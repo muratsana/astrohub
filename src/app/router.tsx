@@ -2,6 +2,8 @@ import { createBrowserRouter } from 'react-router-dom';
 import { AppShell } from '@/components/shell/AppShell';
 import { HomePage } from '@/features/home/HomePage';
 import { PlaceholderPage } from '@/components/PlaceholderPage';
+import { LoginPage } from '@/features/auth/LoginPage';
+import { RegisterPage } from '@/features/auth/RegisterPage';
 
 /**
  * Route haritası — şartname §20 önerilen URL yapısı.
@@ -228,24 +230,8 @@ export const router = createBrowserRouter([
       },
 
       // Auth
-      {
-        path: 'giris',
-        element: (
-          <PlaceholderPage
-            title="Giriş Yap"
-            description="Astrohub hesabınla giriş yap."
-          />
-        ),
-      },
-      {
-        path: 'kayit',
-        element: (
-          <PlaceholderPage
-            title="Üye Ol"
-            description="Astrohub üyeliği ile gökyüzünü keşfet, paylaş, öğren."
-          />
-        ),
-      },
+      { path: 'giris', element: <LoginPage /> },
+      { path: 'kayit', element: <RegisterPage /> },
 
       // 404
       {

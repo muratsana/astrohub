@@ -48,6 +48,9 @@ npm test          # Vitest
   ESLint/Prettier, Vitest, CI, tasarım token'ları (§6.2)
 - ✅ Sprint 0.2 — AppShell (Topbar/Footer/mobil nav), UI primitive'leri ve
   **kabul edilen ana sayfa** (referans tasarıma sadık, responsive, erişilebilir)
-- ⏭️ Sonraki — Sprint 0.3: Supabase temeli, Auth ve tek üyelik iskeleti
+- ✅ Sprint 0.3 — Supabase istemcisi (graceful degradation), AuthContext,
+  giriş/kayıt sayfaları (RHF + Zod), `ObjectStorageAdapter`, ilk iki migration
+  (extensions + auth/profiles/membership + RLS), entitlement domain kuralları
+- ⏭️ Sonraki — Faz 1: üyelik/ödeme lifecycle, fotoğraf pipeline ve kota
 
 Yol haritası için [GELISTIRME-PLANI.md](./docs/GELISTIRME-PLANI.md).
