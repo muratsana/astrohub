@@ -51,6 +51,8 @@ npm test          # Vitest
 - ✅ Sprint 0.3 — Supabase istemcisi (graceful degradation), AuthContext,
   giriş/kayıt sayfaları (RHF + Zod), `ObjectStorageAdapter`, ilk iki migration
   (extensions + auth/profiles/membership + RLS), entitlement domain kuralları
+- ✅ **FOV & Pixel Scale hesaplayıcı** (§7.12) — tam çalışan araç: optik
+  matematiği (domain), hazır ekipman ön ayarları, canlı sonuç; backend gerekmez
 - ⏭️ Sonraki — Faz 1: üyelik/ödeme lifecycle, fotoğraf pipeline ve kota
 
 Yol haritası için [GELISTIRME-PLANI.md](./docs/GELISTIRME-PLANI.md).

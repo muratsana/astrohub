@@ -4,6 +4,7 @@ import { HomePage } from '@/features/home/HomePage';
 import { PlaceholderPage } from '@/components/PlaceholderPage';
 import { LoginPage } from '@/features/auth/LoginPage';
 import { RegisterPage } from '@/features/auth/RegisterPage';
+import { FovCalculatorPage } from '@/features/calculators/FovCalculatorPage';
 
 /**
  * Route haritası — şartname §20 önerilen URL yapısı.
@@ -157,19 +158,9 @@ export const router = createBrowserRouter([
           />
         ),
       },
-      {
-        path: 'araclar/fov',
-        element: (
-          <PlaceholderPage
-            title="FOV Hesaplayıcı"
-            description="Teleskop görüş alanını hesapla."
-          />
-        ),
-      },
-      {
-        path: 'araclar/pixel-scale',
-        element: <PlaceholderPage title="Pixel Scale Hesaplayıcı" />,
-      },
+      { path: 'araclar/fov', element: <FovCalculatorPage /> },
+      // Pixel scale hesabı FOV hesaplayıcının içinde sunulur.
+      { path: 'araclar/pixel-scale', element: <FovCalculatorPage /> },
       {
         path: 'araclar/mosaic',
         element: <PlaceholderPage title="Mosaic Planlayıcı" />,
