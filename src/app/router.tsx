@@ -1,0 +1,262 @@
+import { createBrowserRouter } from 'react-router-dom';
+import { AppShell } from '@/components/shell/AppShell';
+import { HomePage } from '@/features/home/HomePage';
+import { PlaceholderPage } from '@/components/PlaceholderPage';
+
+/**
+ * Route haritası — şartname §20 önerilen URL yapısı.
+ * MVP'de çoğu sayfa placeholder; ilgili feature sprintlerinde
+ * gerçek içerikle değiştirilecektir.
+ */
+export const router = createBrowserRouter([
+  {
+    path: '/',
+    element: <AppShell />,
+    children: [
+      { index: true, element: <HomePage /> },
+
+      // Keşfet
+      {
+        path: 'kesfet',
+        element: (
+          <PlaceholderPage
+            title="Keşfet"
+            description="Astrofotoğrafçılar, kulüpler, rasathaneler ve yeni içerikler."
+          />
+        ),
+      },
+
+      // Fotoğraflar
+      {
+        path: 'fotograflar',
+        element: (
+          <PlaceholderPage
+            title="Fotoğraflar"
+            description="Topluluğun astrofotoğraf galerisi ve filtreleri."
+          />
+        ),
+      },
+      {
+        path: 'fotograflar/yukle',
+        element: (
+          <PlaceholderPage
+            title="Fotoğraf Yükle"
+            description="6 adımlı astrofotoğraf yükleme sihirbazı."
+          />
+        ),
+      },
+      {
+        path: 'fotograf/:slug',
+        element: (
+          <PlaceholderPage
+            title="Fotoğraf Detayı"
+            description="Görsel, teknik çekim verisi ve ilişkili içerikler."
+          />
+        ),
+      },
+
+      // Hedefler
+      {
+        path: 'hedefler',
+        element: (
+          <PlaceholderPage
+            title="Astronomik Hedefler"
+            description="Messier, NGC, IC ve daha fazla katalog."
+          />
+        ),
+      },
+      { path: 'hedef/:slug', element: <PlaceholderPage title="Hedef Detayı" /> },
+
+      // Etkinlikler
+      {
+        path: 'etkinlikler',
+        element: (
+          <PlaceholderPage
+            title="Etkinlikler"
+            description="Türkiye astronomi etkinlikleri: liste, takvim ve harita."
+          />
+        ),
+      },
+      {
+        path: 'etkinlik/:slug',
+        element: <PlaceholderPage title="Etkinlik Detayı" />,
+      },
+
+      // Harita
+      {
+        path: 'harita',
+        element: (
+          <PlaceholderPage
+            title="Harita"
+            description="Işık kirliliği, kamp/gözlem noktaları ve tesisler."
+          />
+        ),
+      },
+      {
+        path: 'harita/isik-kirliligi',
+        element: <PlaceholderPage title="Işık Kirliliği Haritası" />,
+      },
+      {
+        path: 'harita/gozlem-noktalari',
+        element: (
+          <PlaceholderPage
+            title="Kamp ve Gözlem Noktaları"
+            description="Türkiye'de karanlık gökyüzü ve astrocamping noktaları."
+          />
+        ),
+      },
+      {
+        path: 'gozlem-noktasi/:slug',
+        element: <PlaceholderPage title="Gözlem Noktası" />,
+      },
+
+      // Bu gece / planlayıcı
+      {
+        path: 'bu-gece',
+        element: (
+          <PlaceholderPage
+            title="Bu Gece Gökyüzünde"
+            description="Ay fazı, astronomik karanlık ve hedef önerileri."
+          />
+        ),
+      },
+      {
+        path: 'planlayici',
+        element: (
+          <PlaceholderPage
+            title="Gözlem ve Çekim Planlayıcı"
+            description="Gece planı, hedef sırası ve yükseklik grafiği."
+          />
+        ),
+      },
+
+      // Ekipman
+      {
+        path: 'ekipman',
+        element: (
+          <PlaceholderPage
+            title="Ekipman Veritabanı"
+            description="Montür, optik, kamera, filtre ve daha fazlası."
+          />
+        ),
+      },
+      {
+        path: 'ekipman/:category',
+        element: <PlaceholderPage title="Ekipman Kategorisi" />,
+      },
+
+      // Araçlar
+      {
+        path: 'araclar',
+        element: (
+          <PlaceholderPage
+            title="Araçlar"
+            description="FOV, pixel scale, mosaic ve setup uyumluluk araçları."
+          />
+        ),
+      },
+      {
+        path: 'araclar/fov',
+        element: (
+          <PlaceholderPage
+            title="FOV Hesaplayıcı"
+            description="Teleskop görüş alanını hesapla."
+          />
+        ),
+      },
+      {
+        path: 'araclar/pixel-scale',
+        element: <PlaceholderPage title="Pixel Scale Hesaplayıcı" />,
+      },
+      {
+        path: 'araclar/mosaic',
+        element: <PlaceholderPage title="Mosaic Planlayıcı" />,
+      },
+
+      // Eğitim
+      {
+        path: 'egitim',
+        element: (
+          <PlaceholderPage
+            title="Eğitim Merkezi"
+            description="Makaleler, videolar ve işleme laboratuvarı."
+          />
+        ),
+      },
+      { path: 'egitim/:slug', element: <PlaceholderPage title="Eğitim İçeriği" /> },
+
+      // İkinci el
+      {
+        path: 'ikinci-el',
+        element: (
+          <PlaceholderPage
+            title="İkinci El İlanlar"
+            description="Güvenilir astronomi ekipmanı pazaryeri."
+          />
+        ),
+      },
+      { path: 'ilan/:slug', element: <PlaceholderPage title="İlan Detayı" /> },
+
+      // Topluluk / profil
+      {
+        path: 'topluluklar',
+        element: (
+          <PlaceholderPage
+            title="Kulüpler ve Topluluklar"
+            description="Dernekler, üniversite kulüpleri ve gözlem grupları."
+          />
+        ),
+      },
+      {
+        path: 'topluluk/:slug',
+        element: <PlaceholderPage title="Topluluk" />,
+      },
+      {
+        path: 'profil/:username',
+        element: <PlaceholderPage title="Kullanıcı Profili" />,
+      },
+
+      // Üye paneli
+      {
+        path: 'panel',
+        element: (
+          <PlaceholderPage
+            title="Üye Paneli"
+            description="Fotoğraflarım, setup'larım, planlarım ve üyelik."
+          />
+        ),
+      },
+
+      // Auth
+      {
+        path: 'giris',
+        element: (
+          <PlaceholderPage
+            title="Giriş Yap"
+            description="Astrohub hesabınla giriş yap."
+          />
+        ),
+      },
+      {
+        path: 'kayit',
+        element: (
+          <PlaceholderPage
+            title="Üye Ol"
+            description="Astrohub üyeliği ile gökyüzünü keşfet, paylaş, öğren."
+          />
+        ),
+      },
+
+      // 404
+      {
+        path: '*',
+        element: (
+          <PlaceholderPage
+            title="Sayfa bulunamadı"
+            description="Aradığınız sayfa mevcut değil ya da henüz yayında değil."
+          />
+        ),
+      },
+    ],
+  },
+]);

@@ -1,0 +1,88 @@
+@import 'tailwindcss';
+
+/*
+ * Astrohub tasarım sistemi — şartname §6.2 renk token'ları.
+ * Koyu tema varsayılandır (§19.7). Açık tema opsiyoneldir.
+ * Tailwind 4 @theme: token'lar utility sınıflarına dönüşür
+ * (bg-background, text-foreground, bg-surface-2, text-primary, border-border...).
+ */
+@theme {
+  --color-background: #050a12;
+  --color-surface-1: #0a111d;
+  --color-surface-2: #0f1826;
+  --color-surface-3: #162235;
+
+  --color-foreground: #f7f8fb;
+  --color-muted-foreground: #9ca9ba;
+
+  --color-border: rgba(255, 255, 255, 0.1);
+
+  --color-primary: #f4b82f;
+  --color-primary-hover: #ffca4c;
+  --color-primary-foreground: #090b0f;
+
+  --color-link: #8db8ff;
+  --color-success: #45c985;
+  --color-warning: #ffb84d;
+  --color-danger: #ef6464;
+
+  /* Modül ikonlarında sınırlı kullanım için aksan tonları (§6.2) */
+  --color-accent-violet: #a78bfa;
+  --color-accent-blue: #60a5fa;
+  --color-accent-green: #34d399;
+  --color-accent-teal: #2dd4bf;
+  --color-accent-orange: #fb923c;
+
+  --font-sans:
+    'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  /* İçerik genişliği (§6.4): maksimum 1440–1520px */
+  --spacing-content: 1520px;
+
+  --radius-card: 14px;
+}
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    margin: 0;
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    font-feature-settings:
+      'cv02', 'cv03', 'cv04', 'cv11';
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Teknik değerler için tabular numerals (§6.3) */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Focus ring hiçbir temada kaldırılmaz (§6.7) */
+  :focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* Hareket azaltma tercihi (§6.7) */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}

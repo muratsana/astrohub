@@ -29,7 +29,25 @@ React 19 · TypeScript · Vite · Tailwind CSS 4 · Radix/shadcn · React Router
 TanStack Query · Supabase (Auth / PostgreSQL + PostGIS / RLS / Edge Functions) ·
 Leaflet · PWA
 
+## Geliştirme
+
+```bash
+npm install       # bağımlılıklar
+npm run dev       # geliştirme sunucusu (http://localhost:5173)
+npm run build     # üretim derlemesi
+npm run typecheck # TypeScript kontrolü
+npm run lint      # ESLint
+npm test          # Vitest
+```
+
 ## Durum
 
-🚧 Faz 0 — Temel platform kurulumu. Yol haritası için
-[GELISTIRME-PLANI.md](./docs/GELISTIRME-PLANI.md).
+🚧 **Faz 0 — Temel platform.** Tamamlanan:
+
+- ✅ Sprint 0.1 — Proje iskeleti (Vite + React 19 + TS + Tailwind 4),
+  ESLint/Prettier, Vitest, CI, tasarım token'ları (§6.2)
+- ✅ Sprint 0.2 — AppShell (Topbar/Footer/mobil nav), UI primitive'leri ve
+  **kabul edilen ana sayfa** (referans tasarıma sadık, responsive, erişilebilir)
+- ⏭️ Sonraki — Sprint 0.3: Supabase temeli, Auth ve tek üyelik iskeleti
+
+Yol haritası için [GELISTIRME-PLANI.md](./docs/GELISTIRME-PLANI.md).
