@@ -1,0 +1,135 @@
+/** Kamp/gözlem noktası tohum verisi (§8.5). Harita katmanı Faz 1.7'de. */
+
+export interface ObservingSite {
+  slug: string;
+  name: string;
+  region: string; // il/ilçe
+  bortle: number;
+  sqm?: number;
+  altitude: number; // metre
+  roadAccess: 'Asfalt' | 'Stabilize' | '4x4 gerekir';
+  facilities: {
+    water: boolean;
+    toilet: boolean;
+    electricity: boolean;
+    cellSignal: boolean;
+    tentArea: boolean;
+    caravanOk: boolean;
+  };
+  southHorizon: 'Açık' | 'Kısmen açık' | 'Kapalı';
+  bestMonths: string;
+  description: string;
+  warnings?: string[];
+  gradient: string;
+  rating: number; // 0-5
+  reviewCount: number;
+}
+
+export const sites: ObservingSite[] = [
+  {
+    slug: 'saklikent-antalya',
+    name: 'Saklıkent Gözlem Alanı',
+    region: 'Antalya',
+    bortle: 3,
+    sqm: 21.6,
+    altitude: 1850,
+    roadAccess: 'Asfalt',
+    facilities: {
+      water: true,
+      toilet: true,
+      electricity: true,
+      cellSignal: true,
+      tentArea: true,
+      caravanOk: true,
+    },
+    southHorizon: 'Açık',
+    bestMonths: 'Mayıs – Ekim',
+    description:
+      'TÜBİTAK Ulusal Gözlemevi yakınındaki plato; asfalt erişim ve tesis olanaklarıyla Türkiye\'nin en erişilebilir karanlık gökyüzü noktalarından. Yaz gecelerinde bile serin olur.',
+    warnings: ['Yaz hafta sonları kalabalık olabilir; erken yer tutun.'],
+    gradient: 'linear-gradient(160deg, #0f172a 0%, #1e3a5f 50%, #4c1d95 100%)',
+    rating: 4.7,
+    reviewCount: 128,
+  },
+  {
+    slug: 'palandoken-yaylasi',
+    name: 'Palandöken Yaylası',
+    region: 'Erzurum',
+    bortle: 2,
+    sqm: 21.9,
+    altitude: 2400,
+    roadAccess: 'Stabilize',
+    facilities: {
+      water: false,
+      toilet: false,
+      electricity: false,
+      cellSignal: true,
+      tentArea: true,
+      caravanOk: false,
+    },
+    southHorizon: 'Açık',
+    bestMonths: 'Haziran – Eylül',
+    description:
+      'Doğu Anadolu\'nun en karanlık gökyüzülerinden; SQM 21.9 ölçümleriyle narrowband gerektirmeyen doğal kontrast. Tesis yok — tam donanımlı gelin.',
+    warnings: [
+      'Gece sıcaklığı yazın bile 5°C altına düşebilir.',
+      'Son 3 km stabilize yol; yağışta zorlaşır.',
+    ],
+    gradient: 'linear-gradient(160deg, #020617 0%, #172554 60%, #312e81 100%)',
+    rating: 4.9,
+    reviewCount: 64,
+  },
+  {
+    slug: 'camlidere-ankara',
+    name: 'Çamlıdere Gözlem Noktası',
+    region: 'Ankara',
+    bortle: 4,
+    sqm: 21.2,
+    altitude: 1250,
+    roadAccess: 'Asfalt',
+    facilities: {
+      water: true,
+      toilet: false,
+      electricity: false,
+      cellSignal: true,
+      tentArea: true,
+      caravanOk: true,
+    },
+    southHorizon: 'Kısmen açık',
+    bestMonths: 'Nisan – Kasım',
+    description:
+      'Ankara\'ya 1 saat mesafede hafta sonu kaçamağı; başkentin ışık kubbesi kuzey ufkunu etkiler ama güney hedefleri için yeterli karanlık sunar.',
+    gradient: 'linear-gradient(160deg, #0c1220 0%, #1e293b 55%, #475569 100%)',
+    rating: 4.2,
+    reviewCount: 96,
+  },
+  {
+    slug: 'goreme-nevsehir',
+    name: 'Göreme Kırsalı',
+    region: 'Nevşehir',
+    bortle: 3,
+    sqm: 21.4,
+    altitude: 1100,
+    roadAccess: 'Stabilize',
+    facilities: {
+      water: false,
+      toilet: false,
+      electricity: false,
+      cellSignal: true,
+      tentArea: true,
+      caravanOk: true,
+    },
+    southHorizon: 'Açık',
+    bestMonths: 'Nisan – Ekim',
+    description:
+      'Peribacaları silüetiyle gece manzarası fotoğrafçılığının Türkiye\'deki başkenti. Turistik bölgeden 10-15 dk uzaklaşınca Bortle 3 gökyüzü.',
+    warnings: ['Balon uçuş sabahları erken saatte araç trafiği başlar.'],
+    gradient: 'linear-gradient(160deg, #1c1917 0%, #78350f 55%, #b45309 100%)',
+    rating: 4.6,
+    reviewCount: 87,
+  },
+];
+
+export function getSiteBySlug(slug: string): ObservingSite | undefined {
+  return sites.find((s) => s.slug === slug);
+}

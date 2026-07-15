@@ -7,6 +7,19 @@ import { RegisterPage } from '@/features/auth/RegisterPage';
 import { FovCalculatorPage } from '@/features/calculators/FovCalculatorPage';
 import { GalleryPage } from '@/features/photos/GalleryPage';
 import { PhotoDetailPage } from '@/features/photos/PhotoDetailPage';
+import { EventsPage } from '@/features/events/EventsPage';
+import { EventDetailPage } from '@/features/events/EventDetailPage';
+import { TargetsPage } from '@/features/targets/TargetsPage';
+import { TargetDetailPage } from '@/features/targets/TargetDetailPage';
+import { EquipmentPage } from '@/features/equipment/EquipmentPage';
+import { SitesPage } from '@/features/observing-sites/SitesPage';
+import { SiteDetailPage } from '@/features/observing-sites/SiteDetailPage';
+import { LearningPage } from '@/features/learning/LearningPage';
+import { MarketplacePage } from '@/features/marketplace/MarketplacePage';
+import { UploadWizardPage } from '@/features/upload/UploadWizardPage';
+import { PanelPage } from '@/features/panel/PanelPage';
+import { ProfilePage } from '@/features/profile/ProfilePage';
+import { DiscoverPage } from '@/features/discover/DiscoverPage';
 
 /**
  * Route haritası — şartname §20 önerilen URL yapısı.
@@ -21,83 +34,35 @@ export const router = createBrowserRouter([
       { index: true, element: <HomePage /> },
 
       // Keşfet
-      {
-        path: 'kesfet',
-        element: (
-          <PlaceholderPage
-            title="Keşfet"
-            description="Astrofotoğrafçılar, kulüpler, rasathaneler ve yeni içerikler."
-          />
-        ),
-      },
+      { path: 'kesfet', element: <DiscoverPage /> },
 
       // Fotoğraflar
       { path: 'fotograflar', element: <GalleryPage /> },
-      {
-        path: 'fotograflar/yukle',
-        element: (
-          <PlaceholderPage
-            title="Fotoğraf Yükle"
-            description="6 adımlı astrofotoğraf yükleme sihirbazı — Faz 1.2/1.3'te."
-          />
-        ),
-      },
+      { path: 'fotograflar/yukle', element: <UploadWizardPage /> },
       { path: 'fotograf/:slug', element: <PhotoDetailPage /> },
 
       // Hedefler
-      {
-        path: 'hedefler',
-        element: (
-          <PlaceholderPage
-            title="Astronomik Hedefler"
-            description="Messier, NGC, IC ve daha fazla katalog."
-          />
-        ),
-      },
-      { path: 'hedef/:slug', element: <PlaceholderPage title="Hedef Detayı" /> },
+      { path: 'hedefler', element: <TargetsPage /> },
+      { path: 'hedef/:slug', element: <TargetDetailPage /> },
 
       // Etkinlikler
-      {
-        path: 'etkinlikler',
-        element: (
-          <PlaceholderPage
-            title="Etkinlikler"
-            description="Türkiye astronomi etkinlikleri: liste, takvim ve harita."
-          />
-        ),
-      },
-      {
-        path: 'etkinlik/:slug',
-        element: <PlaceholderPage title="Etkinlik Detayı" />,
-      },
+      { path: 'etkinlikler', element: <EventsPage /> },
+      { path: 'etkinlik/:slug', element: <EventDetailPage /> },
 
-      // Harita
-      {
-        path: 'harita',
-        element: (
-          <PlaceholderPage
-            title="Harita"
-            description="Işık kirliliği, kamp/gözlem noktaları ve tesisler."
-          />
-        ),
-      },
+      // Harita — tam ekran harita katmanı, tile sağlayıcısı lisansı
+      // doğrulanınca eklenecek (§14.1); şimdilik nokta listesi sunulur.
+      { path: 'harita', element: <SitesPage /> },
       {
         path: 'harita/isik-kirliligi',
-        element: <PlaceholderPage title="Işık Kirliliği Haritası" />,
-      },
-      {
-        path: 'harita/gozlem-noktalari',
         element: (
           <PlaceholderPage
-            title="Kamp ve Gözlem Noktaları"
-            description="Türkiye'de karanlık gökyüzü ve astrocamping noktaları."
+            title="Işık Kirliliği Haritası"
+            description="Katman, veri lisansı doğrulandıktan sonra yayına alınacak (§14.1)."
           />
         ),
       },
-      {
-        path: 'gozlem-noktasi/:slug',
-        element: <PlaceholderPage title="Gözlem Noktası" />,
-      },
+      { path: 'harita/gozlem-noktalari', element: <SitesPage /> },
+      { path: 'gozlem-noktasi/:slug', element: <SiteDetailPage /> },
 
       // Bu gece / planlayıcı
       {
@@ -120,19 +85,8 @@ export const router = createBrowserRouter([
       },
 
       // Ekipman
-      {
-        path: 'ekipman',
-        element: (
-          <PlaceholderPage
-            title="Ekipman Veritabanı"
-            description="Montür, optik, kamera, filtre ve daha fazlası."
-          />
-        ),
-      },
-      {
-        path: 'ekipman/:category',
-        element: <PlaceholderPage title="Ekipman Kategorisi" />,
-      },
+      { path: 'ekipman', element: <EquipmentPage /> },
+      { path: 'ekipman/:category', element: <EquipmentPage /> },
 
       // Araçlar
       {
@@ -153,28 +107,28 @@ export const router = createBrowserRouter([
       },
 
       // Eğitim
+      { path: 'egitim', element: <LearningPage /> },
       {
-        path: 'egitim',
+        path: 'egitim/:slug',
         element: (
           <PlaceholderPage
-            title="Eğitim Merkezi"
-            description="Makaleler, videolar ve işleme laboratuvarı."
+            title="Eğitim İçeriği"
+            description="İçerik detay sayfaları Faz 1.8'de yayına alınacak."
           />
         ),
       },
-      { path: 'egitim/:slug', element: <PlaceholderPage title="Eğitim İçeriği" /> },
 
       // İkinci el
+      { path: 'ikinci-el', element: <MarketplacePage /> },
       {
-        path: 'ikinci-el',
+        path: 'ilan/:slug',
         element: (
           <PlaceholderPage
-            title="İkinci El İlanlar"
-            description="Güvenilir astronomi ekipmanı pazaryeri."
+            title="İlan Detayı"
+            description="İlan detayları ve güvenli iletişim Faz 1.8'de."
           />
         ),
       },
-      { path: 'ilan/:slug', element: <PlaceholderPage title="İlan Detayı" /> },
 
       // Topluluk / profil
       {
@@ -190,21 +144,10 @@ export const router = createBrowserRouter([
         path: 'topluluk/:slug',
         element: <PlaceholderPage title="Topluluk" />,
       },
-      {
-        path: 'profil/:username',
-        element: <PlaceholderPage title="Kullanıcı Profili" />,
-      },
+      { path: 'profil/:username', element: <ProfilePage /> },
 
       // Üye paneli
-      {
-        path: 'panel',
-        element: (
-          <PlaceholderPage
-            title="Üye Paneli"
-            description="Fotoğraflarım, setup'larım, planlarım ve üyelik."
-          />
-        ),
-      },
+      { path: 'panel', element: <PanelPage /> },
 
       // Auth
       { path: 'giris', element: <LoginPage /> },

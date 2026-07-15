@@ -58,6 +58,12 @@ npm test          # Vitest
 - ✅ **Fotoğraf detay sayfası** (§7.3) — geniş görüntüleyici, temel bilgi,
   5 sekmeli teknik veri (çekim/ekipman/pozlama tablosu/işleme/konum),
   AI beyanı ve konum gizliliği göstergeleri, benzer fotoğraf önerileri
-- ⏭️ Sonraki — Faz 1: üyelik/ödeme lifecycle, fotoğraf pipeline ve kota
+- ✅ **UI iskeleti tamamlandı** — tüm ana modüller mock veriyle çalışır durumda:
+  Etkinlikler (liste+detay, kaynak şeffaflığı), Hedef kataloğu (liste+detay,
+  hedef→fotoğraf ilişkisi), Ekipman veritabanı, Gözlem noktaları (liste+detay),
+  Eğitim merkezi, İkinci el, 6 adımlı yükleme sihirbazı, Üye paneli (kota
+  göstergesi), Kullanıcı profili, Keşfet. 18 route duman testinden geçti.
+- ⏭️ Sonraki — 3. parti bağlantılar: Supabase (auth/DB), object storage
+  (fotoğraf pipeline), ödeme, harita tile'ları — hesaplar açılınca
 
 Yol haritası için [GELISTIRME-PLANI.md](./docs/GELISTIRME-PLANI.md).

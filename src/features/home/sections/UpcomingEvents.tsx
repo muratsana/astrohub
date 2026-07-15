@@ -3,6 +3,7 @@ import { Container } from '@/components/ui/Container';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { PhotoPlaceholder } from '@/components/media/PhotoPlaceholder';
 import { CalendarIcon } from '@/components/ui/icons';
+import { Badge } from '@/components/ui/Badge';
 import { upcomingEvents } from '../data';
 
 /**
@@ -61,24 +62,3 @@ export function UpcomingEvents() {
   );
 }
 
-function Badge({
-  children,
-  tone = 'muted',
-}: {
-  children: React.ReactNode;
-  tone?: 'muted' | 'primary' | 'success' | 'teal';
-}) {
-  const tones = {
-    muted: 'border-border text-muted-foreground',
-    primary: 'border-primary/30 text-primary',
-    success: 'border-success/30 text-success',
-    teal: 'border-accent-teal/30 text-accent-teal',
-  } as const;
-  return (
-    <span
-      className={`rounded-full border px-2 py-0.5 text-[11px] font-medium ${tones[tone]}`}
-    >
-      {children}
-    </span>
-  );
-}
