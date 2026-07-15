@@ -53,6 +53,11 @@ npm test          # Vitest
   (extensions + auth/profiles/membership + RLS), entitlement domain kuralları
 - ✅ **FOV & Pixel Scale hesaplayıcı** (§7.12) — tam çalışan araç: optik
   matematiği (domain), hazır ekipman ön ayarları, canlı sonuç; backend gerekmez
+- ✅ **Fotoğraf galerisi** (§7.2) — arama + tür/palet/şehir/sıralama filtreleri,
+  entegrasyon rozetli kartlar, editör seçimi; filtre mantığı saf/test edilebilir
+- ✅ **Fotoğraf detay sayfası** (§7.3) — geniş görüntüleyici, temel bilgi,
+  5 sekmeli teknik veri (çekim/ekipman/pozlama tablosu/işleme/konum),
+  AI beyanı ve konum gizliliği göstergeleri, benzer fotoğraf önerileri
 - ⏭️ Sonraki — Faz 1: üyelik/ödeme lifecycle, fotoğraf pipeline ve kota
 
 Yol haritası için [GELISTIRME-PLANI.md](./docs/GELISTIRME-PLANI.md).

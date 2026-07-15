@@ -1,0 +1,348 @@
+import { useMemo, useState } from 'react';
+import { Link, useParams } from 'react-router-dom';
+import { Container } from '@/components/ui/Container';
+import { ButtonLink } from '@/components/ui/Button';
+import { PhotoPlaceholder } from '@/components/media/PhotoPlaceholder';
+import { PlaceholderPage } from '@/components/PlaceholderPage';
+import { SectionHeader } from '@/components/ui/SectionHeader';
+import {
+  formatIntegration,
+  totalIntegrationSeconds,
+  exposureRowSeconds,
+} from '@/domain/photography/integration';
+import { getPhotoBySlug, photos } from './data';
+import { photoTypeLabels } from './types';
+import type { AstroPhoto } from './types';
+import { cn } from '@/lib/cn';
+
+type TabId = 'cekim' | 'ekipman' | 'pozlama' | 'islem' | 'konum';
+
+const tabs: { id: TabId; label: string }[] = [
+  { id: 'cekim', label: 'Çekim Bilgileri' },
+  { id: 'ekipman', label: 'Ekipman' },
+  { id: 'pozlama', label: 'Pozlama & Kalibrasyon' },
+  { id: 'islem', label: 'İşleme & Lisans' },
+  { id: 'konum', label: 'Konum & Gökyüzü' },
+];
+
+/**
+ * Fotoğraf detay sayfası (§7.3): üstte geniş görüntüleyici, temel bilgi,
+ * sekmeli teknik veri ve alt öneriler. Konum daima seçilen görünürlük
+ * seviyesinde gösterilir (§15.3).
+ */
+export function PhotoDetailPage() {
+  const { slug } = useParams<{ slug: string }>();
+  const photo = slug ? getPhotoBySlug(slug) : undefined;
+
+  if (!photo) {
+    return (
+      <PlaceholderPage
+        title="Fotoğraf bulunamadı"
+        description="Bu fotoğraf yayından kaldırılmış ya da bağlantı hatalı olabilir."
+      />
+    );
+  }
+
+  return <PhotoDetail photo={photo} />;
+}
+
+function PhotoDetail({ photo }: { photo: AstroPhoto }) {
+  const [tab, setTab] = useState<TabId>('cekim');
+  const integration = totalIntegrationSeconds(photo.exposures);
+
+  const related = useMemo(
+    () =>
+      photos
+        .filter(
+          (p) =>
+            p.slug !== photo.slug &&
+            (p.target.catalog === photo.target.catalog || p.type === photo.type)
+        )
+        .slice(0, 4),
+    [photo]
+  );
+
+  return (
+    <Container className="py-8 sm:py-12">
+      {/* Görüntüleyici */}
+      <div className="relative overflow-hidden rounded-2xl border border-border">
+        <PhotoPlaceholder
+          gradient={photo.gradient}
+          alt={`${photo.title} — ${photo.target.catalog}`}
+          rounded="rounded-none"
+          className="aspect-[16/9] w-full sm:aspect-[2/1]"
+        />
+        <span className="absolute bottom-3 right-3 rounded-full bg-black/60 px-3 py-1 text-xs text-muted-foreground backdrop-blur-sm">
+          Tam çözünürlük Faz 1.2'de (görsel pipeline)
+        </span>
+      </div>
+
+      {/* Temel bilgi */}
+      <div className="mt-6 flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-primary">
+            {photo.target.catalog} · {photoTypeLabels[photo.type]}
+          </p>
+          <h1 className="mt-1 text-2xl font-semibold text-foreground sm:text-3xl">
+            {photo.title}
+          </h1>
+          <p className="tabular mt-2 text-sm text-muted-foreground">
+            <Link
+              to={`/profil/${photo.user.username}`}
+              className="font-medium text-foreground hover:text-primary"
+            >
+              {photo.user.displayName}
+            </Link>{' '}
+            · {new Date(photo.capturedAt).toLocaleDateString('tr-TR')} ·{' '}
+            {photo.location.label} · Toplam {formatIntegration(integration)}
+          </p>
+          <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+            {photo.description}
+          </p>
+        </div>
+
+        <div className="tabular flex shrink-0 items-center gap-2 text-sm">
+          <ActionChip>♥ {photo.likes}</ActionChip>
+          <ActionChip>💬 {photo.comments}</ActionChip>
+          <ActionChip>Kaydet</ActionChip>
+          <ActionChip>Paylaş</ActionChip>
+        </div>
+      </div>
+
+      {/* Sekmeler */}
+      <div
+        role="tablist"
+        aria-label="Teknik veri sekmeleri"
+        className="mt-8 flex flex-wrap gap-1 border-b border-border"
+      >
+        {tabs.map((t) => (
+          <button
+            key={t.id}
+            role="tab"
+            aria-selected={tab === t.id}
+            onClick={() => setTab(t.id)}
+            className={cn(
+              '-mb-px rounded-t-lg border-b-2 px-4 py-2.5 text-sm font-medium transition-colors',
+              tab === t.id
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            )}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="py-6">
+        {tab === 'cekim' && <CaptureTab photo={photo} />}
+        {tab === 'ekipman' && <EquipmentTab photo={photo} />}
+        {tab === 'pozlama' && <ExposureTab photo={photo} />}
+        {tab === 'islem' && <ProcessingTab photo={photo} />}
+        {tab === 'konum' && <LocationTab photo={photo} />}
+      </div>
+
+      {/* Alt öneriler (§7.3) */}
+      {related.length > 0 && (
+        <section className="mt-8 border-t border-border pt-10">
+          <SectionHeader
+            title="Benzer Fotoğraflar"
+            description="Aynı hedef veya aynı türden diğer kareler"
+            linkTo="/fotograflar"
+          />
+          <ul className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            {related.map((p) => (
+              <li key={p.slug}>
+                <Link to={`/fotograf/${p.slug}`} className="group block">
+                  <PhotoPlaceholder
+                    gradient={p.gradient}
+                    alt={p.title}
+                    className="aspect-[4/3] w-full border border-border transition-transform duration-300 group-hover:scale-[1.03]"
+                  />
+                  <p className="mt-2 truncate text-sm font-medium text-foreground">
+                    {p.target.catalog} · {p.title}
+                  </p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    @{p.user.username}
+                  </p>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      <div className="mt-10">
+        <ButtonLink to="/fotograflar" variant="secondary">
+          ← Galeriye dön
+        </ButtonLink>
+      </div>
+    </Container>
+  );
+}
+
+/* ── Sekme içerikleri ── */
+
+function CaptureTab({ photo }: { photo: AstroPhoto }) {
+  return (
+    <DL
+      rows={[
+        ['Astronomik hedef', `${photo.target.name} (${photo.target.catalog})`],
+        ['Takımyıldız', photo.target.constellation],
+        ['Fotoğraf türü', photoTypeLabels[photo.type]],
+        ['Çekim tarihi', new Date(photo.capturedAt).toLocaleDateString('tr-TR')],
+        ['Toplam entegrasyon', formatIntegration(totalIntegrationSeconds(photo.exposures))],
+        ['İşleme paleti', photo.palette],
+      ]}
+    />
+  );
+}
+
+function EquipmentTab({ photo }: { photo: AstroPhoto }) {
+  const s = photo.setup;
+  return (
+    <DL
+      rows={[
+        ['Optik', s.optic],
+        ['Kamera', s.camera],
+        ['Montür', s.mount],
+        ['Guiding', s.guiding ?? '—'],
+        ['Filtreler', s.filters ?? '—'],
+        ['Reducer / Barlow', s.reducer ?? '—'],
+      ]}
+    />
+  );
+}
+
+function ExposureTab({ photo }: { photo: AstroPhoto }) {
+  const total = totalIntegrationSeconds(photo.exposures);
+  const c = photo.calibration;
+  return (
+    <div className="space-y-6">
+      <div className="overflow-x-auto rounded-xl border border-border">
+        <table className="w-full min-w-96 text-sm">
+          <thead>
+            <tr className="border-b border-border bg-surface-1 text-left text-xs uppercase tracking-wide text-muted-foreground">
+              <th className="px-4 py-2.5 font-medium">Filtre</th>
+              <th className="px-4 py-2.5 font-medium">Kare</th>
+              <th className="px-4 py-2.5 font-medium">Pozlama</th>
+              <th className="px-4 py-2.5 font-medium">Toplam</th>
+            </tr>
+          </thead>
+          <tbody className="tabular">
+            {photo.exposures.map((row) => (
+              <tr key={row.filter} className="border-b border-border/50 last:border-0">
+                <td className="px-4 py-2.5 font-medium text-foreground">{row.filter}</td>
+                <td className="px-4 py-2.5 text-muted-foreground">{row.frames}</td>
+                <td className="px-4 py-2.5 text-muted-foreground">
+                  {row.exposureSeconds < 1
+                    ? `${(row.exposureSeconds * 1000).toFixed(0)} ms`
+                    : `${row.exposureSeconds} sn`}
+                </td>
+                <td className="px-4 py-2.5 text-foreground">
+                  {formatIntegration(exposureRowSeconds(row))}
+                </td>
+              </tr>
+            ))}
+            <tr className="bg-surface-1">
+              <td className="px-4 py-2.5 font-semibold text-foreground" colSpan={3}>
+                Toplam entegrasyon
+              </td>
+              <td className="px-4 py-2.5 font-semibold text-primary">
+                {formatIntegration(total)}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div>
+        <h3 className="mb-2 text-sm font-semibold text-foreground">
+          Kalibrasyon kareleri
+        </h3>
+        {c ? (
+          <DL
+            rows={[
+              ['Dark', c.darks?.toString() ?? '—'],
+              ['Flat', c.flats?.toString() ?? '—'],
+              ['Bias', c.bias?.toString() ?? '—'],
+              ['Dark-flat', c.darkFlats?.toString() ?? '—'],
+            ]}
+          />
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            Kalibrasyon bilgisi paylaşılmamış.
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ProcessingTab({ photo }: { photo: AstroPhoto }) {
+  return (
+    <div className="space-y-4">
+      <DL
+        rows={[
+          ['Yazılımlar', photo.processing.software.join(', ')],
+          ['İşleme adımları', photo.processing.steps ?? '—'],
+          ['Lisans', photo.license],
+        ]}
+      />
+      {photo.processing.aiDeclared && (
+        <p className="rounded-xl border border-accent-blue/30 bg-accent-blue/10 px-4 py-3 text-xs text-accent-blue">
+          ℹ️ Fotoğrafçı, işlemede AI tabanlı araç (denoise/deconvolution vb.)
+          kullanıldığını beyan etmiştir (şeffaflık politikası).
+        </p>
+      )}
+    </div>
+  );
+}
+
+function LocationTab({ photo }: { photo: AstroPhoto }) {
+  const loc = photo.location;
+  const visibilityLabel = {
+    exact: 'Tam koordinat',
+    approximate: 'Yaklaşık konum',
+    region: 'Bölge düzeyi',
+    hidden: 'Gizli',
+  }[loc.visibility];
+  return (
+    <div className="space-y-4">
+      <DL
+        rows={[
+          ['Lokasyon', loc.label],
+          ['Konum görünürlüğü', visibilityLabel],
+          ['Bortle sınıfı', loc.bortle?.toString() ?? '—'],
+          ['SQM', loc.sqm ? `${loc.sqm} mag/arcsec²` : '—'],
+        ]}
+      />
+      <p className="text-xs text-muted-foreground/70">
+        Konum, fotoğrafçının seçtiği gizlilik seviyesinde gösterilir; tam
+        koordinatlar açık onay olmadan yayımlanmaz.
+      </p>
+    </div>
+  );
+}
+
+/* ── Küçük yardımcılar ── */
+
+function DL({ rows }: { rows: [string, string][] }) {
+  return (
+    <dl className="grid gap-x-8 gap-y-3 sm:grid-cols-2">
+      {rows.map(([label, value]) => (
+        <div key={label} className="flex flex-col gap-0.5">
+          <dt className="text-xs text-muted-foreground">{label}</dt>
+          <dd className="text-sm font-medium text-foreground">{value}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+function ActionChip({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="rounded-full border border-border bg-surface-1 px-3 py-1.5 text-muted-foreground">
+      {children}
+    </span>
+  );
+}

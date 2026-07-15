@@ -5,6 +5,8 @@ import { PlaceholderPage } from '@/components/PlaceholderPage';
 import { LoginPage } from '@/features/auth/LoginPage';
 import { RegisterPage } from '@/features/auth/RegisterPage';
 import { FovCalculatorPage } from '@/features/calculators/FovCalculatorPage';
+import { GalleryPage } from '@/features/photos/GalleryPage';
+import { PhotoDetailPage } from '@/features/photos/PhotoDetailPage';
 
 /**
  * Route haritası — şartname §20 önerilen URL yapısı.
@@ -30,33 +32,17 @@ export const router = createBrowserRouter([
       },
 
       // Fotoğraflar
-      {
-        path: 'fotograflar',
-        element: (
-          <PlaceholderPage
-            title="Fotoğraflar"
-            description="Topluluğun astrofotoğraf galerisi ve filtreleri."
-          />
-        ),
-      },
+      { path: 'fotograflar', element: <GalleryPage /> },
       {
         path: 'fotograflar/yukle',
         element: (
           <PlaceholderPage
             title="Fotoğraf Yükle"
-            description="6 adımlı astrofotoğraf yükleme sihirbazı."
+            description="6 adımlı astrofotoğraf yükleme sihirbazı — Faz 1.2/1.3'te."
           />
         ),
       },
-      {
-        path: 'fotograf/:slug',
-        element: (
-          <PlaceholderPage
-            title="Fotoğraf Detayı"
-            description="Görsel, teknik çekim verisi ve ilişkili içerikler."
-          />
-        ),
-      },
+      { path: 'fotograf/:slug', element: <PhotoDetailPage /> },
 
       // Hedefler
       {

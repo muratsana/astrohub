@@ -17,31 +17,34 @@ export interface PhotoItem {
   comments?: number;
 }
 
-/** Editoryal giriş alanı — sağ sütundaki dikey fotoğraf seçkisi (§7.1) */
+/**
+ * Editoryal giriş alanı — sağ sütundaki dikey fotoğraf seçkisi (§7.1).
+ * id alanı fotoğraf detay slug'ıdır (features/photos/data.ts ile eşleşir).
+ */
 export const heroPhotos: PhotoItem[] = [
   {
-    id: 'ngc7009',
+    id: 'ngc6302-kelebek-sho',
     title: 'Kelebek Bulutsusu',
     user: 'astrocan',
     gradient:
       'radial-gradient(120% 90% at 50% 40%, #2b6cb0 0%, #6b46c1 35%, #1a1035 70%, #050a12 100%)',
   },
   {
-    id: 'm31',
+    id: 'm31-andromeda-lrgb',
     title: 'Andromeda Galaksisi',
     user: 'mert_astro',
     gradient:
       'radial-gradient(90% 70% at 55% 45%, #d6bca0 0%, #7c5c46 30%, #241a2e 65%, #050a12 100%)',
   },
   {
-    id: 'ic434',
+    id: 'ic434-at-basi-sho',
     title: 'At Başı Bulutsusu',
     user: 'gokhanuzun',
     gradient:
       'radial-gradient(120% 100% at 45% 55%, #c026d3 0%, #9d174d 35%, #3b0a24 70%, #050a12 100%)',
   },
   {
-    id: 'moon',
+    id: 'ay-kopernik-krateri',
     title: 'Ay',
     user: 'cemyildirim',
     gradient:
@@ -49,57 +52,60 @@ export const heroPhotos: PhotoItem[] = [
   },
 ];
 
-/** Öne çıkan astrofotoğraflar bölümü (§7.1) */
+/**
+ * Öne çıkan astrofotoğraflar bölümü (§7.1).
+ * id alanı fotoğraf detay slug'ıdır (features/photos/data.ts ile eşleşir).
+ */
 export const featuredPhotos: PhotoItem[] = [
   {
-    id: 'milkyway-arch',
+    id: 'samanyolu-kemeri-kapadokya',
     title: 'Samanyolu Kemeri',
     user: 'nightscaper',
     gradient:
       'linear-gradient(160deg, #1e293b 0%, #4c1d95 40%, #be185d 75%, #f59e0b 100%)',
-    integration: '2.4 sa',
-    likes: 312,
-    comments: 24,
+    integration: '3 dk',
+    likes: 388,
+    comments: 33,
   },
   {
-    id: 'rosette',
+    id: 'rozet-bulutsusu-sho',
     title: 'Rozet Bulutsusu',
     user: 'deepsky_tr',
     gradient:
       'radial-gradient(100% 100% at 50% 50%, #ef4444 0%, #7f1d1d 45%, #2a0a16 80%, #050a12 100%)',
-    integration: '9.1 sa',
+    integration: '9 sa',
     likes: 288,
     comments: 41,
   },
   {
-    id: 'startrail',
+    id: 'yildiz-izleri-agri',
     title: 'Yıldız İzleri',
     user: 'polaris34',
     gradient:
       'linear-gradient(180deg, #0f172a 0%, #1e3a5f 55%, #475569 100%)',
-    integration: '1.0 sa',
+    integration: '2 sa',
     likes: 176,
     comments: 12,
   },
   {
-    id: 'horsehead2',
+    id: 'ic434-at-basi-sho',
     title: 'At Başı & Alev',
-    user: 'orionfan',
+    user: 'gokhanuzun',
     gradient:
       'radial-gradient(120% 90% at 40% 60%, #dc2626 0%, #991b1b 40%, #1f0a0a 80%, #050a12 100%)',
-    integration: '12.5 sa',
+    integration: '7 sa',
     likes: 421,
     comments: 58,
   },
   {
-    id: 'galactic-core',
-    title: 'Galaktik Merkez',
-    user: 'skyhunter',
+    id: 'jupiter-buyuk-kirmizi-leke',
+    title: 'Jüpiter ve Büyük Kırmızı Leke',
+    user: 'planetary_tr',
     gradient:
-      'linear-gradient(160deg, #0b1220 0%, #78350f 45%, #b45309 70%, #fbbf24 100%)',
-    integration: '3.3 sa',
-    likes: 254,
-    comments: 19,
+      'radial-gradient(80% 80% at 50% 45%, #d9c4a0 0%, #b08355 35%, #6b4a2e 65%, #1a1208 100%)',
+    integration: '8 dk',
+    likes: 203,
+    comments: 27,
   },
 ];
 
