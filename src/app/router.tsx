@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter, createHashRouter } from 'react-router-dom';
 import { AppShell } from '@/components/shell/AppShell';
 import { HomePage } from '@/features/home/HomePage';
 import { PlaceholderPage } from '@/components/PlaceholderPage';
@@ -22,11 +22,20 @@ import { ProfilePage } from '@/features/profile/ProfilePage';
 import { DiscoverPage } from '@/features/discover/DiscoverPage';
 
 /**
+ * Sunucusuz önizleme (tek dosya HTML) için hash tabanlı router kullanılır;
+ * üretimde her zaman history API'li browser router çalışır.
+ */
+const createRouter =
+  import.meta.env.VITE_ROUTER_MODE === 'hash'
+    ? createHashRouter
+    : createBrowserRouter;
+
+/**
  * Route haritası — şartname §20 önerilen URL yapısı.
  * MVP'de çoğu sayfa placeholder; ilgili feature sprintlerinde
  * gerçek içerikle değiştirilecektir.
  */
-export const router = createBrowserRouter([
+export const router = createRouter([
   {
     path: '/',
     element: <AppShell />,

@@ -32,13 +32,25 @@ Leaflet · PWA
 ## Geliştirme
 
 ```bash
-npm install       # bağımlılıklar
-npm run dev       # geliştirme sunucusu (http://localhost:5173)
-npm run build     # üretim derlemesi
-npm run typecheck # TypeScript kontrolü
-npm run lint      # ESLint
-npm test          # Vitest
+npm install          # bağımlılıklar
+npm run dev          # geliştirme sunucusu (http://localhost:5173)
+npm run build        # üretim derlemesi
+npm run build:preview # tek dosya önizleme (dist-preview/index.html)
+npm run typecheck    # TypeScript kontrolü
+npm run lint         # ESLint
+npm test             # Vitest
 ```
+
+### Tek dosya önizleme
+
+`npm run build:preview`, uygulamayı tüm JS/CSS gömülü **tek bir HTML dosyası**
+olarak üretir (`dist-preview/index.html`). Sunucu gerektirmez; doğrudan tarayıcıda
+açılır ve dış istek yapmadığı için katı CSP altında da çalışır — tasarım/akış
+gözden geçirmelerini paylaşmak için kullanılır.
+
+Bu derlemede router `hash` modundadır (`VITE_ROUTER_MODE=hash`), çünkü sunucusuz
+tek dosyada history API tabanlı derin bağlantılar çözülemez. Üretim derlemesi her
+zaman normal (history) router ile çalışır.
 
 ## Durum
 
