@@ -16,10 +16,10 @@
  *   4. İlk hero başlığı görünmeli
  *   5. Ana modüllerin tamamı gezilebilmeli
  */
-import { chromium } from 'playwright';
-import { existsSync, readdirSync } from 'node:fs';
+import { existsSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import path from 'node:path';
+import { launchBrowser, NETWORK_NOISE, includesTr } from './browser.mjs';
 
 const FILE = path.resolve('dist-preview/index.html');
 if (!existsSync(FILE)) {
@@ -27,47 +27,16 @@ if (!existsSync(FILE)) {
   process.exit(1);
 }
 
-/**
- * Ortamda hazır kurulu bir Chromium varsa onu kullan. Playwright'ın kendi
- * indirdiği sürüm bulunmadığında (kurumsal/sandbox ortamlar) kurulum
- * beklemek yerine mevcut ikiliye düşülür.
- */
-function findChromium() {
-  const root = process.env.PLAYWRIGHT_BROWSERS_PATH;
-  if (!root || !existsSync(root)) return undefined;
-
-  for (const dir of readdirSync(root)) {
-    for (const candidate of [
-      path.join(root, dir, 'chrome-linux', 'chrome'),
-      path.join(root, dir, 'chrome-linux', 'headless_shell'),
-    ]) {
-      if (existsSync(candidate)) return candidate;
-    }
-  }
-  return undefined;
-}
-
-const executablePath = findChromium();
-const browser = await chromium.launch({
-  ...(executablePath ? { executablePath } : {}),
-  args: ['--no-sandbox', '--disable-dev-shm-usage'],
-});
+const browser = await launchBrowser();
 
 const page = await browser.newPage({ viewport: { width: 1440, height: 950 } });
 const problems = [];
 
-/**
- * Dış servise ulaşamamak uygulama hatası değildir.
- *
- * Önizleme `file://` üzerinden açılıyor ve hava servisi (Open-Meteo) çağrısı
- * ağı olmayan/kısıtlı ortamlarda başarısız oluyor. Beklenen davranış zaten
- * bu: değerler "—" gösterilir ve sayfa çalışmaya devam eder. Bu satırları
- * hata saymak, testi ortamın ağına bağımlı hâle getirir.
- *
- * Uygulamanın KENDİ hataları (React, render, çözümlenmemiş değişken)
- * `pageerror` olarak gelir ve hiçbir biçimde göz ardı edilmez.
+/*
+ * Ağ gürültüsü ve Türkçe karşılaştırma `browser.mjs`ten gelir: uygulamanın
+ * KENDİ hataları (React, render, çözümlenmemiş değişken) `pageerror` olarak
+ * gelir ve hiçbir biçimde göz ardı edilmez.
  */
-const NETWORK_NOISE = /ERR_TUNNEL_CONNECTION_FAILED|ERR_INTERNET_DISCONNECTED|ERR_NAME_NOT_RESOLVED|Failed to fetch|net::ERR_/;
 
 page.on('console', (m) => {
   if (m.type() !== 'error') return;
@@ -93,15 +62,6 @@ if (textLength < 500) failures.push(`sayfada yalnızca ${textLength} karakter me
 
 const h1 = await page.$eval('h1', (el) => el.textContent?.trim()).catch(() => null);
 if (!h1) failures.push('h1 bulunamadı');
-
-/**
- * Türkçe duyarlı karşılaştırma. JS'in varsayılan `toLowerCase()` metodu
- * "İ" harfini "i" değil "i̇" (i + birleşen nokta) yapar; bu yüzden
- * "İlanlar" başlığı naif bir `/ilan/i` testiyle eşleşmez.
- */
-function includesTr(haystack, needle) {
-  return haystack.toLocaleLowerCase('tr-TR').includes(needle);
-}
 
 // Her ana modül gezilebilmeli (hash router).
 const routes = [

@@ -14,7 +14,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "format": "prettier --write \"src/**/*.{ts,tsx,css}\"",
-    "check:preview": "node scripts/check-preview.mjs"
+    "check:preview": "node scripts/check-preview.mjs",
+    "test:e2e": "npm run build:preview && node scripts/e2e.mjs",
+    "test:all": "npm run typecheck && npm run lint && npm test && npm run check:preview && node scripts/e2e.mjs"
   },
   "dependencies": {
     "@fontsource-variable/jetbrains-mono": "^5.3.0",

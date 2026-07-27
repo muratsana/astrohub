@@ -1,0 +1,461 @@
+/**
+ * UÇTAN UCA TESTLER (§17.1).
+ *
+ * Birim testleri bileşenleri jsdom'da tek tek render eder; burada gerçek
+ * tarayıcıda, gerçek derlemeyle, gerçek gezinme yapılır. İkisinin
+ * yakaladığı hata sınıfı farklıdır:
+ *
+ *   birim   → mantık, biçimlendirme, erişilebilirlik nitelikleri
+ *   e2e     → yönlendirme, kod bölme, kalıcı durum, düzen, paketleme
+ *
+ * Neden `dist-preview` (tek dosya, hash router)?
+ * Sunucu gerektirmez. `dist` klasörünü `file://` ile açmak history API'li
+ * router'da çalışmaz (derin bağlantılar 404 verir) ve bir HTTP sunucusu
+ * kurmak testi ortamın portlarına bağımlı hâle getirir. Tek dosya derlemesi
+ * aynı uygulama kodunu çalıştırır — yalnızca router modu farklıdır.
+ *
+ * Her senaryo bağımsızdır: kendi adresine gider, kendi doğrulamasını yapar.
+ * Bir senaryonun başarısızlığı diğerlerini durdurmaz; sonunda tüm
+ * başarısızlıklar birlikte raporlanır — tek tek düzeltip yeniden çalıştırmak
+ * gece boyunca çok tur demek.
+ */
+import { existsSync, mkdirSync } from 'node:fs';
+import { pathToFileURL } from 'node:url';
+import path from 'node:path';
+import { launchBrowser, NETWORK_NOISE, includesTr } from './browser.mjs';
+
+const FILE = path.resolve('dist-preview/index.html');
+if (!existsSync(FILE)) {
+  console.error('dist-preview/index.html yok — önce `npm run build:preview`.');
+  process.exit(1);
+}
+
+const BASE = pathToFileURL(FILE).href;
+const browser = await launchBrowser();
+const context = await browser.newContext({
+  viewport: { width: 1440, height: 950 },
+});
+const page = await context.newPage();
+
+const pageErrors = [];
+page.on('console', (m) => {
+  if (m.type() !== 'error') return;
+  if (NETWORK_NOISE.test(m.text())) return;
+  pageErrors.push(`konsol: ${m.text()}`);
+});
+page.on('pageerror', (e) => pageErrors.push(`sayfa hatası: ${e.message}`));
+
+const failures = [];
+let passed = 0;
+
+/** Bir senaryoyu çalıştırır; hata fırlatırsa kaydeder ve devam eder. */
+async function scenario(name, fn) {
+  try {
+    await fn();
+    passed++;
+    console.log(`  ✓ ${name}`);
+  } catch (error) {
+    failures.push(`${name}: ${error.message}`);
+    console.log(`  ✗ ${name} — ${error.message}`);
+  } finally {
+    /*
+     * Senaryo yarıda kaldıysa açık kalan bir katman (komut paleti, çekmece)
+     * sonraki senaryoların tıklamalarını yer ve tek bir hata zincirleme on
+     * hataya dönüşür. Her senaryodan sonra katmanlar kapatılır.
+     */
+    await page.keyboard.press('Escape').catch(() => {});
+    await page.waitForTimeout(150);
+  }
+}
+
+function assert(condition, message) {
+  if (!condition) throw new Error(message);
+}
+
+/** Hash router'da bir adrese gider ve boyamayı bekler. */
+async function goto(route) {
+  await page.evaluate((r) => {
+    location.hash = `#${r}`;
+  }, route);
+  // Kod bölünmüş rotalar bir tur sonra boyanıyor; sabit bekleme yerine
+  // başlığın gelmesini bekliyoruz.
+  await page.waitForFunction(() => document.querySelector('h1') !== null, {
+    timeout: 5000,
+  });
+  await page.waitForTimeout(250);
+}
+
+async function heading() {
+  return (await page.$eval('h1', (el) => el.textContent ?? '')).trim();
+}
+
+await page.goto(BASE, { waitUntil: 'load' });
+await page.waitForTimeout(1500);
+
+console.log('\nE2E senaryoları\n');
+
+/* ══════════════════════ Gezinme ══════════════════════ */
+
+await scenario('ana sayfa hero başlığıyla açılır', async () => {
+  await goto('/');
+  assert((await heading()).length > 5, 'h1 boş');
+});
+
+await scenario('üst menüden galeriye gidilir', async () => {
+  await goto('/');
+  const link = await page.$('a[href="#/galeri"]');
+  assert(link !== null, 'galeri bağlantısı bulunamadı');
+  await link.click();
+  await page.waitForTimeout(600);
+  assert(
+    includesTr(await heading(), 'galeri'),
+    `beklenmeyen başlık: ${await heading()}`
+  );
+});
+
+await scenario('bilinmeyen adres 404 sayfası gösterir', async () => {
+  await goto('/boyle-bir-sayfa-yok');
+  const text = await page.evaluate(() => document.body.innerText);
+  assert(text.includes('404'), '404 metni yok');
+});
+
+await scenario('tanımsız şehir sayfası 404 verir', async () => {
+  await goto('/atlantis-astronomi-etkinlikleri');
+  const text = await page.evaluate(() => document.body.innerText);
+  assert(text.includes('404'), 'uydurma şehir sayfası 404 vermedi');
+});
+
+await scenario('tanımlı şehir sayfası açılır', async () => {
+  await goto('/ankara-astronomi-etkinlikleri');
+  assert(
+    includesTr(await heading(), 'ankara'),
+    `şehir başlığı gelmedi: ${await heading()}`
+  );
+});
+
+/* ══════════════════════ Arama ══════════════════════ */
+
+await scenario('⌘K arama katmanını açar ve M31 sonuç döndürür', async () => {
+  await goto('/');
+  await page.keyboard.press('Control+K');
+  await page.waitForSelector('[role="dialog"][aria-label="Komut paleti"]', {
+    timeout: 4000,
+  });
+
+  const input = await page.$('input[aria-label="Komut ya da arama terimi"]');
+  assert(input !== null, 'arama girişi bulunamadı');
+  await input.type('M31', { delay: 20 });
+  await page.waitForTimeout(400);
+
+  const results = await page.$$('[role="option"]');
+  assert(results.length > 0, 'M31 için sonuç yok (boşluksuz eşleşme bozuldu)');
+
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(200);
+});
+
+/* ══════════════════════ Hesaplayıcılar ══════════════════════ */
+
+await scenario('FOV hesaplayıcı girdi değişince sonucu günceller', async () => {
+  await goto('/araclar/fov');
+
+  const before = await page.evaluate(() => document.body.innerText);
+  await page.fill('#fl', '1000');
+  await page.waitForTimeout(300);
+  const after = await page.evaluate(() => document.body.innerText);
+
+  assert(before !== after, 'odak uzaklığı değişti ama sonuç aynı kaldı');
+  assert(after.includes('″/px'), 'piksel ölçeği sonucu görünmüyor');
+});
+
+await scenario('mozaik planlayıcı örtüşme artınca panel sayısını artırır', async () => {
+  await goto('/araclar/mosaic');
+
+  // 250mm ön ayarında kadraj 5°'yi aşıyor ve çoğu hedef tek kareye sığıyor;
+  // panel bölünmesini görmek için uzun odak seçiliyor.
+  await page.fill('#mosaic-fl', '1600');
+  await page.fill('#mosaic-tw', '300');
+  await page.fill('#mosaic-th', '200');
+  await page.fill('#mosaic-overlap', '0');
+  await page.waitForTimeout(300);
+  const low = await page.$eval('[aria-label*="mozaik düzeni"]', (el) =>
+    el.getAttribute('aria-label')
+  );
+
+  await page.fill('#mosaic-overlap', '40');
+  await page.waitForTimeout(300);
+  const high = await page.$eval('[aria-label*="mozaik düzeni"]', (el) =>
+    el.getAttribute('aria-label')
+  );
+
+  assert(low !== high, `örtüşme panel düzenini değiştirmedi (${low})`);
+});
+
+await scenario('setup uyumluluk yanlış backfocus’ta hata verir', async () => {
+  await goto('/araclar/setup-uyumluluk');
+
+  await page.fill('#setup-spacer', '30');
+  await page.waitForTimeout(300);
+  const text = await page.evaluate(() => document.body.innerText);
+
+  assert(
+    includesTr(text, 'kurulamaz') || includesTr(text, 'ara halka ekleyin'),
+    'backfocus hatası raporlanmadı'
+  );
+});
+
+await scenario('karanlık takvimi ay değiştirince yeniden hesaplar', async () => {
+  await goto('/araclar/takvim');
+
+  /*
+   * Gövde metninin tamamını karşılaştırmak kırılgan: sayfanın üst kısmı
+   * (durum çubuğu, başlık) ay değişince aynı kalıyor ve fark ilk 400
+   * karakterde görünmüyordu. Ay etiketi doğrudan okunuyor.
+   */
+  const monthLabel = () =>
+    page.$eval('button[aria-label="Önceki ay"] + span', (el) =>
+      (el.textContent ?? '').trim()
+    );
+
+  const before = await monthLabel();
+  const grid = await page.evaluate(() => document.body.innerText.length);
+
+  await page.click('button[aria-label="Sonraki ay"]');
+  await page.waitForTimeout(800);
+
+  const after = await monthLabel();
+  assert(before !== after, `ay etiketi değişmedi (${before})`);
+  assert(grid > 0, 'takvim boş');
+
+  // Geri gelince başlangıç ayına dönmeli — durum tutarlı ilerlemeli.
+  await page.click('button[aria-label="Önceki ay"]');
+  await page.waitForTimeout(800);
+  assert((await monthLabel()) === before, 'geri gidince aynı aya dönmedi');
+});
+
+/* ══════════════════════ Forum ══════════════════════ */
+
+await scenario('forum konusundan detaya gidilir', async () => {
+  await goto('/forum');
+  const link = await page.$('a[href^="#/forum/"]:not([href="#/forum/yeni"])');
+  assert(link !== null, 'konu bağlantısı yok');
+  await link.click();
+  await page.waitForTimeout(700);
+  assert((await heading()).length > 5, 'konu başlığı gelmedi');
+});
+
+await scenario('yeni konu formu HTML etiketlerini önizlemede temizler', async () => {
+  await goto('/forum/yeni');
+  await page.fill('#thread-title', '<b>Guide hatası</b> meridyen sonrası');
+  await page.waitForTimeout(300);
+
+  const text = await page.evaluate(() => document.body.innerText);
+  assert(!text.includes('<b>'), 'etiket önizlemede temizlenmedi');
+  assert(text.includes('Guide hatası'), 'önizleme metni görünmüyor');
+});
+
+/* ══════════════════════ Etkinlikler ══════════════════════ */
+
+await scenario('etkinliklerde takvim görünümüne geçilir', async () => {
+  await goto('/etkinlikler');
+  const [, calendarButton] = await page.$$(
+    '[aria-label="Görünüm biçimi"] button'
+  );
+  assert(calendarButton !== undefined, 'takvim düğmesi yok');
+
+  await calendarButton.click();
+  await page.waitForTimeout(500);
+  const text = await page.evaluate(() => document.body.innerText);
+  assert(includesTr(text, 'etkinlik başlıyor'), 'takvim ızgarası gelmedi');
+});
+
+await scenario('etkinlik haritası yakınlık listesi üretir', async () => {
+  await goto('/etkinlikler/harita');
+  const text = await page.evaluate(() => document.body.innerText);
+  assert(includesTr(text, 'size en yakın'), 'yakınlık listesi yok');
+  assert(/\d+\s*km/.test(text), 'mesafe değeri basılmadı');
+});
+
+/* ══════════════════════ Fotoğraf sürümleri ══════════════════════ */
+
+await scenario('sürüm karşılaştırma sürgüsü klavyeyle sürülür', async () => {
+  await goto('/fotograf/ic434-at-basi-sho');
+
+  const slider = await page.$('[role="slider"]');
+  assert(slider !== null, 'sürüm sürgüsü yok');
+
+  const before = await slider.getAttribute('aria-valuenow');
+  await slider.focus();
+  await page.keyboard.press('ArrowRight');
+  await page.waitForTimeout(150);
+  const after = await slider.getAttribute('aria-valuenow');
+
+  assert(before !== after, `sürgü klavyeyle hareket etmedi (${before})`);
+});
+
+/* ══════════════════════ Radyo (kalıcı oynatıcı) ══════════════════════ */
+
+await scenario('radyo rıhtımı rota değişiminde ayakta kalır', async () => {
+  await goto('/radyo');
+
+  const playButton = await page.$(
+    'button[aria-label*="Çal"], button[aria-label*="çal"]'
+  );
+  if (playButton) {
+    await playButton.click();
+    await page.waitForTimeout(400);
+  }
+
+  // Rıhtım varsa gezinmeden sonra da DOM'da kalmalı (provider router dışında).
+  const dockBefore = await page.$$eval('audio', (els) => els.length);
+  await goto('/galeri');
+  const dockAfter = await page.$$eval('audio', (els) => els.length);
+
+  assert(
+    dockAfter >= dockBefore,
+    `gezinme <audio> öğesini söktü (${dockBefore} → ${dockAfter})`
+  );
+});
+
+/* ══════════════════════ Tema ══════════════════════ */
+
+await scenario('tema değişimi kalıcıdır', async () => {
+  await goto('/');
+  const toggle = await page.$('button[aria-label*="Saha modunu"]');
+  assert(toggle !== null, 'tema düğmesi bulunamadı');
+
+  const before = await page.evaluate(() =>
+    document.documentElement.getAttribute('data-theme')
+  );
+  await toggle.click();
+  await page.waitForTimeout(300);
+  const after = await page.evaluate(() =>
+    document.documentElement.getAttribute('data-theme')
+  );
+  assert(before !== after, 'tema değişmedi');
+
+  const stored = await page.evaluate(() =>
+    localStorage.getItem('astrohub:theme')
+  );
+  assert(stored !== null, 'tema tercihi saklanmadı');
+
+  // Eski hâline döndür — sonraki senaryolar varsayılan temayı bekliyor.
+  await toggle.click();
+  await page.waitForTimeout(200);
+});
+
+/* ══════════════════════ Çerez tercihleri ══════════════════════ */
+
+await scenario('çerez sayfası saklanan veriyi listeler ve siler', async () => {
+  await page.evaluate(() => {
+    localStorage.setItem('astrohub:view:galeri', 'list');
+  });
+  await goto('/cerezler');
+
+  const text = await page.evaluate(() => document.body.innerText);
+  assert(includesTr(text, 'görünüm tercihleri'), 'envanter listelenmedi');
+
+  const clearAll = await page.$$('button');
+  const target = [];
+  for (const button of clearAll) {
+    const label = (await button.textContent()) ?? '';
+    if (includesTr(label, 'tüm yerel verileri sil')) target.push(button);
+  }
+  assert(target.length > 0, 'toplu silme düğmesi yok');
+
+  await target[0].click();
+  await page.waitForTimeout(300);
+
+  const remaining = await page.evaluate(() =>
+    Object.keys(localStorage).filter((k) => k.startsWith('astrohub:')).length
+  );
+  assert(remaining === 0, `silme sonrası ${remaining} anahtar kaldı`);
+});
+
+/* ══════════════════════ Erişilebilirlik: içeriğe atla ══════════════════════ */
+
+await scenario('"içeriğe atla" bağlantısı ilk odaklanabilir öğedir', async () => {
+  await goto('/');
+
+  /*
+   * `Tab` tuşuyla test etmek, o anda odağın nerede olduğuna bağlı ve
+   * senaryolar arası sızıntıya açık. Onun yerine belgedeki odaklanabilir
+   * öğelerin SIRASI kontrol ediliyor: atlama bağlantısı ilk sırada
+   * olmazsa klavye kullanıcısı tüm menüyü geçmek zorunda kalır (§6.7).
+   */
+  const first = await page.evaluate(() => {
+    const focusable = document.querySelectorAll(
+      'a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    const el = focusable[0];
+    return el ? { text: el.textContent?.trim() ?? '', href: el.getAttribute('href') } : null;
+  });
+
+  assert(first !== null, 'odaklanabilir öğe bulunamadı');
+  assert(
+    first.href === '#icerik' || includesTr(first.text, 'içeriğe atla'),
+    `ilk odaklanabilir öğe beklenmedik: "${first.text}"`
+  );
+
+  // Odaklandığında gerçekten görünür olmalı (sr-only + focus:not-sr-only).
+  const visible = await page.evaluate(() => {
+    const link = document.querySelector('a[href="#icerik"]');
+    if (!link) return false;
+    link.focus();
+    const rect = link.getBoundingClientRect();
+    return rect.width > 20 && rect.height > 10;
+  });
+  assert(visible, 'atlama bağlantısı odakta görünür olmuyor');
+});
+
+/* ══════════════════════ Görsel kayıt (§17.2) ══════════════════════ */
+
+/*
+ * PİKSEL KARŞILAŞTIRMASI YAPILMIYOR — bilinçli.
+ *
+ * Görsel regresyon testi ancak referans görüntüler aynı ortamda üretildiğinde
+ * anlamlı: yazı tipi sürümü, alt piksel yumuşatma ve GPU farkı, hiçbir şey
+ * değişmemişken bile binlerce piksel fark üretir. CI ortamı sabitlenmeden
+ * commit edilen referanslar, sürekli kırmızı yanan ve bir süre sonra kimsenin
+ * bakmadığı bir teste dönüşür.
+ *
+ * Bunun yerine ekran görüntüleri üretiliyor: gözle inceleme ve hata
+ * raporlarına ek için. Yatay taşma gibi ölçülebilir düzen hataları
+ * `check-preview.mjs` içinde sayısal olarak denetleniyor — asıl koruma orada.
+ */
+const SHOTS = path.resolve('dist-preview/screens');
+mkdirSync(SHOTS, { recursive: true });
+
+const shotRoutes = ['/', '/galeri', '/etkinlikler', '/araclar/mosaic', '/forum'];
+const shotWidths = [390, 1024, 1440];
+let shots = 0;
+
+for (const width of shotWidths) {
+  await page.setViewportSize({ width, height: 900 });
+  for (const route of shotRoutes) {
+    await goto(route);
+    const name = route === '/' ? 'ana' : route.replace(/\//g, '-').slice(1);
+    await page.screenshot({
+      path: path.join(SHOTS, `${name}-${width}.png`),
+      fullPage: false,
+    });
+    shots++;
+  }
+}
+
+await browser.close();
+
+/* ══════════════════════ Rapor ══════════════════════ */
+
+const all = [...pageErrors, ...failures];
+console.log('');
+
+if (all.length > 0) {
+  console.error(`E2E BAŞARISIZ (${passed} geçti, ${failures.length} düştü):`);
+  for (const item of all) console.error(`  · ${item}`);
+  process.exit(1);
+}
+
+console.log(
+  `E2E tamam · ${passed} senaryo geçti, sayfa hatası yok · ${shots} ekran görüntüsü dist-preview/screens/`
+);

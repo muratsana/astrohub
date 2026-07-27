@@ -72,6 +72,14 @@ export function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
               type="button"
               onClick={toggleFieldMode}
               aria-pressed={fieldMode}
+              /*
+                Etiket 2xl altında gizleniyor ve düğme ikon-only kalıyordu;
+                `title` çoğu ekran okuyucuda ad olarak okunsa da güvenilir
+                değil. Açık `aria-label` durumu da bildiriyor (§6.7).
+              */
+              aria-label={
+                fieldMode ? 'Saha modunu kapat (tema)' : 'Saha modunu aç (tema)'
+              }
               title={
                 fieldMode
                   ? 'Saha modu açık — kapatmak için tıkla'
