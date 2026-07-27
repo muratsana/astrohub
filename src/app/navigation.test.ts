@@ -61,8 +61,13 @@ describe('navigasyon bağlantıları', () => {
     }
   });
 
-  it('üst menü yedi ana giriş taşır (§5.1)', () => {
-    expect(primaryNav).toHaveLength(7);
+  it('üst menü dokuz ana giriş taşır (§5.1)', () => {
+    // Yedi modüle Forum ve Radyo eklendi. Sayıyı sabitlemek bilinçli:
+    // menüye sessizce onuncu bir giriş eklenmesi, `xl` kırılımında
+    // taşmaya yol açar (bkz. Topbar yorumu).
+    expect(primaryNav).toHaveLength(9);
+    expect(primaryNav.map((i) => i.to)).toContain('/forum');
+    expect(primaryNav.map((i) => i.to)).toContain('/radyo');
   });
 
   it('üst menüde açılır menü yoktur — keşif palete ve footer’a bırakılır', () => {

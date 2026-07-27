@@ -18,7 +18,11 @@ export function Logo({ compact = false }: { compact?: boolean }) {
         className="h-7 w-7 text-border-strong transition-colors group-hover:text-primary"
         accent="var(--color-primary)"
       />
-      <span className="font-display text-[17px] font-bold uppercase leading-none tracking-[0.2em]">
+      {/*
+        Harf aralığı çok dar ekranlarda kırılıyor: 0.2em'lik tracking 390px'te
+        üst çubuğun sağ kümesini taşırıyordu. Küçük ekranda daha sıkı.
+      */}
+      <span className="font-display text-[17px] font-bold uppercase leading-none tracking-[0.12em] sm:tracking-[0.2em]">
         Astro<span className="text-primary">hub</span>
       </span>
       {!compact && (

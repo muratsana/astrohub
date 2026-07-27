@@ -1,9 +1,22 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Container } from '@/components/ui/Container';
-import { Input } from '@/components/ui/Input';
+import { Input, Select } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
-import { PhotoPlaceholder } from '@/components/media/PhotoPlaceholder';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { EmptyState } from '@/components/ui/EmptyState';
+import {
+  FilterBar,
+  FilterCell,
+  FilterToggle,
+  filterControlClass,
+} from '@/components/ui/FilterBar';
+import { CardGrid } from '@/components/ui/CardGrid';
+import { ToolBar, ResultCount } from '@/components/ui/ToolBar';
+import { useViewMode } from '@/components/ui/useViewMode';
+import { PlateFrame } from '@/components/media/PlateFrame';
+import { StarField } from '@/components/media/StarField';
+import { tintFromSeed } from '@/components/media/tints';
 import { events } from './data';
 import {
   filterEvents,
@@ -17,16 +30,16 @@ import type { AstroEvent } from './types';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
 
-const selectClass =
-  'h-10 rounded-xl border border-border bg-surface-1 px-3 text-sm text-foreground focus:border-primary/60';
-
 /**
- * Etkinlikler sayfası (§7.5) — kart liste görünümü.
+ * Etkinlikler sayfası (§7.5).
+ *
  * Takvim ve harita görünümleri Faz 1.6'da eklenecek (harita 3. parti tile
- * sağlayıcısı gerektirdiği için şimdilik kapsam dışı).
+ * sağlayıcısı gerektirdiği için şimdilik kapsam dışı). Bu arada ızgara/liste
+ * geçişi var: liste görünümü tarihe göre taramayı kolaylaştırır.
  */
 export function EventsPage() {
   const [filters, setFilters] = useState<EventFilters>(defaultEventFilters);
+  const [view, setView] = useViewMode('etkinlikler');
   const cities = useMemo(() => availableEventCities(events), []);
   const result = useMemo(() => filterEvents(events, filters), [filters]);
 
@@ -44,144 +57,203 @@ export function EventsPage() {
           { name: 'Etkinlikler', path: '/etkinlikler' },
         ])}
       />
-      <Container className="py-10 sm:py-14">
-        <header className="mb-8">
-          <h1 className="text-2xl font-semibold text-foreground sm:text-3xl">
-            Etkinlikler
-          </h1>
-          <p className="mt-2 max-w-xl text-muted-foreground">
-            Türkiye'deki astronomi etkinlikleri — gözlem şenlikleri, kamplar,
-            atölyeler ve halk gözlemleri tek takvimde.
-          </p>
-        </header>
+      <Container className="py-8 sm:py-10">
+        <PageHeader
+          title="Etkinlikler"
+          description="Türkiye'deki astronomi etkinlikleri — gözlem şenlikleri, kamplar, atölyeler ve halk gözlemleri tek takvimde."
+        />
 
-        <div className="mb-8 flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-surface-1 p-4">
-          <div className="min-w-56 flex-1">
-            <label htmlFor="event-search" className="sr-only">
-              Etkinlik ara
-            </label>
+        <FilterBar>
+          <FilterCell label="Ara" htmlFor="event-search" className="lg:col-span-2">
             <Input
               id="event-search"
               type="search"
-              placeholder="Etkinlik, şehir veya organizatör ara"
+              placeholder="Etkinlik, şehir veya organizatör"
               value={filters.search}
               onChange={(e) => set('search', e.target.value)}
-              className="h-10"
+              className={filterControlClass}
             />
-          </div>
+          </FilterCell>
 
-          <label className="sr-only" htmlFor="e-city">
-            Şehir
-          </label>
-          <select
-            id="e-city"
-            className={selectClass}
-            value={filters.city}
-            onChange={(e) => set('city', e.target.value)}
-          >
-            <option value="hepsi">Tüm şehirler</option>
-            {cities.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
+          <FilterCell label="Şehir" htmlFor="e-city">
+            <Select
+              id="e-city"
+              value={filters.city}
+              onChange={(e) => set('city', e.target.value)}
+              className={filterControlClass}
+            >
+              <option value="hepsi">Tüm şehirler</option>
+              {cities.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </Select>
+          </FilterCell>
 
-          <label className="sr-only" htmlFor="e-type">
-            Etkinlik türü
-          </label>
-          <select
-            id="e-type"
-            className={selectClass}
-            value={filters.type}
-            onChange={(e) => set('type', e.target.value as EventType | 'hepsi')}
-          >
-            <option value="hepsi">Tüm türler</option>
-            {Object.entries(eventTypeLabels).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
+          <FilterCell label="Tür" htmlFor="e-type">
+            <Select
+              id="e-type"
+              value={filters.type}
+              onChange={(e) => set('type', e.target.value as EventType | 'hepsi')}
+              className={filterControlClass}
+            >
+              <option value="hepsi">Tüm türler</option>
+              {Object.entries(eventTypeLabels).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </Select>
+          </FilterCell>
 
-          <label className="flex items-center gap-2 text-sm text-muted-foreground">
-            <input
-              type="checkbox"
-              className="h-4 w-4 rounded border-border accent-primary"
-              checked={filters.onlyFree}
-              onChange={(e) => set('onlyFree', e.target.checked)}
+          <FilterToggle
+            id="e-free"
+            label="Ücretsiz"
+            checked={filters.onlyFree}
+            onChange={(v) => set('onlyFree', v)}
+          />
+          <FilterToggle
+            id="e-camping"
+            label="Kamp imkânı"
+            checked={filters.onlyCamping}
+            onChange={(v) => set('onlyCamping', v)}
+          />
+        </FilterBar>
+
+        <ToolBar
+          left={
+            <ResultCount
+              current={result.length}
+              total={events.length}
+              noun="etkinlik"
             />
-            Ücretsiz
-          </label>
-          <label className="flex items-center gap-2 text-sm text-muted-foreground">
-            <input
-              type="checkbox"
-              className="h-4 w-4 rounded border-border accent-primary"
-              checked={filters.onlyCamping}
-              onChange={(e) => set('onlyCamping', e.target.checked)}
-            />
-            Kamp imkânı
-          </label>
-        </div>
+          }
+          view={{ mode: view, onChange: setView }}
+        />
 
         {result.length === 0 ? (
-          <p className="py-16 text-center text-muted-foreground">
-            Bu filtrelerle eşleşen etkinlik bulunamadı.
-          </p>
+          <EmptyState
+            message="Eşleşen etkinlik yok"
+            hint="Şehir veya tür filtresini gevşetmeyi deneyin; takvim ileri tarihlere doğru dolmaya devam ediyor."
+          />
         ) : (
-          <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <CardGrid view={view}>
             {result.map((event) => (
               <li key={event.slug}>
-                <EventCard event={event} />
+                <EventCard event={event} variant={view} />
               </li>
             ))}
-          </ul>
+          </CardGrid>
         )}
       </Container>
     </>
   );
 }
 
-function EventCard({ event }: { event: AstroEvent }) {
-  const date = new Date(event.startsAt).toLocaleDateString('tr-TR', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
+/** Tarihi iki parçaya böler: büyük gün sayısı + ay/yıl. */
+function splitDate(iso: string) {
+  const d = new Date(iso);
+  return {
+    day: d.toLocaleDateString('tr-TR', { day: '2-digit' }),
+    month: d.toLocaleDateString('tr-TR', { month: 'short' }),
+    year: d.getFullYear(),
+    full: d.toLocaleDateString('tr-TR', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    }),
+  };
+}
+
+function EventCard({
+  event,
+  variant,
+}: {
+  event: AstroEvent;
+  variant: 'grid' | 'list';
+}) {
+  const date = splitDate(event.startsAt);
   const capacity = capacityLabel(event);
+
+  const badges = (
+    <div className="flex flex-wrap gap-1">
+      <Badge>{eventTypeLabels[event.type]}</Badge>
+      <Badge tone={event.free ? 'success' : 'primary'}>
+        {event.free ? 'Ücretsiz' : 'Ücretli'}
+      </Badge>
+      {event.camping && <Badge tone="cold">Kamp</Badge>}
+      {capacity && <Badge tone="muted">{capacity}</Badge>}
+    </div>
+  );
+
+  if (variant === 'list') {
+    return (
+      <Link
+        to={`/etkinlik/${event.slug}`}
+        className="group flex items-center gap-3 rounded-card border border-border bg-surface-1 px-3 py-2.5 transition-colors hover:border-border-strong"
+      >
+        <DateBlock date={date} />
+        <div className="min-w-0 flex-1">
+          <h2 className="truncate text-[13px] font-medium leading-snug text-foreground group-hover:text-primary">
+            {event.title}
+          </h2>
+          <p className="tabular mt-0.5 truncate text-[10px] text-muted-foreground">
+            {event.city}
+            {event.organizer.verified && ' · Doğrulanmış organizatör'}
+          </p>
+        </div>
+        <div className="hidden shrink-0 sm:block">{badges}</div>
+      </Link>
+    );
+  }
 
   return (
     <Link
       to={`/etkinlik/${event.slug}`}
-      className="group flex h-full flex-col overflow-hidden rounded-card border border-border bg-surface-1 transition-colors hover:border-white/20"
+      className="group flex h-full flex-col rounded-card border border-border bg-surface-1 transition-colors hover:border-border-strong"
     >
-      <PhotoPlaceholder
-        gradient={event.gradient}
-        alt={event.title}
-        rounded="rounded-none"
-        className="aspect-[16/9] w-full"
-      />
-      <div className="flex flex-1 flex-col p-4">
-        <div className="tabular mb-2 flex flex-wrap items-center gap-2 text-xs">
-          <span className="font-medium text-primary">{date}</span>
-          <span className="text-muted-foreground">·</span>
-          <span className="text-muted-foreground">{event.city}</span>
-          {event.organizer.verified && (
-            <Badge tone="cold">Doğrulanmış organizatör</Badge>
-          )}
-        </div>
-        <h2 className="text-sm font-semibold leading-snug text-foreground">
+      <PlateFrame
+        ratio="aspect-[16/9]"
+        className="border-0 border-b border-border"
+        badge={
+          <span className="tabular rounded-[2px] bg-background/85 px-1.5 py-0.5 text-[10px] uppercase tracking-[0.1em] text-primary">
+            {date.day} {date.month}
+          </span>
+        }
+        flag={
+          event.organizer.verified ? (
+            <Badge tone="cold" className="bg-background/85">
+              Doğrulanmış
+            </Badge>
+          ) : undefined
+        }
+      >
+        <StarField seed={event.slug} tint={tintFromSeed(event.slug)} />
+      </PlateFrame>
+      <div className="flex flex-1 flex-col px-2.5 py-2">
+        <p className="tabular text-[10px] text-muted-foreground">
+          {date.full} · {event.city}
+        </p>
+        <h2 className="mt-1 text-[13px] font-medium leading-snug text-foreground group-hover:text-primary">
           {event.title}
         </h2>
-        <div className="mt-auto flex flex-wrap gap-1.5 pt-3">
-          <Badge>{eventTypeLabels[event.type]}</Badge>
-          <Badge tone={event.free ? 'success' : 'primary'}>
-            {event.free ? 'Ücretsiz' : 'Ücretli'}
-          </Badge>
-          {event.camping && <Badge tone="cold">Kamp</Badge>}
-          {capacity && <Badge tone="muted">{capacity}</Badge>}
-        </div>
+        <div className="mt-auto pt-2">{badges}</div>
       </div>
     </Link>
+  );
+}
+
+/** Takvim yaprağı — liste görünümünde tarihi ilk okunan öğe yapar. */
+function DateBlock({ date }: { date: ReturnType<typeof splitDate> }) {
+  return (
+    <div className="flex w-11 shrink-0 flex-col items-center rounded-card border border-border bg-surface-2 py-1">
+      <span className="tabular font-display text-[17px] font-bold leading-none text-primary">
+        {date.day}
+      </span>
+      <span className="mt-0.5 text-[9px] uppercase tracking-[0.1em] text-muted-foreground">
+        {date.month}
+      </span>
+    </div>
   );
 }

@@ -93,10 +93,20 @@ describe('HomePage · bölümler', () => {
     ).toBeInTheDocument();
   });
 
-  it('hava servisi bağlanmadığı için seeing değerini uydurmaz', () => {
+  it('hava servisine ulaşılamadığında seeing değerini uydurmaz', () => {
+    // jsdom'da `fetch` gerçek bir istek yapamaz; kanca hata durumuna
+    // düşer. Beklenen davranış boş bir tire — asla uydurulmuş bir sayı.
     renderHome();
-    const seeing = screen.getByText(/seeing \/ bulut/i).closest('div');
+    const seeing = screen.getByText(/^seeing$/i).closest('div');
     expect(within(seeing!).getByText('—')).toBeInTheDocument();
+  });
+
+  it('bulut ve çiylenme hücrelerini de tire ile bırakır', () => {
+    renderHome();
+    for (const label of [/^bulut$/i, /^çiylenme$/i]) {
+      const cell = screen.getByText(label).closest('div');
+      expect(within(cell!).getByText('—')).toBeInTheDocument();
+    }
   });
 
   it('galeri şeridini künyeli karolarla gösterir', () => {

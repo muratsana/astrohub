@@ -34,6 +34,28 @@ function hashSeed(value: string): number {
   return h >>> 0;
 }
 
+const DEFAULT_TINT: [number, number, number] = [150, 185, 235];
+
+/**
+ * Tonu güvenle çözer.
+ *
+ * Beklenen biçim `"r,g,b"`. Buraya yanlışlıkla bir CSS gradyanı geçirmek
+ * kolay (veri dosyalarında `gradient` alanı da var) ve o durumda
+ * `Number('linear-gradient(...)')` NaN üretip `addColorStop`'u
+ * fırlatıyordu — tek bir kart yüzünden bütün rota hata sınırına düşüyordu.
+ * Geçersiz ton artık varsayılana iner: kart biraz farklı renkte çizilir,
+ * sayfa ayakta kalır.
+ */
+function parseTint(value: string): [number, number, number] {
+  const parts = value.split(',');
+  if (parts.length !== 3) return DEFAULT_TINT;
+
+  const rgb = parts.map((p) => Number(p.trim()));
+  const valid = rgb.every((n) => Number.isFinite(n) && n >= 0 && n <= 255);
+
+  return valid ? (rgb as [number, number, number]) : DEFAULT_TINT;
+}
+
 export interface StarFieldProps {
   /** Aynı görüntüyü üreten sabit anahtar — genelde hedef ya da slug. */
   seed: string;
@@ -72,7 +94,7 @@ export function StarField({
       g.clearRect(0, 0, w, h);
 
       const rnd = makeRandom(hashSeed(seed));
-      const rgb = tint.split(',').map(Number);
+      const rgb = parseTint(tint);
 
       // Bulutsu sisi: tohumdan gelen konumda iki yumuşak leke
       for (let i = 0; i < 2; i++) {

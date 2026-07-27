@@ -32,10 +32,23 @@ describe('GalleryPage (§7.2)', () => {
     expect(photoLinks()).toHaveLength(photos.length);
   });
 
-  it('sonuç sayacını canlı bildirir', () => {
+  it('filtre yokken yalnızca toplamı bildirir', () => {
+    // "48 / 48" hiçbir bilgi taşımıyordu; filtre uygulanmadan kesir
+    // gösterilmez (bkz. ToolBar → ResultCount).
     renderGallery();
     expect(screen.getByRole('status')).toHaveTextContent(
-      `${photos.length} / ${photos.length} fotoğraf`
+      `${photos.length} fotoğraf`
+    );
+    expect(screen.getByRole('status').textContent).not.toContain('/');
+  });
+
+  it('filtre uygulanınca sayacı kesirli gösterir', () => {
+    renderGallery();
+    fireEvent.change(screen.getByLabelText(/^ara$/i), {
+      target: { value: 'rozet' },
+    });
+    expect(screen.getByRole('status')).toHaveTextContent(
+      `1 / ${photos.length} fotoğraf`
     );
   });
 

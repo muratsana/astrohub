@@ -3,7 +3,15 @@ import { Link } from 'react-router-dom';
 import { Container } from '@/components/ui/Container';
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
-import { PhotoPlaceholder } from '@/components/media/PhotoPlaceholder';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { FilterBar, FilterCell, filterControlClass } from '@/components/ui/FilterBar';
+import { CardGrid } from '@/components/ui/CardGrid';
+import { ToolBar, ResultCount } from '@/components/ui/ToolBar';
+import { useViewMode } from '@/components/ui/useViewMode';
+import { PlateFrame } from '@/components/media/PlateFrame';
+import { StarField } from '@/components/media/StarField';
+import { tintFor } from '@/components/media/tints';
 import { targets, targetKindLabels } from './data';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
@@ -12,17 +20,33 @@ function trLower(s: string): string {
   return s.toLocaleLowerCase('tr-TR');
 }
 
-/** Astronomik hedefler listesi (§8.2): ad/katalog/alias araması + kartlar. */
+/** Zorluk derecesinin rozet tonu — kolay yeşil, zor kırmızı. */
+function difficultyTone(difficulty: string) {
+  if (difficulty === 'Kolay') return 'success' as const;
+  if (difficulty === 'Orta') return 'primary' as const;
+  return 'danger' as const;
+}
+
+/**
+ * Astronomik hedefler kataloğu (§8.2).
+ *
+ * Kartlar galeri karosuyla aynı bileşeni kullanır: hedef sayfası da bir
+ * "kayıt" sunar ve iki modülde farklı kart anatomisi olması, aynı gökcismini
+ * iki yerde tanımayı zorlaştırırdı.
+ */
 export function TargetsPage() {
   const [search, setSearch] = useState('');
+  const [view, setView] = useViewMode('hedefler');
 
   const result = useMemo(() => {
     const q = trLower(search.trim());
     if (!q) return targets;
+    // Katalog kodları "M 31" biçiminde saklanır; boşluksuz yazım da eşleşmeli.
+    const compact = q.replace(/\s+/g, '');
     return targets.filter((t) =>
       [t.name, t.catalog, t.constellation, ...t.aliases]
         .map(trLower)
-        .some((f) => f.includes(q))
+        .some((f) => f.includes(q) || f.replace(/\s+/g, '').includes(compact))
     );
   }, [search]);
 
@@ -36,79 +60,134 @@ export function TargetsPage() {
           { name: 'Hedefler', path: '/hedefler' },
         ])}
       />
-      <Container className="py-10 sm:py-14">
-        <header className="mb-8">
-          <h1 className="text-2xl font-semibold text-foreground sm:text-3xl">
-            Astronomik Hedefler
-          </h1>
-          <p className="mt-2 max-w-xl text-muted-foreground">
-            Messier, NGC, IC ve diğer kataloglardan hedefler — görünürlük,
-            önerilen odak ve filtre bilgileriyle.
-          </p>
-        </header>
+      <Container className="py-8 sm:py-10">
+        <PageHeader
+          title="Astronomik Hedefler"
+          description="Messier, NGC, IC ve diğer kataloglardan hedefler — görünürlük, önerilen odak ve filtre bilgileriyle."
+        />
 
-        <div className="mb-8 max-w-xl">
-          <label htmlFor="target-search" className="sr-only">
-            Hedef ara
-          </label>
-          <Input
-            id="target-search"
-            type="search"
-            placeholder="Hedef adı, katalog kodu (M 31, NGC 7000…) veya takımyıldız"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
+        <FilterBar columns={2}>
+          <FilterCell label="Ara" htmlFor="target-search" className="sm:col-span-2">
+            <Input
+              id="target-search"
+              type="search"
+              placeholder="Hedef adı, katalog kodu (M 31, NGC 7000…) veya takımyıldız"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className={filterControlClass}
+            />
+          </FilterCell>
+        </FilterBar>
+
+        <ToolBar
+          left={
+            <ResultCount
+              current={result.length}
+              total={targets.length}
+              noun="hedef"
+            />
+          }
+          view={{ mode: view, onChange: setView }}
+        />
 
         {result.length === 0 ? (
-          <p className="py-16 text-center text-muted-foreground">
-            Eşleşen hedef bulunamadı. Katalog kodu veya alias ile deneyin.
-          </p>
+          <EmptyState
+            message="Eşleşen hedef yok"
+            hint="Katalog kodu (M 31), alias (Andromeda) veya takımyıldız adıyla deneyin."
+          />
         ) : (
-          <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <CardGrid view={view} density="tight">
             {result.map((t) => (
               <li key={t.slug}>
-                <Link
-                  to={`/hedef/${t.slug}`}
-                  className="group flex h-full flex-col overflow-hidden rounded-card border border-border bg-surface-1 transition-colors hover:border-white/20"
-                >
-                  <PhotoPlaceholder
-                    gradient={t.gradient}
-                    alt={`${t.name} (${t.catalog})`}
-                    rounded="rounded-none"
-                    className="aspect-[16/10] w-full"
-                  />
-                  <div className="flex flex-1 flex-col p-4">
-                    <p className="text-xs font-medium text-primary">
-                      {t.catalog}
-                    </p>
-                    <h2 className="mt-0.5 text-sm font-semibold text-foreground">
-                      {t.name}
-                    </h2>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {t.constellation} · {targetKindLabels[t.kind]}
-                    </p>
-                    <div className="mt-auto flex flex-wrap gap-1.5 pt-3">
-                      <Badge>{t.bestMonths}</Badge>
-                      <Badge
-                        tone={
-                          t.difficulty === 'Kolay'
-                            ? 'success'
-                            : t.difficulty === 'Orta'
-                              ? 'primary'
-                              : 'danger'
-                        }
-                      >
-                        {t.difficulty}
-                      </Badge>
-                    </div>
-                  </div>
-                </Link>
+                <TargetCard target={t} variant={view} />
               </li>
             ))}
-          </ul>
+          </CardGrid>
         )}
       </Container>
     </>
+  );
+}
+
+/**
+ * Hedef kartı. Galeri karosuyla aynı çerçeveyi (PlateFrame + StarField)
+ * kullanır ama künyesi farklıdır: hedefte palet/entegrasyon yoktur, yerine
+ * takımyıldız, tür ve en iyi gözlem ayları vardır. PhotoTile'ı zorlamak
+ * yerine ayrı kart yazmanın nedeni bu — orada boş kalan satırlar "—" olarak
+ * görünürdü.
+ */
+function TargetCard({
+  target: t,
+  variant,
+}: {
+  target: (typeof targets)[number];
+  variant: 'grid' | 'list';
+}) {
+  const difficulty = (
+    <Badge tone={difficultyTone(t.difficulty)} className="bg-background/85">
+      {t.difficulty}
+    </Badge>
+  );
+
+  if (variant === 'list') {
+    return (
+      <Link
+        to={`/hedef/${t.slug}`}
+        className="group flex items-center gap-3 rounded-card border border-border bg-surface-1 p-2 transition-colors hover:border-border-strong"
+      >
+        <PlateFrame className="w-24 shrink-0 sm:w-32">
+          <StarField seed={t.slug} tint={tintFor(t.kind)} />
+        </PlateFrame>
+
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <span className="truncate font-display text-[14px] font-bold uppercase text-foreground transition-colors group-hover:text-primary">
+              {t.catalog}
+            </span>
+            {difficulty}
+          </div>
+          <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
+            {t.name}
+          </p>
+        </div>
+
+        <div className="tabular hidden shrink-0 text-right text-[11px] sm:block">
+          <span className="block text-cold">{targetKindLabels[t.kind]}</span>
+          <span className="block text-muted-foreground">
+            {t.constellation} · {t.bestMonths}
+          </span>
+        </div>
+      </Link>
+    );
+  }
+
+  return (
+    <Link
+      to={`/hedef/${t.slug}`}
+      className="group flex h-full flex-col rounded-card border border-border bg-surface-1 transition-colors hover:border-border-strong"
+    >
+      <PlateFrame
+        className="shrink-0 border-0 border-b border-border"
+        flag={difficulty}
+        fieldOfView={t.bestMonths}
+      >
+        <StarField seed={t.slug} tint={tintFor(t.kind)} />
+      </PlateFrame>
+
+      <div className="flex flex-1 flex-col px-2.5 py-2">
+        <p className="truncate font-display text-[13px] font-bold uppercase leading-tight text-foreground transition-colors group-hover:text-primary">
+          {t.catalog}
+        </p>
+        <p className="truncate text-[10px] leading-snug text-muted-foreground">
+          {t.name}
+        </p>
+        <p className="tabular mt-auto truncate pt-1 text-[10px] leading-snug text-cold">
+          {targetKindLabels[t.kind]}
+        </p>
+        <p className="tabular truncate text-[10px] leading-snug text-muted-foreground">
+          {t.constellation}
+        </p>
+      </div>
+    </Link>
   );
 }

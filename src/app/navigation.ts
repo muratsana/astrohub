@@ -29,12 +29,23 @@ export interface NavGroup {
   items: NavItem[];
 }
 
-/** Üst menü — yedi ana modül. */
+/**
+ * Üst menü — dokuz ana modül.
+ *
+ * Forum ve Radyo, sitenin "gece boyunca açık kalan" iki modülüdür: biri
+ * çekim aralarında yazışmak, diğeri arka planda çalmak için. Bu yüzden
+ * referans modüllerin (hedef kataloğu, ekipman) aksine üst menüde dururlar.
+ *
+ * Dokuz giriş 1024px'te sığmıyor; nav bu yüzden `xl` kırılımında açılır,
+ * altında modül haritası mobil çekmeceden gelir.
+ */
 export const primaryNav: NavItem[] = [
   { label: 'Galeri', to: '/galeri' },
   { label: 'Etkinlikler', to: '/etkinlikler' },
   { label: 'Haberler', to: '/haberler' },
   { label: 'Yazılar', to: '/yazilar' },
+  { label: 'Forum', to: '/forum' },
+  { label: 'Radyo', to: '/radyo' },
   { label: 'Araçlar', to: '/araclar' },
   { label: 'İlanlar', to: '/ilanlar' },
   { label: 'Saha', to: '/saha' },
@@ -111,6 +122,34 @@ export const siteMap: NavGroup[] = [
         to: '/yazilar',
         description: 'Rehberler, eğitim yazıları, işleme dersleri',
         keywords: ['makale', 'eğitim', 'rehber', 'ders', 'işleme'],
+      },
+    ],
+  },
+  {
+    title: 'Forum',
+    items: [
+      {
+        label: 'Forum Ana Sayfa',
+        to: '/forum',
+        description: 'Kategoriler ve son konular',
+        keywords: ['forum', 'tartışma', 'soru', 'konu'],
+      },
+      {
+        label: 'Yeni Konu Aç',
+        to: '/forum/yeni',
+        description: 'Soru sor ya da tartışma başlat',
+        keywords: ['konu aç', 'soru sor', 'yeni'],
+      },
+    ],
+  },
+  {
+    title: 'Radyo',
+    items: [
+      {
+        label: 'Astrohub Radyo',
+        to: '/radyo',
+        description: 'Gece çekimi için kesintisiz çalma listesi',
+        keywords: ['radyo', 'müzik', 'çalma listesi', 'spotify', 'mp3'],
       },
     ],
   },

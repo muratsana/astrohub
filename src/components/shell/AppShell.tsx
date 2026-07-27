@@ -4,6 +4,8 @@ import { StatusBar } from './StatusBar';
 import { Topbar } from './Topbar';
 import { Footer } from './Footer';
 import { MobileNav } from './MobileNav';
+import { NavDrawer } from './NavDrawer';
+import { RadioDock } from '@/features/radio/RadioDock';
 import { isPreviewEditorEnabled } from '@/features/preview-editor/PreviewEditorContext';
 
 /**
@@ -12,8 +14,13 @@ import { isPreviewEditorEnabled } from '@/features/preview-editor/PreviewEditorC
  * Yapışkan başlık iki katmandır: gökyüzü durum çubuğu + navigasyon. Sağ
  * enstrüman rayı yoktur (o karar geri alındı) — içerik tam genişlikte akar.
  *
+ * Radyo rıhtımı da kabuk seviyesindedir; `Outlet`'in dışında olduğu için
+ * sayfa değişimi yayını kesmez.
+ *
  * Komut paleti tüm modüllerin verisini indeksler; ilk yüklemede indirilmesi
  * gereksiz ağırlık olur (§16.4), bu yüzden yalnızca açıldığında yüklenir.
+ * Üst çubuktaki düğmesi kaldırıldı — ⌘K kısayolu ve modül haritasındaki
+ * giriş yeterli.
  */
 const CommandPalette = lazy(() =>
   import('@/features/search/CommandPalette').then((m) => ({
@@ -34,8 +41,12 @@ const PreviewEditorPanel = lazy(() =>
 
 export function AppShell() {
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [navOpen, setNavOpen] = useState(false);
+
   const openPalette = useCallback(() => setPaletteOpen(true), []);
   const closePalette = useCallback(() => setPaletteOpen(false), []);
+  const openNav = useCallback(() => setNavOpen(true), []);
+  const closeNav = useCallback(() => setNavOpen(false), []);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -61,15 +72,23 @@ export function AppShell() {
       {/* Durum çubuğu ve nav birlikte yapışkan — gece durumu hep görünür */}
       <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-md">
         <StatusBar />
-        <Topbar onOpenPalette={openPalette} />
+        <Topbar onOpenNav={openNav} />
       </div>
 
-      <main id="icerik" className="flex-1 pb-16 lg:pb-0">
+      <main id="icerik" className="flex-1 pb-28 lg:pb-16">
         <Outlet />
       </main>
 
       <Footer />
-      <MobileNav onOpenPalette={openPalette} />
+
+      <RadioDock />
+      <MobileNav onOpenNav={openNav} />
+
+      <NavDrawer
+        open={navOpen}
+        onClose={closeNav}
+        onOpenPalette={openPalette}
+      />
 
       {paletteOpen && (
         <Suspense fallback={null}>

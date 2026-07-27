@@ -1,7 +1,7 @@
 import { isRouteErrorResponse, useRouteError } from 'react-router-dom';
 import { Container } from '@/components/ui/Container';
-import { ButtonLink } from '@/components/ui/Button';
-import { AlertIcon } from '@/components/ui/icons';
+import { Button, ButtonLink } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/Badge';
 import { NotFoundPage } from './NotFoundPage';
 
 /**
@@ -10,6 +10,10 @@ import { NotFoundPage } from './NotFoundPage';
  *
  * Kod bölme ile birlikte önemi artar: ağ kesintisinde bir chunk indirilemezse
  * kullanıcı burada anlaşılır bir mesaj ve yeniden deneme yolu görür.
+ *
+ * Hatanın ham metni bilerek gösterilir. Teknik bir kitleye hitap eden bir
+ * üründe "bir şeyler ters gitti" tek başına hiçbir işe yaramaz; kullanıcı
+ * mesajı kopyalayıp bildirebilmeli.
  */
 export function RouteError() {
   const error = useRouteError();
@@ -26,33 +30,36 @@ export function RouteError() {
       : null;
 
   return (
-    <Container className="flex min-h-[60vh] flex-col items-center justify-center py-20 text-center">
-      <span className="mb-4 rounded-full border border-danger/30 bg-danger/10 p-4 text-danger">
-        <AlertIcon className="h-7 w-7" />
-      </span>
-      <h1 className="text-2xl font-semibold text-foreground sm:text-3xl">
-        Bir şeyler ters gitti
-      </h1>
-      <p className="mt-3 max-w-md text-muted-foreground">
-        Bu sayfa yüklenirken beklenmeyen bir hata oluştu. Bağlantınızı kontrol
-        edip sayfayı yenilemeyi deneyin.
-      </p>
-      {detail && (
-        <p className="mt-4 max-w-lg break-words rounded-card border border-border bg-surface-1 px-4 py-2 text-xs text-muted-foreground">
-          {detail}
-        </p>
-      )}
-      <div className="mt-8 flex flex-wrap justify-center gap-3">
-        <button
-          type="button"
-          onClick={() => window.location.reload()}
-          className="inline-flex h-10 items-center justify-center rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover"
-        >
-          Sayfayı yenile
-        </button>
-        <ButtonLink to="/" variant="secondary">
-          Ana sayfaya dön
-        </ButtonLink>
+    <Container className="py-16 sm:py-24">
+      <div className="mx-auto max-w-2xl">
+        <div className="border-b border-danger/30 pb-6">
+          <Badge tone="danger">Hata</Badge>
+          <h1 className="mt-3 text-[22px] text-foreground sm:text-[26px]">
+            Sayfa Yüklenemedi
+          </h1>
+          <p className="mt-2 max-w-[70ch] text-[12px] leading-relaxed text-muted-foreground">
+            Bu sayfa yüklenirken beklenmeyen bir hata oluştu. Bağlantınızı
+            kontrol edip yenilemeyi deneyin.
+          </p>
+        </div>
+
+        {detail && (
+          <div className="mt-4 rounded-card border border-border bg-surface-1 px-3 py-2.5">
+            <p className="label">Hata çıktısı</p>
+            <p className="tabular mt-1 break-words text-[12px] leading-relaxed text-danger">
+              {detail}
+            </p>
+          </div>
+        )}
+
+        <div className="mt-6 flex flex-wrap gap-2">
+          <Button size="sm" onClick={() => window.location.reload()}>
+            Sayfayı Yenile
+          </Button>
+          <ButtonLink to="/" variant="secondary" size="sm">
+            Ana Sayfa
+          </ButtonLink>
+        </div>
       </div>
     </Container>
   );

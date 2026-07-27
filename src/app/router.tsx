@@ -177,6 +177,34 @@ export const router = createRouter([
         ),
       },
 
+      /* ═════════════ FORUM ═════════════ */
+      {
+        path: 'forum',
+        element: route(
+          named(() => import('@/features/forum/ForumPage'), 'ForumPage')
+        ),
+      },
+      {
+        path: 'forum/yeni',
+        element: route(
+          named(() => import('@/features/forum/NewThreadPage'), 'NewThreadPage')
+        ),
+      },
+      {
+        path: 'forum/:slug',
+        element: route(
+          named(() => import('@/features/forum/ThreadPage'), 'ThreadPage')
+        ),
+      },
+
+      /* ═════════════ RADYO ═════════════ */
+      {
+        path: 'radyo',
+        element: route(
+          named(() => import('@/features/radio/RadioPage'), 'RadioPage')
+        ),
+      },
+
       /* ═════════════ ARAÇLAR ═════════════ */
       {
         path: 'araclar',

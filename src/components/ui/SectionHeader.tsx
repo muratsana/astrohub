@@ -23,24 +23,30 @@ export function SectionHeader({
 }) {
   return (
     <div className="mb-5">
+      {/*
+        `min-w-0` + `truncate` şart: başlık, sayaç ve bağlantı birlikte dar
+        ekranda kabı aşıyordu. Aradaki hairline sıfıra kadar büzülebildiği
+        için taşma görünmüyor sanılıyor, oysa sayfa yatay kayıyordu (390px'te
+        ölçüldü). Başlık artık kırpılır, bağlantı hiç büzülmez.
+      */}
       <div className="flex items-center gap-3">
-        <h2 className="whitespace-nowrap text-[17px] text-foreground sm:text-[19px]">
+        <h2 className="min-w-0 truncate text-[17px] text-foreground sm:text-[19px]">
           {title}
         </h2>
 
         {meta && (
-          <span className="tabular whitespace-nowrap text-[11px] text-faint">
+          <span className="tabular hidden whitespace-nowrap text-[11px] text-faint sm:inline">
             {meta}
           </span>
         )}
 
         {/* Kalan boşluğu dolduran hairline — bölümün "kanal" hissini kurar */}
-        <span aria-hidden className="h-px flex-1 bg-border" />
+        <span aria-hidden className="h-px min-w-0 flex-1 bg-border" />
 
         {linkTo && (
           <Link
             to={linkTo}
-            className="whitespace-nowrap text-[10px] uppercase tracking-[0.16em] text-muted-foreground transition-colors hover:text-primary"
+            className="shrink-0 whitespace-nowrap text-[10px] uppercase tracking-[0.16em] text-muted-foreground transition-colors hover:text-primary"
           >
             {linkLabel} →
           </Link>

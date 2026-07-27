@@ -1,17 +1,30 @@
 import { Link } from 'react-router-dom';
 import { Container } from '@/components/ui/Container';
 import { Badge } from '@/components/ui/Badge';
-import { PhotoPlaceholder } from '@/components/media/PhotoPlaceholder';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { CardGrid } from '@/components/ui/CardGrid';
+import { ToolBar, ResultCount } from '@/components/ui/ToolBar';
+import { useViewMode } from '@/components/ui/useViewMode';
+import { PlateFrame } from '@/components/media/PlateFrame';
+import { StarField } from '@/components/media/StarField';
+import { tintFromSeed } from '@/components/media/tints';
 import { sites } from './data';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
+import { cn } from '@/lib/cn';
 
 /**
  * Kamp ve gözlem noktaları listesi (§7.7 alt kümesi).
+ *
  * Tam ekran ışık kirliliği haritası, tile sağlayıcısı lisansı doğrulandıktan
  * sonra Faz 1.7'de eklenecek (§14.1); şimdilik kart listesi.
+ *
+ * Bortle sınıfı burada rozet değil, ölçüm okuması gibi gösterilir: bu sayfada
+ * karşılaştırmayı yapan tek sayı odur.
  */
 export function SitesPage() {
+  const [view, setView] = useViewMode('saha');
+
   return (
     <>
       <PageMeta
@@ -19,73 +32,136 @@ export function SitesPage() {
         description="Türkiye'nin karanlık gökyüzü noktaları: Bortle sınıfı, SQM, rakım, yol erişimi ve kamp olanaklarıyla değerlendirilmiş astrocamping alanları."
         jsonLd={breadcrumbJsonLd([
           { name: 'Ana Sayfa', path: '/' },
-          { name: 'Harita', path: '/saha' },
-          { name: 'Gözlem Noktaları', path: '/saha' },
+          { name: 'Saha', path: '/saha' },
         ])}
       />
-      <Container className="py-10 sm:py-14">
-        <header className="mb-8">
-          <h1 className="text-2xl font-semibold text-foreground sm:text-3xl">
-            Kamp ve Gözlem Noktaları
-          </h1>
-          <p className="mt-2 max-w-xl text-muted-foreground">
-            Türkiye'nin karanlık gökyüzü noktaları — Bortle/SQM ölçümleri,
-            erişim ve tesis bilgileriyle.
-          </p>
-        </header>
+      <Container className="py-8 sm:py-10">
+        <PageHeader
+          title="Kamp ve Gözlem Noktaları"
+          description="Türkiye'nin karanlık gökyüzü noktaları — Bortle/SQM ölçümleri, erişim ve tesis bilgileriyle."
+        />
 
-        <ul className="grid gap-4 sm:grid-cols-2">
-          {sites.map((site) => (
-            <li key={site.slug}>
-              <Link
-                to={`/saha/${site.slug}`}
-                className="group flex h-full flex-col overflow-hidden rounded-card border border-border bg-surface-1 transition-colors hover:border-white/20"
-              >
-                <PhotoPlaceholder
-                  gradient={site.gradient}
-                  alt={site.name}
-                  rounded="rounded-none"
-                  className="aspect-[21/9] w-full"
-                />
-                <div className="flex flex-1 flex-col p-5">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <h2 className="text-base font-semibold text-foreground">
+        <ToolBar
+          left={
+            <ResultCount
+              current={sites.length}
+              total={sites.length}
+              noun="nokta"
+            />
+          }
+          view={{ mode: view, onChange: setView }}
+        />
+
+        <CardGrid view={view} density="wide">
+          {sites.map((site) => {
+            const facilities = [
+              site.facilities.tentArea && 'Çadır',
+              site.facilities.caravanOk && 'Karavan',
+            ].filter(Boolean) as string[];
+
+            if (view === 'list') {
+              return (
+                <li key={site.slug}>
+                  <Link
+                    to={`/saha/${site.slug}`}
+                    className="group flex items-center gap-3 rounded-card border border-border bg-surface-1 px-3 py-2.5 transition-colors hover:border-border-strong"
+                  >
+                    <BortleBlock bortle={site.bortle} />
+                    <div className="min-w-0 flex-1">
+                      <h2 className="truncate text-[13px] font-medium text-foreground group-hover:text-primary">
                         {site.name}
                       </h2>
-                      <p className="mt-0.5 text-sm text-muted-foreground">
-                        {site.region} · {site.altitude} m
+                      <p className="tabular mt-0.5 truncate text-[10px] text-muted-foreground">
+                        {site.region} · {site.altitude} m · {site.roadAccess}
+                        {site.sqm && ` · SQM ${site.sqm}`}
                       </p>
                     </div>
-                    <p className="tabular shrink-0 text-sm text-muted-foreground">
+                    <p className="tabular shrink-0 text-[11px] text-muted-foreground">
                       ★ {site.rating.toFixed(1)}{' '}
-                      <span className="text-muted-foreground/60">
-                        ({site.reviewCount})
-                      </span>
+                      <span className="text-faint">({site.reviewCount})</span>
                     </p>
-                  </div>
-                  <div className="mt-auto flex flex-wrap gap-1.5 pt-4">
-                    <Badge tone="primary">Bortle {site.bortle}</Badge>
-                    {site.sqm && <Badge tone="cold">SQM {site.sqm}</Badge>}
-                    <Badge>{site.roadAccess}</Badge>
-                    {site.facilities.tentArea && (
-                      <Badge tone="cold">Çadır</Badge>
-                    )}
-                    {site.facilities.caravanOk && (
-                      <Badge tone="cold">Karavan</Badge>
-                    )}
-                  </div>
-                </div>
-              </Link>
-            </li>
-          ))}
-        </ul>
+                  </Link>
+                </li>
+              );
+            }
 
-        <p className="mt-8 rounded-2xl border border-border bg-surface-1 p-4 text-center text-xs text-muted-foreground">
+            return (
+              <li key={site.slug}>
+                <Link
+                  to={`/saha/${site.slug}`}
+                  className="group flex h-full flex-col rounded-card border border-border bg-surface-1 transition-colors hover:border-border-strong"
+                >
+                  <PlateFrame
+                    ratio="aspect-[21/9]"
+                    className="border-0 border-b border-border"
+                    badge={
+                      <Badge tone="primary" className="bg-background/85">
+                        Bortle {site.bortle}
+                      </Badge>
+                    }
+                    fieldOfView={site.sqm ? `SQM ${site.sqm}` : undefined}
+                  >
+                    <StarField seed={site.slug} tint={tintFromSeed(site.slug)} />
+                  </PlateFrame>
+
+                  <div className="flex flex-1 flex-col px-2.5 py-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <h2 className="text-[13px] font-medium leading-snug text-foreground group-hover:text-primary">
+                        {site.name}
+                      </h2>
+                      <p className="tabular shrink-0 text-[11px] text-muted-foreground">
+                        ★ {site.rating.toFixed(1)}
+                      </p>
+                    </div>
+                    <p className="tabular mt-0.5 text-[10px] text-muted-foreground">
+                      {site.region} · {site.altitude} m
+                    </p>
+                    <div className="mt-auto flex flex-wrap gap-1 pt-2">
+                      <Badge>{site.roadAccess}</Badge>
+                      {facilities.map((f) => (
+                        <Badge key={f} tone="cold">
+                          {f}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                </Link>
+              </li>
+            );
+          })}
+        </CardGrid>
+
+        <p className="mt-4 rounded-card border border-border bg-surface-1 px-3 py-2.5 text-[11px] leading-relaxed text-muted-foreground">
           Işık kirliliği haritası, veri lisansı doğrulandıktan sonra bu sayfaya
           eklenecek. Konumlar gizlilik politikası gereği yaklaşık gösterilir.
         </p>
       </Container>
     </>
+  );
+}
+
+/**
+ * Bortle okuması. Ölçek 1–9 arasıdır ve **küçük iyidir**; renk bu yüzden
+ * değerin kendisine bağlanır — 1–3 arası soğuk mavi (karanlık), 7+ kehribar
+ * (kirli). Renk tek başına anlam taşımasın diye sayı her zaman yazılır (§6.7).
+ */
+function BortleBlock({ bortle }: { bortle: number }) {
+  const tone =
+    bortle <= 3 ? 'text-cold' : bortle <= 5 ? 'text-foreground' : 'text-primary';
+
+  return (
+    <div className="flex w-11 shrink-0 flex-col items-center rounded-card border border-border bg-surface-2 py-1">
+      <span
+        className={cn(
+          'tabular font-display text-[17px] font-bold leading-none',
+          tone
+        )}
+      >
+        {bortle}
+      </span>
+      <span className="mt-0.5 text-[9px] uppercase tracking-[0.1em] text-muted-foreground">
+        Bortle
+      </span>
+    </div>
   );
 }

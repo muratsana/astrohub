@@ -214,3 +214,73 @@ export function ListIcon(props: IconProps) {
     </svg>
   );
 }
+
+export function PlayIcon(props: IconProps) {
+  return (
+    <svg {...base(props)} fill="currentColor" stroke="none">
+      <path d="M7 4.5v15l13-7.5-13-7.5z" />
+    </svg>
+  );
+}
+
+export function PauseIcon(props: IconProps) {
+  return (
+    <svg {...base(props)} fill="currentColor" stroke="none">
+      <rect x="6" y="4.5" width="4" height="15" rx="0.5" />
+      <rect x="14" y="4.5" width="4" height="15" rx="0.5" />
+    </svg>
+  );
+}
+
+export function SkipIcon(props: IconProps) {
+  return (
+    <svg {...base(props)} fill="currentColor" stroke="none">
+      <path d="M6 5v14l10-7L6 5z" />
+      <rect x="17" y="5" width="2.5" height="14" rx="0.5" />
+    </svg>
+  );
+}
+
+export function VolumeIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M4 9.5v5h3.5L12 19V5L7.5 9.5H4z" />
+      <path d="M16 9a4 4 0 0 1 0 6" />
+    </svg>
+  );
+}
+
+export function RadioIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <circle cx="12" cy="14" r="3" />
+      <path d="M4 8.5h16v11H4z" />
+      <path d="m8 8 10-4" />
+    </svg>
+  );
+}
+
+export function ChatIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M20 5.5H4v11h4v3.5l4-3.5h8v-11z" />
+    </svg>
+  );
+}
+
+export function PinIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M14 3.5 20.5 10 17 11l-1.5 6L12 13.5 6.5 19 12 13.5 8 10l1-3.5 5-3z" />
+    </svg>
+  );
+}
+
+export function LockIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <rect x="4.5" y="10" width="15" height="10" rx="1.5" />
+      <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+    </svg>
+  );
+}

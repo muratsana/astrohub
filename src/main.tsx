@@ -7,6 +7,7 @@ import { AuthProvider } from '@/features/auth/AuthContext';
 import { ThemeProvider } from '@/features/theme/ThemeContext';
 import { LocationProvider } from '@/features/location/LocationContext';
 import { PreviewEditorProvider } from '@/features/preview-editor/PreviewEditorContext';
+import { RadioProvider } from '@/features/radio/RadioContext';
 import './index.css';
 
 const queryClient = new QueryClient({
@@ -27,9 +28,16 @@ createRoot(rootEl).render(
       <ThemeProvider>
         <LocationProvider>
           <AuthProvider>
-            <PreviewEditorProvider>
-              <RouterProvider router={router} />
-            </PreviewEditorProvider>
+            {/*
+              Radyo sağlayıcısı router'ın DIŞINDA: sayfa değişimi <audio>
+              öğesini söküp müziği kesmemeli. Rota içinde yaşasaydı her
+              gezinme yayını sıfırlardı.
+            */}
+            <RadioProvider>
+              <PreviewEditorProvider>
+                <RouterProvider router={router} />
+              </PreviewEditorProvider>
+            </RadioProvider>
           </AuthProvider>
         </LocationProvider>
       </ThemeProvider>

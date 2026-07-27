@@ -3,7 +3,15 @@ import { Container } from '@/components/ui/Container';
 import { ButtonLink } from '@/components/ui/Button';
 import { Input, Select } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
-import { ViewToggle } from '@/components/ui/ViewToggle';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { EmptyState } from '@/components/ui/EmptyState';
+import {
+  FilterBar,
+  FilterCell,
+  filterControlClass,
+} from '@/components/ui/FilterBar';
+import { CardGrid } from '@/components/ui/CardGrid';
+import { ToolBar, ResultCount } from '@/components/ui/ToolBar';
 import { useViewMode } from '@/components/ui/useViewMode';
 import { PhotoTile } from '@/components/media/PhotoTile';
 import { tintFor } from '@/components/media/tints';
@@ -80,20 +88,15 @@ export function GalleryPage() {
       />
 
       <Container className="py-8 sm:py-10">
-        <header className="mb-5 flex flex-col gap-3 border-b border-border pb-5 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h1 className="text-[26px] text-foreground sm:text-[30px]">
-              Fotoğraf Galerisi
-            </h1>
-            <p className="mt-2 max-w-[70ch] text-[12px] leading-relaxed text-muted-foreground">
-              Topluluğun astrofotoğraf arşivi. Her kayıt hedefi, setup'ı,
-              filtresi ve gökyüzü koşullarıyla birlikte saklanır.
-            </p>
-          </div>
-          <ButtonLink to="/galeri/yukle" size="sm" className="shrink-0">
-            Fotoğraf Yükle
-          </ButtonLink>
-        </header>
+        <PageHeader
+          title="Fotoğraf Galerisi"
+          description="Topluluğun astrofotoğraf arşivi. Her kayıt hedefi, setup'ı, filtresi ve gökyüzü koşullarıyla birlikte saklanır."
+          actions={
+            <ButtonLink to="/galeri/yukle" size="sm">
+              Fotoğraf Yükle
+            </ButtonLink>
+          }
+        />
 
         {/* Tür aileleri — renkli rozetlerle filtre */}
         <div
@@ -139,7 +142,7 @@ export function GalleryPage() {
         </div>
 
         {/* Filtre paneli */}
-        <div className="mb-4 grid gap-px border border-border bg-border sm:grid-cols-2 lg:grid-cols-4">
+        <FilterBar>
           <FilterCell label="Ara" htmlFor="gallery-search" className="lg:col-span-2">
             <Input
               id="gallery-search"
@@ -147,7 +150,7 @@ export function GalleryPage() {
               placeholder="Hedef, katalog (M31, NGC 7000) veya kullanıcı"
               value={filters.search}
               onChange={(e) => set('search', e.target.value)}
-              className="h-8 border-0 bg-transparent px-0 text-[12px] focus:bg-transparent"
+              className={filterControlClass}
             />
           </FilterCell>
 
@@ -158,7 +161,7 @@ export function GalleryPage() {
               onChange={(e) =>
                 set('palette', e.target.value as GalleryFilters['palette'])
               }
-              className="h-8 border-0 bg-transparent px-0 text-[12px] focus:bg-transparent"
+              className={filterControlClass}
             >
               {paletteOptions.map((p) => (
                 <option key={p} value={p}>
@@ -173,7 +176,7 @@ export function GalleryPage() {
               id="f-city"
               value={filters.city}
               onChange={(e) => set('city', e.target.value)}
-              className="h-8 border-0 bg-transparent px-0 text-[12px] focus:bg-transparent"
+              className={filterControlClass}
             >
               <option value="hepsi">Tüm şehirler</option>
               {cities.map((c) => (
@@ -183,47 +186,37 @@ export function GalleryPage() {
               ))}
             </Select>
           </FilterCell>
-        </div>
+        </FilterBar>
 
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <p className="tabular label" role="status" aria-live="polite">
-            {result.length} / {photos.length} fotoğraf
-          </p>
-
-          <div className="flex items-center gap-2">
-            <label htmlFor="f-sort" className="label hidden sm:block">
-              Sırala
-            </label>
-            <Select
-              id="f-sort"
-              value={filters.sort}
-              onChange={(e) =>
-                set('sort', e.target.value as GalleryFilters['sort'])
-              }
-              className="h-8 w-auto text-[11px]"
-            >
-              <option value="yeni">En yeni</option>
-              <option value="populer">Popüler</option>
-              <option value="editor">Editör seçimi</option>
-              <option value="yorum">En çok yorumlanan</option>
-            </Select>
-            <ViewToggle mode={view} onChange={setView} />
-          </div>
-        </div>
+        <ToolBar
+          left={
+            <ResultCount
+              current={result.length}
+              total={photos.length}
+              noun="fotoğraf"
+            />
+          }
+          sort={{
+            id: 'f-sort',
+            value: filters.sort,
+            onChange: (v) => set('sort', v as GalleryFilters['sort']),
+            options: [
+              { value: 'yeni', label: 'En yeni' },
+              { value: 'populer', label: 'Popüler' },
+              { value: 'editor', label: 'Editör seçimi' },
+              { value: 'yorum', label: 'En çok yorumlanan' },
+            ],
+          }}
+          view={{ mode: view, onChange: setView }}
+        />
 
         {result.length === 0 ? (
-          <p className="border border-border bg-surface-1 px-4 py-14 text-center text-[12px] text-muted-foreground">
-            Bu filtrelerle eşleşen kayıt yok. Filtreleri gevşetmeyi ya da
-            katalog kodunu boşluksuz yazmayı deneyin (M31).
-          </p>
+          <EmptyState
+            message="Eşleşen kayıt yok"
+            hint="Filtreleri gevşetmeyi ya da katalog kodunu boşluksuz yazmayı deneyin (M31)."
+          />
         ) : (
-          <ul
-            className={cn(
-              view === 'grid'
-                ? 'grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5'
-                : 'grid gap-2'
-            )}
-          >
+          <CardGrid view={view} density="tight">
             {result.map((photo) => {
               const info = photoFamilies[familyOf(photo.type)];
               return (
@@ -253,31 +246,9 @@ export function GalleryPage() {
                 </li>
               );
             })}
-          </ul>
+          </CardGrid>
         )}
       </Container>
     </>
-  );
-}
-
-/** Filtre paneli hücresi: üstte büyük harf etiket, altta kontrol. */
-function FilterCell({
-  label,
-  htmlFor,
-  children,
-  className,
-}: {
-  label: string;
-  htmlFor: string;
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <div className={cn('bg-surface-1 px-3 pb-1 pt-1.5', className)}>
-      <label htmlFor={htmlFor} className="label block">
-        {label}
-      </label>
-      {children}
-    </div>
   );
 }

@@ -102,7 +102,9 @@ export function PhotoTile({
     <Link
       to={to}
       className={cn(
-        'group block rounded-card border border-border bg-surface-1 transition-colors',
+        // h-full + flex: ızgara hücresi gerildiğinde kart da gerilir,
+        // künye bloğu altta hizalı kalır (bkz. CardGrid).
+        'group flex h-full flex-col rounded-card border border-border bg-surface-1 transition-colors',
         'hover:border-border-strong focus-visible:border-primary',
         className
       )}
@@ -111,12 +113,12 @@ export function PhotoTile({
         fieldOfView={fieldOfView}
         badge={family ? <FamilyBadge {...family} /> : undefined}
         flag={flag}
-        className="border-0 border-b border-border"
+        className="shrink-0 border-0 border-b border-border"
       >
         <StarField seed={seed} tint={tint} />
       </PlateFrame>
 
-      <div className="px-2.5 py-2">
+      <div className="flex flex-1 flex-col px-2.5 py-2">
         <p className="truncate font-display text-[13px] font-bold uppercase leading-tight text-foreground transition-colors group-hover:text-primary">
           {target}
         </p>
@@ -125,7 +127,7 @@ export function PhotoTile({
             {title}
           </p>
         )}
-        <p className="tabular mt-1 truncate text-[10px] leading-snug text-cold">
+        <p className="tabular mt-auto truncate pt-1 text-[10px] leading-snug text-cold">
           {meta || '—'}
         </p>
         <p className="tabular truncate text-[10px] leading-snug text-muted-foreground">

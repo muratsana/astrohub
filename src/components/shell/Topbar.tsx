@@ -2,7 +2,7 @@ import { NavLink } from 'react-router-dom';
 import { Logo } from './Logo';
 import { ButtonLink } from '@/components/ui/Button';
 import { Container } from '@/components/ui/Container';
-import { SearchIcon, MoonIcon } from '@/components/ui/icons';
+import { MenuIcon, MoonIcon } from '@/components/ui/icons';
 import { primaryNav } from '@/app/navigation';
 import { useTheme } from '@/features/theme/ThemeContext';
 import { cn } from '@/lib/cn';
@@ -10,22 +10,29 @@ import { cn } from '@/lib/cn';
 /**
  * ÜST NAVİGASYON.
  *
- * Yedi ana giriş, düz — açılır menü yoktur (§5.2 komut paletine devredildi).
- * Girişler hairline bölmelerle ayrılır; aktif olan altında kehribar bir
- * çizgi taşır. Sağda: komut paleti tetikleyicisi, saha modu, hesap.
+ * Dokuz ana giriş, düz — açılır menü yoktur (§5.2). Girişler hairline
+ * bölmelerle ayrılır; aktif olan altında kehribar bir çizgi taşır.
+ *
+ * Komut paleti tetikleyicisi kaldırıldı: ⌘K kısayolu çalışmaya devam eder
+ * ama üst çubukta yer kaplamaz. Dokuz modül genişliği zaten sıkıyordu ve
+ * paletin kendisi keşif değil hızlandırma aracı — düğmesi olmadan da
+ * bilenler kullanır.
+ *
+ * Kırılım `xl`: dokuz giriş 1024px'te sığmıyor. Arada kalan genişlikte
+ * (lg) modül haritasını açan bir düğme gösterilir.
  */
-export function Topbar({ onOpenPalette }: { onOpenPalette: () => void }) {
+export function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
   const { fieldMode, toggleFieldMode } = useTheme();
 
   return (
     <header className="border-b border-border bg-background">
       <Container>
-        <div className="flex h-14 items-center gap-4">
+        <div className="flex h-14 items-center gap-3">
           <Logo />
 
           <nav
             aria-label="Ana navigasyon"
-            className="ml-2 hidden items-stretch self-stretch lg:flex"
+            className="ml-1 hidden items-stretch self-stretch xl:flex"
           >
             {primaryNav.map((item) => (
               <NavLink
@@ -33,7 +40,7 @@ export function Topbar({ onOpenPalette }: { onOpenPalette: () => void }) {
                 to={item.to}
                 className={({ isActive }) =>
                   cn(
-                    'flex items-center border-l border-border px-4 text-[11px] font-medium uppercase tracking-[0.14em] transition-colors last:border-r',
+                    'flex items-center border-l border-border px-3 text-[11px] font-medium uppercase tracking-[0.12em] transition-colors last:border-r',
                     isActive
                       ? 'text-primary shadow-[inset_0_-2px_0_var(--color-primary)]'
                       : 'text-muted-foreground hover:text-foreground'
@@ -46,18 +53,19 @@ export function Topbar({ onOpenPalette }: { onOpenPalette: () => void }) {
           </nav>
 
           <div className="ml-auto flex items-center gap-2">
-            {/* Komut paleti tetikleyicisi — kısayolu görünür biçimde taşır */}
+            {/*
+              Yalnızca lg–xl aralığında görünür. Altında mobil alt çubuğun
+              "Daha" düğmesi aynı çekmeceyi açıyor; ikisini birden göstermek
+              hem gereksiz hem de 390px'te üst çubuğu taşırıyordu.
+            */}
             <button
               type="button"
-              onClick={onOpenPalette}
-              aria-keyshortcuts="Control+K Meta+K"
-              className="inline-flex h-8 items-center gap-2 rounded-card border border-border px-2.5 text-[10px] uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:border-border-strong hover:text-foreground"
+              onClick={onOpenNav}
+              aria-label="Modül haritasını aç"
+              className="hidden h-8 items-center gap-1.5 rounded-card border border-border px-2.5 text-[10px] uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:border-border-strong hover:text-foreground lg:inline-flex xl:hidden"
             >
-              <SearchIcon className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Komut</span>
-              <kbd className="hidden rounded-[2px] border border-border px-1 py-px text-[9px] text-faint sm:inline">
-                ⌘K
-              </kbd>
+              <MenuIcon className="h-3.5 w-3.5" />
+              Modüller
             </button>
 
             <button
@@ -77,7 +85,7 @@ export function Topbar({ onOpenPalette }: { onOpenPalette: () => void }) {
               )}
             >
               <MoonIcon className="h-3.5 w-3.5" />
-              <span className="hidden md:inline">Saha</span>
+              <span className="hidden 2xl:inline">Saha</span>
             </button>
 
             <ButtonLink to="/giris" size="sm" variant="secondary">
