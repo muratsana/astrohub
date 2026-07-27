@@ -82,7 +82,7 @@ describe('navigasyon bağlantıları', () => {
     const seen = new Map<string, string>();
     for (const item of allNavItems()) {
       const previous = seen.get(item.to);
-      // Aynı yol iki farklı etiketle görünebilir (ör. /fotograflar), ama
+      // Aynı yol iki farklı etiketle görünebilir (ör. /galeri), ama
       // aynı etiketle iki kez görünmemeli.
       if (previous) expect(previous).not.toBe(item.label);
       seen.set(item.to, item.label);

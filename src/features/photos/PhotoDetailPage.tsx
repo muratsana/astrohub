@@ -80,7 +80,7 @@ function PhotoDetail({ photo }: { photo: AstroPhoto }) {
           }),
           breadcrumbJsonLd([
             { name: 'Ana Sayfa', path: '/' },
-            { name: 'Fotoğraflar', path: '/fotograflar' },
+            { name: 'Fotoğraflar', path: '/galeri' },
             { name: photo.title, path: `/fotograf/${photo.slug}` },
           ]),
         ]}
@@ -169,7 +169,7 @@ function PhotoDetail({ photo }: { photo: AstroPhoto }) {
             <SectionHeader
               title="Benzer Fotoğraflar"
               description="Aynı hedef veya aynı türden diğer kareler"
-              linkTo="/fotograflar"
+              linkTo="/galeri"
             />
             <ul className="grid grid-cols-2 gap-4 lg:grid-cols-4">
               {related.map((p) => (
@@ -194,7 +194,7 @@ function PhotoDetail({ photo }: { photo: AstroPhoto }) {
         )}
 
         <div className="mt-10">
-          <ButtonLink to="/fotograflar" variant="secondary">
+          <ButtonLink to="/galeri" variant="secondary">
             ← Galeriye dön
           </ButtonLink>
         </div>

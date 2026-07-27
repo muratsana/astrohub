@@ -5,12 +5,13 @@ import { events } from '@/features/events/data';
 import { eventTypeLabels } from '@/features/events/types';
 import { equipment, equipmentCategoryLabels } from '@/features/equipment/data';
 import { sites } from '@/features/observing-sites/data';
-import { learningItems } from '@/features/learning/data';
+import { articles, articleCategoryLabels } from '@/features/articles/data';
+import { news, newsCategoryLabels } from '@/features/news/data';
 import { listings } from '@/features/marketplace/data';
 
 /**
  * Global arama (§16.1). Tek kutu; fotoğraf, hedef, kullanıcı, ekipman,
- * etkinlik, kamp noktası, eğitim içeriği ve ilanları tarar. Sonuçlar
+ * etkinlik, gözlem alanı, yazı, haber ve ilanları tarar. Sonuçlar
  * kategori başlıklarıyla gruplanır.
  *
  * MVP'de indeks istemci tarafında mock veriden kurulur. Veri hacmi
@@ -25,7 +26,8 @@ export type SearchCategory =
   | 'ekipman'
   | 'etkinlik'
   | 'nokta'
-  | 'egitim'
+  | 'yazi'
+  | 'haber'
   | 'ilan';
 
 export const searchCategoryLabels: Record<SearchCategory, string> = {
@@ -34,9 +36,10 @@ export const searchCategoryLabels: Record<SearchCategory, string> = {
   kullanici: 'Astrofotoğrafçılar',
   ekipman: 'Ekipman',
   etkinlik: 'Etkinlikler',
-  nokta: 'Gözlem Noktaları',
-  egitim: 'Eğitim İçerikleri',
-  ilan: 'İkinci El İlanlar',
+  nokta: 'Gözlem Alanları',
+  yazi: 'Yazılar',
+  haber: 'Haberler',
+  ilan: 'İlanlar',
 };
 
 /** Kategori gösterim sırası — sonuç listesinde bu sırayla görünür. */
@@ -47,7 +50,8 @@ export const searchCategoryOrder: SearchCategory[] = [
   'nokta',
   'ekipman',
   'kullanici',
-  'egitim',
+  'yazi',
+  'haber',
   'ilan',
 ];
 
@@ -162,7 +166,7 @@ export const searchIndex: SearchDoc[] = [
       s.slug,
       s.name,
       `${s.region} · Bortle ${s.bortle} · ${s.altitude} m`,
-      `/gozlem-noktasi/${s.slug}`,
+      `/saha/${s.slug}`,
       [s.region, `bortle ${s.bortle}`, s.roadAccess]
     )
   ),
@@ -192,14 +196,25 @@ export const searchIndex: SearchDoc[] = [
       )
   ),
 
-  ...learningItems.map((l) =>
+  ...articles.map((a) =>
     doc(
-      'egitim',
-      l.slug,
-      l.title,
-      `${l.category} · ${l.level}`,
-      `/egitim/${l.slug}`,
-      [l.category, l.level, l.summary]
+      'yazi',
+      a.slug,
+      a.title,
+      `${articleCategoryLabels[a.category]} · ${a.level}`,
+      `/yazi/${a.slug}`,
+      [articleCategoryLabels[a.category], a.level, a.summary, a.author]
+    )
+  ),
+
+  ...news.map((n) =>
+    doc(
+      'haber',
+      n.slug,
+      n.title,
+      `${newsCategoryLabels[n.category]} · ${n.source.name}`,
+      `/haber/${n.slug}`,
+      [newsCategoryLabels[n.category], n.summary, n.source.name]
     )
   ),
 

@@ -22,7 +22,7 @@ export function DarkSkyStrip() {
         title="Karanlık Gökyüzü"
         meta={`${sites.length} nokta`}
         description="Bortle sınıfı, SQM ölçümü, rakım ve kamp olanaklarıyla değerlendirilmiş gözlem noktaları."
-        linkTo="/harita/gozlem-noktalari"
+        linkTo="/saha"
         linkLabel="Tüm noktalar"
       />
 
@@ -30,7 +30,7 @@ export function DarkSkyStrip() {
         {darkest.map((site) => (
           <li key={site.slug}>
             <Link
-              to={`/gozlem-noktasi/${site.slug}`}
+              to={`/saha/${site.slug}`}
               className="group block rounded-card border border-border bg-surface-1 transition-colors hover:border-border-strong"
             >
               <PlateFrame

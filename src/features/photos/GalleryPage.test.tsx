@@ -27,7 +27,7 @@ describe('GalleryPage (§7.2)', () => {
     ).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /kayıt aç/i })).toHaveAttribute(
       'href',
-      '/fotograflar/yukle'
+      '/galeri/yukle'
     );
     expect(photoLinks()).toHaveLength(photos.length);
   });

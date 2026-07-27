@@ -42,7 +42,7 @@ export function MarketplacePage() {
         description="Ekipman veritabanına bağlı, güven sinyalleriyle desteklenen ikinci el astronomi pazaryeri: teleskop, montür, kamera ve filtre ilanları."
         jsonLd={breadcrumbJsonLd([
           { name: 'Ana Sayfa', path: '/' },
-          { name: 'İkinci El', path: '/ikinci-el' },
+          { name: 'İkinci El', path: '/ilanlar' },
         ])}
       />
       <Container className="py-10 sm:py-14">

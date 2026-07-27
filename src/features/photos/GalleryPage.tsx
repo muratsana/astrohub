@@ -75,7 +75,7 @@ export function GalleryPage() {
         description="Türkiye'den astrofotoğraflar — hedef, ekipman, filtre ve lokasyon verisiyle birlikte. Tür, palet, şehir ve entegrasyon süresine göre filtreleyin."
         jsonLd={breadcrumbJsonLd([
           { name: 'Ana Sayfa', path: '/' },
-          { name: 'Kayıtlar', path: '/fotograflar' },
+          { name: 'Kayıtlar', path: '/galeri' },
         ])}
       />
 
@@ -90,7 +90,7 @@ export function GalleryPage() {
               filtresi ve gökyüzü koşullarıyla birlikte saklanır.
             </p>
           </div>
-          <ButtonLink to="/fotograflar/yukle" className="shrink-0">
+          <ButtonLink to="/galeri/yukle" className="shrink-0">
             Kayıt aç
           </ButtonLink>
         </header>

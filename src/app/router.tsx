@@ -6,6 +6,7 @@ import { NotFoundPage } from '@/components/NotFoundPage';
 import { RouteError } from '@/components/RouteError';
 import { RouteFallback } from '@/components/RouteFallback';
 import { PlaceholderPage } from '@/components/PlaceholderPage';
+import { RedirectTo, RedirectParam } from './Redirect';
 
 /**
  * Sunucusuz önizleme (tek dosya HTML) için hash tabanlı router kullanılır;
@@ -41,10 +42,30 @@ function named<T extends string>(
   return () => loader().then((module) => ({ default: module[name] }));
 }
 
+// Aynı bileşeni birden çok yolda kullanan yükleyiciler
+const sitesPage = () =>
+  route(
+    named(() => import('@/features/observing-sites/SitesPage'), 'SitesPage')
+  );
+const fovPage = () =>
+  route(
+    named(
+      () => import('@/features/calculators/FovCalculatorPage'),
+      'FovCalculatorPage'
+    )
+  );
+const equipmentPage = () =>
+  route(
+    named(() => import('@/features/equipment/EquipmentPage'), 'EquipmentPage')
+  );
+const panelPage = () =>
+  route(named(() => import('@/features/panel/PanelPage'), 'PanelPage'));
+
 /**
- * Route haritası — şartname §20 önerilen URL yapısı.
- * Henüz yayına alınmamış bölümler PlaceholderPage ile açık biçimde
- * işaretlenir; hiçbir menü/footer bağlantısı 404'e düşmez.
+ * Route haritası — yedi ana modül.
+ *
+ * Modül adları değiştiği için URL'ler de hizalandı; eski adresler kalıcı
+ * yönlendirmeyle korunur (yer imleri ve arama motoru indeksi kırılmasın).
  */
 export const router = createRouter([
   {
@@ -54,26 +75,15 @@ export const router = createRouter([
     children: [
       { index: true, element: <HomePage /> },
 
-      // Keşfet
+      /* ═════════════ GALERİ ═════════════ */
       {
-        path: 'kesfet',
-        element: route(
-          named(
-            () => import('@/features/discover/DiscoverPage'),
-            'DiscoverPage'
-          )
-        ),
-      },
-
-      // Fotoğraflar
-      {
-        path: 'fotograflar',
+        path: 'galeri',
         element: route(
           named(() => import('@/features/photos/GalleryPage'), 'GalleryPage')
         ),
       },
       {
-        path: 'fotograflar/yukle',
+        path: 'galeri/yukle',
         element: route(
           named(
             () => import('@/features/upload/UploadWizardPage'),
@@ -90,25 +100,17 @@ export const router = createRouter([
           )
         ),
       },
-
-      // Hedefler
       {
-        path: 'hedefler',
+        path: 'kesfet',
         element: route(
-          named(() => import('@/features/targets/TargetsPage'), 'TargetsPage')
+          named(() => import('@/features/discover/DiscoverPage'), 'DiscoverPage')
         ),
       },
-      {
-        path: 'hedef/:slug',
-        element: route(
-          named(
-            () => import('@/features/targets/TargetDetailPage'),
-            'TargetDetailPage'
-          )
-        ),
-      },
+      { path: 'profil/:username', element: route(
+          named(() => import('@/features/profile/ProfilePage'), 'ProfilePage')
+        ) },
 
-      // Etkinlikler
+      /* ═════════════ ETKİNLİKLER ═════════════ */
       {
         path: 'etkinlikler',
         element: route(
@@ -124,38 +126,8 @@ export const router = createRouter([
           )
         ),
       },
-
-      // Harita — tam ekran harita katmanı, tile sağlayıcısı lisansı
-      // doğrulanınca eklenecek (§14.1); şimdilik nokta listesi sunulur.
       {
-        path: 'harita',
-        element: route(
-          named(
-            () => import('@/features/observing-sites/SitesPage'),
-            'SitesPage'
-          )
-        ),
-      },
-      {
-        path: 'harita/isik-kirliligi',
-        element: (
-          <PlaceholderPage
-            title="Işık Kirliliği Haritası"
-            description="Bortle/SQM katmanı, veri lisansı ve kaynak atfı doğrulandıktan sonra yayına alınacak (§14.1)."
-          />
-        ),
-      },
-      {
-        path: 'harita/gozlem-noktalari',
-        element: route(
-          named(
-            () => import('@/features/observing-sites/SitesPage'),
-            'SitesPage'
-          )
-        ),
-      },
-      {
-        path: 'harita/etkinlikler',
+        path: 'etkinlikler/harita',
         element: (
           <PlaceholderPage
             title="Etkinlik Haritası"
@@ -164,83 +136,48 @@ export const router = createRouter([
         ),
       },
       {
-        path: 'harita/istasyonlar',
+        path: 'topluluklar',
         element: (
           <PlaceholderPage
-            title="Canlı SQM / All-Sky İstasyonları"
-            description="Karanlık gökyüzü canlı ölçüm ağı (§8.7) Faz 3'te devreye alınacak."
+            title="Kulüpler ve Topluluklar"
+            description="Dernekler, üniversite kulüpleri ve gözlem grupları için kurumsal profiller (§8.11)."
           />
         ),
       },
+      { path: 'topluluk/:slug', element: <PlaceholderPage title="Topluluk" /> },
+
+      /* ═════════════ HABERLER ═════════════ */
       {
-        path: 'gozlem-noktasi/:slug',
+        path: 'haberler',
+        element: route(
+          named(() => import('@/features/news/NewsPage'), 'NewsPage')
+        ),
+      },
+      {
+        path: 'haber/:slug',
+        element: route(
+          named(() => import('@/features/news/NewsDetailPage'), 'NewsDetailPage')
+        ),
+      },
+
+      /* ═════════════ YAZILAR ═════════════ */
+      {
+        path: 'yazilar',
+        element: route(
+          named(() => import('@/features/articles/ArticlesPage'), 'ArticlesPage')
+        ),
+      },
+      {
+        path: 'yazi/:slug',
         element: route(
           named(
-            () => import('@/features/observing-sites/SiteDetailPage'),
-            'SiteDetailPage'
+            () => import('@/features/articles/ArticleDetailPage'),
+            'ArticleDetailPage'
           )
         ),
       },
 
-      // Bu gece / planlayıcı
-      {
-        path: 'bu-gece',
-        element: (
-          <PlaceholderPage
-            title="Bu Gece Gökyüzünde"
-            description="Ay fazı, astronomik karanlık ve hedef önerileri. Efemeris servisi (§14.2) bağlandığında açılacak."
-          />
-        ),
-      },
-      {
-        path: 'planlayici',
-        element: (
-          <PlaceholderPage
-            title="Gözlem ve Çekim Planlayıcı"
-            description="Gece planı, hedef sırası ve yükseklik grafiği."
-          />
-        ),
-      },
-
-      // Ekipman
-      {
-        path: 'ekipman',
-        element: route(
-          named(
-            () => import('@/features/equipment/EquipmentPage'),
-            'EquipmentPage'
-          )
-        ),
-      },
-      {
-        path: 'ekipman/:category',
-        element: route(
-          named(
-            () => import('@/features/equipment/EquipmentPage'),
-            'EquipmentPage'
-          )
-        ),
-      },
-      {
-        path: 'ekipman/:brand/:slug',
-        element: (
-          <PlaceholderPage
-            title="Ekipman Modeli"
-            description="Model detay sayfaları (teknik alanlar, uyumluluk, bu ekipmanla çekilmiş fotoğraflar) Faz 1.5'te."
-          />
-        ),
-      },
-      {
-        path: 'setup/:id',
-        element: (
-          <PlaceholderPage
-            title="Setup Detayı"
-            description="Kayıtlı setup'lar ve fotoğraf ilişkisi Faz 1.5'te yayına alınacak."
-          />
-        ),
-      },
-
-      // Araçlar
+      /* ═════════════ ARAÇLAR ═════════════ */
       {
         path: 'araclar',
         element: route(
@@ -250,23 +187,16 @@ export const router = createRouter([
           )
         ),
       },
-      {
-        path: 'araclar/fov',
-        element: route(
-          named(
-            () => import('@/features/calculators/FovCalculatorPage'),
-            'FovCalculatorPage'
-          )
-        ),
-      },
+      { path: 'araclar/fov', element: fovPage() },
       // Pixel scale hesabı FOV hesaplayıcının içinde sunulur.
+      { path: 'araclar/pixel-scale', element: fovPage() },
       {
-        path: 'araclar/pixel-scale',
-        element: route(
-          named(
-            () => import('@/features/calculators/FovCalculatorPage'),
-            'FovCalculatorPage'
-          )
+        path: 'araclar/isik-kirliligi',
+        element: (
+          <PlaceholderPage
+            title="Işık Kirliliği Haritası"
+            description="Bortle/SQM katmanı, veri lisansı ve kaynak atfı doğrulandıktan sonra yayına alınacak (§14.1)."
+          />
         ),
       },
       {
@@ -292,34 +222,32 @@ export const router = createRouter([
         element: (
           <PlaceholderPage
             title="Ay ve Astronomik Karanlık Takvimi"
-            description="Aylık karanlık pencere takvimi; efemeris servisi (§14.2) bağlandığında açılacak."
+            description="Aylık karanlık pencere takvimi."
           />
         ),
       },
-
-      // Eğitim
       {
-        path: 'egitim',
-        element: route(
-          named(
-            () => import('@/features/learning/LearningPage'),
-            'LearningPage'
-          )
-        ),
-      },
-      {
-        path: 'egitim/:slug',
+        path: 'bu-gece',
         element: (
           <PlaceholderPage
-            title="Eğitim İçeriği"
-            description="İçerik detay sayfaları ve işleme laboratuvarı Faz 1.8'de yayına alınacak."
+            title="Bu Gece Gökyüzünde"
+            description="Ana sayfadaki panel bu sayfada gün gün genişletilecek: yükseklik grafikleri, ay penceresi ve hedef sırası."
+          />
+        ),
+      },
+      {
+        path: 'planlayici',
+        element: (
+          <PlaceholderPage
+            title="Gözlem ve Çekim Planlayıcı"
+            description="Gece planı, hedef sırası ve yükseklik grafiği."
           />
         ),
       },
 
-      // İkinci el
+      /* ═════════════ İLANLAR ═════════════ */
       {
-        path: 'ikinci-el',
+        path: 'ilanlar',
         element: route(
           named(
             () => import('@/features/marketplace/MarketplacePage'),
@@ -337,19 +265,25 @@ export const router = createRouter([
         ),
       },
 
-      // Topluluk / profil
+      /* ═════════════ SAHA ═════════════ */
+      { path: 'saha', element: sitesPage() },
       {
-        path: 'topluluklar',
-        element: (
-          <PlaceholderPage
-            title="Kulüpler ve Topluluklar"
-            description="Dernekler, üniversite kulüpleri ve gözlem grupları için kurumsal profiller (§8.11)."
-          />
+        path: 'saha/:slug',
+        element: route(
+          named(
+            () => import('@/features/observing-sites/SiteDetailPage'),
+            'SiteDetailPage'
+          )
         ),
       },
       {
-        path: 'topluluk/:slug',
-        element: <PlaceholderPage title="Topluluk" />,
+        path: 'saha/istasyonlar',
+        element: (
+          <PlaceholderPage
+            title="Canlı SQM / All-Sky İstasyonları"
+            description="Karanlık gökyüzü canlı ölçüm ağı (§8.7) Faz 3'te devreye alınacak."
+          />
+        ),
       },
       {
         path: 'tesisler',
@@ -360,39 +294,70 @@ export const router = createRouter([
           />
         ),
       },
+
+      /* ═════════════ REFERANS ═════════════ */
       {
-        path: 'profil/:username',
+        path: 'hedefler',
         element: route(
-          named(() => import('@/features/profile/ProfilePage'), 'ProfilePage')
+          named(() => import('@/features/targets/TargetsPage'), 'TargetsPage')
+        ),
+      },
+      {
+        path: 'hedef/:slug',
+        element: route(
+          named(
+            () => import('@/features/targets/TargetDetailPage'),
+            'TargetDetailPage'
+          )
+        ),
+      },
+      { path: 'ekipman', element: equipmentPage() },
+      { path: 'ekipman/:category', element: equipmentPage() },
+      {
+        path: 'ekipman/:brand/:slug',
+        element: (
+          <PlaceholderPage
+            title="Ekipman Modeli"
+            description="Model detay sayfaları (teknik alanlar, uyumluluk, bu ekipmanla çekilmiş fotoğraflar) Faz 1.5'te."
+          />
+        ),
+      },
+      {
+        path: 'setup/:id',
+        element: (
+          <PlaceholderPage
+            title="Setup Detayı"
+            description="Kayıtlı setup'lar ve fotoğraf ilişkisi Faz 1.5'te yayına alınacak."
+          />
         ),
       },
 
-      // Üye paneli — alt sayfalar hesap sistemiyle birlikte açılacak (§7.16)
-      {
-        path: 'panel',
-        element: route(
-          named(() => import('@/features/panel/PanelPage'), 'PanelPage')
-        ),
-      },
-      {
-        path: 'panel/:section',
-        element: route(
-          named(() => import('@/features/panel/PanelPage'), 'PanelPage')
-        ),
-      },
-
-      // Yönetim
+      /* ═════════════ HESAP VE YÖNETİM ═════════════ */
+      { path: 'panel', element: panelPage() },
+      { path: 'panel/:section', element: panelPage() },
       {
         path: 'admin',
         element: (
           <PlaceholderPage
             title="Yönetim Paneli"
-            description="Moderasyon kuyrukları, ekipman/etkinlik yönetimi ve depolama paneli (§13). Yetkilendirme sunucu tarafında zorunludur."
+            description="Moderasyon kuyrukları, etkinlik/haber girişi ve depolama paneli (§13). Yetkilendirme sunucu tarafında zorunludur."
           />
         ),
       },
+      {
+        path: 'giris',
+        element: route(
+          named(() => import('@/features/auth/LoginPage'), 'LoginPage')
+        ),
+      },
+      {
+        path: 'kayit',
+        element: route(
+          named(() => import('@/features/auth/RegisterPage'), 'RegisterPage')
+        ),
+      },
 
-      // Kurumsal / hukuki
+      /* ═════════════ KURUMSAL ═════════════ */
       {
         path: 'kvkk',
         element: route(
@@ -412,18 +377,31 @@ export const router = createRouter([
         ),
       },
 
-      // Auth
+      /* ═════════════ ESKİ ADRESLER ═════════════
+       * Modül adları değişti; eski yollar kalıcı olarak yönlendirilir.
+       * Yer imleri ve arama motoru indeksi kırılmaz. */
+      { path: 'fotograflar', element: <RedirectTo to="/galeri" /> },
+      { path: 'fotograflar/yukle', element: <RedirectTo to="/galeri/yukle" /> },
+      { path: 'egitim', element: <RedirectTo to="/yazilar" /> },
+      { path: 'egitim/:slug', element: <RedirectParam to="/yazi/:slug" /> },
+      { path: 'ikinci-el', element: <RedirectTo to="/ilanlar" /> },
+      { path: 'harita', element: <RedirectTo to="/saha" /> },
+      { path: 'harita/gozlem-noktalari', element: <RedirectTo to="/saha" /> },
       {
-        path: 'giris',
-        element: route(
-          named(() => import('@/features/auth/LoginPage'), 'LoginPage')
-        ),
+        path: 'harita/isik-kirliligi',
+        element: <RedirectTo to="/araclar/isik-kirliligi" />,
       },
       {
-        path: 'kayit',
-        element: route(
-          named(() => import('@/features/auth/RegisterPage'), 'RegisterPage')
-        ),
+        path: 'harita/etkinlikler',
+        element: <RedirectTo to="/etkinlikler/harita" />,
+      },
+      {
+        path: 'harita/istasyonlar',
+        element: <RedirectTo to="/saha/istasyonlar" />,
+      },
+      {
+        path: 'gozlem-noktasi/:slug',
+        element: <RedirectParam to="/saha/:slug" />,
       },
 
       // 404

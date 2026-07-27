@@ -40,15 +40,15 @@ export function SiteDetailPage() {
         jsonLd={[
           placeJsonLd({
             name: site.name,
-            path: `/gozlem-noktasi/${site.slug}`,
+            path: `/saha/${site.slug}`,
             description: site.description,
             region: site.region,
             altitude: site.altitude,
           }),
           breadcrumbJsonLd([
             { name: 'Ana Sayfa', path: '/' },
-            { name: 'Gözlem Noktaları', path: '/harita/gozlem-noktalari' },
-            { name: site.name, path: `/gozlem-noktasi/${site.slug}` },
+            { name: 'Gözlem Noktaları', path: '/saha' },
+            { name: site.name, path: `/saha/${site.slug}` },
           ]),
         ]}
       />
@@ -143,7 +143,7 @@ export function SiteDetailPage() {
               </p>
             </div>
             <ButtonLink
-              to="/harita/gozlem-noktalari"
+              to="/saha"
               variant="secondary"
               className="mt-4 w-full"
             >

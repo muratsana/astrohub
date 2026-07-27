@@ -1,46 +1,44 @@
+import { HeroSection } from './sections/HeroSection';
 import { TonightPanel } from './sections/TonightPanel';
 import { RecentRecords } from './sections/RecentRecords';
-import { ManifestoStrip } from './sections/ManifestoStrip';
 import { UpcomingEvents } from './sections/UpcomingEvents';
 import { DarkSkyStrip } from './sections/DarkSkyStrip';
+import { NewsStrip } from './sections/NewsStrip';
 import { ToolsStrip } from './sections/ToolsStrip';
-import { LearningStrip } from './sections/LearningStrip';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { organizationJsonLd } from '@/lib/seo';
 
 /**
  * ANA SAYFA — Rasathane Terminali.
  *
- * Bölüm sırası "kayıt odaklı": site kendini anlatmadan önce çalışırken
- * gösterir. Üstte bu gecenin gökyüzü durumu (dönen kullanıcı için her gece
- * yeni değer), sonra topluluğun kayıtları; ürün mesajı üçüncü sıraya,
- * tek bir şeride iner.
- *
- *   1  Bu gece · gerçek efemeris hesabı
- *   2  Son kayıtlar · künyeli karo ızgarası
- *   3  Manifesto şeridi
+ *   1  Hero · beş modül mockup'ı + slogan (site ne yapar)
+ *   2  Bu gece · gerçek efemeris hesabı
+ *   3  Galeriden son yüklenenler
  *   4  Yaklaşan etkinlikler · tablo
  *   5  Karanlık gökyüzü · en iyi üç nokta
- *   6  Araçlar
- *   7  Eğitim
+ *   6  Haberler ve yazılar · iki sütun
+ *   7  Araçlar
+ *
+ * Manifesto şeridi kaldırıldı: ürün mesajını artık hero taşıyor, aynı şeyi
+ * iki kez söylemeye gerek yok.
  */
 export function HomePage() {
   return (
     <>
       <PageMeta
         bare
-        title="Astrohub — Gökyüzü kayıt altında"
-        description="Türkiye'nin astrofotoğraf kayıt ağı. Her kare hedefi, optiği, filtresi ve gökyüzü koşullarıyla arşivlenir. Bu gece gökyüzünde ne var, hangi hedef ne zaman zirve yapıyor — canlı hesapla."
+        title="Astrohub — Gökyüzünü kaydet, paylaş, planla"
+        description="Türkiye'nin astronomi platformu. Astrofotoğraflarını teknik künyesiyle arşivle, etkinlikleri takip et, karanlık gökyüzü noktalarını bul, gökyüzü araçlarıyla geceni planla."
         jsonLd={organizationJsonLd}
       />
 
+      <HeroSection />
       <TonightPanel />
       <RecentRecords />
-      <ManifestoStrip />
       <UpcomingEvents />
       <DarkSkyStrip />
+      <NewsStrip />
       <ToolsStrip />
-      <LearningStrip />
     </>
   );
 }

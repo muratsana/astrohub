@@ -3,7 +3,8 @@ import { targets } from '../features/targets/data';
 import { events } from '../features/events/data';
 import { sites } from '../features/observing-sites/data';
 import { equipment } from '../features/equipment/data';
-import { learningItems } from '../features/learning/data';
+import { articles } from '../features/articles/data';
+import { news } from '../features/news/data';
 
 /**
  * Sitemap girdileri (§16.2). Yalnızca indekslenebilir, herkese açık sayfalar
@@ -26,20 +27,20 @@ export interface SitemapEntry {
 export const staticEntries: SitemapEntry[] = [
   { path: '/', priority: 1.0, changefreq: 'daily' },
   { path: '/kesfet', priority: 0.8, changefreq: 'daily' },
-  { path: '/fotograflar', priority: 0.9, changefreq: 'daily' },
+  { path: '/galeri', priority: 0.9, changefreq: 'daily' },
   { path: '/hedefler', priority: 0.8, changefreq: 'weekly' },
   { path: '/etkinlikler', priority: 0.9, changefreq: 'daily' },
-  { path: '/harita', priority: 0.8, changefreq: 'weekly' },
-  { path: '/harita/gozlem-noktalari', priority: 0.8, changefreq: 'weekly' },
-  { path: '/harita/isik-kirliligi', priority: 0.6, changefreq: 'monthly' },
+  { path: '/saha', priority: 0.8, changefreq: 'weekly' },
+  { path: '/haberler', priority: 0.9, changefreq: 'daily' },
+  { path: '/araclar/isik-kirliligi', priority: 0.6, changefreq: 'monthly' },
   { path: '/bu-gece', priority: 0.6, changefreq: 'daily' },
   { path: '/planlayici', priority: 0.5, changefreq: 'monthly' },
   { path: '/ekipman', priority: 0.7, changefreq: 'weekly' },
   { path: '/araclar', priority: 0.7, changefreq: 'monthly' },
   { path: '/araclar/fov', priority: 0.7, changefreq: 'monthly' },
   { path: '/araclar/pixel-scale', priority: 0.6, changefreq: 'monthly' },
-  { path: '/egitim', priority: 0.8, changefreq: 'weekly' },
-  { path: '/ikinci-el', priority: 0.7, changefreq: 'daily' },
+  { path: '/yazilar', priority: 0.8, changefreq: 'weekly' },
+  { path: '/ilanlar', priority: 0.7, changefreq: 'daily' },
   { path: '/topluluklar', priority: 0.5, changefreq: 'monthly' },
   { path: '/hakkinda', priority: 0.4, changefreq: 'yearly' },
   { path: '/kvkk', priority: 0.3, changefreq: 'yearly' },
@@ -68,7 +69,7 @@ export function contentEntries(): SitemapEntry[] {
       changefreq: 'weekly' as const,
     })),
     ...sites.map((s) => ({
-      path: `/gozlem-noktasi/${s.slug}`,
+      path: `/saha/${s.slug}`,
       priority: 0.7,
       changefreq: 'monthly' as const,
     })),
@@ -77,9 +78,14 @@ export function contentEntries(): SitemapEntry[] {
       priority: 0.6,
       changefreq: 'monthly' as const,
     })),
-    ...learningItems.map((l) => ({
-      path: `/egitim/${l.slug}`,
+    ...articles.map((a) => ({
+      path: `/yazi/${a.slug}`,
       priority: 0.6,
+      changefreq: 'monthly' as const,
+    })),
+    ...news.map((n) => ({
+      path: `/haber/${n.slug}`,
+      priority: 0.7,
       changefreq: 'monthly' as const,
     })),
   ];

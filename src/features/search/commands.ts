@@ -74,7 +74,7 @@ const actionCommands: Command[] = [
     kind: 'arac',
     title: 'Yeni kayıt aç',
     subtitle: 'Astrofotoğraf yükleme sihirbazını başlat',
-    to: '/fotograflar/yukle',
+    to: '/galeri/yukle',
     keywords: ['yükle', 'kayıt', 'yeni', 'upload'],
   },
 ];
@@ -83,7 +83,7 @@ const actionCommands: Command[] = [
 export const defaultCommands: Command[] = [
   ...actionCommands.filter((c) => c.id !== 'arac:saha-modu'),
   ...navCommands.filter((c) =>
-    ['/bu-gece', '/fotograflar', '/etkinlikler', '/harita'].includes(
+    ['/bu-gece', '/galeri', '/etkinlikler', '/saha'].includes(
       c.to ?? ''
     )
   ),

@@ -10,7 +10,7 @@ import { tintFor } from '@/components/media/tints';
 import { targets } from '@/features/targets/data';
 
 /**
- * SON KAYITLAR — ana sayfanın ikinci bölümü.
+ * GALERİDEN SON YÜKLENENLER.
  *
  * Topluluğun ürettiği kayıtlar öne alınır: site kendini anlatmadan önce
  * çalışırken gösterir. Künye her karoda görünür (yön kararı).
@@ -30,10 +30,10 @@ export function RecentRecords() {
   return (
     <Container className="py-12 sm:py-14">
       <SectionHeader
-        title="Son Kayıtlar"
-        meta={`${photos.length} kayıt`}
-        linkTo="/fotograflar"
-        linkLabel="Tüm arşiv"
+        title="Galeriden Son Yüklenenler"
+        meta={`${photos.length} fotoğraf`}
+        linkTo="/galeri"
+        linkLabel="Galeri"
       />
 
       <ul className="grid grid-cols-2 gap-3 lg:grid-cols-4">

@@ -20,9 +20,9 @@ import { cn } from '@/lib/cn';
 
 const iconFor: Record<string, typeof ImageIcon> = {
   '/': HomeIcon,
-  '/fotograflar': ImageIcon,
+  '/galeri': ImageIcon,
   '/etkinlikler': CalendarIcon,
-  '/harita': MapIcon,
+  '/saha': MapIcon,
 };
 
 /**
@@ -63,7 +63,7 @@ export function MobileNav({ onOpenPalette }: { onOpenPalette: () => void }) {
 
           {/* Ortadaki kayıt aksiyonu (§5.3) */}
           <NavLink
-            to="/fotograflar/yukle"
+            to="/galeri/yukle"
             aria-label="Yeni kayıt aç"
             className="flex flex-1 items-center justify-center py-2"
           >

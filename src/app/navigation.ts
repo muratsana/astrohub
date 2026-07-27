@@ -1,13 +1,16 @@
 /**
  * Navigasyon haritası — Rasathane Terminali.
  *
- * Karar: üst menüde açılır menü **yoktur**. Yedi ana giriş düz biçimde
- * durur; alt sayfalara ⌘K komut paletinden ve footer'daki tam modül
- * haritasından ulaşılır. Bu, terminal metaforuyla tutarlı: gezinme
- * tıklanarak değil, yazılarak yapılır.
+ * Yedi ana modül düz biçimde durur; üst menüde açılır menü **yoktur**.
+ * Alt sayfalara ⌘K komut paletinden ve footer'daki tam modül haritasından
+ * ulaşılır. Terminal metaforuyla tutarlı: gezinme tıklanarak değil, yazılarak.
  *
  * `siteMap` tek kaynaktır — footer, komut paleti ve mobil çekmece hep
  * buradan beslenir, hiçbir bağlantı iki yerde ayrı ayrı tanımlanmaz.
+ *
+ * Not: Hedef kataloğu ve ekipman veritabanı üst menüde değildir. Bunlar
+ * başka modüllerin (galeri, bu gece, araçlar) içinden doğal olarak
+ * kullanılan referans modülleridir; footer ve palette tam erişilebilir.
  */
 
 export interface NavItem {
@@ -26,15 +29,15 @@ export interface NavGroup {
   items: NavItem[];
 }
 
-/** Üst menü (§5.1) — yedi ana giriş, düz. */
+/** Üst menü — yedi ana modül. */
 export const primaryNav: NavItem[] = [
-  { label: 'Kayıtlar', to: '/fotograflar' },
-  { label: 'Hedefler', to: '/hedefler' },
-  { label: 'Etkinlik', to: '/etkinlikler' },
-  { label: 'Saha', to: '/harita' },
-  { label: 'Ekipman', to: '/ekipman' },
+  { label: 'Galeri', to: '/galeri' },
+  { label: 'Etkinlikler', to: '/etkinlikler' },
+  { label: 'Haberler', to: '/haberler' },
+  { label: 'Yazılar', to: '/yazilar' },
   { label: 'Araçlar', to: '/araclar' },
-  { label: 'Eğitim', to: '/egitim' },
+  { label: 'İlanlar', to: '/ilanlar' },
+  { label: 'Saha', to: '/saha' },
 ];
 
 /**
@@ -44,100 +47,42 @@ export const primaryNav: NavItem[] = [
  */
 export const siteMap: NavGroup[] = [
   {
-    title: 'Kayıt',
+    title: 'Galeri',
     items: [
       {
-        label: 'Fotoğraf Arşivi',
-        to: '/fotograflar',
-        description: 'Tüm kayıtlar, filtreli',
-        keywords: ['galeri', 'arşiv', 'foto'],
+        label: 'Fotoğraf Galerisi',
+        to: '/galeri',
+        description: 'Topluluğun künyeli astrofotoğraf arşivi',
+        keywords: ['galeri', 'arşiv', 'foto', 'astrofotoğraf'],
       },
       {
-        label: 'Kayıt Aç',
-        to: '/fotograflar/yukle',
-        description: 'Yeni astrofotoğraf yükle',
-        keywords: ['yükle', 'upload', 'ekle'],
+        label: 'Fotoğraf Yükle',
+        to: '/galeri/yukle',
+        description: 'Yeni kayıt aç — hedef, setup, pozlama',
+        keywords: ['yükle', 'upload', 'ekle', 'paylaş'],
       },
       {
         label: 'Astrofotoğrafçılar',
         to: '/kesfet',
         description: 'Topluluğun üreticileri',
-        keywords: ['keşfet', 'kullanıcı'],
+        keywords: ['keşfet', 'kullanıcı', 'fotoğrafçı'],
       },
     ],
   },
   {
-    title: 'Gökyüzü',
-    items: [
-      {
-        label: 'Bu Gece Gökyüzünde',
-        to: '/bu-gece',
-        description: 'Ay fazı, karanlık penceresi, hedef önerileri',
-        keywords: ['tonight', 'gece', 'karanlık'],
-      },
-      {
-        label: 'Hedef Kataloğu',
-        to: '/hedefler',
-        description: 'Messier, NGC, IC',
-        keywords: ['messier', 'ngc', 'ic', 'katalog'],
-      },
-      {
-        label: 'Gözlem ve Çekim Planlayıcı',
-        to: '/planlayici',
-        description: 'Gece planı ve hedef sırası',
-        soon: true,
-        keywords: ['plan', 'gece planı'],
-      },
-      {
-        label: 'Ay ve Karanlık Takvimi',
-        to: '/araclar/takvim',
-        description: 'Aylık karanlık pencere takvimi',
-        soon: true,
-        keywords: ['takvim', 'ay fazı'],
-      },
-    ],
-  },
-  {
-    title: 'Saha',
-    items: [
-      {
-        // Kanonik adres `/harita`; `/harita/gozlem-noktalari` aynı sayfayı
-        // sunan bir takma addır (§20) ve menüde tekrar edilmez.
-        label: 'Gözlem Noktaları',
-        to: '/harita',
-        description: 'Bortle, SQM, kamp olanakları',
-        keywords: ['kamp', 'astrocamping', 'nokta', 'saha', 'harita'],
-      },
-      {
-        label: 'Işık Kirliliği Haritası',
-        to: '/harita/isik-kirliligi',
-        description: 'Bortle/SQM katmanı',
-        soon: true,
-        keywords: ['bortle', 'sqm', 'ışık kirliliği'],
-      },
-      {
-        label: 'Etkinlik Haritası',
-        to: '/harita/etkinlikler',
-        description: 'Yaklaşan etkinliklerin konumları',
-        soon: true,
-      },
-      {
-        label: 'Canlı SQM / All-Sky',
-        to: '/harita/istasyonlar',
-        description: 'Karanlık gökyüzü ölçüm ağı',
-        soon: true,
-        keywords: ['istasyon', 'allsky'],
-      },
-    ],
-  },
-  {
-    title: 'Etkinlik',
+    title: 'Etkinlikler',
     items: [
       {
         label: 'Etkinlik Takvimi',
         to: '/etkinlikler',
         description: 'Türkiye astronomi etkinlikleri',
-        keywords: ['şenlik', 'kamp', 'atölye'],
+        keywords: ['şenlik', 'kamp', 'atölye', 'takvim'],
+      },
+      {
+        label: 'Etkinlik Haritası',
+        to: '/etkinlikler/harita',
+        description: 'Yaklaşan etkinliklerin konumları',
+        soon: true,
       },
       {
         label: 'Kulüpler ve Topluluklar',
@@ -145,28 +90,27 @@ export const siteMap: NavGroup[] = [
         description: 'Dernek ve üniversite kulüpleri',
         soon: true,
       },
+    ],
+  },
+  {
+    title: 'Haberler',
+    items: [
       {
-        label: 'Rasathane ve Planetaryumlar',
-        to: '/tesisler',
-        description: 'Türkiye astronomi tesisleri',
-        soon: true,
+        label: 'Güncel Haberler',
+        to: '/haberler',
+        description: 'Astronomi ve uzay gündemi',
+        keywords: ['haber', 'gündem', 'duyuru'],
       },
     ],
   },
   {
-    title: 'Ekipman',
+    title: 'Yazılar',
     items: [
       {
-        label: 'Ekipman Veritabanı',
-        to: '/ekipman',
-        description: 'Teleskop, montür, kamera, filtre',
-        keywords: ['teleskop', 'montür', 'kamera', 'filtre'],
-      },
-      {
-        label: 'İkinci El İlanlar',
-        to: '/ikinci-el',
-        description: 'Ekipman pazaryeri',
-        keywords: ['satılık', 'pazar', 'ilan'],
+        label: 'Tüm Yazılar',
+        to: '/yazilar',
+        description: 'Rehberler, eğitim yazıları, işleme dersleri',
+        keywords: ['makale', 'eğitim', 'rehber', 'ders', 'işleme'],
       },
     ],
   },
@@ -176,7 +120,7 @@ export const siteMap: NavGroup[] = [
       {
         label: 'Tüm Araçlar',
         to: '/araclar',
-        description: 'Hesaplayıcı ve planlayıcıların listesi',
+        description: 'Hesaplayıcı ve haritaların listesi',
         keywords: ['araç', 'hesaplayıcı', 'tools'],
       },
       {
@@ -192,6 +136,26 @@ export const siteMap: NavGroup[] = [
         keywords: ['pixel scale', 'örnekleme', 'sampling'],
       },
       {
+        label: 'Işık Kirliliği Haritası',
+        to: '/araclar/isik-kirliligi',
+        description: 'Bortle / SQM katmanı',
+        soon: true,
+        keywords: ['bortle', 'sqm', 'ışık kirliliği', 'harita'],
+      },
+      {
+        label: 'Bu Gece Gökyüzünde',
+        to: '/bu-gece',
+        description: 'Ay fazı, karanlık penceresi, hedef önerileri',
+        keywords: ['tonight', 'gece', 'karanlık', 'efemeris'],
+      },
+      {
+        label: 'Gözlem ve Çekim Planlayıcı',
+        to: '/planlayici',
+        description: 'Gece planı ve hedef sırası',
+        soon: true,
+        keywords: ['plan', 'gece planı'],
+      },
+      {
         label: 'Mosaic Planlayıcı',
         to: '/araclar/mosaic',
         description: 'Çok panelli kadraj planı',
@@ -203,23 +167,71 @@ export const siteMap: NavGroup[] = [
         description: 'Yük, backfocus, guide uyumu',
         soon: true,
       },
+      {
+        label: 'Ay ve Karanlık Takvimi',
+        to: '/araclar/takvim',
+        description: 'Aylık karanlık pencere takvimi',
+        soon: true,
+        keywords: ['takvim', 'ay fazı'],
+      },
     ],
   },
   {
-    title: 'Öğrenme',
+    title: 'İlanlar',
     items: [
       {
-        label: 'Eğitim Merkezi',
-        to: '/egitim',
-        description: 'Başlangıçtan ileri seviyeye rehberler',
-        keywords: ['ders', 'rehber', 'işleme'],
+        label: 'İkinci El İlanlar',
+        to: '/ilanlar',
+        description: 'Ekipman alım-satım pazaryeri',
+        keywords: ['satılık', 'pazar', 'ilan', 'ikinci el'],
+      },
+    ],
+  },
+  {
+    title: 'Saha',
+    items: [
+      {
+        label: 'Gözlem Alanları',
+        to: '/saha',
+        description: 'Karanlık gökyüzü noktaları ve haritası',
+        keywords: ['kamp', 'astrocamping', 'nokta', 'saha', 'harita'],
+      },
+      {
+        label: 'Canlı SQM / All-Sky',
+        to: '/saha/istasyonlar',
+        description: 'Karanlık gökyüzü ölçüm ağı',
+        soon: true,
+        keywords: ['istasyon', 'allsky'],
+      },
+      {
+        label: 'Rasathane ve Planetaryumlar',
+        to: '/tesisler',
+        description: 'Türkiye astronomi tesisleri',
+        soon: true,
+      },
+    ],
+  },
+  {
+    title: 'Referans',
+    items: [
+      {
+        label: 'Hedef Kataloğu',
+        to: '/hedefler',
+        description: 'Messier, NGC, IC',
+        keywords: ['messier', 'ngc', 'ic', 'katalog', 'hedef'],
+      },
+      {
+        label: 'Ekipman Veritabanı',
+        to: '/ekipman',
+        description: 'Teleskop, montür, kamera, filtre',
+        keywords: ['teleskop', 'montür', 'kamera', 'filtre', 'ekipman'],
       },
     ],
   },
   {
     title: 'Hesap',
     items: [
-      { label: 'Üye Paneli', to: '/panel', description: 'Kayıtlar, kota, üyelik' },
+      { label: 'Üye Paneli', to: '/panel', description: 'Fotoğraflar, kota, üyelik' },
       { label: 'Giriş Yap', to: '/giris' },
       { label: 'Üye Ol', to: '/kayit' },
     ],
@@ -240,15 +252,15 @@ export function allNavItems(): NavItem[] {
 }
 
 /**
- * Mobil alt navigasyon (§5.3). Çubukta dört giriş + ortada "+" + "Daha
- * Fazla"; Profil/Üye Paneli çekmecenin en üstünde birincil satır olarak
- * durur (yedi hücre dar ekranda etiketleri kırpıyordu).
+ * Mobil alt navigasyon. Çubukta dört giriş + ortada "+" + "Daha Fazla";
+ * Üye Paneli çekmecenin en üstünde birincil satır olarak durur (yedi hücre
+ * dar ekranda etiketleri kırpıyordu).
  */
 export const mobileNav: NavItem[] = [
   { label: 'Ana', to: '/' },
-  { label: 'Kayıt', to: '/fotograflar' },
+  { label: 'Galeri', to: '/galeri' },
   { label: 'Etkinlik', to: '/etkinlikler' },
-  { label: 'Saha', to: '/harita' },
+  { label: 'Saha', to: '/saha' },
 ];
 
 /** Çekmecenin en üstünde sabit duran birincil giriş. */

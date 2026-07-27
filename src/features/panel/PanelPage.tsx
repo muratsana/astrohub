@@ -23,12 +23,12 @@ export function PanelPage() {
       to: '/panel',
       note: formatQuotaLabel(activePhotos),
     },
-    { label: 'Fotoğraf Yükle', to: '/fotograflar/yukle' },
+    { label: 'Fotoğraf Yükle', to: '/galeri/yukle' },
     { label: "Setup'larım", to: '/panel', note: 'Yakında' },
     { label: 'Planlarım', to: '/planlayici', note: 'Yakında' },
     { label: 'Etkinliklerim', to: '/etkinlikler' },
-    { label: 'Kayıtlı Noktalar', to: '/harita/gozlem-noktalari' },
-    { label: 'İlanlarım', to: '/ikinci-el', note: 'Yakında' },
+    { label: 'Kayıtlı Noktalar', to: '/saha' },
+    { label: 'İlanlarım', to: '/ilanlar', note: 'Yakında' },
     { label: 'Üyelik ve Ödeme', to: '/panel', note: 'Yakında' },
   ];
 

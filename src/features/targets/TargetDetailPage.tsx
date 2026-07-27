@@ -127,7 +127,7 @@ export function TargetDetailPage() {
           <SectionHeader
             title={`${target.catalog} Fotoğrafları`}
             description="Bu hedefin Astrohub topluluğundaki kareleri"
-            linkTo="/fotograflar"
+            linkTo="/galeri"
           />
           {targetPhotos.length === 0 ? (
             <p className="text-sm text-muted-foreground">

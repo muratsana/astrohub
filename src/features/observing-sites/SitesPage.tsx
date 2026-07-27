@@ -19,8 +19,8 @@ export function SitesPage() {
         description="Türkiye'nin karanlık gökyüzü noktaları: Bortle sınıfı, SQM, rakım, yol erişimi ve kamp olanaklarıyla değerlendirilmiş astrocamping alanları."
         jsonLd={breadcrumbJsonLd([
           { name: 'Ana Sayfa', path: '/' },
-          { name: 'Harita', path: '/harita' },
-          { name: 'Gözlem Noktaları', path: '/harita/gozlem-noktalari' },
+          { name: 'Harita', path: '/saha' },
+          { name: 'Gözlem Noktaları', path: '/saha' },
         ])}
       />
       <Container className="py-10 sm:py-14">
@@ -38,7 +38,7 @@ export function SitesPage() {
           {sites.map((site) => (
             <li key={site.slug}>
               <Link
-                to={`/gozlem-noktasi/${site.slug}`}
+                to={`/saha/${site.slug}`}
                 className="group flex h-full flex-col overflow-hidden rounded-card border border-border bg-surface-1 transition-colors hover:border-white/20"
               >
                 <PhotoPlaceholder

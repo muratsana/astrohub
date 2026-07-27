@@ -33,7 +33,7 @@ export function NotFoundPage() {
 
         <div className="mt-8 flex flex-wrap justify-center gap-3">
           <ButtonLink to="/">Ana sayfaya dön</ButtonLink>
-          <ButtonLink to="/fotograflar" variant="secondary">
+          <ButtonLink to="/galeri" variant="secondary">
             Fotoğrafları keşfet
           </ButtonLink>
         </div>
