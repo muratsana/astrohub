@@ -229,47 +229,41 @@ export const router = createRouter([
       },
       {
         path: 'araclar/mosaic',
-        element: (
-          <PlaceholderPage
-            title="Mosaic Planlayıcı"
-            description="Çok panelli kadraj planı ve örtüşme hesabı."
-          />
+        element: route(
+          named(
+            () => import('@/features/calculators/MosaicPlannerPage'),
+            'MosaicPlannerPage'
+          )
         ),
       },
       {
         path: 'araclar/setup-uyumluluk',
-        element: (
-          <PlaceholderPage
-            title="Setup Uyumluluk Kontrolü"
-            description="Montür yük kapasitesi, backfocus ve guide uyumu kontrolü (§7.12)."
-          />
+        element: route(
+          named(
+            () => import('@/features/calculators/SetupCompatibilityPage'),
+            'SetupCompatibilityPage'
+          )
         ),
       },
       {
         path: 'araclar/takvim',
-        element: (
-          <PlaceholderPage
-            title="Ay ve Astronomik Karanlık Takvimi"
-            description="Aylık karanlık pencere takvimi."
-          />
+        element: route(
+          named(
+            () => import('@/features/sky/DarkCalendarPage'),
+            'DarkCalendarPage'
+          )
         ),
       },
       {
         path: 'bu-gece',
-        element: (
-          <PlaceholderPage
-            title="Bu Gece Gökyüzünde"
-            description="Ana sayfadaki panel bu sayfada gün gün genişletilecek: yükseklik grafikleri, ay penceresi ve hedef sırası."
-          />
+        element: route(
+          named(() => import('@/features/sky/TonightPage'), 'TonightPage')
         ),
       },
       {
         path: 'planlayici',
-        element: (
-          <PlaceholderPage
-            title="Gözlem ve Çekim Planlayıcı"
-            description="Gece planı, hedef sırası ve yükseklik grafiği."
-          />
+        element: route(
+          named(() => import('@/features/sky/PlannerPage'), 'PlannerPage')
         ),
       },
 
