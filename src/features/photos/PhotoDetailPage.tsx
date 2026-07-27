@@ -14,6 +14,8 @@ import { getPhotoBySlug, photos } from './data';
 import { photoTypeLabels } from './types';
 import type { AstroPhoto } from './types';
 import { cn } from '@/lib/cn';
+import { PageMeta } from '@/components/seo/PageMeta';
+import { breadcrumbJsonLd, photoJsonLd } from '@/lib/seo';
 
 type TabId = 'cekim' | 'ekipman' | 'pozlama' | 'islem' | 'konum';
 
@@ -63,120 +65,141 @@ function PhotoDetail({ photo }: { photo: AstroPhoto }) {
   );
 
   return (
-    <Container className="py-8 sm:py-12">
-      {/* Görüntüleyici */}
-      <div className="relative overflow-hidden rounded-2xl border border-border">
-        <PhotoPlaceholder
-          gradient={photo.gradient}
-          alt={`${photo.title} — ${photo.target.catalog}`}
-          rounded="rounded-none"
-          className="aspect-[16/9] w-full sm:aspect-[2/1]"
-        />
-        <span className="absolute bottom-3 right-3 rounded-full bg-black/60 px-3 py-1 text-xs text-muted-foreground backdrop-blur-sm">
-          Tam çözünürlük Faz 1.2'de (görsel pipeline)
-        </span>
-      </div>
-
-      {/* Temel bilgi */}
-      <div className="mt-6 flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-        <div className="min-w-0">
-          <p className="text-sm font-medium text-primary">
-            {photo.target.catalog} · {photoTypeLabels[photo.type]}
-          </p>
-          <h1 className="mt-1 text-2xl font-semibold text-foreground sm:text-3xl">
-            {photo.title}
-          </h1>
-          <p className="tabular mt-2 text-sm text-muted-foreground">
-            <Link
-              to={`/profil/${photo.user.username}`}
-              className="font-medium text-foreground hover:text-primary"
-            >
-              {photo.user.displayName}
-            </Link>{' '}
-            · {new Date(photo.capturedAt).toLocaleDateString('tr-TR')} ·{' '}
-            {photo.location.label} · Toplam {formatIntegration(integration)}
-          </p>
-          <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-            {photo.description}
-          </p>
-        </div>
-
-        <div className="tabular flex shrink-0 items-center gap-2 text-sm">
-          <ActionChip>♥ {photo.likes}</ActionChip>
-          <ActionChip>💬 {photo.comments}</ActionChip>
-          <ActionChip>Kaydet</ActionChip>
-          <ActionChip>Paylaş</ActionChip>
-        </div>
-      </div>
-
-      {/* Sekmeler */}
-      <div
-        role="tablist"
-        aria-label="Teknik veri sekmeleri"
-        className="mt-8 flex flex-wrap gap-1 border-b border-border"
-      >
-        {tabs.map((t) => (
-          <button
-            key={t.id}
-            role="tab"
-            aria-selected={tab === t.id}
-            onClick={() => setTab(t.id)}
-            className={cn(
-              '-mb-px rounded-t-lg border-b-2 px-4 py-2.5 text-sm font-medium transition-colors',
-              tab === t.id
-                ? 'border-primary text-primary'
-                : 'border-transparent text-muted-foreground hover:text-foreground'
-            )}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
-
-      <div className="py-6">
-        {tab === 'cekim' && <CaptureTab photo={photo} />}
-        {tab === 'ekipman' && <EquipmentTab photo={photo} />}
-        {tab === 'pozlama' && <ExposureTab photo={photo} />}
-        {tab === 'islem' && <ProcessingTab photo={photo} />}
-        {tab === 'konum' && <LocationTab photo={photo} />}
-      </div>
-
-      {/* Alt öneriler (§7.3) */}
-      {related.length > 0 && (
-        <section className="mt-8 border-t border-border pt-10">
-          <SectionHeader
-            title="Benzer Fotoğraflar"
-            description="Aynı hedef veya aynı türden diğer kareler"
-            linkTo="/fotograflar"
+    <>
+      <PageMeta
+        title={`${photo.title} — ${photo.target.catalog}`}
+        description={`${photo.description.slice(0, 150)} · ${photo.setup.optic} + ${photo.setup.camera}, ${formatIntegration(integration)} entegrasyon, ${photo.city}.`}
+        jsonLd={[
+          photoJsonLd({
+            title: photo.title,
+            path: `/fotograf/${photo.slug}`,
+            description: photo.description,
+            author: photo.user.displayName,
+            capturedAt: photo.capturedAt,
+            license: photo.license,
+          }),
+          breadcrumbJsonLd([
+            { name: 'Ana Sayfa', path: '/' },
+            { name: 'Fotoğraflar', path: '/fotograflar' },
+            { name: photo.title, path: `/fotograf/${photo.slug}` },
+          ]),
+        ]}
+      />
+      <Container className="py-8 sm:py-12">
+        {/* Görüntüleyici */}
+        <div className="relative overflow-hidden rounded-2xl border border-border">
+          <PhotoPlaceholder
+            gradient={photo.gradient}
+            alt={`${photo.title} — ${photo.target.catalog}`}
+            rounded="rounded-none"
+            className="aspect-[16/9] w-full sm:aspect-[2/1]"
           />
-          <ul className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-            {related.map((p) => (
-              <li key={p.slug}>
-                <Link to={`/fotograf/${p.slug}`} className="group block">
-                  <PhotoPlaceholder
-                    gradient={p.gradient}
-                    alt={p.title}
-                    className="aspect-[4/3] w-full border border-border transition-transform duration-300 group-hover:scale-[1.03]"
-                  />
-                  <p className="mt-2 truncate text-sm font-medium text-foreground">
-                    {p.target.catalog} · {p.title}
-                  </p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    @{p.user.username}
-                  </p>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+          <span className="absolute bottom-3 right-3 rounded-full bg-black/60 px-3 py-1 text-xs text-muted-foreground backdrop-blur-sm">
+            Tam çözünürlük Faz 1.2'de (görsel pipeline)
+          </span>
+        </div>
 
-      <div className="mt-10">
-        <ButtonLink to="/fotograflar" variant="secondary">
-          ← Galeriye dön
-        </ButtonLink>
-      </div>
-    </Container>
+        {/* Temel bilgi */}
+        <div className="mt-6 flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-primary">
+              {photo.target.catalog} · {photoTypeLabels[photo.type]}
+            </p>
+            <h1 className="mt-1 text-2xl font-semibold text-foreground sm:text-3xl">
+              {photo.title}
+            </h1>
+            <p className="tabular mt-2 text-sm text-muted-foreground">
+              <Link
+                to={`/profil/${photo.user.username}`}
+                className="font-medium text-foreground hover:text-primary"
+              >
+                {photo.user.displayName}
+              </Link>{' '}
+              · {new Date(photo.capturedAt).toLocaleDateString('tr-TR')} ·{' '}
+              {photo.location.label} · Toplam {formatIntegration(integration)}
+            </p>
+            <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+              {photo.description}
+            </p>
+          </div>
+
+          <div className="tabular flex shrink-0 items-center gap-2 text-sm">
+            <ActionChip>♥ {photo.likes}</ActionChip>
+            <ActionChip>💬 {photo.comments}</ActionChip>
+            <ActionChip>Kaydet</ActionChip>
+            <ActionChip>Paylaş</ActionChip>
+          </div>
+        </div>
+
+        {/* Sekmeler */}
+        <div
+          role="tablist"
+          aria-label="Teknik veri sekmeleri"
+          className="mt-8 flex flex-wrap gap-1 border-b border-border"
+        >
+          {tabs.map((t) => (
+            <button
+              key={t.id}
+              role="tab"
+              aria-selected={tab === t.id}
+              onClick={() => setTab(t.id)}
+              className={cn(
+                '-mb-px rounded-t-lg border-b-2 px-4 py-2.5 text-sm font-medium transition-colors',
+                tab === t.id
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              )}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="py-6">
+          {tab === 'cekim' && <CaptureTab photo={photo} />}
+          {tab === 'ekipman' && <EquipmentTab photo={photo} />}
+          {tab === 'pozlama' && <ExposureTab photo={photo} />}
+          {tab === 'islem' && <ProcessingTab photo={photo} />}
+          {tab === 'konum' && <LocationTab photo={photo} />}
+        </div>
+
+        {/* Alt öneriler (§7.3) */}
+        {related.length > 0 && (
+          <section className="mt-8 border-t border-border pt-10">
+            <SectionHeader
+              title="Benzer Fotoğraflar"
+              description="Aynı hedef veya aynı türden diğer kareler"
+              linkTo="/fotograflar"
+            />
+            <ul className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+              {related.map((p) => (
+                <li key={p.slug}>
+                  <Link to={`/fotograf/${p.slug}`} className="group block">
+                    <PhotoPlaceholder
+                      gradient={p.gradient}
+                      alt={p.title}
+                      className="aspect-[4/3] w-full border border-border transition-transform duration-300 group-hover:scale-[1.03]"
+                    />
+                    <p className="mt-2 truncate text-sm font-medium text-foreground">
+                      {p.target.catalog} · {p.title}
+                    </p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      @{p.user.username}
+                    </p>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        <div className="mt-10">
+          <ButtonLink to="/fotograflar" variant="secondary">
+            ← Galeriye dön
+          </ButtonLink>
+        </div>
+      </Container>
+    </>
   );
 }
 
@@ -189,8 +212,14 @@ function CaptureTab({ photo }: { photo: AstroPhoto }) {
         ['Astronomik hedef', `${photo.target.name} (${photo.target.catalog})`],
         ['Takımyıldız', photo.target.constellation],
         ['Fotoğraf türü', photoTypeLabels[photo.type]],
-        ['Çekim tarihi', new Date(photo.capturedAt).toLocaleDateString('tr-TR')],
-        ['Toplam entegrasyon', formatIntegration(totalIntegrationSeconds(photo.exposures))],
+        [
+          'Çekim tarihi',
+          new Date(photo.capturedAt).toLocaleDateString('tr-TR'),
+        ],
+        [
+          'Toplam entegrasyon',
+          formatIntegration(totalIntegrationSeconds(photo.exposures)),
+        ],
         ['İşleme paleti', photo.palette],
       ]}
     />
@@ -230,9 +259,16 @@ function ExposureTab({ photo }: { photo: AstroPhoto }) {
           </thead>
           <tbody className="tabular">
             {photo.exposures.map((row) => (
-              <tr key={row.filter} className="border-b border-border/50 last:border-0">
-                <td className="px-4 py-2.5 font-medium text-foreground">{row.filter}</td>
-                <td className="px-4 py-2.5 text-muted-foreground">{row.frames}</td>
+              <tr
+                key={row.filter}
+                className="border-b border-border/50 last:border-0"
+              >
+                <td className="px-4 py-2.5 font-medium text-foreground">
+                  {row.filter}
+                </td>
+                <td className="px-4 py-2.5 text-muted-foreground">
+                  {row.frames}
+                </td>
                 <td className="px-4 py-2.5 text-muted-foreground">
                   {row.exposureSeconds < 1
                     ? `${(row.exposureSeconds * 1000).toFixed(0)} ms`
@@ -244,7 +280,10 @@ function ExposureTab({ photo }: { photo: AstroPhoto }) {
               </tr>
             ))}
             <tr className="bg-surface-1">
-              <td className="px-4 py-2.5 font-semibold text-foreground" colSpan={3}>
+              <td
+                className="px-4 py-2.5 font-semibold text-foreground"
+                colSpan={3}
+              >
                 Toplam entegrasyon
               </td>
               <td className="px-4 py-2.5 font-semibold text-primary">

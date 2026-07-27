@@ -8,6 +8,8 @@ import { PhotoPlaceholder } from '@/components/media/PhotoPlaceholder';
 import { PlaceholderPage } from '@/components/PlaceholderPage';
 import { photos } from '@/features/photos/data';
 import { getTargetBySlug, targetKindLabels } from './data';
+import { PageMeta } from '@/components/seo/PageMeta';
+import { breadcrumbJsonLd } from '@/lib/seo';
 
 /**
  * Hedef detay sayfası (§8.2): teknik künye + bu hedefin Astrohub'daki
@@ -39,105 +41,122 @@ export function TargetDetailPage() {
   }
 
   return (
-    <Container className="py-8 sm:py-12">
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
-        <PhotoPlaceholder
-          gradient={target.gradient}
-          alt={`${target.name} (${target.catalog})`}
-          className="aspect-[4/3] w-full border border-border"
-        />
+    <>
+      <PageMeta
+        title={`${target.catalog} — ${target.name}`}
+        description={`${targetKindLabels[target.kind]}, ${target.constellation} takımyıldızında. Astrohub topluluğundan ${targetPhotos.length} fotoğraf, teknik künye ve gözlem önerileri.`}
+        jsonLd={breadcrumbJsonLd([
+          { name: 'Ana Sayfa', path: '/' },
+          { name: 'Hedefler', path: '/hedefler' },
+          {
+            name: `${target.catalog} ${target.name}`,
+            path: `/hedef/${target.slug}`,
+          },
+        ])}
+      />
+      <Container className="py-8 sm:py-12">
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
+          <PhotoPlaceholder
+            gradient={target.gradient}
+            alt={`${target.name} (${target.catalog})`}
+            className="aspect-[4/3] w-full border border-border"
+          />
 
-        <div>
-          <p className="text-sm font-medium text-primary">
-            {target.catalog}
-            {target.aliases.length > 0 && (
-              <span className="text-muted-foreground">
-                {' '}
-                · {target.aliases.join(', ')}
-              </span>
-            )}
-          </p>
-          <h1 className="mt-1 text-2xl font-semibold text-foreground sm:text-3xl">
-            {target.name}
-          </h1>
-          <div className="mt-3 flex flex-wrap gap-1.5">
-            <Badge tone="primary">{targetKindLabels[target.kind]}</Badge>
-            <Badge>{target.constellation}</Badge>
-            <Badge
-              tone={
-                target.difficulty === 'Kolay'
-                  ? 'success'
-                  : target.difficulty === 'Orta'
-                    ? 'primary'
-                    : 'danger'
-              }
-            >
-              {target.difficulty}
-            </Badge>
-          </div>
+          <div>
+            <p className="text-sm font-medium text-primary">
+              {target.catalog}
+              {target.aliases.length > 0 && (
+                <span className="text-muted-foreground">
+                  {' '}
+                  · {target.aliases.join(', ')}
+                </span>
+              )}
+            </p>
+            <h1 className="mt-1 text-2xl font-semibold text-foreground sm:text-3xl">
+              {target.name}
+            </h1>
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              <Badge tone="primary">{targetKindLabels[target.kind]}</Badge>
+              <Badge>{target.constellation}</Badge>
+              <Badge
+                tone={
+                  target.difficulty === 'Kolay'
+                    ? 'success'
+                    : target.difficulty === 'Orta'
+                      ? 'primary'
+                      : 'danger'
+                }
+              >
+                {target.difficulty}
+              </Badge>
+            </div>
 
-          <p className="mt-4 leading-relaxed text-muted-foreground">
-            {target.description}
-          </p>
+            <p className="mt-4 leading-relaxed text-muted-foreground">
+              {target.description}
+            </p>
 
-          <dl className="tabular mt-6 grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
-            <Row label="Sağ açıklık (RA)" value={target.ra} />
-            <Row label="Yükselim (DEC)" value={target.dec} />
-            <Row
-              label="Görünür parlaklık"
-              value={target.magnitude ? `${target.magnitude} kadir` : '—'}
-            />
-            <Row label="Açısal boyut" value={target.angularSize} />
-            <Row label="En uygun aylar" value={target.bestMonths} />
-            <Row label="Önerilen odak" value={target.recommendedFocal} />
-            <Row label="Önerilen filtreler" value={target.recommendedFilters} />
-          </dl>
+            <dl className="tabular mt-6 grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
+              <Row label="Sağ açıklık (RA)" value={target.ra} />
+              <Row label="Yükselim (DEC)" value={target.dec} />
+              <Row
+                label="Görünür parlaklık"
+                value={target.magnitude ? `${target.magnitude} kadir` : '—'}
+              />
+              <Row label="Açısal boyut" value={target.angularSize} />
+              <Row label="En uygun aylar" value={target.bestMonths} />
+              <Row label="Önerilen odak" value={target.recommendedFocal} />
+              <Row
+                label="Önerilen filtreler"
+                value={target.recommendedFilters}
+              />
+            </dl>
 
-          <div className="mt-6 flex flex-wrap gap-3">
-            <ButtonLink to="/araclar/fov" variant="secondary" size="sm">
-              FOV'da dene
-            </ButtonLink>
-            <ButtonLink to="/hedefler" variant="ghost" size="sm">
-              ← Tüm hedefler
-            </ButtonLink>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <ButtonLink to="/araclar/fov" variant="secondary" size="sm">
+                FOV'da dene
+              </ButtonLink>
+              <ButtonLink to="/hedefler" variant="ghost" size="sm">
+                ← Tüm hedefler
+              </ButtonLink>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Bu hedefin fotoğrafları */}
-      <section className="mt-14 border-t border-border pt-10">
-        <SectionHeader
-          title={`${target.catalog} Fotoğrafları`}
-          description="Bu hedefin Astrohub topluluğundaki kareleri"
-          linkTo="/fotograflar"
-        />
-        {targetPhotos.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            Bu hedef için henüz fotoğraf yayımlanmamış. İlk paylaşan sen ol!
-          </p>
-        ) : (
-          <ul className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-            {targetPhotos.map((p) => (
-              <li key={p.slug}>
-                <Link to={`/fotograf/${p.slug}`} className="group block">
-                  <PhotoPlaceholder
-                    gradient={p.gradient}
-                    alt={p.title}
-                    className="aspect-[4/3] w-full border border-border transition-transform duration-300 group-hover:scale-[1.03]"
-                  />
-                  <p className="mt-2 truncate text-sm font-medium text-foreground">
-                    {p.title}
-                  </p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    @{p.user.username}
-                  </p>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-    </Container>
+        {/* Bu hedefin fotoğrafları */}
+        <section className="mt-14 border-t border-border pt-10">
+          <SectionHeader
+            title={`${target.catalog} Fotoğrafları`}
+            description="Bu hedefin Astrohub topluluğundaki kareleri"
+            linkTo="/fotograflar"
+          />
+          {targetPhotos.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Bu hedef için henüz fotoğraf yayımlanmamış. İlk paylaşan sen ol!
+            </p>
+          ) : (
+            <ul className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+              {targetPhotos.map((p) => (
+                <li key={p.slug}>
+                  <Link to={`/fotograf/${p.slug}`} className="group block">
+                    <PhotoPlaceholder
+                      gradient={p.gradient}
+                      alt={p.title}
+                      className="aspect-[4/3] w-full border border-border transition-transform duration-300 group-hover:scale-[1.03]"
+                    />
+                    <p className="mt-2 truncate text-sm font-medium text-foreground">
+                      {p.title}
+                    </p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      @{p.user.username}
+                    </p>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      </Container>
+    </>
   );
 }
 

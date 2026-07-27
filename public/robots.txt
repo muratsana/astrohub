@@ -1,0 +1,15 @@
+# Astrohub — arama motoru erişim kuralları (§16.2)
+
+User-agent: *
+Allow: /
+
+# Kişiye özel ve indekslenmemesi gereken alanlar
+Disallow: /panel
+Disallow: /panel/
+Disallow: /admin
+Disallow: /giris
+Disallow: /kayit
+Disallow: /fotograflar/yukle
+
+# Sitemap adresi yayın alan adı belirlendiğinde mutlak URL ile güncellenir.
+Sitemap: /sitemap.xml

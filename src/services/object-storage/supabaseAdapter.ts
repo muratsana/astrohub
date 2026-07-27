@@ -16,7 +16,7 @@ export class SupabaseStorageAdapter implements ObjectStorageAdapter {
     path: string,
     options?: { expiresIn?: number; contentType?: string }
   ): Promise<SignedUploadTarget> {
-    const client = requireSupabase();
+    const client = await requireSupabase();
     const { data, error } = await client.storage
       .from(bucket)
       .createSignedUploadUrl(path);
@@ -35,7 +35,7 @@ export class SupabaseStorageAdapter implements ObjectStorageAdapter {
     path: string,
     expiresIn = 3600
   ): Promise<string> {
-    const client = requireSupabase();
+    const client = await requireSupabase();
     const { data, error } = await client.storage
       .from(bucket)
       .createSignedUrl(path, expiresIn);
@@ -45,13 +45,13 @@ export class SupabaseStorageAdapter implements ObjectStorageAdapter {
     return data.signedUrl;
   }
 
-  getPublicUrl(bucket: StorageBucket, path: string): string {
-    const client = requireSupabase();
+  async getPublicUrl(bucket: StorageBucket, path: string): Promise<string> {
+    const client = await requireSupabase();
     return client.storage.from(bucket).getPublicUrl(path).data.publicUrl;
   }
 
   async remove(bucket: StorageBucket, paths: string[]): Promise<void> {
-    const client = requireSupabase();
+    const client = await requireSupabase();
     const { error } = await client.storage.from(bucket).remove(paths);
     if (error) throw new Error(`Nesne silinemedi: ${error.message}`);
   }

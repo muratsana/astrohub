@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { Container } from '@/components/ui/Container';
 import { useAuth } from './AuthContext';
+import { PageMeta } from '@/components/seo/PageMeta';
 
 /** Ortalanmış auth kartı + kurulum uyarısı (Supabase yapılandırılmamışsa). */
 export function AuthLayout({
@@ -19,6 +20,8 @@ export function AuthLayout({
 
   return (
     <Container className="flex min-h-[70vh] items-center justify-center py-16">
+      {/* Auth sayfaları indekslenmez (§16.2). */}
+      <PageMeta title={title} description={subtitle} noIndex />
       <div className="w-full max-w-md">
         <div className="rounded-2xl border border-border bg-surface-1 p-6 sm:p-8">
           <h1 className="text-2xl font-semibold text-foreground">{title}</h1>

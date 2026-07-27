@@ -1,0 +1,111 @@
+import { photos } from '../features/photos/data';
+import { targets } from '../features/targets/data';
+import { events } from '../features/events/data';
+import { sites } from '../features/observing-sites/data';
+import { equipment } from '../features/equipment/data';
+import { learningItems } from '../features/learning/data';
+
+/**
+ * Sitemap girdileri (§16.2). Yalnızca indekslenebilir, herkese açık sayfalar
+ * listelenir; panel/admin/auth ve yükleme akışı `robots.txt` ile birlikte
+ * dışarıda bırakılır.
+ *
+ * Not: Bu modül derleme zamanında Node tarafında da çalıştırıldığı için
+ * yalnızca göreli içe aktarma ve saf veri kullanır — React/tarayıcı
+ * bağımlılığı taşımaz.
+ */
+
+export interface SitemapEntry {
+  path: string;
+  /** Arama motoruna göreli önem (0.0–1.0). */
+  priority: number;
+  changefreq: 'daily' | 'weekly' | 'monthly' | 'yearly';
+}
+
+/** Sabit (statik) sayfalar. */
+export const staticEntries: SitemapEntry[] = [
+  { path: '/', priority: 1.0, changefreq: 'daily' },
+  { path: '/kesfet', priority: 0.8, changefreq: 'daily' },
+  { path: '/fotograflar', priority: 0.9, changefreq: 'daily' },
+  { path: '/hedefler', priority: 0.8, changefreq: 'weekly' },
+  { path: '/etkinlikler', priority: 0.9, changefreq: 'daily' },
+  { path: '/harita', priority: 0.8, changefreq: 'weekly' },
+  { path: '/harita/gozlem-noktalari', priority: 0.8, changefreq: 'weekly' },
+  { path: '/harita/isik-kirliligi', priority: 0.6, changefreq: 'monthly' },
+  { path: '/bu-gece', priority: 0.6, changefreq: 'daily' },
+  { path: '/planlayici', priority: 0.5, changefreq: 'monthly' },
+  { path: '/ekipman', priority: 0.7, changefreq: 'weekly' },
+  { path: '/araclar', priority: 0.7, changefreq: 'monthly' },
+  { path: '/araclar/fov', priority: 0.7, changefreq: 'monthly' },
+  { path: '/araclar/pixel-scale', priority: 0.6, changefreq: 'monthly' },
+  { path: '/egitim', priority: 0.8, changefreq: 'weekly' },
+  { path: '/ikinci-el', priority: 0.7, changefreq: 'daily' },
+  { path: '/topluluklar', priority: 0.5, changefreq: 'monthly' },
+  { path: '/hakkinda', priority: 0.4, changefreq: 'yearly' },
+  { path: '/kvkk', priority: 0.3, changefreq: 'yearly' },
+  { path: '/kullanim-kosullari', priority: 0.3, changefreq: 'yearly' },
+];
+
+/**
+ * İçerik sayfaları. MVP'de tohum verisinden türetilir; veritabanı
+ * bağlandığında aynı yapı sorgu sonucundan doldurulacaktır.
+ */
+export function contentEntries(): SitemapEntry[] {
+  return [
+    ...photos.map((p) => ({
+      path: `/fotograf/${p.slug}`,
+      priority: 0.7,
+      changefreq: 'monthly' as const,
+    })),
+    ...targets.map((t) => ({
+      path: `/hedef/${t.slug}`,
+      priority: 0.7,
+      changefreq: 'monthly' as const,
+    })),
+    ...events.map((e) => ({
+      path: `/etkinlik/${e.slug}`,
+      priority: 0.8,
+      changefreq: 'weekly' as const,
+    })),
+    ...sites.map((s) => ({
+      path: `/gozlem-noktasi/${s.slug}`,
+      priority: 0.7,
+      changefreq: 'monthly' as const,
+    })),
+    ...[...new Set(equipment.map((e) => e.category))].map((category) => ({
+      path: `/ekipman/${category}`,
+      priority: 0.6,
+      changefreq: 'monthly' as const,
+    })),
+    ...learningItems.map((l) => ({
+      path: `/egitim/${l.slug}`,
+      priority: 0.6,
+      changefreq: 'monthly' as const,
+    })),
+  ];
+}
+
+/** Tüm girdilerden sitemap XML'i üretir. */
+export function buildSitemapXml(siteUrl: string, lastmod: string): string {
+  const base = siteUrl.replace(/\/$/, '');
+  const entries = [...staticEntries, ...contentEntries()];
+
+  const urls = entries
+    .map(
+      (entry) =>
+        `  <url>\n` +
+        `    <loc>${base}${entry.path}</loc>\n` +
+        `    <lastmod>${lastmod}</lastmod>\n` +
+        `    <changefreq>${entry.changefreq}</changefreq>\n` +
+        `    <priority>${entry.priority.toFixed(1)}</priority>\n` +
+        `  </url>`
+    )
+    .join('\n');
+
+  return (
+    `<?xml version="1.0" encoding="UTF-8"?>\n` +
+    `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
+    `${urls}\n` +
+    `</urlset>\n`
+  );
+}

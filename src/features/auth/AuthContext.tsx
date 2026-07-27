@@ -7,7 +7,7 @@ import {
   type ReactNode,
 } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
-import { supabase, isSupabaseConfigured } from '@/services/supabase/client';
+import { getSupabase, isSupabaseConfigured } from '@/services/supabase/client';
 
 interface AuthResult {
   error: string | null;
@@ -37,30 +37,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!supabase) {
+    const clientPromise = getSupabase();
+    if (!clientPromise) {
       setLoading(false);
       return;
     }
 
     let active = true;
+    let unsubscribe: (() => void) | undefined;
 
-    supabase.auth.getSession().then(({ data }) => {
+    // SDK tembel yüklendiği için oturum kurulumu asenkron ilerler;
+    // bu arada `loading` true kalır ve UI iskelet gösterir.
+    void clientPromise.then(async (client) => {
+      const { data } = await client.auth.getSession();
       if (!active) return;
+
       setSession(data.session);
       setUser(data.session?.user ?? null);
       setLoading(false);
-    });
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
-      setSession(nextSession);
-      setUser(nextSession?.user ?? null);
+      const {
+        data: { subscription },
+      } = client.auth.onAuthStateChange((_event, nextSession) => {
+        setSession(nextSession);
+        setUser(nextSession?.user ?? null);
+      });
+
+      // Etki bu noktaya gelmeden temizlendiyse aboneliği hemen kapat.
+      if (!active) subscription.unsubscribe();
+      else unsubscribe = () => subscription.unsubscribe();
     });
 
     return () => {
       active = false;
-      subscription.unsubscribe();
+      unsubscribe?.();
     };
   }, []);
 
@@ -72,8 +82,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       configured: isSupabaseConfigured,
 
       async signIn(email, password) {
-        if (!supabase) return NOT_CONFIGURED;
-        const { error } = await supabase.auth.signInWithPassword({
+        const clientPromise = getSupabase();
+        if (!clientPromise) return NOT_CONFIGURED;
+        const client = await clientPromise;
+        const { error } = await client.auth.signInWithPassword({
           email,
           password,
         });
@@ -81,14 +93,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
 
       async signUp(email, password) {
-        if (!supabase) return NOT_CONFIGURED;
-        const { error } = await supabase.auth.signUp({ email, password });
+        const clientPromise = getSupabase();
+        if (!clientPromise) return NOT_CONFIGURED;
+        const client = await clientPromise;
+        const { error } = await client.auth.signUp({ email, password });
         return { error: error?.message ?? null };
       },
 
       async signOut() {
-        if (!supabase) return;
-        await supabase.auth.signOut();
+        const clientPromise = getSupabase();
+        if (!clientPromise) return;
+        const client = await clientPromise;
+        await client.auth.signOut();
       },
     }),
     [user, session, loading]

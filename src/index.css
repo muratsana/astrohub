@@ -47,6 +47,42 @@
     color-scheme: dark;
   }
 
+  /*
+   * Açık tema (§19.7: koyu varsayılan, açık opsiyonel).
+   * `@theme` token'ları :root üzerinde tanımlıdır; burada yalnızca değerler
+   * yeniden atanır — utility sınıfları var() üzerinden okuduğu için tüm
+   * arayüz tek noktadan döner. Kontrast WCAG AA hedefine göre seçilmiştir.
+   */
+  :root[data-theme='light'] {
+    color-scheme: light;
+
+    --color-background: #f6f8fc;
+    --color-surface-1: #ffffff;
+    --color-surface-2: #eef2f8;
+    --color-surface-3: #e2e8f2;
+
+    --color-foreground: #0b1220;
+    --color-muted-foreground: #55637a;
+
+    --color-border: rgba(11, 18, 32, 0.12);
+
+    /* Amber, açık zeminde okunurluk için bir tık koyultulur. */
+    --color-primary: #b3790a;
+    --color-primary-hover: #96660a;
+    --color-primary-foreground: #ffffff;
+
+    --color-link: #1d4ed8;
+    --color-success: #15803d;
+    --color-warning: #b45309;
+    --color-danger: #b91c1c;
+
+    --color-accent-violet: #6d28d9;
+    --color-accent-blue: #1d4ed8;
+    --color-accent-green: #047857;
+    --color-accent-teal: #0f766e;
+    --color-accent-orange: #c2410c;
+  }
+
   html {
     scroll-behavior: smooth;
   }
@@ -56,8 +92,7 @@
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
-    font-feature-settings:
-      'cv02', 'cv03', 'cv04', 'cv11';
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
   }

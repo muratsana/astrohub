@@ -13,7 +13,17 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noUncheckedSideEffectImports": true,
-    "types": ["node"]
+    "types": ["node"],
+
+    /* Derleme yapılandırması src içindeki saf veri modüllerini
+       (ör. sitemap girdileri) içe aktarabilir. */
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
   },
-  "include": ["vite.config.ts"]
+  /* vitest.config.ts dışarıda: Vitest kendi Vite kopyasını taşıdığı için
+     iki farklı `Plugin` tipi çakışıyor — yapılandırma dosyası çalışma
+     zamanında doğrulanır. */
+  "include": ["vite.config.ts", "vite.preview.config.ts"]
 }

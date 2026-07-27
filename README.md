@@ -13,6 +13,7 @@ ikinci el pazaryeri sunan bir topluluk portalıdır.
 
 - **[Ürün / UI / Teknik Şartname](./docs/ASTROHUB_PRODUCT_UI_TECHNICAL_SPEC.md)** — onaylanan tam şartname
 - **[Geliştirme Planı ve Yol Haritası](./docs/GELISTIRME-PLANI.md)** — fazlar, sprintler, mimari ilkeler
+- **[Site Denetimi (Temmuz 2026)](./docs/SITE-AUDIT-2026-07.md)** — tam kapsamlı denetim bulguları, uygulanan düzeltmeler ve kalan işler
 
 ## Öne çıkan kararlar
 
@@ -75,7 +76,17 @@ zaman normal (history) router ile çalışır.
   hedef→fotoğraf ilişkisi), Ekipman veritabanı, Gözlem noktaları (liste+detay),
   Eğitim merkezi, İkinci el, 6 adımlı yükleme sihirbazı, Üye paneli (kota
   göstergesi), Kullanıcı profili, Keşfet. 18 route duman testinden geçti.
+- ✅ **Site denetimi ve platform sertleştirme** (Temmuz 2026) —
+  **global arama** (§16.1: dokuz kategori, ⌘K, Türkçe duyarlı, `M31` ≡ `M 31`),
+  **SEO altyapısı** (§16.2: route başına başlık/meta/canonical, JSON-LD,
+  robots.txt, derleme zamanı sitemap), **rota bazlı kod bölme** (§16.4: ilk
+  yükleme JS 213 kB → ~117 kB gzip), **§5.2 açılır menüler** ve mobil
+  "+"/"Daha Fazla" çekmecesi (§5.3), **açık tema** (§19.7), "içeriğe atla"
+  bağlantısı (§6.7), KVKK/Kullanım Koşulları/Hakkında sayfaları (§15.7),
+  gerçek 404 ve hata sınırı. Ölü bağlantılar giderildi ve testle kilitlendi.
+  Ayrıntı: [SITE-AUDIT-2026-07.md](./docs/SITE-AUDIT-2026-07.md).
 - ⏭️ Sonraki — 3. parti bağlantılar: Supabase (auth/DB), object storage
   (fotoğraf pipeline), ödeme, harita tile'ları — hesaplar açılınca
 
-Yol haritası için [GELISTIRME-PLANI.md](./docs/GELISTIRME-PLANI.md).
+Yol haritası için [GELISTIRME-PLANI.md](./docs/GELISTIRME-PLANI.md),
+kalan iş listesi için [SITE-AUDIT-2026-07.md](./docs/SITE-AUDIT-2026-07.md) §4.

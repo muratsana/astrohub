@@ -44,8 +44,11 @@ export interface ObjectStorageAdapter {
     expiresIn?: number
   ): Promise<string>;
 
-  /** Public bucket'lar için kalıcı CDN URL'i. */
-  getPublicUrl(bucket: StorageBucket, path: string): string;
+  /**
+   * Public bucket'lar için kalıcı CDN URL'i.
+   * Sağlayıcı SDK'sı tembel yüklendiği için imza asenkrondur.
+   */
+  getPublicUrl(bucket: StorageBucket, path: string): Promise<string>;
 
   /** Nesneyi siler (lifecycle/temizlik — §10.8). */
   remove(bucket: StorageBucket, paths: string[]): Promise<void>;

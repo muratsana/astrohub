@@ -1,0 +1,39 @@
+{
+  "name": "Astrohub — Gökyüzünü keşfet, paylaş, öğren",
+  "short_name": "Astrohub",
+  "description": "Türkiye'nin astronomi, astrofotoğrafçılık, gözlem etkinlikleri, karanlık gökyüzü ve astrocamping platformu.",
+  "lang": "tr",
+  "dir": "ltr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#050a12",
+  "theme_color": "#050a12",
+  "categories": ["education", "photo", "travel"],
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Fotoğraf yükle",
+      "short_name": "Yükle",
+      "url": "/fotograflar/yukle"
+    },
+    {
+      "name": "Etkinlikler",
+      "short_name": "Etkinlik",
+      "url": "/etkinlikler"
+    },
+    {
+      "name": "Gözlem noktaları",
+      "short_name": "Noktalar",
+      "url": "/harita/gozlem-noktalari"
+    }
+  ]
+}

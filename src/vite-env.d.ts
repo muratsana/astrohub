@@ -10,6 +10,12 @@ interface ImportMetaEnv {
    * önizleme derlemesi için. Üretimde tanımsızdır (history API).
    */
   readonly VITE_ROUTER_MODE?: 'hash' | 'history';
+  /**
+   * Yayın alan adı (örn. https://astrohub.example). Canonical/og:url
+   * etiketleri ve sitemap üretimi bu değere bağlıdır; tanımsızsa mutlak URL
+   * üretilmez (§16.2).
+   */
+  readonly VITE_SITE_URL?: string;
 }
 
 interface ImportMeta {

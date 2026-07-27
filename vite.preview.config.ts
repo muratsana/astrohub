@@ -59,8 +59,46 @@ function inlineAssets(): Plugin {
       for (const name of inlined) delete bundle[name];
 
       htmlAsset.source = html;
+
+      // Ek çıktı: `artifact.html` — aynı uygulama, ancak yalnızca <body>
+      // içeriği. <head>/<html> iskeletini kendisi saran barındırma
+      // ortamlarına (paylaşılabilir önizleme sayfaları) doğrudan verilebilir.
+      this.emitFile({
+        type: 'asset',
+        fileName: 'artifact.html',
+        source: toBodyFragment(html),
+      });
     },
   };
+}
+
+/**
+ * Tam HTML belgesini gövde parçasına çevirir: <head> içindeki gömülü
+ * <style>/<script> blokları korunur, belge iskeleti atılır. Barındırıcı
+ * kendi <head>'ini eklediği için burada yalnızca gövde içeriği kalır.
+ */
+function toBodyFragment(html: string): string {
+  const headMatch = /<head[^>]*>([\s\S]*?)<\/head>/i.exec(html);
+  const bodyMatch = /<body[^>]*>([\s\S]*?)<\/body>/i.exec(html);
+  const head = headMatch?.[1] ?? '';
+  const body = bodyMatch?.[1] ?? html;
+
+  // <head>'ten yalnızca gömülü stil ve betikleri taşı; meta/title
+  // etiketleri barındırıcının kendi <head>'ine aittir.
+  const assets =
+    head.match(/<style[\s\S]*?<\/style>|<script[\s\S]*?<\/script>/gi) ?? [];
+
+  // Barındırıcı sayfanın gövde boşluğu/arka planı uygulamayı bozmasın.
+  const reset =
+    '<style>:root{color-scheme:dark}html,body{margin:0;padding:0;' +
+    'background:#050a12;max-width:none}</style>';
+
+  return [
+    reset,
+    ...assets.filter((a) => a.startsWith('<style')),
+    body.trim(),
+    ...assets.filter((a) => !a.startsWith('<style')),
+  ].join('\n');
 }
 
 function escapeRegExp(value: string): string {

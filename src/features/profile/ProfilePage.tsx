@@ -9,6 +9,8 @@ import {
   formatIntegration,
 } from '@/domain/photography/integration';
 import { photos } from '@/features/photos/data';
+import { PageMeta } from '@/components/seo/PageMeta';
+import { breadcrumbJsonLd } from '@/lib/seo';
 
 /**
  * Kullanıcı profili (§7.15). MVP: fotoğraf verisinden türetilen kamuya açık
@@ -40,57 +42,70 @@ export function ProfilePage() {
   const cities = [...new Set(userPhotos.map((p) => p.city))];
 
   return (
-    <Container className="py-10 sm:py-14">
-      <header className="mb-10 flex flex-wrap items-center gap-5">
-        {/* Avatar placeholder: baş harf */}
-        <div
-          aria-hidden
-          className="flex h-20 w-20 items-center justify-center rounded-full border border-border bg-surface-2 text-2xl font-bold text-primary"
-        >
-          {displayName.charAt(0).toLocaleUpperCase('tr-TR')}
-        </div>
-        <div className="min-w-0">
-          <h1 className="text-2xl font-semibold text-foreground">{displayName}</h1>
-          <p className="text-sm text-muted-foreground">@{username}</p>
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            <Badge tone="primary">
-              {userPhotos.length} fotoğraf
-            </Badge>
-            <Badge tone="blue">
-              Toplam {formatIntegration(totalSeconds)} entegrasyon
-            </Badge>
-            {cities.map((c) => (
-              <Badge key={c}>{c}</Badge>
-            ))}
+    <>
+      <PageMeta
+        title={`${displayName} (@${username})`}
+        description={`${displayName} kullanıcısının Astrohub profili: ${userPhotos.length} astrofotoğraf, toplam ${formatIntegration(totalSeconds)} entegrasyon süresi.`}
+        jsonLd={breadcrumbJsonLd([
+          { name: 'Ana Sayfa', path: '/' },
+          { name: 'Astrofotoğrafçılar', path: '/kesfet' },
+          { name: displayName, path: `/profil/${username}` },
+        ])}
+      />
+      <Container className="py-10 sm:py-14">
+        <header className="mb-10 flex flex-wrap items-center gap-5">
+          {/* Avatar placeholder: baş harf */}
+          <div
+            aria-hidden
+            className="flex h-20 w-20 items-center justify-center rounded-full border border-border bg-surface-2 text-2xl font-bold text-primary"
+          >
+            {displayName.charAt(0).toLocaleUpperCase('tr-TR')}
           </div>
-        </div>
-      </header>
+          <div className="min-w-0">
+            <h1 className="text-2xl font-semibold text-foreground">
+              {displayName}
+            </h1>
+            <p className="text-sm text-muted-foreground">@{username}</p>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              <Badge tone="primary">{userPhotos.length} fotoğraf</Badge>
+              <Badge tone="blue">
+                Toplam {formatIntegration(totalSeconds)} entegrasyon
+              </Badge>
+              {cities.map((c) => (
+                <Badge key={c}>{c}</Badge>
+              ))}
+            </div>
+          </div>
+        </header>
 
-      <h2 className="mb-4 text-lg font-semibold text-foreground">Fotoğraflar</h2>
-      <ul className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {userPhotos.map((p) => (
-          <li key={p.slug}>
-            <Link to={`/fotograf/${p.slug}`} className="group block">
-              <PhotoPlaceholder
-                gradient={p.gradient}
-                alt={p.title}
-                className="aspect-[4/3] w-full border border-border transition-transform duration-300 group-hover:scale-[1.03]"
-              />
-              <p className="mt-2 truncate text-sm font-medium text-foreground">
-                {p.target.catalog} · {p.title}
-              </p>
-              <p className="tabular truncate text-xs text-muted-foreground">
-                ♥ {p.likes} · 💬 {p.comments}
-              </p>
-            </Link>
-          </li>
-        ))}
-      </ul>
+        <h2 className="mb-4 text-lg font-semibold text-foreground">
+          Fotoğraflar
+        </h2>
+        <ul className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          {userPhotos.map((p) => (
+            <li key={p.slug}>
+              <Link to={`/fotograf/${p.slug}`} className="group block">
+                <PhotoPlaceholder
+                  gradient={p.gradient}
+                  alt={p.title}
+                  className="aspect-[4/3] w-full border border-border transition-transform duration-300 group-hover:scale-[1.03]"
+                />
+                <p className="mt-2 truncate text-sm font-medium text-foreground">
+                  {p.target.catalog} · {p.title}
+                </p>
+                <p className="tabular truncate text-xs text-muted-foreground">
+                  ♥ {p.likes} · 💬 {p.comments}
+                </p>
+              </Link>
+            </li>
+          ))}
+        </ul>
 
-      <p className="mt-10 text-center text-xs text-muted-foreground/70">
-        Takip etme, mesaj gönderme ve koleksiyonlar hesap sistemiyle birlikte
-        açılacak.
-      </p>
-    </Container>
+        <p className="mt-10 text-center text-xs text-muted-foreground/70">
+          Takip etme, mesaj gönderme ve koleksiyonlar hesap sistemiyle birlikte
+          açılacak.
+        </p>
+      </Container>
+    </>
   );
 }
