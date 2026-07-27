@@ -1,22 +1,53 @@
 import { useMemo, useState } from 'react';
 import { Container } from '@/components/ui/Container';
-import { Input } from '@/components/ui/Input';
-import { Field } from '@/components/ui/Field';
+import { Input, Select } from '@/components/ui/Input';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { Panel, SpecList, SpecRow } from '@/components/ui/Panel';
+import { Readout } from '@/components/ui/Readout';
+import { Badge } from '@/components/ui/Badge';
+import { ButtonLink } from '@/components/ui/Button';
+import {
+  FilterBar,
+  FilterCell,
+  filterControlClass,
+} from '@/components/ui/FilterBar';
 import { computeOptics } from '@/domain/astronomy/optics';
 import type { SamplingCategory } from '@/domain/astronomy/optics';
+import { parseAngularSizeArcmin } from '@/domain/astronomy/mosaic';
+import { targets } from '@/features/targets/data';
 import { opticPresets, cameraPresets, reducerPresets } from './presets';
-import { cn } from '@/lib/cn';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
+import { cn } from '@/lib/cn';
 
-const selectClass =
-  'h-11 w-full rounded-xl border border-border bg-surface-1 px-3 text-sm text-foreground focus:border-primary/60';
+/**
+ * FOV VE PIXEL SCALE HESAPLAYICI (§7.12).
+ *
+ * Tasarım, mozaik ve uyumluluk araçlarıyla hizalandı: aynı şerit, aynı
+ * ölçüm kutuları, aynı künye satırları. Üç araç aynı işi yapıyor (ekipman
+ * girdisinden sayı üretmek); üçünün üç ayrı yerleşimi olması, kullanıcıyı
+ * her seferinde yeniden yönlendiriyordu.
+ *
+ * KADRAJ ÖNİZLEMESİ eklendi: hedefin açısal boyutu kadraja oranlanarak
+ * çizilir. "3.9° × 2.6° görüş alanı" bir sayıdır; hedefin sığıp sığmadığı
+ * ise asıl sorudur ve gözle bir bakışta cevaplanır.
+ */
 
 const samplingTone: Record<SamplingCategory, string> = {
-  oversampled: 'border-accent-blue/40 text-accent-blue',
-  optimal: 'border-success/40 text-success',
-  undersampled: 'border-warning/40 text-warning',
-};
+  oversampled: 'cold',
+  optimal: 'success',
+  undersampled: 'warning',
+} as const satisfies Record<SamplingCategory, string>;
+
+/** Açısal boyutu ayrıştırılabilen katalog hedefleri. */
+const framedTargets = targets
+  .map((target) => ({ target, size: parseAngularSizeArcmin(target.angularSize) }))
+  .filter(
+    (entry): entry is {
+      target: (typeof targets)[number];
+      size: { widthArcmin: number; heightArcmin: number };
+    } => entry.size !== null
+  );
 
 export function FovCalculatorPage() {
   const [focalLength, setFocalLength] = useState(530);
@@ -25,6 +56,7 @@ export function FovCalculatorPage() {
   const [pixelSize, setPixelSize] = useState(3.76);
   const [sensorWidth, setSensorWidth] = useState(23.5);
   const [sensorHeight, setSensorHeight] = useState(15.7);
+  const [targetSlug, setTargetSlug] = useState(framedTargets[0]?.target.slug ?? '');
 
   const valid =
     focalLength > 0 && pixelSize > 0 && sensorWidth > 0 && sensorHeight > 0;
@@ -36,15 +68,9 @@ export function FovCalculatorPage() {
       { pixelSize, sensorWidth, sensorHeight },
       reducer
     );
-  }, [
-    focalLength,
-    aperture,
-    reducer,
-    pixelSize,
-    sensorWidth,
-    sensorHeight,
-    valid,
-  ]);
+  }, [focalLength, aperture, reducer, pixelSize, sensorWidth, sensorHeight, valid]);
+
+  const framed = framedTargets.find((entry) => entry.target.slug === targetSlug);
 
   return (
     <>
@@ -57,116 +83,126 @@ export function FovCalculatorPage() {
           { name: 'FOV Hesaplayıcı', path: '/araclar/fov' },
         ])}
       />
-      <Container className="py-10 sm:py-14">
-        <header className="mb-8 max-w-2xl">
-          <h1 className="text-2xl font-semibold text-foreground sm:text-3xl">
-            FOV & Pixel Scale Hesaplayıcı
-          </h1>
-          <p className="mt-2 text-muted-foreground">
-            Teleskop ve kamera kombinasyonunun görüş alanını, piksel ölçeğini ve
-            örnekleme durumunu hesapla. Tüm hesaplar cihazında yerel yapılır.
-          </p>
-        </header>
 
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
-          {/* Girdiler */}
-          <section className="rounded-2xl border border-border bg-surface-1 p-5 sm:p-6">
-            <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-              Optik
-            </h2>
-            <div className="space-y-4">
-              <Field label="Hazır teleskop" htmlFor="optic-preset">
-                <select
-                  id="optic-preset"
-                  className={selectClass}
-                  defaultValue=""
-                  onChange={(e) => {
-                    const p = opticPresets[Number(e.target.value)];
-                    if (p) {
+      <Container className="py-8 sm:py-10">
+        <PageHeader
+          breadcrumb={[
+            { label: 'Ana Sayfa', to: '/' },
+            { label: 'Araçlar', to: '/araclar' },
+            { label: 'FOV Hesaplayıcı' },
+          ]}
+          title="FOV ve Pixel Scale"
+          description="Teleskop–kamera kombinasyonunun görüş alanı, piksel ölçeği ve örnekleme durumu. Tüm hesaplar cihazınızda yerel yapılır."
+          actions={
+            <>
+              <ButtonLink to="/araclar/mosaic" size="sm" variant="secondary">
+                Mozaik Planlayıcı
+              </ButtonLink>
+              <ButtonLink
+                to="/araclar/setup-uyumluluk"
+                size="sm"
+                variant="secondary"
+              >
+                Uyumluluk
+              </ButtonLink>
+            </>
+          }
+        />
+
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
+          {/* ───────── Girdiler ───────── */}
+          <div className="space-y-4">
+            <Panel title="Optik">
+              <FilterBar columns={2} className="mb-0">
+                <FilterCell label="Hazır teleskop" htmlFor="optic-preset">
+                  <Select
+                    id="optic-preset"
+                    defaultValue=""
+                    className={filterControlClass}
+                    onChange={(e) => {
+                      const p = opticPresets[Number(e.target.value)];
+                      if (!p) return;
                       setFocalLength(p.focalLength);
                       setAperture(p.aperture);
-                    }
-                  }}
-                >
-                  <option value="" disabled>
-                    Seç veya elle gir…
-                  </option>
-                  {opticPresets.map((p, i) => (
-                    <option key={p.label} value={i}>
-                      {p.label}
+                    }}
+                  >
+                    <option value="" disabled>
+                      Seç veya elle gir…
                     </option>
-                  ))}
-                </select>
-              </Field>
-
-              <div className="grid grid-cols-2 gap-4">
-                <Field label="Odak uzaklığı (mm)" htmlFor="fl">
+                    {opticPresets.map((p, i) => (
+                      <option key={p.label} value={i}>
+                        {p.label}
+                      </option>
+                    ))}
+                  </Select>
+                </FilterCell>
+                <FilterCell label="Reducer / Barlow" htmlFor="reducer">
+                  <Select
+                    id="reducer"
+                    value={reducer}
+                    className={filterControlClass}
+                    onChange={(e) => setReducer(Number(e.target.value))}
+                  >
+                    {reducerPresets.map((r) => (
+                      <option key={r.label} value={r.factor}>
+                        {r.label}
+                      </option>
+                    ))}
+                  </Select>
+                </FilterCell>
+                <FilterCell label="Odak uzaklığı (mm)" htmlFor="fl">
                   <Input
                     id="fl"
                     type="number"
                     min={1}
                     value={focalLength}
                     onChange={(e) => setFocalLength(Number(e.target.value))}
+                    className={filterControlClass}
                   />
-                </Field>
-                <Field label="Açıklık (mm)" htmlFor="ap">
+                </FilterCell>
+                <FilterCell label="Açıklık (mm)" htmlFor="ap">
                   <Input
                     id="ap"
                     type="number"
                     min={1}
                     value={aperture}
                     onChange={(e) => setAperture(Number(e.target.value))}
+                    className={filterControlClass}
                   />
-                </Field>
-              </div>
+                </FilterCell>
+              </FilterBar>
+            </Panel>
 
-              <Field label="Reducer / Barlow" htmlFor="reducer">
-                <select
-                  id="reducer"
-                  className={selectClass}
-                  value={reducer}
-                  onChange={(e) => setReducer(Number(e.target.value))}
+            <Panel title="Kamera">
+              <FilterBar columns={2} className="mb-0">
+                <FilterCell
+                  label="Hazır kamera"
+                  htmlFor="camera-preset"
+                  className="sm:col-span-2"
                 >
-                  {reducerPresets.map((r) => (
-                    <option key={r.label} value={r.factor}>
-                      {r.label}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-            </div>
-
-            <h2 className="mb-4 mt-8 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-              Kamera
-            </h2>
-            <div className="space-y-4">
-              <Field label="Hazır kamera" htmlFor="camera-preset">
-                <select
-                  id="camera-preset"
-                  className={selectClass}
-                  defaultValue=""
-                  onChange={(e) => {
-                    const p = cameraPresets[Number(e.target.value)];
-                    if (p) {
+                  <Select
+                    id="camera-preset"
+                    defaultValue=""
+                    className={filterControlClass}
+                    onChange={(e) => {
+                      const p = cameraPresets[Number(e.target.value)];
+                      if (!p) return;
                       setPixelSize(p.pixelSize);
                       setSensorWidth(p.sensorWidth);
                       setSensorHeight(p.sensorHeight);
-                    }
-                  }}
-                >
-                  <option value="" disabled>
-                    Seç veya elle gir…
-                  </option>
-                  {cameraPresets.map((p, i) => (
-                    <option key={p.label} value={i}>
-                      {p.label}
+                    }}
+                  >
+                    <option value="" disabled>
+                      Seç veya elle gir…
                     </option>
-                  ))}
-                </select>
-              </Field>
-
-              <div className="grid grid-cols-3 gap-3">
-                <Field label="Piksel (µm)" htmlFor="px">
+                    {cameraPresets.map((p, i) => (
+                      <option key={p.label} value={i}>
+                        {p.label}
+                      </option>
+                    ))}
+                  </Select>
+                </FilterCell>
+                <FilterCell label="Piksel (µm)" htmlFor="px">
                   <Input
                     id="px"
                     type="number"
@@ -174,9 +210,10 @@ export function FovCalculatorPage() {
                     min={0.1}
                     value={pixelSize}
                     onChange={(e) => setPixelSize(Number(e.target.value))}
+                    className={filterControlClass}
                   />
-                </Field>
-                <Field label="Sensör G (mm)" htmlFor="sw">
+                </FilterCell>
+                <FilterCell label="Sensör G (mm)" htmlFor="sw">
                   <Input
                     id="sw"
                     type="number"
@@ -184,9 +221,10 @@ export function FovCalculatorPage() {
                     min={1}
                     value={sensorWidth}
                     onChange={(e) => setSensorWidth(Number(e.target.value))}
+                    className={filterControlClass}
                   />
-                </Field>
-                <Field label="Sensör Y (mm)" htmlFor="sh">
+                </FilterCell>
+                <FilterCell label="Sensör Y (mm)" htmlFor="sh">
                   <Input
                     id="sh"
                     type="number"
@@ -194,104 +232,207 @@ export function FovCalculatorPage() {
                     min={1}
                     value={sensorHeight}
                     onChange={(e) => setSensorHeight(Number(e.target.value))}
+                    className={filterControlClass}
                   />
-                </Field>
-              </div>
-            </div>
-          </section>
+                </FilterCell>
+              </FilterBar>
+            </Panel>
 
-          {/* Sonuçlar */}
-          <section className="rounded-2xl border border-border bg-surface-1 p-5 sm:p-6">
-            <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-              Sonuç
-            </h2>
+            <Panel title="Kadrajda hedef">
+              <FilterBar columns={2} className="mb-0">
+                <FilterCell
+                  label="Hedef seç"
+                  htmlFor="fov-target"
+                  className="sm:col-span-2"
+                >
+                  <Select
+                    id="fov-target"
+                    value={targetSlug}
+                    className={filterControlClass}
+                    onChange={(e) => setTargetSlug(e.target.value)}
+                  >
+                    {framedTargets.map((entry) => (
+                      <option key={entry.target.slug} value={entry.target.slug}>
+                        {entry.target.catalog} — {entry.target.name} (
+                        {entry.target.angularSize})
+                      </option>
+                    ))}
+                  </Select>
+                </FilterCell>
+              </FilterBar>
+            </Panel>
+          </div>
 
+          {/* ───────── Sonuç ───────── */}
+          <div className="space-y-4">
             {!result ? (
-              <p className="text-sm text-muted-foreground">
-                Geçerli değerler girin (pozitif odak, piksel ve sensör boyutu).
-              </p>
+              <Panel title="Sonuç">
+                <p className="text-[12px] text-muted-foreground">
+                  Geçerli değerler girin: odak uzaklığı, piksel ve sensör
+                  boyutu pozitif olmalı.
+                </p>
+              </Panel>
             ) : (
-              <div className="space-y-5">
-                <div className="grid grid-cols-2 gap-4">
-                  <Stat
+              <>
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  <Readout
                     label="Piksel ölçeği"
-                    value={`${result.pixelScale.toFixed(2)}″/px`}
-                    emphasis
+                    value={result.pixelScale.toFixed(2)}
+                    unit="″/px"
                   />
-                  <div className="flex items-center">
-                    <span
-                      className={cn(
-                        'rounded-full border px-3 py-1 text-sm font-medium',
-                        samplingTone[result.sampling.category]
-                      )}
+                  <Readout
+                    label="Efektif odak"
+                    value={result.effectiveFocalLength.toFixed(0)}
+                    unit="mm"
+                    tone="cold"
+                  />
+                  <Readout
+                    label="Odak oranı"
+                    value={result.fRatio ? `f/${result.fRatio.toFixed(1)}` : '—'}
+                    tone="plain"
+                  />
+                  <Readout
+                    label="Görüş alanı"
+                    value={`${result.fov.widthDeg.toFixed(2)}°`}
+                    unit={`× ${result.fov.heightDeg.toFixed(2)}°`}
+                    tone="plain"
+                  />
+                </div>
+
+                <Panel
+                  title="Örnekleme"
+                  status={
+                    <Badge
+                      tone={
+                        samplingTone[result.sampling.category] as
+                          | 'cold'
+                          | 'success'
+                          | 'warning'
+                      }
                     >
                       {result.sampling.label}
-                    </span>
-                  </div>
-                </div>
+                    </Badge>
+                  }
+                >
+                  <p className="text-[12px] leading-relaxed text-muted-foreground">
+                    {result.sampling.hint}
+                  </p>
+                  <p className="mt-2 text-[10px] leading-snug text-faint">
+                    Bu değerlendirme tipik gökyüzü koşullarına (seeing ~2–4″)
+                    göre sabit eşiklidir. Sahanızın seeing değerine bağlı
+                    kararı{' '}
+                    <span className="text-muted-foreground">
+                      Setup Uyumluluk
+                    </span>{' '}
+                    aracı verir.
+                  </p>
+                </Panel>
 
-                <p className="rounded-xl border border-border bg-surface-2 px-4 py-3 text-xs text-muted-foreground">
-                  {result.sampling.hint}
-                </p>
+                {framed && (
+                  <Panel
+                    title="Kadraj önizlemesi"
+                    status={`${framed.target.catalog} · ${framed.target.angularSize}`}
+                  >
+                    <FramePreview
+                      frameWidth={result.fov.widthArcmin}
+                      frameHeight={result.fov.heightArcmin}
+                      targetWidth={framed.size.widthArcmin}
+                      targetHeight={framed.size.heightArcmin}
+                      targetName={framed.target.name}
+                    />
+                  </Panel>
+                )}
 
-                <div className="grid grid-cols-2 gap-4">
-                  <Stat
-                    label="Efektif odak"
-                    value={`${result.effectiveFocalLength.toFixed(0)} mm`}
-                  />
-                  <Stat
-                    label="Odak oranı"
-                    value={
-                      result.fRatio ? `f/${result.fRatio.toFixed(1)}` : '—'
-                    }
-                  />
-                  <Stat
-                    label="Görüş alanı (derece)"
-                    value={`${result.fov.widthDeg.toFixed(2)}° × ${result.fov.heightDeg.toFixed(2)}°`}
-                  />
-                  <Stat
-                    label="Görüş alanı (arcmin)"
-                    value={`${result.fov.widthArcmin.toFixed(0)}′ × ${result.fov.heightArcmin.toFixed(0)}′`}
-                  />
-                  <Stat
-                    label="Çözünürlük"
-                    value={`${result.resolutionX} × ${result.resolutionY} px`}
-                  />
-                </div>
-
-                <p className="text-xs text-muted-foreground/70">
-                  Not: örnekleme değerlendirmesi tipik gökyüzü koşullarına
-                  (seeing ~2–4″) göredir; kesin ideal aralık gökyüzü kalitesine
-                  bağlıdır.
-                </p>
-              </div>
+                <Panel title="Ayrıntı">
+                  <SpecList>
+                    <SpecRow
+                      label="Görüş alanı (arcmin)"
+                      value={`${result.fov.widthArcmin.toFixed(0)}′ × ${result.fov.heightArcmin.toFixed(0)}′`}
+                      tone="cold"
+                    />
+                    <SpecRow
+                      label="Çözünürlük"
+                      value={`${result.resolutionX} × ${result.resolutionY} px`}
+                    />
+                    <SpecRow
+                      label="Kadraj alanı"
+                      value={`${(result.fov.widthDeg * result.fov.heightDeg).toFixed(2)} derece²`}
+                      tone="muted"
+                    />
+                  </SpecList>
+                </Panel>
+              </>
             )}
-          </section>
+          </div>
         </div>
       </Container>
     </>
   );
 }
 
-function Stat({
-  label,
-  value,
-  emphasis,
+/**
+ * KADRAJ ÖNİZLEMESİ.
+ *
+ * Kadraj sabit genişlikte çizilir; hedef ona oranlanır. Hedef kadrajdan
+ * büyükse taşan kısım görünür kalır (kırpılmaz) — "sığmıyor" bilgisi asıl
+ * anlatılmak istenen şey ve kırpmak onu gizlerdi.
+ */
+function FramePreview({
+  frameWidth,
+  frameHeight,
+  targetWidth,
+  targetHeight,
+  targetName,
 }: {
-  label: string;
-  value: string;
-  emphasis?: boolean;
+  frameWidth: number;
+  frameHeight: number;
+  targetWidth: number;
+  targetHeight: number;
+  targetName: string;
 }) {
+  const fits = targetWidth <= frameWidth && targetHeight <= frameHeight;
+  const scaleX = (targetWidth / frameWidth) * 100;
+  const scaleY = (targetHeight / frameHeight) * 100;
+
+  // Taşan hedefte önizleme küçültülür ki kadrajın dışı da görünsün.
+  const zoom = Math.min(1, 1 / Math.max(scaleX / 100, scaleY / 100, 1));
+
   return (
     <div>
-      <p className="text-xs text-muted-foreground">{label}</p>
+      <div
+        className="relative mx-auto flex items-center justify-center overflow-hidden"
+        style={{ aspectRatio: `${frameWidth} / ${frameHeight}`, maxWidth: '100%' }}
+      >
+        {/* Kadraj */}
+        <div
+          className="absolute border border-primary/70"
+          style={{ width: `${zoom * 100}%`, height: `${zoom * 100}%` }}
+        />
+        {/* Hedef */}
+        <div
+          role="img"
+          aria-label={`${targetName} kadraja ${fits ? 'sığıyor' : 'sığmıyor'}`}
+          className="rounded-full border border-cold/70 bg-cold/15"
+          style={{
+            width: `${scaleX * zoom}%`,
+            height: `${scaleY * zoom}%`,
+          }}
+        />
+      </div>
+
       <p
         className={cn(
-          'tabular mt-0.5 font-semibold text-foreground',
-          emphasis ? 'text-2xl text-primary' : 'text-base'
+          'mt-3 text-center text-[12px]',
+          fits ? 'text-success' : 'text-warning'
         )}
       >
-        {value}
+        {fits
+          ? `${targetName} kadraja sığıyor.`
+          : `${targetName} kadraja sığmıyor — mozaik planlayıcı gerekebilir.`}
+      </p>
+      <p className="mt-1 text-center text-[10px] text-faint">
+        Kadraj {frameWidth.toFixed(0)}′ × {frameHeight.toFixed(0)}′ · hedef{' '}
+        {targetWidth.toFixed(0)}′ × {targetHeight.toFixed(0)}′
       </p>
     </div>
   );

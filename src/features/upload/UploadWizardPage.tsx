@@ -24,7 +24,7 @@ const steps = [
 ] as const;
 
 const selectClass =
-  'h-11 w-full rounded-xl border border-border bg-surface-1 px-3 text-sm text-foreground focus:border-primary/60';
+  'h-11 w-full rounded-card border border-border bg-surface-1 px-3 text-sm text-foreground focus:border-primary/60';
 
 interface WizardState {
   fileName: string;
@@ -100,9 +100,9 @@ export function UploadWizardPage() {
         description="Astrofotoğrafınızı hedef, setup, pozlama ve işleme verisiyle birlikte yayımlayın."
         noIndex
       />
-      <Container className="py-10 sm:py-14">
+      <Container className="py-8 sm:py-10">
         <header className="mb-8">
-          <h1 className="text-2xl font-semibold text-foreground sm:text-3xl">
+          <h1 className="text-[26px] text-foreground sm:text-[30px]">
             Fotoğraf Yükle
           </h1>
           <p className="mt-2 max-w-xl text-muted-foreground">
@@ -137,7 +137,7 @@ export function UploadWizardPage() {
           ))}
         </ol>
 
-        <div className="rounded-2xl border border-border bg-surface-1 p-5 sm:p-8">
+        <div className="rounded-card border border-border bg-surface-1 p-4 sm:p-6">
           {step === 0 && (
             <div className="space-y-5">
               <StepTitle
@@ -146,7 +146,7 @@ export function UploadWizardPage() {
               />
               <label
                 htmlFor="file-name"
-                className="flex aspect-[3/1] cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-border bg-surface-2/40 text-center transition-colors hover:border-primary/40"
+                className="flex aspect-[3/1] cursor-pointer flex-col items-center justify-center rounded-card border-2 border-dashed border-border bg-surface-2/40 text-center transition-colors hover:border-primary/40"
               >
                 <p className="text-sm font-medium text-foreground">
                   {state.fileName || 'Dosyayı buraya sürükle veya adını yaz'}
@@ -389,7 +389,7 @@ export function UploadWizardPage() {
               >
                 + Filtre satırı ekle
               </Button>
-              <p className="tabular rounded-xl border border-border bg-surface-2 px-4 py-3 text-sm">
+              <p className="tabular rounded-card border border-border bg-surface-2 px-4 py-3 text-sm">
                 Toplam entegrasyon:{' '}
                 <span className="font-semibold text-primary">
                   {formatIntegration(total)}
@@ -449,7 +449,7 @@ export function UploadWizardPage() {
               </label>
 
               {/* Özet */}
-              <div className="rounded-xl border border-border bg-surface-2 p-4">
+              <div className="rounded-card border border-border bg-surface-2 p-4">
                 <h3 className="mb-2 text-sm font-semibold text-foreground">
                   Özet
                 </h3>

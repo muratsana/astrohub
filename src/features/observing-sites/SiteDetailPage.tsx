@@ -52,7 +52,7 @@ export function SiteDetailPage() {
           ]),
         ]}
       />
-      <Container className="py-8 sm:py-12">
+      <Container className="py-8 sm:py-10">
         <PhotoPlaceholder
           gradient={site.gradient}
           alt={site.name}
@@ -61,7 +61,7 @@ export function SiteDetailPage() {
 
         <div className="mt-6 flex flex-col gap-8 lg:flex-row">
           <div className="min-w-0 flex-1">
-            <h1 className="text-2xl font-semibold text-foreground sm:text-3xl">
+            <h1 className="text-[26px] text-foreground sm:text-[30px]">
               {site.name}
             </h1>
             <p className="tabular mt-1 text-sm text-muted-foreground">
@@ -83,7 +83,7 @@ export function SiteDetailPage() {
             </p>
 
             {site.warnings && site.warnings.length > 0 && (
-              <div className="mt-6 rounded-xl border border-warning/30 bg-warning/10 p-4">
+              <div className="mt-6 rounded-card border border-warning/30 bg-warning/10 p-4">
                 <h2 className="text-sm font-semibold text-warning">Uyarılar</h2>
                 <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-muted-foreground">
                   {site.warnings.map((w) => (
@@ -105,7 +105,7 @@ export function SiteDetailPage() {
                 {facilityRows.map(([label, ok]) => (
                   <li
                     key={label}
-                    className="flex items-center gap-2 rounded-xl border border-border bg-surface-1 px-3 py-2 text-sm"
+                    className="flex items-center gap-2 rounded-card border border-border bg-surface-1 px-3 py-2 text-sm"
                   >
                     <span
                       aria-hidden
@@ -130,7 +130,7 @@ export function SiteDetailPage() {
           </div>
 
           <aside className="w-full shrink-0 lg:w-72">
-            <div className="rounded-2xl border border-border bg-surface-1 p-5 text-sm text-muted-foreground">
+            <div className="rounded-card border border-border bg-surface-1 p-4 text-[12px] leading-relaxed text-muted-foreground">
               <p className="font-medium text-foreground">Konum bilgisi</p>
               <p className="mt-2 text-xs leading-relaxed">
                 Koordinatlar gizlilik politikası gereği yaklaşık paylaşılır

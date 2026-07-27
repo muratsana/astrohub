@@ -65,7 +65,7 @@ export function EventDetailPage() {
           ]),
         ]}
       />
-      <Container className="py-8 sm:py-12">
+      <Container className="py-8 sm:py-10">
         <PhotoPlaceholder
           gradient={event.gradient}
           alt={event.title}
@@ -88,7 +88,7 @@ export function EventDetailPage() {
               )}
             </div>
 
-            <h1 className="mt-3 text-2xl font-semibold text-foreground sm:text-3xl">
+            <h1 className="mt-3 text-[26px] text-foreground sm:text-[30px]">
               {event.title}
             </h1>
             <p className="tabular mt-2 text-sm text-muted-foreground">
@@ -160,7 +160,7 @@ export function EventDetailPage() {
 
           {/* Sağ: aksiyon paneli */}
           <aside className="w-full shrink-0 lg:w-80">
-            <div className="rounded-2xl border border-border bg-surface-1 p-5">
+            <div className="rounded-card border border-border bg-surface-1 p-4">
               <div className="flex items-center justify-between gap-2">
                 <p className="text-sm font-medium text-foreground">
                   {event.organizer.name}

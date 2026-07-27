@@ -1,8 +1,11 @@
 import { useMemo } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { Container } from '@/components/ui/Container';
 import { Badge } from '@/components/ui/Badge';
-import { PhotoPlaceholder } from '@/components/media/PhotoPlaceholder';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { Readout } from '@/components/ui/Readout';
+import { CardGrid } from '@/components/ui/CardGrid';
+import { PhotoCard } from '@/features/photos/PhotoCard';
 import { PlaceholderPage } from '@/components/PlaceholderPage';
 import {
   totalIntegrationSeconds,
@@ -40,6 +43,11 @@ export function ProfilePage() {
     0
   );
   const cities = [...new Set(userPhotos.map((p) => p.city))];
+  // Bortle bilgisi olmayan kayıtlar hesaba girmemeli; `Math.min` boş dizide
+  // Infinity döner ve ekranda anlamsız bir değer belirir.
+  const bortleValues = userPhotos
+    .map((p) => p.location.bortle)
+    .filter((b): b is number => typeof b === 'number');
 
   return (
     <>
@@ -52,56 +60,53 @@ export function ProfilePage() {
           { name: displayName, path: `/profil/${username}` },
         ])}
       />
-      <Container className="py-10 sm:py-14">
-        <header className="mb-10 flex flex-wrap items-center gap-5">
-          {/* Avatar placeholder: baş harf */}
-          <div
-            aria-hidden
-            className="flex h-20 w-20 items-center justify-center rounded-full border border-border bg-surface-2 text-2xl font-bold text-primary"
-          >
-            {displayName.charAt(0).toLocaleUpperCase('tr-TR')}
-          </div>
-          <div className="min-w-0">
-            <h1 className="text-2xl font-semibold text-foreground">
-              {displayName}
-            </h1>
-            <p className="text-sm text-muted-foreground">@{username}</p>
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              <Badge tone="primary">{userPhotos.length} fotoğraf</Badge>
-              <Badge tone="cold">
-                Toplam {formatIntegration(totalSeconds)} entegrasyon
-              </Badge>
-              {cities.map((c) => (
-                <Badge key={c}>{c}</Badge>
-              ))}
-            </div>
-          </div>
-        </header>
+      <Container className="py-8 sm:py-10">
+        <PageHeader
+          breadcrumb={[
+            { label: 'Ana Sayfa', to: '/' },
+            { label: 'Astrofotoğrafçılar', to: '/kesfet' },
+            { label: displayName },
+          ]}
+          title={displayName}
+          meta={`@${username}`}
+          description={`${cities.join(', ')} çevresinden ${userPhotos.length} kayıt.`}
+          actions={cities.map((city) => (
+            <Badge key={city}>{city}</Badge>
+          ))}
+        />
 
-        <h2 className="mb-4 text-lg font-semibold text-foreground">
-          Fotoğraflar
-        </h2>
-        <ul className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          {userPhotos.map((p) => (
-            <li key={p.slug}>
-              <Link to={`/fotograf/${p.slug}`} className="group block">
-                <PhotoPlaceholder
-                  gradient={p.gradient}
-                  alt={p.title}
-                  className="aspect-[4/3] w-full border border-border transition-transform duration-300 group-hover:scale-[1.03]"
-                />
-                <p className="mt-2 truncate text-sm font-medium text-foreground">
-                  {p.target.catalog} · {p.title}
-                </p>
-                <p className="tabular truncate text-xs text-muted-foreground">
-                  ♥ {p.likes} · 💬 {p.comments}
-                </p>
-              </Link>
+        <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <Readout label="Fotoğraf" value={userPhotos.length} />
+          <Readout
+            label="Toplam entegrasyon"
+            value={formatIntegration(totalSeconds)}
+            tone="cold"
+          />
+          <Readout
+            label="Beğeni"
+            value={userPhotos.reduce((sum, p) => sum + p.likes, 0)}
+            tone="plain"
+          />
+          <Readout
+            label="En karanlık saha"
+            value={
+              bortleValues.length > 0 ? `Bortle ${Math.min(...bortleValues)}` : '—'
+            }
+            tone="muted"
+            hint={bortleValues.length > 0 ? 'kayıtlardan' : 'kayıt yok'}
+          />
+        </div>
+
+        <h2 className="label mb-2">Fotoğraflar</h2>
+        <CardGrid view="grid" density="tight" className="mb-6">
+          {userPhotos.map((photo) => (
+            <li key={photo.slug}>
+              <PhotoCard photo={photo} />
             </li>
           ))}
-        </ul>
+        </CardGrid>
 
-        <p className="mt-10 text-center text-xs text-muted-foreground/70">
+        <p className="text-center text-[10.5px] leading-relaxed text-faint">
           Takip etme, mesaj gönderme ve koleksiyonlar hesap sistemiyle birlikte
           açılacak.
         </p>

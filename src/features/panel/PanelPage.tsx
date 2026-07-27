@@ -1,9 +1,15 @@
 import { Link } from 'react-router-dom';
 import { Container } from '@/components/ui/Container';
-import { Badge } from '@/components/ui/Badge';
 import { ButtonLink } from '@/components/ui/Button';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { Panel } from '@/components/ui/Panel';
+import { Readout } from '@/components/ui/Readout';
 import { useAuth } from '@/features/auth/AuthContext';
-import { formatQuotaLabel, MAX_ACTIVE_PHOTOS } from '@/domain/membership/quota';
+import {
+  formatQuotaLabel,
+  MAX_ACTIVE_PHOTOS,
+  MAX_DRAFT_PHOTOS,
+} from '@/domain/membership/quota';
 import { PageMeta } from '@/components/seo/PageMeta';
 
 /**
@@ -39,70 +45,77 @@ export function PanelPage() {
         description="Fotoğraflarınız, kotanız, setuplarınız ve üyelik durumunuz."
         noIndex
       />
-      <Container className="py-10 sm:py-14">
-        <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-semibold text-foreground sm:text-3xl">
-              Üye Paneli
-            </h1>
-            <p className="mt-2 text-muted-foreground">
-              {user
-                ? `Hoş geldin, ${user.email}`
-                : 'Hesap sistemi devreye alındığında burada içeriklerini yöneteceksin.'}
-            </p>
-          </div>
-          {!user && (
-            <ButtonLink to="/kayit" size="sm">
-              Üye Ol
-            </ButtonLink>
-          )}
-        </header>
+      <Container className="py-8 sm:py-10">
+        <PageHeader
+          title="Üye Paneli"
+          description={
+            user
+              ? `Hoş geldin, ${user.email}`
+              : 'Hesap sistemi devreye alındığında burada içeriklerini yöneteceksin.'
+          }
+          actions={
+            !user && (
+              <ButtonLink to="/kayit" size="sm">
+                Üye Ol
+              </ButtonLink>
+            )
+          }
+        />
 
         {!configured && (
-          <p className="mb-8 rounded-xl border border-warning/30 bg-warning/10 px-4 py-3 text-xs text-warning">
+          <p className="mb-4 rounded-card border border-warning/35 bg-surface-1 px-3 py-2.5 text-[11.5px] leading-relaxed text-warning">
             Hesap altyapısı (Supabase) henüz bağlanmadı — panel önizleme
-            modunda.
+            modunda. Buradaki sayılar gerçek değil, kural örnekleridir.
           </p>
         )}
 
-        {/* Genel bakış kartları */}
-        <div className="mb-8 grid gap-4 sm:grid-cols-3">
-          <div className="rounded-card border border-border bg-surface-1 p-5">
-            <p className="text-xs text-muted-foreground">Fotoğraf kotası</p>
-            <p className="tabular mt-1 text-2xl font-bold text-foreground">
-              {formatQuotaLabel(activePhotos)}
-            </p>
-            <div
-              role="progressbar"
-              aria-valuenow={activePhotos}
-              aria-valuemin={0}
-              aria-valuemax={MAX_ACTIVE_PHOTOS}
-              aria-label="Fotoğraf kotası kullanımı"
-              className="mt-3 h-1.5 overflow-hidden rounded-full bg-surface-3"
-            >
-              <div
-                className="h-full rounded-full bg-primary"
-                style={{
-                  width: `${(activePhotos / MAX_ACTIVE_PHOTOS) * 100}%`,
-                }}
-              />
-            </div>
-          </div>
-          <div className="rounded-card border border-border bg-surface-1 p-5">
-            <p className="text-xs text-muted-foreground">Üyelik durumu</p>
-            <p className="mt-1 text-2xl font-bold text-foreground">—</p>
-            <Badge className="mt-3">Üyelik sistemi yakında</Badge>
-          </div>
-          <div className="rounded-card border border-border bg-surface-1 p-5">
-            <p className="text-xs text-muted-foreground">Toplam entegrasyon</p>
-            <p className="tabular mt-1 text-2xl font-bold text-foreground">
-              0 sa
-            </p>
-            <p className="mt-3 text-xs text-muted-foreground/70">
-              Yayımlanan fotoğraflarından hesaplanır
-            </p>
-          </div>
+        {/* Genel bakış — ölçüm kutuları sitenin geri kalanıyla aynı dilde */}
+        <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <Readout
+            label="Fotoğraf kotası"
+            value={formatQuotaLabel(activePhotos)}
+            hint={`${MAX_ACTIVE_PHOTOS - activePhotos} hak kaldı`}
+          />
+          <Readout
+            label="Taslak"
+            value={`0 / ${MAX_DRAFT_PHOTOS}`}
+            hint="yayımlanmamış kayıt"
+            tone="cold"
+          />
+          <Readout
+            label="Üyelik"
+            value="—"
+            hint="üyelik sistemi yakında"
+            tone="muted"
+          />
+          <Readout
+            label="Toplam entegrasyon"
+            value="0"
+            unit="sa"
+            hint="yayımlanan kayıtlardan"
+            tone="plain"
+          />
         </div>
+
+        <Panel title="Kota kullanımı" className="mb-4">
+          <div
+            role="progressbar"
+            aria-valuenow={activePhotos}
+            aria-valuemin={0}
+            aria-valuemax={MAX_ACTIVE_PHOTOS}
+            aria-label="Fotoğraf kotası kullanımı"
+            className="h-1.5 overflow-hidden rounded-full bg-surface-3"
+          >
+            <div
+              className="h-full rounded-full bg-primary"
+              style={{ width: `${(activePhotos / MAX_ACTIVE_PHOTOS) * 100}%` }}
+            />
+          </div>
+          <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
+            Aynı fotoğrafın işleme sürümleri kotada ayrı kayıt sayılmaz; bir
+            fotoğraf kaç sürüme sahip olursa olsun tek hak tüketir (§4.2).
+          </p>
+        </Panel>
 
         {/* Menü */}
         <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -110,7 +123,7 @@ export function PanelPage() {
             <li key={item.label}>
               <Link
                 to={item.to}
-                className="flex h-full items-center justify-between gap-2 rounded-card border border-border bg-surface-1 px-4 py-3.5 text-sm font-medium text-foreground transition-colors hover:border-white/20 hover:bg-surface-2"
+                className="flex h-full items-center justify-between gap-2 rounded-card border border-border bg-surface-1 px-4 py-3.5 text-sm font-medium text-foreground transition-colors hover:border-border-strong hover:bg-surface-2"
               >
                 {item.label}
                 {item.note && (

@@ -54,7 +54,7 @@ export function TargetDetailPage() {
           },
         ])}
       />
-      <Container className="py-8 sm:py-12">
+      <Container className="py-8 sm:py-10">
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
           <PhotoPlaceholder
             gradient={target.gradient}
@@ -72,7 +72,7 @@ export function TargetDetailPage() {
                 </span>
               )}
             </p>
-            <h1 className="mt-1 text-2xl font-semibold text-foreground sm:text-3xl">
+            <h1 className="mt-1 text-[26px] text-foreground sm:text-[30px]">
               {target.name}
             </h1>
             <div className="mt-3 flex flex-wrap gap-1.5">

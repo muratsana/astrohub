@@ -87,9 +87,9 @@ function PhotoDetail({ photo }: { photo: AstroPhoto }) {
           ]),
         ]}
       />
-      <Container className="py-8 sm:py-12">
+      <Container className="py-8 sm:py-10">
         {/* Görüntüleyici */}
-        <div className="relative overflow-hidden rounded-2xl border border-border">
+        <div className="relative overflow-hidden rounded-card border border-border">
           <PhotoPlaceholder
             gradient={photo.gradient}
             alt={`${photo.title} — ${photo.target.catalog}`}
@@ -107,7 +107,7 @@ function PhotoDetail({ photo }: { photo: AstroPhoto }) {
             <p className="text-sm font-medium text-primary">
               {photo.target.catalog} · {photoTypeLabels[photo.type]}
             </p>
-            <h1 className="mt-1 text-2xl font-semibold text-foreground sm:text-3xl">
+            <h1 className="mt-1 text-[26px] text-foreground sm:text-[30px]">
               {photo.title}
             </h1>
             <p className="tabular mt-2 text-sm text-muted-foreground">
@@ -269,7 +269,7 @@ function ExposureTab({ photo }: { photo: AstroPhoto }) {
   const c = photo.calibration;
   return (
     <div className="space-y-6">
-      <div className="overflow-x-auto rounded-xl border border-border">
+      <div className="overflow-x-auto rounded-card border border-border">
         <table className="w-full min-w-96 text-sm">
           <thead>
             <tr className="border-b border-border bg-surface-1 text-left text-xs uppercase tracking-wide text-muted-foreground">
@@ -350,7 +350,7 @@ function ProcessingTab({ photo }: { photo: AstroPhoto }) {
         ]}
       />
       {photo.processing.aiDeclared && (
-        <p className="rounded-xl border border-accent-blue/30 bg-accent-blue/10 px-4 py-3 text-xs text-accent-blue">
+        <p className="rounded-card border border-accent-blue/30 bg-accent-blue/10 px-4 py-3 text-xs text-accent-blue">
           ℹ️ Fotoğrafçı, işlemede AI tabanlı araç (denoise/deconvolution vb.)
           kullanıldığını beyan etmiştir (şeffaflık politikası).
         </p>
