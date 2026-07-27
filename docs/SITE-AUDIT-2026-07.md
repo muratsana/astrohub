@@ -217,22 +217,17 @@ gerektiriyor.
 | Hava servisi entegrasyonu | §14.3 | Servis hesabı |
 | Canlı SQM / All-Sky ağı | §8.7 | Faz 3 |
 
-### 4.3 Ürün geliştirmesi (bağımlılıksız, sıradaki iş)
+### 4.3 Ürün geliştirmesi (bağımlılıksız)
+
+Bu başlıktaki işlerin çoğu **27 Temmuz gecesi tamamlandı** (bkz. §6). Kalanlar:
 
 | İş | Şartname | Not |
 | --- | --- | --- |
-| Etkinlik takvim ve harita görünümü | §19.3 | Liste görünümü var; takvim eksik |
-| Fotoğraf sürümleri ve karşılaştırma | §8.1 | Kota kuralı yazıldı, UI yok |
-| Setup oluşturucu + uyumluluk kontrolü | §7.12 | FOV hesaplayıcı hazır, temeli var |
-| Mosaic planlayıcı | §7.12 | Optik matematiği domain'de mevcut |
-| Ekipman model detay sayfaları | §7.11 | Route açık, içerik yok |
-| Eğitim içerik detayı + işleme laboratuvarı | §7.14 | Route açık |
-| İlan detayı ve platform içi iletişim | §7.13 | Route açık |
 | Kulüp/topluluk kurumsal profilleri | §8.11 | Faz 2 |
-| Şehir bazlı SEO sayfaları | §20 | `/ankara-astronomi-etkinlikleri` vb. |
-| Çerez tercih yönetimi arayüzü | §15.7 | Politika metni yazıldı, UI yok |
-| E2E testler (Playwright) | §17.1 | Şu an yalnızca unit + integration |
-| Görsel regresyon testleri | §17.2 | — |
+| İşleme laboratuvarı / FITS analizi | §7.14 | Faz 3 |
+| Teknik sorun teşhis merkezi | §8.12 | Faz 3 |
+| Astrotrip rota planlayıcı | §8.10 | Faz 3 |
+| Piksel bazlı görsel regresyon | §17.2 | CI ortamı sabitlenmeden referans görüntü commit'lemek sürekli kırmızı yanan bir teste dönüşür; şimdilik ekran görüntüsü kaydı + sayısal düzen denetimi var |
 
 ### 4.4 Yayın öncesi zorunlu
 
@@ -243,6 +238,12 @@ gerektiriyor.
 3. `robots.txt` içindeki `Sitemap:` satırı mutlak URL'e çevrilmeli.
 4. PWA ikonları — manifest şu an yalnızca SVG favicon'a işaret ediyor;
    192/512 px PNG maskable ikonlar eklenmeli.
+5. **`st_estimatedextent` yetkisi** — PostGIS fonksiyonu `anon`/`authenticated`
+   rollerine açık ve yetkiyi `supabase_admin` verdiği için migration rolünün
+   `revoke`'u etkisiz kalıyor (PostgreSQL'de revoke yalnızca çağıran rolün
+   verdiği yetkiyi kaldırır). Supabase dashboard/destek üzerinden
+   `supabase_admin` rolüyle geri alınmalı. Kalan risk sınırlı: fonksiyon
+   yalnızca istatistikten kapsam tahmini döndürür, veri satırı vermez.
 
 ---
 
@@ -255,3 +256,78 @@ gerektiriyor.
 | `npm test` | ✅ 65 test (46 → 65) |
 | `npm run build` | ✅ uyarısız, 40+ chunk, ilk yükleme %45 daha hafif |
 | Ölü bağlantı | ✅ yok (testle kilitli) |
+
+---
+
+## 6. İkinci tur — 27 Temmuz gecesi
+
+Denetimin "kalan işler" listesindeki bağımlılıksız maddeler kapatıldı.
+
+### 6.1 Yeni araçlar (§7.12, §7.9–7.10)
+
+| Araç | Adres | Ne yapar |
+| --- | --- | --- |
+| Mozaik planlayıcı | `/araclar/mosaic` | Panel sayısı, adım aralığı, kapsanan alan, süre ve gece sayısı; kadraj yönünü otomatik seçer |
+| Setup uyumluluk | `/araclar/setup-uyumluluk` | Montür yükü (%60 görüntüleme payı), backfocus (filtre = kalınlık/3), seeing'e bağlı örnekleme, guide ölçeği |
+| Karanlık takvimi | `/araclar/takvim` | Aylık **aysız karanlık süre** ızgarası, gece kalite puanı, ayın en iyi üç gecesi |
+| Bu gece | `/bu-gece` | Hedefler zirve yüksekliğine değil, 30° üstünde kaldıkları süreye göre sıralı; yükseklik eğrileri |
+| Gece planlayıcı | `/planlayici` | "En erken biten önce" ile çakışmasız program; plana giremeyenler gerekçesiyle listelenir |
+
+FOV hesaplayıcı bu üç araçla aynı yerleşime taşındı ve **kadraj önizlemesi**
+kazandı: hedefin kadraja sığıp sığmadığı bir bakışta görülüyor.
+
+### 6.2 Yeni sayfalar
+
+| Sayfa | Not |
+| --- | --- |
+| `/etkinlikler` takvim görünümü | Çok günlü etkinlikler her gününde görünür; takvim ilk etkinliğin ayında açılır |
+| `/etkinlikler/harita` | Tile sağlayıcısı yok; şematik dağılım + kuş uçuşu mesafeye göre sıralı liste ("harita" iddiası taşımıyor) |
+| `/ekipman/:brand/:slug` | Model künyesi, bu ekipmanla çekilen fotoğraflar, ikinci el ilanları, aynı sınıftaki alternatifler |
+| `/ilan/:slug` | Fiyat bağlamı (kategori medyanı), satıcı geçmişi, güvenlik uyarıları; doğrudan iletişim ve "güvenli ödeme" iddiası bilinçli olarak yok |
+| `/cerezler` | Tarayıcıda gerçekten saklanan verilerin listesi ve tek tıkla silme |
+| `/{sehir}-astronomi-etkinlikleri` | On beş şehir için üretilmiş SEO sayfaları; tanımsız şehir 404 alır |
+
+### 6.3 Fotoğraf sürümleri (§8.1)
+
+Sürüm geçmişi, öncesi/sonrası sürgüsü (klavyeyle de çalışır) ve aynı hedefin
+iki kaydı arasında teknik fark tablosu. Kota kuralı domain katmanında:
+sürümler 50'lik kotada ayrı fotoğraf sayılmaz.
+
+### 6.4 Dayanıklılık ve güvenlik
+
+- **lazyWithRetry** — yeni sürüm yayına alındığında silinen chunk'lar
+  yüzünden açık sekmede oluşan hata ekranı; bir kez yeniden dener, sonra
+  sayfayı **bir kez** yeniler (sonsuz döngüye karşı bayrak).
+- **ErrorBoundary** — radyo rıhtımı router'ın dışında yaşıyor ve oradaki bir
+  hata `errorElement`'e uğramadan köke çıkıp uygulamayı beyaz ekrana
+  düşürüyordu. Rıhtım, komut paleti ve önizleme paneli izole edildi.
+- **safeUrl / ExternalLink** — yalnızca `http(s)`; `javascript:` ve
+  boşluk/kontrol karakteriyle gizlenmiş şemalar reddediliyor. Güvensiz adres
+  bağlantıya dönüşmüyor, düz metin kalıyor. `rel="noopener noreferrer nofollow"`.
+- **sanitize** — HTML etiketleri, görünmez karakterler (kullanıcı adı
+  taklidi) ve aşırı satır sonu temizliği; forum formunda canlı önizleme.
+- **Veritabanı** — radyo bucket'ının geniş listeleme politikası editörlere
+  daraltıldı (Supabase denetçisi 0025).
+
+### 6.5 Test
+
+| Katman | Önce | Sonra |
+| --- | --- | --- |
+| Birim + entegrasyon | 156 | **320** |
+| E2E senaryosu | 0 | **19** |
+| Önizleme duman testi | 7 modül | 7 modül + 4 genişlikte taşma denetimi |
+
+E2E gerçek tarayıcıda, gerçek derlemeyle çalışır ve birim testlerinin
+göremediği sınıfı kapsar: yönlendirme, kod bölme, kalıcı durum, düzen.
+Üç genişlikte ekran görüntüsü `dist-preview/screens/` altına yazılır.
+
+### 6.6 İkinci tur sonrası durum
+
+| Kontrol | Sonuç |
+| --- | --- |
+| `npm run typecheck` | ✅ hatasız |
+| `npm run lint` | ✅ hatasız |
+| `npm test` | ✅ 320 test |
+| `npm run build` | ✅ uyarısız |
+| `npm run check:preview` | ✅ sağlam, yatay taşma yok |
+| `node scripts/e2e.mjs` | ✅ 19/19 senaryo |

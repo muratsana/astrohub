@@ -39,7 +39,10 @@ npm run build        # üretim derlemesi
 npm run build:preview # tek dosya önizleme (dist-preview/index.html)
 npm run typecheck    # TypeScript kontrolü
 npm run lint         # ESLint
-npm test             # Vitest
+npm test             # Vitest (birim + entegrasyon)
+npm run check:preview # önizleme duman testi (gerçek tarayıcı)
+npm run test:e2e     # uçtan uca senaryolar (önizleme derlemesi üzerinde)
+npm run test:all     # hepsi sırayla
 ```
 
 ### Tek dosya önizleme
