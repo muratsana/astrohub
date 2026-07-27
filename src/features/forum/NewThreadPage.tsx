@@ -7,6 +7,7 @@ import { Input, Select } from '@/components/ui/Input';
 import { Button, ButtonLink } from '@/components/ui/Button';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { forumCategories, forumCategoryOrder } from './types';
+import { sanitizeText } from '@/lib/sanitize';
 
 /**
  * YENİ KONU FORMU.
@@ -21,6 +22,16 @@ export function NewThreadPage() {
   const [body, setBody] = useState('');
 
   const info = forumCategories[category as keyof typeof forumCategories];
+
+  /*
+   * Önizleme, yayımlanacak metnin AYNISINI gösterir: `sanitizeText` HTML
+   * etiketlerini söker, görünmez karakterleri atar ve üç üstü satır sonunu
+   * ikiye indirir. Kullanıcı "yazdığım gibi çıkmadı" sürprizini gönderdikten
+   * sonra değil, yazarken görmeli (§15.4).
+   */
+  const cleanTitle = sanitizeText(title, { maxLength: 120 });
+  const cleanBody = sanitizeText(body, { multiline: true });
+  const changed = cleanTitle !== title.trim() || cleanBody !== body.trim();
 
   return (
     <>
@@ -105,7 +116,31 @@ export function NewThreadPage() {
             </div>
           </form>
 
-          <aside>
+          <aside className="space-y-4">
+            {(cleanTitle || cleanBody) && (
+              <Panel
+                title="Önizleme"
+                status={changed ? 'metin sadeleştirildi' : 'değişiklik yok'}
+              >
+                {cleanTitle && (
+                  <p className="text-[13px] font-medium leading-snug text-foreground">
+                    {cleanTitle}
+                  </p>
+                )}
+                {cleanBody && (
+                  <p className="mt-2 whitespace-pre-line text-[11.5px] leading-relaxed text-muted-foreground">
+                    {cleanBody}
+                  </p>
+                )}
+                {changed && (
+                  <p className="mt-2 border-t border-border pt-2 text-[10px] leading-snug text-faint">
+                    Biçimlendirme etiketleri ve görünmez karakterler kaldırıldı;
+                    forum düz metin kabul eder.
+                  </p>
+                )}
+              </Panel>
+            )}
+
             <Panel title="İyi soru nasıl yazılır">
               <ol className="space-y-2.5 text-[11.5px] leading-relaxed text-muted-foreground">
                 <li>

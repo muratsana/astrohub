@@ -7,6 +7,7 @@ import { NotFoundPage } from '@/components/NotFoundPage';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { absoluteUrl, breadcrumbJsonLd, SITE_NAME } from '@/lib/seo';
 import { getNewsBySlug, sortedNews, newsCategoryLabels } from './data';
+import { ExternalLink } from '@/components/ExternalLink';
 
 /** Haber detayı — okuma genişliği sınırlı, kaynak künyesi görünür. */
 export function NewsDetailPage() {
@@ -83,7 +84,15 @@ export function NewsDetailPage() {
 
           <footer className="mt-10 border-t border-border pt-5">
             <p className="label mb-1">Kaynak</p>
-            <p className="text-[12.5px] text-foreground">{item.source.name}</p>
+            <p className="text-[12.5px] text-foreground">
+              {/*
+                Kaynak adresi dış veriden gelir; `ExternalLink` güvenli
+                olmayan şemalarda bağlantı kurmaz, düz metin bırakır (§15.4).
+              */}
+              <ExternalLink href={item.source.url} showHost>
+                {item.source.name}
+              </ExternalLink>
+            </p>
             <p className="mt-3 text-[11px] leading-relaxed text-faint">
               Haber içerikleri kaynağın yayınına dayanır; Astrohub editörü
               tarafından derlenir ve son doğrulama tarihiyle birlikte

@@ -6,6 +6,7 @@ import { Footer } from './Footer';
 import { MobileNav } from './MobileNav';
 import { NavDrawer } from './NavDrawer';
 import { RadioDock } from '@/features/radio/RadioDock';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { isPreviewEditorEnabled } from '@/features/preview-editor/PreviewEditorContext';
 
 /**
@@ -81,7 +82,14 @@ export function AppShell() {
 
       <Footer />
 
-      <RadioDock />
+      {/*
+        Rıhtım router'ın dışında yaşıyor; oradaki bir hatayı rota hata
+        sınırı yakalayamaz ve köke çıkıp tüm uygulamayı beyaz ekrana
+        düşürür. Yerel sınır, hatayı yalnızca rıhtıma mal eder.
+      */}
+      <ErrorBoundary label="RadioDock">
+        <RadioDock />
+      </ErrorBoundary>
       <MobileNav onOpenNav={openNav} />
 
       <NavDrawer
@@ -91,15 +99,19 @@ export function AppShell() {
       />
 
       {paletteOpen && (
-        <Suspense fallback={null}>
-          <CommandPalette open onClose={closePalette} />
-        </Suspense>
+        <ErrorBoundary label="CommandPalette">
+          <Suspense fallback={null}>
+            <CommandPalette open onClose={closePalette} />
+          </Suspense>
+        </ErrorBoundary>
       )}
 
       {isPreviewEditorEnabled && (
-        <Suspense fallback={null}>
-          <PreviewEditorPanel />
-        </Suspense>
+        <ErrorBoundary label="PreviewEditorPanel">
+          <Suspense fallback={null}>
+            <PreviewEditorPanel />
+          </Suspense>
+        </ErrorBoundary>
       )}
 
       <ScrollRestoration />

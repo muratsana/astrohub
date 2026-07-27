@@ -53,7 +53,10 @@ export const news: NewsItem[] = [
       'Bu yıl zirve gecesi ay evresi gözlemi zorlaştırmıyor: ay gece yarısından önce batıyor ve en verimli saatler tamamen karanlık geçiyor. Şehir ışığından uzak, Bortle 4 ve altı bir noktada saatte 80–110 meteor görülebilir.',
       'Gözlem için teleskop gerekmez; çıplak gözle, sırtüstü uzanarak ve gökyüzünün mümkün olduğunca geniş bir bölümünü görecek şekilde bakmak en verimli yöntemdir. Gözün karanlığa uyum sağlaması 20–30 dakika sürer; bu süre boyunca beyaz ışıktan kaçınmak gerekir.',
     ],
-    source: { name: 'IMO — International Meteor Organization' },
+    source: {
+      name: 'IMO — International Meteor Organization',
+      url: 'https://www.imo.net/',
+    },
     tint: '232,150,110',
   },
   {
@@ -67,7 +70,7 @@ export const news: NewsItem[] = [
       'James Webb Uzay Teleskobu’nun derin alan gözlemleri, kırmızıya kayması 14’ün üzerinde olan galaksi adaylarını ortaya çıkardı. Bu, ışığın Büyük Patlama’dan yalnızca 300 milyon yıl sonra yola çıktığı anlamına geliyor.',
       'Bulgular, erken evrende yıldız oluşumunun mevcut modellerin öngördüğünden daha hızlı ilerlediğine işaret ediyor. Alternatif açıklamalar arasında ilk kuşak yıldızların farklı kütle dağılımına sahip olması ve süper kütleli kara delik tohumlarının katkısı bulunuyor.',
     ],
-    source: { name: 'NASA / STScI' },
+    source: { name: 'NASA / STScI', url: 'https://www.nasa.gov/' },
     tint: '150,185,235',
   },
   {
@@ -111,7 +114,10 @@ export const news: NewsItem[] = [
       'Ay, gölge konisinin merkezine yakın geçeceği için bütünlük evresi uzun sürecek. Tutulmanın tüm evreleri Türkiye’den ufuk üzerinde gerçekleşiyor.',
       'Tam ay tutulması çıplak gözle güvenle izlenebilir; herhangi bir filtre gerekmez. Fotoğraf için geniş dinamik aralık nedeniyle pozlama köşeleme (bracketing) önerilir.',
     ],
-    source: { name: 'NASA Eclipse Web Site' },
+    source: {
+      name: 'NASA Eclipse Web Site',
+      url: 'https://eclipse.gsfc.nasa.gov/',
+    },
     tint: '220,190,150',
   },
   {

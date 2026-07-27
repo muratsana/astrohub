@@ -1,4 +1,4 @@
-import { lazy, Suspense, type ComponentType, type ReactNode } from 'react';
+import { Suspense, type ComponentType, type ReactNode } from 'react';
 import { createBrowserRouter, createHashRouter } from 'react-router-dom';
 import { AppShell } from '@/components/shell/AppShell';
 import { HomePage } from '@/features/home/HomePage';
@@ -7,6 +7,7 @@ import { RouteError } from '@/components/RouteError';
 import { RouteFallback } from '@/components/RouteFallback';
 import { PlaceholderPage } from '@/components/PlaceholderPage';
 import { RedirectTo, RedirectParam } from './Redirect';
+import { lazyWithRetry } from '@/lib/lazyWithRetry';
 import { cityRoutePaths } from '@/features/city/routes';
 
 /**
@@ -25,9 +26,14 @@ const createRouter =
  *
  * Tek dosya önizleme derlemesinde `inlineDynamicImports` açık olduğu için
  * bu chunk'lar tek pakette birleşir — davranış değişmez.
+ *
+ * Yükleyici `lazyWithRetry` ile sarılır: yeni sürüm yayına alındığında eski
+ * chunk dosyaları silinir ve açık duran sekmede gezinen kullanıcı var olmayan
+ * bir dosya ister. Tek gereken sayfayı yenilemekken kullanıcı hata ekranı
+ * görüyordu (bkz. `lib/lazyWithRetry`).
  */
 function route(loader: () => Promise<{ default: ComponentType }>): ReactNode {
-  const Component = lazy(loader);
+  const Component = lazyWithRetry(loader);
   return (
     <Suspense fallback={<RouteFallback />}>
       <Component />
