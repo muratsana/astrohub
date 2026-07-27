@@ -33,11 +33,12 @@ function inlineAssets(): Plugin {
         // Not: yerine koyma metni fonksiyonla verilir — paket kodundaki
         // `$&` / `$'` dizileri String.replace tarafından yorumlanmasın.
         if (chunk.type === 'chunk' && name.endsWith('.js')) {
+          const code = stripPreloadPlaceholder(chunk.code);
           html = html.replace(
             new RegExp(
               `<script[^>]*src="[^"]*${escapeRegExp(name)}"[^>]*></script>`
             ),
-            () => `<script type="module">${chunk.code}</script>`
+            () => `<script type="module">${code}</script>`
           );
           inlined.push(name);
         } else if (chunk.type === 'asset' && name.endsWith('.css')) {
@@ -99,6 +100,25 @@ function toBodyFragment(html: string): string {
     body.trim(),
     ...assets.filter((a) => !a.startsWith('<style')),
   ].join('\n');
+}
+
+/**
+ * Vite'ın dinamik import yardımcısı (`__vitePreload`) her `import()`
+ * çağrısına bir bağımlılık listesi yer tutucusu (`__VITE_PRELOAD__`) koyar
+ * ve bunu normalde chunk yazımı sırasında gerçek listeyle değiştirir.
+ * `inlineDynamicImports` ile tek chunk üretildiğinde bu değişim yapılmıyor
+ * ve yer tutucu kodda kalıyor; tarayıcı ilk tembel bileşende
+ * "`__VITE_PRELOAD__ is not defined`" atıp uygulamanın tamamını boş ekrana
+ * düşürüyor.
+ *
+ * Tek dosyada hiçbir chunk ayrı indirilmediği için ön yükleme zaten
+ * anlamsız — yer tutucu `void 0` ile kapatılır.
+ *
+ * Not: `define` ile çözülemiyor; `define` yer tutucu enjekte edilmeden önce
+ * çalışıyor. Bu yüzden değişim, paketin son hâli üzerinde burada yapılır.
+ */
+function stripPreloadPlaceholder(code: string): string {
+  return code.replace(/__VITE_PRELOAD__/g, 'void 0');
 }
 
 function escapeRegExp(value: string): string {

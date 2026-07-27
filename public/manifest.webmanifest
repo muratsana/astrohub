@@ -1,17 +1,39 @@
 {
-  "name": "Astrohub — Gökyüzünü keşfet, paylaş, öğren",
+  "name": "Astrohub — Gökyüzü kayıt altında",
   "short_name": "Astrohub",
-  "description": "Türkiye'nin astronomi, astrofotoğrafçılık, gözlem etkinlikleri, karanlık gökyüzü ve astrocamping platformu.",
+  "description": "Türkiye'nin astronomi platformu: astrofotoğraf galerisi, etkinlik takvimi, karanlık gökyüzü noktaları ve gökyüzü araçları.",
   "lang": "tr",
   "dir": "ltr",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "background_color": "#050a12",
-  "theme_color": "#050a12",
-  "categories": ["education", "photo", "travel"],
+  "background_color": "#07090b",
+  "theme_color": "#07090b",
+  "categories": [
+    "education",
+    "photo",
+    "travel"
+  ],
   "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
     {
       "src": "/favicon.svg",
       "sizes": "any",
@@ -23,7 +45,7 @@
     {
       "name": "Fotoğraf yükle",
       "short_name": "Yükle",
-      "url": "/fotograflar/yukle"
+      "url": "/galeri/yukle"
     },
     {
       "name": "Etkinlikler",
@@ -31,9 +53,9 @@
       "url": "/etkinlikler"
     },
     {
-      "name": "Gözlem noktaları",
-      "short_name": "Noktalar",
-      "url": "/harita/gozlem-noktalari"
+      "name": "Gözlem alanları",
+      "short_name": "Saha",
+      "url": "/saha"
     }
   ]
 }

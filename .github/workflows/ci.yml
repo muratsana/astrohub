@@ -31,3 +31,30 @@ jobs:
 
       - name: Build
         run: npm run build
+
+  preview:
+    # Önizleme derlemesi (tek dosya, gömülü varlıklar) üretim derlemesinden
+    # farklı bir yoldan geçer; ona özgü hatalar birim testlerinde görünmez.
+    # Bu iş, derlenen dosyayı gerçek bir tarayıcıda açıp uygulamanın
+    # boyandığını ve tüm modüllerin gezilebildiğini doğrular.
+    name: Önizleme duman testi
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Build preview
+        run: npm run build:preview
+
+      - name: Check preview renders
+        run: npm run check:preview

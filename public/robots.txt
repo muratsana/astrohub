@@ -9,7 +9,6 @@ Disallow: /panel/
 Disallow: /admin
 Disallow: /giris
 Disallow: /kayit
-Disallow: /fotograflar/yukle
+Disallow: /galeri/yukle
 
-# Sitemap adresi yayın alan adı belirlendiğinde mutlak URL ile güncellenir.
-Sitemap: /sitemap.xml
+Sitemap: https://astrohub.com.tr/sitemap.xml
