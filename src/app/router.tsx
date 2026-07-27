@@ -128,11 +128,8 @@ export const router = createRouter([
       },
       {
         path: 'etkinlikler/harita',
-        element: (
-          <PlaceholderPage
-            title="Etkinlik Haritası"
-            description="Yaklaşan etkinliklerin harita görünümü, tile sağlayıcısı bağlandığında açılacak."
-          />
+        element: route(
+          named(() => import('@/features/events/EventMapPage'), 'EventMapPage')
         ),
       },
       {

@@ -92,8 +92,8 @@ export const siteMap: NavGroup[] = [
       {
         label: 'Etkinlik Haritası',
         to: '/etkinlikler/harita',
-        description: 'Yaklaşan etkinliklerin konumları',
-        soon: true,
+        description: 'Konum dağılımı ve size en yakın etkinlikler',
+        keywords: ['harita', 'yakınımda', 'konum'],
       },
       {
         label: 'Kulüpler ve Topluluklar',

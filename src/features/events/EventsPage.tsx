@@ -29,17 +29,27 @@ import { eventTypeLabels, type EventType } from './types';
 import type { AstroEvent } from './types';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
+import { EventCalendar } from './EventCalendar';
+import { cn } from '@/lib/cn';
 
 /**
  * Etkinlikler sayfası (§7.5).
  *
- * Takvim ve harita görünümleri Faz 1.6'da eklenecek (harita 3. parti tile
- * sağlayıcısı gerektirdiği için şimdilik kapsam dışı). Bu arada ızgara/liste
- * geçişi var: liste görünümü tarihe göre taramayı kolaylaştırır.
+ * Üç okuma biçimi: ızgara (görsel tarama), liste (tarihe göre hızlı tarama)
+ * ve takvim (§19.3 — "şu hafta sonu ne var" sorusu). Harita ayrı bir sayfada
+ * (/etkinlikler/harita) çünkü orada asıl sorulan soru "yakınımda ne var".
+ * Filtreler üçünde de aynıdır; görünüm veriyi değil, okumayı değiştirir.
  */
 export function EventsPage() {
   const [filters, setFilters] = useState<EventFilters>(defaultEventFilters);
   const [view, setView] = useViewMode('etkinlikler');
+  /*
+   * Kart / takvim ayrımı `useViewMode` ile birleştirilmedi: o kanca ızgara ve
+   * liste arasında geçiş yapar ve tercihi modül bazında saklar. Takvim bunların
+   * üçüncüsü değil, farklı bir okuma biçimi — kart görünümündeyken ızgara/liste
+   * tercihi hâlâ anlamlı, takvimdeyken hiç değil.
+   */
+  const [layout, setLayout] = useState<'kart' | 'takvim'>('kart');
   const cities = useMemo(() => availableEventCities(events), []);
   const result = useMemo(() => filterEvents(events, filters), [filters]);
 
@@ -129,10 +139,48 @@ export function EventsPage() {
               noun="etkinlik"
             />
           }
-          view={{ mode: view, onChange: setView }}
+          view={layout === 'kart' ? { mode: view, onChange: setView } : undefined}
+          extra={
+            <div
+              role="group"
+              aria-label="Görünüm biçimi"
+              className="inline-flex shrink-0 overflow-hidden rounded-card border border-border"
+            >
+              {(
+                [
+                  { value: 'kart', label: 'Kart' },
+                  { value: 'takvim', label: 'Takvim' },
+                ] as const
+              ).map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setLayout(option.value)}
+                  aria-pressed={layout === option.value}
+                  className={cn(
+                    'h-8 border-l border-border px-2.5 text-[10px] uppercase tracking-[0.12em] transition-colors first:border-l-0',
+                    layout === option.value
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:bg-surface-2 hover:text-foreground'
+                  )}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          }
         />
 
-        {result.length === 0 ? (
+        {layout === 'takvim' ? (
+          result.length === 0 ? (
+            <EmptyState
+              message="Eşleşen etkinlik yok"
+              hint="Takvim yalnızca filtreye uyan etkinlikleri gösterir; filtreyi gevşetmeyi deneyin."
+            />
+          ) : (
+            <EventCalendar events={result} />
+          )
+        ) : result.length === 0 ? (
           <EmptyState
             message="Eşleşen etkinlik yok"
             hint="Şehir veya tür filtresini gevşetmeyi deneyin; takvim ileri tarihlere doğru dolmaya devam ediyor."

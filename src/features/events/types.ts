@@ -31,12 +31,26 @@ export interface EventSession {
   speaker?: string;
 }
 
+export interface EventCoords {
+  latitude: number;
+  longitude: number;
+}
+
 export interface AstroEvent {
   slug: string;
   title: string;
   type: EventType;
   city: string;
   venue: string;
+  /**
+   * Etkinlik yerinin koordinatı — harita görünümü ve yakınlık sıralaması için.
+   *
+   * Çevrimiçi etkinliklerde yoktur; harita bu kayıtları ayrı bir listede
+   * gösterir. Koordinat **etkinlik yerine** aittir, katılımcıya değil —
+   * §15.3'teki konum mahremiyeti kuralı kişisel konumlar içindir, ilan
+   * edilmiş bir etkinlik adresi zaten kamuya açıktır.
+   */
+  coords?: EventCoords;
   startsAt: string; // ISO
   endsAt?: string;
   free: boolean;
