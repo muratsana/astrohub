@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { LoginPage } from './LoginPage';
@@ -33,10 +33,53 @@ describe('LoginPage', () => {
   });
 
   it('Supabase yapılandırılmadığında kurulum uyarısı gösterir', () => {
-    // Test ortamında VITE_SUPABASE_* tanımsız → configured=false.
+    // VITE_SUPABASE_* vitest.config.ts'te boşa sabitlenmiştir; bu yüzden
+    // geliştiricinin .env dosyası olsa da olmasa da configured=false.
     renderLogin();
     expect(
       screen.getByText(/kimlik doğrulama henüz yapılandırılmadı/i)
+    ).toBeInTheDocument();
+  });
+});
+
+describe('LoginPage — Supabase yapılandırılmışken', () => {
+  // Yapılandırma modül düzeyinde bir sabit olduğu için ortam değişkeni
+  // değiştirmek yetmez; modülün kendisi taklit edilir.
+  beforeEach(() => {
+    vi.doMock('@/services/supabase/client', () => ({
+      isSupabaseConfigured: true,
+      // İstemci kurulmadan da bağlam çalışmalı: sağlayıcı null'ı zaten
+      // "yükleme bitti" olarak ele alır.
+      getSupabase: () => null,
+      requireSupabase: async () => {
+        throw new Error('testte kullanılmaz');
+      },
+    }));
+  });
+
+  afterEach(() => {
+    vi.doUnmock('@/services/supabase/client');
+    vi.resetModules();
+  });
+
+  it('kurulum uyarısını göstermez', async () => {
+    vi.resetModules();
+    const { LoginPage: Page } = await import('./LoginPage');
+    const { AuthProvider: Provider } = await import('./AuthContext');
+
+    render(
+      <MemoryRouter>
+        <Provider>
+          <Page />
+        </Provider>
+      </MemoryRouter>
+    );
+
+    expect(
+      screen.queryByText(/kimlik doğrulama henüz yapılandırılmadı/i)
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: /giriş yap/i })
     ).toBeInTheDocument();
   });
 });

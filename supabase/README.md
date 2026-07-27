@@ -4,14 +4,51 @@ Bu klasör Astrohub'ın veritabanı şemasını (migrations), edge fonksiyonlar�
 ve seed verilerini içerir. Şema plan §12.4'teki konsolide gruplara göre temiz
 biçimde yönetilir; StageHub migration mirası taşınmaz.
 
+## Bağlı proje
+
+| Alan | Değer |
+|---|---|
+| Proje adı | `astrohub` |
+| Ref | `eoqggvosegjbburyuyba` |
+| Bölge | `eu-central-1` (Frankfurt) |
+| API URL | `https://eoqggvosegjbburyuyba.supabase.co` |
+| Organizasyon | StageHub (ücretsiz plan — ikinci proje, ek ücret yok) |
+
+Anahtarlar `.env` dosyasına konur (repoya girmez); şablon için `.env.example`.
+
 ## Migration'lar
 
 | Dosya | İçerik |
 |---|---|
 | `0001_extensions_and_core.sql` | postgis, pg_trgm, citext, pgcrypto; `app` şeması; `updated_at` tetikleyicisi; `app_role` enum |
 | `0002_auth_profiles_membership.sql` | profiles, user_roles, memberships, billing, notification_preferences, push, KVKK tabloları + RLS |
+| `0003_grant_hardening.sql` | tablo yetkilerinin daraltılması, TRUNCATE boşluğunun kapatılması, fonksiyon `search_path` sabitlemesi |
 
-Sonraki gruplar (§12.4): `0003_equipment_and_setups` … `0012_storage_and_rls`.
+Sonraki gruplar (§12.4): `0004_equipment_and_setups` … `0012_storage_and_rls`.
+
+### Uzak projedeki migration adları
+
+Uzak proje bu dosyalardan daha küçük parçalar halinde kurulmuştu; adlar
+birebir eşleşmez:
+
+```
+20260715121837  extensions_and_core                  ← 0001
+20260727053310  auth_profiles                        ┐
+20260727053326  user_roles_and_helpers               ├ 0002'nin parçaları
+20260727053702  memberships_and_billing              ┘
+20260727…       auth_profiles_rls_and_kvkk_tables    ← 0002'nin uygulanmamış kalan bölümü
+20260727…       grant_hardening                      ┐
+20260727…       postgis_reference_table_readonly     ├ 0003   (bu adım etkisiz —
+20260727…       harden_set_updated_at_search_path    ┘         aşağıdaki nota bakın)
+```
+
+> **Not — 2026-07 denetimi.** `0002`'nin RLS bölümü ve son dört tablosu uzak
+> projeye hiç uygulanmamıştı: dört tablo RLS **kapalı** durumdaydı ve `anon`
+> rolünün hepsinde tam yazma yetkisi vardı. Tablolar boş ve uygulama canlıda
+> olmadığı için veri sızıntısı oluşmadı. `auth_profiles_rls_and_kvkk_tables`
+> migration'ı eksik bölümü tamamlar. Buradaki dosyalar sıfırdan kurulumun
+> doğru kaynağıdır — `supabase db reset` ile temiz bir veritabanı bu duruma
+> ulaşır.
 
 ## Yerel geliştirme
 
@@ -20,16 +57,29 @@ Sonraki gruplar (§12.4): `0003_equipment_and_setups` … `0012_storage_and_rls`
 supabase start
 supabase db reset          # tüm migration'ları uygular
 
-# Yeni proje bağlama
-supabase link --project-ref <ref>
+# Uzak projeye bağlanma
+supabase link --project-ref eoqggvosegjbburyuyba
 supabase db push           # migration'ları uzak projeye uygular
 ```
 
 ## İlkeler
 
-- Her tabloda açık **RLS** vardır (§15.1).
+- Her tabloda açık **RLS** vardır (§15.1). Yeni tablo eklerken RLS'i ve
+  politikalarını aynı migration'a yazın — sonraya bırakılan RLS uygulanmadan
+  kalır (yukarıdaki nota bakın).
 - Admin yetkisi `app.is_admin()` ile **veritabanı rol tablosundan** kontrol
   edilir; JWT metadata'ya güvenilmez.
-- `service_role` anahtarı asla istemciye gönderilmez.
+- `service_role` anahtarı asla istemciye gönderilmez ve `VITE_` önekli hiçbir
+  değişkene konmaz — `VITE_` ile başlayan her değer istemci paketine gömülür.
 - Üyelik durumu ve roller yalnızca admin/service-role tarafından yazılır
   (webhook entitlement — §14.5).
+- RLS'in kapsamadığı tek DML komutu **TRUNCATE**'tir; istemci rollerine bu
+  yetki verilmez (`0003`).
+
+## Bilinen denetçi uyarıları (kabul edilmiş)
+
+| Uyarı | Neden bırakıldı |
+|---|---|
+| `spatial_ref_sys` üzerinde RLS kapalı **ve `anon` yazabiliyor** | Tablo `supabase_admin` rolüne aittir: RLS açamayız, yetkileri de geri alamayız (REVOKE yalnızca kendi verdiğin izni kaldırır — `postgres` ile denemek hata vermeden no-op olur). İçerik EPSG koordinat sistemi kataloğudur; kişisel veri yoktur ve PostGIS'ten yeniden doldurulabilir. Supabase'deki her PostGIS projesinde aynıdır. |
+| `postgis`, `citext`, `pg_trgm` `public` şemasında | `0001`'de kurulmuş ve `profiles.username citext` gibi sütun tipleri bunlara bağlı. Taşımak tip referanslarını kırar; kazanç düşük. |
+| `st_estimatedextent` çağrılabilir | PostGIS'in kendi fonksiyonu, bizim kodumuz değil. |
