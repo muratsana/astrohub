@@ -7,6 +7,7 @@ import { RouteError } from '@/components/RouteError';
 import { RouteFallback } from '@/components/RouteFallback';
 import { PlaceholderPage } from '@/components/PlaceholderPage';
 import { RedirectTo, RedirectParam } from './Redirect';
+import { cityRoutePaths } from '@/features/city/routes';
 
 /**
  * Sunucusuz önizleme (tek dosya HTML) için hash tabanlı router kullanılır;
@@ -390,6 +391,15 @@ export const router = createRouter([
         ),
       },
       {
+        path: 'cerezler',
+        element: route(
+          named(
+            () => import('@/features/privacy/CookiePreferencesPage'),
+            'CookiePreferencesPage'
+          )
+        ),
+      },
+      {
         path: 'hakkinda',
         element: route(
           named(() => import('@/features/static/AboutPage'), 'AboutPage')
@@ -422,6 +432,17 @@ export const router = createRouter([
         path: 'gozlem-noktasi/:slug',
         element: <RedirectParam to="/saha/:slug" />,
       },
+
+      /* ═════════════ ŞEHİR SAYFALARI ═════════════
+       * `/ankara-astronomi-etkinlikleri` gibi adresler (§20). Şehir adı yol
+       * parçasının içinde geçtiği için dinamik segment kullanılamaz; rotalar
+       * şehir listesinden üretilir. Tanımsız şehir adı böylece 404 alır. */
+      ...cityRoutePaths.map((path) => ({
+        path,
+        element: route(
+          named(() => import('@/features/city/CityPage'), 'CityPage')
+        ),
+      })),
 
       // 404
       { path: '*', element: <NotFoundPage /> },

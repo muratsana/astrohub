@@ -2,7 +2,9 @@ import { photos } from '../features/photos/data';
 import { targets } from '../features/targets/data';
 import { events } from '../features/events/data';
 import { sites } from '../features/observing-sites/data';
-import { equipment } from '../features/equipment/data';
+import { equipment, equipmentPath } from '../features/equipment/data';
+import { listings } from '../features/marketplace/data';
+import { cityRoutePaths } from '../features/city/routes';
 import { articles } from '../features/articles/data';
 import { news } from '../features/news/data';
 
@@ -39,6 +41,11 @@ export const staticEntries: SitemapEntry[] = [
   { path: '/araclar', priority: 0.7, changefreq: 'monthly' },
   { path: '/araclar/fov', priority: 0.7, changefreq: 'monthly' },
   { path: '/araclar/pixel-scale', priority: 0.6, changefreq: 'monthly' },
+  { path: '/araclar/mosaic', priority: 0.6, changefreq: 'monthly' },
+  { path: '/araclar/setup-uyumluluk', priority: 0.6, changefreq: 'monthly' },
+  { path: '/araclar/takvim', priority: 0.6, changefreq: 'daily' },
+  { path: '/etkinlikler/harita', priority: 0.6, changefreq: 'daily' },
+  { path: '/cerezler', priority: 0.2, changefreq: 'yearly' },
   { path: '/yazilar', priority: 0.8, changefreq: 'weekly' },
   { path: '/ilanlar', priority: 0.7, changefreq: 'daily' },
   { path: '/topluluklar', priority: 0.5, changefreq: 'monthly' },
@@ -77,6 +84,26 @@ export function contentEntries(): SitemapEntry[] {
       path: `/ekipman/${category}`,
       priority: 0.6,
       changefreq: 'monthly' as const,
+    })),
+    ...equipment.map((e) => ({
+      path: equipmentPath(e),
+      priority: 0.5,
+      changefreq: 'monthly' as const,
+    })),
+    ...listings.map((l) => ({
+      path: `/ilan/${l.slug}`,
+      priority: 0.5,
+      changefreq: 'weekly' as const,
+    })),
+    /*
+     * Şehir sayfaları: arama motoru için asıl giriş noktaları. Öncelik
+     * etkinlik detaylarının üstünde tutuluyor çünkü aranan sorgu ("ankara
+     * astronomi etkinlikleri") tam olarak bu sayfanın karşılığı.
+     */
+    ...cityRoutePaths.map((path) => ({
+      path: `/${path}`,
+      priority: 0.7,
+      changefreq: 'weekly' as const,
     })),
     ...articles.map((a) => ({
       path: `/yazi/${a.slug}`,

@@ -277,6 +277,12 @@ export const siteMap: NavGroup[] = [
     items: [
       { label: 'Hakkında', to: '/hakkinda' },
       { label: 'KVKK ve Gizlilik', to: '/kvkk', keywords: ['gizlilik', 'veri'] },
+      {
+        label: 'Çerez Tercihleri',
+        to: '/cerezler',
+        description: 'Tarayıcıda ne saklanıyor, nasıl silinir',
+        keywords: ['çerez', 'cookie', 'depolama', 'localstorage'],
+      },
       { label: 'Kullanım Koşulları', to: '/kullanim-kosullari' },
     ],
   },

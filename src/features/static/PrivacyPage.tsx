@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
 import { LegalLayout, LegalSection, LegalList } from './LegalLayout';
@@ -96,12 +97,26 @@ export function PrivacyPage() {
           </p>
         </LegalSection>
 
-        <LegalSection heading="4. Çerezler">
+        <LegalSection heading="4. Çerezler ve yerel depolama">
           <p>
-            Zorunlu çerezler oturumun sürdürülmesi için kullanılır ve
-            kapatılamaz. Ölçümleme ve tercih çerezleri için ayrı onay alınır;
-            tercihinizi çerez ayarları üzerinden istediğiniz zaman
-            değiştirebilirsiniz.
+            Astrohub hâlihazırda <strong>izleme çerezi kullanmamaktadır</strong>:
+            reklam ağı, üçüncü parti analitik ve parmak izi çıkarma yoktur.
+            Tarayıcınızda saklanan veriler yalnızca sizin tercihlerinizdir
+            (tema, gözlem konumu, görünüm seçimi, radyo ses düzeyi) ve
+            tarayıcınızın yerel deposunda kalır.
+          </p>
+          <p>
+            Oturum açıldığında kimlik doğrulama için zorunlu bir oturum kaydı
+            tutulur; hizmetin çalışması için gereklidir ve kapatılamaz.
+            Ölçümleme ya da pazarlama amaçlı bir kayıt eklenirse ayrıca açık
+            rızanız alınır.
+          </p>
+          <p>
+            Saklanan verilerin tam listesini görmek ve tek tıkla silmek için{' '}
+            <Link to="/cerezler" className="text-primary hover:underline">
+              Çerez ve Depolama Tercihleri
+            </Link>{' '}
+            sayfasına bakabilirsiniz.
           </p>
         </LegalSection>
 
