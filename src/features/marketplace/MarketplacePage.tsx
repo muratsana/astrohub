@@ -1,12 +1,27 @@
 import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Container } from '@/components/ui/Container';
+import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
-import { PhotoPlaceholder } from '@/components/media/PhotoPlaceholder';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { CardGrid } from '@/components/ui/CardGrid';
+import { ToolBar, ResultCount } from '@/components/ui/ToolBar';
+import { useViewMode } from '@/components/ui/useViewMode';
+import {
+  FilterBar,
+  FilterCell,
+  FilterToggle,
+  filterControlClass,
+} from '@/components/ui/FilterBar';
+import { PlateFrame } from '@/components/media/PlateFrame';
+import { StarField } from '@/components/media/StarField';
+import { tintFromSeed } from '@/components/media/tints';
 import {
   equipmentCategoryLabels,
   type EquipmentCategory,
 } from '@/features/equipment/data';
-import { listings } from './data';
+import { listings, type Listing } from './data';
 import { cn } from '@/lib/cn';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
@@ -21,19 +36,46 @@ const categories: (EquipmentCategory | 'hepsi')[] = [
   'aksesuar',
 ];
 
-/** İkinci el pazaryeri listesi (§7.13): kategori filtresi + güven sinyalleri. */
-export function MarketplacePage() {
-  const [category, setCategory] = useState<EquipmentCategory | 'hepsi'>(
-    'hepsi'
-  );
+type SortKey = 'yeni' | 'ucuz' | 'pahali';
 
-  const result = useMemo(
-    () =>
-      category === 'hepsi'
-        ? listings
-        : listings.filter((l) => l.category === category),
-    [category]
-  );
+/**
+ * İKİNCİ EL PAZARYERİ (§7.13).
+ *
+ * Güven sinyalleri (fatura, doğrulanmış satıcı, değerlendirme) kartın
+ * süsü değil filtresidir: ikinci el ekipmanda karar veren şey fiyat kadar
+ * satıcının geçmişidir. Bu yüzden "yalnızca faturalı" ve "yalnızca
+ * doğrulanmış satıcı" birer onay kutusu olarak duruyor.
+ */
+export function MarketplacePage() {
+  const [category, setCategory] = useState<EquipmentCategory | 'hepsi'>('hepsi');
+  const [search, setSearch] = useState('');
+  const [sort, setSort] = useState<SortKey>('yeni');
+  const [onlyInvoice, setOnlyInvoice] = useState(false);
+  const [onlyVerified, setOnlyVerified] = useState(false);
+  const [view, setView] = useViewMode('ilanlar');
+
+  const result = useMemo(() => {
+    let items = listings;
+
+    if (category !== 'hepsi') items = items.filter((l) => l.category === category);
+    if (onlyInvoice) items = items.filter((l) => l.hasInvoice);
+    if (onlyVerified) items = items.filter((l) => l.seller.verified);
+
+    const q = search.trim().toLocaleLowerCase('tr-TR');
+    if (q) {
+      items = items.filter((l) =>
+        `${l.title} ${l.city} ${l.seller.username}`
+          .toLocaleLowerCase('tr-TR')
+          .includes(q)
+      );
+    }
+
+    return [...items].sort((a, b) => {
+      if (sort === 'ucuz') return a.price - b.price;
+      if (sort === 'pahali') return b.price - a.price;
+      return b.postedAt.localeCompare(a.postedAt);
+    });
+  }, [category, search, sort, onlyInvoice, onlyVerified]);
 
   return (
     <>
@@ -42,24 +84,20 @@ export function MarketplacePage() {
         description="Ekipman veritabanına bağlı, güven sinyalleriyle desteklenen ikinci el astronomi pazaryeri: teleskop, montür, kamera ve filtre ilanları."
         jsonLd={breadcrumbJsonLd([
           { name: 'Ana Sayfa', path: '/' },
-          { name: 'İkinci El', path: '/ilanlar' },
+          { name: 'İlanlar', path: '/ilanlar' },
         ])}
       />
-      <Container className="py-10 sm:py-14">
-        <header className="mb-8">
-          <h1 className="text-2xl font-semibold text-foreground sm:text-3xl">
-            İkinci El İlanlar
-          </h1>
-          <p className="mt-2 max-w-xl text-muted-foreground">
-            Ekipman veritabanına bağlı, güven sinyalleriyle desteklenen
-            astronomi pazaryeri. Alım-satım iletişimi platform içinden yürür.
-          </p>
-        </header>
+
+      <Container className="py-8 sm:py-10">
+        <PageHeader
+          title="İkinci El İlanlar"
+          description="Ekipman veritabanına bağlı astronomi pazaryeri. İletişim platform içinden yürür; Astrohub ödemeye aracılık etmez, emanet (escrow) hizmeti sunmaz."
+        />
 
         <div
           role="tablist"
           aria-label="İlan kategorileri"
-          className="mb-8 flex flex-wrap gap-1.5"
+          className="mb-4 flex flex-wrap items-center gap-1.5"
         >
           {categories.map((c) => (
             <button
@@ -68,10 +106,10 @@ export function MarketplacePage() {
               aria-selected={category === c}
               onClick={() => setCategory(c)}
               className={cn(
-                'rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors',
+                'rounded-card border px-2.5 py-1 text-[10px] uppercase tracking-[0.12em] transition-colors',
                 category === c
-                  ? 'border-primary/50 bg-primary/10 text-primary'
-                  : 'border-border text-muted-foreground hover:text-foreground'
+                  ? 'border-foreground/40 bg-surface-2 text-foreground'
+                  : 'border-border text-muted-foreground hover:border-border-strong hover:text-foreground'
               )}
             >
               {c === 'hepsi' ? 'Tümü' : equipmentCategoryLabels[c]}
@@ -79,52 +117,146 @@ export function MarketplacePage() {
           ))}
         </div>
 
+        <FilterBar>
+          <FilterCell label="Ara" htmlFor="listing-search" className="lg:col-span-2">
+            <Input
+              id="listing-search"
+              type="search"
+              placeholder="İlan başlığı, şehir veya satıcı"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className={filterControlClass}
+            />
+          </FilterCell>
+          <FilterToggle
+            id="listing-invoice"
+            label="Yalnızca faturalı"
+            checked={onlyInvoice}
+            onChange={setOnlyInvoice}
+          />
+          <FilterToggle
+            id="listing-verified"
+            label="Doğrulanmış satıcı"
+            checked={onlyVerified}
+            onChange={setOnlyVerified}
+          />
+        </FilterBar>
+
+        <ToolBar
+          left={
+            <ResultCount
+              current={result.length}
+              total={listings.length}
+              noun="ilan"
+            />
+          }
+          sort={{
+            id: 'listing-sort',
+            value: sort,
+            onChange: (v) => setSort(v as SortKey),
+            options: [
+              { value: 'yeni', label: 'En yeni' },
+              { value: 'ucuz', label: 'Artan fiyat' },
+              { value: 'pahali', label: 'Azalan fiyat' },
+            ],
+          }}
+          view={{ mode: view, onChange: setView }}
+        />
+
         {result.length === 0 ? (
-          <p className="py-16 text-center text-muted-foreground">
-            Bu kategoride aktif ilan yok.
-          </p>
+          <EmptyState
+            message="Eşleşen ilan yok"
+            hint="Filtreleri gevşetmeyi deneyin. İlan verme akışı hesap sistemiyle birlikte (Faz 1.8) açılacak."
+          />
         ) : (
-          <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {result.map((l) => (
-              <li
-                key={l.slug}
-                className="flex h-full flex-col overflow-hidden rounded-card border border-border bg-surface-1"
-              >
-                <PhotoPlaceholder
-                  gradient={l.gradient}
-                  alt={l.title}
-                  rounded="rounded-none"
-                  className="aspect-[16/9] w-full"
-                />
-                <div className="flex flex-1 flex-col p-4">
-                  <h2 className="text-sm font-semibold leading-snug text-foreground">
-                    {l.title}
-                  </h2>
-                  <p className="tabular mt-2 text-lg font-bold text-primary">
-                    {l.price.toLocaleString('tr-TR')} ₺
-                  </p>
-                  <p className="tabular mt-0.5 text-xs text-muted-foreground">
-                    {l.city} · @{l.seller.username} · ★{' '}
-                    {l.seller.rating.toFixed(1)}
-                    {l.seller.verified && ' · Doğrulanmış satıcı'}
-                  </p>
-                  <div className="mt-auto flex flex-wrap gap-1.5 pt-3">
-                    <Badge>{l.condition}</Badge>
-                    {l.hasInvoice && <Badge tone="success">Faturalı</Badge>}
-                    {l.shippingOk && <Badge tone="cold">Kargo var</Badge>}
-                  </div>
-                </div>
+          <CardGrid view={view}>
+            {result.map((listing) => (
+              <li key={listing.slug}>
+                <ListingCard listing={listing} variant={view} />
               </li>
             ))}
-          </ul>
+          </CardGrid>
         )}
 
-        <p className="mt-8 text-center text-xs text-muted-foreground/70">
-          İlan verme, mesajlaşma ve moderasyon akışı hesap sistemiyle birlikte
-          (Faz 1.8) devreye alınacak. Platform içi ödeme/escrow MVP kapsamı
-          dışındadır.
+        <p className="mt-6 text-center text-[10.5px] leading-relaxed text-faint">
+          Platform içi ödeme/escrow MVP kapsamı dışındadır. Alım-satımda elden
+          teslim ve yerinde deneme önerilir.
         </p>
       </Container>
     </>
+  );
+}
+
+function ListingCard({
+  listing,
+  variant,
+}: {
+  listing: Listing;
+  variant: 'grid' | 'list';
+}) {
+  const badges = (
+    <div className="flex flex-wrap gap-1">
+      <Badge>{listing.condition}</Badge>
+      {listing.hasInvoice && <Badge tone="success">Faturalı</Badge>}
+      {listing.shippingOk && <Badge tone="cold">Kargo</Badge>}
+    </div>
+  );
+
+  if (variant === 'list') {
+    return (
+      <Link
+        to={`/ilan/${listing.slug}`}
+        className="group flex h-full items-center gap-3 rounded-card border border-border bg-surface-1 px-3 py-2.5 transition-colors hover:border-border-strong"
+      >
+        <div className="min-w-0 flex-1">
+          <h2 className="truncate text-[13px] font-medium text-foreground group-hover:text-primary">
+            {listing.title}
+          </h2>
+          <p className="tabular mt-0.5 truncate text-[10px] text-muted-foreground">
+            {listing.city} · @{listing.seller.username} · ★{' '}
+            {listing.seller.rating.toFixed(1)}
+          </p>
+        </div>
+        <span className="tabular shrink-0 font-display text-[15px] font-bold text-primary">
+          {listing.price.toLocaleString('tr-TR')} ₺
+        </span>
+        <div className="hidden shrink-0 sm:block">{badges}</div>
+      </Link>
+    );
+  }
+
+  return (
+    <Link
+      to={`/ilan/${listing.slug}`}
+      className="group flex h-full flex-col rounded-card border border-border bg-surface-1 transition-colors hover:border-border-strong"
+    >
+      <PlateFrame
+        ratio="aspect-[16/9]"
+        className="border-0 border-b border-border"
+        flag={
+          listing.seller.verified ? (
+            <Badge tone="cold" className="bg-background/85">
+              Doğrulanmış
+            </Badge>
+          ) : undefined
+        }
+      >
+        <StarField seed={listing.slug} tint={tintFromSeed(listing.slug)} />
+      </PlateFrame>
+
+      <div className="flex flex-1 flex-col px-2.5 py-2">
+        <h2 className="text-[13px] font-medium leading-snug text-foreground group-hover:text-primary">
+          {listing.title}
+        </h2>
+        <p className="tabular mt-1.5 font-display text-[17px] font-bold leading-none text-primary">
+          {listing.price.toLocaleString('tr-TR')} ₺
+        </p>
+        <p className="tabular mt-1 truncate text-[10px] text-muted-foreground">
+          {listing.city} · @{listing.seller.username} · ★{' '}
+          {listing.seller.rating.toFixed(1)}
+        </p>
+        <div className="mt-auto pt-2">{badges}</div>
+      </div>
+    </Link>
   );
 }

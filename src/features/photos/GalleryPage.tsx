@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react';
 import { Container } from '@/components/ui/Container';
 import { ButtonLink } from '@/components/ui/Button';
 import { Input, Select } from '@/components/ui/Input';
-import { Badge } from '@/components/ui/Badge';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
 import {
@@ -13,16 +12,12 @@ import {
 import { CardGrid } from '@/components/ui/CardGrid';
 import { ToolBar, ResultCount } from '@/components/ui/ToolBar';
 import { useViewMode } from '@/components/ui/useViewMode';
-import { PhotoTile } from '@/components/media/PhotoTile';
-import { tintFor } from '@/components/media/tints';
-import { formatIntegration } from '@/domain/photography/integration';
-import { targets } from '@/features/targets/data';
+import { PhotoCard } from './PhotoCard';
 import { photos } from './data';
 import {
   filterPhotos,
   defaultFilters,
   availableCities,
-  photoIntegrationSeconds,
   type GalleryFilters,
 } from './filtering';
 import { type ProcessingPalette } from './types';
@@ -39,14 +34,6 @@ const paletteOptions: (ProcessingPalette | 'hepsi')[] = [
   'HOO',
   'Mono',
 ];
-
-/** Fotoğrafın hedef türünü katalogdan bulup yıldız alanı tonunu seçer. */
-function tintForPhoto(catalog: string): string {
-  const target = targets.find(
-    (t) => t.catalog === catalog || t.aliases.includes(catalog)
-  );
-  return tintFor(target?.kind);
-}
 
 /**
  * FOTOĞRAF GALERİSİ — terminal dilinde.
@@ -217,35 +204,11 @@ export function GalleryPage() {
           />
         ) : (
           <CardGrid view={view} density="tight">
-            {result.map((photo) => {
-              const info = photoFamilies[familyOf(photo.type)];
-              return (
-                <li key={photo.slug}>
-                  <PhotoTile
-                    variant={view}
-                    to={`/fotograf/${photo.slug}`}
-                    seed={photo.slug}
-                    tint={tintForPhoto(photo.target.catalog)}
-                    target={photo.target.catalog}
-                    title={photo.title}
-                    palette={photo.palette}
-                    integration={formatIntegration(
-                      photoIntegrationSeconds(photo)
-                    )}
-                    bortle={photo.location.bortle}
-                    username={photo.user.username}
-                    family={{ label: info.label, className: info.className }}
-                    flag={
-                      photo.editorsPick ? (
-                        <Badge tone="primary" className="bg-background/85">
-                          Editör
-                        </Badge>
-                      ) : undefined
-                    }
-                  />
-                </li>
-              );
-            })}
+            {result.map((photo) => (
+              <li key={photo.slug}>
+                <PhotoCard photo={photo} variant={view} />
+              </li>
+            ))}
           </CardGrid>
         )}
       </Container>

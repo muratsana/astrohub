@@ -20,6 +20,14 @@ export interface PageMetaProps {
   noIndex?: boolean;
   /** Sayfaya özgü yapılandırılmış veri (JSON-LD) nesnesi ya da nesneleri. */
   jsonLd?: Record<string, unknown> | Record<string, unknown>[];
+  /**
+   * Kanonik yol — varsayılan olarak ziyaret edilen adrestir.
+   *
+   * Aynı içeriğe birden çok adresten ulaşılabilen sayfalarda (ör. ekipman
+   * detayında marka parçası doğrulanmaz) kanonik adresi sayfanın kendisi
+   * bildirmelidir; aksi hâlde arama motoru aynı içeriği iki kez indeksler.
+   */
+  canonicalPath?: string;
 }
 
 export function PageMeta({
@@ -28,10 +36,11 @@ export function PageMeta({
   bare = false,
   noIndex = false,
   jsonLd,
+  canonicalPath,
 }: PageMetaProps) {
   const { pathname } = useLocation();
   const fullTitle = bare ? title : `${title} | ${SITE_NAME}`;
-  const canonical = SITE_URL ? `${SITE_URL}${pathname}` : null;
+  const canonical = SITE_URL ? `${SITE_URL}${canonicalPath ?? pathname}` : null;
   const blocks = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
 
   return (

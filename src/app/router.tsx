@@ -276,11 +276,11 @@ export const router = createRouter([
       },
       {
         path: 'ilan/:slug',
-        element: (
-          <PlaceholderPage
-            title="İlan Detayı"
-            description="İlan detayları ve platform içi güvenli iletişim Faz 1.8'de."
-          />
+        element: route(
+          named(
+            () => import('@/features/marketplace/ListingDetailPage'),
+            'ListingDetailPage'
+          )
         ),
       },
 
@@ -334,11 +334,11 @@ export const router = createRouter([
       { path: 'ekipman/:category', element: equipmentPage() },
       {
         path: 'ekipman/:brand/:slug',
-        element: (
-          <PlaceholderPage
-            title="Ekipman Modeli"
-            description="Model detay sayfaları (teknik alanlar, uyumluluk, bu ekipmanla çekilmiş fotoğraflar) Faz 1.5'te."
-          />
+        element: route(
+          named(
+            () => import('@/features/equipment/EquipmentDetailPage'),
+            'EquipmentDetailPage'
+          )
         ),
       },
       {
