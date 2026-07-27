@@ -67,7 +67,7 @@ export function UpcomingEvents() {
     .slice(0, 5);
 
   return (
-    <Container className="py-12 sm:py-14">
+    <Container className="py-9 sm:py-11">
       <SectionHeader
         title="Yaklaşan Etkinlikler"
         meta={`${events.length} kayıt`}

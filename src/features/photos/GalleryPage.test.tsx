@@ -23,7 +23,7 @@ describe('GalleryPage (§7.2)', () => {
   it('başlığı, yükleme CTA’sını ve tüm karoları gösterir', () => {
     renderGallery();
     expect(
-      screen.getByRole('heading', { level: 1, name: /kayıt arşivi/i })
+      screen.getByRole('heading', { level: 1, name: /fotoğraf galerisi/i })
     ).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /fotoğraf yükle/i })).toHaveAttribute(
       'href',
@@ -35,7 +35,7 @@ describe('GalleryPage (§7.2)', () => {
   it('sonuç sayacını canlı bildirir', () => {
     renderGallery();
     expect(screen.getByRole('status')).toHaveTextContent(
-      `${photos.length} / ${photos.length} kayıt`
+      `${photos.length} / ${photos.length} fotoğraf`
     );
   });
 
@@ -64,6 +64,33 @@ describe('GalleryPage (§7.2)', () => {
     for (const card of photoLinks()) {
       expect(card).toHaveTextContent('@');
     }
+  });
+
+  it('her karoda tür ailesi rozeti gösterir', () => {
+    renderGallery();
+    // Dört aileden en az biri her zaman görünür olmalı.
+    const labels = ['Derin Uzay', 'Güneş Sistemi', 'Takımyıldız', 'Gece Manzarası'];
+    const found = labels.filter((l) => screen.queryAllByText(l).length > 0);
+    expect(found.length).toBeGreaterThan(0);
+  });
+
+  it('aile filtresi sonuçları daraltır', () => {
+    renderGallery();
+    const before = photoLinks().length;
+    fireEvent.click(screen.getByRole('tab', { name: 'Güneş Sistemi' }));
+    const after = photoLinks().length;
+    expect(after).toBeLessThan(before);
+    expect(after).toBeGreaterThan(0);
+  });
+
+  it('liste görünümüne geçilebilir', () => {
+    renderGallery();
+    fireEvent.click(screen.getByRole('button', { name: /liste görünümü/i }));
+    expect(
+      screen.getByRole('button', { name: /liste görünümü/i })
+    ).toHaveAttribute('aria-pressed', 'true');
+    // Karo sayısı görünümden bağımsız aynı kalmalı.
+    expect(photoLinks()).toHaveLength(photos.length);
   });
 
   it('Bortle ölçümü olan kayıtta gökyüzü sınıfını da yazar', () => {

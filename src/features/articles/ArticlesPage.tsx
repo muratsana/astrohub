@@ -4,6 +4,8 @@ import { Container } from '@/components/ui/Container';
 import { Badge } from '@/components/ui/Badge';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
+import { ViewToggle } from '@/components/ui/ViewToggle';
+import { useViewMode } from '@/components/ui/useViewMode';
 import { cn } from '@/lib/cn';
 import {
   articles,
@@ -46,6 +48,7 @@ function levelTone(level: ArticleLevel) {
 export function ArticlesPage() {
   const [level, setLevel] = useState<ArticleLevel | 'hepsi'>('hepsi');
   const [category, setCategory] = useState<ArticleCategory | 'hepsi'>('hepsi');
+  const [view, setView] = useViewMode('yazilar');
 
   const result = useMemo(
     () =>
@@ -68,18 +71,18 @@ export function ArticlesPage() {
         ])}
       />
 
-      <Container className="py-10 sm:py-12">
-        <header className="mb-6 border-b border-border pb-6">
-          <h1 className="text-[28px] text-foreground sm:text-[34px]">Yazılar</h1>
-          <p className="mt-2.5 max-w-[70ch] text-[12.5px] leading-relaxed text-muted-foreground">
+      <Container className="py-8 sm:py-10">
+        <header className="mb-5 border-b border-border pb-5">
+          <h1 className="text-[26px] text-foreground sm:text-[30px]">Yazılar</h1>
+          <p className="mt-2 max-w-[70ch] text-[12px] leading-relaxed text-muted-foreground">
             Başlangıçtan ileri seviyeye rehberler, işleme dersleri ve saha
             notları. Her yazı bir prosedür gibi kurulur: ne yapılır, neden
             yapılır, ne zaman işe yaramaz.
           </p>
         </header>
 
-        <div className="mb-6 grid gap-px border border-border bg-border sm:grid-cols-2">
-          <div className="bg-surface-1 px-3 py-2.5">
+        <div className="mb-4 grid gap-px border border-border bg-border sm:grid-cols-2">
+          <div className="bg-surface-1 px-3 py-2">
             <p className="label mb-2">Seviye</p>
             <div role="tablist" aria-label="Seviye" className="flex flex-wrap gap-1.5">
               {levels.map((l) => (
@@ -101,7 +104,7 @@ export function ArticlesPage() {
             </div>
           </div>
 
-          <div className="bg-surface-1 px-3 py-2.5">
+          <div className="bg-surface-1 px-3 py-2">
             <p className="label mb-2">Kategori</p>
             <div role="tablist" aria-label="Kategori" className="flex flex-wrap gap-1.5">
               {categories.map((c) => (
@@ -124,23 +127,32 @@ export function ArticlesPage() {
           </div>
         </div>
 
-        <p className="tabular label mb-4" role="status" aria-live="polite">
-          {result.length} / {articles.length} yazı
-        </p>
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <p className="tabular label" role="status" aria-live="polite">
+            {result.length} / {articles.length} yazı
+          </p>
+          <ViewToggle mode={view} onChange={setView} />
+        </div>
 
         {result.length === 0 ? (
           <p className="border border-border bg-surface-1 px-4 py-16 text-center text-[12px] text-muted-foreground">
             Bu filtrelerle eşleşen yazı yok.
           </p>
         ) : (
-          <ul className="grid gap-px border border-border bg-border md:grid-cols-2 xl:grid-cols-3">
+          <ul
+            className={cn(
+              view === 'grid'
+                ? 'grid gap-px border border-border bg-border sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
+                : 'grid gap-px border border-border bg-border'
+            )}
+          >
             {result.map((article, i) => (
               <li key={article.slug}>
                 <Link
                   to={`/yazi/${article.slug}`}
-                  className="group flex h-full flex-col bg-surface-1 p-4 transition-colors hover:bg-surface-2"
+                  className="group flex h-full flex-col bg-surface-1 p-3 transition-colors hover:bg-surface-2"
                 >
-                  <div className="mb-3 flex items-baseline justify-between gap-2">
+                  <div className="mb-2 flex items-baseline justify-between gap-2">
                     <span className="tabular label text-primary">
                       {String(i + 1).padStart(2, '0')}
                     </span>
@@ -149,14 +161,14 @@ export function ArticlesPage() {
                     </span>
                   </div>
 
-                  <h2 className="text-[15px] leading-snug text-foreground transition-colors group-hover:text-primary">
+                  <h2 className="text-[13px] text-foreground transition-colors group-hover:text-primary">
                     {article.title}
                   </h2>
-                  <p className="mt-2 text-[11.5px] leading-relaxed text-muted-foreground">
+                  <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground">
                     {article.summary}
                   </p>
 
-                  <div className="mt-auto flex items-center gap-2 pt-4">
+                  <div className="mt-auto flex items-center gap-2 pt-3">
                     <Badge tone={levelTone(article.level)}>{article.level}</Badge>
                     <span className="tabular text-[10px] text-faint">
                       {article.duration}

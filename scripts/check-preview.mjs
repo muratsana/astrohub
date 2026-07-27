@@ -88,7 +88,7 @@ function includesTr(haystack, needle) {
 
 // Her ana modül gezilebilmeli (hash router).
 const routes = [
-  ['/galeri', 'arşiv'],
+  ['/galeri', 'galeri'],
   ['/etkinlikler', 'etkinlik'],
   ['/haberler', 'haber'],
   ['/yazilar', 'yazı'],

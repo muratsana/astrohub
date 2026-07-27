@@ -101,7 +101,7 @@ export function HeroSection() {
 
           {/* İçerik */}
           <div
-            className="relative flex min-h-[340px] flex-col justify-center px-6 py-10 sm:min-h-[420px] sm:px-10 lg:min-h-[460px] lg:px-14"
+            className="relative flex min-h-[300px] flex-col justify-center px-5 py-8 sm:min-h-[360px] sm:px-9 lg:min-h-[400px] lg:px-12"
             aria-live="polite"
           >
             <div className="max-w-[46ch]">
@@ -112,7 +112,7 @@ export function HeroSection() {
               </Editable>
 
               <Editable slide={slide} field="title" className="mt-5 block">
-                <h1 className="text-[32px] leading-[1.02] text-foreground sm:text-[46px] lg:text-[54px]">
+                <h1 className="text-[30px] text-foreground sm:text-[42px] lg:text-[50px]">
                   {slide.title}
                 </h1>
               </Editable>

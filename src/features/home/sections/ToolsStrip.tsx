@@ -13,7 +13,7 @@ const tools = siteMap.find((g) => g.title === 'Araçlar')?.items ?? [];
 
 export function ToolsStrip() {
   return (
-    <Container className="py-12 sm:py-14">
+    <Container className="py-9 sm:py-11">
       <SectionHeader
         title="Araçlar"
         description="Çekim öncesi kararları sayıya dayandıran hesaplayıcılar."

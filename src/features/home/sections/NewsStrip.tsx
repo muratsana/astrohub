@@ -16,7 +16,7 @@ export function NewsStrip() {
   const latestArticles = articles.slice(0, 4);
 
   return (
-    <Container className="py-12 sm:py-14">
+    <Container className="py-9 sm:py-11">
       <div className="grid gap-10 lg:grid-cols-2 lg:gap-12">
         <section>
           <SectionHeader title="Haberler" linkTo="/haberler" linkLabel="Tümü" />

@@ -132,7 +132,13 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: -0.005em;
-    line-height: 1.06;
+    /*
+     * Türkçe büyük harfler cap yüksekliğinin ÜSTÜNE çıkan işaretler taşır:
+     * İ'nin noktası, Ü/Ö'nün umlautu, Ğ'nin kısa çizgisi. 1.0–1.06 gibi sıkı
+     * bir satır aralığında bu işaretler bir üstteki satıra değer ve başlık
+     * kirli görünür. 1.16 en dar güvenli değerdir.
+     */
+    line-height: 1.16;
     text-wrap: balance;
   }
 

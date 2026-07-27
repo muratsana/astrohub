@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { CloseIcon } from '@/components/ui/icons';
@@ -13,7 +14,9 @@ import { cn } from '@/lib/cn';
  * gösterir; seçilen alan vurgulanır ve odak oraya taşınır. Değişiklikler
  * anında hero'ya yansır ve `localStorage`'da saklanır.
  *
- * Yalnızca önizleme derlemesinde render edilir (bkz. PreviewEditorContext).
+ * Yalnızca önizleme derlemesinde render edilir (bkz. PreviewEditorContext)
+ * ve yalnızca ana sayfada görünür: düzenlediği tek şey hero, diğer
+ * sayfalarda sekme içeriğin üstüne binerdi.
  */
 export function PreviewEditorPanel() {
   const {
@@ -35,7 +38,10 @@ export function PreviewEditorPanel() {
     if (open && selection) activeInputRef.current?.select();
   }, [open, selection]);
 
-  if (!enabled) return null;
+  const { pathname } = useLocation();
+
+  // Editör yalnızca hero'yu düzenler — başka sayfada gösterilmez.
+  if (!enabled || pathname !== '/') return null;
 
   const activeSlide =
     slides.find((s) => s.id === selection?.slideId) ?? slides[0];

@@ -7,6 +7,8 @@ import {
   totalIntegrationSeconds,
 } from '@/domain/photography/integration';
 import { tintFor } from '@/components/media/tints';
+import { Badge } from '@/components/ui/Badge';
+import { familyOf, photoFamilies } from '@/features/photos/families';
 import { targets } from '@/features/targets/data';
 
 /**
@@ -25,10 +27,10 @@ function tintForPhoto(catalog: string): string {
 }
 
 export function RecentRecords() {
-  const recent = photos.slice(0, 8);
+  const recent = photos.slice(0, 10);
 
   return (
-    <Container className="py-12 sm:py-14">
+    <Container className="py-9 sm:py-11">
       <SectionHeader
         title="Galeriden Son Yüklenenler"
         meta={`${photos.length} fotoğraf`}
@@ -36,7 +38,7 @@ export function RecentRecords() {
         linkLabel="Galeri"
       />
 
-      <ul className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <ul className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5">
         {recent.map((photo) => (
           <li key={photo.slug}>
             <PhotoTile
@@ -51,7 +53,17 @@ export function RecentRecords() {
               )}
               bortle={photo.location.bortle}
               username={photo.user.username}
-              badge={photo.editorsPick ? 'Editör' : undefined}
+              family={{
+                label: photoFamilies[familyOf(photo.type)].label,
+                className: photoFamilies[familyOf(photo.type)].className,
+              }}
+              flag={
+                photo.editorsPick ? (
+                  <Badge tone="primary" className="bg-background/85">
+                    Editör
+                  </Badge>
+                ) : undefined
+              }
             />
           </li>
         ))}

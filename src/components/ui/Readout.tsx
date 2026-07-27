@@ -36,14 +36,14 @@ export function Readout({
   return (
     <div
       className={cn(
-        'rounded-card border border-border bg-surface-1 px-4 py-3',
+        'rounded-card border border-border bg-surface-1 px-3 py-2.5',
         className
       )}
     >
       <p className="label">{label}</p>
       <p
         className={cn(
-          'tabular mt-1.5 font-display text-[28px] font-bold leading-none',
+          'tabular mt-1 font-display text-[23px] font-bold leading-none',
           toneClass
         )}
       >
@@ -54,7 +54,7 @@ export function Readout({
           </span>
         )}
       </p>
-      {hint && <p className="mt-2 text-[11px] leading-snug text-faint">{hint}</p>}
+      {hint && <p className="mt-1.5 text-[10px] leading-snug text-faint">{hint}</p>}
     </div>
   );
 }

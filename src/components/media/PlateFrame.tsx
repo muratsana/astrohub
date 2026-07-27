@@ -4,9 +4,9 @@ import { cn } from '@/lib/cn';
 /**
  * LEVHA ÇERÇEVESİ — fotoğrafın bir ölçüm gibi çerçevelenmesi.
  *
- * Üst ve alt kenarda ince ölçü çentikleri, köşede isteğe bağlı görüş alanı
- * yazısı. Çentikler tek bir tekrarlanan gradyanla çizilir; ek DOM düğümü
- * yoktur ve ekran okuyucuya görünmez.
+ * Üst ve alt kenarda ince ölçü çentikleri, köşelerde isteğe bağlı rozetler.
+ * Çentikler tek bir tekrarlanan gradyanla çizilir; ek DOM düğümü yoktur ve
+ * ekran okuyucuya görünmez.
  *
  * En-boy oranı **sabit 4:3**: galeri mutlak hizalı kalır ve kareler
  * birbiriyle karşılaştırılabilir olur. Sabit oran ayrıca görsel yüklenirken
@@ -16,14 +16,17 @@ export function PlateFrame({
   children,
   /** Sağ alt köşede gösterilen görüş alanı: "3.1° × 2.1°" */
   fieldOfView,
-  /** Sol üst köşede gösterilen küçük durum etiketi. */
+  /** Sol üst köşedeki birincil rozet (tür ailesi). */
   badge,
+  /** Sağ üst köşedeki ikincil işaret (editör seçimi vb.). */
+  flag,
   ratio = 'aspect-[4/3]',
   className,
 }: {
   children: ReactNode;
   fieldOfView?: string;
   badge?: ReactNode;
+  flag?: ReactNode;
   ratio?: string;
   className?: string;
 }) {
@@ -47,14 +50,12 @@ export function PlateFrame({
         className="ticks-y pointer-events-none absolute inset-x-0 bottom-0 h-[5px]"
       />
 
-      {badge && (
-        <span className="absolute left-2 top-2.5 rounded-[2px] border border-border-strong bg-background/85 px-1.5 py-0.5 text-[9px] uppercase tracking-[0.14em] text-muted-foreground backdrop-blur-sm">
-          {badge}
-        </span>
-      )}
+      {badge && <span className="absolute left-1.5 top-2">{badge}</span>}
+
+      {flag && <span className="absolute right-1.5 top-2">{flag}</span>}
 
       {fieldOfView && (
-        <span className="tabular absolute bottom-2.5 right-2 rounded-[2px] bg-background/85 px-1.5 py-0.5 text-[10px] text-cold backdrop-blur-sm">
+        <span className="tabular absolute bottom-2 right-1.5 rounded-[2px] bg-background/85 px-1.5 py-0.5 text-[9px] text-cold backdrop-blur-sm">
           {fieldOfView}
         </span>
       )}
