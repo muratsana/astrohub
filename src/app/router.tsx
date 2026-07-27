@@ -141,14 +141,16 @@ export const router = createRouter([
       },
       {
         path: 'topluluklar',
-        element: (
-          <PlaceholderPage
-            title="Kulüpler ve Topluluklar"
-            description="Dernekler, üniversite kulüpleri ve gözlem grupları için kurumsal profiller (§8.11)."
-          />
+        element: route(
+          named(() => import('@/features/clubs/ClubsPage'), 'ClubsPage')
         ),
       },
-      { path: 'topluluk/:slug', element: <PlaceholderPage title="Topluluk" /> },
+      {
+        path: 'topluluk/:slug',
+        element: route(
+          named(() => import('@/features/clubs/ClubDetailPage'), 'ClubDetailPage')
+        ),
+      },
 
       /* ═════════════ HABERLER ═════════════ */
       {
@@ -313,11 +315,8 @@ export const router = createRouter([
       },
       {
         path: 'tesisler',
-        element: (
-          <PlaceholderPage
-            title="Rasathaneler ve Planetaryumlar"
-            description="Türkiye astronomi tesisleri rehberi Faz 2'de yayına alınacak."
-          />
+        element: route(
+          named(() => import('@/features/clubs/FacilitiesPage'), 'FacilitiesPage')
         ),
       },
 
@@ -350,11 +349,11 @@ export const router = createRouter([
       },
       {
         path: 'setup/:id',
-        element: (
-          <PlaceholderPage
-            title="Setup Detayı"
-            description="Kayıtlı setup'lar ve fotoğraf ilişkisi Faz 1.5'te yayına alınacak."
-          />
+        element: route(
+          named(
+            () => import('@/features/setups/SetupDetailPage'),
+            'SetupDetailPage'
+          )
         ),
       },
 

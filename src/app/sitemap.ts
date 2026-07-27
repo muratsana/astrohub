@@ -5,6 +5,7 @@ import { sites } from '../features/observing-sites/data';
 import { equipment, equipmentPath } from '../features/equipment/data';
 import { listings } from '../features/marketplace/data';
 import { cityRoutePaths } from '../features/city/routes';
+import { clubs } from '../features/clubs/data';
 import { articles } from '../features/articles/data';
 import { news } from '../features/news/data';
 
@@ -48,7 +49,8 @@ export const staticEntries: SitemapEntry[] = [
   { path: '/cerezler', priority: 0.2, changefreq: 'yearly' },
   { path: '/yazilar', priority: 0.8, changefreq: 'weekly' },
   { path: '/ilanlar', priority: 0.7, changefreq: 'daily' },
-  { path: '/topluluklar', priority: 0.5, changefreq: 'monthly' },
+  { path: '/topluluklar', priority: 0.6, changefreq: 'monthly' },
+  { path: '/tesisler', priority: 0.6, changefreq: 'monthly' },
   { path: '/hakkinda', priority: 0.4, changefreq: 'yearly' },
   { path: '/kvkk', priority: 0.3, changefreq: 'yearly' },
   { path: '/kullanim-kosullari', priority: 0.3, changefreq: 'yearly' },
@@ -100,6 +102,11 @@ export function contentEntries(): SitemapEntry[] {
      * etkinlik detaylarının üstünde tutuluyor çünkü aranan sorgu ("ankara
      * astronomi etkinlikleri") tam olarak bu sayfanın karşılığı.
      */
+    ...clubs.map((c) => ({
+      path: `/topluluk/${c.slug}`,
+      priority: 0.5,
+      changefreq: 'monthly' as const,
+    })),
     ...cityRoutePaths.map((path) => ({
       path: `/${path}`,
       priority: 0.7,

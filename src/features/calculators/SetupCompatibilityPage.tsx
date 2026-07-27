@@ -1,11 +1,12 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Container } from '@/components/ui/Container';
+import { useNavigate } from 'react-router-dom';
 import { Input, Select } from '@/components/ui/Input';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Panel, SpecList, SpecRow } from '@/components/ui/Panel';
 import { Readout } from '@/components/ui/Readout';
 import { Badge } from '@/components/ui/Badge';
-import { ButtonLink } from '@/components/ui/Button';
+import { Button, ButtonLink } from '@/components/ui/Button';
 import {
   FilterBar,
   FilterCell,
@@ -14,7 +15,7 @@ import {
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
 import { checkSetup } from '@/domain/equipment/compatibility';
-import type { CheckSeverity } from '@/domain/equipment/compatibility';
+import type { CheckSeverity, SetupInput } from '@/domain/equipment/compatibility';
 import {
   mountPresets,
   opticMechanicalPresets,
@@ -23,6 +24,7 @@ import {
   filterThicknessPresets,
   reducerPresets,
 } from './presets';
+import { saveSetup } from '@/features/setups/storage';
 import { cn } from '@/lib/cn';
 
 /**
@@ -58,6 +60,8 @@ const verdictSummary: Record<CheckSeverity, string> = {
 };
 
 export function SetupCompatibilityPage() {
+  const navigate = useNavigate();
+  const [setupName, setSetupName] = useState('');
   const [mountIndex, setMountIndex] = useState(3); // EQ6-R Pro
   const [payloadCapacity, setPayloadCapacity] = useState(20);
 
@@ -81,10 +85,12 @@ export function SetupCompatibilityPage() {
   const [seeing, setSeeing] = useState(3);
   const [guideIndex, setGuideIndex] = useState(1);
 
-  const report = useMemo(() => {
-    if (focalLength <= 0 || aperture <= 0 || pixelSize <= 0) return null;
-    if (sensorWidth <= 0 || sensorHeight <= 0 || payloadCapacity <= 0) return null;
-
+  /*
+   * Girdi nesnesi tek yerde kuruluyor: hem rapor hem "kaydet" aynı değerleri
+   * kullanmalı. İki ayrı yerde kurulsaydı, kaydedilen setup ile ekranda
+   * görülen rapor zamanla birbirinden ayrılırdı.
+   */
+  const buildInput = useCallback((): SetupInput => {
     const guidePreset = guidePresets[guideIndex];
     // OAG ana optikle aynı odağı kullanır (focalLength: -1 işareti).
     const guide =
@@ -99,17 +105,20 @@ export function SetupCompatibilityPage() {
           }
         : undefined;
 
-    return checkSetup({
-      mount: { name: 'Montür', payloadCapacityKg: payloadCapacity },
+    return {
+      mount: {
+        name: mountPresets[mountIndex]?.label ?? 'Montür',
+        payloadCapacityKg: payloadCapacity,
+      },
       optic: {
-        name: 'Optik',
+        name: opticMechanicalPresets[opticIndex]?.label ?? 'Optik',
         focalLength,
         aperture,
         weightKg: opticWeight,
         requiredBackfocusMm: requiredBackfocus,
       },
       camera: {
-        name: 'Kamera',
+        name: cameraMechanicalPresets[cameraIndex]?.label ?? 'Kamera',
         pixelSize,
         sensorWidth,
         sensorHeight,
@@ -122,8 +131,11 @@ export function SetupCompatibilityPage() {
       reducerFactor: reducer,
       seeingArcsec: seeing,
       guide,
-    });
+    };
   }, [
+    mountIndex,
+    opticIndex,
+    cameraIndex,
     payloadCapacity,
     focalLength,
     aperture,
@@ -140,6 +152,20 @@ export function SetupCompatibilityPage() {
     reducer,
     seeing,
     guideIndex,
+  ]);
+
+  const report = useMemo(() => {
+    if (focalLength <= 0 || aperture <= 0 || pixelSize <= 0) return null;
+    if (sensorWidth <= 0 || sensorHeight <= 0 || payloadCapacity <= 0) return null;
+    return checkSetup(buildInput());
+  }, [
+    buildInput,
+    focalLength,
+    aperture,
+    pixelSize,
+    sensorWidth,
+    sensorHeight,
+    payloadCapacity,
   ]);
 
   return (
@@ -559,6 +585,37 @@ export function SetupCompatibilityPage() {
                       </li>
                     ))}
                   </ul>
+                </Panel>
+
+                <Panel title="Setup'u kaydet">
+                  <p className="text-[11.5px] leading-relaxed text-muted-foreground">
+                    Kayıt tarayıcınızda saklanır (hesap sistemi gelene kadar).
+                    Kaydettikten sonra oluşan bağlantı, setup değerlerini
+                    kendi içinde taşıdığı için başka cihazda da açılır.
+                  </p>
+                  <form
+                    className="mt-3 flex flex-wrap items-center gap-2"
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      const saved = saveSetup(setupName, buildInput());
+                      navigate(`/setup/${saved.id}`);
+                    }}
+                  >
+                    <label htmlFor="setup-name" className="sr-only">
+                      Setup adı
+                    </label>
+                    <Input
+                      id="setup-name"
+                      value={setupName}
+                      onChange={(e) => setSetupName(e.target.value)}
+                      placeholder="Setup adı (ör. Yayla kurulumu)"
+                      maxLength={60}
+                      className="h-9 min-w-0 flex-1 text-[12px]"
+                    />
+                    <Button type="submit" size="sm">
+                      Kaydet
+                    </Button>
+                  </form>
                 </Panel>
 
                 <Panel title="Zincir künyesi">

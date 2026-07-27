@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { Container } from '@/components/ui/Container';
 import { ButtonLink } from '@/components/ui/Button';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -11,6 +11,7 @@ import {
   MAX_DRAFT_PHOTOS,
 } from '@/domain/membership/quota';
 import { PageMeta } from '@/components/seo/PageMeta';
+import { listSetups } from '@/features/setups/storage';
 
 /**
  * Üye paneli (§7.16). Kamuya açık sayfalardan farklı olarak daha işlevsel
@@ -19,6 +20,12 @@ import { PageMeta } from '@/components/seo/PageMeta';
  */
 export function PanelPage() {
   const { user, configured } = useAuth();
+  const { section } = useParams<{ section?: string }>();
+  /*
+   * Setup listesi her render'da değil, bölüm açıldığında okunuyor: liste
+   * `localStorage`'dan gelir ve panelin diğer bölümlerinde gereksiz.
+   */
+  const setups = section === 'setuplar' ? listSetups() : [];
 
   // Hesap bağlanana kadar demo değerleri
   const activePhotos = 0;
@@ -30,7 +37,7 @@ export function PanelPage() {
       note: formatQuotaLabel(activePhotos),
     },
     { label: 'Fotoğraf Yükle', to: '/galeri/yukle' },
-    { label: "Setup'larım", to: '/panel', note: 'Yakında' },
+    { label: "Setup'larım", to: '/panel/setuplar' },
     { label: 'Planlarım', to: '/planlayici', note: 'Yakında' },
     { label: 'Etkinliklerim', to: '/etkinlikler' },
     { label: 'Kayıtlı Noktalar', to: '/saha' },
@@ -116,6 +123,52 @@ export function PanelPage() {
             fotoğraf kaç sürüme sahip olursa olsun tek hak tüketir (§4.2).
           </p>
         </Panel>
+
+        {section === 'setuplar' && (
+          <Panel
+            title="Kayıtlı setup'lar"
+            status={`${setups.length} kayıt`}
+            className="mb-4"
+          >
+            {setups.length === 0 ? (
+              <p className="py-3 text-[12px] leading-relaxed text-muted-foreground">
+                Henüz kayıtlı setup yok. Uyumluluk aracında bir zincir kurup
+                kaydettiğinizde burada listelenir.{' '}
+                <Link to="/araclar/setup-uyumluluk" className="text-primary">
+                  Setup kur →
+                </Link>
+              </p>
+            ) : (
+              <ul>
+                {setups.map((setup) => (
+                  <li key={setup.id} className="border-b border-border last:border-0">
+                    <Link
+                      to={`/setup/${setup.id}`}
+                      className="group flex items-baseline justify-between gap-3 py-2.5"
+                    >
+                      <span className="min-w-0">
+                        <span className="block truncate text-[12.5px] text-foreground group-hover:text-primary">
+                          {setup.name}
+                        </span>
+                        <span className="mt-0.5 block truncate text-[10.5px] text-muted-foreground">
+                          {setup.input.optic.name} · {setup.input.camera.name}
+                        </span>
+                      </span>
+                      <span className="tabular shrink-0 text-[10.5px] text-faint">
+                        {new Date(setup.savedAt).toLocaleDateString('tr-TR')}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <p className="mt-2 text-[10px] leading-snug text-faint">
+              Setup'lar hesap sistemi gelene kadar bu tarayıcıda saklanır.
+              Paylaşmak için setup sayfasındaki bağlantıyı kopyalayın — bağlantı
+              değerleri kendi içinde taşır.
+            </p>
+          </Panel>
+        )}
 
         {/* Menü */}
         <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

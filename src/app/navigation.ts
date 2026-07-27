@@ -98,8 +98,8 @@ export const siteMap: NavGroup[] = [
       {
         label: 'Kulüpler ve Topluluklar',
         to: '/topluluklar',
-        description: 'Dernek ve üniversite kulüpleri',
-        soon: true,
+        description: 'Dernek, üniversite kulübü ve gözlem grupları',
+        keywords: ['dernek', 'kulüp', 'topluluk', 'grup'],
       },
     ],
   },
@@ -242,8 +242,8 @@ export const siteMap: NavGroup[] = [
       {
         label: 'Rasathane ve Planetaryumlar',
         to: '/tesisler',
-        description: 'Türkiye astronomi tesisleri',
-        soon: true,
+        description: 'Ziyarete açık astronomi tesisleri',
+        keywords: ['rasathane', 'planetaryum', 'gözlemevi', 'bilim merkezi'],
       },
     ],
   },

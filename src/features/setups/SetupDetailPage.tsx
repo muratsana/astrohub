@@ -1,0 +1,294 @@
+import { useMemo, useState } from 'react';
+import { useParams, useSearchParams, Link } from 'react-router-dom';
+import { Container } from '@/components/ui/Container';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { Panel, SpecList, SpecRow } from '@/components/ui/Panel';
+import { Readout } from '@/components/ui/Readout';
+import { Badge } from '@/components/ui/Badge';
+import { Button, ButtonLink } from '@/components/ui/Button';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { PageMeta } from '@/components/seo/PageMeta';
+import { checkSetup } from '@/domain/equipment/compatibility';
+import type { CheckSeverity } from '@/domain/equipment/compatibility';
+import { getSetup, decodeSetup, encodeSetup, deleteSetup } from './storage';
+import { cn } from '@/lib/cn';
+
+/**
+ * KAYITLI SETUP DETAYI (§7.12).
+ *
+ * İki kaynaktan beslenir:
+ *   1. Yerel depo (`/setup/<id>`) — kendi cihazınızdaki kayıt.
+ *   2. Bağlantıdaki kodlanmış yük (`?d=…`) — başkasının paylaştığı setup.
+ *
+ * İkinci kaynak olmasa "paylaş" düğmesi karşı tarafa boş sayfa gösterirdi.
+ * Kayıt bulunamadığında sayfa bunu **açıkça** söylüyor: setup'ların şu an
+ * tarayıcıda saklandığını ve bağlantının kodlanmış yük içermesi gerektiğini.
+ */
+
+const severityLabel: Record<CheckSeverity, string> = {
+  ok: 'Uygun',
+  warning: 'Ödün var',
+  error: 'Kurulamaz',
+};
+
+export function SetupDetailPage() {
+  const { id } = useParams<{ id: string }>();
+  const [params] = useSearchParams();
+  const [deleted, setDeleted] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const shared = useMemo(() => decodeSetup(params.get('d')), [params]);
+  const stored = useMemo(
+    () => (id && !deleted ? getSetup(id) : undefined),
+    [id, deleted]
+  );
+
+  const setup = stored ?? shared;
+  const report = useMemo(
+    () => (setup ? checkSetup(setup.input) : null),
+    [setup]
+  );
+
+  if (!setup || !report) {
+    return (
+      <>
+        <PageMeta title="Setup bulunamadı" noIndex />
+        <Container className="py-8 sm:py-10">
+          <PageHeader
+            breadcrumb={[
+              { label: 'Ana Sayfa', to: '/' },
+              { label: 'Setup' },
+            ]}
+            title="Setup bulunamadı"
+          />
+          <EmptyState
+            message="Bu setup bu cihazda kayıtlı değil"
+            hint="Setup'lar hesap sistemi gelene kadar tarayıcınızda saklanıyor. Başkasının paylaştığı bir bağlantıysa, bağlantının kodlanmış setup verisini (?d=…) içermesi gerekir."
+            action={
+              <ButtonLink to="/araclar/setup-uyumluluk" size="sm">
+                Yeni Setup Kur
+              </ButtonLink>
+            }
+          />
+        </Container>
+      </>
+    );
+  }
+
+  const shareUrl = `${window.location.origin}${window.location.pathname}${
+    window.location.hash ? window.location.hash.split('?')[0] : ''
+  }?d=${encodeSetup({ name: setup.name, input: setup.input })}`;
+
+  return (
+    <>
+      <PageMeta
+        title={`${setup.name} — Setup`}
+        description={`${setup.input.optic.name} + ${setup.input.camera.name} kombinasyonunun uyumluluk raporu: yük, backfocus, örnekleme ve guide kontrolü.`}
+        noIndex
+      />
+
+      <Container className="py-8 sm:py-10">
+        <PageHeader
+          breadcrumb={[
+            { label: 'Ana Sayfa', to: '/' },
+            { label: 'Araçlar', to: '/araclar' },
+            { label: setup.name },
+          ]}
+          title={setup.name}
+          meta={stored ? 'bu cihazda kayıtlı' : 'bağlantıdan açıldı'}
+          description={`${setup.input.optic.name} · ${setup.input.camera.name} · ${setup.input.mount.name}`}
+          actions={
+            <>
+              <Badge
+                tone={
+                  report.verdict === 'ok'
+                    ? 'success'
+                    : report.verdict === 'warning'
+                      ? 'warning'
+                      : 'danger'
+                }
+              >
+                {severityLabel[report.verdict]}
+              </Badge>
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => {
+                  void navigator.clipboard?.writeText(shareUrl).then(() => {
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                  });
+                }}
+              >
+                {copied ? 'Kopyalandı' : 'Bağlantıyı Kopyala'}
+              </Button>
+              {stored && (
+                <Button
+                  size="sm"
+                  variant="danger"
+                  onClick={() => {
+                    deleteSetup(stored.id);
+                    setDeleted(true);
+                  }}
+                >
+                  Sil
+                </Button>
+              )}
+            </>
+          }
+        />
+
+        <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <Readout
+            label="Toplam yük"
+            value={report.totalWeightKg.toFixed(1)}
+            unit="kg"
+            hint={`pay ${report.usablePayloadKg.toFixed(1)} kg`}
+            tone={
+              report.totalWeightKg > report.usablePayloadKg ? 'primary' : 'plain'
+            }
+          />
+          <Readout
+            label="Optik yol"
+            value={report.achievedBackfocusMm.toFixed(1)}
+            unit="mm"
+            hint={`hedef ${setup.input.optic.requiredBackfocusMm} mm`}
+            tone="cold"
+          />
+          <Readout
+            label="Piksel ölçeği"
+            value={report.optics.pixelScale.toFixed(2)}
+            unit="″/px"
+          />
+          <Readout
+            label="Görüş alanı"
+            value={`${report.optics.fov.widthDeg.toFixed(2)}°`}
+            unit={`× ${report.optics.fov.heightDeg.toFixed(2)}°`}
+            tone="plain"
+          />
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+          <Panel title="Kontroller" status={`${report.checks.length} başlık`}>
+            <ul>
+              {report.checks.map((check) => (
+                <li
+                  key={check.id}
+                  className="border-b border-border py-2.5 first:pt-0 last:border-0 last:pb-0"
+                >
+                  <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                    <span className="flex items-center gap-2">
+                      <span
+                        aria-hidden
+                        className={cn(
+                          'inline-block h-1.5 w-1.5 rounded-full',
+                          check.severity === 'ok'
+                            ? 'bg-success'
+                            : check.severity === 'warning'
+                              ? 'bg-warning'
+                              : 'bg-danger'
+                        )}
+                      />
+                      <span className="text-[12.5px] font-medium text-foreground">
+                        {check.title}
+                      </span>
+                      <span className="sr-only">
+                        {severityLabel[check.severity]}
+                      </span>
+                    </span>
+                    <span className="tabular text-[11.5px] text-muted-foreground">
+                      {check.value}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">
+                    {check.detail}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          </Panel>
+
+          <div className="space-y-4">
+            <Panel title="Zincir">
+              <SpecList>
+                <SpecRow label="Montür" value={setup.input.mount.name} />
+                <SpecRow
+                  label="Yük kapasitesi"
+                  value={`${setup.input.mount.payloadCapacityKg} kg`}
+                  tone="muted"
+                />
+                <SpecRow label="Optik" value={setup.input.optic.name} />
+                <SpecRow
+                  label="Odak / açıklık"
+                  value={`${setup.input.optic.focalLength} mm · f/${(
+                    setup.input.optic.focalLength / setup.input.optic.aperture
+                  ).toFixed(1)}`}
+                  tone="cold"
+                />
+                <SpecRow label="Kamera" value={setup.input.camera.name} />
+                <SpecRow
+                  label="Piksel / sensör"
+                  value={`${setup.input.camera.pixelSize} µm · ${setup.input.camera.sensorWidth}×${setup.input.camera.sensorHeight} mm`}
+                  tone="cold"
+                />
+                <SpecRow
+                  label="Ara halka"
+                  value={`${setup.input.spacerMm} mm`}
+                  tone="muted"
+                />
+                <SpecRow
+                  label="Filtre"
+                  value={
+                    setup.input.filterThicknessMm > 0
+                      ? `${setup.input.filterThicknessMm} mm`
+                      : 'yok'
+                  }
+                  tone="muted"
+                />
+                <SpecRow
+                  label="Guide"
+                  value={setup.input.guide?.name ?? 'yok'}
+                  tone="muted"
+                />
+                <SpecRow
+                  label="Saha seeing"
+                  value={`${setup.input.seeingArcsec}″`}
+                  tone="muted"
+                />
+              </SpecList>
+            </Panel>
+
+            <Panel title="Paylaşım">
+              <p className="text-[11.5px] leading-relaxed text-muted-foreground">
+                Bağlantı, setup değerlerini kendi içinde taşır — karşı tarafta
+                kayıt olmasa da açılır. Kodlama şifreleme değildir; içinde
+                yalnızca ekipman değerleri vardır.
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <ButtonLink
+                  to="/araclar/setup-uyumluluk"
+                  size="sm"
+                  variant="secondary"
+                >
+                  Düzenle
+                </ButtonLink>
+                <ButtonLink to="/panel/setuplar" size="sm" variant="ghost">
+                  Kayıtlı setup'lar
+                </ButtonLink>
+              </div>
+            </Panel>
+          </div>
+        </div>
+
+        {deleted && (
+          <p className="mt-4 text-center text-[12px] text-muted-foreground">
+            Setup silindi.{' '}
+            <Link to="/araclar/setup-uyumluluk" className="text-primary">
+              Yeni bir tane kurabilirsiniz.
+            </Link>
+          </p>
+        )}
+      </Container>
+    </>
+  );
+}
