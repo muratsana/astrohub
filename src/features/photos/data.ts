@@ -8,7 +8,11 @@ export const photos: AstroPhoto[] = [
   {
     slug: 'ic434-at-basi-sho',
     title: 'At Başı ve Alev Bulutsusu',
-    target: { name: 'At Başı Bulutsusu', catalog: 'IC 434', constellation: 'Orion' },
+    target: {
+      name: 'At Başı Bulutsusu',
+      catalog: 'IC 434',
+      constellation: 'Orion',
+    },
     type: 'deep-sky',
     user: { username: 'gokhanuzun', displayName: 'Gökhan Uzun' },
     description:
@@ -16,7 +20,12 @@ export const photos: AstroPhoto[] = [
     gradient:
       'radial-gradient(120% 90% at 40% 60%, #dc2626 0%, #991b1b 40%, #1f0a0a 80%, #050a12 100%)',
     capturedAt: '2026-01-18',
-    location: { label: 'Saklıkent, Antalya', visibility: 'approximate', bortle: 3, sqm: 21.6 },
+    location: {
+      label: 'Saklıkent, Antalya',
+      visibility: 'approximate',
+      bortle: 3,
+      sqm: 21.6,
+    },
     setup: {
       optic: 'Sky-Watcher Esprit 100 (550mm)',
       camera: 'ZWO ASI2600MM Pro',
@@ -31,10 +40,48 @@ export const photos: AstroPhoto[] = [
       { filter: 'SII', frames: 24, exposureSeconds: 300 },
     ],
     palette: 'SHO',
+    versions: [
+      {
+        id: 'v1',
+        label: 'v1 — İlk işleme',
+        kind: 'ilk-isleme',
+        publishedAt: '2026-01-22',
+        note: 'Tek gecelik Ha verisiyle ilk deneme; OIII ve SII henüz yoktu.',
+        gradient:
+          'radial-gradient(120% 90% at 40% 60%, #9a3412 0%, #7c2d12 45%, #1c1917 82%, #050a12 100%)',
+        exposures: [{ filter: 'Ha', frames: 18, exposureSeconds: 300 }],
+        palette: 'Mono',
+      },
+      {
+        id: 'v2',
+        label: 'v2 — SHO birleşim',
+        kind: 'yeni-entegrasyon',
+        publishedAt: '2026-02-04',
+        note: 'İkinci gecede OIII ve SII eklendi; kanallar Hubble paletiyle birleştirildi.',
+        gradient:
+          'radial-gradient(120% 90% at 40% 60%, #dc2626 0%, #991b1b 40%, #1f0a0a 80%, #050a12 100%)',
+        exposures: [
+          { filter: 'Ha', frames: 36, exposureSeconds: 300 },
+          { filter: 'OIII', frames: 24, exposureSeconds: 300 },
+          { filter: 'SII', frames: 24, exposureSeconds: 300 },
+        ],
+        palette: 'SHO',
+      },
+      {
+        id: 'v3',
+        label: 'v3 — Revize streç',
+        kind: 'revize-isleme',
+        publishedAt: '2026-03-11',
+        note: 'Yıldız küçültme ve daha yumuşak streç; arka plan gradyanı yeniden düzeltildi.',
+        gradient:
+          'radial-gradient(120% 90% at 42% 58%, #ef4444 0%, #7f1d1d 42%, #170707 82%, #030509 100%)',
+      },
+    ],
     calibration: { darks: 30, flats: 25, bias: 50 },
     processing: {
       software: ['PixInsight', 'Photoshop'],
-      steps: 'WBPP → BlurXTerminator → kanal birleştirme → curves → NoiseXTerminator',
+      steps:
+        'WBPP → BlurXTerminator → kanal birleştirme → curves → NoiseXTerminator',
       aiDeclared: true,
     },
     license: 'CC BY-NC 4.0',
@@ -47,7 +94,11 @@ export const photos: AstroPhoto[] = [
   {
     slug: 'ngc6302-kelebek-sho',
     title: 'Kelebek Bulutsusu',
-    target: { name: 'Kelebek Bulutsusu', catalog: 'NGC 6302', constellation: 'Akrep' },
+    target: {
+      name: 'Kelebek Bulutsusu',
+      catalog: 'NGC 6302',
+      constellation: 'Akrep',
+    },
     type: 'deep-sky',
     user: { username: 'astrocan', displayName: 'Can Demir' },
     description:
@@ -55,7 +106,12 @@ export const photos: AstroPhoto[] = [
     gradient:
       'radial-gradient(120% 90% at 50% 40%, #2b6cb0 0%, #6b46c1 35%, #1a1035 70%, #050a12 100%)',
     capturedAt: '2025-07-18',
-    location: { label: 'Saklıkent, Antalya', visibility: 'approximate', bortle: 3, sqm: 21.5 },
+    location: {
+      label: 'Saklıkent, Antalya',
+      visibility: 'approximate',
+      bortle: 3,
+      sqm: 21.5,
+    },
     setup: {
       optic: '8" f/4 Newton (800mm)',
       camera: 'ZWO ASI2600MM Pro',
@@ -80,14 +136,24 @@ export const photos: AstroPhoto[] = [
   {
     slug: 'm31-andromeda-lrgb',
     title: 'Andromeda Galaksisi',
-    target: { name: 'Andromeda Galaksisi', catalog: 'M 31', constellation: 'Andromeda' },
+    target: {
+      name: 'Andromeda Galaksisi',
+      catalog: 'M 31',
+      constellation: 'Andromeda',
+    },
     type: 'deep-sky',
     user: { username: 'mert_astro', displayName: 'Mert Yılmaz' },
-    description: 'Sonbahar sezonunun klasiği; 4 panelli mozaikten tek kare kırpım.',
+    description:
+      'Sonbahar sezonunun klasiği; 4 panelli mozaikten tek kare kırpım.',
     gradient:
       'radial-gradient(90% 70% at 55% 45%, #d6bca0 0%, #7c5c46 30%, #241a2e 65%, #050a12 100%)',
     capturedAt: '2025-10-12',
-    location: { label: 'Çamlıdere, Ankara', visibility: 'region', bortle: 4, sqm: 21.2 },
+    location: {
+      label: 'Çamlıdere, Ankara',
+      visibility: 'region',
+      bortle: 4,
+      sqm: 21.2,
+    },
     setup: {
       optic: 'WO RedCat 51 (250mm)',
       camera: 'ZWO ASI2600MC Pro',
@@ -96,6 +162,28 @@ export const photos: AstroPhoto[] = [
     },
     exposures: [{ filter: 'UV/IR-cut', frames: 96, exposureSeconds: 180 }],
     palette: 'RGB',
+    versions: [
+      {
+        id: 'v1',
+        label: 'v1 — RGB',
+        kind: 'ilk-isleme',
+        publishedAt: '2026-01-05',
+        note: 'Yalnızca RGB kanallarıyla ilk işleme; toz şeritleri sönük kaldı.',
+        gradient:
+          'radial-gradient(90% 70% at 55% 45%, #b8a08c 0%, #6b5442 32%, #211a2b 68%, #050a12 100%)',
+        palette: 'RGB',
+      },
+      {
+        id: 'v2',
+        label: 'v2 — LRGB',
+        kind: 'yeni-entegrasyon',
+        publishedAt: '2026-01-27',
+        note: 'Luminans eklendi; toz şeritleri ve dış kollar belirgin hâle geldi.',
+        gradient:
+          'radial-gradient(90% 70% at 55% 45%, #d6bca0 0%, #7c5c46 30%, #241a2e 65%, #050a12 100%)',
+        palette: 'LRGB',
+      },
+    ],
     calibration: { darks: 25, flats: 30 },
     processing: { software: ['Siril', 'GIMP'] },
     license: 'Tüm hakları saklıdır',
@@ -107,14 +195,24 @@ export const photos: AstroPhoto[] = [
   {
     slug: 'ngc7000-kuzey-amerika-hoo',
     title: 'Kuzey Amerika Bulutsusu',
-    target: { name: 'Kuzey Amerika Bulutsusu', catalog: 'NGC 7000', constellation: 'Kuğu' },
+    target: {
+      name: 'Kuzey Amerika Bulutsusu',
+      catalog: 'NGC 7000',
+      constellation: 'Kuğu',
+    },
     type: 'deep-sky',
     user: { username: 'astrocan', displayName: 'Can Demir' },
-    description: 'Şehir merkezinden dual-band filtre ile; ışık kirliliğine rağmen HOO paleti.',
+    description:
+      'Şehir merkezinden dual-band filtre ile; ışık kirliliğine rağmen HOO paleti.',
     gradient:
       'radial-gradient(120% 100% at 45% 55%, #c026d3 0%, #9d174d 35%, #3b0a24 70%, #050a12 100%)',
     capturedAt: '2025-08-02',
-    location: { label: 'Kadıköy, İstanbul', visibility: 'region', bortle: 8, sqm: 18.1 },
+    location: {
+      label: 'Kadıköy, İstanbul',
+      visibility: 'region',
+      bortle: 8,
+      sqm: 18.1,
+    },
     setup: {
       optic: 'Samyang 135mm f/2',
       camera: 'ZWO ASI533MC Pro',
@@ -134,10 +232,15 @@ export const photos: AstroPhoto[] = [
   {
     slug: 'ay-kopernik-krateri',
     title: 'Kopernik Krateri',
-    target: { name: 'Ay — Kopernik Krateri', catalog: 'Ay', constellation: '—' },
+    target: {
+      name: 'Ay — Kopernik Krateri',
+      catalog: 'Ay',
+      constellation: '—',
+    },
     type: 'ay',
     user: { username: 'cemyildirim', displayName: 'Cem Yıldırım' },
-    description: 'İyi seeing gecesinde 8" SCT ile lucky imaging; en iyi %10 kare stack.',
+    description:
+      'İyi seeing gecesinde 8" SCT ile lucky imaging; en iyi %10 kare stack.',
     gradient:
       'radial-gradient(70% 70% at 60% 40%, #e5e7eb 0%, #9ca3af 30%, #4b5563 55%, #111827 100%)',
     capturedAt: '2026-03-27',
@@ -167,7 +270,12 @@ export const photos: AstroPhoto[] = [
     gradient:
       'linear-gradient(160deg, #1e293b 0%, #4c1d95 40%, #be185d 75%, #f59e0b 100%)',
     capturedAt: '2025-07-20',
-    location: { label: 'Göreme, Nevşehir', visibility: 'approximate', bortle: 3, sqm: 21.4 },
+    location: {
+      label: 'Göreme, Nevşehir',
+      visibility: 'approximate',
+      bortle: 3,
+      sqm: 21.4,
+    },
     setup: {
       optic: 'Sigma 20mm f/1.4 Art',
       camera: 'Sony A7 III (modifiyeli)',
@@ -186,7 +294,11 @@ export const photos: AstroPhoto[] = [
   {
     slug: 'rozet-bulutsusu-sho',
     title: 'Rozet Bulutsusu',
-    target: { name: 'Rozet Bulutsusu', catalog: 'NGC 2237', constellation: 'Tek Boynuz' },
+    target: {
+      name: 'Rozet Bulutsusu',
+      catalog: 'NGC 2237',
+      constellation: 'Tek Boynuz',
+    },
     type: 'deep-sky',
     user: { username: 'deepsky_tr', displayName: 'Deniz Arslan' },
     description: 'Üç gecelik 9 saatlik SHO verisi; merkez küme NGC 2244 ile.',
@@ -218,13 +330,21 @@ export const photos: AstroPhoto[] = [
   {
     slug: 'yildiz-izleri-agri',
     title: 'Ağrı Dağı Üzerinde Yıldız İzleri',
-    target: { name: 'Kutup Yıldızı çevresi', catalog: 'Star trail', constellation: '—' },
+    target: {
+      name: 'Kutup Yıldızı çevresi',
+      catalog: 'Star trail',
+      constellation: '—',
+    },
     type: 'star-trail',
     user: { username: 'polaris34', displayName: 'Burak Şen' },
     description: '2 saatlik seri; 240 karenin StarStaX ile birleştirilmesi.',
     gradient: 'linear-gradient(180deg, #0f172a 0%, #1e3a5f 55%, #475569 100%)',
     capturedAt: '2025-09-05',
-    location: { label: 'Doğubayazıt, Ağrı', visibility: 'approximate', bortle: 2 },
+    location: {
+      label: 'Doğubayazıt, Ağrı',
+      visibility: 'approximate',
+      bortle: 2,
+    },
     setup: {
       optic: 'Canon 16-35mm f/2.8',
       camera: 'Canon EOS R6',
@@ -245,7 +365,8 @@ export const photos: AstroPhoto[] = [
     target: { name: 'Jüpiter', catalog: 'Gezegen', constellation: '—' },
     type: 'gezegen',
     user: { username: 'planetary_tr', displayName: 'Selin Öztürk' },
-    description: 'Karşı konum haftasında derotasyon ile 6 videoluk birleştirme.',
+    description:
+      'Karşı konum haftasında derotasyon ile 6 videoluk birleştirme.',
     gradient:
       'radial-gradient(80% 80% at 50% 45%, #d9c4a0 0%, #b08355 35%, #6b4a2e 65%, #1a1208 100%)',
     capturedAt: '2026-01-04',

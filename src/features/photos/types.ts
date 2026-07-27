@@ -1,4 +1,5 @@
 import type { FilterExposure } from '@/domain/photography/integration';
+import type { PhotoVersion } from '@/domain/photography/versions';
 
 /**
  * Fotoğraf modülü tipleri (§8.1 ana ilişkiler). MVP'de mock veri ile çalışır;
@@ -57,6 +58,13 @@ export interface AstroPhoto {
   };
   exposures: FilterExposure[];
   palette: ProcessingPalette;
+  /**
+   * Aynı kaydın işleme sürümleri (§8.1). Kotada ayrı fotoğraf sayılmaz
+   * (§4.2) — kural `domain/photography/versions` içinde.
+   *
+   * Liste **eskiden yeniye** sıralıdır; son eleman yayında olan sürümdür.
+   */
+  versions?: PhotoVersion[];
   calibration?: {
     darks?: number;
     flats?: number;

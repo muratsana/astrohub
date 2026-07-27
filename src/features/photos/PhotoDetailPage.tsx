@@ -11,6 +11,8 @@ import {
   exposureRowSeconds,
 } from '@/domain/photography/integration';
 import { getPhotoBySlug, photos } from './data';
+import { PhotoComparison } from './PhotoComparison';
+import { VersionHistory } from './VersionHistory';
 import { photoTypeLabels } from './types';
 import type { AstroPhoto } from './types';
 import { cn } from '@/lib/cn';
@@ -162,6 +164,26 @@ function PhotoDetail({ photo }: { photo: AstroPhoto }) {
           {tab === 'islem' && <ProcessingTab photo={photo} />}
           {tab === 'konum' && <LocationTab photo={photo} />}
         </div>
+
+        {/* Sürümler ve karşılaştırma (§8.1) */}
+        {photo.versions && photo.versions.length > 1 && (
+          <section className="mt-8 border-t border-border pt-8">
+            <SectionHeader
+              title="Sürümler"
+              description="Aynı kaydın işleme sürümleri. Sürümler 50 fotoğraf kotasında ayrı fotoğraf sayılmaz (§4.2)."
+              meta={`${photo.versions.length} sürüm`}
+            />
+            <VersionHistory versions={photo.versions} />
+          </section>
+        )}
+
+        <section className="mt-8 border-t border-border pt-8">
+          <SectionHeader
+            title="Teknik Karşılaştırma"
+            description="Aynı hedefin başka bir kaydıyla yan yana: entegrasyon, palet, ekipman ve gökyüzü farkı."
+          />
+          <PhotoComparison photo={photo} />
+        </section>
 
         {/* Alt öneriler (§7.3) */}
         {related.length > 0 && (
