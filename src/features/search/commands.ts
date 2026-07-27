@@ -72,7 +72,7 @@ const actionCommands: Command[] = [
   {
     id: 'arac:kayit-ac',
     kind: 'arac',
-    title: 'Yeni kayıt aç',
+    title: 'Fotoğraf yükle',
     subtitle: 'Astrofotoğraf yükleme sihirbazını başlat',
     to: '/galeri/yukle',
     keywords: ['yükle', 'kayıt', 'yeni', 'upload'],

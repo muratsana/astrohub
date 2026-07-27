@@ -1,167 +1,265 @@
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Container } from '@/components/ui/Container';
-import { ButtonLink } from '@/components/ui/Button';
-import {
-  GalleryMock,
-  EventsMock,
-  FieldMock,
-  ToolsMock,
-  ContentMock,
-} from './hero/mockups';
+import { HeroBackdrop } from '@/components/media/HeroBackdrop';
+import { ChevronDownIcon } from '@/components/ui/icons';
+import { usePreviewEditor } from '@/features/preview-editor/PreviewEditorContext';
+import type { EditableField, HeroSlide } from '../hero/slides';
+import { cn } from '@/lib/cn';
 
 /**
- * HERO — navigasyonun hemen altında, sitenin ne yaptığını tek ekranda anlatan
- * görsel set.
+ * HERO — tam genişlikte slayt gösterisi.
  *
- * Beş mockup, beş ana modülü temsil eder ve her biri o modülün **gerçek
- * arayüz diliyle** çizilmiş minyatürüdür (ekran görüntüsü değil). Tasarım
- * değiştiğinde hero da kendiliğinden güncellenir; hiçbir yerde eskimiş bir
- * görsel kalmaz.
+ * Yapı: arka plan görseli üzerinde kategori etiketi, büyük başlık, tek satır
+ * alt metin ve tek bir CTA. Sağ/sol oklar ve alttaki çizgi göstergeleriyle
+ * beş modül sırayla tanıtılır.
  *
- * Mockup'lar merdiven biçiminde kaydırılır: ortadaki en yüksekte durur,
- * kenarlara doğru alçalır. Bu, beş eşit kutunun yarattığı tekdüzeliği kırar
- * ve gözü ortadaki "Saha" karosuna çeker.
+ * Terminal diline uyarlandı: köşeli etiket, hairline çerçeveler, mono
+ * göstergeler. Yuvarlak hap biçimi ve gölge yok.
+ *
+ * Erişilebilirlik: otomatik geçiş `prefers-reduced-motion` altında hiç
+ * başlamaz, ayrıca fare üzerindeyken ve odak içerideyken durur. Slaytlar
+ * `aria-roledescription="carousel"` ile duyurulur; göstergeler gerçek
+ * butondur ve klavyeyle gezilir.
  */
 
-interface HeroModule {
-  label: string;
-  caption: string;
-  to: string;
-  mock: () => React.ReactElement;
-  /** Merdiven ofseti — dikey kayma sınıfı. */
-  offset: string;
-}
-
-const modules: HeroModule[] = [
-  {
-    label: 'Galeri',
-    caption: 'Künyeli astrofotoğraf arşivi',
-    to: '/galeri',
-    mock: GalleryMock,
-    offset: 'lg:mt-10',
-  },
-  {
-    label: 'Etkinlikler',
-    caption: 'Türkiye astronomi takvimi',
-    to: '/etkinlikler',
-    mock: EventsMock,
-    offset: 'lg:mt-5',
-  },
-  {
-    label: 'Saha',
-    caption: 'Karanlık gökyüzü noktaları',
-    to: '/saha',
-    mock: FieldMock,
-    offset: 'lg:mt-0',
-  },
-  {
-    label: 'Araçlar',
-    caption: 'FOV, pixel scale, ışık kirliliği',
-    to: '/araclar',
-    mock: ToolsMock,
-    offset: 'lg:mt-5',
-  },
-  {
-    label: 'Yazılar & Haberler',
-    caption: 'Rehberler ve güncel gündem',
-    to: '/yazilar',
-    mock: ContentMock,
-    offset: 'lg:mt-10',
-  },
-];
+const AUTOPLAY_MS = 7000;
 
 export function HeroSection() {
+  const { slides, enabled, selection } = usePreviewEditor();
+  const [index, setIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const regionRef = useRef<HTMLElement>(null);
+
+  const count = slides.length;
+  const go = useCallback(
+    (next: number) => setIndex(((next % count) + count) % count),
+    [count]
+  );
+
+  // Otomatik geçiş — hareket azaltma tercihinde hiç kurulmaz.
+  useEffect(() => {
+    if (paused) return;
+    const reduced = window.matchMedia?.(
+      '(prefers-reduced-motion: reduce)'
+    ).matches;
+    if (reduced) return;
+
+    const timer = setInterval(() => go(index + 1), AUTOPLAY_MS);
+    return () => clearInterval(timer);
+  }, [index, paused, go]);
+
+  // Bölge odaktayken sol/sağ ok tuşlarıyla gezinme.
+  function onKeyDown(event: React.KeyboardEvent) {
+    if (event.key === 'ArrowLeft') {
+      event.preventDefault();
+      go(index - 1);
+    } else if (event.key === 'ArrowRight') {
+      event.preventDefault();
+      go(index + 1);
+    }
+  }
+
+  const slide = slides[index];
+
   return (
-    <section className="relative overflow-hidden border-b border-border">
-      {/* Zemin: çok sönük bir ızgara dokusu — enstrüman paneli hissi */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-[0.55]"
-        style={{
-          backgroundImage:
-            'linear-gradient(var(--color-border) 1px, transparent 1px), linear-gradient(90deg, var(--color-border) 1px, transparent 1px)',
-          backgroundSize: '64px 64px',
-          maskImage:
-            'radial-gradient(120% 90% at 50% 0%, #000 25%, transparent 75%)',
-        }}
-      />
-
-      <Container className="relative py-12 sm:py-16">
-        {/* Slogan ve açıklama */}
-        <div className="mx-auto max-w-3xl text-center">
-          <p className="label mb-5 text-cold">
-            Türkiye Gözlem Ağı · Gözlem · Kayıt · Paylaşım
-          </p>
-
-          <h1 className="text-[38px] leading-[0.98] text-foreground sm:text-[54px] lg:text-[64px]">
-            Gökyüzünü <span className="text-primary">kaydet</span>,
-            <br />
-            paylaş, planla.
-          </h1>
-
-          <p className="mx-auto mt-6 max-w-[62ch] text-[13.5px] leading-relaxed text-muted-foreground">
-            Astrofotoğraflarını teknik künyesiyle arşivle. Türkiye'deki gözlem
-            etkinliklerini tek takvimden takip et. Karanlık gökyüzü noktalarını
-            bul, gökyüzü araçlarıyla geceni planla, rehberleri oku ve ekipmanını
-            topluluk içinde al-sat.
-          </p>
-
-          <div className="mt-8 flex flex-wrap justify-center gap-2.5">
-            <ButtonLink to="/galeri" size="lg">
-              Galeriyi aç
-            </ButtonLink>
-            <ButtonLink to="/galeri/yukle" size="lg" variant="secondary">
-              Fotoğrafını yükle
-            </ButtonLink>
+    <section
+      ref={regionRef}
+      aria-roledescription="carousel"
+      aria-label="Astrohub modülleri"
+      onKeyDown={onKeyDown}
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onFocusCapture={() => setPaused(true)}
+      onBlurCapture={(e) => {
+        if (!regionRef.current?.contains(e.relatedTarget as Node)) {
+          setPaused(false);
+        }
+      }}
+      className="border-b border-border bg-background"
+    >
+      <Container className="py-5 sm:py-6">
+        <div className="relative overflow-hidden rounded-card border border-border">
+          {/* Arka plan — slayta göre değişen yıldız alanı */}
+          <div className="absolute inset-0">
+            <HeroBackdrop
+              key={slide.id}
+              scene={slide.scene}
+              seed={slide.id}
+              tint={slide.tint}
+            />
+            {/* Metnin okunurluğu için soldan sağa koyulaşan perde */}
+            <div
+              aria-hidden
+              className="absolute inset-0 bg-[linear-gradient(90deg,var(--color-background)_0%,color-mix(in_srgb,var(--color-background)_82%,transparent)_38%,transparent_78%)]"
+            />
+            <div
+              aria-hidden
+              className="absolute inset-0 bg-[linear-gradient(0deg,var(--color-background)_0%,transparent_45%)]"
+            />
           </div>
-        </div>
 
-        {/* Beş modül mockup'ı */}
-        <div className="mt-12 sm:mt-14">
-          <ul
-            className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 [scrollbar-width:none] lg:mx-0 lg:grid lg:grid-cols-5 lg:items-start lg:overflow-visible lg:px-0 lg:pb-0 [&::-webkit-scrollbar]:hidden"
-            aria-label="Astrohub modülleri"
+          {/* İçerik */}
+          <div
+            className="relative flex min-h-[340px] flex-col justify-center px-6 py-10 sm:min-h-[420px] sm:px-10 lg:min-h-[460px] lg:px-14"
+            aria-live="polite"
           >
-            {modules.map((module) => {
-              const Mock = module.mock;
-              return (
-                <li
-                  key={module.label}
-                  className={`w-[210px] shrink-0 snap-start sm:w-[240px] lg:w-auto ${module.offset}`}
+            <div className="max-w-[46ch]">
+              <Editable slide={slide} field="badge">
+                <span className="inline-block rounded-card bg-primary px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.16em] text-primary-foreground">
+                  {slide.badge}
+                </span>
+              </Editable>
+
+              <Editable slide={slide} field="title" className="mt-5 block">
+                <h1 className="text-[32px] leading-[1.02] text-foreground sm:text-[46px] lg:text-[54px]">
+                  {slide.title}
+                </h1>
+              </Editable>
+
+              <Editable slide={slide} field="subtitle" className="mt-4 block">
+                <p className="text-[13px] leading-relaxed text-muted-foreground sm:text-[14px]">
+                  {slide.subtitle}
+                </p>
+              </Editable>
+
+              <Editable slide={slide} field="ctaLabel" className="mt-7 block">
+                <Link
+                  to={slide.ctaTo}
+                  // Editör açıkken bağlantı gezinmez; tıklama alanı seçer.
+                  onClick={(e) => enabled && e.preventDefault()}
+                  className="inline-flex shrink-0 items-center gap-2.5 whitespace-nowrap rounded-card border border-primary bg-primary px-6 py-3 text-[11px] font-medium uppercase leading-none tracking-[0.14em] text-primary-foreground transition-colors hover:bg-primary-hover"
                 >
-                  <Link
-                    to={module.to}
-                    className="group block rounded-card border border-border bg-surface-1 transition-colors hover:border-primary"
-                  >
-                    {/* Mockup penceresi: üstte cihaz şeridi, altta minyatür UI */}
-                    <div className="flex items-center gap-1.5 border-b border-border px-2.5 py-1.5">
-                      <span
-                        aria-hidden
-                        className="h-1.5 w-1.5 rounded-full bg-primary/70 transition-colors group-hover:bg-primary"
-                      />
-                      <span className="truncate text-[9px] uppercase tracking-[0.18em] text-muted-foreground transition-colors group-hover:text-foreground">
-                        {module.label}
-                      </span>
-                    </div>
+                  {slide.ctaLabel}
+                  <span aria-hidden>→</span>
+                </Link>
+              </Editable>
+            </div>
+          </div>
 
-                    <div className="h-[196px] overflow-hidden bg-background">
-                      <Mock />
-                    </div>
+          {/* Oklar */}
+          <NavArrow side="left" onClick={() => go(index - 1)} />
+          <NavArrow side="right" onClick={() => go(index + 1)} />
 
-                    <p className="border-t border-border px-2.5 py-2 text-[10.5px] leading-snug text-muted-foreground transition-colors group-hover:text-foreground">
-                      {module.caption}
-                    </p>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
+          {/* Göstergeler */}
+          <div
+            role="tablist"
+            aria-label="Slayt seçimi"
+            className="absolute inset-x-0 bottom-4 flex items-center justify-center gap-1.5"
+          >
+            {slides.map((s, i) => (
+              <button
+                key={s.id}
+                role="tab"
+                aria-selected={i === index}
+                aria-label={`${i + 1}. slayt: ${s.badge}`}
+                onClick={() => go(i)}
+                className="group px-1 py-2"
+              >
+                <span
+                  className={cn(
+                    'block h-[3px] transition-all',
+                    i === index
+                      ? 'w-8 bg-primary'
+                      : 'w-4 bg-border-strong group-hover:bg-muted-foreground'
+                  )}
+                />
+              </button>
+            ))}
+          </div>
 
-          <p className="mt-3 text-center text-[10px] uppercase tracking-[0.16em] text-faint lg:hidden">
-            ← kaydır →
-          </p>
+          {/* Slayt sayacı — terminal künyesi */}
+          <span className="tabular absolute right-4 top-4 rounded-card border border-border bg-background/80 px-2 py-1 text-[10px] tracking-[0.14em] text-muted-foreground backdrop-blur-sm">
+            {String(index + 1).padStart(2, '0')} /{' '}
+            {String(count).padStart(2, '0')}
+          </span>
+
+          {enabled && selection && (
+            <span className="absolute left-4 top-4 rounded-card border border-cold bg-background/85 px-2 py-1 text-[10px] uppercase tracking-[0.14em] text-cold backdrop-blur-sm">
+              Düzenleme modu
+            </span>
+          )}
         </div>
       </Container>
     </section>
+  );
+}
+
+function NavArrow({
+  side,
+  onClick,
+}: {
+  side: 'left' | 'right';
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={side === 'left' ? 'Önceki slayt' : 'Sonraki slayt'}
+      className={cn(
+        'absolute top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center',
+        'rounded-card border border-border bg-background/70 text-muted-foreground backdrop-blur-sm',
+        'transition-colors hover:border-primary hover:text-primary',
+        side === 'left' ? 'left-3' : 'right-3'
+      )}
+    >
+      <ChevronDownIcon
+        className={cn('h-4 w-4', side === 'left' ? 'rotate-90' : '-rotate-90')}
+      />
+    </button>
+  );
+}
+
+/**
+ * Düzenlenebilir sarmalayıcı.
+ *
+ * Önizleme editörü kapalıyken (üretim) tamamen şeffaftır: fazladan DOM,
+ * olay dinleyicisi ya da stil eklemez. Açıkken tıklanabilir bir hedef olur
+ * ve seçili alanı kesikli bir çerçeveyle işaretler.
+ */
+function Editable({
+  slide,
+  field,
+  children,
+  className,
+}: {
+  slide: HeroSlide;
+  field: EditableField;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  const { enabled, select, selection } = usePreviewEditor();
+
+  if (!enabled) {
+    return className ? <div className={className}>{children}</div> : <>{children}</>;
+  }
+
+  const active = selection?.slideId === slide.id && selection.field === field;
+
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={(e) => {
+        e.stopPropagation();
+        select({ slideId: slide.id, field });
+      }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          select({ slideId: slide.id, field });
+        }
+      }}
+      className={cn(
+        'relative cursor-pointer outline-offset-4 transition-shadow',
+        active
+          ? 'shadow-[0_0_0_1px_var(--color-cold)]'
+          : 'hover:shadow-[0_0_0_1px_var(--color-border-strong)]',
+        className
+      )}
+    >
+      {children}
+    </div>
   );
 }

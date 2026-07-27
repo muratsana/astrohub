@@ -8,6 +8,13 @@ import { cn } from '@/lib/cn';
  *
  * Köşeli (2px), gölgesiz, büyük harf mono etiket ve geniş harf aralığı.
  * Bir cihaz düğmesi gibi okunur: yuvarlak hap biçimi yoktur.
+ *
+ * Taşma önlemleri:
+ *  - `whitespace-nowrap` — etiket iki satıra bölünüp butonu deforme etmez.
+ *  - `shrink-0` — dar flex kaplarda buton sıkışıp metni kırpmaz.
+ *  - `[text-indent]` — harf aralığı son harften sonra da uygulanır ve metni
+ *    optik olarak sola kaydırır; sağdaki fazla boşluk kadar indent verilerek
+ *    etiket yeniden ortalanır.
  */
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
@@ -24,14 +31,17 @@ const variantClasses: Record<Variant, string> = {
 };
 
 const sizeClasses: Record<Size, string> = {
-  sm: 'h-8 px-3 text-[10px]',
+  sm: 'h-8 px-3.5 text-[10px]',
   md: 'h-10 px-5 text-[11px]',
   lg: 'h-12 px-7 text-xs',
 };
 
 function buttonClasses(variant: Variant, size: Size, className?: string) {
   return cn(
-    'inline-flex items-center justify-center gap-2 rounded-card font-medium uppercase tracking-[0.16em]',
+    'inline-flex shrink-0 items-center justify-center gap-2 rounded-card',
+    'whitespace-nowrap text-center font-medium uppercase leading-none tracking-[0.14em]',
+    // Harf aralığının sondaki fazlalığını dengeler — etiket gerçekten ortalanır.
+    '[text-indent:0.14em]',
     'transition-colors disabled:pointer-events-none disabled:opacity-45',
     variantClasses[variant],
     sizeClasses[size],

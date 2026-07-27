@@ -91,7 +91,7 @@ export function GalleryPage() {
             </p>
           </div>
           <ButtonLink to="/galeri/yukle" className="shrink-0">
-            Kayıt aç
+            Fotoğraf Yükle
           </ButtonLink>
         </header>
 

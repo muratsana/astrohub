@@ -1,9 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, within, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { HomePage } from './HomePage';
 import { ThemeProvider } from '@/features/theme/ThemeContext';
 import { LocationProvider } from '@/features/location/LocationContext';
+import { PreviewEditorProvider } from '@/features/preview-editor/PreviewEditorContext';
+import { defaultHeroSlides } from './hero/slides';
 import { primaryNav } from '@/app/navigation';
 
 /**
@@ -15,41 +17,75 @@ function renderHome() {
     <MemoryRouter>
       <ThemeProvider>
         <LocationProvider>
-          <HomePage />
+          <PreviewEditorProvider>
+            <HomePage />
+          </PreviewEditorProvider>
         </LocationProvider>
       </ThemeProvider>
     </MemoryRouter>
   );
 }
 
-describe('HomePage', () => {
-  it('hero sloganını h1 olarak gösterir', () => {
+function carousel() {
+  return screen.getByRole('region', { name: /astrohub modülleri/i });
+}
+
+describe('HomePage · hero', () => {
+  it('ilk slaydın başlığını h1 olarak gösterir', () => {
     renderHome();
     expect(
-      screen.getByRole('heading', { level: 1, name: /kaydet/i })
+      screen.getByRole('heading', { level: 1, name: defaultHeroSlides[0].title })
     ).toBeInTheDocument();
   });
 
-  it('hero’da beş modül mockup’ı bulunur', () => {
+  it('her modül için bir gösterge sunar', () => {
     renderHome();
-    const list = screen.getByRole('list', { name: /astrohub modülleri/i });
-    expect(within(list).getAllByRole('listitem')).toHaveLength(5);
+    const tabs = within(carousel()).getAllByRole('tab');
+    expect(tabs).toHaveLength(defaultHeroSlides.length);
   });
 
-  it('hero mockup’ları gerçek modül sayfalarına bağlanır', () => {
+  it('ileri okuyla sonraki slayda geçer', () => {
     renderHome();
-    const list = screen.getByRole('list', { name: /astrohub modülleri/i });
-    const hrefs = within(list)
-      .getAllByRole('link')
-      .map((a) => a.getAttribute('href'));
+    fireEvent.click(
+      within(carousel()).getByRole('button', { name: /sonraki slayt/i })
+    );
+    expect(
+      screen.getByRole('heading', { level: 1, name: defaultHeroSlides[1].title })
+    ).toBeInTheDocument();
+  });
 
-    // Her mockup bağlantısı üst menüde de bulunan bir modüle gitmeli.
+  it('geri okuyla son slayda sarar', () => {
+    renderHome();
+    fireEvent.click(
+      within(carousel()).getByRole('button', { name: /önceki slayt/i })
+    );
+    const last = defaultHeroSlides[defaultHeroSlides.length - 1];
+    expect(
+      screen.getByRole('heading', { level: 1, name: last.title })
+    ).toBeInTheDocument();
+  });
+
+  it('göstergeye tıklayınca o slayda gider', () => {
+    renderHome();
+    const tabs = within(carousel()).getAllByRole('tab');
+    fireEvent.click(tabs[2]);
+    expect(
+      screen.getByRole('heading', { level: 1, name: defaultHeroSlides[2].title })
+    ).toBeInTheDocument();
+    expect(tabs[2]).toHaveAttribute('aria-selected', 'true');
+  });
+
+  it('her slaydın CTA’sı gerçek bir modüle bağlanır', () => {
     const navPaths = primaryNav.map((i) => i.to);
-    for (const href of hrefs) {
-      expect(navPaths).toContain(href);
+    for (const slide of defaultHeroSlides) {
+      expect(navPaths, `${slide.badge} hedefi menüde yok`).toContain(
+        slide.ctaTo
+      );
     }
   });
+});
 
+describe('HomePage · bölümler', () => {
   it('hero’dan sonra "Bu Gece" panelini gösterir', () => {
     renderHome();
     expect(

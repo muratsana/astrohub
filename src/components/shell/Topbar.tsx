@@ -80,14 +80,11 @@ export function Topbar({ onOpenPalette }: { onOpenPalette: () => void }) {
               <span className="hidden md:inline">Saha</span>
             </button>
 
-            <NavLink
-              to="/giris"
-              className="hidden text-[10px] uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:text-foreground sm:inline"
-            >
+            <ButtonLink to="/giris" size="sm" variant="secondary">
               Giriş
-            </NavLink>
+            </ButtonLink>
             <ButtonLink to="/kayit" size="sm">
-              Kayıt Aç
+              Kaydol
             </ButtonLink>
           </div>
         </div>

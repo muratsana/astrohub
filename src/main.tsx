@@ -6,6 +6,7 @@ import { router } from '@/app/router';
 import { AuthProvider } from '@/features/auth/AuthContext';
 import { ThemeProvider } from '@/features/theme/ThemeContext';
 import { LocationProvider } from '@/features/location/LocationContext';
+import { PreviewEditorProvider } from '@/features/preview-editor/PreviewEditorContext';
 import './index.css';
 
 const queryClient = new QueryClient({
@@ -26,7 +27,9 @@ createRoot(rootEl).render(
       <ThemeProvider>
         <LocationProvider>
           <AuthProvider>
-            <RouterProvider router={router} />
+            <PreviewEditorProvider>
+              <RouterProvider router={router} />
+            </PreviewEditorProvider>
           </AuthProvider>
         </LocationProvider>
       </ThemeProvider>

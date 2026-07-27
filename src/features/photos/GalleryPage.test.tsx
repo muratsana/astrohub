@@ -20,12 +20,12 @@ function photoLinks() {
 }
 
 describe('GalleryPage (§7.2)', () => {
-  it('başlığı, kayıt açma CTA’sını ve tüm karoları gösterir', () => {
+  it('başlığı, yükleme CTA’sını ve tüm karoları gösterir', () => {
     renderGallery();
     expect(
       screen.getByRole('heading', { level: 1, name: /kayıt arşivi/i })
     ).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /kayıt aç/i })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: /fotoğraf yükle/i })).toHaveAttribute(
       'href',
       '/galeri/yukle'
     );

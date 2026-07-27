@@ -4,6 +4,7 @@ import { StatusBar } from './StatusBar';
 import { Topbar } from './Topbar';
 import { Footer } from './Footer';
 import { MobileNav } from './MobileNav';
+import { isPreviewEditorEnabled } from '@/features/preview-editor/PreviewEditorContext';
 
 /**
  * UYGULAMA KABUĞU — Rasathane Terminali.
@@ -17,6 +18,17 @@ import { MobileNav } from './MobileNav';
 const CommandPalette = lazy(() =>
   import('@/features/search/CommandPalette').then((m) => ({
     default: m.CommandPalette,
+  }))
+);
+
+/**
+ * Önizleme editörü bir tasarım aracıdır, ürün özelliği değildir. Tembel
+ * yüklenir: üretim paketinde ayrı bir chunk'ta kalır, hiç istenmez ve
+ * kullanıcıya inmez.
+ */
+const PreviewEditorPanel = lazy(() =>
+  import('@/features/preview-editor/PreviewEditorPanel').then((m) => ({
+    default: m.PreviewEditorPanel,
   }))
 );
 
@@ -62,6 +74,12 @@ export function AppShell() {
       {paletteOpen && (
         <Suspense fallback={null}>
           <CommandPalette open onClose={closePalette} />
+        </Suspense>
+      )}
+
+      {isPreviewEditorEnabled && (
+        <Suspense fallback={null}>
+          <PreviewEditorPanel />
         </Suspense>
       )}
 

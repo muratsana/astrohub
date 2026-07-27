@@ -64,7 +64,7 @@ export function MobileNav({ onOpenPalette }: { onOpenPalette: () => void }) {
           {/* Ortadaki kayıt aksiyonu (§5.3) */}
           <NavLink
             to="/galeri/yukle"
-            aria-label="Yeni kayıt aç"
+            aria-label="Fotoğraf yükle"
             className="flex flex-1 items-center justify-center py-2"
           >
             <span className="flex h-8 w-8 items-center justify-center rounded-[2px] bg-primary text-primary-foreground">

@@ -1,4 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" rx="7" fill="#050a12"/>
-  <path d="M16 5l2.6 7.1L26 14.7l-7.4 2.6L16 25l-2.6-7.7L6 14.7l7.4-2.6L16 5z" fill="#f4b82f"/>
+  <!--
+    Astrohub favicon — logo işaretinin küçük boyut için sadeleştirilmiş hâli.
+    Ölçü çentikleri 16 px'te okunmadığı için çıkarıldı; kalan biçim
+    (levha çerçevesi + yıldız) tanınabilirliği taşır.
+    Zemin dolu: hem koyu hem açık sekme çubuğunda aynı okunur.
+  -->
+  <rect width="32" height="32" rx="4" fill="#07090b"/>
+  <rect x="4.5" y="4.5" width="23" height="23" rx="1.5"
+        fill="none" stroke="#ff9d2e" stroke-width="2.4"/>
+  <path d="M16 9l1.85 5.15L23 16l-5.15 1.85L16 23l-1.85-5.15L9 16l5.15-1.85L16 9z"
+        fill="#ff9d2e"/>
 </svg>

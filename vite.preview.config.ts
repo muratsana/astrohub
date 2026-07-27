@@ -109,6 +109,9 @@ export default defineConfig({
   plugins: [react(), tailwindcss(), inlineAssets()],
   define: {
     'import.meta.env.VITE_ROUTER_MODE': JSON.stringify('hash'),
+    // Canlı metin düzenleme paneli yalnızca önizlemede açıktır; üretim
+    // derlemesinde bu bayrak tanımsız kalır ve panel hiç render edilmez.
+    'import.meta.env.VITE_PREVIEW_EDITOR': JSON.stringify('true'),
   },
   resolve: {
     alias: {
