@@ -268,6 +268,12 @@ export const siteMap: NavGroup[] = [
     title: 'Hesap',
     items: [
       { label: 'Üye Paneli', to: '/panel', description: 'Fotoğraflar, kota, üyelik' },
+      {
+        label: 'Yönetim Paneli',
+        to: '/admin',
+        description: 'Moderasyon kuyruğu (yetki gerektirir)',
+        keywords: ['admin', 'moderasyon', 'yönetim'],
+      },
       { label: 'Giriş Yap', to: '/giris' },
       { label: 'Üye Ol', to: '/kayit' },
     ],

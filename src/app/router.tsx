@@ -362,11 +362,8 @@ export const router = createRouter([
       { path: 'panel/:section', element: panelPage() },
       {
         path: 'admin',
-        element: (
-          <PlaceholderPage
-            title="Yönetim Paneli"
-            description="Moderasyon kuyrukları, etkinlik/haber girişi ve depolama paneli (§13). Yetkilendirme sunucu tarafında zorunludur."
-          />
+        element: route(
+          named(() => import('@/features/admin/AdminPage'), 'AdminPage')
         ),
       },
       {

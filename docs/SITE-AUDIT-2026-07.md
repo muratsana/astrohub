@@ -321,13 +321,35 @@ E2E gerçek tarayıcıda, gerçek derlemeyle çalışır ve birim testlerinin
 göremediği sınıfı kapsar: yönlendirme, kod bölme, kalıcı durum, düzen.
 Üç genişlikte ekran görüntüsü `dist-preview/screens/` altına yazılır.
 
-### 6.6 İkinci tur sonrası durum
+### 6.6 Yönetim, kulüpler ve setup'lar
+
+| Modül | Adres | Not |
+| --- | --- | --- |
+| Kulüpler ve topluluklar | `/topluluklar`, `/topluluk/:slug` | Etkinlik takvimi profilin omurgası; Organization JSON-LD |
+| Rasathane/planetaryum | `/tesisler` | Mesafeye göre sıralı; ziyaret koşulu (randevulu/serbest) rozet |
+| Kayıtlı setup'lar | `/setup/:id`, `/panel/setuplar` | Yerel kayıt + bağlantıya gömülü paylaşım yükü |
+| Yönetim paneli | `/admin` | Moderasyon kuyruğu; yetki RLS'te, arayüzdeki kontrol yalnızca nezaket |
+
+Moderasyon şeması (`0007_moderation_and_audit.sql`):
+
+- **Tek kuyruk, polimorfik hedef.** Moderatör "sırada ne var" diye bakar,
+  "sırada hangi fotoğraf var" diye değil. Bedeli hedefe FK konamaması;
+  karşılığı dört ayrı ekran yerine tek kuyruk.
+- **Raporlayan kendi raporunu göremez.** Kuyruğu izleyebilmek, hedef
+  kullanıcının kimin şikâyet ettiğini çıkarmasına ve misillemeye kapı açar.
+- **Çözülen kayıt kimin çözdüğünü taşımak zorunda** (CHECK kısıtı): "kim
+  karar verdi" sorusunun cevapsız kaldığı bir moderasyon günlüğü işe yaramaz.
+- **`audit_logs` için yazma politikası yok.** İstemci kendi izini
+  uyduramamalı; kayıtlar sunucu tarafındaki SECURITY DEFINER fonksiyonlardan
+  atılacak. RLS varsayılanı zaten reddediyor.
+
+### 6.7 İkinci tur sonrası durum
 
 | Kontrol | Sonuç |
 | --- | --- |
 | `npm run typecheck` | ✅ hatasız |
 | `npm run lint` | ✅ hatasız |
-| `npm test` | ✅ 320 test |
+| `npm test` | ✅ 336 test |
 | `npm run build` | ✅ uyarısız |
 | `npm run check:preview` | ✅ sağlam, yatay taşma yok |
 | `node scripts/e2e.mjs` | ✅ 19/19 senaryo |
