@@ -80,11 +80,11 @@ export function EventDetailPage() {
               <Badge tone={event.free ? 'success' : 'muted'}>
                 {event.free ? 'Ücretsiz' : 'Ücretli'}
               </Badge>
-              {event.camping && <Badge tone="teal">Kamp yapılabilir</Badge>}
+              {event.camping && <Badge tone="cold">Kamp yapılabilir</Badge>}
               {event.kidsFriendly && <Badge>Çocuklara uygun</Badge>}
               {event.telescopesProvided && <Badge>Teleskop sağlanıyor</Badge>}
               {event.astrophotoFocused && (
-                <Badge tone="blue">Astrofoto odaklı</Badge>
+                <Badge tone="cold">Astrofoto odaklı</Badge>
               )}
             </div>
 
@@ -166,7 +166,7 @@ export function EventDetailPage() {
                   {event.organizer.name}
                 </p>
                 {event.organizer.verified && (
-                  <Badge tone="blue">Doğrulanmış</Badge>
+                  <Badge tone="cold">Doğrulanmış</Badge>
                 )}
               </div>
 

@@ -68,7 +68,7 @@ export function ProfilePage() {
             <p className="text-sm text-muted-foreground">@{username}</p>
             <div className="mt-2 flex flex-wrap gap-1.5">
               <Badge tone="primary">{userPhotos.length} fotoğraf</Badge>
-              <Badge tone="blue">
+              <Badge tone="cold">
                 Toplam {formatIntegration(totalSeconds)} entegrasyon
               </Badge>
               {cities.map((c) => (

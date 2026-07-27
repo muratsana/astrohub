@@ -1,37 +1,33 @@
 <!doctype html>
-<html lang="tr">
+<html lang="tr" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#050a12" />
+    <meta name="theme-color" content="#07090b" />
     <meta
       name="description"
-      content="Astrohub — Türkiye'nin astronomi, astrofotoğrafçılık, gözlem etkinlikleri, karanlık gökyüzü ve astrocamping platformu."
+      content="Astrohub — Türkiye'nin astrofotoğraf kayıt ağı. Her kare hedefi, optiği, filtresi ve gökyüzü koşullarıyla arşivlenir."
     />
-    <title>Astrohub — Gökyüzünü keşfet, paylaş, öğren</title>
+    <title>Astrohub — Gökyüzü kayıt altında</title>
 
     <!--
-      Tema, React yüklenmeden önce uygulanır; aksi hâlde açık tema seçen
-      kullanıcı ilk boyamada koyu ekran görüp "flash" yaşar (§19.7).
-      Kaynak sırası: kullanıcı seçimi → işletim sistemi tercihi → koyu.
+      Saha modu React yüklenmeden uygulanır; aksi hâlde kırmızı arayüzü
+      seçmiş kullanıcı ilk boyamada grafit ekran görür ve karanlık
+      adaptasyonu bozulur. Varsayılan koyu moddur; sistem tercihi izlenmez
+      (saha modu bir estetik tercih değil, sahada açılan bir araçtır).
     -->
     <script>
       (function () {
         try {
           var stored = localStorage.getItem('astrohub:theme');
-          var theme =
-            stored === 'light' || stored === 'dark'
-              ? stored
-              : window.matchMedia('(prefers-color-scheme: light)').matches
-                ? 'light'
-                : 'dark';
+          var theme = stored === 'field' ? 'field' : 'dark';
           document.documentElement.dataset.theme = theme;
-          if (theme === 'light') {
+          if (theme === 'field') {
             document
               .querySelector('meta[name="theme-color"]')
-              .setAttribute('content', '#f6f8fc');
+              .setAttribute('content', '#0a0000');
           }
         } catch (e) {
           document.documentElement.dataset.theme = 'dark';

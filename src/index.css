@@ -1,45 +1,68 @@
+@import './styles/fonts.css';
 @import 'tailwindcss';
 
 /*
- * Astrohub tasarım sistemi — şartname §6.2 renk token'ları.
- * Koyu tema varsayılandır (§19.7). Açık tema opsiyoneldir.
- * Tailwind 4 @theme: token'lar utility sınıflarına dönüşür
- * (bg-background, text-foreground, bg-surface-2, text-primary, border-border...).
+ * ═══════════════════════════════════════════════════════════════════
+ * ASTROHUB — RASATHANE TERMİNALİ
+ * ═══════════════════════════════════════════════════════════════════
+ *
+ * Site bir yayın organı gibi değil, bir cihaz gibi davranır. Karar künyesi:
+ *
+ *   Palet      grafit zemin · fosfor kehribar aksan · soğuk mavi ikincil
+ *   Tipografi  Roboto Condensed 700 (başlık, uppercase) + JetBrains Mono
+ *   Sertlik    "dengeli" — 2px radius, gölge yok, hairline bölmeler
+ *   Tema       koyu (varsayılan) + saha kırmızısı; açık tema yoktur
+ *
+ * Yüzey ayrımı gölgeyle değil çizgiyle yapılır. Radius yalnızca 2px —
+ * yumuşatmak için değil, kenarın kırılmasını engellemek için.
  */
 @theme {
-  --color-background: #050a12;
-  --color-surface-1: #0a111d;
-  --color-surface-2: #0f1826;
-  --color-surface-3: #162235;
+  /* ---- Zemin ve yüzeyler ---- */
+  --color-background: #07090b;
+  --color-surface-1: #0d1114;
+  --color-surface-2: #131a1e;
+  --color-surface-3: #1c262c;
 
-  --color-foreground: #f7f8fb;
-  --color-muted-foreground: #9ca9ba;
+  /* ---- Metin ---- */
+  --color-foreground: #e6ebe8;
+  --color-muted-foreground: #7d8d90;
+  /* Üçüncül: birim etiketleri, dipnotlar — asla tek başına anlam taşımaz */
+  --color-faint: #556266;
 
-  --color-border: rgba(255, 255, 255, 0.1);
+  /* ---- Çizgiler ---- */
+  --color-border: rgba(230, 235, 232, 0.13);
+  --color-border-strong: rgba(230, 235, 232, 0.28);
 
-  --color-primary: #f4b82f;
-  --color-primary-hover: #ffca4c;
-  --color-primary-foreground: #090b0f;
+  /* ---- Aksan: fosfor kehribar ---- */
+  --color-primary: #ff9d2e;
+  --color-primary-hover: #ffb45c;
+  --color-primary-foreground: #07090b;
+  /* Sönük kehribar: dolgu zeminleri ve pasif durumlar */
+  --color-primary-dim: #b36a17;
 
-  --color-link: #8db8ff;
-  --color-success: #45c985;
-  --color-warning: #ffb84d;
-  --color-danger: #ef6464;
+  /* ---- İkincil: soğuk mavi (bağlantı, ölçüm, grafik) ---- */
+  --color-cold: #6ea8c7;
+  --color-cold-dim: #3d6a83;
 
-  /* Modül ikonlarında sınırlı kullanım için aksan tonları (§6.2) */
-  --color-accent-violet: #a78bfa;
-  --color-accent-blue: #60a5fa;
-  --color-accent-green: #34d399;
-  --color-accent-teal: #2dd4bf;
-  --color-accent-orange: #fb923c;
+  /* ---- Durum ---- */
+  --color-success: #4bbd85;
+  --color-warning: #e0a132;
+  --color-danger: #e2604f;
 
-  --font-sans:
-    'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  /* ---- Tipografi ---- */
+  --font-display: 'Roboto Condensed', 'Arial Narrow', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --font-sans: 'JetBrains Mono', ui-monospace, monospace;
 
-  /* İçerik genişliği (§6.4): maksimum 1440–1520px */
+  /* İçerik genişliği (§6.4) */
   --spacing-content: 1520px;
 
-  --radius-card: 14px;
+  /* Sertlik: "dengeli" — 2px, her yerde aynı */
+  --radius-card: 2px;
+
+  /* Yapışkan kabuk yüksekliği: durum çubuğu + nav.
+     Bölüm bağlantılarının başlığın altında kalmaması için kullanılır. */
+  --spacing-shell: 92px;
 }
 
 @layer base {
@@ -48,65 +71,99 @@
   }
 
   /*
-   * Açık tema (§19.7: koyu varsayılan, açık opsiyonel).
-   * `@theme` token'ları :root üzerinde tanımlıdır; burada yalnızca değerler
-   * yeniden atanır — utility sınıfları var() üzerinden okuduğu için tüm
-   * arayüz tek noktadan döner. Kontrast WCAG AA hedefine göre seçilmiştir.
+   * SAHA MODU — teleskop başında karanlık adaptasyonunu bozmayan kırmızı.
+   * Mavi ve yeşil kanallar tamamen kısılır; en parlak değer bile düşük
+   * ışık gücünde kalır. Bir tema değil, bir araç.
    */
-  :root[data-theme='light'] {
-    color-scheme: light;
+  :root[data-theme='field'] {
+    color-scheme: dark;
 
-    --color-background: #f6f8fc;
-    --color-surface-1: #ffffff;
-    --color-surface-2: #eef2f8;
-    --color-surface-3: #e2e8f2;
+    --color-background: #0a0000;
+    --color-surface-1: #150303;
+    --color-surface-2: #1e0605;
+    --color-surface-3: #2b0a08;
 
-    --color-foreground: #0b1220;
-    --color-muted-foreground: #55637a;
+    --color-foreground: #ff8a7a;
+    --color-muted-foreground: #a85448;
+    --color-faint: #6d332c;
 
-    --color-border: rgba(11, 18, 32, 0.12);
+    --color-border: rgba(255, 110, 90, 0.17);
+    --color-border-strong: rgba(255, 110, 90, 0.34);
 
-    /* Amber, açık zeminde okunurluk için bir tık koyultulur. */
-    --color-primary: #b3790a;
-    --color-primary-hover: #96660a;
-    --color-primary-foreground: #ffffff;
+    --color-primary: #ff3b26;
+    --color-primary-hover: #ff5c49;
+    --color-primary-foreground: #0a0000;
+    --color-primary-dim: #8f1f13;
 
-    --color-link: #1d4ed8;
-    --color-success: #15803d;
-    --color-warning: #b45309;
-    --color-danger: #b91c1c;
+    /* Soğuk mavi saha modunda yoktur — sönük kızıla düşer. */
+    --color-cold: #c25a49;
+    --color-cold-dim: #7a2f24;
 
-    --color-accent-violet: #6d28d9;
-    --color-accent-blue: #1d4ed8;
-    --color-accent-green: #047857;
-    --color-accent-teal: #0f766e;
-    --color-accent-orange: #c2410c;
+    --color-success: #c26a4a;
+    --color-warning: #d4703f;
+    --color-danger: #ff5c49;
   }
 
   html {
     scroll-behavior: smooth;
+    /* Yapışkan kabuk, çapa bağlantılarında başlığı örtmesin. */
+    scroll-padding-top: var(--spacing-shell);
   }
 
   body {
     margin: 0;
     background-color: var(--color-background);
     color: var(--color-foreground);
-    font-family: var(--font-sans);
-    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    font-family: var(--font-mono);
+    font-size: 13.5px;
+    line-height: 1.7;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
   }
 
-  /* Teknik değerler için tabular numerals (§6.3) */
+  /*
+   * Başlıklar sıkışık grotesk, büyük harf. Monospace gövdenin yanında
+   * ölçü farkı yaratır — terminalin "etiket / değer" ritmi burada kurulur.
+   */
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: -0.005em;
+    line-height: 1.06;
+    text-wrap: balance;
+  }
+
+  /* Sayısal her şey hizalı olmalı: tablolar, ölçümler, süreler. */
   .tabular {
     font-variant-numeric: tabular-nums;
+  }
+
+  /*
+   * Terminal etiketi: küçük, geniş harf aralıklı, büyük harf.
+   * §6.3 gereği 10px'in altına inmez.
+   */
+  .label {
+    font-size: 10px;
+    line-height: 1.4;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--color-muted-foreground);
   }
 
   /* Focus ring hiçbir temada kaldırılmaz (§6.7) */
   :focus-visible {
     outline: 2px solid var(--color-primary);
     outline-offset: 2px;
-    border-radius: 4px;
+    border-radius: 0;
+  }
+
+  /* Seçim vurgusu da kehribar kalsın */
+  ::selection {
+    background: var(--color-primary);
+    color: var(--color-primary-foreground);
   }
 
   /* Hareket azaltma tercihi (§6.7) */
@@ -119,5 +176,20 @@
       transition-duration: 0.01ms !important;
       scroll-behavior: auto !important;
     }
+  }
+}
+
+@layer components {
+  /*
+   * ÖLÇÜ ÇENTİKLERİ — fotoğraf karolarının çerçevesi.
+   * Görsel bir "ölçüm" gibi çerçevelenir: üst ve alt kenarda ince
+   * çentikler, bunlar tekrar eden bir gradyanla çizilir (ek DOM yok).
+   */
+  .ticks-y {
+    background-image: repeating-linear-gradient(
+      90deg,
+      var(--color-border-strong) 0 1px,
+      transparent 1px 12px
+    );
   }
 }

@@ -1,18 +1,22 @@
 import { Link } from 'react-router-dom';
-import { SparkleIcon } from '@/components/ui/icons';
 
-/** Astrohub logosu: sarı yıldız + "Astro" (beyaz) "hub" (vurgulu) */
-export function Logo() {
+/**
+ * Astrohub künyesi. Terminal dilinde logo bir simge değil, bir
+ * **cihaz etiketi**: geniş harf aralıklı büyük harf, "hub" kehribar.
+ */
+export function Logo({ compact = false }: { compact?: boolean }) {
   return (
     <Link
       to="/"
-      className="flex items-center gap-2 text-xl font-bold tracking-tight"
       aria-label="Astrohub ana sayfa"
+      className="shrink-0 font-display text-[17px] font-bold uppercase leading-none tracking-[0.2em] text-foreground transition-colors hover:text-primary"
     >
-      <SparkleIcon className="h-6 w-6 text-primary" />
-      <span className="text-foreground">
-        Astro<span className="text-primary">hub</span>
-      </span>
+      Astro<span className="text-primary">hub</span>
+      {!compact && (
+        <span className="ml-2 hidden align-middle text-[9px] font-normal tracking-[0.24em] text-faint xl:inline">
+          GÖZLEM AĞI
+        </span>
+      )}
     </Link>
   );
 }

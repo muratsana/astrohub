@@ -72,7 +72,7 @@ export function SiteDetailPage() {
             <div className="mt-3 flex flex-wrap gap-1.5">
               <Badge tone="primary">Bortle {site.bortle}</Badge>
               {site.sqm && (
-                <Badge tone="blue">SQM {site.sqm} mag/arcsec²</Badge>
+                <Badge tone="cold">SQM {site.sqm} mag/arcsec²</Badge>
               )}
               <Badge>Güney ufku: {site.southHorizon}</Badge>
               <Badge>{site.bestMonths}</Badge>

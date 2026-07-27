@@ -3,28 +3,36 @@ import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/cn';
 
-type Variant = 'primary' | 'secondary' | 'ghost';
+/**
+ * Buton — terminal dili.
+ *
+ * Köşeli (2px), gölgesiz, büyük harf mono etiket ve geniş harf aralığı.
+ * Bir cihaz düğmesi gibi okunur: yuvarlak hap biçimi yoktur.
+ */
+
+type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
 type Size = 'sm' | 'md' | 'lg';
 
 const variantClasses: Record<Variant, string> = {
-  // Sarı/amber marka vurgusu (§6.2)
   primary:
-    'bg-primary text-primary-foreground hover:bg-primary-hover font-semibold',
+    'bg-primary text-primary-foreground hover:bg-primary-hover border border-primary',
   secondary:
-    'border border-border bg-surface-2/60 text-foreground hover:bg-surface-3 hover:border-white/20',
-  ghost: 'text-foreground/80 hover:text-foreground hover:bg-surface-2/60',
+    'border border-border-strong text-foreground hover:border-primary hover:text-primary',
+  ghost:
+    'border border-transparent text-muted-foreground hover:text-foreground hover:border-border',
+  danger: 'border border-danger/60 text-danger hover:bg-danger/10',
 };
 
 const sizeClasses: Record<Size, string> = {
-  sm: 'h-8 px-3 text-sm',
-  md: 'h-10 px-5 text-sm',
-  lg: 'h-12 px-6 text-base',
+  sm: 'h-8 px-3 text-[10px]',
+  md: 'h-10 px-5 text-[11px]',
+  lg: 'h-12 px-7 text-xs',
 };
 
 function buttonClasses(variant: Variant, size: Size, className?: string) {
   return cn(
-    'inline-flex items-center justify-center gap-2 rounded-full transition-colors',
-    'disabled:pointer-events-none disabled:opacity-50',
+    'inline-flex items-center justify-center gap-2 rounded-card font-medium uppercase tracking-[0.16em]',
+    'transition-colors disabled:pointer-events-none disabled:opacity-45',
     variantClasses[variant],
     sizeClasses[size],
     className

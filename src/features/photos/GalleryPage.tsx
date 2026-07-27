@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { Container } from '@/components/ui/Container';
 import { ButtonLink } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { PhotoPlaceholder } from '@/components/media/PhotoPlaceholder';
-import { SparkleIcon } from '@/components/ui/icons';
+import { Input, Select } from '@/components/ui/Input';
+import { PhotoTile } from '@/components/media/PhotoTile';
+import { tintFor } from '@/components/media/tints';
 import { formatIntegration } from '@/domain/photography/integration';
+import { targets } from '@/features/targets/data';
 import { photos } from './data';
 import {
   filterPhotos,
@@ -19,12 +19,8 @@ import {
   type PhotoType,
   type ProcessingPalette,
 } from './types';
-import type { AstroPhoto } from './types';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
-
-const selectClass =
-  'h-10 rounded-xl border border-border bg-surface-1 px-3 text-sm text-foreground focus:border-primary/60';
 
 const typeOptions: (PhotoType | 'hepsi')[] = [
   'hepsi',
@@ -46,9 +42,19 @@ const paletteOptions: (ProcessingPalette | 'hepsi')[] = [
   'Mono',
 ];
 
+/** Fotoğrafın hedef türünü katalogdan bulup yıldız alanı tonunu seçer. */
+function tintForPhoto(catalog: string): string {
+  const target = targets.find(
+    (t) => t.catalog === catalog || t.aliases.includes(catalog)
+  );
+  return tintFor(target?.kind);
+}
+
 /**
- * Astrofotoğraf galerisi (§7.2): başlık + arama + yükleme CTA'sı, filtre
- * barı ve geniş görsel kartlar. Kart üzerinde ekipman kalabalığı yok.
+ * KAYIT ARŞİVİ (§7.2) — terminal dilinde galeri.
+ *
+ * Filtre barı bir enstrüman paneli gibi kurulur: hairline bölmeli tek şerit,
+ * her kontrol büyük harf etiketiyle. Karolarda künye her zaman görünür.
  */
 export function GalleryPage() {
   const [filters, setFilters] = useState<GalleryFilters>(defaultFilters);
@@ -65,127 +71,139 @@ export function GalleryPage() {
   return (
     <>
       <PageMeta
-        title="Astrofotoğraf Galerisi"
+        title="Kayıt Arşivi"
         description="Türkiye'den astrofotoğraflar — hedef, ekipman, filtre ve lokasyon verisiyle birlikte. Tür, palet, şehir ve entegrasyon süresine göre filtreleyin."
         jsonLd={breadcrumbJsonLd([
           { name: 'Ana Sayfa', path: '/' },
-          { name: 'Fotoğraflar', path: '/fotograflar' },
+          { name: 'Kayıtlar', path: '/fotograflar' },
         ])}
       />
-      <Container className="py-10 sm:py-14">
-        {/* Üst alan (§7.2) */}
-        <header className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+
+      <Container className="py-10 sm:py-12">
+        <header className="mb-6 flex flex-col gap-4 border-b border-border pb-6 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="text-2xl font-semibold text-foreground sm:text-3xl">
-              Fotoğraflar
+            <h1 className="text-[28px] text-foreground sm:text-[34px]">
+              Kayıt Arşivi
             </h1>
-            <p className="mt-2 max-w-xl text-muted-foreground">
-              Topluluğun astrofotoğraf arşivi — her karede hedef, setup ve çekim
-              verisiyle birlikte.
+            <p className="mt-2.5 max-w-[70ch] text-[12.5px] leading-relaxed text-muted-foreground">
+              Topluluğun astrofotoğraf arşivi. Her kayıt hedefi, setup'ı,
+              filtresi ve gökyüzü koşullarıyla birlikte saklanır.
             </p>
           </div>
           <ButtonLink to="/fotograflar/yukle" className="shrink-0">
-            Fotoğraf Yükle
+            Kayıt aç
           </ButtonLink>
         </header>
 
-        {/* Filtre barı */}
-        <div className="mb-8 flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-surface-1 p-4">
-          <div className="min-w-56 flex-1">
-            <label htmlFor="gallery-search" className="sr-only">
-              Fotoğraf ara
-            </label>
+        {/* Filtre paneli */}
+        <div className="mb-6 grid gap-px border border-border bg-border sm:grid-cols-2 lg:grid-cols-5">
+          <FilterCell label="Ara" htmlFor="gallery-search" className="lg:col-span-2">
             <Input
               id="gallery-search"
               type="search"
-              placeholder="Hedef, katalog (M 31, NGC…) veya kullanıcı ara"
+              placeholder="Hedef, katalog (M31, NGC 7000) veya kullanıcı"
               value={filters.search}
               onChange={(e) => set('search', e.target.value)}
-              className="h-10"
+              className="h-9 border-0 bg-transparent px-0 focus:bg-transparent"
             />
-          </div>
+          </FilterCell>
 
-          <label className="sr-only" htmlFor="f-type">
-            Fotoğraf türü
-          </label>
-          <select
-            id="f-type"
-            className={selectClass}
-            value={filters.type}
-            onChange={(e) =>
-              set('type', e.target.value as GalleryFilters['type'])
-            }
-          >
-            {typeOptions.map((t) => (
-              <option key={t} value={t}>
-                {t === 'hepsi' ? 'Tüm türler' : photoTypeLabels[t]}
-              </option>
-            ))}
-          </select>
+          <FilterCell label="Tür" htmlFor="f-type">
+            <Select
+              id="f-type"
+              value={filters.type}
+              onChange={(e) =>
+                set('type', e.target.value as GalleryFilters['type'])
+              }
+              className="h-9 border-0 bg-transparent px-0 focus:bg-transparent"
+            >
+              {typeOptions.map((t) => (
+                <option key={t} value={t}>
+                  {t === 'hepsi' ? 'Tüm türler' : photoTypeLabels[t]}
+                </option>
+              ))}
+            </Select>
+          </FilterCell>
 
-          <label className="sr-only" htmlFor="f-palette">
-            İşleme paleti
-          </label>
-          <select
-            id="f-palette"
-            className={selectClass}
-            value={filters.palette}
-            onChange={(e) =>
-              set('palette', e.target.value as GalleryFilters['palette'])
-            }
-          >
-            {paletteOptions.map((p) => (
-              <option key={p} value={p}>
-                {p === 'hepsi' ? 'Tüm paletler' : p}
-              </option>
-            ))}
-          </select>
+          <FilterCell label="Palet" htmlFor="f-palette">
+            <Select
+              id="f-palette"
+              value={filters.palette}
+              onChange={(e) =>
+                set('palette', e.target.value as GalleryFilters['palette'])
+              }
+              className="h-9 border-0 bg-transparent px-0 focus:bg-transparent"
+            >
+              {paletteOptions.map((p) => (
+                <option key={p} value={p}>
+                  {p === 'hepsi' ? 'Tüm paletler' : p}
+                </option>
+              ))}
+            </Select>
+          </FilterCell>
 
-          <label className="sr-only" htmlFor="f-city">
-            Şehir
-          </label>
-          <select
-            id="f-city"
-            className={selectClass}
-            value={filters.city}
-            onChange={(e) => set('city', e.target.value)}
-          >
-            <option value="hepsi">Tüm şehirler</option>
-            {cities.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
+          <FilterCell label="Şehir" htmlFor="f-city">
+            <Select
+              id="f-city"
+              value={filters.city}
+              onChange={(e) => set('city', e.target.value)}
+              className="h-9 border-0 bg-transparent px-0 focus:bg-transparent"
+            >
+              <option value="hepsi">Tüm şehirler</option>
+              {cities.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </Select>
+          </FilterCell>
 
-          <label className="sr-only" htmlFor="f-sort">
-            Sıralama
-          </label>
-          <select
-            id="f-sort"
-            className={selectClass}
-            value={filters.sort}
-            onChange={(e) =>
-              set('sort', e.target.value as GalleryFilters['sort'])
-            }
-          >
-            <option value="yeni">En yeni</option>
-            <option value="populer">Popüler</option>
-            <option value="editor">Editör seçimi</option>
-            <option value="yorum">En çok yorumlanan</option>
-          </select>
+          <FilterCell label="Sırala" htmlFor="f-sort">
+            <Select
+              id="f-sort"
+              value={filters.sort}
+              onChange={(e) =>
+                set('sort', e.target.value as GalleryFilters['sort'])
+              }
+              className="h-9 border-0 bg-transparent px-0 focus:bg-transparent"
+            >
+              <option value="yeni">En yeni</option>
+              <option value="populer">Popüler</option>
+              <option value="editor">Editör seçimi</option>
+              <option value="yorum">En çok yorumlanan</option>
+            </Select>
+          </FilterCell>
         </div>
 
-        {/* Sonuç */}
+        <p
+          className="tabular label mb-4"
+          role="status"
+          aria-live="polite"
+        >
+          {result.length} / {photos.length} kayıt
+        </p>
+
         {result.length === 0 ? (
-          <p className="py-16 text-center text-muted-foreground">
-            Bu filtrelerle eşleşen fotoğraf bulunamadı.
+          <p className="border border-border bg-surface-1 px-4 py-16 text-center text-[12px] text-muted-foreground">
+            Bu filtrelerle eşleşen kayıt yok. Filtreleri gevşetmeyi ya da
+            katalog kodunu boşluksuz yazmayı deneyin (M31).
           </p>
         ) : (
-          <ul className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <ul className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-4">
             {result.map((photo) => (
               <li key={photo.slug}>
-                <PhotoCard photo={photo} />
+                <PhotoTile
+                  to={`/fotograf/${photo.slug}`}
+                  seed={photo.slug}
+                  tint={tintForPhoto(photo.target.catalog)}
+                  target={photo.target.catalog}
+                  title={photo.title}
+                  palette={photo.palette}
+                  integration={formatIntegration(photoIntegrationSeconds(photo))}
+                  bortle={photo.location.bortle}
+                  username={photo.user.username}
+                  badge={photo.editorsPick ? 'Editör' : undefined}
+                />
               </li>
             ))}
           </ul>
@@ -195,33 +213,24 @@ export function GalleryPage() {
   );
 }
 
-function PhotoCard({ photo }: { photo: AstroPhoto }) {
-  const integration = photoIntegrationSeconds(photo);
+/** Filtre paneli hücresi: üstte büyük harf etiket, altta kontrol. */
+function FilterCell({
+  label,
+  htmlFor,
+  children,
+  className,
+}: {
+  label: string;
+  htmlFor: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
   return (
-    <Link to={`/fotograf/${photo.slug}`} className="group block">
-      <div className="relative aspect-[4/3] overflow-hidden rounded-card">
-        <PhotoPlaceholder
-          gradient={photo.gradient}
-          alt={`${photo.title} — @${photo.user.username}`}
-          className="h-full w-full border border-border transition-transform duration-300 group-hover:scale-[1.03]"
-        />
-        <span className="tabular absolute left-2 top-2 rounded-full bg-black/60 px-2 py-0.5 text-[11px] font-medium text-foreground backdrop-blur-sm">
-          {formatIntegration(integration)}
-        </span>
-        {photo.editorsPick && (
-          <span className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-full bg-primary/90 px-2 py-0.5 text-[11px] font-semibold text-primary-foreground">
-            <SparkleIcon className="h-3 w-3" /> Editör
-          </span>
-        )}
-      </div>
-      <div className="mt-2.5">
-        <p className="truncate text-sm font-semibold text-foreground">
-          {photo.target.catalog} · {photo.title}
-        </p>
-        <p className="tabular mt-0.5 truncate text-xs text-muted-foreground">
-          @{photo.user.username} · ♥ {photo.likes} · 💬 {photo.comments}
-        </p>
-      </div>
-    </Link>
+    <div className={`bg-surface-1 px-3 pb-1 pt-2 ${className ?? ''}`}>
+      <label htmlFor={htmlFor} className="label block">
+        {label}
+      </label>
+      {children}
+    </div>
   );
 }

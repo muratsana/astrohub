@@ -167,7 +167,7 @@ function EventCard({ event }: { event: AstroEvent }) {
           <span className="text-muted-foreground">·</span>
           <span className="text-muted-foreground">{event.city}</span>
           {event.organizer.verified && (
-            <Badge tone="blue">Doğrulanmış organizatör</Badge>
+            <Badge tone="cold">Doğrulanmış organizatör</Badge>
           )}
         </div>
         <h2 className="text-sm font-semibold leading-snug text-foreground">
@@ -178,7 +178,7 @@ function EventCard({ event }: { event: AstroEvent }) {
           <Badge tone={event.free ? 'success' : 'primary'}>
             {event.free ? 'Ücretsiz' : 'Ücretli'}
           </Badge>
-          {event.camping && <Badge tone="teal">Kamp</Badge>}
+          {event.camping && <Badge tone="cold">Kamp</Badge>}
           {capacity && <Badge tone="muted">{capacity}</Badge>}
         </div>
       </div>

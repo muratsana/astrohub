@@ -457,9 +457,9 @@ export function UploadWizardPage() {
                   <Badge tone="primary">{state.title || 'Başlıksız'}</Badge>
                   <Badge>{photoTypeLabels[state.type]}</Badge>
                   {state.capturedAt && <Badge>{state.capturedAt}</Badge>}
-                  <Badge tone="blue">{formatIntegration(total)}</Badge>
+                  <Badge tone="cold">{formatIntegration(total)}</Badge>
                   <Badge>{state.license}</Badge>
-                  {state.aiDeclared && <Badge tone="teal">AI beyanlı</Badge>}
+                  {state.aiDeclared && <Badge tone="cold">AI beyanlı</Badge>}
                 </div>
               </div>
             </div>

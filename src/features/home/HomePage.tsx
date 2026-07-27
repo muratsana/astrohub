@@ -1,35 +1,46 @@
-import { HeroSection } from './sections/HeroSection';
-import { QuickAccess } from './sections/QuickAccess';
+import { TonightPanel } from './sections/TonightPanel';
+import { RecentRecords } from './sections/RecentRecords';
+import { ManifestoStrip } from './sections/ManifestoStrip';
 import { UpcomingEvents } from './sections/UpcomingEvents';
-import { FeaturedPhotos } from './sections/FeaturedPhotos';
-import { PopularArticles } from './sections/PopularArticles';
-import { CommunityCTA } from './sections/CommunityCTA';
+import { DarkSkyStrip } from './sections/DarkSkyStrip';
+import { ToolsStrip } from './sections/ToolsStrip';
+import { LearningStrip } from './sections/LearningStrip';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { organizationJsonLd } from '@/lib/seo';
 
 /**
- * Astrohub ana sayfası — kabul edilen editoryal tasarım (§7.1).
- * Dashboard değil; koyu, ferah, fotoğraf odaklı yerleşim (§6.1, §19.7).
+ * ANA SAYFA — Rasathane Terminali.
  *
- * Bölüm sırası (§7.1):
- *  1. Editoryal giriş  2. Hızlı erişim  3. Yaklaşan etkinlikler
- *  4. Öne çıkan fotoğraflar  5. Popüler makaleler  6. Topluluk çağrısı
+ * Bölüm sırası "kayıt odaklı": site kendini anlatmadan önce çalışırken
+ * gösterir. Üstte bu gecenin gökyüzü durumu (dönen kullanıcı için her gece
+ * yeni değer), sonra topluluğun kayıtları; ürün mesajı üçüncü sıraya,
+ * tek bir şeride iner.
+ *
+ *   1  Bu gece · gerçek efemeris hesabı
+ *   2  Son kayıtlar · künyeli karo ızgarası
+ *   3  Manifesto şeridi
+ *   4  Yaklaşan etkinlikler · tablo
+ *   5  Karanlık gökyüzü · en iyi üç nokta
+ *   6  Araçlar
+ *   7  Eğitim
  */
 export function HomePage() {
   return (
-    <div className="pb-8">
+    <>
       <PageMeta
         bare
-        title="Astrohub — Gökyüzünü keşfet, paylaş, öğren"
-        description="Türkiye'nin astronomi, astrofotoğrafçılık, gözlem etkinlikleri, karanlık gökyüzü ve astrocamping platformu. Astrofotoğrafları teknik çekim verisiyle arşivle, etkinlikleri takip et, karanlık gökyüzü noktalarını keşfet."
+        title="Astrohub — Gökyüzü kayıt altında"
+        description="Türkiye'nin astrofotoğraf kayıt ağı. Her kare hedefi, optiği, filtresi ve gökyüzü koşullarıyla arşivlenir. Bu gece gökyüzünde ne var, hangi hedef ne zaman zirve yapıyor — canlı hesapla."
         jsonLd={organizationJsonLd}
       />
-      <HeroSection />
-      <QuickAccess />
+
+      <TonightPanel />
+      <RecentRecords />
+      <ManifestoStrip />
       <UpcomingEvents />
-      <FeaturedPhotos />
-      <PopularArticles />
-      <CommunityCTA />
-    </div>
+      <DarkSkyStrip />
+      <ToolsStrip />
+      <LearningStrip />
+    </>
   );
 }

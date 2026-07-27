@@ -1,64 +1,88 @@
-import { Link } from 'react-router-dom';
 import { Container } from '@/components/ui/Container';
 import { SectionHeader } from '@/components/ui/SectionHeader';
-import { PhotoPlaceholder } from '@/components/media/PhotoPlaceholder';
-import { CalendarIcon } from '@/components/ui/icons';
 import { Badge } from '@/components/ui/Badge';
-import { upcomingEvents } from '../data';
+import { DataTable, type Column } from '@/components/ui/DataTable';
+import { events } from '@/features/events/data';
+import { eventTypeLabels, type AstroEvent } from '@/features/events/types';
 
 /**
- * Yaklaşan astronomi etkinlikleri (§7.1). Etkinlikler ana sayfada öne alınır.
- * Kartta: tarih, ad, şehir, tür, ücretsiz/ücretli ve kamp etiketleri.
+ * YAKLAŞAN ETKİNLİKLER — tablo görünümü.
+ *
+ * Kart yerine tablo: etkinlikler karşılaştırılarak okunur (tarih, şehir,
+ * ücret, kamp). Kaynak şeffaflığı (§8.4) etkinlik detayında sürer.
  */
+const columns: Column<AstroEvent>[] = [
+  {
+    key: 'date',
+    header: 'Tarih',
+    width: '92px',
+    numeric: true,
+    cell: (e) =>
+      new Date(e.startsAt).toLocaleDateString('tr-TR', {
+        day: '2-digit',
+        month: 'short',
+      }),
+  },
+  {
+    key: 'title',
+    header: 'Etkinlik',
+    cell: (e) => e.title,
+  },
+  {
+    key: 'type',
+    header: 'Tür',
+    hideOnMobile: true,
+    cell: (e) => (
+      <span className="text-muted-foreground">{eventTypeLabels[e.type]}</span>
+    ),
+  },
+  {
+    key: 'city',
+    header: 'Şehir',
+    width: '110px',
+    cell: (e) => <span className="text-cold">{e.city}</span>,
+  },
+  {
+    key: 'flags',
+    header: 'Nitelik',
+    width: '150px',
+    hideOnMobile: true,
+    cell: (e) => (
+      <span className="flex flex-wrap gap-1">
+        <Badge tone={e.free ? 'success' : 'muted'}>
+          {e.free ? 'Ücretsiz' : 'Ücretli'}
+        </Badge>
+        {e.camping && <Badge tone="cold">Kamp</Badge>}
+      </span>
+    ),
+  },
+];
+
 export function UpcomingEvents() {
+  // Tarihe göre sıralı ilk beş etkinlik.
+  const upcoming = [...events]
+    .sort(
+      (a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime()
+    )
+    .slice(0, 5);
+
   return (
-    <section className="pt-16 sm:pt-20">
-      <Container>
-        <SectionHeader
-          title="Yaklaşan Etkinlikler"
-          description="Türkiye'deki astronomi etkinlikleri"
-          icon={<CalendarIcon className="h-5 w-5" />}
-          linkTo="/etkinlikler"
-          linkLabel="Tüm Etkinlikler"
-        />
-        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {upcomingEvents.map((event) => (
-            <li key={event.id}>
-              <Link
-                to={`/etkinlik/${event.id}`}
-                className="group flex h-full flex-col overflow-hidden rounded-card border border-border bg-surface-1 transition-colors hover:border-white/20"
-              >
-                <PhotoPlaceholder
-                  gradient={event.gradient}
-                  alt={event.title}
-                  rounded="rounded-none"
-                  className="aspect-[16/9] w-full"
-                />
-                <div className="flex flex-1 flex-col p-4">
-                  <div className="mb-2 flex flex-wrap items-center gap-2 text-xs">
-                    <span className="tabular font-medium text-primary">
-                      {event.date}
-                    </span>
-                    <span className="text-muted-foreground">·</span>
-                    <span className="text-muted-foreground">{event.city}</span>
-                  </div>
-                  <h3 className="text-sm font-semibold leading-snug text-foreground">
-                    {event.title}
-                  </h3>
-                  <div className="mt-auto flex flex-wrap gap-1.5 pt-3">
-                    <Badge>{event.type}</Badge>
-                    <Badge tone={event.free ? 'success' : 'primary'}>
-                      {event.free ? 'Ücretsiz' : 'Ücretli'}
-                    </Badge>
-                    {event.camping && <Badge tone="teal">Kamp</Badge>}
-                  </div>
-                </div>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </Container>
-    </section>
+    <Container className="py-12 sm:py-14">
+      <SectionHeader
+        title="Yaklaşan Etkinlikler"
+        meta={`${events.length} kayıt`}
+        description="Gözlem şenlikleri, kamplar, halk gözlemleri ve atölyeler — her kayıt kaynağı ve son doğrulama tarihiyle birlikte."
+        linkTo="/etkinlikler"
+        linkLabel="Takvim"
+      />
+
+      <DataTable
+        columns={columns}
+        rows={upcoming}
+        rowKey={(e) => e.slug}
+        rowHref={(e) => `/etkinlik/${e.slug}`}
+        empty="Yaklaşan etkinlik yok."
+      />
+    </Container>
   );
 }
-

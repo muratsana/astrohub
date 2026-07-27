@@ -91,7 +91,7 @@ function toBodyFragment(html: string): string {
   // Barındırıcı sayfanın gövde boşluğu/arka planı uygulamayı bozmasın.
   const reset =
     '<style>:root{color-scheme:dark}html,body{margin:0;padding:0;' +
-    'background:#050a12;max-width:none}</style>';
+    'background:#07090b;max-width:none}</style>';
 
   return [
     reset,

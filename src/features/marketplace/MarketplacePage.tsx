@@ -111,7 +111,7 @@ export function MarketplacePage() {
                   <div className="mt-auto flex flex-wrap gap-1.5 pt-3">
                     <Badge>{l.condition}</Badge>
                     {l.hasInvoice && <Badge tone="success">Faturalı</Badge>}
-                    {l.shippingOk && <Badge tone="teal">Kargo var</Badge>}
+                    {l.shippingOk && <Badge tone="cold">Kargo var</Badge>}
                   </div>
                 </div>
               </li>

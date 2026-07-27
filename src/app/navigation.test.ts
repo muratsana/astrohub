@@ -2,27 +2,27 @@ import { describe, it, expect } from 'vitest';
 import {
   primaryNav,
   mobileNav,
-  mobileDrawerGroups,
   mobileDrawerPrimary,
-  footerGroups,
+  allNavItems,
   type NavItem,
 } from './navigation';
 import { router } from './router';
+import { defaultCommands, runCommandSearch } from '@/features/search/commands';
 
 /**
- * Navigasyon regresyon testi: menü, footer ve çekmecedeki her bağlantının
- * router'da karşılığı olmalı. Bu test, "footer'da var ama route yok" tipi
- * ölü bağlantıların geri gelmesini engeller.
+ * Navigasyon regresyon testi: menü, footer, çekmece ve komut paletindeki her
+ * bağlantının router'da karşılığı olmalı. Bu test "footer'da var ama route
+ * yok" tipi ölü bağlantıların geri gelmesini engeller.
+ *
+ * Rasathane Terminali yönünde üst menüde açılır menü yoktur; keşif footer'a
+ * ve komut paletine bırakıldığı için `siteMap`'in eksiksizliği kritik.
  */
 
 /** Router'ın tanıdığı yolları toplar (parametreli segmentler dahil). */
-function routePatterns(): string[] {
-  const root = router.routes[0];
-  return (root.children ?? [])
-    .map((child) => child.path)
-    .filter((path): path is string => typeof path === 'string')
-    .map((path) => `/${path}`);
-}
+const patterns = (router.routes[0].children ?? [])
+  .map((child) => child.path)
+  .filter((path): path is string => typeof path === 'string')
+  .map((path) => `/${path}`);
 
 /** `/hedef/:slug` gibi bir desenin verilen yolu karşılayıp karşılamadığı. */
 function matches(pattern: string, path: string): boolean {
@@ -32,8 +32,6 @@ function matches(pattern: string, path: string): boolean {
   return p.every((segment, i) => segment.startsWith(':') || segment === t[i]);
 }
 
-const patterns = routePatterns();
-
 function isRouted(path: string): boolean {
   if (path === '/') return true;
   return patterns.some((pattern) => matches(pattern, path));
@@ -41,16 +39,15 @@ function isRouted(path: string): boolean {
 
 function allItems(): NavItem[] {
   return [
-    ...primaryNav.flatMap((entry) => [entry, ...(entry.children ?? [])]),
+    ...primaryNav,
     ...mobileNav,
     mobileDrawerPrimary,
-    ...mobileDrawerGroups.flatMap((group) => group.items),
-    ...footerGroups.flatMap((group) => group.items),
+    ...allNavItems(),
   ];
 }
 
 describe('navigasyon bağlantıları', () => {
-  it('tüm menü/footer bağlantıları bir route ile karşılanır', () => {
+  it('tüm menü/footer/çekmece bağlantıları bir route ile karşılanır', () => {
     const broken = allItems()
       .map((item) => item.to)
       .filter((to) => !isRouted(to));
@@ -64,27 +61,71 @@ describe('navigasyon bağlantıları', () => {
     }
   });
 
-  it('üst menü şartnamedeki yedi ana girişi taşır (§5.1)', () => {
-    expect(primaryNav.map((entry) => entry.label)).toEqual([
-      'Keşfet',
-      'Fotoğraflar',
-      'Etkinlikler',
-      'Harita',
-      'Eğitim',
-      'Araçlar',
-      'İkinci El',
-    ]);
+  it('üst menü yedi ana giriş taşır (§5.1)', () => {
+    expect(primaryNav).toHaveLength(7);
   });
 
-  it('Keşfet, Harita ve Araçlar açılır menü grubudur (§5.2)', () => {
-    for (const label of ['Keşfet', 'Harita', 'Araçlar']) {
-      const entry = primaryNav.find((e) => e.label === label);
-      expect(entry?.children?.length ?? 0).toBeGreaterThan(0);
+  it('üst menüde açılır menü yoktur — keşif palete ve footer’a bırakılır', () => {
+    for (const item of primaryNav) {
+      expect(Object.keys(item)).not.toContain('children');
+    }
+  });
+
+  it('üst menüdeki her giriş modül haritasında da yer alır', () => {
+    const mapped = new Set(allNavItems().map((i) => i.to));
+    for (const item of primaryNav) {
+      expect(mapped, `${item.label} footer haritasında eksik`).toContain(item.to);
+    }
+  });
+
+  it('modül haritasında yinelenen bağlantı yoktur', () => {
+    const seen = new Map<string, string>();
+    for (const item of allNavItems()) {
+      const previous = seen.get(item.to);
+      // Aynı yol iki farklı etiketle görünebilir (ör. /fotograflar), ama
+      // aynı etiketle iki kez görünmemeli.
+      if (previous) expect(previous).not.toBe(item.label);
+      seen.set(item.to, item.label);
     }
   });
 
   it('mobil çubuk dar ekranda taşmayacak sayıda giriş içerir (§5.3)', () => {
     // Çubuk: girişler + "+" + "Daha Fazla" → en fazla altı hücre.
     expect(mobileNav.length + 2).toBeLessThanOrEqual(6);
+  });
+});
+
+describe('komut paleti', () => {
+  it('boş sorguda sık kullanılan kısayolları verir', () => {
+    const groups = runCommandSearch('');
+    expect(groups).toHaveLength(1);
+    expect(groups[0].items.length).toBeGreaterThan(0);
+  });
+
+  it('varsayılan kısayolların tamamı route edilmiştir ya da eylemdir', () => {
+    for (const command of defaultCommands) {
+      if (command.action) continue;
+      expect(command.to, `${command.title} yolu yok`).toBeTruthy();
+      expect(isRouted(command.to!), `${command.to} route edilmemiş`).toBe(true);
+    }
+  });
+
+  it('sayfa adıyla arayınca gezinme komutu bulur', () => {
+    const items = runCommandSearch('fov').flatMap((g) => g.items);
+    expect(items.some((c) => c.to === '/araclar/fov')).toBe(true);
+  });
+
+  it('katalog koduyla arayınca içerik sonucu bulur', () => {
+    const items = runCommandSearch('M31').flatMap((g) => g.items);
+    expect(items.some((c) => c.kind === 'icerik')).toBe(true);
+  });
+
+  it('saha modu bir eylem komutu olarak bulunur', () => {
+    const items = runCommandSearch('saha').flatMap((g) => g.items);
+    expect(items.some((c) => c.action === 'toggle-field-mode')).toBe(true);
+  });
+
+  it('eşleşme yoksa boş döner', () => {
+    expect(runCommandSearch('qwxzptr')).toEqual([]);
   });
 });

@@ -1,43 +1,56 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRightIcon } from './icons';
 
 /**
- * Bölüm başlığı — §6.6: "Tümünü gör" bağlantısı sağ üstte sade biçimde.
- * İkon opsiyonel; başlık + kısa açıklama + opsiyonel bağlantı.
+ * BÖLÜM BAŞLIĞI — terminal dilinde bir "kanal başlığı".
+ *
+ * Başlık solda, sağda ince bir çizgi ve varsa bağlantı. Çizgi kalan boşluğu
+ * doldurur: bölümler birbirinden gölgeyle değil, yatay bir kuralla ayrılır.
  */
 export function SectionHeader({
   title,
   description,
-  icon,
   linkTo,
-  linkLabel = 'Tümünü Gör',
+  linkLabel = 'Tümü',
+  meta,
 }: {
   title: string;
   description?: string;
-  icon?: ReactNode;
   linkTo?: string;
   linkLabel?: string;
+  /** Başlığın hemen sağındaki küçük sayaç/durum bilgisi. */
+  meta?: ReactNode;
 }) {
   return (
-    <div className="mb-6 flex items-end justify-between gap-4">
-      <div>
-        <h2 className="flex items-center gap-2 text-xl font-semibold text-foreground sm:text-2xl">
-          {icon && <span className="text-primary">{icon}</span>}
+    <div className="mb-5">
+      <div className="flex items-center gap-3">
+        <h2 className="whitespace-nowrap text-[17px] text-foreground sm:text-[19px]">
           {title}
         </h2>
-        {description && (
-          <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+
+        {meta && (
+          <span className="tabular whitespace-nowrap text-[11px] text-faint">
+            {meta}
+          </span>
+        )}
+
+        {/* Kalan boşluğu dolduran hairline — bölümün "kanal" hissini kurar */}
+        <span aria-hidden className="h-px flex-1 bg-border" />
+
+        {linkTo && (
+          <Link
+            to={linkTo}
+            className="whitespace-nowrap text-[10px] uppercase tracking-[0.16em] text-muted-foreground transition-colors hover:text-primary"
+          >
+            {linkLabel} →
+          </Link>
         )}
       </div>
-      {linkTo && (
-        <Link
-          to={linkTo}
-          className="group inline-flex shrink-0 items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-primary"
-        >
-          {linkLabel}
-          <ArrowRightIcon className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-        </Link>
+
+      {description && (
+        <p className="mt-2 max-w-[70ch] text-[12px] leading-relaxed text-muted-foreground">
+          {description}
+        </p>
       )}
     </div>
   );

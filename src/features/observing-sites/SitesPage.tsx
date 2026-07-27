@@ -66,13 +66,13 @@ export function SitesPage() {
                   </div>
                   <div className="mt-auto flex flex-wrap gap-1.5 pt-4">
                     <Badge tone="primary">Bortle {site.bortle}</Badge>
-                    {site.sqm && <Badge tone="blue">SQM {site.sqm}</Badge>}
+                    {site.sqm && <Badge tone="cold">SQM {site.sqm}</Badge>}
                     <Badge>{site.roadAccess}</Badge>
                     {site.facilities.tentArea && (
-                      <Badge tone="teal">Çadır</Badge>
+                      <Badge tone="cold">Çadır</Badge>
                     )}
                     {site.facilities.caravanOk && (
-                      <Badge tone="teal">Karavan</Badge>
+                      <Badge tone="cold">Karavan</Badge>
                     )}
                   </div>
                 </div>

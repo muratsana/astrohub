@@ -9,71 +9,58 @@ import {
 } from 'react';
 
 /**
- * Tema yönetimi (§19.7): koyu tema varsayılandır, açık tema opsiyoneldir.
- * Seçim `localStorage`'da saklanır; kullanıcı hiç seçim yapmadıysa işletim
- * sistemi tercihi (`prefers-color-scheme`) takip edilir.
+ * Tema yönetimi.
+ *
+ * İki mod vardır ve ikisi de koyudur:
+ *
+ *   dark   varsayılan — grafit zemin, fosfor kehribar aksan
+ *   field  saha modu  — teleskop başında karanlık adaptasyonunu bozmayan
+ *                       kırmızı. Mavi/yeşil kanallar tamamen kısılır.
+ *
+ * Açık tema **yoktur**: terminal metaforu tek bir görsel dünyada yaşar.
+ * Saha modu bir estetik tercih değil, sahada işe yarayan bir araçtır —
+ * bu yüzden sistem tercihini izlemez, yalnızca kullanıcı açar.
  *
  * Tema `<html data-theme="…">` üzerinden uygulanır; renk token'ları
  * `src/index.css` içinde bu seçiciye göre yeniden atanır.
  */
 
-export type Theme = 'dark' | 'light';
+export type Theme = 'dark' | 'field';
 
 const STORAGE_KEY = 'astrohub:theme';
 
 interface ThemeContextValue {
   theme: Theme;
-  /** Kullanıcı açık bir seçim yaptı mı? (yoksa sistem tercihi izlenir) */
-  isExplicit: boolean;
+  /** Saha modu açık mı? (okunabilirlik için ayrı bayrak) */
+  fieldMode: boolean;
   setTheme: (theme: Theme) => void;
-  toggleTheme: () => void;
+  toggleFieldMode: () => void;
 }
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
-function readStoredTheme(): Theme | null {
+function readStoredTheme(): Theme {
   try {
-    const value = localStorage.getItem(STORAGE_KEY);
-    return value === 'dark' || value === 'light' ? value : null;
+    return localStorage.getItem(STORAGE_KEY) === 'field' ? 'field' : 'dark';
   } catch {
-    // Gizli sekme / depolama kapalı: sessizce sistem tercihine düş.
-    return null;
+    // Gizli sekme / depolama kapalı: varsayılana düş.
+    return 'dark';
   }
 }
 
-function systemTheme(): Theme {
-  return typeof window !== 'undefined' &&
-    window.matchMedia?.('(prefers-color-scheme: light)').matches
-    ? 'light'
-    : 'dark';
-}
-
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [stored, setStored] = useState<Theme | null>(() => readStoredTheme());
-  const [system, setSystem] = useState<Theme>(() => systemTheme());
-
-  const theme = stored ?? system;
-
-  // Kullanıcı seçim yapmadıysa sistem tercihi değişimini canlı takip et.
-  useEffect(() => {
-    const mq = window.matchMedia?.('(prefers-color-scheme: light)');
-    if (!mq) return;
-    const onChange = (e: MediaQueryListEvent) =>
-      setSystem(e.matches ? 'light' : 'dark');
-    mq.addEventListener('change', onChange);
-    return () => mq.removeEventListener('change', onChange);
-  }, []);
+  const [theme, setThemeState] = useState<Theme>(readStoredTheme);
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
-    // Tarayıcı arayüzü (adres çubuğu) de temaya uysun.
+    // Tarayıcı arayüzü (adres çubuğu) de moda uysun.
     document
       .querySelector('meta[name="theme-color"]')
-      ?.setAttribute('content', theme === 'light' ? '#f6f8fc' : '#050a12');
+      ?.setAttribute('content', theme === 'field' ? '#0a0000' : '#07090b');
   }, [theme]);
 
   const setTheme = useCallback((next: Theme) => {
-    setStored(next);
+    setThemeState(next);
     try {
       localStorage.setItem(STORAGE_KEY, next);
     } catch {
@@ -84,11 +71,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const value = useMemo<ThemeContextValue>(
     () => ({
       theme,
-      isExplicit: stored !== null,
+      fieldMode: theme === 'field',
       setTheme,
-      toggleTheme: () => setTheme(theme === 'dark' ? 'light' : 'dark'),
+      toggleFieldMode: () => setTheme(theme === 'field' ? 'dark' : 'field'),
     }),
-    [theme, stored, setTheme]
+    [theme, setTheme]
   );
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;

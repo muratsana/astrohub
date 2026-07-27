@@ -4,21 +4,24 @@ import { cn } from '@/lib/cn';
 export type BadgeTone =
   | 'muted'
   | 'primary'
+  | 'cold'
   | 'success'
-  | 'teal'
-  | 'blue'
+  | 'warning'
   | 'danger';
 
 const tones: Record<BadgeTone, string> = {
   muted: 'border-border text-muted-foreground',
-  primary: 'border-primary/30 text-primary',
-  success: 'border-success/30 text-success',
-  teal: 'border-accent-teal/30 text-accent-teal',
-  blue: 'border-accent-blue/30 text-accent-blue',
-  danger: 'border-danger/30 text-danger',
+  primary: 'border-primary/45 text-primary',
+  cold: 'border-cold/45 text-cold',
+  success: 'border-success/45 text-success',
+  warning: 'border-warning/45 text-warning',
+  danger: 'border-danger/45 text-danger',
 };
 
-/** Küçük durum/etiket rozeti. Renk tek başına anlam taşımaz; metin esastır (§6.7). */
+/**
+ * Durum etiketi. Köşeli, büyük harf, geniş harf aralıklı.
+ * Renk tek başına anlam taşımaz; metin esastır (§6.7).
+ */
 export function Badge({
   children,
   tone = 'muted',
@@ -31,7 +34,7 @@ export function Badge({
   return (
     <span
       className={cn(
-        'rounded-full border px-2 py-0.5 text-[11px] font-medium',
+        'inline-block rounded-[2px] border px-1.5 py-0.5 text-[10px] font-medium uppercase leading-[1.5] tracking-[0.12em]',
         tones[tone],
         className
       )}
