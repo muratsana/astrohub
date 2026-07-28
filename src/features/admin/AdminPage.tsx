@@ -15,6 +15,7 @@ import { BroadcastControl } from './BroadcastControl';
 import { CatalogControl } from './CatalogControl';
 import { FeaturedControl } from './FeaturedControl';
 import { EquipmentDataControl } from './EquipmentDataControl';
+import { SpecImportControl } from './SpecImportControl';
 import {
   fetchQueue,
   resolveItem,
@@ -380,6 +381,12 @@ export function AdminPage() {
           senkronizasyondan sonra bakılacak ilk yer burası. */}
       <div className="mt-4">
         <EquipmentDataControl canWrite={roles.isAdmin} />
+      </div>
+
+      {/* İçe aktarma raporun hemen altında: rapor neyin eksik olduğunu
+          söylüyor, bu ekran o eksiği toplu doldurmanın yolu. */}
+      <div className="mt-4">
+        <SpecImportControl canWrite={roles.isAdmin} />
       </div>
     </Shell>
   );
