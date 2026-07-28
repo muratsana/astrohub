@@ -17,6 +17,24 @@ import { estimateSeeing, type SeeingEstimate } from './seeing';
 
 const ENDPOINT = 'https://api.open-meteo.com/v1/forecast';
 
+/**
+ * Bulut örtüsünün katman ayrımı.
+ *
+ * Astronomide toplam örtü tek başına yetmiyor: %40 alçak bulut geceyi
+ * bitirir, %40 yüksek sirrus geniş alan çekimini yalnızca zorlaştırır.
+ * İki servis de bu ayrımı veriyor, dolayısıyla model ortak.
+ */
+export interface CloudLayers {
+  /** Alçak bulut yüzdesi — gözlemi doğrudan kapatan katman. */
+  low: number;
+  /** Orta katman yüzdesi. */
+  mid: number;
+  /** Yüksek (sirrus) yüzdesi — şeffaflığı düşürür, tümden kapatmaz. */
+  high: number;
+  /** Yatay görüş (km). Ölçüm gelmezse `null`. */
+  visibilityKm: number | null;
+}
+
 export interface SkyConditions {
   /** Bulut örtüsü yüzdesi (0–100). */
   cloudCover: number;
@@ -31,12 +49,26 @@ export interface SkyConditions {
   seeing: SeeingEstimate;
   /** Ölçümün ait olduğu saat. */
   observedAt: Date;
+  /**
+   * Sayının hangi servisten geldiği.
+   *
+   * Arayüzde görünüyor: iki servis aynı saat için farklı bulut yüzdesi
+   * verebilir ve kullanıcı hangisine baktığını bilmeden ikisini
+   * karşılaştıramaz.
+   */
+  source: 'meteoblue' | 'open-meteo';
+  /** Katman ayrımı — servis vermezse `null`. */
+  layers: CloudLayers | null;
 }
 
 interface HourlyResponse {
   hourly?: {
     time?: string[];
     cloud_cover?: (number | null)[];
+    cloud_cover_low?: (number | null)[];
+    cloud_cover_mid?: (number | null)[];
+    cloud_cover_high?: (number | null)[];
+    visibility?: (number | null)[];
     relative_humidity_2m?: (number | null)[];
     temperature_2m?: (number | null)[];
     dew_point_2m?: (number | null)[];
@@ -48,6 +80,10 @@ interface HourlyResponse {
 
 const HOURLY_FIELDS = [
   'cloud_cover',
+  'cloud_cover_low',
+  'cloud_cover_mid',
+  'cloud_cover_high',
+  'visibility',
   'relative_humidity_2m',
   'temperature_2m',
   'dew_point_2m',
@@ -112,6 +148,17 @@ export function parseSkyConditions(
 
   const temperature = at(hourly.temperature_2m, i, 0);
 
+  /* Katman ayrımı ancak üçü de gelirse kuruluyor. Eksik bir katmanı
+     sıfır saymak "o yükseklikte bulut yok" demek olurdu — oysa bilinen
+     tek şey ölçümün gelmediği. */
+  const low = hourly.cloud_cover_low?.[i];
+  const mid = hourly.cloud_cover_mid?.[i];
+  const high = hourly.cloud_cover_high?.[i];
+  const complete =
+    typeof low === 'number' && typeof mid === 'number' && typeof high === 'number';
+
+  const visibilityM = hourly.visibility?.[i];
+
   return {
     cloudCover: at(hourly.cloud_cover, i, 0),
     humidity: at(hourly.relative_humidity_2m, i, 0),
@@ -124,6 +171,33 @@ export function parseSkyConditions(
       windSurface: at(hourly.wind_speed_10m, i, 0),
     }),
     observedAt: new Date(times[i]),
+    source: 'open-meteo',
+    layers: complete
+      ? {
+          low,
+          mid,
+          high,
+          visibilityKm:
+            typeof visibilityM === 'number'
+              ? Math.round(visibilityM / 100) / 10
+              : null,
+        }
+      : null,
+  };
+}
+
+/** Seeing hesabı için üst atmosfer rüzgârı — meteoblue yolunda da kullanılır. */
+export function parseUpperAir(
+  raw: HourlyResponse,
+  now: Date
+): { wind200hPa: number; wind500hPa: number } | null {
+  const times = raw.hourly?.time;
+  if (!raw.hourly || !times || times.length === 0) return null;
+  const i = nearestHourIndex(times, now);
+  if (i < 0) return null;
+  return {
+    wind200hPa: at(raw.hourly.wind_speed_200hPa, i, 0),
+    wind500hPa: at(raw.hourly.wind_speed_500hPa, i, 0),
   };
 }
 
@@ -136,13 +210,35 @@ export async function fetchSkyConditions(
   longitude: number,
   signal?: AbortSignal
 ): Promise<SkyConditions | null> {
+  return (await fetchOpenMeteo(latitude, longitude, signal)).conditions;
+}
+
+/**
+ * Tek istek, iki çıktı: koşullar ve üst atmosfer rüzgârı.
+ *
+ * Üst atmosfer ayrı veriliyor çünkü meteoblue yolunda **yalnızca o**
+ * gerekiyor — bulut ve sıcaklık oradan geliyor, seeing hâlâ buradan.
+ * İkinci bir Open-Meteo isteği atmak aynı yanıtı iki kez indirmek olurdu.
+ */
+export async function fetchOpenMeteo(
+  latitude: number,
+  longitude: number,
+  signal?: AbortSignal
+): Promise<{
+  conditions: SkyConditions | null;
+  upperAir: { wind200hPa: number; wind500hPa: number } | null;
+}> {
   const response = await fetch(skyConditionsUrl(latitude, longitude), {
     signal,
   });
-  if (!response.ok) return null;
+  if (!response.ok) return { conditions: null, upperAir: null };
 
   const raw = (await response.json()) as HourlyResponse;
-  return parseSkyConditions(raw, new Date());
+  const now = new Date();
+  return {
+    conditions: parseSkyConditions(raw, now),
+    upperAir: parseUpperAir(raw, now),
+  };
 }
 
 /**

@@ -102,6 +102,15 @@ export function TonightPanel() {
             {dateLabel}
           </span>
 
+          {/* Sayının kaynağı görünür: iki servis aynı saat için farklı
+              bulut yüzdesi verebiliyor ve kullanıcı hangisine baktığını
+              bilmeden ikisini karşılaştıramaz. */}
+          {weather && (
+            <span className="text-[10px] text-faint">
+              {weather.source === 'meteoblue' ? 'meteoblue' : 'Open-Meteo'}
+            </span>
+          )}
+
           {verdict && (
             <span
               className={cn(
@@ -205,7 +214,12 @@ export function TonightPanel() {
               value={weather ? `%${Math.round(weather.cloudCover)}` : '—'}
               hint={
                 weather
-                  ? `${Math.round(weather.temperature)}°C · nem %${Math.round(weather.humidity)}`
+                  ? weather.layers
+                    ? /* Katman ayrımı varsa onu göster: alçak bulut geceyi
+                         bitirir, yüksek sirrus yalnızca zorlaştırır.
+                         Toplam yüzde bu farkı gizliyor. */
+                      `alçak %${Math.round(weather.layers.low)} · orta %${Math.round(weather.layers.mid)} · yüksek %${Math.round(weather.layers.high)}`
+                    : `${Math.round(weather.temperature)}°C · nem %${Math.round(weather.humidity)}`
                   : conditions.status === 'loading'
                     ? 'alınıyor…'
                     : conditions.status === 'offline'

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useLocationContext } from '@/features/location/LocationContext';
-import { fetchSkyConditions, type SkyConditions } from './openMeteo';
+import { fetchOpenMeteo, type SkyConditions } from './openMeteo';
+import { fetchMeteoblue } from './meteoblue';
 import { hasNetworkAccess } from '@/lib/runtime';
 
 /**
@@ -37,6 +38,39 @@ function keyFor(lat: number, lon: number) {
   return `${lat.toFixed(2)},${lon.toFixed(2)}`;
 }
 
+/**
+ * İKİ SERVİS, TEK SONUÇ.
+ *
+ * Open-Meteo her koşulda çağrılıyor çünkü seeing tahmininin ihtiyaç
+ * duyduğu 200/500 hPa rüzgârını yalnızca o veriyor (meteoblue'nun temel
+ * paketlerinde basınç seviyesi değişkenleri yok).
+ *
+ * meteoblue varsa **yer koşulları ve bulut** ondan alınıyor: bulut
+ * tahmini astronomi topluluğunda referans ve katman ayrımı veriyor.
+ * Vekil yapılandırılmamışsa ya da istek düşerse Open-Meteo'nun kendi
+ * sonucu kullanılıyor.
+ *
+ * Sıralama değil paralel: iki isteği arka arkaya yapmak paneli iki tur
+ * bekletirdi ve Open-Meteo sonucu zaten her iki yolda da gerekiyor.
+ */
+export async function fetchConditions(
+  latitude: number,
+  longitude: number
+): Promise<SkyConditions | null> {
+  const open = await fetchOpenMeteo(latitude, longitude).catch(() => ({
+    conditions: null,
+    upperAir: null,
+  }));
+
+  const meteoblue = await fetchMeteoblue(
+    latitude,
+    longitude,
+    open.upperAir
+  ).catch(() => null);
+
+  return meteoblue ?? open.conditions;
+}
+
 export function useSkyConditions(): SkyState {
   const { location } = useLocationContext();
   const key = keyFor(location.latitude, location.longitude);
@@ -68,9 +102,7 @@ export function useSkyConditions(): SkyState {
     // anda mount olduğunda tek istek gider.
     const inflight =
       hit?.promise ??
-      fetchSkyConditions(location.latitude, location.longitude).catch(
-        () => null
-      );
+      fetchConditions(location.latitude, location.longitude).catch(() => null);
 
     cache.set(key, { at: hit?.at ?? 0, data: hit?.data ?? null, promise: inflight });
 
