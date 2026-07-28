@@ -1,7 +1,7 @@
 # Astrohub — Yayına Alma
 
-Alan adı: **www.astrohub.com.tr** (Natro, DNS: `ns1.natrohost.com`,
-`ns2.natrohost.com`)
+Alan adı: **astrohub.com.tr** — kanonik adres apex (www'suz).
+Kayıt: Natro · DNS: `ns1.natrohost.com`, `ns2.natrohost.com`
 Supabase projesi: `eoqggvosegjbburyuyba` (eu-central-1, Frankfurt)
 
 Bu belge yayına alma adımlarını **kimin yapabileceğine göre** ikiye
@@ -35,9 +35,8 @@ o özelliği kapatır.
 1. Vercel → **Add New → Project** → GitHub'dan `muratsana/astrohub`.
 2. Framework **Vite** olarak algılanacak; `vercel.json` zaten build
    komutunu ve çıktı klasörünü veriyor, değiştirmeyin.
-3. **Production Branch**: yayına alınacak dal. Bu depoda henüz `main`
-   yok; hangi dalın yayın dalı olacağına karar verip Vercel'de onu
-   seçin.
+3. **Production Branch**: `main`. Dal oluşturuldu ve bütün çalışma
+   orada; her push otomatik yayına çıkar (bkz. §7).
 
 ### 2.2 Ortam değişkenleri
 
@@ -48,8 +47,8 @@ Vercel → Settings → **Environment Variables**. Üçünü de *Production*,
 | --- | --- |
 | `VITE_SUPABASE_URL` | `https://eoqggvosegjbburyuyba.supabase.co` |
 | `VITE_SUPABASE_ANON_KEY` | Supabase → Settings → API → **publishable** anahtar |
-| `VITE_APP_URL` | `https://www.astrohub.com.tr` |
-| `VITE_SITE_URL` | `https://www.astrohub.com.tr` |
+| `VITE_APP_URL` | `https://astrohub.com.tr` |
+| `VITE_SITE_URL` | `https://astrohub.com.tr` |
 | `VITE_CAPTCHA_PROVIDER` | `turnstile` |
 | `VITE_CAPTCHA_SITE_KEY` | Turnstile site anahtarı (bkz. §4) |
 
@@ -63,10 +62,15 @@ döner ve kullanıcı "bağlantı çalışmıyor" der.
 
 ### 2.3 Alan adı
 
-1. Vercel → Settings → **Domains** → `www.astrohub.com.tr` ekleyin,
-   ardından `astrohub.com.tr` ekleyip `www`'ye yönlendirin (ya da
-   tersi — hangisi kanonikse `VITE_SITE_URL` ile aynı olmalı, yoksa
-   `canonical` etiketleri ile gerçek adres çelişir).
+1. Vercel → Settings → **Domains**:
+   - Önce `astrohub.com.tr` ekleyin — **kanonik** adres bu.
+   - Sonra `www.astrohub.com.tr` ekleyip apex'e **yönlendirin**
+     (Vercel "Redirect to astrohub.com.tr" seçeneğini sunar).
+
+   `VITE_SITE_URL` bu kanonik adresle aynı olmalı; farklı olursa
+   sayfalardaki `canonical` etiketleri gerçek adresle çelişir ve arama
+   motoru iki ayrı site görür.
+
 2. Vercel size iki kayıt verir. Natro → **Alan Adı Yönetimi →
    astrohub.com.tr → DNS Yönetimi**:
 
@@ -88,10 +92,10 @@ Supabase Dashboard → **Authentication**.
 
 ### 3.1 URL yapılandırması
 
-- **Site URL**: `https://www.astrohub.com.tr`
+- **Site URL**: `https://astrohub.com.tr`
 - **Redirect URLs** (hepsini ekleyin):
-  - `https://www.astrohub.com.tr/**`
   - `https://astrohub.com.tr/**`
+  - `https://www.astrohub.com.tr/**`
   - `http://localhost:5173/**` (yerel geliştirme)
   - Vercel önizleme adresleri için: `https://*-muratsana.vercel.app/**`
 
@@ -162,8 +166,8 @@ açmak, anahtar sızsa bile kullanımı sizin alan adınızla sınırlar.
 
 ## 6. Yayın sonrası kontrol listesi
 
-- [ ] `https://www.astrohub.com.tr` açılıyor, SSL geçerli
-- [ ] `astrohub.com.tr` → `www` yönlendirmesi çalışıyor
+- [ ] `https://astrohub.com.tr` açılıyor, SSL geçerli
+- [ ] `www.astrohub.com.tr` → apex yönlendirmesi çalışıyor
 - [ ] Bir hesapla e-posta kaydı: doğrulama e-postası geliyor ve
       bağlantı **canlı adrese** dönüyor
 - [ ] Google ile giriş: hesap oluşuyor ve `profiles` tablosunda satır
@@ -174,3 +178,45 @@ açmak, anahtar sızsa bile kullanımı sizin alan adınızla sınırlar.
 - [ ] Fotoğraf yükleniyor ve **galeride görünüyor** (okuma katmanı)
 - [ ] "Bu Gece" panelinde kaynak `meteoblue` yazıyor
 - [ ] `/sitemap.xml` ve `/robots.txt` doğru alan adını gösteriyor
+
+---
+
+## 7. Otomasyon — ne kendiliğinden oluyor
+
+### 7.1 Dağıtım
+
+Vercel'in **Git entegrasyonu** bir kez bağlandıktan sonra dağıtım
+tamamen otomatik:
+
+| Olay | Sonuç |
+| --- | --- |
+| `main` dalına push | Üretim dağıtımı → `astrohub.com.tr` |
+| Başka bir dala push | Önizleme dağıtımı → benzersiz `*.vercel.app` adresi |
+| Pull request | PR'a önizleme bağlantısı yorum olarak düşer |
+
+Token, iş akışı dosyası ya da elle tetikleme gerekmiyor. Kurulumdaki tek
+elle adım, projeyi ilk kez bağlamak.
+
+### 7.2 Doğrulama
+
+`.github/workflows/ci.yml` her push ve pull request'te tam zinciri
+koşuyor: tip kontrolü, lint, 701 birim testi, üretim derlemesi, önizleme
+derlemesi, yatay taşma denetimi ve 25 E2E senaryosu. Düşen bir senaryonun
+ekran görüntüleri iş çıktısına yükleniyor.
+
+**Vercel'in kendi derlemesi bunları koşmuyor** — orada yalnızca
+`npm run build` var. CI olmadan bozuk bir akış derlenip yayına
+çıkabilirdi.
+
+### 7.3 Neden GitHub Actions'tan Vercel'e dağıtım yapmıyoruz
+
+Yapılabilir (`VERCEL_TOKEN` deposu sırrı olarak) ama gereksiz: Git
+entegrasyonu aynı işi sır saklamadan yapıyor. Actions'a taşımanın tek
+gerçek gerekçesi "CI geçmeden dağıtma" kuralı; onu Vercel tarafında
+**Settings → Git → Ignored Build Step** ile de kurabilirsiniz.
+
+### 7.4 Veritabanı değişiklikleri
+
+Migration'lar otomatik uygulanmıyor — bilinçli. Şema değişikliği geri
+alınması en zor işlem ve bir push'un yan etkisi olmamalı. Yeni bir
+migration `supabase/migrations/` altına yazılıyor ve elle uygulanıyor.

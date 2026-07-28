@@ -5,6 +5,12 @@ on:
     branches: ['**']
   pull_request:
 
+concurrency:
+  # Aynı dala arka arkaya push edildiğinde eski koşuyu iptal et; sonucunu
+  # zaten kimse beklemiyor ve runner dakikası boşa gidiyor.
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     name: Typecheck · Lint · Test · Build
@@ -58,3 +64,21 @@ jobs:
 
       - name: Check preview renders
         run: npm run check:preview
+
+      # E2E, Vercel'in build adımında KOŞMUYOR; orada yalnızca `npm run
+      # build` var. Bozuk bir akış (ölü düğme, kırılan rota) derlenip
+      # yayına çıkabiliyordu. Yayın dalına giren her değişiklik artık
+      # yirmi beş senaryodan geçiyor.
+      - name: E2E senaryoları
+        run: node scripts/e2e.mjs
+
+      # Düşen bir senaryonun sebebini görmek için: hangi ekranda ne
+      # göründüğü, hata metninden daha hızlı anlatıyor.
+      - name: Ekran görüntüleri
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-ekranlar
+          path: dist-preview/screens/
+          retention-days: 7
+          if-no-files-found: ignore
