@@ -302,6 +302,53 @@ await scenario('yeni konu formu HTML etiketlerini önizlemede temizler', async (
   assert(text.includes('Guide hatası'), 'önizleme metni görünmüyor');
 });
 
+/* ══════════════════════ İlan ver ══════════════════════ */
+
+await scenario('ilan formu eksikleri yazarken bildirir, tamamlanınca açılır', async () => {
+  /*
+   * Bu akışın kilitlenmesi gerekiyor çünkü servis katmanı (createListing)
+   * arayüzünden aylarca önce yazılmıştı ve "hazır" sanılıyordu. Test
+   * doğrulamanın yayımlamadan ÖNCE görünür olmasını koruyor: kullanıcı
+   * düğmeye basıp hata almak yerine neyin eksik olduğunu yazarken görmeli.
+   */
+  await goto('/ilan/yeni');
+
+  let text = await page.evaluate(() => document.body.innerText);
+  assert(includesTr(text, 'ilan ver'), 'ilan formu açılmadı');
+  assert(
+    includesTr(text, 'başlık en az'),
+    `boş formda başlık uyarısı yok: ${text.slice(0, 200)}`
+  );
+
+  await page.fill('#l-title', 'Sky-Watcher Esprit 100ED apokromatik refraktör');
+  await page.fill('#l-price', '48500');
+  await page.fill('#l-city', 'Ankara');
+  await page.fill(
+    '#l-desc',
+    '2023 yılında alındı, yaklaşık 40 gece kullanıldı. Optikte çizik yok, kutusu ve faturası duruyor.'
+  );
+  await page.waitForTimeout(300);
+
+  text = await page.evaluate(() => document.body.innerText);
+  assert(
+    includesTr(text, 'yayımlanmaya hazır'),
+    'form tamamlanınca hazır durumu görünmedi'
+  );
+
+  // Önizleme yayımlanacak künyenin aynısını göstermeli.
+  assert(text.includes('48.500'), 'önizlemede fiyat biçimlenmedi');
+
+  // Oturum yokken düğme kaybolmuyor, girişe yönlendiriyor: yazdığını
+  // kaybetmemek için form temizlenmiyor.
+  const buttons = await page.$$eval('button', (list) =>
+    list.map((b) => b.textContent?.trim() ?? '')
+  );
+  assert(
+    buttons.some((b) => b === 'Giriş yap' || b === 'İlanı yayımla'),
+    `yayımla düğmesi yok: ${buttons.join(' | ')}`
+  );
+});
+
 /* ══════════════════════ Etkinlikler ══════════════════════ */
 
 await scenario('etkinliklerde takvim görünümüne geçilir', async () => {

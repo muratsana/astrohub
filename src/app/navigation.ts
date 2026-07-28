@@ -229,6 +229,12 @@ export const siteMap: NavGroup[] = [
         description: 'Ekipman alım-satım pazaryeri',
         keywords: ['satılık', 'pazar', 'ilan', 'ikinci el'],
       },
+      {
+        label: 'İlan Ver',
+        to: '/ilan/yeni',
+        description: 'Elindeki ekipman için ilan aç',
+        keywords: ['sat', 'ilan ver', 'yeni ilan', 'satmak'],
+      },
     ],
   },
   {

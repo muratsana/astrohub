@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/Badge';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { CardGrid } from '@/components/ui/CardGrid';
+import { ButtonLink } from '@/components/ui/Button';
 import { ToolBar, ResultCount } from '@/components/ui/ToolBar';
 import { useViewMode } from '@/components/ui/useViewMode';
 import {
@@ -98,6 +99,7 @@ export function MarketplacePage() {
         <PageHeader
           title="İkinci El İlanlar"
           description="Ekipman veritabanına bağlı astronomi pazaryeri. İletişim platform içinden yürür; Astrohub ödemeye aracılık etmez, emanet (escrow) hizmeti sunmaz."
+          actions={<ButtonLink to="/ilan/yeni" size="sm">İlan ver</ButtonLink>}
         />
 
         <div
@@ -168,7 +170,7 @@ export function MarketplacePage() {
         {result.length === 0 ? (
           <EmptyState
             message="Eşleşen ilan yok"
-            hint="Filtreleri gevşetmeyi deneyin. İlan verme akışı hesap sistemiyle birlikte (Faz 1.8) açılacak."
+            hint="Filtreleri gevşetmeyi deneyin — ya da elinizdeki ekipman için ilan açın."
           />
         ) : (
           /* Yoğunluk `tight`: kart ölçüsü galeriyle aynı olsun.

@@ -297,6 +297,17 @@ export const router = createRouter([
         ),
       },
       {
+        /* Slug rotasından ÖNCE: `ilan/yeni` aksi hâlde `:slug` ile
+           eşleşip "böyle bir ilan yok" derdi. */
+        path: 'ilan/yeni',
+        element: route(
+          named(
+            () => import('@/features/marketplace/NewListingPage'),
+            'NewListingPage'
+          )
+        ),
+      },
+      {
         path: 'ilan/:slug',
         element: route(
           named(
