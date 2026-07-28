@@ -13,6 +13,7 @@ import { useAuth } from '@/features/auth/AuthContext';
 import { useRoles, roleLabels } from './useRoles';
 import { BroadcastControl } from './BroadcastControl';
 import { CatalogControl } from './CatalogControl';
+import { FeaturedControl } from './FeaturedControl';
 import { EquipmentDataControl } from './EquipmentDataControl';
 import {
   fetchQueue,
@@ -357,6 +358,12 @@ export function AdminPage() {
       */}
       <div className="mt-4">
         <BroadcastControl />
+      </div>
+
+      {/* Öne çıkan içerik yayın kontrolünün yanında: ikisi de "bugün ne
+          görünsün" sorusunun cevabı. */}
+      <div className="mt-4">
+        <FeaturedControl canWrite={roles.isAdmin} />
       </div>
 
       {/*

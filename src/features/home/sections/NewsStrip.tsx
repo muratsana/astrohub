@@ -6,6 +6,7 @@ import { RemoteImage } from '@/components/media/RemoteImage';
 import { StarField } from '@/components/media/StarField';
 import { sortedNews, newsCategoryLabels } from '@/features/news/data';
 import { articles, articleCategoryLabels } from '@/features/articles/data';
+import { applyFeatured, useFeatured } from '@/services/content/featured';
 
 /**
  * HABERLER VE YAZILAR — tek şeritte iki modül.
@@ -36,9 +37,32 @@ function Thumb({ children }: { children: React.ReactNode }) {
   );
 }
 
+/** Şerit başına satır sayısı — ana sayfa iki şeridi de dörtle sınırlar. */
+const ROWS = 4;
+
 export function NewsStrip() {
-  const latestNews = sortedNews().slice(0, 4);
-  const latestArticles = articles.slice(0, 4);
+  /*
+    SIRAYI YÖNETİCİ BELİRLER, TARİH DEĞİL.
+    Önce ikisi de "en yeni dört" idi. Bu, editoryal bir kararı tarih
+    alanına devrediyordu: iyi bir rehber bir hafta sonra ana sayfadan
+    düşüyor, güncel ama önemsiz bir duyuru üste çıkıyordu. Yönetim
+    panelinden seçim yapılmadıysa davranış eskisiyle aynı kalır.
+  */
+  const featuredNews = useFeatured('haber');
+  const featuredArticles = useFeatured('yazi');
+
+  const latestNews = applyFeatured(
+    sortedNews(),
+    featuredNews.slugs,
+    (n) => n.slug,
+    ROWS
+  );
+  const latestArticles = applyFeatured(
+    articles,
+    featuredArticles.slugs,
+    (a) => a.slug,
+    ROWS
+  );
 
   return (
     <Container className="py-9 sm:py-11">
