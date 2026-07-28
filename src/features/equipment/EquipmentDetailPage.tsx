@@ -13,12 +13,11 @@ import { breadcrumbJsonLd } from '@/lib/seo';
 import { photos } from '@/features/photos/data';
 import { listings } from '@/features/marketplace/data';
 import {
-  getEquipmentBySlug,
   equipmentCategoryLabels,
   equipmentPath,
-  relatedEquipment,
   type EquipmentModel,
 } from './data';
+import { useEquipmentCatalog } from '@/services/content/equipment';
 
 /**
  * EKİPMAN MODEL DETAYI (§7.11).
@@ -48,7 +47,10 @@ function mentions(text: string | undefined, model: EquipmentModel): boolean {
 
 export function EquipmentDetailPage() {
   const { slug } = useParams<{ slug: string }>();
-  const model = slug ? getEquipmentBySlug(slug) : undefined;
+  const catalog = useEquipmentCatalog();
+  const model = slug
+    ? catalog.items.find((item) => item.slug === slug)
+    : undefined;
 
   const shotWith = useMemo(() => {
     if (!model) return [];
@@ -72,9 +74,15 @@ export function EquipmentDetailPage() {
     );
   }, [model]);
 
+  /* Aynı kategorideki diğer modeller — kaynak hangisiyse ondan. */
   const alternatives = useMemo(
-    () => (model ? relatedEquipment(model) : []),
-    [model]
+    () =>
+      model
+        ? catalog.items
+            .filter((e) => e.category === model.category && e.slug !== model.slug)
+            .slice(0, 4)
+        : [],
+    [catalog.items, model]
   );
 
   if (!model) return <NotFoundPage />;

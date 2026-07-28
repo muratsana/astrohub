@@ -121,6 +121,51 @@ export function remainingSpecs(
   return rest;
 }
 
+/**
+ * TERS YÖN — typed kolonlardan gösterilebilir spec metnine.
+ *
+ * Veritabanından okuyan arayüz, tohum verideki ile aynı biçimi görmeli:
+ * kartlar `{ Açıklık: '100 mm' }` bekliyor, `{ aperture_mm: 100 }` değil.
+ * Birim burada ekleniyor çünkü kolonun birimi **adında** yazılı ve o bilgi
+ * veritabanı satırında taşınmıyor.
+ *
+ * `Çözünürlük` gibi JSONB'de kalan alanlar `mergeSpecs` ile birleştirilir;
+ * sıra typed → JSONB olur, yani tohum verideki yazım sırasıyla birebir aynı
+ * olmayabilir. Anahtar kümesi aynıdır, gösterim sırası arayüzün işidir.
+ */
+export function formatTypedSpecs(typed: Partial<TypedSpecs>): Record<string, string> {
+  const out: Record<string, string> = {};
+  const put = (key: string, value: number | null | undefined, unit: string) => {
+    if (value === null || value === undefined) return;
+    out[key] = `${formatNumber(value)} ${unit}`;
+  };
+
+  put('Açıklık', typed.apertureMm, 'mm');
+  put('Odak', typed.focalLengthMm, 'mm');
+  put('Piksel', typed.pixelSizeUm, 'µm');
+  put('Yük kapasitesi', typed.payloadCapacityKg, 'kg');
+  put('Ağırlık', typed.weightKg, 'kg');
+
+  return out;
+}
+
+/** Typed ve JSONB katmanlarını tek gösterim nesnesinde birleştirir. */
+export function mergeSpecs(
+  typed: Partial<TypedSpecs>,
+  rest: Record<string, string> | null | undefined
+): Record<string, string> {
+  return { ...formatTypedSpecs(typed), ...(rest ?? {}) };
+}
+
+/**
+ * Sayıyı gereksiz sıfır taşımadan yazar: 550 → '550', 3.76 → '3.76',
+ * 17.70 → '17.7'. Veritabanı `numeric(8,2)` döndürdüğünde JS tarafında
+ * 550 zaten 550'dir; bu fonksiyon esas olarak ondalık kuyruğu temizler.
+ */
+function formatNumber(value: number): string {
+  return String(Math.round(value * 1000) / 1000);
+}
+
 function round2(value: number): number {
   return Math.round(value * 100) / 100;
 }

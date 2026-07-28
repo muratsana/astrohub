@@ -5,7 +5,10 @@ import {
   sensorSizeMm,
   typedSpecs,
   remainingSpecs,
+  formatTypedSpecs,
+  mergeSpecs,
 } from './specs';
+import { equipment } from '@/features/equipment/data';
 
 describe('parseMeasure', () => {
   it('birimi yok sayıp baştaki sayıyı okur', () => {
@@ -120,5 +123,42 @@ describe('remainingSpecs', () => {
   it('bilinmeyen anahtarı düşürmez', () => {
     const rest = remainingSpecs({ 'Yeni Alan': 'değer' });
     expect(rest).toEqual({ 'Yeni Alan': 'değer' });
+  });
+});
+
+describe('formatTypedSpecs', () => {
+  it('birimi geri ekler', () => {
+    expect(
+      formatTypedSpecs({ apertureMm: 100, focalLengthMm: 550 })
+    ).toEqual({ Açıklık: '100 mm', Odak: '550 mm' });
+  });
+
+  it('gereksiz ondalık kuyruğu bırakmaz', () => {
+    expect(formatTypedSpecs({ weightKg: 17.7 })).toEqual({ Ağırlık: '17.7 kg' });
+    expect(formatTypedSpecs({ pixelSizeUm: 3.76 })).toEqual({ Piksel: '3.76 µm' });
+  });
+
+  it('null alanı hiç yazmaz — "—" gibi bir yer tutucu üretmez', () => {
+    expect(formatTypedSpecs({ apertureMm: null, focalLengthMm: 550 })).toEqual({
+      Odak: '550 mm',
+    });
+  });
+});
+
+describe('gidiş-dönüş', () => {
+  /*
+   * Asıl güvence bu: tohum verideki her spec, veritabanına yazılıp geri
+   * okunduğunda aynı anahtar/değer kümesini vermeli. Ayrıştırma ile
+   * biçimleme birbirinin tersi değilse, veritabanına geçen sayfa sessizce
+   * farklı bir künye gösterir.
+   */
+  it('tüm tohum ekipmanı ayrıştırıp geri biçimlemek aynı specs verir', () => {
+    for (const item of equipment) {
+      const roundTripped = mergeSpecs(
+        typedSpecs(item.specs),
+        remainingSpecs(item.specs)
+      );
+      expect(roundTripped).toEqual(item.specs);
+    }
   });
 });

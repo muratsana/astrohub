@@ -106,12 +106,39 @@ export function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
               <span className="hidden 2xl:inline">Saha</span>
             </button>
 
-            <ButtonLink to="/giris" size="sm" variant="secondary">
-              Giriş
-            </ButtonLink>
-            <ButtonLink to="/kayit" size="sm">
-              Kaydol
-            </ButtonLink>
+            {/*
+              390px'te iki metin düğmesi + modül düğmesi üst çubuğu taşırıyor
+              (önizleme denetimi 10px ölçtü). Telefon genişliğinde tek bir
+              hesap girişi bırakılıyor: `/giris` sayfası zaten "hesabın yok
+              mu → Kaydol" bağlantısını taşıyor, yani kayıt yolu kapanmıyor,
+              bir adım uzuyor. Düğmeyi küçültmek yerine sayısını azaltmak,
+              dokunma hedefini 24px'e indirmekten iyidir (§6.7).
+            */}
+            {/*
+              Görünürlük sarmalayıcı `span` üzerinden veriliyor: `ButtonLink`
+              kendi `inline-flex` sınıfını taşıyor ve aynı elemana `hidden`
+              vermek iki display kuralını çakıştırıyor — hangisinin kazandığı
+              stil sırasına kalıyor, yani kırılgan.
+            */}
+            <span className="sm:hidden">
+              <ButtonLink
+                to="/giris"
+                size="sm"
+                variant="secondary"
+                aria-label="Giriş yap veya kaydol"
+              >
+                Hesap
+              </ButtonLink>
+            </span>
+
+            <span className="hidden items-center gap-2 sm:flex">
+              <ButtonLink to="/giris" size="sm" variant="secondary">
+                Giriş
+              </ButtonLink>
+              <ButtonLink to="/kayit" size="sm">
+                Kaydol
+              </ButtonLink>
+            </span>
           </div>
         </div>
       </Container>

@@ -15,12 +15,13 @@ import {
   filterControlClass,
 } from '@/components/ui/FilterBar';
 import {
-  equipment,
   equipmentCategoryLabels,
   equipmentPath,
   type EquipmentCategory,
   type EquipmentModel,
 } from './data';
+import { useEquipmentCatalog } from '@/services/content/equipment';
+import { CatalogSourceNote } from '@/components/ui/CatalogSourceNote';
 import { cn } from '@/lib/cn';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
@@ -61,8 +62,10 @@ export function EquipmentPage() {
   const [search, setSearch] = useState('');
   const [view, setView] = useViewMode('ekipman');
 
+  const catalog = useEquipmentCatalog();
+
   const result = useMemo(() => {
-    let items = equipment;
+    let items = catalog.items;
     if (category !== 'hepsi') items = items.filter((e) => e.category === category);
     const q = trLower(search.trim());
     if (q) {
@@ -71,7 +74,7 @@ export function EquipmentPage() {
       );
     }
     return items;
-  }, [category, search]);
+  }, [catalog.items, category, search]);
 
   const title =
     category === 'hepsi'
@@ -151,11 +154,13 @@ export function EquipmentPage() {
           </FilterCell>
         </FilterBar>
 
+        <CatalogSourceNote selection={catalog} />
+
         <ToolBar
           left={
             <ResultCount
               current={result.length}
-              total={equipment.length}
+              total={catalog.items.length}
               noun="model"
             />
           }
