@@ -534,3 +534,174 @@ genişlikte üst çubukta gezinme girişi olduğunu doğruluyor.
 | `node scripts/e2e.mjs` | ✅ 20/20 senaryo |
 | Şema kuralları (canlı DB) | ✅ 8/8 |
 | `anon` yetki denetimi (canlı DB) | ✅ okur, yazamaz, gizli tabloları göremez |
+
+---
+
+## 7. Genel denetim — 28 Temmuz 2026
+
+Bu bölüm kod tabanının ve canlı veritabanının o günkü ölçülmüş durumudur.
+Sayılar tahmin değil: dosya sayımı, test koşusu, `pg_stat_user_tables` ve
+Supabase güvenlik denetçisinden alınmıştır.
+
+### 7.1 Ölçülen durum
+
+| Ölçü | Değer |
+| --- | --- |
+| Kaynak dosya | 277 (`.ts` / `.tsx`) |
+| Kod satırı | 47 652 |
+| Rota | 63 |
+| Birim testi | 640 (54 dosya) |
+| E2E senaryosu | 24 |
+| Migration | 14 (`0001` → `0014`) |
+| Veritabanı tablosu | 36 |
+| Storage bucket | 3 (`photos`, `photo-originals`, `radio`) |
+
+Doğrulama zinciri: `tsc` hatasız · `eslint` uyarısız · 640 test geçti ·
+`build` uyarısız · `check:preview` yatay taşma yok · 24/24 E2E.
+
+### 7.2 Tamamlananlar
+
+**Kabuk ve tasarım sistemi.** Dokuz modüllü üst menü, modül haritası
+çekmecesi, komut paleti (⌘K), hata sınırı, "içeriğe atla", 63 rota,
+kod bölme, PWA kabuğu, üç kademeli tema (açık · koyu · saha).
+
+**Gökyüzü hesapları.** Efemeris tümüyle kendi kodumuzda: astronomik
+karanlık, ay evresi ve doğuş/batış, hedef zirve yüksekliği, karanlık
+takvimi, yükseklik grafiği. Dış servis yok, API anahtarı yok. Hava ve
+seeing Open-Meteo'dan; servis düşerse hücreler "—" gösterir, uydurma
+değer üretilmez.
+
+**Hedef kataloğu.** 182 gök cismi, 321 katalog kodu. En iyi aylar,
+zorluk, önerilen odak ve filtre ölçülen RA/Dec/kadir/boyuttan
+**türetiliyor** — elle yazılmıyor, dolayısıyla katalog büyüdükçe
+tutarlılık bozulmuyor.
+
+**Ekipman modülü ve setup planlayıcı.** 14 kategori, 43 marka, 129 model.
+Merkezî uyumluluk motoru (`domain/setup/engine.ts`) yük, örnekleme, FOV,
+backfocus zinciri, vinyetleme, filtre, reducer, fiziksel bağlantı ve
+guiding kontrollerini yapıyor; her sonuç formül, girdi, birim ve güven
+taşıyor. Veri yoksa kontrol yapılmıyor ve "veri yetersiz" deniyor.
+
+**Yönetim paneli.** Katalog senkronizasyonu (asla silmez), eksik veri
+raporu ve satır içi düzenleme, moderasyon kuyruğu, yayın kontrolü,
+kullanıcı katkısı onayı.
+
+**Veritabanı.** 14 migration, RLS her tabloda, rol tabanlı yetki,
+kota/entitlement, denetim günlüğü, KVKK için hesap silme/dışa aktarma
+tabloları. `anon` okur, yazamaz.
+
+**Güvenlik ve gizlilik.** `safeUrl`, HTML temizleme, çerez envanteri ve
+toplu silme, konum yalnızca tarayıcıda, KVKK sayfaları.
+
+### 7.3 Eksikler — önem sırasına göre
+
+#### E1 · Yüklenen fotoğraf galeride görünmüyor  (en kritik)
+
+`services/photos/upload.ts` `astro_photos` tablosuna yazıyor ve dosyayı
+`photos` bucket'ına koyuyor; ama `GalleryPage` hâlâ `features/photos/data`
+tohum dizisini okuyor. Okuma katmanı (`usePhotoCatalog`) yok. Yani yükleme
+akışı çalışıyor, sonucu hiçbir yerde görünmüyor. Tablo şu an **0 satır**.
+
+Gereken: `services/content/photos.ts` — diğer beş katalogla aynı desen
+(`selectContent`), görsel türevleri ve `photo_exposures` birleşimi.
+
+#### E2 · Yazma akışlarının çoğu yok
+
+Yazan modüller: fotoğraf yükleme, yönetim paneli (dört kontrol), ekipman
+katkısı. Yazmayan ama arayüzü hazır olanlar:
+
+| Akış | Durum | Tablo hazır mı |
+| --- | --- | --- |
+| Forum konusu / yanıt | Form var, **Gönder düğmesi `disabled`** | ✅ `forum_threads`, `forum_posts` |
+| İlan oluşturma | Sayfa yok | ✅ `listings` (0 satır) |
+| Etkinlik kaydı | Buton yok | ✅ `event_registrations` |
+| Beğeni / yorum | Yok | ✅ `photo_likes`, `photo_comments` |
+| Saha katkısı / yorum | Yok | ✅ `site_reviews` |
+| Profil düzenleme | Profil tohum fotoğraftan türetiliyor | ✅ `profiles` (0 satır) |
+
+Şema ve RLS tarafı bitmiş; eksik olan yalnızca istemci tarafı.
+
+#### E3 · İçeriğin yarısı hâlâ tohum dizide
+
+| Modül | Kaynak | Kayıt |
+| --- | --- | --- |
+| Ekipman · Hedef · Etkinlik · Saha · Yayın | ✅ veritabanı | 129 · 182 · 15 · 4 · 0 |
+| Fotoğraf | ⛔ tohum | 9 |
+| Haber | ⛔ tohum | 20 |
+| Yazı | ⛔ tohum | 6 |
+| Forum | ⛔ tohum | 7 |
+| İlan | ⛔ tohum | 4 |
+| Kulüp / tesis | ⛔ tohum | 11 |
+
+Haber, yazı, kulüp ve tesis için **tablo bile yok** — şema kararı
+verilmemiş.
+
+#### E4 · Ekipman kanıt alanları boş
+
+129 modelin:
+
+- 98'i setup motorunun istediği alanları eksiksiz taşıyor, **31'i eksik**
+  (en çok: optik tüp 10, astro kamera 7, guide 6, filtre 4, lens 4)
+- 79'unda bağlantı standardı, 73'ünde optik ölçü var
+- 91'inde üretim durumu ve veri güveni var
+- **0'ında kaynak (`sources`) var** — şartname her teknik değerin
+  kaynağını istiyordu
+- **0'ında doğrulama tarihi (`verifiedAt`) var**
+- **0'ında ürün görseli var** — telif nedeniyle bilinçli; izinli kaynak
+  ya da yönetilebilir medya sistemi kurulmadı
+
+Uydurma veri girilmedi (kural buydu), ama "kaynağı yazılmış veri" hedefine
+henüz ulaşılmadı.
+
+#### E5 · Harita katmanı yok
+
+Projede harita kütüphanesi yok (Leaflet kurulu değil). Etkinlik ve saha
+haritaları kendi çizdiğimiz basit koordinat düzlemleri. Eksik olanlar:
+
+- Işık kirliliği haritası (şu an yalnızca nokta ölçümleri)
+- Bulut / yağış (uydu) haritası
+- Astrocamping veritabanı ve harita üzerinde saha keşfi
+
+#### E6 · Üyelik ve ödeme
+
+`memberships`, `billing_transactions` tabloları var, 0 satır. Panelde
+"Üyelik ve Ödeme", "Planlarım", "İlanlarım" **Yakında** etiketli. Kota ve
+entitlement iş kuralları (`domain/membership`) yazılmış ve test edilmiş —
+bağlanacak ödeme sağlayıcısı yok.
+
+#### E7 · Setup ve envanter kalıcılığı localStorage'da
+
+`user_setups` ve `user_equipment` tabloları ve RLS'leri **hazır** (0014),
+ama `features/setups/store.ts` hâlâ tarayıcıya yazıyor. Kullanıcı cihaz
+değiştirince setup'ları kayboluyor.
+
+#### E8 · İçerik derinliği
+
+Yazılar 3–4 paragraf; şartname uzun rehber öngörüyordu. Yönetici için
+Word/PDF içe aktarma yok. Haber gövdeleri iyi durumda.
+
+#### E9 · Güvenlik denetçisi bulguları
+
+| Seviye | Bulgu | Değerlendirme |
+| --- | --- | --- |
+| ERROR | `spatial_ref_sys` tablosunda RLS yok | PostGIS'in kendi sistem tablosu; bizim verimiz değil, salt okunur referans |
+| WARN | `photos` bucket'ında geniş SELECT politikası dosya listelemeye izin veriyor | **Gerçek bulgu** — herkese açık URL erişimi için gerekmiyor, daraltılmalı |
+| WARN | `citext`, `pg_trgm`, `postgis` `public` şemasında | Supabase varsayılanı; ayrı şemaya taşınabilir |
+| WARN | PostGIS `st_estimatedextent` fonksiyonları `anon`'a açık | PostGIS'ten geliyor; `EXECUTE` geri alınabilir |
+
+Kendi tablolarımızda RLS eksiği **yok**.
+
+### 7.4 Önerilen sıra
+
+1. **E1** — fotoğraf okuma katmanı. Tek başına en büyük fark: yükleme
+   akışının sonucu görünür hâle gelir ve galeri canlı içerikle dolar.
+2. **E2** — forum yazma, beğeni/yorum, etkinlik kaydı. Şema hazır olduğu
+   için işin çoğu istemci tarafında.
+3. **E7** — setup/envanter kalıcılığı. Küçük iş, cihazlar arası kayıp
+   biter.
+4. **E9** — `photos` bucket politikasını daralt.
+5. **E4** — ekipman kaynak ve doğrulama tarihi doldurma (yönetim paneli
+   zaten hangi kaydın neyi eksik olduğunu listeliyor).
+6. **E3** — haber/yazı/kulüp şeması ve taşıma.
+7. **E5** — harita katmanı.
+8. **E6** — üyelik ve ödeme.
