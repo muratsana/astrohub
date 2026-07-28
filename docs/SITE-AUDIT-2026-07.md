@@ -593,7 +593,95 @@ tabloları. `anon` okur, yazamaz.
 **Güvenlik ve gizlilik.** `safeUrl`, HTML temizleme, çerez envanteri ve
 toplu silme, konum yalnızca tarayıcıda, KVKK sayfaları.
 
-### 7.3 Eksikler — önem sırasına göre
+### 7.3 İstenen işler — istek istek durum
+
+Bu tablo tek tek **istenmiş** işleri izler. Kaynak: proje boyunca verilen
+talimatlar ve "Ekipman Kataloğu, Setup Builder ve Uyumluluk Simülatörü"
+şartnamesi. Durum: ✅ bitti · ⚠️ kısmen · ⛔ yapılmadı.
+
+#### Fotoğraf yükleme ve hedef kataloğu
+
+| # | İstenen | Durum | Not |
+| --- | --- | --- | --- |
+| A1 | Yükleme ekranında önce obje tipi, sonra katalog, sonra ilgili obje girişi | ✅ | `TargetPicker` — iki adımlı, aranabilir |
+| A2 | "Olabilecek tüm objeleri ekle, veritabanlarından araştır" | ⚠️ | 182 obje (Messier 110 + NGC/IC 52 + güneş sistemi 19). Tam NGC/IC ~13 000 kayıt; şu anki katalog fotoğrafı çekilen cisimleri kapsıyor, tamamını değil |
+| A3 | Orijinal EXIF/FITS/XISF metadata'sına dokunulmaması | ✅ | Setup bilgisi yalnızca Astrohub alanlarına yazılıyor |
+
+#### Ortak ekipman veritabanı
+
+| # | İstenen | Durum | Not |
+| --- | --- | --- | --- |
+| B1 | Filtre, lens, teleskop, montür, reducer, barlow, optik tüp… **ortak** veritabanı | ✅ | 14 kategori · 43 marka · 129 model; dört ayrı elle tutulan liste kaldırıldı |
+| B2 | Şartnamedeki ~50 kategori | ⚠️ | **14 kategori var** — oküler, prizma, dedew, güç, filtre çekmecesi, dome gibi kategoriler açılmadı |
+| B3 | Şartnamedeki büyük üretici listesi | ⚠️ | 43 marka; listedeki bazı üreticiler (özellikle niş ve Uzak Doğu markaları) girilmedi |
+| B4 | Ekipman görselleri — "hepsinin webden görüntüleri" | ⛔ | **0 görsel.** Üretici görselleri telif nedeniyle kopyalanmadı; izinli kaynak ya da yönetilebilir medya sistemi kurulmadı. `image` alanı ve 14 kategori simgesi hazır, içerik yok |
+| B5 | Teknik özelliklerle **karşılaştırma** ekranı | ✅ | Katalog sekmesinde, seçim adres çubuğunda taşınıyor |
+
+#### Admin panelden veri güncelleme
+
+| # | İstenen | Durum | Not |
+| --- | --- | --- | --- |
+| C1 | Veritabanı belli dönemlerde **panelden tetiklenerek** güncellensin | ⚠️ | Panelde senkronizasyon düğmesi var ve çalışıyor — ama kaynağı **uygulamanın içindeki tohum dizi**, dış dünya değil |
+| C2 | "Kendin güncelleyebilsin" — dış kaynaktan veri çekme | ⛔ | **Yok.** Üretici sitesinden / dış veritabanından otomatik veri çekme hiç yazılmadı. Yeni ürün ancak koda eklenip yayınlanınca panele düşüyor |
+| C3 | Eksik veri raporu ve elle düzeltme | ✅ | Panel hangi kaydın hangi alanının eksik olduğunu listeliyor, satır içi düzenleniyor |
+
+#### Setup Builder ve uyumluluk simülatörü (21 bölümlük şartname)
+
+| # | İstenen | Durum | Not |
+| --- | --- | --- | --- |
+| G1 | Dört sekme, varsayılan "Setup Oluştur" | ✅ | |
+| G2 | Kategori → marka → model, aranabilir, uzun liste dökmeyen seçim | ✅ | E2E "katalog sekmesi listeyi tek seferde dökmez" bunu koruyor |
+| G3 | Solda bileşenler, sağda yapışkan canlı analiz | ✅ | |
+| G4 | Altı durum seviyeli uyumluluk motoru, her sonuç kriter + kullanılan değer + beklenen aralık + açıklama + çözüm taşısın | ✅ | `domain/setup/engine.ts` |
+| G5 | Yük, örnekleme, FOV, backfocus zinciri, vinyetleme, filtre, reducer, fiziksel bağlantı, guiding kontrolleri | ✅ | |
+| G6 | Setup özeti, önem sırasına göre uyarılar | ✅ | |
+| G7 | Setup kaydetme (ad, açıklama, amaç, görünürlük, varsayılan, kopyalama) | ⚠️ | Çalışıyor ama **localStorage'da** — cihaz değişince kayboluyor. `user_setups` tablosu ve RLS hazır, bağlanmadı |
+| G8 | Setup paylaşma | ⚠️ | `/setup/:id` rotası var; kayıt kalıcı olmadığı için paylaşılan bağlantı karşı tarafta açılmıyor |
+| G9 | Fotoğraf yüklemede kayıtlı setup'tan künye doldurma | ✅ | |
+| G10 | Ekipman verisi gömülü statik JSON olmasın | ⚠️ | Veritabanı yetkili kaynak, ama tohum dizi hâlâ uygulamanın içinde (veritabanı yoksa site ayakta kalsın diye — bilinçli) |
+| G11 | Ürün detayında üretim durumu | ✅ | 129 modelin 91'inde dolu |
+| G12 | Ürün detayında **belgeler** (kılavuz, teknik çizim) | ⛔ | Alan bile yok |
+| G13 | Ürün detayında **kaynaklar** | ⛔ | Alan var (`sources`), **0 kayıtta dolu** |
+| G14 | Sunucu taraflı arama / filtreleme / sayfalama; tüm veritabanı tarayıcıya inmesin | ⛔ | Şu an tamamen istemcide. 129 modelde sorun çıkarmıyor ama şartnamenin açık maddesi |
+| G15 | Öneri motoru (§17) | ⛔ | Hiç yazılmadı |
+| G16 | Admin veri yönetim paneli | ✅ | |
+| G17 | Mock değerle "tamamlandı" izlenimi verilmesin, eksikler açıkça işaretlensin | ✅ | Veri yoksa motor "veri yetersiz" diyor; panel eksikleri sayıyla listeliyor |
+| G18 | Koyu tema korunsun, kompakt metrik kartları, tooltip, mobil | ✅ | |
+
+#### Haritalar, saha ve araçlar
+
+| # | İstenen | Durum | Not |
+| --- | --- | --- | --- |
+| H1 | Araç ikon seti | ⛔ | `ToolsIndexPage`'de hiç ikon yok |
+| H2 | Işık kirliliği **haritası** | ⛔ | Sayfa var ama nokta ölçümü listesi; harita katmanı yok |
+| H3 | Bulut / yağış (uydu) haritası | ⛔ | |
+| H4 | Astrocamping veritabanı + ücretsiz harita servisi | ⛔ | Saha modülünde 4 kayıt, kamp veritabanı yok. Projede harita kütüphanesi kurulu değil |
+
+#### Hesap, içerik ve yönetim
+
+| # | İstenen | Durum | Not |
+| --- | --- | --- | --- |
+| L1 | Üyelik sistemi | ⛔ | Tablolar ve iş kuralları hazır, ödeme sağlayıcısı yok; panelde "Yakında" |
+| L2 | Profil yönetimi | ⛔ | Profil sayfası tohum fotoğraflardan türetiliyor; hesapla bağı yok, düzenleme yok |
+| L3 | Admin dashboard | ✅ | Dört kontrol: katalog, ekipman verisi, moderasyon, yayın |
+| L4 | İçerik zenginleştirme (yazı gövdeleri) | ⛔ | Yazılar hâlâ 3–4 paragraf |
+| L5 | Word / PDF içe aktarma (yönetici içerik girişi) | ⛔ | |
+| L6 | Faz 3 yazma akışları — forum konusu/yanıt, ilan oluşturma, etkinlik kaydı, beğeni/yorum, saha katkısı | ⛔ | Şema ve RLS hazır, istemci tarafı yok. Forumda "Gönder" düğmesi `disabled` |
+
+#### Arayüz düzeltmeleri (bu oturum)
+
+| # | İstenen | Durum |
+| --- | --- | --- |
+| U1 | Nav Bar'a Ekipman modülü | ✅ |
+| U2 | Ana sayfa modül sıralaması (hero → bu gece → galeri → haber/yazı → etkinlik → ilan) | ✅ |
+| U3 | "Bu Gece" kartlarına görsel — boş duruyordu | ✅ |
+| U4 | Haber ve yazıların yanına mini görsel kartları | ✅ |
+| U5 | Giriş'in yanındaki "Saha" yazısını kaldır | ✅ |
+| U6 | Üç kademeli tema (açık · koyu · kırmızı), her birinde ayrı simge | ✅ |
+
+### 7.4 Denetimde çıkan ek bulgular
+
+Bunlar istenmiş işler değil; kodu ve veritabanını tararken çıkanlar.
 
 #### E1 · Yüklenen fotoğraf galeride görünmüyor  (en kritik)
 
@@ -691,17 +779,32 @@ Word/PDF içe aktarma yok. Haber gövdeleri iyi durumda.
 
 Kendi tablolarımızda RLS eksiği **yok**.
 
-### 7.4 Önerilen sıra
+### 7.5 Önerilen sıra
 
-1. **E1** — fotoğraf okuma katmanı. Tek başına en büyük fark: yükleme
-   akışının sonucu görünür hâle gelir ve galeri canlı içerikle dolar.
-2. **E2** — forum yazma, beğeni/yorum, etkinlik kaydı. Şema hazır olduğu
-   için işin çoğu istemci tarafında.
-3. **E7** — setup/envanter kalıcılığı. Küçük iş, cihazlar arası kayıp
-   biter.
-4. **E9** — `photos` bucket politikasını daralt.
-5. **E4** — ekipman kaynak ve doğrulama tarihi doldurma (yönetim paneli
-   zaten hangi kaydın neyi eksik olduğunu listeliyor).
-6. **E3** — haber/yazı/kulüp şeması ve taşıma.
-7. **E5** — harita katmanı.
-8. **E6** — üyelik ve ödeme.
+İstenmiş ama yapılmamış işler önce; denetimde çıkan bulgular aralarına
+önem sırasına göre yerleştirildi.
+
+1. **E1 · Fotoğraf okuma katmanı** — yükleme `astro_photos`'a yazıyor ama
+   galeri tohum diziyi okuyor. Tek başına en büyük fark: yükleme akışının
+   sonucu görünür hâle gelir.
+2. **L6 · Yazma akışları** — forum konusu/yanıt, beğeni/yorum, etkinlik
+   kaydı, ilan oluşturma. Şema ve RLS hazır; iş neredeyse tamamen
+   istemcide.
+3. **G7 + G8 · Setup kalıcılığı ve paylaşım** — `user_setups` tablosu
+   hazır. Küçük iş; cihazlar arası kayıp ve ölü paylaşım bağlantısı biter.
+4. **E9 · `photos` bucket politikasını daralt** — tek satırlık düzeltme.
+5. **C2 · Dış kaynaktan ekipman verisi çekme** — "panelden kendin
+   güncelleyebilsin" isteğinin karşılanmayan yarısı. Üretici sayfası ya da
+   dış veritabanından çekim + onay kuyruğu.
+6. **G13 + B4 · Kaynak/belge alanları ve ürün görselleri** — panel zaten
+   hangi kaydın neyi eksik olduğunu listeliyor; eksik olan içerik ve
+   izinli medya kaynağı.
+7. **B2 + B3 · Kategori ve marka kapsamını genişlet** — 14 → ~50 kategori.
+8. **H1–H4 · Harita katmanı ve araç ikonları** — harita kütüphanesi
+   kararı (ücretsiz servis) bu adımın önkoşulu.
+9. **E3 · Haber/yazı/kulüp şeması** — bu dört modül için tablo bile yok.
+10. **G14 · Sunucu taraflı arama/sayfalama** — 129 modelde acil değil,
+    katalog büyüyünce zorunlu.
+11. **G15 · Öneri motoru**.
+12. **L1 + L2 · Üyelik, ödeme ve profil yönetimi**.
+13. **L4 + L5 · İçerik derinleştirme ve Word/PDF içe aktarma**.
