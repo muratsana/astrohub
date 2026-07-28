@@ -1,39 +1,42 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { useLocationContext } from '@/features/location/LocationContext';
+import { useTheme } from '@/features/theme/ThemeContext';
 import { hasNetworkAccess } from '@/lib/runtime';
 import { cn } from '@/lib/cn';
+import { TileMap } from './TileMap';
+import { type LatLng } from './tileMath';
 import {
+  BASEMAP_CREDIT,
   OPACITY_RANGE,
+  OVERLAY_CREDIT,
+  OVERLAY_SOURCES,
   ZOOM_RANGE,
-  embedUrl,
+  basemapSource,
   fullUrl,
-  type MapView,
 } from './lightPollutionEmbed';
 
 /**
- * IŞIK KİRLİLİĞİ HARİTASI — gömülü tam genişlik görünüm.
+ * IŞIK KİRLİLİĞİ HARİTASI — tam genişlik, kendi döşemelerimizle.
  *
- * Harita lightpollutionmap.app'ten geliyor; kendi veri setimizi
- * lisanslamadan bir dünya haritası boyayamayız ve o sitenin yayımlanmış
- * bir gömme uç noktası var.
+ * Neden `<iframe>` değil: `lightPollutionEmbed.ts` başında. Kısası,
+ * sağlayıcının yayımladığı gömme adresi köke yönleniyor ve kök
+ * çerçevelenmeyi reddediyor; canlıda harita hiç açılmadı.
  *
- * ÜÇÜNCÜ TARAF ÇERÇEVESİ İZİNLE YÜKLENİYOR. Sayfanın kendi metni
- * "koordinat sunucumuza gönderilmez" diyor; bir `<iframe>` açtığımız anda
- * kullanıcının IP'si ve baktığı koordinat karşı tarafa gider. Bunu
- * sormadan yapmak, sayfanın kendi sözünü bozmak olurdu. Bu yüzden ilk
- * ziyarette tek bir onay isteniyor; seçim saklanıyor ve bir daha
- * sorulmuyor. Çerez envanterinde de görünüyor, oradan silinebiliyor.
+ * ÜÇÜNCÜ TARAF İSTEĞİ HÂLÂ VAR, İZİN DE. Döşemeler CARTO ve
+ * djlorenz.github.io'dan geliyor; harita açıldığı anda IP adresi ve
+ * bakılan bölge o sunuculara gider. Sayfanın kendi metni "koordinat
+ * sunucumuza gönderilmez" diyor — bunu sormadan yapmak o sözü bozmak
+ * olurdu. Tek onay isteniyor, saklanıyor, çerez envanterinden geri
+ * alınabiliyor.
  *
- * KONTROLLER BİZDE, HARİTA ONLARDA. Yakınlaştırma ve katman saydamlığı
- * çerçeve adresinin parametreleri; sürgüyü oynatınca adres değişiyor ve
- * çerçeve yeniden yükleniyor. Çerçevenin içine erişemeyiz (farklı köken),
- * dolayısıyla kontroller dışarıda duruyor — bu bir sınırlama değil,
- * kullanıcının konumuyla bizim şehir seçicimizi aynı yere bağlamanın tek
- * yolu.
+ * KONTROLLER BİZDE: yakınlaştırma, katman saydamlığı, sıfırlama ve tam
+ * ekran haritanın kendi durumunu değiştiriyor — artık bir adres
+ * parametresi değil. Sürükleyerek gezmek, çift tıkla ve ⌘/Ctrl+tekerlek
+ * ile yakınlaşmak da mümkün.
  */
 
-const CONSENT_KEY = 'astrohub:embed:lightpollutionmap';
+const CONSENT_KEY = 'astrohub:map:tiles';
 
 function readConsent(): boolean {
   try {
@@ -45,20 +48,32 @@ function readConsent(): boolean {
 
 export function LightPollutionMap() {
   const { location } = useLocationContext();
+  const { theme } = useTheme();
   const frameRef = useRef<HTMLDivElement>(null);
 
   const [allowed, setAllowed] = useState(readConsent);
-  const [view, setView] = useState<MapView>(() => ({
+  const [center, setCenter] = useState<LatLng>(() => ({
     lat: location.latitude,
     lng: location.longitude,
-    zoom: 6,
-    opacity: 50,
   }));
+  const [zoom, setZoom] = useState(6);
+  const [opacity, setOpacity] = useState(50);
 
-  /* Üstteki şehir seçici değişince harita da oraya gitsin: iki ayrı konum
-     kavramı taşımak, kullanıcıya "hangisi geçerli" diye sordurur. */
+  /* Katman kaynağı sırayla deneniyor; hangisinin yayımda olduğunu bu
+     ortamdan doğrulayamadım (gerekçe kaynak listesinin başında). */
+  const [sourceIndex, setSourceIndex] = useState(0);
+  const overlay = OVERLAY_SOURCES[sourceIndex];
+  const overlayFailed = sourceIndex >= OVERLAY_SOURCES.length;
+
+  const onOverlayFailure = useCallback(() => {
+    setSourceIndex((index) => index + 1);
+  }, []);
+
+  /* Üstteki şehir seçici değişince harita da oraya gitsin: iki ayrı
+     konum kavramı taşımak, kullanıcıya "hangisi geçerli" diye
+     sordurur. */
   useEffect(() => {
-    setView((v) => ({ ...v, lat: location.latitude, lng: location.longitude }));
+    setCenter({ lat: location.latitude, lng: location.longitude });
   }, [location.latitude, location.longitude]);
 
   const allow = useCallback(() => {
@@ -70,11 +85,21 @@ export function LightPollutionMap() {
     }
   }, []);
 
+  const base = useMemo(() => basemapSource(theme !== 'light'), [theme]);
+
+  const view = { lat: center.lat, lng: center.lng, zoom, opacity };
+
   function fullscreen() {
     const el = frameRef.current;
     if (!el) return;
     if (document.fullscreenElement) void document.exitFullscreen();
     else void el.requestFullscreen?.();
+  }
+
+  function reset() {
+    setCenter({ lat: location.latitude, lng: location.longitude });
+    setZoom(6);
+    setOpacity(50);
   }
 
   return (
@@ -91,7 +116,7 @@ export function LightPollutionMap() {
             rel="noreferrer noopener"
             className="ml-auto text-[11px] text-cold transition-colors hover:text-primary"
           >
-            lightpollutionmap.app ↗
+            Ayrıntılı analiz: lightpollutionmap.app ↗
           </a>
         </header>
 
@@ -103,14 +128,12 @@ export function LightPollutionMap() {
             Yükseklik oranla değil, görünüm alanı yüksekliğiyle veriliyor:
             harita bir görsel değil, gezilen bir yüzey. 4:3 bir kutuda
             telefonda 250px kalıyordu ve o yükseklikte harita gezilemiyor.
-            `min-h` telefonu, `max-h` geniş ekranda sayfanın tamamen
-            haritaya dönüşmesini engelliyor.
           */}
           <div className="h-[68vh] max-h-[820px] min-h-[420px] w-full">
             {!hasNetworkAccess ? (
               <Notice
                 title="Bu derlemede harita yüklenmiyor"
-                body="Tek dosya önizleme dış istek yapamaz. Yayındaki sitede harita bu alanda açılır."
+                body="Tek dosya önizleme dış istek yapamaz; döşemeler indirilemez. Yayındaki sitede harita bu alanda açılır."
                 action={
                   <a
                     href={fullUrl(view)}
@@ -123,35 +146,33 @@ export function LightPollutionMap() {
                 }
               />
             ) : allowed ? (
-              <iframe
-                /* Adres değişince React çerçeveyi yeniden kurmalı; aynı
-                   `src` üzerine yazmak bazı tarayıcılarda geçmişe kayıt
-                   düşürüyor ve geri tuşunu haritaya esir ediyor. */
-                key={embedUrl(view)}
-                src={embedUrl(view)}
-                title="Light Pollution Map"
-                allowFullScreen
-                /*
-                 * REFERRER GÖNDERİLİYOR — ve bu bilinçli.
-                 *
-                 * Önce `referrerPolicy="no-referrer"` konmuştu; canlıda
-                 * çerçeve boş bir kutu olarak açıldı. Gömme servisleri
-                 * hangi siteden çağrıldıklarını referrer başlığından
-                 * doğruluyor; başlık yoksa isteği reddediyorlar.
-                 * Sağlayıcının kendi yayımladığı gömme kodunda da böyle
-                 * bir kısıtlama yok — ondan sapmanın bedeli buydu.
-                 *
-                 * `loading="lazy"` de kaldırıldı: çerçeve sayfanın
-                 * görünen kısmında ve ertelemenin kazandırdığı bir şey
-                 * yok, ama bazı tarayıcılarda ilk boyamada boş kalıyor.
-                 */
-                className="h-full w-full"
-                style={{ border: 0 }}
+              <TileMap
+                label="Işık kirliliği haritası — sürükleyerek gezin, çift tıklayarak yakınlaşın"
+                className={cn(
+                  'h-full w-full',
+                  /* Saha modunda harita da kırmızıya düşüyor: bu tema
+                     bir görünüm tercihi değil, karanlık adaptasyonunu
+                     koruma aracı. Tam renkli bir uydu haritası o
+                     korumayı tek başına bozardı. */
+                  theme === 'field' &&
+                    '[filter:sepia(1)_saturate(5)_hue-rotate(-38deg)_brightness(0.6)]'
+                )}
+                center={center}
+                zoom={zoom}
+                minZoom={ZOOM_RANGE.min}
+                maxZoom={ZOOM_RANGE.max}
+                onCenterChange={setCenter}
+                onZoomChange={setZoom}
+                base={base}
+                overlay={overlay}
+                overlayOpacity={opacity / 100}
+                onOverlayFailure={onOverlayFailure}
+                marker={{ lat: location.latitude, lng: location.longitude }}
               />
             ) : (
               <Notice
-                title="Harita üçüncü taraftan geliyor"
-                body="Haritayı açtığınızda IP adresiniz ve baktığınız koordinat lightpollutionmap.app'e gider. Bir kez onaylarsanız tercihiniz saklanır; çerez sayfasından geri alabilirsiniz."
+                title="Harita üçüncü taraf sunucularından yükleniyor"
+                body="Haritayı açtığınızda IP adresiniz ve baktığınız bölge döşeme sağlayıcılarına (CARTO, djlorenz.github.io) gider. Bir kez onaylarsanız tercihiniz saklanır; çerez sayfasından geri alabilirsiniz."
                 action={
                   <Button size="sm" onClick={allow}>
                     Haritayı yükle
@@ -160,6 +181,25 @@ export function LightPollutionMap() {
               />
             )}
           </div>
+
+          {/* Yakınlaştırma düğmeleri haritanın üstünde: sürgü aşağıda
+              duruyor ama gezinirken el haritadan ayrılmamalı. */}
+          {hasNetworkAccess && allowed ? (
+            <div className="absolute right-2 top-2 flex flex-col overflow-hidden rounded-card border border-border-strong bg-background/85 backdrop-blur-sm">
+              <ZoomButton
+                label="Yakınlaştır"
+                sign="+"
+                disabled={zoom >= ZOOM_RANGE.max}
+                onClick={() => setZoom((z) => Math.min(ZOOM_RANGE.max, z + 1))}
+              />
+              <ZoomButton
+                label="Uzaklaştır"
+                sign="−"
+                disabled={zoom <= ZOOM_RANGE.min}
+                onClick={() => setZoom((z) => Math.max(ZOOM_RANGE.min, z - 1))}
+              />
+            </div>
+          ) : null}
         </div>
 
         {/* ── Kontroller ── */}
@@ -167,36 +207,25 @@ export function LightPollutionMap() {
           <Slider
             id="lp-zoom"
             label="Yakınlaştırma"
-            value={view.zoom}
+            value={zoom}
             min={ZOOM_RANGE.min}
             max={ZOOM_RANGE.max}
             step={1}
-            display={`z${view.zoom}`}
-            onChange={(zoom) => setView((v) => ({ ...v, zoom }))}
+            display={`z${zoom}`}
+            onChange={setZoom}
           />
           <Slider
             id="lp-opacity"
             label="Katman saydamlığı"
-            value={view.opacity}
+            value={opacity}
             min={OPACITY_RANGE.min}
             max={OPACITY_RANGE.max}
             step={5}
-            display={`%${view.opacity}`}
-            onChange={(opacity) => setView((v) => ({ ...v, opacity }))}
+            display={`%${opacity}`}
+            onChange={setOpacity}
           />
           <div className="flex items-end gap-1.5">
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={() =>
-                setView({
-                  lat: location.latitude,
-                  lng: location.longitude,
-                  zoom: 6,
-                  opacity: 50,
-                })
-              }
-            >
+            <Button size="sm" variant="secondary" onClick={reset}>
               Sıfırla
             </Button>
             <Button size="sm" variant="ghost" onClick={fullscreen}>
@@ -205,14 +234,51 @@ export function LightPollutionMap() {
           </div>
         </div>
 
+        {/*
+          Katman gelmediyse bu açıkça yazılıyor. Sessiz kalmak, boş bir
+          altlık haritayı "bu bölgede ışık kirliliği yok" gibi
+          okutuyordu.
+        */}
+        {overlayFailed ? (
+          <p className="mt-1.5 rounded-card border border-warning/40 bg-surface-1 px-2.5 py-1.5 text-[11px] leading-snug text-warning">
+            Işık kirliliği katmanı yüklenemedi; altta yalnızca temel harita
+            var. Aşağıdaki karşılaştırma kendi ölçümlerimizden geldiği için
+            etkilenmiyor.
+          </p>
+        ) : null}
+
         <p className="mt-1.5 text-[10px] leading-snug text-faint">
-          Harita ve veri lightpollutionmap.app'e aittir; Astrohub yalnızca
-          yayımlanmış gömme adresini kullanır. Aşağıdaki karşılaştırma ise
-          kendi gözlem noktası ölçümlerimizden hesaplanır — ikisi ayrı
-          kaynaklardır ve birbirini doğrulamaz.
+          {BASEMAP_CREDIT} · {OVERLAY_CREDIT}
+          {overlay ? ` ${overlay.year}` : ''}. Katman uydu kestirimidir.
+          Aşağıdaki karşılaştırma ise kendi gözlem noktası ölçümlerimizden
+          hesaplanır — ikisi ayrı kaynaklardır ve birbirini doğrulamaz.
         </p>
       </div>
     </section>
+  );
+}
+
+function ZoomButton({
+  label,
+  sign,
+  disabled,
+  onClick,
+}: {
+  label: string;
+  sign: string;
+  disabled: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      disabled={disabled}
+      onClick={onClick}
+      className="h-7 w-7 text-[15px] leading-none text-muted-foreground transition-colors hover:bg-surface-2 hover:text-foreground disabled:opacity-35 disabled:hover:bg-transparent"
+    >
+      {sign}
+    </button>
   );
 }
 

@@ -59,11 +59,11 @@ export const storageInventory: StorageItem[] = [
     prefix: true,
   },
   {
-    key: 'astrohub:embed:lightpollutionmap',
-    label: 'Işık kirliliği haritası izni',
+    key: 'astrohub:map:tiles',
+    label: 'Harita döşemeleri izni',
     purpose: 'tercih',
     description:
-      'Işık kirliliği haritası üçüncü taraftan (lightpollutionmap.app) gömülür; açtığınızda IP adresiniz ve baktığınız koordinat oraya gider. Bu anahtar yalnızca "izin verdim" bilgisini tutar. Silerseniz harita bir daha sorar.',
+      'Işık kirliliği haritasının görüntüleri üçüncü taraf sunucularından (CARTO, djlorenz.github.io) yüklenir; haritayı açtığınızda IP adresiniz ve baktığınız bölge oraya gider. Bu anahtar yalnızca "izin verdim" bilgisini tutar. Silerseniz harita bir daha sorar.',
     consentRequired: false,
   },
   {

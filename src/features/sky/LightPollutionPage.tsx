@@ -27,9 +27,10 @@ import { cn } from '@/lib/cn';
  *
  * İKİ AYRI KAYNAK, BİLİNÇLİ OLARAK YAN YANA:
  *
- *   1. Üstte **harita** — lightpollutionmap.app'in yayımlanmış gömme
- *      adresi. Küresel bir ışık kirliliği veri setini kendimiz
- *      lisanslamadan boyayamayız; o sitenin gömme izni var.
+ *   1. Üstte **harita** — VIIRS uydu ölçümlerinden türetilmiş açık ışık
+ *      kirliliği katmanı (D. J. Lorenz), kendi döşeme haritamızda.
+ *      Kestirimdir: bölgesel bir eğilim gösterir, bir yerin o geceki
+ *      gökyüzünü ölçmez.
  *   2. Altta **karşılaştırma** — kendi gözlem noktası kayıtlarımızın
  *      SQM/Bortle ölçümleri. Kullanıcının asıl sorusu haritada bir renge
  *      bakmak değil: "şehirden şu sahaya gitmek neyi değiştirir?"
@@ -95,8 +96,8 @@ export function LightPollutionPage() {
         <p className="mb-4 rounded-card border border-cold/35 bg-surface-1 px-3 py-2.5 text-[11.5px] leading-relaxed text-muted-foreground">
           <span className="text-foreground">Aşağıdaki sayılar haritadan
           gelmiyor.</span>{' '}
-          Üstteki harita uydu kestirimidir ve lightpollutionmap.app'e
-          aittir. Buradaki değerler ise kendi gözlem noktası
+          Üstteki harita uydu kestirimidir (VIIRS ölçümlerinden
+          türetilmiş açık veri). Buradaki değerler ise kendi gözlem noktası
           kayıtlarımızdan ve Bortle ölçeğinin yerleşik SQM
           karşılıklarından gelir; yerde ölçülmüş olanlar ayrıca
           işaretlidir. İki kaynağı karıştırmamak gerekir — kestirim bir
