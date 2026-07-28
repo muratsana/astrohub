@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { Container } from '@/components/ui/Container';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -11,18 +11,25 @@ import { PageMeta } from '@/components/seo/PageMeta';
 import { checkSetup } from '@/domain/equipment/compatibility';
 import type { CheckSeverity } from '@/domain/equipment/compatibility';
 import { getSetup, decodeSetup, encodeSetup, deleteSetup } from './storage';
+import { fetchSharedSetup, isUuid } from './remote';
+import { SharedSetupView } from './SharedSetupView';
+import { getSetup as getSavedSetup, type SavedSetup } from './store';
 import { cn } from '@/lib/cn';
 
 /**
- * KAYITLI SETUP DETAYI (§7.12).
+ * SETUP DETAYI (§7.12) — üç kaynak, tek adres.
  *
- * İki kaynaktan beslenir:
- *   1. Yerel depo (`/setup/<id>`) — kendi cihazınızdaki kayıt.
- *   2. Bağlantıdaki kodlanmış yük (`?d=…`) — başkasının paylaştığı setup.
+ *   1. **Veritabanı** (`/setup/<uuid>`) — ekipman modülünde kurulmuş,
+ *      hesaba kayıtlı setup. Başkasının tarayıcısında da açılır;
+ *      görünürlüğü RLS uyguluyor.
+ *   2. **Yerel depo** — aynı kayıt henüz eşitlenmemişse ya da kullanıcı
+ *      oturum açmadan kurmuşsa. Çevrimdışı da çalışır.
+ *   3. **Bağlantıdaki kodlanmış yük** (`?d=…`) — eski uyumluluk aracının
+ *      paylaşım biçimi. Dolaşımdaki bağlantılar kırılmasın diye duruyor.
  *
- * İkinci kaynak olmasa "paylaş" düğmesi karşı tarafa boş sayfa gösterirdi.
- * Kayıt bulunamadığında sayfa bunu **açıkça** söylüyor: setup'ların şu an
- * tarayıcıda saklandığını ve bağlantının kodlanmış yük içermesi gerektiğini.
+ * Sıra önemli: veritabanı kaydı katalogdan taze çözülüyor, kodlanmış yük
+ * ise kurulduğu andaki sayıları taşıyor. İkisi çakışırsa güncel olan
+ * kazanmalı.
  */
 
 const severityLabel: Record<CheckSeverity, string> = {
@@ -37,6 +44,26 @@ export function SetupDetailPage() {
   const [deleted, setDeleted] = useState(false);
   const [copied, setCopied] = useState(false);
 
+  /*
+   * Yeni model (v2) önce yerelden okunuyor — varsa ekran anında doluyor.
+   * Aynı anda veritabanı sorgusu gidiyor: kayıt başka bir cihazda
+   * kurulmuş ya da başkasının paylaştığı bir bağlantı olabilir.
+   */
+  const [saved, setSaved] = useState<SavedSetup | undefined>(() =>
+    id ? getSavedSetup(id) : undefined
+  );
+
+  useEffect(() => {
+    if (!id || !isUuid(id) || deleted) return;
+    let active = true;
+    void fetchSharedSetup(id).then((row) => {
+      if (active && row) setSaved(row);
+    });
+    return () => {
+      active = false;
+    };
+  }, [id, deleted]);
+
   const shared = useMemo(() => decodeSetup(params.get('d')), [params]);
   const stored = useMemo(
     () => (id && !deleted ? getSetup(id) : undefined),
@@ -48,6 +75,15 @@ export function SetupDetailPage() {
     () => (setup ? checkSetup(setup.input) : null),
     [setup]
   );
+
+  /* v2 kaydı varsa yeni motorla çizilen görünüm kazanıyor: değerleri
+     katalogdan taze çözüyor, kodlanmış yük ise kurulduğu andaki
+     sayılarla donmuş durumda.
+
+     Dallanma bütün kancalardan SONRA: erken dönüş kanca sırasını
+     bozuyordu ve React aynı bileşende iki farklı sırayla kanca çağrısı
+     kabul etmiyor. */
+  if (saved && !deleted) return <SharedSetupView setup={saved} />;
 
   if (!setup || !report) {
     return (

@@ -9,9 +9,14 @@ import { EMPTY_SETUP, type SetupDraft } from '@/domain/setup/types';
  * hesabı da düzeliyor. Sayıyı kopyalasaydık, kayıt yanlış değerle donmuş
  * kalırdı.
  *
- * Depo hâlâ tarayıcıda. Hesap sistemi bağlandığında aynı arayüzle
- * Supabase'e taşınacak; `SavedSetup` tipini o yüzden serileştirilebilir
- * tuttuk — içinde fonksiyon ya da model nesnesi yok, yalnızca slug.
+ * BU DOSYA YEREL DEPO — tek başına kullanılmıyor. Üstünde
+ * `useSetups` var: oturum varsa `user_setups` tablosuyla eşitliyor.
+ * Yerel katman kalmaya devam ediyor çünkü setup kurmak için hesap
+ * gerekmiyor ve her tuşta ağ beklemek aracı ağırlaştırırdı.
+ *
+ * `SavedSetup` serileştirilebilir — içinde fonksiyon ya da model nesnesi
+ * yok, yalnızca slug. Bu sayede aynı tip hem `localStorage`'a hem
+ * `jsonb` kolonuna giriyor.
  */
 
 const STORAGE_KEY = 'astrohub:setups:v2';
@@ -150,6 +155,18 @@ export function duplicateSetup(id: string, now: string): SavedSetup | null {
  */
 export function setDefaultSetup(id: string): void {
   write(read().map((s) => ({ ...s, isDefault: s.id === id })));
+}
+
+/**
+ * Listeyi olduğu gibi değiştirir — senkronizasyon katmanı için.
+ *
+ * `useSetups`, veritabanıyla birleştirdiği sonucu tek seferde yazıyor.
+ * Kayıt kayıt `saveSetup` çağırmak her birinin `updatedAt` alanını
+ * bugüne çekerdi ve bir sonraki birleştirmede yerel taraf hep "daha
+ * yeni" görünüp uzaktaki gerçek güncellemeyi ezerdi.
+ */
+export function replaceAll(setups: SavedSetup[]): void {
+  write(setups);
 }
 
 export function newId(): string {

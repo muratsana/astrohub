@@ -1,10 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Input';
 import { useEquipmentCatalog } from '@/services/content/equipment';
-import { listSetups, defaultSetup, type SavedSetup } from '@/features/setups/store';
+import type { SavedSetup } from '@/features/setups/store';
+import { useSetups } from '@/features/setups/useSetups';
 import {
   computeEffectiveFRatio,
   computeEffectiveFocal,
@@ -53,8 +54,17 @@ function label(model: EquipmentModel | undefined): string {
 
 export function SetupSelect({ onApply }: { onApply: (fill: SetupFill) => void }) {
   const catalog = useEquipmentCatalog();
-  const setups = useMemo(() => listSetups(), []);
-  const [selected, setSelected] = useState<string>(() => defaultSetup()?.id ?? '');
+  const { setups } = useSetups();
+  const [selected, setSelected] = useState<string>('');
+
+  /* Varsayılan setup senkronizasyon bittikten sonra gelebiliyor; seçim
+     bir kez, liste ilk dolduğunda kuruluyor. Her değişimde yeniden
+     kursaydık kullanıcının elle yaptığı seçimi ezerdik. */
+  useEffect(() => {
+    if (selected) return;
+    const fallback = setups.find((s) => s.isDefault);
+    if (fallback) setSelected(fallback.id);
+  }, [setups, selected]);
   const [applied, setApplied] = useState(false);
 
   const setup = setups.find((s) => s.id === selected);

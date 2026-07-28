@@ -22,20 +22,13 @@ import {
   type EquipmentCategory,
 } from './data';
 import {
-  deleteSetup,
-  duplicateSetup,
   emptyDraft,
-  listSetups,
-  saveSetup,
-  setDefaultSetup,
   visibilityLabels,
   type SavedSetup,
 } from '@/features/setups/store';
-import {
-  listOwned,
-  removeOwned,
-  toggleOwned,
-} from '@/features/setups/inventory';
+import { useSetups, type SetupStore } from '@/features/setups/useSetups';
+import { isUuid } from '@/features/setups/remote';
+import { useInventory } from '@/features/setups/useInventory';
 import { SLOT_LABELS, type SetupDraft, type SlotId } from '@/domain/setup/types';
 import { cn } from '@/lib/cn';
 
@@ -133,18 +126,52 @@ export function EquipmentModulePage() {
 
 function BuilderTab() {
   const [draft, setDraft] = useState<SetupDraft>(emptyDraft);
-  const [, force] = useState(0);
+  const store = useSetups();
 
   return (
-    <SetupBuilder
-      draft={draft}
-      onChange={setDraft}
-      onSave={(meta) => {
-        saveSetup({ ...meta, draft }, new Date().toISOString());
-        force((n) => n + 1);
-      }}
-    />
+    <>
+      <SetupBuilder
+        draft={draft}
+        onChange={setDraft}
+        onSave={(meta) => void store.save({ ...meta, draft })}
+      />
+      <SyncNotice store={store} />
+    </>
   );
+}
+
+/**
+ * Kalıcılık durumu.
+ *
+ * "Kaydedildi" deyip aslında yalnızca tarayıcıya yazmış olmak, kullanıcı
+ * cihaz değiştirdiğinde ortaya çıkan ve sebebi anlaşılmayan bir kayıp
+ * üretir. Nerede durduğunu söylemek bir uyarı değil, dürüstlük.
+ */
+function SyncNotice({ store }: { store: SetupStore }) {
+  if (store.error) {
+    return (
+      <p role="alert" className="mt-2 text-[11px] text-danger">
+        Veritabanına yazılamadı ({store.error}). Setup tarayıcınızda duruyor;
+        bir sonraki girişte yeniden denenecek.
+      </p>
+    );
+  }
+
+  if (!store.durable) {
+    return (
+      <p className="mt-2 text-[11px] text-muted-foreground">
+        Setup’larınız yalnızca bu tarayıcıda saklanıyor.{' '}
+        <Link to="/giris" className="text-primary hover:underline">
+          Giriş yaparsanız
+        </Link>{' '}
+        hesabınıza kaydedilir ve diğer cihazlarınızda da görünür.
+      </p>
+    );
+  }
+
+  return store.syncing ? (
+    <p className="mt-2 text-[11px] text-faint">Hesabınızla eşitleniyor…</p>
+  ) : null;
 }
 
 /* ══════════════════════ Katalog ══════════════════════ */
@@ -258,11 +285,8 @@ function CatalogTab() {
 /* ══════════════════════ Setup'larım ══════════════════════ */
 
 function SetupsTab() {
-  /* `version` yalnızca yeniden okumayı tetikliyor; listeyi memoize etmiyoruz
-     çünkü kaynak localStorage ve her render'da taze okunması gerekiyor. */
-  const [, setVersion] = useState(0);
-  const setups = listSetups();
-  const refresh = () => setVersion((n) => n + 1);
+  const store = useSetups();
+  const setups = store.setups;
 
   if (setups.length === 0) {
     return (
@@ -274,22 +298,25 @@ function SetupsTab() {
   }
 
   return (
-    <ul className="grid gap-2 sm:grid-cols-2">
-      {setups.map((setup) => (
-        <li key={setup.id}>
-          <SetupCard setup={setup} onChange={refresh} />
-        </li>
-      ))}
-    </ul>
+    <>
+      <ul className="grid gap-2 sm:grid-cols-2">
+        {setups.map((setup) => (
+          <li key={setup.id}>
+            <SetupCard setup={setup} store={store} />
+          </li>
+        ))}
+      </ul>
+      <SyncNotice store={store} />
+    </>
   );
 }
 
 function SetupCard({
   setup,
-  onChange,
+  store,
 }: {
   setup: SavedSetup;
-  onChange: () => void;
+  store: SetupStore;
 }) {
   const catalog = useEquipmentCatalog();
   const parts = (Object.entries(setup.draft.slots) as [SlotId, string][])
@@ -333,30 +360,28 @@ function SetupCard({
         <Button
           size="sm"
           variant="secondary"
-          onClick={() => {
-            setDefaultSetup(setup.id);
-            onChange();
-          }}
+          onClick={() => void store.makeDefault(setup.id)}
         >
           Varsayılan yap
         </Button>
+        {/* Paylaşım bağlantısı yalnızca veritabanına yazılmış kayıtlar
+            için anlamlı: yerel kimlik karşı tarafta hiçbir şey açmaz. */}
+        {isUuid(setup.id) && (
+          <ButtonLink to={`/setup/${setup.id}`} size="sm" variant="ghost">
+            Aç / paylaş
+          </ButtonLink>
+        )}
         <Button
           size="sm"
           variant="ghost"
-          onClick={() => {
-            duplicateSetup(setup.id, new Date().toISOString());
-            onChange();
-          }}
+          onClick={() => void store.duplicate(setup.id)}
         >
           Çoğalt
         </Button>
         <Button
           size="sm"
           variant="danger"
-          onClick={() => {
-            deleteSetup(setup.id);
-            onChange();
-          }}
+          onClick={() => void store.remove(setup.id)}
         >
           Sil
         </Button>
@@ -375,12 +400,10 @@ function SetupCard({
 function InventoryTab() {
   const catalog = useEquipmentCatalog();
   const { user } = useAuth();
-  const [, setVersion] = useState(0);
   const [query, setQuery] = useState('');
 
-  /* Envanter de localStorage'dan; memoize edilirse "ekle" tıklamasından
-     sonra liste eski hâlinde kalır. */
-  const owned = listOwned();
+  const inventory = useInventory();
+  const owned = inventory.owned;
   const ownedSet = new Set(owned);
 
   const results = useMemo(() => {
@@ -417,10 +440,7 @@ function InventoryTab() {
               <li key={m.slug}>
                 <button
                   type="button"
-                  onClick={() => {
-                    toggleOwned(m.slug);
-                    setVersion((n) => n + 1);
-                  }}
+                  onClick={() => void inventory.toggle(m.slug)}
                   className="flex w-full items-center gap-2 border-b border-border px-2.5 py-2 text-left transition-colors last:border-0 hover:bg-surface-2"
                 >
                   <EquipmentGlyph
@@ -477,10 +497,7 @@ function InventoryTab() {
               <Button
                 size="sm"
                 variant="ghost"
-                onClick={() => {
-                  removeOwned(m.slug);
-                  setVersion((n) => n + 1);
-                }}
+                onClick={() => void inventory.toggle(m.slug)}
               >
                 Çıkar
               </Button>

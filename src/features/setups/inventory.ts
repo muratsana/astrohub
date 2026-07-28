@@ -5,9 +5,9 @@
  * saklanıyor: modelin teknik verisi katalogda düzeldiğinde envanterdeki
  * kayıt da düzeliyor.
  *
- * Şu an tarayıcıda. Hesap sistemi bağlandığında aynı arayüzle
- * `user_equipment` tablosuna taşınacak — bu yüzden fonksiyonlar senkron
- * değil de tek yönlü tutuldu ve dışarıya yalnızca slug veriyor.
+ * BU DOSYA YEREL DEPO. Üstünde `useInventory` var: oturum varsa
+ * `user_equipment` tablosuyla eşitliyor. Yerel katman kalıyor çünkü
+ * ekipman işaretlemek için hesap gerekmiyor.
  */
 
 const STORAGE_KEY = 'astrohub:owned-equipment';
@@ -53,4 +53,9 @@ export function toggleOwned(slug: string): boolean {
 
 export function removeOwned(slug: string): void {
   write(read().filter((s) => s !== slug));
+}
+
+/** Listeyi olduğu gibi değiştirir — senkronizasyon katmanı için. */
+export function replaceOwned(slugs: string[]): void {
+  write(slugs);
 }
