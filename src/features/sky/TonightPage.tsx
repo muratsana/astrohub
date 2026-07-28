@@ -201,7 +201,9 @@ export function TonightPage() {
                 ? `${Math.round(weather.temperature)}°C · nem %${Math.round(weather.humidity)}`
                 : conditions.status === 'loading'
                   ? 'alınıyor…'
-                  : 'servise ulaşılamadı'
+                  : conditions.status === 'offline'
+                    ? 'önizlemede dış servis kapalı'
+                    : 'servise ulaşılamadı'
             }
             tone="cold"
           />

@@ -1,8 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useLocationContext } from '@/features/location/LocationContext';
 import { fetchSkyConditions, type SkyConditions } from './openMeteo';
+import { hasNetworkAccess } from '@/lib/runtime';
 
-export type SkyStatus = 'idle' | 'loading' | 'ready' | 'error';
+/**
+ * `offline`: dış istek yapılamayan bir derlemede çalışıyoruz (tek dosya
+ * önizleme). `error`den ayrı tutuluyor çünkü kullanıcıya söylenecek şey
+ * farklı — beklemek ya da tekrar denemek bu durumda işe yaramaz.
+ */
+export type SkyStatus = 'idle' | 'loading' | 'ready' | 'error' | 'offline';
 
 interface SkyState {
   status: SkyStatus;
@@ -43,6 +49,11 @@ export function useSkyConditions(): SkyState {
   });
 
   useEffect(() => {
+    if (!hasNetworkAccess) {
+      setState({ status: 'offline', data: null });
+      return;
+    }
+
     let active = true;
 
     const hit = cache.get(key);

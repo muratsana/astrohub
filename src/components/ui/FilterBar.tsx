@@ -38,7 +38,15 @@ export function FilterBar({
   );
 }
 
-/** Filtre şeridi hücresi: üstte büyük harf etiket, altta kontrol. */
+/**
+ * Filtre şeridi hücresi: üstte etiket, altta kontrol.
+ *
+ * ODAK HALKASI HÜCREYE AİT, KONTROLE DEĞİL. Kontrolün kendi halkası,
+ * hücrenin içinde yüzen yuvarlak köşeli ikinci bir kutu üretiyordu —
+ * şerit "hücrelere bölünmüş tek panel" olmaktan çıkıp iç içe kutulara
+ * dönüşüyordu. Halka kaldırılmadı, yeri değiştirildi: `inset` gölge
+ * hücrenin tam sınırına oturur ve odak §6.7'deki gibi her zaman görünür.
+ */
 export function FilterCell({
   label,
   htmlFor,
@@ -51,7 +59,13 @@ export function FilterCell({
   className?: string;
 }) {
   return (
-    <div className={cn('bg-surface-1 px-3 pb-1 pt-1.5', className)}>
+    <div
+      className={cn(
+        'bg-surface-1 px-3 pb-1.5 pt-1.5',
+        'has-[:focus-visible]:shadow-[inset_0_0_0_2px_var(--color-primary)]',
+        className
+      )}
+    >
       <label htmlFor={htmlFor} className="label block">
         {label}
       </label>
@@ -65,7 +79,8 @@ export function FilterCell({
  * çerçeveyi hücre çizer; alan yalnızca içine yazılan değerdir.
  */
 export const filterControlClass =
-  'h-8 border-0 bg-transparent px-0 text-[12px] focus:bg-transparent';
+  'h-8 w-full rounded-none border-0 bg-transparent px-0 text-[12px] ' +
+  'focus:bg-transparent focus-visible:outline-none';
 
 /**
  * Onay kutusu hücresi. Etiket ve kutu aynı satırda; hücre yüksekliği
@@ -85,7 +100,13 @@ export function FilterToggle({
   className?: string;
 }) {
   return (
-    <div className={cn('flex items-center bg-surface-1 px-3 py-2.5', className)}>
+    <div
+      className={cn(
+        'flex items-center bg-surface-1 px-3 py-2.5',
+        'has-[:focus-visible]:shadow-[inset_0_0_0_2px_var(--color-primary)]',
+        className
+      )}
+    >
       <label
         htmlFor={id}
         className="label flex cursor-pointer items-center gap-2 text-muted-foreground has-[:checked]:text-foreground"

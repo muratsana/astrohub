@@ -6,6 +6,7 @@ import { ChevronDownIcon } from '@/components/ui/icons';
 import { usePreviewEditor } from '@/features/preview-editor/PreviewEditorContext';
 import type { EditableField, HeroSlide } from '../hero/slides';
 import { cn } from '@/lib/cn';
+import { upperTr } from '@/lib/text';
 
 /**
  * HERO — tam genişlikte slayt gösterisi.
@@ -105,15 +106,22 @@ export function HeroSection() {
             aria-live="polite"
           >
             <div className="max-w-[46ch]">
-              <Editable slide={slide} field="badge">
+              <Editable slide={slide} field="badge" className="w-fit">
                 <span className="inline-block rounded-card bg-primary px-2.5 py-1 text-[10px] font-medium tracking-[0.04em] text-primary-foreground">
                   {slide.badge}
                 </span>
               </Editable>
 
               <Editable slide={slide} field="title" className="mt-5 block">
-                <h1 className="text-[30px] text-foreground sm:text-[42px] lg:text-[50px]">
-                  {slide.title}
+                {/*
+                  Büyük harf CSS ile değil, `tr-TR` yerel ayarıyla JS'te
+                  yapılıyor: `text-transform` sayfanın `lang` bilgisine
+                  bakar ve uygulamayı kendi iskeletine saran ortamlarda o
+                  bilgi bizim değil — "i" harfi "I" olup başlık "KARENIN"
+                  diye çıkıyor. Ayrıntı: lib/text.ts
+                */}
+                <h1 className="caps text-[28px] text-foreground sm:text-[40px] lg:text-[48px]">
+                  {upperTr(slide.title)}
                 </h1>
               </Editable>
 
@@ -123,7 +131,7 @@ export function HeroSection() {
                 </p>
               </Editable>
 
-              <Editable slide={slide} field="ctaLabel" className="mt-7 block">
+              <Editable slide={slide} field="ctaLabel" className="mt-7 block w-fit">
                 <Link
                   to={slide.ctaTo}
                   // Editör açıkken bağlantı gezinmez; tıklama alanı seçer.
@@ -237,6 +245,12 @@ function Editable({
 
   const active = selection?.slideId === slide.id && selection.field === field;
 
+  /*
+   * Sarmalayıcı varsayılan olarak blok: başlık ve alt metin için doğru.
+   * Ama rozet ve CTA gibi içeriği kadar yer kaplayan öğelerde blok
+   * sarmalayıcı, seçim çerçevesini sütunun tamamına yayıyor ve düğmenin
+   * yanında sebepsiz bir dikdörtgen bırakıyordu. Bu iki yer `w-fit` verir.
+   */
   return (
     <div
       role="button"

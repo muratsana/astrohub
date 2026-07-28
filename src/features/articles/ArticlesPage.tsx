@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { Container } from '@/components/ui/Container';
 import { Badge } from '@/components/ui/Badge';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
 import { ViewToggle } from '@/components/ui/ViewToggle';
+import { EditorialList, type EditorialItem } from '@/components/ui/EditorialList';
 import { useViewMode } from '@/components/ui/useViewMode';
 import { cn } from '@/lib/cn';
 import {
@@ -58,6 +58,33 @@ export function ArticlesPage() {
           (category === 'hepsi' || a.category === category)
       ),
     [level, category]
+  );
+
+  /*
+   * Haber, yazı ve etkinlik aynı editöryel düzeni paylaşıyor
+   * (`EditorialList`). Sayfanın işi veriyi o düzenin beklediği alanlara
+   * eşlemek; kart yapısı, manşet ve kolon sayısı orada bir kez tanımlı.
+   */
+  const items: EditorialItem[] = useMemo(
+    () =>
+      result.map((article) => ({
+        slug: article.slug,
+        to: `/yazi/${article.slug}`,
+        title: article.title,
+        summary: article.summary,
+        category: articleCategoryLabels[article.category],
+        meta: article.duration,
+        tint: article.tint,
+        footer: (
+          <div className="flex items-center gap-2">
+            <Badge tone={levelTone(article.level)}>{article.level}</Badge>
+            <span className="tabular text-[10px] text-faint">
+              {article.author}
+            </span>
+          </div>
+        ),
+      })),
+    [result]
   );
 
   return (
@@ -134,51 +161,12 @@ export function ArticlesPage() {
           <ViewToggle mode={view} onChange={setView} />
         </div>
 
-        {result.length === 0 ? (
-          <p className="border border-border bg-surface-1 px-4 py-16 text-center text-[12px] text-muted-foreground">
-            Bu filtrelerle eşleşen yazı yok.
-          </p>
-        ) : (
-          <ul
-            className={cn(
-              view === 'grid'
-                ? 'grid gap-px border border-border bg-border sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
-                : 'grid gap-px border border-border bg-border'
-            )}
-          >
-            {result.map((article, i) => (
-              <li key={article.slug}>
-                <Link
-                  to={`/yazi/${article.slug}`}
-                  className="group flex h-full flex-col bg-surface-1 p-3 transition-colors hover:bg-surface-2"
-                >
-                  <div className="mb-2 flex items-baseline justify-between gap-2">
-                    <span className="tabular label text-primary">
-                      {String(i + 1).padStart(2, '0')}
-                    </span>
-                    <span className="label">
-                      {articleCategoryLabels[article.category]}
-                    </span>
-                  </div>
-
-                  <h2 className="text-[13px] text-foreground transition-colors group-hover:text-primary">
-                    {article.title}
-                  </h2>
-                  <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground">
-                    {article.summary}
-                  </p>
-
-                  <div className="mt-auto flex items-center gap-2 pt-3">
-                    <Badge tone={levelTone(article.level)}>{article.level}</Badge>
-                    <span className="tabular text-[10px] text-faint">
-                      {article.duration}
-                    </span>
-                  </div>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
+        <EditorialList
+          view={view}
+          items={items}
+          leadLabel="Öne çıkan"
+          emptyMessage="Bu filtrelerle eşleşen yazı yok."
+        />
       </Container>
     </>
   );

@@ -1,12 +1,9 @@
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { Container } from '@/components/ui/Container';
-import { Badge } from '@/components/ui/Badge';
-import { PlateFrame } from '@/components/media/PlateFrame';
-import { StarField } from '@/components/media/StarField';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
 import { ViewToggle } from '@/components/ui/ViewToggle';
+import { EditorialList, type EditorialItem } from '@/components/ui/EditorialList';
 import { useViewMode } from '@/components/ui/useViewMode';
 import { cn } from '@/lib/cn';
 import {
@@ -50,7 +47,21 @@ export function NewsPage() {
     [all, category]
   );
 
-  const [lead, ...rest] = result;
+  /* Ortak editöryel düzen — yazı ve etkinlikle aynı kart yapısı. */
+  const items: EditorialItem[] = useMemo(
+    () =>
+      result.map((item) => ({
+        slug: item.slug,
+        to: `/haber/${item.slug}`,
+        title: item.title,
+        summary: item.summary,
+        category: newsCategoryLabels[item.category],
+        meta: formatDate(item.publishedAt),
+        tint: item.tint,
+        footer: <p className="label">Kaynak · {item.source.name}</p>,
+      })),
+    [result]
+  );
 
   return (
     <>
@@ -98,73 +109,11 @@ export function NewsPage() {
         <ViewToggle mode={view} onChange={setView} />
         </div>
 
-        {result.length === 0 ? (
-          <p className="border border-border bg-surface-1 px-4 py-16 text-center text-[12px] text-muted-foreground">
-            Bu kategoride haber yok.
-          </p>
-        ) : (
-          <>
-            {/* Manşet — yalnızca ızgara görünümünde */}
-            {view === 'grid' && (
-            <Link
-              to={`/haber/${lead.slug}`}
-              className="group mb-2.5 grid gap-3.5 rounded-card border border-border bg-surface-1 p-2.5 transition-colors hover:border-border-strong md:grid-cols-[minmax(0,300px)_minmax(0,1fr)]"
-            >
-              <PlateFrame ratio="aspect-[16/9]" badge={<span className="rounded-[2px] border border-primary/50 bg-primary/15 px-1.5 py-0.5 text-[9px] tracking-[0.02em] text-primary backdrop-blur-sm">Manşet</span>}>
-                <StarField seed={lead.slug} tint={lead.tint} density={1.1} />
-              </PlateFrame>
-
-              <div className="flex flex-col py-1 pr-1">
-                <div className="mb-2 flex flex-wrap items-center gap-2">
-                  <Badge tone="primary">{newsCategoryLabels[lead.category]}</Badge>
-                  <span className="tabular text-[10.5px] text-faint">
-                    {formatDate(lead.publishedAt)}
-                  </span>
-                </div>
-                <h2 className="text-[18px] text-foreground transition-colors group-hover:text-primary sm:text-[21px]">
-                  {lead.title}
-                </h2>
-                <p className="mt-2.5 text-[12px] leading-relaxed text-muted-foreground">
-                  {lead.summary}
-                </p>
-                <p className="label mt-auto pt-3">Kaynak · {lead.source.name}</p>
-              </div>
-            </Link>
-            )}
-
-            {/* Kalanlar */}
-            <ul
-              className={cn(
-                view === 'grid'
-                  ? 'grid gap-px border border-border bg-border sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
-                  : 'grid gap-px border border-border bg-border'
-              )}
-            >
-              {(view === 'grid' ? rest : result).map((item) => (
-                <li key={item.slug}>
-                  <Link
-                    to={`/haber/${item.slug}`}
-                    className="group flex h-full flex-col bg-surface-1 p-3 transition-colors hover:bg-surface-2"
-                  >
-                    <div className="mb-2 flex flex-wrap items-center gap-2">
-                      <Badge>{newsCategoryLabels[item.category]}</Badge>
-                      <span className="tabular text-[10px] text-faint">
-                        {formatDate(item.publishedAt)}
-                      </span>
-                    </div>
-                    <h2 className="text-[13px] text-foreground transition-colors group-hover:text-primary">
-                      {item.title}
-                    </h2>
-                    <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground">
-                      {item.summary}
-                    </p>
-                    <p className="label mt-auto pt-3">{item.source.name}</p>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </>
-        )}
+        <EditorialList
+          view={view}
+          items={items}
+          emptyMessage="Bu kategoride haber yok."
+        />
       </Container>
     </>
   );

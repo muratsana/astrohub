@@ -39,6 +39,15 @@ function renderHome() {
   );
 }
 
+/**
+ * Hero başlığı ekranda Türkçeye duyarlı biçimde büyütülür ("karenin" →
+ * "KARENİN"); erişilebilir ad da bu metindir. Varsayılan yerel ayarla
+ * büyütülse "KARENIN" çıkardı — testin asıl koruduğu şey bu.
+ */
+function heroName(title: string): string {
+  return title.toLocaleUpperCase('tr-TR');
+}
+
 function carousel() {
   return screen.getByRole('region', { name: /astrohub modülleri/i });
 }
@@ -49,7 +58,7 @@ describe('HomePage · hero', () => {
     expect(
       screen.getByRole('heading', {
         level: 1,
-        name: defaultHeroSlides[0].title,
+        name: heroName(defaultHeroSlides[0].title),
       })
     ).toBeInTheDocument();
   });
@@ -68,7 +77,7 @@ describe('HomePage · hero', () => {
     expect(
       screen.getByRole('heading', {
         level: 1,
-        name: defaultHeroSlides[1].title,
+        name: heroName(defaultHeroSlides[1].title),
       })
     ).toBeInTheDocument();
   });
@@ -80,7 +89,7 @@ describe('HomePage · hero', () => {
     );
     const last = defaultHeroSlides[defaultHeroSlides.length - 1];
     expect(
-      screen.getByRole('heading', { level: 1, name: last.title })
+      screen.getByRole('heading', { level: 1, name: heroName(last.title) })
     ).toBeInTheDocument();
   });
 
@@ -91,7 +100,7 @@ describe('HomePage · hero', () => {
     expect(
       screen.getByRole('heading', {
         level: 1,
-        name: defaultHeroSlides[2].title,
+        name: heroName(defaultHeroSlides[2].title),
       })
     ).toBeInTheDocument();
     expect(tabs[2]).toHaveAttribute('aria-selected', 'true');

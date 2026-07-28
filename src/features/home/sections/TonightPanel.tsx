@@ -200,7 +200,12 @@ export function TonightPanel() {
                   ? `${Math.round(weather.temperature)}°C · nem %${Math.round(weather.humidity)}`
                   : conditions.status === 'loading'
                     ? 'alınıyor…'
-                    : 'servise ulaşılamadı'
+                    : conditions.status === 'offline'
+                      // Tek dosya önizlemede dış istek yapılamaz; "servise
+                      // ulaşılamadı" demek burada yanlış olurdu — servis
+                      // ayakta, isteği yapan derleme kapalı.
+                      ? 'önizlemede dış servis kapalı'
+                      : 'servise ulaşılamadı'
               }
               tone="cold"
             />
