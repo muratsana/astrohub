@@ -43,60 +43,87 @@ export function StatusBar() {
   const { night, moon } = sky;
   const conditions = useSkyConditions();
 
+  /*
+    ŞERİT SAYFANIN TAM ORTASINDA.
+
+    Önce konum seçicisinin sağında `flex-1` bir kutuydu ve okumalar o
+    kutunun soluna yaslanıyordu; şerit görsel olarak sağa kaçmış
+    duruyordu. Ortalamanın doğru yolu `justify-center` değil: o da
+    yalnızca kalan alanı ortalar, yani seçicinin genişliği kadar sağa
+    kayar. Geniş ekranda okumalar mutlak konumla sayfanın gerçek
+    ortasına oturuyor.
+
+    Dar ekranda mutlak konum işe yaramaz (okumalar seçiciyle çakışır),
+    orada akış içinde kaydırılabilir şerit kalıyor. İçerik iki yerde
+    de aynı — tek bir değişkenden geliyor.
+  */
+  const readouts = (
+    <>
+      <InlineReadout
+        label="Ay"
+        value={`%${Math.round(moon.illumination * 100)} ${moon.name.toLocaleLowerCase('tr-TR')}`}
+        tone="primary"
+      />
+
+      <InlineReadout
+        label="Astr. karanlık"
+        value={
+          night.neverDark
+            ? 'oluşmuyor'
+            : `${formatClock(night.start, location.timeZone)} → ${formatClock(night.end, location.timeZone)}`
+        }
+        tone="cold"
+      />
+
+      <InlineReadout
+        label="Süre"
+        value={formatDuration(night.durationMinutes)}
+      />
+
+      <InlineReadout
+        label="Bulut"
+        value={
+          conditions.data
+            ? `%${Math.round(conditions.data.cloudCover)}`
+            : conditions.status === 'loading'
+              ? '…'
+              : '—'
+        }
+        tone="cold"
+      />
+
+      <InlineReadout
+        label="Seeing"
+        value={
+          conditions.data
+            ? seeingLabel(conditions.data.seeing.index)
+            : conditions.status === 'loading'
+              ? '…'
+              : '—'
+        }
+        tone="primary"
+      />
+    </>
+  );
+
   return (
     <div className="bg-background">
       <Container>
-        <div className="flex h-8 items-center gap-3 border-b border-border">
+        <div className="relative flex h-8 items-center gap-3 border-b border-border">
           {/* Kaydırma bağlamının dışında — açılır menü kırpılmaz */}
           <LocationPicker />
 
-          <span aria-hidden className="h-3 w-px shrink-0 bg-border" />
+          <span aria-hidden className="h-3 w-px shrink-0 bg-border lg:hidden" />
 
-          <div className="flex flex-1 items-center gap-x-5 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <InlineReadout
-              label="Ay"
-              value={`%${Math.round(moon.illumination * 100)} ${moon.name.toLocaleLowerCase('tr-TR')}`}
-              tone="primary"
-            />
+          <div
+            aria-hidden
+            className="pointer-events-none absolute left-1/2 hidden -translate-x-1/2 items-center gap-x-6 whitespace-nowrap lg:flex"
+          >
+            {readouts}
+          </div>
 
-            <InlineReadout
-              label="Astr. karanlık"
-              value={
-                night.neverDark
-                  ? 'oluşmuyor'
-                  : `${formatClock(night.start, location.timeZone)} → ${formatClock(night.end, location.timeZone)}`
-              }
-              tone="cold"
-            />
-
-            <InlineReadout
-              label="Süre"
-              value={formatDuration(night.durationMinutes)}
-            />
-
-            <InlineReadout
-              label="Bulut"
-              value={
-                conditions.data
-                  ? `%${Math.round(conditions.data.cloudCover)}`
-                  : conditions.status === 'loading'
-                    ? '…'
-                    : '—'
-              }
-              tone="cold"
-            />
-
-            <InlineReadout
-              label="Seeing"
-              value={
-                conditions.data
-                  ? seeingLabel(conditions.data.seeing.index)
-                  : conditions.status === 'loading'
-                    ? '…'
-                    : '—'
-              }
-              tone="primary"
-            />
+          <div className="flex flex-1 items-center gap-x-5 overflow-x-auto whitespace-nowrap [scrollbar-width:none] lg:hidden [&::-webkit-scrollbar]:hidden">
+            {readouts}
           </div>
         </div>
       </Container>

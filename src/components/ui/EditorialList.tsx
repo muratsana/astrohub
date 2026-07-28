@@ -166,10 +166,12 @@ function EditorialCard({ item }: { item: EditorialItem }) {
         'transition-colors hover:border-border-strong'
       )}
     >
-      <PlateFrame
-        ratio="aspect-[16/9]"
-        className="shrink-0 rounded-none border-0 border-b border-border"
-      >
+      {/* Oran galeri karosuyla aynı (4:3, PlateFrame varsayılanı):
+          site genelinde ızgara kartlarının tek bir ölçüsü var. Bir
+          modülün 16:9 kalması, aynı sayfada iki farklı kart yüksekliği
+          demekti. Üstteki geniş "öne çıkan" kart bunun dışında —
+          o bir ızgara karosu değil, tam genişlik bir manşet. */}
+      <PlateFrame className="shrink-0 rounded-none border-0 border-b border-border">
         <RemoteImage
           src={item.imageUrl}
           alt={item.title}

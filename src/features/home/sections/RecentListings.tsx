@@ -15,8 +15,13 @@ import { equipmentCategoryLabels } from '@/features/equipment/data';
  * alışveriş değil: önce gökyüzü (bu gece), sonra topluluk (galeri,
  * haber, etkinlik), en sonda ikinci el. Sıra bir öncelik beyanı.
  *
- * Dört ilan gösteriliyor, tarihe göre en yeniler. Fiyat karttaki en
- * güçlü öğe — ikinci el ekipmanda ilk bakılan şey o.
+ * IZGARA GALERİ SATIRIYLA AYNI. Önce dört ilan, 16:9 görselle dört
+ * kolonda duruyordu; hemen üstündeki galeri satırı beş kolon ve 4:3'tü.
+ * İki şerit yan yana geldiğinde kart boyları tutmuyor, sayfa
+ * hizalanmamış görünüyordu. Artık kolon sayısı, oran ve iç ölçüler
+ * galeriyle birebir aynı — beş ilan, beş karo.
+ *
+ * Fiyat karttaki en güçlü öğe — ikinci el ekipmanda ilk bakılan şey o.
  *
  * Görsel yok: ilan fotoğrafları satıcıya ait ve medya hattı (Faz 2)
  * devreye girene kadar yükleme yok. Yıldız alanı yer tutuyor;
@@ -25,7 +30,7 @@ import { equipmentCategoryLabels } from '@/features/equipment/data';
 export function RecentListings() {
   const recent = [...listings]
     .sort((a, b) => new Date(b.postedAt).getTime() - new Date(a.postedAt).getTime())
-    .slice(0, 4);
+    .slice(0, 5);
 
   return (
     <Container className="py-9 sm:py-11">
@@ -42,7 +47,7 @@ export function RecentListings() {
           Yayında ilan yok.
         </p>
       ) : (
-        <ul className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
+        <ul className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5">
           {recent.map((listing) => (
             <li key={listing.slug}>
               <Link
@@ -50,19 +55,11 @@ export function RecentListings() {
                 className="group flex h-full flex-col rounded-card border border-border bg-surface-1 transition-colors hover:border-border-strong"
               >
                 <PlateFrame
-                  ratio="aspect-[16/9]"
-                  className="border-0 border-b border-border"
+                  className="shrink-0 border-0 border-b border-border"
                   badge={
                     <Badge tone="muted" className="bg-background/85">
                       {equipmentCategoryLabels[listing.category]}
                     </Badge>
-                  }
-                  flag={
-                    listing.seller.verified ? (
-                      <Badge tone="cold" className="bg-background/85">
-                        Doğrulanmış
-                      </Badge>
-                    ) : undefined
                   }
                 >
                   <StarField
@@ -78,14 +75,10 @@ export function RecentListings() {
                   <p className="tabular mt-1.5 font-display text-[17px] font-bold leading-none text-primary">
                     {listing.price.toLocaleString('tr-TR')} ₺
                   </p>
-                  <p className="tabular mt-1 truncate text-[10px] text-muted-foreground">
+                  <p className="tabular mt-auto truncate pt-1 text-[10px] text-muted-foreground">
                     {listing.city} · @{listing.seller.username} · ★{' '}
                     {listing.seller.rating.toFixed(1)}
                   </p>
-                  <div className="mt-auto flex flex-wrap gap-1 pt-2">
-                    <Badge>{listing.condition}</Badge>
-                    {listing.hasInvoice && <Badge tone="success">Faturalı</Badge>}
-                  </div>
                 </div>
               </Link>
             </li>

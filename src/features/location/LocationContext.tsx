@@ -125,26 +125,6 @@ export function LocationProvider({ children }: { children: ReactNode }) {
     () => readStored()?.permission ?? 'unasked'
   );
 
-  // Tarayıcı izni daha önce kalıcı olarak verilmişse tekrar sormaya gerek yok.
-  useEffect(() => {
-    if (permission !== 'unasked' || !navigator.permissions?.query) return;
-    let active = true;
-
-    navigator.permissions
-      .query({ name: 'geolocation' })
-      .then((status) => {
-        if (!active) return;
-        if (status.state === 'denied') setPermission('denied');
-      })
-      .catch(() => {
-        // Bazı tarayıcılar geolocation sorgusunu desteklemez — sessiz geç.
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [permission]);
-
   const setCity = useCallback((id: string) => {
     const city = findCity(id);
     if (!city) return;
@@ -194,6 +174,52 @@ export function LocationProvider({ children }: { children: ReactNode }) {
       { enableHighAccuracy: false, timeout: 10_000, maximumAge: 600_000 }
     );
   }, []);
+
+  /**
+   * İZİN ZATEN VERİLMİŞSE KONUMU KENDİLİĞİNDEN AL.
+   *
+   * BULUNAN HATA: kullanıcı tarayıcıya konum iznini vermiş olsa bile
+   * uygulama `getCurrentPosition`'ı yalnızca "Konum izni ver" düğmesine
+   * basıldığında çağırıyordu. Düğmeye basılmadıkça — ya da öneri kutusu
+   * bir kez kapatıldıkça — konum sonsuza kadar varsayılan şehirde
+   * (İstanbul) kalıyordu. Ankara'daki bir kullanıcı için sayfadaki her
+   * hesap yanlış enlemde yapılıyordu ve bunun görünür bir işareti yoktu.
+   *
+   * Permissions API "granted" diyorsa tarayıcı bize sormadan konum
+   * verir; ek bir diyalog açılmaz, yani kullanıcıyı rahatsız etmeden
+   * doğru konuma geçilir. "denied" ise öneri kutusunu boşuna
+   * göstermemek için durum işaretlenir.
+   *
+   * KULLANICININ ŞEHİR SEÇİMİ EZİLMEZ: otomatik alma yalnızca hiç seçim
+   * yapılmamışken (`source === 'default'`) çalışır. Elle Ankara seçen
+   * birini cihaz konumuyla başka yere taşımak, seçimi geri almak olurdu.
+   */
+  useEffect(() => {
+    if (!navigator.permissions?.query) return;
+    let active = true;
+
+    navigator.permissions
+      .query({ name: 'geolocation' })
+      .then((status) => {
+        if (!active) return;
+        if (status.state === 'denied') {
+          setPermission((current) =>
+            current === 'unasked' ? 'denied' : current
+          );
+          return;
+        }
+        if (status.state === 'granted' && location.source === 'default') {
+          requestDeviceLocation();
+        }
+      })
+      .catch(() => {
+        // Bazı tarayıcılar geolocation sorgusunu desteklemez — sessiz geç.
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [location.source, requestDeviceLocation]);
 
   const dismissGeolocationOffer = useCallback(() => {
     setPermission('dismissed');

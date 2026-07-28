@@ -44,7 +44,18 @@ export function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
                 to={item.to}
                 className={({ isActive }) =>
                   cn(
-                    'flex items-center border-l border-border px-3 text-[11px] font-medium tracking-[0.03em] transition-colors last:border-r',
+                    /*
+                      HÜCRE GENİŞLİĞİ SABİT, ETİKET ORTALI.
+                      Önce yalnızca `px-3` vardı: "Forum" ile
+                      "Etkinlikler" arasındaki boşluklar etiketin
+                      uzunluğuna göre değiştiği için şerit düzensiz
+                      görünüyordu. Ayırıcı çizgiler bunu daha da
+                      belli ediyordu — eşit aralıklı çizgiler beklenir.
+                      En uzun etiket ("Etkinlikler") 78px; 84px hücre
+                      hepsini nefes payıyla alıyor ve dokuz hücre
+                      1280px'te sığıyor.
+                    */
+                    'flex min-w-[84px] items-center justify-center border-l border-border px-2 text-[11px] font-medium tracking-[0.03em] transition-colors last:border-r',
                     isActive
                       ? 'text-primary shadow-[inset_0_-2px_0_var(--color-primary)]'
                       : 'text-muted-foreground hover:text-foreground'

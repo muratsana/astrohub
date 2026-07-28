@@ -43,17 +43,20 @@ type SortKey = 'yeni' | 'ucuz' | 'pahali';
 /**
  * İKİNCİ EL PAZARYERİ (§7.13).
  *
- * Güven sinyalleri (fatura, doğrulanmış satıcı, değerlendirme) kartın
- * süsü değil filtresidir: ikinci el ekipmanda karar veren şey fiyat kadar
- * satıcının geçmişidir. Bu yüzden "yalnızca faturalı" ve "yalnızca
- * doğrulanmış satıcı" birer onay kutusu olarak duruyor.
+ * Güven sinyali kartın süsü değil filtresidir: "yalnızca faturalı" bir
+ * onay kutusu, kartın altında tekrar eden bir rozet değil. Kart üzerinde
+ * yalnızca ekipman tipi duruyor ve o da görselin üstünde — kartın gövdesi
+ * başlık, fiyat ve satıcıya kalıyor.
+ *
+ * Satıcı doğrulaması kavram olarak kalktı: ilan yalnızca kayıtlı
+ * kullanıcıdan açılıyor, yani hem rozet hem süzgeç herkes için aynı
+ * sonucu veriyordu.
  */
 export function MarketplacePage() {
   const [category, setCategory] = useState<EquipmentCategory | 'hepsi'>('hepsi');
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<SortKey>('yeni');
   const [onlyInvoice, setOnlyInvoice] = useState(false);
-  const [onlyVerified, setOnlyVerified] = useState(false);
   const [view, setView] = useViewMode('ilanlar');
 
   const catalog = useListings();
@@ -63,7 +66,6 @@ export function MarketplacePage() {
 
     if (category !== 'hepsi') items = items.filter((l) => l.category === category);
     if (onlyInvoice) items = items.filter((l) => l.hasInvoice);
-    if (onlyVerified) items = items.filter((l) => l.seller.verified);
 
     const q = search.trim().toLocaleLowerCase('tr-TR');
     if (q) {
@@ -79,7 +81,7 @@ export function MarketplacePage() {
       if (sort === 'pahali') return b.price - a.price;
       return b.postedAt.localeCompare(a.postedAt);
     });
-  }, [catalog.items, category, search, sort, onlyInvoice, onlyVerified]);
+  }, [catalog.items, category, search, sort, onlyInvoice]);
 
   return (
     <>
@@ -138,12 +140,8 @@ export function MarketplacePage() {
             checked={onlyInvoice}
             onChange={setOnlyInvoice}
           />
-          <FilterToggle
-            id="listing-verified"
-            label="Doğrulanmış satıcı"
-            checked={onlyVerified}
-            onChange={setOnlyVerified}
-          />
+          {/* "Doğrulanmış satıcı" süzgeci kalktı: ilan yalnızca kayıtlı
+              kullanıcıdan açılıyor, yani süzgeç herkesi geçiriyordu. */}
         </FilterBar>
 
         <ToolBar
@@ -173,7 +171,10 @@ export function MarketplacePage() {
             hint="Filtreleri gevşetmeyi deneyin. İlan verme akışı hesap sistemiyle birlikte (Faz 1.8) açılacak."
           />
         ) : (
-          <CardGrid view={view}>
+          /* Yoğunluk `tight`: kart ölçüsü galeriyle aynı olsun.
+             Pazaryeri tek başına 4 kolonda duruyordu ve aynı ekranda
+             galeri karolarından belirgin biçimde iri görünüyordu. */
+          <CardGrid view={view} density="tight">
             {result.map((listing) => (
               <li key={listing.slug}>
                 <ListingCard listing={listing} variant={view} />
@@ -198,14 +199,19 @@ function ListingCard({
   listing: Listing;
   variant: 'grid' | 'list';
 }) {
-  const badges = (
-    <div className="flex flex-wrap gap-1">
-      <Badge>{listing.condition}</Badge>
-      {listing.hasInvoice && <Badge tone="success">Faturalı</Badge>}
-      {listing.shippingOk && <Badge tone="cold">Kargo</Badge>}
-    </div>
-  );
+  /*
+    KARTIN ALTINDA ROZET YOK.
 
+    Önce durum / faturalı / kargo üç ayrı rozet olarak duruyordu. Üçü
+    de kartın altında bir satır kaplıyor ama hiçbiri seçim yaptırmıyordu:
+    "çok iyi" ile "sıfır gibi" arasındaki fark satıcı beyanı, "faturalı"
+    zaten filtrede var. Kalan tek ayırt edici bilgi ekipman tipi ve o da
+    görselin üstünde duruyor — kartın gövdesi başlık, fiyat ve satıcıya
+    kalıyor.
+
+    "Doğrulanmış" rozeti de kalktı: ilan yalnızca kayıtlı kullanıcıdan
+    açılıyor, yani rozet herkeste aynı şeyi söylüyordu.
+  */
   if (variant === 'list') {
     return (
       <Link
@@ -224,7 +230,9 @@ function ListingCard({
         <span className="tabular shrink-0 font-display text-[15px] font-bold text-primary">
           {listing.price.toLocaleString('tr-TR')} ₺
         </span>
-        <div className="hidden shrink-0 sm:block">{badges}</div>
+        <Badge tone="muted" className="hidden shrink-0 sm:inline-flex">
+          {equipmentCategoryLabels[listing.category]}
+        </Badge>
       </Link>
     );
   }
@@ -234,15 +242,15 @@ function ListingCard({
       to={`/ilan/${listing.slug}`}
       className="group flex h-full flex-col rounded-card border border-border bg-surface-1 transition-colors hover:border-border-strong"
     >
+      {/* Oran galeri karosuyla aynı (4:3, PlateFrame varsayılanı):
+          16:9 kart, aynı ızgarada galeri karosundan alçak kalıyor ve
+          satır hizası bozuluyordu. */}
       <PlateFrame
-        ratio="aspect-[16/9]"
-        className="border-0 border-b border-border"
-        flag={
-          listing.seller.verified ? (
-            <Badge tone="cold" className="bg-background/85">
-              Doğrulanmış
-            </Badge>
-          ) : undefined
+        className="shrink-0 border-0 border-b border-border"
+        badge={
+          <Badge tone="muted" className="bg-background/85">
+            {equipmentCategoryLabels[listing.category]}
+          </Badge>
         }
       >
         <StarField seed={listing.slug} tint={tintFromSeed(listing.slug)} />
@@ -255,11 +263,10 @@ function ListingCard({
         <p className="tabular mt-1.5 font-display text-[17px] font-bold leading-none text-primary">
           {listing.price.toLocaleString('tr-TR')} ₺
         </p>
-        <p className="tabular mt-1 truncate text-[10px] text-muted-foreground">
+        <p className="tabular mt-auto truncate pt-1 text-[10px] text-muted-foreground">
           {listing.city} · @{listing.seller.username} · ★{' '}
           {listing.seller.rating.toFixed(1)}
         </p>
-        <div className="mt-auto pt-2">{badges}</div>
       </div>
     </Link>
   );
