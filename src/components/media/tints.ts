@@ -48,3 +48,31 @@ export function tintFor(kind: string | undefined): string {
       return '150,185,235';
   }
 }
+
+/**
+ * Tohuma göre kararlı CSS gradyanı.
+ *
+ * Veri dosyalarındaki kayıtlar kendi `gradient` alanını taşır; ama
+ * veritabanından gelen satırlarda böyle bir kolon yok ve olmamalı —
+ * gradyan bir sunum tercihi, içerik değil. Editörün her kayıt için CSS
+ * yazması gerekseydi katalog yönetimi tasarım işine dönerdi.
+ *
+ * Aynı slug her zaman aynı gradyanı verir, yani liste yeniden sıralansa
+ * ya da sayfa yeniden yüklense kart kimliğini korur.
+ */
+const seedGradients = [
+  'linear-gradient(160deg, #0f172a 0%, #1e3a5f 50%, #4c1d95 100%)',
+  'linear-gradient(160deg, #020617 0%, #172554 60%, #312e81 100%)',
+  'linear-gradient(150deg, #0b1120 0%, #1e293b 55%, #334155 100%)',
+  'linear-gradient(165deg, #0c0a1d 0%, #2e1065 55%, #4c1d95 100%)',
+  'linear-gradient(155deg, #0a0f1a 0%, #14532d 60%, #166534 100%)',
+];
+
+export function gradientFromSeed(seed: string): string {
+  let h = 2166136261;
+  for (let i = 0; i < seed.length; i++) {
+    h ^= seed.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return seedGradients[(h >>> 0) % seedGradients.length];
+}

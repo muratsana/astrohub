@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button, ButtonLink } from '@/components/ui/Button';
 import { PhotoPlaceholder } from '@/components/media/PhotoPlaceholder';
 import { PlaceholderPage } from '@/components/PlaceholderPage';
-import { getEventBySlug } from './data';
+import { useEventCatalog } from '@/services/content/events';
 import { eventTypeLabels } from './types';
 import { capacityLabel } from './filtering';
 import { PageMeta } from '@/components/seo/PageMeta';
@@ -17,7 +17,10 @@ import { breadcrumbJsonLd, eventJsonLd } from '@/lib/seo';
  */
 export function EventDetailPage() {
   const { slug } = useParams<{ slug: string }>();
-  const event = slug ? getEventBySlug(slug) : undefined;
+  const catalog = useEventCatalog();
+  const event = slug
+    ? catalog.items.find((item) => item.slug === slug)
+    : undefined;
 
   if (!event) {
     return (

@@ -3,7 +3,7 @@ import { Container } from '@/components/ui/Container';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { PlateFrame } from '@/components/media/PlateFrame';
 import { StarField } from '@/components/media/StarField';
-import { sites } from '@/features/observing-sites/data';
+import { useSiteCatalog } from '@/services/content/sites';
 
 /**
  * KARANLIK GÖKYÜZÜ — en iyi üç gözlem noktası.
@@ -12,7 +12,8 @@ import { sites } from '@/features/observing-sites/data';
  * ayırt eder. Kart yerine geniş yatay levha: nokta bir "saha" olarak okunur.
  */
 export function DarkSkyStrip() {
-  const darkest = [...sites]
+  const catalog = useSiteCatalog();
+  const darkest = [...catalog.items]
     .sort((a, b) => a.bortle - b.bortle || (b.sqm ?? 0) - (a.sqm ?? 0))
     .slice(0, 4);
 
@@ -20,7 +21,7 @@ export function DarkSkyStrip() {
     <Container className="py-9 sm:py-11">
       <SectionHeader
         title="Karanlık Gökyüzü"
-        meta={`${sites.length} nokta`}
+        meta={`${catalog.items.length} nokta`}
         description="Bortle sınıfı, SQM ölçümü, rakım ve kamp olanaklarıyla değerlendirilmiş gözlem noktaları."
         linkTo="/saha"
         linkLabel="Tüm noktalar"

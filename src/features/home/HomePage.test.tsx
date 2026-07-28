@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen, within, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { HomePage } from './HomePage';
 import { ThemeProvider } from '@/features/theme/ThemeContext';
 import { LocationProvider } from '@/features/location/LocationContext';
@@ -12,17 +13,29 @@ import { primaryNav } from '@/app/navigation';
  * Ana sayfa duman testi — bölüm sırası:
  * hero → bu gece → galeri → etkinlik → gökyüzü → haber/yazı → araçlar.
  */
+/*
+ * İçerik kancaları (ekipman, etkinlik, gözlem noktası) TanStack Query
+ * kullanıyor; sağlayıcı olmadan render çöker. Test ortamında Supabase
+ * yapılandırması yok, dolayısıyla sorgu hiç kurulmuyor ve sayfa tohum
+ * veriyle boyanıyor — sağlayıcı yalnızca kancanın bağlamı için gerekli.
+ */
 function renderHome() {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+
   return render(
-    <MemoryRouter>
-      <ThemeProvider>
-        <LocationProvider>
-          <PreviewEditorProvider>
-            <HomePage />
-          </PreviewEditorProvider>
-        </LocationProvider>
-      </ThemeProvider>
-    </MemoryRouter>
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter>
+        <ThemeProvider>
+          <LocationProvider>
+            <PreviewEditorProvider>
+              <HomePage />
+            </PreviewEditorProvider>
+          </LocationProvider>
+        </ThemeProvider>
+      </MemoryRouter>
+    </QueryClientProvider>
   );
 }
 
@@ -34,7 +47,10 @@ describe('HomePage · hero', () => {
   it('ilk slaydın başlığını h1 olarak gösterir', () => {
     renderHome();
     expect(
-      screen.getByRole('heading', { level: 1, name: defaultHeroSlides[0].title })
+      screen.getByRole('heading', {
+        level: 1,
+        name: defaultHeroSlides[0].title,
+      })
     ).toBeInTheDocument();
   });
 
@@ -50,7 +66,10 @@ describe('HomePage · hero', () => {
       within(carousel()).getByRole('button', { name: /sonraki slayt/i })
     );
     expect(
-      screen.getByRole('heading', { level: 1, name: defaultHeroSlides[1].title })
+      screen.getByRole('heading', {
+        level: 1,
+        name: defaultHeroSlides[1].title,
+      })
     ).toBeInTheDocument();
   });
 
@@ -70,7 +89,10 @@ describe('HomePage · hero', () => {
     const tabs = within(carousel()).getAllByRole('tab');
     fireEvent.click(tabs[2]);
     expect(
-      screen.getByRole('heading', { level: 1, name: defaultHeroSlides[2].title })
+      screen.getByRole('heading', {
+        level: 1,
+        name: defaultHeroSlides[2].title,
+      })
     ).toBeInTheDocument();
     expect(tabs[2]).toHaveAttribute('aria-selected', 'true');
   });

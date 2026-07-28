@@ -10,7 +10,7 @@ import { ButtonLink } from '@/components/ui/Button';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
 import { useLocationContext } from '@/features/location/LocationContext';
-import { sites } from '@/features/observing-sites/data';
+import { useSiteCatalog } from '@/services/content/sites';
 import { haversineKm, formatDistance } from '@/domain/geography/distance';
 import {
   bortleScale,
@@ -38,6 +38,7 @@ import { cn } from '@/lib/cn';
  */
 export function LightPollutionPage() {
   const { location } = useLocationContext();
+  const catalog = useSiteCatalog();
   const [bortle, setBortle] = useState<BortleClass>(() =>
     clampBortle(location.bortle ?? 8)
   );
@@ -46,7 +47,7 @@ export function LightPollutionPage() {
 
   const ranked = useMemo(
     () =>
-      sites
+      catalog.items
         .map((site) => {
           const siteSqm = site.sqm ?? typicalSqm(clampBortle(site.bortle));
           return {
@@ -58,7 +59,7 @@ export function LightPollutionPage() {
           };
         })
         .sort((a, b) => b.comparison.ratio - a.comparison.ratio),
-    [homeSqm, location]
+    [catalog.items, homeSqm, location]
   );
 
   const best = ranked[0];

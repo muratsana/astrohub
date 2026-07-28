@@ -4,14 +4,17 @@ import { Badge } from '@/components/ui/Badge';
 import { ButtonLink } from '@/components/ui/Button';
 import { PhotoPlaceholder } from '@/components/media/PhotoPlaceholder';
 import { PlaceholderPage } from '@/components/PlaceholderPage';
-import { getSiteBySlug } from './data';
+import { useSiteCatalog } from '@/services/content/sites';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd, placeJsonLd } from '@/lib/seo';
 
 /** Kamp/gözlem noktası detayı (§7.8): gökyüzü + kamp + erişim kriterleri. */
 export function SiteDetailPage() {
   const { slug } = useParams<{ slug: string }>();
-  const site = slug ? getSiteBySlug(slug) : undefined;
+  const catalog = useSiteCatalog();
+  const site = slug
+    ? catalog.items.find((item) => item.slug === slug)
+    : undefined;
 
   if (!site) {
     return (

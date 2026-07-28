@@ -11,9 +11,9 @@ import { NotFoundPage } from '@/components/NotFoundPage';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd, SITE_URL } from '@/lib/seo';
 import { findCity } from '@/features/location/cities';
-import { events } from '@/features/events/data';
+import { useEventCatalog } from '@/services/content/events';
 import { eventTypeLabels } from '@/features/events/types';
-import { sites } from '@/features/observing-sites/data';
+import { useSiteCatalog } from '@/services/content/sites';
 import { haversineKm, formatDistance } from '@/domain/geography/distance';
 import { nightEntry } from '@/domain/astronomy/nightCalendar';
 import { formatClock, formatDuration } from '@/domain/astronomy/ephemeris';
@@ -41,10 +41,12 @@ export function CityPage() {
   const { pathname } = useLocation();
   const cityId = cityIdFromPath(pathname);
   const city = cityId ? findCity(cityId) : undefined;
+  const siteCatalog = useSiteCatalog();
+  const eventCatalog = useEventCatalog();
 
   const cityEvents = useMemo(() => {
     if (!city) return [];
-    return events
+    return eventCatalog.items
       .filter((event) => {
         if (event.city === city.name) return true;
         if (!event.coords) return false;
@@ -55,15 +57,15 @@ export function CityPage() {
         distanceKm: event.coords ? haversineKm(city, event.coords) : 0,
       }))
       .sort((a, b) => a.event.startsAt.localeCompare(b.event.startsAt));
-  }, [city]);
+  }, [city, eventCatalog.items]);
 
   const nearbySites = useMemo(() => {
     if (!city) return [];
-    return sites
+    return siteCatalog.items
       .map((site) => ({ site, distanceKm: haversineKm(city, site.coords) }))
       .filter((entry) => entry.distanceKm <= NEARBY_KM * 1.5)
       .sort((a, b) => a.distanceKm - b.distanceKm);
-  }, [city]);
+  }, [city, siteCatalog.items]);
 
   const tonight = useMemo(
     () => (city ? nightEntry(new Date(), city.latitude, city.longitude) : null),

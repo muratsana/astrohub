@@ -2,7 +2,7 @@ import { Container } from '@/components/ui/Container';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { Badge } from '@/components/ui/Badge';
 import { DataTable, type Column } from '@/components/ui/DataTable';
-import { events } from '@/features/events/data';
+import { useEventCatalog } from '@/services/content/events';
 import { eventTypeLabels, type AstroEvent } from '@/features/events/types';
 
 /**
@@ -60,7 +60,8 @@ const columns: Column<AstroEvent>[] = [
 
 export function UpcomingEvents() {
   // Tarihe göre sıralı ilk beş etkinlik.
-  const upcoming = [...events]
+  const catalog = useEventCatalog();
+  const upcoming = [...catalog.items]
     .sort(
       (a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime()
     )
@@ -70,7 +71,7 @@ export function UpcomingEvents() {
     <Container className="py-9 sm:py-11">
       <SectionHeader
         title="Yaklaşan Etkinlikler"
-        meta={`${events.length} kayıt`}
+        meta={`${catalog.items.length} kayıt`}
         description="Gözlem şenlikleri, kamplar, halk gözlemleri ve atölyeler — her kayıt kaynağı ve son doğrulama tarihiyle birlikte."
         linkTo="/etkinlikler"
         linkLabel="Takvim"

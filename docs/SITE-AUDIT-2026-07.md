@@ -462,3 +462,75 @@ taşıma sırasında şema değiştirmek, iki kez taşımak demek.
 | `npm run check:preview` | ✅ sağlam, yatay taşma yok |
 | `node scripts/e2e.mjs` | ✅ 19/19 senaryo |
 | Şema kuralları (canlı DB) | ✅ 8/8 |
+
+### 6.11 Beşinci tur — okuma katmanı ve tohum taşıma
+
+Şema kurulduktan sonra sayfalar hâlâ `data.ts` dizilerinden okuyordu.
+Bu tur o bağı veritabanına çeviriyor — ama tohum diziyi **atmadan**.
+
+**Tohum taşıma.** `node scripts/seed.mjs`, tohum dizilerinden SQL üretir
+ve çıktı `supabase/seed/0001_reference_data.sql` olarak repoda durur.
+Elle SQL yazmak yerine üretmenin sebebi: tohum dizisi değişince SQL'i
+yeniden üretmek bir komut, elle yazılmış üç yüz satırı senkron tutmak
+sürekli bir borç. Spec metinlerini typed kolona çeviren ayrıştırma alan
+katmanında (`domain/equipment/specs.ts`) ve tersi de aynı dosyada:
+gidiş-dönüş testi tohum kataloğunun tamamında anahtar/değer kümesinin
+korunduğunu her koşuda doğruluyor.
+
+Fotoğraf ve ilan **tohumlanmadı**: ikisi de `auth.users`'a NOT NULL bağlı,
+tohumlamak sahte hesap açmayı gerektirirdi. Puan ortalaması ve kayıt
+sayısı da yazılmadı — onlar tetikleyicilerin türettiği değerler; demo
+sayıyı gerçek kayda çevirmek olmayan 128 değerlendirmeyi var göstermek
+olurdu.
+
+Canlı veritabanı: 13 ekipman modeli, 7 marka, 8 gök cismi, 15 katalog
+kodu, 4 gözlem noktası + ölçümleri, 15 etkinlik, 42 oturum.
+
+**Okuma deseni.** `useCatalog` tek desen kuruyor: tohum diziyle anında
+boya, veritabanı satırları gelince değiştir. Yükleniyor durumu yok —
+gösterilecek geçerli bir liste zaten var ve iskelet ekran boş kare
+göstermekten başka bir şey yapmaz. Yapılandırma yoksa sorgu hiç kurulmaz
+ve Supabase SDK'sı indirilmez; tek dosya önizleme ile çevrimdışı kabuk
+hiçbir değişiklik olmadan çalışmaya devam ediyor.
+
+Seçim kuralı `selectContent` içinde ve testli:
+
+| Durum | Gösterilen | Not |
+| --- | --- | --- |
+| Satır geldi | veritabanı | otorite odur |
+| Tablo boş | tohum | boş tablo "içerik yok" değil, "henüz taşınmadı" |
+| Okuma hatası | tohum | `degraded` bayrağı kalkar, sayfa not basar |
+| Yapılandırma yok | tohum | arıza değil, tasarlanmış çalışma biçimi |
+
+Sessizce yerel veriye düşmek daha kolaydı ama kullanıcı gördüğü listenin
+güncel olmayabileceğini bilmeden karar veriyor olurdu. `CatalogSourceNote`
+yalnızca **bozulma** hâlinde tek satır basar; yapılandırma yokken hiç
+çıkmaz.
+
+Bağlanan modüller: ekipman (liste + detay), etkinlik (liste, detay,
+harita, ana sayfa şeridi, şehir sayfası), gözlem noktası (liste, detay,
+ışık kirliliği, ana sayfa şeridi, şehir sayfası). Hedef kataloğu bu turda
+bağlanmadı: RA/Dec veritabanında derece, arayüzde `'00h 42m 44s'` biçiminde
+ve ters çevirme kendi testlerini hak eden ayrı bir iş.
+
+**Üst çubuk regresyonu.** Dar bir görünüm alanında (gömülü önizleme paneli)
+üst çubukta gezinme girişi kalmadığı bildirildi. Düz menü `xl` altında
+gizleniyor, "Modüller" düğmesi ise yalnızca lg–xl arasında görünüyordu;
+altındaki genişliklerde gezinme yalnızca `fixed` alt çubuktaydı ve o bağlamda
+görüş dışındaydı. Düğme artık `xl` altında her genişlikte duruyor. Bunun
+390px'te 10px taşma ürettiğini `check-preview` yakaladı; telefonda iki metin
+düğmesi yerine tek "Hesap" girişi bırakıldı. Yeni E2E senaryosu beş
+genişlikte üst çubukta gezinme girişi olduğunu doğruluyor.
+
+### 6.12 Beşinci tur sonrası durum
+
+| Kontrol | Sonuç |
+| --- | --- |
+| `npm run typecheck` | ✅ hatasız |
+| `npm run lint` | ✅ hatasız |
+| `npm test` | ✅ 416 test |
+| `npm run build` | ✅ uyarısız |
+| `npm run check:preview` | ✅ sağlam, yatay taşma yok |
+| `node scripts/e2e.mjs` | ✅ 20/20 senaryo |
+| Şema kuralları (canlı DB) | ✅ 8/8 |
+| `anon` yetki denetimi (canlı DB) | ✅ okur, yazamaz, gizli tabloları göremez |

@@ -15,7 +15,7 @@ import {
   projectToBox,
   formatDistance,
 } from '@/domain/geography/distance';
-import { events } from './data';
+import { useEventCatalog } from '@/services/content/events';
 import { eventTypeLabels, type EventType } from './types';
 import type { AstroEvent } from './types';
 import { cn } from '@/lib/cn';
@@ -44,10 +44,14 @@ export function EventMapPage() {
   const { location } = useLocationContext();
   const [type, setType] = useState<EventType | 'hepsi'>('hepsi');
   const [active, setActive] = useState<string | null>(null);
+  const catalog = useEventCatalog();
 
   const filtered = useMemo(
-    () => (type === 'hepsi' ? events : events.filter((e) => e.type === type)),
-    [type]
+    () =>
+      type === 'hepsi'
+        ? catalog.items
+        : catalog.items.filter((e) => e.type === type),
+    [catalog.items, type]
   );
 
   const { located, unlocated } = useMemo(

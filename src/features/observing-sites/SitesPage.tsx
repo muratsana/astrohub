@@ -8,7 +8,8 @@ import { useViewMode } from '@/components/ui/useViewMode';
 import { PlateFrame } from '@/components/media/PlateFrame';
 import { StarField } from '@/components/media/StarField';
 import { tintFromSeed } from '@/components/media/tints';
-import { sites } from './data';
+import { useSiteCatalog } from '@/services/content/sites';
+import { CatalogSourceNote } from '@/components/ui/CatalogSourceNote';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
 import { cn } from '@/lib/cn';
@@ -24,6 +25,7 @@ import { cn } from '@/lib/cn';
  */
 export function SitesPage() {
   const [view, setView] = useViewMode('saha');
+  const catalog = useSiteCatalog();
 
   return (
     <>
@@ -41,11 +43,13 @@ export function SitesPage() {
           description="Türkiye'nin karanlık gökyüzü noktaları — Bortle/SQM ölçümleri, erişim ve tesis bilgileriyle."
         />
 
+        <CatalogSourceNote selection={catalog} />
+
         <ToolBar
           left={
             <ResultCount
-              current={sites.length}
-              total={sites.length}
+              current={catalog.items.length}
+              total={catalog.items.length}
               noun="nokta"
             />
           }
@@ -53,7 +57,7 @@ export function SitesPage() {
         />
 
         <CardGrid view={view} density="wide">
-          {sites.map((site) => {
+          {catalog.items.map((site) => {
             const facilities = [
               site.facilities.tentArea && 'Çadır',
               site.facilities.caravanOk && 'Karavan',

@@ -17,7 +17,8 @@ import { useViewMode } from '@/components/ui/useViewMode';
 import { PlateFrame } from '@/components/media/PlateFrame';
 import { StarField } from '@/components/media/StarField';
 import { tintFromSeed } from '@/components/media/tints';
-import { events } from './data';
+import { useEventCatalog } from '@/services/content/events';
+import { CatalogSourceNote } from '@/components/ui/CatalogSourceNote';
 import {
   filterEvents,
   defaultEventFilters,
@@ -50,8 +51,15 @@ export function EventsPage() {
    * tercihi hâlâ anlamlı, takvimdeyken hiç değil.
    */
   const [layout, setLayout] = useState<'kart' | 'takvim'>('kart');
-  const cities = useMemo(() => availableEventCities(events), []);
-  const result = useMemo(() => filterEvents(events, filters), [filters]);
+  const catalog = useEventCatalog();
+  const cities = useMemo(
+    () => availableEventCities(catalog.items),
+    [catalog.items]
+  );
+  const result = useMemo(
+    () => filterEvents(catalog.items, filters),
+    [catalog.items, filters]
+  );
 
   function set<K extends keyof EventFilters>(key: K, value: EventFilters[K]) {
     setFilters((f) => ({ ...f, [key]: value }));
@@ -131,11 +139,13 @@ export function EventsPage() {
           />
         </FilterBar>
 
+        <CatalogSourceNote selection={catalog} />
+
         <ToolBar
           left={
             <ResultCount
               current={result.length}
-              total={events.length}
+              total={catalog.items.length}
               noun="etkinlik"
             />
           }
