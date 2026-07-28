@@ -3,7 +3,6 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Badge } from '@/components/ui/Badge';
 import { Panel } from '@/components/ui/Panel';
-import { ButtonLink } from '@/components/ui/Button';
 import { PlayIcon, PauseIcon } from '@/components/ui/icons';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
@@ -30,7 +29,7 @@ export function RadioPage() {
     <>
       <PageMeta
         title="Astrohub Radyo"
-        description="Gece çekimi için kesintisiz çalma listesi. Topluluğun yüklediği kayıtlar ve Spotify parçaları."
+        description="Astrohub'ın gece yayını: çekim boyunca arka planda çalan, editör tarafından programlanmış kesintisiz liste."
         jsonLd={breadcrumbJsonLd([
           { name: 'Ana Sayfa', path: '/' },
           { name: 'Radyo', path: '/radyo' },
@@ -40,7 +39,7 @@ export function RadioPage() {
       <Container className="py-8 sm:py-10">
         <PageHeader
           title="Astrohub Radyo"
-          description="Gece boyunca arka planda çalar. Sayfalar arasında gezinmek yayını kesmez — galeriye geçip geri dönebilirsin."
+          description="Astrohub'ın kendi yayını. Gece boyunca arka planda çalar; sayfalar arasında gezinmek yayını kesmez — galeriye geçip geri dönebilirsin."
           meta={
             tracks.length > 0
               ? `${mp3Count} kayıt · ${spotifyCount} Spotify`
@@ -51,33 +50,39 @@ export function RadioPage() {
         {tracks.length === 0 ? (
           <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,380px)]">
             <EmptyState
-              message="Çalma listesi henüz boş"
-              hint="Radyoya parça eklendiğinde burada listelenir ve alttaki oynatıcıdan kesintisiz çalar."
-              action={
-                <ButtonLink to="/panel" size="sm" variant="secondary">
-                  Panele Git
-                </ButtonLink>
-              }
+              message="Yayın henüz başlamadı"
+              hint="Liste yayına alındığında burada görünür ve alttaki oynatıcıdan kesintisiz çalar."
             />
 
-            <Panel title="Parça nasıl eklenir">
-              <ol className="space-y-3 text-[12px] leading-relaxed text-muted-foreground">
+            <Panel title="Yayın nasıl işler">
+              <ul className="space-y-3 text-[12px] leading-relaxed text-muted-foreground">
                 <li>
-                  <span className="label mb-0.5 block text-cold">01 · MP3</span>
-                  Ses dosyasını Supabase <code className="text-foreground">radio</code>{' '}
-                  bucket'ına yükleyin. Yüklenen kayıtlar sırayla, kesintisiz
-                  çalar; biri bitince sonraki başlar.
+                  <span className="label mb-0.5 block text-cold">
+                    Programı Astrohub yapar
+                  </span>
+                  Radyo bir topluluk kuyruğu değil, sitenin kendi yayını.
+                  Listeyi editör ekibi hazırlar; dinleyiciden parça
+                  yüklenmez. Bunun sebebi lisans: çalınan her kaydın
+                  hakkının kimde olduğunu tek bir yerin izlemesi gerekir,
+                  aksi hâlde sorumluluk kimsede olmayan bir yayın çıkar.
                 </li>
                 <li>
                   <span className="label mb-0.5 block text-cold">
-                    02 · Spotify
+                    Kesintisiz akış
                   </span>
-                  Parçanın paylaşım bağlantısını ekleyin. Spotify parçaları
-                  gömülü oynatıcıda çalar — lisans gereği ham ses akışı üçüncü
-                  taraf oynatıcılara açılmadığı için MP3 sırasına karışamaz ve
+                  Kayıtlar sırayla çalar, biri bitince sonraki başlar.
+                  Oynatıcı kabuk seviyesinde durduğu için rota değişimi
+                  yayını kesmez.
+                </li>
+                <li>
+                  <span className="label mb-0.5 block text-cold">
+                    Spotify parçaları ayrı çalar
+                  </span>
+                  Lisans gereği ham ses akışı üçüncü taraf oynatıcılara
+                  açılmıyor; Spotify kayıtları gömülü oynatıcıda çalar ve
                   bitince otomatik geçiş yapılamaz.
                 </li>
-              </ol>
+              </ul>
             </Panel>
           </div>
         ) : (

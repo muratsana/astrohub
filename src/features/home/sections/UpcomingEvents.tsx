@@ -1,65 +1,24 @@
+import { Link } from 'react-router-dom';
 import { Container } from '@/components/ui/Container';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { Badge } from '@/components/ui/Badge';
-import { DataTable, type Column } from '@/components/ui/DataTable';
 import { useEventCatalog } from '@/services/content/events';
 import { eventTypeLabels, type AstroEvent } from '@/features/events/types';
 
 /**
- * YAKLAŞAN ETKİNLİKLER — tablo görünümü.
+ * YAKLAŞAN ETKİNLİKLER.
  *
- * Kart yerine tablo: etkinlikler karşılaştırılarak okunur (tarih, şehir,
- * ücret, kamp). Kaynak şeffaflığı (§8.4) etkinlik detayında sürer.
+ * Tablo görünümünden ajanda satırına geçildi. Tablo, etkinliğin adını
+ * diğer hücrelerle aynı ağırlıkta gösteriyordu: beş sütunun ortasında,
+ * gövde rengiyle. Oysa satırın taşıdığı asıl bilgi ad ve tarih; şehir,
+ * tür ve nitelik onu **niteleyen** ikinci sıra veri. Yeni düzen bu
+ * hiyerarşiyi ölçü ve renkle kuruyor — ad tam kontrastta ve daha büyük,
+ * gerisi kısılmış.
+ *
+ * Tarih solda kendi bloğunda: gün büyük, ay küçük. Ajandada göz önce
+ * "ne zaman"a bakar, sonra "ne"ye; okuma sırası düzenle aynı olmalı.
  */
-const columns: Column<AstroEvent>[] = [
-  {
-    key: 'date',
-    header: 'Tarih',
-    width: '92px',
-    numeric: true,
-    cell: (e) =>
-      new Date(e.startsAt).toLocaleDateString('tr-TR', {
-        day: '2-digit',
-        month: 'short',
-      }),
-  },
-  {
-    key: 'title',
-    header: 'Etkinlik',
-    cell: (e) => e.title,
-  },
-  {
-    key: 'type',
-    header: 'Tür',
-    hideOnMobile: true,
-    cell: (e) => (
-      <span className="text-muted-foreground">{eventTypeLabels[e.type]}</span>
-    ),
-  },
-  {
-    key: 'city',
-    header: 'Şehir',
-    width: '110px',
-    cell: (e) => <span className="text-cold">{e.city}</span>,
-  },
-  {
-    key: 'flags',
-    header: 'Nitelik',
-    width: '150px',
-    hideOnMobile: true,
-    cell: (e) => (
-      <span className="flex flex-wrap gap-1">
-        <Badge tone={e.free ? 'success' : 'muted'}>
-          {e.free ? 'Ücretsiz' : 'Ücretli'}
-        </Badge>
-        {e.camping && <Badge tone="cold">Kamp</Badge>}
-      </span>
-    ),
-  },
-];
-
 export function UpcomingEvents() {
-  // Tarihe göre sıralı ilk beş etkinlik.
   const catalog = useEventCatalog();
   const upcoming = [...catalog.items]
     .sort(
@@ -77,13 +36,70 @@ export function UpcomingEvents() {
         linkLabel="Takvim"
       />
 
-      <DataTable
-        columns={columns}
-        rows={upcoming}
-        rowKey={(e) => e.slug}
-        rowHref={(e) => `/etkinlik/${e.slug}`}
-        empty="Yaklaşan etkinlik yok."
-      />
+      {upcoming.length === 0 ? (
+        <p className="rounded-card border border-border bg-surface-1 px-3 py-6 text-center text-[12px] text-muted-foreground">
+          Yaklaşan etkinlik yok.
+        </p>
+      ) : (
+        <ul className="overflow-hidden rounded-card border border-border bg-surface-1">
+          {upcoming.map((event) => (
+            <li key={event.slug} className="border-b border-border last:border-0">
+              <EventRow event={event} />
+            </li>
+          ))}
+        </ul>
+      )}
     </Container>
+  );
+}
+
+function EventRow({ event }: { event: AstroEvent }) {
+  const date = new Date(event.startsAt);
+
+  return (
+    <Link
+      to={`/etkinlik/${event.slug}`}
+      className="group flex items-center gap-3 px-3 py-3 transition-colors hover:bg-surface-2 sm:gap-4 sm:px-4"
+    >
+      {/* Tarih bloğu — sabit genişlik, satırlar arası dikey hizayı tutar. */}
+      <span className="tabular flex w-11 shrink-0 flex-col items-center leading-none">
+        <span className="font-display text-[19px] font-bold text-foreground">
+          {date.toLocaleDateString('tr-TR', { day: '2-digit' })}
+        </span>
+        <span className="mt-1 text-[10px] text-muted-foreground">
+          {date.toLocaleDateString('tr-TR', { month: 'short' })}
+        </span>
+      </span>
+
+      <span aria-hidden className="h-9 w-px shrink-0 bg-border" />
+
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-[13.5px] font-medium leading-snug text-foreground transition-colors group-hover:text-primary">
+          {event.title}
+        </span>
+        <span className="mt-0.5 block truncate text-[11px] text-muted-foreground">
+          {eventTypeLabels[event.type]}
+          <span aria-hidden className="px-1.5 text-faint">
+            ·
+          </span>
+          <span className="text-cold">{event.city}</span>
+          {event.venue && (
+            <>
+              <span aria-hidden className="px-1.5 text-faint">
+                ·
+              </span>
+              {event.venue}
+            </>
+          )}
+        </span>
+      </span>
+
+      <span className="hidden shrink-0 items-center gap-1 sm:flex">
+        <Badge tone={event.free ? 'success' : 'muted'}>
+          {event.free ? 'Ücretsiz' : 'Ücretli'}
+        </Badge>
+        {event.camping && <Badge tone="cold">Kamp</Badge>}
+      </span>
+    </Link>
   );
 }

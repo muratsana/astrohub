@@ -61,7 +61,7 @@ export function ThreadPage() {
           actions={
             <span
               className={cn(
-                'rounded-card border px-2.5 py-1 text-[10px] uppercase tracking-[0.12em]',
+                'rounded-card border px-2.5 py-1 text-[10px] tracking-[0.03em]',
                 info.className
               )}
             >

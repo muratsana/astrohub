@@ -46,7 +46,7 @@ export function SectionHeader({
         {linkTo && (
           <Link
             to={linkTo}
-            className="shrink-0 whitespace-nowrap text-[10px] uppercase tracking-[0.16em] text-muted-foreground transition-colors hover:text-primary"
+            className="shrink-0 whitespace-nowrap text-[10px] tracking-[0.04em] text-muted-foreground transition-colors hover:text-primary"
           >
             {linkLabel} →
           </Link>

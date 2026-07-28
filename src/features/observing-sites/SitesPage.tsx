@@ -56,7 +56,7 @@ export function SitesPage() {
           view={{ mode: view, onChange: setView }}
         />
 
-        <CardGrid view={view} density="wide">
+        <CardGrid view={view} density="tight">
           {catalog.items.map((site) => {
             const facilities = [
               site.facilities.tentArea && 'Çadır',
@@ -163,7 +163,7 @@ function BortleBlock({ bortle }: { bortle: number }) {
       >
         {bortle}
       </span>
-      <span className="mt-0.5 text-[9px] uppercase tracking-[0.1em] text-muted-foreground">
+      <span className="mt-0.5 text-[9px] tracking-[0.02em] text-muted-foreground">
         Bortle
       </span>
     </div>

@@ -85,7 +85,7 @@ export function NewsPage() {
               aria-selected={category === c}
               onClick={() => setCategory(c)}
               className={cn(
-                'rounded-card border px-3 py-1.5 text-[10px] uppercase tracking-[0.14em] transition-colors',
+                'rounded-card border px-3 py-1.5 text-[10px] tracking-[0.03em] transition-colors',
                 category === c
                   ? 'border-primary text-primary'
                   : 'border-border text-muted-foreground hover:border-border-strong hover:text-foreground'
@@ -110,7 +110,7 @@ export function NewsPage() {
               to={`/haber/${lead.slug}`}
               className="group mb-2.5 grid gap-3.5 rounded-card border border-border bg-surface-1 p-2.5 transition-colors hover:border-border-strong md:grid-cols-[minmax(0,300px)_minmax(0,1fr)]"
             >
-              <PlateFrame ratio="aspect-[16/9]" badge={<span className="rounded-[2px] border border-primary/50 bg-primary/15 px-1.5 py-0.5 text-[9px] uppercase tracking-[0.1em] text-primary backdrop-blur-sm">Manşet</span>}>
+              <PlateFrame ratio="aspect-[16/9]" badge={<span className="rounded-[2px] border border-primary/50 bg-primary/15 px-1.5 py-0.5 text-[9px] tracking-[0.02em] text-primary backdrop-blur-sm">Manşet</span>}>
                 <StarField seed={lead.slug} tint={lead.tint} density={1.1} />
               </PlateFrame>
 

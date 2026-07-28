@@ -65,7 +65,7 @@ export function AppShell() {
       {/* Klavye kullanıcıları için içeriğe atlama bağlantısı (§6.7) */}
       <a
         href="#icerik"
-        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[60] focus:rounded-card focus:bg-primary focus:px-4 focus:py-2 focus:text-[11px] focus:font-medium focus:uppercase focus:tracking-[0.14em] focus:text-primary-foreground"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[60] focus:rounded-card focus:bg-primary focus:px-4 focus:py-2 focus:text-[11px] focus:font-medium focus:tracking-[0.03em] focus:text-primary-foreground"
       >
         İçeriğe atla
       </a>

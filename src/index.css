@@ -122,15 +122,21 @@
   }
 
   /*
-   * Başlıklar sıkışık grotesk, büyük harf. Monospace gövdenin yanında
-   * ölçü farkı yaratır — terminalin "etiket / değer" ritmi burada kurulur.
+   * Başlıklar sıkışık grotesk. Büyük harf dönüşümü KALDIRILDI: sayfa
+   * boyunca her başlığın ve her etiketin büyük harf olması, okuma
+   * hızını düşürüyor ve uzun Türkçe başlıkları (İ, Ğ, Ü işaretleriyle)
+   * bir blok hâline getiriyordu. Ölçü farkını artık dönüşüm değil,
+   * yazı ailesi ve ağırlık kuruyor.
+   *
+   * Büyük harf gereken tekil yerler (marka kelime markası, galeri kart
+   * başlıkları) `.caps` yardımcı sınıfını açıkça ister — kural olmaktan
+   * çıkıp istisna oldu.
    */
   h1,
   h2,
   h3 {
     font-family: var(--font-display);
     font-weight: 700;
-    text-transform: uppercase;
     letter-spacing: -0.005em;
     /*
      * Türkçe büyük harfler cap yüksekliğinin ÜSTÜNE çıkan işaretler taşır:
@@ -148,15 +154,29 @@
   }
 
   /*
-   * Terminal etiketi: küçük, geniş harf aralıklı, büyük harf.
-   * §6.3 gereği 10px'in altına inmez.
+   * Terminal etiketi: küçük ve hafifçe aralıklı.
+   *
+   * Büyük harf ve 0.16em aralık kaldırıldı. Bir arayüzde her etiketin
+   * büyük harf olması "vurgu" değil gürültüdür: her şey vurgulanınca
+   * hiçbir şey vurgulanmaz. Etiketi gövdeden ayıran şey artık dönüşüm
+   * değil renk ve ölçü. §6.3 gereği 11px'in altına inmez.
    */
   .label {
-    font-size: 10px;
-    line-height: 1.4;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
+    font-size: 11px;
+    line-height: 1.45;
+    letter-spacing: 0.04em;
     color: var(--color-muted-foreground);
+  }
+
+  /*
+   * Büyük harf istisnası. Yalnızca kimlik taşıyan iki yerde kullanılır:
+   * marka kelime markası ve galeri kart başlıkları (fotoğrafın künye
+   * plakası gibi okunur). Yeni bir yere eklemeden önce sorulacak soru:
+   * bu metin bir "etiket" mi, yoksa okunacak bir cümle mi?
+   */
+  .caps {
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
   }
 
   /* Focus ring hiçbir temada kaldırılmaz (§6.7) */

@@ -58,7 +58,7 @@ export function MobileNav({ onOpenNav }: { onOpenNav: () => void }) {
         <button
           type="button"
           onClick={onOpenNav}
-          className="flex flex-1 flex-col items-center gap-1 border-l border-border py-2 text-[9px] uppercase tracking-[0.1em] text-muted-foreground transition-colors hover:text-foreground"
+          className="flex flex-1 flex-col items-center gap-1 border-l border-border py-2 text-[9px] tracking-[0.02em] text-muted-foreground transition-colors hover:text-foreground"
         >
           <MenuIcon className="h-4.5 w-4.5" />
           Daha
@@ -76,7 +76,7 @@ function MobileNavLink({ to, label }: { to: string; label: string }) {
       end={to === '/'}
       className={({ isActive }) =>
         cn(
-          'flex flex-1 flex-col items-center gap-1 border-l border-border py-2 text-[9px] uppercase tracking-[0.1em] transition-colors first:border-l-0',
+          'flex flex-1 flex-col items-center gap-1 border-l border-border py-2 text-[9px] tracking-[0.02em] transition-colors first:border-l-0',
           isActive
             ? 'text-primary shadow-[inset_0_2px_0_var(--color-primary)]'
             : 'text-muted-foreground hover:text-foreground'

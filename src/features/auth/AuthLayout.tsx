@@ -62,7 +62,7 @@ export function AuthLayout({
         <p className="mt-2 text-center">
           <Link
             to="/"
-            className="text-[10px] uppercase tracking-[0.16em] text-faint transition-colors hover:text-foreground"
+            className="text-[10px] tracking-[0.04em] text-faint transition-colors hover:text-foreground"
           >
             ← Ana sayfa
           </Link>

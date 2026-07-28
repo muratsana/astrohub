@@ -78,7 +78,7 @@ export function ForumPage() {
             aria-selected={category === 'hepsi'}
             onClick={() => setCategory('hepsi')}
             className={cn(
-              'rounded-card border px-2.5 py-1 text-[10px] uppercase tracking-[0.12em] transition-colors',
+              'rounded-card border px-2.5 py-1 text-[10px] tracking-[0.03em] transition-colors',
               category === 'hepsi'
                 ? 'border-foreground/40 bg-surface-2 text-foreground'
                 : 'border-border text-muted-foreground hover:border-border-strong hover:text-foreground'
@@ -98,7 +98,7 @@ export function ForumPage() {
                 title={info.description}
                 onClick={() => setCategory(id)}
                 className={cn(
-                  'rounded-card border px-2.5 py-1 text-[10px] uppercase tracking-[0.12em] transition-colors',
+                  'rounded-card border px-2.5 py-1 text-[10px] tracking-[0.03em] transition-colors',
                   active
                     ? info.className
                     : 'border-border text-muted-foreground hover:border-border-strong hover:text-foreground'
@@ -189,7 +189,7 @@ function ThreadRow({ thread }: { thread: ForumThread }) {
             {thread.title}
           </h2>
           {thread.solved && (
-            <span className="shrink-0 rounded-[2px] border border-success/45 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-[0.1em] text-success">
+            <span className="shrink-0 rounded-[2px] border border-success/45 px-1.5 py-0.5 text-[9px] font-medium tracking-[0.02em] text-success">
               Çözüldü
             </span>
           )}
@@ -202,7 +202,7 @@ function ThreadRow({ thread }: { thread: ForumThread }) {
         <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
           <span
             className={cn(
-              'rounded-[2px] border px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-[0.1em]',
+              'rounded-[2px] border px-1.5 py-0.5 text-[9px] font-medium tracking-[0.02em]',
               info.className
             )}
           >

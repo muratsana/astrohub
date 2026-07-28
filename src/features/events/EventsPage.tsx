@@ -168,7 +168,7 @@ export function EventsPage() {
                   onClick={() => setLayout(option.value)}
                   aria-pressed={layout === option.value}
                   className={cn(
-                    'h-8 border-l border-border px-2.5 text-[10px] uppercase tracking-[0.12em] transition-colors first:border-l-0',
+                    'h-8 border-l border-border px-2.5 text-[10px] tracking-[0.03em] transition-colors first:border-l-0',
                     layout === option.value
                       ? 'bg-primary text-primary-foreground'
                       : 'text-muted-foreground hover:bg-surface-2 hover:text-foreground'
@@ -275,7 +275,7 @@ function EventCard({
         ratio="aspect-[16/9]"
         className="border-0 border-b border-border"
         badge={
-          <span className="tabular rounded-[2px] bg-background/85 px-1.5 py-0.5 text-[10px] uppercase tracking-[0.1em] text-primary">
+          <span className="tabular rounded-[2px] bg-background/85 px-1.5 py-0.5 text-[10px] tracking-[0.02em] text-primary">
             {date.day} {date.month}
           </span>
         }
@@ -309,7 +309,7 @@ function DateBlock({ date }: { date: ReturnType<typeof splitDate> }) {
       <span className="tabular font-display text-[17px] font-bold leading-none text-primary">
         {date.day}
       </span>
-      <span className="mt-0.5 text-[9px] uppercase tracking-[0.1em] text-muted-foreground">
+      <span className="mt-0.5 text-[9px] tracking-[0.02em] text-muted-foreground">
         {date.month}
       </span>
     </div>

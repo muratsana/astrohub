@@ -31,7 +31,7 @@ export function LegalLayout({
             </p>
           )}
           {updatedAt && (
-            <p className="tabular mt-4 text-[10px] uppercase tracking-[0.14em] text-faint">
+            <p className="tabular mt-4 text-[10px] tracking-[0.03em] text-faint">
               Son güncelleme:{' '}
               {new Date(updatedAt).toLocaleDateString('tr-TR', {
                 day: 'numeric',

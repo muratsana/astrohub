@@ -4,10 +4,15 @@ import { LogoMark } from './LogoMark';
 /**
  * Astrohub künyesi: levha çerçevesi işareti + kelime markası.
  *
- * Kelime markası geniş harf aralıklı büyük harftir — bir cihaz etiketi gibi
- * okunur. "hub" kehribar; işaretin merkezindeki yıldızla aynı renk.
+ * Kelime markası, sitede büyük harfin korunduğu iki yerden biri: marka bir
+ * cümle değil, bir işaret. "hub" kehribar; işaretin merkezindeki yıldızla
+ * aynı renk.
+ *
+ * Yanındaki "GÖZLEM AĞI" alt yazısı kaldırıldı — marka adının yanında ikinci
+ * bir etiket taşımak künyeyi kalabalıklaştırıyor ve ne olduğumuzu anlatma
+ * işini zaten hero üstleniyor.
  */
-export function Logo({ compact = false }: { compact?: boolean }) {
+export function Logo() {
   return (
     <Link
       to="/"
@@ -25,11 +30,6 @@ export function Logo({ compact = false }: { compact?: boolean }) {
       <span className="font-display text-[17px] font-bold uppercase leading-none tracking-[0.12em] sm:tracking-[0.2em]">
         Astro<span className="text-primary">hub</span>
       </span>
-      {!compact && (
-        <span className="hidden text-[9px] font-normal tracking-[0.24em] text-faint xl:inline">
-          GÖZLEM AĞI
-        </span>
-      )}
     </Link>
   );
 }

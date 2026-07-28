@@ -121,7 +121,7 @@ export function DarkCalendarPage() {
             </Button>
           </div>
 
-          <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.12em] text-faint">
+          <div className="flex items-center gap-2 text-[10px] tracking-[0.03em] text-faint">
             <span>az</span>
             <span aria-hidden className="flex">
               {[0.15, 0.35, 0.55, 0.75, 1].map((o) => (

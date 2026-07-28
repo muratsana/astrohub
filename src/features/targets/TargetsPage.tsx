@@ -141,7 +141,7 @@ function TargetCard({
 
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <span className="truncate font-display text-[14px] font-bold uppercase text-foreground transition-colors group-hover:text-primary">
+            <span className="truncate font-display text-[14px] font-bold text-foreground transition-colors group-hover:text-primary">
               {t.catalog}
             </span>
             {difficulty}
@@ -175,7 +175,7 @@ function TargetCard({
       </PlateFrame>
 
       <div className="flex flex-1 flex-col px-2.5 py-2">
-        <p className="truncate font-display text-[13px] font-bold uppercase leading-tight text-foreground transition-colors group-hover:text-primary">
+        <p className="truncate font-display text-[13px] font-bold leading-tight text-foreground transition-colors group-hover:text-primary">
           {t.catalog}
         </p>
         <p className="truncate text-[10px] leading-snug text-muted-foreground">

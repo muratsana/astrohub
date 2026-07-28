@@ -4,7 +4,6 @@ import { RecentRecords } from './sections/RecentRecords';
 import { UpcomingEvents } from './sections/UpcomingEvents';
 import { DarkSkyStrip } from './sections/DarkSkyStrip';
 import { NewsStrip } from './sections/NewsStrip';
-import { ToolsStrip } from './sections/ToolsStrip';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { organizationJsonLd } from '@/lib/seo';
 
@@ -17,10 +16,13 @@ import { organizationJsonLd } from '@/lib/seo';
  *   4  Yaklaşan etkinlikler · tablo
  *   5  Karanlık gökyüzü · en iyi üç nokta
  *   6  Haberler ve yazılar · iki sütun
- *   7  Araçlar
  *
  * Manifesto şeridi kaldırıldı: ürün mesajını artık hero taşıyor, aynı şeyi
  * iki kez söylemeye gerek yok.
+ *
+ * Araçlar şeridi de kaldırıldı: araçlar üst menüde ve modül haritasında
+ * zaten var; ana sayfanın sonunda üçüncü bir bağlantı listesi, sayfayı
+ * içerikle değil dizinle bitiriyordu.
  */
 export function HomePage() {
   return (
@@ -38,7 +40,6 @@ export function HomePage() {
       <UpcomingEvents />
       <DarkSkyStrip />
       <NewsStrip />
-      <ToolsStrip />
     </>
   );
 }

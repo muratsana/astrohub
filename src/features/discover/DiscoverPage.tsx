@@ -122,7 +122,7 @@ export function DiscoverPage() {
                     ratio="aspect-[16/10]"
                     className="border-0 border-b border-border"
                     badge={
-                      <span className="tabular rounded-[2px] bg-background/85 px-1.5 py-0.5 text-[10px] uppercase tracking-[0.1em] text-primary">
+                      <span className="tabular rounded-[2px] bg-background/85 px-1.5 py-0.5 text-[10px] tracking-[0.02em] text-primary">
                         {t.catalog}
                       </span>
                     }

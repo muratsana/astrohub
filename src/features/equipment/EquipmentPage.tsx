@@ -129,7 +129,7 @@ export function EquipmentPage() {
                 aria-selected={active}
                 to={c === 'hepsi' ? '/ekipman' : `/ekipman/${c}`}
                 className={cn(
-                  'rounded-card border px-2.5 py-1 text-[10px] uppercase tracking-[0.12em] transition-colors',
+                  'rounded-card border px-2.5 py-1 text-[10px] tracking-[0.03em] transition-colors',
                   active
                     ? 'border-foreground/40 bg-surface-2 text-foreground'
                     : 'border-border text-muted-foreground hover:border-border-strong hover:text-foreground'
@@ -173,7 +173,7 @@ export function EquipmentPage() {
             hint="Aramayı kısaltmayı ya da başka bir kategori seçmeyi deneyin. Katalogda olmayan model talebi Faz 1.5'te açılacak."
           />
         ) : (
-          <CardGrid view={view} density="default">
+          <CardGrid view={view} density="tight">
             {result.map((model) => (
               <li key={model.slug}>
                 <EquipmentCard model={model} variant={view} />
@@ -244,11 +244,11 @@ function EquipmentCard({
 
       <div className="mt-auto flex items-center justify-between gap-2 pt-2.5">
         {model.priceHint && (
-          <span className="text-[10px] uppercase tracking-[0.12em] text-faint">
+          <span className="text-[10px] tracking-[0.03em] text-faint">
             {model.priceHint}
           </span>
         )}
-        <span className="ml-auto text-[10px] uppercase tracking-[0.16em] text-muted-foreground transition-colors group-hover:text-primary">
+        <span className="ml-auto text-[10px] tracking-[0.04em] text-muted-foreground transition-colors group-hover:text-primary">
           künye →
         </span>
       </div>

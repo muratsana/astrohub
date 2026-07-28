@@ -45,7 +45,7 @@ export function ToolsIndexPage() {
                   {String(i + 1).padStart(2, '0')}
                 </span>
                 <span className="flex items-baseline gap-2">
-                  <span className="font-display text-[17px] font-bold uppercase text-foreground transition-colors group-hover:text-primary">
+                  <span className="font-display text-[17px] font-bold text-foreground transition-colors group-hover:text-primary">
                     {tool.label}
                   </span>
                   {tool.soon && <Badge>Yakında</Badge>}
@@ -55,7 +55,7 @@ export function ToolsIndexPage() {
                     {tool.description}
                   </span>
                 )}
-                <span className="mt-auto pt-5 text-[10px] uppercase tracking-[0.16em] text-faint transition-colors group-hover:text-primary">
+                <span className="mt-auto pt-5 text-[10px] tracking-[0.04em] text-faint transition-colors group-hover:text-primary">
                   {tool.soon ? 'yol haritasında' : 'aracı aç →'}
                 </span>
               </Link>

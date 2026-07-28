@@ -92,7 +92,7 @@ export function ArticlesPage() {
                   aria-selected={level === l}
                   onClick={() => setLevel(l)}
                   className={cn(
-                    'rounded-card border px-2.5 py-1 text-[10px] uppercase tracking-[0.14em] transition-colors',
+                    'rounded-card border px-2.5 py-1 text-[10px] tracking-[0.03em] transition-colors',
                     level === l
                       ? 'border-primary text-primary'
                       : 'border-border text-muted-foreground hover:border-border-strong hover:text-foreground'
@@ -114,7 +114,7 @@ export function ArticlesPage() {
                   aria-selected={category === c}
                   onClick={() => setCategory(c)}
                   className={cn(
-                    'rounded-card border px-2.5 py-1 text-[10px] uppercase tracking-[0.14em] transition-colors',
+                    'rounded-card border px-2.5 py-1 text-[10px] tracking-[0.03em] transition-colors',
                     category === c
                       ? 'border-primary text-primary'
                       : 'border-border text-muted-foreground hover:border-border-strong hover:text-foreground'

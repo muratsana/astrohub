@@ -11,7 +11,7 @@ import { primaryNav } from '@/app/navigation';
 
 /**
  * Ana sayfa duman testi — bölüm sırası:
- * hero → bu gece → galeri → etkinlik → gökyüzü → haber/yazı → araçlar.
+ * hero → bu gece → galeri → etkinlik → gökyüzü → haber/yazı.
  */
 /*
  * İçerik kancaları (ekipman, etkinlik, gözlem noktası) TanStack Query
@@ -144,20 +144,25 @@ describe('HomePage · bölümler', () => {
     expect(
       screen.getByRole('heading', { name: /yaklaşan etkinlikler/i })
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole('columnheader', { name: /tarih/i })
-    ).toBeInTheDocument();
+    // Ajanda satırı: etkinlik adı tam kontrastta bir bağlantı olarak
+    // okunmalı. Tablo düzeninde ad diğer hücrelerle aynı ağırlıktaydı.
+    const link = screen.getAllByRole('link', {
+      name: /perseid meteor yağmuru/i,
+    })[0];
+    expect(link).toHaveAttribute('href', '/etkinlik/perseid-2026');
   });
 
-  it('karanlık gökyüzü, haberler, yazılar ve araçlar bölümlerini içerir', () => {
+  it('karanlık gökyüzü, haberler ve yazılar bölümlerini içerir', () => {
     renderHome();
-    for (const name of [
-      /karanlık gökyüzü/i,
-      /^haberler$/i,
-      /^yazılar$/i,
-      /^araçlar$/i,
-    ]) {
+    for (const name of [/karanlık gökyüzü/i, /^haberler$/i, /^yazılar$/i]) {
       expect(screen.getByRole('heading', { name })).toBeInTheDocument();
     }
+  });
+
+  it('araçlar şeridini artık göstermez', () => {
+    renderHome();
+    expect(
+      screen.queryByRole('heading', { name: /^araçlar$/i })
+    ).not.toBeInTheDocument();
   });
 });

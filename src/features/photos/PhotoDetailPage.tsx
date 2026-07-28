@@ -278,7 +278,7 @@ function ExposureTab({ photo }: { photo: AstroPhoto }) {
       <div className="overflow-x-auto rounded-card border border-border">
         <table className="w-full min-w-96 text-sm">
           <thead>
-            <tr className="border-b border-border bg-surface-1 text-left text-xs uppercase tracking-wide text-muted-foreground">
+            <tr className="border-b border-border bg-surface-1 text-left text-xs tracking-wide text-muted-foreground">
               <th className="px-4 py-2.5 font-medium">Filtre</th>
               <th className="px-4 py-2.5 font-medium">Kare</th>
               <th className="px-4 py-2.5 font-medium">Pozlama</th>

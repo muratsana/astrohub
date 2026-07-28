@@ -39,7 +39,7 @@ const sizeClasses: Record<Size, string> = {
 function buttonClasses(variant: Variant, size: Size, className?: string) {
   return cn(
     'inline-flex shrink-0 items-center justify-center gap-2 rounded-card',
-    'whitespace-nowrap text-center font-medium uppercase leading-none tracking-[0.14em]',
+    'whitespace-nowrap text-center font-medium leading-none tracking-[0.03em]',
     // Harf aralığının sondaki fazlalığını dengeler — etiket gerçekten ortalanır.
     '[text-indent:0.14em]',
     'transition-colors disabled:pointer-events-none disabled:opacity-45',

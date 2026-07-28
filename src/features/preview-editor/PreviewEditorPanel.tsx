@@ -53,7 +53,7 @@ export function PreviewEditorPanel() {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="fixed right-0 top-1/2 z-40 -translate-y-1/2 rounded-l-card border border-r-0 border-cold bg-surface-1 px-2 py-4 text-[10px] uppercase tracking-[0.16em] text-cold [writing-mode:vertical-rl] hover:bg-surface-2"
+          className="fixed right-0 top-1/2 z-40 -translate-y-1/2 rounded-l-card border border-r-0 border-cold bg-surface-1 px-2 py-4 text-[10px] tracking-[0.04em] text-cold [writing-mode:vertical-rl] hover:bg-surface-2"
         >
           Önizleme editörü
         </button>
@@ -97,7 +97,7 @@ export function PreviewEditorPanel() {
                 }
                 aria-pressed={activeSlide.id === slide.id}
                 className={cn(
-                  'rounded-card border px-2.5 py-1 text-[10px] uppercase tracking-[0.12em] transition-colors',
+                  'rounded-card border px-2.5 py-1 text-[10px] tracking-[0.03em] transition-colors',
                   activeSlide.id === slide.id
                     ? 'border-primary text-primary'
                     : 'border-border text-muted-foreground hover:border-border-strong hover:text-foreground'

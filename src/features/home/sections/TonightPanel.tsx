@@ -105,7 +105,7 @@ export function TonightPanel() {
           {verdict && (
             <span
               className={cn(
-                'ml-auto rounded-card border px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.12em]',
+                'ml-auto rounded-card border px-2 py-0.5 text-[10px] font-medium tracking-[0.03em]',
                 {
                   success: 'border-success/45 text-success',
                   primary: 'border-primary/45 text-primary',
@@ -121,13 +121,17 @@ export function TonightPanel() {
 
         {shouldOfferGeolocation && (
           <div className="mb-3 flex flex-wrap items-center gap-3 rounded-card border border-cold/40 bg-surface-1 px-3 py-2.5">
-            <p className="flex-1 text-[11px] leading-relaxed text-muted-foreground">
-              Hesaplar şu an{' '}
-              <span className="text-foreground">{location.label}</span> için
-              yapılıyor. Bulunduğun yere göre hesaplamak istersen konum izni
-              verebilirsin —{' '}
-              <span className="text-cold">koordinat sunucumuza gönderilmez</span>
-              , yalnızca tarayıcında kalır ve hava servisine iletilir.
+            {/*
+              Metin kısaltıldı: dört satırlık bir açıklama panelin en üstünde
+              en büyük blok oluyordu ve asıl içerik olan ölçümlerin önüne
+              geçiyordu. Kalması gereken tek şey karar için gereken bilgi —
+              hangi konum kullanılıyor ve koordinatın nereye gittiği.
+            */}
+            <p className="flex-1 text-[11.5px] leading-relaxed text-muted-foreground">
+              Hesaplar <span className="text-foreground">{location.label}</span>{' '}
+              için yapılıyor.{' '}
+              <span className="text-cold">Koordinat sunucumuza gönderilmez</span>
+              ; yalnızca tarayıcında kalır.
             </p>
             <div className="flex shrink-0 gap-2">
               <Button size="sm" onClick={requestDeviceLocation}>
@@ -149,7 +153,13 @@ export function TonightPanel() {
 
         <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,400px)]">
           {/* Ölçüm hücreleri — bitişik ızgara, hairline ayrımlı */}
-          <div className="grid grid-cols-2 gap-px overflow-hidden rounded-card border border-border bg-border sm:grid-cols-3">
+          {/*
+            `auto-rows-fr`: altı hücre yüksekliği eşit paylaşır. Bunsuz sol
+            sütun sağdaki hedef listesi kadar geriliyor ama hücre içeriği
+            üste yapışıyordu — panelin altında amaçsız bir boşluk kalıyor,
+            enstrüman paneli izlenimi dağılıyordu.
+          */}
+          <div className="grid auto-rows-fr grid-cols-2 gap-px overflow-hidden rounded-card border border-border bg-border sm:grid-cols-3">
             <Cell
               label="Astr. karanlık"
               value={
@@ -289,17 +299,19 @@ function Cell({
   }[tone];
 
   return (
-    <div className="bg-surface-1 px-3 py-2">
+    <div className="flex flex-col justify-center bg-surface-1 px-3 py-3">
       <p className="label">{label}</p>
       <p
         className={cn(
-          'tabular mt-0.5 font-display text-[19px] font-bold leading-none',
+          'tabular mt-1 font-display text-[22px] font-bold leading-none',
           toneClass
         )}
       >
         {value}
       </p>
-      <p className="mt-1 truncate text-[10px] leading-snug text-faint">{hint}</p>
+      <p className="mt-1.5 truncate text-[10.5px] leading-snug text-faint">
+        {hint}
+      </p>
     </div>
   );
 }

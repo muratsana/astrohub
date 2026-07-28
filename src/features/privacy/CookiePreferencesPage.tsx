@@ -100,7 +100,7 @@ export function CookiePreferencesPage() {
                           Sil
                         </Button>
                       ) : (
-                        <span className="text-[10px] uppercase tracking-[0.12em] text-faint">
+                        <span className="text-[10px] tracking-[0.03em] text-faint">
                           saklanmıyor
                         </span>
                       )}

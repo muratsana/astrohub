@@ -1,20 +1,29 @@
 import type { RadioTrack } from './types';
 
 /**
- * RADYO ÇALMA LİSTESİ.
+ * RADYO YAYIN LİSTESİ — SİTE YAYINI, TOPLULUK KUYRUĞU DEĞİL.
+ *
+ * Programı Astrohub editör ekibi yapar; dinleyici parça yükleyemez.
+ * Yetki veritabanı seviyesinde de böyle: `radio` bucket'ına yazma ve
+ * (0006 ile) okuma politikası editör rolüne bağlıdır — yani kural yalnızca
+ * arayüzde yazan bir cümle değil.
+ *
+ * Sebebi lisans: çalınan her kaydın hakkının kimde olduğunu tek bir yerin
+ * izlemesi gerekir. Herkesin yükleyebildiği bir yayında sorumluluk kimsede
+ * olmaz.
  *
  * Liste **kasıtlı olarak boş** başlar. Sitede henüz yüklenmiş bir MP3 yok ve
  * gerçekte var olmayan parçaları örnek diye yazmak, arayüzü dolu gösterip
  * çalmaya basınca 404 vermekten başka bir işe yaramazdı.
  *
- * Parça eklemenin iki yolu:
+ * Editörün parça eklemesinin iki yolu:
  *
- *   1. MP3 — dosyayı Supabase `radio` bucket'ına yükleyin, genel URL'i
- *      aşağıdaki listeye `source: 'mp3'` olarak ekleyin. (Kalıcı çözüm:
+ *   1. MP3 — dosyayı Supabase `radio` bucket'ına yükler, genel URL'i
+ *      aşağıdaki listeye `source: 'mp3'` olarak ekler. (Kalıcı çözüm:
  *      `radio_tracks` tablosu — bkz. supabase/migrations/0004.)
  *
  *   2. Spotify — parçanın "Share → Copy link" adresini `source: 'spotify'`
- *      olarak ekleyin. Spotify parçaları gömülü oynatıcıda çalar; MP3
+ *      olarak ekler. Spotify parçaları gömülü oynatıcıda çalar; MP3
  *      sırasına karışmaz (nedeni `types.ts`'te yazılı).
  *
  * Örnek satır:
@@ -31,8 +40,8 @@ import type { RadioTrack } from './types';
 export const radioTracks: RadioTrack[] = [];
 
 /**
- * Yüklenen parçaların uyması beklenen ölçütler. Sayfada gösterilir —
- * "neden bu parçayı eklemediniz" sorusunu peşinen cevaplar.
+ * Yayına alınan kayıtların uyması beklenen ölçütler. Sayfada gösterilir —
+ * dinleyici, listenin neye göre seçildiğini bilsin diye.
  */
 export const radioGuidelines = [
   'Gece çekimi arka planı: yavaş tempo, ani yükselen bölümler olmadan.',
