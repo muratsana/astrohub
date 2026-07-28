@@ -408,6 +408,51 @@ await scenario('"içeriğe atla" bağlantısı ilk odaklanabilir öğedir', asyn
   assert(visible, 'atlama bağlantısı odakta görünür olmuyor');
 });
 
+/* ══════════════════════ Navigasyon her genişlikte ══════════════════════ */
+
+/*
+ * Üst çubuk hiçbir genişlikte gezinme girişsiz kalmamalı.
+ *
+ * Bu senaryo bir hata raporundan doğdu: dar bir görünüm alanında (gömülü
+ * önizleme paneli) düz menü `xl` altında gizlendiği için üst çubukta
+ * yalnızca Giriş/Kaydol kalıyordu. Alt çubuk `fixed` olduğu için o bağlamda
+ * görünmüyordu — yani "navigasyon var ama başka yerde" savunması pratikte
+ * doğru değildi. Ölçüt: her genişlikte ya düz menü ya da modül düğmesi
+ * ÜST çubukta görünür olacak.
+ */
+await scenario('üst çubukta her genişlikte gezinme girişi var', async () => {
+  const widths = [390, 768, 1024, 1280, 1440];
+  const missing = [];
+
+  for (const width of widths) {
+    await page.setViewportSize({ width, height: 900 });
+    await goto('/');
+
+    const ok = await page.evaluate(() => {
+      const header = document.querySelector('header');
+      if (!header) return false;
+      const shown = (el) => {
+        if (!el) return false;
+        const rect = el.getBoundingClientRect();
+        return rect.width > 0 && rect.height > 0;
+      };
+      const flatNav = header.querySelector('nav[aria-label="Ana navigasyon"]');
+      const drawerButton = header.querySelector(
+        'button[aria-label="Modül haritasını aç"]'
+      );
+      return shown(flatNav) || shown(drawerButton);
+    });
+
+    if (!ok) missing.push(width);
+  }
+
+  await page.setViewportSize({ width: 1440, height: 950 });
+  assert(
+    missing.length === 0,
+    `üst çubukta gezinme girişi yok: ${missing.join(', ')} px`
+  );
+});
+
 /* ══════════════════════ Görsel kayıt (§17.2) ══════════════════════ */
 
 /*

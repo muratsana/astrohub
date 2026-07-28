@@ -18,8 +18,9 @@ import { cn } from '@/lib/cn';
  * paletin kendisi keşif değil hızlandırma aracı — düğmesi olmadan da
  * bilenler kullanır.
  *
- * Kırılım `xl`: dokuz giriş 1024px'te sığmıyor. Arada kalan genişlikte
- * (lg) modül haritasını açan bir düğme gösterilir.
+ * Kırılım `xl`: dokuz giriş 1024px'te sığmıyor. Altındaki her genişlikte
+ * modül haritasını açan bir düğme gösterilir — üst çubuk hiçbir zaman
+ * gezinme girişi olmadan kalmaz.
  */
 export function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
   const { fieldMode, toggleFieldMode } = useTheme();
@@ -54,18 +55,27 @@ export function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
 
           <div className="ml-auto flex items-center gap-2">
             {/*
-              Yalnızca lg–xl aralığında görünür. Altında mobil alt çubuğun
-              "Daha" düğmesi aynı çekmeceyi açıyor; ikisini birden göstermek
-              hem gereksiz hem de 390px'te üst çubuğu taşırıyordu.
+              `xl` altında düz menü gizlendiği için burası navigasyonun ÜST
+              çubuktaki tek girişi. Önceden yalnızca lg–xl aralığında
+              gösteriliyordu; gerekçe mobil alt çubuğun aynı çekmeceyi
+              açmasıydı. Ama alt çubuk `fixed` ve gömülü/dar bir görünüm
+              alanında (yan panel, küçültülmüş pencere) görüş dışında
+              kalabiliyor — o durumda üst çubukta Giriş/Kaydol dışında hiçbir
+              gezinme girişi kalmıyordu. Yedeği olmayan tek giriş, olmayan
+              giriştir; düğme artık `xl` altında her genişlikte duruyor.
+
+              Dar ekranda taşmayı önleyen şey görünürlük değil, etiket:
+              `lg` altında yalnızca ikon kalır, erişilebilir ad `aria-label`
+              ile korunur (§6.7).
             */}
             <button
               type="button"
               onClick={onOpenNav}
               aria-label="Modül haritasını aç"
-              className="hidden h-8 items-center gap-1.5 rounded-card border border-border px-2.5 text-[10px] uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:border-border-strong hover:text-foreground lg:inline-flex xl:hidden"
+              className="inline-flex h-8 items-center gap-1.5 rounded-card border border-border px-2.5 text-[10px] uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:border-border-strong hover:text-foreground xl:hidden"
             >
               <MenuIcon className="h-3.5 w-3.5" />
-              Modüller
+              <span className="hidden lg:inline">Modüller</span>
             </button>
 
             <button

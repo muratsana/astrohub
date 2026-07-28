@@ -25,5 +25,9 @@
   /* vitest.config.ts dışarıda: Vitest kendi Vite kopyasını taşıdığı için
      iki farklı `Plugin` tipi çakışıyor — yapılandırma dosyası çalışma
      zamanında doğrulanır. */
-  "include": ["vite.config.ts", "vite.preview.config.ts"]
+  "include": [
+    "vite.config.ts",
+    "vite.preview.config.ts",
+    "scripts/seed/reference-data.ts"
+  ]
 }
