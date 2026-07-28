@@ -32,6 +32,8 @@ export interface TileSource {
   maxZoom: number;
   /** Hata sayımını sıfırlamak için kimlik — kaynak değişince yeniden denenir. */
   id: string;
+  /** Karışım kipi; gece ışıkları görüntüsü için `screen`. */
+  blend?: 'screen';
 }
 
 export interface TileMapProps {
@@ -306,7 +308,10 @@ function Layer({
     <div
       aria-hidden
       className="pointer-events-none absolute inset-0"
-      style={opacity === undefined ? undefined : { opacity }}
+      style={{
+        ...(opacity === undefined ? null : { opacity }),
+        ...(source.blend ? { mixBlendMode: source.blend } : null),
+      }}
     >
       {tiles.map((tile) => (
         <img

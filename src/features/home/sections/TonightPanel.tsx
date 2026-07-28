@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Container } from '@/components/ui/Container';
 import { Button, ButtonLink } from '@/components/ui/Button';
 import { useLocationContext } from '@/features/location/LocationContext';
+import { useTheme } from '@/features/theme/ThemeContext';
 import { useSkyConditions } from '@/features/weather/useSkyConditions';
 import { seeingLabel, observingVerdict } from '@/features/weather/seeing';
 import { dewRisk } from '@/features/weather/openMeteo';
@@ -43,6 +44,7 @@ export function TonightPanel() {
     requestDeviceLocation,
     dismissGeolocationOffer,
   } = useLocationContext();
+  const { theme } = useTheme();
 
   // Gün ve konum değişmedikçe yeniden hesaplanmaz — tarama tabanlı arama
   // her render'da çalışmamalı.
@@ -92,7 +94,31 @@ export function TonightPanel() {
   });
 
   return (
-    <section>
+    <section className="relative isolate">
+      {/*
+        GECE ZEMİNİ. Panelin arkasında tepeden inen bir gradyan var:
+        modül düz zeminde başlayıp bitiyordu ve sayfanın en önemli
+        bölümü, altındaki listelerden hiçbir şekilde ayrışmıyordu.
+        Gradyan token'lardan besleniyor, yani üç temada da doğru
+        yönde çalışıyor — açık temada kâğıt, koyu temada gece.
+
+        Yıldızlar yalnızca koyu ve saha modunda: açık temada aynı
+        noktalar gökyüzü değil, ekrandaki toz gibi okunuyordu.
+      */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
+      >
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage:
+              'radial-gradient(125% 145% at 50% -30%, var(--color-surface-2) 0%, var(--color-surface-1) 38%, var(--color-background) 72%)',
+          }}
+        />
+        {theme !== 'light' && <BackdropStars />}
+      </div>
+
       <Container className="border-b border-border py-5 sm:py-6">
         <header className="mb-3 flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h1 className="text-[20px] text-foreground sm:text-[23px]">Bu Gece</h1>
@@ -136,7 +162,11 @@ export function TonightPanel() {
               geçiyordu. Kalması gereken tek şey karar için gereken bilgi —
               hangi konum kullanılıyor ve koordinatın nereye gittiği.
             */}
-            <p className="flex-1 text-[11.5px] leading-relaxed text-muted-foreground">
+            {/* Telefonda `flex-1` metni 120 piksele sıkıştırıp yedi
+                satıra bölüyordu; düğmeler cümlenin ortasına
+                giriyordu. Dar ekranda metin tam satır, düğmeler
+                altında. */}
+            <p className="w-full text-[11.5px] leading-relaxed text-muted-foreground sm:w-auto sm:flex-1">
               Hesaplar <span className="text-foreground">{location.label}</span>{' '}
               için yapılıyor.{' '}
               <span className="text-cold">Koordinat sunucumuza gönderilmez</span>
@@ -168,7 +198,7 @@ export function TonightPanel() {
             üste yapışıyordu — panelin altında amaçsız bir boşluk kalıyor,
             enstrüman paneli izlenimi dağılıyordu.
           */}
-          <div className="grid auto-rows-fr grid-cols-2 gap-px overflow-hidden rounded-card border border-border bg-border sm:grid-cols-3">
+          <div className="grid auto-rows-fr grid-cols-2 gap-px overflow-hidden rounded-card border border-border-strong bg-border sm:grid-cols-3">
             <Cell
               label="Astr. karanlık"
               value={
@@ -327,10 +357,10 @@ function Cell({
   hint: string;
   tone: 'primary' | 'cold' | 'muted';
   /**
-   * Hücrenin sağında duran küçük görsel.
+   * Hücrenin sağında duran görsel.
    *
    * Fotoğraf değil, **ölçüm çizimi**: ay evresinin diski, karanlık
-   * penceresinin çubuğu, bulut örtüsünün halkası. Bir veri panelinde
+   * penceresinin çubuğu, bulut örtüsünün doluluğu. Bir veri panelinde
    * dekoratif fotoğraf gürültüdür; bu çizimler sayıyı tekrar etmiyor,
    * onu bir bakışta okunur hâle getiriyor.
    */
@@ -342,28 +372,76 @@ function Cell({
     muted: 'text-muted-foreground',
   }[tone];
 
+  /*
+    ÇİZİM ARTIK METNİN ÜSTÜNDE DEĞİL, YANINDA.
+    Önce mutlak konumla sağ kenara yapıştırılmıştı ve 30px'ti; küçük
+    olmasının tek sebebi metnin altına girmemesiydi. Kendi sütununa
+    alınınca boyut kısıtı kalktı: telefonda 42, sonrasında 54 piksel.
+    Aynı çizimler, okunur bir ölçekte.
+  */
   return (
-    <div className="relative flex flex-col justify-center overflow-hidden bg-surface-1 px-3 py-3">
-      {visual && (
-        <span
-          aria-hidden
-          className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 opacity-90"
+    <div className="flex items-center gap-2.5 overflow-hidden bg-surface-1/85 px-3 py-3.5 sm:gap-3">
+      <div className="min-w-0 flex-1">
+        <p className="label">{label}</p>
+        {/*
+          VERİ YOKKEN TİRE, ÖLÇÜM GİBİ GÖRÜNMEMELİ. 24 punto kalın ve
+          renkli bir "—" ekranda kısa bir renkli çubuğa dönüşüyordu:
+          uzaktan bakan biri onu bir gösterge sanıyor. Boş değer artık
+          sönük ve ince — bir sayının yokluğu, sayı gibi durmuyor.
+        */}
+        <p
+          className={cn(
+            'tabular mt-1 font-display leading-none',
+            value === '—'
+              ? 'text-[20px] font-normal text-faint'
+              : cn('text-[22px] font-bold sm:text-[24px]', toneClass)
+          )}
         >
+          {value}
+        </p>
+        <p className="mt-1.5 truncate text-[10.5px] leading-snug text-faint">
+          {hint}
+        </p>
+      </div>
+      {visual && (
+        <span aria-hidden className="shrink-0">
           {visual}
         </span>
       )}
-      <p className="label">{label}</p>
-      <p
-        className={cn(
-          'tabular mt-1 font-display text-[22px] font-bold leading-none',
-          toneClass
-        )}
-      >
-        {value}
-      </p>
-      <p className="mt-1.5 truncate text-[10.5px] leading-snug text-faint">
-        {hint}
-      </p>
+    </div>
+  );
+}
+
+/**
+ * Zemin yıldızları.
+ *
+ * Konumlar sabit bir listeden geliyor, rastgele değil: her ziyarette
+ * aynı gökyüzü. Rastgele üretim sayfanın her boyamasında yıldızları
+ * oynatır ve bu, göz ucuyla bakıldığında bir arıza gibi görünür.
+ */
+const BACKDROP_STARS = [
+  [4, 18, 1.4], [11, 62, 1], [17, 31, 1.8], [23, 78, 1.1], [29, 12, 1.3],
+  [34, 51, 1], [39, 84, 1.6], [45, 26, 1.1], [52, 66, 1.4], [57, 8, 1],
+  [61, 44, 1.7], [66, 88, 1.2], [72, 21, 1.3], [77, 58, 1], [82, 35, 1.5],
+  [88, 72, 1.1], [93, 15, 1.4], [97, 49, 1], [8, 41, 1.1], [26, 55, 1.2],
+  [48, 92, 1], [69, 68, 1.1], [85, 5, 1.2], [14, 88, 1.3],
+] as const;
+
+function BackdropStars() {
+  return (
+    <div className="absolute inset-0 opacity-60">
+      {BACKDROP_STARS.map(([x, y, r]) => (
+        <span
+          key={`${x}-${y}`}
+          className="absolute rounded-full bg-faint"
+          style={{
+            left: `${x}%`,
+            top: `${y}%`,
+            width: `${r * 2}px`,
+            height: `${r * 2}px`,
+          }}
+        />
+      ))}
     </div>
   );
 }
@@ -386,8 +464,14 @@ function Cell({
    asla aynı görünmemeli.
    ══════════════════════════════════════════════════════════════════════ */
 
-/** Çizim kutusu — altı hücrenin tamamı aynı ölçüde. */
-const V = 30;
+/**
+ * Çizim kutusu — altı hücrenin tamamı aynı ölçüde.
+ *
+ * Ölçü piksel özniteliğiyle değil sınıfla veriliyor: telefonda 42,
+ * `sm` üstünde 54 piksel. Sabit tek bir boy, iki uçtan birinde yanlış
+ * olurdu — dar hücrede metni eziyor, geniş hücrede kayboluyordu.
+ */
+const GLYPH = 'h-[42px] w-[42px] sm:h-[54px] sm:w-[54px]';
 
 /**
  * Saat–dilimi farkındalıklı "gün içindeki an" oranı: 00:00 → 0, 12:00 → 0.5.
@@ -423,15 +507,37 @@ function NightArc({ from, to }: { from: number | null; to: number | null }) {
   const span = from === null || to === null ? 0 : (((to - from) % 1) + 1) % 1;
 
   return (
-    <svg width={V} height={V} viewBox="0 0 30 30" fill="none">
-      <circle cx="15" cy="15" r={r} className="stroke-border" strokeWidth="3" />
+    <svg viewBox="0 0 30 30" fill="none" className={GLYPH}>
+      {/* Saat işaretleri: yayın nereye düştüğünü okumak için bir
+          referans gerekiyor. Tepe = gece yarısı. */}
+      {[0, 6, 12, 18].map((hour) => {
+        const a = (hour / 24) * 2 * Math.PI - Math.PI / 2;
+        return (
+          <line
+            key={hour}
+            x1={15 + Math.cos(a) * 13}
+            y1={15 + Math.sin(a) * 13}
+            x2={15 + Math.cos(a) * 14.6}
+            y2={15 + Math.sin(a) * 14.6}
+            className="stroke-border-strong"
+            strokeWidth="1.2"
+          />
+        );
+      })}
+      <circle
+        cx="15"
+        cy="15"
+        r={r}
+        className="stroke-border-strong"
+        strokeWidth="3.4"
+      />
       {span > 0 && (
         <circle
           cx="15"
           cy="15"
           r={r}
-          className="stroke-primary/80"
-          strokeWidth="3"
+          className="stroke-primary"
+          strokeWidth="3.4"
           strokeLinecap="round"
           strokeDasharray={`${c * span} ${c}`}
           /* 0 oranı tepede olsun diye çeyrek tur geri, sonra başlangıç
@@ -444,25 +550,43 @@ function NightArc({ from, to }: { from: number | null; to: number | null }) {
 }
 
 /**
- * Seeing diski — yıldızın atmosferde ne kadar şiştiği.
+ * Seeing yıldızı — atmosferin yıldızı ne kadar şişirdiği.
  *
- * İndeks 1'de nokta gibi, 5'te dış çemberi dolduran şişkin bir leke.
+ * ÖNCEKİ ÇİZİM İÇ İÇE İKİ DAİREYDİ ve yanındaki bulut halkasıyla aynı
+ * siluete sahipti; ızgarada altı hücrenin ikisi birbirinin kopyası gibi
+ * duruyordu. Şimdi gerçek bir yıldız işareti: iyi seeing'de sivri ve
+ * temiz, kötüde şişmiş bir hâle içinde. Şekil artık hücreye bakmadan
+ * hangi ölçüm olduğunu söylüyor.
+ *
  * Ölçek indeksin kendisiyle doğrusal; saniye-yay iddiası taşımıyor
  * (bkz. `features/weather/seeing.ts` — çıktı ölçüm değil tahmin).
  *
- * Veri yoksa yalnızca boş çember çiziliyor: "mükemmel seeing" ile
+ * Veri yoksa yalnızca sönük bir çerçeve kalır: "mükemmel seeing" ile
  * "bilmiyoruz" aynı görünmemeli.
  */
 function SeeingDisc({ index }: { index: number | null }) {
-  const core = index === null ? 0 : 1.6 + (clamp(index, 1, 5) - 1) * 1.6;
+  const level = index === null ? 0 : clamp(index, 1, 5);
+  // 1 → dar hâle (2.5), 5 → dış çembere dayanan hâle (11)
+  const halo = level === 0 ? 0 : 2.5 + (level - 1) * 2.1;
+  const spike = level === 0 ? 0 : 11 - (level - 1) * 0.9;
 
   return (
-    <svg width={V} height={V} viewBox="0 0 30 30" fill="none">
-      <circle cx="15" cy="15" r="10" className="stroke-border" />
+    <svg viewBox="0 0 30 30" fill="none" className={GLYPH}>
+      <circle
+        cx="15"
+        cy="15"
+        r="13"
+        className="stroke-border-strong"
+        strokeWidth="1"
+        strokeDasharray="2 3"
+      />
       {index !== null && (
         <>
-          <circle cx="15" cy="15" r={core * 1.7} className="fill-primary/20" />
-          <circle cx="15" cy="15" r={core} className="fill-primary/85" />
+          <circle cx="15" cy="15" r={halo} className="fill-primary/18" />
+          <path
+            d={`M15 ${15 - spike} L${15 + spike * 0.26} ${15 - spike * 0.26} L${15 + spike} 15 L${15 + spike * 0.26} ${15 + spike * 0.26} L15 ${15 + spike} L${15 - spike * 0.26} ${15 + spike * 0.26} L${15 - spike} 15 L${15 - spike * 0.26} ${15 - spike * 0.26} Z`}
+            className="fill-primary"
+          />
         </>
       )}
     </svg>
@@ -482,23 +606,23 @@ function DewDrop({ spread }: { spread: number | null }) {
   const shape = 'M15 5 C 19 12, 23 15, 23 19 A 8 8 0 0 1 7 19 C 7 15, 11 12, 15 5 Z';
 
   return (
-    <svg width={V} height={V} viewBox="0 0 30 30" fill="none">
+    <svg viewBox="0 0 30 30" fill="none" className={GLYPH}>
       <defs>
         <clipPath id={clipId}>
           <path d={shape} />
         </clipPath>
       </defs>
-      <path d={shape} className="stroke-border" />
       {level > 0 && (
         <rect
           x="0"
           y={27 - 22 * level}
           width="30"
           height={22 * level}
-          className="fill-cold/70"
+          className="fill-cold"
           clipPath={`url(#${clipId})`}
         />
       )}
+      <path d={shape} className="stroke-border-strong" strokeWidth="1.6" />
     </svg>
   );
 }
@@ -518,11 +642,17 @@ function MoonDisc({ illumination }: { illumination: number }) {
   const sweep = k > 0.5 ? 1 : 0;
 
   return (
-    <svg width={V} height={V} viewBox="0 0 30 30" fill="none">
-      <circle cx="15" cy="15" r={r} className="fill-surface-2 stroke-border" />
+    <svg viewBox="0 0 30 30" fill="none" className={GLYPH}>
+      <circle
+        cx="15"
+        cy="15"
+        r={r}
+        className="fill-surface-3 stroke-border-strong"
+        strokeWidth="1.2"
+      />
       <path
         d={`M15 3 A ${r} ${r} 0 0 1 15 27 A ${rx} ${r} 0 0 ${sweep} 15 3 Z`}
-        className="fill-primary/80"
+        className="fill-primary"
       />
     </svg>
   );
@@ -535,46 +665,83 @@ function DarknessBar({ minutes }: { minutes: number }) {
   const ratio = clamp(minutes / (8 * 60), 0, 1);
 
   return (
-    <svg width={V} height={V} viewBox="0 0 30 30" fill="none">
-      <rect x="6" y="5" width="18" height="20" rx="2" className="stroke-border" />
+    <svg viewBox="0 0 30 30" fill="none" className={GLYPH}>
       <rect
-        x="6"
-        y={5 + 20 * (1 - ratio)}
-        width="18"
-        height={20 * ratio}
-        rx="2"
-        className="fill-cold/70"
+        x="7"
+        y="4"
+        width="16"
+        height="22"
+        rx="2.5"
+        className="stroke-border-strong"
+        strokeWidth="1.6"
       />
+      <rect
+        x="7"
+        y={4 + 22 * (1 - ratio)}
+        width="16"
+        height={22 * ratio}
+        rx="2.5"
+        className="fill-cold"
+      />
+      {/* Saat kertikleri: dolu bir çubuk tek başına "ne kadar" demiyor,
+          yalnızca "çok" diyor. Dört kertik onu okunur bir ölçeğe
+          çeviriyor (üst sınır 8 saat). */}
+      {[1, 2, 3].map((i) => (
+        <line
+          key={i}
+          x1="7"
+          x2="23"
+          y1={4 + (22 * i) / 4}
+          y2={4 + (22 * i) / 4}
+          className="stroke-background/45"
+          strokeWidth="1"
+        />
+      ))}
     </svg>
   );
 }
 
 /**
- * Bulut örtüsü halkası.
+ * Bulut örtüsü — bulut silueti, örtü oranınca dolar.
  *
- * Yüzde bir yay uzunluğuna çevriliyor. Veri yoksa halka boş kalır —
- * "%0 bulut" ile "veri yok" aynı görünmemeli.
+ * ÖNCE BİR HALKAYDI ve yandaki karanlık kadranıyla birebir aynı şekle
+ * sahipti; iki ölçüm yan yana durduğunda hangisinin hangisi olduğu
+ * ancak yazıyı okuyunca anlaşılıyordu. İkon başlığı tekrar etmek için
+ * değil, başlığa bakmadan tanınmak için var.
+ *
+ * Veri yoksa silüet boş kalır — "%0 bulut" ile "veri yok" aynı
+ * görünmemeli.
  */
+const CLOUD_PATH =
+  'M7.5 22.5 a5 5 0 0 1 0.7 -9.9 a7.6 7.6 0 0 1 14.2 1.5 a4.7 4.7 0 0 1 -0.7 8.4 Z';
+
 function CloudRing({ cover }: { cover: number | null }) {
-  const r = 10;
-  const c = 2 * Math.PI * r;
+  const clipId = useId();
   const ratio = cover === null ? 0 : clamp(cover / 100, 0, 1);
 
   return (
-    <svg width={V} height={V} viewBox="0 0 30 30" fill="none">
-      <circle cx="15" cy="15" r={r} className="stroke-border" strokeWidth="3" />
-      {cover !== null && (
-        <circle
-          cx="15"
-          cy="15"
-          r={r}
-          className="stroke-cold/80"
-          strokeWidth="3"
-          strokeLinecap="round"
-          strokeDasharray={`${c * ratio} ${c}`}
-          transform="rotate(-90 15 15)"
+    <svg viewBox="0 0 30 30" fill="none" className={GLYPH}>
+      <defs>
+        <clipPath id={clipId}>
+          <path d={CLOUD_PATH} />
+        </clipPath>
+      </defs>
+      {cover !== null && ratio > 0 && (
+        <rect
+          x="0"
+          y={22.5 - 10 * ratio}
+          width="30"
+          height={10 * ratio}
+          className="fill-cold"
+          clipPath={`url(#${clipId})`}
         />
       )}
+      <path
+        d={CLOUD_PATH}
+        className="stroke-border-strong"
+        strokeWidth="1.6"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }

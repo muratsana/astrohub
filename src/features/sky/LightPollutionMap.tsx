@@ -9,7 +9,6 @@ import { type LatLng } from './tileMath';
 import {
   BASEMAP_CREDIT,
   OPACITY_RANGE,
-  OVERLAY_CREDIT,
   OVERLAY_SOURCES,
   ZOOM_RANGE,
   basemapSource,
@@ -85,7 +84,13 @@ export function LightPollutionMap() {
     }
   }, []);
 
-  const base = useMemo(() => basemapSource(theme !== 'light'), [theme]);
+  /* Gece ışıkları katmanı `screen` ile bindiriliyor; açık altlıkta bu
+     her yeri beyaza boyar. O katman etkinse altlık koyuya zorlanıyor —
+     temaya uymamak, katmanı okunmaz kılmaktan iyi. */
+  const base = useMemo(
+    () => basemapSource(theme !== 'light' || !!overlay?.needsDarkBasemap),
+    [theme, overlay]
+  );
 
   const view = { lat: center.lat, lng: center.lng, zoom, opacity };
 
@@ -241,15 +246,15 @@ export function LightPollutionMap() {
         */}
         {overlayFailed ? (
           <p className="mt-1.5 rounded-card border border-warning/40 bg-surface-1 px-2.5 py-1.5 text-[11px] leading-snug text-warning">
-            Işık kirliliği katmanı yüklenemedi; altta yalnızca temel harita
-            var. Aşağıdaki karşılaştırma kendi ölçümlerimizden geldiği için
-            etkilenmiyor.
+            Hiçbir ışık kirliliği kaynağına ulaşılamadı; altta yalnızca temel
+            harita var. Aşağıdaki karşılaştırma kendi ölçümlerimizden geldiği
+            için etkilenmiyor.
           </p>
         ) : null}
 
         <p className="mt-1.5 text-[10px] leading-snug text-faint">
-          {BASEMAP_CREDIT} · {OVERLAY_CREDIT}
-          {overlay ? ` ${overlay.year}` : ''}. Katman uydu kestirimidir.
+          {BASEMAP_CREDIT}
+          {overlay ? ` · ${overlay.credit}` : ''}. Katman uydu kestirimidir.
           Aşağıdaki karşılaştırma ise kendi gözlem noktası ölçümlerimizden
           hesaplanır — ikisi ayrı kaynaklardır ve birbirini doğrulamaz.
         </p>

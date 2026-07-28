@@ -142,7 +142,17 @@ export function StarField({
     <canvas
       ref={ref}
       aria-hidden
-      className={cn('block h-full w-full bg-surface-2', className)}
+      /*
+       * ZEMİN TEMADAN BAĞIMSIZ.
+       *
+       * Önce `bg-surface-2` idi ve açık temada bu, gökyüzünü açık griye
+       * çeviriyordu: aynı kart koyu temada gece, açık temada solmuş bir
+       * kâğıt gibi görünüyordu. Bu bileşen bir arayüz yüzeyi değil,
+       * fotoğrafın yerini tutan bir görsel — gerçek bir fotoğraf da
+       * temayla renk değiştirmezdi. Sabit gece rengi, üstüne çizilen
+       * yıldızların da (sabit RGB) doğru kontrastta kalmasını sağlıyor.
+       */
+      className={cn('block h-full w-full bg-[#0b1016]', className)}
     />
   );
 }

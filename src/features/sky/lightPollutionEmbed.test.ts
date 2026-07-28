@@ -77,9 +77,34 @@ describe('döşeme kaynakları', () => {
   it('katman verisinin çözünürlüğünün ötesine döşeme istemez', () => {
     for (const source of OVERLAY_SOURCES) {
       expect(source.maxZoom).toBe(8);
-      expect(source.url({ x: 4, y: 5, z: 3 })).toBe(
-        `https://djlorenz.github.io/astronomy/${source.id}/overlay/tiles/tile_3_4_5.png`
-      );
     }
+  });
+
+  it('önce Bortle atlası denenir, gece ışıkları son çare', () => {
+    // Sıra önemli: atlas ölçekli veri, Black Marble ham parlaklık.
+    // Ham parlaklık öne geçerse kullanıcı Bortle sanıp yanlış okur.
+    expect(OVERLAY_SOURCES[0].url({ x: 4, y: 5, z: 3 })).toBe(
+      'https://djlorenz.github.io/astronomy/lp2024/overlay/tiles/tile_3_4_5.png'
+    );
+    expect(OVERLAY_SOURCES.at(-1)!.id).toContain('gibs');
+  });
+
+  it('her kaynak neye bakıldığını yazar', () => {
+    // Yedeğe düşüldüğünde altındaki kaynak yazısı da değişmeli; aksi
+    // hâlde ham parlaklık, ölçekli atlas diye okunur.
+    for (const source of OVERLAY_SOURCES) {
+      expect(source.credit.length).toBeGreaterThan(10);
+    }
+    expect(OVERLAY_SOURCES.at(-1)!.credit).toContain('ham parlaklık');
+  });
+
+  it('GIBS adresi WMTS satır/sütun sırasını korur', () => {
+    // z/y/x yerine z/x/y yazılırsa harita aynasal kayar ve bu, gözle
+    // ancak tanıdık bir kıyıda fark edilir.
+    const gibs = OVERLAY_SOURCES.find((s) => s.id.startsWith('gibs'))!;
+    expect(gibs.url({ x: 4, y: 5, z: 3 })).toContain(
+      'GoogleMapsCompatible_Level8/3/5/4.jpg'
+    );
+    expect(gibs.blend).toBe('screen');
   });
 });

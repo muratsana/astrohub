@@ -102,29 +102,61 @@ export function basemapSource(dark: boolean) {
 
 export const BASEMAP_CREDIT = '© OpenStreetMap katkıcıları · © CARTO';
 
-/**
- * IŞIK KİRLİLİĞİ KATMANI — David J. Lorenz'in dünya atlası döşemeleri.
- *
- * VIIRS uydu ölçümlerinden türetilmiş, yıllık yayımlanan açık bir veri
- * seti; lightpollutionmap.info dahil pek çok site aynı kaynağı kullanır.
- *
- * BİRDEN FAZLA YIL DENENİYOR. Bu ortamdan (kapalı ağ) hangi yılın
- * yayımda olduğunu doğrulayamadım ve yanlış bir adres, katmanı sessizce
- * boş bırakırdı — kullanıcı bunu "burada ışık kirliliği yok" diye okur.
- * Bu yüzden liste sırayla deneniyor: bir kaynağın hiçbir döşemesi
- * gelmezse bir sonrakine geçilir, hepsi tükenirse katmanın yüklenemediği
- * açıkça yazılır. Uydurma bir veri gösterilmez.
- *
- * `maxZoom` 8: veri kabaca 750 m çözünürlüklü, daha ileri yakınlaştırma
- * yeni bilgi taşımaz. Üstünde döşeme büyütülerek çizilir.
- */
-export const OVERLAY_SOURCES = ['lp2022', 'lp2024', 'lp2020'].map((year) => ({
-  id: year,
-  year: year.replace('lp', ''),
-  maxZoom: 8,
-  url: (tile: Tile) =>
-    `https://djlorenz.github.io/astronomy/${year}/overlay/tiles/` +
-    `tile_${tile.z}_${tile.x}_${tile.y}.png`,
-}));
+export interface OverlaySource {
+  id: string;
+  /** Katmanın altında yazan kaynak — hangi veriye baktığı gizlenmemeli. */
+  credit: string;
+  maxZoom: number;
+  url: (tile: Tile) => string;
+  /**
+   * `screen`: siyahı yok sayıp ışığı toplar. Gece ışıkları görüntüsü
+   * (siyah zemin + parlak şehirler) altlığın üstüne ancak böyle
+   * bindirilebilir; normal çizimde altlığı tümden karartırdı.
+   */
+  blend?: 'screen';
+  /** Bu katman yalnızca koyu altlıkla anlamlı mı? */
+  needsDarkBasemap?: boolean;
+}
 
-export const OVERLAY_CREDIT = 'Işık kirliliği katmanı: D. J. Lorenz, VIIRS';
+/**
+ * IŞIK KİRLİLİĞİ KATMANI — sırayla denenen kaynaklar.
+ *
+ * ÖNCE David J. Lorenz'in dünya atlası: VIIRS ölçümlerinden türetilmiş,
+ * Bortle ölçeğine boyanmış, yıllık yayımlanan açık veri. Aradığımız şey
+ * tam olarak bu — lightpollutionmap.info dahil pek çok site aynı kaynağı
+ * kullanır. Hangi yılın yayında olduğunu bu ortamdan doğrulayamadım (dış
+ * ağ kapalı), bu yüzden yıllar yeniden eskiye doğru deneniyor.
+ *
+ * SONDA NASA GIBS'in "Black Marble" gece ışıkları görüntüsü var ve orada
+ * olmasının sebebi şu: katmansız bir harita işe yaramaz. Atlas
+ * adreslerinin hiçbiri yanıt vermezse kullanıcıya boş bir yol haritası
+ * bırakmak yerine, gece ışıklarının kendisi gösteriliyor — Bortle
+ * sınıfına boyanmış değil, ham parlaklık; bu yüzden altındaki kaynak
+ * yazısı da değişiyor. Farklı bir veriye bakıldığını saklamak, ölçekli
+ * bir atlasa bakıldığı izlenimi verirdi.
+ *
+ * `maxZoom` 8: iki veri de kabaca 750 m çözünürlüklü, daha ileri
+ * yakınlaştırma yeni bilgi taşımaz. Üstünde döşeme büyütülerek çizilir.
+ */
+export const OVERLAY_SOURCES: OverlaySource[] = [
+  ...['lp2024', 'lp2023', 'lp2022', 'lp2021', 'lp2020'].map((year) => ({
+    id: year,
+    credit: `Işık kirliliği atlası: D. J. Lorenz, VIIRS ${year.replace('lp', '')}`,
+    maxZoom: 8,
+    url: (tile: Tile) =>
+      `https://djlorenz.github.io/astronomy/${year}/overlay/tiles/` +
+      `tile_${tile.z}_${tile.x}_${tile.y}.png`,
+  })),
+  ...['2016-01-01', 'default'].map((time) => ({
+    id: `gibs:${time}`,
+    credit: 'Gece ışıkları: NASA GIBS · VIIRS Black Marble (ham parlaklık)',
+    maxZoom: 8,
+    blend: 'screen' as const,
+    needsDarkBasemap: true,
+    /* WMTS REST sırası satır/sütun: {TileMatrix}/{TileRow}/{TileCol},
+       yani z/y/x. x/y yer değiştirirse harita aynasal kayar. */
+    url: (tile: Tile) =>
+      'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_Black_Marble/' +
+      `default/${time}/GoogleMapsCompatible_Level8/${tile.z}/${tile.y}/${tile.x}.jpg`,
+  })),
+];
