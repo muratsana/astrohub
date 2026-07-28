@@ -317,3 +317,36 @@ export function gradientFor(kind: TargetKind): string {
       return 'linear-gradient(180deg, #050a12 0%, #14213d 45%, #3b2a4a 75%, #6b4a3a 100%)';
   }
 }
+
+/**
+ * Hedef açıklaması — ölçülen değerlerden cümle.
+ *
+ * Metni 230 kayıt için elle yazmak yerine kuraldan üretiyoruz; aynı kural
+ * hem tohum veride hem veritabanından okunan satırda çalışıyor. Böylece
+ * `celestial_objects.description` boş bırakılabiliyor ve kayıt iki
+ * kaynakta aynı görünüyor — metni satıra kopyalamak, kuralı değiştirdiğinde
+ * eskimiş 230 kopya bırakırdı.
+ *
+ * Editör bir kaydın açıklamasını elle yazdıysa satırdaki değer kazanır;
+ * kural yalnızca boşluğu dolduruyor.
+ */
+export function describeTarget(input: {
+  kind: TargetKind;
+  constellation: string;
+  magnitude?: number;
+  sizeArcmin: number;
+  note?: string;
+}): string {
+  const kindText = targetKindLabels[input.kind].toLocaleLowerCase('tr-TR');
+  const magText =
+    input.magnitude !== undefined
+      ? `${input.magnitude.toFixed(1)} kadir parlaklığında`
+      : 'kataloglarda kadir değeri verilmeyen';
+  const sizeText =
+    input.sizeArcmin >= 60
+      ? `${(input.sizeArcmin / 60).toFixed(1)}° genişliğinde geniş bir alan kaplar`
+      : `${input.sizeArcmin} yay dakikası genişliğindedir`;
+
+  const base = `${input.constellation} takımyıldızında, ${magText} bir ${kindText}. ${sizeText}.`;
+  return input.note ? `${base} ${input.note}` : base;
+}

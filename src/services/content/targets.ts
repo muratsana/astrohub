@@ -5,6 +5,7 @@ import {
 } from '@/features/targets/data';
 import {
   bestMonthsFromRa,
+  describeTarget,
   difficultyFor,
   formatAngularSize,
   formatDec,
@@ -107,7 +108,20 @@ export function mapTargetRow(row: TargetRow): CelestialTarget {
       row.recommended_focal ?? recommendedFocalFor(sizeArcmin),
     recommendedFilters:
       row.recommended_filters ?? recommendedFiltersFor(kind),
-    description: row.description ?? '',
+    /*
+     * Açıklama boşsa kuraldan üretiliyor: 230 kaydın açıklamasını
+     * veritabanına kopyalamak, kural değişince eskimiş 230 kopya
+     * bırakırdı. Editör elle yazdıysa satırdaki metin kazanır.
+     */
+    description:
+      row.description && row.description.trim().length > 0
+        ? row.description
+        : describeTarget({
+            kind,
+            constellation: row.constellation,
+            magnitude,
+            sizeArcmin,
+          }),
     gradient: gradientFor(kind),
     moving: isMovingKind(kind),
   };

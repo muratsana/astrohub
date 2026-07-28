@@ -33,8 +33,14 @@ import { equipment, equipmentCategoryLabels } from '@/features/equipment/data';
 import { targets } from '@/features/targets/data';
 import { sites } from '@/features/observing-sites/data';
 import { events } from '@/features/events/data';
-import { parseRa, parseDec } from '@/domain/astronomy/ephemeris';
-import { parseMeasure, typedSpecs, remainingSpecs } from '@/domain/equipment/specs';
+import {
+  brandId,
+  brandRows,
+  equipmentRow,
+  identifierRows,
+  parseAngularPair,
+  targetRow,
+} from '@/domain/catalog/rows';
 
 /* ── SQL değişmez değerleri ──────────────────────────────────────────── */
 
@@ -54,19 +60,7 @@ function jsonLit(value: unknown): string {
   return `${lit(JSON.stringify(value))}::jsonb`;
 }
 
-/** Marka adından kararlı bir kimlik üretir: 'Sky-Watcher' → 'sky-watcher'. */
-export function brandId(name: string): string {
-  return name
-    .toLocaleLowerCase('tr-TR')
-    .replace(/ı/g, 'i')
-    .replace(/ş/g, 's')
-    .replace(/ğ/g, 'g')
-    .replace(/ü/g, 'u')
-    .replace(/ö/g, 'o')
-    .replace(/ç/g, 'c')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-}
+export { brandId };
 
 /* ── Bölümler ────────────────────────────────────────────────────────── */
 
@@ -82,10 +76,9 @@ function categorySql(): string {
 }
 
 function brandSql(): string {
-  const seen = new Map<string, string>();
-  for (const item of equipment) seen.set(brandId(item.brand), item.brand);
-
-  const rows = [...seen].map(([id, name]) => `  (${lit(id)}, ${lit(name)})`);
+  const rows = brandRows(equipment).map(
+    (b) => `  (${lit(b.id)}, ${lit(b.name)})`
+  );
   return [
     'insert into public.equipment_brands (id, name) values',
     rows.join(',\n'),
@@ -94,26 +87,29 @@ function brandSql(): string {
 }
 
 function equipmentSql(): string {
+  /* Kolon eşlemesi alan katmanında (`domain/catalog/rows`); burada yalnızca
+     SQL değişmezlerine çevriliyor. Aynı eşlemeyi yönetim panelindeki
+     senkronizasyon da kullanıyor. */
   const rows = equipment.map((item) => {
-    const typed = typedSpecs(item.specs);
+    const r = equipmentRow(item);
     return [
       '  (',
       [
-        lit(item.slug),
-        lit(brandId(item.brand)),
-        lit(item.category),
-        lit(item.model),
-        lit(item.summary ?? null),
-        lit(item.priceHint ?? null),
-        lit(typed.focalLengthMm),
-        lit(typed.apertureMm),
-        lit(typed.pixelSizeUm),
-        lit(typed.sensorWidthMm),
-        lit(typed.sensorHeightMm),
-        lit(typed.payloadCapacityKg),
-        lit(typed.weightKg),
-        jsonLit(remainingSpecs(item.specs)),
-        arrayLit(item.notes),
+        lit(r.slug),
+        lit(r.brand_id),
+        lit(r.category_id),
+        lit(r.model),
+        lit(r.summary),
+        lit(r.price_hint),
+        lit(r.focal_length_mm),
+        lit(r.aperture_mm),
+        lit(r.pixel_size_um),
+        lit(r.sensor_width_mm),
+        lit(r.sensor_height_mm),
+        lit(r.payload_capacity_kg),
+        lit(r.weight_kg),
+        jsonLit(r.specs),
+        arrayLit(r.notes),
       ].join(', '),
       ')',
     ].join('');
@@ -147,27 +143,25 @@ function equipmentSql(): string {
 
 function targetSql(): string {
   const rows = targets.map((target) => {
-    // Açısal boyut "3.2° × 1.0°" ya da "11′ × 7′" biçiminde; ilk sayıyı
-    // arcdakikaya çeviriyoruz. Derece işareti varsa 60 ile çarpılır.
-    const size = parseAngularPair(target.angularSize);
+    const r = targetRow(target);
     return [
       '  (',
       [
-        lit(target.slug),
-        lit(target.name),
-        lit(target.catalog),
-        lit(target.kind),
-        lit(target.constellation),
-        lit(round(parseRa(target.ra), 5)),
-        lit(round(parseDec(target.dec), 5)),
-        lit(target.magnitude ?? null),
-        lit(size.major),
-        lit(size.minor),
-        lit(target.bestMonths),
-        lit(target.difficulty),
-        lit(target.recommendedFocal),
-        lit(target.recommendedFilters),
-        lit(target.description),
+        lit(r.slug),
+        lit(r.name),
+        lit(r.catalog),
+        lit(r.kind),
+        lit(r.constellation),
+        lit(r.ra_deg),
+        lit(r.dec_deg),
+        lit(r.magnitude),
+        lit(r.size_major_arcmin),
+        lit(r.size_minor_arcmin),
+        lit(r.best_months),
+        lit(r.difficulty),
+        lit(r.recommended_focal),
+        lit(r.recommended_filters),
+        lit(r.description),
       ].join(', '),
       ')',
     ].join('');
@@ -199,16 +193,13 @@ function targetSql(): string {
 }
 
 function identifierSql(): string {
-  const rows: string[] = [];
-  for (const target of targets) {
-    const codes = [target.catalog, ...target.aliases];
-    codes.forEach((code, index) => {
-      rows.push(
-        `  ((select id from public.celestial_objects where slug = ${lit(target.slug)}), ` +
-          `${lit(code)}, ${index === 0 ? 'true' : 'false'})`
-      );
-    });
-  }
+  const rows = targets.flatMap((target) =>
+    identifierRows(target).map(
+      (r) =>
+        `  ((select id from public.celestial_objects where slug = ${lit(r.slug)}), ` +
+        `${lit(r.code)}, ${r.is_primary ? 'true' : 'false'})`
+    )
+  );
 
   return [
     'insert into public.catalog_identifiers (object_id, code, is_primary) values',
@@ -399,24 +390,9 @@ function sessionSql(): string {
 /* ── Yardımcılar ─────────────────────────────────────────────────────── */
 
 /** `'3.2° × 1.0°'` / `'11′ × 7′'` → arcdakika çifti. */
-export function parseAngularPair(value: string): {
-  major: number | null;
-  minor: number | null;
-} {
-  const parts = value.split(/[×xX]/);
-  const major = parseAngularSingle(parts[0]);
-  const minor = parts[1] !== undefined ? parseAngularSingle(parts[1]) : major;
-  return { major, minor };
-}
+export { parseAngularPair };
 
-function parseAngularSingle(part: string | undefined): number | null {
-  if (!part) return null;
-  const amount = parseMeasure(part);
-  if (amount === null) return null;
-  // Derece işareti varsa arcdakikaya çevir; yoksa zaten arcdakika kabul et.
-  return part.includes('°') ? round(amount * 60, 2) : round(amount, 2);
-}
-
+/** Koordinat yuvarlama — `null` girdiyi de kabul eder. */
 function round(value: number | null, digits: number): number | null {
   if (value === null || !Number.isFinite(value)) return null;
   const factor = 10 ** digits;

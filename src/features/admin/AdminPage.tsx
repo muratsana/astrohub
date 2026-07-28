@@ -12,6 +12,7 @@ import { PageMeta } from '@/components/seo/PageMeta';
 import { useAuth } from '@/features/auth/AuthContext';
 import { useRoles, roleLabels } from './useRoles';
 import { BroadcastControl } from './BroadcastControl';
+import { CatalogControl } from './CatalogControl';
 import {
   fetchQueue,
   resolveItem,
@@ -355,6 +356,16 @@ export function AdminPage() {
       */}
       <div className="mt-4">
         <BroadcastControl />
+      </div>
+
+      {/*
+        Katalog kontrolü en altta: moderasyon her gece, yayın haftada bir,
+        katalog senkronizasyonu ise sürüm başına bir kez yapılan bir iş.
+        Sıklığa göre dizmek, panelin her açılışında en çok kullanılanı
+        aramayı gerektirmiyor.
+      */}
+      <div className="mt-4">
+        <CatalogControl canWrite={roles.isAdmin} />
       </div>
     </Shell>
   );

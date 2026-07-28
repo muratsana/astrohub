@@ -1,5 +1,6 @@
 import {
   bestMonthsFromRa,
+  describeTarget,
   difficultyFor,
   formatAngularSize,
   formatDec,
@@ -117,21 +118,6 @@ const KIND_NOUN: Record<TargetKind, string> = {
   'gokyuzu-olayi': 'Gökyüzü Olayı',
 };
 
-function describe(row: CatalogRow, sizeArcmin: number): string {
-  const kindText = targetKindLabels[row.kind].toLocaleLowerCase('tr-TR');
-  const magText =
-    row.mag !== undefined
-      ? `${row.mag.toFixed(1)} kadir parlaklığında`
-      : 'kataloglarda kadir değeri verilmeyen';
-  const sizeText =
-    sizeArcmin >= 60
-      ? `${(sizeArcmin / 60).toFixed(1)}° genişliğinde geniş bir alan kaplar`
-      : `${sizeArcmin} yay dakikası genişliğindedir`;
-
-  const base = `${row.constellation} takımyıldızında, ${magText} bir ${kindText}. ${sizeText}.`;
-  return row.note ? `${base} ${row.note}` : base;
-}
-
 function fromRow(row: CatalogRow): CelestialTarget {
   const sizeArcmin = longestAxisArcmin(row.size);
   return {
@@ -149,7 +135,13 @@ function fromRow(row: CatalogRow): CelestialTarget {
     difficulty: difficultyFor(row.mag, sizeArcmin),
     recommendedFocal: recommendedFocalFor(sizeArcmin),
     recommendedFilters: recommendedFiltersFor(row.kind),
-    description: describe(row, sizeArcmin),
+    description: describeTarget({
+      kind: row.kind,
+      constellation: row.constellation,
+      magnitude: row.mag,
+      sizeArcmin,
+      note: row.note,
+    }),
     gradient: gradientFor(row.kind),
     moving: false,
   };
