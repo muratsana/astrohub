@@ -59,6 +59,14 @@ export const storageInventory: StorageItem[] = [
     prefix: true,
   },
   {
+    key: 'astrohub:embed:lightpollutionmap',
+    label: 'Işık kirliliği haritası izni',
+    purpose: 'tercih',
+    description:
+      'Işık kirliliği haritası üçüncü taraftan (lightpollutionmap.app) gömülür; açtığınızda IP adresiniz ve baktığınız koordinat oraya gider. Bu anahtar yalnızca "izin verdim" bilgisini tutar. Silerseniz harita bir daha sorar.',
+    consentRequired: false,
+  },
+  {
     key: 'astrohub:radio:volume',
     label: 'Radyo ses düzeyi',
     purpose: 'tercih',

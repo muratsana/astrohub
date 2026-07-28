@@ -10,6 +10,7 @@ import { ButtonLink } from '@/components/ui/Button';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
 import { useLocationContext } from '@/features/location/LocationContext';
+import { LightPollutionMap } from './LightPollutionMap';
 import { useSiteCatalog } from '@/services/content/sites';
 import { haversineKm, formatDistance } from '@/domain/geography/distance';
 import {
@@ -22,19 +23,20 @@ import {
 import { cn } from '@/lib/cn';
 
 /**
- * KARANLIK GÖKYÜZÜ KARŞILAŞTIRMASI (§14.1).
+ * IŞIK KİRLİLİĞİ (§14.1) — harita + karşılaştırma.
  *
- * NEDEN "HARİTA" DEĞİL
- * Şartname lisanslı bir küresel ışık kirliliği veri seti öngörüyor; o lisans
- * (kullanım, atıf, önbellek hakları) netleşmeden harita yayımlanamaz.
- * Ama kullanıcının asıl sorusu haritada bir renge bakmak değil:
- * "şehirden şu sahaya gitmek neyi değiştirir?" Bunun cevabı elimizdeki
- * gerçek verilerle — gözlem noktalarımızın SQM/Bortle kayıtlarıyla —
- * hesaplanabiliyor.
+ * İKİ AYRI KAYNAK, BİLİNÇLİ OLARAK YAN YANA:
  *
- * Sayfa bu ayrımı gizlemiyor: gösterdiği her sayı ya bir ölçüm ya da
- * ölçümden türetilmiş. Kestirimle boyanmış bir harita yerine, doğrulanabilir
- * bir karşılaştırma.
+ *   1. Üstte **harita** — lightpollutionmap.app'in yayımlanmış gömme
+ *      adresi. Küresel bir ışık kirliliği veri setini kendimiz
+ *      lisanslamadan boyayamayız; o sitenin gömme izni var.
+ *   2. Altta **karşılaştırma** — kendi gözlem noktası kayıtlarımızın
+ *      SQM/Bortle ölçümleri. Kullanıcının asıl sorusu haritada bir renge
+ *      bakmak değil: "şehirden şu sahaya gitmek neyi değiştirir?"
+ *
+ * İkisi birbirini doğrulamaz ve sayfa bunu saklamıyor: haritadaki renk
+ * uydu kestirimi, alttaki sayı yerde yapılmış ölçüm. Karıştırılırsa
+ * kullanıcı ölçüme sahip olmadığı bir kesinlik atfeder.
  */
 export function LightPollutionPage() {
   const { location } = useLocationContext();
@@ -76,6 +78,8 @@ export function LightPollutionPage() {
         ])}
       />
 
+      <LightPollutionMap />
+
       <Container className="py-8 sm:py-10">
         <PageHeader
           breadcrumb={[
@@ -89,12 +93,14 @@ export function LightPollutionPage() {
         />
 
         <p className="mb-4 rounded-card border border-cold/35 bg-surface-1 px-3 py-2.5 text-[11.5px] leading-relaxed text-muted-foreground">
-          <span className="text-foreground">Bu bir ışık kirliliği haritası
-          değildir.</span>{' '}
-          Küresel ışık kirliliği veri setlerinin kullanım ve atıf lisansı
-          netleşmeden harita yayımlamıyoruz (§14.1). Buradaki değerler kendi
-          gözlem noktası kayıtlarımızdan ve Bortle ölçeğinin yerleşik SQM
-          karşılıklarından gelir; ölçülmüş olanlar ayrıca işaretlidir.
+          <span className="text-foreground">Aşağıdaki sayılar haritadan
+          gelmiyor.</span>{' '}
+          Üstteki harita uydu kestirimidir ve lightpollutionmap.app'e
+          aittir. Buradaki değerler ise kendi gözlem noktası
+          kayıtlarımızdan ve Bortle ölçeğinin yerleşik SQM
+          karşılıklarından gelir; yerde ölçülmüş olanlar ayrıca
+          işaretlidir. İki kaynağı karıştırmamak gerekir — kestirim bir
+          bölgeyi, ölçüm tek bir noktayı anlatır.
         </p>
 
         <div className="mb-4 grid gap-px border border-border bg-border sm:grid-cols-2">

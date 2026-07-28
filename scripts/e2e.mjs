@@ -233,6 +233,54 @@ await scenario('karanlık takvimi ay değiştirince yeniden hesaplar', async () 
   assert((await monthLabel()) === before, 'geri gidince aynı aya dönmedi');
 });
 
+/* ══════════════════ Işık kirliliği haritası ══════════════════ */
+
+await scenario('ışık kirliliği haritası kontrolleri adresi değiştirir', async () => {
+  await goto('/araclar/isik-kirliligi');
+
+  const text = await page.evaluate(() => document.body.innerText);
+  assert(includesTr(text, 'ışık kirliliği haritası'), 'harita bölümü yok');
+
+  /*
+   * Tek dosya önizleme dış istek yapamaz, dolayısıyla çerçeve hiç
+   * yüklenmiyor ve yerine dürüst bir açıklama çıkıyor. Testin koruduğu
+   * şey tam olarak bu: kırık bir çerçeve ya da sessiz boşluk değil,
+   * sebebini söyleyen bir metin.
+   */
+  assert(
+    includesTr(text, 'bu derlemede harita yüklenmiyor'),
+    'ağsız derlemede açıklama gösterilmedi'
+  );
+
+  /* Kontroller çerçeveden bağımsız: harita yüklenmese de sürgüler
+     çalışmalı, çünkü ürettikleri adres "yeni sekmede aç" bağlantısını da
+     besliyor. */
+  const linkHref = () =>
+    page.$eval('a[href*="lightpollutionmap.app"]', (el) =>
+      el.getAttribute('href')
+    );
+
+  const before = await linkHref();
+  assert(before.includes('zoom=6'), `başlangıç yakınlaştırması yanlış: ${before}`);
+
+  await page.$eval('#lp-zoom', (el) => {
+    const setter = Object.getOwnPropertyDescriptor(
+      window.HTMLInputElement.prototype,
+      'value'
+    ).set;
+    setter.call(el, '9');
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  await page.waitForTimeout(300);
+
+  const after = await linkHref();
+  assert(after.includes('zoom=9'), `sürgü adresi güncellemedi: ${after}`);
+  assert(
+    after.startsWith('https://lightpollutionmap.app/'),
+    `adres sağlayıcı dışına çıktı: ${after}`
+  );
+});
+
 /* ══════════════════════ Forum ══════════════════════ */
 
 await scenario('forum konusundan detaya gidilir', async () => {
