@@ -226,11 +226,11 @@ export const router = createRouter([
       { path: 'araclar/pixel-scale', element: fovPage() },
       {
         path: 'araclar/isik-kirliligi',
-        element: (
-          <PlaceholderPage
-            title="Işık Kirliliği Haritası"
-            description="Bortle/SQM katmanı, veri lisansı ve kaynak atfı doğrulandıktan sonra yayına alınacak (§14.1)."
-          />
+        element: route(
+          named(
+            () => import('@/features/sky/LightPollutionPage'),
+            'LightPollutionPage'
+          )
         ),
       },
       {

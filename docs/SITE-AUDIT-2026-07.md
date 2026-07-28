@@ -343,13 +343,36 @@ Moderasyon şeması (`0007_moderation_and_audit.sql`):
   uyduramamalı; kayıtlar sunucu tarafındaki SECURITY DEFINER fonksiyonlardan
   atılacak. RLS varsayılanı zaten reddediyor.
 
+### 6.8 Üçüncü tur — kalan engelleri kaldırma
+
+| İş | Sonuç |
+| --- | --- |
+| Service worker / çevrimdışı (§16.3) | Kabuk önbelleği + üç ayrı strateji; kayıt yalnızca üretimde |
+| Işık kirliliği (§14.1) | Harita yerine **karşılaştırma**: kendi SQM/Bortle kayıtlarımızdan hesaplanan fon parlaklığı oranı ve süre kazancı |
+| EXIF okuma (§10.3) | Bağımlılıksız JPEG/TIFF ayrıştırıcı; GPS okunur ama **asla otomatik yayımlanmaz** (§15.3) |
+| PWA ikonları, robots Sitemap | Kontrol edildi — zaten tamamdı |
+
+**Işık kirliliği kararı.** Lisanslı küresel veri seti olmadan harita
+yayımlamak yerine, kullanıcının asıl sorusuna cevap veriyoruz: "şehirden şu
+sahaya gitmek neyi değiştirir?" Kadir ölçeği logaritmik olduğu için
+Bortle 8'den Bortle 3'e geçiş "biraz daha karanlık" değil, fon parlaklığında
+on kat mertebesinde bir sıçramadır — sayfa bunu ölçümlerden hesaplayıp
+gösteriyor. Süre kazancının bir **üst sınır** olduğu (okuma gürültüsü ve dar
+bant hesaba katılmıyor) ekranda yazılı.
+
+**EXIF kararı.** Hazır kütüphaneler 20–60 kB ve kullanmayacağımız onlarca
+üretici bloğunu ayrıştırıyor; bizim ihtiyacımız sekiz alan. Kendi
+ayrıştırıcımız ilk yüklemeye hiçbir şey eklemiyor. GPS ayrıştırılıyor ama
+forma yazılmıyor: kullanıcı dosyasında konum olduğunu bilmeli (bilmediği bir
+veriyi paylaşmama kararı veremez), ama varsayılan her zaman gizlemek.
+
 ### 6.7 İkinci tur sonrası durum
 
 | Kontrol | Sonuç |
 | --- | --- |
 | `npm run typecheck` | ✅ hatasız |
 | `npm run lint` | ✅ hatasız |
-| `npm test` | ✅ 336 test |
+| `npm test` | ✅ 377 test |
 | `npm run build` | ✅ uyarısız |
 | `npm run check:preview` | ✅ sağlam, yatay taşma yok |
 | `node scripts/e2e.mjs` | ✅ 19/19 senaryo |

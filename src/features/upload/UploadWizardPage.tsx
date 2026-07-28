@@ -13,6 +13,12 @@ import { photoTypeLabels, type PhotoType } from '@/features/photos/types';
 import { targets } from '@/features/targets/data';
 import { cn } from '@/lib/cn';
 import { PageMeta } from '@/components/seo/PageMeta';
+import {
+  parseExif,
+  cameraLabel,
+  formatExposure,
+  type ExifData,
+} from '@/domain/photography/exif';
 
 const steps = [
   'Dosya',
@@ -68,11 +74,58 @@ const initialState: WizardState = {
  * bu iskelet form akışını, doğrulamaları ve özet ekranını tanımlar.
  */
 export function UploadWizardPage() {
+  const [exif, setExif] = useState<ExifData | null>(null);
+  const [exifState, setExifState] = useState<'idle' | 'reading' | 'read' | 'none'>(
+    'idle'
+  );
+  const [useExifGps, setUseExifGps] = useState(false);
   const [step, setStep] = useState(0);
   const [state, setState] = useState<WizardState>(initialState);
 
   function patch(p: Partial<WizardState>) {
     setState((s) => ({ ...s, ...p }));
+  }
+
+  /**
+   * Seçilen dosyanın EXIF'ini okur ve boş künye alanlarını doldurur.
+   *
+   * DOLU ALANLARA DOKUNULMAZ: kullanıcı bir değeri elle yazdıysa, EXIF onu
+   * ezmemeli. İşlenmiş astrofotoğraflarda EXIF çoğu zaman yığınlama
+   * yazılımının yazdığı eksik/yanlış veriyi taşır; kullanıcının yazdığı
+   * değer her zaman daha güvenilirdir.
+   *
+   * GPS bilinçli olarak forma YAZILMAZ (§15.3) — yalnızca bildirilir.
+   */
+  async function handleFile(file: File | undefined) {
+    if (!file) return;
+
+    patch({ fileName: file.name });
+    setExif(null);
+    setUseExifGps(false);
+    setExifState('reading');
+
+    try {
+      const buffer = await file.arrayBuffer();
+      const parsed = parseExif(buffer);
+
+      if (!parsed) {
+        setExifState('none');
+        return;
+      }
+
+      setExif(parsed);
+      setExifState('read');
+
+      const camera = cameraLabel(parsed);
+      patch({
+        camera: state.camera || camera || '',
+        optic: state.optic || parsed.lens || '',
+        capturedAt: state.capturedAt || parsed.capturedAt?.slice(0, 10) || '',
+      });
+    } catch {
+      // Dosya okunamadı (izin, bozuk dosya) — akış durmaz.
+      setExifState('none');
+    }
   }
 
   const total = useMemo(
@@ -144,22 +197,117 @@ export function UploadWizardPage() {
                 title="Dosya seç"
                 hint="JPEG, PNG, WebP veya AVIF · en fazla 40 MB / 12.000 px (§10.5)"
               />
+
               <label
-                htmlFor="file-name"
+                htmlFor="file-input"
                 className="flex aspect-[3/1] cursor-pointer flex-col items-center justify-center rounded-card border-2 border-dashed border-border bg-surface-2/40 text-center transition-colors hover:border-primary/40"
               >
                 <p className="text-sm font-medium text-foreground">
-                  {state.fileName || 'Dosyayı buraya sürükle veya adını yaz'}
+                  {state.fileName || 'Dosya seçmek için tıklayın'}
                 </p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Gerçek yükleme ve otomatik EXIF okuma, depolama altyapısı
-                  bağlandığında aktifleşecek.
+                <p className="mt-1 px-4 text-xs leading-relaxed text-muted-foreground">
+                  Dosya <span className="text-foreground">cihazınızdan
+                  çıkmaz</span>: künye alanlarını doldurmak için EXIF bilgisi
+                  tarayıcıda okunur. Sunucuya yükleme, depolama altyapısı
+                  bağlandığında açılacak.
                 </p>
               </label>
-              <Field label="Dosya adı (demo)" htmlFor="file-name">
+
+              <input
+                id="file-input"
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/avif"
+                className="sr-only"
+                onChange={(event) => void handleFile(event.target.files?.[0])}
+              />
+
+              {exifState === 'reading' && (
+                <p className="text-[12px] text-muted-foreground" role="status">
+                  EXIF okunuyor…
+                </p>
+              )}
+
+              {exifState === 'none' && state.fileName && (
+                <p className="rounded-card border border-border bg-surface-1 px-3 py-2.5 text-[11.5px] leading-relaxed text-muted-foreground">
+                  Dosyada EXIF bulunamadı. İşlenmiş astrofotoğraflarda bu
+                  normaldir — yığınlama yazılımları çıktıya kamera bilgisi
+                  yazmaz. Alanları elle doldurabilirsiniz.
+                </p>
+              )}
+
+              {exif && (
+                <div className="rounded-card border border-border bg-surface-1">
+                  <header className="flex items-center justify-between border-b border-border px-3 py-2">
+                    <h3 className="label text-foreground">Okunan EXIF</h3>
+                    <span className="label">otomatik dolduruldu</span>
+                  </header>
+                  <dl className="px-3 py-2">
+                    <ExifRow label="Kamera" value={cameraLabel(exif)} />
+                    <ExifRow label="Lens" value={exif.lens} />
+                    <ExifRow
+                      label="Poz"
+                      value={
+                        exif.exposureSeconds
+                          ? formatExposure(exif.exposureSeconds)
+                          : undefined
+                      }
+                    />
+                    <ExifRow
+                      label="Diyafram"
+                      value={exif.fNumber ? `f/${exif.fNumber.toFixed(1)}` : undefined}
+                    />
+                    <ExifRow label="ISO" value={exif.iso?.toString()} />
+                    <ExifRow
+                      label="Odak"
+                      value={exif.focalLength ? `${exif.focalLength} mm` : undefined}
+                    />
+                    <ExifRow
+                      label="Çekim zamanı"
+                      value={exif.capturedAt?.replace('T', ' ')}
+                    />
+                  </dl>
+
+                  {exif.hasGps && (
+                    /*
+                     * KONUM MAHREMİYETİ (§15.3).
+                     *
+                     * GPS okunur ama KULLANILMAZ: ne forma yazılır ne de
+                     * yayımlanır. Kullanıcının bilmesi gerekir — bilmediği
+                     * bir veriyi paylaşmama kararı veremez — ama varsayılan
+                     * her zaman gizlemektir. Onay açıkça istenir.
+                     */
+                    <div className="border-t border-warning/35 px-3 py-2.5">
+                      <p className="text-[11.5px] leading-relaxed text-warning">
+                        Bu dosya <strong>GPS koordinatı taşıyor</strong>. Konum
+                        formunuza yazılmadı ve yayımlanmayacak; yalnızca
+                        haberiniz olsun diye bildiriyoruz.
+                      </p>
+                      <label className="label mt-2 flex cursor-pointer items-center gap-2 text-muted-foreground has-[:checked]:text-foreground">
+                        <input
+                          type="checkbox"
+                          checked={useExifGps}
+                          onChange={(e) => {
+                            setUseExifGps(e.target.checked);
+                            if (e.target.checked && exif.gps) {
+                              patch({
+                                locationLabel: `${exif.gps.latitude.toFixed(4)}, ${exif.gps.longitude.toFixed(4)}`,
+                                locationVisibility: 'approximate',
+                              });
+                            }
+                          }}
+                          className="h-3.5 w-3.5 rounded-[2px] border-border accent-primary"
+                        />
+                        Koordinatı konum alanına yaz (yaklaşık görünürlükle)
+                      </label>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <Field label="Dosya adı" htmlFor="file-name">
                 <Input
                   id="file-name"
-                  placeholder="ornegin-ic434-sho.tif"
+                  placeholder="ornegin-ic434-sho.jpg"
                   value={state.fileName}
                   onChange={(e) => patch({ fileName: e.target.value })}
                 />
@@ -498,6 +646,17 @@ function StepTitle({ title, hint }: { title: string; hint?: string }) {
     <div>
       <h2 className="text-lg font-semibold text-foreground">{title}</h2>
       {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
+    </div>
+  );
+}
+
+/** EXIF künyesindeki tek satır; değer yoksa satır hiç çizilmez. */
+function ExifRow({ label, value }: { label: string; value?: string }) {
+  if (!value) return null;
+  return (
+    <div className="flex items-baseline justify-between gap-3 border-b border-border py-1.5 last:border-0">
+      <dt className="label shrink-0">{label}</dt>
+      <dd className="tabular text-right text-[11.5px] text-foreground">{value}</dd>
     </div>
   );
 }
