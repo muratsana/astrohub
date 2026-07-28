@@ -129,10 +129,22 @@ export function LightPollutionMap() {
                    düşürüyor ve geri tuşunu haritaya esir ediyor. */
                 key={embedUrl(view)}
                 src={embedUrl(view)}
-                title="Işık Kirliliği Haritası"
+                title="Light Pollution Map"
                 allowFullScreen
-                loading="lazy"
-                referrerPolicy="no-referrer"
+                /*
+                 * REFERRER GÖNDERİLİYOR — ve bu bilinçli.
+                 *
+                 * Önce `referrerPolicy="no-referrer"` konmuştu; canlıda
+                 * çerçeve boş bir kutu olarak açıldı. Gömme servisleri
+                 * hangi siteden çağrıldıklarını referrer başlığından
+                 * doğruluyor; başlık yoksa isteği reddediyorlar.
+                 * Sağlayıcının kendi yayımladığı gömme kodunda da böyle
+                 * bir kısıtlama yok — ondan sapmanın bedeli buydu.
+                 *
+                 * `loading="lazy"` de kaldırıldı: çerçeve sayfanın
+                 * görünen kısmında ve ertelemenin kazandırdığı bir şey
+                 * yok, ama bazı tarayıcılarda ilk boyamada boş kalıyor.
+                 */
                 className="h-full w-full"
                 style={{ border: 0 }}
               />

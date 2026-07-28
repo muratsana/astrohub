@@ -9,7 +9,7 @@
  * Site bir yayın organı gibi değil, bir cihaz gibi davranır. Karar künyesi:
  *
  *   Palet      grafit zemin · fosfor kehribar aksan · soğuk mavi ikincil
- *   Tipografi  Roboto Condensed 700 (başlık, uppercase) + JetBrains Mono
+ *   Tipografi  Inter (arayüz ve okuma) + JetBrains Mono (yalnızca sayı)
  *   Sertlik    "dengeli" — 2px radius, gölge yok, hairline bölmeler
  *   Tema       açık · koyu (varsayılan) · saha kırmızısı
  *
@@ -50,9 +50,22 @@
   --color-danger: #e2604f;
 
   /* ---- Tipografi ---- */
-  --font-display: 'Roboto Condensed', 'Arial Narrow', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
-  --font-sans: 'JetBrains Mono', ui-monospace, monospace;
+  /*
+   * TEK AİLE, İKİ İŞ.
+   *
+   * Gövde ve başlık aynı aileden (Inter): okuma metni ile başlık
+   * arasındaki fark aile değil, ölçü ve ağırlık. İki ayrı ailenin
+   * uyumunu kollamak yerine tek ailenin ağırlık aralığını kullanmak
+   * hem daha az font indiriyor hem daha tutarlı duruyor.
+   *
+   * Rakam hizalaması ayrı bir aile gerektirmiyor: Inter'in tabular
+   * figürleri (`font-variant-numeric: tabular-nums`, bkz. `.tabular`)
+   * sayıları alt alta getiriyor. `--font-mono` yalnızca ileride bir kod
+   * bloğu gerekirse diye duruyor ve hiçbir dosya indirmiyor.
+   */
+  --font-display: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, monospace;
 
   /* İçerik genişliği (§6.4) */
   --spacing-content: 1520px;
@@ -150,13 +163,26 @@
     scroll-padding-top: var(--spacing-shell);
   }
 
+  /*
+   * GÖVDE ÖLÇÜSÜ 13.5px'ten 15px'e çıktı.
+   *
+   * Monospace'te 13.5px kabul edilebilirdi çünkü her harf geniş.
+   * Orantılı bir ailede aynı sayı küçük kalıyor ve uzun metinde göz
+   * yoruyor. 15px, arayüz metni için yaygın kabul gören alt sınır.
+   *
+   * `font-optical-sizing` ve `letter-spacing: -0.006em`: Inter küçük
+   * puntoda varsayılan olarak biraz gevşek duruyor; hafif sıkıştırma
+   * kelime siluetini toparlıyor.
+   */
   body {
     margin: 0;
     background-color: var(--color-background);
     color: var(--color-foreground);
-    font-family: var(--font-mono);
-    font-size: 13.5px;
-    line-height: 1.7;
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.65;
+    letter-spacing: -0.006em;
+    font-optical-sizing: auto;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
   }

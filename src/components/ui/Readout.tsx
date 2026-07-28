@@ -49,7 +49,7 @@ export function Readout({
       >
         {value}
         {unit && (
-          <span className="ml-1 font-mono text-xs font-normal tracking-wide text-faint">
+          <span className="ml-1 text-xs font-normal tracking-wide text-faint">
             {unit}
           </span>
         )}

@@ -1,6 +1,14 @@
 /*
  * Astrohub tipografisi — kendi kendine barındırılan fontlar.
  *
+ * TEK AİLE: Inter. Gövde, başlık ve etiketlerin hepsi buradan; fark
+ * aile değil ölçü ve ağırlık.
+ *
+ * JETBRAINS MONO KALDIRILDI. Gövde metni monospace'ti ve okumayı
+ * yoruyordu; hizalama gerekçesiyle tutulabilirdi ama Inter'in
+ * `font-variant-numeric: tabular-nums` desteği rakamları zaten alt alta
+ * getiriyor. İki font indirmenin karşılığı yoktu.
+ *
  * `@fontsource` paketlerinin hazır CSS'leri her alt kümeyi (kiril, yunan,
  * vietnamca…) dahil ediyor; tek dosya önizleme derlemesinde bunların hepsi
  * base64 olarak gömülüyor ve çıktıyı gereksiz şişiriyor. Bu yüzden yalnızca
@@ -64,14 +72,28 @@
     U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
 
-/* ---- Gövde ve veri: JetBrains Mono (değişken ağırlık 100–800) ---- */
+/* ---- Gövde ve arayüz: Inter (değişken ağırlık 100–900) ----
+ *
+ * NEDEN DEĞİŞTİ: gövde metni JetBrains Mono'ydu. Monospace bir cihaz
+ * hissi veriyordu ama okuma metnini yoruyor: her harf aynı genişlikte
+ * olduğu için kelime siluetleri kayboluyor, göz harf harf ilerliyor.
+ * Kısa etiketlerde sorun değil, üç paragraflık bir haber metninde
+ * belirgin.
+ *
+ * Inter tam bu iş için çizildi: küçük punto arayüz metni. Türkçe için
+ * gereken ğ ş ı İ karakterleri latin-ext alt kümesinde.
+ *
+ * MONOSPACE KAYBOLMADI, HAK ETTİĞİ YERE ÇEKİLDİ: ölçüm ve sayı
+ * hizalaması (`.tabular`) hâlâ JetBrains Mono. Rakamların alt alta
+ * hizalanması bir okuma kolaylığı değil, karşılaştırma aracı.
+ */
 
 @font-face {
-  font-family: 'JetBrains Mono';
+  font-family: 'Inter';
   font-style: normal;
-  font-weight: 100 800;
+  font-weight: 100 900;
   font-display: swap;
-  src: url('@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2')
+  src: url('@fontsource-variable/inter/files/inter-latin-wght-normal.woff2')
     format('woff2-variations');
   unicode-range:
     U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
@@ -79,11 +101,11 @@
     U+2212, U+2215, U+FEFF, U+FFFD;
 }
 @font-face {
-  font-family: 'JetBrains Mono';
+  font-family: 'Inter';
   font-style: normal;
-  font-weight: 100 800;
+  font-weight: 100 900;
   font-display: swap;
-  src: url('@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-ext-wght-normal.woff2')
+  src: url('@fontsource-variable/inter/files/inter-latin-ext-wght-normal.woff2')
     format('woff2-variations');
   unicode-range:
     U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304,

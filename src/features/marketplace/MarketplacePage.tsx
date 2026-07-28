@@ -21,7 +21,8 @@ import {
   equipmentCategoryLabels,
   type EquipmentCategory,
 } from '@/features/equipment/data';
-import { listings, type Listing } from './data';
+import { useListings } from '@/services/content/listings';
+import type { Listing } from './data';
 import { cn } from '@/lib/cn';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
@@ -55,8 +56,10 @@ export function MarketplacePage() {
   const [onlyVerified, setOnlyVerified] = useState(false);
   const [view, setView] = useViewMode('ilanlar');
 
+  const catalog = useListings();
+
   const result = useMemo(() => {
-    let items = listings;
+    let items = catalog.items;
 
     if (category !== 'hepsi') items = items.filter((l) => l.category === category);
     if (onlyInvoice) items = items.filter((l) => l.hasInvoice);
@@ -76,7 +79,7 @@ export function MarketplacePage() {
       if (sort === 'pahali') return b.price - a.price;
       return b.postedAt.localeCompare(a.postedAt);
     });
-  }, [category, search, sort, onlyInvoice, onlyVerified]);
+  }, [catalog.items, category, search, sort, onlyInvoice, onlyVerified]);
 
   return (
     <>
@@ -147,7 +150,7 @@ export function MarketplacePage() {
           left={
             <ResultCount
               current={result.length}
-              total={listings.length}
+              total={catalog.items.length}
               noun="ilan"
             />
           }
