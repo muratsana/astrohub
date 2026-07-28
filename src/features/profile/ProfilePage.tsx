@@ -11,7 +11,7 @@ import {
   totalIntegrationSeconds,
   formatIntegration,
 } from '@/domain/photography/integration';
-import { photos } from '@/features/photos/data';
+import { usePhotoCatalog } from '@/services/content/photos';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
 
@@ -22,10 +22,11 @@ import { breadcrumbJsonLd } from '@/lib/seo';
  */
 export function ProfilePage() {
   const { username } = useParams<{ username: string }>();
+  const photos = usePhotoCatalog().items;
 
   const userPhotos = useMemo(
     () => photos.filter((p) => p.user.username === username),
-    [username]
+    [photos, username]
   );
 
   if (!username || userPhotos.length === 0) {

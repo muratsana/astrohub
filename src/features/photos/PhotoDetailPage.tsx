@@ -10,7 +10,7 @@ import {
   totalIntegrationSeconds,
   exposureRowSeconds,
 } from '@/domain/photography/integration';
-import { getPhotoBySlug, photos } from './data';
+import { usePhotoCatalog } from '@/services/content/photos';
 import { PhotoComparison } from './PhotoComparison';
 import { VersionHistory } from './VersionHistory';
 import { ReportButton } from '@/features/admin/ReportButton';
@@ -37,7 +37,8 @@ const tabs: { id: TabId; label: string }[] = [
  */
 export function PhotoDetailPage() {
   const { slug } = useParams<{ slug: string }>();
-  const photo = slug ? getPhotoBySlug(slug) : undefined;
+  const catalog = usePhotoCatalog();
+  const photo = catalog.items.find((p) => p.slug === slug);
 
   if (!photo) {
     return (
@@ -48,23 +49,23 @@ export function PhotoDetailPage() {
     );
   }
 
-  return <PhotoDetail photo={photo} />;
+  return <PhotoDetail photo={photo} all={catalog.items} />;
 }
 
-function PhotoDetail({ photo }: { photo: AstroPhoto }) {
+function PhotoDetail({ photo, all }: { photo: AstroPhoto; all: AstroPhoto[] }) {
   const [tab, setTab] = useState<TabId>('cekim');
   const integration = totalIntegrationSeconds(photo.exposures);
 
   const related = useMemo(
     () =>
-      photos
+      all
         .filter(
           (p) =>
             p.slug !== photo.slug &&
             (p.target.catalog === photo.target.catalog || p.type === photo.type)
         )
         .slice(0, 4),
-    [photo]
+    [all, photo]
   );
 
   return (

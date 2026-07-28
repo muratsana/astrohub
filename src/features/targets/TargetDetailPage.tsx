@@ -6,7 +6,7 @@ import { ButtonLink } from '@/components/ui/Button';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { PhotoPlaceholder } from '@/components/media/PhotoPlaceholder';
 import { PlaceholderPage } from '@/components/PlaceholderPage';
-import { photos } from '@/features/photos/data';
+import { usePhotoCatalog } from '@/services/content/photos';
 import { getTargetBySlug, targetKindLabels } from './data';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
@@ -19,6 +19,8 @@ export function TargetDetailPage() {
   const { slug } = useParams<{ slug: string }>();
   const target = slug ? getTargetBySlug(slug) : undefined;
 
+  const photos = usePhotoCatalog().items;
+
   const targetPhotos = useMemo(
     () =>
       target
@@ -28,7 +30,7 @@ export function TargetDetailPage() {
               target.aliases.includes(p.target.catalog)
           )
         : [],
-    [target]
+    [photos, target]
   );
 
   if (!target) {

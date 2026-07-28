@@ -1,7 +1,7 @@
 import { Container } from '@/components/ui/Container';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { PhotoTile } from '@/components/media/PhotoTile';
-import { photos } from '@/features/photos/data';
+import { usePhotoCatalog } from '@/services/content/photos';
 import {
   formatIntegration,
   totalIntegrationSeconds,
@@ -27,6 +27,7 @@ function tintForPhoto(catalog: string): string {
 }
 
 export function RecentRecords() {
+  const photos = usePhotoCatalog().items;
   const recent = photos.slice(0, 10);
 
   return (

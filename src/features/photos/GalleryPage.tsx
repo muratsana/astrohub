@@ -13,7 +13,7 @@ import { CardGrid } from '@/components/ui/CardGrid';
 import { ToolBar, ResultCount } from '@/components/ui/ToolBar';
 import { useViewMode } from '@/components/ui/useViewMode';
 import { PhotoCard } from './PhotoCard';
-import { photos } from './data';
+import { usePhotoCatalog } from '@/services/content/photos';
 import {
   filterPhotos,
   defaultFilters,
@@ -47,14 +47,17 @@ export function GalleryPage() {
   const [family, setFamily] = useState<PhotoFamily | 'hepsi'>('hepsi');
   const [view, setView] = useViewMode('galeri');
 
-  const cities = useMemo(() => availableCities(photos), []);
+  const catalog = usePhotoCatalog();
+  const photos = catalog.items;
+
+  const cities = useMemo(() => availableCities(photos), [photos]);
 
   const result = useMemo(() => {
     const base = filterPhotos(photos, filters);
     return family === 'hepsi'
       ? base
       : base.filter((p) => familyOf(p.type) === family);
-  }, [filters, family]);
+  }, [photos, filters, family]);
 
   function set<K extends keyof GalleryFilters>(
     key: K,

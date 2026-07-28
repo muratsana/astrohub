@@ -1,14 +1,28 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { GalleryPage } from './GalleryPage';
 import { photos } from './data';
 
+/*
+ * Galeri artık `usePhotoCatalog` üzerinden okuyor; kanca TanStack Query
+ * kullanıyor ve sağlayıcı olmadan render çöker. Test ortamında Supabase
+ * yapılandırması yok, dolayısıyla sorgu hiç kurulmuyor ve sayfa tohum
+ * veriyle boyanıyor — beklentiler `photos` dizisi üzerinden geçerli
+ * kalıyor.
+ */
 function renderGallery() {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+
   return render(
-    <MemoryRouter>
-      <GalleryPage />
-    </MemoryRouter>
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter>
+        <GalleryPage />
+      </MemoryRouter>
+    </QueryClientProvider>
   );
 }
 

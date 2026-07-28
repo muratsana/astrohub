@@ -9,7 +9,7 @@ import { ButtonLink } from '@/components/ui/Button';
 import { PlateFrame } from '@/components/media/PlateFrame';
 import { StarField } from '@/components/media/StarField';
 import { tintFor } from '@/components/media/tints';
-import { photos } from '@/features/photos/data';
+import { usePhotoCatalog } from '@/services/content/photos';
 import { targets } from '@/features/targets/data';
 import {
   totalIntegrationSeconds,
@@ -24,6 +24,8 @@ import { breadcrumbJsonLd } from '@/lib/seo';
  */
 export function DiscoverPage() {
   // Fotoğraf verisinden fotoğrafçı özetleri türet
+  const photos = usePhotoCatalog().items;
+
   const photographers = useMemo(() => {
     const byUser = new Map<
       string,
@@ -49,7 +51,7 @@ export function DiscoverPage() {
       byUser.set(p.user.username, cur);
     }
     return [...byUser.values()].sort((a, b) => b.likes - a.likes);
-  }, []);
+  }, [photos]);
 
   const popularTargets = targets.slice(0, 4);
 

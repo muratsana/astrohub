@@ -10,7 +10,7 @@ import { CardGrid } from '@/components/ui/CardGrid';
 import { NotFoundPage } from '@/components/NotFoundPage';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
-import { photos } from '@/features/photos/data';
+import { usePhotoCatalog } from '@/services/content/photos';
 import { listings } from '@/features/marketplace/data';
 import {
   equipmentCategoryLabels,
@@ -57,6 +57,8 @@ export function EquipmentDetailPage() {
     ? catalog.items.find((item) => item.slug === slug)
     : undefined;
 
+  const photos = usePhotoCatalog().items;
+
   const shotWith = useMemo(() => {
     if (!model) return [];
     return photos.filter((photo) =>
@@ -68,7 +70,7 @@ export function EquipmentDetailPage() {
         photo.setup.filters,
       ].some((field) => mentions(field, model))
     );
-  }, [model]);
+  }, [photos, model]);
 
   const forSale = useMemo(() => {
     if (!model) return [];

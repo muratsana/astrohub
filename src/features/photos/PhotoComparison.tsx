@@ -9,7 +9,7 @@ import {
   differenceCount,
   type ComparablePhoto,
 } from '@/domain/photography/versions';
-import { photos } from './data';
+import { usePhotoCatalog } from '@/services/content/photos';
 import type { AstroPhoto } from './types';
 import { cn } from '@/lib/cn';
 
@@ -25,12 +25,14 @@ import { cn } from '@/lib/cn';
  * temiz çıkmış" sorusunu bir bakışta cevaplamak.
  */
 export function PhotoComparison({ photo }: { photo: AstroPhoto }) {
+  const all = usePhotoCatalog().items;
+
   const candidates = useMemo(
     () =>
-      photos.filter(
+      all.filter(
         (p) => p.slug !== photo.slug && p.target.catalog === photo.target.catalog
       ),
-    [photo]
+    [all, photo]
   );
 
   const [otherSlug, setOtherSlug] = useState(candidates[0]?.slug ?? '');
