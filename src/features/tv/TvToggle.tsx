@@ -5,15 +5,15 @@ import { liveBroadcast } from './types';
 import { cn } from '@/lib/cn';
 
 /**
- * ÜST ÇUBUKTAKİ TV DÜĞMESİ.
+ * ÜST ÇUBUKTAKİ TV DÜĞMESİ — metinli.
  *
- * Radyo düğmesiyle aynı işi görür ama farklı bir şey yapar: radyo yayını
- * yerinde açılır (ses arka planda çalar), TV yayını ise sayfaya gider —
- * video ekranın ortasında olmalı, üst çubuğa sıkıştırılamaz.
+ * Radyo düğmesiyle aynı biçimde ama farklı davranır: radyo yayını yerinde
+ * açılır (ses arka planda çalar), TV yayını sayfaya gider — video ekranın
+ * ortasında olmalı, üst çubuğa sıkıştırılamaz.
  *
- * Düğme aynı zamanda **durum göstergesi**: canlı yayın varken kehribar
- * yanar ve yanında bir nokta taşır. Kullanıcının yayının başladığını
- * anlamak için TV sayfasını açması gerekmez.
+ * Canlı yayın varken düğme kehribar yanar ve yanında bir nokta taşır:
+ * kullanıcı yayının başladığını anlamak için TV sayfasını açmak zorunda
+ * kalmasın.
  */
 export function TvToggle({ className }: { className?: string }) {
   const catalog = useBroadcastCatalog();
@@ -25,21 +25,21 @@ export function TvToggle({ className }: { className?: string }) {
       aria-label={live ? `Astrohub.tv — canlı: ${live.title}` : 'Astrohub.tv'}
       title={live ? `Canlı yayında: ${live.title}` : 'Astrohub.tv'}
       className={cn(
-        'inline-flex h-8 items-center gap-1.5 rounded-card border px-2 text-[10px] tracking-[0.03em] transition-colors sm:px-2.5',
+        'inline-flex h-8 shrink-0 items-center gap-1.5 rounded-card border px-2 text-[11px] font-medium tracking-[0.02em] transition-colors sm:px-2.5',
         live
-          ? 'border-primary text-primary'
+          ? 'border-primary bg-primary/10 text-primary'
           : 'border-border text-muted-foreground hover:border-border-strong hover:text-foreground',
         className
       )}
     >
-      <TvIcon className="h-3.5 w-3.5" />
+      <TvIcon className="h-3.5 w-3.5 shrink-0" />
+      TV
       {live && (
         <span
           aria-hidden
           className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-primary"
         />
       )}
-      <span className="hidden 2xl:inline">TV</span>
     </Link>
   );
 }

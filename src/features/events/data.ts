@@ -60,6 +60,11 @@ export const events: AstroEvent[] = [
       url: 'https://ogbf.kozmikanafor.com/',
       lastVerifiedAt: '2026-07-28',
     },
+    image: {
+      url: 'https://commons.wikimedia.org/wiki/Special:FilePath/Olimpos%2C%20Antalya.jpg?width=1200',
+      credit: 'Wikimedia Commons — Olimpos, Antalya',
+      licence: 'CC BY-SA',
+    },
   },
   {
     slug: 'ethem-hoca-gokyuzu-gozlem-senligi-2026',
@@ -167,6 +172,11 @@ export const events: AstroEvent[] = [
       url: 'https://uludagastrofest.com/',
       lastVerifiedAt: '2026-07-28',
     },
+    image: {
+      url: 'https://commons.wikimedia.org/wiki/Special:FilePath/View%20of%20Bursa%20from%20the%20hills%20of%20Mount%20Uludag.jpg?width=1200',
+      credit: 'Wikimedia Commons — Mount Uludağ',
+      licence: 'CC BY-SA 3.0',
+    },
   },
   {
     slug: 'ulusal-gokyuzu-gozlem-senligi-2026',
@@ -200,6 +210,11 @@ export const events: AstroEvent[] = [
       url: 'https://senlik.tug.tubitak.gov.tr/',
       lastVerifiedAt: '2026-07-28',
     },
+    image: {
+      url: 'https://commons.wikimedia.org/wiki/Special:FilePath/Palandoken%20Erzurum%202009.JPG?width=1200',
+      credit: 'Wikimedia Commons — Palandöken, Erzurum',
+      licence: 'CC BY-SA',
+    },
   },
   {
     slug: 'zerzevan-gokyuzu-gozlem-2026',
@@ -228,6 +243,11 @@ export const events: AstroEvent[] = [
       name: 'Gazete Detay',
       url: 'https://gazetedetay.com/zerzevan-kalesinde-gokyuzu-gozlem-etkinligi-ve-bilim-senligi-duzenlenecek',
       lastVerifiedAt: '2026-07-28',
+    },
+    image: {
+      url: 'https://commons.wikimedia.org/wiki/Special:FilePath/Mithraeum%20of%20Zerzevan%20Castle.jpg?width=1200',
+      credit: 'Clemens Schmillen / Wikimedia Commons',
+      licence: 'CC BY-SA 4.0',
     },
   },
 ];

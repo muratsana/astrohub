@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { Container } from '@/components/ui/Container';
 import { Input, Select } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
@@ -11,12 +10,9 @@ import {
   FilterToggle,
   filterControlClass,
 } from '@/components/ui/FilterBar';
-import { CardGrid } from '@/components/ui/CardGrid';
+import { EditorialList, type EditorialItem } from '@/components/ui/EditorialList';
 import { ToolBar, ResultCount } from '@/components/ui/ToolBar';
 import { useViewMode } from '@/components/ui/useViewMode';
-import { PlateFrame } from '@/components/media/PlateFrame';
-import { StarField } from '@/components/media/StarField';
-import { tintFromSeed } from '@/components/media/tints';
 import { useEventCatalog } from '@/services/content/events';
 import { CatalogSourceNote } from '@/components/ui/CatalogSourceNote';
 import {
@@ -27,7 +23,6 @@ import {
   type EventFilters,
 } from './filtering';
 import { eventTypeLabels, type EventType } from './types';
-import type { AstroEvent } from './types';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
 import { EventCalendar } from './EventCalendar';
@@ -59,6 +54,41 @@ export function EventsPage() {
   const result = useMemo(
     () => filterEvents(catalog.items, filters),
     [catalog.items, filters]
+  );
+
+  /*
+    Etkinlikler de haber ve yazıyla aynı editöryel düzeni kullanıyor.
+    Sayfanın işi veriyi o düzenin beklediği alanlara eşlemek; kart
+    yapısı, manşet ve kolon sayısı `EditorialList` içinde bir kez tanımlı.
+  */
+  const editorialItems: EditorialItem[] = useMemo(
+    () =>
+      result.map((event) => {
+        const date = splitDate(event.startsAt);
+        const capacity = capacityLabel(event);
+        return {
+          slug: event.slug,
+          to: `/etkinlik/${event.slug}`,
+          title: event.title,
+          summary: event.description,
+          category: eventTypeLabels[event.type],
+          meta: `${date.day} ${date.month} · ${event.city}`,
+          imageUrl: event.image?.url,
+          imageCredit: event.image?.credit,
+          footer: (
+            <div className="flex flex-wrap items-center gap-1.5">
+              <Badge tone={event.free ? 'success' : 'primary'}>
+                {event.free ? 'Ücretsiz' : 'Ücretli'}
+              </Badge>
+              {event.camping && <Badge tone="cold">Kamp</Badge>}
+              {capacity && (
+                <span className="tabular text-[10px] text-faint">{capacity}</span>
+              )}
+            </div>
+          ),
+        };
+      }),
+    [result]
   );
 
   function set<K extends keyof EventFilters>(key: K, value: EventFilters[K]) {
@@ -196,13 +226,19 @@ export function EventsPage() {
             hint="Şehir veya tür filtresini gevşetmeyi deneyin; takvim ileri tarihlere doğru dolmaya devam ediyor."
           />
         ) : (
-          <CardGrid view={view}>
-            {result.map((event) => (
-              <li key={event.slug}>
-                <EventCard event={event} variant={view} />
-              </li>
-            ))}
-          </CardGrid>
+          /*
+            Etkinlikler de haber ve yazıyla aynı editöryel düzeni
+            kullanıyor: manşet + görselli kartlar. Üç modül aynı şeyi
+            yapıyor (tarihli, kategorili, özetli kayıt listelemek) ve üç
+            ayrı kart yapısı, sayfadan sayfaya geçen kullanıcıya aynı
+            sitenin üç ayrı bölümü gibi görünüyordu.
+          */
+          <EditorialList
+            view={view}
+            items={editorialItems}
+            leadLabel="Öne çıkan"
+            emptyMessage="Eşleşen etkinlik yok."
+          />
         )}
       </Container>
     </>
@@ -222,96 +258,4 @@ function splitDate(iso: string) {
       year: 'numeric',
     }),
   };
-}
-
-function EventCard({
-  event,
-  variant,
-}: {
-  event: AstroEvent;
-  variant: 'grid' | 'list';
-}) {
-  const date = splitDate(event.startsAt);
-  const capacity = capacityLabel(event);
-
-  const badges = (
-    <div className="flex flex-wrap gap-1">
-      <Badge>{eventTypeLabels[event.type]}</Badge>
-      <Badge tone={event.free ? 'success' : 'primary'}>
-        {event.free ? 'Ücretsiz' : 'Ücretli'}
-      </Badge>
-      {event.camping && <Badge tone="cold">Kamp</Badge>}
-      {capacity && <Badge tone="muted">{capacity}</Badge>}
-    </div>
-  );
-
-  if (variant === 'list') {
-    return (
-      <Link
-        to={`/etkinlik/${event.slug}`}
-        className="group flex items-center gap-3 rounded-card border border-border bg-surface-1 px-3 py-2.5 transition-colors hover:border-border-strong"
-      >
-        <DateBlock date={date} />
-        <div className="min-w-0 flex-1">
-          <h2 className="truncate text-[13px] font-medium leading-snug text-foreground group-hover:text-primary">
-            {event.title}
-          </h2>
-          <p className="tabular mt-0.5 truncate text-[10px] text-muted-foreground">
-            {event.city}
-            {event.organizer.verified && ' · Doğrulanmış organizatör'}
-          </p>
-        </div>
-        <div className="hidden shrink-0 sm:block">{badges}</div>
-      </Link>
-    );
-  }
-
-  return (
-    <Link
-      to={`/etkinlik/${event.slug}`}
-      className="group flex h-full flex-col rounded-card border border-border bg-surface-1 transition-colors hover:border-border-strong"
-    >
-      <PlateFrame
-        ratio="aspect-[16/9]"
-        className="border-0 border-b border-border"
-        badge={
-          <span className="tabular rounded-[2px] bg-background/85 px-1.5 py-0.5 text-[10px] tracking-[0.02em] text-primary">
-            {date.day} {date.month}
-          </span>
-        }
-        flag={
-          event.organizer.verified ? (
-            <Badge tone="cold" className="bg-background/85">
-              Doğrulanmış
-            </Badge>
-          ) : undefined
-        }
-      >
-        <StarField seed={event.slug} tint={tintFromSeed(event.slug)} />
-      </PlateFrame>
-      <div className="flex flex-1 flex-col px-2.5 py-2">
-        <p className="tabular text-[10px] text-muted-foreground">
-          {date.full} · {event.city}
-        </p>
-        <h2 className="mt-1 text-[13px] font-medium leading-snug text-foreground group-hover:text-primary">
-          {event.title}
-        </h2>
-        <div className="mt-auto pt-2">{badges}</div>
-      </div>
-    </Link>
-  );
-}
-
-/** Takvim yaprağı — liste görünümünde tarihi ilk okunan öğe yapar. */
-function DateBlock({ date }: { date: ReturnType<typeof splitDate> }) {
-  return (
-    <div className="flex w-11 shrink-0 flex-col items-center rounded-card border border-border bg-surface-2 py-1">
-      <span className="tabular font-display text-[17px] font-bold leading-none text-primary">
-        {date.day}
-      </span>
-      <span className="mt-0.5 text-[9px] tracking-[0.02em] text-muted-foreground">
-        {date.month}
-      </span>
-    </div>
-  );
 }

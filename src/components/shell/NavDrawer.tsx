@@ -1,7 +1,8 @@
 import { useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { siteMap, mobileDrawerPrimary } from '@/app/navigation';
-import { CloseIcon, UserIcon, SearchIcon } from '@/components/ui/icons';
+import { CloseIcon, UserIcon, SearchIcon, MoonIcon } from '@/components/ui/icons';
+import { useTheme } from '@/features/theme/ThemeContext';
 
 /**
  * MODÜL HARİTASI ÇEKMECESİ.
@@ -21,6 +22,7 @@ export function NavDrawer({
   onOpenPalette: () => void;
 }) {
   const { pathname } = useLocation();
+  const { fieldMode, toggleFieldMode } = useTheme();
 
   // Gezinince kendiliğinden kapanır.
   useEffect(() => {
@@ -96,6 +98,30 @@ export function NavDrawer({
             <UserIcon className="h-3.5 w-3.5" />
             {mobileDrawerPrimary.label}
           </NavLink>
+
+          {/*
+            Saha modu anahtarı `sm` altında ÜST ÇUBUKTA YOK (bkz. Topbar):
+            TV ve radyo metinli düğmeye dönünce yer kalmadı ve giden tema
+            oldu. Ama gitmesi "erişilemez olması" anlamına gelemez —
+            telefonda tek erişim yolu burası, o yüzden `sm` üstünde
+            gizleniyor: iki yerde birden göstermek gereksiz tekrar.
+          */}
+          <button
+            type="button"
+            onClick={toggleFieldMode}
+            aria-pressed={fieldMode}
+            className={`mt-2 flex w-full items-center gap-2 rounded-card border px-3 py-2.5 text-[11px] font-medium tracking-[0.03em] transition-colors sm:hidden ${
+              fieldMode
+                ? 'border-primary bg-primary/10 text-primary'
+                : 'border-border text-muted-foreground'
+            }`}
+          >
+            <MoonIcon className="h-3.5 w-3.5" />
+            Saha modu
+            <span className="ml-auto text-[10px] text-faint">
+              {fieldMode ? 'açık' : 'kapalı'}
+            </span>
+          </button>
         </div>
 
         {siteMap.map((group) => (

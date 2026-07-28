@@ -79,4 +79,13 @@ export interface AstroEvent {
   posterUrl?: string;
   /** Afiş kullanım izni kimden alındı — boşsa afiş gösterilmez. */
   posterCredit?: string;
+  /**
+   * MEKÂN GÖRSELİ — afişin yerine geçen, telifi uygun fotoğraf.
+   *
+   * Afiş kullanılamıyor (telif düzenleyende) ama etkinliğin nerede
+   * yapıldığı görsel bir bilgi ve o yerin serbest lisanslı fotoğrafları
+   * var. Kartta gösterilen şey bu: etkinliğin afişi değil, gideceğin yer.
+   * Kredi zorunlu — CC BY/BY-SA'nın şartı.
+   */
+  image?: { url: string; credit: string; licence: string };
 }
