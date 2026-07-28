@@ -94,6 +94,7 @@ export function HeroSection() {
                 key={`${slide.id}-photo`}
                 src={slide.image.url}
                 alt=""
+                credit={`${slide.image.credit} · ${slide.image.licence}`}
               />
             )}
             {/* Metnin okunurluğu için soldan sağa koyulaşan perde */}
@@ -195,16 +196,6 @@ export function HeroSection() {
             </span>
           )}
 
-          {/*
-            Kredi görünür olmak zorunda: CC BY 4.0'ın şartı bu. Küçük ve
-            kenarda ama gizli değil — gizlenmiş bir kredi, kredi değildir.
-            Göstergelerin üstüne binmesin diye sağ altta.
-          */}
-          {slide.image && (
-            <span className="absolute bottom-3 right-4 max-w-[46%] truncate text-right text-[9.5px] leading-snug text-faint">
-              {slide.image.credit} · {slide.image.licence}
-            </span>
-          )}
         </div>
       </Container>
     </section>
@@ -223,23 +214,50 @@ export function HeroSection() {
  * görsel sayfanın ilk ekranında ve ertelenirse kullanıcı sahneyi görüp
  * sonra değiştiğine tanık oluyor.
  */
-function HeroPhoto({ src, alt }: { src: string; alt: string }) {
+function HeroPhoto({
+  src,
+  alt,
+  credit,
+}: {
+  src: string;
+  alt: string;
+  credit: string;
+}) {
   const [state, setState] = useState<'loading' | 'ready' | 'failed'>('loading');
   if (state === 'failed') return null;
 
   return (
-    <img
-      src={src}
-      alt={alt}
-      loading="eager"
-      decoding="async"
-      onLoad={() => setState('ready')}
-      onError={() => setState('failed')}
-      className={cn(
-        'absolute inset-0 h-full w-full object-cover transition-opacity duration-700',
-        state === 'ready' ? 'opacity-100' : 'opacity-0'
+    <>
+      <img
+        src={src}
+        alt={alt}
+        loading="eager"
+        decoding="async"
+        onLoad={() => setState('ready')}
+        onError={() => setState('failed')}
+        className={cn(
+          'absolute inset-0 h-full w-full object-cover transition-opacity duration-700',
+          state === 'ready' ? 'opacity-100' : 'opacity-0'
+        )}
+      />
+
+      {/*
+        KREDİ FOTOĞRAFLA BİRLİKTE GELİR, ONDAN AYRI DEĞİL.
+        Önce kredi slaytın verisine bakıp koşulsuz basılıyordu; adres
+        yüklenmediğinde ekranda çizilen sahne duruyor ama altında
+        "NASA, ESA, Hubble" yazıyordu. Gösterilmeyen bir görseli
+        kredilendirmek yanlış atıf — kredi artık yalnızca fotoğraf
+        gerçekten çizildiğinde çıkıyor.
+
+        Görünürlük CC BY 4.0'ın şartı: küçük ve kenarda ama gizli değil.
+        Göstergelerin üstüne binmesin diye sağ altta.
+      */}
+      {state === 'ready' && (
+        <span className="absolute bottom-3 right-4 z-10 max-w-[46%] truncate text-right text-[9.5px] leading-snug text-faint">
+          {credit}
+        </span>
       )}
-    />
+    </>
   );
 }
 
