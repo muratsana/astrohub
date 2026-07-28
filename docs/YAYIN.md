@@ -220,3 +220,44 @@ gerçek gerekçesi "CI geçmeden dağıtma" kuralı; onu Vercel tarafında
 Migration'lar otomatik uygulanmıyor — bilinçli. Şema değişikliği geri
 alınması en zor işlem ve bir push'un yan etkisi olmamalı. Yeni bir
 migration `supabase/migrations/` altına yazılıyor ve elle uygulanıyor.
+
+---
+
+## 8. Sık karşılaşılan tuzaklar
+
+### 8.1 Yayında eski sürüm görünüyor
+
+**Belirti:** Vercel "Ready" diyor ama sitede eski tasarım var.
+
+**Sebep:** Vercel projeyi bağladığı anda **deponun varsayılan dalını**
+bir kez derler. Production Branch ayarı `main` olsa bile, o ilk dağıtım
+varsayılan daldan gelir ve `main`'e daha önce yapılmış push'lar için
+webhook tetiklenmez — bağlantı kurulmadan önce olup bitmişlerdir.
+
+**Çözüm:** `main` dalına yeni bir commit push edin. Vercel'in kendi
+ekranı da bunu söylüyor: *"To update your Production Deployment, push to
+the main branch."*
+
+**Kalıcı çözüm:** GitHub → Settings → **General → Default branch** →
+`main`. Böylece yeni bağlantılar ve pull request'ler de doğru dalı
+hedefler.
+
+### 8.2 Depoda gereksiz dal kalması
+
+Bu depoda `main` dışındaki dallar tarihsel; `main` hepsini kapsıyor
+(`git merge-base --is-ancestor` ile doğrulandı, birleştirilecek commit
+yok). Varsayılan dal `main` yapıldıktan sonra GitHub → **Branches**
+ekranından silinebilirler.
+
+Varsayılan dal silinemez — önce değiştirmek gerekir.
+
+### 8.3 Google girişi `redirect_uri_mismatch` veriyor
+
+Sırasıyla kontrol edin:
+1. Supabase → Authentication → URL Configuration → **Redirect URLs**
+   listesinde adres var mı (`https://astrohub.com.tr/**`).
+2. Google Cloud → OAuth client → **Authorized redirect URIs** alanında
+   Supabase geri dönüş adresi var mı
+   (`https://eoqggvosegjbburyuyba.supabase.co/auth/v1/callback`).
+
+En yaygın sebep birincisi.
