@@ -2,9 +2,9 @@ import { NavLink } from 'react-router-dom';
 import { Logo } from './Logo';
 import { ButtonLink } from '@/components/ui/Button';
 import { Container } from '@/components/ui/Container';
-import { MenuIcon, MoonIcon, UserIcon } from '@/components/ui/icons';
+import { MenuIcon, UserIcon } from '@/components/ui/icons';
 import { primaryNav } from '@/app/navigation';
-import { useTheme } from '@/features/theme/ThemeContext';
+import { ThemeToggle } from '@/features/theme/ThemeToggle';
 import { RadioToggle } from '@/features/radio/RadioToggle';
 import { TvToggle } from '@/features/tv/TvToggle';
 import { cn } from '@/lib/cn';
@@ -25,8 +25,6 @@ import { cn } from '@/lib/cn';
  * gezinme girişi olmadan kalmaz.
  */
 export function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
-  const { fieldMode, toggleFieldMode } = useTheme();
-
   return (
     <header className="border-b border-border bg-background">
       <Container>
@@ -99,33 +97,16 @@ export function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
               Tema düğmesi `sm` altında ÜST ÇUBUKTA DEĞİL, çekmecede.
               TV ve radyo metinli düğmeye dönünce 390px'te 45px taşma
               oluştu (önizleme denetimi ölçtü) ve bir şeyin gitmesi
-              gerekiyordu. Giden tema oldu: saha modu bir tercih, gezinme
+              gerekiyordu. Giden tema oldu: tema bir tercih, gezinme
               değil — telefonda menüye ait. Yayın düğmeleri ise her
               sayfada durum göstermek zorunda, gizlenemez.
+
+              Yanındaki "Saha" metni kaldırıldı: düğme artık üç modu
+              dolaşıyor ve tek bir modun adını yazmak diğer ikisinde
+              yalan oluyordu. Durumu ikon taşıyor (güneş/ay/göz).
             */}
             <span className="hidden sm:inline-flex">
-              <button
-                type="button"
-                onClick={toggleFieldMode}
-                aria-pressed={fieldMode}
-                aria-label={
-                  fieldMode ? 'Saha modunu kapat (tema)' : 'Saha modunu aç (tema)'
-                }
-                title={
-                  fieldMode
-                    ? 'Saha modu açık — kapatmak için tıkla'
-                    : 'Saha modu: karanlık adaptasyonunu koruyan kırmızı arayüz'
-                }
-                className={cn(
-                  'inline-flex h-8 shrink-0 items-center gap-1.5 rounded-card border px-2 text-[11px] tracking-[0.02em] transition-colors sm:px-2.5',
-                  fieldMode
-                    ? 'border-primary bg-primary/10 text-primary'
-                    : 'border-border text-muted-foreground hover:border-border-strong hover:text-foreground'
-                )}
-              >
-                <MoonIcon className="h-3.5 w-3.5 shrink-0" />
-                <span className="hidden 2xl:inline">Saha</span>
-              </button>
+              <ThemeToggle />
             </span>
 
             {/*

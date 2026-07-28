@@ -29,7 +29,12 @@ export interface Command {
   keywords: string[];
 }
 
-export type CommandAction = 'toggle-field-mode';
+/**
+ * Tema artık üç kademeli, bu yüzden palette tek bir "aç/kapat" komutu
+ * yok: üç mod da doğrudan seçilebiliyor. Paletin işi hızlandırmak —
+ * aradığı moda ulaşmak için düğmeye iki kez basmak gerekmemeli.
+ */
+export type CommandAction = 'tema-acik' | 'tema-koyu' | 'tema-saha';
 
 export const commandKindLabels: Record<CommandKind, string> = {
   git: 'Git',
@@ -54,11 +59,27 @@ const navCommands: Command[] = allNavItems().map((item) => ({
 /** Sayfa değil, doğrudan bir eylem çalıştıran komutlar. */
 const actionCommands: Command[] = [
   {
-    id: 'arac:saha-modu',
+    id: 'arac:tema-acik',
     kind: 'arac',
-    title: 'Saha modunu aç / kapat',
+    title: 'Açık temaya geç',
+    subtitle: 'Gündüz masası — kâğıt zemin, grafit metin',
+    action: 'tema-acik',
+    keywords: ['açık', 'light', 'gündüz', 'tema', 'beyaz'],
+  },
+  {
+    id: 'arac:tema-koyu',
+    kind: 'arac',
+    title: 'Koyu temaya geç',
+    subtitle: 'Varsayılan — grafit zemin, kehribar aksan',
+    action: 'tema-koyu',
+    keywords: ['koyu', 'dark', 'gece', 'tema', 'siyah'],
+  },
+  {
+    id: 'arac:tema-saha',
+    kind: 'arac',
+    title: 'Saha moduna geç',
     subtitle: 'Karanlık adaptasyonunu koruyan kırmızı arayüz',
-    action: 'toggle-field-mode',
+    action: 'tema-saha',
     keywords: ['saha', 'kırmızı', 'gece modu', 'tema', 'dark adaptation'],
   },
   {

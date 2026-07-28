@@ -11,7 +11,7 @@
  *   Palet      grafit zemin · fosfor kehribar aksan · soğuk mavi ikincil
  *   Tipografi  Roboto Condensed 700 (başlık, uppercase) + JetBrains Mono
  *   Sertlik    "dengeli" — 2px radius, gölge yok, hairline bölmeler
- *   Tema       koyu (varsayılan) + saha kırmızısı; açık tema yoktur
+ *   Tema       açık · koyu (varsayılan) · saha kırmızısı
  *
  * Yüzey ayrımı gölgeyle değil çizgiyle yapılır. Radius yalnızca 2px —
  * yumuşatmak için değil, kenarın kırılmasını engellemek için.
@@ -68,6 +68,46 @@
 @layer base {
   :root {
     color-scheme: dark;
+  }
+
+  /*
+   * AÇIK TEMA — gündüz masası.
+   *
+   * Terminal metaforu korunuyor: aynı tipografi, aynı 2px kenar, aynı
+   * hairline bölmeler. Değişen yalnızca ışık yönü — kâğıt zemin, grafit
+   * metin. "Beyaz" değil kırık beyaz: saf beyaz zeminde hairline kenarlar
+   * kayboluyor ve cihaz görünümü dağılıyordu.
+   *
+   * Kehribar aksan olduğu gibi taşınamaz: #ff9d2e açık zeminde 2:1
+   * kontrast veriyor ve bağlantı metni okunmuyor. Aynı renk ailesinin
+   * koyu ucuna iniliyor (§6.7 — metin kontrastı en az 4.5:1).
+   */
+  :root[data-theme='light'] {
+    color-scheme: light;
+
+    --color-background: #f5f6f3;
+    --color-surface-1: #ecefea;
+    --color-surface-2: #e2e6e0;
+    --color-surface-3: #d4dad3;
+
+    --color-foreground: #12181a;
+    --color-muted-foreground: #4f5c5c;
+    --color-faint: #78868a;
+
+    --color-border: rgba(18, 24, 26, 0.16);
+    --color-border-strong: rgba(18, 24, 26, 0.34);
+
+    --color-primary: #a35400;
+    --color-primary-hover: #7f4100;
+    --color-primary-foreground: #ffffff;
+    --color-primary-dim: #d99b4e;
+
+    --color-cold: #1c5b7a;
+    --color-cold-dim: #7aa5bb;
+
+    --color-success: #12704a;
+    --color-warning: #8c5f0d;
+    --color-danger: #a93325;
   }
 
   /*

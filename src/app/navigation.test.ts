@@ -134,7 +134,17 @@ describe('komut paleti', () => {
 
   it('saha modu bir eylem komutu olarak bulunur', () => {
     const items = runCommandSearch('saha').flatMap((g) => g.items);
-    expect(items.some((c) => c.action === 'toggle-field-mode')).toBe(true);
+    expect(items.some((c) => c.action === 'tema-saha')).toBe(true);
+  });
+
+  it('üç temanın üçü de paletten doğrudan seçilebilir', () => {
+    // Tek bir "aç/kapat" komutu üç kademeli temada aradığı moda
+    // ulaşmak için iki tıklama demekti; palet hızlandırmak için var.
+    const items = runCommandSearch('tema').flatMap((g) => g.items);
+    const actions = items.map((c) => c.action);
+    for (const action of ['tema-acik', 'tema-koyu', 'tema-saha']) {
+      expect(actions).toContain(action);
+    }
   });
 
   it('eşleşme yoksa boş döner', () => {

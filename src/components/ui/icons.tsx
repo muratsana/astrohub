@@ -45,6 +45,22 @@ export function MoonIcon(props: IconProps) {
   );
 }
 
+/**
+ * SAHA MODU İKONU — karanlığa uyum sağlamış göz.
+ *
+ * Ay ikonu koyu temayı anlatıyor; saha modu için ikinci bir "gece"
+ * sembolü ikisini birbirine karıştırırdı. Saha modunun konusu gecenin
+ * kendisi değil, gözün karanlık adaptasyonu — bu yüzden göz.
+ */
+export function EyeIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" />
+      <circle cx="12" cy="12" r="2.8" />
+    </svg>
+  );
+}
+
 export function ArrowRightIcon(props: IconProps) {
   return (
     <svg {...base(props)}>

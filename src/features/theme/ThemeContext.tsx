@@ -7,25 +7,31 @@ import {
   useState,
   type ReactNode,
 } from 'react';
+import { THEME_COLOR, isTheme, nextTheme, type Theme } from './themes';
 
 /**
  * Tema yönetimi.
  *
- * İki mod vardır ve ikisi de koyudur:
+ * ÜÇ MOD, tek düğmeyle sırayla dolaşılır (sıra ve etiketler için
+ * `themes.ts`):
  *
- *   dark   varsayılan — grafit zemin, fosfor kehribar aksan
- *   field  saha modu  — teleskop başında karanlık adaptasyonunu bozmayan
- *                       kırmızı. Mavi/yeşil kanallar tamamen kısılır.
+ *   light  açık     — gündüz masası; kâğıt zemin, grafit metin
+ *   dark   koyu     — varsayılan; grafit zemin, fosfor kehribar aksan
+ *   field  saha     — teleskop başında karanlık adaptasyonunu bozmayan
+ *                     kırmızı. Mavi/yeşil kanallar tamamen kısılır.
  *
- * Açık tema **yoktur**: terminal metaforu tek bir görsel dünyada yaşar.
- * Saha modu bir estetik tercih değil, sahada işe yarayan bir araçtır —
- * bu yüzden sistem tercihini izlemez, yalnızca kullanıcı açar.
+ * VARSAYILAN HÂLÂ KOYU ve sistem tercihini izlemiyoruz. Açık tema artık
+ * var ama site bir cihaz gibi davranıyor: cihazın kendi varsayılan
+ * görüntüsü olur, işletim sisteminden devralmaz. Kullanıcı bir kez
+ * seçtiğinde seçimi kalıcı.
+ *
+ * Saha modu bir estetik tercih değil, sahada işe yarayan bir araç — bu
+ * yüzden `fieldMode` ayrı bir bayrak olarak da veriliyor: "koyu mu"
+ * sorusuyla "kırmızı mı" sorusu aynı şey değil.
  *
  * Tema `<html data-theme="…">` üzerinden uygulanır; renk token'ları
  * `src/index.css` içinde bu seçiciye göre yeniden atanır.
  */
-
-export type Theme = 'dark' | 'field';
 
 const STORAGE_KEY = 'astrohub:theme';
 
@@ -34,14 +40,16 @@ interface ThemeContextValue {
   /** Saha modu açık mı? (okunabilirlik için ayrı bayrak) */
   fieldMode: boolean;
   setTheme: (theme: Theme) => void;
-  toggleFieldMode: () => void;
+  /** Sıradaki temaya geçer: açık → koyu → saha → açık. */
+  cycleTheme: () => void;
 }
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
 function readStoredTheme(): Theme {
   try {
-    return localStorage.getItem(STORAGE_KEY) === 'field' ? 'field' : 'dark';
+    const stored = localStorage.getItem(STORAGE_KEY);
+    return isTheme(stored) ? stored : 'dark';
   } catch {
     // Gizli sekme / depolama kapalı: varsayılana düş.
     return 'dark';
@@ -53,10 +61,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
-    // Tarayıcı arayüzü (adres çubuğu) de moda uysun.
     document
       .querySelector('meta[name="theme-color"]')
-      ?.setAttribute('content', theme === 'field' ? '#0a0000' : '#07090b');
+      ?.setAttribute('content', THEME_COLOR[theme]);
   }, [theme]);
 
   const setTheme = useCallback((next: Theme) => {
@@ -73,7 +80,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       theme,
       fieldMode: theme === 'field',
       setTheme,
-      toggleFieldMode: () => setTheme(theme === 'field' ? 'dark' : 'field'),
+      cycleTheme: () => setTheme(nextTheme(theme)),
     }),
     [theme, setTheme]
   );

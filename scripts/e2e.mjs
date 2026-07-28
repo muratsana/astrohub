@@ -380,17 +380,16 @@ await scenario('radyo rıhtımı rota değişiminde ayakta kalır', async () => 
 
 await scenario('tema değişimi kalıcıdır', async () => {
   await goto('/');
-  const toggle = await page.$('button[aria-label*="Saha modunu"]');
+  const toggle = await page.$('button[aria-label^="Tema:"]');
   assert(toggle !== null, 'tema düğmesi bulunamadı');
 
-  const before = await page.evaluate(() =>
-    document.documentElement.getAttribute('data-theme')
-  );
+  const readTheme = () =>
+    page.evaluate(() => document.documentElement.getAttribute('data-theme'));
+
+  const before = await readTheme();
   await toggle.click();
   await page.waitForTimeout(300);
-  const after = await page.evaluate(() =>
-    document.documentElement.getAttribute('data-theme')
-  );
+  const after = await readTheme();
   assert(before !== after, 'tema değişmedi');
 
   const stored = await page.evaluate(() =>
@@ -398,9 +397,19 @@ await scenario('tema değişimi kalıcıdır', async () => {
   );
   assert(stored !== null, 'tema tercihi saklanmadı');
 
-  // Eski hâline döndür — sonraki senaryolar varsayılan temayı bekliyor.
+  /*
+   * Düğme üç kademeli: açık → koyu → saha → açık. Üç tıklama başlangıca
+   * döndürür ve aynı anda döngünün kapandığını da kanıtlar — iki kademe
+   * kalsaydı tur asla tamamlanmazdı.
+   */
   await toggle.click();
   await page.waitForTimeout(200);
+  await toggle.click();
+  await page.waitForTimeout(200);
+  assert(
+    (await readTheme()) === before,
+    'üç tıklamada başlangıç temasına dönülmedi'
+  );
 });
 
 /* ══════════════════════ Çerez tercihleri ══════════════════════ */

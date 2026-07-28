@@ -11,7 +11,7 @@ import { primaryNav } from '@/app/navigation';
 
 /**
  * Ana sayfa duman testi — bölüm sırası:
- * hero → bu gece → galeri → etkinlik → gökyüzü → haber/yazı.
+ * hero → bu gece → galeri → haber/yazı → etkinlik → ilan.
  */
 /*
  * İçerik kancaları (ekipman, etkinlik, gözlem noktası) TanStack Query
@@ -164,10 +164,52 @@ describe('HomePage · bölümler', () => {
     expect(links.length).toBeGreaterThan(0);
   });
 
-  it('karanlık gökyüzü, haberler ve yazılar bölümlerini içerir', () => {
+  it('haberler ve yazılar bölümlerini içerir', () => {
     renderHome();
-    for (const name of [/karanlık gökyüzü/i, /^haberler$/i, /^yazılar$/i]) {
+    for (const name of [/^haberler$/i, /^yazılar$/i]) {
       expect(screen.getByRole('heading', { name })).toBeInTheDocument();
+    }
+  });
+
+  it('son ilanları fiyatıyla gösterir', () => {
+    renderHome();
+    expect(
+      screen.getByRole('heading', { name: /Son İlanlar/ })
+    ).toBeInTheDocument();
+    const links = screen
+      .getAllByRole('link')
+      .filter((el) => el.getAttribute('href')?.startsWith('/ilan/'));
+    expect(links.length).toBeGreaterThan(0);
+    expect(within(links[0]).getByText(/₺$/)).toBeInTheDocument();
+  });
+
+  it('karanlık gökyüzü şeridi ana sayfadan çıkarıldı', () => {
+    // Modül `/saha`da duruyor ve üst menüde girişi var; ana sayfada
+    // yedinci bir bölüm listeyi uzatıyor, sıralamayı güçlendirmiyordu.
+    renderHome();
+    expect(
+      screen.queryByRole('heading', { name: /karanlık gökyüzü/i })
+    ).not.toBeInTheDocument();
+  });
+
+  it('bölümler istenen sırada dizilir', () => {
+    // Sıra bir öncelik beyanı (bkz. HomePage doc): gökyüzü → topluluk →
+    // okunacaklar → takvim → pazaryeri. Kayması sessizce olmasın.
+    renderHome();
+    const order = [
+      /^bu gece$/i,
+      /galeriden son yüklenenler/i,
+      /^haberler$/i,
+      /yaklaşan etkinlikler/i,
+      /Son İlanlar/,
+    ].map((name) => screen.getByRole('heading', { name }));
+
+    for (let i = 1; i < order.length; i++) {
+      const relation = order[i - 1].compareDocumentPosition(order[i]);
+      expect(
+        relation & Node.DOCUMENT_POSITION_FOLLOWING,
+        `${order[i].textContent} bir önceki bölümden sonra gelmeli`
+      ).toBeTruthy();
     }
   });
 

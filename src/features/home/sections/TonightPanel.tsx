@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useId, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Container } from '@/components/ui/Container';
 import { Button, ButtonLink } from '@/components/ui/Button';
@@ -173,6 +173,12 @@ export function TonightPanel() {
                   : `bitiş ${formatClock(night.end, location.timeZone)}`
               }
               tone="primary"
+              visual={
+                <NightArc
+                  from={clockFraction(night.start, location.timeZone)}
+                  to={clockFraction(night.end, location.timeZone)}
+                />
+              }
             />
             <Cell
               label="Süre"
@@ -221,6 +227,7 @@ export function TonightPanel() {
                   : 'yüksek irtifa rüzgârından'
               }
               tone="primary"
+              visual={<SeeingDisc index={weather ? weather.seeing.index : null} />}
             />
             <Cell
               label="Çiylenme"
@@ -231,6 +238,11 @@ export function TonightPanel() {
                   : 'ısıtıcı bandı kararı için'
               }
               tone={dew?.tone === 'danger' ? 'muted' : 'cold'}
+              visual={
+                <DewDrop
+                  spread={weather ? weather.temperature - weather.dewPoint : null}
+                />
+              }
             />
           </div>
 
@@ -345,11 +357,137 @@ function Cell({
 /* ══════════════════════════════════════════════════════════════════════
    HÜCRE GÖRSELLERİ
 
-   Üçü de saf SVG ve **veriyle çizilir**: ay diskindeki gölge gerçek
-   aydınlanma oranından, karanlık çubuğu gerçek süreden, bulut halkası
-   gerçek örtü yüzdesinden. Sabit bir ikon seti daha kolay olurdu ama
-   ikon yalnızca "bu hücre ay hakkında" der; bu çizimler değeri gösterir.
+   Altısı da saf SVG ve **veriyle çizilir**: ay diskindeki gölge gerçek
+   aydınlanma oranından, karanlık çubuğu gerçek süreden, kadranın yayı
+   gerçek başlangıç–bitiş saatinden, bulut halkası gerçek örtü
+   yüzdesinden, seeing diski indeksten, damla ise sıcaklık–çiy noktası
+   açıklığından. Sabit bir ikon seti daha kolay olurdu ama ikon yalnızca
+   "bu hücre ay hakkında" der; bu çizimler değeri gösterir.
+
+   Altı hücrenin altısında da çizim olmasının ikinci bir sebebi var:
+   üçünde çizim, üçünde boşluk olduğunda ızgara yarım kalmış görünüyordu.
+   Ölçüm panelinde boşluk, veri yokluğu gibi okunur.
+
+   Veri yoksa çizim boş çerçevesiyle kalır — "%0 bulut" ile "bilmiyoruz"
+   asla aynı görünmemeli.
    ══════════════════════════════════════════════════════════════════════ */
+
+/** Çizim kutusu — altı hücrenin tamamı aynı ölçüde. */
+const V = 30;
+
+/**
+ * Saat–dilimi farkındalıklı "gün içindeki an" oranı: 00:00 → 0, 12:00 → 0.5.
+ *
+ * `formatClock` üzerinden gidiyoruz çünkü `Date` nesnesi tarayıcının yerel
+ * saatini taşır, gösterdiğimiz saat ise seçili konumun saat dilimine göre
+ * biçimlendiriliyor. Kadranın yayı ile hücrede yazan saat aynı kaynaktan
+ * gelmezse ikisi birbirini yalanlardı.
+ */
+function clockFraction(date: Date | null, timeZone: string): number | null {
+  if (!date) return null;
+  const [h, m] = formatClock(date, timeZone).split(':').map(Number);
+  if (!Number.isFinite(h) || !Number.isFinite(m)) return null;
+  return (h + m / 60) / 24;
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
+}
+
+/**
+ * Karanlık penceresi kadranı — 24 saatlik saat yüzü, tepesi gece yarısı.
+ *
+ * Yanındaki `DarknessBar` "ne kadar" sorusunu cevaplıyor; bu kadran "ne
+ * zaman"ı cevaplıyor. Aynı geceyi iki farklı soruyla okumak, iki hücreyi
+ * birbirinin tekrarı olmaktan çıkarıyor: yaz gecesinde yay ince ve geç
+ * başlar, kışın kalın ve erken.
+ */
+function NightArc({ from, to }: { from: number | null; to: number | null }) {
+  const r = 10;
+  const c = 2 * Math.PI * r;
+  // Gece yarısını geçen pencere için mod: 22:30 → 04:10 negatif fark verir.
+  const span = from === null || to === null ? 0 : (((to - from) % 1) + 1) % 1;
+
+  return (
+    <svg width={V} height={V} viewBox="0 0 30 30" fill="none">
+      <circle cx="15" cy="15" r={r} className="stroke-border" strokeWidth="3" />
+      {span > 0 && (
+        <circle
+          cx="15"
+          cy="15"
+          r={r}
+          className="stroke-primary/80"
+          strokeWidth="3"
+          strokeLinecap="round"
+          strokeDasharray={`${c * span} ${c}`}
+          /* 0 oranı tepede olsun diye çeyrek tur geri, sonra başlangıç
+             saati kadar ileri döndürülüyor. */
+          transform={`rotate(${-90 + (from ?? 0) * 360} 15 15)`}
+        />
+      )}
+    </svg>
+  );
+}
+
+/**
+ * Seeing diski — yıldızın atmosferde ne kadar şiştiği.
+ *
+ * İndeks 1'de nokta gibi, 5'te dış çemberi dolduran şişkin bir leke.
+ * Ölçek indeksin kendisiyle doğrusal; saniye-yay iddiası taşımıyor
+ * (bkz. `features/weather/seeing.ts` — çıktı ölçüm değil tahmin).
+ *
+ * Veri yoksa yalnızca boş çember çiziliyor: "mükemmel seeing" ile
+ * "bilmiyoruz" aynı görünmemeli.
+ */
+function SeeingDisc({ index }: { index: number | null }) {
+  const core = index === null ? 0 : 1.6 + (clamp(index, 1, 5) - 1) * 1.6;
+
+  return (
+    <svg width={V} height={V} viewBox="0 0 30 30" fill="none">
+      <circle cx="15" cy="15" r="10" className="stroke-border" />
+      {index !== null && (
+        <>
+          <circle cx="15" cy="15" r={core * 1.7} className="fill-primary/20" />
+          <circle cx="15" cy="15" r={core} className="fill-primary/85" />
+        </>
+      )}
+    </svg>
+  );
+}
+
+/**
+ * Çiylenme damlası — sıcaklık ile çiy noktası arasındaki açıklık.
+ *
+ * Damla doldukça yoğuşma yaklaşır: 8 °C ve üstü açıklıkta boş, 0'da tam
+ * dolu. 8 °C'yi üst sınır seçtik çünkü bunun ötesinde ısıtıcı bandı kararı
+ * değişmiyor; ölçeği daha geniş tutmak damlayı hep boş gösterirdi.
+ */
+function DewDrop({ spread }: { spread: number | null }) {
+  const clipId = useId();
+  const level = spread === null ? 0 : clamp(1 - spread / 8, 0, 1);
+  const shape = 'M15 5 C 19 12, 23 15, 23 19 A 8 8 0 0 1 7 19 C 7 15, 11 12, 15 5 Z';
+
+  return (
+    <svg width={V} height={V} viewBox="0 0 30 30" fill="none">
+      <defs>
+        <clipPath id={clipId}>
+          <path d={shape} />
+        </clipPath>
+      </defs>
+      <path d={shape} className="stroke-border" />
+      {level > 0 && (
+        <rect
+          x="0"
+          y={27 - 22 * level}
+          width="30"
+          height={22 * level}
+          className="fill-cold/70"
+          clipPath={`url(#${clipId})`}
+        />
+      )}
+    </svg>
+  );
+}
 
 /**
  * Ay evresi diski.
@@ -359,17 +497,17 @@ function Cell({
  * "yarım daire" çizimi, %20 ile %80 dolunayı aynı gösterirdi.
  */
 function MoonDisc({ illumination }: { illumination: number }) {
-  const r = 11;
-  const k = Math.max(0, Math.min(1, illumination));
+  const r = 12;
+  const k = clamp(illumination, 0, 1);
   // Terminatörün yatay yarıçapı: 0'da tam elips (yeni ay), 1'de düz çizgi.
   const rx = r * Math.abs(1 - 2 * k);
   const sweep = k > 0.5 ? 1 : 0;
 
   return (
-    <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
-      <circle cx="13" cy="13" r={r} className="fill-surface-2 stroke-border" />
+    <svg width={V} height={V} viewBox="0 0 30 30" fill="none">
+      <circle cx="15" cy="15" r={r} className="fill-surface-2 stroke-border" />
       <path
-        d={`M13 2 A ${r} ${r} 0 0 1 13 24 A ${rx} ${r} 0 0 ${sweep} 13 2 Z`}
+        d={`M15 3 A ${r} ${r} 0 0 1 15 27 A ${rx} ${r} 0 0 ${sweep} 15 3 Z`}
         className="fill-primary/80"
       />
     </svg>
@@ -380,16 +518,16 @@ function MoonDisc({ illumination }: { illumination: number }) {
 function DarknessBar({ minutes }: { minutes: number }) {
   // 8 saat pratik bir üst sınır: yaz gecelerinde toplam karanlık bunun
   // altında kalır, kışın da çubuk dolar ve fark okunmaz hâle gelmez.
-  const ratio = Math.max(0, Math.min(1, minutes / (8 * 60)));
+  const ratio = clamp(minutes / (8 * 60), 0, 1);
 
   return (
-    <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
-      <rect x="4" y="5" width="18" height="16" rx="2" className="stroke-border" />
+    <svg width={V} height={V} viewBox="0 0 30 30" fill="none">
+      <rect x="6" y="5" width="18" height="20" rx="2" className="stroke-border" />
       <rect
-        x="4"
-        y={5 + 16 * (1 - ratio)}
+        x="6"
+        y={5 + 20 * (1 - ratio)}
         width="18"
-        height={16 * ratio}
+        height={20 * ratio}
         rx="2"
         className="fill-cold/70"
       />
@@ -404,23 +542,23 @@ function DarknessBar({ minutes }: { minutes: number }) {
  * "%0 bulut" ile "veri yok" aynı görünmemeli.
  */
 function CloudRing({ cover }: { cover: number | null }) {
-  const r = 9;
+  const r = 10;
   const c = 2 * Math.PI * r;
-  const ratio = cover === null ? 0 : Math.max(0, Math.min(1, cover / 100));
+  const ratio = cover === null ? 0 : clamp(cover / 100, 0, 1);
 
   return (
-    <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
-      <circle cx="13" cy="13" r={r} className="stroke-border" strokeWidth="3" />
+    <svg width={V} height={V} viewBox="0 0 30 30" fill="none">
+      <circle cx="15" cy="15" r={r} className="stroke-border" strokeWidth="3" />
       {cover !== null && (
         <circle
-          cx="13"
-          cy="13"
+          cx="15"
+          cy="15"
           r={r}
           className="stroke-cold/80"
           strokeWidth="3"
           strokeLinecap="round"
           strokeDasharray={`${c * ratio} ${c}`}
-          transform="rotate(-90 13 13)"
+          transform="rotate(-90 15 15)"
         />
       )}
     </svg>

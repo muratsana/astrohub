@@ -1,9 +1,9 @@
 import { HeroSection } from './sections/HeroSection';
 import { TonightPanel } from './sections/TonightPanel';
 import { RecentRecords } from './sections/RecentRecords';
-import { UpcomingEvents } from './sections/UpcomingEvents';
-import { DarkSkyStrip } from './sections/DarkSkyStrip';
 import { NewsStrip } from './sections/NewsStrip';
+import { UpcomingEvents } from './sections/UpcomingEvents';
+import { RecentListings } from './sections/RecentListings';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { organizationJsonLd } from '@/lib/seo';
 
@@ -13,9 +13,17 @@ import { organizationJsonLd } from '@/lib/seo';
  *   1  Hero · beş modül mockup'ı + slogan (site ne yapar)
  *   2  Bu gece · gerçek efemeris hesabı
  *   3  Galeriden son yüklenenler
- *   4  Yaklaşan etkinlikler · tablo
- *   5  Karanlık gökyüzü · en iyi üç nokta
- *   6  Haberler ve yazılar · iki sütun
+ *   4  Haberler ve yazılar · iki sütun, mini görsel kartları
+ *   5  Yaklaşan etkinlikler · ajanda
+ *   6  Son ilanlar
+ *
+ * SIRA BİR ÖNCELİK BEYANI: önce gökyüzünün kendisi (bu gece), sonra
+ * topluluğun ürettiği (galeri), sonra okunacaklar (haber/yazı), sonra
+ * takvim, en sonda pazaryeri. Ziyaretçinin ilk işi alışveriş değil.
+ *
+ * Karanlık gökyüzü şeridi ana sayfadan çıkarıldı — modül `/saha`da
+ * duruyor ve üst menüde girişi var. Ana sayfa altı bölümle bitiyor;
+ * yedincisi listeyi uzatıyor, sıralamayı güçlendirmiyordu.
  *
  * Manifesto şeridi kaldırıldı: ürün mesajını artık hero taşıyor, aynı şeyi
  * iki kez söylemeye gerek yok.
@@ -37,9 +45,9 @@ export function HomePage() {
       <HeroSection />
       <TonightPanel />
       <RecentRecords />
-      <UpcomingEvents />
-      <DarkSkyStrip />
       <NewsStrip />
+      <UpcomingEvents />
+      <RecentListings />
     </>
   );
 }

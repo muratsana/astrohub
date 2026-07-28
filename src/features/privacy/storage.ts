@@ -38,7 +38,7 @@ export const storageInventory: StorageItem[] = [
     label: 'Tema tercihi',
     purpose: 'tercih',
     description:
-      'Koyu / saha teması seçiminiz. Saklanmazsa her ziyarette işletim sistemi tercihinize dönülür.',
+      'Açık / koyu / saha teması seçiminiz. Saklanmazsa her ziyarette koyu temaya dönülür.',
     consentRequired: false,
   },
   {

@@ -1,12 +1,25 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '@/features/theme/ThemeContext';
+import type { Theme } from '@/features/theme/themes';
 import { cn } from '@/lib/cn';
 import {
   runCommandSearch,
   flattenCommands,
   type Command,
+  type CommandAction,
 } from './commands';
+
+/**
+ * Komut kimliği → tema. Eşleme burada duruyor çünkü `commands.ts` saf
+ * veri: tema tipini oraya taşımak, komut listesini tema modülüne
+ * bağımlı hâle getirirdi.
+ */
+const THEME_BY_ACTION: Record<CommandAction, Theme> = {
+  'tema-acik': 'light',
+  'tema-koyu': 'dark',
+  'tema-saha': 'field',
+};
 
 /**
  * KOMUT PALETİ — sitenin tek gezinme ve arama giriş noktası (⌘K / Ctrl+K).
@@ -31,7 +44,7 @@ export function CommandPalette({
   const listRef = useRef<HTMLDivElement>(null);
   const listboxId = useId();
   const navigate = useNavigate();
-  const { toggleFieldMode } = useTheme();
+  const { setTheme } = useTheme();
 
   const groups = useMemo(() => runCommandSearch(query), [query]);
   const flat = useMemo(() => flattenCommands(groups), [groups]);
@@ -68,8 +81,8 @@ export function CommandPalette({
 
   function run(command: Command) {
     onClose();
-    if (command.action === 'toggle-field-mode') {
-      toggleFieldMode();
+    if (command.action) {
+      setTheme(THEME_BY_ACTION[command.action]);
       return;
     }
     if (command.to) navigate(command.to);
