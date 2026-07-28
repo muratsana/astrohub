@@ -104,8 +104,19 @@ export const BASEMAP_CREDIT = '© OpenStreetMap katkıcıları · © CARTO';
 
 export interface OverlaySource {
   id: string;
+  /** Seçicide görünen ad. */
+  label: string;
   /** Katmanın altında yazan kaynak — hangi veriye baktığı gizlenmemeli. */
   credit: string;
+  /**
+   * Lejantın hangi ölçeği anlattığı.
+   *
+   * `atlas`: karanlıktan şehre giden renk ölçeği (Bortle'a boyanmış).
+   * `radiance`: ham gece parlaklığı — renk ölçeği yok, yalnızca ışık var.
+   * İkisine aynı lejantı koymak, ham görüntüye sahip olmadığı bir ölçek
+   * atfetmek olurdu.
+   */
+  legend: 'atlas' | 'radiance';
   maxZoom: number;
   url: (tile: Tile) => string;
   /**
@@ -138,25 +149,58 @@ export interface OverlaySource {
  * `maxZoom` 8: iki veri de kabaca 750 m çözünürlüklü, daha ileri
  * yakınlaştırma yeni bilgi taşımaz. Üstünde döşeme büyütülerek çizilir.
  */
-export const OVERLAY_SOURCES: OverlaySource[] = [
-  ...['lp2024', 'lp2023', 'lp2022', 'lp2021', 'lp2020'].map((year) => ({
-    id: year,
-    credit: `Işık kirliliği atlası: D. J. Lorenz, VIIRS ${year.replace('lp', '')}`,
+function gibs(
+  id: string,
+  layer: string,
+  time: string,
+  label: string
+): OverlaySource {
+  return {
+    id,
+    label,
+    credit: `Gece ışıkları: NASA GIBS · ${layer} (ham parlaklık)`,
+    legend: 'radiance',
     maxZoom: 8,
-    url: (tile: Tile) =>
-      `https://djlorenz.github.io/astronomy/${year}/overlay/tiles/` +
-      `tile_${tile.z}_${tile.x}_${tile.y}.png`,
-  })),
-  ...['2016-01-01', 'default'].map((time) => ({
-    id: `gibs:${time}`,
-    credit: 'Gece ışıkları: NASA GIBS · VIIRS Black Marble (ham parlaklık)',
-    maxZoom: 8,
-    blend: 'screen' as const,
+    blend: 'screen',
     needsDarkBasemap: true,
     /* WMTS REST sırası satır/sütun: {TileMatrix}/{TileRow}/{TileCol},
        yani z/y/x. x/y yer değiştirirse harita aynasal kayar. */
     url: (tile: Tile) =>
-      'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_Black_Marble/' +
+      `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/${layer}/` +
       `default/${time}/GoogleMapsCompatible_Level8/${tile.z}/${tile.y}/${tile.x}.jpg`,
-  })),
+  };
+}
+
+export const OVERLAY_SOURCES: OverlaySource[] = [
+  ...['lp2024', 'lp2023', 'lp2022', 'lp2021', 'lp2020'].map((year) => {
+    const y = year.replace('lp', '');
+    return {
+      id: year,
+      label: `Işık kirliliği atlası ${y}`,
+      credit: `Işık kirliliği atlası: D. J. Lorenz, VIIRS ${y}`,
+      legend: 'atlas' as const,
+      maxZoom: 8,
+      url: (tile: Tile) =>
+        `https://djlorenz.github.io/astronomy/${year}/overlay/tiles/` +
+        `tile_${tile.z}_${tile.x}_${tile.y}.png`,
+    };
+  }),
+  gibs(
+    'gibs:black-marble',
+    'VIIRS_Black_Marble',
+    '2016-01-01',
+    'NASA gece ışıkları (2016)'
+  ),
+  gibs(
+    'gibs:city-lights',
+    'VIIRS_CityLights_2012',
+    'default',
+    'NASA şehir ışıkları (2012)'
+  ),
+  gibs(
+    'gibs:earth-at-night',
+    'VIIRS_Black_Marble',
+    'default',
+    'NASA gece ışıkları (varsayılan tarih)'
+  ),
 ];

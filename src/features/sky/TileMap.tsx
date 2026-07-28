@@ -49,6 +49,10 @@ export interface TileMapProps {
   overlayOpacity?: number;
   /** Üst katmanın hiçbir döşemesi yüklenemediğinde bir kez çağrılır. */
   onOverlayFailure?: () => void;
+  /** Üst katmanın ilk döşemesi geldiğinde bir kez çağrılır. */
+  onOverlayLoad?: () => void;
+  /** Haritaya tıklanınca (sürükleme değil) o noktanın koordinatı. */
+  onPick?: (point: LatLng) => void;
   /** Harita üzerine çizilen işaret (seçili şehir). */
   marker?: LatLng;
   className?: string;
@@ -72,6 +76,8 @@ export function TileMap({
   overlay,
   overlayOpacity = 1,
   onOverlayFailure,
+  onOverlayLoad,
+  onPick,
   marker,
   className,
   label,
@@ -80,6 +86,10 @@ export function TileMap({
   const [size, setSize] = useState<Size>({ width: 0, height: 0 });
   const dragRef = useRef<{ id: number; x: number; y: number } | null>(null);
   const [dragging, setDragging] = useState(false);
+  /* Tıklama ile sürükleme aynı olay çiftinden çıkıyor; toplam hareket
+     eşiğin altındaysa kullanıcı bir yeri işaretlemek istemiştir. Eşik
+     yoksa harita her kaydırmadan sonra rastgele bir nokta seçer. */
+  const travelRef = useRef(0);
 
   /* Ölçü ResizeObserver'dan: harita tam ekrana geçebiliyor ve pencere
      genişliğine bakmak o durumda yanlış sonuç verir. */
@@ -104,6 +114,7 @@ export function TileMap({
       x: event.clientX,
       y: event.clientY,
     };
+    travelRef.current = 0;
     setDragging(true);
     event.currentTarget.setPointerCapture(event.pointerId);
   };
@@ -114,6 +125,7 @@ export function TileMap({
     const dx = event.clientX - drag.x;
     const dy = event.clientY - drag.y;
     if (dx === 0 && dy === 0) return;
+    travelRef.current += Math.abs(dx) + Math.abs(dy);
     dragRef.current = { id: drag.id, x: event.clientX, y: event.clientY };
     onCenterChange(panBy(center, dx, dy, zoom));
   };
@@ -122,6 +134,20 @@ export function TileMap({
     if (dragRef.current?.id !== event.pointerId) return;
     dragRef.current = null;
     setDragging(false);
+
+    if (onPick && travelRef.current < 5 && size.width > 0) {
+      const rect = event.currentTarget.getBoundingClientRect();
+      onPick(
+        pointToLatLng(
+          center,
+          zoom,
+          size.width,
+          size.height,
+          event.clientX - rect.left,
+          event.clientY - rect.top
+        )
+      );
+    }
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId);
     }
@@ -247,6 +273,7 @@ export function TileMap({
           size={size}
           opacity={overlayOpacity}
           onAllFailed={onOverlayFailure}
+          onFirstLoad={onOverlayLoad}
         />
       ) : null}
 
@@ -282,6 +309,7 @@ function Layer({
   size,
   opacity,
   onAllFailed,
+  onFirstLoad,
 }: {
   source: TileSource;
   center: LatLng;
@@ -289,6 +317,7 @@ function Layer({
   size: Size;
   opacity?: number;
   onAllFailed?: () => void;
+  onFirstLoad?: () => void;
 }) {
   const stats = useRef({ id: source.id, ok: 0, failed: 0, reported: false });
   if (stats.current.id !== source.id) {
@@ -322,6 +351,7 @@ function Layer({
           decoding="async"
           onLoad={() => {
             stats.current.ok += 1;
+            if (stats.current.ok === 1) onFirstLoad?.();
           }}
           onError={(event) => {
             /* Kırık görsel simgesi haritanın üstünde arıza gibi durur;

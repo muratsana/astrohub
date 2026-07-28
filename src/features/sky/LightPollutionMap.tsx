@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/Button';
 import { useLocationContext } from '@/features/location/LocationContext';
 import { useTheme } from '@/features/theme/ThemeContext';
+import { useSiteCatalog } from '@/services/content/sites';
+import { haversineKm, formatDistance } from '@/domain/geography/distance';
 import { hasNetworkAccess } from '@/lib/runtime';
 import { cn } from '@/lib/cn';
 import { TileMap } from './TileMap';
@@ -22,66 +25,92 @@ import {
  * sağlayıcının yayımladığı gömme adresi köke yönleniyor ve kök
  * çerçevelenmeyi reddediyor; canlıda harita hiç açılmadı.
  *
- * ÜÇÜNCÜ TARAF İSTEĞİ HÂLÂ VAR, İZİN DE. Döşemeler CARTO ve
- * djlorenz.github.io'dan geliyor; harita açıldığı anda IP adresi ve
- * bakılan bölge o sunuculara gider. Sayfanın kendi metni "koordinat
- * sunucumuza gönderilmez" diyor — bunu sormadan yapmak o sözü bozmak
- * olurdu. Tek onay isteniyor, saklanıyor, çerez envanterinden geri
- * alınabiliyor.
+ * ÜÇÜNCÜ TARAF İSTEĞİ HÂLÂ VAR, İZİN DE. Döşemeler CARTO ve katman
+ * sağlayıcısından geliyor; harita açıldığı anda IP adresi ve bakılan
+ * bölge o sunuculara gider. Sayfanın kendi metni "koordinat sunucumuza
+ * gönderilmez" diyor — bunu sormadan yapmak o sözü bozmak olurdu.
  *
- * KONTROLLER BİZDE: yakınlaştırma, katman saydamlığı, sıfırlama ve tam
- * ekran haritanın kendi durumunu değiştiriyor — artık bir adres
- * parametresi değil. Sürükleyerek gezmek, çift tıkla ve ⌘/Ctrl+tekerlek
- * ile yakınlaşmak da mümkün.
+ * KATMAN SEÇİMİ KULLANICIDA, ÇÜNKÜ TAHMİN TUTMADI. Sağlayıcı adresleri
+ * bu geliştirme ortamından doğrulanamıyor (dış ağ kapalı) ve otomatik
+ * denenen ilk aday listesi canlıda boşa çıktı. Katmanı sessizce
+ * "yüklenemedi"ye bırakmak yerine seçici açıldı: her adayın durumu
+ * (geldi / ulaşılamadı) görünüyor ve başarısız olanın denenen adresi
+ * tıklanabilir duruyor. Böylece sorunun nerede olduğu tek bakışta
+ * anlaşılıyor — kör bir yeniden tahmin turu gerekmiyor.
  */
 
 const CONSENT_KEY = 'astrohub:map:tiles';
+const LAYER_KEY = 'astrohub:map:layer';
 
-function readConsent(): boolean {
+function readStored(key: string): string | null {
   try {
-    return localStorage.getItem(CONSENT_KEY) === 'izin';
+    return localStorage.getItem(key);
   } catch {
-    return false;
+    return null;
+  }
+}
+
+function store(key: string, value: string) {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    // Depolama kapalıysa seçim yalnızca bu oturum için geçerli olur.
   }
 }
 
 export function LightPollutionMap() {
   const { location } = useLocationContext();
   const { theme } = useTheme();
+  const sites = useSiteCatalog();
   const frameRef = useRef<HTMLDivElement>(null);
 
-  const [allowed, setAllowed] = useState(readConsent);
+  const [allowed, setAllowed] = useState(
+    () => readStored(CONSENT_KEY) === 'izin'
+  );
   const [center, setCenter] = useState<LatLng>(() => ({
     lat: location.latitude,
     lng: location.longitude,
   }));
   const [zoom, setZoom] = useState(6);
   const [opacity, setOpacity] = useState(50);
+  const [pick, setPick] = useState<LatLng | null>(null);
 
-  /* Katman kaynağı sırayla deneniyor; hangisinin yayımda olduğunu bu
-     ortamdan doğrulayamadım (gerekçe kaynak listesinin başında). */
-  const [sourceIndex, setSourceIndex] = useState(0);
-  const overlay = OVERLAY_SOURCES[sourceIndex];
-  const overlayFailed = sourceIndex >= OVERLAY_SOURCES.length;
+  /* Katman seçimi: 'oto' sırayla dener, açık seçim tek kaynakta kalır. */
+  const [choice, setChoice] = useState(() => readStored(LAYER_KEY) ?? 'oto');
+  const [failed, setFailed] = useState<string[]>([]);
+  const [loadedId, setLoadedId] = useState<string | null>(null);
+
+  const overlay = useMemo(() => {
+    if (choice !== 'oto') {
+      return OVERLAY_SOURCES.find((s) => s.id === choice);
+    }
+    return OVERLAY_SOURCES.find((s) => !failed.includes(s.id));
+  }, [choice, failed]);
+
+  const autoExhausted = choice === 'oto' && !overlay;
+  const pickedFailed = choice !== 'oto' && !!overlay && failed.includes(overlay.id);
 
   const onOverlayFailure = useCallback(() => {
-    setSourceIndex((index) => index + 1);
-  }, []);
+    const id = overlay?.id;
+    if (!id) return;
+    setFailed((list) => (list.includes(id) ? list : [...list, id]));
+  }, [overlay]);
+
+  const onOverlayLoad = useCallback(() => {
+    setLoadedId(overlay?.id ?? null);
+  }, [overlay]);
 
   /* Üstteki şehir seçici değişince harita da oraya gitsin: iki ayrı
      konum kavramı taşımak, kullanıcıya "hangisi geçerli" diye
      sordurur. */
   useEffect(() => {
     setCenter({ lat: location.latitude, lng: location.longitude });
+    setPick(null);
   }, [location.latitude, location.longitude]);
 
   const allow = useCallback(() => {
     setAllowed(true);
-    try {
-      localStorage.setItem(CONSENT_KEY, 'izin');
-    } catch {
-      // Depolama kapalıysa izin yalnızca bu oturum için geçerli olur.
-    }
+    store(CONSENT_KEY, 'izin');
   }, []);
 
   /* Gece ışıkları katmanı `screen` ile bindiriliyor; açık altlıkta bu
@@ -94,6 +123,15 @@ export function LightPollutionMap() {
 
   const view = { lat: center.lat, lng: center.lng, zoom, opacity };
 
+  /** Tıklanan noktaya en yakın kayıtlı gözlem noktası. */
+  const nearest = useMemo(() => {
+    if (!pick || sites.items.length === 0) return null;
+    const here = { latitude: pick.lat, longitude: pick.lng };
+    return sites.items
+      .map((site) => ({ site, km: haversineKm(here, site.coords) }))
+      .sort((a, b) => a.km - b.km)[0];
+  }, [pick, sites.items]);
+
   function fullscreen() {
     const el = frameRef.current;
     if (!el) return;
@@ -105,7 +143,10 @@ export function LightPollutionMap() {
     setCenter({ lat: location.latitude, lng: location.longitude });
     setZoom(6);
     setOpacity(50);
+    setPick(null);
   }
+
+  const live = hasNetworkAccess && allowed;
 
   return (
     <section aria-labelledby="lp-map-title">
@@ -131,8 +172,7 @@ export function LightPollutionMap() {
         >
           {/*
             Yükseklik oranla değil, görünüm alanı yüksekliğiyle veriliyor:
-            harita bir görsel değil, gezilen bir yüzey. 4:3 bir kutuda
-            telefonda 250px kalıyordu ve o yükseklikte harita gezilemiyor.
+            harita bir görsel değil, gezilen bir yüzey.
           */}
           <div className="h-[68vh] max-h-[820px] min-h-[420px] w-full">
             {!hasNetworkAccess ? (
@@ -152,13 +192,12 @@ export function LightPollutionMap() {
               />
             ) : allowed ? (
               <TileMap
-                label="Işık kirliliği haritası — sürükleyerek gezin, çift tıklayarak yakınlaşın"
+                label="Işık kirliliği haritası — sürükleyerek gezin, tıklayarak nokta seçin"
                 className={cn(
                   'h-full w-full',
                   /* Saha modunda harita da kırmızıya düşüyor: bu tema
                      bir görünüm tercihi değil, karanlık adaptasyonunu
-                     koruma aracı. Tam renkli bir uydu haritası o
-                     korumayı tek başına bozardı. */
+                     koruma aracı. */
                   theme === 'field' &&
                     '[filter:sepia(1)_saturate(5)_hue-rotate(-38deg)_brightness(0.6)]'
                 )}
@@ -168,16 +207,18 @@ export function LightPollutionMap() {
                 maxZoom={ZOOM_RANGE.max}
                 onCenterChange={setCenter}
                 onZoomChange={setZoom}
+                onPick={setPick}
                 base={base}
                 overlay={overlay}
                 overlayOpacity={opacity / 100}
                 onOverlayFailure={onOverlayFailure}
-                marker={{ lat: location.latitude, lng: location.longitude }}
+                onOverlayLoad={onOverlayLoad}
+                marker={pick ?? { lat: location.latitude, lng: location.longitude }}
               />
             ) : (
               <Notice
                 title="Harita üçüncü taraf sunucularından yükleniyor"
-                body="Haritayı açtığınızda IP adresiniz ve baktığınız bölge döşeme sağlayıcılarına (CARTO, djlorenz.github.io) gider. Bir kez onaylarsanız tercihiniz saklanır; çerez sayfasından geri alabilirsiniz."
+                body="Haritayı açtığınızda IP adresiniz ve baktığınız bölge döşeme sağlayıcılarına (CARTO, NASA GIBS / djlorenz.github.io) gider. Bir kez onaylarsanız tercihiniz saklanır; çerez sayfasından geri alabilirsiniz."
                 action={
                   <Button size="sm" onClick={allow}>
                     Haritayı yükle
@@ -187,28 +228,48 @@ export function LightPollutionMap() {
             )}
           </div>
 
-          {/* Yakınlaştırma düğmeleri haritanın üstünde: sürgü aşağıda
-              duruyor ama gezinirken el haritadan ayrılmamalı. */}
-          {hasNetworkAccess && allowed ? (
-            <div className="absolute right-2 top-2 flex flex-col overflow-hidden rounded-card border border-border-strong bg-background/85 backdrop-blur-sm">
-              <ZoomButton
-                label="Yakınlaştır"
-                sign="+"
-                disabled={zoom >= ZOOM_RANGE.max}
-                onClick={() => setZoom((z) => Math.min(ZOOM_RANGE.max, z + 1))}
-              />
-              <ZoomButton
-                label="Uzaklaştır"
-                sign="−"
-                disabled={zoom <= ZOOM_RANGE.min}
-                onClick={() => setZoom((z) => Math.max(ZOOM_RANGE.min, z - 1))}
-              />
-            </div>
-          ) : null}
+          {live && (
+            <>
+              <div className="absolute right-2 top-2 flex flex-col overflow-hidden rounded-card border border-border-strong bg-background/85 backdrop-blur-sm">
+                <ZoomButton
+                  label="Yakınlaştır"
+                  sign="+"
+                  disabled={zoom >= ZOOM_RANGE.max}
+                  onClick={() => setZoom((z) => Math.min(ZOOM_RANGE.max, z + 1))}
+                />
+                <ZoomButton
+                  label="Uzaklaştır"
+                  sign="−"
+                  disabled={zoom <= ZOOM_RANGE.min}
+                  onClick={() => setZoom((z) => Math.max(ZOOM_RANGE.min, z - 1))}
+                />
+              </div>
+
+              {overlay && loadedId === overlay.id && (
+                <Legend kind={overlay.legend} />
+              )}
+
+              {/*
+                NOKTA BİLGİSİ — haritaya tıklayınca çıkar.
+                Uydu katmanı bir renk gösteriyor ama o rengin karşılığını
+                biz üretmiyoruz; onun yerine elimizdeki tek gerçek ölçüme
+                bağlıyoruz: en yakın kayıtlı gözlem noktası. Renkten
+                Bortle okumak, sahip olmadığımız bir kalibrasyona güven
+                vermek olurdu.
+              */}
+              {pick && (
+                <PickPanel
+                  point={pick}
+                  nearest={nearest}
+                  onClose={() => setPick(null)}
+                />
+              )}
+            </>
+          )}
         </div>
 
         {/* ── Kontroller ── */}
-        <div className="mt-2 grid gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
+        <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.15fr)_auto]">
           <Slider
             id="lp-zoom"
             label="Yakınlaştırma"
@@ -229,6 +290,54 @@ export function LightPollutionMap() {
             display={`%${opacity}`}
             onChange={setOpacity}
           />
+
+          {/* Katman seçici — durumu da gösteriyor. */}
+          <div className="rounded-card border border-border bg-surface-2 px-2.5 py-1.5">
+            <div className="flex items-baseline justify-between gap-2">
+              <label htmlFor="lp-layer" className="label">
+                Katman
+              </label>
+              <span
+                className={cn(
+                  'text-[10px]',
+                  overlay && loadedId === overlay.id
+                    ? 'text-success'
+                    : autoExhausted || pickedFailed
+                      ? 'text-warning'
+                      : 'text-faint'
+                )}
+              >
+                {overlay && loadedId === overlay.id
+                  ? 'geldi'
+                  : autoExhausted || pickedFailed
+                    ? 'ulaşılamadı'
+                    : 'deneniyor…'}
+              </span>
+            </div>
+            <select
+              id="lp-layer"
+              value={choice}
+              onChange={(e) => {
+                setChoice(e.target.value);
+                store(LAYER_KEY, e.target.value);
+                setLoadedId(null);
+                /* Seçim yenilenince o kaynağa bir şans daha: sunucu
+                   geçici olarak düşmüş olabilir ve kullanıcı elle
+                   seçtiyse tekrar denemek istiyordur. */
+                setFailed((list) => list.filter((id) => id !== e.target.value));
+              }}
+              className="mt-1 w-full bg-transparent text-[11.5px] text-foreground outline-none"
+            >
+              <option value="oto">Otomatik (sırayla dener)</option>
+              {OVERLAY_SOURCES.map((source) => (
+                <option key={source.id} value={source.id}>
+                  {source.label}
+                  {failed.includes(source.id) ? ' — ulaşılamadı' : ''}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <div className="flex items-end gap-1.5">
             <Button size="sm" variant="secondary" onClick={reset}>
               Sıfırla
@@ -240,26 +349,160 @@ export function LightPollutionMap() {
         </div>
 
         {/*
-          Katman gelmediyse bu açıkça yazılıyor. Sessiz kalmak, boş bir
-          altlık haritayı "bu bölgede ışık kirliliği yok" gibi
-          okutuyordu.
+          TANI SATIRI. Katman gelmiyorsa sebebini bu ortamdan
+          göremiyorum; denenen adresi yazmak, sorunu bir tıkla
+          görülebilir hâle getiriyor. "Yüklenemedi" tek başına kimseye
+          bir şey söylemiyordu.
         */}
-        {overlayFailed ? (
+        {(autoExhausted || pickedFailed) && (
           <p className="mt-1.5 rounded-card border border-warning/40 bg-surface-1 px-2.5 py-1.5 text-[11px] leading-snug text-warning">
-            Hiçbir ışık kirliliği kaynağına ulaşılamadı; altta yalnızca temel
-            harita var. Aşağıdaki karşılaştırma kendi ölçümlerimizden geldiği
-            için etkilenmiyor.
+            {autoExhausted
+              ? 'Listedeki ışık kirliliği kaynaklarının hiçbirine ulaşılamadı'
+              : 'Seçilen katmana ulaşılamadı'}
+            ; altta yalnızca temel harita var. Aşağıdaki karşılaştırma kendi
+            ölçümlerimizden geldiği için etkilenmiyor.{' '}
+            <a
+              href={(overlay ?? OVERLAY_SOURCES[0]).url({ x: 37, y: 22, z: 6 })}
+              target="_blank"
+              rel="noreferrer noopener"
+              className="underline underline-offset-2"
+            >
+              Denenen örnek adres ↗
+            </a>
           </p>
-        ) : null}
+        )}
 
         <p className="mt-1.5 text-[10px] leading-snug text-faint">
           {BASEMAP_CREDIT}
-          {overlay ? ` · ${overlay.credit}` : ''}. Katman uydu kestirimidir.
-          Aşağıdaki karşılaştırma ise kendi gözlem noktası ölçümlerimizden
-          hesaplanır — ikisi ayrı kaynaklardır ve birbirini doğrulamaz.
+          {overlay && loadedId === overlay.id ? ` · ${overlay.credit}` : ''}.
+          Katman uydu kestirimidir. Aşağıdaki karşılaştırma ise kendi gözlem
+          noktası ölçümlerimizden hesaplanır — ikisi ayrı kaynaklardır ve
+          birbirini doğrulamaz.
         </p>
       </div>
     </section>
+  );
+}
+
+/**
+ * Lejant.
+ *
+ * Atlas katmanı karanlıktan şehre giden bir renk ölçeği taşıyor; ham
+ * parlaklık görüntüsünde böyle bir ölçek yok, yalnızca ışık var. İkisine
+ * aynı lejantı koymak, ham görüntüye sahip olmadığı bir kalibrasyon
+ * atfetmek olurdu — bu yüzden lejant kaynağa göre değişiyor.
+ */
+const ATLAS_SCALE = [
+  '#000000',
+  '#1d2a55',
+  '#1f6f4a',
+  '#8fae21',
+  '#e0c025',
+  '#e0761f',
+  '#cf2d1f',
+  '#ffffff',
+];
+
+function Legend({ kind }: { kind: 'atlas' | 'radiance' }) {
+  return (
+    <div className="absolute bottom-2 left-2 rounded-card border border-border-strong bg-background/85 px-2 py-1.5 backdrop-blur-sm">
+      <p className="label mb-1">
+        {kind === 'atlas' ? 'Gökyüzü parlaklığı' : 'Gece ışığı'}
+      </p>
+      {kind === 'atlas' ? (
+        <>
+          <div className="flex h-2 w-40 overflow-hidden rounded-[2px]">
+            {ATLAS_SCALE.map((color) => (
+              <span
+                key={color}
+                className="flex-1"
+                style={{ backgroundColor: color }}
+              />
+            ))}
+          </div>
+          <div className="mt-1 flex justify-between text-[9.5px] text-faint">
+            <span>karanlık</span>
+            <span>şehir</span>
+          </div>
+        </>
+      ) : (
+        <>
+          <div
+            className="h-2 w-40 rounded-[2px]"
+            style={{
+              backgroundImage: 'linear-gradient(90deg, #000000, #fff3c4)',
+            }}
+          />
+          <p className="mt-1 text-[9.5px] leading-snug text-faint">
+            ham parlaklık · Bortle ölçeği değil
+          </p>
+        </>
+      )}
+    </div>
+  );
+}
+
+/** Tıklanan noktanın bilgisi. */
+function PickPanel({
+  point,
+  nearest,
+  onClose,
+}: {
+  point: LatLng;
+  nearest: {
+    site: { slug: string; name: string; region: string; bortle: number; sqm?: number };
+    km: number;
+  } | null;
+  onClose: () => void;
+}) {
+  return (
+    <div className="absolute left-2 top-2 w-[min(260px,calc(100%-1rem))] rounded-card border border-border-strong bg-background/90 p-2.5 backdrop-blur-sm">
+      <div className="flex items-baseline justify-between gap-2">
+        <p className="label">Seçilen nokta</p>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Nokta bilgisini kapat"
+          className="text-[13px] leading-none text-muted-foreground hover:text-foreground"
+        >
+          ×
+        </button>
+      </div>
+      <p className="tabular mt-1 text-[12px] text-foreground">
+        {point.lat.toFixed(4)}° · {point.lng.toFixed(4)}°
+      </p>
+
+      {nearest ? (
+        <div className="mt-2 border-t border-border pt-2">
+          <p className="label">En yakın gözlem noktası</p>
+          <Link
+            to={`/saha/${nearest.site.slug}`}
+            className="mt-0.5 block text-[12px] text-foreground hover:text-primary"
+          >
+            {nearest.site.name}
+          </Link>
+          <p className="mt-0.5 text-[10.5px] text-faint">
+            {nearest.site.region} · {formatDistance(nearest.km)}
+          </p>
+          <p className="tabular mt-1 text-[11px] text-cold">
+            Bortle {nearest.site.bortle}
+            {nearest.site.sqm !== undefined
+              ? ` · SQM ${nearest.site.sqm.toFixed(2)}`
+              : ' · SQM ölçümü yok'}
+          </p>
+        </div>
+      ) : (
+        <p className="mt-2 border-t border-border pt-2 text-[10.5px] leading-snug text-faint">
+          Yakında kayıtlı gözlem noktamız yok.
+        </p>
+      )}
+
+      {/* Renkten sayı okumamak bilinçli — gerekçe çağrı yerinde. */}
+      <p className="mt-2 text-[9.5px] leading-snug text-faint">
+        Haritadaki renk uydu kestirimidir; buradaki Bortle/SQM ise o
+        noktanın değil, en yakın kayıtlı sahanın ölçümüdür.
+      </p>
+    </div>
   );
 }
 
