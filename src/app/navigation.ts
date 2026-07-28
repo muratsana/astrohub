@@ -8,9 +8,10 @@
  * `siteMap` tek kaynaktır — footer, komut paleti ve mobil çekmece hep
  * buradan beslenir, hiçbir bağlantı iki yerde ayrı ayrı tanımlanmaz.
  *
- * Not: Hedef kataloğu ve ekipman veritabanı üst menüde değildir. Bunlar
- * başka modüllerin (galeri, bu gece, araçlar) içinden doğal olarak
- * kullanılan referans modülleridir; footer ve palette tam erişilebilir.
+ * Not: Hedef kataloğu üst menüde değildir — galeri, bu gece ve araçların
+ * içinden doğal olarak kullanılan bir referans modülüdür. Ekipman ise
+ * üst menüye alındı: 130 modelli katalog, karşılaştırma ekranı ve ikinci
+ * el ilanlarıyla artık kendi başına gezilen bir modül.
  */
 
 export interface NavItem {
@@ -32,12 +33,13 @@ export interface NavGroup {
 /**
  * Üst menü — dokuz ana modül.
  *
- * Forum ve Radyo, sitenin "gece boyunca açık kalan" iki modülüdür: biri
- * çekim aralarında yazışmak, diğeri arka planda çalmak için. Bu yüzden
- * referans modüllerin (hedef kataloğu, ekipman) aksine üst menüde dururlar.
+ * Forum, sitenin "gece boyunca açık kalan" modülü: çekim aralarında
+ * yazışmak için. TV ve Radyo metin girişi değil, üst çubukta durum
+ * düğmesi — açılıp kapatılan bir yayın, gidilecek bir sayfa değil.
  *
  * Dokuz giriş 1024px'te sığmıyor; nav bu yüzden `xl` kırılımında açılır,
- * altında modül haritası mobil çekmeceden gelir.
+ * altında modül haritası mobil çekmeceden gelir. Onuncu giriş `xl`'de de
+ * taşırır — eklemeden önce ölçün.
  */
 export const primaryNav: NavItem[] = [
   { label: 'Galeri', to: '/galeri' },
@@ -45,6 +47,7 @@ export const primaryNav: NavItem[] = [
   { label: 'Haberler', to: '/haberler' },
   { label: 'Yazılar', to: '/yazilar' },
   { label: 'Forum', to: '/forum' },
+  { label: 'Ekipman', to: '/ekipman' },
   { label: 'Araçlar', to: '/araclar' },
   { label: 'İlanlar', to: '/ilanlar' },
   { label: 'Saha', to: '/saha' },
@@ -263,8 +266,14 @@ export const siteMap: NavGroup[] = [
       {
         label: 'Ekipman Veritabanı',
         to: '/ekipman',
-        description: 'Teleskop, montür, kamera, filtre',
+        description: 'Teleskop, montür, kamera, filtre, reducer, barlow',
         keywords: ['teleskop', 'montür', 'kamera', 'filtre', 'ekipman'],
+      },
+      {
+        label: 'Ekipman Karşılaştırma',
+        to: '/ekipman/karsilastir',
+        description: 'Dört modeli teknik özellikleriyle yan yana koy',
+        keywords: ['karşılaştır', 'compare', 'fark', 'hangisi'],
       },
     ],
   },

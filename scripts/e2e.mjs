@@ -276,6 +276,36 @@ await scenario('etkinlik haritası yakınlık listesi üretir', async () => {
   assert(/\d+\s*km/.test(text), 'mesafe değeri basılmadı');
 });
 
+/* ══════════════════════ Ekipman karşılaştırma ══════════════════════ */
+
+await scenario('ekipman karşılaştırma seçimi adres çubuğunda taşınır', async () => {
+  // Karşılaştırma seçimi URL'de duruyor; forumda bağlantı paylaşınca aynı
+  // tablo açılmalı. Bu, birim testinin göremeyeceği bir yönlendirme davranışı.
+  await goto('/ekipman/karsilastir?m=zwo-asi2600mm,zwo-asi533mc');
+
+  const text = await page.evaluate(() => document.body.innerText);
+  // `includesTr` yalnızca samanlığı küçültüyor; aranan metin zaten küçük
+  // harf verilmeli. "ASI" gibi parçalar Türkçe küçültmede noktasız ı'ya
+  // dönüştüğü için harfsiz parçalarla eşleştiriyoruz.
+  assert(includesTr(text, '2600mm pro'), 'ilk model tabloda yok');
+  assert(includesTr(text, '533mc pro'), 'ikinci model tabloda yok');
+
+  const columns = await page.evaluate(
+    () => document.querySelectorAll('table thead th').length
+  );
+  assert(columns === 3, `beklenen 3 sütun, gelen ${columns}`);
+
+  // Farklı olan satırların işaretlenmesi tablonun asıl işi.
+  assert(includesTr(text, 'fark'), 'farklı satır işaretlenmemiş');
+});
+
+await scenario('bilinmeyen model karşılaştırmayı boşaltmıyor', async () => {
+  await goto('/ekipman/karsilastir?m=zwo-asi2600mm,olmayan-model');
+
+  const text = await page.evaluate(() => document.body.innerText);
+  assert(includesTr(text, '2600mm pro'), 'çalışan model de kayboldu');
+});
+
 /* ══════════════════════ Fotoğraf sürümleri ══════════════════════ */
 
 await scenario('sürüm karşılaştırma sürgüsü klavyeyle sürülür', async () => {

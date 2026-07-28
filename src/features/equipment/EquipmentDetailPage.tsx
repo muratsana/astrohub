@@ -17,6 +17,7 @@ import {
   equipmentPath,
   type EquipmentModel,
 } from './data';
+import { comparePath } from './compare';
 import { useEquipmentCatalog } from '@/services/content/equipment';
 
 /**
@@ -127,6 +128,15 @@ export function EquipmentDetailPage() {
                 {equipmentCategoryLabels[model.category]}
               </Badge>
               {model.priceHint && <Badge>{model.priceHint}</Badge>}
+              {/* Karşılaştırma bu modelle başlıyor: "hangisi" sorusu genelde
+                  bir modelin sayfasında doğuyor, boş bir tabloda değil. */}
+              <ButtonLink
+                to={comparePath([model.slug])}
+                size="sm"
+                variant="secondary"
+              >
+                Karşılaştır
+              </ButtonLink>
             </>
           }
         />

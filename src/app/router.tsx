@@ -341,6 +341,17 @@ export const router = createRouter([
         ),
       },
       { path: 'ekipman', element: equipmentPage() },
+      /* Statik parça dinamikten önce tanımlı: React Router statik segmenti
+         zaten üstün sayıyor, ama sıra okuyan için de açık olsun. */
+      {
+        path: 'ekipman/karsilastir',
+        element: route(
+          named(
+            () => import('@/features/equipment/EquipmentComparePage'),
+            'EquipmentComparePage'
+          )
+        ),
+      },
       { path: 'ekipman/:category', element: equipmentPage() },
       {
         path: 'ekipman/:brand/:slug',

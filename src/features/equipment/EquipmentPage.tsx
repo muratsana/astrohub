@@ -16,10 +16,13 @@ import {
 } from '@/components/ui/FilterBar';
 import {
   equipmentCategoryLabels,
+  equipmentCategoryOrder,
   equipmentPath,
   type EquipmentCategory,
   type EquipmentModel,
 } from './data';
+import { EquipmentGlyph } from './EquipmentGlyph';
+import { RemoteImage } from '@/components/media/RemoteImage';
 import { useEquipmentCatalog } from '@/services/content/equipment';
 import { CatalogSourceNote } from '@/components/ui/CatalogSourceNote';
 import { cn } from '@/lib/cn';
@@ -30,15 +33,14 @@ function trLower(s: string): string {
   return s.toLocaleLowerCase('tr-TR');
 }
 
+/*
+ * Sekmeler kategori tablosundan geliyor: liste iki yerde yazılıyken yeni
+ * bir kategori eklendiğinde (reducer, barlow, oküler…) sekmelerde
+ * görünmüyor ve o kayıtlara yalnızca arama ile ulaşılabiliyordu.
+ */
 const categories: (EquipmentCategory | 'hepsi')[] = [
   'hepsi',
-  'optik-tup',
-  'lens',
-  'montur',
-  'astro-kamera',
-  'filtre',
-  'guide',
-  'aksesuar',
+  ...equipmentCategoryOrder,
 ];
 
 /** URL'deki kategori parçası geçerli mi? */
@@ -109,9 +111,18 @@ export function EquipmentPage() {
           title={title}
           description="Standartlaştırılmış teknik verilerle astronomi ekipmanları. Her model, o ekipmanla çekilmiş fotoğraflara ve hesaplayıcılara bağlıdır."
           actions={
-            <ButtonLink to="/araclar/setup-uyumluluk" size="sm" variant="secondary">
-              Setup Uyumluluğu
-            </ButtonLink>
+            <>
+              <ButtonLink to="/ekipman/karsilastir" size="sm">
+                Karşılaştır
+              </ButtonLink>
+              <ButtonLink
+                to="/araclar/setup-uyumluluk"
+                size="sm"
+                variant="secondary"
+              >
+                Setup Uyumluluğu
+              </ButtonLink>
+            </>
           }
         />
 
@@ -200,6 +211,7 @@ function EquipmentCard({
         to={equipmentPath(model)}
         className="group flex h-full items-center gap-3 rounded-card border border-border bg-surface-1 px-3 py-2.5 transition-colors hover:border-border-strong"
       >
+        <EquipmentVisual model={model} className="h-9 w-9 shrink-0" />
         <div className="min-w-0 flex-1">
           <h2 className="truncate text-[13px] font-medium text-foreground group-hover:text-primary">
             <span className="text-muted-foreground">{model.brand}</span>{' '}
@@ -221,8 +233,9 @@ function EquipmentCard({
       to={equipmentPath(model)}
       className="group flex h-full flex-col rounded-card border border-border bg-surface-1 p-3 transition-colors hover:border-border-strong"
     >
-      <div className="mb-2 flex items-start justify-between gap-2">
-        <div className="min-w-0">
+      <div className="mb-2 flex items-start gap-2.5">
+        <EquipmentVisual model={model} className="h-11 w-11 shrink-0" />
+        <div className="min-w-0 flex-1">
           <p className="label">{model.brand}</p>
           <h2 className="mt-0.5 text-[14px] font-medium leading-snug text-foreground group-hover:text-primary">
             {model.model}
@@ -254,5 +267,50 @@ function EquipmentCard({
         </span>
       </div>
     </Link>
+  );
+}
+
+/**
+ * Modelin görseli — varsa fotoğraf, yoksa kategori simgesi.
+ *
+ * Üretici ürün fotoğrafları telifli olduğu için katalogda çoğu kaydın
+ * görseli yok. Boş bir kutu bırakmak yerine parçanın siluetini çizen
+ * simgeyi gösteriyoruz: liste taranırken bir kaydın reducer mı barlow mu
+ * olduğu okumadan ayırt edilebiliyor.
+ */
+function EquipmentVisual({
+  model,
+  className,
+}: {
+  model: EquipmentModel;
+  className?: string;
+}) {
+  if (model.image) {
+    return (
+      <span
+        className={cn(
+          'overflow-hidden rounded-card border border-border bg-surface-2',
+          className
+        )}
+      >
+        <RemoteImage
+          src={model.image.url}
+          alt={`${model.brand} ${model.model}`}
+          seed={model.slug}
+          className="h-full w-full object-cover"
+        />
+      </span>
+    );
+  }
+
+  return (
+    <span
+      className={cn(
+        'flex items-center justify-center rounded-card border border-border bg-surface-2 p-1.5 text-muted-foreground transition-colors group-hover:text-primary',
+        className
+      )}
+    >
+      <EquipmentGlyph category={model.category} className="block h-full w-full" />
+    </span>
   );
 }
