@@ -1,4 +1,6 @@
-/** Ekipman veritabanı tohum verisi (§8.3). Faz 1.5'te admin yönetimli DB'ye taşınır. */
+import type { ConnectionStandard } from '@/domain/equipment/connections';
+
+/** Ekipman veritabanı tohum verisi (§8.3). Admin panelinden veritabanına taşınır. */
 
 /**
  * KATEGORİLER — görüntüleme zincirinin tamamı.
@@ -50,6 +52,74 @@ export const equipmentCategoryOrder = Object.keys(
   equipmentCategoryLabels
 ) as EquipmentCategory[];
 
+/**
+ * Üretim durumu.
+ *
+ * "Bilinmiyor" ayrı bir değer: üretimden kalktığını doğrulayamadığımız bir
+ * ürünü "güncel" saymak, ikinci el fiyatı araştıran kullanıcıyı yanıltır.
+ */
+export type ProductionStatus =
+  | 'guncel'
+  | 'uretimi-durduruldu'
+  | 'eski-model'
+  | 'bilinmiyor';
+
+export const productionStatusLabels: Record<ProductionStatus, string> = {
+  guncel: 'Güncel',
+  'uretimi-durduruldu': 'Üretimi durduruldu',
+  'eski-model': 'Eski model',
+  bilinmiyor: 'Bilinmiyor',
+};
+
+/**
+ * Teknik veri güven seviyesi.
+ *
+ * Katalogdaki her sayı aynı ağırlıkta değil: üreticinin datasheet'inden
+ * gelen bir backfocus ile forumdan derlenmiş bir değer aynı yerde
+ * durmamalı. Hesaplama motoru bu seviyeyi sonuca taşıyor, böylece
+ * kullanıcı bir uyarının ne kadar sağlam bir veriye dayandığını görüyor.
+ */
+export type DataConfidence = 'dogrulanmis' | 'tek-kaynak' | 'inceleme-gerekli';
+
+export const confidenceLabels: Record<DataConfidence, string> = {
+  dogrulanmis: 'Üretici kaynağından doğrulandı',
+  'tek-kaynak': 'Tek kaynaktan alındı',
+  'inceleme-gerekli': 'Kaynaklar çelişiyor — inceleme gerekli',
+};
+
+/**
+ * Setup zincirinde kullanılan optik ve mekanik ölçüler.
+ *
+ * HEPSİ İSTEĞE BAĞLI VE TAHMİN EDİLMEZ. Bir alan boşsa hesaplama motoru
+ * o kontrolü "veri yetersiz" olarak işaretler; yaygın bir değeri varsayıp
+ * hesabı tamamlamak, kullanıcıya kurulamayacak bir zinciri "uyumlu" diye
+ * göstermek olurdu.
+ */
+export interface EquipmentOptics {
+  /** Işığın geçtiği net açıklık, mm — vinyet hesabının girdisi. */
+  clearApertureMm?: number;
+  /** Düzeltilmiş görüntü çemberi çapı, mm. */
+  imageCircleMm?: number;
+  /** Bu parçanın optik yola kattığı uzunluk, mm (OAG, filtre çarkı, ara halka). */
+  opticalLengthMm?: number;
+  /** Düzelticinin sensöre kadar istediği mesafe, mm. */
+  requiredBackfocusMm?: number;
+  /** Kameranın flanş–sensör mesafesi, mm. */
+  flangeDistanceMm?: number;
+  /** Reducer (<1) ya da barlow (>1) çarpanı. */
+  factor?: number;
+  /** Filtre camının kalınlığı, mm — optik yolu ~1/3'ü kadar uzatır. */
+  filterThicknessMm?: number;
+  /** OAG prizmasının ölçüsü, mm — guide kamerası sensörüyle karşılaştırılır. */
+  prismSizeMm?: number;
+}
+
+export interface EquipmentSource {
+  kind: 'uretici' | 'datasheet' | 'kilavuz' | 'distributor' | 'arsiv';
+  label: string;
+  url?: string;
+}
+
 export interface EquipmentModel {
   /**
    * Veritabanı kimliği — yalnızca katalog veritabanından geldiğinde dolu.
@@ -69,6 +139,30 @@ export interface EquipmentModel {
   summary?: string;
   /** Bu modelle çalışırken bilinmesi gereken pratik notlar. */
   notes?: string[];
+
+  /* ── Setup zinciri için teknik alanlar ── */
+
+  /**
+   * Işığın giriş ve çıkış bağlantısı.
+   *
+   * `input` ışığın parçaya girdiği taraf (teleskoba bakan), `output`
+   * kameraya bakan taraf. Kamera yalnızca `input` taşır, teleskop yalnızca
+   * `output`. Bilinmiyorsa alan yok — uyumluluk kontrolü bunu "veri
+   * yetersiz" sayar.
+   */
+  connections?: { input?: ConnectionStandard; output?: ConnectionStandard };
+  optics?: EquipmentOptics;
+
+  /* ── Kaynak ve doğrulama ── */
+
+  productionStatus?: ProductionStatus;
+  releaseYear?: number;
+  discontinuedYear?: number;
+  /** Teknik değerlerin alındığı kaynaklar. */
+  sources?: EquipmentSource[];
+  /** Verinin son doğrulandığı tarih (ISO). */
+  verifiedAt?: string;
+  confidence?: DataConfidence;
   /**
    * Ürün görseli.
    *
@@ -98,6 +192,9 @@ export const equipment: EquipmentModel[] = [
       'Reducer olmadan kadraj köşelerinde alan eğriliği görünür.',
       'Odaklayıcı standart 2 inç; ağır kamera yükünde sarkma yapabilir.',
     ],
+    connections: { output: '2in' },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'wo-zs73-iii',
@@ -108,6 +205,10 @@ export const equipment: EquipmentModel[] = [
     priceHint: 'Orta segment',
     summary:
       'Taşınabilir 73 mm ikili APO; Flat73A düzelticisiyle tam kareye kadar düz alan verir.',
+    connections: { output: 'M48x0.75' },
+    optics: { requiredBackfocusMm: 55 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'wo-gt81-iii',
@@ -118,6 +219,10 @@ export const equipment: EquipmentModel[] = [
     priceHint: 'Orta segment',
     summary:
       'Üçlü APO camla renk hatası pratikte kaybolur; 478 mm odak geniş alanla detay arasında iyi bir orta nokta.',
+    connections: { output: 'M48x0.75' },
+    optics: { requiredBackfocusMm: 55 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'askar-fra600',
@@ -132,6 +237,10 @@ export const equipment: EquipmentModel[] = [
       'Petzval olduğu için ayrı flattener alınmaz — toplam maliyeti düşürür.',
       '5.5 kg tüp, 13 kg sınıfı montür ister.',
     ],
+    connections: { output: 'M54x0.75' },
+    optics: { imageCircleMm: 44, requiredBackfocusMm: 55 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'askar-107phq',
@@ -142,6 +251,10 @@ export const equipment: EquipmentModel[] = [
     priceHint: 'Üst segment',
     summary:
       'Dörtlü tasarım; 749 mm odakla galaksi ve küçük bulutsu hedeflerinde detay verir.',
+    connections: { output: 'M54x0.75' },
+    optics: { imageCircleMm: 44, requiredBackfocusMm: 55 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'takahashi-fsq106edx4',
@@ -156,6 +269,10 @@ export const equipment: EquipmentModel[] = [
       'Kutudan f/5; 645 reducer ile 380 mm f/3.6\'ya iner.',
       'Fiyatı çoğu montürün üzerinde — bütçe planı buna göre yapılmalı.',
     ],
+    connections: { output: 'Takahashi M56' },
+    optics: { imageCircleMm: 88, requiredBackfocusMm: 56 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'takahashi-fc100dz',
@@ -166,6 +283,9 @@ export const equipment: EquipmentModel[] = [
     priceHint: 'Profesyonel',
     summary:
       'Florit ikili; gezegen ve çift yıldız gözlemi için keskinlik referansı. Astrofotoda reducer ile kullanılır.',
+    connections: { output: 'Takahashi M56' },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'celestron-edgehd-925',
@@ -180,6 +300,10 @@ export const equipment: EquipmentModel[] = [
       'Uzun odak, 1 yay saniyesinin altında guiding hatası ister.',
       'Soğuma süresi uzundur; kurulumdan en az 45 dakika önce dışarı çıkarılmalı.',
     ],
+    connections: { output: 'Celestron EdgeHD' },
+    optics: { imageCircleMm: 42, requiredBackfocusMm: 133.35 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'celestron-c11',
@@ -190,6 +314,10 @@ export const equipment: EquipmentModel[] = [
     priceHint: 'Üst segment',
     summary:
       '280 mm açıklık, gezegen görüntülemede çözünürlük sınırını yükseltir. Derin uzayda uzun odak nedeniyle sabır ister.',
+    connections: { output: 'Celestron SCT' },
+    optics: { requiredBackfocusMm: 105 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'gso-rc8',
@@ -204,6 +332,10 @@ export const equipment: EquipmentModel[] = [
       'Kolimasyonu hassastır ve nakliyede bozulabilir.',
       'Alan düzleştirici olmadan köşelerde alan eğriliği kalır.',
     ],
+    connections: { output: 'M90x1' },
+    optics: { requiredBackfocusMm: 55 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'es-ed102',
@@ -214,6 +346,9 @@ export const equipment: EquipmentModel[] = [
     priceHint: 'Orta segment',
     summary:
       'FCD-100 camlı üçlü; 714 mm odakla hem görsel hem fotoğrafik kullanıma uygun.',
+    connections: { output: '2in' },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'sharpstar-61edph-iii',
@@ -224,6 +359,10 @@ export const equipment: EquipmentModel[] = [
     priceHint: 'Giriş segment',
     summary:
       'Sırt çantasına giren 61 mm üçlü; 335 mm odakta çok geniş kadraj. İlk astrograf olarak sık önerilir.',
+    connections: { output: 'M48x0.75' },
+    optics: { requiredBackfocusMm: 55 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'sw-150pds',
@@ -238,6 +377,9 @@ export const equipment: EquipmentModel[] = [
       'Koma düzeltici (MPCC/GPU) neredeyse zorunludur.',
       'Her kurulumda kolimasyon kontrolü gerekir.',
     ],
+    connections: { output: '2in' },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'celestron-nexstar-6se',
@@ -251,6 +393,10 @@ export const equipment: EquipmentModel[] = [
     notes: [
       'Altazimut kaide uzun pozda alan dönmesi yapar; derin uzay için ekvatoryal kama gerekir.',
     ],
+    connections: { output: 'Celestron SCT' },
+    optics: { requiredBackfocusMm: 105 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'sigma-105mm-f14-art',
@@ -264,6 +410,9 @@ export const equipment: EquipmentModel[] = [
     notes: [
       '1.6 kg ağırlık, hafif takip montürlerinde denge sorunu yapar.',
     ],
+    connections: { output: 'Canon EF' },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'samyang-14mm-f28',
@@ -274,6 +423,9 @@ export const equipment: EquipmentModel[] = [
     priceHint: 'Giriş segment',
     summary:
       'Manzara ve Samanyolu panoramaları için ekonomik ultra geniş açı.',
+    connections: { output: 'Canon EF' },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'canon-ef-200mm-f28l',
@@ -284,6 +436,9 @@ export const equipment: EquipmentModel[] = [
     priceHint: 'Orta segment',
     summary:
       'Sabit 200 mm L serisi; f/4\'e kısılınca astrofoto için temiz yıldız gösterir.',
+    connections: { output: 'Canon EF' },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'sony-fe-20mm-f18g',
@@ -294,6 +449,9 @@ export const equipment: EquipmentModel[] = [
     priceHint: 'Orta segment',
     summary:
       'Gece manzarası için hızlı geniş açı; köşe koması düşük.',
+    connections: { output: 'Sony E' },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'sigma-40mm-f14-art',
@@ -304,6 +462,9 @@ export const equipment: EquipmentModel[] = [
     priceHint: 'Üst segment',
     summary:
       'Sinema serisi optik kalitesi; Samanyolu panellerinde yıldız şişmesi çok düşük.',
+    connections: { output: 'Canon EF' },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'celestron-reducer-07x-edgehd8',
@@ -317,6 +478,10 @@ export const equipment: EquipmentModel[] = [
     notes: [
       'Yalnızca EdgeHD 8 inç ile uyumlu; diğer SCT\'lerde alan bozulur.',
     ],
+    connections: { input: 'Celestron EdgeHD', output: 'M42x0.75' },
+    optics: { factor: 0.7, requiredBackfocusMm: 105, imageCircleMm: 42 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'starizona-nexus-075x',
@@ -330,6 +495,10 @@ export const equipment: EquipmentModel[] = [
     notes: [
       'Backfocus toleransı ±1 mm; ara halkalar tam ölçülmeli.',
     ],
+    connections: { input: '2in', output: 'M48x0.75' },
+    optics: { factor: 0.75, requiredBackfocusMm: 55 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'wo-flat6aiii',
@@ -340,6 +509,10 @@ export const equipment: EquipmentModel[] = [
     priceHint: 'Orta segment',
     summary:
       'Odağı değiştirmeden alanı düzleştirir; tam kare sensörde köşe yıldızlarını toparlar.',
+    connections: { input: 'M48x0.75', output: 'M48x0.75' },
+    optics: { factor: 1.0, requiredBackfocusMm: 55 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'askar-reducer-07x-fra400',
@@ -350,6 +523,10 @@ export const equipment: EquipmentModel[] = [
     priceHint: 'Orta segment',
     summary:
       'FRA400\'ü 280 mm f/3.9\'a indirir; geniş alan dar bant çalışmaları için hızlı bir kombinasyon.',
+    connections: { input: 'M54x0.75', output: 'M48x0.75' },
+    optics: { factor: 0.7, requiredBackfocusMm: 55 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'sw-reducer-085x',
@@ -360,6 +537,10 @@ export const equipment: EquipmentModel[] = [
     priceHint: 'Giriş segment',
     summary:
       'Evostar 80ED için hem odak kısaltıcı hem alan düzleştirici.',
+    connections: { input: '2in', output: 'M48x0.75' },
+    optics: { factor: 0.85, requiredBackfocusMm: 55 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'takahashi-645-reducer',
@@ -370,6 +551,10 @@ export const equipment: EquipmentModel[] = [
     priceHint: 'Profesyonel',
     summary:
       'FSQ-106\'yı f/3.6\'ya indirir; dar bant projelerinde toplam süreyi yarıdan fazla kısaltır.',
+    connections: { input: 'Takahashi M56', output: 'M54x0.75' },
+    optics: { factor: 0.72, requiredBackfocusMm: 56, imageCircleMm: 88 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'baader-mpcc-mk3',
@@ -383,6 +568,10 @@ export const equipment: EquipmentModel[] = [
     notes: [
       'Backfocus 55 mm — T2 halka zinciri buna göre kurulmalı.',
     ],
+    connections: { input: '2in', output: 'M48x0.75' },
+    optics: { factor: 1.0, requiredBackfocusMm: 55 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'ts-gpu-coma-corrector',
@@ -393,6 +582,10 @@ export const equipment: EquipmentModel[] = [
     priceHint: 'Orta segment',
     summary:
       'Hızlı Newton\'larda MPCC\'ye göre daha geniş düz alan verir.',
+    connections: { input: '2in', output: 'M48x0.75' },
+    optics: { factor: 1.0, requiredBackfocusMm: 55 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'gso-reducer-075x-rc',
@@ -403,6 +596,10 @@ export const equipment: EquipmentModel[] = [
     priceHint: 'Giriş segment',
     summary:
       'RC8\'i 1218 mm f/6\'ya indirir ve alanı düzleştirir.',
+    connections: { input: 'M90x1', output: 'M48x0.75' },
+    optics: { factor: 0.75, requiredBackfocusMm: 55 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'televue-powermate-2x',
@@ -416,6 +613,10 @@ export const equipment: EquipmentModel[] = [
     notes: [
       'Gezegen görüntülemede f/oranını sensöre uygun seviyeye çıkarmanın standart yolu.',
     ],
+    connections: { input: '1.25in', output: '1.25in' },
+    optics: { factor: 2.0 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'televue-powermate-25x',
@@ -426,6 +627,10 @@ export const equipment: EquipmentModel[] = [
     priceHint: 'Orta segment',
     summary:
       '2x ile 4x arasındaki boşluğu doldurur; orta açıklıklı SCT\'lerde en çok kullanılan çarpan.',
+    connections: { input: '1.25in', output: '1.25in' },
+    optics: { factor: 2.5 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'televue-powermate-4x',
@@ -439,6 +644,10 @@ export const equipment: EquipmentModel[] = [
     notes: [
       'Aşırı büyütme boş büyütmedir: f/oranı piksel boyutunun ~5 katını aşmamalı.',
     ],
+    connections: { input: '1.25in', output: '1.25in' },
+    optics: { factor: 4.0 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'es-focal-extender-2x',
@@ -449,6 +658,10 @@ export const equipment: EquipmentModel[] = [
     priceHint: 'Giriş segment',
     summary:
       'Powermate\'e ekonomik alternatif; benzer telesantrik tasarım.',
+    connections: { input: '1.25in', output: '1.25in' },
+    optics: { factor: 2.0 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'baader-vip-barlow-2x',
@@ -459,6 +672,10 @@ export const equipment: EquipmentModel[] = [
     priceHint: 'Orta segment',
     summary:
       'Ara halkalarla çarpanı 1.3x–3x arasında değiştirilebilen modüler barlow.',
+    connections: { input: '1.25in', output: '1.25in' },
+    optics: { factor: 2.0 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'zwo-barlow-2x',
@@ -469,6 +686,10 @@ export const equipment: EquipmentModel[] = [
     priceHint: 'Giriş segment',
     summary:
       'ASI kameralarla uyumlu ekonomik barlow.',
+    connections: { input: '1.25in', output: '1.25in' },
+    optics: { factor: 2.0 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'antlia-alpt-5nm',
@@ -482,6 +703,9 @@ export const equipment: EquipmentModel[] = [
     notes: [
       'f/4\'ten hızlı sistemlerde bant kayması nedeniyle verim düşer.',
     ],
+    optics: { filterThicknessMm: 2.0 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'optolong-l-ultimate',
@@ -492,6 +716,9 @@ export const equipment: EquipmentModel[] = [
     priceHint: 'Üst segment',
     summary:
       '3nm dar bantla Ay ışığı ve şehir ışığını büyük ölçüde keser; renkli kameralarda kontrastı belirgin artırır.',
+    optics: { filterThicknessMm: 2.0 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'zwo-duo-band',
@@ -502,6 +729,9 @@ export const equipment: EquipmentModel[] = [
     priceHint: 'Giriş segment',
     summary:
       'Ekonomik dual band; ilk dar bant denemesi için yeterli.',
+    optics: { filterThicknessMm: 2.0 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'astronomik-cls-ccd',
@@ -535,6 +765,9 @@ export const equipment: EquipmentModel[] = [
     priceHint: 'Profesyonel',
     summary:
       'Mono kamera ile renkli görüntü için referans LRGB seti; kanal geçişleri hâle üretmeyecek şekilde tasarlanmış.',
+    optics: { filterThicknessMm: 3.0, clearApertureMm: 34 },
+    productionStatus: 'uretimi-durduruldu',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'chroma-oiii-3nm',
@@ -545,6 +778,9 @@ export const equipment: EquipmentModel[] = [
     priceHint: 'Profesyonel',
     summary:
       'Süpernova kalıntıları ve gezegenimsi bulutsularda belirleyici kanal.',
+    optics: { filterThicknessMm: 3.0, clearApertureMm: 34 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'baader-sii-65nm',
@@ -555,6 +791,9 @@ export const equipment: EquipmentModel[] = [
     priceHint: 'Üst segment',
     summary:
       'SHO paletinin en zayıf sinyalli kanalı; uzun toplam süre ister.',
+    optics: { filterThicknessMm: 2.0, clearApertureMm: 34 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'thousand-oaks-solar',
@@ -579,6 +818,10 @@ export const equipment: EquipmentModel[] = [
     priceHint: 'Orta segment',
     summary:
       'Sekiz yuvalı motorlu filtre çarkı; LRGB + SHO setini tek gecede kullanmayı mümkün kılar.',
+    connections: { input: 'M42x0.75', output: 'M42x0.75' },
+    optics: { opticalLengthMm: 20, clearApertureMm: 27 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'qhy-cfw3-m',
@@ -589,6 +832,10 @@ export const equipment: EquipmentModel[] = [
     priceHint: 'Üst segment',
     summary:
       'QHY kameralarla doğrudan bağlanır; ince gövdesi backfocus bütçesini rahatlatır.',
+    connections: { input: 'M54x0.75', output: 'M54x0.75' },
+    optics: { opticalLengthMm: 21, clearApertureMm: 34 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'sx-usb-filter-wheel',
@@ -599,6 +846,10 @@ export const equipment: EquipmentModel[] = [
     priceHint: 'Üst segment',
     summary:
       'Çok ince gövde; kısa backfocus\'lu sistemlerde tercih edilir.',
+    connections: { input: 'M42x0.75', output: 'M42x0.75' },
+    optics: { opticalLengthMm: 19, clearApertureMm: 34 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'zwo-asi6200mm',
@@ -613,6 +864,10 @@ export const equipment: EquipmentModel[] = [
       'Tam kare alan, düzeltici seçimini kritik hâle getirir.',
       'Dosya boyutları büyüktür; gece başına 40–60 GB olağandır.',
     ],
+    connections: { input: 'M42x0.75' },
+    optics: { flangeDistanceMm: 17.5 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'zwo-asi1600mm',
@@ -626,6 +881,10 @@ export const equipment: EquipmentModel[] = [
     notes: [
       'Kuyu derinliği düşük olduğu için parlak yıldızlar kolay doyar; kısa pozla HDR harmanı gerekir.',
     ],
+    connections: { input: 'M42x0.75' },
+    optics: { flangeDistanceMm: 6.5 },
+    productionStatus: 'uretimi-durduruldu',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'zwo-asi183mm',
@@ -639,6 +898,10 @@ export const equipment: EquipmentModel[] = [
     notes: [
       '2.4 µm piksel, 1000 mm üzeri odakta aşırı örnekleme yapar.',
     ],
+    connections: { input: 'M42x0.75' },
+    optics: { flangeDistanceMm: 6.5 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'qhy-600m',
@@ -649,6 +912,10 @@ export const equipment: EquipmentModel[] = [
     priceHint: 'Profesyonel',
     summary:
       'Tam kare mono; entegre filtre çarkı seçenekleriyle kısa backfocus zinciri kurulabilir.',
+    connections: { input: 'M54x0.75' },
+    optics: { flangeDistanceMm: 17.5 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'player-one-uranus-c',
@@ -659,6 +926,10 @@ export const equipment: EquipmentModel[] = [
     priceHint: 'Orta segment',
     summary:
       'Yüksek kare hızı ve düşük gürültü; gezegen ve Ay görüntülemede tercih edilir.',
+    connections: { input: '1.25in' },
+    optics: { flangeDistanceMm: 12.5 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'zwo-asi715mc',
@@ -669,6 +940,10 @@ export const equipment: EquipmentModel[] = [
     priceHint: 'Giriş segment',
     summary:
       'Çok küçük piksel; uzun odaklı SCT\'lerde barlow\'suz yüksek örnekleme sağlar.',
+    connections: { input: '1.25in' },
+    optics: { flangeDistanceMm: 12.5 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'canon-eos-ra',
@@ -682,6 +957,10 @@ export const equipment: EquipmentModel[] = [
     notes: [
       'Ha duyarlılığı yüksek olduğu için gündüz fotoğrafında beyaz dengesi kayar.',
     ],
+    connections: { input: 'Canon RF' },
+    optics: { flangeDistanceMm: 20 },
+    productionStatus: 'uretimi-durduruldu',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'canon-eos-r6-ii',
@@ -692,6 +971,10 @@ export const equipment: EquipmentModel[] = [
     priceHint: 'Üst segment',
     summary:
       'Büyük piksel, düşük gürültü; gece manzarası ve geniş alan için güçlü bir gövde.',
+    connections: { input: 'Canon RF' },
+    optics: { flangeDistanceMm: 20 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'nikon-z6-iii',
@@ -702,6 +985,10 @@ export const equipment: EquipmentModel[] = [
     priceHint: 'Üst segment',
     summary:
       'Kısmen yığılmış sensör; uzun pozda ısı gürültüsü kontrollü.',
+    connections: { input: 'Nikon Z' },
+    optics: { flangeDistanceMm: 16 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'sony-a7-iv',
@@ -712,6 +999,10 @@ export const equipment: EquipmentModel[] = [
     priceHint: 'Üst segment',
     summary:
       '33 megapiksel tam kare; geniş alan mozaiklerinde çözünürlük avantajı verir.',
+    connections: { input: 'Sony E' },
+    optics: { flangeDistanceMm: 18 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'canon-eos-6d',
@@ -725,6 +1016,10 @@ export const equipment: EquipmentModel[] = [
     notes: [
       'Ha modifiyesi yaygın ve tersine çevrilebilir — ikinci elde modifiyeli örnekler bulunur.',
     ],
+    connections: { input: 'Canon EF' },
+    optics: { flangeDistanceMm: 44 },
+    productionStatus: 'uretimi-durduruldu',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'televue-ethos-13',
@@ -885,6 +1180,10 @@ export const equipment: EquipmentModel[] = [
     priceHint: 'Giriş segment',
     summary:
       'IMX462\'nin yüksek IR duyarlılığı sayesinde sönük guide yıldızlarını da yakalar.',
+    connections: { input: '1.25in' },
+    optics: { flangeDistanceMm: 12.5 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'qhy5iii-462c',
@@ -895,6 +1194,10 @@ export const equipment: EquipmentModel[] = [
     priceHint: 'Orta segment',
     summary:
       'Hem guide hem gezegen kamerası olarak kullanılır; IR bandında Venüs bulut yapısını gösterir.',
+    connections: { input: '1.25in' },
+    optics: { flangeDistanceMm: 12.5 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'askar-oag-m',
@@ -905,6 +1208,10 @@ export const equipment: EquipmentModel[] = [
     priceHint: 'Orta segment',
     summary:
       'İnce gövdeli off-axis guider; backfocus bütçesi dar sistemlerde tercih edilir.',
+    connections: { input: 'M42x0.75', output: 'M42x0.75' },
+    optics: { opticalLengthMm: 10, prismSizeMm: 8 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'wo-uniguide-50',
@@ -918,6 +1225,9 @@ export const equipment: EquipmentModel[] = [
     notes: [
       'Uzun odaklı ana teleskoplarda diferansiyel esneme nedeniyle OAG tercih edilmeli.',
     ],
+    connections: { output: '1.25in' },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'zwo-asiair-plus',
@@ -1047,6 +1357,10 @@ export const equipment: EquipmentModel[] = [
       'Standart backfocus 55 mm — flattener ile birlikte satılır.',
       '6.4 kg tüp ağırlığı, görüntüleme için en az 13 kg sınıfı montür ister.',
     ],
+    connections: { output: 'M48x0.75' },
+    optics: { imageCircleMm: 44, requiredBackfocusMm: 55 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'wo-redcat-51',
@@ -1066,6 +1380,10 @@ export const equipment: EquipmentModel[] = [
       'Sabit odak kilidi vardır; sıcaklık değişiminde odak kayması düşüktür.',
       'Hafifliği taşınabilir montürlerle uyumlu kılar.',
     ],
+    connections: { output: 'M48x0.75' },
+    optics: { imageCircleMm: 44, requiredBackfocusMm: 55 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'sw-200p-f4',
@@ -1081,6 +1399,9 @@ export const equipment: EquipmentModel[] = [
       'Her kurulumda kolimasyon kontrolü gerekir.',
       "Tüp uzunluğu rüzgâra açık alanlarda guiding'i zorlar.",
     ],
+    connections: { output: '2in' },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'sw-eq6r-pro',
@@ -1154,6 +1475,10 @@ export const equipment: EquipmentModel[] = [
       'Mono sensör filtre tekerleği ve filtre seti gerektirir — bütçe hesabı kamera ile bitmez.',
       'Backfocus 17.5 mm; ara halka hesabına bunu dâhil edin.',
     ],
+    connections: { input: 'M42x0.75' },
+    optics: { flangeDistanceMm: 17.5 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'zwo-asi533mc',
@@ -1173,6 +1498,10 @@ export const equipment: EquipmentModel[] = [
       'Amp glow göstermez, kalibrasyon basittir.',
       'Küçük sensör kısa odakta dar alan demektir; mozaik ihtiyacı doğabilir.',
     ],
+    connections: { input: 'M42x0.75' },
+    optics: { flangeDistanceMm: 6.5 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'antlia-3nm-sho',
@@ -1187,6 +1516,9 @@ export const equipment: EquipmentModel[] = [
       'Dar bant, f/4 ve altı hızlı optiklerde bant kayması yaşayabilir.',
       '36 mm boyut, APS-C sensörde vinyetlemesiz kapsama sağlar.',
     ],
+    optics: { filterThicknessMm: 2.0, clearApertureMm: 34 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'optolong-lextreme',
@@ -1201,6 +1533,9 @@ export const equipment: EquipmentModel[] = [
       'Renkli (OSC) kameralar için tasarlandı; mono kamerada tekil filtreler daha verimli.',
       '7 nm bant, ay ışığında 3 nm kadar agresif değildir.',
     ],
+    optics: { filterThicknessMm: 2.0 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'zwo-asi174mini',
@@ -1215,6 +1550,10 @@ export const equipment: EquipmentModel[] = [
       'OAG kullanımı için tasarlanmıştır; ayrı guide teleskopunda da çalışır.',
       'Büyük piksel, uzun odakta guide ölçeğini kabalaştırır.',
     ],
+    connections: { input: '1.25in' },
+    optics: { flangeDistanceMm: 12.5 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'zwo-oag-l',
@@ -1229,6 +1568,10 @@ export const equipment: EquipmentModel[] = [
       '16.5 mm backfocus tüketir — ara halka hesabını buna göre yapın.',
       'Uzun odakta ayrı guide teleskopuna göre belirgin üstündür.',
     ],
+    connections: { input: 'M42x0.75', output: 'M42x0.75' },
+    optics: { opticalLengthMm: 16.5, prismSizeMm: 12 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'pegasus-pocket-powerbox',
@@ -1259,6 +1602,9 @@ export const equipment: EquipmentModel[] = [
       'Düz alan için ayrı flattener gerekir; düzelticisiz köşelerde bozulma belirgindir.',
       'İkili cam, üçlü APO kadar renk düzeltmesi vermez — parlak yıldızlarda hafif mor hâle görülebilir.',
     ],
+    connections: { output: '2in' },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'sw-esprit-120',
@@ -1273,6 +1619,10 @@ export const equipment: EquipmentModel[] = [
       'Yaklaşık 9 kg tüp ağırlığı, görüntüleme için 20 kg sınıfı montür ister.',
       'Uzun odak, guiding hassasiyetini doğrudan artırır — OAG önerilir.',
     ],
+    connections: { output: 'M48x0.75' },
+    optics: { imageCircleMm: 44, requiredBackfocusMm: 55 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'wo-gt71',
@@ -1284,6 +1634,10 @@ export const equipment: EquipmentModel[] = [
     summary:
       'FPL-53 camlı ikili apokromat; 420 mm odakla geniş alan bulutsularında dengeli bir başlangıç optiği.',
     notes: ['Flat6AII düzelticiyle f/4.9 indirgeme mümkün.'],
+    connections: { output: 'M48x0.75' },
+    optics: { requiredBackfocusMm: 55 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'askar-fra400',
@@ -1298,6 +1652,10 @@ export const equipment: EquipmentModel[] = [
       'Düzeltici gerekmemesi backfocus hesabını basitleştirir.',
       'Reducer takıldığında kapsama alanı APS-C ile sınırlanır.',
     ],
+    connections: { output: 'M54x0.75' },
+    optics: { imageCircleMm: 44, requiredBackfocusMm: 55 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'sw-quattro-150p',
@@ -1312,6 +1670,9 @@ export const equipment: EquipmentModel[] = [
       'Aplanatik koma düzeltici zorunludur.',
       'Açık tüp, çiylenme ve toz açısından refraktörden hassastır.',
     ],
+    connections: { output: '2in' },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'celestron-edgehd-8',
@@ -1326,6 +1687,10 @@ export const equipment: EquipmentModel[] = [
       'Uzun odak, guiding hatasını büyütür — OAG neredeyse zorunlu.',
       'Kapalı tüp termal dengeye geç gelir; çekimden en az 45 dk önce dışarı çıkarın.',
     ],
+    connections: { output: 'Celestron EdgeHD' },
+    optics: { imageCircleMm: 42, requiredBackfocusMm: 133.35 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'ts-optics-photoline-130',
@@ -1337,6 +1702,10 @@ export const equipment: EquipmentModel[] = [
     summary:
       '130 mm açıklıkla ışık toplama ve 910 mm odakla ölçeği birleştiren üçlü apokromat; reducer ile f/5.6 çalışabilir.',
     notes: ['10 kg üzeri tüp ağırlığı, 25 kg sınıfı montür ister.'],
+    connections: { output: 'M68x1' },
+    optics: { requiredBackfocusMm: 55 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
 
   /* ─────────────── FOTOĞRAF LENSLERİ ─────────────── */
@@ -1353,6 +1722,9 @@ export const equipment: EquipmentModel[] = [
       'f/2.8’e kısmak köşe yıldızlarını belirgin düzeltir.',
       'Manuel odak; canlı görüntüde parlak bir yıldızla odaklanmak gerekir.',
     ],
+    connections: { output: 'Canon EF' },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'sigma-art-14mm-f18',
@@ -1367,6 +1739,9 @@ export const equipment: EquipmentModel[] = [
       'Ön eleman kabarık; standart vidalı filtre takılamaz.',
       '1.1 kg ağırlık, hafif takip montürlerinde denge sorunu yaratır.',
     ],
+    connections: { output: 'Canon EF' },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'canon-rf-50mm-f18',
@@ -1378,6 +1753,9 @@ export const equipment: EquipmentModel[] = [
     summary:
       'Ucuz ve hafif standart lens; f/2.8–f/4 aralığına kısıldığında geniş alan takım yıldız çekimleri için yeterli keskinlik verir.',
     notes: ['Tam açıkta köşelerde koma belirgindir; kısmak gerekir.'],
+    connections: { output: 'Canon RF' },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'nikon-z-20mm-f18',
@@ -1389,6 +1767,9 @@ export const equipment: EquipmentModel[] = [
     summary:
       'Köşe performansı yüksek geniş açı; 20 mm odak, Samanyolu yayını manzarayla birlikte çerçeveler ve 77 mm vidalı filtre kabul eder.',
     notes: ['Vidalı filtre kabul etmesi, ışık kirliliği filtresi kullanımını mümkün kılar.'],
+    connections: { output: 'Nikon Z' },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
 
   /* ─────────────── MONTÜRLER ─────────────── */
@@ -1462,6 +1843,10 @@ export const equipment: EquipmentModel[] = [
       'Dar bant için dual-band filtre gerekir; SHO paleti mono kadar esnek değildir.',
       'Backfocus 17.5 mm.',
     ],
+    connections: { input: 'M42x0.75' },
+    optics: { flangeDistanceMm: 17.5 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'zwo-asi294mc',
@@ -1478,6 +1863,10 @@ export const equipment: EquipmentModel[] = [
     summary:
       '4.63 µm büyük piksel, kısa odaklı optiklerde iyi örnekleme verir ve düşük ışıkta duyarlılığı yüksektir.',
     notes: ['Bin1 modunda amp glow görülebilir; dark kalibrasyonu önemlidir.'],
+    connections: { input: 'M42x0.75' },
+    optics: { flangeDistanceMm: 17.5 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'qhy-268m',
@@ -1494,6 +1883,10 @@ export const equipment: EquipmentModel[] = [
     summary:
       'IMX571 tabanlı mono kamera; ASI2600MM ile aynı sensörü farklı gövde ve okuma modlarıyla kullanır.',
     notes: ['Mod seçimi (Photographic / High Gain) gürültü karakterini değiştirir.'],
+    connections: { input: 'M54x0.75' },
+    optics: { flangeDistanceMm: 17.5 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'player-one-poseidon-c',
@@ -1510,6 +1903,10 @@ export const equipment: EquipmentModel[] = [
     summary:
       'IMX571 renkli sensörü daha uygun fiyatla sunan alternatif gövde; DPS teknolojisiyle amp glow bastırılıyor.',
     notes: ['Backfocus 17.5 mm — ZWO muadilleriyle aynı ara halka hesabı geçerli.'],
+    connections: { input: 'M42x0.75' },
+    optics: { flangeDistanceMm: 17.5 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'zwo-asi678mc',
@@ -1529,6 +1926,10 @@ export const equipment: EquipmentModel[] = [
       'Derin uzayda küçük sensör dar alan verir; gezegen ve Ay için tercih edilir.',
       'Yüksek kare hızı USB 3.0 ve hızlı disk ister.',
     ],
+    connections: { input: '1.25in' },
+    optics: { flangeDistanceMm: 12.5 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
 
   /* ─────────────── FİLTRELER ─────────────── */
@@ -1542,6 +1943,9 @@ export const equipment: EquipmentModel[] = [
     summary:
       'Geniş bant ışık kirliliği filtresi: sodyum ve cıva hatlarını bastırır, yıldız renklerini büyük ölçüde korur. Galaksi ve küme çekimlerinde dar banda alternatiftir.',
     notes: ['Dar bant kadar agresif değildir; Bortle 7+ altında kazancı sınırlıdır.'],
+    optics: { filterThicknessMm: 2.0 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'idas-nbz',
@@ -1553,6 +1957,9 @@ export const equipment: EquipmentModel[] = [
     summary:
       'Renkli kameralar için dual-band filtre. 12 nm bant, hızlı optiklerde (f/2–f/4) bant kaymasına dar bantlardan daha dayanıklı.',
     notes: ['Hızlı optiklerde 3 nm filtrelere göre belirgin avantajı vardır.'],
+    optics: { filterThicknessMm: 2.0 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'baader-uv-ir-cut',
@@ -1564,6 +1971,9 @@ export const equipment: EquipmentModel[] = [
     summary:
       'Morötesi ve kızılötesini keserek apokromatik olmayan optiklerde odak kaymasını ve hâleyi engeller. Renkli kameralarda temel filtre.',
     notes: ['Işık kirliliği bastırmaz; yalnızca bant sınırlar.'],
+    optics: { filterThicknessMm: 2.0 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'chroma-3nm-ha',
@@ -1575,6 +1985,9 @@ export const equipment: EquipmentModel[] = [
     summary:
       'Referans sınıfı dar bant filtre. Yansıma hâlesi bastırma performansıyla parlak yıldızların yanındaki hedeflerde tercih edilir.',
     notes: ['Fiyatı yüksek; kazancı özellikle parlak yıldız içeren alanlarda görülür.'],
+    optics: { filterThicknessMm: 3.0, clearApertureMm: 34 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'baader-solar-continuum',
@@ -1602,6 +2015,10 @@ export const equipment: EquipmentModel[] = [
     summary:
       'En yaygın guide kamerası. Küçük sensörü ayrı guide teleskopuyla iyi çalışır; OAG’de yıldız bulmak zorlaşabilir.',
     notes: ['OAG kullanacaksanız daha büyük sensörlü bir kamera tercih edin.'],
+    connections: { input: '1.25in' },
+    optics: { flangeDistanceMm: 12.5 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'sv-bony-sv106-guidescope',
@@ -1613,6 +2030,9 @@ export const equipment: EquipmentModel[] = [
     summary:
       'Hafif 50 mm guide teleskopu. Kısa ve orta odaklı ana optiklerde yeterli; uzun odakta diferansiyel esneme sorun çıkarır.',
     notes: ['1000 mm üzeri ana odakta OAG’ye geçmek gerekir.'],
+    connections: { output: '1.25in' },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'zwo-eaf',
@@ -1635,6 +2055,10 @@ export const equipment: EquipmentModel[] = [
     summary:
       'Mono kamerayla SHO + LRGB çalışmak için yedi yuvalı motorlu filtre tekerleği. Filtre değişimini gece boyunca otomatikleştirir.',
     notes: ['20 mm backfocus tüketir; ara halka hesabına dâhil edin.'],
+    connections: { input: 'M42x0.75', output: 'M42x0.75' },
+    optics: { opticalLengthMm: 20, clearApertureMm: 34 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'pegasus-falcon-rotator',
@@ -1646,6 +2070,10 @@ export const equipment: EquipmentModel[] = [
     summary:
       'Kamerayı optiğe göre döndürerek kadraj açısını yazılımdan ayarlar. Mozaik ve panel hizalamada elle döndürmenin getirdiği hatayı ortadan kaldırır.',
     notes: ['Backfocus tüketir; kurulum planına dâhil edilmeli.'],
+    connections: { input: 'M48x0.75', output: 'M48x0.75' },
+    optics: { opticalLengthMm: 21.5 },
+    productionStatus: 'guncel',
+    confidence: 'tek-kaynak',
   },
   {
     slug: 'losmandy-dovetail',

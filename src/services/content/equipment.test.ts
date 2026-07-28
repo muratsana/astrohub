@@ -28,6 +28,26 @@ function rowFor(slug: string, { asText = false } = {}) {
     specs: remainingSpecs(seed.specs),
     notes: seed.notes ?? null,
     equipment_brands: { name: seed.brand },
+
+    /* 0014 alanları — tohumdaki değerler satıra çevriliyor ki gidiş-dönüş
+       gerçekten ölçülsün. Boş bırakılsalardı test yalnızca eski alanları
+       doğrular, yeni alanların eşlemesi sessizce bozulabilirdi. */
+    connection_input: seed.connections?.input ?? null,
+    connection_output: seed.connections?.output ?? null,
+    clear_aperture_mm: cast(seed.optics?.clearApertureMm ?? null),
+    image_circle_mm: cast(seed.optics?.imageCircleMm ?? null),
+    optical_length_mm: cast(seed.optics?.opticalLengthMm ?? null),
+    required_backfocus_mm: cast(seed.optics?.requiredBackfocusMm ?? null),
+    flange_distance_mm: cast(seed.optics?.flangeDistanceMm ?? null),
+    optic_factor: cast(seed.optics?.factor ?? null),
+    filter_thickness_mm: cast(seed.optics?.filterThicknessMm ?? null),
+    prism_size_mm: cast(seed.optics?.prismSizeMm ?? null),
+    production_status: seed.productionStatus ?? 'bilinmiyor',
+    release_year: seed.releaseYear ?? null,
+    discontinued_year: seed.discontinuedYear ?? null,
+    sources: seed.sources ?? [],
+    verified_at: seed.verifiedAt ?? null,
+    data_confidence: seed.confidence ?? null,
   };
 }
 

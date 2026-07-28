@@ -61,13 +61,13 @@ describe('navigasyon bağlantıları', () => {
     }
   });
 
-  it('üst menü dokuz ana giriş taşır (§5.1)', () => {
-    // Sayıyı sabitlemek bilinçli: menüye sessizce onuncu bir giriş
-    // eklenmesi `xl` kırılımında taşmaya yol açar (bkz. Topbar yorumu).
-    // Taşma `scripts/check-preview.mjs` ile 390/1024/1440 px'te ölçülüyor.
-    expect(primaryNav).toHaveLength(9);
+  it('üst menü sekiz ana giriş taşır (§5.1)', () => {
+    // Sayıyı sabitlemek bilinçli: menüye sessizce dokuzuncu bir giriş
+    // eklenmesi çubuğu sıkıştırıyor — Ekipman bir ara eklenip geri
+    // çıkarıldı. Referans modülleri modül haritasından erişilir.
+    expect(primaryNav).toHaveLength(8);
     expect(primaryNav.map((i) => i.to)).toContain('/forum');
-    expect(primaryNav.map((i) => i.to)).toContain('/ekipman');
+    expect(primaryNav.map((i) => i.to)).not.toContain('/ekipman');
   });
 
   it('yayın modülleri menüde metin girişi değil, üst çubukta ikon', () => {

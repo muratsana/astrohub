@@ -8,10 +8,11 @@
  * `siteMap` tek kaynaktır — footer, komut paleti ve mobil çekmece hep
  * buradan beslenir, hiçbir bağlantı iki yerde ayrı ayrı tanımlanmaz.
  *
- * Not: Hedef kataloğu üst menüde değildir — galeri, bu gece ve araçların
- * içinden doğal olarak kullanılan bir referans modülüdür. Ekipman ise
- * üst menüye alındı: 130 modelli katalog, karşılaştırma ekranı ve ikinci
- * el ilanlarıyla artık kendi başına gezilen bir modül.
+ * Not: Hedef kataloğu ve ekipman veritabanı üst menüde değildir. Bunlar
+ * başka modüllerin (galeri, bu gece, araçlar) içinden doğal olarak
+ * kullanılan referans modülleridir; footer ve palette tam erişilebilir.
+ * Ekipman bir ara üst menüye alınmıştı; dokuzuncu giriş çubuğu
+ * sıkıştırdığı için geri çıkarıldı.
  */
 
 export interface NavItem {
@@ -31,15 +32,15 @@ export interface NavGroup {
 }
 
 /**
- * Üst menü — dokuz ana modül.
+ * Üst menü — sekiz ana modül.
  *
  * Forum, sitenin "gece boyunca açık kalan" modülü: çekim aralarında
  * yazışmak için. TV ve Radyo metin girişi değil, üst çubukta durum
  * düğmesi — açılıp kapatılan bir yayın, gidilecek bir sayfa değil.
  *
- * Dokuz giriş 1024px'te sığmıyor; nav bu yüzden `xl` kırılımında açılır,
- * altında modül haritası mobil çekmeceden gelir. Onuncu giriş `xl`'de de
- * taşırır — eklemeden önce ölçün.
+ * Sekiz giriş `xl` kırılımında rahat sığıyor; dokuzuncu giriş çubuğu
+ * gözle görülür şekilde sıkıştırıyor (Ekipman bir ara eklenip geri
+ * çıkarıldı). Eklemeden önce 1024 ve 1440 px'te ölçün.
  */
 export const primaryNav: NavItem[] = [
   { label: 'Galeri', to: '/galeri' },
@@ -47,7 +48,6 @@ export const primaryNav: NavItem[] = [
   { label: 'Haberler', to: '/haberler' },
   { label: 'Yazılar', to: '/yazilar' },
   { label: 'Forum', to: '/forum' },
-  { label: 'Ekipman', to: '/ekipman' },
   { label: 'Araçlar', to: '/araclar' },
   { label: 'İlanlar', to: '/ilanlar' },
   { label: 'Saha', to: '/saha' },

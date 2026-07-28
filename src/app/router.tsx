@@ -65,6 +65,15 @@ const equipmentPage = () =>
   route(
     named(() => import('@/features/equipment/EquipmentPage'), 'EquipmentPage')
   );
+/* /ekipman artık katalog değil planlama modülü; kategori kırılımı
+   (/ekipman/montur) eski katalog sayfasında kalıyor. */
+const equipmentModulePage = () =>
+  route(
+    named(
+      () => import('@/features/equipment/EquipmentModulePage'),
+      'EquipmentModulePage'
+    )
+  );
 const panelPage = () =>
   route(named(() => import('@/features/panel/PanelPage'), 'PanelPage'));
 
@@ -340,7 +349,7 @@ export const router = createRouter([
           )
         ),
       },
-      { path: 'ekipman', element: equipmentPage() },
+      { path: 'ekipman', element: equipmentModulePage() },
       /* Statik parça dinamikten önce tanımlı: React Router statik segmenti
          zaten üstün sayıyor, ama sıra okuyan için de açık olsun. */
       {

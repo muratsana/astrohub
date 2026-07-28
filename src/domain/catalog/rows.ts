@@ -44,6 +44,24 @@ export interface EquipmentRowValues {
   weight_kg: number | null;
   specs: Record<string, string>;
   notes: string[];
+
+  /* ── Setup planlayıcısı alanları (0014) ── */
+  connection_input: string | null;
+  connection_output: string | null;
+  clear_aperture_mm: number | null;
+  image_circle_mm: number | null;
+  optical_length_mm: number | null;
+  required_backfocus_mm: number | null;
+  flange_distance_mm: number | null;
+  optic_factor: number | null;
+  filter_thickness_mm: number | null;
+  prism_size_mm: number | null;
+  production_status: string;
+  release_year: number | null;
+  discontinued_year: number | null;
+  sources: unknown[];
+  verified_at: string | null;
+  data_confidence: string | null;
 }
 
 export function equipmentRow(item: EquipmentModel): EquipmentRowValues {
@@ -64,6 +82,25 @@ export function equipmentRow(item: EquipmentModel): EquipmentRowValues {
     weight_kg: typed.weightKg,
     specs: remainingSpecs(item.specs),
     notes: item.notes ?? [],
+
+    connection_input: item.connections?.input ?? null,
+    connection_output: item.connections?.output ?? null,
+    clear_aperture_mm: item.optics?.clearApertureMm ?? null,
+    image_circle_mm: item.optics?.imageCircleMm ?? null,
+    optical_length_mm: item.optics?.opticalLengthMm ?? null,
+    required_backfocus_mm: item.optics?.requiredBackfocusMm ?? null,
+    flange_distance_mm: item.optics?.flangeDistanceMm ?? null,
+    optic_factor: item.optics?.factor ?? null,
+    filter_thickness_mm: item.optics?.filterThicknessMm ?? null,
+    prism_size_mm: item.optics?.prismSizeMm ?? null,
+    /* Şema 'bilinmiyor' varsayılanını taşıyor; tohumda alan yoksa aynı
+       değeri yazıyoruz ki senkronizasyon eski bir durumu bırakmasın. */
+    production_status: item.productionStatus ?? 'bilinmiyor',
+    release_year: item.releaseYear ?? null,
+    discontinued_year: item.discontinuedYear ?? null,
+    sources: item.sources ?? [],
+    verified_at: item.verifiedAt ?? null,
+    data_confidence: item.confidence ?? null,
   };
 }
 
