@@ -13,6 +13,7 @@ import { useAuth } from '@/features/auth/AuthContext';
 import { useRoles, roleLabels } from './useRoles';
 import { BroadcastControl } from './BroadcastControl';
 import { CatalogControl } from './CatalogControl';
+import { EquipmentDataControl } from './EquipmentDataControl';
 import {
   fetchQueue,
   resolveItem,
@@ -366,6 +367,12 @@ export function AdminPage() {
       */}
       <div className="mt-4">
         <CatalogControl canWrite={roles.isAdmin} />
+      </div>
+
+      {/* Eksik teknik veri raporu senkronizasyonun hemen altında:
+          senkronizasyondan sonra bakılacak ilk yer burası. */}
+      <div className="mt-4">
+        <EquipmentDataControl canWrite={roles.isAdmin} />
       </div>
     </Shell>
   );

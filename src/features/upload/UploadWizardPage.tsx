@@ -17,6 +17,7 @@ import {
 } from '@/domain/photography/integration';
 import { photoTypeLabels, type PhotoType } from '@/features/photos/types';
 import { TargetPicker } from '@/features/targets/TargetPicker';
+import { SetupSelect } from './SetupSelect';
 import { getTargetBySlug } from '@/features/targets/data';
 import { resolveTargetId } from '@/services/content/targets';
 import { kindToPhotoType, type TargetKind } from '@/domain/targets/derive';
@@ -69,6 +70,15 @@ interface WizardState {
   opticSlug?: string;
   cameraSlug?: string;
   mountSlug?: string;
+  /* Künye setup'tan dolduğunda bağ da kuruluyor; künye alanları yine
+     fotoğrafın kendi kaydında saklanıyor ki setup sonradan değişirse
+     eski fotoğrafın künyesi bozulmasın. */
+  setupId?: string;
+  setupFilter?: string;
+  setupGuide?: string;
+  effectiveFocalMm?: number | null;
+  effectiveFRatio?: number | null;
+  pixelScaleArcsec?: number | null;
   exposures: FilterExposure[];
   software: string;
   aiDeclared: boolean;
@@ -172,10 +182,27 @@ export function UploadWizardPage() {
           opticId: equipmentId(state.opticSlug),
           cameraId: equipmentId(state.cameraSlug),
           mountId: equipmentId(state.mountSlug),
+          setupId: state.setupId ?? null,
+          /*
+           * Hesaplanan değerler künyeye YAZILIYOR, sonradan türetilmiyor:
+           * kullanıcı ara halkayı ya da reduceri değiştirdiğinde geçmiş
+           * fotoğrafın etkin odağı değişmemeli.
+           */
           setup: {
             Optik: state.optic,
             Kamera: state.camera,
             Montür: state.mount,
+            ...(state.setupFilter ? { Filtre: state.setupFilter } : {}),
+            ...(state.setupGuide ? { Guide: state.setupGuide } : {}),
+            ...(state.effectiveFocalMm != null
+              ? { 'Etkin odak': `${Math.round(state.effectiveFocalMm)} mm` }
+              : {}),
+            ...(state.effectiveFRatio != null
+              ? { 'Etkin f/': `f/${state.effectiveFRatio.toFixed(1)}` }
+              : {}),
+            ...(state.pixelScaleArcsec != null
+              ? { 'Piksel ölçeği': `${state.pixelScaleArcsec.toFixed(2)} ″/px` }
+              : {}),
             Yazılım: state.software,
           },
           exposures: state.exposures,
@@ -547,7 +574,26 @@ export function UploadWizardPage() {
             <div className="space-y-5">
               <StepTitle
                 title="Setup"
-                hint="Kayıtlı setup seçimi hesap sistemiyle gelecek; şimdilik elle gir"
+                hint="Kayıtlı setup’ınızı seçin ya da bileşenleri tek tek girin"
+              />
+
+              <SetupSelect
+                onApply={(fill) =>
+                  patch({
+                    setupId: fill.setupId,
+                    opticSlug: fill.opticSlug,
+                    optic: fill.optic,
+                    cameraSlug: fill.cameraSlug,
+                    camera: fill.camera,
+                    mountSlug: fill.mountSlug,
+                    mount: fill.mount,
+                    setupFilter: fill.filter,
+                    setupGuide: fill.guide,
+                    effectiveFocalMm: fill.effectiveFocalMm,
+                    effectiveFRatio: fill.effectiveFRatio,
+                    pixelScaleArcsec: fill.pixelScaleArcsec,
+                  })
+                }
               />
               {/*
                 Serbest metin yerine katalog seçimi: "ASI2600", "asi 2600

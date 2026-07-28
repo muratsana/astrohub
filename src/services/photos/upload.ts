@@ -49,6 +49,8 @@ export interface UploadInput {
   mountId?: string | null;
   /** Katalogdaki hedefin veritabanı kimliği; yoksa yalnızca etiket saklanır. */
   objectId?: string | null;
+  /** Çekimde kullanılan kayıtlı setup — künye ayrıca saklanır. */
+  setupId?: string | null;
   /** Hedefin okunabilir adı — katalog bağı kurulamasa da künye eksik kalmasın. */
   targetLabel?: string | null;
   exposures?: { filter: string; frames: number; exposureSeconds: number }[];
@@ -100,6 +102,7 @@ export async function uploadPhoto(
       }),
       photo_type: input.photoType,
       object_id: input.objectId ?? null,
+      setup_id: input.setupId ?? null,
       target_label: input.targetLabel
         ? sanitizeText(input.targetLabel, { maxLength: 160 })
         : null,

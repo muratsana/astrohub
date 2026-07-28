@@ -276,6 +276,35 @@ await scenario('etkinlik haritası yakınlık listesi üretir', async () => {
   assert(/\d+\s*km/.test(text), 'mesafe değeri basılmadı');
 });
 
+/* ══════════════════════ Setup planlayıcı ══════════════════════ */
+
+await scenario('ekipman modülü setup builder ile açılır', async () => {
+  // Varsayılan sekme katalog değil builder olmalı: modül bir ürün listesi
+  // değil planlama aracı.
+  await goto('/ekipman');
+
+  const text = await page.evaluate(() => document.body.innerText);
+  assert(includesTr(text, 'setup oluştur'), 'builder sekmesi yok');
+  assert(includesTr(text, 'temel bileşenler'), 'bileşen grupları çizilmedi');
+  assert(includesTr(text, 'genel durum'), 'analiz paneli yok');
+
+  // Zorunlu bileşenler eksikken analiz bunu söylemeli, sessiz kalmamalı.
+  assert(includesTr(text, 'veri yetersiz'), 'eksik veri durumu bildirilmedi');
+});
+
+await scenario('katalog sekmesi listeyi tek seferde dökmez', async () => {
+  await goto('/ekipman?sekme=katalog');
+
+  const text = await page.evaluate(() => document.body.innerText);
+  assert(includesTr(text, 'bir kategori seçin'), 'kategori seçimi istenmiyor');
+
+  // Kategori seçilmeden model kartı çizilmemeli.
+  const cards = await page.evaluate(
+    () => document.querySelectorAll('a[href*="/ekipman/"]').length
+  );
+  assert(cards < 10, `kategori seçilmeden ${cards} kart çizildi`);
+});
+
 /* ══════════════════════ Ekipman karşılaştırma ══════════════════════ */
 
 await scenario('ekipman karşılaştırma seçimi adres çubuğunda taşınır', async () => {
