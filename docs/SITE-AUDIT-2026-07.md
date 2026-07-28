@@ -386,3 +386,79 @@ veriyi paylaşmama kararı veremez), ama varsayılan her zaman gizlemek.
 | `npm run build` | ✅ uyarısız |
 | `npm run check:preview` | ✅ sağlam, yatay taşma yok |
 | `node scripts/e2e.mjs` | ✅ 19/19 senaryo |
+
+### 6.9 Dördüncü tur — veritabanı şeması (§4, §9.2, §9.3, §15.3)
+
+Bu tura kadar arayüz bitmişti ama arkasında tablo yoktu: fotoğraf, hedef,
+ekipman, etkinlik, gözlem noktası ve ilan sayfalarının tamamı `data.ts`
+tohum dizilerinden besleniyordu. Üç migration bu boşluğu kapatıyor.
+
+**`0008_equipment_and_targets.sql` — referans veri.** Ekipman kategorileri,
+markalar, modeller ve gök cismi kataloğu. İki katmanlı spec (§9.2): listede
+**filtrelenen** alan (odak, açıklık, piksel) typed kolon, kategoriye özgü
+ayrıntı JSONB. Sınır keyfî değil — JSONB'deki alan indekssiz kalır, her
+kategoriye kolon açmak ise tablo genişliğinin çoğunu boşa çıkarır.
+
+Katalog kimlikleri ayrı tabloda: bir cismin M 31, NGC 224 ve UGC 454 gibi
+birden çok kodu var ve kullanıcının hangisini yazacağı belli değil. Diziye
+koymak "NGC224" aramasını indeksten mahrum bırakırdı. `normalized`
+generated kolonu boşluk ve tireyi atıp küçük harfe indiriyor — §2.5'te
+arayüz seviyesinde bir kez hataya yol açan eşleşme, artık veritabanında.
+
+**`0009_photos_and_capture.sql` — fotoğraf, sürüm, pozlama.** Üç kural
+veritabanına indi:
+
+1. **50 aktif fotoğraf kotası (§4.2)** `app.enforce_photo_quota()`
+   tetikleyicisiyle. Alan katmanındaki kontrolün sunucu yarısı; istemci
+   doğrulaması kullanıcıya hızlı geri bildirim için, kotayı **tutan** bu.
+2. **Sürümler kotaya girmez.** Ayrı `photo_versions` tablosunda oldukları
+   için sayım sorgusu onları zaten görmüyor — kuralı ayrıca yazmak
+   gerekmiyor, şema onu ifade ediyor.
+3. **Tam koordinat ayrı tabloda (§15.3).** RLS satır bazlıdır; aynı satırda
+   "bu kolonu gizle" denemez. `photo_exact_locations` yalnızca sahibine ve
+   yöneticiye açık — moderatör bilinçli olarak dışarıda.
+
+**`0010_events_sites_marketplace.sql` — etkinlik, saha, ilan.** Üçü tek
+dosyada çünkü üçü de yer bildiriyor ve §15.3 her birinde farklı sonuç
+veriyor:
+
+| İçerik | Koordinat | Gerekçe |
+| --- | --- | --- |
+| Etkinlik | tam, herkese açık | ilan edilmiş adres zaten duyurulmuştur |
+| Gözlem noktası | yalnızca yaklaşık | kullanıcı katkısı; nokta da katkı veren de korunmalı |
+| İlan | yok, sadece şehir | satıcının evi bir adrestir |
+
+Yan kararlar: kontenjan `app.enforce_event_capacity()` ile sunucuda tutuluyor
+(istemcinin "kaydı ekle, sayacı artır" göndermesi, kopan bağlantıda kontenjanı
+kalıcı olarak yanlışa düşürürdü); katılımcı listesi yalnızca kişinin kendisine
+ve organizatöre açık; gözlem noktası katkısı `pending` başlamak zorunda —
+WITH CHECK bunu zorluyor, yani kullanıcı kendi kaydını yayına alamıyor.
+
+İlan metninde e-posta **veritabanı kısıtıyla** reddediliyor: iletişimin
+platform dışına çıkması moderasyonu ve anlaşmazlıkta kaydı devre dışı
+bırakır (§7.13). Telefon aranmıyor — seri numarası, odak uzunluğu ve model
+kodu ("ASI 2600 MC") rakam dizileriyle dolu; orada otomatik yakalama yanlış
+pozitif üretir. Kısıt yalnızca kesin olanı reddediyor, gerisi moderasyonun
+işi.
+
+**Şema doğrulaması.** Migration'lar uygulandıktan sonra sekiz kural canlı
+veritabanında sınandı (blok bilerek `raise` ile bitirilip geri alındı, test
+satırı kalmadı): yarım koordinat reddi, `location` türetimi, kayıt sayacı,
+kontenjan reddi, puan ortalaması tetikleyicisi, e-posta içeren ilanın reddi,
+rakam yoğun temiz metnin kabulü, kota fonksiyonunun çalışması — 8/8 geçti.
+
+**Not:** Sayfalar hâlâ tohum verisinden okuyor; tablolar hazır ama veri
+taşıma ve sorgu katmanı ayrı bir adım. Şemayı önce kurmak bilinçli — veri
+taşıma sırasında şema değiştirmek, iki kez taşımak demek.
+
+### 6.10 Dördüncü tur sonrası durum
+
+| Kontrol | Sonuç |
+| --- | --- |
+| `npm run typecheck` | ✅ hatasız |
+| `npm run lint` | ✅ hatasız |
+| `npm test` | ✅ 377 test |
+| `npm run build` | ✅ uyarısız |
+| `npm run check:preview` | ✅ sağlam, yatay taşma yok |
+| `node scripts/e2e.mjs` | ✅ 19/19 senaryo |
+| Şema kuralları (canlı DB) | ✅ 8/8 |
