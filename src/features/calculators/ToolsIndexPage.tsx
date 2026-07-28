@@ -4,6 +4,17 @@ import { Badge } from '@/components/ui/Badge';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
 import { siteMap } from '@/app/navigation';
+import {
+  CalendarIcon,
+  ChainIcon,
+  FrameIcon,
+  GridIcon,
+  MapIcon,
+  MoonIcon,
+  MosaicIcon,
+  PixelIcon,
+  RouteIcon,
+} from '@/components/ui/icons';
 
 /**
  * ARAÇLAR giriş sayfası (§7.12).
@@ -11,6 +22,30 @@ import { siteMap } from '@/app/navigation';
  * iki yerde ayrı bakım gerekmez.
  */
 const tools = siteMap.find((group) => group.title === 'Araçlar')?.items ?? [];
+
+/**
+ * Araç ikonları — rotaya göre.
+ *
+ * NEDEN BURADA, `navigation.ts` İÇİNDE DEĞİL: gezinme haritası saf veri
+ * ve o dosya bir React bileşenine bağımlı olmamalı; site haritası,
+ * arama dizini ve sitemap üretimi de aynı diziyi okuyor. İkon bir sunum
+ * ayrıntısı, dolayısıyla sunumun yanında duruyor.
+ *
+ * Eşleşmeyen rota ikonsuz kalır, çökmez: yeni bir araç eklendiğinde
+ * sayfa çalışmaya devam eder, yalnızca o kartın ikonu boş görünür ve
+ * bu, buraya bir satır eklemeyi hatırlatan görünür bir iz bırakır.
+ */
+const toolIcons: Record<string, typeof GridIcon> = {
+  '/araclar': GridIcon,
+  '/araclar/fov': FrameIcon,
+  '/araclar/pixel-scale': PixelIcon,
+  '/araclar/isik-kirliligi': MapIcon,
+  '/bu-gece': MoonIcon,
+  '/planlayici': RouteIcon,
+  '/araclar/mosaic': MosaicIcon,
+  '/araclar/setup-uyumluluk': ChainIcon,
+  '/araclar/takvim': CalendarIcon,
+};
 
 export function ToolsIndexPage() {
   return (
@@ -35,14 +70,23 @@ export function ToolsIndexPage() {
         </header>
 
         <ul className="grid gap-px border border-border bg-border sm:grid-cols-2 lg:grid-cols-3">
-          {tools.map((tool, i) => (
+          {tools.map((tool, i) => {
+            const Icon = toolIcons[tool.to];
+            return (
             <li key={tool.to + tool.label}>
               <Link
                 to={tool.to}
                 className="group flex h-full flex-col bg-surface-1 p-5 transition-colors hover:bg-surface-2"
               >
-                <span className="tabular label mb-3 text-primary">
-                  {String(i + 1).padStart(2, '0')}
+                {/* İkon ve sıra numarası aynı satırda: numara künye,
+                    ikon tanıma işareti — ikisi de küçük ve üstte. */}
+                <span className="mb-3 flex items-center gap-2.5">
+                  {Icon && (
+                    <Icon className="h-6 w-6 shrink-0 text-border-strong transition-colors group-hover:text-primary" />
+                  )}
+                  <span className="tabular label text-primary">
+                    {String(i + 1).padStart(2, '0')}
+                  </span>
                 </span>
                 <span className="flex items-baseline gap-2">
                   <span className="font-display text-[17px] font-bold text-foreground transition-colors group-hover:text-primary">
@@ -60,7 +104,8 @@ export function ToolsIndexPage() {
                 </span>
               </Link>
             </li>
-          ))}
+            );
+          })}
         </ul>
       </Container>
     </>

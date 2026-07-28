@@ -319,3 +319,65 @@ export function LockIcon(props: IconProps) {
     </svg>
   );
 }
+
+/* ── Araç ikonları ───────────────────────────────────────────────────
+   Araçlar sayfası bugüne kadar yalnızca numaralı bir listeydi; dokuz
+   girişin hepsi aynı görünüyor ve göz aradığını başlıkları okuyarak
+   buluyordu. Aşağıdakiler o modüllerin kendi işini anlatıyor: kadraj
+   çerçevesi, örnekleme ızgarası, mozaik panelleri, bağlantı zinciri.
+   ──────────────────────────────────────────────────────────────────── */
+
+/** Kadraj çerçevesi — FOV hesaplayıcı. */
+export function FrameIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M3 8V4.5A1.5 1.5 0 0 1 4.5 3H8M16 3h3.5A1.5 1.5 0 0 1 21 4.5V8M21 16v3.5a1.5 1.5 0 0 1-1.5 1.5H16M8 21H4.5A1.5 1.5 0 0 1 3 19.5V16" />
+      <circle cx="12" cy="12" r="2.5" />
+    </svg>
+  );
+}
+
+/** Örnekleme ızgarası — pixel scale. */
+export function PixelIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <rect x="3.5" y="3.5" width="17" height="17" rx="1.5" />
+      <path d="M9.17 3.5v17M14.83 3.5v17M3.5 9.17h17M3.5 14.83h17" />
+      <rect x="9.17" y="9.17" width="5.66" height="5.66" fill="currentColor" stroke="none" opacity="0.45" />
+    </svg>
+  );
+}
+
+/** Bitişik paneller — mozaik planlayıcı. */
+export function MosaicIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <rect x="3" y="4" width="8.5" height="7" rx="1" />
+      <rect x="12.5" y="4" width="8.5" height="7" rx="1" />
+      <rect x="3" y="13" width="8.5" height="7" rx="1" />
+      <rect x="12.5" y="13" width="8.5" height="7" rx="1" />
+    </svg>
+  );
+}
+
+/** Bağlantı zinciri — setup uyumluluk kontrolü. */
+export function ChainIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M9.5 14.5 14.5 9.5" />
+      <path d="M13 6.5 14.6 4.9a3.6 3.6 0 0 1 5.1 5.1L18 11.6" />
+      <path d="M11 17.5 9.4 19.1a3.6 3.6 0 0 1-5.1-5.1L6 12.4" />
+    </svg>
+  );
+}
+
+/** Sıralı gece planı — planlayıcı. */
+export function RouteIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <circle cx="6" cy="6" r="2.2" />
+      <circle cx="18" cy="18" r="2.2" />
+      <path d="M8.2 6H15a3 3 0 0 1 0 6H9a3 3 0 0 0 0 6h6.8" />
+    </svg>
+  );
+}

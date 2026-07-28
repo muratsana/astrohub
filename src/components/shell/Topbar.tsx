@@ -4,6 +4,7 @@ import { ButtonLink } from '@/components/ui/Button';
 import { Container } from '@/components/ui/Container';
 import { MenuIcon, UserIcon } from '@/components/ui/icons';
 import { primaryNav } from '@/app/navigation';
+import { useAuth } from '@/features/auth/AuthContext';
 import { ThemeToggle } from '@/features/theme/ThemeToggle';
 import { RadioToggle } from '@/features/radio/RadioToggle';
 import { TvToggle } from '@/features/tv/TvToggle';
@@ -25,6 +26,15 @@ import { cn } from '@/lib/cn';
  * gezinme girişi olmadan kalmaz.
  */
 export function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
+  /*
+    OTURUM DURUMU ÜST ÇUBUKTA GÖRÜNÜR OLMAK ZORUNDA. Bugüne kadar giriş
+    yapmış kullanıcı da "Giriş / Kaydol" görüyordu: hem oturumunun açık
+    olup olmadığını anlayamıyor hem de profiline gidecek bir yol
+    bulamıyordu. Oturum açıkken iki düğme tek bir "Hesabım" girişine
+    dönüşüyor.
+  */
+  const { user, loading } = useAuth();
+
   return (
     <header className="bg-background">
       <Container>
@@ -145,22 +155,35 @@ export function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
             */}
             <span className="sm:hidden">
               <ButtonLink
-                to="/giris"
+                to={user ? '/hesap' : '/giris'}
                 size="sm"
                 variant="secondary"
-                aria-label="Giriş yap veya kaydol"
+                aria-label={user ? 'Hesabım' : 'Giriş yap veya kaydol'}
               >
                 <UserIcon className="h-3.5 w-3.5" />
               </ButtonLink>
             </span>
 
+            {/*
+              `loading` sırasında hiçbir şey çizilmiyor: önce "Giriş"
+              gösterip sonra "Hesabım"a atlamak, sayfa açılışında göze
+              çarpan bir sıçrama ve bir an için yanlış bilgi.
+            */}
             <span className="hidden items-center gap-2 sm:flex">
-              <ButtonLink to="/giris" size="sm" variant="secondary">
-                Giriş
-              </ButtonLink>
-              <ButtonLink to="/kayit" size="sm">
-                Kaydol
-              </ButtonLink>
+              {loading ? null : user ? (
+                <ButtonLink to="/hesap" size="sm" variant="secondary">
+                  Hesabım
+                </ButtonLink>
+              ) : (
+                <>
+                  <ButtonLink to="/giris" size="sm" variant="secondary">
+                    Giriş
+                  </ButtonLink>
+                  <ButtonLink to="/kayit" size="sm">
+                    Kaydol
+                  </ButtonLink>
+                </>
+              )}
             </span>
           </div>
         </div>

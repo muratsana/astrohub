@@ -238,6 +238,17 @@ export const siteMap: NavGroup[] = [
     ],
   },
   {
+    title: 'Hesap',
+    items: [
+      {
+        label: 'Hesabım',
+        to: '/hesap',
+        description: 'Profil bilgileri ve hesap ayarları',
+        keywords: ['profil', 'hesap', 'ayar', 'kullanıcı adı'],
+      },
+    ],
+  },
+  {
     title: 'Saha',
     items: [
       {

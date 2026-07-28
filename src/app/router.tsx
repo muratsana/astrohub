@@ -393,6 +393,12 @@ export const router = createRouter([
       },
 
       /* ═════════════ HESAP VE YÖNETİM ═════════════ */
+      {
+        path: 'hesap',
+        element: route(
+          named(() => import('@/features/profile/AccountPage'), 'AccountPage')
+        ),
+      },
       { path: 'panel', element: panelPage() },
       { path: 'panel/:section', element: panelPage() },
       {
