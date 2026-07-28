@@ -309,7 +309,7 @@ export const router = createRouter([
         element: (
           <PlaceholderPage
             title="Canlı SQM / All-Sky İstasyonları"
-            description="Karanlık gökyüzü canlı ölçüm ağı (§8.7) Faz 3'te devreye alınacak."
+            description="Sahaya kurulan SQM ve all-sky kameralardan canlı ölçüm akışı (§8.7). Donanım ve veri toplama altyapısı gerektirdiği için Faz 3'te devreye alınacak; o zamana kadar gözlem noktası kayıtlarındaki tek seferlik SQM ölçümleri kullanılıyor."
           />
         ),
       },

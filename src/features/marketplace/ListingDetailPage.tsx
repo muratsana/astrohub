@@ -17,6 +17,7 @@ import {
   getEquipmentBySlug,
   equipmentPath,
 } from '@/features/equipment/data';
+import { ReportButton } from '@/features/admin/ReportButton';
 import { getListingBySlug, relatedListings, priceRange } from './data';
 
 /**
@@ -173,6 +174,12 @@ export function ListingDetailPage() {
                   incelemeye alır (§13).
                 </li>
               </ul>
+              <ReportButton
+                className="mt-3"
+                targetType="listing"
+                targetId={listing.slug}
+                targetPath={`/ilan/${listing.slug}`}
+              />
             </Panel>
           </div>
 

@@ -13,6 +13,7 @@ import {
 import { getPhotoBySlug, photos } from './data';
 import { PhotoComparison } from './PhotoComparison';
 import { VersionHistory } from './VersionHistory';
+import { ReportButton } from '@/features/admin/ReportButton';
 import { photoTypeLabels } from './types';
 import type { AstroPhoto } from './types';
 import { cn } from '@/lib/cn';
@@ -130,6 +131,11 @@ function PhotoDetail({ photo }: { photo: AstroPhoto }) {
             <ActionChip>💬 {photo.comments}</ActionChip>
             <ActionChip>Kaydet</ActionChip>
             <ActionChip>Paylaş</ActionChip>
+            <ReportButton
+              targetType="photo"
+              targetId={photo.slug}
+              targetPath={`/fotograf/${photo.slug}`}
+            />
           </div>
         </div>
 

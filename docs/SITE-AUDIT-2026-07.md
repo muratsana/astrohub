@@ -351,6 +351,16 @@ Moderasyon şeması (`0007_moderation_and_audit.sql`):
 | Işık kirliliği (§14.1) | Harita yerine **karşılaştırma**: kendi SQM/Bortle kayıtlarımızdan hesaplanan fon parlaklığı oranı ve süre kazancı |
 | EXIF okuma (§10.3) | Bağımlılıksız JPEG/TIFF ayrıştırıcı; GPS okunur ama **asla otomatik yayımlanmaz** (§15.3) |
 | PWA ikonları, robots Sitemap | Kontrol edildi — zaten tamamdı |
+| İçerik bildirme (§13) | Fotoğraf ve ilan sayfalarında "Bildir"; kayıt doğrudan moderasyon kuyruğuna, RLS `reported_by = auth.uid()` şartıyla |
+
+Bildirim gönderildikten sonra **durum takibi gösterilmiyor**: raporlayanın
+kuyruğu izleyebilmesi, bildirilen kullanıcının kimin şikâyet ettiğini
+çıkarmasına kapı açar. Arayüz "iletildi" der ve orada durur — sahte bir
+takip ekranı göstermek, gizliliği koruyormuş gibi yapıp korumamak olurdu.
+
+**Tek kalan placeholder:** `/saha/istasyonlar` (canlı SQM / all-sky ağı).
+Donanım ve veri toplama altyapısı gerektiriyor; Faz 3. Sayfa artık neyin
+eksik olduğunu ve o zamana kadar hangi verinin kullanıldığını açıkça yazıyor.
 
 **Işık kirliliği kararı.** Lisanslı küresel veri seti olmadan harita
 yayımlamak yerine, kullanıcının asıl sorusuna cevap veriyoruz: "şehirden şu
