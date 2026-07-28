@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/features/auth/AuthContext';
+import { EquipmentPicker } from '@/features/equipment/EquipmentPicker';
+import { useEquipmentCatalog } from '@/services/content/equipment';
 import { uploadPhoto, publishPhoto } from '@/services/photos/upload';
 import { checkUploadSize, formatBytes } from '@/domain/membership/quota';
 import { Container } from '@/components/ui/Container';
@@ -47,6 +49,11 @@ interface WizardState {
   optic: string;
   camera: string;
   mount: string;
+  /* Katalog bağı — seçim yapıldıysa model slug'ı. Serbest metin girildiyse
+     boş kalır ve künyede yalnızca metin saklanır. */
+  opticSlug?: string;
+  cameraSlug?: string;
+  mountSlug?: string;
   exposures: FilterExposure[];
   software: string;
   aiDeclared: boolean;
@@ -94,6 +101,20 @@ export function UploadWizardPage() {
   const [publishError, setPublishError] = useState<string | null>(null);
 
   const { user, configured } = useAuth();
+  const equipmentCatalog = useEquipmentCatalog();
+
+  /**
+   * Seçilen slug'ın veritabanı kimliğini bulur.
+   *
+   * Tohum katalogda kimlik yok (uydurmak, var olmayan bir satıra referans
+   * üretmek olurdu). Kimlik bulunamazsa ekipman bağı kurulmuyor ve ad
+   * künyede serbest metin olarak saklanıyor — bağ kurulamaması, veriyi
+   * kaybetmek için sebep değil.
+   */
+  function equipmentId(slug: string | undefined): string | null {
+    if (!slug) return null;
+    return equipmentCatalog.items.find((m) => m.slug === slug)?.id ?? null;
+  }
   const navigate = useNavigate();
 
   const sizeVerdict = file ? checkUploadSize(file.size) : null;
@@ -123,6 +144,9 @@ export function UploadWizardPage() {
           locationVisibility: state.locationVisibility,
           license: state.license,
           aiDeclared: state.aiDeclared,
+          opticId: equipmentId(state.opticSlug),
+          cameraId: equipmentId(state.cameraSlug),
+          mountId: equipmentId(state.mountSlug),
           setup: {
             Optik: state.optic,
             Kamera: state.camera,
@@ -481,31 +505,37 @@ export function UploadWizardPage() {
                 title="Setup"
                 hint="Kayıtlı setup seçimi hesap sistemiyle gelecek; şimdilik elle gir"
               />
-              <Field label="Optik / teleskop" htmlFor="w-optic">
-                <Input
-                  id="w-optic"
-                  placeholder="ör. Esprit 100 + 0.8× reducer"
-                  value={state.optic}
-                  onChange={(e) => patch({ optic: e.target.value })}
-                />
-              </Field>
+              {/*
+                Serbest metin yerine katalog seçimi: "ASI2600", "asi 2600
+                mm" ve "ZWO ASI2600MM Pro" aynı kameranın üç yazımı ve
+                serbest metin bunları üç ayrı ekipman yapıyordu. Katalog
+                bağı olunca "bu ekipmanla çekilmiş fotoğraflar" sorusu
+                cevaplanabiliyor. Katalogda olmayan model seçicinin
+                içinden eklenebiliyor (onaya gider).
+              */}
+              <EquipmentPicker
+                category="optik-tup"
+                label="Optik / teleskop"
+                placeholder="ör. Esprit 100ED"
+                value={{ slug: state.opticSlug, text: state.optic }}
+                onChange={(v) => patch({ opticSlug: v.slug, optic: v.text })}
+              />
+
               <div className="grid gap-5 sm:grid-cols-2">
-                <Field label="Kamera" htmlFor="w-cam">
-                  <Input
-                    id="w-cam"
-                    placeholder="ör. ASI2600MM Pro"
-                    value={state.camera}
-                    onChange={(e) => patch({ camera: e.target.value })}
-                  />
-                </Field>
-                <Field label="Montür" htmlFor="w-mount">
-                  <Input
-                    id="w-mount"
-                    placeholder="ör. EQ6-R Pro"
-                    value={state.mount}
-                    onChange={(e) => patch({ mount: e.target.value })}
-                  />
-                </Field>
+                <EquipmentPicker
+                  category="astro-kamera"
+                  label="Kamera"
+                  placeholder="ör. ASI2600MM Pro"
+                  value={{ slug: state.cameraSlug, text: state.camera }}
+                  onChange={(v) => patch({ cameraSlug: v.slug, camera: v.text })}
+                />
+                <EquipmentPicker
+                  category="montur"
+                  label="Montür"
+                  placeholder="ör. EQ6-R Pro"
+                  value={{ slug: state.mountSlug, text: state.mount }}
+                  onChange={(v) => patch({ mountSlug: v.slug, mount: v.text })}
+                />
               </div>
             </div>
           )}

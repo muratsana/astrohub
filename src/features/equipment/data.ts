@@ -20,6 +20,13 @@ export const equipmentCategoryLabels: Record<EquipmentCategory, string> = {
 };
 
 export interface EquipmentModel {
+  /**
+   * Veritabanı kimliği — yalnızca katalog veritabanından geldiğinde dolu.
+   * Tohum dizide yok, çünkü tohum kayıtların UUID'si yok ve uydurmak,
+   * var olmayan bir satıra referans üretmek olurdu. Yükleme akışı
+   * kimliği bulamazsa ekipman bağını kurmuyor, adı künyede saklıyor.
+   */
+  id?: string;
   slug: string;
   brand: string;
   model: string;

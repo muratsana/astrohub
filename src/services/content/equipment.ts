@@ -20,6 +20,7 @@ import type { ContentSelection } from './select';
  */
 
 interface EquipmentRow {
+  id: string;
   slug: string;
   model: string;
   category_id: string;
@@ -52,6 +53,7 @@ function num(value: number | string | null): number | null {
 
 export function mapEquipmentRow(row: EquipmentRow): EquipmentModel {
   return {
+    id: row.id,
     slug: row.slug,
     brand: row.equipment_brands?.name ?? '—',
     model: row.model,
@@ -76,7 +78,7 @@ async function fetchEquipment(client: SupabaseClient): Promise<EquipmentModel[]>
   const { data, error } = await client
     .from('equipment_models')
     .select(
-      'slug, model, category_id, summary, price_hint, focal_length_mm, ' +
+      'id, slug, model, category_id, summary, price_hint, focal_length_mm, ' +
         'aperture_mm, pixel_size_um, payload_capacity_kg, weight_kg, ' +
         'specs, notes, equipment_brands(name)'
     )

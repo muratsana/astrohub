@@ -12,6 +12,9 @@ function rowFor(slug: string, { asText = false } = {}) {
     v === null ? null : asText ? String(v) : v;
 
   return {
+    // Gerçek satırda kimlik var; tohum kayıtta yok. Test fikstürü DB
+    // satırını taklit ettiği için kimliği burada üretiyoruz.
+    id: `id-${seed.slug}`,
     slug: seed.slug,
     model: seed.model,
     category_id: seed.category,
@@ -31,20 +34,27 @@ function rowFor(slug: string, { asText = false } = {}) {
 describe('mapEquipmentRow', () => {
   it('satırı tohum kaydının aynısına çevirir', () => {
     const seed = equipment.find((e) => e.slug === 'sw-esprit-100')!;
-    expect(mapEquipmentRow(rowFor('sw-esprit-100'))).toEqual(seed);
+    expect(mapEquipmentRow(rowFor('sw-esprit-100'))).toEqual({
+      ...seed,
+      id: 'id-sw-esprit-100',
+    });
   });
 
   it('numeric kolonlar metin gelse de aynı sonucu verir', () => {
     // PostgREST numeric'i string serileştirir; sınırda çevrilmezse künye bozulur.
     const seed = equipment.find((e) => e.slug === 'zwo-asi2600mm')!;
-    expect(mapEquipmentRow(rowFor('zwo-asi2600mm', { asText: true }))).toEqual(
-      seed
-    );
+    expect(mapEquipmentRow(rowFor('zwo-asi2600mm', { asText: true }))).toEqual({
+      ...seed,
+      id: 'id-zwo-asi2600mm',
+    });
   });
 
   it('tüm tohum kataloğu için gidiş-dönüş korunur', () => {
     for (const seed of equipment) {
-      expect(mapEquipmentRow(rowFor(seed.slug))).toEqual(seed);
+      expect(mapEquipmentRow(rowFor(seed.slug))).toEqual({
+        ...seed,
+        id: `id-${seed.slug}`,
+      });
     }
   });
 
