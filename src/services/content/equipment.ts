@@ -12,6 +12,7 @@ import type {
   EquipmentSource,
   ProductionStatus,
 } from '@/features/equipment/data';
+import { getSupabase } from '@/services/supabase/client';
 import { useCatalog } from './useCatalog';
 import type { ContentSelection } from './select';
 
@@ -169,19 +170,27 @@ export function mapEquipmentRow(row: EquipmentRow): EquipmentModel {
   };
 }
 
+/**
+ * Katalog sorgusunun alan listesi.
+ *
+ * İki yerde (tam katalog ve sayfalı sorgu) kullanılıyor; ayrı ayrı
+ * yazılsaydı biri güncellenip diğeri unutulduğunda eksik alanla dönen
+ * kayıtlar sessizce "veri yok" gibi görünürdü.
+ */
+const CATALOG_SELECT =
+  'id, slug, model, category_id, summary, price_hint, focal_length_mm, ' +
+  'aperture_mm, pixel_size_um, payload_capacity_kg, weight_kg, ' +
+  'specs, notes, equipment_brands(name), ' +
+  'connection_input, connection_output, clear_aperture_mm, ' +
+  'image_circle_mm, optical_length_mm, required_backfocus_mm, ' +
+  'flange_distance_mm, optic_factor, filter_thickness_mm, ' +
+  'prism_size_mm, production_status, release_year, discontinued_year, ' +
+  'sources, verified_at, data_confidence';
+
 async function fetchEquipment(client: SupabaseClient): Promise<EquipmentModel[]> {
   const { data, error } = await client
     .from('equipment_models')
-    .select(
-      'id, slug, model, category_id, summary, price_hint, focal_length_mm, ' +
-        'aperture_mm, pixel_size_um, payload_capacity_kg, weight_kg, ' +
-        'specs, notes, equipment_brands(name), ' +
-        'connection_input, connection_output, clear_aperture_mm, ' +
-        'image_circle_mm, optical_length_mm, required_backfocus_mm, ' +
-        'flange_distance_mm, optic_factor, filter_thickness_mm, ' +
-        'prism_size_mm, production_status, release_year, discontinued_year, ' +
-        'sources, verified_at, data_confidence'
-    )
+    .select(CATALOG_SELECT)
     .order('category_id')
     .order('model');
 
@@ -192,4 +201,143 @@ async function fetchEquipment(client: SupabaseClient): Promise<EquipmentModel[]>
 /** Ekipman kataloğu: veritabanı varsa oradan, yoksa tohum diziden. */
 export function useEquipmentCatalog(): ContentSelection<EquipmentModel> {
   return useCatalog('ekipman', equipmentSeed, fetchEquipment);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   SUNUCU TARAFLI ARAMA VE SAYFALAMA (şartname G14)
+   ══════════════════════════════════════════════════════════════════════ */
+
+/**
+ * NEDEN GEREKLİ: katalog bugüne kadar tümüyle tarayıcıya iniyor ve
+ * filtreleme istemcide yapılıyordu. 129 modelde bu sorun çıkarmıyor —
+ * ama şartnamenin açık maddesi ve sebebi ölçekte belli oluyor: katalog
+ * birkaç bine çıktığında her ziyaretçi, hiç bakmayacağı yüzlerce kaydın
+ * teknik künyesini indiriyor olacak.
+ *
+ * TOHUM DİZİ HÂLÂ YEDEK. Veritabanı yoksa aynı sorgu bellekte
+ * çalıştırılıyor; site yapılandırılmamış bir ortamda da katalogla
+ * çalışmaya devam ediyor. İki yolun aynı sonucu vermesi test edilebilir
+ * olsun diye eleme ve sıralama saf bir fonksiyonda duruyor.
+ */
+
+export interface CatalogQuery {
+  /** Serbest metin — marka ve model üzerinde aranır. */
+  search?: string;
+  category?: EquipmentCategory | 'hepsi';
+  brand?: string;
+  /** Sayfa numarası, 0 tabanlı. */
+  page?: number;
+  /** Sayfa başına kayıt. */
+  pageSize?: number;
+}
+
+export interface CatalogPage {
+  items: EquipmentModel[];
+  /** Süzgeçlere uyan TOPLAM kayıt — sayfadaki değil. */
+  total: number;
+  page: number;
+  pageSize: number;
+  /** Veritabanından mı geldi, tohum diziden mi? */
+  durable: boolean;
+}
+
+export const CATALOG_PAGE_SIZE = 24;
+
+/**
+ * Aynı elemeyi bellekte uygular — veritabanı yokken ve testlerde.
+ *
+ * Türkçe karşılaştırma `toLocaleLowerCase('tr-TR')` ile: "İ" harfi
+ * JavaScript'in varsayılan küçültmesinde "i̇" (iki kod noktası) oluyor
+ * ve "ilan" araması "İLAN" başlığını bulamıyor.
+ */
+export function filterCatalog(
+  models: EquipmentModel[],
+  query: CatalogQuery
+): EquipmentModel[] {
+  const q = (query.search ?? '').trim().toLocaleLowerCase('tr-TR');
+
+  return models.filter((model) => {
+    if (
+      query.category &&
+      query.category !== 'hepsi' &&
+      model.category !== query.category
+    ) {
+      return false;
+    }
+    if (query.brand && model.brand !== query.brand) return false;
+    if (!q) return true;
+    return `${model.brand} ${model.model}`
+      .toLocaleLowerCase('tr-TR')
+      .includes(q);
+  });
+}
+
+/** Bellekte sayfalama — veritabanı yokken aynı sözleşmeyi üretir. */
+export function paginate(
+  models: EquipmentModel[],
+  query: CatalogQuery
+): CatalogPage {
+  const pageSize = query.pageSize ?? CATALOG_PAGE_SIZE;
+  const page = Math.max(0, query.page ?? 0);
+  const matched = filterCatalog(models, query);
+  const start = page * pageSize;
+
+  return {
+    items: matched.slice(start, start + pageSize),
+    total: matched.length,
+    page,
+    pageSize,
+    durable: false,
+  };
+}
+
+/**
+ * Sunucuda eleyip sayfalar.
+ *
+ * `count: 'exact'` toplamı sunucudan alıyor: "kaç sonuç var" sorusunun
+ * cevabı için tüm kayıtları indirmek, sayfalamanın varlık sebebini yok
+ * ederdi. `range` PostgREST'in kapsayıcı aralığı — son indeks dahil,
+ * bu yüzden `-1`.
+ */
+export async function fetchCatalogPage(
+  query: CatalogQuery
+): Promise<CatalogPage> {
+  const pageSize = query.pageSize ?? CATALOG_PAGE_SIZE;
+  const page = Math.max(0, query.page ?? 0);
+
+  const clientPromise = getSupabase();
+  if (!clientPromise) return paginate(equipmentSeed, query);
+
+  const client = await clientPromise;
+  let request = client
+    .from('equipment_models')
+    .select(CATALOG_SELECT, { count: 'exact' })
+    .order('category_id')
+    .order('model')
+    .range(page * pageSize, page * pageSize + pageSize - 1);
+
+  if (query.category && query.category !== 'hepsi') {
+    request = request.eq('category_id', query.category);
+  }
+  if (query.brand) {
+    /* Marka ayrı tabloda; PostgREST gömülü kaynağa göre elemeyi
+       `equipment_brands.name` yoluyla kabul ediyor. */
+    request = request.eq('equipment_brands.name', query.brand);
+  }
+  if (query.search?.trim()) {
+    /* `ilike` Postgres tarafında büyük/küçük harf duyarsız — Türkçe
+       harfler için de veritabanının kendi harmanlaması geçerli. */
+    request = request.ilike('model', `%${query.search.trim()}%`);
+  }
+
+  const { data, error, count } = await request;
+  if (error) throw new Error(error.message);
+
+  return {
+    items: (data as unknown as EquipmentRow[]).map(mapEquipmentRow),
+    total: count ?? 0,
+    page,
+    pageSize,
+    durable: true,
+  };
 }
