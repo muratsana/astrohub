@@ -67,5 +67,16 @@ export interface AstroEvent {
   rules?: string[];
   gradient: string;
   /** Kaynak şeffaflığı (§8.4): kaynak adı + son doğrulama */
-  source: { name: string; lastVerifiedAt: string };
+  source: { name: string; lastVerifiedAt: string; url?: string };
+  /**
+   * Etkinlik afişi SİTEYE KOPYALANMAZ.
+   *
+   * Afişin telifi düzenleyendedir; izin almadan yeniden yayımlamak hak
+   * ihlalidir ve "duyuruyu paylaşıyoruz" savunması bunu değiştirmez.
+   * Kartlarda kendi görselimiz çizilir, afiş için duyuru sayfasına
+   * bağlantı verilir. İzin alınan etkinliklerde bu alan doldurulabilir.
+   */
+  posterUrl?: string;
+  /** Afiş kullanım izni kimden alındı — boşsa afiş gösterilmez. */
+  posterCredit?: string;
 }

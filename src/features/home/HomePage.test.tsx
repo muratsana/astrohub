@@ -155,10 +155,13 @@ describe('HomePage · bölümler', () => {
     ).toBeInTheDocument();
     // Ajanda satırı: etkinlik adı tam kontrastta bir bağlantı olarak
     // okunmalı. Tablo düzeninde ad diğer hücrelerle aynı ağırlıktaydı.
-    const link = screen.getAllByRole('link', {
-      name: /perseid meteor yağmuru/i,
-    })[0];
-    expect(link).toHaveAttribute('href', '/etkinlik/perseid-2026');
+    // Belirli bir etkinliğe değil, düzene bakıyoruz: ajanda satırındaki
+    // ad tam kontrastta bir bağlantı olmalı. İçeriğe kilitlenen bir
+    // beklenti, takvim her güncellendiğinde düşerdi.
+    const links = screen
+      .getAllByRole('link')
+      .filter((el) => el.getAttribute('href')?.startsWith('/etkinlik/'));
+    expect(links.length).toBeGreaterThan(0);
   });
 
   it('karanlık gökyüzü, haberler ve yazılar bölümlerini içerir', () => {

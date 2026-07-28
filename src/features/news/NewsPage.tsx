@@ -58,6 +58,8 @@ export function NewsPage() {
         category: newsCategoryLabels[item.category],
         meta: formatDate(item.publishedAt),
         tint: item.tint,
+        imageUrl: item.image?.url,
+        imageCredit: item.image?.credit,
         footer: <p className="label">Kaynak · {item.source.name}</p>,
       })),
     [result]

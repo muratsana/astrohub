@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { Badge } from './Badge';
 import { PlateFrame } from '@/components/media/PlateFrame';
-import { StarField } from '@/components/media/StarField';
+import { RemoteImage } from '@/components/media/RemoteImage';
 import { tintFromSeed } from '@/components/media/tints';
 import type { ViewMode } from './useViewMode';
 import { cn } from '@/lib/cn';
@@ -37,6 +37,13 @@ export interface EditorialItem {
   footer?: ReactNode;
   /** StarField tonu ("r,g,b"). Verilmezse slug'dan türetilir. */
   tint?: string;
+  /**
+   * Telifi uygun dış görsel. Yoksa (ya da yüklenemezse) kart kendi yıldız
+   * alanını çizer — kırık görsel ikonu göstermek yer tutucudan kötüdür.
+   */
+  imageUrl?: string;
+  /** CC BY 4.0'ın şartı: kredi görünür olmalı. */
+  imageCredit?: string;
 }
 
 export function EditorialList({
@@ -107,7 +114,12 @@ function LeadCard({ item, label }: { item: EditorialItem; label: string }) {
           </span>
         }
       >
-        <StarField seed={item.slug} tint={seedTint(item)} density={1.1} />
+        <RemoteImage
+          src={item.imageUrl}
+          alt={item.title}
+          seed={item.slug}
+          tint={seedTint(item)}
+        />
       </PlateFrame>
 
       <div className="flex flex-col py-1 pr-1">
@@ -124,6 +136,12 @@ function LeadCard({ item, label }: { item: EditorialItem; label: string }) {
         <p className="mt-2.5 text-[12px] leading-relaxed text-muted-foreground">
           {item.summary}
         </p>
+
+        {item.imageCredit && (
+          <p className="mt-2 text-[10px] text-faint">
+            Görsel: {item.imageCredit}
+          </p>
+        )}
 
         {item.footer && <div className="mt-auto pt-3">{item.footer}</div>}
       </div>
@@ -148,8 +166,16 @@ function EditorialCard({ item }: { item: EditorialItem }) {
         'transition-colors hover:border-border-strong'
       )}
     >
-      <PlateFrame ratio="aspect-[16/9]" className="shrink-0 rounded-none border-0 border-b border-border">
-        <StarField seed={item.slug} tint={seedTint(item)} />
+      <PlateFrame
+        ratio="aspect-[16/9]"
+        className="shrink-0 rounded-none border-0 border-b border-border"
+      >
+        <RemoteImage
+          src={item.imageUrl}
+          alt={item.title}
+          seed={item.slug}
+          tint={seedTint(item)}
+        />
       </PlateFrame>
 
       <div className="flex flex-1 flex-col p-3">
