@@ -29,6 +29,7 @@ import { breadcrumbJsonLd } from '@/lib/seo';
 const categories: (EquipmentCategory | 'hepsi')[] = [
   'hepsi',
   'optik-tup',
+  'lens',
   'montur',
   'astro-kamera',
   'filtre',

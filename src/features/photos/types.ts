@@ -39,8 +39,17 @@ export interface AstroPhoto {
   type: PhotoType;
   user: { username: string; displayName: string };
   description: string;
-  /** Placeholder gradyanı — gerçek görsel pipeline'ı Faz 1.2'de */
+  /** Placeholder gradyanı — gerçek görsel yokken kullanılır. */
   gradient: string;
+  /**
+   * Görsel adresi ve kredisi.
+   *
+   * Tohum kayıtlarda telifi uygun (kamu malı / CC BY-SA) örnek görseller
+   * kullanılıyor; kullanıcı yüklemelerinde `photos` bucket'ındaki
+   * küçültülmüş kopyanın genel adresi buraya gelir. Yoksa ya da
+   * yüklenemezse kart kendi yıldız alanını çizer.
+   */
+  image?: { url: string; credit: string; licence: string };
   capturedAt: string; // ISO tarih
   location: {
     label: string; // "Saklıkent, Antalya" | "Antalya (bölge)"

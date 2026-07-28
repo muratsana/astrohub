@@ -30,6 +30,7 @@ export function PhotoCard({
       variant={variant}
       to={`/fotograf/${photo.slug}`}
       seed={photo.slug}
+      imageUrl={photo.image?.url}
       tint={tintForPhoto(photo.target.catalog)}
       target={photo.target.catalog}
       title={photo.title}

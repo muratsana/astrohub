@@ -1,4 +1,5 @@
 import type { AstroPhoto } from './types';
+import { commonsImage } from '@/lib/commons';
 
 /**
  * Galeri/detay demo verisi. Faz 1.2'de Supabase + object storage'a bağlanır;
@@ -105,6 +106,11 @@ export const photos: AstroPhoto[] = [
       'Güney ufkuna yakın zorlu bir gezegenimsi bulutsu; alçak yükseklikte kısa pozlama pencereleriyle toplandı.',
     gradient:
       'radial-gradient(120% 90% at 50% 40%, #2b6cb0 0%, #6b46c1 35%, #1a1035 70%, #050a12 100%)',
+    image: {
+      url: commonsImage('NGC 6302 Hubble 2009.full.jpg'),
+      credit: 'NASA, ESA, Hubble SM4 ERO Team',
+      licence: 'Kamu malı',
+    },
     capturedAt: '2025-07-18',
     location: {
       label: 'Saklıkent, Antalya',
@@ -147,6 +153,11 @@ export const photos: AstroPhoto[] = [
       'Sonbahar sezonunun klasiği; 4 panelli mozaikten tek kare kırpım.',
     gradient:
       'radial-gradient(90% 70% at 55% 45%, #d6bca0 0%, #7c5c46 30%, #241a2e 65%, #050a12 100%)',
+    image: {
+      url: commonsImage('Andromeda galaxy.jpg'),
+      credit: 'Wikimedia Commons — Andromeda Galaksisi',
+      licence: 'CC BY-SA',
+    },
     capturedAt: '2025-10-12',
     location: {
       label: 'Çamlıdere, Ankara',
@@ -206,6 +217,11 @@ export const photos: AstroPhoto[] = [
       'Şehir merkezinden dual-band filtre ile; ışık kirliliğine rağmen HOO paleti.',
     gradient:
       'radial-gradient(120% 100% at 45% 55%, #c026d3 0%, #9d174d 35%, #3b0a24 70%, #050a12 100%)',
+    image: {
+      url: commonsImage('North America Nebula (NGC7000) in Hubble Palette.jpg'),
+      credit: 'Wikimedia Commons — NGC 7000',
+      licence: 'CC BY-SA 4.0',
+    },
     capturedAt: '2025-08-02',
     location: {
       label: 'Kadıköy, İstanbul',
@@ -304,6 +320,11 @@ export const photos: AstroPhoto[] = [
     description: 'Üç gecelik 9 saatlik SHO verisi; merkez küme NGC 2244 ile.',
     gradient:
       'radial-gradient(100% 100% at 50% 50%, #ef4444 0%, #7f1d1d 45%, #2a0a16 80%, #050a12 100%)',
+    image: {
+      url: commonsImage('Rosette Nebula NGC 2237 - C49.png'),
+      credit: 'Wikimedia Commons — Rozet Bulutsusu',
+      licence: 'CC BY-SA 3.0',
+    },
     capturedAt: '2026-02-11',
     location: { label: 'Erzurum', visibility: 'region', bortle: 2, sqm: 21.9 },
     setup: {

@@ -179,6 +179,7 @@ export function TonightPanel() {
               value={formatDuration(night.durationMinutes)}
               hint="güneş −18° altında"
               tone="cold"
+              visual={<DarknessBar minutes={night.durationMinutes} />}
             />
             <Cell
               label="Ay"
@@ -191,6 +192,7 @@ export function TonightPanel() {
                     : moon.name.toLocaleLowerCase('tr-TR')
               }
               tone={moon.illumination > 0.4 ? 'muted' : 'primary'}
+              visual={<MoonDisc illumination={moon.illumination} />}
             />
             <Cell
               label="Bulut"
@@ -208,6 +210,7 @@ export function TonightPanel() {
                       : 'servise ulaşılamadı'
               }
               tone="cold"
+              visual={<CloudRing cover={weather ? weather.cloudCover : null} />}
             />
             <Cell
               label="Seeing"
@@ -291,11 +294,21 @@ function Cell({
   value,
   hint,
   tone,
+  visual,
 }: {
   label: string;
   value: string;
   hint: string;
   tone: 'primary' | 'cold' | 'muted';
+  /**
+   * Hücrenin sağında duran küçük görsel.
+   *
+   * Fotoğraf değil, **ölçüm çizimi**: ay evresinin diski, karanlık
+   * penceresinin çubuğu, bulut örtüsünün halkası. Bir veri panelinde
+   * dekoratif fotoğraf gürültüdür; bu çizimler sayıyı tekrar etmiyor,
+   * onu bir bakışta okunur hâle getiriyor.
+   */
+  visual?: React.ReactNode;
 }) {
   const toneClass = {
     primary: 'text-primary',
@@ -304,7 +317,15 @@ function Cell({
   }[tone];
 
   return (
-    <div className="flex flex-col justify-center bg-surface-1 px-3 py-3">
+    <div className="relative flex flex-col justify-center overflow-hidden bg-surface-1 px-3 py-3">
+      {visual && (
+        <span
+          aria-hidden
+          className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 opacity-90"
+        >
+          {visual}
+        </span>
+      )}
       <p className="label">{label}</p>
       <p
         className={cn(
@@ -318,5 +339,90 @@ function Cell({
         {hint}
       </p>
     </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   HÜCRE GÖRSELLERİ
+
+   Üçü de saf SVG ve **veriyle çizilir**: ay diskindeki gölge gerçek
+   aydınlanma oranından, karanlık çubuğu gerçek süreden, bulut halkası
+   gerçek örtü yüzdesinden. Sabit bir ikon seti daha kolay olurdu ama
+   ikon yalnızca "bu hücre ay hakkında" der; bu çizimler değeri gösterir.
+   ══════════════════════════════════════════════════════════════════════ */
+
+/**
+ * Ay evresi diski.
+ *
+ * Aydınlanma oranı bir daire üzerinde iki yay ile çiziliyor: dış kenar
+ * sabit, iç terminatör oranla birlikte genişleyip daralıyor. Basit bir
+ * "yarım daire" çizimi, %20 ile %80 dolunayı aynı gösterirdi.
+ */
+function MoonDisc({ illumination }: { illumination: number }) {
+  const r = 11;
+  const k = Math.max(0, Math.min(1, illumination));
+  // Terminatörün yatay yarıçapı: 0'da tam elips (yeni ay), 1'de düz çizgi.
+  const rx = r * Math.abs(1 - 2 * k);
+  const sweep = k > 0.5 ? 1 : 0;
+
+  return (
+    <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
+      <circle cx="13" cy="13" r={r} className="fill-surface-2 stroke-border" />
+      <path
+        d={`M13 2 A ${r} ${r} 0 0 1 13 24 A ${rx} ${r} 0 0 ${sweep} 13 2 Z`}
+        className="fill-primary/80"
+      />
+    </svg>
+  );
+}
+
+/** Karanlık penceresi çubuğu — gece içindeki astronomik karanlık payı. */
+function DarknessBar({ minutes }: { minutes: number }) {
+  // 8 saat pratik bir üst sınır: yaz gecelerinde toplam karanlık bunun
+  // altında kalır, kışın da çubuk dolar ve fark okunmaz hâle gelmez.
+  const ratio = Math.max(0, Math.min(1, minutes / (8 * 60)));
+
+  return (
+    <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
+      <rect x="4" y="5" width="18" height="16" rx="2" className="stroke-border" />
+      <rect
+        x="4"
+        y={5 + 16 * (1 - ratio)}
+        width="18"
+        height={16 * ratio}
+        rx="2"
+        className="fill-cold/70"
+      />
+    </svg>
+  );
+}
+
+/**
+ * Bulut örtüsü halkası.
+ *
+ * Yüzde bir yay uzunluğuna çevriliyor. Veri yoksa halka boş kalır —
+ * "%0 bulut" ile "veri yok" aynı görünmemeli.
+ */
+function CloudRing({ cover }: { cover: number | null }) {
+  const r = 9;
+  const c = 2 * Math.PI * r;
+  const ratio = cover === null ? 0 : Math.max(0, Math.min(1, cover / 100));
+
+  return (
+    <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
+      <circle cx="13" cy="13" r={r} className="stroke-border" strokeWidth="3" />
+      {cover !== null && (
+        <circle
+          cx="13"
+          cy="13"
+          r={r}
+          className="stroke-cold/80"
+          strokeWidth="3"
+          strokeLinecap="round"
+          strokeDasharray={`${c * ratio} ${c}`}
+          transform="rotate(-90 13 13)"
+        />
+      )}
+    </svg>
   );
 }

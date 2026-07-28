@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { PlateFrame } from './PlateFrame';
-import { StarField } from './StarField';
+import { RemoteImage } from './RemoteImage';
 import { cn } from '@/lib/cn';
 
 /**
@@ -27,6 +27,8 @@ export interface PhotoTileProps {
   target: string;
   /** Eserin adı; katalog kodundan farklıysa ikinci satırda görünür. */
   title?: string;
+  /** Gerçek görsel adresi; yoksa yıldız alanı çizilir. */
+  imageUrl?: string;
   palette?: string;
   integration?: string;
   bortle?: number;
@@ -46,6 +48,7 @@ export function PhotoTile({
   tint,
   target,
   title,
+  imageUrl,
   palette,
   integration,
   bortle,
@@ -57,7 +60,10 @@ export function PhotoTile({
   className,
 }: PhotoTileProps) {
   const meta = [palette, integration].filter(Boolean).join(' · ');
-  const origin = [bortle ? `B${bortle}` : null, username ? `@${username}` : null]
+  const origin = [
+    bortle ? `B${bortle}` : null,
+    username ? `@${username}` : null,
+  ]
     .filter(Boolean)
     .join(' · ');
 
@@ -72,7 +78,7 @@ export function PhotoTile({
         )}
       >
         <PlateFrame className="w-24 shrink-0 border-border sm:w-32">
-          <StarField seed={seed} tint={tint} />
+          <RemoteImage src={imageUrl} alt={target} seed={seed} tint={tint} />
         </PlateFrame>
 
         <span className="min-w-0 flex-1">
@@ -115,7 +121,7 @@ export function PhotoTile({
         flag={flag}
         className="shrink-0 border-0 border-b border-border"
       >
-        <StarField seed={seed} tint={tint} />
+        <RemoteImage src={imageUrl} alt={target} seed={seed} tint={tint} />
       </PlateFrame>
 
       <div className="flex flex-1 flex-col px-2.5 py-2">

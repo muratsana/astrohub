@@ -33,6 +33,7 @@ function trLower(s: string): string {
 const categories: (EquipmentCategory | 'hepsi')[] = [
   'hepsi',
   'optik-tup',
+  'lens',
   'montur',
   'astro-kamera',
   'filtre',

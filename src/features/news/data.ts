@@ -1,3 +1,5 @@
+import { commonsImage } from '@/lib/commons';
+
 /**
  * Haber modülü içeriği.
  *
@@ -36,9 +38,18 @@ export const newsCategoryLabels: Record<NewsCategory, string> = {
 
 export interface NewsImage {
   url: string;
-  /** CC BY 4.0'ın şartı: kredi görünür olmalı. */
+  /**
+   * Kredi görünür olmak zorunda: hem CC BY hem CC BY-SA bunu şart koşuyor.
+   * NASA görselleri kamu malı olduğu için hukuken zorunlu değil, ama
+   * kaynağı göstermek okuyucunun görseli doğrulayabilmesi demek.
+   */
   credit: string;
-  licence: 'Kamu malı' | 'CC BY 4.0';
+  /**
+   * Lisans metni serbest bırakıldı: Commons'ta aynı konunun iki dosyası
+   * farklı lisanslarda olabiliyor (CC BY-SA 3.0 / 4.0 / kamu malı) ve
+   * sabit bir birleşim tipi, doğru lisansı yazmayı engelliyordu.
+   */
+  licence: string;
 }
 
 export interface NewsItem {
@@ -104,6 +115,11 @@ export const news: NewsItem[] = [
       name: 'STScI',
       url: 'https://www.stsci.edu/contents/news-releases/2026/news-2026-126',
     },
+    image: {
+      url: commonsImage('Beta Pictoris.jpg'),
+      credit: 'Wikimedia Commons — Beta Pictoris',
+      licence: 'CC BY-SA',
+    },
     tint: '150,185,235',
   },
   {
@@ -122,6 +138,11 @@ export const news: NewsItem[] = [
     source: {
       name: 'ScienceDaily',
       url: 'https://www.sciencedaily.com/news/space_time/astronomy/',
+    },
+    image: {
+      url: commonsImage('Rosette Nebula NGC 2237 - C49.png'),
+      credit: 'Wikimedia Commons — Rozet Bulutsusu',
+      licence: 'CC BY-SA 3.0',
     },
     tint: '120,215,200',
   },
@@ -159,6 +180,11 @@ export const news: NewsItem[] = [
       name: 'ScienceDaily',
       url: 'https://www.sciencedaily.com/news/space_time/astronomy/',
     },
+    image: {
+      url: commonsImage('NGC 6302 Hubble 2009.full.jpg'),
+      credit: 'NASA, ESA, Hubble SM4 ERO Team',
+      licence: 'Kamu malı',
+    },
     tint: '190,150,220',
   },
   {
@@ -195,6 +221,11 @@ export const news: NewsItem[] = [
       name: 'ESA/Hubble',
       url: 'https://esahubble.org/',
     },
+    image: {
+      url: commonsImage('Andromeda galaxy.jpg'),
+      credit: 'Wikimedia Commons — Andromeda Galaksisi',
+      licence: 'CC BY-SA',
+    },
     tint: '150,185,235',
   },
   {
@@ -214,6 +245,11 @@ export const news: NewsItem[] = [
       name: 'TÜBİTAK Bilim Genç',
       url: 'https://bilimgenc.tubitak.gov.tr/makale/temmuz-2026da-gokyuzu',
     },
+    image: {
+      url: commonsImage('North America Nebula (NGC7000) in Hubble Palette.jpg'),
+      credit: 'Wikimedia Commons — NGC 7000',
+      licence: 'CC BY-SA 4.0',
+    },
     tint: '230,205,150',
   },
   {
@@ -231,6 +267,11 @@ export const news: NewsItem[] = [
     source: {
       name: 'Bilim ve Teknik',
       url: 'https://bilimteknik.tubitak.gov.tr/temmuz-2026nin-onemli-gok-olaylari/',
+    },
+    image: {
+      url: commonsImage('Elephant Trunk Nebula.jpg'),
+      credit: 'Wikimedia Commons — Fil Hortumu Bulutsusu',
+      licence: 'CC BY-SA',
     },
     tint: '120,215,200',
   },
@@ -267,6 +308,11 @@ export const news: NewsItem[] = [
     source: {
       name: 'ScienceDaily',
       url: 'https://www.sciencedaily.com/news/space_time/mars/',
+    },
+    image: {
+      url: commonsImage('Orion Nebula - Hubble 2006 mosaic.jpg'),
+      credit: 'NASA, ESA, M. Robberto (STScI/ESA)',
+      licence: 'Kamu malı',
     },
     tint: '232,140,110',
   },
