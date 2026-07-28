@@ -1,4 +1,4 @@
-import type { EquipmentCategory } from '@/features/equipment/data';
+import type { EquipmentCategory } from '../equipment/data';
 
 /** İlan tohum verisi (§7.13). Gerçek ilan akışı + moderasyon Faz 1.8'de. */
 

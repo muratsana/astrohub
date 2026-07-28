@@ -174,10 +174,18 @@ export function formatDec(decDegrees: number): string {
   return `${sign}${d + carry}° ${String(m - carry * 60).padStart(2, '0')}′`;
 }
 
-/** "178x63" → "178′ × 63′"; "20" → "20′". */
+/**
+ * "178x63" → "178′ × 63′"; "20" → "20′"; "5x5" → "5′".
+ *
+ * Eşit eksenler tek değere iniyor: dairesel bir cismi "5′ × 5′" diye
+ * yazmak aynı bilgiyi iki kez söylemek. Kuralın burada olması şart —
+ * tohum veri ile veritabanı satırı aynı metni üretmezse, aynı hedef iki
+ * kaynakta farklı görünür (bunu bir gidiş-dönüş testi yakaladı).
+ */
 export function formatAngularSize(size: string): string {
   const parts = size.split(/[x×]/).map((p) => p.trim());
-  return parts.map((p) => `${p}′`).join(' × ');
+  const unique = parts.every((p) => p === parts[0]) ? [parts[0]] : parts;
+  return unique.map((p) => `${p}′`).join(' × ');
 }
 
 /** Açısal boyutun uzun kenarı, yay dakikası. */

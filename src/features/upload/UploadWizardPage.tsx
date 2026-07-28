@@ -16,7 +16,10 @@ import {
   type FilterExposure,
 } from '@/domain/photography/integration';
 import { photoTypeLabels, type PhotoType } from '@/features/photos/types';
-import { targets } from '@/features/targets/data';
+import { TargetPicker } from '@/features/targets/TargetPicker';
+import { getTargetBySlug } from '@/features/targets/data';
+import { resolveTargetId } from '@/services/content/targets';
+import { kindToPhotoType, type TargetKind } from '@/domain/targets/derive';
 import { cn } from '@/lib/cn';
 import { PageMeta } from '@/components/seo/PageMeta';
 import {
@@ -28,12 +31,22 @@ import {
 
 const steps = [
   'Dosya',
-  'Hedef ve Kategori',
+  'Obje ve Katalog',
   'Çekim Oturumu',
   'Setup',
   'Pozlama',
   'Yayın',
 ] as const;
+
+/**
+ * `kindToPhotoType` alan katmanında string döner: domain katmanı arayüz
+ * tiplerine bağımlı olmamalı (§12.5). Sınırda bir kez doğruluyoruz —
+ * doğrulamadan cast etmek, tabloya yeni bir tür eklendiğinde geçersiz bir
+ * değeri sessizce kaydederdi.
+ */
+function isPhotoType(value: string): value is PhotoType {
+  return value in photoTypeLabels;
+}
 
 const selectClass =
   'h-11 w-full rounded-card border border-border bg-surface-1 px-3 text-sm text-foreground focus:border-primary/60';
@@ -41,6 +54,8 @@ const selectClass =
 interface WizardState {
   fileName: string;
   targetSlug: string;
+  /** Seçim listesini daraltan obje tipi; hedef seçimini kaydetmez. */
+  targetKind: TargetKind | 'hepsi';
   type: PhotoType;
   title: string;
   capturedAt: string;
@@ -64,6 +79,7 @@ interface WizardState {
 const initialState: WizardState = {
   fileName: '',
   targetSlug: '',
+  targetKind: 'hepsi',
   type: 'deep-sky',
   title: '',
   capturedAt: '',
@@ -117,6 +133,11 @@ export function UploadWizardPage() {
   }
   const navigate = useNavigate();
 
+  /* Seçili hedef künyeye etiket olarak da yazılıyor: veritabanı bağı
+     kurulamazsa (katalog henüz taşınmamışsa) fotoğrafın neyin fotoğrafı
+     olduğu bilgisi kaybolmasın. */
+  const selectedTarget = getTargetBySlug(state.targetSlug);
+
   const sizeVerdict = file ? checkUploadSize(file.size) : null;
 
   /**
@@ -144,6 +165,10 @@ export function UploadWizardPage() {
           locationVisibility: state.locationVisibility,
           license: state.license,
           aiDeclared: state.aiDeclared,
+          objectId: await resolveTargetId(state.targetSlug),
+          targetLabel: selectedTarget
+            ? `${selectedTarget.catalog} — ${selectedTarget.name}`
+            : null,
           opticId: equipmentId(state.opticSlug),
           cameraId: equipmentId(state.cameraSlug),
           mountId: equipmentId(state.mountSlug),
@@ -407,25 +432,44 @@ export function UploadWizardPage() {
           {step === 1 && (
             <div className="space-y-5">
               <StepTitle
-                title="Hedef ve kategori"
-                hint="Hedef veritabanından seç; katalog alias'ları desteklenir"
+                title="Obje ve kategori"
+                hint="Önce ne çektiğinizi seçin; katalog o türe göre daralır"
               />
-              <Field label="Astronomik hedef" htmlFor="w-target">
-                <select
-                  id="w-target"
-                  className={selectClass}
-                  value={state.targetSlug}
-                  onChange={(e) => patch({ targetSlug: e.target.value })}
-                >
-                  <option value="">Hedef seç (veya serbest bırak)</option>
-                  {targets.map((t) => (
-                    <option key={t.slug} value={t.slug}>
-                      {t.catalog} — {t.name}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-              <Field label="Fotoğraf türü" htmlFor="w-type">
+
+              <TargetPicker
+                value={state.targetSlug}
+                kind={state.targetKind}
+                onKindChange={(targetKind) => patch({ targetKind })}
+                onChange={(target) => {
+                  if (!target) {
+                    patch({ targetSlug: '' });
+                    return;
+                  }
+                  /*
+                   * Fotoğraf türü hedeften türetiliyor ama kullanıcının
+                   * elle yaptığı seçim ezilmiyor: aynı hedefin geniş alan
+                   * manzarası da çekilebilir. Yalnızca tür hâlâ başlangıç
+                   * değerindeyse öneriye geçiyoruz.
+                   */
+                  const suggested = kindToPhotoType[target.kind];
+                  const keepUserChoice = state.type !== initialState.type;
+                  patch({
+                    targetSlug: target.slug,
+                    title: state.title || target.name,
+                    type:
+                      keepUserChoice || !isPhotoType(suggested)
+                        ? state.type
+                        : suggested,
+                  });
+                }}
+                selectClassName={selectClass}
+              />
+
+              <Field
+                label="Fotoğraf türü"
+                htmlFor="w-type"
+                hint="Hedef seçtiğinizde otomatik önerilir; değiştirebilirsiniz."
+              >
                 <select
                   id="w-type"
                   className={selectClass}

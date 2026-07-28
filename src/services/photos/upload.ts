@@ -47,6 +47,10 @@ export interface UploadInput {
   opticId?: string | null;
   cameraId?: string | null;
   mountId?: string | null;
+  /** Katalogdaki hedefin veritabanı kimliği; yoksa yalnızca etiket saklanır. */
+  objectId?: string | null;
+  /** Hedefin okunabilir adı — katalog bağı kurulamasa da künye eksik kalmasın. */
+  targetLabel?: string | null;
   exposures?: { filter: string; frames: number; exposureSeconds: number }[];
 }
 
@@ -95,6 +99,10 @@ export async function uploadPhoto(
         maxLength: 5000,
       }),
       photo_type: input.photoType,
+      object_id: input.objectId ?? null,
+      target_label: input.targetLabel
+        ? sanitizeText(input.targetLabel, { maxLength: 160 })
+        : null,
       status: 'draft',
       captured_at: input.capturedAt || null,
       location_label: input.locationLabel || null,

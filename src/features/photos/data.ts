@@ -1,5 +1,5 @@
 import type { AstroPhoto } from './types';
-import { commonsImage } from '@/lib/commons';
+import { commonsImage } from '../../lib/commons';
 
 /**
  * Galeri/detay demo verisi. Faz 1.2'de Supabase + object storage'a bağlanır;

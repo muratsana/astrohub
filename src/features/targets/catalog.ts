@@ -1,4 +1,5 @@
-import type { TargetKind } from '@/domain/targets/derive';
+// Göreli yol: bkz. data.ts — bu modül vite.config.ts zincirinden de yükleniyor.
+import type { TargetKind } from '../../domain/targets/derive';
 
 /**
  * HEDEF KATALOĞU — KAYNAK VERİ.

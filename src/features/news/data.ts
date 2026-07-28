@@ -1,4 +1,4 @@
-import { commonsImage } from '@/lib/commons';
+import { commonsImage } from '../../lib/commons';
 
 /**
  * Haber modülü içeriği.

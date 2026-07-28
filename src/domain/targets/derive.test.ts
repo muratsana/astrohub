@@ -91,6 +91,11 @@ describe('açısal boyut', () => {
     expect(formatAngularSize('178x63')).toBe('178′ × 63′');
   });
 
+  it('eşit eksenleri tek değere indirir', () => {
+    // "5′ × 5′" aynı bilgiyi iki kez yazar; dairesel cisimde tek değer yeter.
+    expect(formatAngularSize('5x5')).toBe('5′');
+  });
+
   it('uzun kenarı bulur', () => {
     expect(longestAxisArcmin('178x63')).toBe(178);
     expect(longestAxisArcmin('20')).toBe(20);

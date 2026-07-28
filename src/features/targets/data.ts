@@ -12,7 +12,13 @@ import {
   targetKindLabels,
   type Difficulty,
   type TargetKind,
-} from '@/domain/targets/derive';
+/*
+ * Göreli yol, bilinçli: bu dosya `src/app/sitemap.ts` üzerinden
+ * `vite.config.ts` tarafından da yükleniyor ve yapılandırma dosyası
+ * Vite'ın `@/` takma adını henüz tanımıyor. Takma adla yazılırsa derleme
+ * "Cannot find package '@/lib'" diyerek düşer.
+ */
+} from '../../domain/targets/derive';
 import {
   deepSky,
   messier,
@@ -39,6 +45,12 @@ export type { TargetKind };
  */
 
 export interface CelestialTarget {
+  /**
+   * Veritabanı kimliği — yalnızca katalog veritabanından geldiğinde dolu.
+   * Tohum kayıtlarda yok; uydurmak, var olmayan bir satıra referans
+   * üretmek olurdu.
+   */
+  id?: string;
   slug: string;
   name: string;
   /** Birincil katalog kodu. */
