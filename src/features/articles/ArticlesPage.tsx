@@ -17,9 +17,12 @@ import {
 /**
  * YAZILAR — rehberler, eğitim yazıları ve işleme dersleri.
  *
- * Görselsiz, tipografi odaklı liste: bir yazı "prosedür" gibi okunur,
- * dekoratif kapak görseline ihtiyaç duymaz. Seviye ve kategori filtreleri
- * bağımsız çalışır.
+ * Her yazının konusuyla ilgili bir kapak görseli var: liste önce
+ * görselsizdi ve "tipografi yeter" diye savunulmuştu, ama aynı sayfada
+ * galeri ve haber kartları görselliyken yazılar sönük bir metin bloğu
+ * gibi duruyor, tıklanmıyordu. Görsel dekorasyon değil: kutup yıldızı
+ * izleri polar alignment yazısını, Hubble paleti narrowband yazısını
+ * bir bakışta anlatıyor. Seviye ve kategori filtreleri bağımsız çalışır.
  */
 const levels: (ArticleLevel | 'hepsi')[] = [
   'hepsi',
@@ -75,6 +78,7 @@ export function ArticlesPage() {
         category: articleCategoryLabels[article.category],
         meta: article.duration,
         tint: article.tint,
+        imageUrl: article.image?.url,
         footer: (
           <div className="flex items-center gap-2">
             <Badge tone={levelTone(article.level)}>{article.level}</Badge>

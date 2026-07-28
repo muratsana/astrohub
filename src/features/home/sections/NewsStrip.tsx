@@ -3,7 +3,6 @@ import { Container } from '@/components/ui/Container';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { Badge } from '@/components/ui/Badge';
 import { RemoteImage } from '@/components/media/RemoteImage';
-import { StarField } from '@/components/media/StarField';
 import { sortedNews, newsCategoryLabels } from '@/features/news/data';
 import { articles, articleCategoryLabels } from '@/features/articles/data';
 import { applyFeatured, useFeatured } from '@/services/content/featured';
@@ -19,10 +18,13 @@ import { applyFeatured, useFeatured } from '@/services/content/featured';
  * metin bloğu gibi duruyordu. Artık her satırın solunda küçük bir levha
  * var:
  *
- *   haber  telifi uygun bir görsel varsa o (NASA kamu malı, ESA/ESO
- *          CC BY) — kredi satırın altında görünür kalır, lisansın şartı
- *   yazı   yıldız alanı; rehberlerin fotoğrafı yok ve bulmak için
- *          internetten görsel çekmek telif sorunudur
+ * Hem haber hem yazı için telifi uygun görseller kullanılıyor (NASA kamu
+ * malı, ESA/Hubble ve ESO CC BY 4.0, Commons CC BY-SA); kredi satırın
+ * altında görünür kalır — lisansın şartı bu. Yazı görselleri konuyla
+ * ilgili seçildi: polar alignment yazısının yanında kutup yıldızı
+ * izleri, narrowband yazısının yanında Hubble paletiyle işlenmiş bir
+ * kare. Görselin işi süslemek değil, yazının ne hakkında olduğunu bir
+ * bakışta söylemek.
  *
  * Görsel yüklenemezse `RemoteImage` sessizce yıldız alanına düşer; kırık
  * ikon, yer tutucudan kötüdür.
@@ -126,7 +128,12 @@ export function NewsStrip() {
                   className="group flex gap-3 border-b border-border py-3 transition-colors hover:bg-surface-1"
                 >
                   <Thumb>
-                    <StarField seed={article.slug} tint={article.tint} />
+                    <RemoteImage
+                      src={article.image?.url}
+                      alt=""
+                      seed={article.slug}
+                      tint={article.tint}
+                    />
                   </Thumb>
 
                   <span className="min-w-0 flex-1">

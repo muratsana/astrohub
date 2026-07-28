@@ -70,12 +70,12 @@ export function LightPollutionPage() {
   return (
     <>
       <PageMeta
-        title="Karanlık Gökyüzü Karşılaştırması"
-        description="Bulunduğunuz şehirle Türkiye'deki gözlem noktaları arasındaki gökyüzü kalitesi farkı: SQM ölçümleri, Bortle sınıfları ve aynı sonuç için gereken süre kazancı."
+        title="Işık Kirliliği Haritası"
+        description="Türkiye ışık kirliliği haritası ve karanlık gökyüzü karşılaştırması: bulunduğunuz şehirle gözlem noktaları arasındaki gökyüzü kalitesi farkı, SQM ölçümleri, Bortle sınıfları ve aynı sonuç için gereken süre kazancı."
         jsonLd={breadcrumbJsonLd([
           { name: 'Ana Sayfa', path: '/' },
           { name: 'Araçlar', path: '/araclar' },
-          { name: 'Işık Kirliliği', path: '/araclar/isik-kirliligi' },
+          { name: 'Işık Kirliliği Haritası', path: '/araclar/isik-kirliligi' },
         ])}
       />
 
@@ -86,9 +86,9 @@ export function LightPollutionPage() {
           breadcrumb={[
             { label: 'Ana Sayfa', to: '/' },
             { label: 'Araçlar', to: '/araclar' },
-            { label: 'Işık Kirliliği' },
+            { label: 'Işık Kirliliği Haritası' },
           ]}
-          title="Karanlık Gökyüzü Karşılaştırması"
+          title="Işık Kirliliği Haritası"
           description="Bulunduğunuz yerin gökyüzüyle kayıtlı gözlem noktalarımızı karşılaştırır: fon parlaklığı kaç kat sönük, aynı sonuç için gereken süre ne kadar kısalır."
           meta={location.label}
         />

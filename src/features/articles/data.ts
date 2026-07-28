@@ -1,3 +1,4 @@
+import { commonsImage } from '../../lib/commons';
 /**
  * Yazılar modülü — rehberler, eğitim yazıları ve işleme dersleri.
  *
@@ -35,6 +36,27 @@ export interface Article {
   summary: string;
   body: string[];
   tint: string;
+  /**
+   * Kart görseli.
+   *
+   * LİSANS: yalnızca yeniden kullanımına izin veren kaynaklar — NASA/ESA
+   * yayınları kamu malı, ESO görselleri CC BY 4.0. Kredi arayüzde
+   * gösteriliyor; gösterilmediğinde CC BY ihlal edilir.
+   *
+   * KONUYLA İLGİLİ OLMAK ZORUNDA. Rehberlere rastgele bir bulutsu
+   * koymak kartı süsler ama okuyucuya yalan söyler: polar alignment
+   * yazısının yanındaki görsel kutup yıldızı izleri, narrowband
+   * yazısınınki Hubble paletiyle işlenmiş bir kare. Görselin işi
+   * dekorasyon değil, yazının ne hakkında olduğunu bir bakışta
+   * söylemek.
+   *
+   * Adres çalışmazsa `RemoteImage` sessizce yıldız alanına düşer.
+   */
+  image?: {
+    url: string;
+    credit: string;
+    licence: string;
+  };
 }
 
 export const articles: Article[] = [
@@ -54,6 +76,11 @@ export const articles: Article[] = [
       'İlk optik için kısa odaklı bir apokromatik refraktör, uzun odaklı bir yansıtmalıdan çok daha affedicidir: takip hataları daha az belli olur, görüş alanı geniştir ve kadraj yapmak kolaydır.',
     ],
     tint: '232,157,46',
+    image: {
+      url: commonsImage('Two telescopes observing the night sky at the Paranal Observatory.jpg'),
+      credit: 'ESO — Paranal Gözlemevi',
+      licence: 'CC BY 4.0',
+    },
   },
   {
     slug: 'kalibrasyon',
@@ -71,6 +98,11 @@ export const articles: Article[] = [
       'Soğutmalı kameralarda master dark kütüphanesi sıcaklık ve poz süresi bazında saklanabilir; flat ise optik yol her değiştiğinde (odak, filtre, kamera dönüşü) yenilenmelidir.',
     ],
     tint: '150,185,235',
+    image: {
+      url: commonsImage('Orion Nebula - Hubble 2006 mosaic.jpg'),
+      credit: 'NASA, ESA, M. Robberto (STScI/ESA)',
+      licence: 'Kamu malı',
+    },
   },
   {
     slug: 'sho-palet',
@@ -88,6 +120,11 @@ export const articles: Article[] = [
       'Yıldızlar narrowband’de doğal renklerini kaybeder. Yaygın çözüm, yıldızları ayrı bir RGB veriden alıp işlenmiş narrowband katmanın üzerine bindirmektir.',
     ],
     tint: '190,120,140',
+    image: {
+      url: commonsImage('North America Nebula (NGC7000) in Hubble Palette.jpg'),
+      credit: 'Wikimedia Commons — NGC 7000 (Hubble paleti)',
+      licence: 'CC BY-SA 4.0',
+    },
   },
   {
     slug: 'polar-align',
@@ -105,6 +142,11 @@ export const articles: Article[] = [
       'Kutup yıldızının görünmediği durumlarda (engel, güney yönü) sürüklenme (drift) yöntemi ya da yazılım destekli üç nokta hizalaması kullanılabilir.',
     ],
     tint: '150,185,235',
+    image: {
+      url: commonsImage('Circumpolar star trails.jpg'),
+      credit: 'Wikimedia Commons — Kutup yıldızı çevresinde iz',
+      licence: 'CC BY-SA',
+    },
   },
   {
     slug: 'guiding-sorunlari',
@@ -122,6 +164,11 @@ export const articles: Article[] = [
       'Kablo yönetimi en çok küçümsenen etkendir. Montür dönerken gerilen bir kablo, düzenli aralıklarla tekrar eden ani sıçramalar üretir.',
     ],
     tint: '120,200,180',
+    image: {
+      url: commonsImage('Milky Way over the VLT (dsc4081-cc).jpg'),
+      credit: 'ESO — VLT üzerinde Samanyolu',
+      licence: 'CC BY 4.0',
+    },
   },
   {
     slug: 'bortle-olcegi',
@@ -139,6 +186,11 @@ export const articles: Article[] = [
       'Karanlık gökyüzü her hedef için aynı ölçüde kritik değildir: parlak gezegenler ve ay şehirden de çekilebilirken, sönük emisyon bulutsuları için karanlık gökyüzü ya da dar bant filtreler gerekir.',
     ],
     tint: '150,185,235',
+    image: {
+      url: commonsImage('Milky Way above ESO telescopes ( H9A2493P-CC).jpg'),
+      credit: 'ESO — Karanlık gökyüzünde Samanyolu',
+      licence: 'CC BY 4.0',
+    },
   },
 ];
 

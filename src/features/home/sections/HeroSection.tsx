@@ -81,7 +81,7 @@ export function HeroSection() {
     >
       <Container className="py-5 sm:py-6">
         <div className="relative overflow-hidden rounded-card border border-border">
-          {/* Arka plan — slayta göre değişen yıldız alanı */}
+          {/* Arka plan — gerçek fotoğraf, altında çizilen sahne */}
           <div className="absolute inset-0">
             <HeroBackdrop
               key={slide.id}
@@ -89,6 +89,13 @@ export function HeroSection() {
               seed={slide.id}
               tint={slide.tint}
             />
+            {slide.image && (
+              <HeroPhoto
+                key={`${slide.id}-photo`}
+                src={slide.image.url}
+                alt=""
+              />
+            )}
             {/* Metnin okunurluğu için soldan sağa koyulaşan perde */}
             <div
               aria-hidden
@@ -187,9 +194,52 @@ export function HeroSection() {
               Düzenleme modu
             </span>
           )}
+
+          {/*
+            Kredi görünür olmak zorunda: CC BY 4.0'ın şartı bu. Küçük ve
+            kenarda ama gizli değil — gizlenmiş bir kredi, kredi değildir.
+            Göstergelerin üstüne binmesin diye sağ altta.
+          */}
+          {slide.image && (
+            <span className="absolute bottom-3 right-4 max-w-[46%] truncate text-right text-[9.5px] leading-snug text-faint">
+              {slide.image.credit} · {slide.image.licence}
+            </span>
+          )}
         </div>
       </Container>
     </section>
+  );
+}
+
+/**
+ * Hero fotoğrafı — yüklenemezse yok olur, altındaki sahne görünür.
+ *
+ * `RemoteImage` KULLANILMIYOR çünkü o, hata durumunda kendi yıldız
+ * alanını çiziyor; burada altta zaten slayta özel bir sahne var ve onun
+ * üstüne ikinci bir yer tutucu koymak, iyi olanı kötüsüyle örtmek olurdu.
+ *
+ * Açılışta yumuşak bir geçiş: fotoğraf geldiği anda sert bir sıçrama
+ * yerine sahneden fotoğrafa geçiyor. `loading="eager"` bilinçli — bu
+ * görsel sayfanın ilk ekranında ve ertelenirse kullanıcı sahneyi görüp
+ * sonra değiştiğine tanık oluyor.
+ */
+function HeroPhoto({ src, alt }: { src: string; alt: string }) {
+  const [state, setState] = useState<'loading' | 'ready' | 'failed'>('loading');
+  if (state === 'failed') return null;
+
+  return (
+    <img
+      src={src}
+      alt={alt}
+      loading="eager"
+      decoding="async"
+      onLoad={() => setState('ready')}
+      onError={() => setState('failed')}
+      className={cn(
+        'absolute inset-0 h-full w-full object-cover transition-opacity duration-700',
+        state === 'ready' ? 'opacity-100' : 'opacity-0'
+      )}
+    />
   );
 }
 

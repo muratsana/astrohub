@@ -184,7 +184,7 @@ export const siteMap: NavGroup[] = [
         keywords: ['pixel scale', 'örnekleme', 'sampling'],
       },
       {
-        label: 'Karanlık Gökyüzü Karşılaştırması',
+        label: 'Işık Kirliliği Haritası',
         to: '/araclar/isik-kirliligi',
         description: 'Şehir ile saha arasındaki SQM/Bortle farkı',
         keywords: ['bortle', 'sqm', 'ışık kirliliği', 'harita'],
