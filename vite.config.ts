@@ -2,7 +2,9 @@ import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import path from 'node:path';
+import { readFileSync } from 'node:fs';
 import { buildSitemapXml } from './src/app/sitemap';
+import { renderServiceWorker } from './src/pwa/buildSw';
 
 /**
  * Derleme sırasında `sitemap.xml` üretir (§16.2).
@@ -43,8 +45,53 @@ function sitemap(): Plugin {
 }
 
 // https://vite.dev/config/
+/**
+ * Service worker üretir (§16.3).
+ *
+ * Şablon `src/pwa/sw-template.js`; buradaki tek iş, derlemede oluşan gerçek
+ * dosya adlarını ve sürüm damgasını şablona yazmak. Hash router modunda
+ * (tek dosya önizleme) üretilmez — orada service worker zaten çalışmaz.
+ */
+function serviceWorker(): Plugin {
+  let routerMode: string | undefined;
+
+  return {
+    name: 'astrohub-sw',
+    apply: 'build',
+    configResolved(config) {
+      routerMode = config.env.VITE_ROUTER_MODE;
+    },
+    generateBundle(_options, bundle) {
+      if (routerMode === 'hash') return;
+
+      const template = readFileSync(
+        path.resolve(__dirname, 'src/pwa/sw-template.js'),
+        'utf8'
+      );
+
+      /*
+       * Sürüm damgası derleme çıktısındaki giriş paketinin adından alınır:
+       * içerik değişmediyse hash de değişmez, yani gereksiz yere yeni bir
+       * önbellek adı üretip kullanıcıya her derlemede yeniden indirtmeyiz.
+       */
+      const emittedFiles = Object.keys(bundle);
+      const entry =
+        emittedFiles.find((f) => /^assets\/index-[^/]+\.js$/.test(f)) ??
+        emittedFiles[0] ??
+        'astrohub';
+      const buildId = entry.replace(/^assets\/index-|\.js$/g, '');
+
+      this.emitFile({
+        type: 'asset',
+        fileName: 'sw.js',
+        source: renderServiceWorker(template, { buildId, emittedFiles }),
+      });
+    },
+  };
+}
+
 export default defineConfig({
-  plugins: [react(), tailwindcss(), sitemap()],
+  plugins: [react(), tailwindcss(), sitemap(), serviceWorker()],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

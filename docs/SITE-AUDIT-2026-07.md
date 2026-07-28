@@ -235,9 +235,9 @@ Bu başlıktaki işlerin çoğu **27 Temmuz gecesi tamamlandı** (bkz. §6). Kal
    sitemap üretilmez.
 2. **Hukuki metinler hukuk danışmanı incelemesinden geçmeli** — veri sorumlusu
    kimliği, başvuru kanalı, uyuşmazlık maddeleri eksik.
-3. `robots.txt` içindeki `Sitemap:` satırı mutlak URL'e çevrilmeli.
-4. PWA ikonları — manifest şu an yalnızca SVG favicon'a işaret ediyor;
-   192/512 px PNG maskable ikonlar eklenmeli.
+3. ~~`robots.txt` içindeki `Sitemap:` satırı~~ — mutlak URL yazılı (tamam).
+4. ~~PWA ikonları~~ — 192/512 px PNG + 512 maskable + apple-touch-icon
+   mevcut ve manifest'e bağlı (tamam). Service worker de eklendi (§6.8).
 5. **`st_estimatedextent` yetkisi** — PostGIS fonksiyonu `anon`/`authenticated`
    rollerine açık ve yetkiyi `supabase_admin` verdiği için migration rolünün
    `revoke`'u etkisiz kalıyor (PostgreSQL'de revoke yalnızca çağıran rolün

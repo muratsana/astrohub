@@ -8,6 +8,7 @@ import { ThemeProvider } from '@/features/theme/ThemeContext';
 import { LocationProvider } from '@/features/location/LocationContext';
 import { PreviewEditorProvider } from '@/features/preview-editor/PreviewEditorContext';
 import { RadioProvider } from '@/features/radio/RadioContext';
+import { registerServiceWorker } from '@/pwa/register';
 import './index.css';
 
 const queryClient = new QueryClient({
@@ -44,3 +45,10 @@ createRoot(rootEl).render(
     </QueryClientProvider>
   </StrictMode>
 );
+
+/*
+ * Çevrimdışı desteği uygulama boyandıktan SONRA kurulur: kayıt işlemi ilk
+ * boyamayla yarışırsa, ölçülebilir bir kazanç sağlamadan ilk içerik boyamasını
+ * geciktirir (§16.4). Kayıt başarısız olursa uygulama normal çalışır.
+ */
+registerServiceWorker();
