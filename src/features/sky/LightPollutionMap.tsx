@@ -78,8 +78,8 @@ export function LightPollutionMap() {
   }
 
   return (
-    <section aria-labelledby="lp-map-title" className="border-y border-border bg-surface-1">
-      <div className="mx-auto w-full max-w-content px-4 py-4 sm:px-6">
+    <section aria-labelledby="lp-map-title">
+      <div className="mx-auto w-full max-w-content border-y border-border px-4 py-4 sm:px-6 lg:px-8 xl:px-12">
         <header className="mb-2.5 flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h2 id="lp-map-title" className="text-[16px] text-foreground">
             Işık Kirliliği Haritası

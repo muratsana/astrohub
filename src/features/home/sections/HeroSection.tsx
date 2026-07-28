@@ -77,7 +77,7 @@ export function HeroSection() {
           setPaused(false);
         }
       }}
-      className="border-b border-border bg-background"
+      className="bg-background"
     >
       <Container className="py-5 sm:py-6">
         <div className="relative overflow-hidden rounded-card border border-border">

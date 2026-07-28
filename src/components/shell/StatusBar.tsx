@@ -44,9 +44,9 @@ export function StatusBar() {
   const conditions = useSkyConditions();
 
   return (
-    <div className="border-b border-border bg-background">
+    <div className="bg-background">
       <Container>
-        <div className="flex h-8 items-center gap-3">
+        <div className="flex h-8 items-center gap-3 border-b border-border">
           {/* Kaydırma bağlamının dışında — açılır menü kırpılmaz */}
           <LocationPicker />
 

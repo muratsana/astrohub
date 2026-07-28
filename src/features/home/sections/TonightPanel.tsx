@@ -92,8 +92,8 @@ export function TonightPanel() {
   });
 
   return (
-    <section className="border-b border-border bg-surface-1/40">
-      <Container className="py-5 sm:py-6">
+    <section>
+      <Container className="border-b border-border py-5 sm:py-6">
         <header className="mb-3 flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h1 className="text-[20px] text-foreground sm:text-[23px]">Bu Gece</h1>
           <span className="label">{location.label}</span>

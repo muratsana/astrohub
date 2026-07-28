@@ -26,9 +26,12 @@ import { cn } from '@/lib/cn';
  */
 export function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
   return (
-    <header className="border-b border-border bg-background">
+    <header className="bg-background">
       <Container>
-        <div className="flex h-14 items-center gap-3">
+        {/* Ayırıcı çizgi konteynerin içinde: geniş ekranda kenara kadar
+            uzanan bir çizgi, kabuğu kullanılabilir alanın dışına
+            taşıyormuş gibi gösteriyordu. */}
+        <div className="flex h-14 items-center gap-3 border-b border-border">
           <Logo />
 
           <nav
