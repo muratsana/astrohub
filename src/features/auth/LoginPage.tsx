@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useNavigate } from 'react-router-dom';
@@ -8,11 +8,16 @@ import { Field } from '@/components/ui/Field';
 import { AuthLayout } from './AuthLayout';
 import { useAuth } from './AuthContext';
 import { loginSchema, type LoginValues } from './schema';
+import { Captcha, type CaptchaHandle } from './Captcha';
+import { captchaEnabled } from './captchaConfig';
+import { AuthDivider, GoogleButton } from './GoogleButton';
 
 export function LoginPage() {
   const { signIn } = useAuth();
   const navigate = useNavigate();
   const [formError, setFormError] = useState<string | null>(null);
+  const [captchaToken, setCaptchaToken] = useState('');
+  const captchaRef = useRef<CaptchaHandle>(null);
 
   const {
     register,
@@ -22,9 +27,24 @@ export function LoginPage() {
 
   async function onSubmit(values: LoginValues) {
     setFormError(null);
-    const { error } = await signIn(values.email, values.password);
+
+    if (captchaEnabled && !captchaToken) {
+      setFormError('Lütfen güvenlik doğrulamasını tamamlayın.');
+      return;
+    }
+
+    const { error } = await signIn(
+      values.email,
+      values.password,
+      captchaToken || undefined
+    );
+
     if (error) {
       setFormError(error);
+      /* Token tek kullanımlık: başarısız denemeden sonra aynı token'la
+         tekrar denemek sunucuda reddediliyor ve kullanıcı sebebini
+         anlamadan ikinci bir hata alıyordu. */
+      captchaRef.current?.reset();
       return;
     }
     navigate('/panel');
@@ -43,6 +63,11 @@ export function LoginPage() {
         </>
       }
     >
+      <div className="mb-4 space-y-4">
+        <GoogleButton />
+        <AuthDivider />
+      </div>
+
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
         <Field label="E-posta" htmlFor="email" error={errors.email?.message}>
           <Input
@@ -65,6 +90,8 @@ export function LoginPage() {
             {...register('password')}
           />
         </Field>
+
+        <Captcha ref={captchaRef} onToken={setCaptchaToken} />
 
         {formError && (
           <p role="alert" className="text-sm text-danger">
