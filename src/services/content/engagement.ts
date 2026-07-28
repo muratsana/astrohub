@@ -1,0 +1,299 @@
+import { useCallback, useEffect, useState } from 'react';
+import { getSupabase, isSupabaseConfigured } from '@/services/supabase/client';
+import { useAuth } from '@/features/auth/AuthContext';
+import { sanitizeText } from '@/lib/sanitize';
+
+/**
+ * BEĞENİ VE YORUM.
+ *
+ * Şema ve RLS hazırdı; `photo_likes` ve `photo_comments` tabloları boştu
+ * çünkü istemci tarafı hiç yazılmamıştı. Fotoğraf detayında beğeni sayısı
+ * duruyordu ama tıklanamıyordu — sayının kendisi bile tohum veriden
+ * geliyordu.
+ *
+ * BEĞENİ İYİMSER, YORUM DEĞİL. Beğeni tek bitlik bir durum: yanlış
+ * giderse geri almak bir tıklama ve arada gösterilen sayı bir saniye
+ * şişik kalıyor. Yorum ise metin; iyimser eklenip sonra kaybolan bir
+ * yorum kullanıcıya "yazdım mı yazmadım mı" sorusunu sordurur.
+ *
+ * SAYIM TETİKLEYİCİDE. `like_count` kolonunu istemciden artırmıyoruz;
+ * veritabanı tetikleyicisi sayıyor. İki kaynak olsaydı ikisi ayrışırdı ve
+ * hangisinin doğru olduğu belli olmazdı.
+ */
+
+async function client() {
+  const promise = getSupabase();
+  if (!promise) throw new Error('Veritabanı bağlantısı yapılandırılmamış');
+  return promise;
+}
+
+export interface LikeState {
+  liked: boolean;
+  count: number;
+  /** Oturum yoksa beğeni yazılamaz; arayüz girişe yönlendirir. */
+  canLike: boolean;
+  busy: boolean;
+  error: string | null;
+  toggle: () => Promise<void>;
+}
+
+/**
+ * Fotoğraf beğenisi.
+ *
+ * `photoId` yoksa (tohum veriyle çalışan bir kurulum) kanca hiçbir istek
+ * yapmıyor ve `canLike` false kalıyor: kaydı olmayan bir fotoğrafı
+ * beğenmek anlamsız.
+ */
+export function usePhotoLike(
+  photoId: string | undefined,
+  initialCount: number
+): LikeState {
+  const { user } = useAuth();
+  const [liked, setLiked] = useState(false);
+  const [count, setCount] = useState(initialCount);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => setCount(initialCount), [initialCount]);
+
+  /* Kullanıcının bu fotoğrafı beğenip beğenmediği ayrı bir sorgu:
+     liste sorgusuna eklemek her fotoğraf için kullanıcıya özel bir alan
+     demekti ve önbelleği kullanıcı başına parçalardı. */
+  useEffect(() => {
+    if (!photoId || !user || !isSupabaseConfigured) {
+      setLiked(false);
+      return;
+    }
+
+    let active = true;
+    void (async () => {
+      try {
+        const supabase = await client();
+        const { data } = await supabase
+          .from('photo_likes')
+          .select('photo_id')
+          .eq('photo_id', photoId)
+          .eq('user_id', user.id)
+          .maybeSingle();
+        if (active) setLiked(Boolean(data));
+      } catch {
+        /* Beğeni durumu okunamadıysa varsayılan "beğenmedim" kalır;
+           kullanıcı tıklarsa veritabanı zaten tekrarı reddediyor. */
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [photoId, user]);
+
+  const toggle = useCallback(async () => {
+    if (!photoId || !user) return;
+
+    const next = !liked;
+    setLiked(next);
+    setCount((c) => Math.max(0, c + (next ? 1 : -1)));
+    setBusy(true);
+    setError(null);
+
+    try {
+      const supabase = await client();
+      const { error: writeError } = next
+        ? await supabase
+            .from('photo_likes')
+            .upsert(
+              { photo_id: photoId, user_id: user.id },
+              { onConflict: 'photo_id,user_id' }
+            )
+        : await supabase
+            .from('photo_likes')
+            .delete()
+            .eq('photo_id', photoId)
+            .eq('user_id', user.id);
+
+      if (writeError) throw new Error(writeError.message);
+    } catch (e) {
+      /* İyimser değişikliği geri al: sayının bir süre yanlış kalması
+         kabul edilebilir, kalıcı olarak yanlış kalması değil. */
+      setLiked(!next);
+      setCount((c) => Math.max(0, c + (next ? -1 : 1)));
+      setError(e instanceof Error ? e.message : 'Beğeni kaydedilemedi');
+    } finally {
+      setBusy(false);
+    }
+  }, [photoId, user, liked]);
+
+  return {
+    liked,
+    count,
+    canLike: Boolean(photoId && user && isSupabaseConfigured),
+    busy,
+    error,
+    toggle,
+  };
+}
+
+export interface PhotoComment {
+  id: string;
+  body: string;
+  createdAt: string;
+  author: { username: string; displayName: string };
+}
+
+interface CommentRow {
+  id: string;
+  body: string;
+  created_at: string;
+  profiles: { username: string; display_name: string | null } | null;
+}
+
+export interface CommentThread {
+  comments: PhotoComment[];
+  loading: boolean;
+  canWrite: boolean;
+  busy: boolean;
+  error: string | null;
+  send: (body: string) => Promise<void>;
+  remove: (id: string) => Promise<void>;
+  /** Oturumdaki kullanıcının kimliği — kendi yorumunu silebilsin. */
+  currentUsername: string | null;
+}
+
+export function usePhotoComments(photoId: string | undefined): CommentThread {
+  const { user } = useAuth();
+  const [comments, setComments] = useState<PhotoComment[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [currentUsername, setCurrentUsername] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    if (!photoId || !isSupabaseConfigured) {
+      setComments([]);
+      return;
+    }
+    setLoading(true);
+    try {
+      const supabase = await client();
+      const { data, error: readError } = await supabase
+        .from('photo_comments')
+        .select(
+          'id, body, created_at, ' +
+            'profiles!photo_comments_user_id_profiles_fkey(username, display_name)'
+        )
+        .eq('photo_id', photoId)
+        .order('created_at', { ascending: true });
+
+      if (readError) throw new Error(readError.message);
+
+      setComments(
+        (data as unknown as CommentRow[]).map((row) => ({
+          id: row.id,
+          body: row.body,
+          createdAt: row.created_at,
+          author: {
+            username: row.profiles?.username ?? 'bilinmiyor',
+            displayName:
+              row.profiles?.display_name ??
+              row.profiles?.username ??
+              'Bilinmiyor',
+          },
+        }))
+      );
+      setError(null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Yorumlar okunamadı');
+    } finally {
+      setLoading(false);
+    }
+  }, [photoId]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  /* Kendi kullanıcı adını biliyoruz ki "sil" düğmesi yalnızca kendi
+     yorumunda görünsün. RLS zaten başkasınınkini silmiyor; bu yalnızca
+     kullanılamayacak bir düğmeyi göstermemek için. */
+  useEffect(() => {
+    if (!user || !isSupabaseConfigured) {
+      setCurrentUsername(null);
+      return;
+    }
+    let active = true;
+    void (async () => {
+      try {
+        const supabase = await client();
+        const { data } = await supabase
+          .from('profiles')
+          .select('username')
+          .eq('id', user.id)
+          .maybeSingle();
+        if (active) setCurrentUsername((data as { username: string } | null)?.username ?? null);
+      } catch {
+        /* Profil okunamazsa silme düğmesi gizli kalır — güvenli taraf. */
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [user]);
+
+  const send = useCallback(
+    async (raw: string) => {
+      if (!photoId || !user) return;
+      const body = sanitizeText(raw, { multiline: true, maxLength: 4000 });
+      if (body.length < 2) {
+        setError('Boş yorum gönderilemez.');
+        return;
+      }
+
+      setBusy(true);
+      setError(null);
+      try {
+        const supabase = await client();
+        const { error: writeError } = await supabase
+          .from('photo_comments')
+          .insert({ photo_id: photoId, user_id: user.id, body });
+        if (writeError) throw new Error(writeError.message);
+        await load();
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Yorum gönderilemedi');
+      } finally {
+        setBusy(false);
+      }
+    },
+    [photoId, user, load]
+  );
+
+  const remove = useCallback(
+    async (id: string) => {
+      setBusy(true);
+      try {
+        const supabase = await client();
+        const { error: writeError } = await supabase
+          .from('photo_comments')
+          .delete()
+          .eq('id', id);
+        if (writeError) throw new Error(writeError.message);
+        await load();
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Yorum silinemedi');
+      } finally {
+        setBusy(false);
+      }
+    },
+    [load]
+  );
+
+  return {
+    comments,
+    loading,
+    canWrite: Boolean(photoId && user && isSupabaseConfigured),
+    busy,
+    error,
+    send,
+    remove,
+    currentUsername,
+  };
+}

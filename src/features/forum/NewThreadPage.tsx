@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Container } from '@/components/ui/Container';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Panel } from '@/components/ui/Panel';
@@ -6,20 +7,53 @@ import { Field } from '@/components/ui/Field';
 import { Input, Select } from '@/components/ui/Input';
 import { Button, ButtonLink } from '@/components/ui/Button';
 import { PageMeta } from '@/components/seo/PageMeta';
-import { forumCategories, forumCategoryOrder } from './types';
+import { forumCategories, forumCategoryOrder, type ForumCategoryId } from './types';
 import { sanitizeText } from '@/lib/sanitize';
+import { useAuth } from '@/features/auth/AuthContext';
+import { createThread } from '@/services/content/forum';
 
 /**
  * YENİ KONU FORMU.
  *
- * Gönderme, hesap sistemi bağlanana kadar devre dışı. Formu şimdiden
- * yazmanın nedeni, kategori seçimi ve "iyi soru" yönlendirmesinin ürünün
- * parçası olması — sonradan eklenen bir yardım metni kimse okumuyor.
+ * Gönderim `forum_threads` tablosuna yazıyor; RLS yalnızca kendi adına
+ * konu açmaya izin veriyor. Oturum yoksa form dolduruluyor ama gönderim
+ * girişe yönlendiriyor — yazdıklarını kaybettirmemek için form
+ * temizlenmiyor.
+ *
+ * Kategori seçimi ve "iyi soru" yönlendirmesi ürünün parçası; sonradan
+ * eklenen bir yardım metnini kimse okumuyor.
  */
 export function NewThreadPage() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
   const [category, setCategory] = useState<string>(forumCategoryOrder[0]);
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function submit() {
+    if (!user) {
+      navigate('/giris');
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      const slug = await createThread({
+        title,
+        body,
+        category: category as ForumCategoryId,
+        authorId: user.id,
+      });
+      navigate(`/forum/${slug}`);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Konu açılamadı');
+    } finally {
+      setBusy(false);
+    }
+  }
 
   const info = forumCategories[category as keyof typeof forumCategories];
 
@@ -53,6 +87,7 @@ export function NewThreadPage() {
             className="space-y-4"
             onSubmit={(e) => {
               e.preventDefault();
+              void submit();
             }}
           >
             <Field label="Kategori" htmlFor="thread-category">
@@ -101,16 +136,24 @@ export function NewThreadPage() {
               />
             </Field>
 
+            {error && (
+              <p role="alert" className="text-[11.5px] text-danger">
+                {error}
+              </p>
+            )}
+
             <div className="flex items-center justify-between gap-3 border-t border-border pt-4">
               <p className="text-[10px] leading-snug text-faint">
-                Konu açma, hesap sistemi bağlandığında etkinleşir.
+                {user
+                  ? 'Konu düz metin olarak yayımlanır; biçimlendirme etiketleri kaldırılır.'
+                  : 'Konu açmak için giriş yapmanız gerekiyor — yazdıklarınız formda kalır.'}
               </p>
               <div className="flex gap-2">
                 <ButtonLink to="/forum" size="sm" variant="secondary">
                   Vazgeç
                 </ButtonLink>
-                <Button type="submit" size="sm" disabled>
-                  Konuyu Aç
+                <Button type="submit" size="sm" disabled={busy}>
+                  {busy ? 'Açılıyor…' : user ? 'Konuyu Aç' : 'Giriş yap ve aç'}
                 </Button>
               </div>
             </div>

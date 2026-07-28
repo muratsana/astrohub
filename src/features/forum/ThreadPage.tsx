@@ -1,4 +1,5 @@
-import { useParams } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useParams } from 'react-router-dom';
 import { Container } from '@/components/ui/Container';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Panel } from '@/components/ui/Panel';
@@ -8,14 +9,16 @@ import { LockIcon, PinIcon } from '@/components/ui/icons';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
 import { NotFoundPage } from '@/components/NotFoundPage';
-import { forumThreads } from './data';
-import { forumCategories, relativeTime, type ForumPost } from './types';
+import { forumCategories, relativeTime, type ForumPost, type ForumThread } from './types';
+import { useAuth } from '@/features/auth/AuthContext';
+import { createReply, useForumThreads } from '@/services/content/forum';
 import { cn } from '@/lib/cn';
 
 /** Konu detayı: açılış mesajı + yanıtlar + yanıt kutusu. */
 export function ThreadPage() {
   const { slug } = useParams<{ slug: string }>();
-  const thread = forumThreads.find((t) => t.slug === slug);
+  const catalog = useForumThreads();
+  const thread = catalog.items.find((t) => t.slug === slug);
 
   if (!thread) return <NotFoundPage />;
 
@@ -91,22 +94,7 @@ export function ThreadPage() {
                 Bu konu kilitli; yeni yanıt yazılamaz.
               </p>
             ) : (
-              <Panel title="Yanıt yaz">
-                <textarea
-                  rows={4}
-                  placeholder="Ekipmanını ve koşullarını da yazarsan çok daha isabetli yanıt alırsın."
-                  aria-label="Yanıt metni"
-                  className="w-full resize-y rounded-card border border-border bg-surface-2 px-3 py-2 text-[12px] leading-relaxed text-foreground outline-none placeholder:text-faint focus:border-primary"
-                />
-                <div className="mt-2.5 flex items-center justify-between gap-3">
-                  <p className="text-[10px] text-faint">
-                    Yanıt gönderme, hesap sistemi bağlandığında etkinleşir.
-                  </p>
-                  <Button size="sm" disabled>
-                    Gönder
-                  </Button>
-                </div>
-              </Panel>
+              <ReplyBox thread={thread} onSent={catalog.refresh} />
             )}
           </div>
 
@@ -185,5 +173,88 @@ function PostCard({ post, opening }: { post: ForumPost; opening?: boolean }) {
         {post.body}
       </p>
     </article>
+  );
+}
+
+/**
+ * YANIT KUTUSU.
+ *
+ * Gönderim `forum_posts` tablosuna yazıyor; RLS hem kendi adına yazmayı
+ * hem konunun kilitli olmamasını şart koşuyor. Kilit kontrolü burada da
+ * var ama onun yerine geçmiyor — kilitli bir konuda kutuyu hiç
+ * göstermemek, gönderdikten sonra hata almaktan iyi.
+ *
+ * Gönderim sonrası metin temizleniyor ve liste tazeleniyor. Yanıtı
+ * ekranda iyimser olarak göstermiyoruz: forum sıralaması ve yanıt sayısı
+ * veritabanı tetikleyicisiyle güncelleniyor, iyimser bir kopya ikisiyle
+ * çelişirdi.
+ */
+function ReplyBox({
+  thread,
+  onSent,
+}: {
+  thread: ForumThread;
+  onSent: () => void;
+}) {
+  const { user } = useAuth();
+  const [body, setBody] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function send() {
+    if (!user) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await createReply({ threadId: thread.id, body, authorId: user.id });
+      setBody('');
+      onSent();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Yanıt gönderilemedi');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Panel title="Yanıt yaz">
+      <textarea
+        rows={4}
+        value={body}
+        onChange={(e) => setBody(e.target.value)}
+        placeholder="Ekipmanını ve koşullarını da yazarsan çok daha isabetli yanıt alırsın."
+        aria-label="Yanıt metni"
+        className="w-full resize-y rounded-card border border-border bg-surface-2 px-3 py-2 text-[12px] leading-relaxed text-foreground outline-none placeholder:text-faint focus:border-primary"
+      />
+
+      {error && (
+        <p role="alert" className="mt-2 text-[11.5px] text-danger">
+          {error}
+        </p>
+      )}
+
+      <div className="mt-2.5 flex items-center justify-between gap-3">
+        <p className="text-[10px] text-faint">
+          {user ? (
+            'Düz metin olarak yayımlanır.'
+          ) : (
+            <>
+              Yanıt yazmak için{' '}
+              <Link to="/giris" className="text-primary hover:underline">
+                giriş yapın
+              </Link>
+              .
+            </>
+          )}
+        </p>
+        <Button
+          size="sm"
+          disabled={busy || !user || body.trim().length < 2}
+          onClick={() => void send()}
+        >
+          {busy ? 'Gönderiliyor…' : 'Gönder'}
+        </Button>
+      </div>
+    </Panel>
   );
 }

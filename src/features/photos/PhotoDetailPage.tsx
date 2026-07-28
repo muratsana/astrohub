@@ -11,6 +11,8 @@ import {
   exposureRowSeconds,
 } from '@/domain/photography/integration';
 import { usePhotoCatalog } from '@/services/content/photos';
+import { usePhotoLike } from '@/services/content/engagement';
+import { PhotoComments } from './PhotoComments';
 import { PhotoComparison } from './PhotoComparison';
 import { VersionHistory } from './VersionHistory';
 import { ReportButton } from '@/features/admin/ReportButton';
@@ -128,7 +130,7 @@ function PhotoDetail({ photo, all }: { photo: AstroPhoto; all: AstroPhoto[] }) {
           </div>
 
           <div className="tabular flex shrink-0 items-center gap-2 text-sm">
-            <ActionChip>♥ {photo.likes}</ActionChip>
+            <LikeChip photo={photo} />
             <ActionChip>💬 {photo.comments}</ActionChip>
             <ActionChip>Kaydet</ActionChip>
             <ActionChip>Paylaş</ActionChip>
@@ -190,6 +192,10 @@ function PhotoDetail({ photo, all }: { photo: AstroPhoto; all: AstroPhoto[] }) {
             description="Aynı hedefin başka bir kaydıyla yan yana: entegrasyon, palet, ekipman ve gökyüzü farkı."
           />
           <PhotoComparison photo={photo} />
+
+          <div className="mt-6">
+            <PhotoComments photo={photo} />
+          </div>
         </section>
 
         {/* Alt öneriler (§7.3) */}
@@ -404,6 +410,40 @@ function DL({ rows }: { rows: [string, string][] }) {
         </div>
       ))}
     </dl>
+  );
+}
+
+/**
+ * BEĞENİ DÜĞMESİ.
+ *
+ * Tohum kayıtlarda veritabanı kimliği yok; o durumda düğme yerine sayı
+ * duruyor. Tıklanabilir görünüp hiçbir şey yapmamak, tıklanamaz
+ * görünmekten kötü.
+ */
+function LikeChip({ photo }: { photo: AstroPhoto }) {
+  const like = usePhotoLike(photo.id, photo.likes);
+
+  if (!like.canLike) {
+    return <ActionChip>♥ {like.count}</ActionChip>;
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => void like.toggle()}
+      disabled={like.busy}
+      aria-pressed={like.liked}
+      aria-label={like.liked ? 'Beğeniyi geri al' : 'Beğen'}
+      title={like.error ?? undefined}
+      className={cn(
+        'tabular rounded-full border px-3 py-1.5 transition-colors',
+        like.liked
+          ? 'border-primary/60 bg-primary/10 text-primary'
+          : 'border-border bg-surface-1 text-muted-foreground hover:border-border-strong hover:text-foreground'
+      )}
+    >
+      ♥ {like.count}
+    </button>
   );
 }
 

@@ -53,6 +53,7 @@ interface VersionRow {
 }
 
 interface PhotoRow {
+  id: string;
   slug: string;
   title: string;
   description: string | null;
@@ -161,6 +162,7 @@ export function mapPhotoRow(row: PhotoRow): AstroPhoto {
   const owner = row.profiles;
 
   return {
+    id: row.id,
     slug: row.slug,
     title: row.title,
     target: {
@@ -244,7 +246,7 @@ export function mapPhotoRow(row: PhotoRow): AstroPhoto {
 }
 
 const SELECT =
-  'slug, title, description, photo_type, palette, captured_at, published_at, ' +
+  'id, slug, title, description, photo_type, palette, captured_at, published_at, ' +
   'target_label, location_label, location_visibility, bortle, sqm, license, ' +
   'ai_declared, like_count, comment_count, display_path, thumb_path, setup_text, ' +
   /* Gömme ipucu ZORUNLU: `user_id` kolonunda iki yabancı anahtar var —

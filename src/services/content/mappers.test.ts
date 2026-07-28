@@ -4,6 +4,7 @@ import { mapSiteRow } from './sites';
 import { gradientFromSeed } from '@/components/media/tints';
 
 const eventRow = {
+  id: '9c1f7d2e-3a4b-4c5d-8e9f-0a1b2c3d4e5f',
   slug: 'perseid-2026',
   title: 'Perseid Meteor Yağmuru Gözlem Kampı',
   event_type: 'meteor-yagmuru',

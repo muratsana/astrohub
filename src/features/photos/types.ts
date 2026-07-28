@@ -32,6 +32,13 @@ export type ProcessingPalette = 'RGB' | 'LRGB' | 'SHO' | 'HOO' | 'Mono';
 export type LocationVisibility = 'exact' | 'approximate' | 'region' | 'hidden';
 
 export interface AstroPhoto {
+  /**
+   * Veritabanı kimliği. Tohum kayıtlarda YOK ve bu bilinçli: beğeni ve
+   * yorum gerçek bir satıra bağlanır. Tohum bir fotoğrafa beğeni yazmaya
+   * çalışmak yabancı anahtar hatası verirdi; arayüz `id` yokken bu
+   * düğmeleri hiç göstermiyor.
+   */
+  id?: string;
   slug: string;
   title: string;
   /** Astronomik hedef (canonical ad + katalog kodu) */

@@ -2,6 +2,7 @@ import { useParams } from 'react-router-dom';
 import { Container } from '@/components/ui/Container';
 import { Badge } from '@/components/ui/Badge';
 import { Button, ButtonLink } from '@/components/ui/Button';
+import { EventRegistration } from './EventRegistration';
 import { PhotoPlaceholder } from '@/components/media/PhotoPlaceholder';
 import { PlaceholderPage } from '@/components/PlaceholderPage';
 import { useEventCatalog } from '@/services/content/events';
@@ -206,6 +207,8 @@ export function EventDetailPage() {
                 </div>
               </dl>
             </div>
+
+            <EventRegistration event={event} />
 
             <ButtonLink
               to="/etkinlikler"

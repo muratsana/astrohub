@@ -44,5 +44,6 @@ export function useCatalog<T>(
     rows: query.data,
     configured: isSupabaseConfigured,
     failed: query.isError,
+    refresh: () => void query.refetch(),
   });
 }

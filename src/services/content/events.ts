@@ -29,6 +29,7 @@ interface EventSessionRow {
 }
 
 interface EventRow {
+  id: string;
   slug: string;
   title: string;
   event_type: string;
@@ -66,6 +67,7 @@ export function mapEventRow(row: EventRow): AstroEvent {
   const longitude = num(row.longitude);
 
   return {
+    id: row.id,
     slug: row.slug,
     title: row.title,
     type: row.event_type as EventType,
@@ -107,7 +109,7 @@ async function fetchEvents(client: SupabaseClient): Promise<AstroEvent[]> {
   const { data, error } = await client
     .from('events')
     .select(
-      'slug, title, event_type, city, venue, latitude, longitude, starts_at, ' +
+      'id, slug, title, event_type, city, venue, latitude, longitude, starts_at, ' +
         'ends_at, free, camping, kids_friendly, astrophoto_focused, ' +
         'telescopes_provided, capacity, registered_count, organizer_name, ' +
         'organizer_verified, description, observed_targets, rules, ' +

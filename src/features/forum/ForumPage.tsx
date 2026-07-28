@@ -15,7 +15,7 @@ import {
 import { PinIcon, LockIcon, ChatIcon } from '@/components/ui/icons';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
-import { forumThreads } from './data';
+import { useForumThreads } from '@/services/content/forum';
 import {
   forumCategories,
   forumCategoryOrder,
@@ -40,9 +40,11 @@ export function ForumPage() {
   const [search, setSearch] = useState('');
   const [onlyUnsolved, setOnlyUnsolved] = useState(false);
 
+  const threads = useForumThreads().items;
+
   const result = useMemo(
-    () => sortThreads(filterThreads(forumThreads, { category, search, onlyUnsolved })),
-    [category, search, onlyUnsolved]
+    () => sortThreads(filterThreads(threads, { category, search, onlyUnsolved })),
+    [threads, category, search, onlyUnsolved]
   );
 
   return (
@@ -133,7 +135,7 @@ export function ForumPage() {
           left={
             <ResultCount
               current={result.length}
-              total={forumThreads.length}
+              total={threads.length}
               noun="konu"
             />
           }

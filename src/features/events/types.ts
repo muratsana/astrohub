@@ -37,6 +37,12 @@ export interface EventCoords {
 }
 
 export interface AstroEvent {
+  /**
+   * Veritabanı kimliği. Tohum kayıtlarda yok: kayıt olma gerçek bir
+   * satıra bağlanır ve tohum bir etkinliğe kaydolmak yabancı anahtar
+   * hatası verirdi.
+   */
+  id?: string;
   slug: string;
   title: string;
   type: EventType;
