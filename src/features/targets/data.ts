@@ -1,204 +1,224 @@
-/** Astronomik hedef kataloğu — MVP tohum verisi (§8.2). Faz 1.4'te DB'ye taşınır. */
+import {
+  bestMonthsFromRa,
+  difficultyFor,
+  formatAngularSize,
+  formatDec,
+  formatRa,
+  gradientFor,
+  isMovingKind,
+  longestAxisArcmin,
+  recommendedFiltersFor,
+  recommendedFocalFor,
+  targetKindLabels,
+  type Difficulty,
+  type TargetKind,
+} from '@/domain/targets/derive';
+import {
+  deepSky,
+  messier,
+  movingTargets,
+  type CatalogRow,
+  type MovingRow,
+} from './catalog';
 
-export type TargetKind =
-  | 'galaksi'
-  | 'emisyon-bulutsusu'
-  | 'gezegenimsi-bulutsu'
-  | 'kuresel-kume'
-  | 'acik-kume'
-  | 'karanlik-bulutsu'
-  | 'sungerimsi-kalinti';
+export { targetKindLabels };
+export type { TargetKind };
 
-export const targetKindLabels: Record<TargetKind, string> = {
-  galaksi: 'Galaksi',
-  'emisyon-bulutsusu': 'Emisyon Bulutsusu',
-  'gezegenimsi-bulutsu': 'Gezegenimsi Bulutsu',
-  'kuresel-kume': 'Küresel Küme',
-  'acik-kume': 'Açık Küme',
-  'karanlik-bulutsu': 'Karanlık Bulutsu',
-  'sungerimsi-kalinti': 'Süpernova Kalıntısı',
-};
+/**
+ * ASTRONOMİK HEDEF KATALOĞU (§8.2).
+ *
+ * Katalog `catalog.ts` içindeki ölçülmüş satırlardan burada kuruluyor.
+ * Elle yazılan tek şey kaynak veri; görüntülenen her metin ondan türüyor.
+ * Bu ayrımın pratik faydası şu: yeni bir hedef eklemek dokuz satır metin
+ * yazmayı değil, bir koordinat satırı girmeyi gerektiriyor — ve yüz kayıt
+ * sonra "en uygun ay" alanı hâlâ tutarlı kalıyor.
+ *
+ * Güneş sistemi hedefleri (Ay, gezegenler, kuyruklu yıldız) ayrı bir
+ * tablodan gelir: bunların sabit koordinatı yoktur ve sıfır yazmak, onları
+ * gökyüzünde Koç noktasına çivilemek olurdu.
+ */
 
 export interface CelestialTarget {
   slug: string;
   name: string;
-  catalog: string; // birincil kod
+  /** Birincil katalog kodu. */
+  catalog: string;
   aliases: string[];
   kind: TargetKind;
   constellation: string;
+  /** "00sa 42dk 44sn" — boş dize, koordinatı olmayan hedeflerde. */
   ra: string;
   dec: string;
   magnitude?: number;
   angularSize: string;
   bestMonths: string;
-  difficulty: 'Kolay' | 'Orta' | 'Zor';
+  difficulty: Difficulty;
   recommendedFocal: string;
   recommendedFilters: string;
   description: string;
   gradient: string;
+  /** Güneş sistemi / manzara hedefi mi? Efemeris hesapları bunları atlar. */
+  moving: boolean;
 }
 
+/** "M 31" → "m31", "Sh2-155" → "sh2-155", "NGC 7000" → "ngc7000". */
+export function codeSlug(code: string): string {
+  return code
+    .toLocaleLowerCase('tr-TR')
+    .replace(/ı/g, 'i')
+    .replace(/ğ/g, 'g')
+    .replace(/ü/g, 'u')
+    .replace(/ş/g, 's')
+    .replace(/ö/g, 'o')
+    .replace(/ç/g, 'c')
+    .replace(/\s+/g, '')
+    .replace(/[^a-z0-9-]/g, '');
+}
+
+/**
+ * Adı olmayan kayıtlar için ad üretimi.
+ *
+ * "M 49" ekranda yalnız başına bir kod; "M 49 Galaksisi" ise ne olduğunu
+ * söylüyor. Tamlama ekleri Türkçede türe göre değiştiği için etiketleri
+ * doğrudan kullanmak yerine küçük bir eşleme tutuyoruz — "M 9 Küresel Küme"
+ * yerine "M 9 Küresel Kümesi".
+ */
+const KIND_NOUN: Record<TargetKind, string> = {
+  galaksi: 'Galaksisi',
+  'galaksi-grubu': 'Galaksi Grubu',
+  'emisyon-bulutsusu': 'Emisyon Bulutsusu',
+  'yansima-bulutsusu': 'Yansıma Bulutsusu',
+  'gezegenimsi-bulutsu': 'Gezegenimsi Bulutsusu',
+  'karanlik-bulutsu': 'Karanlık Bulutsusu',
+  'sungerimsi-kalinti': 'Süpernova Kalıntısı',
+  'kuresel-kume': 'Küresel Kümesi',
+  'acik-kume': 'Açık Kümesi',
+  'yildiz-bulutu': 'Yıldız Bulutu',
+  'cift-yildiz': 'Çift Yıldızı',
+  asterizm: 'Asterizmi',
+  gezegen: 'Gezegeni',
+  ay: 'Ay',
+  gunes: 'Güneş',
+  'kuyruklu-yildiz': 'Kuyruklu Yıldızı',
+  'meteor-yagmuru': 'Meteor Yağmuru',
+  'genis-alan': 'Geniş Alan',
+  'gokyuzu-olayi': 'Gökyüzü Olayı',
+};
+
+function describe(row: CatalogRow, sizeArcmin: number): string {
+  const kindText = targetKindLabels[row.kind].toLocaleLowerCase('tr-TR');
+  const magText =
+    row.mag !== undefined
+      ? `${row.mag.toFixed(1)} kadir parlaklığında`
+      : 'kataloglarda kadir değeri verilmeyen';
+  const sizeText =
+    sizeArcmin >= 60
+      ? `${(sizeArcmin / 60).toFixed(1)}° genişliğinde geniş bir alan kaplar`
+      : `${sizeArcmin} yay dakikası genişliğindedir`;
+
+  const base = `${row.constellation} takımyıldızında, ${magText} bir ${kindText}. ${sizeText}.`;
+  return row.note ? `${base} ${row.note}` : base;
+}
+
+function fromRow(row: CatalogRow): CelestialTarget {
+  const sizeArcmin = longestAxisArcmin(row.size);
+  return {
+    slug: row.slug ?? codeSlug(row.code),
+    name: row.name ?? `${row.code} ${KIND_NOUN[row.kind]}`,
+    catalog: row.code,
+    aliases: row.aliases ?? [],
+    kind: row.kind,
+    constellation: row.constellation,
+    ra: formatRa(row.ra),
+    dec: formatDec(row.dec),
+    magnitude: row.mag,
+    angularSize: formatAngularSize(row.size),
+    bestMonths: bestMonthsFromRa(row.ra),
+    difficulty: difficultyFor(row.mag, sizeArcmin),
+    recommendedFocal: recommendedFocalFor(sizeArcmin),
+    recommendedFilters: recommendedFiltersFor(row.kind),
+    description: describe(row, sizeArcmin),
+    gradient: gradientFor(row.kind),
+    moving: false,
+  };
+}
+
+function fromMovingRow(row: MovingRow): CelestialTarget {
+  return {
+    slug: row.slug ?? codeSlug(row.code),
+    name: row.name,
+    catalog: row.code,
+    aliases: row.aliases ?? [],
+    kind: row.kind,
+    constellation: '—',
+    // Koordinat alanları bilerek boş: gökyüzündeki yeri tarihe bağlı.
+    ra: '',
+    dec: '',
+    angularSize: row.size ? formatAngularSize(row.size) : '—',
+    bestMonths: row.window,
+    difficulty: 'Orta',
+    recommendedFocal: row.focal,
+    recommendedFilters: recommendedFiltersFor(row.kind),
+    description: row.note
+      ? `${row.name} — konumu tarihe göre değişir. ${row.note}`
+      : `${row.name} — konumu tarihe göre değişir; çekim penceresi için efemeris gerekir.`,
+    gradient: gradientFor(row.kind),
+    moving: true,
+  };
+}
+
+/**
+ * Katalogun tamamı. Sıra bilerek "Messier → diğer derin uzay → güneş
+ * sistemi": listeyi ilk açan kişi tanıdık kodlarla karşılaşsın.
+ */
 export const targets: CelestialTarget[] = [
-  {
-    slug: 'm31-andromeda',
-    name: 'Andromeda Galaksisi',
-    catalog: 'M 31',
-    aliases: ['NGC 224'],
-    kind: 'galaksi',
-    constellation: 'Andromeda',
-    ra: '00s 42d 44sn',
-    dec: "+41° 16'",
-    magnitude: 3.4,
-    angularSize: "178' × 63'",
-    bestMonths: 'Eylül – Aralık',
-    difficulty: 'Kolay',
-    recommendedFocal: '135–600 mm',
-    recommendedFilters: 'UV/IR-cut (geniş bant)',
-    description:
-      'Samanyolu\'na en yakın büyük galaksi; çıplak gözle görülebilen en uzak gökcisimlerinden. Geniş açısal boyutu nedeniyle kısa odaklarla bile etkileyici sonuç verir.',
-    gradient:
-      'radial-gradient(90% 70% at 55% 45%, #d6bca0 0%, #7c5c46 30%, #241a2e 65%, #050a12 100%)',
-  },
-  {
-    slug: 'ic434-at-basi',
-    name: 'At Başı Bulutsusu',
-    catalog: 'IC 434',
-    aliases: ['Barnard 33'],
-    kind: 'karanlik-bulutsu',
-    constellation: 'Orion',
-    ra: '05s 40d 59sn',
-    dec: "-02° 27'",
-    angularSize: "8' × 6'",
-    bestMonths: 'Kasım – Şubat',
-    difficulty: 'Orta',
-    recommendedFocal: '600–1200 mm',
-    recommendedFilters: 'Ha (dar bant)',
-    description:
-      'Parlak IC 434 emisyon perdesinin önündeki ikonik karanlık bulutsu. Ha filtresiyle kontrast belirgin şekilde artar.',
-    gradient:
-      'radial-gradient(120% 100% at 45% 55%, #c026d3 0%, #9d174d 35%, #3b0a24 70%, #050a12 100%)',
-  },
-  {
-    slug: 'ngc7000-kuzey-amerika',
-    name: 'Kuzey Amerika Bulutsusu',
-    catalog: 'NGC 7000',
-    aliases: ['Caldwell 20'],
-    kind: 'emisyon-bulutsusu',
-    constellation: 'Kuğu',
-    ra: '20s 59d 17sn',
-    dec: "+44° 31'",
-    magnitude: 4.0,
-    angularSize: "120' × 100'",
-    bestMonths: 'Haziran – Ekim',
-    difficulty: 'Kolay',
-    recommendedFocal: '135–400 mm',
-    recommendedFilters: 'Ha/OIII dual-band veya SHO',
-    description:
-      'Kuğu takımyıldızındaki dev emisyon bölgesi; şehir içinden bile dual-band filtreyle çalışılabilir. Geniş alan setup\'larının klasiği.',
-    gradient:
-      'radial-gradient(120% 100% at 45% 55%, #be185d 0%, #7f1d1d 45%, #2a0a16 80%, #050a12 100%)',
-  },
-  {
-    slug: 'ngc2237-rozet',
-    name: 'Rozet Bulutsusu',
-    catalog: 'NGC 2237',
-    aliases: ['Caldwell 49'],
-    kind: 'emisyon-bulutsusu',
-    constellation: 'Tek Boynuz',
-    ra: '06s 33d 45sn',
-    dec: "+04° 59'",
-    magnitude: 9.0,
-    angularSize: "80' × 60'",
-    bestMonths: 'Aralık – Mart',
-    difficulty: 'Orta',
-    recommendedFocal: '400–800 mm',
-    recommendedFilters: 'SHO (dar bant)',
-    description:
-      'Merkezinde NGC 2244 açık kümesini barındıran halka biçimli emisyon bulutsusu; SHO paletinin en sevilen hedeflerinden.',
-    gradient:
-      'radial-gradient(100% 100% at 50% 50%, #ef4444 0%, #7f1d1d 45%, #2a0a16 80%, #050a12 100%)',
-  },
-  {
-    slug: 'm42-orion',
-    name: 'Orion Bulutsusu',
-    catalog: 'M 42',
-    aliases: ['NGC 1976'],
-    kind: 'emisyon-bulutsusu',
-    constellation: 'Orion',
-    ra: '05s 35d 17sn',
-    dec: "-05° 23'",
-    magnitude: 4.0,
-    angularSize: "85' × 60'",
-    bestMonths: 'Kasım – Şubat',
-    difficulty: 'Kolay',
-    recommendedFocal: '400–1000 mm',
-    recommendedFilters: 'UV/IR-cut; çekirdek için kısa pozlar (HDR)',
-    description:
-      'Gökyüzünün en parlak bulutsusu ve çoğu astrofotoğrafçının ilk deep-sky hedefi. Parlak çekirdeği için HDR tekniği önerilir.',
-    gradient:
-      'radial-gradient(110% 90% at 50% 45%, #f9a8d4 0%, #be185d 30%, #4c1d95 60%, #050a12 100%)',
-  },
-  {
-    slug: 'm13-herkul',
-    name: 'Herkül Küresel Kümesi',
-    catalog: 'M 13',
-    aliases: ['NGC 6205'],
-    kind: 'kuresel-kume',
-    constellation: 'Herkül',
-    ra: '16s 41d 41sn',
-    dec: "+36° 27'",
-    magnitude: 5.8,
-    angularSize: "20'",
-    bestMonths: 'Nisan – Ağustos',
-    difficulty: 'Kolay',
-    recommendedFocal: '800–2000 mm',
-    recommendedFilters: 'UV/IR-cut',
-    description:
-      'Kuzey yarımkürenin en görkemli küresel kümesi; yüz binlerce yıldızı çözümlemek için orta-uzun odak ister.',
-    gradient:
-      'radial-gradient(70% 70% at 50% 50%, #fef3c7 0%, #d9c4a0 25%, #6b5a3e 55%, #0f0d08 100%)',
-  },
-  {
-    slug: 'ngc6302-kelebek',
-    name: 'Kelebek Bulutsusu',
-    catalog: 'NGC 6302',
-    aliases: ['Caldwell 69'],
-    kind: 'gezegenimsi-bulutsu',
-    constellation: 'Akrep',
-    ra: '17s 13d 44sn',
-    dec: "-37° 06'",
-    magnitude: 7.1,
-    angularSize: "3'",
-    bestMonths: 'Haziran – Ağustos',
-    difficulty: 'Zor',
-    recommendedFocal: '1200+ mm',
-    recommendedFilters: 'Ha/OIII',
-    description:
-      'Türkiye\'den güney ufkuna yakın, alçak yükseklikte kalan zorlu bir gezegenimsi bulutsu; kısa gözlem penceresi ve iyi güney ufku gerektirir.',
-    gradient:
-      'radial-gradient(120% 90% at 50% 40%, #2b6cb0 0%, #6b46c1 35%, #1a1035 70%, #050a12 100%)',
-  },
-  {
-    slug: 'ic1396-fil-hortumu',
-    name: 'Fil Hortumu Bulutsusu',
-    catalog: 'IC 1396',
-    aliases: [],
-    kind: 'emisyon-bulutsusu',
-    constellation: 'Kral',
-    ra: '21s 39d 06sn',
-    dec: "+57° 30'",
-    angularSize: "170' × 140'",
-    bestMonths: 'Temmuz – Kasım',
-    difficulty: 'Orta',
-    recommendedFocal: '200–600 mm',
-    recommendedFilters: 'SHO (dar bant)',
-    description:
-      'Kral takımyıldızındaki dev emisyon kompleksi; içindeki "fil hortumu" globülü uzun odaklarda ayrı bir hedef olarak çalışılır.',
-    gradient:
-      'radial-gradient(120% 100% at 45% 50%, #b91c1c 0%, #7c2d12 40%, #1f1408 75%, #050a12 100%)',
-  },
+  ...messier.map(fromRow),
+  ...deepSky.map(fromRow),
+  ...movingTargets.map(fromMovingRow),
 ];
 
+/** Sabit koordinatlı hedefler — efemeris ve kadraj hesapları bunları kullanır. */
+export const fixedTargets: CelestialTarget[] = targets.filter((t) => !isMovingKind(t.kind));
+
+const bySlug = new Map(targets.map((t) => [t.slug, t]));
+
 export function getTargetBySlug(slug: string): CelestialTarget | undefined {
-  return targets.find((t) => t.slug === slug);
+  return bySlug.get(slug);
+}
+
+/**
+ * Ad, katalog kodu ya da alias üzerinden arama.
+ *
+ * Alias'ları da taramak şart: kullanıcı "NGC 224" yazdığında M 31'i
+ * bulamayan bir katalog, aynı cismi iki ayrı hedef sanmasına yol açar.
+ */
+export function searchTargets(query: string, limit = 20): CelestialTarget[] {
+  const q = query.trim().toLocaleLowerCase('tr-TR');
+  if (!q) return targets.slice(0, limit);
+
+  const normalized = q.replace(/\s+/g, '');
+  const scored: { target: CelestialTarget; score: number }[] = [];
+
+  for (const target of targets) {
+    const haystacks = [
+      target.catalog,
+      target.name,
+      ...target.aliases,
+      target.constellation,
+    ].map((h) => h.toLocaleLowerCase('tr-TR'));
+
+    // "m31" ve "m 31" aynı sonucu vermeli; boşluk kullanıcı tarafında
+    // rastgeledir ve arama onu ayırt edici bir bilgi saymamalı.
+    const compact = haystacks.map((h) => h.replace(/\s+/g, ''));
+
+    let score = -1;
+    if (compact.some((h) => h === normalized)) score = 0;
+    else if (compact.some((h) => h.startsWith(normalized))) score = 1;
+    else if (haystacks.some((h) => h.includes(q))) score = 2;
+
+    if (score >= 0) scored.push({ target, score });
+  }
+
+  scored.sort((a, b) => a.score - b.score);
+  return scored.slice(0, limit).map((s) => s.target);
 }

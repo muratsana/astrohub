@@ -12,13 +12,10 @@ import { useViewMode } from '@/components/ui/useViewMode';
 import { PlateFrame } from '@/components/media/PlateFrame';
 import { StarField } from '@/components/media/StarField';
 import { tintFor } from '@/components/media/tints';
-import { targets, targetKindLabels } from './data';
+import { targets, targetKindLabels, searchTargets } from './data';
+import { isMovingKind, type TargetKind } from '@/domain/targets/derive';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
-
-function trLower(s: string): string {
-  return s.toLocaleLowerCase('tr-TR');
-}
 
 /** Zorluk derecesinin rozet tonu — kolay yeşil, zor kırmızı. */
 function difficultyTone(difficulty: string) {
@@ -38,23 +35,42 @@ export function TargetsPage() {
   const [search, setSearch] = useState('');
   const [view, setView] = useViewMode('hedefler');
 
+  const [kind, setKind] = useState<TargetKind | 'hepsi'>('hepsi');
+  const [difficulty, setDifficulty] = useState<'hepsi' | 'Kolay' | 'Orta' | 'Zor'>(
+    'hepsi'
+  );
+
+  /*
+   * Katalog 200 kaydı aştıktan sonra tek bir arama kutusu yetmiyor: "bu gece
+   * ne çekebilirim" sorusu tür ve zorluk üzerinden sorulur, ad üzerinden
+   * değil. Arama sırasında sonuç sayısını kırpmıyoruz — kırpılmış bir liste,
+   * kullanıcının aradığı kaydın var olmadığı izlenimini verir.
+   */
   const result = useMemo(() => {
-    const q = trLower(search.trim());
-    if (!q) return targets;
-    // Katalog kodları "M 31" biçiminde saklanır; boşluksuz yazım da eşleşmeli.
-    const compact = q.replace(/\s+/g, '');
-    return targets.filter((t) =>
-      [t.name, t.catalog, t.constellation, ...t.aliases]
-        .map(trLower)
-        .some((f) => f.includes(q) || f.replace(/\s+/g, '').includes(compact))
+    const base = search.trim()
+      ? searchTargets(search, targets.length)
+      : targets;
+    return base.filter(
+      (t) =>
+        (kind === 'hepsi' || t.kind === kind) &&
+        (difficulty === 'hepsi' || t.difficulty === difficulty)
     );
-  }, [search]);
+  }, [search, kind, difficulty]);
+
+  /* Boş kalan tür seçeneklerini listelemek, tıklandığında hiçbir şey
+     göstermeyen bir menü üretirdi. */
+  const availableKinds = useMemo(() => {
+    const present = new Set(targets.map((t) => t.kind));
+    return (Object.keys(targetKindLabels) as TargetKind[]).filter((k) =>
+      present.has(k)
+    );
+  }, []);
 
   return (
     <>
       <PageMeta
         title="Astronomik Hedef Kataloğu"
-        description="Messier, NGC ve IC kataloğu: takımyıldız, tür, görünür büyüklük ve en iyi gözlem ayları ile birlikte topluluktan çekilmiş fotoğraflar."
+        description={`Messier kataloğunun 110 kaydı, popüler NGC/IC/Sharpless hedefleri ve güneş sistemi cisimleri — toplam ${targets.length} hedef; takımyıldız, tür, parlaklık ve en uygun gözlem ayları ile.`}
         jsonLd={breadcrumbJsonLd([
           { name: 'Ana Sayfa', path: '/' },
           { name: 'Hedefler', path: '/hedefler' },
@@ -63,19 +79,50 @@ export function TargetsPage() {
       <Container className="py-8 sm:py-10">
         <PageHeader
           title="Astronomik Hedefler"
-          description="Messier, NGC, IC ve diğer kataloglardan hedefler — görünürlük, önerilen odak ve filtre bilgileriyle."
+          description={`Messier kataloğunun tamamı, popüler NGC/IC/Sharpless hedefleri ve güneş sistemi — ${targets.length} kayıt. Görünürlük penceresi, önerilen odak ve filtre önerisi ölçülen koordinat ve parlaklıktan hesaplanır.`}
         />
 
-        <FilterBar columns={2}>
+        <FilterBar columns={4}>
           <FilterCell label="Ara" htmlFor="target-search" className="sm:col-span-2">
             <Input
               id="target-search"
               type="search"
-              placeholder="Hedef adı, katalog kodu (M 31, NGC 7000…) veya takımyıldız"
+              placeholder="M 31, NGC 7000, Andromeda, Jüpiter…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className={filterControlClass}
             />
+          </FilterCell>
+          <FilterCell label="Tür" htmlFor="target-kind">
+            <select
+              id="target-kind"
+              value={kind}
+              onChange={(e) => setKind(e.target.value as TargetKind | 'hepsi')}
+              className={filterControlClass}
+            >
+              <option value="hepsi">Tüm türler</option>
+              {availableKinds.map((k) => (
+                <option key={k} value={k}>
+                  {targetKindLabels[k]}
+                  {isMovingKind(k) ? ' (güneş sistemi)' : ''}
+                </option>
+              ))}
+            </select>
+          </FilterCell>
+          <FilterCell label="Zorluk" htmlFor="target-difficulty">
+            <select
+              id="target-difficulty"
+              value={difficulty}
+              onChange={(e) =>
+                setDifficulty(e.target.value as typeof difficulty)
+              }
+              className={filterControlClass}
+            >
+              <option value="hepsi">Hepsi</option>
+              <option value="Kolay">Kolay</option>
+              <option value="Orta">Orta</option>
+              <option value="Zor">Zor</option>
+            </select>
           </FilterCell>
         </FilterBar>
 
@@ -93,7 +140,7 @@ export function TargetsPage() {
         {result.length === 0 ? (
           <EmptyState
             message="Eşleşen hedef yok"
-            hint="Katalog kodu (M 31), alias (Andromeda) veya takımyıldız adıyla deneyin."
+            hint="Katalog kodu (M 31), alias (NGC 224), Türkçe ad (Rozet) veya takımyıldız adıyla deneyin. Tür ve zorluk filtrelerini gevşetmeyi de deneyebilirsiniz."
           />
         ) : (
           <CardGrid view={view} density="tight">
