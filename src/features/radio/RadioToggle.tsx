@@ -23,7 +23,7 @@ export function RadioToggle({ className }: { className?: string }) {
   const hasBroadcast = Boolean(current || spotifyTrack);
 
   const shared =
-    'inline-flex h-8 items-center gap-1.5 rounded-card border px-2.5 text-[10px] tracking-[0.03em] transition-colors';
+    'inline-flex h-8 items-center gap-1.5 rounded-card border px-2 text-[10px] tracking-[0.03em] transition-colors sm:px-2.5';
 
   if (!hasBroadcast) {
     return (

@@ -203,7 +203,11 @@ export const router = createRouter([
         ),
       },
 
-      /* ═════════════ RADYO ═════════════ */
+      /* ═════════════ YAYIN (TV + RADYO) ═════════════ */
+      {
+        path: 'tv',
+        element: route(named(() => import('@/features/tv/TvPage'), 'TvPage')),
+      },
       {
         path: 'radyo',
         element: route(

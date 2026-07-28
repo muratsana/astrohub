@@ -11,6 +11,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { useAuth } from '@/features/auth/AuthContext';
 import { useRoles, roleLabels } from './useRoles';
+import { BroadcastControl } from './BroadcastControl';
 import {
   fetchQueue,
   resolveItem,
@@ -345,6 +346,15 @@ export function AdminPage() {
             </p>
           </Panel>
         </div>
+      </div>
+
+      {/*
+        Yayın kontrolü kuyruğun altında: moderasyon günlük iş, yayın
+        programı ise seyrek bir eylem. Sık kullanılanı üstte tutmak,
+        panelin her açılışında aşağı kaydırmayı gerektirmiyor.
+      */}
+      <div className="mt-4">
+        <BroadcastControl />
       </div>
     </Shell>
   );

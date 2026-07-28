@@ -45,7 +45,6 @@ export const primaryNav: NavItem[] = [
   { label: 'Haberler', to: '/haberler' },
   { label: 'Yazılar', to: '/yazilar' },
   { label: 'Forum', to: '/forum' },
-  { label: 'Radyo', to: '/radyo' },
   { label: 'Araçlar', to: '/araclar' },
   { label: 'İlanlar', to: '/ilanlar' },
   { label: 'Saha', to: '/saha' },
@@ -143,8 +142,14 @@ export const siteMap: NavGroup[] = [
     ],
   },
   {
-    title: 'Radyo',
+    title: 'Yayın',
     items: [
+      {
+        label: 'Astrohub.tv',
+        to: '/tv',
+        description: 'Canlı yayın, gözlem geceleri ve atölye kayıtları',
+        keywords: ['tv', 'canlı', 'yayın', 'youtube', 'video', 'izle'],
+      },
       {
         label: 'Astrohub Radyo',
         to: '/radyo',

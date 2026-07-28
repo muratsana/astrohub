@@ -61,13 +61,19 @@ describe('navigasyon bağlantıları', () => {
     }
   });
 
-  it('üst menü dokuz ana giriş taşır (§5.1)', () => {
-    // Yedi modüle Forum ve Radyo eklendi. Sayıyı sabitlemek bilinçli:
-    // menüye sessizce onuncu bir giriş eklenmesi, `xl` kırılımında
-    // taşmaya yol açar (bkz. Topbar yorumu).
-    expect(primaryNav).toHaveLength(9);
+  it('üst menü sekiz ana giriş taşır (§5.1)', () => {
+    // Sayıyı sabitlemek bilinçli: menüye sessizce dokuzuncu bir giriş
+    // eklenmesi `xl` kırılımında taşmaya yol açar (bkz. Topbar yorumu).
+    expect(primaryNav).toHaveLength(8);
     expect(primaryNav.map((i) => i.to)).toContain('/forum');
-    expect(primaryNav.map((i) => i.to)).toContain('/radyo');
+  });
+
+  it('yayın modülleri menüde metin girişi değil, üst çubukta ikon', () => {
+    // TV ve radyo "gidilecek sayfa" değil, açılıp kapatılan yayın; durumun
+    // her sayfada görünmesi gerekiyor ve bir metin bağlantısı bunu yapamaz.
+    // Sayfaların kendisi modül haritasında duruyor (aşağıdaki test).
+    expect(primaryNav.map((i) => i.to)).not.toContain('/radyo');
+    expect(primaryNav.map((i) => i.to)).not.toContain('/tv');
   });
 
   it('üst menüde açılır menü yoktur — keşif palete ve footer’a bırakılır', () => {

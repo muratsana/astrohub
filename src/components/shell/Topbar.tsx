@@ -6,6 +6,7 @@ import { MenuIcon, MoonIcon } from '@/components/ui/icons';
 import { primaryNav } from '@/app/navigation';
 import { useTheme } from '@/features/theme/ThemeContext';
 import { RadioToggle } from '@/features/radio/RadioToggle';
+import { TvToggle } from '@/features/tv/TvToggle';
 import { cn } from '@/lib/cn';
 
 /**
@@ -54,7 +55,12 @@ export function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
             ))}
           </nav>
 
-          <div className="ml-auto flex items-center gap-2">
+          {/*
+            390px'te dört ikon + hesap düğmesi 9px taşırıyordu (önizleme
+            denetimi ölçtü). Telefonda boşluk ve yatay dolgu daraltılıyor;
+            dokunma hedefi 32px yüksekliğini koruyor (§6.7).
+          */}
+          <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
             {/*
               `xl` altında düz menü gizlendiği için burası navigasyonun ÜST
               çubuktaki tek girişi. Önceden yalnızca lg–xl aralığında
@@ -73,12 +79,20 @@ export function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
               type="button"
               onClick={onOpenNav}
               aria-label="Modül haritasını aç"
-              className="inline-flex h-8 items-center gap-1.5 rounded-card border border-border px-2.5 text-[10px] tracking-[0.03em] text-muted-foreground transition-colors hover:border-border-strong hover:text-foreground xl:hidden"
+              className="inline-flex h-8 items-center gap-1.5 rounded-card border border-border px-2 text-[10px] tracking-[0.03em] text-muted-foreground transition-colors hover:border-border-strong hover:text-foreground sm:px-2.5 xl:hidden"
             >
               <MenuIcon className="h-3.5 w-3.5" />
               <span className="hidden lg:inline">Modüller</span>
             </button>
 
+            {/*
+              TV ve radyo üst çubukta ikon olarak duruyor, düz menüde metin
+              girişi olarak değil. Sebep: ikisi de "gidilecek bir sayfa"
+              değil, açılıp kapatılan bir yayın — ve yayın durumunun her
+              sayfada görünmesi gerekiyor. Menüde bir metin bağlantısı bunu
+              yapamazdı.
+            */}
+            <TvToggle />
             <RadioToggle />
 
             <button
@@ -99,7 +113,7 @@ export function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
                   : 'Saha modu: karanlık adaptasyonunu koruyan kırmızı arayüz'
               }
               className={cn(
-                'inline-flex h-8 items-center gap-1.5 rounded-card border px-2.5 text-[10px] tracking-[0.03em] transition-colors',
+                'inline-flex h-8 items-center gap-1.5 rounded-card border px-2 text-[10px] tracking-[0.03em] transition-colors sm:px-2.5',
                 fieldMode
                   ? 'border-primary text-primary'
                   : 'border-border text-muted-foreground hover:border-border-strong hover:text-foreground'

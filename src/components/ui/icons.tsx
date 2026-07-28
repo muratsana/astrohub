@@ -260,6 +260,25 @@ export function RadioIcon(props: IconProps) {
   );
 }
 
+/** Astrohub.tv — ekran gövdesi + anten. Radyo ikonuyla aynı çizgi ailesi. */
+export function TvIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M3 8.5h18v11H3z" />
+      <path d="m8 8 4-3.5L16 8" />
+    </svg>
+  );
+}
+
+/** Canlı yayın göstergesi — dolu daire; yalnızca yayın açıkken çizilir. */
+export function LiveDotIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <circle cx="12" cy="12" r="4" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
 export function ChatIcon(props: IconProps) {
   return (
     <svg {...base(props)}>
