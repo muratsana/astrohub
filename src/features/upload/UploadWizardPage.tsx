@@ -1,4 +1,8 @@
 import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/features/auth/AuthContext';
+import { uploadPhoto, publishPhoto } from '@/services/photos/upload';
+import { checkUploadSize, formatBytes } from '@/domain/membership/quota';
 import { Container } from '@/components/ui/Container';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -82,6 +86,65 @@ export function UploadWizardPage() {
   const [step, setStep] = useState(0);
   const [state, setState] = useState<WizardState>(initialState);
 
+  /* Seçilen dosyanın kendisi — özet ekranında ve yüklemede gerekiyor. */
+  const [file, setFile] = useState<File | null>(null);
+  const [publishState, setPublishState] = useState<
+    'idle' | 'hazirlaniyor' | 'kucultuluyor' | 'yukleniyor' | 'kaydediliyor' | 'bitti'
+  >('idle');
+  const [publishError, setPublishError] = useState<string | null>(null);
+
+  const { user, configured } = useAuth();
+  const navigate = useNavigate();
+
+  const sizeVerdict = file ? checkUploadSize(file.size) : null;
+
+  /**
+   * Yükleme + yayımlama.
+   *
+   * Kota kontrolü BURADA YAPILMIYOR: veritabanı tetikleyicisi yapıyor
+   * (§4.2) ve hata mesajı kotayı da kademeyi de söylüyor. İstemcide ikinci
+   * bir kontrol koymak iki sınırın ayrışması riskini getirir, hiçbir
+   * güvence eklemez.
+   */
+  async function submit() {
+    if (!file || !user) return;
+    setPublishError(null);
+
+    try {
+      const result = await uploadPhoto(
+        {
+          file,
+          userId: user.id,
+          slug: slugify(state.title || file.name),
+          title: state.title || file.name,
+          photoType: state.type,
+          capturedAt: state.capturedAt || undefined,
+          locationLabel: state.locationLabel || undefined,
+          locationVisibility: state.locationVisibility,
+          license: state.license,
+          aiDeclared: state.aiDeclared,
+          setup: {
+            Optik: state.optic,
+            Kamera: state.camera,
+            Montür: state.mount,
+            Yazılım: state.software,
+          },
+          exposures: state.exposures,
+        },
+        setPublishState
+      );
+
+      await publishPhoto(result.photoId);
+      setPublishState('bitti');
+      navigate('/panel');
+    } catch (error) {
+      setPublishState('idle');
+      setPublishError(
+        error instanceof Error ? error.message : 'Yükleme tamamlanamadı'
+      );
+    }
+  }
+
   function patch(p: Partial<WizardState>) {
     setState((s) => ({ ...s, ...p }));
   }
@@ -99,6 +162,8 @@ export function UploadWizardPage() {
   async function handleFile(file: File | undefined) {
     if (!file) return;
 
+    setFile(file);
+    setPublishError(null);
     patch({ fileName: file.name });
     setExif(null);
     setUseExifGps(false);
@@ -608,7 +673,41 @@ export function UploadWizardPage() {
                   <Badge tone="cold">{formatIntegration(total)}</Badge>
                   <Badge>{state.license}</Badge>
                   {state.aiDeclared && <Badge tone="cold">AI beyanlı</Badge>}
+                  {file && <Badge tone="muted">{formatBytes(file.size)}</Badge>}
                 </div>
+
+                {/*
+                  Boyut kararı üç sonuçtan biri ve üçü ayrı anlatılıyor:
+                  kabul, küçülterek kabul, ret. Tek bir "çok büyük" mesajı
+                  küçültülebilecek bir dosyayı reddedilmiş gibi gösterirdi.
+                */}
+                {sizeVerdict && sizeVerdict.kind !== 'ok' && (
+                  <p
+                    className={
+                      sizeVerdict.kind === 'reject'
+                        ? 'mt-3 text-[11.5px] leading-relaxed text-danger'
+                        : 'mt-3 text-[11.5px] leading-relaxed text-cold'
+                    }
+                  >
+                    {sizeVerdict.reason}
+                  </p>
+                )}
+
+                {!user && (
+                  <p className="mt-3 text-[11.5px] leading-relaxed text-muted-foreground">
+                    Yayımlamak için giriş yapmanız gerekir. Girdiğiniz künye
+                    bilgileri bu sayfada kalır.
+                  </p>
+                )}
+
+                {publishError && (
+                  <p
+                    role="alert"
+                    className="mt-3 rounded-card border border-danger/40 px-3 py-2 text-[11.5px] leading-relaxed text-danger"
+                  >
+                    {publishError}
+                  </p>
+                )}
               </div>
             </div>
           )}
@@ -628,10 +727,25 @@ export function UploadWizardPage() {
               </Button>
             ) : (
               <Button
-                disabled
-                title="Depolama altyapısı bağlandığında aktifleşecek"
+                onClick={() => void submit()}
+                disabled={
+                  !file ||
+                  !state.copyrightConfirmed ||
+                  !configured ||
+                  !user ||
+                  publishState !== 'idle'
+                }
+                title={
+                  !configured
+                    ? 'Veritabanı bağlantısı yapılandırılmamış'
+                    : !user
+                      ? 'Yayımlamak için giriş yapın'
+                      : !state.copyrightConfirmed
+                        ? 'Telif onayı olmadan yayımlanamaz'
+                        : undefined
+                }
               >
-                Yayımla (yakında)
+                {publishState === 'idle' ? 'Yayımla' : progressLabel(publishState)}
               </Button>
             )}
           </div>
@@ -639,6 +753,47 @@ export function UploadWizardPage() {
       </Container>
     </>
   );
+}
+
+/**
+ * Başlıktan adres parçası üretir.
+ *
+ * Türkçe harfler ASCII karşılığına indirgeniyor: adres çubuğunda ve
+ * paylaşılan bağlantıda yüzde kodlaması okunmaz bir şeye dönüşüyor.
+ * Sonuna kısa bir rastgele ek geliyor çünkü slug tekil olmak zorunda ve
+ * iki kullanıcının aynı hedefi aynı adla yüklemesi olağan.
+ */
+/** Yükleme aşamasını insan diline çevirir. */
+function progressLabel(stage: string): string {
+  switch (stage) {
+    case 'hazirlaniyor':
+      return 'Hazırlanıyor…';
+    case 'kucultuluyor':
+      return 'Görsel küçültülüyor…';
+    case 'yukleniyor':
+      return 'Yükleniyor…';
+    case 'kaydediliyor':
+      return 'Kaydediliyor…';
+    default:
+      return 'Tamamlandı';
+  }
+}
+
+function slugify(input: string): string {
+  const base = input
+    .toLocaleLowerCase('tr-TR')
+    .replace(/ı/g, 'i')
+    .replace(/ş/g, 's')
+    .replace(/ğ/g, 'g')
+    .replace(/ü/g, 'u')
+    .replace(/ö/g, 'o')
+    .replace(/ç/g, 'c')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 90);
+
+  const suffix = Math.floor(Math.random() * 46656).toString(36);
+  return `${base || 'fotograf'}-${suffix}`;
 }
 
 function StepTitle({ title, hint }: { title: string; hint?: string }) {
