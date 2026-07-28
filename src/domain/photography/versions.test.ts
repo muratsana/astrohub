@@ -30,15 +30,26 @@ describe('sürüm kota kuralı (§4.2)', () => {
   });
 
   it('elli fotoğrafın yüz sürümü kotayı aşmaz', () => {
+    // Kademe açıkça veriliyor: burada sınanan kural "sürümler sayılmaz",
+    // kademe sınırı değil. Kademe belirtilmezse varsayılan standart (3)
+    // olur ve test, ölçmek istediği şeyden başka bir şeyi ölçerdi.
     const counts = Array.from({ length: MAX_ACTIVE_PHOTOS }, () => 2);
     expect(quotaUnits(counts)).toBe(MAX_ACTIVE_PHOTOS);
     expect(
-      canPublishPhoto({ activePublished: quotaUnits(counts), drafts: 0 })
+      canPublishPhoto({
+        activePublished: quotaUnits(counts),
+        drafts: 0,
+        tier: 'premium',
+      })
     ).toBe(false);
     // Ama 49 fotoğraf × 3 sürüm hâlâ yayın hakkı bırakır.
     const almost = Array.from({ length: MAX_ACTIVE_PHOTOS - 1 }, () => 3);
     expect(
-      canPublishPhoto({ activePublished: quotaUnits(almost), drafts: 0 })
+      canPublishPhoto({
+        activePublished: quotaUnits(almost),
+        drafts: 0,
+        tier: 'premium',
+      })
     ).toBe(true);
   });
 
