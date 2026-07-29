@@ -37,6 +37,7 @@ function label(entry: CatalogEntry, suffix?: string): string {
 
 export interface OpticPreset {
   slug: string;
+  brand: string;
   label: string;
   focalLength: number;
   aperture: number;
@@ -52,6 +53,7 @@ export function opticPresetsFrom(entries: CatalogEntry[]): OpticPreset[] {
       if (focalLength === null || aperture === null) return null;
       return {
         slug: e.slug,
+        brand: e.brand,
         label: label(e, `${focalLength} mm`),
         focalLength,
         aperture,
@@ -63,6 +65,7 @@ export function opticPresetsFrom(entries: CatalogEntry[]): OpticPreset[] {
 
 export interface CameraPreset {
   slug: string;
+  brand: string;
   label: string;
   pixelSize: number;
   sensorWidth: number;
@@ -87,6 +90,7 @@ export function cameraPresetsFrom(entries: CatalogEntry[]): CameraPreset[] {
       if (pixelSize === null || !sensor) return null;
       return {
         slug: e.slug,
+        brand: e.brand,
         label: label(e, `${pixelSize} µm`),
         pixelSize,
         sensorWidth: sensor.widthMm,
@@ -99,6 +103,7 @@ export function cameraPresetsFrom(entries: CatalogEntry[]): CameraPreset[] {
 
 export interface MountPreset {
   slug: string;
+  brand: string;
   label: string;
   payloadCapacityKg: number;
 }
@@ -111,6 +116,7 @@ export function mountPresetsFrom(entries: CatalogEntry[]): MountPreset[] {
       if (payloadCapacityKg === null) return null;
       return {
         slug: e.slug,
+        brand: e.brand,
         label: label(e, `${payloadCapacityKg} kg`),
         payloadCapacityKg,
       };
@@ -121,6 +127,7 @@ export function mountPresetsFrom(entries: CatalogEntry[]): MountPreset[] {
 
 export interface FactorPreset {
   slug: string;
+  brand: string;
   label: string;
   factor: number;
 }
@@ -136,7 +143,12 @@ export function factorPresetsFrom(entries: CatalogEntry[]): FactorPreset[] {
     .map((e) => {
       const factor = parseMeasure(e.specs['Çarpan']);
       if (factor === null || factor <= 0) return null;
-      return { slug: e.slug, label: label(e, `${factor}×`), factor };
+      return {
+        slug: e.slug,
+        brand: e.brand,
+        label: label(e, `${factor}×`),
+        factor,
+      };
     })
     .filter((p): p is FactorPreset => p !== null)
     .sort((a, b) => a.factor - b.factor);
@@ -184,6 +196,7 @@ export function cameraMechanicalPresetsFrom(
 
 export interface GuidePreset {
   slug: string;
+  brand: string;
   label: string;
   focalLength: number;
   pixelSize: number;
@@ -210,6 +223,7 @@ export function guidePresetsFrom(entries: CatalogEntry[]): GuidePreset[] {
       if (pixelSize === null) continue;
       combos.push({
         slug: `${scope.slug}+${camera.slug}`,
+        brand: scope.brand,
         label: `${scope.model} + ${camera.model}`,
         focalLength,
         pixelSize,
