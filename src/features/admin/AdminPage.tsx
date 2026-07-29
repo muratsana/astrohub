@@ -14,6 +14,7 @@ import { useRoles, roleLabels } from './useRoles';
 import { BroadcastControl } from './BroadcastControl';
 import { CatalogControl } from './CatalogControl';
 import { FeaturedControl } from './FeaturedControl';
+import { ContentControl } from './ContentControl';
 import { EquipmentDataControl } from './EquipmentDataControl';
 import { SpecImportControl } from './SpecImportControl';
 import {
@@ -359,6 +360,12 @@ export function AdminPage() {
       */}
       <div className="mt-4">
         <BroadcastControl />
+      </div>
+
+      {/* İçerik yönetimi öne çıkanların ÜSTÜNDE: önce içerik yazılır,
+          sonra hangisinin öne çıkacağı seçilir. */}
+      <div className="mt-4">
+        <ContentControl canWrite={roles.isAdmin} />
       </div>
 
       {/* Öne çıkan içerik yayın kontrolünün yanında: ikisi de "bugün ne

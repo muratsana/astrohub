@@ -6,6 +6,7 @@ import { RemoteImage } from '@/components/media/RemoteImage';
 import { sortedNews, newsCategoryLabels } from '@/features/news/data';
 import { articles, articleCategoryLabels } from '@/features/articles/data';
 import { applyFeatured, useFeatured } from '@/services/content/featured';
+import { mergeWithSeed, useEntries } from '@/services/content/entries';
 
 /**
  * HABERLER VE YAZILAR — tek şeritte iki modül.
@@ -53,14 +54,48 @@ export function NewsStrip() {
   const featuredNews = useFeatured('haber');
   const featuredArticles = useFeatured('yazi');
 
+  /*
+    PANELDEN YAZILAN İÇERİK TOHUM VERİYLE BİRLEŞİYOR. Aynı slug varsa
+    veritabanı kazanıyor: paneldeki düzenleme, uygulamanın içindeki eski
+    metnin üstüne geçmeli — yoksa aynı içerik iki kez görünürdü.
+  */
+  const dbNews = useEntries('haber');
+  const dbArticles = useEntries('yazi');
+
+  const allNews = mergeWithSeed(sortedNews(), dbNews.entries, (e) => ({
+    slug: e.slug,
+    title: e.title,
+    summary: e.summary,
+    category: e.category as never,
+    publishedAt: e.publishedAt,
+    tint: e.tint ?? '150,185,235',
+    image: e.image ?? undefined,
+    body: e.body,
+    source: e.source ?? { name: '—', url: '' },
+  }));
+
+  const allArticles = mergeWithSeed(articles, dbArticles.entries, (e) => ({
+    slug: e.slug,
+    title: e.title,
+    summary: e.summary,
+    category: e.category as never,
+    duration: e.duration ?? '',
+    tint: e.tint ?? '150,185,235',
+    image: e.image ?? undefined,
+    body: e.body,
+    level: (e.level ?? 'Başlangıç') as never,
+    publishedAt: e.publishedAt,
+    author: e.author ?? '',
+  }));
+
   const latestNews = applyFeatured(
-    sortedNews(),
+    allNews,
     featuredNews.slugs,
     (n) => n.slug,
     ROWS
   );
   const latestArticles = applyFeatured(
-    articles,
+    allArticles,
     featuredArticles.slugs,
     (a) => a.slug,
     ROWS
