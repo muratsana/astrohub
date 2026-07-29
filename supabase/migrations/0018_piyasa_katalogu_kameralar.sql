@@ -1,4 +1,4 @@
--- PİYASA KATALOĞU — ASTRONOMİ KAMERALARI (291 model)
+-- PİYASA KATALOĞU — ASTRONOMİ KAMERALARI (291 model) — UYGULANDI
 --
 -- Kaynak: kullanıcı tarafından sağlanan 28.07.2026 tarihli piyasa
 -- listesi. Bu dosya YALNIZCA listede bulunan alanları taşır:

@@ -1,4 +1,4 @@
--- PİYASA KATALOĞU — OPTİK TÜPLER / OTA (478 model)
+-- PİYASA KATALOĞU — OPTİK TÜPLER / OTA (478 model) — UYGULANDI
 -- Gerekçe ve sınırlar için 0018 numaralı dosyanın başlığına bakın.
 -- Listede yalnızca optik tasarım var; odak uzaklığı, açıklık ve
 -- görüntü çemberi gibi sayısal alanlar boş bırakıldı.
