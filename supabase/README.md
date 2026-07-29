@@ -52,15 +52,30 @@ birebir eşleşmez:
 
 ## Yerel geliştirme
 
-```bash
-# Supabase CLI ile yerel stack
-supabase start
-supabase db reset          # tüm migration'ları uygular
+Supabase CLI artık `devDependencies` içinde: `npm ci` sonrası ayrıca kurulum
+gerekmez, `npx supabase …` ya da aşağıdaki npm betikleri doğrudan çalışır.
+`supabase/config.toml` repoda durur; `supabase init` tekrar çalıştırılmaz.
 
-# Uzak projeye bağlanma
-supabase link --project-ref eoqggvosegjbburyuyba
-supabase db push           # migration'ları uzak projeye uygular
+```bash
+npx supabase start         # yerel stack (Docker gerekir)
+npx supabase db reset      # tüm migration'ları yerelde uygular
+
+npm run db:migrations      # uzak projedeki migration listesi
+npm run db:push            # migration'ları uzak projeye uygular
+npm run db:diff            # uzak şema ile dosyalar arasındaki fark
+npm run db:types           # TypeScript tipleri üretir
+npm run functions:deploy   # edge fonksiyonlarını dağıtır
 ```
+
+Uzak projeye dokunan komutlar iki ortam değişkeni ister — şablon
+`.env.example` içinde:
+
+| Değişken | Nereden |
+|---|---|
+| `SUPABASE_ACCESS_TOKEN` | Dashboard → Account → Access Tokens |
+| `SUPABASE_DB_PASSWORD` | Dashboard → Project Settings → Database |
+
+İkisi de `VITE_` öneki almaz; alsalardı istemci paketine gömülürlerdi.
 
 ## İlkeler
 
