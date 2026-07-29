@@ -28,7 +28,7 @@ export const forumThreads: ForumThread[] = [
     viewCount: 1842,
     pinned: true,
     locked: true,
-    tags: ['kurallar', 'başlangıç'],
+    labels: ['duyuru', 'rehber'],
     body: 'Foruma hoş geldiniz. Soru sorarken ekipmanınızı, çekim koşullarınızı (Bortle, seeing, ay fazı) ve denediklerinizi yazarsanız çok daha hızlı yanıt alırsınız. Ekran görüntüsü yerine ham veriden örnek paylaşmak, işleme sorularında en çok işe yarayan şey.',
     replies: [
       {
@@ -50,7 +50,7 @@ export const forumThreads: ForumThread[] = [
     replyCount: 12,
     viewCount: 486,
     solved: true,
-    tags: ['teleskop', 'başlangıç'],
+    labels: ['tavsiye', 'soru'],
     body: 'Ankara’da oturuyorum, şehir içinden çıkmam zor. Bütçem 15–20 bin TL civarı. Gözlem ağırlıklı düşünüyorum ama ileride fotoğraf da çekmek isterim. 130 mm newton mu yoksa 8 inç dobson mu daha mantıklı?',
     replies: [
       {
@@ -78,7 +78,7 @@ export const forumThreads: ForumThread[] = [
     lastActivityAt: '2026-07-27T01:20:00+03:00',
     replyCount: 8,
     viewCount: 312,
-    tags: ['sho', 'pixinsight', 'hubble paleti'],
+    labels: ['soru'],
     body: 'Kuzey Amerika bulutsusunu SHO ile işledim ama sonuç neredeyse tamamen yeşil çıkıyor. SCNR uyguluyorum, bu sefer de her şey soluyor. Kanalları birleştirmeden önce mi ayarlamak gerekiyor?',
     replies: [
       {
@@ -99,7 +99,7 @@ export const forumThreads: ForumThread[] = [
     lastActivityAt: '2026-07-26T22:10:00+03:00',
     replyCount: 5,
     viewCount: 198,
-    tags: ['phd2', 'guiding', 'montür'],
+    labels: ['sorun-giderme'],
     body: 'Meridyenin doğusunda RMS 0.6" civarında, batıya geçince 1.4"e çıkıyor. Kutup hizası iyi (drift ile kontrol ettim). Balansı biraz doğu ağır bıraktım. Ne kaçırıyorum?',
     replies: [
       {
@@ -114,13 +114,13 @@ export const forumThreads: ForumThread[] = [
     id: 't-5',
     slug: 'kizilcahamam-agustos-gozlem-bulusmasi',
     title: 'Kızılcahamam’da ağustos gözlem buluşması — yol ve konaklama',
-    category: 'saha-ve-seyahat',
+    category: 'astro-kampcilik',
     author: { username: 'meltem_yildiz', displayName: 'Meltem Yıldız' },
     createdAt: '2026-07-24T12:00:00+03:00',
     lastActivityAt: '2026-07-27T08:55:00+03:00',
     replyCount: 17,
     viewCount: 640,
-    tags: ['buluşma', 'ankara', 'kamp'],
+    labels: ['duyuru'],
     body: 'Perseid için 11–13 ağustos aralığında gidiyoruz. Son 6 km stabilize yol, sedan ile çıkılıyor ama yağmur sonrası zorlanabilirsiniz. Çadır alanı geniş, su yok — yanınızda getirin.',
     replies: [],
   },
@@ -128,13 +128,13 @@ export const forumThreads: ForumThread[] = [
     id: 't-6',
     slug: 'asi533-mi-imx571-mi-kucuk-sensor-tartismasi',
     title: 'ASI533 mü IMX571 mi? Küçük sensör gerçekten dezavantaj mı?',
-    category: 'ekipman',
+    category: 'kameralar',
     author: { username: 'tolga_m', displayName: 'Tolga M.' },
     createdAt: '2026-07-19T18:30:00+03:00',
     lastActivityAt: '2026-07-25T11:05:00+03:00',
     replyCount: 21,
     viewCount: 894,
-    tags: ['kamera', 'sensör', 'cmos'],
+    labels: ['tavsiye', 'soru'],
     body: '80 mm f/6 apo ile kullanacağım. Kare sensör kadrajda esneklik veriyor ama APS-C’nin alanı cazip. Amaç ağırlıklı geniş alan bulutsular. Fiyat farkı ciddi, kararsız kaldım.',
     replies: [
       {
@@ -155,7 +155,7 @@ export const forumThreads: ForumThread[] = [
     lastActivityAt: '2026-07-23T15:12:00+03:00',
     replyCount: 4,
     viewCount: 271,
-    tags: ['gözlem raporu', 'uludağ', 'sqm'],
+    labels: ['inceleme'],
     body: 'Gece boyunca bulutsuzdu, seeing orta (yıldızlar 200x’te oynuyordu). SQM 21.4 okudum, ay yoktu. M13 çözünürlüğü şaşırtıcıydı. Sabaha karşı nem çok arttı, ısıtıcı bandı olmayan herkes çiy yedi.',
     replies: [],
   },

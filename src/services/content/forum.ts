@@ -3,7 +3,10 @@ import { getSupabase } from '@/services/supabase/client';
 import { forumThreads as forumSeed } from '@/features/forum/data';
 import {
   forumCategoryOrder,
+  forumLabelOrder,
+  forumLabelLimit,
   type ForumCategoryId,
+  type ForumLabelId,
   type ForumPost,
   type ForumThread,
 } from '@/features/forum/types';
@@ -53,8 +56,24 @@ interface ThreadRow {
   pinned: boolean;
   locked: boolean;
   solution_post_id: string | null;
+  labels: string[] | null;
   profiles: AuthorRow | null;
   forum_posts: PostRow[] | null;
+}
+
+/**
+ * Tanınmayan rozet kimliklerini eler.
+ *
+ * Rozet seti kodda sabit ama kolon `text[]`; eski bir satır ya da elle
+ * yapılmış bir düzenleme listede olmayan bir değer taşıyabilir. Süzmek
+ * yerine ham geçirmek, arayüzde `forumLabels[id]` üzerinden `undefined`
+ * okumaya ve boş bir rozet kutusuna dönüşüyordu.
+ */
+function labels(raw: string[] | null): ForumLabelId[] | undefined {
+  const known = (raw ?? []).filter((id): id is ForumLabelId =>
+    forumLabelOrder.includes(id as ForumLabelId)
+  );
+  return known.length > 0 ? known.slice(0, forumLabelLimit) : undefined;
 }
 
 function author(row: AuthorRow | null) {
@@ -99,12 +118,13 @@ export function mapThreadRow(row: ThreadRow): ForumThread {
     solved: row.solution_post_id !== null || undefined,
     body: row.body,
     replies,
+    labels: labels(row.labels),
   };
 }
 
 const SELECT =
   'id, slug, title, body, category_id, created_at, last_activity_at, ' +
-  'reply_count, view_count, pinned, locked, solution_post_id, ' +
+  'reply_count, view_count, pinned, locked, solution_post_id, labels, ' +
   'profiles!forum_threads_author_id_profiles_fkey(username, display_name), ' +
   'forum_posts(id, body, created_at, ' +
   'profiles!forum_posts_author_id_profiles_fkey(username, display_name))';
@@ -164,6 +184,7 @@ export interface NewThreadInput {
   title: string;
   body: string;
   category: ForumCategoryId;
+  labels?: ForumLabelId[];
   authorId: string;
 }
 
@@ -184,11 +205,20 @@ export async function createThread(input: NewThreadInput): Promise<string> {
   const supabase = await client();
   const slug = threadSlug(title, slugSuffix());
 
+  /* Rozetler istemcide de süzülüyor. Kolonda CHECK var ve asıl kapı orası;
+     buradaki eleme, sunucudan dönen ham kısıt hatası yerine sessizce
+     geçerli bir alt küme göndermek için — kullanıcı rozeti listeden
+     seçiyor, geçersiz değer ancak bir hatadan gelir. */
+  const chosen = (input.labels ?? [])
+    .filter((id) => forumLabelOrder.includes(id))
+    .slice(0, forumLabelLimit);
+
   const { error } = await supabase.from('forum_threads').insert({
     slug,
     title,
     body,
     category_id: input.category,
+    labels: chosen,
     author_id: input.authorId,
   });
 

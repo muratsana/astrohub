@@ -9,7 +9,13 @@ import { LockIcon, PinIcon } from '@/components/ui/icons';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
 import { NotFoundPage } from '@/components/NotFoundPage';
-import { forumCategories, relativeTime, type ForumPost, type ForumThread } from './types';
+import {
+  forumCategories,
+  forumLabels,
+  relativeTime,
+  type ForumPost,
+  type ForumThread,
+} from './types';
 import { useAuth } from '@/features/auth/AuthContext';
 import { createReply, useForumThreads } from '@/services/content/forum';
 import { cn } from '@/lib/cn';
@@ -113,10 +119,12 @@ export function ThreadPage() {
                 />
               </dl>
 
-              {thread.tags && thread.tags.length > 0 && (
+              {thread.labels && thread.labels.length > 0 && (
                 <div className="mt-3 flex flex-wrap gap-1 border-t border-border pt-3">
-                  {thread.tags.map((tag) => (
-                    <Badge key={tag}>{tag}</Badge>
+                  {thread.labels.map((id) => (
+                    <Badge key={id} className={forumLabels[id]?.className}>
+                      {forumLabels[id]?.name ?? id}
+                    </Badge>
                   ))}
                 </div>
               )}

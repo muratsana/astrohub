@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { mapThreadRow, threadSlug } from './forum';
+import {
+  filterThreads,
+  sortThreads,
+  type ForumThread,
+} from '@/features/forum/types';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 function row(over: Record<string, unknown> = {}): any {
@@ -8,7 +13,7 @@ function row(over: Record<string, unknown> = {}): any {
     slug: 'phd2-guide-hatasi-a1b2c',
     title: 'PHD2 guide hatası meridyen sonrası ikiye katlanıyor',
     body: 'EQ6-R Pro, 8" Newton, OAG…',
-    category_id: 'ekipman',
+    category_id: 'monturler',
     created_at: '2026-07-20T18:00:00Z',
     last_activity_at: '2026-07-21T09:00:00Z',
     reply_count: 2,
@@ -16,6 +21,7 @@ function row(over: Record<string, unknown> = {}): any {
     pinned: false,
     locked: false,
     solution_post_id: null,
+    labels: [],
     profiles: { username: 'mert_astro', display_name: 'Mert Yılmaz' },
     forum_posts: [],
     ...over,
@@ -112,5 +118,130 @@ describe('mapThreadRow', () => {
     const flagged = mapThreadRow(row({ pinned: true, locked: true }));
     expect(flagged.pinned).toBe(true);
     expect(flagged.locked).toBe(true);
+  });
+});
+
+/* ══════════════════════ Rozetler ══════════════════════ */
+
+describe('mapThreadRow — rozetler', () => {
+  it('tanınmayan rozeti eler', () => {
+    // Kolon `text[]`; eski bir satır ya da elle düzenleme listede olmayan
+    // bir değer taşıyabilir. Ham geçirmek arayüzde boş rozet kutusuna
+    // dönüşüyordu.
+    const thread = mapThreadRow(row({ labels: ['soru', 'uydurma'] }));
+    expect(thread.labels).toEqual(['soru']);
+  });
+
+  it('rozet yoksa alanı hiç koymaz', () => {
+    expect(mapThreadRow(row({ labels: [] })).labels).toBeUndefined();
+    expect(mapThreadRow(row({ labels: null })).labels).toBeUndefined();
+  });
+
+  it('üçten fazla rozeti kırpar', () => {
+    const thread = mapThreadRow(
+      row({ labels: ['soru', 'rehber', 'inceleme', 'tavsiye'] })
+    );
+    expect(thread.labels).toHaveLength(3);
+  });
+});
+
+/* ══════════════════════ Sıralama ve filtre ══════════════════════ */
+
+function thread(over: Partial<ForumThread> = {}): ForumThread {
+  return {
+    id: 'x',
+    slug: 'x',
+    title: 'Başlık',
+    category: 'monturler',
+    author: { username: 'a', displayName: 'A' },
+    createdAt: '2026-01-01T00:00:00Z',
+    lastActivityAt: '2026-01-01T00:00:00Z',
+    replyCount: 0,
+    viewCount: 0,
+    body: 'metin',
+    replies: [],
+    ...over,
+  };
+}
+
+describe('sortThreads', () => {
+  const eski = thread({ id: 'eski', createdAt: '2026-01-01T00:00:00Z' });
+  const yeni = thread({ id: 'yeni', createdAt: '2026-06-01T00:00:00Z' });
+
+  it('en yeni tarihli açılış sırasına göre sıralar', () => {
+    expect(sortThreads([eski, yeni], 'en-yeni').map((t) => t.id)).toEqual([
+      'yeni',
+      'eski',
+    ]);
+  });
+
+  it('en eski tarihli sırayı ters çevirir', () => {
+    expect(sortThreads([yeni, eski], 'en-eski').map((t) => t.id)).toEqual([
+      'eski',
+      'yeni',
+    ]);
+  });
+
+  it('sabitlenmiş konu seçilen sıralamadan bağımsız üstte kalır', () => {
+    // Sabitleme bir sıralama tercihi değil, moderasyon kararı: "en eski"
+    // seçilince duyurunun listenin ortasına düşmesi sabitlemeyi anlamsız
+    // kılardı.
+    const sabit = thread({
+      id: 'sabit',
+      pinned: true,
+      createdAt: '2026-12-01T00:00:00Z',
+    });
+    expect(
+      sortThreads([eski, yeni, sabit], 'en-eski').map((t) => t.id)
+    ).toEqual(['sabit', 'eski', 'yeni']);
+  });
+
+  it('bozuk tarihte geçerli kayıtların sırasını bozmaz', () => {
+    const bozuk = thread({ id: 'bozuk', createdAt: 'tarih-değil' });
+    expect(
+      sortThreads([yeni, bozuk, eski], 'en-yeni').map((t) => t.id)
+    ).toEqual(['yeni', 'eski', 'bozuk']);
+  });
+
+  it('girdi dizisini değiştirmez', () => {
+    const input = [eski, yeni];
+    sortThreads(input, 'en-yeni');
+    expect(input.map((t) => t.id)).toEqual(['eski', 'yeni']);
+  });
+});
+
+describe('filterThreads', () => {
+  const soru = thread({ id: 'soru', labels: ['soru'] });
+  const rehber = thread({ id: 'rehber', labels: ['rehber', 'duyuru'] });
+  const rozetsiz = thread({ id: 'rozetsiz' });
+
+  it('rozete göre süzer', () => {
+    expect(
+      filterThreads([soru, rehber, rozetsiz], { label: 'duyuru' }).map(
+        (t) => t.id
+      )
+    ).toEqual(['rehber']);
+  });
+
+  it('rozet süzgeci yokken hepsini döndürür', () => {
+    expect(filterThreads([soru, rehber, rozetsiz], {})).toHaveLength(3);
+  });
+
+  it('aramada rozet ve kategori adını da tarar', () => {
+    // Kullanıcı listede gördüğü kelimeyi arıyor; rozet adı ekranda
+    // görünürken aramada karşılıksız kalması şaşırtıcıydı.
+    expect(filterThreads([soru, rehber], { search: 'Rehber' })).toHaveLength(1);
+    expect(
+      filterThreads([soru], { search: 'montür' }).map((t) => t.id)
+    ).toEqual(['soru']);
+  });
+
+  it('kategori ve rozeti birlikte uygular', () => {
+    const baska = thread({ id: 'baska', category: 'filtreler', labels: ['soru'] });
+    expect(
+      filterThreads([soru, baska], { category: 'filtreler', label: 'soru' }).map(
+        (t) => t.id
+      )
+    ).toEqual(['baska']);
   });
 });
