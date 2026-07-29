@@ -11,11 +11,11 @@ import { breadcrumbJsonLd } from '@/lib/seo';
 import { NotFoundPage } from '@/components/NotFoundPage';
 import {
   forumCategories,
-  forumLabels,
   relativeTime,
   type ForumPost,
   type ForumThread,
 } from './types';
+import { LabelChip } from './LabelChip';
 import { useAuth } from '@/features/auth/AuthContext';
 import { createReply, useForumThreads } from '@/services/content/forum';
 import { cn } from '@/lib/cn';
@@ -122,9 +122,7 @@ export function ThreadPage() {
               {thread.labels && thread.labels.length > 0 && (
                 <div className="mt-3 flex flex-wrap gap-1 border-t border-border pt-3">
                   {thread.labels.map((id) => (
-                    <Badge key={id} className={forumLabels[id]?.className}>
-                      {forumLabels[id]?.name ?? id}
-                    </Badge>
+                    <LabelChip key={id} id={id} />
                   ))}
                 </div>
               )}

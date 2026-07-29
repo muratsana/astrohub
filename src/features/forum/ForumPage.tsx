@@ -33,6 +33,7 @@ import {
   type ForumSortId,
   type ForumThread,
 } from './types';
+import { LabelChip } from './LabelChip';
 import { cn } from '@/lib/cn';
 
 /**
@@ -298,22 +299,9 @@ function ThreadRow({
           <h2 className="text-[13px] font-medium leading-snug text-foreground group-hover:text-primary">
             {thread.title}
           </h2>
-          {labels.map((id) => {
-            const badge = forumLabels[id];
-            if (!badge) return null;
-            return (
-              <span
-                key={id}
-                title={badge.description}
-                className={cn(
-                  'shrink-0 rounded-[2px] border px-1.5 py-0.5 text-[9px] font-medium tracking-[0.02em]',
-                  badge.className
-                )}
-              >
-                {badge.name}
-              </span>
-            );
-          })}
+          {labels.map((id) => (
+            <LabelChip key={id} id={id} />
+          ))}
           {thread.solved && (
             <span className="shrink-0 rounded-[2px] border border-success/45 px-1.5 py-0.5 text-[9px] font-medium tracking-[0.02em] text-success">
               Çözüldü
