@@ -99,7 +99,7 @@ export function ToolsIndexPage() {
                     {tool.description}
                   </span>
                 )}
-                <span className="mt-auto pt-5 text-[10px] tracking-[0.04em] text-faint transition-colors group-hover:text-primary">
+                <span className="mt-auto pt-5 text-meta tracking-[0.04em] text-faint transition-colors group-hover:text-primary">
                   {tool.soon ? 'yol haritasında' : 'aracı aç →'}
                 </span>
               </Link>

@@ -50,7 +50,7 @@ export function DarkSkyStrip() {
                 <h3 className="truncate text-[13px] text-foreground transition-colors group-hover:text-primary">
                   {site.name}
                 </h3>
-                <p className="mt-0.5 text-[10px] text-muted-foreground">
+                <p className="mt-0.5 text-meta text-muted-foreground">
                   {site.region} · {site.roadAccess.toLocaleLowerCase('tr-TR')}
                 </p>
 
@@ -61,8 +61,8 @@ export function DarkSkyStrip() {
                     ['Güney', site.southHorizon],
                   ].map(([label, value]) => (
                     <div key={label} className="bg-surface-1 px-1.5 py-1">
-                      <dt className="label text-[9px]">{label}</dt>
-                      <dd className="tabular mt-0.5 truncate text-[10.5px] text-cold">
+                      <dt className="label text-meta">{label}</dt>
+                      <dd className="tabular mt-0.5 truncate text-meta text-cold">
                         {value}
                       </dd>
                     </div>

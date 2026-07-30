@@ -71,7 +71,7 @@ export function ReportButton({
 
   if (state === 'sent') {
     return (
-      <p className={cn('text-[11px] text-success', className)} role="status">
+      <p className={cn('text-meta text-success', className)} role="status">
         Bildiriminiz moderasyon kuyruğuna iletildi.
       </p>
     );
@@ -100,7 +100,7 @@ export function ReportButton({
       <h3 className="label mb-2 text-foreground">İçeriği bildir</h3>
 
       {!configured || !user ? (
-        <p className="text-[11.5px] leading-relaxed text-muted-foreground">
+        <p className="text-body-sm leading-relaxed text-muted-foreground">
           Bildirim göndermek için giriş yapmanız gerekir. Kayıtların hesapla
           ilişkilendirilmesi, kötüye kullanımı önlemenin tek pratik yolu.
         </p>
@@ -136,7 +136,7 @@ export function ReportButton({
           />
 
           {error && (
-            <p className="mb-2 text-[11px] text-danger" role="alert">
+            <p className="mb-2 text-meta text-danger" role="alert">
               {error}
             </p>
           )}
@@ -158,7 +158,7 @@ export function ReportButton({
         )}
       </div>
 
-      <p className="mt-2 text-[10px] leading-snug text-faint">
+      <p className="mt-2 text-meta leading-snug text-faint">
         Bildiriminizin durumu size ayrıca gösterilmez: kuyruğu izleyebilmek,
         bildirilen kullanıcının kimin şikâyet ettiğini çıkarmasına kapı açar.
       </p>

@@ -141,7 +141,7 @@ export function EquipmentPage() {
                 aria-selected={active}
                 to={c === 'hepsi' ? '/ekipman' : `/ekipman/${c}`}
                 className={cn(
-                  'rounded-card border px-2.5 py-1 text-[10px] tracking-[0.03em] transition-colors',
+                  'rounded-card border px-2.5 py-1 text-meta tracking-[0.03em] transition-colors',
                   active
                     ? 'border-foreground/40 bg-surface-2 text-foreground'
                     : 'border-border text-muted-foreground hover:border-border-strong hover:text-foreground'
@@ -217,7 +217,7 @@ function EquipmentCard({
             <span className="text-muted-foreground">{model.brand}</span>{' '}
             {model.model}
           </h2>
-          <p className="tabular mt-0.5 truncate text-[10px] text-muted-foreground">
+          <p className="tabular mt-0.5 truncate text-meta text-muted-foreground">
             {Object.entries(model.specs)
               .map(([k, v]) => `${k}: ${v}`)
               .join(' · ')}
@@ -251,18 +251,18 @@ function EquipmentCard({
             className="flex items-baseline justify-between gap-3 border-b border-border py-1 last:border-0"
           >
             <dt className="label shrink-0">{k}</dt>
-            <dd className="tabular text-right text-[11.5px] text-cold">{v}</dd>
+            <dd className="tabular text-right text-body-sm text-cold">{v}</dd>
           </div>
         ))}
       </dl>
 
       <div className="mt-auto flex items-center justify-between gap-2 pt-2.5">
         {model.priceHint && (
-          <span className="text-[10px] tracking-[0.03em] text-faint">
+          <span className="text-meta tracking-[0.03em] text-faint">
             {model.priceHint}
           </span>
         )}
-        <span className="ml-auto text-[10px] tracking-[0.04em] text-muted-foreground transition-colors group-hover:text-primary">
+        <span className="ml-auto text-meta tracking-[0.04em] text-muted-foreground transition-colors group-hover:text-primary">
           künye →
         </span>
       </div>

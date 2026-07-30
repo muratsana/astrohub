@@ -79,7 +79,7 @@ export function ThemeToggleRow() {
             onClick={() => setTheme(option)}
             aria-pressed={theme === option}
             className={cn(
-              'flex flex-col items-center gap-1 rounded-card border px-2 py-2 text-[10px] tracking-[0.02em] transition-colors',
+              'flex flex-col items-center gap-1 rounded-card border px-2 py-2 text-meta tracking-[0.02em] transition-colors',
               theme === option
                 ? 'border-primary bg-primary/10 text-primary'
                 : 'border-border text-muted-foreground'

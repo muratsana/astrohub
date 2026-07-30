@@ -159,7 +159,7 @@ export function AdminPage() {
           }
         />
         {roles.error && (
-          <p className="mt-3 text-center text-[11px] text-danger">{roles.error}</p>
+          <p className="mt-3 text-center text-meta text-danger">{roles.error}</p>
         )}
       </Shell>
     );
@@ -203,7 +203,7 @@ export function AdminPage() {
             onChange={(e) =>
               setFilter(e.target.value as ModerationStatus | 'hepsi')
             }
-            className="h-8 w-auto text-[11px]"
+            className="h-8 w-auto text-meta"
           >
             <option value="hepsi">Tüm durumlar</option>
             {Object.entries(statusLabels).map(([value, label]) => (
@@ -219,7 +219,7 @@ export function AdminPage() {
       </div>
 
       {queueError && (
-        <p className="mb-3 rounded-card border border-danger/40 bg-surface-1 px-3 py-2 text-[11.5px] text-danger">
+        <p className="mb-3 rounded-card border border-danger/40 bg-surface-1 px-3 py-2 text-body-sm text-danger">
           {queueError}
         </p>
       )}
@@ -251,17 +251,17 @@ export function AdminPage() {
                       <span className="text-[12.5px] font-medium text-foreground">
                         {targetLabels[item.target_type]}
                       </span>
-                      <span className="text-[11px] text-muted-foreground">
+                      <span className="text-meta text-muted-foreground">
                         {reasonLabels[item.reason]}
                       </span>
                     </span>
-                    <span className="tabular text-[10.5px] text-faint">
+                    <span className="tabular text-meta text-faint">
                       {new Date(item.created_at).toLocaleString('tr-TR')}
                     </span>
                   </div>
 
                   {item.note && (
-                    <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">
+                    <p className="mt-1 text-body-sm leading-relaxed text-muted-foreground">
                       {item.note}
                     </p>
                   )}
@@ -270,7 +270,7 @@ export function AdminPage() {
                     {item.target_path && (
                       <Link
                         to={item.target_path}
-                        className="text-[11px] text-primary hover:underline"
+                        className="text-meta text-primary hover:underline"
                       >
                         İçeriğe git →
                       </Link>
@@ -334,7 +334,7 @@ export function AdminPage() {
                 tone="muted"
               />
             </SpecList>
-            <p className="mt-3 text-[10px] leading-snug text-faint">
+            <p className="mt-3 text-meta leading-snug text-faint">
               Bu satırlar RLS politikalarının aynasıdır. Arayüz bir düğmeyi
               gizlese bile asıl engel veritabanındadır; tersi de doğru —
               gizlenmiş bir düğme yetki vermez.
@@ -342,7 +342,7 @@ export function AdminPage() {
           </Panel>
 
           <Panel title="Kuyruk nasıl doluyor?">
-            <p className="text-[11.5px] leading-relaxed text-muted-foreground">
+            <p className="text-body-sm leading-relaxed text-muted-foreground">
               Kayıtlar kullanıcı raporlarından ve otomatik kontrollerden gelir.
               Rapor eden kullanıcı kendi raporunu kuyrukta göremez: raporlayanın
               kuyruğu izleyebilmesi, hedef kullanıcının kimin şikâyet ettiğini

@@ -55,7 +55,7 @@ export function PlateFrame({
       {flag && <span className="absolute right-1.5 top-2">{flag}</span>}
 
       {fieldOfView && (
-        <span className="tabular absolute bottom-2 right-1.5 rounded-[2px] bg-background/85 px-1.5 py-0.5 text-[9px] text-cold backdrop-blur-sm">
+        <span className="tabular absolute bottom-2 right-1.5 rounded-[2px] bg-background/85 px-1.5 py-0.5 text-meta text-cold backdrop-blur-sm">
           {fieldOfView}
         </span>
       )}

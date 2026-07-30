@@ -133,7 +133,7 @@ export function RadioPage() {
                       >
                         {track.title}
                       </p>
-                      <p className="truncate text-[10px] text-muted-foreground">
+                      <p className="truncate text-meta text-muted-foreground">
                         {track.artist}
                         {track.note && ` · ${track.note}`}
                       </p>
@@ -142,7 +142,7 @@ export function RadioPage() {
                     {track.source === 'spotify' ? (
                       <Badge tone="success">Spotify</Badge>
                     ) : (
-                      <span className="tabular shrink-0 text-[10px] text-faint">
+                      <span className="tabular shrink-0 text-meta text-faint">
                         {track.durationSec
                           ? formatTrackTime(track.durationSec)
                           : '—'}
@@ -169,7 +169,7 @@ export function RadioPage() {
               )}
 
               <Panel title="Yayın ölçütleri">
-                <ul className="space-y-2 text-[11.5px] leading-relaxed text-muted-foreground">
+                <ul className="space-y-2 text-body-sm leading-relaxed text-muted-foreground">
                   {radioGuidelines.map((rule) => (
                     <li key={rule} className="flex gap-2">
                       <span aria-hidden className="text-primary">

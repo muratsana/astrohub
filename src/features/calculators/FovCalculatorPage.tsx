@@ -300,7 +300,7 @@ export function FovCalculatorPage() {
                   <p className="text-[12px] leading-relaxed text-muted-foreground">
                     {result.sampling.hint}
                   </p>
-                  <p className="mt-2 text-[10px] leading-snug text-faint">
+                  <p className="mt-2 text-meta leading-snug text-faint">
                     Bu değerlendirme tipik gökyüzü koşullarına (seeing ~2–4″)
                     göre sabit eşiklidir. Sahanızın seeing değerine bağlı
                     kararı{' '}
@@ -413,7 +413,7 @@ function FramePreview({
           ? `${targetName} kadraja sığıyor.`
           : `${targetName} kadraja sığmıyor — mozaik planlayıcı gerekebilir.`}
       </p>
-      <p className="mt-1 text-center text-[10px] text-faint">
+      <p className="mt-1 text-center text-meta text-faint">
         Kadraj {frameWidth.toFixed(0)}′ × {frameHeight.toFixed(0)}′ · hedef{' '}
         {targetWidth.toFixed(0)}′ × {targetHeight.toFixed(0)}′
       </p>

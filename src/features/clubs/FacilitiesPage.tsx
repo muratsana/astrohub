@@ -101,7 +101,7 @@ export function FacilitiesPage() {
               id="facility-kind"
               value={kind}
               onChange={(e) => setKind(e.target.value as FacilityKind | 'hepsi')}
-              className="h-8 w-auto text-[11px]"
+              className="h-8 w-auto text-meta"
             >
               <option value="hepsi">Tüm türler</option>
               {Object.entries(facilityKindLabels).map(([value, label]) => (
@@ -152,7 +152,7 @@ export function FacilitiesPage() {
                     {facility.highlights.map((highlight) => (
                       <li
                         key={highlight}
-                        className="flex gap-2 text-[11.5px] leading-relaxed text-muted-foreground"
+                        className="flex gap-2 text-body-sm leading-relaxed text-muted-foreground"
                       >
                         <span aria-hidden className="text-primary">
                           ·
@@ -195,7 +195,7 @@ export function FacilitiesPage() {
           </ul>
         )}
 
-        <p className="mt-6 text-center text-[10.5px] leading-relaxed text-faint">
+        <p className="mt-6 text-center text-meta leading-relaxed text-faint">
           Ziyaret koşulları kurumların duyurularından derlenmiştir ve
           değişebilir; yola çıkmadan önce kurumun kendi kanalını kontrol edin.
         </p>

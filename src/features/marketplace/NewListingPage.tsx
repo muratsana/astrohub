@@ -166,7 +166,7 @@ export function NewListingPage() {
         />
 
         {!user && (
-          <p className="mb-4 rounded-card border border-cold/40 bg-surface-1 px-3 py-2.5 text-[11.5px] leading-relaxed text-muted-foreground">
+          <p className="mb-4 rounded-card border border-cold/40 bg-surface-1 px-3 py-2.5 text-body-sm leading-relaxed text-muted-foreground">
             İlan yayımlamak için giriş yapmanız gerekiyor. Formu şimdi
             doldurabilirsiniz — <span className="text-foreground">yazdıklarınız
             kaybolmaz</span>, yayımla düğmesi sizi girişe yönlendirir.
@@ -332,7 +332,7 @@ export function NewListingPage() {
           {/* Yayımlama sütunu — sayfayı kaydırmadan durum görünür. */}
           <div className="lg:sticky lg:top-[calc(var(--spacing-shell)+1rem)] lg:self-start">
             <Panel title="Yayımla">
-              <p className="mb-3 text-[11.5px] leading-relaxed text-muted-foreground">
+              <p className="mb-3 text-body-sm leading-relaxed text-muted-foreground">
                 İlan hemen yayına girer ve pazaryeri listesinde görünür.
                 Sattığınızda ilan sayfanızdan "satıldı" olarak
                 işaretleyebilirsiniz.
@@ -344,17 +344,17 @@ export function NewListingPage() {
                 çeviriyor. `validateListing` zaten ilk engeli döndürüyor.
               */}
               {problem ? (
-                <p className="mb-3 rounded-card border border-warning/40 bg-surface-2 px-2.5 py-2 text-[11px] leading-snug text-warning">
+                <p className="mb-3 rounded-card border border-warning/40 bg-surface-2 px-2.5 py-2 text-meta leading-snug text-warning">
                   {problem}
                 </p>
               ) : (
-                <p className="mb-3 rounded-card border border-success/40 bg-surface-2 px-2.5 py-2 text-[11px] leading-snug text-success">
+                <p className="mb-3 rounded-card border border-success/40 bg-surface-2 px-2.5 py-2 text-meta leading-snug text-success">
                   İlan yayımlanmaya hazır.
                 </p>
               )}
 
               {error && (
-                <p className="mb-3 rounded-card border border-danger/45 bg-surface-2 px-2.5 py-2 text-[11px] leading-snug text-danger">
+                <p className="mb-3 rounded-card border border-danger/45 bg-surface-2 px-2.5 py-2 text-meta leading-snug text-danger">
                   {error}
                 </p>
               )}
@@ -369,7 +369,7 @@ export function NewListingPage() {
               </div>
 
               {/* Fotoğraf yok ve bu gizlenmiyor. */}
-              <p className="mt-3 border-t border-border pt-3 text-[10.5px] leading-relaxed text-faint">
+              <p className="mt-3 border-t border-border pt-3 text-meta leading-relaxed text-faint">
                 <span className="text-muted-foreground">Fotoğraf yükleme
                 henüz açık değil.</span>{' '}
                 İlan kartında ürün tipine göre bir yer tutucu görünür;
@@ -390,7 +390,7 @@ export function NewListingPage() {
                   ? `${input.price.toLocaleString('tr-TR')} ₺`
                   : '— ₺'}
               </p>
-              <p className="tabular mt-1 truncate text-[10px] text-muted-foreground">
+              <p className="tabular mt-1 truncate text-meta text-muted-foreground">
                 {city || 'Şehir'} · {condition}
               </p>
               <div className="mt-2 flex flex-wrap gap-1">
@@ -420,7 +420,7 @@ function Toggle({
     <label
       htmlFor={id}
       className={cn(
-        'inline-flex cursor-pointer items-center gap-2 rounded-card border px-2.5 py-1.5 text-[11px] transition-colors',
+        'inline-flex cursor-pointer items-center gap-2 rounded-card border px-2.5 py-1.5 text-meta transition-colors',
         checked
           ? 'border-primary/50 bg-primary/10 text-foreground'
           : 'border-border text-muted-foreground hover:border-border-strong'

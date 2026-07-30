@@ -100,7 +100,7 @@ export function RadioDock() {
 
           <Link
             to="/radyo"
-            className="min-w-0 flex-1 truncate text-[11px] text-foreground transition-colors hover:text-primary"
+            className="min-w-0 flex-1 truncate text-meta text-foreground transition-colors hover:text-primary"
           >
             <span className="font-medium">{current.title}</span>
             <span className="ml-2 text-muted-foreground">{current.artist}</span>

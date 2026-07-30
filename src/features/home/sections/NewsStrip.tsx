@@ -105,7 +105,7 @@ export function NewsStrip() {
                       <Badge tone="primary">
                         {newsCategoryLabels[item.category]}
                       </Badge>
-                      <span className="tabular text-[10px] text-faint">
+                      <span className="tabular text-meta text-faint">
                         {new Date(item.publishedAt).toLocaleDateString('tr-TR', {
                           day: '2-digit',
                           month: 'short',
@@ -115,12 +115,12 @@ export function NewsStrip() {
                     <span className="block text-[13px] leading-snug text-foreground transition-colors group-hover:text-primary">
                       {item.title}
                     </span>
-                    <span className="mt-1 line-clamp-2 block text-[11px] leading-relaxed text-muted-foreground">
+                    <span className="mt-1 line-clamp-2 block text-meta leading-relaxed text-muted-foreground">
                       {item.summary}
                     </span>
                     {/* CC BY'nin şartı: kredi görünür olmalı. */}
                     {item.image && (
-                      <span className="mt-1 block text-[9.5px] text-faint">
+                      <span className="mt-1 block text-meta text-faint">
                         Görsel: {item.image.credit}
                       </span>
                     )}
@@ -156,14 +156,14 @@ export function NewsStrip() {
                       <Badge tone="cold">
                         {articleCategoryLabels[article.category]}
                       </Badge>
-                      <span className="tabular text-[10px] text-faint">
+                      <span className="tabular text-meta text-faint">
                         {article.duration}
                       </span>
                     </span>
                     <span className="block text-[13px] leading-snug text-foreground transition-colors group-hover:text-primary">
                       {article.title}
                     </span>
-                    <span className="mt-1 line-clamp-2 block text-[11px] leading-relaxed text-muted-foreground">
+                    <span className="mt-1 line-clamp-2 block text-meta leading-relaxed text-muted-foreground">
                       {article.summary}
                     </span>
                   </span>

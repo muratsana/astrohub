@@ -75,7 +75,7 @@ export function RecentListings() {
                   <p className="tabular mt-1.5 font-display text-[17px] font-bold leading-none text-primary">
                     {listing.price.toLocaleString('tr-TR')} ₺
                   </p>
-                  <p className="tabular mt-auto truncate pt-1 text-[10px] text-muted-foreground">
+                  <p className="tabular mt-auto truncate pt-1 text-meta text-muted-foreground">
                     {listing.city} · @{listing.seller.username} · ★{' '}
                     {listing.seller.rating.toFixed(1)}
                   </p>

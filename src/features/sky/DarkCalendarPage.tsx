@@ -128,7 +128,7 @@ export function DarkCalendarPage() {
             </Button>
           </div>
 
-          <div className="flex items-center gap-2 text-[10px] tracking-[0.03em] text-faint">
+          <div className="flex items-center gap-2 text-meta tracking-[0.03em] text-faint">
             <span>az</span>
             <span aria-hidden className="flex">
               {[0.15, 0.35, 0.55, 0.75, 1].map((o) => (
@@ -174,7 +174,7 @@ export function DarkCalendarPage() {
               )}
             </div>
 
-            <p className="mt-3 px-1 text-[10px] leading-snug text-faint">
+            <p className="mt-3 px-1 text-meta leading-snug text-faint">
               Aysız karanlık, güneşin −18° altında olduğu ve ayın ufkun altında
               kaldığı sürenin kesişimidir. Hesap {location.label} koordinatına
               göredir; konumu üst çubuktan değiştirebilirsiniz.
@@ -199,13 +199,13 @@ export function DarkCalendarPage() {
                         <span className="tabular text-[13px] text-foreground">
                           {entry.date.getDate()} {MONTH_NAMES[month]}
                         </span>
-                        <span className="ml-2 text-[11px] text-muted-foreground">
+                        <span className="ml-2 text-meta text-muted-foreground">
                           {entry.date.toLocaleDateString('tr-TR', {
                             weekday: 'long',
                           })}
                         </span>
                       </span>
-                      <span className="tabular shrink-0 text-[11.5px] text-primary">
+                      <span className="tabular shrink-0 text-body-sm text-primary">
                         {formatDuration(entry.moonlessMinutes)}
                       </span>
                     </button>
@@ -233,7 +233,7 @@ export function DarkCalendarPage() {
                   />
                 </div>
 
-                <dl className="mt-3 space-y-1.5 text-[11.5px]">
+                <dl className="mt-3 space-y-1.5 text-body-sm">
                   <Row
                     label="Astronomik karanlık"
                     value={
@@ -318,12 +318,12 @@ function DayCell({
       </span>
       <span
         aria-hidden
-        className="text-[11px] leading-none text-muted-foreground"
+        className="text-meta leading-none text-muted-foreground"
         title={entry.moon.name}
       >
         {moonGlyph(entry.moon.illumination, entry.moon.waxing)}
       </span>
-      <span className="tabular text-[9.5px] leading-none text-faint">
+      <span className="tabular text-meta leading-none text-faint">
         {hours >= 0.1 ? `${hours.toFixed(1)}sa` : '—'}
       </span>
     </button>

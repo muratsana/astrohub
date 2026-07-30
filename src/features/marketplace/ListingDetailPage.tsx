@@ -110,7 +110,7 @@ export function ListingDetailPage() {
             <PlateFrame
               ratio="aspect-[16/9]"
               badge={
-                <span className="tabular rounded-[2px] bg-background/85 px-1.5 py-0.5 text-[10px] tracking-[0.02em] text-primary">
+                <span className="tabular rounded-[2px] bg-background/85 px-1.5 py-0.5 text-meta tracking-[0.02em] text-primary">
                   {equipmentCategoryLabels[listing.category]}
                 </span>
               }
@@ -121,7 +121,7 @@ export function ListingDetailPage() {
               />
             </PlateFrame>
 
-            <p className="text-[10px] leading-snug text-faint">
+            <p className="text-meta leading-snug text-faint">
               Görsel yer tutucudur — ilan fotoğrafı yükleme akışı, medya
               pipeline'ı (Faz 1.2) bağlandığında açılacak.
             </p>
@@ -207,7 +207,7 @@ export function ListingDetailPage() {
                 />
               </div>
 
-              <p className="mt-3 text-[11px] leading-relaxed text-muted-foreground">
+              <p className="mt-3 text-meta leading-relaxed text-muted-foreground">
                 {listing.negotiable
                   ? 'Satıcı pazarlık payı olduğunu belirtmiş.'
                   : 'Satıcı fiyatın sabit olduğunu belirtmiş.'}
@@ -221,7 +221,7 @@ export function ListingDetailPage() {
                 >
                   Satıcıya Mesaj Gönder
                 </Button>
-                <p className="text-[10px] leading-snug text-faint">
+                <p className="text-meta leading-snug text-faint">
                   Platform içi mesajlaşma Faz 2'de açılacak. İletişimin
                   platform içinde kalması, anlaşmazlıkta kaydın moderasyona
                   açık olmasını sağlar — bu yüzden ilanlarda telefon ve
@@ -303,7 +303,7 @@ export function ListingDetailPage() {
                         <span className="min-w-0 truncate text-[12px] text-foreground">
                           {item.title}
                         </span>
-                        <span className="tabular shrink-0 text-[11.5px] text-primary">
+                        <span className="tabular shrink-0 text-body-sm text-primary">
                           {item.price.toLocaleString('tr-TR')} ₺
                         </span>
                       </Link>

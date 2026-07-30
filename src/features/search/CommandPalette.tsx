@@ -142,7 +142,7 @@ export function CommandPalette({
             spellCheck={false}
             className="h-12 w-full bg-transparent text-[14px] text-foreground outline-none placeholder:text-faint"
           />
-          <kbd className="hidden shrink-0 rounded-[2px] border border-border px-1.5 py-0.5 text-[9px] tracking-widest text-faint sm:block">
+          <kbd className="hidden shrink-0 rounded-[2px] border border-border px-1.5 py-0.5 text-meta tracking-widest text-faint sm:block">
             Esc
           </kbd>
         </div>
@@ -187,7 +187,7 @@ export function CommandPalette({
                           <span
                             aria-hidden
                             className={cn(
-                              'shrink-0 text-[11px]',
+                              'shrink-0 text-meta',
                               isActive ? 'text-primary' : 'text-faint'
                             )}
                           >
@@ -200,12 +200,12 @@ export function CommandPalette({
                                 {command.title}
                               </span>
                               {command.soon && (
-                                <span className="shrink-0 rounded-[2px] border border-border px-1 text-[9px] tracking-widest text-faint">
+                                <span className="shrink-0 rounded-[2px] border border-border px-1 text-meta tracking-widest text-faint">
                                   Yakında
                                 </span>
                               )}
                             </span>
-                            <span className="block truncate text-[11px] text-muted-foreground">
+                            <span className="block truncate text-meta text-muted-foreground">
                               {command.subtitle}
                             </span>
                           </span>
@@ -213,7 +213,7 @@ export function CommandPalette({
                           {isActive && (
                             <span
                               aria-hidden
-                              className="shrink-0 text-[10px] tracking-widest text-faint"
+                              className="shrink-0 text-meta tracking-widest text-faint"
                             >
                               ↵
                             </span>
@@ -228,7 +228,7 @@ export function CommandPalette({
           )}
         </div>
 
-        <div className="flex items-center gap-4 border-t border-border px-4 py-2 text-[10px] tracking-[0.03em] text-faint">
+        <div className="flex items-center gap-4 border-t border-border px-4 py-2 text-meta tracking-[0.03em] text-faint">
           <span>↑↓ gez</span>
           <span>↵ çalıştır</span>
           <span>esc kapat</span>

@@ -31,7 +31,7 @@ export function Footer() {
               <Link
                 key={item.to}
                 to={item.to}
-                className="text-[11px] tracking-[0.03em] text-muted-foreground transition-colors hover:text-primary"
+                className="text-meta tracking-[0.03em] text-muted-foreground transition-colors hover:text-primary"
               >
                 {item.label}
               </Link>
@@ -39,7 +39,7 @@ export function Footer() {
           </nav>
         </div>
 
-        <div className="mt-5 flex flex-col gap-2 border-t border-border pt-4 text-[10px] tracking-[0.03em] text-faint sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-5 flex flex-col gap-2 border-t border-border pt-4 text-meta tracking-[0.03em] text-faint sm:flex-row sm:items-center sm:justify-between">
           <p className="tabular">© {new Date().getFullYear()} Astrohub</p>
 
           <nav aria-label="Kurumsal" className="flex flex-wrap gap-x-4 gap-y-1">

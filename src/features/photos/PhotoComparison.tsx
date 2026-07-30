@@ -70,7 +70,7 @@ export function PhotoComparison({ photo }: { photo: AstroPhoto }) {
               alt={photo.title}
               className="aspect-[4/3] w-full border border-border"
             />
-            <figcaption className="mt-1 truncate text-[11px] text-foreground">
+            <figcaption className="mt-1 truncate text-meta text-foreground">
               <span className="label mr-1.5">A</span>
               {photo.title}
             </figcaption>
@@ -82,7 +82,7 @@ export function PhotoComparison({ photo }: { photo: AstroPhoto }) {
               alt={other.title}
               className="aspect-[4/3] w-full border border-border"
             />
-            <figcaption className="mt-1 truncate text-[11px] text-foreground">
+            <figcaption className="mt-1 truncate text-meta text-foreground">
               <span className="label mr-1.5">B</span>
               <Link
                 to={`/fotograf/${other.slug}`}
@@ -127,16 +127,16 @@ export function PhotoComparison({ photo }: { photo: AstroPhoto }) {
               )}
             >
               <dt className="label">{row.label}</dt>
-              <dd className="text-[11.5px] text-foreground">{row.a}</dd>
+              <dd className="text-body-sm text-foreground">{row.a}</dd>
               <dd
                 className={cn(
-                  'text-[11.5px]',
+                  'text-body-sm',
                   row.differs ? 'text-primary' : 'text-foreground'
                 )}
               >
                 {row.b}
                 {row.delta && (
-                  <span className="mt-0.5 block text-[10px] text-faint">
+                  <span className="mt-0.5 block text-meta text-faint">
                     {row.delta}
                   </span>
                 )}
@@ -151,7 +151,7 @@ export function PhotoComparison({ photo }: { photo: AstroPhoto }) {
               ? 'Teknik olarak aynı'
               : `${differenceCount(rows)} fark`}
           </Badge>
-          <span className="text-[10px] leading-snug text-faint">
+          <span className="text-meta leading-snug text-faint">
             A: bu sayfa · B: seçilen kayıt
           </span>
         </div>

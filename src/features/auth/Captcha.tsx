@@ -134,7 +134,7 @@ export const Captcha = forwardRef<
     <div className="space-y-1">
       <div ref={containerRef} className="min-h-[65px]" />
       {failed && (
-        <p className="text-[11.5px] leading-relaxed text-danger">
+        <p className="text-body-sm leading-relaxed text-danger">
           Güvenlik doğrulaması yüklenemedi. Sayfayı yenileyin; sorun sürerse
           reklam/izleyici engelleyicisini bu site için kapatın.
         </p>

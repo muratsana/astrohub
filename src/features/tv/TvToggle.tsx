@@ -25,7 +25,7 @@ export function TvToggle({ className }: { className?: string }) {
       aria-label={live ? `Astrohub.tv — canlı: ${live.title}` : 'Astrohub.tv'}
       title={live ? `Canlı yayında: ${live.title}` : 'Astrohub.tv'}
       className={cn(
-        'inline-flex h-8 shrink-0 items-center gap-1.5 rounded-card border px-2 text-[11px] font-medium tracking-[0.02em] transition-colors sm:px-2.5',
+        'inline-flex h-8 shrink-0 items-center gap-1.5 rounded-card border px-2 text-meta font-medium tracking-[0.02em] transition-colors sm:px-2.5',
         live
           ? 'border-primary bg-primary/10 text-primary'
           : 'border-border text-muted-foreground hover:border-border-strong hover:text-foreground',

@@ -106,7 +106,7 @@ export function ForumPage() {
             aria-selected={category === 'hepsi'}
             onClick={() => setCategory('hepsi')}
             className={cn(
-              'rounded-card border px-2.5 py-1 text-[10px] tracking-[0.03em] transition-colors',
+              'rounded-card border px-2.5 py-1 text-meta tracking-[0.03em] transition-colors',
               category === 'hepsi'
                 ? 'border-foreground/40 bg-surface-2 text-foreground'
                 : 'border-border text-muted-foreground hover:border-border-strong hover:text-foreground'
@@ -126,7 +126,7 @@ export function ForumPage() {
                 title={info.description}
                 onClick={() => setCategory(id)}
                 className={cn(
-                  'rounded-card border px-2.5 py-1 text-[10px] tracking-[0.03em] transition-colors',
+                  'rounded-card border px-2.5 py-1 text-meta tracking-[0.03em] transition-colors',
                   active
                     ? info.className
                     : 'border-border text-muted-foreground hover:border-border-strong hover:text-foreground'
@@ -255,7 +255,7 @@ function DensityToggle({
           aria-pressed={density === value}
           title={title}
           className={cn(
-            'flex h-8 items-center border-l border-border px-2.5 text-[10px] tracking-[0.03em] transition-colors first:border-l-0',
+            'flex h-8 items-center border-l border-border px-2.5 text-meta tracking-[0.03em] transition-colors first:border-l-0',
             density === value
               ? 'bg-primary text-primary-foreground'
               : 'text-muted-foreground hover:bg-surface-2 hover:text-foreground'
@@ -307,7 +307,7 @@ function ThreadRow({
             <LabelChip key={id} id={id} />
           ))}
           {thread.solved && (
-            <span className="shrink-0 rounded-[2px] border border-success/45 px-1.5 py-0.5 text-[9px] font-medium tracking-[0.02em] text-success">
+            <span className="shrink-0 rounded-[2px] border border-success/45 px-1.5 py-0.5 text-meta font-medium tracking-[0.02em] text-success">
               Çözüldü
             </span>
           )}
@@ -318,26 +318,26 @@ function ThreadRow({
             kaybolmasın. */}
         {density === 'detayli' ? (
           <>
-            <p className="mt-1 line-clamp-1 text-[11px] leading-relaxed text-muted-foreground">
+            <p className="mt-1 line-clamp-1 text-meta leading-relaxed text-muted-foreground">
               {thread.body}
             </p>
 
             <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
               <span
                 className={cn(
-                  'rounded-[2px] border px-1.5 py-0.5 text-[9px] font-medium tracking-[0.02em]',
+                  'rounded-[2px] border px-1.5 py-0.5 text-meta font-medium tracking-[0.02em]',
                   info.className
                 )}
               >
                 {info.name}
               </span>
-              <span className="tabular text-[10px] text-muted-foreground">
+              <span className="tabular text-meta text-muted-foreground">
                 @{thread.author.username}
               </span>
-              <span aria-hidden className="text-[10px] text-faint">
+              <span aria-hidden className="text-meta text-faint">
                 ·
               </span>
-              <span className="tabular text-[10px] text-faint">
+              <span className="tabular text-meta text-faint">
                 {relativeTime(thread.lastActivityAt)}
               </span>
             </div>
@@ -346,13 +346,13 @@ function ThreadRow({
           <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
             <span
               className={cn(
-                'rounded-[2px] border px-1.5 py-0.5 text-[9px] font-medium tracking-[0.02em]',
+                'rounded-[2px] border px-1.5 py-0.5 text-meta font-medium tracking-[0.02em]',
                 info.className
               )}
             >
               {info.name}
             </span>
-            <span className="tabular text-[10px] text-faint">
+            <span className="tabular text-meta text-faint">
               {relativeTime(thread.lastActivityAt)}
             </span>
           </div>
@@ -367,11 +367,11 @@ function ThreadRow({
             : 'items-center gap-2'
         )}
       >
-        <span className="tabular inline-flex items-center gap-1 text-[11px] text-cold">
+        <span className="tabular inline-flex items-center gap-1 text-meta text-cold">
           <ChatIcon className="h-3 w-3" />
           {thread.replyCount}
         </span>
-        <span className="tabular text-[10px] text-faint">
+        <span className="tabular text-meta text-faint">
           {thread.viewCount.toLocaleString('tr-TR')}
           {density === 'detayli' ? ' görüntülenme' : ''}
         </span>

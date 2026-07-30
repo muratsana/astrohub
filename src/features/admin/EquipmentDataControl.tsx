@@ -69,7 +69,7 @@ export function EquipmentDataControl({ canWrite }: { canWrite: boolean }) {
         />
       </div>
 
-      <p className="mb-3 text-[11.5px] leading-relaxed text-muted-foreground">
+      <p className="mb-3 text-body-sm leading-relaxed text-muted-foreground">
         Setup planlayıcısı bir alan boşken o kontrolü hiç yapmıyor,
         “veri yetersiz” diyor. Bu liste hangi kaydın hangi alanının eksik
         olduğunu gösteriyor; en çok eksiği olan kayıt en üstte.
@@ -81,8 +81,8 @@ export function EquipmentDataControl({ canWrite }: { canWrite: boolean }) {
           onClick={() => setCategory('')}
           className={
             category === ''
-              ? 'rounded-card border border-primary/50 bg-surface-2 px-2 py-1 text-[11px] text-foreground'
-              : 'rounded-card border border-border px-2 py-1 text-[11px] text-muted-foreground'
+              ? 'rounded-card border border-primary/50 bg-surface-2 px-2 py-1 text-meta text-foreground'
+              : 'rounded-card border border-border px-2 py-1 text-meta text-muted-foreground'
           }
         >
           Tümü ({summary.incomplete})
@@ -94,8 +94,8 @@ export function EquipmentDataControl({ canWrite }: { canWrite: boolean }) {
             onClick={() => setCategory(c as EquipmentCategory)}
             className={
               category === c
-                ? 'rounded-card border border-primary/50 bg-surface-2 px-2 py-1 text-[11px] text-foreground'
-                : 'rounded-card border border-border px-2 py-1 text-[11px] text-muted-foreground'
+                ? 'rounded-card border border-primary/50 bg-surface-2 px-2 py-1 text-meta text-foreground'
+                : 'rounded-card border border-border px-2 py-1 text-meta text-muted-foreground'
             }
           >
             {equipmentCategoryLabels[c as EquipmentCategory]} ({missing})
@@ -104,18 +104,18 @@ export function EquipmentDataControl({ canWrite }: { canWrite: boolean }) {
       </div>
 
       {error && (
-        <p role="alert" className="mb-2 text-[11.5px] text-danger">
+        <p role="alert" className="mb-2 text-body-sm text-danger">
           {error}
         </p>
       )}
       {message && (
-        <p role="status" className="mb-2 text-[11.5px] text-success">
+        <p role="status" className="mb-2 text-body-sm text-success">
           {message}
         </p>
       )}
 
       {report.length === 0 ? (
-        <p className="py-4 text-center text-[11.5px] text-muted-foreground">
+        <p className="py-4 text-center text-body-sm text-muted-foreground">
           Bu filtrede eksik veri yok.
         </p>
       ) : (
@@ -140,7 +140,7 @@ export function EquipmentDataControl({ canWrite }: { canWrite: boolean }) {
                       {row.brand} {row.model}
                     </span>
                   )}
-                  <span className="text-[10px] text-faint">
+                  <span className="text-meta text-faint">
                     {equipmentCategoryLabels[row.category as EquipmentCategory]}
                   </span>
                   <span className="ml-auto flex flex-wrap gap-1">
@@ -184,13 +184,13 @@ export function EquipmentDataControl({ canWrite }: { canWrite: boolean }) {
       )}
 
       {!canWrite && (
-        <p className="mt-2 text-[11px] text-muted-foreground">
+        <p className="mt-2 text-meta text-muted-foreground">
           Düzenleme yönetici yetkisi ister. Rapor yetkisiz de okunabilir —
           eksikleri görmek kimseye zarar vermez.
         </p>
       )}
 
-      <p className="mt-2 text-[10px] leading-snug text-faint">
+      <p className="mt-2 text-meta leading-snug text-faint">
         Düzenleme doğrudan veritabanına yazılır ve doğrulama tarihi bugüne
         çekilir. Uygulamanın içindeki tohum katalog bir sonraki sürümde
         gelir; senkronizasyon yalnızca eksik kayıtları ekler, elle
@@ -309,7 +309,7 @@ function EditForm({
         <Button size="sm" disabled={busy} onClick={() => void submit()}>
           {busy ? 'Kaydediliyor…' : 'Kaydet'}
         </Button>
-        <span className="text-[10px] text-faint">
+        <span className="text-meta text-faint">
           Boş bırakılan alanlar değiştirilmez. Kaydetme, doğrulama tarihini
           bugüne çeker.
         </span>

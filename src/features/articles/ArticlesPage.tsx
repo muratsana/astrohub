@@ -85,7 +85,7 @@ export function ArticlesPage() {
         footer: (
           <div className="flex items-center gap-2">
             <Badge tone={levelTone(article.level)}>{article.level}</Badge>
-            <span className="tabular text-[10px] text-faint">
+            <span className="tabular text-meta text-faint">
               {article.author}
             </span>
           </div>
@@ -126,7 +126,7 @@ export function ArticlesPage() {
                   aria-selected={level === l}
                   onClick={() => setLevel(l)}
                   className={cn(
-                    'rounded-card border px-2.5 py-1 text-[10px] tracking-[0.03em] transition-colors',
+                    'rounded-card border px-2.5 py-1 text-meta tracking-[0.03em] transition-colors',
                     level === l
                       ? 'border-primary text-primary'
                       : 'border-border text-muted-foreground hover:border-border-strong hover:text-foreground'
@@ -148,7 +148,7 @@ export function ArticlesPage() {
                   aria-selected={category === c}
                   onClick={() => setCategory(c)}
                   className={cn(
-                    'rounded-card border px-2.5 py-1 text-[10px] tracking-[0.03em] transition-colors',
+                    'rounded-card border px-2.5 py-1 text-meta tracking-[0.03em] transition-colors',
                     category === c
                       ? 'border-primary text-primary'
                       : 'border-border text-muted-foreground hover:border-border-strong hover:text-foreground'

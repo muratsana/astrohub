@@ -444,7 +444,7 @@ export function SetupCompatibilityPage() {
                   />
                 </FilterCell>
               </FilterBar>
-              <p className="mt-2 text-[10px] leading-snug text-faint">
+              <p className="mt-2 text-meta leading-snug text-faint">
                 Seeing değeri örnekleme kararını doğrudan etkiler: Türkiye'de
                 iyi bir yayla gecesi 2–2.5″, şehir içi 4″ ve üzeridir.
               </p>
@@ -481,7 +481,7 @@ export function SetupCompatibilityPage() {
                     >
                       {severityLabel[report.verdict]}
                     </Badge>
-                    <span className="tabular text-[11px] text-muted-foreground">
+                    <span className="tabular text-meta text-muted-foreground">
                       {report.checks.filter((c) => c.severity === 'ok').length} /{' '}
                       {report.checks.length} kontrol temiz
                     </span>
@@ -553,11 +553,11 @@ export function SetupCompatibilityPage() {
                               {severityLabel[check.severity]}
                             </span>
                           </span>
-                          <span className="tabular text-[11.5px] text-muted-foreground">
+                          <span className="tabular text-body-sm text-muted-foreground">
                             {check.value}
                           </span>
                         </div>
-                        <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">
+                        <p className="mt-1 text-body-sm leading-relaxed text-muted-foreground">
                           {check.detail}
                         </p>
                       </li>
@@ -566,7 +566,7 @@ export function SetupCompatibilityPage() {
                 </Panel>
 
                 <Panel title="Setup'u kaydet">
-                  <p className="text-[11.5px] leading-relaxed text-muted-foreground">
+                  <p className="text-body-sm leading-relaxed text-muted-foreground">
                     Kayıt tarayıcınızda saklanır (hesap sistemi gelene kadar).
                     Kaydettikten sonra oluşan bağlantı, setup değerlerini
                     kendi içinde taşıdığı için başka cihazda da açılır.
@@ -617,7 +617,7 @@ export function SetupCompatibilityPage() {
                       tone="muted"
                     />
                   </SpecList>
-                  <p className="mt-3 text-[10px] leading-snug text-faint">
+                  <p className="mt-3 text-meta leading-snug text-faint">
                     Yük payı üreticinin nominal kapasitesinin %60'ıdır —
                     astrofotoğrafta yerleşik emniyet payı. Backfocus toleransı
                     ±0.5 mm; filtre, kalınlığının 1/3'ü kadar optik yol ekler.

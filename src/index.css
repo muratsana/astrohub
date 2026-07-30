@@ -23,11 +23,26 @@
   --color-surface-2: #131a1e;
   --color-surface-3: #1c262c;
 
-  /* ---- Metin ---- */
+  /*
+   * ---- Metin: üç kademe, HEPSİ WCAG AA (≥4.5:1) ----
+   *
+   * Ölçülen eski değerler: muted 5.10, faint 2.78 (en kötü yüzey olan
+   * surface-2'ye karşı). `faint` küçük metinde AA'yı geçmiyordu ve
+   * denetimde ~31 ihlalin kaynağıydı (QA GUI-02).
+   *
+   * `faint`i sınıra çekmek tek başına yetmedi: 4.6'ya çıkınca muted
+   * (5.10) ile ayırt edilemez hâle geliyordu — kontrastı düzeltip
+   * hiyerarşiyi kaybetmek olurdu. Bu yüzden kademe ARALIĞI açıldı:
+   * muted 6.55'e çıktı, faint 4.64'e. Artık üç kademe de okunur ve
+   * aralarındaki fark gözle görülür (14.6 / 6.6 / 4.6).
+   *
+   * Değerler ton/doygunluk korunarak yalnızca açıklıkta çözüldü;
+   * regresyonu `theme.test.ts` içindeki kontrast testi kilitliyor.
+   */
   --color-foreground: #e6ebe8;
-  --color-muted-foreground: #7d8d90;
+  --color-muted-foreground: #93a0a3;
   /* Üçüncül: birim etiketleri, dipnotlar — asla tek başına anlam taşımaz */
-  --color-faint: #556266;
+  --color-faint: #74868b;
 
   /* ---- Çizgiler ---- */
   --color-border: rgba(230, 235, 232, 0.13);
@@ -67,6 +82,31 @@
   --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono: ui-monospace, 'SF Mono', Menlo, monospace;
 
+  /*
+   * ---- SEMANTİK PUNTO KADEMELERİ (§6.3 / QA GUI-01) ----
+   *
+   * Denetim, kaynakta 9–11.5px arası ELLE YAZILMIŞ 478 punto sınıfı
+   * buldu. Sorun yalnızca okunabilirlik değildi: her yeni ekran kendi
+   * sayısını seçtiği için aynı tür bilgi sayfadan sayfaya farklı
+   * boyutta çıkıyordu — token'ların çevresinden dolaşılmıştı.
+   *
+   * Artık üç kademe var ve isimleri ROLE göre:
+   *
+   *   text-meta     12px  · teknik künye, rozet, birim, tarih
+   *   text-caption  12.5px · dipnot, görsel kredisi, kaynak satırı
+   *   text-body-sm  14px  · kart gövdesi, özet, liste açıklaması
+   *
+   * Alt sınır 12px bilinçli: mobilde 9–11px teknik metin okunmuyordu.
+   * "Teknik görünüm" küçük puntoyla değil tabular rakam, ağırlık, renk
+   * ve hizalamayla kurulur.
+   */
+  --text-meta: 12px;
+  --text-meta--line-height: 1.45;
+  --text-caption: 12.5px;
+  --text-caption--line-height: 1.55;
+  --text-body-sm: 14px;
+  --text-body-sm--line-height: 1.6;
+
   /* İçerik genişliği (§6.4) */
   --spacing-content: 1520px;
 
@@ -104,13 +144,13 @@
     --color-surface-3: #d4dad3;
 
     --color-foreground: #12181a;
-    --color-muted-foreground: #4f5c5c;
-    --color-faint: #78868a;
+    --color-muted-foreground: #465151;
+    --color-faint: #5b6669;
 
     --color-border: rgba(18, 24, 26, 0.16);
     --color-border-strong: rgba(18, 24, 26, 0.34);
 
-    --color-primary: #a35400;
+    --color-primary: #9b5000;
     --color-primary-hover: #7f4100;
     --color-primary-foreground: #ffffff;
     --color-primary-dim: #d99b4e;
@@ -119,7 +159,7 @@
     --color-cold-dim: #7aa5bb;
 
     --color-success: #12704a;
-    --color-warning: #8c5f0d;
+    --color-warning: #875c0d;
     --color-danger: #a93325;
   }
 
@@ -136,9 +176,15 @@
     --color-surface-2: #1e0605;
     --color-surface-3: #2b0a08;
 
+    /*
+     * Saha modunun dinamik aralığı dar: yalnızca kırmızı kanal ve neredeyse
+     * siyah zemin. En parlak metin (foreground) 8.46'da tavan yapıyor, bu
+     * yüzden üç kademe 8.5 / 6.1 / 4.65 olarak sıkıştırıldı — hepsi AA'yı
+     * geçiyor ve karanlık adaptasyonunu bozmuyor.
+     */
     --color-foreground: #ff8a7a;
-    --color-muted-foreground: #a85448;
-    --color-faint: #6d332c;
+    --color-muted-foreground: #c37e74;
+    --color-faint: #bc6358;
 
     --color-border: rgba(255, 110, 90, 0.17);
     --color-border-strong: rgba(255, 110, 90, 0.34);
@@ -149,7 +195,7 @@
     --color-primary-dim: #8f1f13;
 
     /* Soğuk mavi saha modunda yoktur — sönük kızıla düşer. */
-    --color-cold: #c25a49;
+    --color-cold: #c35d4d;
     --color-cold-dim: #7a2f24;
 
     --color-success: #c26a4a;
@@ -228,7 +274,7 @@
    * değil renk ve ölçü. §6.3 gereği 11px'in altına inmez.
    */
   .label {
-    font-size: 11px;
+    font-size: var(--text-meta);
     line-height: 1.45;
     letter-spacing: 0.04em;
     color: var(--color-muted-foreground);

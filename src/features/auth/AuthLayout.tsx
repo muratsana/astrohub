@@ -36,7 +36,7 @@ export function AuthLayout({
             <LogoMark className="h-8 w-8 shrink-0 text-primary" />
             <div className="min-w-0">
               <h1 className="text-[17px] text-foreground">{title}</h1>
-              <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">
+              <p className="mt-0.5 text-meta leading-snug text-muted-foreground">
                 {subtitle}
               </p>
             </div>
@@ -45,7 +45,7 @@ export function AuthLayout({
           {!configured && (
             <div
               role="status"
-              className="border-b border-warning/25 bg-warning/8 px-5 py-3 text-[11px] leading-relaxed text-warning"
+              className="border-b border-warning/25 bg-warning/8 px-5 py-3 text-meta leading-relaxed text-warning"
             >
               Kimlik doğrulama henüz yapılandırılmadı. Formu deneyebilirsiniz;
               Supabase kurulumu tamamlandığında giriş/kayıt aktif olacak.
@@ -62,7 +62,7 @@ export function AuthLayout({
         <p className="mt-2 text-center">
           <Link
             to="/"
-            className="text-[10px] tracking-[0.04em] text-faint transition-colors hover:text-foreground"
+            className="text-meta tracking-[0.04em] text-faint transition-colors hover:text-foreground"
           >
             ← Ana sayfa
           </Link>

@@ -116,7 +116,7 @@ export function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
               type="button"
               onClick={onOpenNav}
               aria-label="Modül haritasını aç"
-              className="inline-flex h-8 items-center gap-1.5 rounded-card border border-border px-2 text-[10px] tracking-[0.03em] text-muted-foreground transition-colors hover:border-border-strong hover:text-foreground sm:px-2.5 xl:hidden"
+              className="inline-flex h-8 items-center gap-1.5 rounded-card border border-border px-2 text-meta tracking-[0.03em] text-muted-foreground transition-colors hover:border-border-strong hover:text-foreground sm:px-2.5 xl:hidden"
             >
               <MenuIcon className="h-3.5 w-3.5" />
               <span className="hidden lg:inline">Modüller</span>

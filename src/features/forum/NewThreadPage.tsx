@@ -115,7 +115,7 @@ export function NewThreadPage() {
               </Select>
             </Field>
             {info && (
-              <p className="-mt-2 text-[10px] text-faint">{info.description}</p>
+              <p className="-mt-2 text-meta text-faint">{info.description}</p>
             )}
 
             {/*
@@ -158,7 +158,7 @@ export function NewThreadPage() {
                         )
                       }
                       className={cn(
-                        'rounded-card border px-2.5 py-1 text-[10px] tracking-[0.03em] transition-colors',
+                        'rounded-card border px-2.5 py-1 text-meta tracking-[0.03em] transition-colors',
                         active
                           ? badge.className
                           : 'border-border text-muted-foreground hover:border-border-strong hover:text-foreground',
@@ -170,7 +170,7 @@ export function NewThreadPage() {
                   );
                 })}
               </div>
-              <p className="text-[10px] leading-snug text-faint">
+              <p className="text-meta leading-snug text-faint">
                 Konunun türünü seçin — en çok {forumLabelLimit} tane. İsteğe
                 bağlı.
               </p>
@@ -206,13 +206,13 @@ export function NewThreadPage() {
             </Field>
 
             {error && (
-              <p role="alert" className="text-[11.5px] text-danger">
+              <p role="alert" className="text-body-sm text-danger">
                 {error}
               </p>
             )}
 
             <div className="flex items-center justify-between gap-3 border-t border-border pt-4">
-              <p className="text-[10px] leading-snug text-faint">
+              <p className="text-meta leading-snug text-faint">
                 {user
                   ? 'Konu düz metin olarak yayımlanır; biçimlendirme etiketleri kaldırılır.'
                   : 'Konu açmak için giriş yapmanız gerekiyor — yazdıklarınız formda kalır.'}
@@ -240,12 +240,12 @@ export function NewThreadPage() {
                   </p>
                 )}
                 {cleanBody && (
-                  <p className="mt-2 whitespace-pre-line text-[11.5px] leading-relaxed text-muted-foreground">
+                  <p className="mt-2 whitespace-pre-line text-body-sm leading-relaxed text-muted-foreground">
                     {cleanBody}
                   </p>
                 )}
                 {changed && (
-                  <p className="mt-2 border-t border-border pt-2 text-[10px] leading-snug text-faint">
+                  <p className="mt-2 border-t border-border pt-2 text-meta leading-snug text-faint">
                     Biçimlendirme etiketleri ve görünmez karakterler kaldırıldı;
                     forum düz metin kabul eder.
                   </p>
@@ -254,7 +254,7 @@ export function NewThreadPage() {
             )}
 
             <Panel title="İyi soru nasıl yazılır">
-              <ol className="space-y-2.5 text-[11.5px] leading-relaxed text-muted-foreground">
+              <ol className="space-y-2.5 text-body-sm leading-relaxed text-muted-foreground">
                 <li>
                   <span className="text-foreground">Ekipmanı yazın.</span>{' '}
                   Teleskop, montür, kamera, filtre ve varsa düzleştirici.

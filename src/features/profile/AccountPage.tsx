@@ -122,13 +122,13 @@ export function AccountPage() {
         />
 
         {loading && (
-          <p className="mb-4 text-[11.5px] text-muted-foreground">
+          <p className="mb-4 text-body-sm text-muted-foreground">
             Profil yükleniyor…
           </p>
         )}
 
         {error && (
-          <p className="mb-4 rounded-card border border-danger/45 bg-surface-1 px-3 py-2 text-[11.5px] text-danger">
+          <p className="mb-4 rounded-card border border-danger/45 bg-surface-1 px-3 py-2 text-body-sm text-danger">
             Profil okunamadı: {error}
           </p>
         )}
@@ -157,7 +157,7 @@ export function AccountPage() {
                 çalışmaz hâle getirir.
               */}
               {usernameChanged && (
-                <p className="rounded-card border border-warning/40 bg-surface-2 px-2.5 py-2 text-[11px] leading-snug text-warning">
+                <p className="rounded-card border border-warning/40 bg-surface-2 px-2.5 py-2 text-meta leading-snug text-warning">
                   Kullanıcı adını değiştirirseniz eski profil adresiniz
                   (<span className="tabular">/profil/{profile?.username}</span>)
                   artık çalışmaz. Daha önce paylaştığınız bağlantılar kırılır.
@@ -223,12 +223,12 @@ export function AccountPage() {
               </Field>
 
               {problem && (
-                <p className="rounded-card border border-warning/40 bg-surface-2 px-2.5 py-2 text-[11px] leading-snug text-warning">
+                <p className="rounded-card border border-warning/40 bg-surface-2 px-2.5 py-2 text-meta leading-snug text-warning">
                   {problem}
                 </p>
               )}
               {failure && (
-                <p className="rounded-card border border-danger/45 bg-surface-2 px-2.5 py-2 text-[11px] leading-snug text-danger">
+                <p className="rounded-card border border-danger/45 bg-surface-2 px-2.5 py-2 text-meta leading-snug text-danger">
                   {failure}
                 </p>
               )}
@@ -238,7 +238,7 @@ export function AccountPage() {
                   {busy ? 'Kaydediliyor…' : 'Kaydet'}
                 </Button>
                 {message && (
-                  <span className="text-[11px] text-success">{message}</span>
+                  <span className="text-meta text-success">{message}</span>
                 )}
               </div>
             </div>
@@ -295,7 +295,7 @@ export function AccountPage() {
                 olurdu; kullanıcı deneyip başarısız olduğunda siteye
                 değil kendine kızıyor.
               */}
-              <ul className="space-y-2 text-[11.5px] leading-relaxed text-muted-foreground">
+              <ul className="space-y-2 text-body-sm leading-relaxed text-muted-foreground">
                 <li>
                   <span className="text-foreground">Profil fotoğrafı</span> —
                   medya altyapısı devreye girdiğinde açılacak.

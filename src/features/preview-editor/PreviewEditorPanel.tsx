@@ -53,7 +53,7 @@ export function PreviewEditorPanel() {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="fixed right-0 top-1/2 z-40 -translate-y-1/2 rounded-l-card border border-r-0 border-cold bg-surface-1 px-2 py-4 text-[10px] tracking-[0.04em] text-cold [writing-mode:vertical-rl] hover:bg-surface-2"
+          className="fixed right-0 top-1/2 z-40 -translate-y-1/2 rounded-l-card border border-r-0 border-cold bg-surface-1 px-2 py-4 text-meta tracking-[0.04em] text-cold [writing-mode:vertical-rl] hover:bg-surface-2"
         >
           Önizleme editörü
         </button>
@@ -71,7 +71,7 @@ export function PreviewEditorPanel() {
         <header className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
           <div>
             <h2 className="label text-foreground">Önizleme Editörü</h2>
-            <p className="mt-0.5 text-[10px] text-faint">
+            <p className="mt-0.5 text-meta text-faint">
               Hero metinlerini canlı düzenle
             </p>
           </div>
@@ -97,7 +97,7 @@ export function PreviewEditorPanel() {
                 }
                 aria-pressed={activeSlide.id === slide.id}
                 className={cn(
-                  'rounded-card border px-2.5 py-1 text-[10px] tracking-[0.03em] transition-colors',
+                  'rounded-card border px-2.5 py-1 text-meta tracking-[0.03em] transition-colors',
                   activeSlide.id === slide.id
                     ? 'border-primary text-primary'
                     : 'border-border text-muted-foreground hover:border-border-strong hover:text-foreground'
@@ -111,7 +111,7 @@ export function PreviewEditorPanel() {
 
         <div className="flex-1 overflow-y-auto px-4 py-4">
           {!selection && (
-            <p className="mb-4 rounded-card border border-cold/40 bg-surface-2 px-3 py-2.5 text-[11px] leading-relaxed text-muted-foreground">
+            <p className="mb-4 rounded-card border border-cold/40 bg-surface-2 px-3 py-2.5 text-meta leading-relaxed text-muted-foreground">
               Hero üzerindeki bir metne tıkla — etiket, başlık, alt metin ya da
               butona. Alan burada açılır.
             </p>
@@ -169,7 +169,7 @@ export function PreviewEditorPanel() {
                   )}
 
                   {field.key === 'ctaTo' && (
-                    <span className="mt-1 block text-[10px] text-faint">
+                    <span className="mt-1 block text-meta text-faint">
                       Site içi yol, ör. /galeri
                     </span>
                   )}
@@ -180,7 +180,7 @@ export function PreviewEditorPanel() {
         </div>
 
         <footer className="flex items-center justify-between gap-3 border-t border-border px-4 py-3">
-          <p className="text-[10px] leading-snug text-faint">
+          <p className="text-meta leading-snug text-faint">
             {dirty ? 'Değişiklikler tarayıcında saklanıyor' : 'Kod değerleri'}
           </p>
           <Button

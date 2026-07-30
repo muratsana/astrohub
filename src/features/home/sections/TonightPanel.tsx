@@ -163,7 +163,7 @@ export function TonightPanel() {
           <h1 className="text-[20px] text-foreground sm:text-[23px]">Bu Gece</h1>
           <span className="label">{location.label}</span>
           <span aria-hidden className="h-3 w-px bg-border" />
-          <span className="tabular text-[11px] text-muted-foreground">
+          <span className="tabular text-meta text-muted-foreground">
             {dateLabel}
           </span>
 
@@ -171,7 +171,7 @@ export function TonightPanel() {
               bulut yüzdesi verebiliyor ve kullanıcı hangisine baktığını
               bilmeden ikisini karşılaştıramaz. */}
           {weather && (
-            <span className="text-[10px] text-faint">
+            <span className="text-meta text-faint">
               {weather.source === 'meteoblue' ? 'meteoblue' : 'Open-Meteo'}
             </span>
           )}
@@ -179,7 +179,7 @@ export function TonightPanel() {
           {verdict && (
             <span
               className={cn(
-                'ml-auto rounded-card border px-2.5 py-1 text-[10.5px] font-medium tracking-[0.04em]',
+                'ml-auto rounded-card border px-2.5 py-1 text-meta font-medium tracking-[0.04em]',
                 {
                   success: 'border-success/45 bg-success/10 text-success',
                   primary: 'border-primary/45 bg-primary/10 text-primary',
@@ -195,7 +195,7 @@ export function TonightPanel() {
 
         {shouldOfferGeolocation && (
           <div className="mb-3 flex flex-wrap items-center gap-3 rounded-card border border-cold/40 bg-surface-1 px-3 py-2.5">
-            <p className="w-full text-[11.5px] leading-relaxed text-muted-foreground sm:w-auto sm:flex-1">
+            <p className="w-full text-body-sm leading-relaxed text-muted-foreground sm:w-auto sm:flex-1">
               Hesaplar <span className="text-foreground">{location.label}</span>{' '}
               için yapılıyor.{' '}
               <span className="text-cold">Koordinat sunucumuza gönderilmez</span>
@@ -213,7 +213,7 @@ export function TonightPanel() {
         )}
 
         {permission === 'denied' && (
-          <p className="mb-3 rounded-card border border-border bg-surface-1 px-3 py-2 text-[11px] text-muted-foreground">
+          <p className="mb-3 rounded-card border border-border bg-surface-1 px-3 py-2 text-meta text-muted-foreground">
             Konum izni alınamadı — hesaplar seçili şehir üzerinden yapılıyor.
             Üstteki konum seçiciden değiştirebilirsin.
           </p>
@@ -351,7 +351,7 @@ export function TonightPanel() {
             </header>
 
             {visible.length === 0 ? (
-              <p className="px-3 py-6 text-center text-[11px] text-muted-foreground">
+              <p className="px-3 py-6 text-center text-meta text-muted-foreground">
                 Bu gece karanlık pencere oluşmuyor; hedef sıralaması
                 hesaplanamadı.
               </p>
@@ -363,13 +363,13 @@ export function TonightPanel() {
                       to={`/hedef/${target.slug}`}
                       className="flex items-baseline justify-between gap-3 border-b border-border px-3 py-1.5 transition-colors last:border-0 hover:bg-surface-2"
                     >
-                      <span className="min-w-0 truncate text-[11.5px] text-foreground">
+                      <span className="min-w-0 truncate text-body-sm text-foreground">
                         <span className="font-medium">{target.catalog}</span>
                         <span className="ml-1.5 text-muted-foreground">
                           {target.name}
                         </span>
                       </span>
-                      <span className="tabular shrink-0 text-[11px] text-cold">
+                      <span className="tabular shrink-0 text-meta text-cold">
                         {clock(peak.peakAt)}
                         <span className="ml-1.5 text-primary">
                           {formatAltitude(peak.peakAltitude)}
@@ -431,7 +431,7 @@ function NightBar({
 }) {
   if (!timeline.from || !timeline.to) {
     return (
-      <p className="rounded-card border border-border bg-surface-2 px-3 py-6 text-center text-[11px] text-muted-foreground">
+      <p className="rounded-card border border-border bg-surface-2 px-3 py-6 text-center text-meta text-muted-foreground">
         Bu enlemde güneş bugün ufkun altına inmiyor; gece çizelgesi
         çizilemedi.
       </p>
@@ -444,7 +444,7 @@ function NightBar({
     <figure>
       <figcaption className="mb-1.5 flex items-baseline justify-between gap-3">
         <span className="label">Gece çizelgesi</span>
-        <span className="tabular text-[10px] text-faint">
+        <span className="tabular text-meta text-faint">
           {formatClock(timeline.from, timeZone)} →{' '}
           {formatClock(timeline.to, timeZone)}
         </span>
@@ -527,7 +527,7 @@ function NightBar({
       </div>
 
       {/* Lejant: renkleri isimlendirmeden çubuk okunamaz. */}
-      <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[9.5px] text-faint">
+      <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-meta text-faint">
         {(['civil', 'nautical', 'astronomical', 'dark'] as SegmentKind[]).map(
           (kind) => (
             <span key={kind} className="inline-flex items-center gap-1">
@@ -571,7 +571,7 @@ function TimeTick({
   return (
     <span
       className={cn(
-        'tabular absolute top-0 text-[10px]',
+        'tabular absolute top-0 text-meta',
         accent ? 'text-primary' : 'text-faint'
       )}
       style={{
@@ -675,7 +675,7 @@ function Stat({
         </div>
       )}
 
-      <p className="mt-1.5 truncate text-[10px] leading-snug text-faint">
+      <p className="mt-1.5 truncate text-meta leading-snug text-faint">
         {hint}
       </p>
     </div>

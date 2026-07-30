@@ -90,7 +90,7 @@ export function SetupSelect({ onApply }: { onApply: (fill: SetupFill) => void })
   if (setups.length === 0) {
     return (
       <div className="rounded-card border border-border bg-surface-2 px-3 py-2.5">
-        <p className="text-[11.5px] leading-relaxed text-muted-foreground">
+        <p className="text-body-sm leading-relaxed text-muted-foreground">
           Kayıtlı setup’ınız yok.{' '}
           <Link to="/ekipman" className="text-primary hover:underline">
             Ekipman modülünden
@@ -181,7 +181,7 @@ export function SetupSelect({ onApply }: { onApply: (fill: SetupFill) => void })
                 </li>
               ))}
           </ul>
-          <p className="mt-1.5 text-[10px] leading-snug text-faint">
+          <p className="mt-1.5 text-meta leading-snug text-faint">
             Uygulanan değerleri bu fotoğraf için tek tek değiştirebilirsiniz;
             setup’ınız etkilenmez. Fotoğrafın orijinal EXIF/FITS verisine
             dokunulmaz.
@@ -190,7 +190,7 @@ export function SetupSelect({ onApply }: { onApply: (fill: SetupFill) => void })
       )}
 
       {applied && (
-        <p role="status" className="mt-1.5 text-[11.5px] text-success">
+        <p role="status" className="mt-1.5 text-body-sm text-success">
           Künye setup’tan dolduruldu.
         </p>
       )}

@@ -115,7 +115,7 @@ function TvControl() {
       title="TV Kontrolü"
       status={items ? `${items.length} kayıt` : 'okunuyor…'}
     >
-      <p className="mb-3 text-[11px] leading-relaxed text-muted-foreground">
+      <p className="mb-3 text-meta leading-relaxed text-muted-foreground">
         Yayın YouTube üzerinden dağıtılır; burada yalnızca kimlik ve program
         tutulur. Tam adres istenmez — gömme adresi kodda kurulur, böylece bu
         alan oynatıcıyı başka bir siteye çeviremez.
@@ -124,7 +124,7 @@ function TvControl() {
       {error && (
         <p
           role="alert"
-          className="mb-3 rounded-card border border-danger/40 bg-surface-1 px-3 py-2 text-[11.5px] text-danger"
+          className="mb-3 rounded-card border border-danger/40 bg-surface-1 px-3 py-2 text-body-sm text-danger"
         >
           {error}
         </p>
@@ -147,7 +147,7 @@ function TvControl() {
                 </span>
               </div>
 
-              <p className="tabular mt-0.5 text-[10px] text-faint">
+              <p className="tabular mt-0.5 text-meta text-faint">
                 {item.refKind === 'channel' ? 'kanal' : 'video'} ·{' '}
                 {item.youtubeId}
               </p>
@@ -200,7 +200,7 @@ function TvControl() {
       )}
 
       {items && items.length === 0 && (
-        <p className="mb-3 py-4 text-center text-[11.5px] text-muted-foreground">
+        <p className="mb-3 py-4 text-center text-body-sm text-muted-foreground">
           Program boş. İlk yayını aşağıdan ekleyin.
         </p>
       )}
@@ -279,7 +279,7 @@ function TvControl() {
             </Button>
           </div>
 
-          <p className="text-[10px] leading-snug text-faint">
+          <p className="text-meta leading-snug text-faint">
             Kayıt taslak olarak eklenir. Yayına almak ayrı bir adımdır —
             yanlış bir kimlik anında izleyiciye kırık oynatıcı göstermesin.
           </p>
@@ -352,7 +352,7 @@ function RadioControl() {
       title="Radyo Kontrolü"
       status={items ? `${items.length} kayıt` : 'okunuyor…'}
     >
-      <p className="mb-3 text-[11px] leading-relaxed text-muted-foreground">
+      <p className="mb-3 text-meta leading-relaxed text-muted-foreground">
         Radyo sitenin kendi yayınıdır; listeyi editör hazırlar. MP3'te
         bucket içindeki yol saklanır, tam adres değil — proje ya da CDN
         adresi değiştiğinde satırları güncellemek gerekmesin.
@@ -361,7 +361,7 @@ function RadioControl() {
       {error && (
         <p
           role="alert"
-          className="mb-3 rounded-card border border-danger/40 bg-surface-1 px-3 py-2 text-[11.5px] text-danger"
+          className="mb-3 rounded-card border border-danger/40 bg-surface-1 px-3 py-2 text-body-sm text-danger"
         >
           {error}
         </p>
@@ -410,7 +410,7 @@ function RadioControl() {
       )}
 
       {items && items.length === 0 && (
-        <p className="mb-3 py-4 text-center text-[11.5px] text-muted-foreground">
+        <p className="mb-3 py-4 text-center text-body-sm text-muted-foreground">
           Çalma listesi boş.
         </p>
       )}

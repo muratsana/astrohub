@@ -75,12 +75,12 @@ export function SitesPage() {
                       <h2 className="truncate text-[13px] font-medium text-foreground group-hover:text-primary">
                         {site.name}
                       </h2>
-                      <p className="tabular mt-0.5 truncate text-[10px] text-muted-foreground">
+                      <p className="tabular mt-0.5 truncate text-meta text-muted-foreground">
                         {site.region} · {site.altitude} m · {site.roadAccess}
                         {site.sqm && ` · SQM ${site.sqm}`}
                       </p>
                     </div>
-                    <p className="tabular shrink-0 text-[11px] text-muted-foreground">
+                    <p className="tabular shrink-0 text-meta text-muted-foreground">
                       ★ {site.rating.toFixed(1)}{' '}
                       <span className="text-faint">({site.reviewCount})</span>
                     </p>
@@ -113,11 +113,11 @@ export function SitesPage() {
                       <h2 className="text-[13px] font-medium leading-snug text-foreground group-hover:text-primary">
                         {site.name}
                       </h2>
-                      <p className="tabular shrink-0 text-[11px] text-muted-foreground">
+                      <p className="tabular shrink-0 text-meta text-muted-foreground">
                         ★ {site.rating.toFixed(1)}
                       </p>
                     </div>
-                    <p className="tabular mt-0.5 text-[10px] text-muted-foreground">
+                    <p className="tabular mt-0.5 text-meta text-muted-foreground">
                       {site.region} · {site.altitude} m
                     </p>
                     <div className="mt-auto flex flex-wrap gap-1 pt-2">
@@ -135,7 +135,7 @@ export function SitesPage() {
           })}
         </CardGrid>
 
-        <p className="mt-4 rounded-card border border-border bg-surface-1 px-3 py-2.5 text-[11px] leading-relaxed text-muted-foreground">
+        <p className="mt-4 rounded-card border border-border bg-surface-1 px-3 py-2.5 text-meta leading-relaxed text-muted-foreground">
           Işık kirliliği haritası, veri lisansı doğrulandıktan sonra bu sayfaya
           eklenecek. Konumlar gizlilik politikası gereği yaklaşık gösterilir.
         </p>
@@ -163,7 +163,7 @@ function BortleBlock({ bortle }: { bortle: number }) {
       >
         {bortle}
       </span>
-      <span className="mt-0.5 text-[9px] tracking-[0.02em] text-muted-foreground">
+      <span className="mt-0.5 text-meta tracking-[0.02em] text-muted-foreground">
         Bortle
       </span>
     </div>

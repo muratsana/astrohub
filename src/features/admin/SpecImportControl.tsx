@@ -56,13 +56,13 @@ export function SpecImportControl({ canWrite }: { canWrite: boolean }) {
       title="Teknik veri içe aktarma"
       status={
         parsed.rows.length > 0 ? (
-          <span className="tabular text-[10px] text-faint">
+          <span className="tabular text-meta text-faint">
             {parsed.clean}/{parsed.rows.length} satır hazır
           </span>
         ) : undefined
       }
     >
-      <p className="mb-3 text-[11.5px] leading-relaxed text-muted-foreground">
+      <p className="mb-3 text-body-sm leading-relaxed text-muted-foreground">
         Üretici sayfasından ya da bir tablodan kopyaladığınız satırları
         yapıştırın. İlk satır başlık olmalı. Eşleşme için{' '}
         <span className="tabular text-foreground">slug</span> ya da{' '}
@@ -73,7 +73,7 @@ export function SpecImportControl({ canWrite }: { canWrite: boolean }) {
 
       {/* Kabul edilen başlıkları örneklemek, sütun eşlemesini denemeyle
           bulmayı gereksiz kılıyor. */}
-      <pre className="mb-3 overflow-x-auto rounded-card border border-border bg-surface-2 px-2.5 py-2 text-[10.5px] leading-relaxed text-muted-foreground">
+      <pre className="mb-3 overflow-x-auto rounded-card border border-border bg-surface-2 px-2.5 py-2 text-meta leading-relaxed text-muted-foreground">
 {`slug	Odak (mm)	Açıklık (mm)	Görüntü çemberi	Çıkış
 askar-fra400	400	72	44	M48x0.75`}
       </pre>
@@ -84,7 +84,7 @@ askar-fra400	400	72	44	M48x0.75`}
         rows={8}
         spellCheck={false}
         placeholder="Başlık satırı ve veriyi buraya yapıştırın…"
-        className="w-full resize-y rounded-card border border-border bg-surface-2 px-2.5 py-2 font-mono text-[11px] leading-relaxed text-foreground outline-none transition-colors focus:border-primary"
+        className="w-full resize-y rounded-card border border-border bg-surface-2 px-2.5 py-2 font-mono text-meta leading-relaxed text-foreground outline-none transition-colors focus:border-primary"
       />
 
       {parsed.rows.length > 0 && (
@@ -103,7 +103,7 @@ askar-fra400	400	72	44	M48x0.75`}
           </div>
 
           {parsed.ignoredHeaders.length > 0 && (
-            <p className="text-[10.5px] leading-snug text-faint">
+            <p className="text-meta leading-snug text-faint">
               Tanınmayan başlıklar yazılmaz. Doğru sütun adları için
               yukarıdaki örneğe bakın.
             </p>
@@ -111,10 +111,10 @@ askar-fra400	400	72	44	M48x0.75`}
 
           {problemRows.length > 0 && (
             <div className="rounded-card border border-warning/40 bg-surface-2 px-2.5 py-2">
-              <p className="mb-1 text-[11px] text-warning">
+              <p className="mb-1 text-meta text-warning">
                 {problemRows.length} satır yazılmayacak:
               </p>
-              <ul className="max-h-40 space-y-0.5 overflow-y-auto text-[10.5px] leading-snug text-muted-foreground">
+              <ul className="max-h-40 space-y-0.5 overflow-y-auto text-meta leading-snug text-muted-foreground">
                 {problemRows.slice(0, 40).map((row) => (
                   <li key={row.line}>
                     <span className="tabular text-faint">satır {row.line}</span>{' '}
@@ -158,13 +158,13 @@ askar-fra400	400	72	44	M48x0.75`}
       </div>
 
       {error && (
-        <p className="mt-2 rounded-card border border-danger/45 bg-surface-2 px-2.5 py-2 text-[11px] text-danger">
+        <p className="mt-2 rounded-card border border-danger/45 bg-surface-2 px-2.5 py-2 text-meta text-danger">
           {error}
         </p>
       )}
 
       {outcome && (
-        <div className="mt-3 rounded-card border border-border bg-surface-2 px-2.5 py-2 text-[11px] leading-relaxed">
+        <div className="mt-3 rounded-card border border-border bg-surface-2 px-2.5 py-2 text-meta leading-relaxed">
           <p className="text-success">{outcome.updated} kayıt güncellendi.</p>
           {outcome.unmatched.length > 0 && (
             <div className="mt-1.5">
@@ -172,7 +172,7 @@ askar-fra400	400	72	44	M48x0.75`}
                 {outcome.unmatched.length} satırın katalogda karşılığı
                 bulunamadı:
               </p>
-              <ul className="mt-0.5 max-h-32 space-y-0.5 overflow-y-auto text-[10.5px] text-muted-foreground">
+              <ul className="mt-0.5 max-h-32 space-y-0.5 overflow-y-auto text-meta text-muted-foreground">
                 {outcome.unmatched.slice(0, 30).map((row) => (
                   <li key={row.line} className="tabular">
                     satır {row.line} · {row.slug ?? `${row.brand} ${row.model}`}
@@ -182,7 +182,7 @@ askar-fra400	400	72	44	M48x0.75`}
             </div>
           )}
           {outcome.errors.length > 0 && (
-            <ul className="mt-1.5 space-y-0.5 text-[10.5px] text-danger">
+            <ul className="mt-1.5 space-y-0.5 text-meta text-danger">
               {outcome.errors.slice(0, 10).map((message) => (
                 <li key={message}>{message}</li>
               ))}
@@ -193,7 +193,7 @@ askar-fra400	400	72	44	M48x0.75`}
             geldi ve ikinci bir kaynakla karşılaştırılmadı. 'dogrulanmis'
             saymak, yapılmamış bir doğrulamayı yapılmış göstermek olurdu.
           */}
-          <p className={cn('mt-1.5 text-[10px] leading-snug text-faint')}>
+          <p className={cn('mt-1.5 text-meta leading-snug text-faint')}>
             Yazılan kayıtlar "tek-kaynak" güven seviyesiyle işaretlendi.
             İkinci bir kaynakla doğruladığınızda eksik veri raporundan
             yükseltebilirsiniz.
@@ -202,7 +202,7 @@ askar-fra400	400	72	44	M48x0.75`}
       )}
 
       {!canWrite && (
-        <p className="mt-2 text-[10px] text-faint">
+        <p className="mt-2 text-meta text-faint">
           Yazmak için yönetici rolü gerekir; yetkiyi RLS politikası zorlar.
         </p>
       )}

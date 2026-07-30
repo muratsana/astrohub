@@ -256,7 +256,7 @@ export function TonightPage() {
                   id="tonight-kind"
                   value={kind}
                   onChange={(e) => setKind(e.target.value as TargetKind | 'hepsi')}
-                  className="h-8 w-auto text-[11px]"
+                  className="h-8 w-auto text-meta"
                 >
                   <option value="hepsi">Tüm türler</option>
                   {Object.entries(targetKindLabels).map(([value, label]) => (
@@ -273,7 +273,7 @@ export function TonightPage() {
                   id="tonight-sort"
                   value={sort}
                   onChange={(e) => setSort(e.target.value as SortKey)}
-                  className="h-8 w-auto text-[11px]"
+                  className="h-8 w-auto text-meta"
                 >
                   <option value="pencere">Pencere süresi</option>
                   <option value="zirve">Zirve yüksekliği</option>
@@ -313,7 +313,7 @@ export function TonightPage() {
                         />
                       </div>
 
-                      <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-[11px]">
+                      <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-meta">
                         <div className="flex justify-between gap-2 border-b border-border pb-1">
                           <dt className="label">Pencere</dt>
                           <dd className="tabular text-primary">
@@ -342,7 +342,7 @@ export function TonightPage() {
 
                       <p
                         className={cn(
-                          'mt-2 text-[10px] leading-snug',
+                          'mt-2 text-meta leading-snug',
                           usable.minutes >= 180 ? 'text-success' : 'text-faint'
                         )}
                       >

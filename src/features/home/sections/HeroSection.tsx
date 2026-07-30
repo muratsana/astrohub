@@ -147,7 +147,7 @@ export function HeroSection() {
           >
             <div className="max-w-[46ch]">
               <Editable slide={slide} field="badge" className="w-fit">
-                <span className="inline-block rounded-card bg-primary px-2.5 py-1 text-[10px] font-medium tracking-[0.04em] text-primary-foreground">
+                <span className="inline-block rounded-card bg-primary px-2.5 py-1 text-meta font-medium tracking-[0.04em] text-primary-foreground">
                   {slide.badge}
                 </span>
               </Editable>
@@ -176,7 +176,7 @@ export function HeroSection() {
                   to={slide.ctaTo}
                   // Editör açıkken bağlantı gezinmez; tıklama alanı seçer.
                   onClick={(e) => enabled && e.preventDefault()}
-                  className="inline-flex shrink-0 items-center gap-2.5 whitespace-nowrap rounded-card border border-primary bg-primary px-6 py-3 text-[11px] font-medium leading-none tracking-[0.03em] text-primary-foreground transition-colors hover:bg-primary-hover"
+                  className="inline-flex shrink-0 items-center gap-2.5 whitespace-nowrap rounded-card border border-primary bg-primary px-6 py-3 text-meta font-medium leading-none tracking-[0.03em] text-primary-foreground transition-colors hover:bg-primary-hover"
                 >
                   {slide.ctaLabel}
                   <span aria-hidden>→</span>
@@ -217,13 +217,13 @@ export function HeroSection() {
           </div>
 
           {/* Slayt sayacı — terminal künyesi */}
-          <span className="tabular absolute right-4 top-4 rounded-card border border-border bg-background/80 px-2 py-1 text-[10px] tracking-[0.03em] text-muted-foreground backdrop-blur-sm">
+          <span className="tabular absolute right-4 top-4 rounded-card border border-border bg-background/80 px-2 py-1 text-meta tracking-[0.03em] text-muted-foreground backdrop-blur-sm">
             {String(index + 1).padStart(2, '0')} /{' '}
             {String(count).padStart(2, '0')}
           </span>
 
           {enabled && selection && (
-            <span className="absolute left-4 top-4 rounded-card border border-cold bg-background/85 px-2 py-1 text-[10px] tracking-[0.03em] text-cold backdrop-blur-sm">
+            <span className="absolute left-4 top-4 rounded-card border border-cold bg-background/85 px-2 py-1 text-meta tracking-[0.03em] text-cold backdrop-blur-sm">
               Düzenleme modu
             </span>
           )}
@@ -291,7 +291,7 @@ function HeroPhoto({
         Göstergelerin üstüne binmesin diye sağ altta.
       */}
       {state === 'ready' && (
-        <span className="absolute bottom-3 right-4 z-10 max-w-[46%] truncate text-right text-[9.5px] leading-snug text-faint">
+        <span className="absolute bottom-3 right-4 z-10 max-w-[46%] truncate text-right text-meta leading-snug text-faint">
           {credit}
         </span>
       )}
