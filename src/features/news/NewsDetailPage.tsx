@@ -8,6 +8,7 @@ import { PageMeta } from '@/components/seo/PageMeta';
 import { absoluteUrl, breadcrumbJsonLd, SITE_NAME } from '@/lib/seo';
 import { newsCategoryLabels } from './data';
 import { useNewsItems } from './useNews';
+import { commonsWidthUrl } from '@/lib/commons';
 import { ExternalLink } from '@/components/ExternalLink';
 
 /** Haber detayı — okuma genişliği sınırlı, kaynak künyesi görünür. */
@@ -36,6 +37,18 @@ export function NewsDetailPage() {
       <PageMeta
         title={item.title}
         description={item.summary}
+        ogType="article"
+        publishedTime={item.publishedAt}
+        image={
+          item.image
+            ? {
+                // Paylaşım kartı için 1200 genişlik yeterli; orijinal
+                // dosya boyutunu bot'a indirtmenin anlamı yok.
+                url: commonsWidthUrl(item.image.url, 1200) ?? item.image.url,
+                alt: item.title,
+              }
+            : undefined
+        }
         jsonLd={[
           {
             '@context': 'https://schema.org',

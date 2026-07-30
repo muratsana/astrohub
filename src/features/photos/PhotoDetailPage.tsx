@@ -75,6 +75,11 @@ function PhotoDetail({ photo, all }: { photo: AstroPhoto; all: AstroPhoto[] }) {
       <PageMeta
         title={`${photo.title} — ${photo.target.catalog}`}
         description={`${photo.description.slice(0, 150)} · ${photo.setup.optic} + ${photo.setup.camera}, ${formatIntegration(integration)} entegrasyon, ${photo.city}.`}
+        image={
+          photo.image
+            ? { url: photo.image.url, alt: `${photo.title} — ${photo.target.catalog}` }
+            : undefined
+        }
         jsonLd={[
           photoJsonLd({
             title: photo.title,
