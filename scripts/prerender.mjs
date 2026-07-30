@@ -98,6 +98,32 @@ async function worker() {
 
 await Promise.all(Array.from({ length: POOL }, worker));
 
+/*
+ * SPA KABUĞU AYRI DOSYAYA YAZILIR.
+ *
+ * Vercel'in yakala-hepsini rewrite'ı `/index.html`e düşüyordu; index.html
+ * artık prerender edilmiş ANA SAYFA olduğu için bilinmeyen her adres ham
+ * HTML'de ana sayfa içeriğini ve başlığını servis eder hâle geldi — botlar
+ * için kopya içerik, kullanıcı için yanlış başlık. Kabuk (`app.html`) rota
+ * içeriği taşımayan orijinal şablondur; sitemap'te olmayan dinamik yollar
+ * (kullanıcı fotoğrafı, panel, forum konusu) ona düşer ve içeriği istemci
+ * çizer — prerender öncesi davranışın aynısı.
+ */
+writeFileSync(path.join(distDir, 'app.html'), template);
+
+/*
+ * GERÇEK 404 (QA P0-03). Prerender edilmiş NotFound sayfası `404.html`
+ * olarak yazılır; Vercel, hiçbir yola ve rewrite'a uymayan istekte bu
+ * dosyayı 404 durum koduyla servis eder. Sayfa `noindex` taşıyor.
+ */
+try {
+  const notFound = await renderRoute('/__404__');
+  writeFileSync(path.join(distDir, '404.html'), composePage(template, notFound));
+  console.log('404.html yazıldı (prerender edilmiş NotFound sayfası)');
+} catch (error) {
+  console.warn(`404.html üretilemedi: ${String(error).slice(0, 160)}`);
+}
+
 if (failures.length > 0) {
   console.warn(`\nPrerender edilemeyen ${failures.length} rota (SPA kabuğunda kaldı):`);
   for (const f of failures) console.warn(`  ${f.path} — ${f.message}`);

@@ -296,3 +296,36 @@ Canlı geçmiş 26 timestamp-sürümlü kayıt; repo dosyaları `0001–0025`
 **Sıradaki blok:** T-202 staging + T-201 (yukarıdaki kılavuz) → Faz 3
 (SEO/performans) → Faz 4 (GUI). T-504 (ödeme) ve T-509 (tile lisansı)
 kararları hâlâ açık.
+
+---
+
+## 14. Faz 3 durumu (30 Temmuz, ikinci blok)
+
+- ✅ **T-304 kod ayağı + T-305** — `srcset/sizes` her görsel kullanımında;
+  hero ilk slaytı `preload` + `fetchpriority=high`. Mobil artık 86 px'lik
+  levha için 1200 px, hero için 1800 px kopya indirmiyor. *(Görselleri
+  kendi CDN'ine taşıma — T-304'ün kalan yarısı — lisans/atıf kaydıyla
+  birlikte ayrı iş.)*
+- ✅ **T-302** — `og:image`/`og:type=article`/`article:published_time`;
+  görselsiz sayfa `summary` kartına düşüyor.
+- ✅ **T-301 prerender** — sitemap'teki 421 rota derlemede tam HTML'e
+  yazılıyor (`dist/<yol>/index.html`), canlıda doğrulandı: `/hedef/abell21`
+  ham HTML'de kendi başlığı, canonical'ı, JSON-LD'si ve og:image'ıyla
+  geliyor. Nötr kabuk `app.html`, 404 sayfası `404.html` olarak üretiliyor.
+- ✅ **T-303** — sitemap `content_entries`ten gerçek `lastmod` ile
+  besleniyor; DB kaydı aynı yolda tohumun yerine geçiyor.
+- ✅ **T-307** — ilk rota JS/CSS gzip bütçe kapısı derleme zincirinde
+  (JS 200 kB / CSS 25 kB; ölçülen 189,7 / 12,4).
+- ✅ **T-306** — kontrol edildi, gereksiz: fontlar zaten yalnız
+  latin + latin-ext alt kümeleriyle self-host.
+
+**Faz 3'ten kalan tek madde — gerçek 404 durum kodu.** Bilinmeyen adres
+artık ana sayfa içeriği vermiyor (nötr kabuk) ama HTTP 200 dönüyor.
+Prefix tabanlı rewrite listesi denendi; `/radyo`, `/harita`, `/ikinci-el`
+gibi prerender edilmeyen gerçek sayfaları 404'e düşürdüğü için geri
+alındı. Doğru çözüm bir Vercel middleware: prerender edilen yolların
+listesi + dinamik önekler bilinir, kalanına `404.html` + status 404
+verilir. Middleware'in dinamik slug'ları (DB fotoğrafı/ilanı) tanıması
+için ya derlemede üretilen bir yol manifestosu ya da kenar katmanında
+Supabase sorgusu gerekir — bu yüzden T-201/T-202 (veri hizalaması) ile
+aynı bloka bırakıldı.

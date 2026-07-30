@@ -9,7 +9,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build && npm run prerender",
+    "build": "tsc -b && vite build && npm run prerender && npm run check:budgets",
     "preview": "vite preview",
     "build:preview": "vite build --config vite.preview.config.ts",
     "lint": "eslint .",
@@ -26,7 +26,8 @@
     "db:migrations": "npm run db:link && supabase migration list --linked",
     "db:types": "supabase gen types typescript --project-id eoqggvosegjbburyuyba",
     "functions:deploy": "supabase functions deploy --project-ref eoqggvosegjbburyuyba",
-    "prerender": "vite build --ssr src/entry-prerender.tsx --outDir dist-ssr && node scripts/prerender.mjs"
+    "prerender": "vite build --ssr src/entry-prerender.tsx --outDir dist-ssr && node scripts/prerender.mjs",
+    "check:budgets": "node scripts/check-budgets.mjs"
   },
   "dependencies": {
     "@fontsource-variable/inter": "^5.3.0",

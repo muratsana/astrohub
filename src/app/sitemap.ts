@@ -24,6 +24,12 @@ export interface SitemapEntry {
   /** Arama motoruna göreli önem (0.0–1.0). */
   priority: number;
   changefreq: 'daily' | 'weekly' | 'monthly' | 'yearly';
+  /**
+   * Kaydın kendi güncellenme tarihi (YYYY-MM-DD). Verilmezse derleme
+   * tarihi yazılır — tohum sayfalar için doğru olan bu; veritabanından
+   * gelen kayıtlar gerçek yayın tarihini taşır (QA SEO-02).
+   */
+  lastmod?: string;
 }
 
 /** Sabit (statik) sayfalar. */
@@ -125,17 +131,70 @@ export function contentEntries(): SitemapEntry[] {
   ];
 }
 
-/** Tüm girdilerden sitemap XML'i üretir. */
-export function buildSitemapXml(siteUrl: string, lastmod: string): string {
-  const base = siteUrl.replace(/\/$/, '');
-  const entries = [...staticEntries, ...contentEntries()];
+/**
+ * Panelden yayımlanan içerik (content_entries) sitemap'e derleme sırasında
+ * eklenir. supabase-js bilerek kullanılmıyor: derleme betiğinin ihtiyacı
+ * tek bir GET; PostgREST'e düz `fetch` yeterli ve derlemeye bağımlılık
+ * eklemiyor. Yalnızca `yayinda` kayıtlar — taslaklar RLS'te de kapalı ama
+ * niyet burada da okunmalı (QA SEO-02).
+ */
+export interface DbEntryRow {
+  kind: 'haber' | 'yazi';
+  slug: string;
+  published_at: string;
+}
 
-  const urls = entries
+export function dbRowsToEntries(rows: DbEntryRow[]): SitemapEntry[] {
+  return rows.map((row) => ({
+    path: `/${row.kind === 'haber' ? 'haber' : 'yazi'}/${row.slug}`,
+    priority: row.kind === 'haber' ? 0.7 : 0.6,
+    changefreq: 'monthly' as const,
+    lastmod: row.published_at?.slice(0, 10) || undefined,
+  }));
+}
+
+export async function fetchDbSitemapEntries(
+  supabaseUrl: string,
+  anonKey: string
+): Promise<SitemapEntry[]> {
+  const endpoint =
+    `${supabaseUrl.replace(/\/+$/, '')}/rest/v1/content_entries` +
+    `?select=kind,slug,published_at&status=eq.yayinda`;
+  const response = await fetch(endpoint, {
+    headers: { apikey: anonKey, Authorization: `Bearer ${anonKey}` },
+    signal: AbortSignal.timeout(10_000),
+  });
+  if (!response.ok) {
+    throw new Error(`content_entries okunamadı: HTTP ${response.status}`);
+  }
+  return dbRowsToEntries((await response.json()) as DbEntryRow[]);
+}
+
+/**
+ * Tüm girdilerden sitemap XML'i üretir.
+ *
+ * `extra` (veritabanı kayıtları) tohum girdilerle AYNI YOLU taşıyorsa
+ * kazanır: panelden düzenlenen içerik tohumun üstüne geçmişti (mergeWithSeed
+ * kuralı); sitemap'te de aynı kayıt iki kez görünmemeli.
+ */
+export function buildSitemapXml(
+  siteUrl: string,
+  lastmod: string,
+  extra: SitemapEntry[] = []
+): string {
+  const base = siteUrl.replace(/\/$/, '');
+
+  const byPath = new Map<string, SitemapEntry>();
+  for (const entry of [...staticEntries, ...contentEntries(), ...extra]) {
+    byPath.set(entry.path, entry);
+  }
+
+  const urls = [...byPath.values()]
     .map(
       (entry) =>
         `  <url>\n` +
         `    <loc>${base}${entry.path}</loc>\n` +
-        `    <lastmod>${lastmod}</lastmod>\n` +
+        `    <lastmod>${entry.lastmod ?? lastmod}</lastmod>\n` +
         `    <changefreq>${entry.changefreq}</changefreq>\n` +
         `    <priority>${entry.priority.toFixed(1)}</priority>\n` +
         `  </url>`
