@@ -118,7 +118,7 @@ export default defineConfig({
             'react',
             'react-dom',
             'react-dom/client',
-            'react-router-dom',
+            'react-router',
           ],
           'vendor-query': ['@tanstack/react-query'],
           'vendor-forms': ['react-hook-form', '@hookform/resolvers', 'zod'],

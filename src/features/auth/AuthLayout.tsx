@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { LogoMark } from '@/components/shell/LogoMark';
 import { useAuth } from './AuthContext';

@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Panel, SpecList, SpecRow } from '@/components/ui/Panel';

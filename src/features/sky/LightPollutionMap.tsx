@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { Button } from '@/components/ui/Button';
 import { useLocationContext } from '@/features/location/LocationContext';
 import { useTheme } from '@/features/theme/ThemeContext';

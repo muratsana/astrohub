@@ -1,4 +1,4 @@
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router';
 import { SITE_NAME, SITE_URL } from '@/lib/seo';
 
 /**

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Badge } from '@/components/ui/Badge';

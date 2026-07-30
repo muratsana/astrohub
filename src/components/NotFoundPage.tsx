@@ -1,4 +1,4 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { ButtonLink } from '@/components/ui/Button';
 import { PageMeta } from '@/components/seo/PageMeta';

@@ -1,4 +1,4 @@
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { Badge } from '@/components/ui/Badge';
 import { Button, ButtonLink } from '@/components/ui/Button';

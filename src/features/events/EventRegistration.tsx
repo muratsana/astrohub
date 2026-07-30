@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { Button } from '@/components/ui/Button';
 import { getSupabase, isSupabaseConfigured } from '@/services/supabase/client';
 import { useAuth } from '@/features/auth/AuthContext';

@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Container } from '@/components/ui/Container';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { Input, Select } from '@/components/ui/Input';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Panel, SpecList, SpecRow } from '@/components/ui/Panel';

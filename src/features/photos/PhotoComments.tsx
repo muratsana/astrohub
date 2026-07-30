@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { Panel } from '@/components/ui/Panel';
 import { Button } from '@/components/ui/Button';
 import { usePhotoComments } from '@/services/content/engagement';

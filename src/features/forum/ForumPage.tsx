@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { Input } from '@/components/ui/Input';
 import { ButtonLink } from '@/components/ui/Button';

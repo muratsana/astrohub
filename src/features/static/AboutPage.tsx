@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
 import { LegalLayout, LegalSection, LegalList } from './LegalLayout';
