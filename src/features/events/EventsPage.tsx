@@ -82,7 +82,7 @@ export function EventsPage() {
               </Badge>
               {event.camping && <Badge tone="cold">Kamp</Badge>}
               {capacity && (
-                <span className="tabular text-[10px] text-faint">{capacity}</span>
+                <span className="tabular text-meta text-faint">{capacity}</span>
               )}
             </div>
           ),
@@ -198,7 +198,7 @@ export function EventsPage() {
                   onClick={() => setLayout(option.value)}
                   aria-pressed={layout === option.value}
                   className={cn(
-                    'h-8 border-l border-border px-2.5 text-[10px] tracking-[0.03em] transition-colors first:border-l-0',
+                    'h-8 border-l border-border px-2.5 text-meta tracking-[0.03em] transition-colors first:border-l-0',
                     layout === option.value
                       ? 'bg-primary text-primary-foreground'
                       : 'text-muted-foreground hover:bg-surface-2 hover:text-foreground'

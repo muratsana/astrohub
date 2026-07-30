@@ -115,7 +115,7 @@ export function ClubDetailPage() {
                           <span className="block truncate text-[12.5px] text-foreground group-hover:text-primary">
                             {event.title}
                           </span>
-                          <span className="tabular mt-0.5 block text-[10.5px] text-muted-foreground">
+                          <span className="tabular mt-0.5 block text-meta text-muted-foreground">
                             {new Date(event.startsAt).toLocaleDateString('tr-TR', {
                               day: 'numeric',
                               month: 'long',
@@ -144,7 +144,7 @@ export function ClubDetailPage() {
                         <span className="min-w-0 truncate text-[12px]">
                           {event.title}
                         </span>
-                        <span className="tabular shrink-0 text-[10.5px]">
+                        <span className="tabular shrink-0 text-meta">
                           {new Date(event.startsAt).toLocaleDateString('tr-TR')}
                         </span>
                       </Link>
@@ -210,7 +210,7 @@ export function ClubDetailPage() {
             </Panel>
 
             <Panel title="Kaynak" status={club.source.lastVerifiedAt}>
-              <p className="text-[11.5px] leading-relaxed text-muted-foreground">
+              <p className="text-body-sm leading-relaxed text-muted-foreground">
                 Bu profil <span className="text-foreground">{club.source.name}</span>{' '}
                 üzerinden derlendi; son doğrulama{' '}
                 {new Date(club.source.lastVerifiedAt).toLocaleDateString('tr-TR')}.

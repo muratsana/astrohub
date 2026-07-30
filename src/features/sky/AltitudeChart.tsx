@@ -39,7 +39,7 @@ export function AltitudeChart({
 
   if (points.length < 2) {
     return (
-      <p className="py-4 text-center text-[11px] text-muted-foreground">
+      <p className="py-4 text-center text-meta text-muted-foreground">
         Eğri için yeterli veri yok.
       </p>
     );
@@ -117,7 +117,7 @@ export function AltitudeChart({
         <circle cx={x(peak.at)} cy={y(peak.altitude)} r="2.5" className="fill-primary" />
       </svg>
 
-      <figcaption className="mt-1 flex justify-between text-[10px] text-faint">
+      <figcaption className="mt-1 flex justify-between text-meta text-faint">
         <span className="tabular">{formatClock(points[0].at, timeZone)}</span>
         <span>
           zirve {Math.round(peak.altitude)}° · {formatClock(peak.at, timeZone)}

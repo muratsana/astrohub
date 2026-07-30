@@ -221,7 +221,7 @@ export function MosaicPlannerPage() {
                   onChange={setShowMargin}
                 />
               </FilterBar>
-              <p className="mt-2 text-[10px] leading-snug text-faint">
+              <p className="mt-2 text-meta leading-snug text-faint">
                 Otomatik seçim iki yönelimi de dener ve az panelli olanı
                 kullanır; eşitlikte kadraj çevrilmez.
               </p>
@@ -397,7 +397,7 @@ export function MosaicPlannerPage() {
                 </div>
 
                 {plan.fitsInSingleFrame && (
-                  <p className="rounded-card border border-success/40 bg-surface-1 px-3 py-2.5 text-[11.5px] leading-relaxed text-success">
+                  <p className="rounded-card border border-success/40 bg-surface-1 px-3 py-2.5 text-body-sm leading-relaxed text-success">
                     Hedef tek kadraja sığıyor — mozaiğe gerek yok. Kenar payı{' '}
                     {plan.marginWidthArcmin.toFixed(0)}′ ×{' '}
                     {plan.marginHeightArcmin.toFixed(0)}′.
@@ -409,7 +409,7 @@ export function MosaicPlannerPage() {
                   status={`${plan.columns} sütun × ${plan.rows} satır`}
                 >
                   <PanelGrid columns={plan.columns} rows={plan.rows} />
-                  <p className="mt-3 text-[10px] leading-snug text-faint">
+                  <p className="mt-3 text-meta leading-snug text-faint">
                     Paneller %{overlapPercent} örtüşecek şekilde{' '}
                     {plan.stepWidthArcmin.toFixed(1)}′ yatay,{' '}
                     {plan.stepHeightArcmin.toFixed(1)}′ dikey adımlarla
@@ -468,7 +468,7 @@ export function MosaicPlannerPage() {
                     />
                   </SpecList>
 
-                  <p className="mt-3 text-[10px] leading-snug text-faint">
+                  <p className="mt-3 text-meta leading-snug text-faint">
                     Süre hesabına poz başına 12 sn (dither + indirme) ve panel
                     başına 90 sn (slew + plate solve) ek yük dâhildir. Ek yük
                     tahmini bir paydır; ekipmana göre değişir.
@@ -506,7 +506,7 @@ function PanelGrid({ columns, rows }: { columns: number; rows: number }) {
           key={n}
           className={cn(
             'flex aspect-[3/2] items-center justify-center bg-surface-2',
-            showNumbers ? 'text-[11px]' : 'text-[0px]'
+            showNumbers ? 'text-meta' : 'text-[0px]'
           )}
         >
           <span className="tabular text-muted-foreground">

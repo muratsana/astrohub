@@ -35,7 +35,7 @@ export function SectionHeader({
         </h2>
 
         {meta && (
-          <span className="tabular hidden whitespace-nowrap text-[11px] text-faint sm:inline">
+          <span className="tabular hidden whitespace-nowrap text-meta text-faint sm:inline">
             {meta}
           </span>
         )}
@@ -46,7 +46,7 @@ export function SectionHeader({
         {linkTo && (
           <Link
             to={linkTo}
-            className="shrink-0 whitespace-nowrap text-[10px] tracking-[0.04em] text-muted-foreground transition-colors hover:text-primary"
+            className="inline-flex shrink-0 items-center whitespace-nowrap py-1 text-meta tracking-[0.04em] text-muted-foreground transition-colors hover:text-primary"
           >
             {linkLabel} →
           </Link>

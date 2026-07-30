@@ -91,10 +91,10 @@ export function VersionHistory({ versions }: { versions: PhotoVersion[] }) {
                   </span>
                   <Badge>{versionKindLabels[version.kind]}</Badge>
                 </div>
-                <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">
+                <p className="mt-1 text-body-sm leading-relaxed text-muted-foreground">
                   {version.note}
                 </p>
-                <p className="tabular mt-1 text-[10px] text-faint">
+                <p className="tabular mt-1 text-meta text-faint">
                   {new Date(version.publishedAt).toLocaleDateString('tr-TR')}
                   {version.exposures && (
                     <>

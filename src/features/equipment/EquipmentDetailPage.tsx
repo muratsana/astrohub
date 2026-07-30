@@ -233,7 +233,7 @@ export function EquipmentDetailPage() {
               {model.sources && model.sources.length > 0 ? (
                 <ul className="mt-2 space-y-1">
                   {model.sources.map((source) => (
-                    <li key={source.label} className="text-[11.5px]">
+                    <li key={source.label} className="text-body-sm">
                       {source.url ? (
                         <a
                           href={safeUrl(source.url) ?? undefined}
@@ -251,7 +251,7 @@ export function EquipmentDetailPage() {
                   ))}
                 </ul>
               ) : (
-                <p className="mt-2 text-[11px] leading-snug text-warning">
+                <p className="mt-2 text-meta leading-snug text-warning">
                   Bu modelin teknik değerleri için kaynak bağlantısı
                   kayıtlı değil. Üretici sayfasını biliyorsanız yönetim
                   ekibine iletebilirsiniz.
@@ -307,7 +307,7 @@ export function EquipmentDetailPage() {
                     />
                   ))}
               </SpecList>
-              <p className="mt-2 text-[10px] leading-snug text-faint">
+              <p className="mt-2 text-meta leading-snug text-faint">
                 Bu alanlar setup planlayıcısının hesaplarına girer. Boş olan
                 bir alan için planlayıcı tahmin üretmez, “veri yetersiz” der.
               </p>
@@ -401,7 +401,7 @@ export function EquipmentDetailPage() {
                           <span className="text-muted-foreground">{alt.brand}</span>{' '}
                           {alt.model}
                         </span>
-                        <span className="shrink-0 text-[10.5px] text-faint">
+                        <span className="shrink-0 text-meta text-faint">
                           {alt.priceHint ?? ''}
                         </span>
                       </Link>

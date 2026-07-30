@@ -133,7 +133,7 @@ export function TargetPicker({
             <span className="min-w-0 flex-1 truncate text-[13px] text-foreground">
               {selected.name}
             </span>
-            <span className="hidden shrink-0 text-[11px] text-muted-foreground sm:inline">
+            <span className="hidden shrink-0 text-meta text-muted-foreground sm:inline">
               {targetKindLabels[selected.kind]}
             </span>
             <Button size="sm" variant="ghost" onClick={() => onChange(null)}>
@@ -159,7 +159,7 @@ export function TargetPicker({
             {open && (
               <div className="absolute left-0 right-0 z-20 mt-1 overflow-hidden rounded-card border border-border-strong bg-surface-1 shadow-lg">
                 {options.length === 0 ? (
-                  <p className="px-3 py-3 text-[11.5px] leading-relaxed text-muted-foreground">
+                  <p className="px-3 py-3 text-body-sm leading-relaxed text-muted-foreground">
                     Bu türde eşleşen kayıt yok. Katalogda olmayan bir hedef
                     çektiyseniz seçimi boş bırakıp başlığa yazabilirsiniz —
                     künye yine kaydedilir.
@@ -174,13 +174,13 @@ export function TargetPicker({
                             onClick={() => pick(t)}
                             className="flex w-full items-baseline gap-2 border-b border-border px-3 py-2 text-left transition-colors last:border-0 hover:bg-surface-2"
                           >
-                            <span className="tabular w-16 shrink-0 text-[11.5px] font-medium text-primary">
+                            <span className="tabular w-16 shrink-0 text-body-sm font-medium text-primary">
                               {t.catalog}
                             </span>
                             <span className="min-w-0 flex-1 truncate text-[12.5px] text-foreground">
                               {t.name}
                             </span>
-                            <span className="hidden shrink-0 text-[10px] text-faint sm:inline">
+                            <span className="hidden shrink-0 text-meta text-faint sm:inline">
                               {t.moving ? '—' : t.constellation} ·{' '}
                               {targetKindLabels[t.kind]}
                             </span>
@@ -189,7 +189,7 @@ export function TargetPicker({
                       ))}
                     </ul>
                     {totalMatches > options.length && (
-                      <p className="border-t border-border-strong px-3 py-1.5 text-[10px] text-faint">
+                      <p className="border-t border-border-strong px-3 py-1.5 text-meta text-faint">
                         {totalMatches} eşleşmenin ilk {options.length} tanesi —
                         aramayı daraltın.
                       </p>
@@ -214,7 +214,7 @@ export function TargetPicker({
 
       {selected && (
         <div className="rounded-card border border-border bg-surface-2/60 px-3 py-2.5">
-          <p className="text-[11.5px] leading-relaxed text-muted-foreground">
+          <p className="text-body-sm leading-relaxed text-muted-foreground">
             {selected.description}
           </p>
           <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 sm:grid-cols-4">
@@ -232,8 +232,8 @@ export function TargetPicker({
 function Fact({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0">
-      <dt className="label text-[9.5px]">{label}</dt>
-      <dd className="tabular truncate text-[11px] text-foreground">{value}</dd>
+      <dt className="label text-meta">{label}</dt>
+      <dd className="tabular truncate text-meta text-foreground">{value}</dd>
     </div>
   );
 }

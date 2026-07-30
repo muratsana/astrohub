@@ -93,7 +93,7 @@ export function LightPollutionPage() {
           meta={location.label}
         />
 
-        <p className="mb-4 rounded-card border border-cold/35 bg-surface-1 px-3 py-2.5 text-[11.5px] leading-relaxed text-muted-foreground">
+        <p className="mb-4 rounded-card border border-cold/35 bg-surface-1 px-3 py-2.5 text-body-sm leading-relaxed text-muted-foreground">
           <span className="text-foreground">Aşağıdaki sayılar haritadan
           gelmiyor.</span>{' '}
           Üstteki harita uydu kestirimidir (VIIRS ölçümlerinden
@@ -170,7 +170,7 @@ export function LightPollutionPage() {
                     >
                       {site.name}
                     </Link>
-                    <span className="tabular text-[11px] text-muted-foreground">
+                    <span className="tabular text-meta text-muted-foreground">
                       {formatDistance(distanceKm)}
                     </span>
                   </div>
@@ -187,7 +187,7 @@ export function LightPollutionPage() {
 
                   <p
                     className={cn(
-                      'mt-1.5 text-[11.5px] leading-relaxed',
+                      'mt-1.5 text-body-sm leading-relaxed',
                       comparison.ratio >= 2 ? 'text-success' : 'text-muted-foreground'
                     )}
                   >
@@ -197,7 +197,7 @@ export function LightPollutionPage() {
               ))}
             </ul>
 
-            <p className="mt-3 text-[10px] leading-snug text-faint">
+            <p className="mt-3 text-meta leading-snug text-faint">
               Süre kazancı bir <strong>üst sınırdır</strong>: gökyüzü fonunun
               baskın gürültü kaynağı olduğu varsayılır. Okuma gürültüsü,
               karanlık akım ve seeing hesaba katılmaz; dar bant filtreyle
@@ -220,14 +220,14 @@ export function LightPollutionPage() {
                       <span className="text-[12px] font-medium text-foreground">
                         {info.bortle} · {info.label}
                       </span>
-                      <span className="tabular shrink-0 text-[10.5px] text-cold">
+                      <span className="tabular shrink-0 text-meta text-cold">
                         {info.sqmRange[0]}–{info.sqmRange[1]}
                       </span>
                     </div>
-                    <p className="mt-0.5 text-[10.5px] leading-snug text-muted-foreground">
+                    <p className="mt-0.5 text-meta leading-snug text-muted-foreground">
                       {info.description}
                     </p>
-                    <p className="tabular mt-0.5 text-[10px] text-faint">
+                    <p className="tabular mt-0.5 text-meta text-faint">
                       Çıplak göz sınırı: {info.nakedEyeLimit}
                     </p>
                   </li>
@@ -236,7 +236,7 @@ export function LightPollutionPage() {
             </Panel>
 
             <Panel title="SQM nasıl okunur?">
-              <div className="space-y-2 text-[11.5px] leading-relaxed text-muted-foreground">
+              <div className="space-y-2 text-body-sm leading-relaxed text-muted-foreground">
                 <p>
                   SQM, gökyüzü fonunun parlaklığıdır (kadir/arcsaniye²) ve{' '}
                   <span className="text-foreground">büyük değer daha karanlık</span>{' '}

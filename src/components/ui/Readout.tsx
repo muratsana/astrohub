@@ -54,7 +54,7 @@ export function Readout({
           </span>
         )}
       </p>
-      {hint && <p className="mt-1.5 text-[10px] leading-snug text-faint">{hint}</p>}
+      {hint && <p className="mt-1.5 text-meta leading-snug text-faint">{hint}</p>}
     </div>
   );
 }
@@ -81,7 +81,7 @@ export function InlineReadout({
   return (
     <span className="inline-flex items-baseline gap-1.5 whitespace-nowrap">
       <span className="label">{label}</span>
-      <span className={cn('tabular text-[11px] font-medium', toneClass)}>
+      <span className={cn('tabular text-meta font-medium', toneClass)}>
         {value}
       </span>
     </span>

@@ -78,7 +78,7 @@ export function ArticleDetailPage() {
             >
               {article.level}
             </Badge>
-            <span className="tabular text-[10.5px] text-faint">
+            <span className="tabular text-meta text-faint">
               {article.duration}
             </span>
           </div>
@@ -87,7 +87,7 @@ export function ArticleDetailPage() {
             {article.title}
           </h1>
 
-          <p className="tabular mt-3 text-[11px] text-muted-foreground">
+          <p className="tabular mt-3 text-meta text-muted-foreground">
             {article.author} ·{' '}
             {new Date(article.publishedAt).toLocaleDateString('tr-TR', {
               day: '2-digit',
@@ -106,7 +106,7 @@ export function ArticleDetailPage() {
             ))}
           </div>
 
-          <p className="mt-10 border-t border-border pt-5 text-[11px] leading-relaxed text-faint">
+          <p className="mt-10 border-t border-border pt-5 text-meta leading-relaxed text-faint">
             Bu yazı topluluk katkısıyla güncellenir. Eksik ya da hatalı bulduğun
             bir nokta varsa bildirmen içeriği doğrudan iyileştirir.
           </p>
@@ -126,7 +126,7 @@ export function ArticleDetailPage() {
                       <span className="text-[12.5px] text-foreground">
                         {r.title}
                       </span>
-                      <span className="tabular shrink-0 text-[10.5px] text-faint">
+                      <span className="tabular shrink-0 text-meta text-faint">
                         {r.duration}
                       </span>
                     </Link>

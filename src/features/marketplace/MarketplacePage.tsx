@@ -115,7 +115,7 @@ export function MarketplacePage() {
               aria-selected={category === c}
               onClick={() => setCategory(c)}
               className={cn(
-                'rounded-card border px-2.5 py-1 text-[10px] tracking-[0.03em] transition-colors',
+                'rounded-card border px-2.5 py-1 text-meta tracking-[0.03em] transition-colors',
                 category === c
                   ? 'border-foreground/40 bg-surface-2 text-foreground'
                   : 'border-border text-muted-foreground hover:border-border-strong hover:text-foreground'
@@ -188,7 +188,7 @@ export function MarketplacePage() {
           </CardGrid>
         )}
 
-        <p className="mt-6 text-center text-[10.5px] leading-relaxed text-faint">
+        <p className="mt-6 text-center text-meta leading-relaxed text-faint">
           Platform içi ödeme/escrow MVP kapsamı dışındadır. Alım-satımda elden
           teslim ve yerinde deneme önerilir.
         </p>
@@ -227,7 +227,7 @@ function ListingCard({
           <h2 className="truncate text-[13px] font-medium text-foreground group-hover:text-primary">
             {listing.title}
           </h2>
-          <p className="tabular mt-0.5 truncate text-[10px] text-muted-foreground">
+          <p className="tabular mt-0.5 truncate text-meta text-muted-foreground">
             {listing.city} · @{listing.seller.username} · ★{' '}
             {listing.seller.rating.toFixed(1)}
           </p>
@@ -268,7 +268,7 @@ function ListingCard({
         <p className="tabular mt-1.5 font-display text-[17px] font-bold leading-none text-primary">
           {listing.price.toLocaleString('tr-TR')} ₺
         </p>
-        <p className="tabular mt-auto truncate pt-1 text-[10px] text-muted-foreground">
+        <p className="tabular mt-auto truncate pt-1 text-meta text-muted-foreground">
           {listing.city} · @{listing.seller.username} · ★{' '}
           {listing.seller.rating.toFixed(1)}
         </p>

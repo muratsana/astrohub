@@ -160,7 +160,7 @@ export function LightPollutionMap() {
             href={fullUrl(view)}
             target="_blank"
             rel="noreferrer noopener"
-            className="ml-auto text-[11px] text-cold transition-colors hover:text-primary"
+            className="ml-auto text-meta text-cold transition-colors hover:text-primary"
           >
             Ayrıntılı analiz: lightpollutionmap.app ↗
           </a>
@@ -299,7 +299,7 @@ export function LightPollutionMap() {
               </label>
               <span
                 className={cn(
-                  'text-[10px]',
+                  'text-meta',
                   overlay && loadedId === overlay.id
                     ? 'text-success'
                     : autoExhausted || pickedFailed
@@ -326,7 +326,7 @@ export function LightPollutionMap() {
                    seçtiyse tekrar denemek istiyordur. */
                 setFailed((list) => list.filter((id) => id !== e.target.value));
               }}
-              className="mt-1 w-full bg-transparent text-[11.5px] text-foreground outline-none"
+              className="mt-1 w-full bg-transparent text-body-sm text-foreground outline-none"
             >
               <option value="oto">Otomatik (sırayla dener)</option>
               {OVERLAY_SOURCES.map((source) => (
@@ -355,7 +355,7 @@ export function LightPollutionMap() {
           bir şey söylemiyordu.
         */}
         {(autoExhausted || pickedFailed) && (
-          <p className="mt-1.5 rounded-card border border-warning/40 bg-surface-1 px-2.5 py-1.5 text-[11px] leading-snug text-warning">
+          <p className="mt-1.5 rounded-card border border-warning/40 bg-surface-1 px-2.5 py-1.5 text-meta leading-snug text-warning">
             {autoExhausted
               ? 'Listedeki ışık kirliliği kaynaklarının hiçbirine ulaşılamadı'
               : 'Seçilen katmana ulaşılamadı'}
@@ -372,7 +372,7 @@ export function LightPollutionMap() {
           </p>
         )}
 
-        <p className="mt-1.5 text-[10px] leading-snug text-faint">
+        <p className="mt-1.5 text-meta leading-snug text-faint">
           {BASEMAP_CREDIT}
           {overlay && loadedId === overlay.id ? ` · ${overlay.credit}` : ''}.
           Katman uydu kestirimidir. Aşağıdaki karşılaştırma ise kendi gözlem
@@ -420,7 +420,7 @@ function Legend({ kind }: { kind: 'atlas' | 'radiance' }) {
               />
             ))}
           </div>
-          <div className="mt-1 flex justify-between text-[9.5px] text-faint">
+          <div className="mt-1 flex justify-between text-meta text-faint">
             <span>karanlık</span>
             <span>şehir</span>
           </div>
@@ -433,7 +433,7 @@ function Legend({ kind }: { kind: 'atlas' | 'radiance' }) {
               backgroundImage: 'linear-gradient(90deg, #000000, #fff3c4)',
             }}
           />
-          <p className="mt-1 text-[9.5px] leading-snug text-faint">
+          <p className="mt-1 text-meta leading-snug text-faint">
             ham parlaklık · Bortle ölçeği değil
           </p>
         </>
@@ -481,10 +481,10 @@ function PickPanel({
           >
             {nearest.site.name}
           </Link>
-          <p className="mt-0.5 text-[10.5px] text-faint">
+          <p className="mt-0.5 text-meta text-faint">
             {nearest.site.region} · {formatDistance(nearest.km)}
           </p>
-          <p className="tabular mt-1 text-[11px] text-cold">
+          <p className="tabular mt-1 text-meta text-cold">
             Bortle {nearest.site.bortle}
             {nearest.site.sqm !== undefined
               ? ` · SQM ${nearest.site.sqm.toFixed(2)}`
@@ -492,13 +492,13 @@ function PickPanel({
           </p>
         </div>
       ) : (
-        <p className="mt-2 border-t border-border pt-2 text-[10.5px] leading-snug text-faint">
+        <p className="mt-2 border-t border-border pt-2 text-meta leading-snug text-faint">
           Yakında kayıtlı gözlem noktamız yok.
         </p>
       )}
 
       {/* Renkten sayı okumamak bilinçli — gerekçe çağrı yerinde. */}
-      <p className="mt-2 text-[9.5px] leading-snug text-faint">
+      <p className="mt-2 text-meta leading-snug text-faint">
         Haritadaki renk uydu kestirimidir; buradaki Bortle/SQM ise o
         noktanın değil, en yakın kayıtlı sahanın ölçümüdür.
       </p>
@@ -542,10 +542,10 @@ function Notice({
   return (
     <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-center">
       <p className="text-[13px] text-foreground">{title}</p>
-      <p className="max-w-[52ch] text-[11.5px] leading-relaxed text-muted-foreground">
+      <p className="max-w-[52ch] text-body-sm leading-relaxed text-muted-foreground">
         {body}
       </p>
-      <div className="mt-1 text-[11.5px]">{action}</div>
+      <div className="mt-1 text-body-sm">{action}</div>
     </div>
   );
 }
@@ -575,7 +575,7 @@ function Slider({
         <label htmlFor={id} className="label">
           {label}
         </label>
-        <span className="tabular text-[11px] text-cold">{display}</span>
+        <span className="tabular text-meta text-cold">{display}</span>
       </div>
       <input
         id={id}

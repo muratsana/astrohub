@@ -168,11 +168,11 @@ function LocationPicker() {
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         aria-haspopup="listbox"
-        className="inline-flex items-center gap-1 text-[11px] font-medium tracking-[0.03em] text-foreground transition-colors hover:text-primary"
+        className="inline-flex min-h-6 items-center gap-1 text-meta font-medium tracking-[0.03em] text-foreground transition-colors hover:text-primary"
       >
         {location.label}
         {location.source === 'device' && (
-          <span className="text-[9px] text-cold" title="Cihaz konumu">
+          <span className="text-meta text-cold" title="Cihaz konumu">
             ◉
           </span>
         )}
@@ -195,10 +195,10 @@ function LocationPicker() {
                   requestDeviceLocation();
                   setOpen(false);
                 }}
-                className="block w-full px-3 py-2 text-left text-[11px] text-cold transition-colors hover:bg-surface-2"
+                className="block w-full px-3 py-2 text-left text-meta text-cold transition-colors hover:bg-surface-2"
               >
                 ◉ Cihaz konumumu kullan
-                <span className="mt-0.5 block text-[10px] leading-snug text-faint">
+                <span className="mt-0.5 block text-meta leading-snug text-faint">
                   Koordinat sunucuya gönderilmez
                 </span>
               </button>
@@ -217,12 +217,12 @@ function LocationPicker() {
                 setOpen(false);
               }}
               className={cn(
-                'flex w-full items-baseline justify-between gap-3 px-3 py-1.5 text-left text-[11px] transition-colors hover:bg-surface-2',
+                'flex w-full items-baseline justify-between gap-3 px-3 py-1.5 text-left text-meta transition-colors hover:bg-surface-2',
                 location.label === city.name ? 'text-primary' : 'text-foreground'
               )}
             >
               {city.name}
-              <span className="tabular text-[10px] text-faint">
+              <span className="tabular text-meta text-faint">
                 B{city.bortle}
               </span>
             </button>

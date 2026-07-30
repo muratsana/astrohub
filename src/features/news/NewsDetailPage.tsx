@@ -77,7 +77,7 @@ export function NewsDetailPage() {
 
           <div className="mb-4 flex flex-wrap items-center gap-2">
             <Badge tone="primary">{newsCategoryLabels[item.category]}</Badge>
-            <span className="tabular text-[11px] text-faint">
+            <span className="tabular text-meta text-faint">
               {publishedLabel}
             </span>
           </div>
@@ -111,7 +111,7 @@ export function NewsDetailPage() {
                 {item.source.name}
               </ExternalLink>
             </p>
-            <p className="mt-3 text-[11px] leading-relaxed text-faint">
+            <p className="mt-3 text-meta leading-relaxed text-faint">
               Haber içerikleri kaynağın yayınına dayanır; Astrohub editörü
               tarafından derlenir ve son doğrulama tarihiyle birlikte
               yayımlanır.
@@ -133,7 +133,7 @@ export function NewsDetailPage() {
                       <span className="text-[12.5px] text-foreground">
                         {r.title}
                       </span>
-                      <span className="tabular shrink-0 text-[10.5px] text-faint">
+                      <span className="tabular shrink-0 text-meta text-faint">
                         {new Date(r.publishedAt).toLocaleDateString('tr-TR', {
                           day: '2-digit',
                           month: 'short',

@@ -100,7 +100,7 @@ export function CookiePreferencesPage() {
                           Sil
                         </Button>
                       ) : (
-                        <span className="text-[10px] tracking-[0.03em] text-faint">
+                        <span className="text-meta tracking-[0.03em] text-faint">
                           saklanmıyor
                         </span>
                       )}
@@ -110,7 +110,7 @@ export function CookiePreferencesPage() {
                       {item.description}
                     </p>
 
-                    <p className="tabular mt-1 text-[10px] text-faint">
+                    <p className="tabular mt-1 text-meta text-faint">
                       {keys.length > 0
                         ? keys.join(', ')
                         : `${item.key}${item.prefix ? '*' : ''}`}
@@ -131,7 +131,7 @@ export function CookiePreferencesPage() {
                   Tüm Yerel Verileri Sil
                 </Button>
                 {lastCleared && (
-                  <span role="status" className="text-[11.5px] text-success">
+                  <span role="status" className="text-body-sm text-success">
                     Silindi: {lastCleared}
                   </span>
                 )}

@@ -26,7 +26,7 @@ export function LabelChip({ id }: { id: ForumLabelId }) {
     <span
       title={badge.description}
       className={cn(
-        'inline-block shrink-0 rounded-[2px] border px-1.5 py-0.5 text-[9px] font-medium leading-[1.5] tracking-[0.02em]',
+        'inline-block shrink-0 rounded-[2px] border px-1.5 py-0.5 text-meta font-medium leading-[1.5] tracking-[0.02em]',
         badge.className
       )}
     >

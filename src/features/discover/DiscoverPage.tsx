@@ -124,7 +124,7 @@ export function DiscoverPage() {
                     ratio="aspect-[16/10]"
                     className="border-0 border-b border-border"
                     badge={
-                      <span className="tabular rounded-[2px] bg-background/85 px-1.5 py-0.5 text-[10px] tracking-[0.02em] text-primary">
+                      <span className="tabular rounded-[2px] bg-background/85 px-1.5 py-0.5 text-meta tracking-[0.02em] text-primary">
                         {t.catalog}
                       </span>
                     }
@@ -135,7 +135,7 @@ export function DiscoverPage() {
                     <p className="text-[12.5px] font-medium leading-snug text-foreground group-hover:text-primary">
                       {t.name}
                     </p>
-                    <p className="mt-0.5 text-[10px] text-muted-foreground">
+                    <p className="mt-0.5 text-meta text-muted-foreground">
                       {t.bestMonths}
                     </p>
                   </div>

@@ -81,18 +81,18 @@ export function NavDrawer({
               onClose();
               onOpenPalette();
             }}
-            className="flex w-full items-center gap-2 rounded-card border border-border bg-surface-2 px-3 py-2.5 text-[11px] tracking-[0.03em] text-muted-foreground transition-colors hover:border-border-strong hover:text-foreground"
+            className="flex w-full items-center gap-2 rounded-card border border-border bg-surface-2 px-3 py-2.5 text-meta tracking-[0.03em] text-muted-foreground transition-colors hover:border-border-strong hover:text-foreground"
           >
             <SearchIcon className="h-3.5 w-3.5" />
             Komut paleti
-            <kbd className="ml-auto rounded-[2px] border border-border px-1 py-px text-[9px] text-faint">
+            <kbd className="ml-auto rounded-[2px] border border-border px-1 py-px text-meta text-faint">
               ⌘K
             </kbd>
           </button>
 
           <NavLink
             to={mobileDrawerPrimary.to}
-            className="flex w-full items-center gap-2 rounded-card border border-primary bg-primary/10 px-3 py-2.5 text-[11px] font-medium tracking-[0.03em] text-primary"
+            className="flex w-full items-center gap-2 rounded-card border border-primary bg-primary/10 px-3 py-2.5 text-meta font-medium tracking-[0.03em] text-primary"
           >
             <UserIcon className="h-3.5 w-3.5" />
             {mobileDrawerPrimary.label}
@@ -126,7 +126,7 @@ export function NavDrawer({
                   >
                     {item.label}
                     {item.soon && (
-                      <span className="text-[9px] tracking-widest text-faint">
+                      <span className="text-meta tracking-widest text-faint">
                         yakında
                       </span>
                     )}

@@ -40,12 +40,12 @@ export function FeaturedControl({ canWrite }: { canWrite: boolean }) {
     <Panel
       title="Ana sayfada öne çıkanlar"
       status={
-        <span className="text-[10px] text-faint">
+        <span className="text-meta text-faint">
           ilk {HOME_ROWS} satır görünür
         </span>
       }
     >
-      <p className="mb-3 text-[11.5px] leading-relaxed text-muted-foreground">
+      <p className="mb-3 text-body-sm leading-relaxed text-muted-foreground">
         Ana sayfadaki haber ve yazı şeritleri dörder satır gösterir. Buradan
         seçilenler verilen sırayla en üste gelir; seçim yapılmazsa şerit en
         yeniden eskiye dizilir. Dörtten fazla seçmek zararsız — fazlası
@@ -128,7 +128,7 @@ function KindEditor({
     <div className="rounded-card border border-border bg-surface-1 p-2.5">
       <div className="mb-2 flex items-baseline justify-between gap-2">
         <h3 className="label text-foreground">{label}</h3>
-        <span className="text-[10px] text-faint">
+        <span className="text-meta text-faint">
           {draft.length} seçili
           {featured.loading ? ' · yükleniyor' : ''}
         </span>
@@ -136,7 +136,7 @@ function KindEditor({
 
       {/* Seçili liste — sıra buradaki sıra. */}
       {draft.length === 0 ? (
-        <p className="rounded-card border border-border bg-surface-2 px-2.5 py-3 text-center text-[11px] text-muted-foreground">
+        <p className="rounded-card border border-border bg-surface-2 px-2.5 py-3 text-center text-meta text-muted-foreground">
           Seçim yok — şerit en yeniden eskiye diziliyor.
         </p>
       ) : (
@@ -151,17 +151,17 @@ function KindEditor({
                   : 'border-border bg-surface-2/60'
               )}
             >
-              <span className="tabular w-4 shrink-0 text-[10px] text-faint">
+              <span className="tabular w-4 shrink-0 text-meta text-faint">
                 {index + 1}
               </span>
-              <span className="min-w-0 flex-1 truncate text-[11.5px] text-foreground">
+              <span className="min-w-0 flex-1 truncate text-body-sm text-foreground">
                 {titleOf(slug)}
               </span>
               {/* Dördün altındakiler ana sayfada görünmüyor; bunu
                   yazmak, "seçtim ama çıkmadı" sorusunu baştan
                   engelliyor. */}
               {index >= HOME_ROWS && (
-                <span className="shrink-0 text-[9.5px] text-faint">yedek</span>
+                <span className="shrink-0 text-meta text-faint">yedek</span>
               )}
               <span className="flex shrink-0 gap-0.5">
                 <IconButton
@@ -203,7 +203,7 @@ function KindEditor({
               type="button"
               disabled={!canWrite}
               onClick={() => setDraft((list) => [...list, entry.slug])}
-              className="flex w-full items-center gap-2 border-b border-border px-2 py-1.5 text-left text-[11px] text-muted-foreground transition-colors last:border-0 hover:bg-surface-2 hover:text-foreground disabled:opacity-45"
+              className="flex w-full items-center gap-2 border-b border-border px-2 py-1.5 text-left text-meta text-muted-foreground transition-colors last:border-0 hover:bg-surface-2 hover:text-foreground disabled:opacity-45"
             >
               <span className="text-primary">+</span>
               <span className="min-w-0 flex-1 truncate">{entry.title}</span>
@@ -226,18 +226,18 @@ function KindEditor({
           </Button>
         )}
         {message && (
-          <span className="text-[10.5px] text-muted-foreground">{message}</span>
+          <span className="text-meta text-muted-foreground">{message}</span>
         )}
       </div>
 
       {!canWrite && (
-        <p className="mt-1.5 text-[10px] text-faint">
+        <p className="mt-1.5 text-meta text-faint">
           Değiştirmek için yönetici rolü gerekir; yazma yetkisini RLS
           politikası zorlar.
         </p>
       )}
       {featured.error && (
-        <p className="mt-1.5 text-[10px] text-warning">
+        <p className="mt-1.5 text-meta text-warning">
           Sıra okunamadı: {featured.error}
         </p>
       )}
@@ -262,7 +262,7 @@ function IconButton({
       aria-label={label}
       disabled={disabled}
       onClick={onClick}
-      className="h-5 w-5 rounded-[2px] border border-border text-[11px] leading-none text-muted-foreground transition-colors hover:border-border-strong hover:text-foreground disabled:opacity-30"
+      className="h-5 w-5 rounded-[2px] border border-border text-meta leading-none text-muted-foreground transition-colors hover:border-border-strong hover:text-foreground disabled:opacity-30"
     >
       {children}
     </button>

@@ -49,7 +49,7 @@ export function GoogleButton({ label = 'Google ile devam et' }: { label?: string
       </button>
 
       {error && (
-        <p role="alert" className="text-[11.5px] text-danger">
+        <p role="alert" className="text-body-sm text-danger">
           {error}
         </p>
       )}

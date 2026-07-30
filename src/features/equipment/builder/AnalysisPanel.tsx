@@ -56,7 +56,7 @@ export function Metric({
 
   return (
     <div className="rounded-card border border-border bg-surface-1 px-2.5 py-2">
-      <p className="label text-[9.5px]">{label}</p>
+      <p className="label text-meta">{label}</p>
       {value === null ? (
         <p className="text-[12px] text-faint" title={computation.assumptions[0]}>
           veri yok
@@ -64,13 +64,13 @@ export function Metric({
       ) : (
         <p className="tabular text-[14px] leading-tight text-foreground">
           {value}
-          <span className="ml-0.5 text-[10px] text-muted-foreground">
+          <span className="ml-0.5 text-meta text-muted-foreground">
             {computation.unit}
           </span>
         </p>
       )}
       {(hint || computation.confidence === 'varsayim') && (
-        <p className="mt-0.5 text-[9.5px] leading-snug text-faint">
+        <p className="mt-0.5 text-meta leading-snug text-faint">
           {hint ?? 'varsayım içeriyor'}
         </p>
       )}
@@ -81,28 +81,28 @@ export function Metric({
 function ComputationDetail({ computation }: { computation: Computation }) {
   return (
     <div className="mt-2 rounded-card border border-border bg-surface-2/70 p-2.5">
-      <p className="label mb-1 text-[9.5px]">Formül</p>
-      <p className="tabular text-[11px] leading-relaxed text-foreground">
+      <p className="label mb-1 text-meta">Formül</p>
+      <p className="tabular text-meta leading-relaxed text-foreground">
         {computation.formula}
       </p>
 
       {computation.inputs.length > 0 && (
         <>
-          <p className="label mb-1 mt-2 text-[9.5px]">Kullanılan değerler</p>
+          <p className="label mb-1 mt-2 text-meta">Kullanılan değerler</p>
           <ul>
             {computation.inputs.map((input, i) => (
               <li
                 key={`${input.label}-${i}`}
                 className="flex flex-wrap items-baseline justify-between gap-x-2 border-b border-border py-1 last:border-0"
               >
-                <span className="text-[11px] text-muted-foreground">
+                <span className="text-meta text-muted-foreground">
                   {input.label}
                 </span>
-                <span className="tabular text-[11px] text-foreground">
+                <span className="tabular text-meta text-foreground">
                   {input.value}
                 </span>
                 {input.source && (
-                  <span className="w-full text-[9.5px] text-faint">
+                  <span className="w-full text-meta text-faint">
                     {input.source}
                   </span>
                 )}
@@ -114,10 +114,10 @@ function ComputationDetail({ computation }: { computation: Computation }) {
 
       {computation.assumptions.length > 0 && (
         <>
-          <p className="label mb-1 mt-2 text-[9.5px]">Kabuller</p>
+          <p className="label mb-1 mt-2 text-meta">Kabuller</p>
           <ul className="space-y-0.5">
             {computation.assumptions.map((a) => (
-              <li key={a} className="text-[10.5px] leading-snug text-warning">
+              <li key={a} className="text-meta leading-snug text-warning">
                 {a}
               </li>
             ))}
@@ -147,15 +147,15 @@ function CheckRow({ check }: { check: SetupCheck }) {
             <span className="text-[12.5px] font-medium text-foreground">
               {check.title}
             </span>
-            <span className="tabular text-[11px] text-cold">{check.headline}</span>
+            <span className="tabular text-meta text-cold">{check.headline}</span>
           </span>
-          <span className="mt-0.5 block text-[11px] leading-relaxed text-muted-foreground">
+          <span className="mt-0.5 block text-meta leading-relaxed text-muted-foreground">
             {check.explanation}
           </span>
         </span>
         <span
           className={cn(
-            'mt-1 shrink-0 text-[10px] text-faint transition-transform',
+            'mt-1 shrink-0 text-meta text-faint transition-transform',
             open && 'rotate-180'
           )}
           aria-hidden
@@ -167,17 +167,17 @@ function CheckRow({ check }: { check: SetupCheck }) {
       {open && (
         <div className="pl-1">
           {check.expected && (
-            <p className="mt-1.5 text-[11px] text-muted-foreground">
-              <span className="label mr-1 text-[9.5px]">Beklenen</span>
+            <p className="mt-1.5 text-meta text-muted-foreground">
+              <span className="label mr-1 text-meta">Beklenen</span>
               {check.expected}
             </p>
           )}
           {check.advice && (
-            <p className="mt-1 rounded-card border border-primary/30 bg-surface-2 px-2 py-1.5 text-[11px] leading-relaxed text-foreground">
+            <p className="mt-1 rounded-card border border-primary/30 bg-surface-2 px-2 py-1.5 text-meta leading-relaxed text-foreground">
               {check.advice}
             </p>
           )}
-          <p className="mt-1 text-[9.5px] text-faint">
+          <p className="mt-1 text-meta text-faint">
             Önem: {SEVERITY_LABELS[check.severity]}
           </p>
           {check.computation && <ComputationDetail computation={check.computation} />}
@@ -197,7 +197,7 @@ export function BackfocusChainView({
 }) {
   if (segments.length === 0) {
     return (
-      <p className="py-2 text-[11.5px] text-muted-foreground">
+      <p className="py-2 text-body-sm text-muted-foreground">
         Zincir henüz kurulmadı. Kamera ve düzeltici seçildiğinde optik yol
         burada parça parça çizilir.
       </p>
@@ -221,10 +221,10 @@ export function BackfocusChainView({
               }}
               aria-hidden
             />
-            <span className="min-w-0 flex-1 truncate text-[11px] text-muted-foreground">
+            <span className="min-w-0 flex-1 truncate text-meta text-muted-foreground">
               {s.label}
             </span>
-            <span className="tabular shrink-0 text-[11px] text-foreground">
+            <span className="tabular shrink-0 text-meta text-foreground">
               {s.missing ? (
                 <span className="text-faint">veri yok</span>
               ) : (
@@ -235,11 +235,11 @@ export function BackfocusChainView({
         ))}
       </ul>
       <div className="mt-2 flex items-baseline justify-between border-t border-border pt-1.5">
-        <span className="label text-[9.5px]">Toplam</span>
+        <span className="label text-meta">Toplam</span>
         <span className="tabular text-[12px] text-foreground">
           {Math.round(total * 100) / 100} mm
           {requiredMm !== null && (
-            <span className="ml-1 text-[10px] text-muted-foreground">
+            <span className="ml-1 text-meta text-muted-foreground">
               / hedef {requiredMm} mm
             </span>
           )}
@@ -267,7 +267,7 @@ export function FovPreview({
 }) {
   if (widthArcmin === null || heightArcmin === null) {
     return (
-      <p className="py-2 text-[11.5px] leading-relaxed text-muted-foreground">
+      <p className="py-2 text-body-sm leading-relaxed text-muted-foreground">
         Görüş alanı için etkin odak ve sensör boyutu gerekiyor; ikisi de
         seçildiğinde kadraj burada ölçekli çizilir.
       </p>
@@ -296,11 +296,11 @@ export function FovPreview({
           style={{ width: `${boxW}%`, height: `${boxH}%` }}
           aria-hidden
         />
-        <span className="tabular absolute bottom-1 right-1.5 text-[9.5px] text-faint">
+        <span className="tabular absolute bottom-1 right-1.5 text-meta text-faint">
           karşılaştırma: dolunay 31′
         </span>
       </div>
-      <p className="tabular mt-1.5 text-[11px] text-muted-foreground">
+      <p className="tabular mt-1.5 text-meta text-muted-foreground">
         {Math.round(widthArcmin)}′ × {Math.round(heightArcmin)}′ (
         {(widthArcmin / 60).toFixed(2)}° × {(heightArcmin / 60).toFixed(2)}°)
       </p>
@@ -328,7 +328,7 @@ export function AnalysisPanel({
         <div className="mb-2 flex flex-wrap items-center gap-2">
           <VerdictBadge status={report.verdict} />
           {report.missingDataCount > 0 && (
-            <span className="text-[11px] text-muted-foreground">
+            <span className="text-meta text-muted-foreground">
               {report.missingDataCount} kontrol için veri eksik
             </span>
           )}
@@ -364,7 +364,7 @@ export function AnalysisPanel({
             <CheckRow key={check.id} check={check} />
           ))}
         </ul>
-        <p className="mt-2 text-[10px] leading-snug text-faint">
+        <p className="mt-2 text-meta leading-snug text-faint">
           Her kontrolün üzerine tıklayınca formül, kullanılan değerler ve
           varsa yapılan kabuller açılır. “Veri yetersiz” yazan kontrollerde
           sistem tahmin üretmez.

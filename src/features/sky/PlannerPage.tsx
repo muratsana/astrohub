@@ -255,7 +255,7 @@ export function PlannerPage() {
                               </span>
                             </Link>
                             {skipped && (
-                              <p className="mt-0.5 text-[10px] leading-snug text-warning">
+                              <p className="mt-0.5 text-meta leading-snug text-warning">
                                 {skipReasonLabels[skipped.reason]}
                               </p>
                             )}
@@ -279,7 +279,7 @@ export function PlannerPage() {
                                 )
                               )
                             }
-                            className="h-8 w-20 shrink-0 text-[11px]"
+                            className="h-8 w-20 shrink-0 text-meta"
                           />
                           <Button
                             size="sm"
@@ -339,7 +339,7 @@ export function PlannerPage() {
                                     {target.catalog} — {target.name}
                                   </Link>
                                 </span>
-                                <span className="tabular text-[11.5px] text-cold">
+                                <span className="tabular text-body-sm text-cold">
                                   {formatClock(slot.start, location.timeZone)} –{' '}
                                   {formatClock(slot.end, location.timeZone)}
                                 </span>
@@ -357,7 +357,7 @@ export function PlannerPage() {
 
                               <p
                                 className={cn(
-                                  'mt-1 text-[10.5px] leading-snug',
+                                  'mt-1 text-meta leading-snug',
                                   slot.fulfillment < 1 ? 'text-warning' : 'text-faint'
                                 )}
                               >
@@ -388,7 +388,7 @@ export function PlannerPage() {
                               <span className="text-[12px] text-foreground">
                                 {target.catalog} — {target.name}
                               </span>
-                              <span className="text-[11px] text-muted-foreground">
+                              <span className="text-meta text-muted-foreground">
                                 {skipReasonLabels[skip.reason]}
                                 {skip.window &&
                                   ` (${formatClock(skip.window.start, location.timeZone)}–${formatClock(skip.window.end, location.timeZone)} müsaitti)`}

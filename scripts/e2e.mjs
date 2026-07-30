@@ -107,6 +107,32 @@ async function heading() {
   return (await el.textContent())?.trim() ?? '';
 }
 
+/**
+ * Sayfada beklenen metnin GÖRÜNMESİNİ bekler ve gövde metnini döndürür.
+ *
+ * Gezinmeden hemen sonra `body.innerText`i bir kez okumak kararsızdı:
+ * rota chunk'ı inip bileşen boyandıktan sonra bile veriye bağlı bölümler
+ * bir tur sonra geliyor. CI'da bu yarış iki ayrı senaryoyu düşürdü
+ * (şehir başlığı, çerez envanteri) — yerelde chunk hızlı indiği için
+ * hiç görünmemişti.
+ *
+ * Metin gelmezse yine düşer; ama artık "henüz gelmedi" ile "hiç yok"
+ * ayrımı 10 saniyeye bağlı, tek karelik şansa değil.
+ */
+async function waitForText(needle, label = needle) {
+  try {
+    await page.waitForFunction(
+      // `includesTr` ile aynı kural: Türkçe duyarlı küçük harfe indirip ara.
+      (t) => (document.body.innerText || '').toLocaleLowerCase('tr-TR').includes(t),
+      needle,
+      { timeout: 10_000 }
+    );
+  } catch {
+    throw new Error(`sayfada beklenen metin görünmedi: ${label}`);
+  }
+  return page.evaluate(() => document.body.innerText);
+}
+
 await page.goto(BASE, { waitUntil: 'load' });
 await page.waitForTimeout(1500);
 
@@ -133,14 +159,12 @@ await scenario('üst menüden galeriye gidilir', async () => {
 
 await scenario('bilinmeyen adres 404 sayfası gösterir', async () => {
   await goto('/boyle-bir-sayfa-yok');
-  const text = await page.evaluate(() => document.body.innerText);
-  assert(text.includes('404'), '404 metni yok');
+  await waitForText('404', '404 sayfası');
 });
 
 await scenario('tanımsız şehir sayfası 404 verir', async () => {
   await goto('/atlantis-astronomi-etkinlikleri');
-  const text = await page.evaluate(() => document.body.innerText);
-  assert(text.includes('404'), 'uydurma şehir sayfası 404 vermedi');
+  await waitForText('404', 'uydurma şehir sayfası 404');
 });
 
 await scenario('tanımlı şehir sayfası açılır', async () => {
@@ -528,13 +552,16 @@ await scenario('tema değişimi kalıcıdır', async () => {
 /* ══════════════════════ Çerez tercihleri ══════════════════════ */
 
 await scenario('çerez sayfası saklanan veriyi listeler ve siler', async () => {
-  await page.evaluate(() => {
+  const written = await page.evaluate(() => {
     localStorage.setItem('astrohub:view:galeri', 'list');
+    return localStorage.getItem('astrohub:view:galeri');
   });
+  assert(written === 'list', 'test verisi yazılamadı');
+
   await goto('/cerezler');
 
-  const text = await page.evaluate(() => document.body.innerText);
-  assert(includesTr(text, 'görünüm tercihleri'), 'envanter listelenmedi');
+  // Envanter localStorage'dan okunur; satırın boyanmasını bekle.
+  await waitForText('görünüm tercihleri', 'çerez envanteri satırı');
 
   const clearAll = await page.$$('button');
   const target = [];

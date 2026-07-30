@@ -118,7 +118,7 @@ function LeadCard({ item, label }: { item: EditorialItem; label: string }) {
       <PlateFrame
         ratio="aspect-[16/9]"
         badge={
-          <span className="rounded-[2px] border border-primary/50 bg-primary/15 px-1.5 py-0.5 text-[9px] tracking-[0.02em] text-primary backdrop-blur-sm">
+          <span className="rounded-[2px] border border-primary/50 bg-primary/15 px-1.5 py-0.5 text-meta tracking-[0.02em] text-primary backdrop-blur-sm">
             {label}
           </span>
         }
@@ -136,7 +136,7 @@ function LeadCard({ item, label }: { item: EditorialItem; label: string }) {
         <div className="mb-2 flex flex-wrap items-center gap-2">
           <Badge tone="primary">{item.category}</Badge>
           {item.meta && (
-            <span className="tabular text-[10.5px] text-faint">{item.meta}</span>
+            <span className="tabular text-meta text-faint">{item.meta}</span>
           )}
         </div>
 
@@ -148,7 +148,7 @@ function LeadCard({ item, label }: { item: EditorialItem; label: string }) {
         </p>
 
         {item.imageCredit && (
-          <p className="mt-2 text-[10px] text-faint">
+          <p className="mt-2 text-meta text-faint">
             Görsel: {item.imageCredit}
           </p>
         )}
@@ -195,7 +195,7 @@ function EditorialCard({ item }: { item: EditorialItem }) {
         <div className="mb-2 flex flex-wrap items-center gap-2">
           <Badge>{item.category}</Badge>
           {item.meta && (
-            <span className="tabular text-[10px] text-faint">{item.meta}</span>
+            <span className="tabular text-meta text-faint">{item.meta}</span>
           )}
         </div>
 
@@ -217,7 +217,7 @@ function EditorialCard({ item }: { item: EditorialItem }) {
         <h2 className="line-clamp-2 min-h-[2lh] text-[13px] leading-snug text-foreground transition-colors group-hover:text-primary">
           {item.title}
         </h2>
-        <p className="mt-1.5 line-clamp-3 min-h-[3lh] text-[11px] leading-relaxed text-muted-foreground">
+        <p className="mt-1.5 line-clamp-3 min-h-[3lh] text-meta leading-relaxed text-muted-foreground">
           {item.summary}
         </p>
 
@@ -259,7 +259,7 @@ function EditorialRow({ item }: { item: EditorialItem }) {
         <span className="block truncate text-[13px] text-foreground transition-colors group-hover:text-primary">
           {item.title}
         </span>
-        <span className="mt-0.5 block truncate text-[11px] text-muted-foreground">
+        <span className="mt-0.5 block truncate text-meta text-muted-foreground">
           {item.summary}
         </span>
       </span>
@@ -267,7 +267,7 @@ function EditorialRow({ item }: { item: EditorialItem }) {
       <span className="hidden shrink-0 items-center gap-2 sm:flex">
         <Badge>{item.category}</Badge>
         {item.meta && (
-          <span className="tabular w-[92px] shrink-0 text-right text-[10px] text-faint">
+          <span className="tabular w-[92px] shrink-0 text-right text-meta text-faint">
             {item.meta}
           </span>
         )}

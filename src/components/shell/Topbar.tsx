@@ -116,7 +116,7 @@ export function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
               type="button"
               onClick={onOpenNav}
               aria-label="Modül haritasını aç"
-              className="inline-flex h-8 items-center gap-1.5 rounded-card border border-border px-2 text-[10px] tracking-[0.03em] text-muted-foreground transition-colors hover:border-border-strong hover:text-foreground sm:px-2.5 xl:hidden"
+              className="inline-flex h-8 items-center gap-1.5 rounded-card border border-border px-2 text-meta tracking-[0.03em] text-muted-foreground transition-colors hover:border-border-strong hover:text-foreground sm:px-2.5 xl:hidden"
             >
               <MenuIcon className="h-3.5 w-3.5" />
               <span className="hidden lg:inline">Modüller</span>
@@ -165,17 +165,19 @@ export function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
             {/*
               Telefonda hesap girişi ikon: "Hesap" metni son 7px'i
               taşırıyordu (önizleme denetimi ölçtü). Erişilebilir ad
-              `aria-label` ile korunuyor, dokunma hedefi 32px kalıyor
-              (§6.7). `/giris` sayfası kayıt bağlantısını zaten taşıyor.
+              `ariaLabel` ile korunuyor; ikon kontrolü olduğu için hedef
+              44×44 (WCAG 2.5.5 — genişletecek metni yok).
+              `/giris` sayfası kayıt bağlantısını zaten taşıyor.
             */}
             <span className="sm:hidden">
               <ButtonLink
                 to={user ? '/hesap' : '/giris'}
                 size="sm"
                 variant="secondary"
-                aria-label={user ? 'Hesabım' : 'Giriş yap veya kaydol'}
+                ariaLabel={user ? 'Hesabım' : 'Giriş yap veya kaydol'}
+                className="h-11 w-11 justify-center px-0"
               >
-                <UserIcon className="h-3.5 w-3.5" />
+                <UserIcon className="h-4 w-4" />
               </ButtonLink>
             </span>
 

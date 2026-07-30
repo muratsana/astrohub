@@ -166,7 +166,7 @@ export function EquipmentPicker({
                           </span>{' '}
                           {model.model}
                         </span>
-                        <span className="tabular ml-auto shrink-0 text-[10px] text-faint">
+                        <span className="tabular ml-auto shrink-0 text-meta text-faint">
                           {Object.values(model.specs).slice(0, 2).join(' · ')}
                         </span>
                       </button>
@@ -174,7 +174,7 @@ export function EquipmentPicker({
                   ))}
                 </ul>
               ) : (
-                <p className="px-3 py-3 text-[11.5px] text-muted-foreground">
+                <p className="px-3 py-3 text-body-sm text-muted-foreground">
                   Katalogda eşleşme yok.
                 </p>
               )}
@@ -195,7 +195,7 @@ export function EquipmentPicker({
                       className="h-9 text-[12px]"
                     />
                     {error && (
-                      <p role="alert" className="text-[11px] text-danger">
+                      <p role="alert" className="text-meta text-danger">
                         {error}
                       </p>
                     )}
@@ -215,14 +215,14 @@ export function EquipmentPicker({
                         Vazgeç
                       </Button>
                     </div>
-                    <p className="text-[10px] leading-snug text-faint">
+                    <p className="text-meta leading-snug text-faint">
                       Kayıt onaya gider ve o zamana kadar yalnızca size
                       görünür. Künyenizde hemen kullanabilirsiniz.
                     </p>
                   </div>
                 ) : (
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-[11px] text-muted-foreground">
+                    <span className="text-meta text-muted-foreground">
                       {user
                         ? 'Aradığınız model yok mu?'
                         : 'Girdiğiniz ad künyede serbest metin olarak kalır.'}

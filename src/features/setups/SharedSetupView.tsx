@@ -104,7 +104,7 @@ export function SharedSetupView({ setup }: { setup: SavedSetup }) {
         />
 
         {missing > 0 && (
-          <p className="mb-3 rounded-card border border-warning/40 bg-surface-1 px-3 py-2 text-[11.5px] text-muted-foreground">
+          <p className="mb-3 rounded-card border border-warning/40 bg-surface-1 px-3 py-2 text-body-sm text-muted-foreground">
             Bu setup’taki {missing} bileşen ekipman veritabanında
             bulunamadı; rapor eksik zincirle hesaplandı.
           </p>

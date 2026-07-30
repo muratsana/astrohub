@@ -70,7 +70,7 @@ export function PanelPage() {
         />
 
         {!configured && (
-          <p className="mb-4 rounded-card border border-warning/35 bg-surface-1 px-3 py-2.5 text-[11.5px] leading-relaxed text-warning">
+          <p className="mb-4 rounded-card border border-warning/35 bg-surface-1 px-3 py-2.5 text-body-sm leading-relaxed text-warning">
             Hesap altyapısı (Supabase) henüz bağlanmadı — panel önizleme
             modunda. Buradaki sayılar gerçek değil, kural örnekleridir.
           </p>
@@ -118,7 +118,7 @@ export function PanelPage() {
               style={{ width: `${(activePhotos / MAX_ACTIVE_PHOTOS) * 100}%` }}
             />
           </div>
-          <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
+          <p className="mt-2 text-meta leading-relaxed text-muted-foreground">
             Aynı fotoğrafın işleme sürümleri kotada ayrı kayıt sayılmaz; bir
             fotoğraf kaç sürüme sahip olursa olsun tek hak tüketir (§4.2).
           </p>
@@ -150,11 +150,11 @@ export function PanelPage() {
                         <span className="block truncate text-[12.5px] text-foreground group-hover:text-primary">
                           {setup.name}
                         </span>
-                        <span className="mt-0.5 block truncate text-[10.5px] text-muted-foreground">
+                        <span className="mt-0.5 block truncate text-meta text-muted-foreground">
                           {setup.input.optic.name} · {setup.input.camera.name}
                         </span>
                       </span>
-                      <span className="tabular shrink-0 text-[10.5px] text-faint">
+                      <span className="tabular shrink-0 text-meta text-faint">
                         {new Date(setup.savedAt).toLocaleDateString('tr-TR')}
                       </span>
                     </Link>
@@ -162,7 +162,7 @@ export function PanelPage() {
                 ))}
               </ul>
             )}
-            <p className="mt-2 text-[10px] leading-snug text-faint">
+            <p className="mt-2 text-meta leading-snug text-faint">
               Setup'lar hesap sistemi gelene kadar bu tarayıcıda saklanır.
               Paylaşmak için setup sayfasındaki bağlantıyı kopyalayın — bağlantı
               değerleri kendi içinde taşır.

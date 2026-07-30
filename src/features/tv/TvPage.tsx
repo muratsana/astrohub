@@ -63,7 +63,7 @@ export function TvPage() {
         <CatalogSourceNote selection={catalog} />
 
         {!hasNetworkAccess && (
-          <p className="mb-4 rounded-card border border-cold/40 bg-surface-1 px-3 py-2.5 text-[11.5px] leading-relaxed text-muted-foreground">
+          <p className="mb-4 rounded-card border border-cold/40 bg-surface-1 px-3 py-2.5 text-body-sm leading-relaxed text-muted-foreground">
             Bu tek dosya önizlemede dış istek yapılamıyor, bu yüzden oynatıcı
             kurulmuyor. Yayın adresleri aşağıda listelenir ve YouTube'da
             açılabilir.
@@ -104,7 +104,7 @@ export function TvPage() {
                         {broadcastKindLabels[item.kind]}
                       </Badge>
                       {item.startsAt && (
-                        <span className="tabular text-[10.5px] text-faint">
+                        <span className="tabular text-meta text-faint">
                           {formatWhen(item.startsAt)}
                         </span>
                       )}
@@ -114,7 +114,7 @@ export function TvPage() {
                       {item.title}
                     </p>
                     {item.description && (
-                      <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+                      <p className="mt-1 text-meta leading-relaxed text-muted-foreground">
                         {item.description}
                       </p>
                     )}
@@ -160,7 +160,7 @@ function Player({ broadcast }: { broadcast: Broadcast }) {
           />
         </div>
       ) : (
-        <div className="flex aspect-video w-full items-center justify-center rounded-card border border-border bg-surface-2 px-6 text-center text-[11.5px] leading-relaxed text-muted-foreground">
+        <div className="flex aspect-video w-full items-center justify-center rounded-card border border-border bg-surface-2 px-6 text-center text-body-sm leading-relaxed text-muted-foreground">
           Oynatıcı bu ortamda kurulamıyor. Yayını YouTube'da açabilirsiniz.
         </div>
       )}
@@ -184,7 +184,7 @@ function WatchLink({ broadcast }: { broadcast: Broadcast }) {
     <p className="mt-2">
       <ExternalLink
         href={href}
-        className="text-[11px] text-cold hover:text-primary"
+        className="text-meta text-cold hover:text-primary"
       >
         YouTube'da aç
       </ExternalLink>

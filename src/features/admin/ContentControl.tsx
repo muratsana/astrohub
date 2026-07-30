@@ -50,7 +50,7 @@ export function ContentControl({ canWrite }: { canWrite: boolean }) {
               type="button"
               onClick={() => setKind(k)}
               className={cn(
-                'rounded-card border px-2 py-0.5 text-[10px] transition-colors',
+                'rounded-card border px-2 py-0.5 text-meta transition-colors',
                 kind === k
                   ? 'border-primary text-primary'
                   : 'border-border text-muted-foreground hover:text-foreground'
@@ -164,13 +164,13 @@ function KindEditor({
         </div>
 
         {error && (
-          <p className="mb-2 rounded-card border border-danger/45 bg-surface-2 px-2 py-1.5 text-[10.5px] text-danger">
+          <p className="mb-2 rounded-card border border-danger/45 bg-surface-2 px-2 py-1.5 text-meta text-danger">
             {error}
           </p>
         )}
 
         {entries.length === 0 && !loading ? (
-          <p className="rounded-card border border-border bg-surface-2 px-2.5 py-3 text-center text-[11px] text-muted-foreground">
+          <p className="rounded-card border border-border bg-surface-2 px-2.5 py-3 text-center text-meta text-muted-foreground">
             Henüz kayıt yok. "Yeni" ile ilk içeriği oluşturun — mevcut
             haber ve yazılar uygulama içindeki veri dosyalarından geliyor
             ve burada görünmüyor.
@@ -192,10 +192,10 @@ function KindEditor({
                     onClick={() => startEdit(entry)}
                     className="block w-full text-left"
                   >
-                    <span className="line-clamp-2 text-[11.5px] leading-snug text-foreground">
+                    <span className="line-clamp-2 text-body-sm leading-snug text-foreground">
                       {entry.title}
                     </span>
-                    <span className="tabular mt-0.5 block text-[10px] text-faint">
+                    <span className="tabular mt-0.5 block text-meta text-faint">
                       {entry.publishedAt} · {entry.slug}
                     </span>
                   </button>
@@ -210,27 +210,27 @@ function KindEditor({
                       type="button"
                       disabled={!canWrite || busy}
                       onClick={() => toggleStatus(entry)}
-                      className="text-[10px] text-cold hover:text-primary disabled:opacity-40"
+                      className="text-meta text-cold hover:text-primary disabled:opacity-40"
                     >
                       {entry.status === 'yayinda' ? 'Taslağa al' : 'Yayınla'}
                     </button>
                     {confirmDelete === entry.id ? (
                       <>
-                        <span className="text-[10px] text-danger">
+                        <span className="text-meta text-danger">
                           Geri alınamaz —
                         </span>
                         <button
                           type="button"
                           disabled={busy}
                           onClick={() => remove(entry.id)}
-                          className="text-[10px] text-danger underline"
+                          className="text-meta text-danger underline"
                         >
                           sil
                         </button>
                         <button
                           type="button"
                           onClick={() => setConfirmDelete(null)}
-                          className="text-[10px] text-muted-foreground"
+                          className="text-meta text-muted-foreground"
                         >
                           vazgeç
                         </button>
@@ -240,7 +240,7 @@ function KindEditor({
                         type="button"
                         disabled={!canWrite || busy}
                         onClick={() => setConfirmDelete(entry.id)}
-                        className="text-[10px] text-muted-foreground hover:text-danger disabled:opacity-40"
+                        className="text-meta text-muted-foreground hover:text-danger disabled:opacity-40"
                       >
                         Sil
                       </button>
@@ -256,7 +256,7 @@ function KindEditor({
       {/* Form */}
       <div>
         {!draft ? (
-          <p className="rounded-card border border-border bg-surface-2/50 px-3 py-8 text-center text-[11.5px] leading-relaxed text-muted-foreground">
+          <p className="rounded-card border border-border bg-surface-2/50 px-3 py-8 text-center text-body-sm leading-relaxed text-muted-foreground">
             Soldan bir kayıt seçin ya da "Yeni" ile içerik oluşturun.
             <br />
             <span className="text-faint">
@@ -276,7 +276,7 @@ function KindEditor({
                   setDraft(null);
                   setEditing(null);
                 }}
-                className="text-[10.5px] text-muted-foreground hover:text-foreground"
+                className="text-meta text-muted-foreground hover:text-foreground"
               >
                 Kapat
               </button>
@@ -466,7 +466,7 @@ function KindEditor({
             </div>
 
             {problem && (
-              <p className="rounded-card border border-warning/40 bg-surface-2 px-2.5 py-2 text-[11px] leading-snug text-warning">
+              <p className="rounded-card border border-warning/40 bg-surface-2 px-2.5 py-2 text-meta leading-snug text-warning">
                 {problem}
               </p>
             )}
@@ -475,7 +475,7 @@ function KindEditor({
               <Button onClick={save} disabled={!canWrite || busy || !!problem}>
                 {busy ? 'Kaydediliyor…' : 'Kaydet'}
               </Button>
-              <label className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
+              <label className="inline-flex items-center gap-1.5 text-meta text-muted-foreground">
                 <input
                   type="checkbox"
                   checked={draft.status === 'yayinda'}
@@ -495,7 +495,7 @@ function KindEditor({
         )}
 
         {message && (
-          <p className="mt-2 text-[11px] text-muted-foreground">{message}</p>
+          <p className="mt-2 text-meta text-muted-foreground">{message}</p>
         )}
       </div>
     </div>

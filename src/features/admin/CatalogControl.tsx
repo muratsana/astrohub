@@ -81,7 +81,7 @@ export function CatalogControl({ canWrite }: { canWrite: boolean }) {
         title="Katalog senkronizasyonu"
         status={`${plan.totalRows} satır`}
       >
-        <p className="mb-3 text-[11.5px] leading-relaxed text-muted-foreground">
+        <p className="mb-3 text-body-sm leading-relaxed text-muted-foreground">
           Ekipman ve hedef kataloğu uygulamanın içinde tohum veri olarak
           geliyor. Bu düğme onu veritabanına yazar: yeni modeller eklenir,
           değişenler güncellenir.{' '}
@@ -119,7 +119,7 @@ export function CatalogControl({ canWrite }: { canWrite: boolean }) {
                 }}
               />
             </div>
-            <p className="tabular mt-1.5 text-[11px] text-muted-foreground" role="status">
+            <p className="tabular mt-1.5 text-meta text-muted-foreground" role="status">
               {progress.step} · {progress.done} / {progress.total}
             </p>
           </div>
@@ -128,7 +128,7 @@ export function CatalogControl({ canWrite }: { canWrite: boolean }) {
         {error && (
           <p
             role="alert"
-            className="mt-3 rounded-card border border-danger/40 bg-surface-1 px-3 py-2 text-[11.5px] text-danger"
+            className="mt-3 rounded-card border border-danger/40 bg-surface-1 px-3 py-2 text-body-sm text-danger"
           >
             {error}
           </p>
@@ -137,7 +137,7 @@ export function CatalogControl({ canWrite }: { canWrite: boolean }) {
         {result && !error && (
           <p
             role="status"
-            className="mt-3 rounded-card border border-success/40 bg-surface-1 px-3 py-2 text-[11.5px] text-success"
+            className="mt-3 rounded-card border border-success/40 bg-surface-1 px-3 py-2 text-body-sm text-success"
           >
             Katalog güncellendi:{' '}
             {Object.entries(result)
@@ -151,13 +151,13 @@ export function CatalogControl({ canWrite }: { canWrite: boolean }) {
             {busy ? 'Yazılıyor…' : 'Kataloğu senkronize et'}
           </Button>
           {!canWrite && (
-            <span className="text-[11px] text-muted-foreground">
+            <span className="text-meta text-muted-foreground">
               Yönetici yetkisi gerekir.
             </span>
           )}
         </div>
 
-        <p className="mt-3 text-[10px] leading-snug text-faint">
+        <p className="mt-3 text-meta leading-snug text-faint">
           Senkronizasyon yalnızca referans kataloğu (ekipman, marka, gök
           cismi, katalog kodu) yazar. Fotoğraf, ilan ve forum içeriği
           kullanıcıya ait ve bu işlemden etkilenmez.
@@ -168,28 +168,28 @@ export function CatalogControl({ canWrite }: { canWrite: boolean }) {
         title="Onay bekleyen katkılar"
         status={pending ? `${pending.length} kayıt` : '—'}
       >
-        <p className="mb-3 text-[11.5px] leading-relaxed text-muted-foreground">
+        <p className="mb-3 text-body-sm leading-relaxed text-muted-foreground">
           Katalogda modelini bulamayan kullanıcılar kendi kayıtlarını
           ekleyebiliyor. Kayıt onaya kadar yalnızca ekleyene görünür;
           onaylandığında herkese açık kataloğa girer.
         </p>
 
         {pendingError && (
-          <p role="alert" className="mb-2 text-[11.5px] text-danger">
+          <p role="alert" className="mb-2 text-body-sm text-danger">
             {pendingError}
           </p>
         )}
 
         {!canWrite ? (
-          <p className="py-4 text-center text-[11.5px] text-muted-foreground">
+          <p className="py-4 text-center text-body-sm text-muted-foreground">
             Bu liste yönetici yetkisi ister.
           </p>
         ) : pending === null ? (
-          <p className="py-4 text-center text-[11.5px] text-muted-foreground">
+          <p className="py-4 text-center text-body-sm text-muted-foreground">
             Okunuyor…
           </p>
         ) : pending.length === 0 ? (
-          <p className="py-4 text-center text-[11.5px] leading-relaxed text-muted-foreground">
+          <p className="py-4 text-center text-body-sm leading-relaxed text-muted-foreground">
             Bekleyen katkı yok. Liste boşsa ya hiç katkı gelmemiştir ya da
             hepsi onaylanmıştır.
           </p>
@@ -205,7 +205,7 @@ export function CatalogControl({ canWrite }: { canWrite: boolean }) {
                     <span className="text-muted-foreground">{item.brand}</span>{' '}
                     {item.model}
                   </span>
-                  <span className="tabular block text-[10px] text-faint">
+                  <span className="tabular block text-meta text-faint">
                     {equipmentCategoryLabels[
                       item.category as EquipmentCategory
                     ] ?? item.category}{' '}

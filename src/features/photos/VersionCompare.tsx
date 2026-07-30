@@ -100,10 +100,10 @@ export function VersionCompare({
         </div>
 
         {/* Etiketler */}
-        <span className="pointer-events-none absolute left-2 top-2 rounded-[2px] bg-background/85 px-1.5 py-0.5 text-[10px] tracking-[0.02em] text-foreground">
+        <span className="pointer-events-none absolute left-2 top-2 rounded-[2px] bg-background/85 px-1.5 py-0.5 text-meta tracking-[0.02em] text-foreground">
           {before.label}
         </span>
-        <span className="pointer-events-none absolute right-2 top-2 rounded-[2px] bg-background/85 px-1.5 py-0.5 text-[10px] tracking-[0.02em] text-foreground">
+        <span className="pointer-events-none absolute right-2 top-2 rounded-[2px] bg-background/85 px-1.5 py-0.5 text-meta tracking-[0.02em] text-foreground">
           {after.label}
         </span>
 
@@ -127,13 +127,13 @@ export function VersionCompare({
           className="absolute inset-y-0 z-10 w-px cursor-ew-resize bg-primary outline-none focus-visible:w-0.5"
           style={{ left: `${position}%` }}
         >
-          <span className="absolute left-1/2 top-1/2 flex h-7 w-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-primary bg-background text-[10px] text-primary">
+          <span className="absolute left-1/2 top-1/2 flex h-7 w-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-primary bg-background text-meta text-primary">
             ⇄
           </span>
         </div>
       </div>
 
-      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-meta text-muted-foreground">
         <span>
           <span className="label mr-1.5">Sol</span>
           {before.caption ?? before.label}

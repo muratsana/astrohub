@@ -136,7 +136,7 @@ export function EquipmentComparePage() {
         {warning && (
           <p
             role="alert"
-            className="mb-3 rounded-card border border-warning/40 bg-surface-1 px-3 py-2 text-[11.5px] text-warning"
+            className="mb-3 rounded-card border border-warning/40 bg-surface-1 px-3 py-2 text-body-sm text-warning"
           >
             {warning}
           </p>
@@ -196,7 +196,7 @@ export function EquipmentComparePage() {
                       >
                         {model.model}
                       </Link>
-                      <span className="mt-0.5 block text-[10px] text-muted-foreground">
+                      <span className="mt-0.5 block text-meta text-muted-foreground">
                         {model.brand} · {equipmentCategoryLabels[model.category]}
                       </span>
                     </th>
@@ -214,7 +214,7 @@ export function EquipmentComparePage() {
                   >
                     <th
                       scope="row"
-                      className="px-3 py-2 align-top text-[11px] font-normal text-muted-foreground"
+                      className="px-3 py-2 align-top text-meta font-normal text-muted-foreground"
                     >
                       {row.label}
                       {row.differs && (
@@ -242,7 +242,7 @@ export function EquipmentComparePage() {
                 ))}
               </tbody>
             </table>
-            <p className="border-t border-border px-3 py-2 text-[10px] leading-snug text-faint">
+            <p className="border-t border-border px-3 py-2 text-meta leading-snug text-faint">
               “—” veri yok demektir, sıfır değil. Katalogda eksik bir alan
               gördüyseniz model sayfasından düzeltme önerebilirsiniz.
             </p>
@@ -292,7 +292,7 @@ export function EquipmentComparePage() {
           </div>
 
           {candidates.length === 0 ? (
-            <p className="py-4 text-center text-[11.5px] text-muted-foreground">
+            <p className="py-4 text-center text-body-sm text-muted-foreground">
               Eşleşen model yok. Aramayı kısaltın ya da kategori filtresini
               değiştirin.
             </p>
@@ -313,7 +313,7 @@ export function EquipmentComparePage() {
                       <span className="block truncate text-[12px] text-foreground">
                         {model.model}
                       </span>
-                      <span className="block truncate text-[10px] text-muted-foreground">
+                      <span className="block truncate text-meta text-muted-foreground">
                         {model.brand}
                       </span>
                     </span>

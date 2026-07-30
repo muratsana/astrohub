@@ -29,7 +29,7 @@ export function CatalogSourceNote({
     return (
       <p
         role="status"
-        className={cn('mb-3 text-[11px] leading-snug text-warning', className)}
+        className={cn('mb-3 text-meta leading-snug text-warning', className)}
       >
         Katalog sunucusuna ulaşılamadı; yerel kayıtlar gösteriliyor. Liste
         güncel olmayabilir.
@@ -41,7 +41,7 @@ export function CatalogSourceNote({
     return (
       <p
         role="status"
-        className={cn('mb-3 text-[11px] leading-snug text-warning', className)}
+        className={cn('mb-3 text-meta leading-snug text-warning', className)}
       >
         Örnek içerik — bu bölümde henüz yayımlanmış gerçek kayıt yok.
         Gösterilen kayıtlar tanıtım amaçlıdır.

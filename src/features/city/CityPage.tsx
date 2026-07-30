@@ -187,7 +187,7 @@ export function CityPage() {
                         <span className="block truncate text-[13px] text-foreground group-hover:text-primary">
                           {event.title}
                         </span>
-                        <span className="tabular mt-0.5 block text-[10.5px] text-muted-foreground">
+                        <span className="tabular mt-0.5 block text-meta text-muted-foreground">
                           {new Date(event.startsAt).toLocaleDateString('tr-TR', {
                             day: 'numeric',
                             month: 'long',
@@ -231,12 +231,12 @@ export function CityPage() {
                           <span className="block truncate text-[12.5px] text-foreground group-hover:text-primary">
                             {site.name}
                           </span>
-                          <span className="tabular mt-0.5 block text-[10.5px] text-muted-foreground">
+                          <span className="tabular mt-0.5 block text-meta text-muted-foreground">
                             Bortle {site.bortle} · {site.altitude} m ·{' '}
                             {site.roadAccess}
                           </span>
                         </span>
-                        <span className="tabular shrink-0 text-[11.5px] text-cold">
+                        <span className="tabular shrink-0 text-body-sm text-cold">
                           {formatDistance(distanceKm)}
                         </span>
                       </Link>
@@ -248,7 +248,7 @@ export function CityPage() {
 
             {tonight && (
               <Panel title={`${city.name} — bu gece`}>
-                <dl className="space-y-1.5 text-[11.5px]">
+                <dl className="space-y-1.5 text-body-sm">
                   <Row
                     label="Astronomik karanlık"
                     value={
@@ -274,7 +274,7 @@ export function CityPage() {
                     Karanlık Takvimi
                   </ButtonLink>
                 </div>
-                <p className="mt-2 text-[10px] leading-snug text-faint">
+                <p className="mt-2 text-meta leading-snug text-faint">
                   Hesap {city.name} il merkezi koordinatına göredir; şehir
                   dışına çıktığınızda saatler birkaç dakika kayar.
                 </p>

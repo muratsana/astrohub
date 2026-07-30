@@ -107,7 +107,7 @@ export function ProfilePage() {
           ))}
         </CardGrid>
 
-        <p className="text-center text-[10.5px] leading-relaxed text-faint">
+        <p className="text-center text-meta leading-relaxed text-faint">
           Takip etme, mesaj gönderme ve koleksiyonlar hesap sistemiyle birlikte
           açılacak.
         </p>

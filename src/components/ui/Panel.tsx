@@ -32,7 +32,7 @@ export function Panel({
         <header className="flex items-center justify-between gap-3 border-b border-border px-4 py-2.5">
           {title && <h3 className="label text-foreground">{title}</h3>}
           {status && (
-            <span className="tabular text-[11px] text-muted-foreground">
+            <span className="tabular text-meta text-muted-foreground">
               {status}
             </span>
           )}

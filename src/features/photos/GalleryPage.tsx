@@ -100,7 +100,7 @@ export function GalleryPage() {
             aria-selected={family === 'hepsi'}
             onClick={() => setFamily('hepsi')}
             className={cn(
-              'rounded-card border px-2.5 py-1 text-[10px] tracking-[0.03em] transition-colors',
+              'rounded-card border px-2.5 py-1 text-meta tracking-[0.03em] transition-colors',
               family === 'hepsi'
                 ? 'border-foreground/40 bg-surface-2 text-foreground'
                 : 'border-border text-muted-foreground hover:border-border-strong hover:text-foreground'
@@ -120,7 +120,7 @@ export function GalleryPage() {
                 title={info.description}
                 onClick={() => setFamily(key)}
                 className={cn(
-                  'rounded-card border px-2.5 py-1 text-[10px] tracking-[0.03em] transition-colors',
+                  'rounded-card border px-2.5 py-1 text-meta tracking-[0.03em] transition-colors',
                   active
                     ? info.className
                     : 'border-border text-muted-foreground hover:border-border-strong hover:text-foreground'

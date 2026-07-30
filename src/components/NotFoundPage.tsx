@@ -64,7 +64,7 @@ export function NotFoundPage() {
                 <li key={item.to}>
                   <Link
                     to={item.to}
-                    className="inline-block rounded-card border border-border px-2.5 py-1 text-[10px] tracking-[0.03em] text-muted-foreground transition-colors hover:border-border-strong hover:text-foreground"
+                    className="inline-block rounded-card border border-border px-2.5 py-1 text-meta tracking-[0.03em] text-muted-foreground transition-colors hover:border-border-strong hover:text-foreground"
                   >
                     {item.label}
                   </Link>

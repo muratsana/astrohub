@@ -100,7 +100,7 @@ export function ModelPicker({ categories, catalog, value, onChange, label }: Pro
           <span className="block truncate text-[13px] font-medium text-foreground">
             {value.model}
           </span>
-          <span className="tabular block truncate text-[10.5px] text-muted-foreground">
+          <span className="tabular block truncate text-meta text-muted-foreground">
             {value.brand} · {headlineSpec(value)}
           </span>
         </span>
@@ -136,7 +136,7 @@ export function ModelPicker({ categories, catalog, value, onChange, label }: Pro
                 setBrand('');
               }}
               className={cn(
-                'rounded-card border px-2 py-0.5 text-[10.5px] transition-colors',
+                'rounded-card border px-2 py-0.5 text-meta transition-colors',
                 category === c
                   ? 'border-primary/50 bg-surface-3 text-foreground'
                   : 'border-border text-muted-foreground hover:text-foreground'
@@ -154,7 +154,7 @@ export function ModelPicker({ categories, catalog, value, onChange, label }: Pro
           type="button"
           onClick={() => setBrand('')}
           className={cn(
-            'rounded-card border px-2 py-0.5 text-[10.5px] transition-colors',
+            'rounded-card border px-2 py-0.5 text-meta transition-colors',
             brand === ''
               ? 'border-primary/50 bg-surface-3 text-foreground'
               : 'border-border text-muted-foreground hover:text-foreground'
@@ -168,7 +168,7 @@ export function ModelPicker({ categories, catalog, value, onChange, label }: Pro
             type="button"
             onClick={() => setBrand(name)}
             className={cn(
-              'rounded-card border px-2 py-0.5 text-[10.5px] transition-colors',
+              'rounded-card border px-2 py-0.5 text-meta transition-colors',
               brand === name
                 ? 'border-primary/50 bg-surface-3 text-foreground'
                 : 'border-border text-muted-foreground hover:text-foreground'
@@ -195,7 +195,7 @@ export function ModelPicker({ categories, catalog, value, onChange, label }: Pro
       />
 
       {shown.length === 0 ? (
-        <p className="px-1 py-3 text-[11.5px] leading-relaxed text-muted-foreground">
+        <p className="px-1 py-3 text-body-sm leading-relaxed text-muted-foreground">
           Eşleşme yok. Aramayı kısaltın ya da başka bir marka seçin.
           Katalogda olmayan bir ürünü “Ekipmanlarım” bölümünden
           ekleyebilirsiniz.
@@ -217,7 +217,7 @@ export function ModelPicker({ categories, catalog, value, onChange, label }: Pro
                   <span className="block truncate text-[12.5px] text-foreground">
                     {m.model}
                   </span>
-                  <span className="tabular block truncate text-[10px] text-muted-foreground">
+                  <span className="tabular block truncate text-meta text-muted-foreground">
                     {m.brand} · {equipmentCategoryLabels[m.category]} ·{' '}
                     {headlineSpec(m)}
                   </span>
@@ -234,7 +234,7 @@ export function ModelPicker({ categories, catalog, value, onChange, label }: Pro
       )}
 
       <div className="mt-2 flex items-center justify-between gap-2">
-        <span className="tabular text-[10px] text-faint">
+        <span className="tabular text-meta text-faint">
           {results.length > shown.length
             ? `${results.length} eşleşmenin ilk ${shown.length} tanesi`
             : `${results.length} eşleşme`}

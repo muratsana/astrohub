@@ -27,13 +27,13 @@ export function Field({
       </label>
       {children}
       {hint && !error && (
-        <p className="text-[10px] leading-snug text-faint">{hint}</p>
+        <p className="text-meta leading-snug text-faint">{hint}</p>
       )}
       {error && (
         <p
           id={`${htmlFor}-error`}
           role="alert"
-          className="text-[11px] leading-snug text-danger"
+          className="text-meta leading-snug text-danger"
         >
           {error}
         </p>

@@ -150,7 +150,7 @@ function BuilderTab() {
 function SyncNotice({ store }: { store: SetupStore }) {
   if (store.error) {
     return (
-      <p role="alert" className="mt-2 text-[11px] text-danger">
+      <p role="alert" className="mt-2 text-meta text-danger">
         Veritabanına yazılamadı ({store.error}). Setup tarayıcınızda duruyor;
         bir sonraki girişte yeniden denenecek.
       </p>
@@ -159,7 +159,7 @@ function SyncNotice({ store }: { store: SetupStore }) {
 
   if (!store.durable) {
     return (
-      <p className="mt-2 text-[11px] text-muted-foreground">
+      <p className="mt-2 text-meta text-muted-foreground">
         Setup’larınız yalnızca bu tarayıcıda saklanıyor.{' '}
         <Link to="/giris" className="text-primary hover:underline">
           Giriş yaparsanız
@@ -170,7 +170,7 @@ function SyncNotice({ store }: { store: SetupStore }) {
   }
 
   return store.syncing ? (
-    <p className="mt-2 text-[11px] text-faint">Hesabınızla eşitleniyor…</p>
+    <p className="mt-2 text-meta text-faint">Hesabınızla eşitleniyor…</p>
   ) : null;
 }
 
@@ -217,7 +217,7 @@ function CatalogTab() {
                 type="button"
                 onClick={() => setCategory(category === c ? '' : c)}
                 className={cn(
-                  'flex items-center gap-1.5 rounded-card border px-2.5 py-1.5 text-[11.5px] transition-colors',
+                  'flex items-center gap-1.5 rounded-card border px-2.5 py-1.5 text-body-sm transition-colors',
                   category === c
                     ? 'border-primary/50 bg-surface-2 text-foreground'
                     : 'border-border text-muted-foreground hover:border-border-strong hover:text-foreground'
@@ -264,7 +264,7 @@ function CatalogTab() {
                   <span className="block truncate text-[13px] text-foreground group-hover:text-primary">
                     {m.model}
                   </span>
-                  <span className="tabular block truncate text-[10.5px] text-muted-foreground">
+                  <span className="tabular block truncate text-meta text-muted-foreground">
                     {m.brand} · {headlineSpec(m)}
                   </span>
                 </span>
@@ -334,10 +334,10 @@ function SetupCard({
         <Badge tone="muted">{visibilityLabels[setup.visibility]}</Badge>
       </div>
       {setup.purpose && (
-        <p className="text-[11px] text-cold">{setup.purpose}</p>
+        <p className="text-meta text-cold">{setup.purpose}</p>
       )}
       {setup.description && (
-        <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">
+        <p className="mt-1 text-body-sm leading-relaxed text-muted-foreground">
           {setup.description}
         </p>
       )}
@@ -346,7 +346,7 @@ function SetupCard({
         {parts.map(({ slot, model }) => (
           <li
             key={slot}
-            className="flex items-baseline justify-between gap-2 text-[11px]"
+            className="flex items-baseline justify-between gap-2 text-meta"
           >
             <span className="text-muted-foreground">{SLOT_LABELS[slot]}</span>
             <span className="truncate text-right text-foreground">
@@ -387,7 +387,7 @@ function SetupCard({
         </Button>
       </div>
 
-      <p className="tabular mt-1.5 text-[9.5px] text-faint">
+      <p className="tabular mt-1.5 text-meta text-faint">
         {new Date(setup.updatedAt).toLocaleDateString('tr-TR')} tarihinde
         güncellendi
       </p>
@@ -419,7 +419,7 @@ function InventoryTab() {
   return (
     <div className="space-y-3">
       <Panel title="Ekipmanlarım" status={`${owned.length} kayıt`}>
-        <p className="mb-3 text-[11.5px] leading-relaxed text-muted-foreground">
+        <p className="mb-3 text-body-sm leading-relaxed text-muted-foreground">
           Sahip olduğunuz ekipmanları işaretleyin; setup kurarken listeniz
           önce gelir ve ilanlarda eşleşme kolaylaşır. Katalogda olmayan bir
           ürününüz varsa model sayfasından katalog önerisi gönderebilirsiniz —
@@ -450,7 +450,7 @@ function InventoryTab() {
                   <span className="min-w-0 flex-1 truncate text-[12px] text-foreground">
                     {m.brand} {m.model}
                   </span>
-                  <span className="shrink-0 text-[11px] text-primary">
+                  <span className="shrink-0 text-meta text-primary">
                     {ownedSet.has(m.slug) ? 'çıkar' : 'ekle'}
                   </span>
                 </button>
@@ -460,7 +460,7 @@ function InventoryTab() {
         )}
 
         {!user && (
-          <p className="mt-2 text-[10.5px] leading-snug text-warning">
+          <p className="mt-2 text-meta leading-snug text-warning">
             Giriş yapılmadığı için envanter yalnızca bu tarayıcıda saklanıyor.
             Hesap sistemi bağlandığında listeniz hesabınıza taşınacak.
           </p>
@@ -490,7 +490,7 @@ function InventoryTab() {
                 >
                   {m.model}
                 </Link>
-                <span className="tabular block truncate text-[10.5px] text-muted-foreground">
+                <span className="tabular block truncate text-meta text-muted-foreground">
                   {m.brand} · {headlineSpec(m)}
                 </span>
               </span>

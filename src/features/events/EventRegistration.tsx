@@ -106,7 +106,7 @@ export function EventRegistration({ event }: { event: AstroEvent }) {
   if (!user) {
     return (
       <div className="mt-4 rounded-card border border-border bg-surface-1 px-3 py-2.5">
-        <p className="text-[11.5px] leading-relaxed text-muted-foreground">
+        <p className="text-body-sm leading-relaxed text-muted-foreground">
           Bu etkinliğe kaydolmak için{' '}
           <Link to="/giris" className="text-primary hover:underline">
             giriş yapın
@@ -128,18 +128,18 @@ export function EventRegistration({ event }: { event: AstroEvent }) {
           onChange={(e) => setNote(e.target.value)}
           aria-label="Düzenleyiciye not"
           placeholder="Düzenleyiciye not (isteğe bağlı): kaç kişi geliyorsunuz, teleskop getiriyor musunuz?"
-          className="mb-2 w-full resize-y rounded-card border border-border bg-surface-2 px-2.5 py-2 text-[11.5px] leading-relaxed text-foreground outline-none placeholder:text-faint focus:border-primary"
+          className="mb-2 w-full resize-y rounded-card border border-border bg-surface-2 px-2.5 py-2 text-body-sm leading-relaxed text-foreground outline-none placeholder:text-faint focus:border-primary"
         />
       )}
 
       {error && (
-        <p role="alert" className="mb-2 text-[11.5px] text-danger">
+        <p role="alert" className="mb-2 text-body-sm text-danger">
           {error}
         </p>
       )}
 
       <div className="flex items-center justify-between gap-2">
-        <p className="text-[10.5px] leading-snug text-faint">
+        <p className="text-meta leading-snug text-faint">
           {registered
             ? 'Kaydınız düzenleyiciye iletildi.'
             : 'Kaydınız yalnızca sizinle ve düzenleyiciyle paylaşılır.'}

@@ -232,11 +232,11 @@ export function SetupDetailPage() {
                         {severityLabel[check.severity]}
                       </span>
                     </span>
-                    <span className="tabular text-[11.5px] text-muted-foreground">
+                    <span className="tabular text-body-sm text-muted-foreground">
                       {check.value}
                     </span>
                   </div>
-                  <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">
+                  <p className="mt-1 text-body-sm leading-relaxed text-muted-foreground">
                     {check.detail}
                   </p>
                 </li>
@@ -295,7 +295,7 @@ export function SetupDetailPage() {
             </Panel>
 
             <Panel title="Paylaşım">
-              <p className="text-[11.5px] leading-relaxed text-muted-foreground">
+              <p className="text-body-sm leading-relaxed text-muted-foreground">
                 Bağlantı, setup değerlerini kendi içinde taşır — karşı tarafta
                 kayıt olmasa da açılır. Kodlama şifreleme değildir; içinde
                 yalnızca ekipman değerleri vardır.

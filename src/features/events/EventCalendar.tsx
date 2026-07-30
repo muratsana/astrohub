@@ -121,7 +121,7 @@ export function EventCalendar({ events }: { events: AstroEvent[] }) {
               >
                 <span
                   className={cn(
-                    'tabular block px-0.5 text-[11px] leading-none',
+                    'tabular block px-0.5 text-meta leading-none',
                     isToday ? 'font-bold text-primary' : 'text-muted-foreground'
                   )}
                 >
@@ -135,7 +135,7 @@ export function EventCalendar({ events }: { events: AstroEvent[] }) {
                         to={`/etkinlik/${event.slug}`}
                         title={`${event.title} — ${event.city}`}
                         className={cn(
-                          'block truncate rounded-[2px] px-1 py-0.5 text-[9.5px] leading-tight transition-colors',
+                          'block truncate rounded-[2px] px-1 py-0.5 text-meta leading-tight transition-colors',
                           continuing
                             ? 'border-l-2 border-cold/60 bg-surface-2 text-muted-foreground'
                             : 'bg-primary/12 text-primary hover:bg-primary/20'
@@ -153,7 +153,7 @@ export function EventCalendar({ events }: { events: AstroEvent[] }) {
         </div>
 
         {monthCount === 0 && (
-          <p className="mt-3 text-center text-[11.5px] text-muted-foreground">
+          <p className="mt-3 text-center text-body-sm text-muted-foreground">
             Bu ayda etkinlik yok. Oklarla diğer aylara geçebilirsiniz.
           </p>
         )}
@@ -170,7 +170,7 @@ export function EventCalendar({ events }: { events: AstroEvent[] }) {
                   to={`/etkinlik/${event.slug}`}
                   className="flex flex-wrap items-baseline gap-x-2 gap-y-1 px-3 py-2 transition-colors hover:bg-surface-2"
                 >
-                  <span className="tabular shrink-0 text-[11px] text-primary">
+                  <span className="tabular shrink-0 text-meta text-primary">
                     {new Date(event.startsAt).toLocaleDateString('tr-TR', {
                       day: '2-digit',
                       month: 'short',
@@ -179,7 +179,7 @@ export function EventCalendar({ events }: { events: AstroEvent[] }) {
                   <span className="min-w-0 flex-1 truncate text-[12.5px] text-foreground">
                     {event.title}
                   </span>
-                  <span className="shrink-0 text-[10.5px] text-muted-foreground">
+                  <span className="shrink-0 text-meta text-muted-foreground">
                     {event.city}
                   </span>
                   <Badge>{eventTypeLabels[event.type]}</Badge>

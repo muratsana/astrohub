@@ -66,7 +66,7 @@ function EventRow({ event }: { event: AstroEvent }) {
         <span className="font-display text-[19px] font-bold text-foreground">
           {date.toLocaleDateString('tr-TR', { day: '2-digit' })}
         </span>
-        <span className="mt-1 text-[10px] text-muted-foreground">
+        <span className="mt-1 text-meta text-muted-foreground">
           {date.toLocaleDateString('tr-TR', { month: 'short' })}
         </span>
       </span>
@@ -77,7 +77,7 @@ function EventRow({ event }: { event: AstroEvent }) {
         <span className="block truncate text-[13.5px] font-medium leading-snug text-foreground transition-colors group-hover:text-primary">
           {event.title}
         </span>
-        <span className="mt-0.5 block truncate text-[11px] text-muted-foreground">
+        <span className="mt-0.5 block truncate text-meta text-muted-foreground">
           {eventTypeLabels[event.type]}
           <span aria-hidden className="px-1.5 text-faint">
             ·

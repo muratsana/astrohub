@@ -32,7 +32,7 @@ export function PhotoComments({ photo }: { photo: AstroPhoto }) {
       status={thread.loading ? 'yükleniyor…' : `${thread.comments.length} yorum`}
     >
       {thread.comments.length === 0 && !thread.loading && (
-        <p className="py-3 text-center text-[11.5px] text-muted-foreground">
+        <p className="py-3 text-center text-body-sm text-muted-foreground">
           Henüz yorum yok.
         </p>
       )}
@@ -50,20 +50,20 @@ export function PhotoComments({ photo }: { photo: AstroPhoto }) {
               >
                 {comment.author.displayName}
               </Link>
-              <span className="tabular text-[10px] text-faint">
+              <span className="tabular text-meta text-faint">
                 {new Date(comment.createdAt).toLocaleDateString('tr-TR')}
               </span>
               {comment.author.username === thread.currentUsername && (
                 <button
                   type="button"
                   onClick={() => void thread.remove(comment.id)}
-                  className="ml-auto text-[10px] text-faint transition-colors hover:text-danger"
+                  className="ml-auto text-meta text-faint transition-colors hover:text-danger"
                 >
                   Sil
                 </button>
               )}
             </div>
-            <p className="mt-1 whitespace-pre-line text-[11.5px] leading-relaxed text-muted-foreground">
+            <p className="mt-1 whitespace-pre-line text-body-sm leading-relaxed text-muted-foreground">
               {comment.body}
             </p>
           </li>
@@ -71,7 +71,7 @@ export function PhotoComments({ photo }: { photo: AstroPhoto }) {
       </ul>
 
       {thread.error && (
-        <p role="alert" className="mt-2 text-[11.5px] text-danger">
+        <p role="alert" className="mt-2 text-body-sm text-danger">
           {thread.error}
         </p>
       )}
@@ -97,7 +97,7 @@ export function PhotoComments({ photo }: { photo: AstroPhoto }) {
           </div>
         </div>
       ) : (
-        <p className="mt-3 border-t border-border pt-3 text-[11px] text-muted-foreground">
+        <p className="mt-3 border-t border-border pt-3 text-meta text-muted-foreground">
           {photo.id ? (
             <>
               Yorum yazmak için{' '}

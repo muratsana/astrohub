@@ -97,13 +97,13 @@ export function PhotoTile({
             {flag}
           </span>
           {title && (
-            <span className="mt-0.5 block truncate text-[11px] text-muted-foreground">
+            <span className="mt-0.5 block truncate text-meta text-muted-foreground">
               {title}
             </span>
           )}
         </span>
 
-        <span className="tabular hidden shrink-0 text-right text-[11px] sm:block">
+        <span className="tabular hidden shrink-0 text-right text-meta sm:block">
           <span className="block text-cold">{meta || '—'}</span>
           <span className="block text-muted-foreground">{origin || '—'}</span>
         </span>
@@ -151,14 +151,14 @@ export function PhotoTile({
           {target}
         </p>
         {title && (
-          <p className="truncate text-[10px] leading-snug text-muted-foreground">
+          <p className="truncate text-meta leading-snug text-muted-foreground">
             {title}
           </p>
         )}
-        <p className="tabular mt-auto truncate pt-1 text-[10px] leading-snug text-cold">
+        <p className="tabular mt-auto truncate pt-1 text-meta leading-snug text-cold">
           {meta || '—'}
         </p>
-        <p className="tabular truncate text-[10px] leading-snug text-muted-foreground">
+        <p className="tabular truncate text-meta leading-snug text-muted-foreground">
           {origin || '—'}
         </p>
       </div>
@@ -177,7 +177,7 @@ export function FamilyBadge({
   return (
     <span
       className={cn(
-        'inline-block shrink-0 rounded-[2px] border px-1.5 py-0.5 text-[9px] font-medium leading-[1.5] tracking-[0.02em] backdrop-blur-sm',
+        'inline-block shrink-0 rounded-[2px] border px-1.5 py-0.5 text-meta font-medium leading-[1.5] tracking-[0.02em] backdrop-blur-sm',
         className
       )}
     >

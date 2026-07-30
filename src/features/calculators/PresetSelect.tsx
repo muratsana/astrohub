@@ -116,12 +116,12 @@ export function PresetSelect<T extends PresetOption>({
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Marka veya model ara…"
               spellCheck={false}
-              className="h-7 flex-1 text-[11px]"
+              className="h-7 flex-1 text-meta"
               aria-label={`${label} içinde ara`}
             />
             <span
               className={cn(
-                'tabular shrink-0 text-[10px]',
+                'tabular shrink-0 text-meta',
                 filtered.length === 0 ? 'text-warning' : 'text-faint'
               )}
             >
@@ -131,7 +131,7 @@ export function PresetSelect<T extends PresetOption>({
         )}
 
         {options.length === 0 && emptyHint && (
-          <p className="text-[10px] leading-snug text-faint">{emptyHint}</p>
+          <p className="text-meta leading-snug text-faint">{emptyHint}</p>
         )}
       </div>
     </FilterCell>

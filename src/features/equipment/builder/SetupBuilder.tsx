@@ -207,7 +207,7 @@ export function SetupBuilder({
               />
             </Field>
           </div>
-          <p className="mt-2 text-[10px] leading-snug text-faint">
+          <p className="mt-2 text-meta leading-snug text-faint">
             Seeing değeri örnekleme kontrolünü doğrudan etkiler: 4″ seeing’de
             uygun olan piksel ölçeği 1.5″ seeing’de aşırı örnekleme sayılır.
             Sahanızın tipik değerini girin.
@@ -277,18 +277,18 @@ export function SetupBuilder({
                   {saveLabel}
                 </Button>
                 {saved && (
-                  <span role="status" className="text-[11.5px] text-success">
+                  <span role="status" className="text-body-sm text-success">
                     Kaydedildi — “Setup’larım” sekmesinde.
                   </span>
                 )}
                 {name.trim().length === 0 && filled > 0 && (
-                  <span className="text-[11px] text-muted-foreground">
+                  <span className="text-meta text-muted-foreground">
                     Kaydetmek için bir ad girin.
                   </span>
                 )}
               </div>
 
-              <p className="text-[10px] leading-snug text-faint">
+              <p className="text-meta leading-snug text-faint">
                 Setup, ekipmanın kendisini değil katalog referansını saklar:
                 bir modelin teknik verisi düzeltildiğinde kayıtlı setup’ın
                 hesabı da düzelir.

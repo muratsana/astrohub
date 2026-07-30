@@ -369,7 +369,7 @@ export function UploadWizardPage() {
               )}
 
               {exifState === 'none' && state.fileName && (
-                <p className="rounded-card border border-border bg-surface-1 px-3 py-2.5 text-[11.5px] leading-relaxed text-muted-foreground">
+                <p className="rounded-card border border-border bg-surface-1 px-3 py-2.5 text-body-sm leading-relaxed text-muted-foreground">
                   Dosyada EXIF bulunamadı. İşlenmiş astrofotoğraflarda bu
                   normaldir — yığınlama yazılımları çıktıya kamera bilgisi
                   yazmaz. Alanları elle doldurabilirsiniz.
@@ -418,7 +418,7 @@ export function UploadWizardPage() {
                      * her zaman gizlemektir. Onay açıkça istenir.
                      */
                     <div className="border-t border-warning/35 px-3 py-2.5">
-                      <p className="text-[11.5px] leading-relaxed text-warning">
+                      <p className="text-body-sm leading-relaxed text-warning">
                         Bu dosya <strong>GPS koordinatı taşıyor</strong>. Konum
                         formunuza yazılmadı ve yayımlanmayacak; yalnızca
                         haberiniz olsun diye bildiriyoruz.
@@ -805,8 +805,8 @@ export function UploadWizardPage() {
                   <p
                     className={
                       sizeVerdict.kind === 'reject'
-                        ? 'mt-3 text-[11.5px] leading-relaxed text-danger'
-                        : 'mt-3 text-[11.5px] leading-relaxed text-cold'
+                        ? 'mt-3 text-body-sm leading-relaxed text-danger'
+                        : 'mt-3 text-body-sm leading-relaxed text-cold'
                     }
                   >
                     {sizeVerdict.reason}
@@ -814,7 +814,7 @@ export function UploadWizardPage() {
                 )}
 
                 {!user && (
-                  <p className="mt-3 text-[11.5px] leading-relaxed text-muted-foreground">
+                  <p className="mt-3 text-body-sm leading-relaxed text-muted-foreground">
                     Yayımlamak için giriş yapmanız gerekir. Girdiğiniz künye
                     bilgileri bu sayfada kalır.
                   </p>
@@ -823,7 +823,7 @@ export function UploadWizardPage() {
                 {publishError && (
                   <p
                     role="alert"
-                    className="mt-3 rounded-card border border-danger/40 px-3 py-2 text-[11.5px] leading-relaxed text-danger"
+                    className="mt-3 rounded-card border border-danger/40 px-3 py-2 text-body-sm leading-relaxed text-danger"
                   >
                     {publishError}
                   </p>
@@ -931,7 +931,7 @@ function ExifRow({ label, value }: { label: string; value?: string }) {
   return (
     <div className="flex items-baseline justify-between gap-3 border-b border-border py-1.5 last:border-0">
       <dt className="label shrink-0">{label}</dt>
-      <dd className="tabular text-right text-[11.5px] text-foreground">{value}</dd>
+      <dd className="tabular text-right text-body-sm text-foreground">{value}</dd>
     </div>
   );
 }

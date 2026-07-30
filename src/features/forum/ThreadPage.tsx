@@ -70,7 +70,7 @@ export function ThreadPage() {
           actions={
             <span
               className={cn(
-                'rounded-card border px-2.5 py-1 text-[10px] tracking-[0.03em]',
+                'rounded-card border px-2.5 py-1 text-meta tracking-[0.03em]',
                 info.className
               )}
             >
@@ -88,14 +88,14 @@ export function ThreadPage() {
             ))}
 
             {thread.replies.length < thread.replyCount && (
-              <p className="rounded-card border border-border bg-surface-1 px-3 py-2.5 text-[11px] text-muted-foreground">
+              <p className="rounded-card border border-border bg-surface-1 px-3 py-2.5 text-meta text-muted-foreground">
                 Kalan {thread.replyCount - thread.replies.length} yanıt, forum
                 veritabanı bağlandığında burada görünecek.
               </p>
             )}
 
             {thread.locked ? (
-              <p className="flex items-center gap-2 rounded-card border border-border bg-surface-1 px-3 py-2.5 text-[11px] text-muted-foreground">
+              <p className="flex items-center gap-2 rounded-card border border-border bg-surface-1 px-3 py-2.5 text-meta text-muted-foreground">
                 <LockIcon className="h-3.5 w-3.5 shrink-0 text-faint" />
                 Bu konu kilitli; yeni yanıt yazılamaz.
               </p>
@@ -106,7 +106,7 @@ export function ThreadPage() {
 
           <aside className="space-y-4">
             <Panel title="Konu bilgisi">
-              <dl className="space-y-2 text-[11.5px]">
+              <dl className="space-y-2 text-body-sm">
                 <Row label="Açan" value={`@${thread.author.username}`} />
                 <Row label="Açılış" value={relativeTime(thread.createdAt)} />
                 <Row
@@ -159,13 +159,13 @@ function PostCard({ post, opening }: { post: ForumPost; opening?: boolean }) {
         <span className="text-[12px] font-medium text-foreground">
           {post.author.displayName}
         </span>
-        <span className="tabular text-[10px] text-muted-foreground">
+        <span className="tabular text-meta text-muted-foreground">
           @{post.author.username}
         </span>
         {post.author.badge && <Badge tone="cold">{post.author.badge}</Badge>}
         {opening && <Badge tone="primary">Konuyu açan</Badge>}
         {post.solution && <Badge tone="success">Çözüm</Badge>}
-        <span className="tabular ml-auto text-[10px] text-faint">
+        <span className="tabular ml-auto text-meta text-faint">
           {relativeTime(post.createdAt)}
         </span>
       </header>
@@ -234,13 +234,13 @@ function ReplyBox({
       />
 
       {error && (
-        <p role="alert" className="mt-2 text-[11.5px] text-danger">
+        <p role="alert" className="mt-2 text-body-sm text-danger">
           {error}
         </p>
       )}
 
       <div className="mt-2.5 flex items-center justify-between gap-3">
-        <p className="text-[10px] text-faint">
+        <p className="text-meta text-faint">
           {user ? (
             'Düz metin olarak yayımlanır.'
           ) : (

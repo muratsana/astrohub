@@ -19,7 +19,7 @@
     "format": "prettier --write \"src/**/*.{ts,tsx,css}\"",
     "check:preview": "node scripts/check-preview.mjs",
     "test:e2e": "npm run build:preview && node scripts/e2e.mjs",
-    "test:all": "npm run typecheck && npm run lint && npm test && npm run build && npm run check:budgets && npm run check:preview && node scripts/e2e.mjs",
+    "test:all": "npm run typecheck && npm run lint && npm test && npm run build && npm run check:budgets && npm run check:preview && npm run check:a11y && node scripts/e2e.mjs",
     "db:link": "supabase link --project-ref eoqggvosegjbburyuyba",
     "db:push": "npm run db:link && supabase db push --linked --yes",
     "db:diff": "npm run db:link && supabase db diff --linked",
@@ -27,7 +27,8 @@
     "db:types": "supabase gen types typescript --project-id eoqggvosegjbburyuyba",
     "functions:deploy": "supabase functions deploy --project-ref eoqggvosegjbburyuyba",
     "prerender": "vite build --ssr src/entry-prerender.tsx --outDir dist-ssr && node scripts/prerender.mjs",
-    "check:budgets": "node scripts/check-budgets.mjs"
+    "check:budgets": "node scripts/check-budgets.mjs",
+    "check:a11y": "node scripts/check-a11y.mjs"
   },
   "dependencies": {
     "@fontsource-variable/inter": "^5.3.0",

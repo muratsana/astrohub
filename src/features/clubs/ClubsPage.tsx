@@ -135,7 +135,7 @@ export function ClubsPage() {
           </CardGrid>
         )}
 
-        <p className="mt-6 text-center text-[10.5px] leading-relaxed text-faint">
+        <p className="mt-6 text-center text-meta leading-relaxed text-faint">
           Kayıtlar kurumların kendi duyurularından derlenmiştir ve doğrulama
           tarihi her profilde yazılıdır. Kurumların kendi profillerini
           devralması hesap sistemiyle birlikte açılacak (§8.11).
@@ -177,12 +177,12 @@ function ClubCard({
         </div>
 
         {variant === 'grid' && (
-          <p className="mt-1.5 line-clamp-3 text-[11.5px] leading-relaxed text-muted-foreground">
+          <p className="mt-1.5 line-clamp-3 text-body-sm leading-relaxed text-muted-foreground">
             {club.summary}
           </p>
         )}
 
-        <p className="tabular mt-1.5 text-[10px] text-faint">
+        <p className="tabular mt-1.5 text-meta text-faint">
           {club.foundedYear ? `${club.foundedYear} kuruluş` : 'kuruluş bilinmiyor'}
           {club.memberCount ? ` · ${club.memberCount} üye` : ''}
         </p>

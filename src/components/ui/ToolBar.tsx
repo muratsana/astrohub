@@ -75,7 +75,7 @@ export function ToolBar({
                  * `h-full` hizayı anahtara kilitler; sabit yükseklik vermek
                  * tarayıcılar arasında 1px kaymalara yol açıyordu.
                  */
-                className="h-full w-auto rounded-none border-0 bg-transparent pl-2.5 pr-7 text-[11px] focus:bg-surface-2"
+                className="h-full w-auto rounded-none border-0 bg-transparent pl-2.5 pr-7 text-meta focus:bg-surface-2"
               >
                 {sort.options.map((o) => (
                   <option key={o.value} value={o.value}>

@@ -102,7 +102,7 @@ export function EventMapPage() {
               id="map-type"
               value={type}
               onChange={(e) => setType(e.target.value as EventType | 'hepsi')}
-              className="h-8 w-auto text-[11px]"
+              className="h-8 w-auto text-meta"
             >
               <option value="hepsi">Tüm türler</option>
               {Object.entries(eventTypeLabels).map(([value, label]) => (
@@ -178,7 +178,7 @@ export function EventMapPage() {
                     const hit = located.find((l) => l.item.slug === active);
                     if (!hit) return null;
                     return (
-                      <p className="truncate text-[11.5px] text-foreground">
+                      <p className="truncate text-body-sm text-foreground">
                         <span className="font-medium">{hit.item.title}</span>
                         <span className="ml-2 text-muted-foreground">
                           {hit.item.city} · {formatDistance(hit.distanceKm)}
@@ -190,7 +190,7 @@ export function EventMapPage() {
               )}
             </div>
 
-            <p className="mt-2 text-[10px] leading-snug text-faint">
+            <p className="mt-2 text-meta leading-snug text-faint">
               Noktalar enlem/boylamlarına göre yerleştirilmiştir; sınır ve ölçek
               çizilmez. Etkileşimli harita, tile sağlayıcısı lisansı
               netleştiğinde bu sayfaya gelecek (§14.4).
@@ -223,7 +223,7 @@ export function EventMapPage() {
                           <span className="block truncate text-[12.5px] text-foreground">
                             {item.title}
                           </span>
-                          <span className="tabular mt-0.5 block text-[10.5px] text-muted-foreground">
+                          <span className="tabular mt-0.5 block text-meta text-muted-foreground">
                             {item.city} ·{' '}
                             {new Date(item.startsAt).toLocaleDateString('tr-TR', {
                               day: 'numeric',
@@ -231,7 +231,7 @@ export function EventMapPage() {
                             })}
                           </span>
                         </span>
-                        <span className="tabular shrink-0 text-[11.5px] text-cold">
+                        <span className="tabular shrink-0 text-body-sm text-cold">
                           {formatDistance(distanceKm)}
                         </span>
                       </Link>

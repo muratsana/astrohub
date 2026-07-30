@@ -39,14 +39,14 @@ export function PageHeader({
     >
       {breadcrumb && breadcrumb.length > 0 && (
         <nav aria-label="Kırıntı yolu" className="mb-2.5">
-          <ol className="flex flex-wrap items-center gap-1.5 text-[10px] tracking-[0.03em] text-faint">
+          <ol className="flex flex-wrap items-center gap-1.5 text-meta tracking-[0.03em] text-faint">
             {breadcrumb.map((crumb, i) => (
               <li key={`${crumb.label}-${i}`} className="flex items-center gap-1.5">
                 {i > 0 && <span aria-hidden>/</span>}
                 {crumb.to ? (
                   <Link
                     to={crumb.to}
-                    className="transition-colors hover:text-foreground"
+                    className="inline-block py-1 transition-colors hover:text-foreground"
                   >
                     {crumb.label}
                   </Link>
@@ -66,7 +66,7 @@ export function PageHeader({
               {title}
             </h1>
             {meta && (
-              <span className="tabular text-[11px] text-faint">{meta}</span>
+              <span className="tabular text-meta text-faint">{meta}</span>
             )}
           </div>
           {description && (

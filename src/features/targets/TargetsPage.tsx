@@ -193,12 +193,12 @@ function TargetCard({
             </span>
             {difficulty}
           </div>
-          <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
+          <p className="mt-0.5 truncate text-meta text-muted-foreground">
             {t.name}
           </p>
         </div>
 
-        <div className="tabular hidden shrink-0 text-right text-[11px] sm:block">
+        <div className="tabular hidden shrink-0 text-right text-meta sm:block">
           <span className="block text-cold">{targetKindLabels[t.kind]}</span>
           <span className="block text-muted-foreground">
             {t.constellation} · {t.bestMonths}
@@ -225,13 +225,13 @@ function TargetCard({
         <p className="truncate font-display text-[13px] font-bold leading-tight text-foreground transition-colors group-hover:text-primary">
           {t.catalog}
         </p>
-        <p className="truncate text-[10px] leading-snug text-muted-foreground">
+        <p className="truncate text-meta leading-snug text-muted-foreground">
           {t.name}
         </p>
-        <p className="tabular mt-auto truncate pt-1 text-[10px] leading-snug text-cold">
+        <p className="tabular mt-auto truncate pt-1 text-meta leading-snug text-cold">
           {targetKindLabels[t.kind]}
         </p>
-        <p className="tabular truncate text-[10px] leading-snug text-muted-foreground">
+        <p className="tabular truncate text-meta leading-snug text-muted-foreground">
           {t.constellation}
         </p>
       </div>
