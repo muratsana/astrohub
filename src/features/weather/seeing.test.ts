@@ -92,6 +92,19 @@ describe('observingVerdict', () => {
     expect(observingVerdict(5, 1.5).label).toBe('Çok iyi gece');
   });
 
+  it('seeing verisi yokken hüküm vermez, eksikliği söyler', () => {
+    // Veri eksikken "çok iyi gece" ilan etmek kullanıcıyı boşuna sahaya
+    // çıkarır; bulut az olsa bile hüküm bulutla sınırlı kalmalı.
+    const verdict = observingVerdict(5, null);
+    expect(verdict.label).toBe('Az bulutlu · seeing verisi yok');
+    expect(verdict.tone).toBe('primary');
+  });
+
+  it('seeing yokken bile yoğun bulutu net bildirir', () => {
+    expect(observingVerdict(90, null).label).toBe('Kapalı');
+    expect(observingVerdict(60, null).label).toBe('Parçalı bulutlu');
+  });
+
   it('parçalı bulutu ayrı bir durum olarak bildirir', () => {
     expect(observingVerdict(60, 2).label).toBe('Parçalı bulutlu');
   });

@@ -93,13 +93,20 @@ export function seeingLabel(index: number): string {
  * Bulut baskındır — %80 bulutta seeing'in mükemmel olması hiçbir işe
  * yaramaz, teleskop hiçbir şey görmez. Bu yüzden bulut bir çarpan gibi
  * davranır, ortalama gibi değil.
+ *
+ * Seeing tahmini yoksa (`null`) hüküm bulutla sınırlı kalır ve bunu
+ * açıkça söyler: veri eksiğiyle "çok iyi gece" ilan etmek, kritik veri
+ * eksikliğinin hükme dönüşmesi demektir (QA ASTRO-05'in hard-stop kuralı).
  */
 export function observingVerdict(
   cloudCover: number,
-  seeingIndex: number
+  seeingIndex: number | null
 ): { label: string; tone: 'success' | 'primary' | 'warning' | 'danger' } {
   if (cloudCover >= 80) return { label: 'Kapalı', tone: 'danger' };
   if (cloudCover >= 50) return { label: 'Parçalı bulutlu', tone: 'warning' };
+
+  if (seeingIndex === null)
+    return { label: 'Az bulutlu · seeing verisi yok', tone: 'primary' };
 
   if (seeingIndex <= 2 && cloudCover < 20)
     return { label: 'Çok iyi gece', tone: 'success' };

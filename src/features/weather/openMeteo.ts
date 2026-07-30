@@ -1,3 +1,4 @@
+import { dewPointFromHumidity } from '@/domain/weather/humidity';
 import { estimateSeeing, type SeeingEstimate } from './seeing';
 
 /**
@@ -46,7 +47,14 @@ export interface SkyConditions {
   dewPoint: number;
   /** Yer rüzgârı (km/sa). */
   windSpeed: number;
-  seeing: SeeingEstimate;
+  /**
+   * Seeing tahmini — üst atmosfer (200/500 hPa) rüzgârı gelmediyse `null`.
+   *
+   * Eksik rüzgârı sıfır saymak "sakin jet, mükemmel seeing" üretirdi;
+   * oysa bilinen tek şey ölçümün gelmediği. `null`, arayüzde "veri yok"
+   * olarak okunur — uydurulmuş bir iyimserlikten her zaman daha doğru.
+   */
+  seeing: SeeingEstimate | null;
   /** Ölçümün ait olduğu saat. */
   observedAt: Date;
   /**
@@ -128,13 +136,28 @@ export function nearestHourIndex(times: string[], now: Date): number {
   return best;
 }
 
-/** Diziden sayı okur; eksik/boş değerde yedeğe düşer. */
-function at(values: (number | null)[] | undefined, i: number, fallback: number) {
+/** Diziden sayı okur; alan yoksa ya da değer sayı değilse `null`. */
+function num(values: (number | null)[] | undefined, i: number): number | null {
   const v = values?.[i];
-  return typeof v === 'number' && Number.isFinite(v) ? v : fallback;
+  return typeof v === 'number' && Number.isFinite(v) ? v : null;
 }
 
-/** Ham yanıtı uygulama modeline çevirir. Ağ katmanından bağımsız — test edilebilir. */
+/**
+ * Ham yanıtı uygulama modeline çevirir. Ağ katmanından bağımsız — test edilebilir.
+ *
+ * EKSİK ALAN ASLA SIFIR SAYILMAZ. Sıfır burada masum bir yedek değil,
+ * anlamlı bir hava raporu: bulut 0 "açık gece", nem 0 "kuru hava", rüzgâr 0
+ * "sakin atmosfer" demek. Eksik ölçümü bunlara çevirmek, veri yokken
+ * "gözleme uygun" hükmü üretir ve kullanıcıyı boşuna sahaya çıkarır
+ * (QA P0-06). Kural:
+ *
+ *   · bulut, sıcaklık, nem, yer rüzgârı — zorunlu; biri yoksa okuma
+ *     bütünüyle reddedilir. Yarım panel, boş panelden daha yanıltıcı.
+ *   · çiy noktası — servis vermezse sıcaklık+nemden türetilir (Magnus);
+ *     o da olmuyorsa sıcaklığın kendisi (açıklık sıfır = en kötü durum,
+ *     güvenli taraf).
+ *   · seeing — üst atmosfer rüzgârı yoksa `null`; tahmin uydurulmaz.
+ */
 export function parseSkyConditions(
   raw: HourlyResponse,
   now: Date
@@ -146,47 +169,63 @@ export function parseSkyConditions(
   const i = nearestHourIndex(times, now);
   if (i < 0) return null;
 
-  const temperature = at(hourly.temperature_2m, i, 0);
+  const cloudCover = num(hourly.cloud_cover, i);
+  const temperature = num(hourly.temperature_2m, i);
+  const humidity = num(hourly.relative_humidity_2m, i);
+  const windSpeed = num(hourly.wind_speed_10m, i);
+  if (
+    cloudCover === null ||
+    temperature === null ||
+    humidity === null ||
+    windSpeed === null
+  ) {
+    return null;
+  }
 
   /* Katman ayrımı ancak üçü de gelirse kuruluyor. Eksik bir katmanı
      sıfır saymak "o yükseklikte bulut yok" demek olurdu — oysa bilinen
      tek şey ölçümün gelmediği. */
-  const low = hourly.cloud_cover_low?.[i];
-  const mid = hourly.cloud_cover_mid?.[i];
-  const high = hourly.cloud_cover_high?.[i];
-  const complete =
-    typeof low === 'number' && typeof mid === 'number' && typeof high === 'number';
+  const low = num(hourly.cloud_cover_low, i);
+  const mid = num(hourly.cloud_cover_mid, i);
+  const high = num(hourly.cloud_cover_high, i);
+  const visibilityM = num(hourly.visibility, i);
 
-  const visibilityM = hourly.visibility?.[i];
+  const wind200hPa = num(hourly.wind_speed_200hPa, i);
+  const wind500hPa = num(hourly.wind_speed_500hPa, i);
 
   return {
-    cloudCover: at(hourly.cloud_cover, i, 0),
-    humidity: at(hourly.relative_humidity_2m, i, 0),
+    cloudCover,
+    humidity,
     temperature,
-    dewPoint: at(hourly.dew_point_2m, i, temperature),
-    windSpeed: at(hourly.wind_speed_10m, i, 0),
-    seeing: estimateSeeing({
-      wind200hPa: at(hourly.wind_speed_200hPa, i, 0),
-      wind500hPa: at(hourly.wind_speed_500hPa, i, 0),
-      windSurface: at(hourly.wind_speed_10m, i, 0),
-    }),
+    dewPoint:
+      num(hourly.dew_point_2m, i) ??
+      dewPointFromHumidity(temperature, humidity) ??
+      temperature,
+    windSpeed,
+    seeing:
+      wind200hPa !== null && wind500hPa !== null
+        ? estimateSeeing({ wind200hPa, wind500hPa, windSurface: windSpeed })
+        : null,
     observedAt: new Date(times[i]),
     source: 'open-meteo',
-    layers: complete
-      ? {
-          low,
-          mid,
-          high,
-          visibilityKm:
-            typeof visibilityM === 'number'
-              ? Math.round(visibilityM / 100) / 10
-              : null,
-        }
-      : null,
+    layers:
+      low !== null && mid !== null && high !== null
+        ? {
+            low,
+            mid,
+            high,
+            visibilityKm:
+              visibilityM !== null ? Math.round(visibilityM / 100) / 10 : null,
+          }
+        : null,
   };
 }
 
-/** Seeing hesabı için üst atmosfer rüzgârı — meteoblue yolunda da kullanılır. */
+/**
+ * Seeing hesabı için üst atmosfer rüzgârı — meteoblue yolunda da kullanılır.
+ * İki seviyeden biri eksikse `null`: yarım girdiyle tahmin, tahmin değil
+ * uydurma olur.
+ */
 export function parseUpperAir(
   raw: HourlyResponse,
   now: Date
@@ -195,10 +234,10 @@ export function parseUpperAir(
   if (!raw.hourly || !times || times.length === 0) return null;
   const i = nearestHourIndex(times, now);
   if (i < 0) return null;
-  return {
-    wind200hPa: at(raw.hourly.wind_speed_200hPa, i, 0),
-    wind500hPa: at(raw.hourly.wind_speed_500hPa, i, 0),
-  };
+  const wind200hPa = num(raw.hourly.wind_speed_200hPa, i);
+  const wind500hPa = num(raw.hourly.wind_speed_500hPa, i);
+  if (wind200hPa === null || wind500hPa === null) return null;
+  return { wind200hPa, wind500hPa };
 }
 
 /**

@@ -95,7 +95,7 @@ export function StatusBar() {
       <InlineReadout
         label="Seeing"
         value={
-          conditions.data
+          conditions.data?.seeing
             ? seeingLabel(conditions.data.seeing.index)
             : conditions.status === 'loading'
               ? '…'

@@ -87,10 +87,12 @@ export interface UpperAir {
 /**
  * Ham yanıtı uygulama modeline çevirir.
  *
- * `upperAir` Open-Meteo'dan gelir. Yoksa seeing hesaplanamaz ve bütün
- * yanıt reddedilir — yarım bir panel, boş bir panelden daha yanıltıcı
- * olurdu: kullanıcı seeing hücresini boş görüp bulut sayısına güvenir,
- * oysa ikisi de aynı geceye ait olmayabilir.
+ * `upperAir` Open-Meteo'dan gelir. Yoksa seeing HESAPLANMAZ — `null`
+ * kalır ve arayüz "veri yok" gösterir. Eski davranış eksik rüzgârı sıfır
+ * sayıyordu; sıfır rüzgâr "sakin jet" demek olduğundan panel veri yokken
+ * yapay bir "mükemmel seeing" basıyordu (QA ASTRO-03). Bulut/sıcaklık
+ * verisi yine de değerli: okumanın tamamını atmak yerine yalnızca
+ * üretemediğimiz alan boş bırakılıyor.
  */
 export function parseMeteoblue(
   raw: MeteoblueRaw,
@@ -131,13 +133,19 @@ export function parseMeteoblue(
     };
   })();
 
-  const windSpeed = num(basic, 'windspeed', i) ?? 0;
+  /* Yer rüzgârı zorunlu: hem panelde okunuyor hem seeing'in yerel
+     bileşeni. Eksikse sıfır ("sakin") saymak yerine okuma reddediliyor —
+     Open-Meteo yedeği zaten devrede. */
+  const windSpeed = num(basic, 'windspeed', i);
+  if (windSpeed === null) return null;
 
-  const seeing: SeeingEstimate = estimateSeeing({
-    wind200hPa: upperAir?.wind200hPa ?? 0,
-    wind500hPa: upperAir?.wind500hPa ?? 0,
-    windSurface: windSpeed,
-  });
+  const seeing: SeeingEstimate | null = upperAir
+    ? estimateSeeing({
+        wind200hPa: upperAir.wind200hPa,
+        wind500hPa: upperAir.wind500hPa,
+        windSurface: windSpeed,
+      })
+    : null;
 
   return {
     cloudCover: total,

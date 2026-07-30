@@ -99,7 +99,7 @@ export function TonightPanel() {
   const weather = conditions.data;
 
   const verdict = weather
-    ? observingVerdict(weather.cloudCover, weather.seeing.index)
+    ? observingVerdict(weather.cloudCover, weather.seeing?.index ?? null)
     : null;
   const dew = weather ? dewRisk(weather.temperature, weather.dewPoint) : null;
 
@@ -300,12 +300,16 @@ export function TonightPanel() {
 
               <Stat
                 label="Seeing"
-                value={weather ? seeingLabel(weather.seeing.index) : '—'}
+                value={weather?.seeing ? seeingLabel(weather.seeing.index) : '—'}
                 hint={
-                  weather ? `tahmin · ${weather.seeing.driver}` : weatherHint
+                  weather
+                    ? weather.seeing
+                      ? `tahmin · ${weather.seeing.driver}`
+                      : 'üst atmosfer verisi yok'
+                    : weatherHint
                 }
                 tone="primary"
-                meter={weather ? 1 - (weather.seeing.index - 1) / 4 : null}
+                meter={weather?.seeing ? 1 - (weather.seeing.index - 1) / 4 : null}
               />
 
               <Stat

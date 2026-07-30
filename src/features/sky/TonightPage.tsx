@@ -112,7 +112,7 @@ export function TonightPage() {
 
   const weather = conditions.data;
   const verdict = weather
-    ? observingVerdict(weather.cloudCover, weather.seeing.index)
+    ? observingVerdict(weather.cloudCover, weather.seeing?.index ?? null)
     : null;
   const dew = weather ? dewRisk(weather.temperature, weather.dewPoint) : null;
 
@@ -209,7 +209,7 @@ export function TonightPage() {
           />
           <Readout
             label="Seeing"
-            value={weather ? seeingLabel(weather.seeing.index) : '—'}
+            value={weather?.seeing ? seeingLabel(weather.seeing.index) : '—'}
             hint={
               dew
                 ? `çiylenme: ${dew.label.toLocaleLowerCase('tr-TR')}`
