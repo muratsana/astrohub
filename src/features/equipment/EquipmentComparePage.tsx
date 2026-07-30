@@ -25,6 +25,7 @@ import {
   toggleCompare,
 } from './compare';
 import { cn } from '@/lib/cn';
+import { Alert } from '@/components/ui/Alert';
 
 /**
  * EKİPMAN KARŞILAŞTIRMA (§7.11).
@@ -134,12 +135,9 @@ export function EquipmentComparePage() {
         <CatalogSourceNote selection={catalog} />
 
         {warning && (
-          <p
-            role="alert"
-            className="mb-3 rounded-card border border-warning/40 bg-surface-1 px-3 py-2 text-body-sm text-warning"
-          >
+          <Alert tone="warning" className="mb-3">
             {warning}
-          </p>
+          </Alert>
         )}
 
         {/* ── Seçilenler ── */}

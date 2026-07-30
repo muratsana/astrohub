@@ -31,6 +31,7 @@ import { isUuid } from '@/features/setups/remote';
 import { useInventory } from '@/features/setups/useInventory';
 import { SLOT_LABELS, type SetupDraft, type SlotId } from '@/domain/setup/types';
 import { cn } from '@/lib/cn';
+import { Alert } from '@/components/ui/Alert';
 
 /**
  * EKİPMAN MODÜLÜ.
@@ -150,10 +151,10 @@ function BuilderTab() {
 function SyncNotice({ store }: { store: SetupStore }) {
   if (store.error) {
     return (
-      <p role="alert" className="mt-2 text-meta text-danger">
+      <Alert variant="text" className="mt-2">
         Veritabanına yazılamadı ({store.error}). Setup tarayıcınızda duruyor;
         bir sonraki girişte yeniden denenecek.
-      </p>
+      </Alert>
     );
   }
 

@@ -29,6 +29,7 @@ import {
   formatExposure,
   type ExifData,
 } from '@/domain/photography/exif';
+import { Alert } from '@/components/ui/Alert';
 
 const steps = [
   'Dosya',
@@ -821,12 +822,9 @@ export function UploadWizardPage() {
                 )}
 
                 {publishError && (
-                  <p
-                    role="alert"
-                    className="mt-3 rounded-card border border-danger/40 px-3 py-2 text-body-sm leading-relaxed text-danger"
-                  >
+                  <Alert className="mt-3">
                     {publishError}
-                  </p>
+                  </Alert>
                 )}
               </div>
             </div>

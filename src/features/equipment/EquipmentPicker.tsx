@@ -14,6 +14,7 @@ import {
   type EquipmentModel,
 } from './data';
 import { cn } from '@/lib/cn';
+import { Alert } from '@/components/ui/Alert';
 
 /**
  * EKİPMAN SEÇİCİ — künye alanlarının katalog bağı.
@@ -195,9 +196,9 @@ export function EquipmentPicker({
                       className="h-9 text-[12px]"
                     />
                     {error && (
-                      <p role="alert" className="text-meta text-danger">
+                      <Alert variant="text">
                         {error}
-                      </p>
+                      </Alert>
                     )}
                     <div className="flex gap-2">
                       <Button

@@ -11,6 +11,7 @@ import { loginSchema, type LoginValues } from './schema';
 import { Captcha, type CaptchaHandle } from './Captcha';
 import { captchaEnabled } from './captchaConfig';
 import { AuthDivider, GoogleButton } from './GoogleButton';
+import { Alert } from '@/components/ui/Alert';
 
 export function LoginPage() {
   const { signIn } = useAuth();
@@ -94,9 +95,9 @@ export function LoginPage() {
         <Captcha ref={captchaRef} onToken={setCaptchaToken} />
 
         {formError && (
-          <p role="alert" className="text-sm text-danger">
+          <Alert variant="text">
             {formError}
-          </p>
+          </Alert>
         )}
 
         <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>

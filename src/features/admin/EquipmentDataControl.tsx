@@ -21,6 +21,7 @@ import {
   type EquipmentPatch,
 } from './equipmentAdmin';
 import { connectionLabel } from '@/domain/equipment/connections';
+import { Alert } from '@/components/ui/Alert';
 
 /**
  * EKİPMAN VERİTABANI PANELİ.
@@ -104,9 +105,9 @@ export function EquipmentDataControl({ canWrite }: { canWrite: boolean }) {
       </div>
 
       {error && (
-        <p role="alert" className="mb-2 text-body-sm text-danger">
+        <Alert variant="text" className="mb-2">
           {error}
-        </p>
+        </Alert>
       )}
       {message && (
         <p role="status" className="mb-2 text-body-sm text-success">

@@ -19,6 +19,7 @@ import { LabelChip } from './LabelChip';
 import { useAuth } from '@/features/auth/AuthContext';
 import { createReply, useForumThreads } from '@/services/content/forum';
 import { cn } from '@/lib/cn';
+import { Alert } from '@/components/ui/Alert';
 
 /** Konu detayı: açılış mesajı + yanıtlar + yanıt kutusu. */
 export function ThreadPage() {
@@ -234,9 +235,9 @@ function ReplyBox({
       />
 
       {error && (
-        <p role="alert" className="mt-2 text-body-sm text-danger">
+        <Alert variant="text" className="mt-2">
           {error}
-        </p>
+        </Alert>
       )}
 
       <div className="mt-2.5 flex items-center justify-between gap-3">

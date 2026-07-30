@@ -20,6 +20,7 @@ import { cn } from '@/lib/cn';
 import { sanitizeText } from '@/lib/sanitize';
 import { useAuth } from '@/features/auth/AuthContext';
 import { createThread } from '@/services/content/forum';
+import { Alert } from '@/components/ui/Alert';
 
 /**
  * YENİ KONU FORMU.
@@ -206,9 +207,9 @@ export function NewThreadPage() {
             </Field>
 
             {error && (
-              <p role="alert" className="text-body-sm text-danger">
+              <Alert variant="text">
                 {error}
-              </p>
+              </Alert>
             )}
 
             <div className="flex items-center justify-between gap-3 border-t border-border pt-4">
