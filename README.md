@@ -14,6 +14,7 @@ ikinci el pazaryeri sunan bir topluluk portalıdır.
 - **[Ürün / UI / Teknik Şartname](./docs/ASTROHUB_PRODUCT_UI_TECHNICAL_SPEC.md)** — onaylanan tam şartname
 - **[Geliştirme Planı ve Yol Haritası](./docs/GELISTIRME-PLANI.md)** — fazlar, sprintler, mimari ilkeler
 - **[Site Denetimi (Temmuz 2026)](./docs/SITE-AUDIT-2026-07.md)** — tam kapsamlı denetim bulguları, uygulanan düzeltmeler ve kalan işler
+- **[Toparlama Planı (Ağustos 2026)](./docs/TOPARLAMA-PLANI-2026-08.md)** — dış QA raporu + bağımsız doğrulama denetiminin birleşik yürütme planı: fazlar, sahipler, kabul ölçütleri
 
 ## Öne çıkan kararlar
 
