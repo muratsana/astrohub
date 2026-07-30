@@ -371,3 +371,128 @@ verilir. Middleware'in dinamik slug'ları (DB fotoğrafı/ilanı) tanıması
 için ya derlemede üretilen bir yol manifestosu ya da kenar katmanında
 Supabase sorgusu gerekir — bu yüzden T-201/T-202 (veri hizalaması) ile
 aynı bloka bırakıldı.
+
+---
+
+## 15. Durum güncellemesi — 30 Temmuz gecesi (üçüncü blok)
+
+Bu blokta Faz 2 ve Faz 6'nın açık kalan maddeleri kapandı. Hepsinde ortak
+bir yöntem var: **iddia edilen davranış ölçüldü.** Üç yerde ölçüm,
+kaynağa bakınca doğru görünen bir şeyin yanlış olduğunu gösterdi.
+
+### T-201 — migration + veri hizalaması ✅
+
+Sıfır bir veritabanına 27 migration uygulandı ve canlıyla karşılaştırıldı.
+
+**Şema: sıfır sapma.** 903 nesnenin (432 kolon, 183 kısıt, 103 indeks,
+90 RLS politikası — `using`/`with check` ifadeleri dahil, 39 tablo,
+24 tetikleyici, 15 enum, 15 fonksiyon, 2 görünüm) özeti iki tarafta da
+`c3745dffd4730d77a3d22f1873ea0454`.
+
+**Veri: kurulamıyordu.** Hiçbir migration `equipment_brands` satırı
+eklemiyordu, ama 0018–0020 o markalara yabancı anahtarla bağlı 1.086 model
+ekliyordu:
+
+| Migration | Temiz veritabanında sonuç |
+| --- | --- |
+| 0018/0019/0020 | yabancı anahtar hatası — migration düşüyor |
+| 0022/0023/0024 | "başarılı", ama **sıfır satır** güncelliyor |
+
+İkincisi birincisinden tehlikeli: teknik veri migration'ları güncelleyecek
+model bulamadığı için sessizce hiçbir şey yapıyordu.
+
+Katalog artık depoda: `supabase/seed/01_katalog.sql` (1.685 satır) ve
+editöryel anlık görüntü `02_ornek-icerik.sql` (65 satır) ayrı dosyalarda.
+`scripts/katalog-disa-aktar.mjs` canlıdan üretiyor, `scripts/seed.mjs`
+bir veritabanına uyguluyor. Dokuz tablonun satır özetleri iki tarafta aynı.
+
+**Eski seed bir tuzaktı.** `scripts/seed.mjs` demo dizilerinden SQL
+üretiyor ama ürettiğini hiçbir şey uygulamıyordu; üstelik dosya kataloğun
+alt kümesiydi (43 marka, 129 model) ve `on conflict do update` ile aynı
+tablolara yazıyordu. Canlıya uygulansa 129 modeli demo değerlerine geri
+çekerdi.
+
+### T-505 — kota yeniden tanımı ✅ *(senin kararın)*
+
+Standart 5, premium 30 fotoğraf; foto başına 10 MB. 10 MB bir ret eşiği
+değil hedef: büyük dosya reddedilmiyor, önce sıkıştırma sonra çözünürlük
+feda edilerek bütçeye indiriliyor. Asıl tavan bucket'ta
+(`photo-originals` 100 MB → 10 MB).
+
+| Kademe | Foto | Kullanıcı başına | 100 GB kaç dolu üye |
+| --- | --- | --- | --- |
+| standart | 5 | ~58 MB | ~1.700 |
+| premium | 30 | ~350 MB | ~290 |
+
+Eski kuralda (3/50 + 100 MB dosya) tek premium kullanıcı 5 GB tutabilirdi:
+yirmi kullanıcıda biten bir plan.
+
+### T-301 kalanı — gerçek 404 ✅
+
+`dist/404.html` üretiliyordu ama yakala-hepsini rewrite (`/(.*)`) her
+adresi karşıladığı için hiç kullanılmıyordu. Rewrite listesi artık rota
+ağacından üretiliyor (78 yol). Ölçüldü: **22 rotanın diskte dosyası yok**
+ve rewrite olmadan 404 alırdı (`/radyo`, `/tv`, `/forum`, `/giris`,
+`/panel`, dört `/harita` adresi, dört eski yönlendirme…). Elle tutulan bir
+listenin hatırlaması gereken 22 istisna — önceki denemenin geri
+alınmasının sebebi buydu.
+
+### T-502/T-503 — yükleme durum makinesi + yol sahipliği ✅
+
+**Açık:** `astro_photos.display_path` serbest metindi. RLS başkasının
+klasörüne *yazmayı* engelliyordu ama kendi satırında başkasının yolunu
+*göstermeyi* engellemiyordu. `photos` bucket'ı herkese açık okunur olduğu
+için bu, tek bir POST ile başkasının fotoğrafını kendi adına yayımlamak
+demekti. Tetikleyici kapattı; üç senaryo veritabanında denendi.
+
+**Çöp:** hata durumunda yalnızca taslak *satır* siliniyordu, yüklenmiş
+*nesneler* bucket'ta kalıyordu. Telafi yığını eklendi; dokuz test
+doğruluyor.
+
+**Biçim:** sihirli baytlar satır açılmadan önce okunuyor. Güvenlik sınırı
+değil (öyle olduğu iddia edilmiyor) — uzantısı değiştirilmiş dosyayı erken
+yakalıyor.
+
+### T-507 — CSP ✅
+
+Planda "Report-Only → enforce" yazıyordu; ölçünce **hiç CSP olmadığı**
+görüldü. Politika yazıldı ve gerçek Chromium'da sınandı.
+
+İlk sürüm `script-src 'self' 'sha256-…'` idi ve **7 rotada 16 ihlal**
+üretti: react-router'ın sayfa başına değişen hidrasyon verisi, React 19'un
+Suspense çalışma zamanı ve — varsayımın aksine — JSON-LD blokları.
+421 sayfa için hash header'ı onlarca kilobayta çıkarırdı; nonce statik CDN
+dağıtımını iptal ederdi.
+
+Politika gerçeğe göre yeniden yazıldı: satır içi izinli, **dış kaynaklı
+betik yasak**, ve sızdırma yolları (`connect-src`, `form-action`,
+`base-uri`, `object-src`) kapalı. `check:csp` derleme zincirinde.
+
+### T-204 — RLS matrisi ✅
+
+18 kontrol, hepsi geçiyor: taslak görünürlüğü, tam koordinat mahremiyeti
+(§15.3), üyelik/fatura yalıtımı, yetki yükseltme denemesi, oran limiti
+sayacının tamamen kapalı olması.
+
+Harness iki kez yanlış yazıldı ve ikisi de öğretici:
+
+- `auth.uid()` tanımı sürüme göre değişiyor (`request.jwt.claims` vs
+  `request.jwt.claim.sub`). Yalnızca birini yazmak `auth.uid()`i NULL
+  bırakıyor ve **her kontrol "göremiyor" diye geçiyordu** — matris
+  yeşilken hiçbir şey ölçmüyordu.
+- UPDATE/DELETE'i RLS hata vererek değil, satırı görünmez yaparak
+  engelliyor. "Hata yok = geçti" varsayımı iki yanlış kırmızı üretti.
+
+`permission denied` artık başarı sayılıyor: tablo yetkisinin hiç
+verilmemiş olması (0003) RLS'ten daha güçlü bir kapı.
+
+### Kalan sıra
+
+| # | İş | Kimde |
+| --- | --- | --- |
+| T-202 | Staging projesi | Sen (Pro plan bunu açıyor) |
+| B18 | `METEOBLUE_API_KEY` + sağlayıcı harcama limiti | Sen |
+| T-509 | Harita karo lisansı | Sen |
+| T-504 | Ödeme sistemi | Sen — bilinçli olarak en sona bırakıldı |
+| T-106 | Topocentric kütüphane değerlendirmesi | Faz 7 |
+| T-304 | Görselleri kendi CDN'ine taşıma (lisans/atıf kaydı) | Faz 7 |
