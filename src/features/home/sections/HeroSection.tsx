@@ -5,8 +5,17 @@ import { HeroBackdrop } from '@/components/media/HeroBackdrop';
 import { ChevronDownIcon } from '@/components/ui/icons';
 import { usePreviewEditor } from '@/features/preview-editor/PreviewEditorContext';
 import type { EditableField, HeroSlide } from '../hero/slides';
+import { commonsSrcSet, commonsWidthUrl } from '@/lib/commons';
 import { cn } from '@/lib/cn';
 import { upperTr } from '@/lib/text';
+
+/**
+ * Hero görselinin kopya genişlikleri ve çizim alanı (QA P0-04).
+ * Konteyner 1520px'te durur; mobilde görsel tam genişliktir. Tarayıcı
+ * 390px'lik ekrana artık 1800'lük değil ~640'lık kopyayı indirir.
+ */
+const HERO_WIDTHS = [640, 960, 1440, 1800];
+const HERO_SIZES = '(min-width: 1520px) 1424px, 100vw';
 
 /**
  * HERO — tam genişlikte slayt gösterisi.
@@ -63,6 +72,18 @@ export function HeroSection() {
 
   const slide = slides[index];
 
+  /*
+    LCP GÖRSELİ ÖNDEN YÜKLENİR. İlk slaytın fotoğrafı sayfanın en büyük
+    boyalı öğesi; keşfi JS'in çalışmasını beklerse LCP saniyeler kayar.
+    React 19 bu <link>i <head>e taşır. Yalnızca ilk slayt: diğerleri
+    kullanıcı geçtikçe yüklenir, beşini birden önden indirmek kod
+    bölmeyi görsellerde tersine çevirmek olurdu.
+  */
+  const first = slides[0];
+  const firstPreload =
+    first?.image &&
+    (commonsWidthUrl(first.image.url, 960) ?? first.image.url);
+
   return (
     <section
       ref={regionRef}
@@ -79,6 +100,16 @@ export function HeroSection() {
       }}
       className="bg-background"
     >
+      {firstPreload && (
+        <link
+          rel="preload"
+          as="image"
+          href={firstPreload}
+          imageSrcSet={commonsSrcSet(first.image!.url, HERO_WIDTHS) ?? undefined}
+          imageSizes={HERO_SIZES}
+          fetchPriority="high"
+        />
+      )}
       <Container className="py-5 sm:py-6">
         <div className="relative overflow-hidden rounded-card border border-border">
           {/* Arka plan — gerçek fotoğraf, altında çizilen sahne */}
@@ -95,6 +126,7 @@ export function HeroSection() {
                 src={slide.image.url}
                 alt=""
                 credit={`${slide.image.credit} · ${slide.image.licence}`}
+                priority={index === 0}
               />
             )}
             {/* Metnin okunurluğu için soldan sağa koyulaşan perde */}
@@ -218,10 +250,13 @@ function HeroPhoto({
   src,
   alt,
   credit,
+  priority = false,
 }: {
   src: string;
   alt: string;
   credit: string;
+  /** İlk slayt = LCP adayı; yüksek öncelikle iner. */
+  priority?: boolean;
 }) {
   const [state, setState] = useState<'loading' | 'ready' | 'failed'>('loading');
   if (state === 'failed') return null;
@@ -230,8 +265,11 @@ function HeroPhoto({
     <>
       <img
         src={src}
+        srcSet={commonsSrcSet(src, HERO_WIDTHS) ?? undefined}
+        sizes={HERO_SIZES}
         alt={alt}
         loading="eager"
+        fetchPriority={priority ? 'high' : undefined}
         decoding="async"
         onLoad={() => setState('ready')}
         onError={() => setState('failed')}

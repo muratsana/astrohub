@@ -5,6 +5,7 @@ import { NotFoundPage } from '@/components/NotFoundPage';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { absoluteUrl, breadcrumbJsonLd, SITE_NAME } from '@/lib/seo';
 import { articleCategoryLabels } from './data';
+import { commonsWidthUrl } from '@/lib/commons';
 import { useArticles } from './useArticles';
 
 /** Yazı detayı — okuma genişliği ~70 karakter, görselsiz. */
@@ -26,6 +27,17 @@ export function ArticleDetailPage() {
       <PageMeta
         title={article.title}
         description={article.summary}
+        ogType="article"
+        publishedTime={article.publishedAt}
+        image={
+          article.image
+            ? {
+                url:
+                  commonsWidthUrl(article.image.url, 1200) ?? article.image.url,
+                alt: article.title,
+              }
+            : undefined
+        }
         jsonLd={[
           {
             '@context': 'https://schema.org',
