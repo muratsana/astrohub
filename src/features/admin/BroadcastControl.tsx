@@ -20,6 +20,7 @@ import {
   type AdminBroadcast,
   type AdminTrack,
 } from './broadcastAdmin';
+import { Alert } from '@/components/ui/Alert';
 
 /**
  * TV VE RADYO KONTROL MODÜLLERİ.
@@ -122,12 +123,9 @@ function TvControl() {
       </p>
 
       {error && (
-        <p
-          role="alert"
-          className="mb-3 rounded-card border border-danger/40 bg-surface-1 px-3 py-2 text-body-sm text-danger"
-        >
+        <Alert className="mb-3">
           {error}
-        </p>
+        </Alert>
       )}
 
       {items && items.length > 0 && (
@@ -359,12 +357,9 @@ function RadioControl() {
       </p>
 
       {error && (
-        <p
-          role="alert"
-          className="mb-3 rounded-card border border-danger/40 bg-surface-1 px-3 py-2 text-body-sm text-danger"
-        >
+        <Alert className="mb-3">
           {error}
-        </p>
+        </Alert>
       )}
 
       {items && items.length > 0 && (

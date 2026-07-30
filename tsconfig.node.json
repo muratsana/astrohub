@@ -28,6 +28,8 @@
   "include": [
     "vite.config.ts",
     "vite.preview.config.ts",
-    "scripts/seed/reference-data.ts"
+    "scripts/seed/reference-data.ts",
+    "supabase/functions/meteoblue/policy.ts",
+    "supabase/functions/meteoblue/policy.test.ts"
   ]
 }

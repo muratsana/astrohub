@@ -4,6 +4,7 @@ import { Panel } from '@/components/ui/Panel';
 import { Button } from '@/components/ui/Button';
 import { usePhotoComments } from '@/services/content/engagement';
 import type { AstroPhoto } from './types';
+import { Alert } from '@/components/ui/Alert';
 
 /**
  * FOTOĞRAF YORUMLARI.
@@ -71,9 +72,9 @@ export function PhotoComments({ photo }: { photo: AstroPhoto }) {
       </ul>
 
       {thread.error && (
-        <p role="alert" className="mt-2 text-body-sm text-danger">
+        <Alert variant="text" className="mt-2">
           {thread.error}
-        </p>
+        </Alert>
       )}
 
       {thread.canWrite ? (

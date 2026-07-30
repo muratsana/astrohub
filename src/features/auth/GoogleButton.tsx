@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from './AuthContext';
+import { Alert } from '@/components/ui/Alert';
 
 /**
  * GOOGLE İLE GİRİŞ.
@@ -49,9 +50,9 @@ export function GoogleButton({ label = 'Google ile devam et' }: { label?: string
       </button>
 
       {error && (
-        <p role="alert" className="text-body-sm text-danger">
+        <Alert variant="text">
           {error}
-        </p>
+        </Alert>
       )}
     </div>
   );

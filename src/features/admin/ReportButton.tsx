@@ -6,6 +6,7 @@ import { getSupabase } from '@/services/supabase/client';
 import { sanitizeText } from '@/lib/sanitize';
 import { reasonLabels, type ModerationReason, type ModerationTarget } from './moderation';
 import { cn } from '@/lib/cn';
+import { Alert } from '@/components/ui/Alert';
 
 /**
  * İÇERİK BİLDİRME (§13).
@@ -136,9 +137,9 @@ export function ReportButton({
           />
 
           {error && (
-            <p className="mb-2 text-meta text-danger" role="alert">
+            <Alert variant="text" className="mb-2">
               {error}
-            </p>
+            </Alert>
           )}
         </>
       )}

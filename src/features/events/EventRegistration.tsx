@@ -5,6 +5,7 @@ import { getSupabase, isSupabaseConfigured } from '@/services/supabase/client';
 import { useAuth } from '@/features/auth/AuthContext';
 import { sanitizeText } from '@/lib/sanitize';
 import type { AstroEvent } from './types';
+import { Alert } from '@/components/ui/Alert';
 
 /**
  * ETKİNLİK KAYDI.
@@ -133,9 +134,9 @@ export function EventRegistration({ event }: { event: AstroEvent }) {
       )}
 
       {error && (
-        <p role="alert" className="mb-2 text-body-sm text-danger">
+        <Alert variant="text" className="mb-2">
           {error}
-        </p>
+        </Alert>
       )}
 
       <div className="flex items-center justify-between gap-2">

@@ -12,6 +12,7 @@ import {
   type PendingContribution,
   type SyncProgress,
 } from './catalogSync';
+import { Alert } from '@/components/ui/Alert';
 
 /**
  * KATALOG KONTROL MODÜLÜ.
@@ -126,12 +127,9 @@ export function CatalogControl({ canWrite }: { canWrite: boolean }) {
         )}
 
         {error && (
-          <p
-            role="alert"
-            className="mt-3 rounded-card border border-danger/40 bg-surface-1 px-3 py-2 text-body-sm text-danger"
-          >
+          <Alert className="mt-3">
             {error}
-          </p>
+          </Alert>
         )}
 
         {result && !error && (
@@ -175,9 +173,9 @@ export function CatalogControl({ canWrite }: { canWrite: boolean }) {
         </p>
 
         {pendingError && (
-          <p role="alert" className="mb-2 text-body-sm text-danger">
+          <Alert variant="text" className="mb-2">
             {pendingError}
-          </p>
+          </Alert>
         )}
 
         {!canWrite ? (

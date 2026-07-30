@@ -11,6 +11,7 @@ import { registerSchema, type RegisterValues } from './schema';
 import { Captcha, type CaptchaHandle } from './Captcha';
 import { captchaEnabled } from './captchaConfig';
 import { AuthDivider, GoogleButton } from './GoogleButton';
+import { Alert } from '@/components/ui/Alert';
 
 export function RegisterPage() {
   const { signUp } = useAuth();
@@ -135,17 +136,17 @@ export function RegisterPage() {
             </span>
           </label>
           {errors.acceptTerms && (
-            <p role="alert" className="text-xs text-danger">
+            <Alert variant="text">
               {errors.acceptTerms.message}
-            </p>
+            </Alert>
           )}
 
           <Captcha ref={captchaRef} onToken={setCaptchaToken} />
 
           {formError && (
-            <p role="alert" className="text-sm text-danger">
+            <Alert variant="text">
               {formError}
-            </p>
+            </Alert>
           )}
 
           <Button
