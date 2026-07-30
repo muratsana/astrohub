@@ -126,6 +126,7 @@ function LeadCard({ item, label }: { item: EditorialItem; label: string }) {
         <RemoteImage
           src={item.imageUrl}
           alt={item.title}
+          sizes="(min-width: 768px) 340px, 100vw"
           seed={item.slug}
           tint={seedTint(item)}
         />
@@ -184,6 +185,7 @@ function EditorialCard({ item }: { item: EditorialItem }) {
         <RemoteImage
           src={item.imageUrl}
           alt={item.title}
+          sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
           seed={item.slug}
           tint={seedTint(item)}
         />

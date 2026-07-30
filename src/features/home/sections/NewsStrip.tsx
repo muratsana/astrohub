@@ -93,6 +93,8 @@ export function NewsStrip() {
                     <RemoteImage
                       src={item.image?.url}
                       alt=""
+                      sizes="86px"
+                      widths={[120, 240]}
                       seed={item.slug}
                       tint={item.tint}
                     />
@@ -142,6 +144,8 @@ export function NewsStrip() {
                     <RemoteImage
                       src={article.image?.url}
                       alt=""
+                      sizes="86px"
+                      widths={[120, 240]}
                       seed={article.slug}
                       tint={article.tint}
                     />

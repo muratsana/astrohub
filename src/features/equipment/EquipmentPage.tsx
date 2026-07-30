@@ -296,6 +296,7 @@ function EquipmentVisual({
         <RemoteImage
           src={model.image.url}
           alt={`${model.brand} ${model.model}`}
+          sizes="(min-width: 640px) 33vw, 50vw"
           seed={model.slug}
           className="h-full w-full object-cover"
         />

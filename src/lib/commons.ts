@@ -21,6 +21,35 @@ export function commonsImage(fileName: string, width = 1200): string {
   )}?width=${width}`;
 }
 
+const COMMONS_FILEPATH = 'commons.wikimedia.org/wiki/Special:FilePath/';
+
+/**
+ * Var olan bir FilePath adresinin `width` parametresini değiştirir.
+ * Commons dışı adreslerde `null` — o adreslerin boyut sözleşmesini
+ * bilmiyoruz, parametre eklemek adresi bozabilir.
+ */
+export function commonsWidthUrl(url: string, width: number): string | null {
+  if (!url.includes(COMMONS_FILEPATH)) return null;
+  const base = url.split('?')[0];
+  return `${base}?width=${width}`;
+}
+
+/**
+ * Aynı görselin birden çok genişlikteki kopyasından `srcset` üretir
+ * (QA P0-04): 86 piksellik bir haber küçüğü için 1200 piksellik kopya
+ * indirmek, mobil LCP'yi tek başına katlayan israftı. Tarayıcı buradan
+ * yalnızca gerçekten çizeceği boyuta en yakın kopyayı seçer.
+ */
+export function commonsSrcSet(url: string, widths: number[]): string | null {
+  const entries = widths
+    .map((w) => {
+      const sized = commonsWidthUrl(url, w);
+      return sized ? `${sized} ${w}w` : null;
+    })
+    .filter((v): v is string => v !== null);
+  return entries.length > 0 ? entries.join(', ') : null;
+}
+
 export interface CommonsCredit {
   url: string;
   credit: string;

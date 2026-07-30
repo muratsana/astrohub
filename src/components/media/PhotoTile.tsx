@@ -78,7 +78,14 @@ export function PhotoTile({
         )}
       >
         <PlateFrame className="w-24 shrink-0 border-border sm:w-32">
-          <RemoteImage src={imageUrl} alt={target} seed={seed} tint={tint} />
+          <RemoteImage
+            src={imageUrl}
+            alt={target}
+            sizes="128px"
+            widths={[160, 320]}
+            seed={seed}
+            tint={tint}
+          />
         </PlateFrame>
 
         <span className="min-w-0 flex-1">
