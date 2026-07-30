@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Panel } from '@/components/ui/Panel';
@@ -26,6 +26,7 @@ import {
   formatDuration,
 } from '@/domain/astronomy/ephemeris';
 import { moonlessDarkMinutes } from '@/domain/astronomy/nightCalendar';
+import { zonedMidnight } from '@/domain/time/zonedDay';
 import { altitudeCurve, usableWindow } from '@/domain/astronomy/sessionPlan';
 import { AltitudeChart } from './AltitudeChart';
 import { cn } from '@/lib/cn';
@@ -52,13 +53,25 @@ export function TonightPage() {
   const [sort, setSort] = useState<SortKey>('pencere');
   const [kind, setKind] = useState<TargetKind | 'hepsi'>('hepsi');
 
-  const dayKey = new Date().toDateString();
+  // Gün, gözlem konumunun takvimine göre anahtarlanır (ASTRO-01) —
+  // tarayıcısı başka dilimde olan kullanıcı yanlış geceyi hesaplamasın.
+  const dayStartMs = zonedMidnight(new Date(), location.timeZone).getTime();
 
   const sky = useMemo(() => {
-    const date = new Date(dayKey);
-    const night = astronomicalNight(date, location.latitude, location.longitude);
+    const date = new Date(dayStartMs);
+    const night = astronomicalNight(
+      date,
+      location.latitude,
+      location.longitude,
+      location.timeZone
+    );
     const moon = moonPhase(date);
-    const moonTimes = moonRiseSet(date, location.latitude, location.longitude);
+    const moonTimes = moonRiseSet(
+      date,
+      location.latitude,
+      location.longitude,
+      location.timeZone
+    );
     const moonless = moonlessDarkMinutes(night, location.latitude, location.longitude);
 
     const window =
@@ -95,7 +108,7 @@ export function TonightPage() {
       : [];
 
     return { night, moon, moonTimes, moonless, window, rows };
-  }, [dayKey, location.latitude, location.longitude]);
+  }, [dayStartMs, location.latitude, location.longitude, location.timeZone]);
 
   const visible = useMemo(() => {
     const filtered =
@@ -112,7 +125,7 @@ export function TonightPage() {
 
   const weather = conditions.data;
   const verdict = weather
-    ? observingVerdict(weather.cloudCover, weather.seeing.index)
+    ? observingVerdict(weather.cloudCover, weather.seeing?.index ?? null)
     : null;
   const dew = weather ? dewRisk(weather.temperature, weather.dewPoint) : null;
 
@@ -209,7 +222,7 @@ export function TonightPage() {
           />
           <Readout
             label="Seeing"
-            value={weather ? seeingLabel(weather.seeing.index) : '—'}
+            value={weather?.seeing ? seeingLabel(weather.seeing.index) : '—'}
             hint={
               dew
                 ? `çiylenme: ${dew.label.toLocaleLowerCase('tr-TR')}`

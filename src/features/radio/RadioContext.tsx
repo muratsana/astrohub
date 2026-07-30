@@ -10,6 +10,7 @@ import {
 } from 'react';
 import { radioTracks } from './data';
 import type { RadioTrack } from './types';
+import { fetchRadioTracks } from '@/services/content/radio';
 
 /**
  * RADYO BAĞLAMI — kalıcı oynatıcının beyni.
@@ -52,7 +53,24 @@ const RadioContext = createContext<RadioState | undefined>(undefined);
 const VOLUME_KEY = 'astrohub:radio:volume';
 
 export function RadioProvider({ children }: { children: ReactNode }) {
-  const tracks = radioTracks;
+  /*
+   * Liste veritabanından gelir (QA FUNC-04): editörün panelden eklediği
+   * parça dinleyiciye ulaşmalı. Tohum dizi (bilerek boş) yalnızca
+   * yapılandırmasız ortamların yedeğidir; istek servis katmanında tek
+   * sefere iner ve başarısızlıkta sessizce tohumda kalınır — radyo
+   * "bozuk" değil "henüz parça yok" olarak görünür.
+   */
+  const [tracks, setTracks] = useState<RadioTrack[]>(radioTracks);
+  useEffect(() => {
+    let active = true;
+    void fetchRadioTracks().then((rows) => {
+      if (active && rows) setTracks(rows);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const mp3Tracks = useMemo(
     () => tracks.filter((t) => t.source === 'mp3'),
     [tracks]
@@ -60,6 +78,17 @@ export function RadioProvider({ children }: { children: ReactNode }) {
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [index, setIndex] = useState(mp3Tracks.length > 0 ? 0 : -1);
+
+  // Liste sonradan geldiğinde (DB yanıtı) sıra başa alınır; liste
+  // kısalırsa taşan indeks toparlanır. -1'de kalmak, parça varken
+  // oynatıcının ölü görünmesi demekti.
+  useEffect(() => {
+    setIndex((i) => {
+      if (mp3Tracks.length === 0) return -1;
+      if (i === -1 || i >= mp3Tracks.length) return 0;
+      return i;
+    });
+  }, [mp3Tracks.length]);
   const [playing, setPlaying] = useState(false);
   const [spotifyTrack, setSpotifyTrack] = useState<RadioTrack | null>(null);
   const [dockVisible, setDockVisible] = useState(true);

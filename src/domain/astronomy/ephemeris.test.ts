@@ -272,3 +272,47 @@ describe('biçimlendirme', () => {
     expect(formatDuration(0)).toBe('—');
   });
 });
+
+describe('astronomicalNight — zaman dilimi (ASTRO-01)', () => {
+  const IST = { lat: 41.01, lon: 28.98, tz: 'Europe/Istanbul' };
+
+  it('dilim verildiğinde pencere, sürecin diliminden bağımsızdır', () => {
+    // İki an da İstanbul takviminde 31 Temmuz'a düşer: biri gece yarısından
+    // hemen sonra (21:30Z = 00:30 TRT), diğeri gündüz (10:00Z = 13:00 TRT).
+    // Dilim parametresiyle ikisi de AYNI geceyi (31 Tem → 1 Ağu) vermeli.
+    const midnightish = astronomicalNight(
+      new Date('2026-07-30T21:30:00Z'),
+      IST.lat,
+      IST.lon,
+      IST.tz
+    );
+    const daytime = astronomicalNight(
+      new Date('2026-07-31T10:00:00Z'),
+      IST.lat,
+      IST.lon,
+      IST.tz
+    );
+
+    expect(midnightish.start?.toISOString()).toBe(daytime.start?.toISOString());
+    expect(midnightish.end?.toISOString()).toBe(daytime.end?.toISOString());
+  });
+
+  it('İstanbul yaz gecesi makul UTC aralığına düşer', () => {
+    // 31 Temmuz gecesi: astronomik karanlık İstanbul'da yaklaşık
+    // 22:00–04:00 TRT, yani 19:00–01:00 UTC civarı başlar/biter.
+    const night = astronomicalNight(
+      new Date('2026-07-31T10:00:00Z'),
+      IST.lat,
+      IST.lon,
+      IST.tz
+    );
+    expect(night.neverDark).toBe(false);
+    const startUtcHour = night.start!.getUTCHours();
+    expect(startUtcHour).toBeGreaterThanOrEqual(18);
+    expect(startUtcHour).toBeLessThanOrEqual(21);
+    // Pencere aynı gece içinde biter (31 Tem gecesi → 1 Ağu sabahı).
+    expect(night.end!.getTime()).toBeGreaterThan(night.start!.getTime());
+    expect(night.durationMinutes).toBeGreaterThan(60);
+    expect(night.durationMinutes).toBeLessThan(9 * 60);
+  });
+});

@@ -8,11 +8,11 @@ import { EditorialList, type EditorialItem } from '@/components/ui/EditorialList
 import { useViewMode } from '@/components/ui/useViewMode';
 import { cn } from '@/lib/cn';
 import {
-  articles,
   articleCategoryLabels,
   type ArticleCategory,
   type ArticleLevel,
 } from './data';
+import { useArticles } from './useArticles';
 
 /**
  * YAZILAR — rehberler, eğitim yazıları ve işleme dersleri.
@@ -53,14 +53,17 @@ export function ArticlesPage() {
   const [category, setCategory] = useState<ArticleCategory | 'hepsi'>('hepsi');
   const [view, setView] = useViewMode('yazilar');
 
+  // Tohum + panelden yayımlananlar tek listede (useArticles.ts).
+  const { items: allArticles } = useArticles();
+
   const result = useMemo(
     () =>
-      articles.filter(
+      allArticles.filter(
         (a) =>
           (level === 'hepsi' || a.level === level) &&
           (category === 'hepsi' || a.category === category)
       ),
-    [level, category]
+    [allArticles, level, category]
   );
 
   /*
@@ -160,7 +163,7 @@ export function ArticlesPage() {
 
         <div className="mb-3 flex items-center justify-between gap-3">
           <p className="tabular label" role="status" aria-live="polite">
-            {result.length} / {articles.length} yazı
+            {result.length} / {allArticles.length} yazı
           </p>
           <ViewToggle mode={view} onChange={setView} />
         </div>

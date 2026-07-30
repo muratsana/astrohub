@@ -3,6 +3,7 @@ import { Container } from '@/components/ui/Container';
 import { InlineReadout } from '@/components/ui/Readout';
 import { ChevronDownIcon } from '@/components/ui/icons';
 import { useLocationContext } from '@/features/location/LocationContext';
+import { zonedMidnight } from '@/domain/time/zonedDay';
 import { useSkyConditions } from '@/features/weather/useSkyConditions';
 import { seeingLabel } from '@/features/weather/seeing';
 import {
@@ -29,16 +30,21 @@ export function StatusBar() {
   const { location } = useLocationContext();
 
   // Gece penceresi ve ay fazı yalnızca konum ya da gün değişince yeniden
-  // hesaplanır; tarama tabanlı arama her render'da çalışmamalı.
-  const today = new Date();
-  const dayKey = today.toDateString();
+  // hesaplanır; tarama tabanlı arama her render'da çalışmamalı. Gün,
+  // tarayıcının değil GÖZLEM KONUMUNUN takvimine göre anahtarlanır.
+  const dayStartMs = zonedMidnight(new Date(), location.timeZone).getTime();
 
   const sky = useMemo(() => {
-    const date = new Date(dayKey);
-    const night = astronomicalNight(date, location.latitude, location.longitude);
+    const date = new Date(dayStartMs);
+    const night = astronomicalNight(
+      date,
+      location.latitude,
+      location.longitude,
+      location.timeZone
+    );
     const moon = moonPhase(date);
     return { night, moon };
-  }, [dayKey, location.latitude, location.longitude]);
+  }, [dayStartMs, location.latitude, location.longitude, location.timeZone]);
 
   const { night, moon } = sky;
   const conditions = useSkyConditions();
@@ -95,7 +101,7 @@ export function StatusBar() {
       <InlineReadout
         label="Seeing"
         value={
-          conditions.data
+          conditions.data?.seeing
             ? seeingLabel(conditions.data.seeing.index)
             : conditions.status === 'loading'
               ? '…'

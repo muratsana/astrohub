@@ -28,8 +28,10 @@
       "@/*": ["./src/*"]
     },
 
-    /* Vitest globals + jsdom types */
-    "types": ["vitest/globals", "@testing-library/jest-dom"]
+    /* Vitest globals + jsdom types. "node": vitest 4 artık @types/node'u
+       dolaylı olarak programa sokmuyor; node:fs/process kullanan test
+       dosyaları (ör. buildSw.test.ts) için açıkça listelenmeli. */
+    "types": ["node", "vitest/globals", "@testing-library/jest-dom"]
   },
   "include": ["src"]
 }

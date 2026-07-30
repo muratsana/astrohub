@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { Panel } from '@/components/ui/Panel';
 import { Select } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';

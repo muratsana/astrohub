@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
@@ -8,6 +8,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { CardGrid } from '@/components/ui/CardGrid';
 import { ButtonLink } from '@/components/ui/Button';
 import { ToolBar, ResultCount } from '@/components/ui/ToolBar';
+import { CatalogSourceNote } from '@/components/ui/CatalogSourceNote';
 import { useViewMode } from '@/components/ui/useViewMode';
 import {
   FilterBar,
@@ -145,6 +146,8 @@ export function MarketplacePage() {
           {/* "Doğrulanmış satıcı" süzgeci kalktı: ilan yalnızca kayıtlı
               kullanıcıdan açılıyor, yani süzgeç herkesi geçiriyordu. */}
         </FilterBar>
+
+        <CatalogSourceNote selection={catalog} />
 
         <ToolBar
           left={

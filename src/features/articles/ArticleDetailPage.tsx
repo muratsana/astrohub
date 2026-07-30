@@ -1,19 +1,23 @@
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { Badge } from '@/components/ui/Badge';
 import { NotFoundPage } from '@/components/NotFoundPage';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { absoluteUrl, breadcrumbJsonLd, SITE_NAME } from '@/lib/seo';
-import { getArticleBySlug, articles, articleCategoryLabels } from './data';
+import { articleCategoryLabels } from './data';
+import { useArticles } from './useArticles';
 
 /** Yazı detayı — okuma genişliği ~70 karakter, görselsiz. */
 export function ArticleDetailPage() {
   const { slug } = useParams<{ slug: string }>();
-  const article = slug ? getArticleBySlug(slug) : undefined;
+  const { items, loading } = useArticles();
+  const article = slug ? items.find((a) => a.slug === slug) : undefined;
 
-  if (!article) return <NotFoundPage />;
+  /* Panelden yayımlanan yazı tohumda yoktur; veritabanı yanıtı gelmeden
+     404 basılmaz (gerekçe: NewsDetailPage). */
+  if (!article) return loading ? null : <NotFoundPage />;
 
-  const related = articles
+  const related = items
     .filter((a) => a.slug !== article.slug && a.category === article.category)
     .slice(0, 3);
 

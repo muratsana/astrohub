@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { Button, ButtonLink } from '@/components/ui/Button';
 import { useLocationContext } from '@/features/location/LocationContext';
@@ -23,6 +23,7 @@ import {
   formatDuration,
   formatAltitude,
 } from '@/domain/astronomy/ephemeris';
+import { zonedMidnight } from '@/domain/time/zonedDay';
 import { cn } from '@/lib/cn';
 
 /**
@@ -61,14 +62,26 @@ export function TonightPanel() {
   const { theme } = useTheme();
 
   // Gün ve konum değişmedikçe yeniden hesaplanmaz — tarama tabanlı arama
-  // her render'da çalışmamalı.
-  const dayKey = new Date().toDateString();
+  // her render'da çalışmamalı. Gün, tarayıcının değil gözlem konumunun
+  // takvimine göre anahtarlanır (ASTRO-01).
+  const dayStartMs = zonedMidnight(new Date(), location.timeZone).getTime();
 
   const sky = useMemo(() => {
-    const date = new Date(dayKey);
-    const timeline = nightTimeline(date, location.latitude, location.longitude);
+    const date = new Date(dayStartMs);
+    const timeline = nightTimeline(
+      date,
+      location.latitude,
+      location.longitude,
+      new Date(),
+      location.timeZone
+    );
     const moon = moonPhase(date);
-    const moonTimes = moonRiseSet(date, location.latitude, location.longitude);
+    const moonTimes = moonRiseSet(
+      date,
+      location.latitude,
+      location.longitude,
+      location.timeZone
+    );
 
     const visible = timeline.dark
       ? targets
@@ -92,14 +105,14 @@ export function TonightPanel() {
       : [];
 
     return { timeline, moon, moonTimes, visible };
-  }, [dayKey, location.latitude, location.longitude]);
+  }, [dayStartMs, location.latitude, location.longitude, location.timeZone]);
 
   const { timeline, moon, moonTimes, visible } = sky;
   const conditions = useSkyConditions();
   const weather = conditions.data;
 
   const verdict = weather
-    ? observingVerdict(weather.cloudCover, weather.seeing.index)
+    ? observingVerdict(weather.cloudCover, weather.seeing?.index ?? null)
     : null;
   const dew = weather ? dewRisk(weather.temperature, weather.dewPoint) : null;
 
@@ -300,12 +313,16 @@ export function TonightPanel() {
 
               <Stat
                 label="Seeing"
-                value={weather ? seeingLabel(weather.seeing.index) : '—'}
+                value={weather?.seeing ? seeingLabel(weather.seeing.index) : '—'}
                 hint={
-                  weather ? `tahmin · ${weather.seeing.driver}` : weatherHint
+                  weather
+                    ? weather.seeing
+                      ? `tahmin · ${weather.seeing.driver}`
+                      : 'üst atmosfer verisi yok'
+                    : weatherHint
                 }
                 tone="primary"
-                meter={weather ? 1 - (weather.seeing.index - 1) / 4 : null}
+                meter={weather?.seeing ? 1 - (weather.seeing.index - 1) / 4 : null}
               />
 
               <Stat

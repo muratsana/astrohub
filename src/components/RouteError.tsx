@@ -1,4 +1,4 @@
-import { isRouteErrorResponse, useRouteError } from 'react-router-dom';
+import { isRouteErrorResponse, useRouteError } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { Button, ButtonLink } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';

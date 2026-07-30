@@ -1,5 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { useTheme } from '@/features/theme/ThemeContext';
 import type { Theme } from '@/features/theme/themes';
 import { cn } from '@/lib/cn';

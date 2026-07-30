@@ -5,6 +5,40 @@ import path from 'node:path';
 import { readFileSync } from 'node:fs';
 import { buildSitemapXml } from './src/app/sitemap';
 import { renderServiceWorker } from './src/pwa/buildSw';
+import { validateClientEnv } from './src/lib/envCheck';
+
+/**
+ * Ortam değişkeni nöbeti (T-003). Biçimi bozuk değer her derlemede,
+ * eksik değer yalnızca gerçek üretim dağıtımında (VERCEL_ENV=production)
+ * derlemeyi durdurur. Gerekçe ve kurallar: src/lib/envCheck.ts.
+ */
+function envGuard(): Plugin {
+  return {
+    name: 'astrohub-env-guard',
+    apply: 'build',
+    configResolved(config) {
+      const errors = validateClientEnv(
+        {
+          supabaseUrl: config.env.VITE_SUPABASE_URL,
+          supabaseAnonKey: config.env.VITE_SUPABASE_ANON_KEY,
+          siteUrl: config.env.VITE_SITE_URL,
+        },
+        {
+          production: process.env.VERCEL_ENV === 'production',
+          // Preview dahil her Vercel derlemesinde Supabase değişkenleri
+          // zorunlu — anahtarsız çıkan önizleme, girişin çalışmadığı
+          // "kusursuz görünen" bir site üretir.
+          deployed: Boolean(process.env.VERCEL),
+        }
+      );
+      if (errors.length > 0) {
+        throw new Error(
+          `Ortam değişkeni doğrulaması başarısız:\n- ${errors.join('\n- ')}`
+        );
+      }
+    },
+  };
+}
 
 /**
  * Derleme sırasında `sitemap.xml` üretir (§16.2).
@@ -90,59 +124,8 @@ function serviceWorker(): Plugin {
   };
 }
 
-/**
- * Kimlik doğrulama yapılandırmasını derleme zamanında doğrular.
- *
- * `VITE_` ile başlayan değişkenler pakete DERLEME ANINDA gömülür. Bu
- * yüzden Supabase anahtarları olmadan alınan bir üretim derlemesi
- * kusursuz görünen ama hiç kimsenin giriş yapamadığı bir site üretiyor:
- * `isSupabaseConfigured` false kalıyor ve giriş formu "Kimlik doğrulama
- * henüz yapılandırılmadı" diyor. Hata çalışma zamanında, kullanıcının
- * karşısında ortaya çıkıyor — oysa sebebi tamamen derleme zamanında
- * belliydi.
- *
- * `.env` depoya girmediği için (girmemeli de) değerler dağıtım ortamının
- * kendi panelinden gelir. Orada tanımlanmayı unutmak sessiz kalmamalı.
- *
- * NEDEN HER YERDE HATA DEĞİL: CI yalnızca derlemenin tamamlandığını
- * doğruluyor ve gizli anahtarlara ihtiyacı yok; orada zorunlu tutmak,
- * güvenlik kazancı olmadan boruyu kırardı. Bu yüzden gerçek bir dağıtım
- * derlemesinde (Vercel) HATA, başka her yerde UYARI.
- */
-function authConfigGuard(): Plugin {
-  const required = ['VITE_SUPABASE_URL', 'VITE_SUPABASE_ANON_KEY'];
-
-  return {
-    name: 'astrohub-auth-config-guard',
-    apply: 'build',
-    configResolved(config) {
-      const missing = required.filter((key) => !config.env[key]?.trim());
-      if (missing.length === 0) return;
-
-      const message =
-        `${missing.join(' ve ')} tanımlı değil. Bu değişkenler pakete ` +
-        'derleme anında gömülür; eksikken çıkan derlemede giriş ve kayıt ' +
-        'tamamen kapalı olur. Değerleri dağıtım ortamının ortam değişkeni ' +
-        'ayarlarına girin (Vercel → Project Settings → Environment Variables).';
-
-      // `VERCEL` yalnızca Vercel'in kendi derleme ortamında tanımlıdır;
-      // yerel `npm run build` ve CI bu dala girmez.
-      if (process.env.VERCEL) {
-        throw new Error(`[astrohub] Dağıtım durduruldu — ${message}`);
-      }
-      config.logger.warn(`[astrohub] ${message}`);
-    },
-  };
-}
-
 export default defineConfig({
-  plugins: [
-    react(),
-    tailwindcss(),
-    authConfigGuard(),
-    sitemap(),
-    serviceWorker(),
-  ],
+  plugins: [envGuard(), react(), tailwindcss(), sitemap(), serviceWorker()],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
@@ -169,7 +152,7 @@ export default defineConfig({
             'react',
             'react-dom',
             'react-dom/client',
-            'react-router-dom',
+            'react-router',
           ],
           'vendor-query': ['@tanstack/react-query'],
           'vendor-forms': ['react-hook-form', '@hookform/resolvers', 'zod'],

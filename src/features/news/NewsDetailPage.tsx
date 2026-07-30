@@ -1,4 +1,4 @@
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { Badge } from '@/components/ui/Badge';
 import { PlateFrame } from '@/components/media/PlateFrame';
@@ -6,17 +6,22 @@ import { StarField } from '@/components/media/StarField';
 import { NotFoundPage } from '@/components/NotFoundPage';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { absoluteUrl, breadcrumbJsonLd, SITE_NAME } from '@/lib/seo';
-import { getNewsBySlug, sortedNews, newsCategoryLabels } from './data';
+import { newsCategoryLabels } from './data';
+import { useNewsItems } from './useNews';
 import { ExternalLink } from '@/components/ExternalLink';
 
 /** Haber detayı — okuma genişliği sınırlı, kaynak künyesi görünür. */
 export function NewsDetailPage() {
   const { slug } = useParams<{ slug: string }>();
-  const item = slug ? getNewsBySlug(slug) : undefined;
+  const { items, loading } = useNewsItems();
+  const item = slug ? items.find((n) => n.slug === slug) : undefined;
 
-  if (!item) return <NotFoundPage />;
+  /* Panelden yayımlanan haber tohumda yoktur; veritabanı yanıtı gelmeden
+     404 basmak, var olan habere "yok" demek olurdu. Yanıt geldikten sonra
+     hâlâ yoksa gerçekten yoktur. */
+  if (!item) return loading ? null : <NotFoundPage />;
 
-  const related = sortedNews()
+  const related = items
     .filter((n) => n.slug !== item.slug && n.category === item.category)
     .slice(0, 3);
 

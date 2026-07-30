@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { CloseIcon } from '@/components/ui/icons';

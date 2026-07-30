@@ -67,7 +67,8 @@ describe('parseSkyConditions', () => {
     expect(result.cloudCover).toBe(10);
     expect(result.temperature).toBe(18);
     expect(result.dewPoint).toBe(10);
-    expect(result.seeing.index).toBeGreaterThanOrEqual(1);
+    expect(result.seeing).not.toBeNull();
+    expect(result.seeing!.index).toBeGreaterThanOrEqual(1);
   });
 
   it('saat ilerleyince diğer satıra geçer', () => {
@@ -80,9 +81,10 @@ describe('parseSkyConditions', () => {
     expect(parseSkyConditions({ hourly: { time: [] } }, new Date())).toBeNull();
   });
 
-  it('eksik alanlarda çökmez', () => {
-    // Open-Meteo tek tek saatler için null döndürebilir; bu durumda
-    // sayfanın patlaması kabul edilemez.
+  it('zorunlu alan eksikse okumayı bütünüyle reddeder', () => {
+    // Eski davranış eksik bulutu/nemi/rüzgârı 0 sayıyordu; 0 burada
+    // "açık, kuru, sakin" demek — veri yokken gözleme-uygun hükmü
+    // üretiyordu (QA P0-06). Artık eksik zorunlu alan = okuma yok.
     const sparse = {
       hourly: {
         time: ['2026-07-27T21:00'],
@@ -90,12 +92,42 @@ describe('parseSkyConditions', () => {
         temperature_2m: [null],
       },
     };
-    const result = parseSkyConditions(sparse, new Date('2026-07-27T21:00'))!;
+    expect(parseSkyConditions(sparse, new Date('2026-07-27T21:00'))).toBeNull();
+  });
+
+  it('üst atmosfer rüzgârı yoksa seeing null kalır, okuma yaşar', () => {
+    const noUpper = {
+      hourly: {
+        time: ['2026-07-27T21:00'],
+        cloud_cover: [15],
+        relative_humidity_2m: [55],
+        temperature_2m: [17],
+        dew_point_2m: [9],
+        wind_speed_10m: [6],
+        // wind_speed_200hPa / 500hPa bilerek yok
+      },
+    };
+    const result = parseSkyConditions(noUpper, new Date('2026-07-27T21:00'))!;
     expect(result).not.toBeNull();
-    expect(result.cloudCover).toBe(0);
-    // Çiy noktası eksikse sıcaklığa düşer — "çiy kesin" yanlış alarmı
-    // vermemesi için değil, en azından NaN olmaması için.
-    expect(Number.isNaN(result.dewPoint)).toBe(false);
+    expect(result.cloudCover).toBe(15);
+    expect(result.seeing).toBeNull();
+  });
+
+  it('çiy noktası eksikse sıcaklık ve nemden türetir', () => {
+    const noDew = {
+      hourly: {
+        time: ['2026-07-27T21:00'],
+        cloud_cover: [15],
+        relative_humidity_2m: [70],
+        temperature_2m: [20],
+        wind_speed_10m: [6],
+      },
+    };
+    const result = parseSkyConditions(noDew, new Date('2026-07-27T21:00'))!;
+    // Magnus formülüyle 20°C / %70 nem ≈ 14.4°C — sıfır ya da sıcaklığın
+    // kopyası değil, gerçek türetilmiş değer.
+    expect(result.dewPoint).toBeGreaterThan(13);
+    expect(result.dewPoint).toBeLessThan(16);
   });
 });
 

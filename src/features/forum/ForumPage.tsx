@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { Input, Select } from '@/components/ui/Input';
 import { ButtonLink } from '@/components/ui/Button';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ToolBar, ResultCount } from '@/components/ui/ToolBar';
+import { CatalogSourceNote } from '@/components/ui/CatalogSourceNote';
 import { useStoredChoice } from '@/components/ui/useViewMode';
 import {
   FilterBar,
@@ -60,7 +61,8 @@ export function ForumPage() {
     'detayli'
   );
 
-  const threads = useForumThreads().items;
+  const threadCatalog = useForumThreads();
+  const threads = threadCatalog.items;
 
   const result = useMemo(
     () =>
@@ -171,6 +173,8 @@ export function ForumPage() {
             onChange={setOnlyUnsolved}
           />
         </FilterBar>
+
+        <CatalogSourceNote selection={threadCatalog} />
 
         <ToolBar
           left={

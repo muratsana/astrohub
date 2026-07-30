@@ -1,5 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
-import { Outlet, ScrollRestoration } from 'react-router-dom';
+import { Outlet, ScrollRestoration } from 'react-router';
 import { StatusBar } from './StatusBar';
 import { Topbar } from './Topbar';
 import { Footer } from './Footer';

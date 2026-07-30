@@ -163,9 +163,10 @@ export function nightTimeline(
   date: Date,
   latitude: number,
   longitude: number,
-  now: Date = new Date()
+  now: Date = new Date(),
+  timeZone?: string
 ): NightTimeline {
-  const horizon = twilightWindow(date, latitude, longitude, HORIZON);
+  const horizon = twilightWindow(date, latitude, longitude, HORIZON, timeZone);
   if (!horizon.start || !horizon.end) return EMPTY;
 
   const from = ms(horizon.start);
@@ -173,9 +174,9 @@ export function nightTimeline(
   const total = to - from;
   if (total <= 0) return EMPTY;
 
-  const civil = twilightWindow(date, latitude, longitude, -6);
-  const nautical = twilightWindow(date, latitude, longitude, -12);
-  const astro = twilightWindow(date, latitude, longitude, -18);
+  const civil = twilightWindow(date, latitude, longitude, -6, timeZone);
+  const nautical = twilightWindow(date, latitude, longitude, -12, timeZone);
+  const astro = twilightWindow(date, latitude, longitude, -18, timeZone);
 
   const at = (value: number) => (value - from) / total;
   const interval = (range: [number, number]): TimelineInterval => ({

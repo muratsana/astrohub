@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { Badge } from './Badge';
 import { CardGrid } from './CardGrid';
 import { PlateFrame } from '@/components/media/PlateFrame';

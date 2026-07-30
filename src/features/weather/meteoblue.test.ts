@@ -80,7 +80,23 @@ describe('parseMeteoblue', () => {
     // kötü seeing demek — indeks yükselmeli.
     const calm = parseMeteoblue(raw(), NOW, { wind200hPa: 20, wind500hPa: 10 })!;
     const jet = parseMeteoblue(raw(), NOW, { wind200hPa: 200, wind500hPa: 100 })!;
-    expect(jet.seeing.index).toBeGreaterThan(calm.seeing.index);
+    expect(jet.seeing!.index).toBeGreaterThan(calm.seeing!.index);
+  });
+
+  it('üst atmosfer verisi yoksa seeing üretmez, okumayı korur', () => {
+    // Eski davranış eksik rüzgârı 0 sayıp yapay "mükemmel seeing"
+    // basıyordu (QA ASTRO-03). Bulut verisi hâlâ değerli; yalnızca
+    // üretemediğimiz alan boş kalıyor.
+    const result = parseMeteoblue(raw(), NOW, null)!;
+    expect(result).not.toBeNull();
+    expect(result.seeing).toBeNull();
+    expect(result.cloudCover).not.toBeNull();
+  });
+
+  it('yer rüzgârı eksikse okumayı reddeder', () => {
+    const missing = raw();
+    delete missing.basic!.data_1h!.windspeed;
+    expect(parseMeteoblue(missing, NOW, UPPER)).toBeNull();
   });
 
   it('zorunlu alan eksikse tüm yanıtı reddeder', () => {

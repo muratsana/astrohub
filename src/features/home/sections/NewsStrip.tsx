@@ -1,12 +1,13 @@
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { Badge } from '@/components/ui/Badge';
 import { RemoteImage } from '@/components/media/RemoteImage';
-import { sortedNews, newsCategoryLabels } from '@/features/news/data';
-import { articles, articleCategoryLabels } from '@/features/articles/data';
+import { newsCategoryLabels } from '@/features/news/data';
+import { articleCategoryLabels } from '@/features/articles/data';
+import { useNewsItems } from '@/features/news/useNews';
+import { useArticles } from '@/features/articles/useArticles';
 import { applyFeatured, useFeatured } from '@/services/content/featured';
-import { mergeWithSeed, useEntries } from '@/services/content/entries';
 
 /**
  * HABERLER VE YAZILAR — tek şeritte iki modül.
@@ -55,38 +56,13 @@ export function NewsStrip() {
   const featuredArticles = useFeatured('yazi');
 
   /*
-    PANELDEN YAZILAN İÇERİK TOHUM VERİYLE BİRLEŞİYOR. Aynı slug varsa
-    veritabanı kazanıyor: paneldeki düzenleme, uygulamanın içindeki eski
-    metnin üstüne geçmeli — yoksa aynı içerik iki kez görünürdü.
+    PANELDEN YAZILAN İÇERİK TOHUM VERİYLE BİRLEŞİYOR (useNews/useArticles).
+    Eşleme daha önce burada gömülüydü; liste ve detay sayfaları da aynı
+    birleşime bağlanınca tek kaynağa taşındı — şeritte görünen haber artık
+    kendi adresinde de var.
   */
-  const dbNews = useEntries('haber');
-  const dbArticles = useEntries('yazi');
-
-  const allNews = mergeWithSeed(sortedNews(), dbNews.entries, (e) => ({
-    slug: e.slug,
-    title: e.title,
-    summary: e.summary,
-    category: e.category as never,
-    publishedAt: e.publishedAt,
-    tint: e.tint ?? '150,185,235',
-    image: e.image ?? undefined,
-    body: e.body,
-    source: e.source ?? { name: '—', url: '' },
-  }));
-
-  const allArticles = mergeWithSeed(articles, dbArticles.entries, (e) => ({
-    slug: e.slug,
-    title: e.title,
-    summary: e.summary,
-    category: e.category as never,
-    duration: e.duration ?? '',
-    tint: e.tint ?? '150,185,235',
-    image: e.image ?? undefined,
-    body: e.body,
-    level: (e.level ?? 'Başlangıç') as never,
-    publishedAt: e.publishedAt,
-    author: e.author ?? '',
-  }));
+  const { items: allNews } = useNewsItems();
+  const { items: allArticles } = useArticles();
 
   const latestNews = applyFeatured(
     allNews,

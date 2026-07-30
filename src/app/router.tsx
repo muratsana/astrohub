@@ -1,5 +1,5 @@
 import { Suspense, type ComponentType, type ReactNode } from 'react';
-import { createBrowserRouter, createHashRouter } from 'react-router-dom';
+import { createBrowserRouter, createHashRouter } from 'react-router';
 import { AppShell } from '@/components/shell/AppShell';
 import { HomePage } from '@/features/home/HomePage';
 import { NotFoundPage } from '@/components/NotFoundPage';

@@ -18,7 +18,15 @@ export default tseslint.config(
       'react-refresh': reactRefresh,
     },
     rules: {
-      ...reactHooks.configs.recommended.rules,
+      /*
+       * react-hooks 7'nin "recommended" seti derleyici-çağı kuralları da
+       * (purity, refs, set-state-in-effect, use-memo) içeriyor ve mevcut
+       * kodda 42 yerde tetikleniyor. Bunlar davranış hatası değil kalite
+       * temizliği; GUI standardizasyon fazında ayrıca ele alınacak. O güne
+       * kadar 5.x ile birebir aynı iki çekirdek kural yürürlükte.
+       */
+      'react-hooks/rules-of-hooks': 'error',
+      'react-hooks/exhaustive-deps': 'warn',
       'react-refresh/only-export-components': [
         'warn',
         { allowConstantExport: true },

@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router';
 import { siteMap, mobileDrawerPrimary } from '@/app/navigation';
 import { CloseIcon, UserIcon, SearchIcon } from '@/components/ui/icons';
 import { ThemeToggleRow } from '@/features/theme/ThemeToggle';

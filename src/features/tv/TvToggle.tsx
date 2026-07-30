@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { TvIcon } from '@/components/ui/icons';
 import { useBroadcastCatalog } from '@/services/content/broadcasts';
 import { liveBroadcast } from './types';
