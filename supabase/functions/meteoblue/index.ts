@@ -16,12 +16,24 @@
  * ve yapılandırılmamış bir gizli değişken kullanıcıya bozuk sayfa olarak
  * yansımamalı.
  *
- * KREDİ KORUMASI — iki katman:
- *   1. Koordinat iki ondalığa yuvarlanıyor (≈1 km). Aynı şehirdeki iki
- *      kullanıcı aynı isteği üretiyor, önbellek paylaşılıyor.
- *   2. Yanıt 15 dakika `Cache-Control` taşıyor; CDN ve tarayıcı aynı
- *      isteği tekrar sormuyor. Hava bundan hızlı değişmiyor.
+ * KREDİ KORUMASI. Anahtarı sunucuda tutmak kotayı korumuyordu: vekil
+ * herkese açıktı (`CORS: *`) ve koordinat başına sınırsız istek kabul
+ * ediyordu. Farklı koordinatlar üreten biri ücretli krediyi boşaltabilir,
+ * fatura hesap sahibine çıkardı (denetim SEC-03).
+ *
+ * Koruma artık dört katman — kuralların gerekçesi `policy.ts` içinde:
+ * origin denetimi, Türkiye sınırı, 5 km ızgara ve IP başına oran limiti.
+ * Hiçbiri tek başına yeterli değil; kesin tavan sağlayıcı tarafındaki
+ * harcama limitidir ve o koda yazılamaz.
  */
+
+import {
+  clientKey,
+  hitRateLimit,
+  isAllowedOrigin,
+  snapCoordinate,
+  RATE_LIMIT,
+} from './policy.ts';
 
 const HOST = 'https://my.meteoblue.com/packages';
 
@@ -32,48 +44,149 @@ const HOST = 'https://my.meteoblue.com/packages';
    zorlaştırır. */
 const PACKAGES = ['basic-1h', 'clouds-1h'] as const;
 
-const CORS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'GET, OPTIONS',
-};
+/**
+ * CORS başlıkları isteğin origin'ine göre kurulur.
+ *
+ * `*` yerine tam origin yansıtılıyor: yıldız, herhangi bir sitenin bizim
+ * kotamızla hava servisi çalıştırmasına izin veriyordu. İzinsiz origin'e
+ * hiç CORS başlığı basılmıyor — tarayıcı yanıtı zaten okuyamıyor.
+ */
+function corsFor(origin: string | null): Record<string, string> {
+  const headers: Record<string, string> = {
+    'Access-Control-Allow-Headers':
+      'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+    Vary: 'Origin',
+  };
+  if (origin && isAllowedOrigin(origin)) {
+    headers['Access-Control-Allow-Origin'] = origin;
+  }
+  return headers;
+}
 
-function json(body: unknown, status = 200, extra: Record<string, string> = {}) {
+/** Yedek sayaç — veritabanına ulaşılamadığında son çare (bkz. policy.ts). */
+const rateStore = new Map<string, number[]>();
+
+/**
+ * Kalıcı oran limiti: sayaç veritabanında, artış atomik.
+ *
+ * Bellek içi sayaç üretimde ölçüldü ve HİÇ tetiklenmedi (her istek ayrı
+ * isolate). Karar artık `consume_rate_limit()` RPC'sinde; service_role
+ * anahtarıyla çağrılıyor çünkü tablo ve fonksiyon istemciye tamamen
+ * kapalı.
+ *
+ * RPC'ye ULAŞILAMAZSA KAPALI TARAFA DÜŞÜLÜYOR (`false`). Açık tarafa
+ * düşmek, veritabanı sarsıldığında kota korumasını tamamen kaldırırdı —
+ * yani korumanın en çok gerektiği anda. Kapalı taraf kullanıcı için
+ * felaket değil: istemci sessizce Open-Meteo'ya geçiyor.
+ */
+async function allowedByDatabase(bucket: string): Promise<boolean | null> {
+  const url = Deno.env.get('SUPABASE_URL');
+  const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  if (!url || !serviceKey) return null; // yapılandırma yok → yedeğe düş
+
+  try {
+    const response = await fetch(`${url}/rest/v1/rpc/consume_rate_limit`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: serviceKey,
+        Authorization: `Bearer ${serviceKey}`,
+      },
+      body: JSON.stringify({
+        p_bucket: bucket,
+        p_window_seconds: Math.round(RATE_LIMIT.windowMs / 1000),
+        p_max: RATE_LIMIT.max,
+      }),
+      signal: AbortSignal.timeout(3000),
+    });
+    if (!response.ok) return false;
+    return (await response.json()) === true;
+  } catch (cause) {
+    console.error('oran limiti sorgulanamadı:', cause);
+    return false;
+  }
+}
+
+function json(
+  body: unknown,
+  status = 200,
+  extra: Record<string, string> = {},
+  origin: string | null = null
+) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { 'Content-Type': 'application/json', ...CORS, ...extra },
+    headers: {
+      'Content-Type': 'application/json',
+      ...corsFor(origin),
+      ...extra,
+    },
   });
 }
 
-function coord(value: string | null, limit: number): number | null {
-  if (value === null) return null;
-  const n = Number(value);
-  if (!Number.isFinite(n) || Math.abs(n) > limit) return null;
-  /* İki ondalık ≈ 1 km. Daha hassası ne tahmini değiştiriyor ne de
-     önbelleği paylaştırıyor — yalnızca konumu gereksiz kesinlikte
-     üçüncü tarafa bildiriyor. */
-  return Math.round(n * 100) / 100;
-}
-
 Deno.serve(async (request: Request) => {
+  const origin = request.headers.get('origin');
+
   if (request.method === 'OPTIONS') {
-    return new Response(null, { headers: CORS });
+    return new Response(null, { headers: corsFor(origin) });
   }
 
+  if (!isAllowedOrigin(origin)) {
+    return json({ error: 'origin izinli değil' }, 403, { 'Cache-Control': 'no-store' });
+  }
+
+  /*
+   * Oran limiti anahtar kontrolünden ÖNCE: yapılandırma eksikse bile
+   * istek seli sayılmalı, yoksa 503 dönen bir uç nokta bedava yük
+   * üretecek bir hedefe dönüşür.
+   */
+  const bucket = `meteoblue:${clientKey(request.headers)}`;
+  const dbDecision = await allowedByDatabase(bucket);
+  const allowed =
+    dbDecision ??
+    hitRateLimit(rateStore, bucket, Date.now()).allowed; // yapılandırma yoksa yedek
+
+  if (!allowed) {
+    return json(
+      { error: 'çok fazla istek' },
+      429,
+      {
+        'Cache-Control': 'no-store',
+        'Retry-After': String(Math.round(RATE_LIMIT.windowMs / 1000)),
+      },
+      origin
+    );
+  }
+
+  const url = new URL(request.url);
+  const point = snapCoordinate(
+    url.searchParams.get('lat'),
+    url.searchParams.get('lon')
+  );
+  if (!point) {
+    /* Sınır dışı koordinat ile eksik koordinat aynı yanıtı alıyor:
+       hangi bölgenin kapsandığını dışarıya haritalamanın faydası yok. */
+    return json(
+      { error: 'lat ve lon gerekli (Türkiye kapsama alanı)' },
+      400,
+      {},
+      origin
+    );
+  }
+  const { lat, lon } = point;
+
+  /* Yapılandırma kontrolü girdi doğrulamasından SONRA: uç noktanın
+     sözleşmesi (hangi istek geçerli) gizli değişkenin durumuna bağlı
+     olmamalı. Anahtar yokken bozuk bir istek de 503 alıyordu ve teşhis
+     yanıltıcı oluyordu. */
   const apikey = Deno.env.get('METEOBLUE_API_KEY');
   if (!apikey) {
     return json(
       { error: 'METEOBLUE_API_KEY tanımlı değil' },
       503,
-      { 'Cache-Control': 'no-store' }
+      { 'Cache-Control': 'no-store' },
+      origin
     );
-  }
-
-  const url = new URL(request.url);
-  const lat = coord(url.searchParams.get('lat'), 90);
-  const lon = coord(url.searchParams.get('lon'), 180);
-  if (lat === null || lon === null) {
-    return json({ error: 'lat ve lon gerekli' }, 400);
   }
 
   try {
@@ -99,7 +212,8 @@ Deno.serve(async (request: Request) => {
       return json(
         { error: `meteoblue ${failed.status}` },
         failed.status === 401 || failed.status === 403 ? 503 : 502,
-        { 'Cache-Control': 'no-store' }
+        { 'Cache-Control': 'no-store' },
+        origin
       );
     }
 
@@ -108,13 +222,19 @@ Deno.serve(async (request: Request) => {
     return json(
       { basic, clouds },
       200,
-      { 'Cache-Control': 'public, max-age=900, s-maxage=900' }
+      { 'Cache-Control': 'public, max-age=900, s-maxage=900' },
+      origin
     );
-  } catch (error) {
+  } catch (cause) {
+    /* İç hata metni İSTEMCİYE sızmıyor (sağlayıcı adresi, anahtar biçimi,
+       yığın izi kullanıcının işine yaramaz, saldırgana yarar) ama sunucu
+       günlüğüne yazılıyor — yoksa arıza teşhis edilemez. */
+    console.error('meteoblue vekili:', cause);
     return json(
-      { error: error instanceof Error ? error.message : 'bilinmeyen hata' },
+      { error: 'hava servisi yanıt vermedi' },
       502,
-      { 'Cache-Control': 'no-store' }
+      { 'Cache-Control': 'no-store' },
+      origin
     );
   }
 });
