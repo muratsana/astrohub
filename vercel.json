@@ -3,7 +3,13 @@
   "framework": "vite",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
+  "rewrites": [
+    {
+      "//": "Prerender edilen sayfalar dosya olarak yazılıyor ve Vercel dosya sistemini rewrite'lardan ÖNCE kontrol ediyor; buraya yalnızca dosyası olmayan yollar düşer (veritabanı içeriği, panel, auth). Hedef index.html DEĞİL app.html: index.html artık prerender edilmiş ana sayfa olduğu için yakala-hepsini onu gösterdiğinde bilinmeyen her adres ham HTML'de ana sayfa içeriğini ve başlığını servis ediyordu — botlar için kopya içerik. app.html rota içeriği taşımayan nötr kabuktur. Bilinmeyen adresin gerçek 404 DURUM KODU alması, geçerli dinamik slug'ları (DB'deki fotoğraf/ilan) kenar katmanında bilmeyi gerektiriyor; prefix listesi denendi ve /radyo, /harita gibi gerçek sayfaları 404'e düşürdüğü için geri alındı. Kalan iş: middleware (plan T-301 notu).",
+      "source": "/(.*)",
+      "destination": "/app.html"
+    }
+  ],
   "headers": [
     {
       "source": "/assets/(.*)",
