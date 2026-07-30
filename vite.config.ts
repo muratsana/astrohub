@@ -3,7 +3,11 @@ import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import path from 'node:path';
 import { readFileSync } from 'node:fs';
-import { buildSitemapXml } from './src/app/sitemap';
+import {
+  buildSitemapXml,
+  fetchDbSitemapEntries,
+  type SitemapEntry,
+} from './src/app/sitemap';
 import { renderServiceWorker } from './src/pwa/buildSw';
 import { validateClientEnv } from './src/lib/envCheck';
 
@@ -49,14 +53,18 @@ function envGuard(): Plugin {
  */
 function sitemap(): Plugin {
   let siteUrl: string | undefined;
+  let supabaseUrl: string | undefined;
+  let anonKey: string | undefined;
 
   return {
     name: 'astrohub-sitemap',
     apply: (_config, env) => env.command === 'build' && !env.isSsrBuild,
     configResolved(config) {
       siteUrl = config.env.VITE_SITE_URL?.trim();
+      supabaseUrl = config.env.VITE_SUPABASE_URL?.trim();
+      anonKey = config.env.VITE_SUPABASE_ANON_KEY?.trim();
     },
-    generateBundle() {
+    async generateBundle() {
       if (!siteUrl) {
         this.warn(
           'VITE_SITE_URL tanımlı değil — sitemap.xml üretilmedi. ' +
@@ -65,14 +73,32 @@ function sitemap(): Plugin {
         return;
       }
 
-      // Derleme tarihi `lastmod` olarak kullanılır; içerik veritabanına
-      // taşındığında kaydın kendi güncellenme tarihi geçecektir.
+      /*
+       * Panelden yayımlanan haber/yazılar gerçek yayın tarihleriyle
+       * sitemap'e girer (QA SEO-02). Veritabanına ulaşılamazsa derleme
+       * KIRILMAZ: tohum sitemap, eksik sitemap'ten iyidir — ama sessiz de
+       * kalınmaz, uyarı düşülür.
+       */
+      let dbEntries: SitemapEntry[] = [];
+      if (supabaseUrl && anonKey) {
+        try {
+          dbEntries = await fetchDbSitemapEntries(supabaseUrl, anonKey);
+        } catch (error) {
+          this.warn(
+            `Sitemap veritabanı kayıtları alınamadı (${String(error)}); ` +
+              'yalnızca tohum girdilerle üretildi.'
+          );
+        }
+      }
+
+      // Tohum sayfalar için derleme tarihi `lastmod` olur; veritabanı
+      // kayıtları kendi yayın tarihini taşır.
       const lastmod = new Date().toISOString().slice(0, 10);
 
       this.emitFile({
         type: 'asset',
         fileName: 'sitemap.xml',
-        source: buildSitemapXml(siteUrl, lastmod),
+        source: buildSitemapXml(siteUrl, lastmod, dbEntries),
       });
     },
   };

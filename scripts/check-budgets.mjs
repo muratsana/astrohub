@@ -1,0 +1,73 @@
+/**
+ * PERFORMANS BÜTÇE KAPISI (QA §7.3 / T-307).
+ *
+ * İlk rotanın indirdiği JS ve CSS'in gzip toplamını ölçer ve bütçeyi
+ * aşarsa derlemeyi kırar. Lighthouse yerine dosya boyutu ölçümü bilinçli:
+ * boyut deterministiktir — CI'da kararsız skor yerine her ortamda aynı
+ * sonucu veren bir kapı. (Gerçek LCP/INP alan ölçümü RUM ile gelecek;
+ * bkz. plan T-604.)
+ *
+ * Bütçeler QA hedefinin kendisi (JS ≤ 200 kB gzip): ölçülen mevcut durum
+ * 189,7 kB — kapı bugünü aklamıyor, ~10 kB'lık payla sessiz büyümeyi
+ * durduruyor. Bütçeye takılan değişiklik ya kırpılır ya lazy edilir;
+ * bütçe yükseltmek bilinçli ve gerekçeli bir commit olmalı.
+ */
+
+import { gzipSync } from 'node:zlib';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const distDir = path.join(root, 'dist');
+
+/** kB (gzip) cinsinden bütçeler. */
+const BUDGETS = {
+  js: 200,
+  css: 25,
+};
+
+const html = readFileSync(path.join(distDir, 'index.html'), 'utf8');
+
+/* İlk rotada inen dosyalar: giriş script'i + modulepreload'lar + CSS.
+   Lazy chunk'lar bilerek dışarıda — onlar ancak ziyaret edilince iner. */
+const jsFiles = [
+  ...html.matchAll(/<script[^>]*src="\/(assets\/[^"]+\.js)"/g),
+  ...html.matchAll(/<link[^>]*rel="modulepreload"[^>]*href="\/(assets\/[^"]+\.js)"/g),
+].map((m) => m[1]);
+
+const cssFiles = [...html.matchAll(/<link[^>]*rel="stylesheet"[^>]*href="\/(assets\/[^"]+\.css)"/g)]
+  .map((m) => m[1]);
+
+function gzipKb(files) {
+  let total = 0;
+  for (const file of new Set(files)) {
+    const raw = readFileSync(path.join(distDir, file));
+    const kb = gzipSync(raw).length / 1024;
+    console.log(`  ${file.padEnd(48)} ${kb.toFixed(1).padStart(7)} kB gzip`);
+    total += kb;
+  }
+  return total;
+}
+
+console.log('İlk rota JS:');
+const jsTotal = gzipKb(jsFiles);
+console.log('İlk rota CSS:');
+const cssTotal = gzipKb(cssFiles);
+
+console.log(
+  `\nToplam · JS ${jsTotal.toFixed(1)} kB (bütçe ${BUDGETS.js}) · ` +
+    `CSS ${cssTotal.toFixed(1)} kB (bütçe ${BUDGETS.css})`
+);
+
+const errors = [];
+if (jsTotal > BUDGETS.js)
+  errors.push(`İlk rota JS bütçeyi aştı: ${jsTotal.toFixed(1)} > ${BUDGETS.js} kB gzip`);
+if (cssTotal > BUDGETS.css)
+  errors.push(`İlk rota CSS bütçeyi aştı: ${cssTotal.toFixed(1)} > ${BUDGETS.css} kB gzip`);
+
+if (errors.length > 0) {
+  console.error('\n' + errors.join('\n'));
+  process.exit(1);
+}
+console.log('Bütçe kapısı geçildi.');
