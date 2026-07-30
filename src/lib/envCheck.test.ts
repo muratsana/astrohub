@@ -31,6 +31,15 @@ describe('validateClientEnv', () => {
     expect(errors.join('\n')).toMatch(/VITE_SITE_URL/);
   });
 
+  it('preview dağıtımında Supabase zorunlu, VITE_SITE_URL değil', () => {
+    // Anahtarsız preview "kusursuz görünen ama girişin çalışmadığı" bir
+    // site üretir; canonical ise preview alan adına zaten basılmamalı.
+    const errors = validateClientEnv({}, { production: false, deployed: true });
+    expect(errors).toHaveLength(2);
+    expect(errors.join('\n')).toMatch(/VITE_SUPABASE_URL/);
+    expect(errors.join('\n')).not.toMatch(/VITE_SITE_URL/);
+  });
+
   it('canlıda yaşanan "ttps://" yazım hatasını her ortamda yakalar', () => {
     const errors = validateClientEnv(
       { supabaseUrl: 'ttps://eoqggvosegjbburyuyba.supabase.co' },

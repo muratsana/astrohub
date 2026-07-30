@@ -7,7 +7,16 @@ import { Field } from '@/components/ui/Field';
 import { Input, Select } from '@/components/ui/Input';
 import { Button, ButtonLink } from '@/components/ui/Button';
 import { PageMeta } from '@/components/seo/PageMeta';
-import { forumCategories, forumCategoryOrder, type ForumCategoryId } from './types';
+import {
+  forumCategories,
+  forumCategoryOrder,
+  forumLabels,
+  forumLabelOrder,
+  forumLabelLimit,
+  type ForumCategoryId,
+  type ForumLabelId,
+} from './types';
+import { cn } from '@/lib/cn';
 import { sanitizeText } from '@/lib/sanitize';
 import { useAuth } from '@/features/auth/AuthContext';
 import { createThread } from '@/services/content/forum';
@@ -28,6 +37,7 @@ export function NewThreadPage() {
   const { user } = useAuth();
 
   const [category, setCategory] = useState<string>(forumCategoryOrder[0]);
+  const [labels, setLabels] = useState<ForumLabelId[]>([]);
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [busy, setBusy] = useState(false);
@@ -45,6 +55,7 @@ export function NewThreadPage() {
         title,
         body,
         category: category as ForumCategoryId,
+        labels,
         authorId: user.id,
       });
       navigate(`/forum/${slug}`);
@@ -106,6 +117,64 @@ export function NewThreadPage() {
             {info && (
               <p className="-mt-2 text-[10px] text-faint">{info.description}</p>
             )}
+
+            {/*
+              Rozet seçimi çoklu ama sınırlı. Serbest metin etiket yerine
+              sabit set kullanılmasının sebebi filtrelemenin işe yaraması;
+              sınır koyulmasının sebebi ise her konuya altı rozetin de
+              takılması hâlinde rozetin hiçbir şey ayırt etmemesi.
+            */}
+            <div className="space-y-1.5">
+              {/* `Field` kullanılmadı: o bileşen `<label htmlFor>` üretiyor
+                  ve tek bir kontrolü işaret ediyor. Burada işaret edilecek
+                  tek kontrol yok — altı düğmeden oluşan bir grup var, ve
+                  ekran okuyucuya bunu söyleyen şey `role="group"`. */}
+              <span id="thread-labels-label" className="label block">
+                Rozetler
+              </span>
+              <div
+                role="group"
+                aria-labelledby="thread-labels-label"
+                className="flex flex-wrap gap-1.5"
+              >
+                {forumLabelOrder.map((id) => {
+                  const badge = forumLabels[id];
+                  const active = labels.includes(id);
+                  const full = labels.length >= forumLabelLimit;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      aria-pressed={active}
+                      title={badge.description}
+                      disabled={!active && full}
+                      onClick={() =>
+                        setLabels((current) =>
+                          current.includes(id)
+                            ? current.filter((x) => x !== id)
+                            : current.length < forumLabelLimit
+                              ? [...current, id]
+                              : current
+                        )
+                      }
+                      className={cn(
+                        'rounded-card border px-2.5 py-1 text-[10px] tracking-[0.03em] transition-colors',
+                        active
+                          ? badge.className
+                          : 'border-border text-muted-foreground hover:border-border-strong hover:text-foreground',
+                        !active && full && 'cursor-not-allowed opacity-40'
+                      )}
+                    >
+                      {badge.name}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-[10px] leading-snug text-faint">
+                Konunun türünü seçin — en çok {forumLabelLimit} tane. İsteğe
+                bağlı.
+              </p>
+            </div>
 
             <Field
               label="Başlık"

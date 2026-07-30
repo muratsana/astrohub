@@ -44,9 +44,32 @@ export function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
         <div className="flex h-14 items-center gap-3 border-b border-border">
           <Logo />
 
+          {/*
+            NAVİGASYON TİPOGRAFİSİ.
+
+            Önceki hâl 11px + `tracking-[0.03em]` + her hücrede dikey
+            ayırıcı çizgi + sabit 84px hücreydi. Okunması zordu ve sebebi
+            renk değil boyuttu: iki temada da kontrastı ölçtüm, ikisi de
+            WCAG AA'yı geçiyor (koyu 5.78, açık 6.41). Sorun 11px'in
+            kendisi — üstüne harf aralığının açılması Türkçe kelimeleri
+            (Etkinlikler, İlanlar) daha da dağıtıyordu.
+
+            Şimdi 13px ve harf aralığı normal. Açılmış aralık büyük harfli
+            kısa etiketlerde işe yarar, cümle düzeninde uzun kelimelerde
+            tam tersini yapıyor.
+
+            AYIRICI ÇİZGİLER KALDIRILDI. Dokuz hücre + dikey hairline'lar
+            gezinmeyi bir veri tablosu gibi gösteriyordu. Ayrım artık
+            boşlukla veriliyor; sabit hücre genişliği de gitti, çünkü onu
+            gerektiren şey çizgilerin eşit aralıklı görünme zorunluluğuydu.
+
+            YER BÜTÇESİ: doğal genişlik + `px-3` ile dokuz giriş ~660px,
+            eski sabit hücre düzeninden (9 × 84 = 756px) DAHA AZ yer
+            kaplıyor. Yani punto büyürken şerit daralıyor.
+          */}
           <nav
             aria-label="Ana navigasyon"
-            className="ml-1 hidden items-stretch self-stretch xl:flex"
+            className="ml-2 hidden items-stretch self-stretch xl:flex"
           >
             {primaryNav.map((item) => (
               <NavLink
@@ -54,18 +77,10 @@ export function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
                 to={item.to}
                 className={({ isActive }) =>
                   cn(
-                    /*
-                      HÜCRE GENİŞLİĞİ SABİT, ETİKET ORTALI.
-                      Önce yalnızca `px-3` vardı: "Forum" ile
-                      "Etkinlikler" arasındaki boşluklar etiketin
-                      uzunluğuna göre değiştiği için şerit düzensiz
-                      görünüyordu. Ayırıcı çizgiler bunu daha da
-                      belli ediyordu — eşit aralıklı çizgiler beklenir.
-                      En uzun etiket ("Etkinlikler") 78px; 84px hücre
-                      hepsini nefes payıyla alıyor ve dokuz hücre
-                      1280px'te sığıyor.
-                    */
-                    'flex min-w-[84px] items-center justify-center border-l border-border px-2 text-[11px] font-medium tracking-[0.03em] transition-colors last:border-r',
+                    'relative flex items-center px-3 text-[13px] font-medium transition-colors',
+                    /* Aktif alt çizgi `inset` gölge ile veriliyor: gerçek
+                       bir `border-bottom` hücreyi 2px yükseltip diğer
+                       girişlerin dikey hizasını bozuyor. */
                     isActive
                       ? 'text-primary shadow-[inset_0_-2px_0_var(--color-primary)]'
                       : 'text-muted-foreground hover:text-foreground'

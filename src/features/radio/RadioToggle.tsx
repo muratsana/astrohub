@@ -40,7 +40,8 @@ export function RadioToggle({ className }: { className?: string }) {
         )}
       >
         <PlayIcon className="h-3.5 w-3.5 shrink-0" />
-        Radyo
+        {/* Etiket `sm` altında gizli — gerekçe `TvToggle` içinde. */}
+        <span className="hidden sm:inline">Radyo</span>
       </Link>
     );
   }
@@ -71,7 +72,7 @@ export function RadioToggle({ className }: { className?: string }) {
       ) : (
         <PlayIcon className="h-3.5 w-3.5 shrink-0" />
       )}
-      Radyo
+      <span className="hidden sm:inline">Radyo</span>
     </button>
   );
 }

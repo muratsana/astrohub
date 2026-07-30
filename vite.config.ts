@@ -23,7 +23,13 @@ function envGuard(): Plugin {
           supabaseAnonKey: config.env.VITE_SUPABASE_ANON_KEY,
           siteUrl: config.env.VITE_SITE_URL,
         },
-        { production: process.env.VERCEL_ENV === 'production' }
+        {
+          production: process.env.VERCEL_ENV === 'production',
+          // Preview dahil her Vercel derlemesinde Supabase değişkenleri
+          // zorunlu — anahtarsız çıkan önizleme, girişin çalışmadığı
+          // "kusursuz görünen" bir site üretir.
+          deployed: Boolean(process.env.VERCEL),
+        }
       );
       if (errors.length > 0) {
         throw new Error(

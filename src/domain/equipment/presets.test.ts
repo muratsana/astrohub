@@ -144,3 +144,27 @@ describe('guidePresetsFrom', () => {
     }
   });
 });
+
+describe('marka alanı', () => {
+  /*
+    Katalog canlı veritabanına bağlanınca listeler 30–40'tan yüzlere
+    çıktı ve seçici markaya göre gruplamak zorunda kaldı. Marka etikette
+    metin olarak zaten vardı ama etiketten ayrıştırmak — "ilk boşluğa
+    kadar olan kısım" — "Sky-Watcher Esprit 100" ile "Explore Scientific
+    ED102" arasında sessizce bozulurdu.
+  */
+  it('her ön ayar kendi markasını taşır', () => {
+    const lists = [
+      opticPresetsFrom(entries),
+      cameraPresetsFrom(entries),
+      mountPresetsFrom(entries),
+    ];
+    for (const list of lists) {
+      expect(list.length).toBeGreaterThan(0);
+      for (const preset of list) {
+        expect(preset.brand).not.toBe('');
+        expect(preset.label.startsWith(preset.brand)).toBe(true);
+      }
+    }
+  });
+});

@@ -32,6 +32,15 @@ export interface ClientEnv {
 export interface EnvCheckOptions {
   /** Gerçek üretim dağıtımı mı? (Vercel'de `VERCEL_ENV === 'production'`.) */
   production: boolean;
+  /**
+   * Herhangi bir dağıtım derlemesi mi (production VEYA preview)?
+   * Preview'da da Supabase değişkenleri zorunlu: anahtar olmadan çıkan
+   * önizleme "kusursuz görünen ama kimsenin giriş yapamadığı" bir site
+   * üretir ve hata kullanıcının karşısında, çalışma zamanında patlar.
+   * `VITE_SITE_URL` ise yalnızca üretimde şart — preview alan adına
+   * canonical basmak zaten yanlış olurdu.
+   */
+  deployed?: boolean;
 }
 
 function parseHttpsUrl(value: string): URL | null {
@@ -62,26 +71,28 @@ function decodeJwtPayload(token: string): Record<string, unknown> | null {
  */
 export function validateClientEnv(
   env: ClientEnv,
-  { production }: EnvCheckOptions
+  { production, deployed = false }: EnvCheckOptions
 ): string[] {
   const errors: string[] = [];
   const supabaseUrl = env.supabaseUrl?.trim();
   const anonKey = env.supabaseAnonKey?.trim();
   const siteUrl = env.siteUrl?.trim();
 
-  if (production) {
+  if (production || deployed) {
     if (!supabaseUrl)
       errors.push(
-        'VITE_SUPABASE_URL tanımlı değil — üretim dağıtımı veritabanı olmadan çıkamaz.'
+        'VITE_SUPABASE_URL tanımlı değil — dağıtım derlemesi veritabanı olmadan çıkamaz.'
       );
     if (!anonKey)
       errors.push(
-        'VITE_SUPABASE_ANON_KEY tanımlı değil — üretim dağıtımı kimlik doğrulama olmadan çıkamaz.'
+        'VITE_SUPABASE_ANON_KEY tanımlı değil — dağıtım derlemesi kimlik doğrulama olmadan çıkamaz.'
       );
-    if (!siteUrl)
-      errors.push(
-        'VITE_SITE_URL tanımlı değil — canonical/OG etiketleri ve sitemap üretilemez.'
-      );
+  }
+
+  if (production && !siteUrl) {
+    errors.push(
+      'VITE_SITE_URL tanımlı değil — canonical/OG etiketleri ve sitemap üretilemez.'
+    );
   }
 
   if (supabaseUrl && !parseHttpsUrl(supabaseUrl)) {

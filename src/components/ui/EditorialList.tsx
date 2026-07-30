@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router';
 import { Badge } from './Badge';
+import { CardGrid } from './CardGrid';
 import { PlateFrame } from '@/components/media/PlateFrame';
 import { RemoteImage } from '@/components/media/RemoteImage';
 import { tintFromSeed } from '@/components/media/tints';
@@ -83,14 +84,22 @@ export function EditorialList({
     <>
       <LeadCard item={lead} label={leadLabel} />
 
+      {/*
+        Izgara `CardGrid`'den geliyor, burada elle kurulmuyor. Önceden aynı
+        kolon tanımı iki yerde yazılıydı (`CardGrid` içindeki `default`
+        yoğunluğu ve buradaki satır içi sınıflar) — birbirinin kopyası iki
+        liste, kaçınılmaz olarak ayrışır. Nitekim ayrışmıştı: satır
+        yüksekliklerini eşitleyen `auto-rows-fr` yalnızca `CardGrid`'e
+        eklenince haber/etkinlik/yazı sayfaları dışarıda kalıyordu.
+      */}
       {rest.length > 0 && (
-        <ul className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 [&>li]:h-full">
+        <CardGrid view="grid">
           {rest.map((item) => (
             <li key={item.slug}>
               <EditorialCard item={item} />
             </li>
           ))}
-        </ul>
+        </CardGrid>
       )}
     </>
   );
@@ -188,14 +197,50 @@ function EditorialCard({ item }: { item: EditorialItem }) {
           )}
         </div>
 
-        <h2 className="text-[13px] leading-snug text-foreground transition-colors group-hover:text-primary">
+        {/*
+          BAŞLIK SABİT İKİ SATIR. Önce hiç kısıtı yoktu: başlık uzunluğuna
+          göre bir, iki ya da üç satıra taşıyordu ve kartın yüksekliğini
+          içerik belirliyordu. Sonuç, aynı ızgarada aynı bileşenin üç sayfada
+          üç ayrı yüksekliğe oturmasıydı — ölçtüm: yazılar 410px, haberler
+          423px, etkinlikler 428px.
+
+          `line-clamp-2` taşan başlığı kesiyor, `min-h` ise KISA başlıkta da
+          iki satırlık yeri ayırıyor. İkincisi olmadan tek satırlık başlıklar
+          kartı yine kısaltırdı; eşitliği sağlayan şey kesmek değil, yeri
+          her durumda ayırmak.
+
+          `lh` birimi satır yüksekliğinin kendisi — 13px ve `leading-snug`
+          değişse de ayrılan yer başlığın gerçek iki satırı kadar kalır.
+        */}
+        <h2 className="line-clamp-2 min-h-[2lh] text-[13px] leading-snug text-foreground transition-colors group-hover:text-primary">
           {item.title}
         </h2>
-        <p className="mt-1.5 line-clamp-3 text-[11px] leading-relaxed text-muted-foreground">
+        <p className="mt-1.5 line-clamp-3 min-h-[3lh] text-[11px] leading-relaxed text-muted-foreground">
           {item.summary}
         </p>
 
-        {item.footer && <div className="mt-auto pt-3">{item.footer}</div>}
+        {/*
+          FOOTER YUVASI SABİT YÜKSEKLİKTE. İçine ne konduğu kartın boyunu
+          değiştirmemeli: haberler künyeye düz bir metin satırı koyuyor,
+          etkinlik ve yazılar `Badge` koyuyor. Badge kendi dolgusu ve
+          kenarıyla metin satırından 5px yüksek — ölçtüm, haberler 423px'te
+          kalırken diğerleri 428px'e çıkıyordu.
+
+          21px bir Badge satırının tam yüksekliği: 10px metin × 1.5 satır
+          yüksekliği (15) + dikey dolgu (2 × 2) + kenar (2 × 1). Yuvayı
+          buna sabitleyince künye ister metin ister rozet olsun kart aynı
+          boyda kalıyor.
+
+          Pay İÇ sarmalayıcıda, `pt-3`'ü taşıyan dış sarmalayıcıda değil:
+          dolguyla birlikte dış eleman zaten 21px'i aşıyor, dolayısıyla
+          oraya konan `min-h` hiç devreye girmiyordu (ilk denemem buydu —
+          haberler 423px'te kaldı).
+        */}
+        {item.footer && (
+          <div className="mt-auto pt-3">
+            <div className="flex min-h-[21px] items-center">{item.footer}</div>
+          </div>
+        )}
       </div>
     </Link>
   );

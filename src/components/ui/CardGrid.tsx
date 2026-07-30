@@ -16,6 +16,14 @@ import { cn } from '@/lib/cn';
  * kullanır (bkz. PhotoTile, EventCard). İkisi birlikte olmadan eşitlik
  * sağlanmıyor — tek başına ızgarayı ayarlamak yetmiyor.
  *
+ * `auto-rows-fr` SATIRLAR ARASINI DA EŞİTLER. `[&>li]:h-full` yalnızca
+ * AYNI SATIRDAKİ kartları eşitliyordu; CSS Grid her satırı bağımsız
+ * boyutladığı için satırlar birbirinden farklı kalıyordu. En görünür hâli
+ * son satır: dört kartlık bir satırın altında tek başına kalan kart,
+ * kendi içeriği kadar uzayıp üstündeki satırdan yüksek çıkıyordu
+ * (etkinliklerde ölçtüm: 410px'e karşı 428px). `auto-rows-fr` bütün
+ * satırlara aynı yüksekliği verir, böylece sayfadaki her kart eşit olur.
+ *
  * `density` ızgara kolon sayısını belirler:
  *   tight    küçük karolar (galeri, hedef kataloğu) — 5 kolona kadar
  *   default  orta kartlar (etkinlik, ilan) — 4 kolona kadar
@@ -43,7 +51,9 @@ export function CardGrid({
     <ul
       className={cn(
         'grid [&>li]:h-full',
-        view === 'grid' ? cn('gap-2.5', densities[density]) : 'gap-2',
+        view === 'grid'
+          ? cn('auto-rows-fr gap-2.5', densities[density])
+          : 'gap-2',
         className
       )}
     >

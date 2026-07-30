@@ -22,7 +22,8 @@ import {
   parseAngularSizeArcmin,
 } from '@/domain/astronomy/mosaic';
 import { targets } from '@/features/targets/data';
-import { opticPresets, cameraPresets, reducerPresets } from './presets';
+import { useCalculatorPresets } from './presets';
+import { PresetSelect } from './PresetSelect';
 import { cn } from '@/lib/cn';
 
 /**
@@ -50,6 +51,13 @@ const catalogTargets = targets
 
 export function MosaicPlannerPage() {
   // Optik + kamera
+  const presets = useCalculatorPresets();
+
+  /* Seçim slug ile tutuluyor — liste veritabanı yanıtıyla değiştiğinde
+     dizin bambaşka bir modeli işaret ederdi. */
+  const [opticSlug, setOpticSlug] = useState('');
+  const [cameraSlug, setCameraSlug] = useState('');
+
   const [focalLength, setFocalLength] = useState(250);
   const [aperture, setAperture] = useState(51);
   const [reducer, setReducer] = useState(1);
@@ -221,51 +229,29 @@ export function MosaicPlannerPage() {
 
             <Panel title="Optik ve kamera">
               <FilterBar columns={2} className="mb-0">
-                <FilterCell label="Hazır teleskop" htmlFor="mosaic-optic">
-                  <Select
-                    id="mosaic-optic"
-                    defaultValue=""
-                    className={filterControlClass}
-                    onChange={(e) => {
-                      const p = opticPresets[Number(e.target.value)];
-                      if (!p) return;
-                      setFocalLength(p.focalLength);
-                      setAperture(p.aperture);
-                    }}
-                  >
-                    <option value="" disabled>
-                      Seç veya elle gir…
-                    </option>
-                    {opticPresets.map((p, i) => (
-                      <option key={p.label} value={i}>
-                        {p.label}
-                      </option>
-                    ))}
-                  </Select>
-                </FilterCell>
-                <FilterCell label="Hazır kamera" htmlFor="mosaic-camera">
-                  <Select
-                    id="mosaic-camera"
-                    defaultValue=""
-                    className={filterControlClass}
-                    onChange={(e) => {
-                      const p = cameraPresets[Number(e.target.value)];
-                      if (!p) return;
-                      setPixelSize(p.pixelSize);
-                      setSensorWidth(p.sensorWidth);
-                      setSensorHeight(p.sensorHeight);
-                    }}
-                  >
-                    <option value="" disabled>
-                      Seç veya elle gir…
-                    </option>
-                    {cameraPresets.map((p, i) => (
-                      <option key={p.label} value={i}>
-                        {p.label}
-                      </option>
-                    ))}
-                  </Select>
-                </FilterCell>
+                <PresetSelect
+                  label="Hazır teleskop"
+                  options={presets.optic}
+                  value={opticSlug}
+                  onSelect={(p) => {
+                    setOpticSlug(p?.slug ?? '');
+                    if (!p) return;
+                    setFocalLength(p.focalLength);
+                    setAperture(p.aperture);
+                  }}
+                />
+                <PresetSelect
+                  label="Hazır kamera"
+                  options={presets.camera}
+                  value={cameraSlug}
+                  onSelect={(p) => {
+                    setCameraSlug(p?.slug ?? '');
+                    if (!p) return;
+                    setPixelSize(p.pixelSize);
+                    setSensorWidth(p.sensorWidth);
+                    setSensorHeight(p.sensorHeight);
+                  }}
+                />
                 <FilterCell label="Odak (mm)" htmlFor="mosaic-fl">
                   <Input
                     id="mosaic-fl"
@@ -293,7 +279,7 @@ export function MosaicPlannerPage() {
                     onChange={(e) => setReducer(Number(e.target.value))}
                     className={filterControlClass}
                   >
-                    {reducerPresets.map((r) => (
+                    {presets.reducer.map((r) => (
                       <option key={r.label} value={r.factor}>
                         {r.label}
                       </option>

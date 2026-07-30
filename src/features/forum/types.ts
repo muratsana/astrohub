@@ -4,21 +4,51 @@
  * Kategoriler sabit ve az sayıdadır. Kullanıcının kategori açabildiği
  * forumlar hızla birbirinin kopyası on beş kategoriye dönüşüyor; burada
  * kategori seti editoryal bir karardır.
+ *
+ * KATEGORİ VE ROZET AYRI EKSENLER. Kategori konunun NEYLE İLGİLİ olduğunu
+ * söyler (montür, filtre, yazılım); rozet NE TÜR bir gönderi olduğunu
+ * (soru, rehber, inceleme). İkisini tek listede toplamak, "Montür" ile
+ * "Soru" arasında seçim yaptırırdı — oysa bir konu ikisi birden.
+ *
+ * Rozet seti de sabittir. Serbest metin etiket, üç ay içinde 'phd2',
+ * 'PHD2', 'phd 2' ve 'phd2 guiding' olarak dörde bölünüyor ve etikete
+ * göre filtrelemeyi işe yaramaz hâle getiriyor.
  */
 
 export type ForumCategoryId =
   | 'baslangic'
-  | 'ekipman'
+  | 'optik-tupler'
+  | 'monturler'
+  | 'filtreler'
+  | 'kameralar'
   | 'isleme'
-  | 'gozlem-raporlari'
-  | 'saha-ve-seyahat'
-  | 'yazilim';
+  | 'yazilim'
+  | 'astro-kampcilik'
+  | 'etkinlikler'
+  | 'diger-ekipmanlar'
+  | 'gozlem-raporlari';
 
 export interface ForumCategory {
   id: ForumCategoryId;
   name: string;
   description: string;
   /** Rozet ve vurgu rengi — galeri ailelerindeki desenin aynısı. */
+  className: string;
+}
+
+/** Konunun türü — kategoriden bağımsız, sabit set. */
+export type ForumLabelId =
+  | 'soru'
+  | 'sorun-giderme'
+  | 'rehber'
+  | 'inceleme'
+  | 'tavsiye'
+  | 'duyuru';
+
+export interface ForumLabel {
+  id: ForumLabelId;
+  name: string;
+  description: string;
   className: string;
 }
 
@@ -58,7 +88,8 @@ export interface ForumThread {
   /** Açılış mesajı. */
   body: string;
   replies: ForumPost[];
-  tags?: string[];
+  /** Sabit setten seçilen rozetler. */
+  labels?: ForumLabelId[];
 }
 
 export const forumCategories: Record<ForumCategoryId, ForumCategory> = {
@@ -68,11 +99,29 @@ export const forumCategories: Record<ForumCategoryId, ForumCategory> = {
     description: 'İlk teleskop, ilk kayıt, temel sorular',
     className: 'border-[#34d399]/50 bg-[#34d399]/12 text-[#5fe0b0]',
   },
-  ekipman: {
-    id: 'ekipman',
-    name: 'Ekipman',
-    description: 'Teleskop, montür, kamera, filtre; kurulum ve arıza',
+  'optik-tupler': {
+    id: 'optik-tupler',
+    name: 'Optik Tüpler',
+    description: 'Refraktör, newton, SCT, RC; odaklayıcı ve kolimasyon',
     className: 'border-primary/50 bg-primary/12 text-primary',
+  },
+  monturler: {
+    id: 'monturler',
+    name: 'Montürler',
+    description: 'Ekvatoryal ve alt-azimut montürler, guiding, kutup ayarı',
+    className: 'border-[#f97316]/50 bg-[#f97316]/12 text-[#fb923c]',
+  },
+  filtreler: {
+    id: 'filtreler',
+    name: 'Filtreler',
+    description: 'Dar bant, geniş bant, ışık kirliliği ve güneş filtreleri',
+    className: 'border-[#ec4899]/50 bg-[#ec4899]/12 text-[#f472b6]',
+  },
+  kameralar: {
+    id: 'kameralar',
+    name: 'Kameralar',
+    description: 'CMOS ve CCD kameralar, DSLR, sensör ve soğutma',
+    className: 'border-[#14b8a6]/50 bg-[#14b8a6]/12 text-[#2dd4bf]',
   },
   isleme: {
     id: 'isleme',
@@ -80,33 +129,135 @@ export const forumCategories: Record<ForumCategoryId, ForumCategory> = {
     description: 'Yığınlama, kalibrasyon, streç, gürültü',
     className: 'border-[#a78bfa]/50 bg-[#a78bfa]/12 text-[#c4b1fd]',
   },
+  yazilim: {
+    id: 'yazilim',
+    name: 'Yazılımlar',
+    description: 'NINA, PHD2, PixInsight, Siril, ASCOM/INDI',
+    className: 'border-[#38bdf8]/50 bg-[#38bdf8]/12 text-[#7dd3fc]',
+  },
+  'astro-kampcilik': {
+    id: 'astro-kampcilik',
+    name: 'Astro Kampçılık',
+    description: 'Karanlık gökyüzü noktaları, kamp, yol ve lojistik',
+    className: 'border-[#f59e0b]/50 bg-[#f59e0b]/12 text-[#fbbf24]',
+  },
+  etkinlikler: {
+    id: 'etkinlikler',
+    name: 'Etkinlikler',
+    description: 'Buluşmalar, gözlem geceleri, atölyeler ve duyurular',
+    className: 'border-[#e11d48]/50 bg-[#e11d48]/12 text-[#fb7185]',
+  },
+  'diger-ekipmanlar': {
+    id: 'diger-ekipmanlar',
+    name: 'Diğer Ekipmanlar',
+    description: 'Oküler, düzleştirici, odaklayıcı, güç ve kablo düzeni',
+    className: 'border-[#94a3b8]/50 bg-[#94a3b8]/12 text-[#cbd5e1]',
+  },
   'gozlem-raporlari': {
     id: 'gozlem-raporlari',
     name: 'Gözlem Raporları',
     description: 'Gece notları, seeing koşulları, gözlem günlükleri',
     className: 'border-cold/50 bg-cold/12 text-cold',
   },
-  'saha-ve-seyahat': {
-    id: 'saha-ve-seyahat',
-    name: 'Saha ve Seyahat',
-    description: 'Karanlık gökyüzü noktaları, kamp, yol ve lojistik',
-    className: 'border-[#f59e0b]/50 bg-[#f59e0b]/12 text-[#fbbf24]',
+};
+
+/*
+ * Sıra ekrandaki sıradır. Başlangıç başta duruyor çünkü foruma ilk gelen
+ * kullanıcının aradığı yer orası; ekipman grupları kendi aralarında
+ * bitişik, Gözlem Raporları en sonda — akış değil arşiv niteliğinde.
+ */
+export const forumCategoryOrder: ForumCategoryId[] = [
+  'baslangic',
+  'optik-tupler',
+  'monturler',
+  'filtreler',
+  'kameralar',
+  'diger-ekipmanlar',
+  'isleme',
+  'yazilim',
+  'astro-kampcilik',
+  'etkinlikler',
+  'gozlem-raporlari',
+];
+
+export const forumLabels: Record<ForumLabelId, ForumLabel> = {
+  soru: {
+    id: 'soru',
+    name: 'Soru',
+    description: 'Yanıt beklenen açık uçlu soru',
+    className: 'border-primary/45 text-primary',
   },
-  yazilim: {
-    id: 'yazilim',
-    name: 'Yazılım',
-    description: 'NINA, PHD2, PixInsight, Siril, ASCOM/INDI',
-    className: 'border-[#38bdf8]/50 bg-[#38bdf8]/12 text-[#7dd3fc]',
+  'sorun-giderme': {
+    id: 'sorun-giderme',
+    name: 'Sorun Giderme',
+    description: 'Çalışmayan bir kurulum ya da beklenmeyen sonuç',
+    className: 'border-danger/45 text-danger',
+  },
+  rehber: {
+    id: 'rehber',
+    name: 'Rehber',
+    description: 'Adım adım anlatım, nasıl yapılır',
+    className: 'border-success/45 text-success',
+  },
+  inceleme: {
+    id: 'inceleme',
+    name: 'İnceleme',
+    description: 'Kullanım deneyimi, ürün değerlendirmesi',
+    className: 'border-[#a78bfa]/45 text-[#c4b1fd]',
+  },
+  tavsiye: {
+    id: 'tavsiye',
+    name: 'Tavsiye',
+    description: 'Satın alma ya da seçim önerisi isteği',
+    className: 'border-[#f59e0b]/45 text-[#fbbf24]',
+  },
+  duyuru: {
+    id: 'duyuru',
+    name: 'Duyuru',
+    description: 'Bilgilendirme; tartışma beklenmez',
+    className: 'border-cold/45 text-cold',
   },
 };
 
-export const forumCategoryOrder: ForumCategoryId[] = [
-  'baslangic',
-  'ekipman',
-  'isleme',
-  'gozlem-raporlari',
-  'saha-ve-seyahat',
-  'yazilim',
+export const forumLabelOrder: ForumLabelId[] = [
+  'soru',
+  'sorun-giderme',
+  'rehber',
+  'inceleme',
+  'tavsiye',
+  'duyuru',
+];
+
+/** Bir konuya en çok bu kadar rozet takılabilir. */
+export const forumLabelLimit = 3;
+
+/* ══════════════════════ Görünüm ve sıralama ══════════════════════ */
+
+/**
+ * Liste yoğunluğu.
+ *
+ * 'baslik' yalnızca başlık ve rozetleri gösterir — konu taramak için.
+ * 'detayli' altına açılış mesajının ilk satırını ekler — ne konuşulduğunu
+ * listeden anlamak için. İkisi aynı veriyi gösteriyor; değişen okuma
+ * biçimi, içerik değil.
+ */
+export type ForumDensity = 'baslik' | 'detayli';
+
+export const forumDensities = ['baslik', 'detayli'] as const;
+
+export type ForumSortId =
+  | 'son-etkinlik'
+  | 'en-yeni'
+  | 'en-eski'
+  | 'en-cok-yanit'
+  | 'en-cok-goruntulenme';
+
+export const forumSortOptions: { value: ForumSortId; label: string }[] = [
+  { value: 'son-etkinlik', label: 'Son etkinlik' },
+  { value: 'en-yeni', label: 'En yeni tarihli' },
+  { value: 'en-eski', label: 'En eski tarihli' },
+  { value: 'en-cok-yanit', label: 'En çok yanıtlanan' },
+  { value: 'en-cok-goruntulenme', label: 'En çok görüntülenen' },
 ];
 
 /**
@@ -133,14 +284,39 @@ export function relativeTime(iso: string, now = new Date()): string {
   return rtf.format(Math.round(diffSec / 31536000), 'year');
 }
 
-/** Konuları son etkinliğe göre sıralar; sabitlenenler her zaman üstte kalır. */
-export function sortThreads(threads: ForumThread[]): ForumThread[] {
+function time(iso: string): number {
+  const value = new Date(iso).getTime();
+  /* Bozuk tarih listeyi kırmasın: sıralamada en eski uca düşsün ki
+     geçerli kayıtların sırası bozulmadan kalsın. */
+  return Number.isFinite(value) ? value : 0;
+}
+
+/**
+ * Konuları seçilen ölçüte göre sıralar; sabitlenenler her zaman üstte
+ * kalır.
+ *
+ * Sabitleme sıralamanın üstünde tutuluyor — "en eski tarihli" seçilince
+ * duyurunun listenin ortasına düşmesi, sabitlemeyi anlamsız kılardı.
+ * Sabitleme bir sıralama tercihi değil, moderasyon kararı.
+ */
+export function sortThreads(
+  threads: ForumThread[],
+  sort: ForumSortId = 'son-etkinlik'
+): ForumThread[] {
+  const compare: Record<ForumSortId, (a: ForumThread, b: ForumThread) => number> =
+    {
+      'son-etkinlik': (a, b) => time(b.lastActivityAt) - time(a.lastActivityAt),
+      'en-yeni': (a, b) => time(b.createdAt) - time(a.createdAt),
+      'en-eski': (a, b) => time(a.createdAt) - time(b.createdAt),
+      'en-cok-yanit': (a, b) => b.replyCount - a.replyCount,
+      'en-cok-goruntulenme': (a, b) => b.viewCount - a.viewCount,
+    };
+
+  const by = compare[sort] ?? compare['son-etkinlik'];
+
   return [...threads].sort((a, b) => {
     if (Boolean(a.pinned) !== Boolean(b.pinned)) return a.pinned ? -1 : 1;
-    return (
-      new Date(b.lastActivityAt).getTime() -
-      new Date(a.lastActivityAt).getTime()
-    );
+    return by(a, b);
   });
 }
 
@@ -148,15 +324,17 @@ function trLower(s: string): string {
   return s.toLocaleLowerCase('tr-TR');
 }
 
-/** Kategori ve serbest metne göre konu filtresi. */
+/** Kategori, rozet ve serbest metne göre konu filtresi. */
 export function filterThreads(
   threads: ForumThread[],
   {
     category = 'hepsi',
+    label = 'hepsi',
     search = '',
     onlyUnsolved = false,
   }: {
     category?: ForumCategoryId | 'hepsi';
+    label?: ForumLabelId | 'hepsi';
     search?: string;
     onlyUnsolved?: boolean;
   }
@@ -165,6 +343,9 @@ export function filterThreads(
 
   return threads.filter((thread) => {
     if (category !== 'hepsi' && thread.category !== category) return false;
+    if (label !== 'hepsi' && !(thread.labels ?? []).includes(label)) {
+      return false;
+    }
     if (onlyUnsolved && thread.solved) return false;
     if (!q) return true;
 
@@ -173,7 +354,8 @@ export function filterThreads(
       thread.body,
       thread.author.displayName,
       thread.author.username,
-      ...(thread.tags ?? []),
+      forumCategories[thread.category]?.name ?? '',
+      ...(thread.labels ?? []).map((id) => forumLabels[id]?.name ?? ''),
     ]
       .map(trLower)
       .join(' ');
