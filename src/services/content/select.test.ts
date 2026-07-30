@@ -31,7 +31,10 @@ describe('selectContent', () => {
     expect(result.degraded).toBe(false);
   });
 
-  it('tablo boşsa tohuma düşer — boş katalog göstermez', () => {
+  it('tablo boşsa boş sonuç otoritedir — kurgu içerik gösterilmez', () => {
+    // Eski kural boş tabloyu tohuma düşürüyordu; yayında bu, kurgu
+    // içeriği gerçekmiş gibi sunmak demekti (QA P0-02). Boş ama gerçek
+    // liste, dolu ama kurgu listeden iyidir.
     const result = selectContent({
       seed,
       rows: [],
@@ -39,9 +42,23 @@ describe('selectContent', () => {
       failed: false,
     });
 
+    expect(result.items).toEqual([]);
+    expect(result.source).toBe('db');
+    expect(result.degraded).toBe(false);
+  });
+
+  it('sorgu sonuçlanana kadar tohum ilk boyamayı yapar', () => {
+    const result = selectContent({
+      seed,
+      rows: undefined,
+      configured: true,
+      failed: false,
+    });
+
     expect(result.items).toEqual(seed);
     expect(result.source).toBe('seed');
-    expect(result.degraded).toBe(false);
+    // Yapılandırılmış ortamda tohum "örnek içerik" olarak etiketlenir.
+    expect(result.configured).toBe(true);
   });
 
   it('okuma başarısızsa tohuma düşer ama bunu bildirir', () => {
