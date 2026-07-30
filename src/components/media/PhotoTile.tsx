@@ -115,7 +115,22 @@ export function PhotoTile({
         className
       )}
     >
+      {/*
+        ORAN KARE, 4:3 DEĞİL.
+
+        Galeri karosu editöryel kartla aynı ızgarada aynı genişlikte
+        (329px) duruyor ama daha kısa kalıyordu: editöryel kartta üç
+        satırlık özet ve künye var, fotoğraf karosunda yok. Ölçtüm: 324px'e
+        karşı 428px.
+
+        Farkı kapatmanın iki yolu vardı — fotoğraf karosuna boş alan
+        eklemek ya da görseli büyütmek. İkincisi seçildi: bir fotoğraf
+        galerisinde asıl içerik fotoğrafın kendisi, ona daha çok yer vermek
+        hem boşluk üretmiyor hem de kare oran galeri ızgaralarının
+        alışılmış biçimi.
+      */}
       <PlateFrame
+        ratio="aspect-square"
         fieldOfView={fieldOfView}
         badge={family ? <FamilyBadge {...family} /> : undefined}
         flag={flag}

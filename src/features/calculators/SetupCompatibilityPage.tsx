@@ -17,13 +17,10 @@ import { breadcrumbJsonLd } from '@/lib/seo';
 import { checkSetup } from '@/domain/equipment/compatibility';
 import type { CheckSeverity, SetupInput } from '@/domain/equipment/compatibility';
 import {
-  mountPresets,
-  opticMechanicalPresets,
-  cameraMechanicalPresets,
-  guidePresets,
   filterThicknessPresets,
-  reducerPresets,
+  useCalculatorPresets,
 } from './presets';
+import { PresetSelect } from './PresetSelect';
 import { saveSetup } from '@/features/setups/storage';
 import { cn } from '@/lib/cn';
 
@@ -62,16 +59,26 @@ const verdictSummary: Record<CheckSeverity, string> = {
 export function SetupCompatibilityPage() {
   const navigate = useNavigate();
   const [setupName, setSetupName] = useState('');
-  const [mountIndex, setMountIndex] = useState(3); // EQ6-R Pro
+  const presets = useCalculatorPresets();
+
+  /*
+    SEÇİM SLUG İLE TUTULUYOR, DİZİNLE DEĞİL.
+    Listeler canlı katalogdan geliyor: ilk çizimde tohum veri, ağ yanıtı
+    gelince veritabanı. Dizinle çalışan bir seçim, liste değiştiğinde
+    kullanıcının seçtiği montürün yerine bambaşka bir montürü işaret
+    eder — hem de sessizce, çünkü dizin hâlâ geçerli bir sayı. Rapor o
+    montürün adıyla yanlış bir yük analizini gösterirdi.
+  */
+  const [mountSlug, setMountSlug] = useState('');
   const [payloadCapacity, setPayloadCapacity] = useState(20);
 
-  const [opticIndex, setOpticIndex] = useState(3); // Esprit 100
+  const [opticSlug, setOpticSlug] = useState('');
   const [focalLength, setFocalLength] = useState(550);
   const [aperture, setAperture] = useState(100);
   const [opticWeight, setOpticWeight] = useState(6.4);
   const [requiredBackfocus, setRequiredBackfocus] = useState(55);
 
-  const [cameraIndex, setCameraIndex] = useState(0);
+  const [cameraSlug, setCameraSlug] = useState('');
   const [pixelSize, setPixelSize] = useState(3.76);
   const [sensorWidth, setSensorWidth] = useState(23.5);
   const [sensorHeight, setSensorHeight] = useState(15.7);
@@ -83,7 +90,7 @@ export function SetupCompatibilityPage() {
   const [accessories, setAccessories] = useState(1.5);
   const [reducer, setReducer] = useState(1);
   const [seeing, setSeeing] = useState(3);
-  const [guideIndex, setGuideIndex] = useState(1);
+  const [guideSlug, setGuideSlug] = useState('');
 
   /*
    * Girdi nesnesi tek yerde kuruluyor: hem rapor hem "kaydet" aynı değerleri
@@ -91,7 +98,7 @@ export function SetupCompatibilityPage() {
    * görülen rapor zamanla birbirinden ayrılırdı.
    */
   const buildInput = useCallback((): SetupInput => {
-    const guidePreset = guidePresets[guideIndex];
+    const guidePreset = presets.guide.find((g) => g.slug === guideSlug);
     // OAG ana optikle aynı odağı kullanır (focalLength: -1 işareti).
     const guide =
       guidePreset && guidePreset.focalLength !== 0
@@ -107,18 +114,23 @@ export function SetupCompatibilityPage() {
 
     return {
       mount: {
-        name: mountPresets[mountIndex]?.label ?? 'Montür',
+        name:
+          presets.mount.find((m) => m.slug === mountSlug)?.label ?? 'Montür',
         payloadCapacityKg: payloadCapacity,
       },
       optic: {
-        name: opticMechanicalPresets[opticIndex]?.label ?? 'Optik',
+        name:
+          presets.opticMechanical.find((o) => o.slug === opticSlug)?.label ??
+          'Optik',
         focalLength,
         aperture,
         weightKg: opticWeight,
         requiredBackfocusMm: requiredBackfocus,
       },
       camera: {
-        name: cameraMechanicalPresets[cameraIndex]?.label ?? 'Kamera',
+        name:
+          presets.cameraMechanical.find((c) => c.slug === cameraSlug)?.label ??
+          'Kamera',
         pixelSize,
         sensorWidth,
         sensorHeight,
@@ -133,9 +145,10 @@ export function SetupCompatibilityPage() {
       guide,
     };
   }, [
-    mountIndex,
-    opticIndex,
-    cameraIndex,
+    presets,
+    mountSlug,
+    opticSlug,
+    cameraSlug,
     payloadCapacity,
     focalLength,
     aperture,
@@ -151,7 +164,7 @@ export function SetupCompatibilityPage() {
     accessories,
     reducer,
     seeing,
-    guideIndex,
+    guideSlug,
   ]);
 
   const report = useMemo(() => {
@@ -201,25 +214,15 @@ export function SetupCompatibilityPage() {
           <div className="space-y-4">
             <Panel title="Montür">
               <FilterBar columns={2} className="mb-0">
-                <FilterCell label="Hazır montür" htmlFor="setup-mount">
-                  <Select
-                    id="setup-mount"
-                    value={mountIndex}
-                    className={filterControlClass}
-                    onChange={(e) => {
-                      const i = Number(e.target.value);
-                      setMountIndex(i);
-                      const p = mountPresets[i];
-                      if (p) setPayloadCapacity(p.payloadCapacityKg);
-                    }}
-                  >
-                    {mountPresets.map((p, i) => (
-                      <option key={p.label} value={i}>
-                        {p.label}
-                      </option>
-                    ))}
-                  </Select>
-                </FilterCell>
+                <PresetSelect
+                  label="Hazır montür"
+                  options={presets.mount}
+                  value={mountSlug}
+                  onSelect={(p) => {
+                    setMountSlug(p?.slug ?? '');
+                    if (p) setPayloadCapacity(p.payloadCapacityKg);
+                  }}
+                />
                 <FilterCell label="Yük kapasitesi (kg)" htmlFor="setup-payload">
                   <Input
                     id="setup-payload"
@@ -236,29 +239,20 @@ export function SetupCompatibilityPage() {
 
             <Panel title="Optik">
               <FilterBar columns={2} className="mb-0">
-                <FilterCell label="Hazır optik" htmlFor="setup-optic">
-                  <Select
-                    id="setup-optic"
-                    value={opticIndex}
-                    className={filterControlClass}
-                    onChange={(e) => {
-                      const i = Number(e.target.value);
-                      setOpticIndex(i);
-                      const p = opticMechanicalPresets[i];
-                      if (!p) return;
-                      setFocalLength(p.focalLength);
-                      setAperture(p.aperture);
-                      setOpticWeight(p.weightKg);
-                      setRequiredBackfocus(p.requiredBackfocusMm);
-                    }}
-                  >
-                    {opticMechanicalPresets.map((p, i) => (
-                      <option key={p.label} value={i}>
-                        {p.label}
-                      </option>
-                    ))}
-                  </Select>
-                </FilterCell>
+                <PresetSelect
+                  label="Hazır optik"
+                  options={presets.opticMechanical}
+                  value={opticSlug}
+                  emptyHint="Ağırlığı ve backfocus'u bilinen optik kaydı yok; değerleri elle girin."
+                  onSelect={(p) => {
+                    setOpticSlug(p?.slug ?? '');
+                    if (!p) return;
+                    setFocalLength(p.focalLength);
+                    setAperture(p.aperture);
+                    setOpticWeight(p.weightKg);
+                    setRequiredBackfocus(p.requiredBackfocusMm);
+                  }}
+                />
                 <FilterCell label="Reducer / Barlow" htmlFor="setup-reducer">
                   <Select
                     id="setup-reducer"
@@ -266,7 +260,7 @@ export function SetupCompatibilityPage() {
                     className={filterControlClass}
                     onChange={(e) => setReducer(Number(e.target.value))}
                   >
-                    {reducerPresets.map((r) => (
+                    {presets.reducer.map((r) => (
                       <option key={r.label} value={r.factor}>
                         {r.label}
                       </option>
@@ -320,30 +314,21 @@ export function SetupCompatibilityPage() {
 
             <Panel title="Kamera ve optik yol">
               <FilterBar columns={2} className="mb-0">
-                <FilterCell label="Hazır kamera" htmlFor="setup-camera">
-                  <Select
-                    id="setup-camera"
-                    value={cameraIndex}
-                    className={filterControlClass}
-                    onChange={(e) => {
-                      const i = Number(e.target.value);
-                      setCameraIndex(i);
-                      const p = cameraMechanicalPresets[i];
-                      if (!p) return;
-                      setPixelSize(p.pixelSize);
-                      setSensorWidth(p.sensorWidth);
-                      setSensorHeight(p.sensorHeight);
-                      setCameraWeight(p.weightKg);
-                      setCameraBackfocus(p.backfocusMm);
-                    }}
-                  >
-                    {cameraMechanicalPresets.map((p, i) => (
-                      <option key={p.label} value={i}>
-                        {p.label}
-                      </option>
-                    ))}
-                  </Select>
-                </FilterCell>
+                <PresetSelect
+                  label="Hazır kamera"
+                  options={presets.cameraMechanical}
+                  value={cameraSlug}
+                  emptyHint="Ağırlığı ve flanş mesafesi bilinen kamera kaydı yok; değerleri elle girin."
+                  onSelect={(p) => {
+                    setCameraSlug(p?.slug ?? '');
+                    if (!p) return;
+                    setPixelSize(p.pixelSize);
+                    setSensorWidth(p.sensorWidth);
+                    setSensorHeight(p.sensorHeight);
+                    setCameraWeight(p.weightKg);
+                    setCameraBackfocus(p.backfocusMm);
+                  }}
+                />
                 <FilterCell label="Filtre kalınlığı" htmlFor="setup-filter">
                   <Select
                     id="setup-filter"
@@ -429,20 +414,13 @@ export function SetupCompatibilityPage() {
 
             <Panel title="Guide ve saha">
               <FilterBar columns={3} className="mb-0">
-                <FilterCell label="Guide sistemi" htmlFor="setup-guide">
-                  <Select
-                    id="setup-guide"
-                    value={guideIndex}
-                    className={filterControlClass}
-                    onChange={(e) => setGuideIndex(Number(e.target.value))}
-                  >
-                    {guidePresets.map((g, i) => (
-                      <option key={g.label} value={i}>
-                        {g.label}
-                      </option>
-                    ))}
-                  </Select>
-                </FilterCell>
+                <PresetSelect
+                  label="Guide sistemi"
+                  options={presets.guide}
+                  value={guideSlug}
+                  placeholder="Guide yok"
+                  onSelect={(g) => setGuideSlug(g?.slug ?? '')}
+                />
                 <FilterCell label="Aksesuar ağırlığı (kg)" htmlFor="setup-acc">
                   <Input
                     id="setup-acc"

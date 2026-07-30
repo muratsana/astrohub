@@ -15,7 +15,8 @@ import { computeOptics } from '@/domain/astronomy/optics';
 import type { SamplingCategory } from '@/domain/astronomy/optics';
 import { parseAngularSizeArcmin } from '@/domain/astronomy/mosaic';
 import { targets } from '@/features/targets/data';
-import { opticPresets, cameraPresets, reducerPresets } from './presets';
+import { useCalculatorPresets } from './presets';
+import { PresetSelect } from './PresetSelect';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
 import { cn } from '@/lib/cn';
@@ -50,6 +51,13 @@ const framedTargets = targets
   );
 
 export function FovCalculatorPage() {
+  const presets = useCalculatorPresets();
+
+  /* Seçim slug ile tutuluyor: liste tohum veriyle çizilip veritabanı
+     yanıtıyla değiştiği için dizin kalıcı bir kimlik değil. */
+  const [opticSlug, setOpticSlug] = useState('');
+  const [cameraSlug, setCameraSlug] = useState('');
+
   const [focalLength, setFocalLength] = useState(530);
   const [aperture, setAperture] = useState(73);
   const [reducer, setReducer] = useState(1);
@@ -114,28 +122,17 @@ export function FovCalculatorPage() {
           <div className="space-y-4">
             <Panel title="Optik">
               <FilterBar columns={2} className="mb-0">
-                <FilterCell label="Hazır teleskop" htmlFor="optic-preset">
-                  <Select
-                    id="optic-preset"
-                    defaultValue=""
-                    className={filterControlClass}
-                    onChange={(e) => {
-                      const p = opticPresets[Number(e.target.value)];
-                      if (!p) return;
-                      setFocalLength(p.focalLength);
-                      setAperture(p.aperture);
-                    }}
-                  >
-                    <option value="" disabled>
-                      Seç veya elle gir…
-                    </option>
-                    {opticPresets.map((p, i) => (
-                      <option key={p.label} value={i}>
-                        {p.label}
-                      </option>
-                    ))}
-                  </Select>
-                </FilterCell>
+                <PresetSelect
+                  label="Hazır teleskop"
+                  options={presets.optic}
+                  value={opticSlug}
+                  onSelect={(p) => {
+                    setOpticSlug(p?.slug ?? '');
+                    if (!p) return;
+                    setFocalLength(p.focalLength);
+                    setAperture(p.aperture);
+                  }}
+                />
                 <FilterCell label="Reducer / Barlow" htmlFor="reducer">
                   <Select
                     id="reducer"
@@ -143,7 +140,7 @@ export function FovCalculatorPage() {
                     className={filterControlClass}
                     onChange={(e) => setReducer(Number(e.target.value))}
                   >
-                    {reducerPresets.map((r) => (
+                    {presets.reducer.map((r) => (
                       <option key={r.label} value={r.factor}>
                         {r.label}
                       </option>
@@ -175,33 +172,19 @@ export function FovCalculatorPage() {
 
             <Panel title="Kamera">
               <FilterBar columns={2} className="mb-0">
-                <FilterCell
+                <PresetSelect
                   label="Hazır kamera"
-                  htmlFor="camera-preset"
+                  options={presets.camera}
+                  value={cameraSlug}
                   className="sm:col-span-2"
-                >
-                  <Select
-                    id="camera-preset"
-                    defaultValue=""
-                    className={filterControlClass}
-                    onChange={(e) => {
-                      const p = cameraPresets[Number(e.target.value)];
-                      if (!p) return;
-                      setPixelSize(p.pixelSize);
-                      setSensorWidth(p.sensorWidth);
-                      setSensorHeight(p.sensorHeight);
-                    }}
-                  >
-                    <option value="" disabled>
-                      Seç veya elle gir…
-                    </option>
-                    {cameraPresets.map((p, i) => (
-                      <option key={p.label} value={i}>
-                        {p.label}
-                      </option>
-                    ))}
-                  </Select>
-                </FilterCell>
+                  onSelect={(p) => {
+                    setCameraSlug(p?.slug ?? '');
+                    if (!p) return;
+                    setPixelSize(p.pixelSize);
+                    setSensorWidth(p.sensorWidth);
+                    setSensorHeight(p.sensorHeight);
+                  }}
+                />
                 <FilterCell label="Piksel (µm)" htmlFor="px">
                   <Input
                     id="px"

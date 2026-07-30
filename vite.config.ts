@@ -90,8 +90,59 @@ function serviceWorker(): Plugin {
   };
 }
 
+/**
+ * Kimlik doğrulama yapılandırmasını derleme zamanında doğrular.
+ *
+ * `VITE_` ile başlayan değişkenler pakete DERLEME ANINDA gömülür. Bu
+ * yüzden Supabase anahtarları olmadan alınan bir üretim derlemesi
+ * kusursuz görünen ama hiç kimsenin giriş yapamadığı bir site üretiyor:
+ * `isSupabaseConfigured` false kalıyor ve giriş formu "Kimlik doğrulama
+ * henüz yapılandırılmadı" diyor. Hata çalışma zamanında, kullanıcının
+ * karşısında ortaya çıkıyor — oysa sebebi tamamen derleme zamanında
+ * belliydi.
+ *
+ * `.env` depoya girmediği için (girmemeli de) değerler dağıtım ortamının
+ * kendi panelinden gelir. Orada tanımlanmayı unutmak sessiz kalmamalı.
+ *
+ * NEDEN HER YERDE HATA DEĞİL: CI yalnızca derlemenin tamamlandığını
+ * doğruluyor ve gizli anahtarlara ihtiyacı yok; orada zorunlu tutmak,
+ * güvenlik kazancı olmadan boruyu kırardı. Bu yüzden gerçek bir dağıtım
+ * derlemesinde (Vercel) HATA, başka her yerde UYARI.
+ */
+function authConfigGuard(): Plugin {
+  const required = ['VITE_SUPABASE_URL', 'VITE_SUPABASE_ANON_KEY'];
+
+  return {
+    name: 'astrohub-auth-config-guard',
+    apply: 'build',
+    configResolved(config) {
+      const missing = required.filter((key) => !config.env[key]?.trim());
+      if (missing.length === 0) return;
+
+      const message =
+        `${missing.join(' ve ')} tanımlı değil. Bu değişkenler pakete ` +
+        'derleme anında gömülür; eksikken çıkan derlemede giriş ve kayıt ' +
+        'tamamen kapalı olur. Değerleri dağıtım ortamının ortam değişkeni ' +
+        'ayarlarına girin (Vercel → Project Settings → Environment Variables).';
+
+      // `VERCEL` yalnızca Vercel'in kendi derleme ortamında tanımlıdır;
+      // yerel `npm run build` ve CI bu dala girmez.
+      if (process.env.VERCEL) {
+        throw new Error(`[astrohub] Dağıtım durduruldu — ${message}`);
+      }
+      config.logger.warn(`[astrohub] ${message}`);
+    },
+  };
+}
+
 export default defineConfig({
-  plugins: [react(), tailwindcss(), sitemap(), serviceWorker()],
+  plugins: [
+    react(),
+    tailwindcss(),
+    authConfigGuard(),
+    sitemap(),
+    serviceWorker(),
+  ],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

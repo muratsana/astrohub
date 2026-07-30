@@ -33,7 +33,17 @@ export function TvToggle({ className }: { className?: string }) {
       )}
     >
       <TvIcon className="h-3.5 w-3.5 shrink-0" />
-      TV
+      {/*
+        Etiket `sm` altında gizli. 360px'te üst çubuk 31px taşıyordu ve
+        ölçüm en pahalı iki kalemin metinli TV (53px) ve Radyo (72px)
+        düğmeleri olduğunu gösterdi — Modüller ve hesap düğmesi telefonda
+        zaten yalnızca ikon, tutarsızlık buradaydı.
+
+        Metni gizlemek bilgi kaybetmiyor: erişilebilir ad `aria-label`'da
+        duruyor, canlı yayın durumunu da kehribar kenar ve nokta taşıyor —
+        "TV" kelimesi zaten durumu anlatmıyordu.
+      */}
+      <span className="hidden sm:inline">TV</span>
       {live && (
         <span
           aria-hidden

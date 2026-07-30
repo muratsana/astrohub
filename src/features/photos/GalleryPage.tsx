@@ -206,7 +206,15 @@ export function GalleryPage() {
             hint="Filtreleri gevşetmeyi ya da katalog kodunu boşluksuz yazmayı deneyin (M31)."
           />
         ) : (
-          <CardGrid view={view} density="tight">
+          /*
+            Yoğunluk `tight` değil `default`: galeri 5 kolonda 261px'lik
+            karolar çiziyordu, haber/etkinlik/yazı ise 4 kolonda 329px.
+            Sayfadan sayfaya geçen kullanıcı için bu, aynı sitenin iki
+            ayrı ızgarası gibi okunuyordu. `tight` küçük veri karoları
+            için duruyor (hedef kataloğu); fotoğraf bir veri karosu değil,
+            asıl içerik — geniş olması hem tutarlı hem doğru.
+          */
+          <CardGrid view={view} density="default">
             {result.map((photo) => (
               <li key={photo.slug}>
                 <PhotoCard photo={photo} variant={view} />
