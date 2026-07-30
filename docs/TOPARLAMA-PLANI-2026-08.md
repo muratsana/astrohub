@@ -250,3 +250,49 @@ sadeleşmesi (QA §14.5: Keşfet/Bu Gece/Planla/Kaydet/Topluluk/Ekipman) Faz 4
 Kabul kapıları için QA raporundaki **§16 Go-live kontrol listesi** esas
 alınır; her faz kapanışında ilgili bölüm işaretlenir. "Tamamlandı" duyurusu,
 P0 listesi kapanmadan yapılmaz.
+
+---
+
+## 13. Durum güncellemesi — 30 Temmuz gecesi
+
+**Kapanan görevler:**
+
+- ✅ T-001 Vercel env düzeltildi (URL `https://`, publishable key); canlı
+  bundle doğrulandı — `isSupabaseConfigured` artık true, katalog DB'den.
+- ✅ T-002 PR #1 merge edildi; dal main ile eşitlendi (çakışmalar çözüldü,
+  main'in `authConfigGuard`'ı `envGuard` ile birleştirildi — preview dahil
+  her Vercel derlemesinde Supabase env zorunlu).
+- ✅ T-003 env nöbeti (+ gizli anahtar sızıntı denetimi), ✅ T-004 "örnek
+  içerik" bandı, ✅ T-005 leaked password koruması + Auth URL yapılandırması,
+  ✅ T-006 `npm audit` tamamen sıfır (react-router 8.3 + vite/vitest/eslint),
+  ✅ T-007 Node 22 sabit.
+- ✅ T-101/102/103(kısmi)/104/105/107 — hava parser'ları eksik veriyi asla
+  iyi koşul saymıyor; gece IANA diliminde; GMST/Ay doğruluk notları.
+  Kalan: T-106 (topocentric kütüphane değerlendirmesi), T-103'ün amaç
+  bazlı tam karar motoru (Faz 7 MUST-01 ile birlikte).
+- ✅ T-203 boş tablo artık üretimde tohuma düşmüyor; ✅ T-501 radyo
+  panel→oynatıcı bağlandı; ✅ haber/yazı sayfaları `content_entries`e
+  bağlandı (useNews/useArticles — QA'da olmayan bulgu).
+
+**T-201 çalıştırma kılavuzu (SUPABASE_ACCESS_TOKEN isteyen oturumda):**
+
+Canlı geçmiş 26 timestamp-sürümlü kayıt; repo dosyaları `0001–0025`
+önekli ve migration aracı dışında yüklenmiş katalog verisi var. Bu yüzden
+`db push` bugün çalıştırılırsa her şeyi yeniden uygulamaya kalkar. Sıra:
+
+1. `SUPABASE_ACCESS_TOKEN` + `SUPABASE_DB_PASSWORD` ortama girilir;
+   `npm run db:migrations` ile iki taraflı fark dökülür.
+2. Karar: **canlı şema baseline kabul edilir.** `supabase db pull` ile tek
+   baseline migration üretilir; mevcut `0001–0025` dosyaları
+   `supabase/migrations-arsiv/` altına taşınır (tarihçe için, uygulanmaz).
+3. `supabase migration repair --status applied <baseline>` ile bookkeeping
+   eşitlenir; `supabase db push --dry-run` **boş** çıkana kadar tekrar.
+4. Piyasa kataloğu/teknik veri gibi veri yüklemeleri migration değil,
+   `scripts/` altında idempotent import komutu olarak yeniden yazılır
+   (T-206 ile birleşir).
+5. Staging projesi (T-202) bu baseline'dan kurulur; RLS test matrisi
+   (T-204) staging'de koşar.
+
+**Sıradaki blok:** T-202 staging + T-201 (yukarıdaki kılavuz) → Faz 3
+(SEO/performans) → Faz 4 (GUI). T-504 (ödeme) ve T-509 (tile lisansı)
+kararları hâlâ açık.
