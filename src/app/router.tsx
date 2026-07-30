@@ -83,7 +83,12 @@ const panelPage = () =>
  * Modül adları değiştiği için URL'ler de hizalandı; eski adresler kalıcı
  * yönlendirmeyle korunur (yer imleri ve arama motoru indeksi kırılmasın).
  */
-export const router = createRouter([
+/**
+ * Rota tanımları — hem tarayıcı router'ı hem prerender (SSG) bunları
+ * kullanır. Prerender tarafı `createStaticHandler` ile aynı ağacı statik
+ * olarak çözer; iki ayrı liste tutmak, birinin sessizce eskimesi demekti.
+ */
+export const appRoutes = [
   {
     path: '/',
     element: <AppShell />,
@@ -491,4 +496,6 @@ export const router = createRouter([
       { path: '*', element: <NotFoundPage /> },
     ],
   },
-]);
+];
+
+export const router = createRouter(appRoutes);
