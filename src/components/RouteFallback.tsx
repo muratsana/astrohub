@@ -9,7 +9,20 @@ import { Container } from '@/components/ui/Container';
 export function RouteFallback() {
   return (
     <Container className="py-10 sm:py-14">
-      <div role="status" aria-live="polite" className="min-h-[60vh]">
+      {/*
+        `data-route-loading`: rota chunk'ı hâlâ inerken DOM'dan okunabilen
+        deterministik işaret. E2E'nin buna ihtiyacı var — "h1 var mı" diye
+        beklemek yetmiyor: gezinme anında ÖNCEKİ sayfanın h1'i hâlâ ekranda
+        oluyor, bekleme anında geçiyor ve sonra iskelet boyanınca h1 bir an
+        kayboluyordu. Test o boşluğa denk geldiğinde kararsız biçimde
+        düşüyordu (CI'da yakalandı).
+      */}
+      <div
+        role="status"
+        aria-live="polite"
+        data-route-loading=""
+        className="min-h-[60vh]"
+      >
         <span className="sr-only">Sayfa yükleniyor…</span>
 
         <div aria-hidden className="animate-pulse space-y-8">

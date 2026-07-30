@@ -38,6 +38,13 @@ jobs:
       - name: Build
         run: npm run build
 
+      # Performans bütçesi kalite kapısıdır: burada, merge'den ÖNCE
+      # denetlenir. Bilerek `npm run build` zincirinde DEĞİL — bir boyut
+      # gerilemesi üretim dağıtımını bloke etmemeli; kapının işi kötü
+      # değişikliği main'e sokmamak.
+      - name: İlk yükleme bütçesi
+        run: npm run check:budgets
+
   preview:
     # Önizleme derlemesi (tek dosya, gömülü varlıklar) üretim derlemesinden
     # farklı bir yoldan geçer; ona özgü hatalar birim testlerinde görünmez.
