@@ -213,6 +213,20 @@ export function UploadWizardPage() {
 
       await publishPhoto(result.photoId);
       setPublishState('bitti');
+
+      /*
+       * Poz künyesi yazılamadıysa fotoğraf yine yayımlandı — o hata
+       * fotoğrafı götürecek kadar büyük değil. Ama kullanıcı girdiği veriyi
+       * kaybettiğini BİLMELİ: sessizce panele göndermek, poz bilgilerinin
+       * kaydedildiği izlenimini bırakırdı.
+       */
+      if (!result.exposuresSaved) {
+        setPublishError(
+          'Fotoğraf yayımlandı ama poz bilgileri kaydedilemedi. Fotoğraf sayfasından yeniden ekleyebilirsiniz.'
+        );
+        return;
+      }
+
       navigate('/panel');
     } catch (error) {
       setPublishState('idle');
