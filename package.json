@@ -9,7 +9,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build && npm run prerender && npm run check:budgets",
+    "build": "tsc -b && vite build && npm run prerender",
     "preview": "vite preview",
     "build:preview": "vite build --config vite.preview.config.ts",
     "lint": "eslint .",
@@ -19,7 +19,7 @@
     "format": "prettier --write \"src/**/*.{ts,tsx,css}\"",
     "check:preview": "node scripts/check-preview.mjs",
     "test:e2e": "npm run build:preview && node scripts/e2e.mjs",
-    "test:all": "npm run typecheck && npm run lint && npm test && npm run check:preview && node scripts/e2e.mjs",
+    "test:all": "npm run typecheck && npm run lint && npm test && npm run build && npm run check:budgets && npm run check:preview && node scripts/e2e.mjs",
     "db:link": "supabase link --project-ref eoqggvosegjbburyuyba",
     "db:push": "npm run db:link && supabase db push --linked --yes",
     "db:diff": "npm run db:link && supabase db diff --linked",

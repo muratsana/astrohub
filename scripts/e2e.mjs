@@ -77,16 +77,34 @@ async function goto(route) {
   await page.evaluate((r) => {
     location.hash = `#${r}`;
   }, route);
-  // Kod bölünmüş rotalar bir tur sonra boyanıyor; sabit bekleme yerine
-  // başlığın gelmesini bekliyoruz.
-  await page.waitForFunction(() => document.querySelector('h1') !== null, {
-    timeout: 5000,
-  });
-  await page.waitForTimeout(250);
+
+  /*
+   * "h1 geldi mi" tek başına yetmez: gezinme anında önceki sayfanın h1'i
+   * hâlâ DOM'da olduğu için bekleme anında geçiyor, ardından lazy chunk
+   * inerken iskelet boyanıyor ve h1 bir an KAYBOLUYOR. Test o boşluğa
+   * denk geldiğinde kararsız biçimde düşüyordu.
+   *
+   * Doğru koşul iki parçalı: adres istenen rotaya geçmiş olmalı VE rota
+   * iskeleti (`data-route-loading`) ekranda olmamalı. İkisi sağlandığında
+   * ekranda duran h1 gerçekten yeni rotanın başlığıdır.
+   */
+  await page.waitForFunction(
+    (r) => {
+      const hash = location.hash.replace(/^#/, '') || '/';
+      if (hash !== r) return false;
+      if (document.querySelector('[data-route-loading]')) return false;
+      return document.querySelector('h1') !== null;
+    },
+    route,
+    { timeout: 10_000 }
+  );
+  await page.waitForTimeout(150);
 }
 
 async function heading() {
-  return (await page.$eval('h1', (el) => el.textContent ?? '')).trim();
+  // Beklemeli okuma: geçici bir boşluk assertion'ı düşürmesin.
+  const el = await page.waitForSelector('h1', { timeout: 10_000 });
+  return (await el.textContent())?.trim() ?? '';
 }
 
 await page.goto(BASE, { waitUntil: 'load' });
