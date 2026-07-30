@@ -299,6 +299,48 @@ kararları hâlâ açık.
 
 ---
 
+## 14. Durum güncellemesi — 30 Temmuz öğleden sonra
+
+**Faz 3 kapandı** (T-301/302/303/305/307): prerender ile 421 rota ham
+HTML'de gerçek içerik/meta taşıyor, sosyal kartlar çalışıyor, görseller
+`srcset` ile iniyor, sitemap DB'den besleniyor, ilk yükleme bütçesi CI
+kapısı. Bilinmeyen adres nötr kabuk alıyor ve `404.html` üretiliyor.
+
+**Faz 4a kapandı** (GUI-01/02/03/10/11): kontrast üç temada AA, 478 punto
+sınıfı üç semantik token'a taşındı, dokunma hedefleri standartta, ana
+sayfada tek `h1`. İki yeni CI kapısı: kontrast (oranlar CSS'ten okunuyor)
+ve erişilebilirlik denetimi (gerçek tarayıcıda ölçüm).
+
+**Faz 4b kısmi**: `Alert` bileşeni — 17 yerde 11 farklı sınıf
+kombinasyonuyla yazılmış durum mesajları tek sözleşmeye alındı.
+Kalan durum bileşenleri (Loading/Offline/AuthRequired) **bilinçli
+ertelendi**: gerçek tekrar bulunamadı, kullanılmayan soyutlama eklemek
+çözdüğünden çok sorun yaratır.
+
+**T-506 kapandı** — dört katman üretimde ölçülerek doğrulandı (403/400/
+ızgara/429). Dördüncü katman iki kez yazıldı: bellek içi sayaç üretimde
+hiç tetiklenmedi (her istek ayrı isolate), veritabanına taşındı.
+
+### Bu turda ortaya çıkan yeni bulgular
+
+| # | Bulgu | Durum |
+| --- | --- | --- |
+| B15 | `ButtonLink` `aria-label`'ı iletmiyordu — kaynakta doğru görünen, çıktıda olmayan sessiz erişilebilirlik hatası | ✅ düzeltildi |
+| B16 | E2E'de iki kararsız senaryo (gezinme sonrası tek karelik okuma) CI'ı rastgele kırmızıya düşürüyordu | ✅ `waitForText` ile sınıf kapatıldı |
+| B17 | `vercel.json`'a yazılan yorum anahtarı dağıtımı sessizce reddettiriyordu | ✅ kaldırıldı |
+| B18 | **`METEOBLUE_API_KEY` üretimde tanımlı değil** — iki hava servisi tasarımı canlıda tek servis olarak çalışıyor | ⏳ **Sen**: anahtarı ekle + sağlayıcıda harcama limiti ayarla |
+
+### Kalan sıra
+
+1. **T-201/T-202** — migration hizalaması + staging (token/proje gerekiyor)
+2. **T-301 kalanı** — bilinmeyen adres gerçek 404 durum kodu (middleware)
+3. **T-502/503** — fotoğraf yükleme durum makinesi ve sunucu tarafı görsel
+   doğrulama (kullanıcı yüklemesi başlamadan önce bitmeli)
+4. **T-507** — CSP Report-Only → enforce
+5. **T-504 (ödeme)** ve **T-509 (harita lisansı)** — senin kararların
+
+---
+
 ## 14. Faz 3 durumu (30 Temmuz, ikinci blok)
 
 - ✅ **T-304 kod ayağı + T-305** — `srcset/sizes` her görsel kullanımında;
