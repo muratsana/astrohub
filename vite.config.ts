@@ -15,7 +15,7 @@ import { validateClientEnv } from './src/lib/envCheck';
 function envGuard(): Plugin {
   return {
     name: 'astrohub-env-guard',
-    apply: 'build',
+    apply: (_config, env) => env.command === 'build' && !env.isSsrBuild,
     configResolved(config) {
       const errors = validateClientEnv(
         {
@@ -52,7 +52,7 @@ function sitemap(): Plugin {
 
   return {
     name: 'astrohub-sitemap',
-    apply: 'build',
+    apply: (_config, env) => env.command === 'build' && !env.isSsrBuild,
     configResolved(config) {
       siteUrl = config.env.VITE_SITE_URL?.trim();
     },
@@ -91,7 +91,7 @@ function serviceWorker(): Plugin {
 
   return {
     name: 'astrohub-sw',
-    apply: 'build',
+    apply: (_config, env) => env.command === 'build' && !env.isSsrBuild,
     configResolved(config) {
       routerMode = config.env.VITE_ROUTER_MODE;
     },
@@ -124,7 +124,7 @@ function serviceWorker(): Plugin {
   };
 }
 
-export default defineConfig({
+export default defineConfig(({ isSsrBuild }) => ({
   plugins: [envGuard(), react(), tailwindcss(), sitemap(), serviceWorker()],
   resolve: {
     alias: {
@@ -137,30 +137,34 @@ export default defineConfig({
   },
   build: {
     rollupOptions: {
-      output: {
-        /**
-         * Satıcı kodunu ayrı chunk'lara böler (§16.4). React ve router
-         * sürümler arası sabit kaldığı için ayrı dosyada tutulunca uzun
-         * ömürlü CDN cache'inden yararlanır; uygulama kodu değiştiğinde
-         * kullanıcı bunları yeniden indirmez.
-         */
-        manualChunks: {
-          // `react-dom/client` ayrıca listelenir: uygulama paketi bu alt
-          // girişten yüklüyor ve yalnızca 'react-dom' verildiğinde React DOM
-          // çalışma zamanı satıcı chunk'ına değil uygulama chunk'ına düşüyor.
-          'vendor-react': [
-            'react',
-            'react-dom',
-            'react-dom/client',
-            'react-router',
-          ],
-          'vendor-query': ['@tanstack/react-query'],
-          'vendor-forms': ['react-hook-form', '@hookform/resolvers', 'zod'],
-          // @supabase/supabase-js bilerek listelenmez: tembel içe aktarılır
-          // (services/supabase/client.ts) ve manualChunks'a alınırsa eager
-          // yüklenen bir grupla birleşip bu kazancı yok eder.
-        },
-      },
+      output: isSsrBuild
+        ? // SSR (prerender) paketinde bağımlılıklar external kalır;
+          // manualChunks orada geçersizdir ve derlemeyi kırar.
+          {}
+        : {
+            /**
+             * Satıcı kodunu ayrı chunk'lara böler (§16.4). React ve router
+             * sürümler arası sabit kaldığı için ayrı dosyada tutulunca uzun
+             * ömürlü CDN cache'inden yararlanır; uygulama kodu değiştiğinde
+             * kullanıcı bunları yeniden indirmez.
+             */
+            manualChunks: {
+              // `react-dom/client` ayrıca listelenir: uygulama paketi bu alt
+              // girişten yüklüyor ve yalnızca 'react-dom' verildiğinde React DOM
+              // çalışma zamanı satıcı chunk'ına değil uygulama chunk'ına düşüyor.
+              'vendor-react': [
+                'react',
+                'react-dom',
+                'react-dom/client',
+                'react-router',
+              ],
+              'vendor-query': ['@tanstack/react-query'],
+              'vendor-forms': ['react-hook-form', '@hookform/resolvers', 'zod'],
+              // @supabase/supabase-js bilerek listelenmez: tembel içe aktarılır
+              // (services/supabase/client.ts) ve manualChunks'a alınırsa eager
+              // yüklenen bir grupla birleşip bu kazancı yok eder.
+            },
+          },
     },
   },
-});
+}));
