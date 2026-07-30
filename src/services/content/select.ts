@@ -25,6 +25,14 @@ export interface ContentSelection<T> {
   /** Veritabanı yapılandırılmış ama okunamadı; gösterilen liste yerel. */
   degraded: boolean;
   /**
+   * Veritabanı yapılandırılmış mı? Arayüz bununla "tohum" un ne anlama
+   * geldiğini ayırt eder: yapılandırma varken gelen tohum, "tablo henüz
+   * boş" demektir ve kullanıcıya örnek içerik gösterildiği söylenmelidir;
+   * yapılandırma yokken (tek dosya önizleme, çevrimdışı) tohum zaten
+   * tasarlanmış çalışma biçimidir, etiket gürültü olur.
+   */
+  configured: boolean;
+  /**
    * Listeyi veritabanından yeniden çeker.
    *
    * Yazma akışları için: forum yanıtı gönderildiğinde liste kendiliğinden
@@ -46,7 +54,7 @@ export function selectContent<T>(params: {
   const { seed, rows, configured, failed, refresh = () => {} } = params;
 
   if (rows && rows.length > 0) {
-    return { items: rows, source: 'db', degraded: false, refresh };
+    return { items: rows, source: 'db', degraded: false, configured, refresh };
   }
 
   return {
@@ -54,6 +62,7 @@ export function selectContent<T>(params: {
     source: 'seed',
     // Yapılandırma yokken bozulma yok — o zaten tasarlanmış çalışma biçimi.
     degraded: configured && failed,
+    configured,
     refresh,
   };
 }

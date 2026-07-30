@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/FilterBar';
 import { CardGrid } from '@/components/ui/CardGrid';
 import { ToolBar, ResultCount } from '@/components/ui/ToolBar';
+import { CatalogSourceNote } from '@/components/ui/CatalogSourceNote';
 import { useViewMode } from '@/components/ui/useViewMode';
 import { PhotoCard } from './PhotoCard';
 import { usePhotoCatalog } from '@/services/content/photos';
@@ -177,6 +178,8 @@ export function GalleryPage() {
             </Select>
           </FilterCell>
         </FilterBar>
+
+        <CatalogSourceNote selection={catalog} />
 
         <ToolBar
           left={
