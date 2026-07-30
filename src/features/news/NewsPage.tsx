@@ -6,11 +6,8 @@ import { ViewToggle } from '@/components/ui/ViewToggle';
 import { EditorialList, type EditorialItem } from '@/components/ui/EditorialList';
 import { useViewMode } from '@/components/ui/useViewMode';
 import { cn } from '@/lib/cn';
-import {
-  sortedNews,
-  newsCategoryLabels,
-  type NewsCategory,
-} from './data';
+import { newsCategoryLabels, type NewsCategory } from './data';
+import { useNewsItems } from './useNews';
 
 /**
  * HABERLER — güncel astronomi ve uzay gündemi.
@@ -41,7 +38,8 @@ export function NewsPage() {
   const [category, setCategory] = useState<NewsCategory | 'hepsi'>('hepsi');
   const [view, setView] = useViewMode('haberler');
 
-  const all = useMemo(() => sortedNews(), []);
+  // Tohum + panelden yayımlananlar tek listede (useNews.ts).
+  const { items: all } = useNewsItems();
   const result = useMemo(
     () => (category === 'hepsi' ? all : all.filter((n) => n.category === category)),
     [all, category]
