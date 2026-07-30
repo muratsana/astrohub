@@ -3,7 +3,320 @@
   "framework": "vite",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "rewrites": [{ "source": "/(.*)", "destination": "/app.html" }],
+  "rewrites": [
+    {
+      "source": "/adana-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/admin",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/ankara-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/antalya-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/araclar",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/araclar/fov",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/araclar/isik-kirliligi",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/araclar/mosaic",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/araclar/pixel-scale",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/araclar/setup-uyumluluk",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/araclar/takvim",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/bu-gece",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/bursa-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/canakkale-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/cerezler",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/diyarbakir-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/egitim",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/egitim/:slug",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/ekipman",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/ekipman/:brand/:slug",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/ekipman/:category",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/ekipman/karsilastir",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/erzurum-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/etkinlik/:slug",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/etkinlikler",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/etkinlikler/harita",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/forum",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/forum/:slug",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/forum/yeni",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/fotograf/:slug",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/fotograflar",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/fotograflar/yukle",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/galeri",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/galeri/yukle",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/gaziantep-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/giris",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/gozlem-noktasi/:slug",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/haber/:slug",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/haberler",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/hakkinda",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/harita",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/harita/etkinlikler",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/harita/gozlem-noktalari",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/harita/isik-kirliligi",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/harita/istasyonlar",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/hedef/:slug",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/hedefler",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/hesap",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/ikinci-el",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/ilan/:slug",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/ilan/yeni",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/ilanlar",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/istanbul-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/izmir-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/kayit",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/kayseri-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/kesfet",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/konya-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/kullanim-kosullari",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/kvkk",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/mugla-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/panel",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/panel/:section",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/planlayici",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/profil/:username",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/radyo",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/saha",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/saha/:slug",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/saha/istasyonlar",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/setup/:id",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/tesisler",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/topluluk/:slug",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/topluluklar",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/trabzon-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/tv",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/van-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/yazi/:slug",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/yazilar",
+      "destination": "/app.html"
+    }
+  ],
   "headers": [
     {
       "source": "/assets/(.*)",
@@ -16,14 +329,28 @@
     },
     {
       "source": "/sw.js",
-      "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache"
+        }
+      ]
     },
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "SAMEORIGIN"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
         {
           "key": "Permissions-Policy",
           "value": "camera=(), microphone=(), payment=(), geolocation=(self)"
