@@ -79,7 +79,8 @@ export function PreviewEditorPanel() {
             type="button"
             onClick={() => setOpen(false)}
             aria-label="Paneli kapat"
-            className="rounded-card border border-border p-1.5 text-muted-foreground hover:border-border-strong hover:text-foreground"
+            /* 44×44: ikon kontrolü (WCAG 2.5.5). */
+            className="flex h-11 w-11 items-center justify-center rounded-card border border-border text-muted-foreground hover:border-border-strong hover:text-foreground"
           >
             <CloseIcon className="h-4 w-4" />
           </button>

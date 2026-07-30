@@ -165,17 +165,19 @@ export function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
             {/*
               Telefonda hesap girişi ikon: "Hesap" metni son 7px'i
               taşırıyordu (önizleme denetimi ölçtü). Erişilebilir ad
-              `aria-label` ile korunuyor, dokunma hedefi 32px kalıyor
-              (§6.7). `/giris` sayfası kayıt bağlantısını zaten taşıyor.
+              `ariaLabel` ile korunuyor; ikon kontrolü olduğu için hedef
+              44×44 (WCAG 2.5.5 — genişletecek metni yok).
+              `/giris` sayfası kayıt bağlantısını zaten taşıyor.
             */}
             <span className="sm:hidden">
               <ButtonLink
                 to={user ? '/hesap' : '/giris'}
                 size="sm"
                 variant="secondary"
-                aria-label={user ? 'Hesabım' : 'Giriş yap veya kaydol'}
+                ariaLabel={user ? 'Hesabım' : 'Giriş yap veya kaydol'}
+                className="h-11 w-11 justify-center px-0"
               >
-                <UserIcon className="h-3.5 w-3.5" />
+                <UserIcon className="h-4 w-4" />
               </ButtonLink>
             </span>
 

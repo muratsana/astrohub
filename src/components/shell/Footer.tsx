@@ -31,7 +31,10 @@ export function Footer() {
               <Link
                 key={item.to}
                 to={item.to}
-                className="text-meta tracking-[0.03em] text-muted-foreground transition-colors hover:text-primary"
+                /* inline-block + py-1: dokunma hedefi 24px'e çıkar
+                   (WCAG 2.2 AA, 2.5.8). Satır yüksekliği tek başına 17px
+                   veriyordu. */
+                className="inline-block py-1 text-meta tracking-[0.03em] text-muted-foreground transition-colors hover:text-primary"
               >
                 {item.label}
               </Link>
@@ -47,7 +50,7 @@ export function Footer() {
               <Link
                 key={item.to}
                 to={item.to}
-                className="transition-colors hover:text-muted-foreground"
+                className="inline-block py-1 transition-colors hover:text-muted-foreground"
               >
                 {item.label}
               </Link>

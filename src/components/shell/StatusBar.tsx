@@ -168,7 +168,7 @@ function LocationPicker() {
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         aria-haspopup="listbox"
-        className="inline-flex items-center gap-1 text-meta font-medium tracking-[0.03em] text-foreground transition-colors hover:text-primary"
+        className="inline-flex min-h-6 items-center gap-1 text-meta font-medium tracking-[0.03em] text-foreground transition-colors hover:text-primary"
       >
         {location.label}
         {location.source === 'device' && (

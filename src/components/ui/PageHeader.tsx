@@ -46,7 +46,7 @@ export function PageHeader({
                 {crumb.to ? (
                   <Link
                     to={crumb.to}
-                    className="transition-colors hover:text-foreground"
+                    className="inline-block py-1 transition-colors hover:text-foreground"
                   >
                     {crumb.label}
                   </Link>

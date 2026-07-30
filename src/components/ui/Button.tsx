@@ -67,21 +67,43 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 Button.displayName = 'Button';
 
 /** Button görünümünde bir router bağlantısı (CTA'lar için). */
+/**
+ * Bağlantı görünümlü düğme.
+ *
+ * `aria-label`/`title` GEÇİRİLİYOR — geçmiyordu ve bu sessiz bir
+ * erişilebilirlik hatasıydı: üst çubuktaki ikon bağlantısına (mobil
+ * giriş/hesap) etiket yazılmıştı ama bileşen onu DOM'a taşımadığı için
+ * ekran okuyucuda hâlâ adsızdı. Denetimde yakalandı (QA GUI-11);
+ * `check-a11y` betiği bir daha kaçmasını engelliyor.
+ *
+ * Rest-spread yerine açık alan listesi: hangi özniteliğin geçtiği
+ * okunabilir kalsın ve yanlışlıkla `onClick` gibi şeyler bağlantıya
+ * sızmasın.
+ */
 export function ButtonLink({
   to,
   variant = 'primary',
   size = 'md',
   className,
   children,
+  ariaLabel,
+  title,
 }: {
   to: string;
   variant?: Variant;
   size?: Size;
   className?: string;
   children: ReactNode;
+  ariaLabel?: string;
+  title?: string;
 }) {
   return (
-    <Link to={to} className={buttonClasses(variant, size, className)}>
+    <Link
+      to={to}
+      aria-label={ariaLabel}
+      title={title}
+      className={buttonClasses(variant, size, className)}
+    >
       {children}
     </Link>
   );

@@ -160,7 +160,14 @@ export function TonightPanel() {
 
       <Container className="border-b border-border py-5 sm:py-6">
         <header className="mb-3 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <h1 className="text-[20px] text-foreground sm:text-[23px]">Bu Gece</h1>
+          {/*
+            h2, h1 DEĞİL. Ana sayfada iki h1 vardı (hero başlığı + bu
+            panel); ekran okuyucu için sayfanın iki ana başlığı olmuş
+            oluyor ve belge hiyerarşisi kırılıyordu (QA GUI-03/SEO-04).
+            Sayfanın h1'i hero'daki karşılama başlığı; bu panel onun
+            altındaki bir bölüm.
+          */}
+          <h2 className="text-[20px] text-foreground sm:text-[23px]">Bu Gece</h2>
           <span className="label">{location.label}</span>
           <span aria-hidden className="h-3 w-px bg-border" />
           <span className="tabular text-meta text-muted-foreground">

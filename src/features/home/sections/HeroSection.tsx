@@ -202,7 +202,15 @@ export function HeroSection() {
                 aria-selected={i === index}
                 aria-label={`${i + 1}. slayt: ${s.badge}`}
                 onClick={() => go(i)}
-                className="group px-1 py-2"
+                /*
+                  DOKUNMA HEDEFİ 44×44 (WCAG 2.5.8 / QA GUI-10).
+                  Gösterge ÇİZGİSİ ince kalıyor — tasarım kararı o — ama
+                  parmakla basılan alan değil. Önceki hâli ~24×19px'ti ve
+                  mobilde yanlış slayda geçmek kolaydı. Alan yükseklikle
+                  değil `flex` + sabit ölçüyle veriliyor; çizgi ortada
+                  duruyor, kutu görünmez.
+                */
+                className="group flex h-11 w-11 items-center justify-center"
               >
                 <span
                   className={cn(
@@ -312,7 +320,8 @@ function NavArrow({
       onClick={onClick}
       aria-label={side === 'left' ? 'Önceki slayt' : 'Sonraki slayt'}
       className={cn(
-        'absolute top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center',
+        // 44×44: WCAG 2.5.8 asgari dokunma hedefi (önceki 40×40 sınırın altındaydı).
+        'absolute top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center',
         'rounded-card border border-border bg-background/70 text-muted-foreground backdrop-blur-sm',
         'transition-colors hover:border-primary hover:text-primary',
         side === 'left' ? 'left-3' : 'right-3'

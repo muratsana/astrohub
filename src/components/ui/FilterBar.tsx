@@ -116,7 +116,9 @@ export function FilterToggle({
           type="checkbox"
           checked={checked}
           onChange={(e) => onChange(e.target.checked)}
-          className="h-3.5 w-3.5 rounded-[2px] border-border accent-primary"
+          /* 24px: WCAG 2.2 AA dokunma hedefi (2.5.8). 14px'lik kutu
+             mobilde parmakla vurulamıyordu. */
+          className="h-6 w-6 rounded-[2px] border-border accent-primary"
         />
         {label}
       </label>

@@ -44,7 +44,10 @@ export function ViewToggle({
           aria-label={label}
           title={label}
           className={cn(
-            'flex h-8 w-9 items-center justify-center border-l border-border transition-colors first:border-l-0',
+            /* 44×44: ikon kontrolü, genişletecek metni yok (WCAG 2.5.5).
+               Önceki 36×32 mobilde iki düğme arasında yanlış basmaya
+               açıktı. */
+            'flex h-11 w-11 items-center justify-center border-l border-border transition-colors first:border-l-0',
             mode === value
               ? 'bg-primary text-primary-foreground'
               : 'text-muted-foreground hover:bg-surface-2 hover:text-foreground'

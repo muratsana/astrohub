@@ -76,6 +76,12 @@ jobs:
       # build` var. Bozuk bir akış (ölü düğme, kırılan rota) derlenip
       # yayına çıkabiliyordu. Yayın dalına giren her değişiklik artık
       # yirmi beş senaryodan geçiyor.
+      # Erişilebilirlik kapısı: dokunma hedefleri ve ikon kontrollerinin
+      # adları gerçek tarayıcıda ölçülür. Sınıf adından çıkarım yapmak
+      # yanıltıcıydı — son ölçü padding ve kabın yüksekliğinden çıkıyor.
+      - name: Erişilebilirlik denetimi
+        run: npm run check:a11y
+
       - name: E2E senaryoları
         run: node scripts/e2e.mjs
 
