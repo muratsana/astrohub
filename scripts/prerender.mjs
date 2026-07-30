@@ -99,7 +99,7 @@ async function worker() {
 await Promise.all(Array.from({ length: POOL }, worker));
 
 /*
- * SPA KABUĞU AYRI DOSYAYA YAZILIR.
+ * SPA KABUĞU AYRI DOSYAYA YAZILIR — `vercel.json` bu dosyaya rewrite eder.
  *
  * Vercel'in yakala-hepsini rewrite'ı `/index.html`e düşüyordu; index.html
  * artık prerender edilmiş ANA SAYFA olduğu için bilinmeyen her adres ham
@@ -108,6 +108,11 @@ await Promise.all(Array.from({ length: POOL }, worker));
  * içeriği taşımayan orijinal şablondur; sitemap'te olmayan dinamik yollar
  * (kullanıcı fotoğrafı, panel, forum konusu) ona düşer ve içeriği istemci
  * çizer — prerender öncesi davranışın aynısı.
+ *
+ * NOT — `vercel.json` YORUM KABUL ETMEZ. Bu gerekçe orada bir "//" anahtarı
+ * olarak yazılmıştı ve Vercel yapılandırmayı katı doğruladığı için dağıtımı
+ * derleme başlamadan reddetti (bilinmeyen alan). Rewrite'ın gerekçesi bu
+ * yüzden burada duruyor; vercel.json şemaya birebir uygun kalmalı.
  */
 writeFileSync(path.join(distDir, 'app.html'), template);
 
