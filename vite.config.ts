@@ -5,6 +5,34 @@ import path from 'node:path';
 import { readFileSync } from 'node:fs';
 import { buildSitemapXml } from './src/app/sitemap';
 import { renderServiceWorker } from './src/pwa/buildSw';
+import { validateClientEnv } from './src/lib/envCheck';
+
+/**
+ * Ortam değişkeni nöbeti (T-003). Biçimi bozuk değer her derlemede,
+ * eksik değer yalnızca gerçek üretim dağıtımında (VERCEL_ENV=production)
+ * derlemeyi durdurur. Gerekçe ve kurallar: src/lib/envCheck.ts.
+ */
+function envGuard(): Plugin {
+  return {
+    name: 'astrohub-env-guard',
+    apply: 'build',
+    configResolved(config) {
+      const errors = validateClientEnv(
+        {
+          supabaseUrl: config.env.VITE_SUPABASE_URL,
+          supabaseAnonKey: config.env.VITE_SUPABASE_ANON_KEY,
+          siteUrl: config.env.VITE_SITE_URL,
+        },
+        { production: process.env.VERCEL_ENV === 'production' }
+      );
+      if (errors.length > 0) {
+        throw new Error(
+          `Ortam değişkeni doğrulaması başarısız:\n- ${errors.join('\n- ')}`
+        );
+      }
+    },
+  };
+}
 
 /**
  * Derleme sırasında `sitemap.xml` üretir (§16.2).
@@ -91,7 +119,7 @@ function serviceWorker(): Plugin {
 }
 
 export default defineConfig({
-  plugins: [react(), tailwindcss(), sitemap(), serviceWorker()],
+  plugins: [envGuard(), react(), tailwindcss(), sitemap(), serviceWorker()],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
