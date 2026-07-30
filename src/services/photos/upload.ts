@@ -1,12 +1,17 @@
 import { getSupabase } from '@/services/supabase/client';
 import {
   renderResized,
+  encodeWithinBudget,
   storagePath,
   extensionOf,
   DISPLAY_MAX_EDGE,
   THUMB_MAX_EDGE,
 } from '@/domain/photography/resize';
-import { checkUploadSize } from '@/domain/membership/quota';
+import {
+  checkUploadSize,
+  formatBytes,
+  MAX_STORED_BYTES,
+} from '@/domain/membership/quota';
 import { sanitizeText } from '@/lib/sanitize';
 
 /**
@@ -65,6 +70,8 @@ export interface UploadResult {
   height: number;
   /** Küçültme yapıldı mı — arayüz kullanıcıya bunu söylüyor. */
   optimized: boolean;
+  /** Bu fotoğrafın bucket'larda tuttuğu toplam yer. */
+  storedBytes: number;
 }
 
 export type UploadProgress =
@@ -162,26 +169,70 @@ export async function uploadPhoto(
   }
 
   /*
-   * ORİJİNAL GİZLİ BUCKET'A. Başarısız olursa akış durmuyor: gösterilecek
-   * kopyalar zaten yüklendi ve kullanıcının emeğini bir arşivleme hatası
-   * yüzünden çöpe atmak orantısız olurdu. Eksiklik `original_path`'in boş
-   * kalmasıyla görünür.
+   * ARŞİV KOPYASI GİZLİ BUCKET'A — ama 10 MB bütçesiyle (§4.2).
+   *
+   * Eskiden ham dosya olduğu gibi yükleniyordu ve tek maliyet kalemi buydu:
+   * 100 MB'lık bir TIFF, gösterim kopyalarının elli katı yer tutuyordu. Kota
+   * fotoğraf SAYISINI sınırlıyordu ama BOYUTU serbest bırakmıştı; asıl
+   * maliyet boyuttaydı.
+   *
+   * Bütçenin altındaki dosyaya DOKUNULMUYOR: 6 MB'lık bir JPEG'i yeniden
+   * kodlamak yer kazandırmaz, yalnızca kullanıcının dosyasını sessizce
+   * bozardı. Üstündeki `ARCHIVE_LADDER` ile bütçeye indiriliyor.
+   */
+  const oversize = input.file.size > MAX_STORED_BYTES;
+  let archiveBody: Blob = input.file;
+  let archiveType = input.file.type || 'application/octet-stream';
+  let archiveExtension = extensionOf(input.file.name);
+
+  if (oversize) {
+    const encoded = await encodeWithinBudget(input.file, MAX_STORED_BYTES);
+    if (!encoded || !encoded.withinBudget) {
+      /*
+       * Küçültme hedefe ulaşamadı. Yine de yüklemek, depolama API'sinin
+       * anlaşılmaz 413'üne düşmek olurdu; taslak siliniyor ve kullanıcı ne
+       * yapacağını biliyor.
+       */
+      await supabase.from('astro_photos').delete().eq('id', photoId);
+      throw new Error(
+        `Bu dosya ${formatBytes(MAX_STORED_BYTES)} sınırına indirilemedi. Kaydı dışa aktarırken çözünürlüğü düşürüp yeniden deneyin.`
+      );
+    }
+    archiveBody = encoded.blob;
+    archiveType = 'image/jpeg';
+    archiveExtension = 'jpg';
+  }
+
+  /*
+   * Arşiv yüklemesi başarısız olursa akış durmuyor: gösterilecek kopyalar
+   * zaten yüklendi ve kullanıcının emeğini bir arşivleme hatası yüzünden
+   * çöpe atmak orantısız olurdu. Eksiklik `original_path`'in boş kalmasıyla
+   * görünür.
    */
   const originalPath = storagePath(
     input.userId,
     photoId,
     'original',
-    extensionOf(input.file.name)
+    archiveExtension
   );
   const { error: originalError } = await supabase.storage
     .from('photo-originals')
-    .upload(originalPath, input.file, {
-      contentType: input.file.type || 'application/octet-stream',
+    .upload(originalPath, archiveBody, {
+      contentType: archiveType,
       upsert: true,
     });
 
-  /* ── 3. Yolları yaz ── */
+  /* ── 3. Yolları yaz ──
+   *
+   * `bytes` artık SAKLANAN toplam, seçilen dosyanın boyu değil. Taslak
+   * açılırken ham boyut yazılmıştı çünkü küçültme daha yapılmamıştı; o
+   * sayıyı bırakmak kapasite planını 40 MB'lık bir dosyada dört kat
+   * yanıltırdı. Kullanıcının diskinde ne olduğu bizi ilgilendirmiyor —
+   * bizim bucket'ımızda ne durduğu ilgilendiriyor. */
   onProgress?.('kaydediliyor');
+  const storedBytes =
+    (originalError ? 0 : archiveBody.size) + display.blob.size + thumb.blob.size;
+
   const { error: updateError } = await supabase
     .from('astro_photos')
     .update({
@@ -190,6 +241,7 @@ export async function uploadPhoto(
       original_path: originalError ? null : originalPath,
       width: display.size.width,
       height: display.size.height,
+      bytes: storedBytes,
     })
     .eq('id', photoId);
 
@@ -219,7 +271,10 @@ export async function uploadPhoto(
     originalPath: originalError ? null : originalPath,
     width: display.size.width,
     height: display.size.height,
-    optimized: verdict.kind === 'optimize',
+    /* Niyet değil, olan biten: `verdict` yalnızca küçültmenin gerekeceğini
+       söylüyordu, `oversize` gerçekten yapıldığını. */
+    optimized: oversize,
+    storedBytes,
   };
 }
 

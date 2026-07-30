@@ -4,6 +4,8 @@ import {
   needsResize,
   storagePath,
   extensionOf,
+  chooseWithinBudget,
+  ARCHIVE_LADDER,
   DISPLAY_MAX_EDGE,
   THUMB_MAX_EDGE,
 } from './resize';
@@ -101,5 +103,92 @@ describe('extensionOf', () => {
 
   it('nokta içeren adlarda son uzantıyı alır', () => {
     expect(extensionOf('M31.final.v2.jpeg')).toBe('jpeg');
+  });
+});
+
+describe('ARCHIVE_LADDER', () => {
+  /*
+   * Merdivenin sırası bir tercih değil, bir ilke: astro karede piksel
+   * bilginin kendisidir. Önce sıkıştırma feda edilir, ölçü en sona kalır.
+   * Bu test o ilkeyi sabitliyor — biri basamak eklerken sırayı bozarsa
+   * burada kırılır.
+   */
+  it('önce kaliteyi, sonra ölçüyü feda eder', () => {
+    const fullSize = ARCHIVE_LADDER.filter((a) => a.maxEdge === Infinity);
+    const scaled = ARCHIVE_LADDER.filter((a) => a.maxEdge !== Infinity);
+
+    expect(fullSize.length).toBeGreaterThanOrEqual(3);
+    // Ölçü indiren hiçbir basamak, ölçü koruyan bir basamaktan önce gelmemeli.
+    const firstScaled = ARCHIVE_LADDER.findIndex((a) => a.maxEdge !== Infinity);
+    const lastFull = ARCHIVE_LADDER.map((a) => a.maxEdge).lastIndexOf(Infinity);
+    expect(firstScaled).toBeGreaterThan(lastFull);
+
+    // Ölçü indiren basamaklar da giderek küçülüyor.
+    const edges = scaled.map((a) => a.maxEdge);
+    expect([...edges].sort((a, b) => b - a)).toEqual(edges);
+  });
+
+  it('kalite astro gradyanlarında bant yapacak kadar düşmez', () => {
+    for (const attempt of ARCHIVE_LADDER) {
+      expect(attempt.quality).toBeGreaterThanOrEqual(0.55);
+      expect(attempt.quality).toBeLessThanOrEqual(1);
+    }
+  });
+});
+
+describe('chooseWithinBudget', () => {
+  const ladder = [
+    { maxEdge: Infinity, quality: 0.9 },
+    { maxEdge: Infinity, quality: 0.7 },
+    { maxEdge: 2048, quality: 0.6 },
+  ];
+
+  it('bütçeye uyan ilk basamakta durur — fazladan kalite feda etmez', () => {
+    const tried: number[] = [];
+    const sizes = [5000, 900, 100];
+
+    return chooseWithinBudget(1000, ladder, async (_attempt, index) => {
+      tried.push(index);
+      return { bytes: sizes[index] };
+    }).then((choice) => {
+      expect(choice?.withinBudget).toBe(true);
+      expect(choice?.result.bytes).toBe(900);
+      // Üçüncü basamak hiç çalıştırılmadı: her basamak bir canvas turu.
+      expect(tried).toEqual([0, 1]);
+    });
+  });
+
+  it('hiçbiri sığmazsa en küçüğü döner ama uyduğunu SÖYLEMEZ', async () => {
+    const sizes = [9000, 7000, 6000];
+    const choice = await chooseWithinBudget(
+      1000,
+      ladder,
+      async (_attempt, index) => ({ bytes: sizes[index] })
+    );
+
+    expect(choice).not.toBeNull();
+    expect(choice?.withinBudget).toBe(false);
+    expect(choice?.result.bytes).toBe(6000);
+  });
+
+  it('kodlanamayan basamağı atlar, akışı bitirmez', async () => {
+    const choice = await chooseWithinBudget(1000, ladder, async (_a, index) =>
+      index === 0 ? null : { bytes: 500 }
+    );
+
+    expect(choice?.withinBudget).toBe(true);
+    expect(choice?.attempt).toEqual(ladder[1]);
+  });
+
+  it('hiçbir basamak kodlanamazsa null döner', async () => {
+    const choice = await chooseWithinBudget(1000, ladder, async () => null);
+    expect(choice).toBeNull();
+  });
+
+  it('tam bütçedeki sonuç kabul edilir', async () => {
+    const choice = await chooseWithinBudget(1000, ladder, async () => ({
+      bytes: 1000,
+    }));
+    expect(choice?.withinBudget).toBe(true);
   });
 });

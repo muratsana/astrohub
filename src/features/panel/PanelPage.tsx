@@ -7,8 +7,9 @@ import { Readout } from '@/components/ui/Readout';
 import { useAuth } from '@/features/auth/AuthContext';
 import {
   formatQuotaLabel,
-  MAX_ACTIVE_PHOTOS,
+  PHOTO_LIMITS,
   MAX_DRAFT_PHOTOS,
+  type MembershipTier,
 } from '@/domain/membership/quota';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { listSetups } from '@/features/setups/storage';
@@ -27,14 +28,22 @@ export function PanelPage() {
    */
   const setups = section === 'setuplar' ? listSetups() : [];
 
-  // Hesap bağlanana kadar demo değerleri
+  /*
+   * Hesap bağlanana kadar demo değerleri. Kademe STANDART varsayılıyor:
+   * üyelik sistemi yokken premium göstermek, kullanıcıya sahip olmadığı bir
+   * hakkı vaat etmek olurdu. Sayaç, etiket ve ilerleme çubuğu aynı sınırdan
+   * besleniyor — üçü ayrı sabitten okuduğunda "0 / 5" yazıp çubuğu 30'a göre
+   * çizen bir panel çıkıyordu.
+   */
+  const tier: MembershipTier = 'standart';
+  const photoLimit = PHOTO_LIMITS[tier];
   const activePhotos = 0;
 
   const menu: { label: string; to: string; note?: string }[] = [
     {
       label: 'Fotoğraflarım',
       to: '/panel',
-      note: formatQuotaLabel(activePhotos),
+      note: formatQuotaLabel(activePhotos, tier),
     },
     { label: 'Fotoğraf Yükle', to: '/galeri/yukle' },
     { label: "Setup'larım", to: '/panel/setuplar' },
@@ -80,8 +89,8 @@ export function PanelPage() {
         <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
           <Readout
             label="Fotoğraf kotası"
-            value={formatQuotaLabel(activePhotos)}
-            hint={`${MAX_ACTIVE_PHOTOS - activePhotos} hak kaldı`}
+            value={formatQuotaLabel(activePhotos, tier)}
+            hint={`${photoLimit - activePhotos} hak kaldı`}
           />
           <Readout
             label="Taslak"
@@ -109,13 +118,13 @@ export function PanelPage() {
             role="progressbar"
             aria-valuenow={activePhotos}
             aria-valuemin={0}
-            aria-valuemax={MAX_ACTIVE_PHOTOS}
+            aria-valuemax={photoLimit}
             aria-label="Fotoğraf kotası kullanımı"
             className="h-1.5 overflow-hidden rounded-full bg-surface-3"
           >
             <div
               className="h-full rounded-full bg-primary"
-              style={{ width: `${(activePhotos / MAX_ACTIVE_PHOTOS) * 100}%` }}
+              style={{ width: `${(activePhotos / photoLimit) * 100}%` }}
             />
           </div>
           <p className="mt-2 text-meta leading-relaxed text-muted-foreground">

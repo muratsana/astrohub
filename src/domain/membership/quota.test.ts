@@ -7,25 +7,31 @@ import {
   quotaFullMessage,
   checkUploadSize,
   formatBytes,
+  tierStorageBudgetBytes,
   PHOTO_LIMITS,
   MAX_DRAFT_PHOTOS,
   MAX_UPLOAD_BYTES,
+  MAX_STORED_BYTES,
   DIRECT_UPLOAD_BYTES,
 } from './quota';
 
 describe('kademeye göre fotoğraf kotası', () => {
-  it('standart üyelik üç fotoğrafta durur', () => {
+  it('standart üyelik beşte durur', () => {
     expect(
-      canPublishPhoto({ activePublished: 2, drafts: 0, tier: 'standart' })
+      canPublishPhoto({ activePublished: 4, drafts: 0, tier: 'standart' })
     ).toBe(true);
     expect(
-      canPublishPhoto({ activePublished: 3, drafts: 0, tier: 'standart' })
+      canPublishPhoto({
+        activePublished: PHOTO_LIMITS.standart,
+        drafts: 0,
+        tier: 'standart',
+      })
     ).toBe(false);
   });
 
-  it('premium üyelik ellide durur', () => {
+  it('premium üyelik otuzda durur', () => {
     expect(
-      canPublishPhoto({ activePublished: 49, drafts: 0, tier: 'premium' })
+      canPublishPhoto({ activePublished: 29, drafts: 0, tier: 'premium' })
     ).toBe(true);
     expect(
       canPublishPhoto({
@@ -42,8 +48,12 @@ describe('kademeye göre fotoğraf kotası', () => {
    * hâle getirirdi.
    */
   it('kademe verilmezse standart kabul eder', () => {
-    expect(canPublishPhoto({ activePublished: 3, drafts: 0 })).toBe(false);
-    expect(remainingPhotoQuota({ activePublished: 1, drafts: 0 })).toBe(2);
+    expect(
+      canPublishPhoto({ activePublished: PHOTO_LIMITS.standart, drafts: 0 })
+    ).toBe(false);
+    expect(remainingPhotoQuota({ activePublished: 1, drafts: 0 })).toBe(
+      PHOTO_LIMITS.standart - 1
+    );
   });
 
   it('taslak sınırı kademeden bağımsız', () => {
@@ -60,8 +70,26 @@ describe('kademeye göre fotoğraf kotası', () => {
   });
 
   it('panel etiketi kademeyi yansıtır', () => {
-    expect(formatQuotaLabel(2, 'standart')).toBe('2 / 3');
-    expect(formatQuotaLabel(34, 'premium')).toBe('34 / 50');
+    expect(formatQuotaLabel(2, 'standart')).toBe('2 / 5');
+    expect(formatQuotaLabel(24, 'premium')).toBe('24 / 30');
+  });
+
+  /*
+   * Kota bir cömertlik ayarı değil, depolama bütçesi. Sayı değişirse
+   * bütçe de değişir; bu test ikisinin bağını görünür tutuyor ve
+   * "premium'u 100 yapalım" kararının maliyetini testte gösteriyor.
+   */
+  it('kademe bütçesi fotoğraf sayısıyla dosya tavanının çarpımıdır', () => {
+    const standart = tierStorageBudgetBytes('standart');
+    const premium = tierStorageBudgetBytes('premium');
+
+    expect(standart).toBeGreaterThan(PHOTO_LIMITS.standart * MAX_STORED_BYTES);
+    expect(premium / standart).toBeCloseTo(
+      PHOTO_LIMITS.premium / PHOTO_LIMITS.standart,
+      5
+    );
+    // Premium üye 100 GB'lık Pro deposunun binde dördünden fazlasını yemesin.
+    expect(premium).toBeLessThan(0.004 * 100 * 1024 ** 3);
   });
 });
 
@@ -78,21 +106,31 @@ describe('kota dolu mesajı', () => {
 });
 
 describe('dosya boyutu kararı', () => {
-  it('küçük dosyayı olduğu gibi kabul eder', () => {
+  it('saklama tavanının altındaki dosyayı olduğu gibi kabul eder', () => {
     expect(checkUploadSize(2 * 1024 * 1024).kind).toBe('ok');
+    expect(checkUploadSize(MAX_STORED_BYTES).kind).toBe('ok');
   });
 
-  it('8 MB üstünü küçülterek kabul eder — reddetmez', () => {
+  /*
+   * En kritik davranış: 10 MB üstü RET DEĞİL. Kullanıcıya yapabileceğimiz
+   * bir işi elle yaptırmak yerine dosyayı biz küçültüyoruz.
+   */
+  it('10 MB üstünü küçülterek kabul eder — reddetmez', () => {
     const verdict = checkUploadSize(DIRECT_UPLOAD_BYTES + 1);
     expect(verdict.kind).toBe('optimize');
     if (verdict.kind === 'optimize') {
       expect(verdict.reason).toContain('küçültülecek');
-      // Kullanıcı orijinalinin kaybolmadığını bilmeli.
-      expect(verdict.reason).toContain('Orijinal');
+      // Ne kaybedileceği açıkça yazmalı: ölçü değil, sıkıştırma.
+      expect(verdict.reason).toContain('Çözünürlük korunur');
     }
   });
 
-  it('50 MB üstünü reddeder ve ne yapılacağını söyler', () => {
+  it('saklama tavanı ile işleme tavanı ayrı sayılardır', () => {
+    expect(MAX_STORED_BYTES).toBeLessThan(MAX_UPLOAD_BYTES);
+    expect(DIRECT_UPLOAD_BYTES).toBe(MAX_STORED_BYTES);
+  });
+
+  it('işleyemeyeceğimiz boyutu reddeder ve ne yapılacağını söyler', () => {
     const verdict = checkUploadSize(MAX_UPLOAD_BYTES + 1);
     expect(verdict.kind).toBe('reject');
     if (verdict.kind === 'reject') {
@@ -115,5 +153,6 @@ describe('formatBytes', () => {
     expect(formatBytes(2048)).toBe('2 KB');
     expect(formatBytes(3.5 * 1024 * 1024)).toBe('3.5 MB');
     expect(formatBytes(48 * 1024 * 1024)).toBe('48 MB');
+    expect(formatBytes(MAX_STORED_BYTES)).toBe('10 MB');
   });
 });
