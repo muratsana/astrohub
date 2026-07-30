@@ -10,7 +10,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { NotFoundPage } from '@/components/NotFoundPage';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd, SITE_URL } from '@/lib/seo';
-import { findCity } from '@/features/location/cities';
+import { findCity, TURKEY_TIME_ZONE } from '@/features/location/cities';
 import { useEventCatalog } from '@/services/content/events';
 import { eventTypeLabels } from '@/features/events/types';
 import { useSiteCatalog } from '@/services/content/sites';
@@ -68,7 +68,12 @@ export function CityPage() {
   }, [city, siteCatalog.items]);
 
   const tonight = useMemo(
-    () => (city ? nightEntry(new Date(), city.latitude, city.longitude) : null),
+    () =>
+      city
+        ? // Şehir sayfaları yalnızca Türkiye şehirleri — gün her zaman
+          // Türkiye takvimine göre seçilir, ziyaretçi nerede olursa olsun.
+          nightEntry(new Date(), city.latitude, city.longitude, TURKEY_TIME_ZONE)
+        : null,
     [city]
   );
 

@@ -23,6 +23,7 @@ import {
   formatDuration,
   formatAltitude,
 } from '@/domain/astronomy/ephemeris';
+import { zonedMidnight } from '@/domain/time/zonedDay';
 import { cn } from '@/lib/cn';
 
 /**
@@ -61,14 +62,26 @@ export function TonightPanel() {
   const { theme } = useTheme();
 
   // Gün ve konum değişmedikçe yeniden hesaplanmaz — tarama tabanlı arama
-  // her render'da çalışmamalı.
-  const dayKey = new Date().toDateString();
+  // her render'da çalışmamalı. Gün, tarayıcının değil gözlem konumunun
+  // takvimine göre anahtarlanır (ASTRO-01).
+  const dayStartMs = zonedMidnight(new Date(), location.timeZone).getTime();
 
   const sky = useMemo(() => {
-    const date = new Date(dayKey);
-    const timeline = nightTimeline(date, location.latitude, location.longitude);
+    const date = new Date(dayStartMs);
+    const timeline = nightTimeline(
+      date,
+      location.latitude,
+      location.longitude,
+      new Date(),
+      location.timeZone
+    );
     const moon = moonPhase(date);
-    const moonTimes = moonRiseSet(date, location.latitude, location.longitude);
+    const moonTimes = moonRiseSet(
+      date,
+      location.latitude,
+      location.longitude,
+      location.timeZone
+    );
 
     const visible = timeline.dark
       ? targets
@@ -92,7 +105,7 @@ export function TonightPanel() {
       : [];
 
     return { timeline, moon, moonTimes, visible };
-  }, [dayKey, location.latitude, location.longitude]);
+  }, [dayStartMs, location.latitude, location.longitude, location.timeZone]);
 
   const { timeline, moon, moonTimes, visible } = sky;
   const conditions = useSkyConditions();

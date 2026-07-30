@@ -52,8 +52,15 @@ export function DarkCalendarPage() {
    * değişmedikçe tekrarlanmaz.
    */
   const entries = useMemo(
-    () => monthNights(year, month, location.latitude, location.longitude),
-    [year, month, location.latitude, location.longitude]
+    () =>
+      monthNights(
+        year,
+        month,
+        location.latitude,
+        location.longitude,
+        location.timeZone
+      ),
+    [year, month, location.latitude, location.longitude, location.timeZone]
   );
 
   const weeks = useMemo(() => calendarWeeks(entries), [entries]);

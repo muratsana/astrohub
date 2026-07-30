@@ -23,6 +23,7 @@ import {
   moonPosition,
 } from './ephemeris';
 import type { MoonPhase, NightWindow, RiseSet } from './ephemeris';
+import { zonedMidnight, zonedTime } from '@/domain/time/zonedDay';
 
 /** Tarama adımı. 5 dk, ±2.5 dakikalık bir hata payı demektir — takvim için fazlasıyla yeterli. */
 const SCAN_STEP_MS = 5 * 60_000;
@@ -99,14 +100,15 @@ export function nightScore(moonlessMinutes: number, illumination: number): numbe
 export function nightEntry(
   date: Date,
   latitude: number,
-  longitude: number
+  longitude: number,
+  timeZone?: string
 ): NightEntry {
-  const dayStart = new Date(date);
-  dayStart.setHours(0, 0, 0, 0);
+  const dayStart = timeZone ? zonedMidnight(date, timeZone) : new Date(date);
+  if (!timeZone) dayStart.setHours(0, 0, 0, 0);
 
-  const night = astronomicalNight(dayStart, latitude, longitude);
+  const night = astronomicalNight(dayStart, latitude, longitude, timeZone);
   const moon = moonPhase(dayStart);
-  const moonTimes = moonRiseSet(dayStart, latitude, longitude);
+  const moonTimes = moonRiseSet(dayStart, latitude, longitude, timeZone);
   const moonlessMinutes = moonlessDarkMinutes(night, latitude, longitude);
 
   return {
@@ -129,13 +131,20 @@ export function monthNights(
   year: number,
   month: number,
   latitude: number,
-  longitude: number
+  longitude: number,
+  timeZone?: string
 ): NightEntry[] {
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const entries: NightEntry[] = [];
 
   for (let day = 1; day <= daysInMonth; day++) {
-    entries.push(nightEntry(new Date(year, month, day), latitude, longitude));
+    /* Dilim verildiğinde günün temsilcisi o dilimin öğlenidir: gece
+       yarısı temsilci alınırsa tarayıcı dilimiyle konum dilimi arasındaki
+       fark günü bir ileri/geri kaydırabilir. */
+    const dayDate = timeZone
+      ? zonedTime(year, month + 1, day, 12, 0, timeZone)
+      : new Date(year, month, day);
+    entries.push(nightEntry(dayDate, latitude, longitude, timeZone));
   }
 
   return entries;

@@ -8,15 +8,22 @@
  * olmadan, çevrimdışı ve test edilebilir biçimde çalışır.
  *
  * Kaynak: Jean Meeus, *Astronomical Algorithms* (2. baskı) — düşük hassasiyet
- * güneş/ay formülleri. Beklenen doğruluk: güneş ±0.01°, ay ±0.3°, doğuş/batış
- * saatleri ±1 dk. Gözlem planlaması için fazlasıyla yeterli; efemeris kalitesi
- * (yay saniyesi) gerektiren işler için değil.
+ * güneş/ay formülleri. Beklenen doğruluk: güneş ±0.01°, ay ~±0.3°
+ * (GEOSENTRİK — topocentric paralaks uygulanmaz, ufka yakın Ay'da fark
+ * ~1°'ye çıkar). Güneş doğuş/batışları dakika mertebesinde; AY doğuş/batışı
+ * paralaks nedeniyle ~10 dakikaya kadar sapabilir (QA ASTRO-06). Gözlem
+ * planlaması için yeterli; efemeris kalitesi (yay saniyesi) ya da dakika
+ * garantisi gerektiren işler için değil.
  *
  * Hava durumu (seeing, bulut) burada YOKTUR — o gerçekten bir servis ister
  * (§14.3) ve panelde açıkça "—" olarak gösterilir.
  *
- * Tüm açılar derece, tüm zamanlar UTC tabanlı `Date`. Saf fonksiyonlar.
+ * Tüm açılar derece, tüm zamanlar UTC tabanlı `Date`. Gün sınırları
+ * istenirse `timeZone` ile gözlem konumunun takvimine bağlanır (ASTRO-01).
+ * Saf fonksiyonlar.
  */
+
+import { zonedMidnight, zonedNoon } from '@/domain/time/zonedDay';
 
 const RAD = Math.PI / 180;
 const DEG = 180 / Math.PI;
@@ -63,7 +70,15 @@ export interface HorizontalCoords {
 
 /* ══════════════════════ Yıldız zamanı ══════════════════════ */
 
-/** Greenwich görünen yıldız zamanı, derece. */
+/**
+ * Greenwich ORTALAMA yıldız zamanı (GMST), derece.
+ *
+ * Nutation/ekinoks düzeltmesi uygulanmaz — yani bu "görünen" (apparent)
+ * değil "ortalama" yıldız zamanıdır; fark ≤ ~1.2 saniye-zaman (≈0.005°).
+ * Buradaki kullanım (yükseklik eğrileri, transit saati) için ihmal
+ * edilebilir; adlandırma kesinlik iddiasını abartmasın diye düzeltildi
+ * (QA ASTRO-07).
+ */
 export function greenwichSiderealTime(date: Date): number {
   const jd = julianDay(date);
   const t = julianCenturies(date);
@@ -301,13 +316,19 @@ export interface NightWindow {
  *
  * Pencere gece yarısını aştığı için arama, verilen günün öğlen 12:00'sinden
  * ertesi gün 12:00'ye kadar yapılır — "bu gece" doğal olarak bu aralıktır.
+ *
+ * `timeZone` verilirse "gün" o dilimin takvimine göre seçilir (QA
+ * ASTRO-01): İstanbul'u izleyen New York'lu kullanıcının tarayıcı öğleni
+ * İstanbul'da akşamdır; pencere oradan kurulursa yanlış geceye kayar.
+ * Verilmezse eski davranış (tarayıcı günü) korunur.
  */
 export function astronomicalNight(
   date: Date,
   latitude: number,
-  longitude: number
+  longitude: number,
+  timeZone?: string
 ): NightWindow {
-  return twilightWindow(date, latitude, longitude, -18);
+  return twilightWindow(date, latitude, longitude, -18, timeZone);
 }
 
 /** Nautical/civil gibi başka alacakaranlık eşikleri için genel biçim. */
@@ -315,10 +336,11 @@ export function twilightWindow(
   date: Date,
   latitude: number,
   longitude: number,
-  sunAltitudeDeg: number
+  sunAltitudeDeg: number,
+  timeZone?: string
 ): NightWindow {
-  const noon = new Date(date);
-  noon.setHours(12, 0, 0, 0);
+  const noon = timeZone ? zonedNoon(date, timeZone) : new Date(date);
+  if (!timeZone) noon.setHours(12, 0, 0, 0);
   const nextNoon = new Date(noon.getTime() + DAY_MS);
 
   const alt = (d: Date) => sunAltitude(d, latitude, longitude);
@@ -350,16 +372,25 @@ export interface RiseSet {
 }
 
 /**
- * Ayın doğuş ve batış saatleri. Ufuk yüksekliği olarak −0.8° kullanılır
- * (atmosferik kırılma + ayın yarıçapı).
+ * Ayın doğuş ve batış saatleri. Ufuk eşiği −0.8° (atmosferik kırılma +
+ * ayın yarıçapı).
+ *
+ * DOĞRULUK NOTU: Ay konumu düşük dereceli GEOSENTRİK yaklaşımla hesaplanır;
+ * topocentric paralaks (ufka yakınken ~1°'ye varır) uygulanmaz. Doğuş/batış
+ * saatleri bu yüzden birkaç dakika ile ~10 dakika arası sapabilir — planlama
+ * için yeterli, dakika kesinliği iddiası değil (QA ASTRO-06).
+ *
+ * `timeZone` verilirse "gün" o dilimin takvim günüdür; verilmezse tarayıcı
+ * günü (eski davranış).
  */
 export function moonRiseSet(
   date: Date,
   latitude: number,
-  longitude: number
+  longitude: number,
+  timeZone?: string
 ): RiseSet {
-  const start = new Date(date);
-  start.setHours(0, 0, 0, 0);
+  const start = timeZone ? zonedMidnight(date, timeZone) : new Date(date);
+  if (!timeZone) start.setHours(0, 0, 0, 0);
   const end = new Date(start.getTime() + DAY_MS);
 
   const alt = (d: Date) =>

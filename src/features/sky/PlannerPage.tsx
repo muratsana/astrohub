@@ -24,6 +24,7 @@ import {
   formatClock,
   formatDuration,
 } from '@/domain/astronomy/ephemeris';
+import { zonedMidnight } from '@/domain/time/zonedDay';
 import {
   planSession,
   altitudeCurve,
@@ -61,13 +62,16 @@ export function PlannerPage() {
   );
   const [pick, setPick] = useState('');
 
-  const dayKey = new Date().toDateString();
+  // Gün, gözlem konumunun takvimine göre anahtarlanır (ASTRO-01).
+  const dayStartMs = zonedMidnight(new Date(), location.timeZone).getTime();
 
   const night = useMemo(() => {
+    const date = new Date(dayStartMs);
     const window = astronomicalNight(
-      new Date(dayKey),
+      date,
       location.latitude,
-      location.longitude
+      location.longitude,
+      location.timeZone
     );
     return {
       window:
@@ -75,9 +79,9 @@ export function PlannerPage() {
           ? { start: window.start, end: window.end }
           : null,
       raw: window,
-      moon: moonPhase(new Date(dayKey)),
+      moon: moonPhase(date),
     };
-  }, [dayKey, location.latitude, location.longitude]);
+  }, [dayStartMs, location.latitude, location.longitude, location.timeZone]);
 
   const plan = useMemo(() => {
     if (!night.window) return null;
