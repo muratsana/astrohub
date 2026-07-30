@@ -1,46 +1,83 @@
 #!/usr/bin/env node
 /**
- * Tohum SQL üretici.
+ * SEED DOSYALARINI BİR VERİTABANINA UYGULAR.
  *
- * `scripts/seed/reference-data.ts` TypeScript ve `@/` yol takma adlarıyla
- * `src/` içindeki tohum dizilerini ve alan katmanını içe aktarıyor; Node
- * bunu doğrudan çalıştıramaz. esbuild ile tek parçaya paketleyip data URL
- * üzerinden içe aktarıyoruz — geçici dosya bırakmadan.
+ * Bu betik eskiden `src/features/*​/data.ts` içindeki demo dizilerinden SQL
+ * ÜRETİYORDU ve ürettiği dosyayı hiçbir şey UYGULAMIYORDU. İki sorun
+ * birden vardı:
  *
- * Çıktı: supabase/seed/0001_reference_data.sql
+ *   · Üretilen dosya kataloğun demo alt kümesiydi (43 marka, 129 model);
+ *     üretimde ise 82 marka ve 1.086 model var. Aynı tablolara
+ *     `on conflict do update` ile yazdığı için canlıya uygulansa 129
+ *     modeli demo değerlerine geri çekerdi.
+ *   · Kimse uygulamadığı için depo, kurulabilir bir veritabanı tarif
+ *     etmiyordu.
+ *
+ * Artık kataloğun tek kaynağı veritabanının kendisi: `katalog-disa-aktar`
+ * onu seed dosyasına yazar, bu betik de bir veritabanına uygular.
+ * `data.ts` dizileri işlerini sürdürüyor — Supabase yapılandırılmadığında
+ * uygulamanın çevrimdışı gösterdiği içerik onlar.
+ *
+ * KULLANIM
+ *   DATABASE_URL='postgresql://…' node scripts/seed.mjs
+ *   DATABASE_URL='postgresql://…' node scripts/seed.mjs --ornek-icerik
  */
 
-import { build } from 'esbuild';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { execFile } from 'node:child_process';
+import { access } from 'node:fs/promises';
 import path from 'node:path';
+import { promisify } from 'node:util';
 
+const run = promisify(execFile);
 const root = process.cwd();
+const url = process.env.DATABASE_URL;
 
-const result = await build({
-  entryPoints: [path.join(root, 'scripts/seed/reference-data.ts')],
-  bundle: true,
-  format: 'esm',
-  platform: 'node',
-  target: 'node20',
-  write: false,
-  alias: { '@': path.join(root, 'src') },
-  logLevel: 'warning',
-});
+if (!url) {
+  console.error(
+    'DATABASE_URL tanımlı değil.\n' +
+      "Supabase panelinde Project Settings → Database → Connection string → URI'yi kullanın."
+  );
+  process.exit(1);
+}
 
-const code = result.outputFiles[0].text;
-const moduleUrl =
-  'data:text/javascript;base64,' + Buffer.from(code, 'utf8').toString('base64');
+/*
+ * Editöryel anlık görüntü VARSAYILAN OLARAK UYGULANMAZ. Etkinlik ve gözlem
+ * noktası verisi site sahibinin panelden girdiği içerik; depodaki kopya
+ * yüklendiği anda bayat. Yanlışlıkla üretime uygulanması, gerçek içeriği
+ * bir anlık görüntüyle geri almak olurdu — bu yüzden açıkça istenmeli.
+ */
+const files = ['01_katalog.sql'];
+if (process.argv.includes('--ornek-icerik')) files.push('02_ornek-icerik.sql');
 
-const { buildSeedSql } = await import(moduleUrl);
-const sql = buildSeedSql();
+for (const file of files) {
+  const target = path.join(root, 'supabase/seed', file);
+  try {
+    await access(target);
+  } catch {
+    console.error(`bulunamadı: ${path.relative(root, target)}`);
+    process.exit(1);
+  }
 
-const outDir = path.join(root, 'supabase/seed');
-await mkdir(outDir, { recursive: true });
-const outFile = path.join(outDir, '0001_reference_data.sql');
-await writeFile(outFile, sql, 'utf8');
+  process.stdout.write(`${file} uygulanıyor… `);
+  try {
+    /*
+     * `ON_ERROR_STOP=1` şart: onsuz psql hatalı ifadeyi atlayıp devam eder
+     * ve yarım yüklenmiş bir katalogla "başarılı" çıkış kodu döner. Dosyalar
+     * kendi `begin`/`commit`'lerini taşıyor; hata hâlinde işlem geri alınır.
+     */
+    await run('psql', [url, '-X', '-q', '-v', 'ON_ERROR_STOP=1', '-f', target], {
+      maxBuffer: 256 * 1024 * 1024,
+    });
+    console.log('tamam');
+  } catch (cause) {
+    console.log('BAŞARISIZ');
+    console.error(cause.stderr || cause.message);
+    process.exit(1);
+  }
+}
 
-const statements = (sql.match(/;\s*$/gm) ?? []).length;
 console.log(
-  `tohum SQL üretildi · ${path.relative(root, outFile)} · ` +
-    `${sql.length.toLocaleString('tr-TR')} karakter · ${statements} ifade`
+  files.length === 1
+    ? '\nKatalog uygulandı. Editöryel örnek içerik için: --ornek-icerik'
+    : '\nKatalog ve örnek içerik uygulandı.'
 );

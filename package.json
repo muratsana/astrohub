@@ -25,6 +25,8 @@
     "db:diff": "npm run db:link && supabase db diff --linked",
     "db:migrations": "npm run db:link && supabase migration list --linked",
     "db:types": "supabase gen types typescript --project-id eoqggvosegjbburyuyba",
+    "db:seed": "node scripts/seed.mjs",
+    "katalog:disa-aktar": "node scripts/katalog-disa-aktar.mjs",
     "functions:deploy": "supabase functions deploy --project-ref eoqggvosegjbburyuyba",
     "prerender": "vite build --ssr src/entry-prerender.tsx --outDir dist-ssr && node scripts/prerender.mjs",
     "check:budgets": "node scripts/check-budgets.mjs",
