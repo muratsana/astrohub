@@ -26,6 +26,26 @@ export const photoTypeLabels: Record<PhotoType, string> = {
   'gece-manzarasi': 'Gece Manzarası',
 };
 
+/**
+ * FOTOĞRAF LİSANSI — TEK KURAL, SEÇENEK YOK.
+ *
+ * Yükleme sihirbazında dört seçenekli bir açılır liste vardı (Tüm
+ * hakları saklıdır / CC BY / CC BY-NC / CC BY-NC-SA). Pratikte seçim
+ * yapılmıyordu: çoğu kullanıcı CC türevleri arasındaki farkı bilmiyor
+ * ve varsayılanı olduğu gibi bırakıyordu — yani ekranda bir hukuki
+ * karar soruluyor ama gerçekte alınmıyordu.
+ *
+ * Kural artık kullanım şartlarında yazılı ve herkes için aynı: eserin
+ * hakları sahibinde kalır, Astrohub kaynak göstermek şartıyla
+ * kullanabilir. Yükleme ekranındaki onay kutusu bu metne atıf yapıyor.
+ *
+ * Sabit burada duruyor çünkü hem yükleme akışı hem fotoğraf sayfası
+ * aynı metni gösteriyor; iki yerde yazılsaydı biri güncellenip diğeri
+ * eskir ve kullanıcıya iki farklı lisans gösterilirdi.
+ */
+export const PHOTO_LICENSE =
+  'Hakları sahibinde · Astrohub kaynak göstererek kullanabilir';
+
 export type ProcessingPalette = 'RGB' | 'LRGB' | 'SHO' | 'HOO' | 'Mono';
 
 /** Konum görünürlüğü (§15.3): tam / yaklaşık / bölge / gizli */

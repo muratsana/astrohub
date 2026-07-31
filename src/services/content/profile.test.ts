@@ -64,6 +64,7 @@ describe('mapProfileRow', () => {
       city: null,
       website_url: null,
       avatar_path: null,
+      terms_accepted_at: null,
     });
     expect(profile.displayName).toBeNull();
     expect(profile.city).toBeNull();
@@ -79,6 +80,7 @@ describe('mapProfileRow', () => {
       city: 'Ankara',
       website_url: 'https://example.com',
       avatar_path: 'u1/avatar.jpg',
+      terms_accepted_at: '2026-07-31T00:00:00Z',
     });
     expect(profile.displayName).toBe('Murat Sana');
     expect(profile.websiteUrl).toBe('https://example.com');
