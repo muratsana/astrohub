@@ -247,6 +247,224 @@ export async function createTrack(input: NewTrack): Promise<void> {
   if (error) throw new Error(error.message);
 }
 
+/* ══════════════════════════════════════════════════════════════════════
+   MP3 KASASI — SÜRÜKLE BIRAK YÜKLEME
+
+   Panel şimdiye kadar yalnızca "bucket içindeki yolu yaz" diyordu. Yani
+   editörün önce Supabase paneline girip dosyayı elle yüklemesi, sonra
+   yolu buraya kopyalaması gerekiyordu. İki ekran, iki adım ve arada
+   yazım hatası yapılabilecek bir alan — yol yanlış yazıldığında hata
+   ancak dinleyici oynat'a bastığında, 404 olarak ortaya çıkıyordu.
+
+   Artık dosya doğrudan buradan yükleniyor ve satır aynı işlemde
+   açılıyor: yol elle yazılmıyor, dolayısıyla yanlış yazılamıyor.
+   ══════════════════════════════════════════════════════════════════════ */
+
+/** Bucket `0005`'te bu sınırla kuruldu; istemci de aynı sayıyı kullanıyor. */
+export const RADIO_MAX_BYTES = 20 * 1024 * 1024;
+
+const RADIO_MIME = ['audio/mpeg', 'audio/mp3', 'audio/ogg', 'audio/aac'];
+
+/**
+ * Dosya adından yol üretir.
+ *
+ * ASCII dışı harfler ve boşluklar temizleniyor: Supabase depolama yolunda
+ * bunlar kabul ediliyor ama üretilen genel URL'de yüzde kodlamasına
+ * dönüşüyor ve elle kopyalanan bir adres bozuluyor. Türkçe karakterler
+ * karşılıklarına indirgeniyor — "Gökyüzü Sessizliği.mp3" yolda
+ * "gokyuzu-sessizligi.mp3" oluyor.
+ *
+ * Başa zaman damgası eklenmiyor, RASTGELE bir önek ekleniyor: aynı
+ * dosyayı iki kez yükleyen editör ilkini sessizce ezmemeli, ama dosya
+ * adının okunabilir kalması da gerekiyor.
+ */
+export function radioObjectPath(fileName: string, suffix: string): string {
+  const harfler: Record<string, string> = {
+    ç: 'c', ğ: 'g', ı: 'i', ö: 'o', ş: 's', ü: 'u', â: 'a', î: 'i', û: 'u',
+  };
+
+  const nokta = fileName.lastIndexOf('.');
+  const govde = nokta > 0 ? fileName.slice(0, nokta) : fileName;
+  const uzanti = nokta > 0 ? fileName.slice(nokta + 1).toLowerCase() : 'mp3';
+
+  const temiz = govde
+    .toLocaleLowerCase('tr-TR')
+    .replace(/[çğıöşüâîû]/g, (c) => harfler[c] ?? c)
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 60);
+
+  return `${temiz || 'parca'}-${suffix}.${uzanti.replace(/[^a-z0-9]/g, '')}`;
+}
+
+/**
+ * Ses dosyasının süresini okur.
+ *
+ * `<audio>` öğesinin meta verisi yeterli; dosyanın tamamı çözülmüyor.
+ * Okunamazsa `null` dönüyor ve yükleme DEVAM EDİYOR: süre künyenin bir
+ * ayrıntısı, parçanın kendisi değil. Bir meta okuma hatası yüzünden
+ * yüklemeyi düşürmek orantısız olurdu.
+ *
+ * Zaman aşımı var çünkü `loadedmetadata` bazı bozuk dosyalarda hiç
+ * gelmiyor ve söz sonsuza kadar askıda kalırdı.
+ */
+export function readAudioDuration(file: File): Promise<number | null> {
+  return new Promise((resolve) => {
+    if (typeof Audio === 'undefined' || typeof URL.createObjectURL !== 'function') {
+      resolve(null);
+      return;
+    }
+
+    const url = URL.createObjectURL(file);
+    const audio = new Audio();
+    let bitti = false;
+
+    const kapat = (value: number | null) => {
+      if (bitti) return;
+      bitti = true;
+      URL.revokeObjectURL(url);
+      resolve(value);
+    };
+
+    const zamanlayici = setTimeout(() => kapat(null), 8000);
+
+    audio.addEventListener('loadedmetadata', () => {
+      clearTimeout(zamanlayici);
+      kapat(Number.isFinite(audio.duration) ? Math.round(audio.duration) : null);
+    });
+    audio.addEventListener('error', () => {
+      clearTimeout(zamanlayici);
+      kapat(null);
+    });
+
+    audio.preload = 'metadata';
+    audio.src = url;
+  });
+}
+
+/** Yükleme öncesi istemci tarafı denetim — sunucu sınırının aynısı. */
+export function validateAudioFile(file: File): string | null {
+  if (file.size > RADIO_MAX_BYTES) {
+    return `Dosya ${Math.round(RADIO_MAX_BYTES / 1024 / 1024)} MB sınırını aşıyor (${(file.size / 1024 / 1024).toFixed(1)} MB).`;
+  }
+  /*
+   * Tarayıcı bazı .mp3 dosyalarına boş tür veriyor; uzantı yedek olarak
+   * kabul ediliyor. Asıl sınır bucket'ın `allowed_mime_types` ayarı —
+   * buradaki denetim kullanıcıya erken ve anlaşılır bir cevap vermek
+   * için, güvenlik sınırı değil.
+   */
+  const uzantiTamam = /\.(mp3|ogg|aac|m4a)$/i.test(file.name);
+  if (file.type && !RADIO_MIME.includes(file.type) && !uzantiTamam) {
+    return 'Yalnızca MP3, OGG ve AAC dosyaları yüklenebilir.';
+  }
+  if (!file.type && !uzantiTamam) {
+    return 'Dosya türü tanınmadı. MP3 uzantılı bir dosya seçin.';
+  }
+  return null;
+}
+
+export interface UploadedTrack {
+  path: string;
+  durationSec: number | null;
+}
+
+/**
+ * MP3'ü kasaya yükler ve `radio_tracks` satırını açar.
+ *
+ * SIRA: önce dosya, sonra satır. Fotoğraf yüklemesindekinin TERSİ ve
+ * sebebi farklı — orada yol kimlikten türüyor, burada yol dosya adından.
+ * Satır önce açılsaydı ve yükleme düşseydi, panelde çalmayan bir parça
+ * satırı kalırdı; bu sırada ise kopan yükleme geride yalnızca sahipsiz
+ * bir nesne bırakıyor ve o da aynı adla tekrar yüklendiğinde üzerine
+ * yazılıyor.
+ *
+ * Satır YAYINDA AÇILMIYOR (`published: false`). Yükleme bitince parça
+ * anında yayına girseydi, yanlış dosyayı sürükleyen editörün hatası
+ * doğrudan dinleyiciye ulaşırdı. Yayına alma ayrı ve bilinçli bir adım.
+ */
+export async function uploadRadioTrack(
+  file: File,
+  meta: { title?: string; artist?: string; note?: string } = {}
+): Promise<UploadedTrack> {
+  const sorun = validateAudioFile(file);
+  if (sorun) throw new Error(sorun);
+
+  const supabase = await client();
+
+  /* Rastgele son ek: aynı adlı ikinci dosya ilkini ezmemeli. */
+  const suffix = Math.random().toString(36).slice(2, 8);
+  const path = radioObjectPath(file.name, suffix);
+
+  const durationSec = await readAudioDuration(file);
+
+  const { error: uploadError } = await supabase.storage
+    .from('radio')
+    .upload(path, file, {
+      contentType: file.type || 'audio/mpeg',
+      upsert: false,
+    });
+
+  if (uploadError) throw new Error(uploadError.message);
+
+  /* Başlık verilmediyse dosya adı kullanılıyor — boş bir başlık, panelde
+     ayırt edilemeyen satırlar demek. */
+  const nokta = file.name.lastIndexOf('.');
+  const varsayilanBaslik = nokta > 0 ? file.name.slice(0, nokta) : file.name;
+
+  const { error: insertError } = await supabase.from('radio_tracks').insert({
+    title: sanitizeText(meta.title?.trim() || varsayilanBaslik, {
+      maxLength: 200,
+    }),
+    artist: sanitizeText(meta.artist?.trim() || 'Bilinmiyor', { maxLength: 200 }),
+    source: 'mp3',
+    path,
+    duration_sec: durationSec,
+    note: meta.note ? sanitizeText(meta.note, { maxLength: 500 }) : null,
+    published: false,
+  });
+
+  if (insertError) {
+    /*
+     * Satır açılamadıysa yüklenen nesne geride kalmamalı — fotoğraf
+     * akışındaki geri alma yığınının küçük hali. Temizlik hatası
+     * yutuluyor: kullanıcıya gösterilecek olan asıl hata.
+     */
+    try {
+      await supabase.storage.from('radio').remove([path]);
+    } catch (cause) {
+      console.error('geri alma: radyo nesnesi silinemedi', cause);
+    }
+    throw new Error(insertError.message);
+  }
+
+  return { path, durationSec };
+}
+
+/**
+ * Parçayı hem tablodan hem kasadan siler.
+ *
+ * `deleteTrack` yalnızca satırı siliyordu ve nesne bucket'ta kalıyordu:
+ * hiçbir satırın işaret etmediği, panelde görünmeyen ama yer tutan bir
+ * dosya. Bu sürüm önce satırı, sonra nesneyi siliyor.
+ */
+export async function deleteRadioTrackWithFile(
+  id: string,
+  source: 'mp3' | 'spotify',
+  path: string
+): Promise<void> {
+  await deleteTrack(id);
+  if (source !== 'mp3') return;
+
+  const supabase = await client();
+  try {
+    await supabase.storage.from('radio').remove([path]);
+  } catch (cause) {
+    /* Satır gitti; nesne kaldıysa kullanıcıya hata göstermek yanıltıcı
+       olur — silme işlemi görünür sonucu itibarıyla başarılı. */
+    console.error('radyo dosyası silinemedi', cause);
+  }
+}
+
 export async function setTrackPublished(
   id: string,
   published: boolean

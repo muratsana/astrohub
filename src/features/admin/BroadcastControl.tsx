@@ -16,11 +16,12 @@ import {
   createTrack,
   validateTrack,
   setTrackPublished,
-  deleteTrack,
+  deleteRadioTrackWithFile,
   type AdminBroadcast,
   type AdminTrack,
 } from './broadcastAdmin';
 import { Alert } from '@/components/ui/Alert';
+import { RadioVault } from './RadioVault';
 
 /**
  * TV VE RADYO KONTROL MODÜLLERİ.
@@ -351,10 +352,14 @@ function RadioControl() {
       status={items ? `${items.length} kayıt` : 'okunuyor…'}
     >
       <p className="mb-3 text-meta leading-relaxed text-muted-foreground">
-        Radyo sitenin kendi yayınıdır; listeyi editör hazırlar. MP3'te
-        bucket içindeki yol saklanır, tam adres değil — proje ya da CDN
-        adresi değiştiğinde satırları güncellemek gerekmesin.
+        Radyo sitenin kendi yayınıdır; listeyi editör hazırlar. Yayın
+        kesintisiz döngüde çalar — son parça bitince baştan başlar.
       </p>
+
+      {/* Kasa: dosyalar buradan yükleniyor, yol elle yazılmıyor. */}
+      <div className="mb-4">
+        <RadioVault onUploaded={load} />
+      </div>
 
       {error && (
         <Alert className="mb-3">
@@ -395,7 +400,15 @@ function RadioControl() {
                 size="sm"
                 variant="ghost"
                 disabled={busy}
-                onClick={() => void run(() => deleteTrack(track.id))}
+                onClick={() =>
+                  void run(() =>
+                    deleteRadioTrackWithFile(
+                      track.id,
+                      track.source,
+                      track.path
+                    )
+                  )
+                }
               >
                 Sil
               </Button>
