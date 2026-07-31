@@ -577,3 +577,169 @@ olarak üretime karşı: `DATABASE_URL='<üretim>' npm run check:auth`.
 `auth.users`'a elle SQL ile satır ekleme. Supabase panelinde
 **Authentication → Users → Add user** kullan — GoTrue üzerinden gittiği
 için kolonları doğru dolduruyor.
+
+---
+
+## 17. "Bu Gece" modülü — hi-fi yeniden tasarım (31 Temmuz)
+
+Dış bir tasarım paketi geldi (`design_handoff_bu_gece`): ana sayfadaki
+"Bu Gece" modülünün 2a varyantı, high-fidelity. Paket kendi kurallarını
+şöyle koyuyor: renk/tipografi/ölçü nihai, **sayısal veriler örnek**,
+eşikler **öneri**, ve tasarım "hedef kod tabanının mevcut ortamında
+yeniden kurulmalı".
+
+### Ne değişti
+
+Panel altı ölçüm hücresinden **üç kolonlu bir karar aracına** döndü:
+
+| kolon | soru | içerik |
+|---|---|---|
+| Karar | Bu gece değer mi? | 0–100 skor halkası, dört çubuklu kırılım, artı/eksi gerekçeler, tek cümlelik öneri |
+| Zaman | Ne zaman? | karanlık penceresi, saat kadranı, alacakaranlık bantları, ay yükseklik eğrisi, "şu an" imleci, dört koşul kartı |
+| Hedefler | Neye bakayım? | çip süzgeci (Tümü/Bulutsu/Küme/Galaksi), zirve saati + yüksekliğiyle altı satır |
+
+**Mimari karar: "karar önce".** Eski panel altı sayı gösterip hükmü
+kullanıcıya bırakıyordu; "bulut %38, seeing 2.5, ay %62" üçlüsünden
+"çıkayım mı" sonucunu çıkarmak uzmanlık istiyor. Sitenin işi o uzmanlığı
+üstlenmek.
+
+### Yeni dosyalar
+
+| dosya | iş |
+|---|---|
+| `domain/astronomy/nightScore.ts` | skor motoru — toplam ve kırılım TEK fonksiyondan (16 test) |
+| `features/targets/grouping.ts` | 19 `TargetKind` → 3 çip (11 test) |
+| `features/home/sections/tonight/useTonight.ts` | modülün tek veri katmanı |
+| `features/home/sections/tonight/DecisionColumn.tsx` | karar kolonu |
+| `features/home/sections/tonight/TimelineColumn.tsx` | zaman + koşullar |
+| `features/home/sections/tonight/NightTimelineChart.tsx` | çizelge çizimi |
+| `features/home/sections/tonight/TargetsColumn.tsx` | hedef listesi |
+| `features/home/sections/TonightPanel.test.tsx` | modül davranış testi (12 test) |
+| `features/home/sections/tonight/DecisionColumn.test.tsx` | skorun DOLU hâli (8 test) |
+
+`TonightPanel.tsx` 755 satırdan ~200 satırlık bir düzen kabuğuna indi.
+
+### Skor modeli — bulut bir terim değil, ÇARPAN
+
+Dört bileşeni ortalayan bir model, %100 bulutlu bir geceye 60 verirdi:
+seeing mükemmel, rüzgâr yok, ay yok — ve teleskop hiçbir şey görmüyor.
+Şeffaflık bu yüzden diğerlerini çarpıyor. Aynı karar depoda zaten
+verilmişti (`observingVerdict`); iki yerde iki felsefe tutmak aynı gece
+için iki hüküm üretirdi.
+
+**Seeing verisi yoksa "çok iyi" denmiyor** (QA ASTRO-05). Ağırlık kalan
+bileşenlere dağıtılıyor ama hüküm "İyi gece" ile sınırlanıyor ve sebebi
+ekranda yazıyor.
+
+### Tasarımdan bilinçli sapmalar
+
+Hepsi ölçüldü; hiçbiri estetik tercih değil.
+
+1. **Palet → depo token'ları.** Tasarımın GitHub-koyu paleti (#0d1117,
+   #3fb950, #58a6ff) doğrudan alınsaydı modül üç temanın (koyu / açık /
+   saha kırmızısı) hiçbirine uymazdı. Anlamlar eşlendi: yeşil→`success`,
+   amber→`primary`, turuncu→`warning`, mavi→`cold`. Tasarımın en sönük
+   dört metin rengi (#6b7885 3.47:1 · #5e6b78 2.70:1 · #4d5a66 2.03:1 ·
+   #3d4854) AA'nın altındaydı; hepsi `faint` (4.64:1) ve
+   `muted-foreground` (6.55:1) kademelerine çıkarıldı. Kademe farkı artık
+   renkle değil ölçü ve ağırlıkla kuruluyor.
+2. **Punto tabanı 12px.** Tasarım 9.5–11.5px kullanıyor; depoda alt sınır
+   12px ve bu bir QA kararı (GUI-01, 478 elle yazılmış punto sınıfının
+   temizliği). Küçük etiketler `text-meta`ya çıktı.
+3. **Radius 2px.** Tasarım 14/9/8px istiyor; depo dili "2px, her yerde
+   aynı". 14px köşeli bir modül 2px'lik bir sitede yapıştırılmış görünür.
+   Çipler 999px kaldı — onlar hap, kart değil.
+4. **Çizelgenin ÜSTÜNDEKİ işaretler sabit renk, token değil.** Çizelge
+   zemini üç temada da koyu (gökyüzü çizimi). Karanlık sınırını
+   `--color-primary` ile çizmek açık temada 2.6:1 veriyordu — token
+   kullanmak orada temaya uymak değil, temayı kırmak.
+5. **IBM Plex Mono eklendi, IBM Plex Sans eklenmedi.** Sayılar mono'dan
+   (yalnız `latin` alt kümesi, 400+600, ~30 kB, `swap`); metin Inter'de
+   kaldı. İkinci bir metin ailesi eklemek gövde tipografisini de
+   değiştirirdi ve modül için istenen şey rakamın karakteri.
+   **Dengelemesi:** hiçbir kuralın istemediği Roboto Condensed
+   bildirimleri silindi (4 dosya, 70 kB `dist`ten çıktı).
+6. **Referans gecenin 92 puanı üretilemiyor.** Paketteki örnek gecede
+   kırılım 97/88/46/80 ve toplam 92; bu dört sayının hiçbir
+   ağırlıklandırması 92 vermiyor (düz ortalama 77.75) ve gecenin kendi
+   eksi maddesi "aysız pencere yok" diyor. Model aynı girdilere **67 —
+   "Orta gece"** veriyor: dolunay altında derin gök için doğru cevap bu,
+   öneri satırı da kullanıcıyı küme/gezegen ve dar banda yönlendiriyor.
+7. **Hata durumu modülün tamamını düşürmüyor.** Tasarım tek satır uyarı
+   istiyor; burada yalnızca karar kolonu "hesaplanamıyor" diyor ve
+   yeniden deneme veriyor. Çizelge ve hedef listesi efemeris hesabıyla
+   çalışmaya devam ediyor — ağ gerektirmiyorlar, düşürmek karşılıksız
+   olurdu.
+
+### Bu turda ortaya çıkan iki kapı hatası *(tasarımla ilgisiz, ölçülerek bulundu)*
+
+**1. `test:all` kendi kapılarını eski çıktı üzerinde çalıştırıyordu.**
+Zincir `check:preview` ve `check:a11y` adımlarını çağırıyor, ikisi de
+`dist-preview/` klasörünü okuyor — ama zincirde o klasörü ÜRETEN adım
+(`build:preview`) yoktu. Yani iki kapı da bir önceki derlemenin
+çıktısını denetliyordu: kodda ne değişirse değişsin yeşil kalırlar.
+Sessizce yanlış güven veren bir kapı, olmayan bir kapıdan kötüdür.
+`build:preview` zincire eklendi.
+
+**2. `npm run build` hiç dönmüyordu.**
+Prerender "tamam · 421/421" yazıyor, 421 dosya diske iniyor ve süreç
+sonsuza kadar uykuda kalıyordu — derleme başarısız olmuyor, ASILI
+kalıyor. Ondan sonraki her adım (bütçe, CSP, a11y, e2e) çalışmadan
+bekliyordu.
+
+Ölçüm: çıkışta `process.getActiveResourcesInfo()` altı `Timeout` ve
+yüzlerce `Immediate` gösteriyor — kabaca rota başına bir tane. Kaynağı
+React'in statik `prerender` iş döngüsü; prelude akışı tükendikten sonra
+da kendini `setImmediate` ile yeniden kuyruğa atıyor. jsdom penceresi
+suçlu değil: `requestAnimationFrame` sayacı 0 çağrı ölçtü.
+
+Hatanın bu turla ilgisi yok — `git stash` ile değişiklikler geri
+alınıp aynı prerender çalıştırıldı, aynı şekilde asılı kaldı. Çözüm:
+eşik kontrolünden SONRA açık `process.exit(0)`. Bütün yazma işleri
+`writeFileSync` ile senkron; bekleyen tek şey sonucunu artık kimsenin
+kullanmadığı render işleri.
+
+### Kapılar
+
+| kapı | sonuç |
+|---|---|
+| `typecheck` · `lint` | temiz |
+| birim testleri | 89 dosya · 1 061 test |
+| `check:budgets` | JS 195.1 kB (bütçe 200) · CSS 12.7 kB (bütçe 25) |
+| `check:csp` | 7 rota, sıfır ihlal · 14 yönerge |
+| `check:rewrites` | 78 rewrite güncel |
+| `check:preview` (390/768/1024/1440) | yatay taşma yok |
+| `check:a11y` | dokunma hedefi ve erişilebilir ad ihlali yok |
+| `e2e` | geçti |
+
+**JS bütçesinde kalan pay 5 kB.** Modül +5.3 kB getirdi (755 satır
+silinmesine rağmen: skor motoru, gruplama ve çizelge yeni kod). Bir
+sonraki ana sayfa değişikliğinde bütçe ya kırpma ya da bilinçli bir
+yükseltme isteyecek.
+
+### Kapsam dışı bırakılan bir bulgu *(karar sende)*
+
+Hedef satırı ekranda aynı şeyi üç kez söylüyordu:
+
+```
+M 29  M 29 Açık Kümesi
+Açık Küme
+```
+
+Sebep: `data.ts` özel adı olmayan kayıtlar için adı `${kod} ${tür}`
+olarak türetiyor ve liste kodu ile türü zaten ayrı gösteriyor.
+`domain/targets/derive.ts` içine `properName()` eklendi ve **yalnızca
+yeni hedef kolonunda** kullanıldı.
+
+Aynı tekrar üç yerde daha var: `TargetsPage` (hem liste hem kart
+görünümü), `TargetPicker`, `TargetDetailPage` başlığı. Oralara
+dokunulmadı — her biri kendi düzenine sahip ve adın boş kalması kart
+yüksekliklerini kaydırıyor; bu turun kapsamı ana sayfa modülüydü.
+Yardımcı hazır, istenirse üçü de tek satırlık değişiklikle düzelir.
+(Detay sayfasının `${kod} — ${ad}` başlığı bilinçli olarak tam kalmalı:
+sosyal önizleme ve arama sonucu tam adı istiyor.)
+
+### Tasarım paketinden alınmayan tek şey
+
+2b varyantı (hedeflerin zaman ekseninde Gantt şeridi). Paket onu
+"ileride istenirse" diye işaretliyor; bu turda kapsam dışı.

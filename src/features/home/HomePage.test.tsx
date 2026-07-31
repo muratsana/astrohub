@@ -132,12 +132,33 @@ describe('HomePage · bölümler', () => {
     expect(within(seeing!).getByText('—')).toBeInTheDocument();
   });
 
-  it('bulut ve çiylenme hücrelerini de tire ile bırakır', () => {
+  it('bulut ve çiylenme kartlarını da tire ile bırakır', () => {
     renderHome();
-    for (const label of [/^bulut$/i, /^çiylenme$/i]) {
+    for (const label of [/^bulut örtüsü$/i, /^çiylenme$/i]) {
       const cell = screen.getByText(label).closest('div');
       expect(within(cell!).getByText('—')).toBeInTheDocument();
     }
+  });
+
+  /*
+   * Hava servisi yokken SKOR DA OLMAMALI. Panelin en görünür sayısı bu
+   * ve uydurulmuş bir "iyi gece", kullanıcıyı gecenin ortasında
+   * ekipmanla dışarı çıkarır. Kolonun o durumda ne söylediği değil,
+   * NE SÖYLEMEDİĞİ denetleniyor.
+   */
+  it('hava verisi yokken gece skoru göstermez', () => {
+    renderHome();
+    expect(screen.queryByText(/çok iyi gece|i̇yi gece|orta gece|zayıf gece/i))
+      .not.toBeInTheDocument();
+  });
+
+  it('hedef süzgeci çipleri tek seçimli bir grup', () => {
+    renderHome();
+    const group = screen.getByRole('radiogroup', { name: /nesne türü/i });
+    const chips = within(group).getAllByRole('radio');
+    expect(chips).toHaveLength(4);
+    expect(chips.filter((c) => c.getAttribute('aria-checked') === 'true'))
+      .toHaveLength(1);
   });
 
   it('galeri şeridini künyeli karolarla gösterir', () => {

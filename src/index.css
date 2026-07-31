@@ -73,14 +73,21 @@
    * uyumunu kollamak yerine tek ailenin ağırlık aralığını kullanmak
    * hem daha az font indiriyor hem daha tutarlı duruyor.
    *
-   * Rakam hizalaması ayrı bir aile gerektirmiyor: Inter'in tabular
-   * figürleri (`font-variant-numeric: tabular-nums`, bkz. `.tabular`)
-   * sayıları alt alta getiriyor. `--font-mono` yalnızca ileride bir kod
-   * bloğu gerekirse diye duruyor ve hiçbir dosya indirmiyor.
+   * Rakam hizalaması Inter'in tabular figürleriyle çözülüyor
+   * (`font-variant-numeric: tabular-nums`, bkz. `.tabular`) ve gövde
+   * metnindeki her sayı için bu yeterli.
+   *
+   * ÜÇÜNCÜ AİLE YALNIZCA ENSTRÜMAN GÖSTERGELERİ İÇİN. `--font-mono` artık
+   * IBM Plex Mono'yu gösteriyor: hizalama değil KARAKTER meselesi — 32px
+   * bir saat değeri Inter'de arayüz başlığı gibi, mono'da gösterge gibi
+   * okunuyor. Yalnız `latin` alt kümesi iniyor (~30 kB, `swap`); zincirde
+   * Inter var, bu yüzden mono bir kutuya düşen Türkçe harf tofu değil
+   * Inter olarak çıkar. Ayrıntı: `styles/fonts.css`.
    */
   --font-display: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-mono: ui-monospace, 'SF Mono', Menlo, monospace;
+  --font-mono: 'IBM Plex Mono', 'Inter', ui-monospace, 'SF Mono', Menlo,
+    monospace;
 
   /*
    * ---- SEMANTİK PUNTO KADEMELERİ (§6.3 / QA GUI-01) ----
@@ -116,6 +123,24 @@
   /* Yapışkan kabuk yüksekliği: durum çubuğu + nav.
      Bölüm bağlantılarının başlığın altında kalmaması için kullanılır. */
   --spacing-shell: 92px;
+}
+
+/*
+ * SKOR HALKASININ DOLGU ORANI.
+ *
+ * `@property` olmadan `conic-gradient` içindeki yüzde CANLANDIRILAMAZ:
+ * tarayıcı özel bir özelliğin türünü bilmediği için onu metin sayar ve
+ * "0%" ile "92%" arasında ara değer üretmez — animasyon ya hiç olmaz ya
+ * da sıçrar. Tür bildirilince değer sayısal olarak yorumlanıyor.
+ *
+ * `@layer` DIŞINDA, üst düzeyde: `@property` bir katmanın içine
+ * konduğunda tarayıcıların bir kısmı bildirimi yok sayıyor ve hata
+ * sessiz oluyor — halka doluyor ama animasyon çalışmıyor.
+ */
+@property --ring-fill {
+  syntax: '<percentage>';
+  inherits: false;
+  initial-value: 0%;
 }
 
 @layer base {
@@ -266,6 +291,23 @@
   }
 
   /*
+   * GÖSTERGE SAYISI — mono aile + tabular figür.
+   *
+   * `.tabular`dan farkı aile: `.tabular` gövde metninin içindeki sayıyı
+   * hizalar (fiyat, tarih, sayaç), `.num` ise sayıyı metinden AYIRIR.
+   * Enstrüman panellerinin okuma değerleri için: saat, süre, derece,
+   * yüzde, skor.
+   *
+   * Kelime için kullanılmaz. Mono'nun `latin-ext` alt kümesi bilerek
+   * indirilmiyor; Türkçe harf taşıyan bir metin `.num` içine konursa o
+   * harfler Inter'e düşer ve satır iki aileli görünür.
+   */
+  .num {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /*
    * Terminal etiketi: küçük ve hafifçe aralıklı.
    *
    * Büyük harf ve 0.16em aralık kaldırıldı. Bir arayüzde her etiketin
@@ -329,5 +371,30 @@
       var(--color-border-strong) 0 1px,
       transparent 1px 12px
     );
+  }
+
+  /*
+   * GECE SKORU HALKASI — dolgu yüzdesi doğrudan skor.
+   *
+   * Ayrı bir görsel ölçek yok: halka %72 doluysa skor 72. İki ölçek
+   * tutmak (ör. "0–100 skor, 0–360° yay") ikisinin bir gün ayrışması
+   * demekti.
+   *
+   * Animasyon ilk boyamada bir kez çalışıyor. `prefers-reduced-motion`
+   * için ayrı bir kural gerekmiyor: genel kural süreyi zaten 0.01ms'ye
+   * indiriyor, halka son değerinde durur.
+   */
+  .score-ring {
+    background: conic-gradient(
+      var(--ring-color, var(--color-success)) 0 var(--ring-fill),
+      var(--color-surface-3) var(--ring-fill) 100%
+    );
+    animation: score-ring-fill 600ms ease-out 1;
+  }
+
+  @keyframes score-ring-fill {
+    from {
+      --ring-fill: 0%;
+    }
   }
 }

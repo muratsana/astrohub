@@ -68,6 +68,18 @@ export interface NightTimeline {
   moonlessMinutes: number;
   /** Eksen üzerinde "şimdi" (0–1); gece dışındaysa null. */
   now: number | null;
+  /**
+   * Ay yüksekliğinin gece boyunca örneklenmiş hâli — çizelgedeki eğri.
+   *
+   * `moonUp` ile AYNI ÖRNEKLEMEDEN çıkıyor, ayrı bir taramadan değil.
+   * İki ayrı örnekleme, aynı çizelgede birbirini tutmayan bir bant ve
+   * bir eğri üretebilirdi: eğri ufkun üstünde görünürken bandın bitmiş
+   * olması gibi. Aynı diziden türeyince bu mümkün değil.
+   *
+   * `altitude` derece; negatif değerler de duruyor (ay ufkun altında).
+   * Kırpma çizim kararı, veri kararı değil.
+   */
+  moonAltitudes: { at: number; altitude: number }[];
 }
 
 const EMPTY: NightTimeline = {
@@ -79,6 +91,7 @@ const EMPTY: NightTimeline = {
   moonlessDark: [],
   moonlessMinutes: 0,
   now: null,
+  moonAltitudes: [],
 };
 
 function ms(date: Date): number {
@@ -129,14 +142,15 @@ function subtract(
  * yukarıda kalabilir. Örnekleme bu üç durumu da tek bir kodla veriyor.
  * On dakikalık adım, bir çubuk üzerinde piksel altı hata demek.
  */
-function moonUpIntervals(
+function moonSamples(
   from: number,
   to: number,
   latitude: number,
   longitude: number
-): [number, number][] {
+): { intervals: [number, number][]; altitudes: { t: number; altitude: number }[] } {
   const STEP = 10 * 60_000;
   const intervals: [number, number][] = [];
+  const altitudes: { t: number; altitude: number }[] = [];
   let openedAt: number | null = null;
 
   for (let t = from; t <= to; t += STEP) {
@@ -147,6 +161,7 @@ function moonUpIntervals(
       latitude,
       longitude
     ).altitude;
+    altitudes.push({ t, altitude: alt });
     const up = alt > HORIZON;
 
     if (up && openedAt === null) openedAt = t;
@@ -156,7 +171,7 @@ function moonUpIntervals(
     }
   }
   if (openedAt !== null) intervals.push([openedAt, to]);
-  return intervals;
+  return { intervals, altitudes };
 }
 
 export function nightTimeline(
@@ -221,7 +236,8 @@ export function nightTimeline(
       ? [ms(astro.start), ms(astro.end)]
       : null;
 
-  const moonRanges = moonUpIntervals(from, to, latitude, longitude)
+  const moon = moonSamples(from, to, latitude, longitude);
+  const moonRanges = moon.intervals
     .map((range) => clip(range, [from, to]))
     .filter((range): range is [number, number] => range !== null);
 
@@ -241,5 +257,9 @@ export function nightTimeline(
     moonlessDark: moonless.map(interval),
     moonlessMinutes,
     now: nowMs >= from && nowMs <= to ? at(nowMs) : null,
+    moonAltitudes: moon.altitudes.map((sample) => ({
+      at: at(sample.t),
+      altitude: sample.altitude,
+    })),
   };
 }

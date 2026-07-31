@@ -20,57 +20,19 @@
  * Her ikisi de yüklenmezse Türkçe metinde harf düşmesi olur.
  */
 
-/* ---- Başlık: Roboto Condensed (400 / 700) ---- */
-
-@font-face {
-  font-family: 'Roboto Condensed';
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url('@fontsource/roboto-condensed/files/roboto-condensed-latin-400-normal.woff2')
-    format('woff2');
-  unicode-range:
-    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
-    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
-    U+2212, U+2215, U+FEFF, U+FFFD;
-}
-@font-face {
-  font-family: 'Roboto Condensed';
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url('@fontsource/roboto-condensed/files/roboto-condensed-latin-ext-400-normal.woff2')
-    format('woff2');
-  unicode-range:
-    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304,
-    U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020,
-    U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
-}
-
-@font-face {
-  font-family: 'Roboto Condensed';
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url('@fontsource/roboto-condensed/files/roboto-condensed-latin-700-normal.woff2')
-    format('woff2');
-  unicode-range:
-    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
-    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
-    U+2212, U+2215, U+FEFF, U+FFFD;
-}
-@font-face {
-  font-family: 'Roboto Condensed';
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url('@fontsource/roboto-condensed/files/roboto-condensed-latin-ext-700-normal.woff2')
-    format('woff2');
-  unicode-range:
-    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304,
-    U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020,
-    U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
-}
+/* ---- ROBOTO CONDENSED KALDIRILDI ----
+ *
+ * Dört `@font-face` bildirimi duruyordu ama HİÇBİR KURAL bu aileyi
+ * istemiyordu: `--font-display` de `--font-sans` de Inter'i gösteriyor
+ * ve depoda tek bir `Roboto` geçişi yok. Tarayıcı kullanılmayan bir
+ * aileyi indirmediği için canlıda bir maliyeti yoktu — ama derleme
+ * dört dosyayı (70 kB) `dist`e kopyalıyordu ve tek dosya önizleme
+ * derlemesi hepsini base64 olarak GÖMÜYORDU.
+ *
+ * Başlık ailesi olarak Inter'e geçildiğinde bildirimler silinmemiş;
+ * "belki kullanılıyordur" korkusu bir dosyayı yıllarca yaşatabiliyor.
+ * Ölçüm bunu bitiriyor: aile hiçbir yerde geçmiyor.
+ */
 
 /* ---- Gövde ve arayüz: Inter (değişken ağırlık 100–900) ----
  *
@@ -84,8 +46,9 @@
  * gereken ğ ş ı İ karakterleri latin-ext alt kümesinde.
  *
  * MONOSPACE KAYBOLMADI, HAK ETTİĞİ YERE ÇEKİLDİ: ölçüm ve sayı
- * hizalaması (`.tabular`) hâlâ JetBrains Mono. Rakamların alt alta
- * hizalanması bir okuma kolaylığı değil, karşılaştırma aracı.
+ * hizalaması `.tabular` ile Inter'in tabular rakamlarından geliyordu;
+ * enstrüman panellerindeki büyük sayılar için aşağıda IBM Plex Mono
+ * eklendi (gerekçe orada).
  */
 
 @font-face {
@@ -111,4 +74,51 @@
     U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304,
     U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020,
     U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* ---- Ölçüm rakamları: IBM Plex Mono (400 / 600) ----
+ *
+ * NEDEN İKİNCİ BİR AİLE — "tek aile" kuralına bilinçli istisna.
+ *
+ * Inter'in tabular rakamları hizalamayı çözüyor ama karakteri çözmüyor:
+ * 32px'lik "21:51 → 03:58" bir arayüz başlığı gibi okunuyordu, oysa o
+ * satır bir cihaz göstergesi. Fark hizalamada değil, rakamın kendi
+ * çiziminde — mono'nun dar apeksleri ve açık sayaçları sayıyı METİN
+ * OLMAKTAN ÇIKARIP ÖLÇÜM yapıyor. "Bu Gece" panelinin bütün kimliği
+ * buna dayanıyor (tasarım paketi: "IBM Plex Mono — tüm sayı/saat
+ * değerleri").
+ *
+ * MALİYET ÖLÇÜLDÜ: 14,7 + 15,6 = ~30 kB woff2, `font-display: swap` ile
+ * render'ı bloklamıyor. Karşılığında yalnız bu panel değil, `--font-mono`
+ * kullanan her ölçüm alanı düzeliyor.
+ *
+ * YALNIZ `latin` ALT KÜMESİ. Mono yalnızca sayı, saat ve işaretlerde
+ * kullanılıyor; ğ ş ı İ (latin-ext) buraya girmiyor ve o alt kümeyi de
+ * indirmek maliyeti iki katına çıkarırdı. Bir Türkçe harf yine de mono
+ * bir kutuya girerse tofu ÇIKMAZ: `--font-mono` zincirinde Inter var,
+ * tarayıcı o karakteri oradan alır.
+ */
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-400-normal.woff2')
+    format('woff2');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+    U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-600-normal.woff2')
+    format('woff2');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+    U+2212, U+2215, U+FEFF, U+FFFD;
 }

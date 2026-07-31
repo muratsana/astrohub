@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useLocationContext } from '@/features/location/LocationContext';
 import { fetchOpenMeteo, type SkyConditions } from './openMeteo';
 import { fetchMeteoblue } from './meteoblue';
@@ -11,9 +11,18 @@ import { hasNetworkAccess } from '@/lib/runtime';
  */
 export type SkyStatus = 'idle' | 'loading' | 'ready' | 'error' | 'offline';
 
-interface SkyState {
+export interface SkyState {
   status: SkyStatus;
   data: SkyConditions | null;
+  /**
+   * Yeniden dener — ÖNBELLEĞİ ATLAYARAK.
+   *
+   * Önbelleği atlamazsa düğme hiçbir şey yapmaz: başarısız istek
+   * önbelleğe `null` yazdıysa 15 dakika boyunca aynı `null` geri gelirdi.
+   * Kullanıcı düğmeye basar, ekran değişmez ve arıza yerine arayüz
+   * bozuk görünür.
+   */
+  retry: () => void;
 }
 
 /**
@@ -75,12 +84,23 @@ export function useSkyConditions(): SkyState {
   const { location } = useLocationContext();
   const key = keyFor(location.latitude, location.longitude);
 
-  const [state, setState] = useState<SkyState>(() => {
+  const [state, setState] = useState<Omit<SkyState, 'retry'>>(() => {
     const hit = cache.get(key);
     return hit && Date.now() - hit.at < CACHE_MS
       ? { status: 'ready', data: hit.data }
       : { status: 'idle', data: null };
   });
+
+  /*
+   * Sayaç, effect'i yeniden çalıştırmanın tek dürüst yolu: aynı konum
+   * için bağımlılık dizisi değişmez ve effect kendiliğinden tekrarlamaz.
+   */
+  const [attempt, setAttempt] = useState(0);
+
+  const retry = useCallback(() => {
+    cache.delete(key);
+    setAttempt((value) => value + 1);
+  }, [key]);
 
   useEffect(() => {
     if (!hasNetworkAccess) {
@@ -114,7 +134,7 @@ export function useSkyConditions(): SkyState {
     return () => {
       active = false;
     };
-  }, [key, location.latitude, location.longitude]);
+  }, [key, attempt, location.latitude, location.longitude]);
 
-  return state;
+  return { ...state, retry };
 }
