@@ -496,3 +496,84 @@ verilmemiş olması (0003) RLS'ten daha güçlü bir kapı.
 | T-504 | Ödeme sistemi | Sen — bilinçli olarak en sona bırakıldı |
 | T-106 | Topocentric kütüphane değerlendirmesi | Faz 7 |
 | T-304 | Görselleri kendi CDN'ine taşıma (lisans/atıf kaydı) | Faz 7 |
+
+---
+
+## 16. Durum güncellemesi — 31 Temmuz
+
+### Google girişi ✅ *(canlıda çalışıyor)*
+
+Kod tarafı zaten `signInWithOAuth` çağırıyordu ve düğme giriş ekranında
+duruyordu. Üç ayrı hata vardı ve **üçü de sessizdi**.
+
+**1. Sağlayıcı kapalı, düğme açık.** `/auth/v1/settings` `"google": false`
+döndürüyordu; basan herkes `Unsupported provider` alıyordu. Düğme yalnızca
+"Supabase yapılandırılmış mı" diye bakıyordu — yapılandırılmış olmak
+sağlayıcının açık olduğu anlamına gelmiyor. Artık Supabase'e sorup
+doğruluyor; sağlayıcı panelden açıldığında düğme yeniden dağıtım olmadan
+beliriyor.
+
+**2. `VITE_APP_URL` diye bir değişken yok.** Dönüş adresi bu addan
+okunuyordu; hiçbir yerde tanımlı değildi (ne tip dosyasında, ne
+`envCheck`te, ne Vercel'de) ve koşul her zaman `window.location.origin`e
+düşüyordu. Doğrulanan değişken bir yerde, kullanılan başka yerdeydi;
+`VITE_SITE_URL`e indirildi.
+
+**3. Google'ın verdiği ad çöpe gidiyordu.** `handle_new_user()` adı
+yalnızca `display_name`den okuyordu; Google `full_name`/`name`/
+`given_name` gönderiyor (migration 0029).
+
+### Asıl engel koda değil VERİYE aitti
+
+Ayarlar baştan doğruydu. `muratsana@gmail.com` hesabı GoTrue üzerinden
+değil **elle SQL ile** açılmıştı ve token kolonları NULL kalmıştı. GoTrue
+onları Go tarafında `string` okuyor:
+
+```
+Scan error on column index 3, name "confirmation_token":
+converting NULL to string is unsupported
+```
+
+Kullanıcıyı e-postayla arayan her sorgu düşüyordu. `auth.flow_state`'te üç
+akış vardı, hiçbirinde kod üretilmemişti.
+
+**Bu hata Google'a özel değildi:** aynı sebep şifreli girişi de kırıyordu.
+`last_sign_in_at` bir kez bile dolmamıştı — o hesapla bugüne kadar hiç
+giriş yapılamamış. Google denemesi olmasaydı bunu ilk gerçek kullanıcı
+bulacaktı.
+
+Dört kolon `''` ile düzeltildi. Sonuç ölçüldü:
+
+```
+son giriş    : 2026-07-31 10:12:48
+sağlayıcılar : email, google      ← mevcut hesaba BAĞLANDI
+oturum       : 1
+rol          : admin              ← korundu
+```
+
+Yeni kullanıcı açılmadı; `murat` kullanıcı adı, profil adı ve admin rolü
+yerinde kaldı.
+
+### T-208 — kimlik tablosu bütünlük denetimi ✅ *(yeni)*
+
+`scripts/check-auth-integrity.mjs`: NULL token kolonu, kimliksiz kullanıcı
+(`auth.identities` satırı yok), profilsiz kullanıcı. Üretimde çalıştırıldı,
+üçü de temiz.
+
+Denetim **var olmayan kolonu ve tabloyu atlıyor** — GoTrue şeması sürüme
+göre değişiyor ve listeyi olduğu gibi sorgulamak denetimi çökertiyordu.
+Atlananlar çıktıda yazılıyor; hangi kontrolün çalışmadığını bilmeden
+"sağlam" demek, ölçülmemiş olanı ölçülmüş saymak olurdu.
+
+Kısıt değil denetim: `auth` şeması Supabase'e ait, elle konan bir
+`not null` bir sonraki GoTrue yükseltmesinde çakışabilir.
+
+**Bu denetim `test:all` zincirinde DEĞİL** — yerel test veritabanında
+bozukluk zaten olmaz, oraya bakan bir kapı yanlış güven verir. Periyodik
+olarak üretime karşı: `DATABASE_URL='<üretim>' npm run check:auth`.
+
+### Sen: bir daha yaşamamak için
+
+`auth.users`'a elle SQL ile satır ekleme. Supabase panelinde
+**Authentication → Users → Add user** kullan — GoTrue üzerinden gittiği
+için kolonları doğru dolduruyor.

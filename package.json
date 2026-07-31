@@ -32,6 +32,7 @@
     "check:rewrites": "node scripts/vercel-rewrites.mjs --check",
     "check:csp": "node scripts/csp.mjs --check && node scripts/check-csp.mjs",
     "check:rls": "node scripts/check-rls.mjs",
+    "check:auth": "node scripts/check-auth-integrity.mjs",
     "check:budgets": "node scripts/check-budgets.mjs",
     "check:a11y": "node scripts/check-a11y.mjs"
   },
