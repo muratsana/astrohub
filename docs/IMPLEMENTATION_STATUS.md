@@ -22,7 +22,7 @@ tabloda `DONE` ile birleştirilmez:
 | Faz | Konu | Belgedeki satır | Durum |
 |---|---|---|---|
 | 0 | Envanter, baseline, güvenli ortam | 102–135 | DONE |
-| 1 | Veri modeli, Supabase güvenliği, merkezi yapılandırma | 136–257 | NOT_STARTED |
+| 1 | Veri modeli, Supabase güvenliği, merkezi yapılandırma | 136–257 | PARTIAL |
 | 2 | Tek tasarım sistemi ve bütüncül arayüz | 258–355 | NOT_STARTED |
 | 3 | Ana sayfa, navbar, hero, hava durumu | 356–461 | NOT_STARTED |
 | 4 | Ortak arama, filtreleme, sıralama, görünüm | 462–548 | NOT_STARTED |
@@ -54,3 +54,26 @@ tabloda `DONE` ile birleştirilmez:
 - **Harici kimlik bilgisi yok:** YouTube OAuth, ödeme sağlayıcısı,
   radyo yayın sunucusu (Icecast/VPS), analitik hesabı. Bu alanlarda
   yalnızca `IMPLEMENTED_BLOCKED_EXTERNAL` seviyesine kadar gidilir.
+
+
+## Faz 1 — ayrıntı
+
+### 1.1 Merkezî konum ve idari birimler — **PARTIAL**
+
+| Madde | Durum | Kanıt |
+|---|---|---|
+| 81 il veritabanında | DONE | `0040`; canlıda `count(*) = 81` ölçüldü |
+| Modül bazında hardcode kaldırılması | PARTIAL | `provinces` servisi kuruldu; tüketici modüller Faz 2'de bağlanacak |
+| İl–ilçe FK | DONE | `districts.province_code → provinces.code` (restrict) |
+| Plaka kodu, Türkçe ad, normalize ad, slug, aktiflik, sıra | DONE | Altı kolon da mevcut |
+| Türkçe I/İ/Ş/Ğ/Ü/Ö/Ç arama ve sıralama | DONE | `app.tr_normalize` + istemci `normalizeTr`; 14 il adında birebir eşleşme testi |
+| "Diğer" gibi bütünlük bozan seçenek | DONE | Yok |
+| Yanlışlıkla silinememe | DONE | `provinces_no_delete` tetikleyicisi; canlıda ölçüldü (silme engellendi, pasifleştirme geçti) |
+| Idempotent seed | DONE | `on conflict do update`; migration sonunda 81 doğrulaması |
+| 81 il testi | DONE | Migration'ın kendi bloğu + canlı ölçüm |
+| Tekrar/eksik kod testi | DONE | Migration slug tekrarında düşüyor |
+| E2E: bütün dropdown'larda 81 il | NOT_STARTED | Tüketici modüller bağlanmadan ölçülemez (Faz 2) |
+| **İlçe tohum verisi** | **NOT_STARTED** | Bilinçli: 973 ilçe adını çevrimdışı üretmek uydurma riski taşıyor. Tablo+FK+RLS hazır; resmî kaynak (TÜİK/NVİ) erişiminde tek `insert` ile dolar. Arayüzde ilçe seçimi olmadığı için hiçbir akış kırık değil. |
+
+### 1.2 Konum modu durum makinesi — **NOT_STARTED**
+### 1.3 Supabase şema ve RLS denetimi — **NOT_STARTED**
