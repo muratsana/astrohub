@@ -16,6 +16,7 @@ import { PhotoComments } from './PhotoComments';
 import { PhotoComparison } from './PhotoComparison';
 import { PhotoViewer } from './PhotoViewer';
 import { BortleIndicator } from './BortleIndicator';
+import { RatingControl, RatingBadge } from './RatingControl';
 import { VersionHistory } from './VersionHistory';
 import { ReportButton } from '@/features/admin/ReportButton';
 import { exifHasValues, photoTypeLabels } from './types';
@@ -127,6 +128,7 @@ function PhotoDetail({ photo, all }: { photo: AstroPhoto; all: AstroPhoto[] }) {
           </div>
 
           <div className="tabular flex shrink-0 items-center gap-2 text-sm">
+            <RatingBadge rating={photo.rating} />
             <LikeChip photo={photo} />
             <ActionChip>💬 {photo.comments}</ActionChip>
             <ActionChip>Kaydet</ActionChip>
@@ -182,6 +184,15 @@ function PhotoDetail({ photo, all }: { photo: AstroPhoto; all: AstroPhoto[] }) {
             <VersionHistory versions={photo.versions} />
           </section>
         )}
+
+        {/*
+          PUANLAMA SEKMELERİN ALTINDA, ÜSTÜNDE DEĞİL. Hüküm vermeden önce
+          künyeye bakılmalı: entegrasyon, ekipman ve gökyüzü görülmeden
+          verilen puan, yalnızca ilk izlenimi ölçer.
+        */}
+        <div className="mt-6">
+          <RatingControl photo={photo} />
+        </div>
 
         <section className="mt-8 border-t border-border pt-8">
           <SectionHeader

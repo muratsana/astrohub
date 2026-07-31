@@ -402,8 +402,76 @@ for (const call of [
   );
 }
 
+/*
+ * ══════════════════════════════════════════════════════════════════════
+ * PUANLAMA (0036) — YARIŞMA SIRALAMASININ BÜTÜNLÜĞÜ
+ *
+ * Üç kural veritabanında duruyor ve üçü de doğrudan sıralamayı koruyor.
+ * İstemcide gizlenen bir düğme, API'ye doğrudan giden birini durdurmaz.
+ */
+
+/* 1. Kendi fotoğrafına puan verilemez — tek bir 10, yirmi oyluk bir
+      ortalamayı 0.15 kaydırır. */
+await expectDenied(
+  'kendi fotoğrafına puan verilemiyor',
+  'authenticated',
+  ALICE,
+  `insert into public.photo_ratings (photo_id, user_id, score)
+   values ('${ALICE_PHOTO}', '${ALICE}', 10);`
+);
+
+/* 2. Başkası adına oy yazılamaz. */
+await expectDenied(
+  'başkası adına puan yazılamıyor',
+  'authenticated',
+  BOB,
+  `insert into public.photo_ratings (photo_id, user_id, score)
+   values ('${ALICE_PHOTO}', '${ALICE}', 1);`
+);
+
+/* 3. Yayımlanmamış kayda oy verilemez — henüz var olmayan bir şeyi
+      puanlamak olurdu. */
+await expectDenied(
+  'taslak fotoğrafa puan verilemiyor',
+  'authenticated',
+  BOB,
+  `insert into public.photo_ratings (photo_id, user_id, score)
+   values ('${ALICE_DRAFT}', '${BOB}', 9);`
+);
+
+/*
+ * 4. SAYAÇ KOLONU ELLE YAZILAMAZ.
+ *
+ * `astro_photos_update_own` sahibin kendi satırını güncellemesine izin
+ * veriyor; koruma tetikleyicisi olmasaydı sahibi `rating_sum`'ı tek bir
+ * PATCH ile 9999 yapabilirdi. Tetikleyici hata FIRLATMIYOR, sessizce
+ * eski değeri geri koyuyor — bu yüzden burada "reddedildi mi" değil,
+ * "değer değişti mi" ölçülüyor.
+ */
+{
+  await sql(
+    `update public.astro_photos set rating_sum = 0 where id = '${ALICE_PHOTO}';`
+  );
+  await asRole(
+    'authenticated',
+    ALICE,
+    `update public.astro_photos set rating_sum = 9999 where id = '${ALICE_PHOTO}';`
+  );
+  const after = await sql(
+    `select rating_sum from public.astro_photos where id = '${ALICE_PHOTO}';`
+  );
+  const korundu = after.trim() === '0';
+  record(
+    'rating_sum elle yazılamıyor (sayaç koruması)',
+    korundu,
+    korundu ? '' : `sahibi sayacı değiştirebildi: ${after.trim()}`
+  );
+}
+
 /* ── Temizlik ─────────────────────────────────────────────────────── */
 await sql(`
+  delete from public.photo_ratings
+   where user_id in ('${ALICE}','${BOB}');
   delete from public.astro_photos where user_id in ('${ALICE}','${BOB}');
   delete from public.memberships where user_id in ('${ALICE}','${BOB}');
   delete from auth.users where email like '%@rls.test';

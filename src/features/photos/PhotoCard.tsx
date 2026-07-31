@@ -4,6 +4,7 @@ import { formatIntegration } from '@/domain/photography/integration';
 import { photoIntegrationSeconds } from './filtering';
 import { tintForPhoto } from './tint';
 import { familyOf, photoFamilies } from './families';
+import { RatingBadge } from './RatingControl';
 import type { AstroPhoto } from './types';
 
 /**
@@ -39,11 +40,21 @@ export function PhotoCard({
       bortle={photo.location.bortle}
       username={photo.user.username}
       family={{ label: info.label, className: info.className }}
+      /*
+       * Rozet alanı iki işareti birden taşıyor: editör seçkisi ve puan
+       * ortalaması. `RatingBadge` oy yokken kendini hiç çizmiyor, o
+       * yüzden yeni yüklenmiş bir kart boş bir rozetle kalabalıklaşmıyor.
+       */
       flag={
-        photo.editorsPick ? (
-          <Badge tone="primary" className="bg-background/85">
-            Editör
-          </Badge>
+        photo.editorsPick || photo.rating.sayi > 0 ? (
+          <>
+            {photo.editorsPick && (
+              <Badge tone="primary" className="bg-background/85">
+                Editör
+              </Badge>
+            )}
+            <RatingBadge rating={photo.rating} className="bg-background/85" />
+          </>
         ) : undefined
       }
     />

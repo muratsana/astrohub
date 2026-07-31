@@ -297,3 +297,189 @@ export function usePhotoComments(photoId: string | undefined): CommentThread {
     currentUsername,
   };
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+   PUANLAMA — 10 üzerinden (0036)
+
+   BEĞENİDEN AYRI BİR KANCA çünkü davranışı farklı: beğeni tek bitlik ve
+   iyimser yazılabilir, puan ise bir HÜKÜM ve ortalamayı taşıyor. Yanlış
+   giden bir puanın bir süre ekranda kalması, ortalamayı görünür biçimde
+   kaydırır — bu yüzden puan İYİMSER YAZILMIYOR: sunucu onaylayana kadar
+   eski değer duruyor.
+
+   ORTALAMA SUNUCUDAN OKUNUYOR, istemcide yeniden hesaplanmıyor. Yerel
+   hesap `(toplam ± eski ± yeni) / sayi` demekti ve o aritmetiği iki
+   yerde (burada ve tetikleyicide) tutmak, ikisinin ayrışması için davet.
+   Yazma başarılı olunca yeni toplam/sayı sunucudan geri okunuyor.
+   ══════════════════════════════════════════════════════════════════════ */
+
+export interface RatingState {
+  /** Kullanıcının verdiği puan; vermemişse null. */
+  mine: number | null;
+  /** Ortalama — oy yoksa null (0.0 göstermek "herkes sıfır verdi" demek). */
+  average: number | null;
+  count: number;
+  /** Oturum var mı, kayıt gerçek mi, kendi fotoğrafı değil mi. */
+  canRate: boolean;
+  /** Kendi fotoğrafına puan verilemez — sebep ayrı taşınıyor ki arayüz söyleyebilsin. */
+  isOwn: boolean;
+  busy: boolean;
+  error: string | null;
+  rate: (score: number) => Promise<void>;
+  clear: () => Promise<void>;
+}
+
+export function usePhotoRating(
+  photoId: string | undefined,
+  initial: { toplam: number; sayi: number }
+): RatingState {
+  const { user } = useAuth();
+  const [mine, setMine] = useState<number | null>(null);
+  const [total, setTotal] = useState(initial.toplam);
+  const [count, setCount] = useState(initial.sayi);
+  const [busy, setBusy] = useState(false);
+  const [isOwn, setIsOwn] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setTotal(initial.toplam);
+    setCount(initial.sayi);
+  }, [initial.toplam, initial.sayi]);
+
+  /*
+   * Kullanıcının kendi puanı ve sahiplik ayrı bir sorguda.
+   *
+   * SAHİPLİK KULLANICI ADIYLA SORULMUYOR. Kartta duran `user.username`
+   * profil tablosundan gelen bir GÖRÜNTÜ adı; oturumdaki kimlik ise
+   * `auth.users.id`. İkisini karşılaştırmak, kullanıcı adı değişen ya da
+   * profili henüz oluşmamış birinde sessizce yanlış cevap verirdi.
+   * Sahiplik doğrudan `astro_photos.user_id` üzerinden soruluyor.
+   */
+  useEffect(() => {
+    if (!photoId || !user || !isSupabaseConfigured) {
+      setMine(null);
+      setIsOwn(false);
+      return;
+    }
+
+    let active = true;
+    void (async () => {
+      try {
+        const supabase = await client();
+        const [own, photo] = await Promise.all([
+          supabase
+            .from('photo_ratings')
+            .select('score')
+            .eq('photo_id', photoId)
+            .eq('user_id', user.id)
+            .maybeSingle(),
+          supabase
+            .from('astro_photos')
+            .select('user_id')
+            .eq('id', photoId)
+            .maybeSingle(),
+        ]);
+        if (!active) return;
+        setMine((own.data as { score: number } | null)?.score ?? null);
+        setIsOwn(
+          (photo.data as { user_id: string } | null)?.user_id === user.id
+        );
+      } catch {
+        /* Okunamadıysa "puan vermedim" varsayılıyor; yazma denemesi
+           zaten sunucuda doğrulanıyor. */
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [photoId, user]);
+
+  /** Yazmadan sonra sunucudaki gerçek toplamı geri okur. */
+  const refresh = useCallback(async () => {
+    if (!photoId) return;
+    try {
+      const supabase = await client();
+      const { data } = await supabase
+        .from('astro_photos')
+        .select('rating_sum, rating_count')
+        .eq('id', photoId)
+        .maybeSingle();
+      const row = data as { rating_sum: number; rating_count: number } | null;
+      if (row) {
+        setTotal(row.rating_sum ?? 0);
+        setCount(row.rating_count ?? 0);
+      }
+    } catch {
+      /* Ortalama bir sonraki sayfa yüklemesinde tazelenir. */
+    }
+  }, [photoId]);
+
+  const rate = useCallback(
+    async (score: number) => {
+      if (!photoId || !user) return;
+      /* Aralık istemcide de kapatılıyor: sunucu zaten reddediyor ama
+         kullanıcıya dönen mesaj "check kısıtı ihlali" olurdu. */
+      const clamped = Math.round(Math.min(10, Math.max(1, score)));
+
+      setBusy(true);
+      setError(null);
+      try {
+        const supabase = await client();
+        const { error: writeError } = await supabase
+          .from('photo_ratings')
+          .upsert(
+            { photo_id: photoId, user_id: user.id, score: clamped },
+            { onConflict: 'photo_id,user_id' }
+          );
+        if (writeError) throw new Error(writeError.message);
+        setMine(clamped);
+        await refresh();
+      } catch (e) {
+        setError(
+          e instanceof Error && /row-level security/i.test(e.message)
+            ? 'Kendi fotoğrafına puan veremezsin.'
+            : e instanceof Error
+              ? e.message
+              : 'Puan kaydedilemedi'
+        );
+      } finally {
+        setBusy(false);
+      }
+    },
+    [photoId, user, refresh]
+  );
+
+  const clear = useCallback(async () => {
+    if (!photoId || !user || mine === null) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const supabase = await client();
+      const { error: writeError } = await supabase
+        .from('photo_ratings')
+        .delete()
+        .eq('photo_id', photoId)
+        .eq('user_id', user.id);
+      if (writeError) throw new Error(writeError.message);
+      setMine(null);
+      await refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Puan geri alınamadı');
+    } finally {
+      setBusy(false);
+    }
+  }, [photoId, user, mine, refresh]);
+
+  return {
+    mine,
+    average: count > 0 ? total / count : null,
+    count,
+    canRate: Boolean(photoId && user && isSupabaseConfigured && !isOwn),
+    isOwn,
+    busy,
+    error,
+    rate,
+    clear,
+  };
+}

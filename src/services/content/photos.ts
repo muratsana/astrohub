@@ -80,6 +80,8 @@ interface PhotoRow {
   ai_declared: boolean | null;
   like_count: number | null;
   comment_count: number | null;
+  rating_sum?: number | null;
+  rating_count?: number | null;
   display_path: string | null;
   thumb_path: string | null;
   width: number | null;
@@ -300,6 +302,10 @@ export function mapPhotoRow(row: PhotoRow): AstroPhoto {
     license: row.license ?? 'Tüm hakları saklıdır',
     likes: row.like_count ?? 0,
     comments: row.comment_count ?? 0,
+    rating: {
+      toplam: row.rating_sum ?? 0,
+      sayi: row.rating_count ?? 0,
+    },
     year: capturedAt ? new Date(capturedAt).getFullYear() : 0,
     city: cityFromLabel(row.location_label),
   };
@@ -308,7 +314,8 @@ export function mapPhotoRow(row: PhotoRow): AstroPhoto {
 const SELECT =
   'id, slug, title, description, photo_type, palette, captured_at, published_at, ' +
   'target_label, location_label, location_visibility, bortle, sqm, license, ' +
-  'ai_declared, like_count, comment_count, display_path, thumb_path, setup_text, ' +
+  'ai_declared, like_count, comment_count, rating_sum, rating_count, ' +
+  'display_path, thumb_path, setup_text, ' +
   'width, height, exif_camera, exif_lens, exif_iso, exif_focal_mm, ' +
   'exif_aperture_f, exif_exposure_seconds, exif_gps_present, ' +
   'solve_status, solve_ra_deg, solve_dec_deg, solve_rotation_deg, ' +

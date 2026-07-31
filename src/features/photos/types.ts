@@ -209,6 +209,18 @@ export interface AstroPhoto {
   solve: PlateSolve;
   likes: number;
   comments: number;
+  /**
+   * PUAN — 10 üzerinden, yarışma altyapısının temeli.
+   *
+   * Ortalama SAKLANMIYOR, toplam ve sayı saklanıyor (0036); burada da
+   * aynı ikili duruyor. `ortalama` alanı türetilmiş olsaydı iki farklı
+   * yerde iki farklı yuvarlama çıkardı.
+   *
+   * Oy yokken `sayi: 0` — ortalama hesaplanmıyor ve arayüz "henüz
+   * puanlanmadı" diyor. Sıfır oyluk bir ortalamayı 0.0 göstermek,
+   * fotoğrafı herkesin sıfır verdiği bir kare gibi gösterirdi.
+   */
+  rating: { toplam: number; sayi: number };
   editorsPick?: boolean;
   year: number;
   city: string;
