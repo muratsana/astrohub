@@ -23,8 +23,19 @@ export const registerSchema = z
       .min(8, 'Şifre en az 8 karakter olmalı')
       .max(72, 'Şifre en fazla 72 karakter olabilir'),
     confirmPassword: z.string().min(1, 'Şifre tekrarı gerekli'),
+    /*
+     * İKİ AYRI ONAY, TEK KUTU DEĞİL.
+     *
+     * Kullanım koşulları bir SÖZLEŞME, KVKK aydınlatma metni bir
+     * BİLGİLENDİRME. Hukuken ayrı şeyler ve ayrı ayrı onaylanmaları
+     * gerekiyor; tek kutuya sıkıştırmak kullanıcının hangisine onay
+     * verdiğini ayırt edilemez hâle getiriyordu.
+     */
     acceptTerms: z.literal(true, {
-      errorMap: () => ({ message: 'Devam etmek için koşulları onaylayın' }),
+      errorMap: () => ({ message: 'Kullanım koşullarını onaylayın' }),
+    }),
+    acceptPrivacy: z.literal(true, {
+      errorMap: () => ({ message: 'KVKK aydınlatma metnini onaylayın' }),
     }),
   })
   .refine((data) => data.password === data.confirmPassword, {

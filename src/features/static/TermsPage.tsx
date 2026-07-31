@@ -92,14 +92,25 @@ export function TermsPage() {
 
         <LegalSection heading="3. İçerik, telif ve lisans">
           <p>
-            Yüklediğiniz eserlerin hakları size aittir. Yükleme sırasında eserin
-            sahibi olduğunuzu, paylaşma hakkınız bulunduğunu ve seçtiğiniz
-            lisansın sonuçlarını kabul ettiğinizi onaylarsınız.
+            <strong>Yüklediğiniz eserlerin hakları size aittir.</strong> Yükleme
+            sırasında eserin sahibi olduğunuzu ve paylaşma hakkınız bulunduğunu
+            onaylarsınız. Astrohub eseri satmaz ve üçüncü taraflara lisanslamaz.
+          </p>
+          <p>
+            Fotoğrafınızı yükleyerek, Astrohub'ın onu{' '}
+            <strong>ayrıca izin almaksızın ancak adınızı kaynak göstermek
+            şartıyla</strong>{' '}
+            kullanmasına izin vermiş olursunuz. Bu izin platform içindeki
+            gösterimi, Astrohub'ın kendi tanıtım ve sosyal medya
+            paylaşımlarını ve site içi derlemeleri kapsar. Her kullanımda
+            eser sahibinin adı görünür biçimde belirtilir.
           </p>
           <LegalList
             items={[
-              'Lisans seçenekleri: tüm hakları saklı, belirli Creative Commons lisansları, indirmeye açık/kapalı.',
-              'Astrohub, içeriğinizi yalnızca platformda gösterebilmek için sınırlı bir kullanım hakkı alır; eseri satmaz veya üçüncü taraflara lisanslamaz.',
+              'Kaynak gösterme zorunludur: fotoğraf, eser sahibinin adı olmadan kullanılmaz.',
+              'İzin münhasır değildir: eseriniz üzerindeki haklarınız aynen devam eder, dilediğiniz yerde yayımlayabilirsiniz.',
+              'Astrohub eseri satmaz, üçüncü taraflara lisanslamaz ve ücret karşılığı devretmez.',
+              'Fotoğrafınızı kaldırdığınızda ileriye dönük kullanım da sona erer; yayımlanmış geçmiş paylaşımlar için makul sürede kaldırma talebinde bulunabilirsiniz.',
               'Size ait olmayan bir eseri yüklemek yasaktır; telif kaldırma ve itiraz süreci işletilir.',
             ]}
           />

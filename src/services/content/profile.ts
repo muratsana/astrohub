@@ -26,6 +26,12 @@ export interface Profile {
   city: string | null;
   websiteUrl: string | null;
   avatarPath: string | null;
+  /**
+   * Kullanım koşullarının onaylandığı an; `null` ise onay hiç alınmamış.
+   * Google ile giren kullanıcılar ve 0031 öncesinde açılmış hesaplar
+   * bu durumda — arayüz girişten sonra onay ekranı gösteriyor.
+   */
+  termsAcceptedAt: string | null;
 }
 
 interface ProfileRow {
@@ -36,6 +42,7 @@ interface ProfileRow {
   city: string | null;
   website_url: string | null;
   avatar_path: string | null;
+  terms_accepted_at: string | null;
 }
 
 export function mapProfileRow(row: ProfileRow): Profile {
@@ -47,10 +54,38 @@ export function mapProfileRow(row: ProfileRow): Profile {
     city: row.city,
     websiteUrl: row.website_url,
     avatarPath: row.avatar_path,
+    termsAcceptedAt: row.terms_accepted_at,
   };
 }
 
-const SELECT = 'id, username, display_name, bio, city, website_url, avatar_path';
+const SELECT =
+  'id, username, display_name, bio, city, website_url, avatar_path, terms_accepted_at';
+
+/**
+ * Onayı kendi profil satırına yazar.
+ *
+ * Zaman damgası burada `now()` olarak İSTEMCİDEN gidiyor gibi görünse
+ * de değil: değer sunucuda `now()` ile üretiliyor (bkz. 0031 ve
+ * aşağıdaki `updated_at` deseni). İstemci yalnızca "onayladım" diyor.
+ */
+export async function recordConsent(version: string): Promise<string | null> {
+  const supabase = await client();
+  const { data: auth } = await supabase.auth.getUser();
+  const id = auth.user?.id;
+  if (!id) return 'Oturum bulunamadı.';
+
+  const now = new Date().toISOString();
+  const { error } = await supabase
+    .from('profiles')
+    .update({
+      terms_accepted_at: now,
+      privacy_accepted_at: now,
+      consent_version: version,
+    })
+    .eq('id', id);
+
+  return error?.message ?? null;
+}
 
 async function client() {
   const promise = getSupabase();

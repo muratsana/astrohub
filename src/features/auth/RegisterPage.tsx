@@ -35,10 +35,18 @@ export function RegisterPage() {
       return;
     }
 
+    /*
+     * Onay, hesabın açıldığı İŞLEMLE BİRLİKTE yazılıyor: `signUp`
+     * bayrağı `raw_user_meta_data` içine koyuyor ve profil
+     * tetikleyicisi zaman damgasını SUNUCU saatiyle basıyor. Ayrı bir
+     * çağrıyla yazılsaydı, arada onayı olmayan bir hesap penceresi
+     * kalırdı.
+     */
     const { error } = await signUp(
       values.email,
       values.password,
-      captchaToken || undefined
+      captchaToken || undefined,
+      true
     );
 
     if (error) {
@@ -114,6 +122,13 @@ export function RegisterPage() {
             />
           </Field>
 
+          {/*
+            İKİ AYRI KUTU. Tek kutu iki metne birden atıf yapıyordu;
+            kullanıcının hangisini onayladığı ayırt edilemiyordu ve
+            onay hiçbir yere de yazılmıyordu. Artık ikisi ayrı
+            işaretleniyor ve profile zaman damgasıyla kaydediliyor
+            (migration 0031).
+          */}
           <label className="flex items-start gap-2.5 text-sm text-muted-foreground">
             <input
               type="checkbox"
@@ -124,18 +139,32 @@ export function RegisterPage() {
             <span>
               <Link to="/kullanim-kosullari" className="text-link hover:underline">
                 Kullanım Koşulları
-              </Link>{' '}
-              ve{' '}
-              <Link to="/kvkk" className="text-link hover:underline">
-                KVKK Aydınlatma Metni
               </Link>
-              ’ni okudum, onaylıyorum.
+              ’nı okudum, onaylıyorum. Yüklediğim fotoğrafları Astrohub’ın
+              adımı kaynak göstererek kullanabileceğini kabul ediyorum.
             </span>
           </label>
           {errors.acceptTerms && (
-            <Alert variant="text">
-              {errors.acceptTerms.message}
-            </Alert>
+            <Alert variant="text">{errors.acceptTerms.message}</Alert>
+          )}
+
+          <label className="flex items-start gap-2.5 text-sm text-muted-foreground">
+            <input
+              type="checkbox"
+              className="mt-0.5 h-4 w-4 rounded border-border bg-surface-1 accent-primary"
+              aria-invalid={!!errors.acceptPrivacy}
+              {...register('acceptPrivacy')}
+            />
+            <span>
+              <Link to="/kvkk" className="text-link hover:underline">
+                KVKK Aydınlatma Metni
+              </Link>
+              ’ni okudum, kişisel verilerimin metinde açıklandığı şekilde
+              işlenmesini kabul ediyorum.
+            </span>
+          </label>
+          {errors.acceptPrivacy && (
+            <Alert variant="text">{errors.acceptPrivacy.message}</Alert>
           )}
 
           <Captcha ref={captchaRef} onToken={setCaptchaToken} />

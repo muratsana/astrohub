@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { useAuth } from '@/features/auth/AuthContext';
 import { EquipmentPicker } from '@/features/equipment/EquipmentPicker';
 import { useEquipmentCatalog } from '@/services/content/equipment';
@@ -15,12 +15,13 @@ import {
   formatIntegration,
   type FilterExposure,
 } from '@/domain/photography/integration';
-import { photoTypeLabels, type PhotoType } from '@/features/photos/types';
+import { photoTypeLabels, PHOTO_LICENSE, type PhotoType } from '@/features/photos/types';
 import { TargetPicker } from '@/features/targets/TargetPicker';
 import { SetupSelect } from './SetupSelect';
 import { getTargetBySlug } from '@/features/targets/data';
 import { resolveTargetId } from '@/services/content/targets';
 import { kindToPhotoType, type TargetKind } from '@/domain/targets/derive';
+import { guessTargetFromFilename } from '@/features/targets/codeGuess';
 import { cn } from '@/lib/cn';
 import { PageMeta } from '@/components/seo/PageMeta';
 import {
@@ -102,7 +103,12 @@ const initialState: WizardState = {
   exposures: [{ filter: 'L', frames: 0, exposureSeconds: 0 }],
   software: '',
   aiDeclared: false,
-  license: 'Tüm hakları saklıdır',
+  /*
+   * Lisans artık seçilmiyor — kullanım şartlarındaki tek kural geçerli.
+   * Alan durumda kalıyor çünkü künyede ve fotoğraf sayfasında
+   * gösteriliyor; değeri tek yerden geliyor.
+   */
+  license: PHOTO_LICENSE,
   copyrightConfirmed: false,
 };
 
@@ -256,7 +262,35 @@ export function UploadWizardPage() {
 
     setFile(file);
     setPublishError(null);
-    patch({ fileName: file.name });
+
+    /*
+     * DOSYA ADINDAN HEDEF TAHMİNİ. Astrofotoğrafçılar dosyayı neredeyse
+     * her zaman obje koduyla adlandırıyor ("M31_L_300s.fit"); o kodu
+     * kullanıcıya bir kez daha yazdırmak gereksiz.
+     *
+     * Tahmin BAĞLAYICI DEĞİL: alan doldurulmuş olarak açılıyor ve
+     * kullanıcı yanlışsa değiştiriyor. Katalogda karşılığı olmayan bir
+     * kod hiç yazılmıyor (bkz. `guessTargetFromFilename`), yani "IMG_2024"
+     * gibi bir dosya adı asla bir gök cismine dönüşmüyor.
+     *
+     * Elle seçilmiş bir hedef EZİLMİYOR: kullanıcı önce hedefi seçip
+     * sonra dosyayı değiştirdiyse, onun seçimi daha isabetli.
+     */
+    const guessed = state.targetSlug ? null : guessTargetFromFilename(file.name);
+
+    patch({
+      fileName: file.name,
+      ...(guessed
+        ? {
+            targetSlug: guessed.slug,
+            targetKind: guessed.kind,
+            title: state.title || guessed.name,
+            type: isPhotoType(kindToPhotoType[guessed.kind])
+              ? (kindToPhotoType[guessed.kind] as PhotoType)
+              : state.type,
+          }
+        : {}),
+    });
     setExif(null);
     setUseExifGps(false);
     setExifState('reading');
@@ -489,43 +523,42 @@ export function UploadWizardPage() {
                     return;
                   }
                   /*
-                   * Fotoğraf türü hedeften türetiliyor ama kullanıcının
-                   * elle yaptığı seçim ezilmiyor: aynı hedefin geniş alan
-                   * manzarası da çekilebilir. Yalnızca tür hâlâ başlangıç
-                   * değerindeyse öneriye geçiyoruz.
+                   * TÜR ARTIK SEÇİLMİYOR, TÜRETİLİYOR. Kullanıcıya
+                   * "M 42 seçtim, şimdi de türünü mü söyleyeyim?" diye
+                   * sormak, katalogda zaten yazan bir bilgiyi ikinci kez
+                   * istemekti — ve iki kaynağın ayrışmasına açıktı:
+                   * bulutsu seçip "Gezegen" işaretlemek mümkündü.
+                   *
+                   * Eşleme `kindToPhotoType` üzerinden; katalog türü
+                   * eşlemede yoksa mevcut değer korunuyor.
                    */
                   const suggested = kindToPhotoType[target.kind];
-                  const keepUserChoice = state.type !== initialState.type;
                   patch({
                     targetSlug: target.slug,
                     title: state.title || target.name,
-                    type:
-                      keepUserChoice || !isPhotoType(suggested)
-                        ? state.type
-                        : suggested,
+                    type: isPhotoType(suggested) ? suggested : state.type,
                   });
                 }}
                 selectClassName={selectClass}
               />
 
-              <Field
-                label="Fotoğraf türü"
-                htmlFor="w-type"
-                hint="Hedef seçtiğinizde otomatik önerilir; değiştirebilirsiniz."
-              >
-                <select
-                  id="w-type"
-                  className={selectClass}
-                  value={state.type}
-                  onChange={(e) => patch({ type: e.target.value as PhotoType })}
-                >
-                  {Object.entries(photoTypeLabels).map(([v, l]) => (
-                    <option key={v} value={v}>
-                      {l}
-                    </option>
-                  ))}
-                </select>
-              </Field>
+              {/*
+                Tür bir GİRDİ değil, bir SONUÇ — bu yüzden alan değil
+                künye satırı. Gizlemek yerine göstermek gerekiyor:
+                kullanıcı fotoğrafının hangi türde yayımlanacağını
+                bilmeli ve yanlışsa hedefi düzelterek düzeltebilmeli.
+              */}
+              <div className="rounded-card border border-border bg-surface-1 px-3.5 py-3">
+                <p className="label">Fotoğraf türü</p>
+                <p className="mt-1 flex items-center gap-2">
+                  <Badge tone="primary">{photoTypeLabels[state.type]}</Badge>
+                  <span className="text-meta text-faint">
+                    {state.targetSlug
+                      ? 'obje türünden çıkarıldı'
+                      : 'obje seçilince güncellenir'}
+                  </span>
+                </p>
+              </div>
               <Field label="Başlık" htmlFor="w-title">
                 <Input
                   id="w-title"
@@ -761,19 +794,18 @@ export function UploadWizardPage() {
                   onChange={(e) => patch({ software: e.target.value })}
                 />
               </Field>
-              <Field label="Lisans" htmlFor="w-lic">
-                <select
-                  id="w-lic"
-                  className={selectClass}
-                  value={state.license}
-                  onChange={(e) => patch({ license: e.target.value })}
-                >
-                  <option>Tüm hakları saklıdır</option>
-                  <option>CC BY 4.0</option>
-                  <option>CC BY-NC 4.0</option>
-                  <option>CC BY-NC-SA 4.0</option>
-                </select>
-              </Field>
+              {/*
+                LİSANS SEÇİMİ KALDIRILDI.
+                Dört seçenekli bir açılır liste, çoğu kullanıcının
+                farkını bilmediği bir hukuki karar sorup varsayılanı
+                ("Tüm hakları saklıdır") olduğu gibi bırakmasına yol
+                açıyordu — yani seçim gerçekte yapılmıyordu.
+
+                Kural artık tek ve kullanım şartlarında yazılı: eser
+                sahibinin hakları kendisinde kalır, Astrohub kaynak
+                göstermek şartıyla kullanabilir. Aşağıdaki onay kutusu
+                buna atıf yapıyor ve metne bağlantı veriyor.
+              */}
               <label className="flex items-start gap-2.5 text-sm text-muted-foreground">
                 <input
                   type="checkbox"
@@ -793,8 +825,22 @@ export function UploadWizardPage() {
                     patch({ copyrightConfirmed: e.target.checked })
                   }
                 />
-                Bu eserin sahibi olduğumu ve paylaşma hakkım bulunduğunu
-                onaylıyorum (§15.4).
+                <span>
+                  Bu eserin sahibi olduğumu ve paylaşma hakkım bulunduğunu
+                  onaylıyorum; Astrohub'ın bu fotoğrafı{' '}
+                  <strong className="font-semibold text-foreground">
+                    adımı kaynak göstererek
+                  </strong>{' '}
+                  kullanmasına izin veriyorum (§15.4,{' '}
+                  <Link
+                    to="/kullanim-kosullari"
+                    target="_blank"
+                    className="text-cold underline underline-offset-2"
+                  >
+                    kullanım şartları
+                  </Link>
+                  ).
+                </span>
               </label>
 
               {/* Özet */}

@@ -7,6 +7,7 @@ import {
   type ReactNode,
 } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
+import { CONSENT_VERSION } from './consent';
 import { getSupabase, isSupabaseConfigured } from '@/services/supabase/client';
 
 interface AuthResult {
@@ -29,10 +30,12 @@ interface AuthContextValue {
     password: string,
     captchaToken?: string
   ) => Promise<AuthResult>;
+  /** `consentAccepted`: kayıt formundaki iki onay kutusu da işaretlendi mi. */
   signUp: (
     email: string,
     password: string,
-    captchaToken?: string
+    captchaToken?: string,
+    consentAccepted?: boolean
   ) => Promise<AuthResult>;
   /**
    * Google ile giriş — tarayıcıyı Google'a yönlendirir.
@@ -141,7 +144,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { error: error?.message ?? null };
       },
 
-      async signUp(email, password, captchaToken) {
+      async signUp(email, password, captchaToken, consentAccepted = false) {
         const clientPromise = getSupabase();
         if (!clientPromise) return NOT_CONFIGURED;
         const client = await clientPromise;
@@ -149,6 +152,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           email,
           password,
           options: {
+            /*
+             * Onay burada YALNIZCA BİR BAYRAK olarak gidiyor, zaman
+             * damgası olarak değil: tarihi istemcinin göndermesi, ispat
+             * değeri olan bir alanı istemcinin saatine bağlamak olurdu.
+             * `app.handle_new_user` bayrağı görüp `now()` yazıyor.
+             */
+            data: {
+              consent_accepted: consentAccepted,
+              consent_version: CONSENT_VERSION,
+            },
             /* Doğrulama e-postasındaki bağlantı yayındaki adrese
                dönmeli. `VITE_SITE_URL` tanımlı değilse o anki köken
                kullanılıyor — yerel geliştirmede doğru davranış. */

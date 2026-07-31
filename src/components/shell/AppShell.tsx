@@ -1,5 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { Outlet, ScrollRestoration } from 'react-router';
+import { ConsentGate } from '@/features/auth/ConsentGate';
 import { StatusBar } from './StatusBar';
 import { Topbar } from './Topbar';
 import { Footer } from './Footer';
@@ -113,6 +114,19 @@ export function AppShell() {
           </Suspense>
         </ErrorBoundary>
       )}
+
+      {/*
+        ONAY KAPISI kabuk seviyesinde: hangi rotada olursa olsun,
+        profilinde onay kaydı bulunmayan oturum bu ekranı görüyor.
+        Rota bazlı bir koruma yeterli olmazdı — Google ile giren
+        kullanıcı doğrudan `/panel`e düşüyor ve oradan her yere
+        gidebiliyor.
+      */}
+      <ErrorBoundary label="ConsentGate">
+        <Suspense fallback={null}>
+          <ConsentGate />
+        </Suspense>
+      </ErrorBoundary>
 
       <ScrollRestoration />
     </div>
