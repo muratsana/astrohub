@@ -75,5 +75,28 @@ tabloda `DONE` ile birleştirilmez:
 | E2E: bütün dropdown'larda 81 il | NOT_STARTED | Tüketici modüller bağlanmadan ölçülemez (Faz 2) |
 | **İlçe tohum verisi** | **NOT_STARTED** | Bilinçli: 973 ilçe adını çevrimdışı üretmek uydurma riski taşıyor. Tablo+FK+RLS hazır; resmî kaynak (TÜİK/NVİ) erişiminde tek `insert` ile dolar. Arayüzde ilçe seçimi olmadığı için hiçbir akış kırık değil. |
 
-### 1.2 Konum modu durum makinesi — **NOT_STARTED**
+### 1.2 Konum modu durum makinesi — **PARTIAL**
+
+**Düzeltilen hata:** belgedeki "manuel seçimden sonra GPS yeniden
+etkinleştirilemiyor". Sebep mimariydi — tek `permission` değişkeni hem
+tarayıcı iznini hem kullanıcının tercihini taşıyordu; şehir seçmek onu
+`dismissed` yapıyor, o da GPS yolunu kalıcı kapatıyordu.
+
+`src/domain/location/mode.ts`: beş mod (`AUTO_GPS`, `MANUAL`, `DENIED`,
+`UNAVAILABLE`, `ERROR`), izinden ayrılmış tercih, ayrı `lastGps` /
+`lastManual`.
+
+| Madde | Durum | Kanıt |
+|---|---|---|
+| Beş modlu durum makinesi | DONE | `mode.ts`, 14 test |
+| Manuel seçim GPS'i kapatmıyor | DONE | "senaryo 4" testleri |
+| Sınırsız geçiş | DONE | 10 turluk gidiş-geliş testi |
+| Son manuel ve son GPS ayrı saklanıyor | DONE | `lastManual` / `lastGps` |
+| DENIED'dan geri dönüş açık | DONE | `canReturnToAuto` testi |
+| İzinsiz prompt tetiklenmiyor | DONE | `shouldPrompt` DENIED'da false |
+| GPS düşünce site çökmüyor | DONE | UNAVAILABLE'dan manuel seçim testi |
+| **Context'e bağlanması** | **NOT_STARTED** | `LocationContext` hâlâ eski `permission` modelinde; durum makinesi henüz tüketilmiyor |
+| Reverse-geocoding adapter | NOT_STARTED | — |
+| Tarayıcı matrisi (Safari/iOS/Android/Edge) | NOT_STARTED | Kum havuzunda tek Chromium var; gerçek cihaz matrisi IMPLEMENTED_BLOCKED_EXTERNAL |
+| Çıkışta konum verisi temizliği | NOT_STARTED | — |
 ### 1.3 Supabase şema ve RLS denetimi — **NOT_STARTED**
