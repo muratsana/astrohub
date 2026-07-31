@@ -35,6 +35,13 @@ import {
   type ExifData,
 } from '@/domain/photography/exif';
 import { Alert } from '@/components/ui/Alert';
+import { CropTool } from './CropTool';
+import {
+  applyCropToFile,
+  isFullFrame,
+  FULL_FRAME,
+  type CropRect,
+} from '@/domain/photography/crop';
 
 const steps = [
   'Dosya',
@@ -122,6 +129,16 @@ const initialState: WizardState = {
  * bu iskelet form akışını, doğrulamaları ve özet ekranını tanımlar.
  */
 export function UploadWizardPage() {
+  /*
+   * KIRPMA DURUMU DOSYADAN AYRI TUTULUYOR.
+   *
+   * Kırpılmış dosyayı `file` yerine koymak akla yakın ama yanlış:
+   * kullanıcı oranı değiştirdiğinde yeniden kırpmak için ÖZGÜN dosya
+   * gerekiyor. Kırpılmışın üstüne kırpmak, her ayarda biraz daha kalite
+   * kaybetmek demekti. Dosya olduğu gibi duruyor; kırpma yalnızca bir
+   * dikdörtgen ve gönderim anında bir kez uygulanıyor.
+   */
+  const [crop, setCrop] = useState<CropRect>(FULL_FRAME);
   const [exif, setExif] = useState<ExifData | null>(null);
   const [exifState, setExifState] = useState<'idle' | 'reading' | 'read' | 'none'>(
     'idle'
@@ -174,9 +191,19 @@ export function UploadWizardPage() {
     setPublishError(null);
 
     try {
+      /*
+       * KIRPMA GÖNDERİM ANINDA, TEK SEFERDE UYGULANIYOR.
+       *
+       * Her ayarda dosyayı yeniden üretmek, JPEG'de her seferinde biraz
+       * daha kalite kaybetmek olurdu. Kırpma yokken `applyCropToFile`
+       * dosyaya hiç dokunmuyor ve özgün bayt dizisi olduğu gibi
+       * yükleniyor.
+       */
+      const gonderilecek = await applyCropToFile(file, crop);
+
       const result = await uploadPhoto(
         {
-          file,
+          file: gonderilecek,
           userId: user.id,
           slug: slugify(state.title || file.name),
           title: state.title || file.name,
@@ -325,6 +352,8 @@ export function UploadWizardPage() {
     });
     setExif(null);
     setUseExifGps(false);
+    /* Yeni dosya, yeni kadraj: önceki seçim başka bir görüntüye aitti. */
+    setCrop(FULL_FRAME);
     setExifState('reading');
 
     try {
@@ -443,6 +472,38 @@ export function UploadWizardPage() {
                 className="sr-only"
                 onChange={(event) => void handleFile(event.target.files?.[0])}
               />
+
+              {/*
+                KIRPMA DOSYA ADIMINDA, AYRI BİR ADIMDA DEĞİL.
+
+                Ayrı bir "kadraj" adımı düşünüldü ve reddedildi: kırpma
+                yapmayacak kullanıcı — ki çoğunluk bu — sihirbazda
+                geçmesi gereken bir adım daha görürdü. Burada, dosya
+                seçildiği anda ve isteğe bağlı olarak duruyor.
+
+                Alan ölçüsü ekipman adımından SONRA anlam kazanıyor
+                (piksel ölçeği orada hesaplanıyor); araç o değeri
+                aldığında satırı kendisi açıyor, almadığında sebebini
+                yazıyor.
+              */}
+              {file && (
+                <div className="rounded-card border border-border bg-surface-2/40 p-3">
+                  <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-3">
+                    <h3 className="label text-foreground">Kadraj</h3>
+                    <span className="text-meta text-faint">
+                      {isFullFrame(crop)
+                        ? 'kırpma yapılmadı — dosya olduğu gibi yüklenir'
+                        : 'kırpma gönderim anında uygulanır'}
+                    </span>
+                  </div>
+                  <CropTool
+                    file={file}
+                    arcsecPerPixel={state.pixelScaleArcsec}
+                    value={crop}
+                    onChange={setCrop}
+                  />
+                </div>
+              )}
 
               {exifState === 'reading' && (
                 <p className="text-[12px] text-muted-foreground" role="status">
