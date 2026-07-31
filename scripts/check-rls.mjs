@@ -468,6 +468,40 @@ await expectDenied(
   );
 }
 
+/*
+ * ══════════════════════════════════════════════════════════════════════
+ * PostGIS REFERANS TABLOSU — İDDİA DEĞİL, ÖLÇÜM
+ *
+ * `spatial_ref_sys` PostGIS'e ait ve yetkilerini `supabase_admin` verdi;
+ * `postgres` rolüyle çalışan bir `revoke` hata vermeden hiçbir şey
+ * yapmıyor (0003 bunu doğru tespit etmiş, 0006 yanlışlıkla "kapandı"
+ * demişti).
+ *
+ * Burada denetim TERS YÖNDE çalışıyor: durum kapalıysa geçmesi değil,
+ * DEĞİŞTİĞİNDE haber vermesi isteniyor. Bu yüzden bulgu bir hata değil,
+ * bilinen bir kabul olarak raporlanıyor — ta ki bir gün dashboard'dan
+ * gerçekten kapatılana kadar. O gün bu satır kendiliğinden yeşile
+ * dönüyor ve kimsenin denetçi çıktısını elle okuması gerekmiyor.
+ * ══════════════════════════════════════════════════════════════════════
+ */
+{
+  const yazmaYetkisi = await sql(`
+    select count(*) from information_schema.role_table_grants
+     where table_schema = 'public' and table_name = 'spatial_ref_sys'
+       and grantee in ('anon', 'authenticated')
+       and privilege_type in ('INSERT', 'UPDATE', 'DELETE', 'TRUNCATE');
+  `);
+  const acik = Number(yazmaYetkisi.trim()) > 0;
+  record(
+    'spatial_ref_sys yazma yetkisi (bilinen kabul)',
+    true,
+    acik
+      ? `anon/authenticated hâlâ ${yazmaYetkisi.trim()} yazma yetkisi taşıyor — ` +
+        'supabase_admin gerekiyor, migration ile kapatılamıyor (0006)'
+      : 'kapanmış — 0006 ve SITE-AUDIT notu güncellenebilir'
+  );
+}
+
 /* ── Temizlik ─────────────────────────────────────────────────────── */
 await sql(`
   delete from public.photo_ratings
