@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { getSupabase } from '@/services/supabase/client';
+import { slugify } from '@/lib/slug';
 import { forumThreads as forumSeed } from '@/features/forum/data';
 import {
   forumCategoryOrder,
@@ -153,19 +154,9 @@ export function useForumThreads(): ContentSelection<ForumThread> {
  * yüzde kodlaması okunmuyor ve paylaşılan bağlantı anlamsız görünüyordu.
  */
 export function threadSlug(title: string, suffix: string): string {
-  const base = title
-    .toLocaleLowerCase('tr-TR')
-    .replace(/ı/g, 'i')
-    .replace(/ş/g, 's')
-    .replace(/ğ/g, 'g')
-    .replace(/ü/g, 'u')
-    .replace(/ö/g, 'o')
-    .replace(/ç/g, 'c')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 60)
-    .replace(/-+$/, '');
-
+  /* Dönüşüm `lib/slug`ta — aynı kural yükleme sihirbazında da geçerli
+     ve iki kopya zamanla ayrışırdı. */
+  const base = slugify(title, 60);
   return `${base || 'konu'}-${suffix}`;
 }
 

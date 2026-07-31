@@ -36,6 +36,7 @@ import {
 } from '@/domain/photography/exif';
 import { Alert } from '@/components/ui/Alert';
 import { CropTool } from './CropTool';
+import { slugify } from '@/lib/slug';
 import {
   applyCropToFile,
   isFullFrame,
@@ -210,7 +211,7 @@ export function UploadWizardPage() {
         {
           file: gonderilecek,
           userId: user.id,
-          slug: slugify(state.title || file.name),
+          slug: slugifyPhoto(state.title || file.name),
           title: state.title || file.name,
           photoType: state.type,
           capturedAt: state.capturedAt || undefined,
@@ -1056,21 +1057,15 @@ function progressLabel(stage: string): string {
   }
 }
 
-function slugify(input: string): string {
-  const base = input
-    .toLocaleLowerCase('tr-TR')
-    .replace(/ı/g, 'i')
-    .replace(/ş/g, 's')
-    .replace(/ğ/g, 'g')
-    .replace(/ü/g, 'u')
-    .replace(/ö/g, 'o')
-    .replace(/ç/g, 'c')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 90);
-
+/**
+ * Fotoğraf adresi — dönüşüm `lib/slug`ta, son ek burada.
+ *
+ * Son ek ÇAKIŞMA İÇİN: aynı hedefi iki kez yükleyen kullanıcı
+ * "m31" adresini ikinci kez alamaz ve yükleme sessizce düşerdi.
+ */
+function slugifyPhoto(input: string): string {
   const suffix = Math.floor(Math.random() * 46656).toString(36);
-  return `${base || 'fotograf'}-${suffix}`;
+  return `${slugify(input) || 'fotograf'}-${suffix}`;
 }
 
 function StepTitle({ title, hint }: { title: string; hint?: string }) {

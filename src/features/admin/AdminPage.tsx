@@ -20,6 +20,7 @@ import { SpecImportControl } from './SpecImportControl';
 import { UserControl } from './UserControl';
 import { RecordsControl, AuditControl } from './RecordsControl';
 import { CommentsControl } from './CommentsControl';
+import { ForumCategories } from './ForumCategories';
 import {
   fetchQueue,
   resolveItem,
@@ -421,6 +422,8 @@ export function AdminPage() {
       */}
       {bolum === 'forum' && (
         <div className="space-y-4">
+          {/* Kategoriler üstte: forumun iskeleti, içerikten önce gelir. */}
+          <ForumCategories canWrite={roles.isAdmin} />
           <RecordsControl kinds={['thread']} title="Forum konuları" />
           <CommentsControl kinds={['forumPost']} />
         </div>

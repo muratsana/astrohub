@@ -137,7 +137,7 @@ describe('bölümler ne açıyor', () => {
   const beklenen: Record<string, string[]> = {
     İçerik: ['İçerik yönetimi', 'İçerik kayıtları', 'Kullanıcı metinleri'],
     Kullanıcılar: ['Kullanıcılar', 'Denetim kaydı'],
-    Forum: ['Forum konuları', 'Kullanıcı metinleri'],
+    Forum: ['Forum kategorileri', 'Forum konuları', 'Kullanıcı metinleri'],
     'Ana sayfa': ['Ana sayfada öne çıkanlar'],
     Yayın: ['TV Kontrolü', 'Radyo Kontrolü'],
   };
