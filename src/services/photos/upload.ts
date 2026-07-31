@@ -48,6 +48,18 @@ export interface UploadInput {
   locationVisibility?: 'exact' | 'approximate' | 'region' | 'hidden';
   license?: string;
   aiDeclared?: boolean;
+  /**
+   * Telif beyanı (§15.4) — kullanıcının "bu eserin sahibiyim" onayı.
+   *
+   * ZORUNLU ALAN, isteğe bağlı değil. Veritabanı `status = 'published'`
+   * olan her satırda bunu şart koşuyor
+   * (`astro_photos_publish_requires_copyright`). Alan `?` ile isteğe
+   * bağlı bırakılsaydı, çağıran taraf onu yazmayı unuttuğunda derleme
+   * geçer ve hata ancak YAYIN adımında, kısıt ihlali olarak çıkardı —
+   * bu tam olarak yaşandı: dosyalar yükleniyor, satır açılıyor ve
+   * fotoğraf taslakta kalıyordu.
+   */
+  copyrightConfirmed: boolean;
   /** Ekipman künyesi — serbest metin; katalog bağı ayrı alanlarda. */
   setup?: Record<string, string>;
   opticId?: string | null;
@@ -192,6 +204,13 @@ export async function uploadPhoto(
         location_visibility: input.locationVisibility ?? 'approximate',
         license: input.license ?? 'Tüm hakları saklıdır',
         ai_declared: input.aiDeclared ?? false,
+        /*
+         * Onay TASLAKTA yazılıyor, yayın adımında değil. Beyan
+         * kullanıcının dosyayı verdiği anda verdiği bir beyan; onu
+         * yayına ertelemek, taslakta duran bir kaydın telif durumunu
+         * belirsiz bırakırdı.
+         */
+        copyright_confirmed: input.copyrightConfirmed,
         optic_id: input.opticId ?? null,
         camera_id: input.cameraId ?? null,
         mount_id: input.mountId ?? null,

@@ -19,6 +19,8 @@ const state = {
   removed: [] as { bucket: string; paths: string[] }[],
   deletedRows: [] as string[],
   insertedRows: 0,
+  /** `astro_photos` insert yükü — alanların gerçekten yazıldığını görmek için. */
+  photoInsert: null as Record<string, unknown> | null,
   exposureError: null as { message: string } | null,
   updateError: null as { message: string } | null,
 };
@@ -30,6 +32,7 @@ function tableApi(table: string) {
     insert(rows: unknown) {
       if (table === 'astro_photos') {
         state.insertedRows++;
+        state.photoInsert = rows as Record<string, unknown>;
         return {
           select: () => ({
             single: async () => ({ data: { id: PHOTO_ID }, error: null }),
@@ -114,6 +117,7 @@ const input = {
   slug: 'gece',
   title: 'Gece',
   photoType: 'deep-sky',
+  copyrightConfirmed: true,
 };
 
 const DISPLAY = 'user-1/photo-1/display.jpg';
@@ -125,6 +129,7 @@ beforeEach(() => {
   state.removed = [];
   state.deletedRows = [];
   state.insertedRows = 0;
+  state.photoInsert = null;
   state.exposureError = null;
   state.updateError = null;
 });
@@ -252,5 +257,35 @@ describe('uploadPhoto — poz künyesi', () => {
       exposures: [{ filter: 'L', frames: 30, exposureSeconds: 120 }],
     });
     expect(result.exposuresSaved).toBe(true);
+  });
+});
+
+describe('uploadPhoto — telif beyanı satıra yazılıyor', () => {
+  /*
+   * BU TESTİN SEBEBİ ÜRETİMDE YAŞANDI. Onay kutusu sihirbazın yerel
+   * durumunda tutuluyor, "Yayımla" düğmesini kilitliyor ve oraya kadar
+   * her şey doğru görünüyordu — ama değer `astro_photos` satırına HİÇ
+   * yazılmıyordu.
+   *
+   * Sonuç sessiz değildi, ama hatanın çıktığı yer sebebinden çok uzaktı:
+   * dosyalar yükleniyor, satır açılıyor, sonra yayın adımı
+   * `astro_photos_publish_requires_copyright` kısıtına takılıyor ve
+   * fotoğraf sonsuza kadar taslakta kalıyordu. Kullanıcının gördüğü
+   * tek şey, üç kez denenip yayımlanmayan bir fotoğraftı.
+   */
+  it('onay verildiğinde satıra true yazıyor', async () => {
+    await uploadPhoto({ ...input, copyrightConfirmed: true });
+    expect(state.photoInsert?.copyright_confirmed).toBe(true);
+  });
+
+  /*
+   * Onaysız yükleme taslak olarak GEÇERLİ — kullanıcı fotoğrafı
+   * yükleyip beyanı sonra verebilir. Bu yüzden burada `false` yazılıyor;
+   * varsayılanı `true`ya çekmek, verilmemiş bir beyanı verilmiş
+   * saymak olurdu.
+   */
+  it('onay verilmediğinde false yazıyor — sessizce doğruya çekmiyor', async () => {
+    await uploadPhoto({ ...input, copyrightConfirmed: false });
+    expect(state.photoInsert?.copyright_confirmed).toBe(false);
   });
 });

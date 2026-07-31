@@ -345,6 +345,63 @@ await expectCount(
   0
 );
 
+/* ── Politika yardımcıları çağrılabiliyor mu ──────────────────────── */
+
+/*
+ * BU BÖLÜM ÜRETİMDE YAŞANAN BİR HATADAN SONRA EKLENDİ.
+ *
+ * `app` şeması 0001'de açılmış ama hiçbir role `usage` verilmemişti.
+ * PostgreSQL'de bir şemaya `usage` yoksa içindeki fonksiyon ADIYLA
+ * çağrılamaz — `security definer` olsa bile: o bayrak gövdenin İÇİNDEKİ
+ * yetkiyi değiştirir, çağırma iznini değil.
+ *
+ * Depoda 70'e yakın politika `app.is_admin()` / `app.has_role(...)`
+ * çağırıyor. Hepsi bu boşluğun üstünde duruyordu ve HİÇBİR TEST
+ * GÖRMEDİ, çünkü:
+ *
+ *   • Bu matristeki sorgular ya 0 satır bekliyor (yetki hatası da
+ *     "geçti" sayılıyor, bkz. expectCount) ya da politikanın OR
+ *     zincirinde sol taraf zaten doğru — sağdaki `app.*` çağrısı hiç
+ *     değerlendirilmiyor.
+ *   • Kırılma ancak ilk gerçek fotoğraf yayımlanırken, INSERT'in
+ *     `with check` ifadesinde ortaya çıktı.
+ *
+ * Bu yüzden burada politikanın DOLAYLI yolu değil, fonksiyonun KENDİSİ
+ * çağrılıyor. Kısa devre yok, satır sayısına bağımlılık yok: yetki ya
+ * var ya yok.
+ */
+for (const role of ['anon', 'authenticated']) {
+  for (const call of ['app.is_admin()', "app.has_role('moderator')"]) {
+    const result = await asRole(role, ALICE, `select ${call};`);
+    record(
+      `${role} rolü ${call} çağırabiliyor`,
+      result.ok,
+      result.ok ? '' : result.error.slice(0, 120)
+    );
+  }
+}
+
+/*
+ * Şemayı açmak, İÇİNDEKİ HER ŞEYİ açmak değil. Bu üçü `security
+ * definer` ve parametre olarak BAŞKASININ kimliğini alıyor; açık
+ * kalsalardı herhangi bir kullanıcı eline geçen bir uuid ile başka
+ * birinin üyelik kademesini ve fotoğraf sayısını sorgulayabilirdi
+ * (0030 bunları geri aldı).
+ */
+for (const call of [
+  `app.membership_tier('${ALICE}')`,
+  `app.photo_limit('${ALICE}')`,
+  `app.active_photo_count('${ALICE}')`,
+]) {
+  const result = await asRole('authenticated', BOB, `select ${call};`);
+  const denied = !result.ok && /permission denied/i.test(result.error);
+  record(
+    `${call} başkasına kapalı`,
+    denied,
+    denied ? '' : 'çağrılabiliyor — başkasının üyeliği sorgulanabilir'
+  );
+}
+
 /* ── Temizlik ─────────────────────────────────────────────────────── */
 await sql(`
   delete from public.astro_photos where user_id in ('${ALICE}','${BOB}');
