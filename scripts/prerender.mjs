@@ -145,3 +145,30 @@ if (homeFailed || failures.length > paths.length * 0.1) {
   console.error('Prerender başarısız sayıldı — eşik aşıldı.');
   process.exit(1);
 }
+
+/*
+ * ══════════════════════════════════════════════════════════════════════
+ * AÇIKÇA ÇIKIŞ — betik işini bitirdikten sonra Node kendiliğinden
+ * kapanmıyordu.
+ *
+ * BELİRTİ: "Prerender tamam · 421/421" yazılıyor, 421 dosya diske
+ * iniyor, sonra süreç sonsuza kadar uykuda kalıyordu. `npm run build`
+ * hiç dönmediği için ondan sonraki her adım (bütçe, CSP, a11y, e2e)
+ * çalışmadan bekliyordu. Derleme "başarısız" bile olmuyor, sadece
+ * ASILI KALIYOR — CI'da en pahalı hata türü.
+ *
+ * ÖLÇÜM: `process.getActiveResourcesInfo()` çıkışta altı `Timeout` ve
+ * yüzlerce `Immediate` gösteriyor — kabaca rota başına bir tane.
+ * Kaynağı React'in statik `prerender` iş döngüsü: prelude akışı
+ * tükendikten sonra da kendini `setImmediate` ile yeniden kuyruğa
+ * atıyor ve olay döngüsü hiç boşalmıyor. jsdom penceresi (rAF sayacı
+ * ölçüldü: 0 çağrı) suçlu değil.
+ *
+ * NEDEN `process.exit` BURADA MEŞRU: bu bir sunucu değil, tek atımlık
+ * bir derleme adımı. Bütün yazma işleri `writeFileSync` ile senkron
+ * yapıldı, yani diskte bekleyen bir şey yok; kalan tek şey artık
+ * kimsenin sonucunu beklemediği render işleri. Çıkış kodu bilinçli
+ * olarak bu satırda: yukarıdaki eşik kontrolünden SONRA geliyor, yani
+ * gerçek bir başarısızlık hâlâ 1 ile düşüyor.
+ */
+process.exit(0);

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   bestMonthsFromRa,
   difficultyFor,
+  properName,
   formatAngularSize,
   formatDec,
   formatRa,
@@ -152,5 +153,44 @@ describe('tür tabloları', () => {
     expect(isMovingKind('ay')).toBe(true);
     expect(isMovingKind('galaksi')).toBe(false);
     expect(isMovingKind('emisyon-bulutsusu')).toBe(false);
+  });
+});
+
+describe('properName — satır aynı şeyi iki kez söylemiyor', () => {
+  it('baştaki katalog kodunu atıyor', () => {
+    expect(properName('NGC 7000', 'NGC 7000 Kuzey Amerika Bulutsusu', 'emisyon-bulutsusu'))
+      .toBe('Kuzey Amerika Bulutsusu');
+  });
+
+  /*
+   * ASIL DURUM. Katalogdaki kayıtların çoğunun özel adı yok ve adı
+   * `${kod} ${tür}` olarak türetiliyor. Satır kodu ve türü zaten ayrı
+   * gösterdiği için geriye söylenecek bir şey kalmıyor.
+   */
+  it('geriye yalnızca tür kalıyorsa null', () => {
+    expect(properName('M 29', 'M 29 Açık Kümesi', 'acik-kume')).toBeNull();
+    expect(properName('NGC 6888', 'NGC 6888 Emisyon Bulutsusu', 'emisyon-bulutsusu'))
+      .toBeNull();
+  });
+
+  it('özel adı olan kayıt korunuyor', () => {
+    expect(properName('M 42', 'Orion Bulutsusu', 'emisyon-bulutsusu'))
+      .toBe('Orion Bulutsusu');
+    expect(properName('NGC 6888', 'Hilal Bulutsusu', 'emisyon-bulutsusu'))
+      .toBe('Hilal Bulutsusu');
+  });
+
+  it('ad koddan ibaretse null', () => {
+    expect(properName('M 29', 'M 29', 'acik-kume')).toBeNull();
+  });
+
+  /*
+   * Türkçe küçültme: `toLowerCase()` "İ" harfini "i̇" (i + birleşen
+   * nokta) yapıyor ve karşılaştırma tutmuyordu. Yerel ayarlı küçültme
+   * şart — katalogda "İkiz", "Işık" gibi adlar var.
+   */
+  it('Türkçe büyük harfle başlayan adda da doğru çalışıyor', () => {
+    expect(properName('IC 1396', 'İkiz Bulutsu', 'emisyon-bulutsusu'))
+      .toBe('İkiz Bulutsu');
   });
 });

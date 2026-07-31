@@ -107,3 +107,42 @@ describe('nightTimeline', () => {
     expect(withNow.now).toBeCloseTo(0.5, 3);
   });
 });
+
+describe('nightTimeline — ay yüksekliği eğrisi', () => {
+  it('örnekler ekseni baştan sona kaplar', () => {
+    const t = build(WINTER);
+    expect(t.moonAltitudes.length).toBeGreaterThan(10);
+    expect(t.moonAltitudes[0].at).toBeCloseTo(0, 6);
+    expect(t.moonAltitudes.at(-1)!.at).toBeLessThanOrEqual(1.000001);
+    for (const sample of t.moonAltitudes) {
+      expect(sample.at).toBeGreaterThanOrEqual(0);
+      expect(sample.altitude).toBeGreaterThanOrEqual(-91);
+      expect(sample.altitude).toBeLessThanOrEqual(91);
+    }
+  });
+
+  /*
+   * ASIL KURAL: eğri ile bant AYNI ÖRNEKLEMEDEN çıkıyor. İki ayrı tarama
+   * yapılsaydı çizelgede eğri ufkun üstündeyken bandın bitmiş olması
+   * mümkün olurdu — ve bu, gözle bakmadan görülmeyen türden bir hata.
+   */
+  it('pozitif yükseklikli her örnek bir "ay yukarıda" bandının içinde', () => {
+    const t = build(WINTER);
+    const inBand = (at: number) =>
+      t.moonUp.some(
+        (piece) =>
+          at >= piece.start - 1e-9 && at <= piece.start + piece.span + 1e-9
+      );
+
+    for (const sample of t.moonAltitudes) {
+      if (sample.altitude > 0) {
+        expect(inBand(sample.at), `${sample.at} bant dışında`).toBe(true);
+      }
+    }
+  });
+
+  it('karanlık oluşmayan gecede eğri de boş', () => {
+    const t = nightTimeline(SUMMER, 69.65, 18.96, SUMMER);
+    expect(t.moonAltitudes).toEqual([]);
+  });
+});

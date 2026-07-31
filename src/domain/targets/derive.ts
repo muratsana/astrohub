@@ -350,3 +350,42 @@ export function describeTarget(input: {
   const base = `${input.constellation} takımyıldızında, ${magText} bir ${kindText}. ${sizeText}.`;
   return input.note ? `${base} ${input.note}` : base;
 }
+
+/**
+ * KATALOG KODU VE TÜR ZATEN EKRANDAYKEN GÖSTERİLECEK AD.
+ *
+ * `data.ts` adı olmayan kayıtlar için adı türetiyor:
+ *
+ *     name: row.name ?? `${row.code} ${KIND_NOUN[row.kind]}`
+ *
+ * Bu tek başına doğru — "M 29 Açık Kümesi" bir başlık olarak eksiksiz.
+ * Ama kodu VE türü ayrı öğeler olarak gösteren bir liste satırında aynı
+ * bilgi üç kez çıkıyor:
+ *
+ *     M 29  M 29 Açık Kümesi
+ *     Açık Küme
+ *
+ * Bu fonksiyon o satırın ikinci parçasını veriyor: baştaki katalog kodu
+ * atılıyor, geriye kalan yalnızca türün tekrarıysa `null` dönüyor.
+ * `null` "ad yok" demek değil — "bu kaydın ekranda zaten görünmeyen
+ * ÖZEL bir adı yok" demek. Çağıran taraf o zaman hiçbir şey basmıyor.
+ *
+ * Adı silmek çözüm olmazdı: başlıklarda ve sosyal önizlemede tam ad
+ * gerekiyor. Karar, kodu ve türü zaten gösteren yerin tekrarı atması.
+ */
+export function properName(
+  catalog: string,
+  name: string,
+  kind: TargetKind
+): string | null {
+  const lower = (value: string) => value.trim().toLocaleLowerCase('tr-TR');
+  const trimmed = name.trim();
+
+  const rest = lower(trimmed).startsWith(lower(catalog))
+    ? trimmed.slice(catalog.length).trim()
+    : trimmed;
+
+  if (rest === '') return null;
+  // "Açık Kümesi" ile "Açık Küme" aynı şeyi söylüyor — iyelik eki farkı.
+  return lower(rest).startsWith(lower(targetKindLabels[kind])) ? null : rest;
+}
