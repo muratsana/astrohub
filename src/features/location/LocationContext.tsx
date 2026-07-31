@@ -15,6 +15,14 @@ import {
   TURKEY_TIME_ZONE,
   type City,
 } from './cities';
+import {
+  reduce as reduceLocationMode,
+  canReturnToAuto as canReturnToAutoOf,
+  needsPermissionHelp as needsPermissionHelpOf,
+  modeLabels,
+  INITIAL_STATE as LOCATION_MODE_INITIAL,
+  type LocationMode,
+} from '@/domain/location/mode';
 
 /**
  * Gözlem konumu (§7.9, §15.3).
@@ -55,6 +63,17 @@ interface LocationContextValue {
   location: ObservingLocation;
   cities: City[];
   permission: PermissionState;
+  /**
+   * Konum MODU — kullanıcının ne istediği (`permission` tarayıcının ne
+   * dediği). İkisi ayrı tutulmazsa manuel şehir seçimi GPS yolunu
+   * kalıcı kapatıyordu; Faz 1.2'de düzeltilen hata buydu.
+   */
+  mode: LocationMode;
+  modeLabel: string;
+  /** "Otomatik konuma dön" düğmesi çizilmeli mi. */
+  canReturnToAuto: boolean;
+  /** Tarayıcı ayar yönergesi gösterilmeli mi. */
+  needsPermissionHelp: boolean;
   /** Öneri kutusu gösterilmeli mi? (yalnızca hiç sorulmadıysa) */
   shouldOfferGeolocation: boolean;
   setCity: (id: string) => void;
@@ -125,23 +144,55 @@ export function LocationProvider({ children }: { children: ReactNode }) {
     () => readStored()?.permission ?? 'unasked'
   );
 
+  /*
+   * MOD, İZİNDEN AYRI. Saklanan kayıt cihaz konumuysa otomatik moddan
+   * başlıyoruz; değilse manuel. İzin durumu buna KARIŞMIYOR — eski
+   * kodda karışıyordu ve şehir seçen kullanıcı GPS'e dönemiyordu.
+   */
+  const [modeState, setModeState] = useState(() => {
+    const stored = readStored();
+    return stored?.source === 'device'
+      ? { ...LOCATION_MODE_INITIAL, mode: 'AUTO_GPS' as LocationMode }
+      : LOCATION_MODE_INITIAL;
+  });
+
   const setCity = useCallback((id: string) => {
     const city = findCity(id);
     if (!city) return;
     setLocation(cityLocation(city, 'city'));
+    /*
+     * ASIL DÜZELTME: burada eskiden `permission` 'dismissed' yapılıyordu.
+     * Yani şehir seçmek, izni hiç reddetmemiş bir kullanıcıda bile GPS
+     * önerisini kalıcı kapatıyor ve "otomatik konuma dön" yolu
+     * kalmıyordu. Manuel seçim artık YALNIZCA modu değiştiriyor.
+     */
+    setModeState((s) =>
+      reduceLocationMode(s, {
+        type: 'SELECT_MANUAL',
+        fix: {
+          label: city.name,
+          latitude: city.latitude,
+          longitude: city.longitude,
+          ref: id,
+        },
+      })
+    );
     setPermission((current) => {
-      const next = current === 'unasked' ? 'dismissed' : current;
-      writeStored({ source: 'city', cityId: id, permission: next });
-      return next;
+      writeStored({ source: 'city', cityId: id, permission: current });
+      return current;
     });
   }, []);
 
   const requestDeviceLocation = useCallback(() => {
     if (!navigator.geolocation) {
+      /* Desteklenmiyor ≠ reddedildi. İkisini aynı saymak, tarayıcısını
+         değiştiren kullanıcıya "izni açın" demek olurdu. */
+      setModeState((s) => reduceLocationMode(s, { type: 'GPS_UNAVAILABLE' }));
       setPermission('denied');
       return;
     }
 
+    setModeState((s) => reduceLocationMode(s, { type: 'REQUEST_AUTO' }));
     setPermission('pending');
     navigator.geolocation.getCurrentPosition(
       ({ coords }) => {
@@ -154,6 +205,12 @@ export function LocationProvider({ children }: { children: ReactNode }) {
           source: 'device',
         };
         setLocation(next);
+        setModeState((s) =>
+          reduceLocationMode(s, {
+            type: 'GPS_OK',
+            fix: { label, latitude: coords.latitude, longitude: coords.longitude },
+          })
+        );
         setPermission('granted');
         writeStored({
           source: 'device',
@@ -163,12 +220,27 @@ export function LocationProvider({ children }: { children: ReactNode }) {
           permission: 'granted',
         });
       },
-      () => {
-        setPermission('denied');
+      (err) => {
+        /*
+         * ÜÇ HATA AYRI. Eski kod hepsini 'denied' sayıyordu; zaman aşımı
+         * yaşayan kullanıcıya "izni açın" demek onu olmayan bir ayarı
+         * aramaya gönderirdi.
+         */
+        setModeState((s) =>
+          reduceLocationMode(
+            s,
+            err.code === err.PERMISSION_DENIED
+              ? { type: 'GPS_DENIED' }
+              : err.code === err.POSITION_UNAVAILABLE
+                ? { type: 'GPS_ERROR', message: 'Konum servisi yanıt vermedi.' }
+                : { type: 'GPS_ERROR', message: 'Konum alınamadı, tekrar deneyin.' }
+          )
+        );
+        setPermission(err.code === err.PERMISSION_DENIED ? 'denied' : 'unasked');
         writeStored({
           source: 'city',
           cityId: DEFAULT_CITY_ID,
-          permission: 'denied',
+          permission: err.code === err.PERMISSION_DENIED ? 'denied' : 'unasked',
         });
       },
       { enableHighAccuracy: false, timeout: 10_000, maximumAge: 600_000 }
@@ -235,12 +307,23 @@ export function LocationProvider({ children }: { children: ReactNode }) {
       location,
       cities,
       permission,
+      mode: modeState.mode,
+      modeLabel: modeLabels[modeState.mode],
+      canReturnToAuto: canReturnToAutoOf(modeState),
+      needsPermissionHelp: needsPermissionHelpOf(modeState),
       shouldOfferGeolocation: permission === 'unasked',
       setCity,
       requestDeviceLocation,
       dismissGeolocationOffer,
     }),
-    [location, permission, setCity, requestDeviceLocation, dismissGeolocationOffer]
+    [
+      location,
+      permission,
+      modeState,
+      setCity,
+      requestDeviceLocation,
+      dismissGeolocationOffer,
+    ]
   );
 
   return (

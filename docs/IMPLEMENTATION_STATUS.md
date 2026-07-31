@@ -95,7 +95,10 @@ tarayıcı iznini hem kullanıcının tercihini taşıyordu; şehir seçmek onu
 | DENIED'dan geri dönüş açık | DONE | `canReturnToAuto` testi |
 | İzinsiz prompt tetiklenmiyor | DONE | `shouldPrompt` DENIED'da false |
 | GPS düşünce site çökmüyor | DONE | UNAVAILABLE'dan manuel seçim testi |
-| **Context'e bağlanması** | **NOT_STARTED** | `LocationContext` hâlâ eski `permission` modelinde; durum makinesi henüz tüketilmiyor |
+| Context'e bağlanması | DONE | `LocationContext` durum makinesini tüketiyor; `mode`, `modeLabel`, `canReturnToAuto`, `needsPermissionHelp` dışa veriliyor |
+| `setCity` izne dokunmuyor | DONE | Eski kod `permission`ı 'dismissed' yapıyordu — kilit buydu, kaldırıldı |
+| GPS hataları ayrıştırıldı | DONE | PERMISSION_DENIED / POSITION_UNAVAILABLE / TIMEOUT ayrı ele alınıyor; eskiden hepsi 'denied' sayılıyordu |
+| **Arayüzde "Otomatik konuma dön" düğmesi** | **NOT_STARTED** | Context alanları hazır; `LocationPicker` henüz çizmiyor |
 | Reverse-geocoding adapter | NOT_STARTED | — |
 | Tarayıcı matrisi (Safari/iOS/Android/Edge) | NOT_STARTED | Kum havuzunda tek Chromium var; gerçek cihaz matrisi IMPLEMENTED_BLOCKED_EXTERNAL |
 | Çıkışta konum verisi temizliği | NOT_STARTED | — |
