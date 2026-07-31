@@ -95,12 +95,19 @@ Uzak projeye dokunan komutlar iki ortam değişkeni ister — şablon
 | `plate-solve` | açık | Yüklenen fotoğrafı astrometry.net'e gönderiyor; sahiplik denetimi **çağıranın anahtarıyla** yapılıyor ki RLS cevap versin |
 | `plate-solve-poll` | **kapalı** | `pg_cron` beş dakikada bir çağırıyor; kimlik `x-poll-secret` başlığıyla elle doğrulanıyor (bkz. `docs/YAYIN.md` §6) |
 
-> **Silinecek: `taslak-temizle`.** Tek seferlik bir temizlik için
-> yazılmıştı ve işi bitti. Yalnızca JWT ile korunuyordu — yani oturum
-> açmış herhangi bir kullanıcı **herkesin** onaylanmamış taslaklarını
-> silebilirdi. Fark edilir edilmez içi boşaltıldı: şu an 410 döndürüyor
-> ve hiçbir şey yapmıyor. MCP'de fonksiyon silme aracı yok; panelden
-> (Edge Functions → `taslak-temizle` → Delete) kaldırılmalı.
+Listenin tamamı bu üç fonksiyon; başkası yok.
+
+> **Kaldırılan: `taslak-temizle` (2026-07-31).** Tek seferlik bir taslak
+> temizliği için yazılmıştı. Yalnızca JWT ile korunuyordu — yani oturum
+> açmış **herhangi bir kullanıcı herkesin** onaylanmamış taslaklarını
+> silebilirdi. Fark edilir edilmez içi boşaltıldı, işi bitince de
+> tamamen silindi.
+>
+> Ders, gelecekteki tek seferlik işler için: servis rolü anahtarı taşıyan
+> bir uç noktada `verify_jwt` **yetki denetimi değildir**. "Oturum açmış
+> biri" ile "bunu yapmaya hakkı olan biri" ayrı sorulardır; ikincisini
+> fonksiyonun kendisi sormak zorunda (`plate-solve` bunu sahiplik
+> kontrolünü çağıranın anahtarıyla yaparak çözüyor).
 
 ## İlkeler
 
