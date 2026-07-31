@@ -743,3 +743,101 @@ sosyal önizleme ve arama sonucu tam adı istiyor.)
 
 2b varyantı (hedeflerin zaman ekseninde Gantt şeridi). Paket onu
 "ileride istenirse" diye işaretliyor; bu turda kapsam dışı.
+
+---
+
+## 18. Yükleme onarımı, hukuki metinler ve plate solve (31 Temmuz, ikinci blok)
+
+### Fotoğraf yüklenemiyordu — iki ayrı hata
+
+Sihirbazın son adımı üretimde düşüyordu. İki bağımsız sebep vardı ve
+ikincisi ancak birincisi kalkınca görünür oldu.
+
+**1. `permission denied for schema app` (0030).** `app` şeması 0001'de
+açılmış ama hiçbir role `usage` verilmemişti. PostgreSQL'de şemaya
+`usage` yoksa içindeki fonksiyon adıyla çağrılamaz — `security definer`
+olsa bile: o bayrak gövdenin İÇİNDEKİ yetkiyi değiştirir, çağırma
+iznini değil. Politika ifadeleri çağıran rolün yetkisiyle
+değerlendiriliyor ve depoda 70'e yakın politika `app.is_admin()` ya da
+`app.has_role(...)` çağırıyor.
+
+*Neden bugüne kadar görünmedi:* kısa devre. Sık yollarda `app.*` çağrısı
+bir OR zincirinin sağında ve sol taraf çoğu satırda zaten doğru
+(`approved`, `status = 'yayinda'`). `astro_photos` ise boştu. Kırılma
+INSERT'te oldu — iki permissive politikanın `with check` ifadeleri
+OR'lanıyor ve biri `app.is_admin()`.
+
+Şema açılırken içindeki her şey açılmadı: `membership_tier`,
+`photo_limit`, `active_photo_count` parametre olarak başkasının
+kimliğini alıyor ve `security definer` olduğu için RLS'i aşarak
+cevaplıyor; üçü de geri alındı.
+
+**2. `copyright_confirmed` veritabanına hiç yazılmıyordu.** Telif onayı
+sihirbazın yerel durumunda tutuluyor, "Yayımla" düğmesini kilitliyor —
+ama satıra yazılmıyordu. Dosyalar yükleniyor, satır açılıyor, sonra
+yayın adımı `astro_photos_publish_requires_copyright` kısıtına takılıyor
+ve fotoğraf sonsuza kadar taslakta kalıyordu. Üretimde sekiz böyle
+kayıt birikmişti; dosyalarıyla birlikte silindi.
+
+Alan `UploadInput` içinde ZORUNLU tanımlandı — `?` ile bırakılsaydı
+çağıran taraf yazmayı unuttuğunda derleme geçer ve hata yine yayın
+adımında çıkardı.
+
+### Hukuki metinler
+
+- **Lisans seçimi kaldırıldı.** Dört seçenekli liste pratikte bir karar
+  üretmiyordu; kural artık tek ve kullanım koşullarında yazılı: haklar
+  sahibinde, Astrohub kaynak göstererek kullanabilir.
+- **KVKK ve koşul onayı kayda geçiyor (0031).** Onay alınıyordu ama
+  hiçbir yere yazılmıyordu; ispat edilemeyen onay, alınmamış onayla
+  aynı yerde durur. Tek kutu ikiye ayrıldı (biri sözleşme, biri
+  bilgilendirme), zaman damgası SUNUCUDAN yazılıyor ve sürüm de
+  saklanıyor.
+- **Google için ayrı kapı.** OAuth akışında araya ekran koyulamıyor;
+  kapı kayıtta değil OTURUMDA duruyor. Profilinde onay kaydı olmayan
+  herkes — 0031 öncesi hesaplar dahil — bir kez onay ekranını görüyor.
+  Çıkış yolu her zaman açık.
+
+### Yükleme sihirbazı
+
+- Tür artık **seçilmiyor, türetiliyor**: katalogda zaten yazan bir
+  bilgiyi ikinci kez sormak, bulutsu seçip "Gezegen" işaretlemeye açık
+  bir kapıydı.
+- **Dosya adından obje tahmini**: desen bilerek geniş, süzgeç kataloğun
+  kendisi. `IMG_2024.jpg` asla bir gök cismine dönüşmüyor.
+  Normalleştirme `catalog_identifiers.normalized` ile birebir aynı.
+
+### Plate solve — astrometry.net (0032, 0033, 0034)
+
+Fotoğrafın gökyüzünde tam olarak nereye baktığı yıldız desenlerinden
+çözülüyor. Künyedeki hedef adı bir İDDİA; bu bir ÖLÇÜM ve ikisi ayrı
+tutuluyor.
+
+**Neden kendi sunucumuz değil:** ASTAP ve veritabanları ücretsiz ama
+yerel bir ikili; çalışması için işlemci ve birkaç GB disk taşıyan bir
+makine gerekiyor. Vercel yerel ikili çalıştırmıyor, Edge Deno üzerinde,
+bulut depolama alan verir işlemci vermez. Çözümün anında olması
+gerekmediği için astrometry.net'in kuyruklu API'si oturdu: ek sunucu,
+aylık ücret ve bakım yok.
+
+Akış: yayından sonra `plate-solve` işi gönderiyor → `pg_cron` beş
+dakikada bir `plate-solve-poll`u çağırıyor → sonuç veritabanına
+yazılıyor. Sırlar Vault'ta; `cron.job` tablosu komutu düz metin
+sakladığı için anahtar oraya yazılamaz.
+
+Ölçüm kullanıcı güncellemelerinden tetikleyiciyle korunuyor: elle
+yazılabilseydi çözüm, ikinci bir iddiaya dönüşürdü.
+
+**Kullanım koşullarına §4 eklendi:** gösterim kopyasının astrometry.net'e
+gönderildiği açıkça yazıyor. Orijinal dosya gönderilmiyor.
+
+### Bu turda ortaya çıkan kapı hataları
+
+1. `test:all`, `check:preview` ve `check:a11y` adımlarını çalıştırıyor
+   ama `dist-preview`'ı hiç üretmiyordu — iki kapı da bir önceki
+   derlemenin çıktısını denetliyordu. `build:preview` zincire eklendi.
+2. `npm run build` hiç dönmüyordu: prerender "tamam" yazıp sonsuza kadar
+   uykuda kalıyordu (React'in statik prerender iş döngüsü kendini
+   `setImmediate` ile yeniden kuyruğa atıyor). Hata bu turla ilgisiz —
+   değişiklikler stash'lenip yeniden denendi, aynı şekilde asılı kaldı.
+   Eşik kontrolünden sonra açık `process.exit(0)`.

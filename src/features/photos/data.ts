@@ -1,11 +1,17 @@
-import type { AstroPhoto } from './types';
+import { COZUM_YOK, type AstroPhoto } from './types';
 import { commonsImage } from '../../lib/commons';
 
 /**
  * Galeri/detay demo verisi. Faz 1.2'de Supabase + object storage'a bağlanır;
  * bu dosya yalnızca UI'yi gerçekçi teknik veriyle doğrulamak içindir.
  */
-export const photos: AstroPhoto[] = [
+/*
+ * Tohum fotoğrafların alan çözümü yok — gerçek bir ölçüm değil, örnek
+ * içerik. `COZUM_YOK` tek yerden geliyor ki sekiz kayda elle
+ * yazılmasın ve biri unutulduğunda tip hatası yerine sessiz bir
+ * tutarsızlık çıkmasın.
+ */
+const ham: Omit<AstroPhoto, 'solve'>[] = [
   {
     slug: 'ic434-at-basi-sho',
     title: 'At Başı ve Alev Bulutsusu',
@@ -408,6 +414,11 @@ export const photos: AstroPhoto[] = [
     city: 'Bursa',
   },
 ];
+
+export const photos: AstroPhoto[] = ham.map((foto) => ({
+  ...foto,
+  solve: COZUM_YOK,
+}));
 
 export function getPhotoBySlug(slug: string): AstroPhoto | undefined {
   return photos.find((p) => p.slug === slug);

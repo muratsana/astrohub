@@ -367,12 +367,80 @@ function ProcessingTab({ photo }: { photo: AstroPhoto }) {
           ['Lisans', photo.license],
         ]}
       />
+      <PlateSolvePanel solve={photo.solve} />
+
       {photo.processing.aiDeclared && (
         <p className="rounded-card border border-accent-blue/30 bg-accent-blue/10 px-4 py-3 text-xs text-accent-blue">
           ℹ️ Fotoğrafçı, işlemede AI tabanlı araç (denoise/deconvolution vb.)
           kullanıldığını beyan etmiştir (şeffaflık politikası).
         </p>
       )}
+    </div>
+  );
+}
+
+/**
+ * ALAN ÇÖZÜMÜ KÜNYESİ.
+ *
+ * Künyedeki hedef adı kullanıcının yazdığı bir İDDİA; buradaki değerler
+ * fotoğraftaki yıldız desenlerinden çıkan bir ÖLÇÜM. Panel bu ayrımı
+ * açıkça söylüyor — iki satırı aynı listede yan yana koymak, ikisini
+ * aynı güvenilirlikte gösterirdi.
+ *
+ * Dört durum, dört farklı cümle. "Yok" hâlinde HİÇBİR ŞEY gösterilmiyor:
+ * çözüm istenmemiş bir fotoğrafta boş bir kutu, eksik bir şey varmış
+ * izlenimi verirdi.
+ */
+function PlateSolvePanel({ solve }: { solve: AstroPhoto['solve'] }) {
+  if (solve.durum === 'yok') return null;
+
+  if (solve.durum === 'kuyrukta') {
+    return (
+      <p className="rounded-card border border-border bg-surface-2 px-4 py-3 text-meta text-muted-foreground">
+        Alan çözümü sırada — yıldız desenlerinden kadraj hesaplanıyor.
+        Sonuç birkaç dakika içinde burada görünecek.
+      </p>
+    );
+  }
+
+  if (solve.durum === 'basarisiz') {
+    return (
+      <p className="rounded-card border border-border bg-surface-2 px-4 py-3 text-meta text-faint">
+        Alan çözümü yapılamadı{solve.error ? ` — ${solve.error}` : '.'}
+      </p>
+    );
+  }
+
+  const derece = (value: number | null, basamak = 3) =>
+    value === null ? '—' : `${value.toFixed(basamak)}°`;
+
+  return (
+    <div className="rounded-card border border-cold/25 bg-cold/8 px-4 py-3">
+      <p className="label caps mb-2 text-cold">Alan çözümü · ölçüm</p>
+      <DL
+        rows={[
+          ['Merkez (RA)', derece(solve.raDeg)],
+          ['Merkez (Dec)', derece(solve.decDeg)],
+          ['Dönüklük', derece(solve.rotationDeg, 1)],
+          [
+            'Ölçek',
+            solve.scaleArcsecPx === null
+              ? '—'
+              : `${solve.scaleArcsecPx.toFixed(2)} ″/px`,
+          ],
+          [
+            'Alan',
+            solve.fieldWidthDeg && solve.fieldHeightDeg
+              ? `${solve.fieldWidthDeg.toFixed(2)}° × ${solve.fieldHeightDeg.toFixed(2)}°`
+              : '—',
+          ],
+        ]}
+      />
+      <p className="mt-2 text-meta text-faint">
+        Bu değerler fotoğraftaki yıldız desenlerinden hesaplandı
+        {solve.provider ? ` (${solve.provider})` : ''}; künyedeki hedef
+        bilgisinden bağımsızdır.
+      </p>
     </div>
   );
 }

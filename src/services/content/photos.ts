@@ -54,6 +54,15 @@ interface VersionRow {
 
 interface PhotoRow {
   id: string;
+  solve_status?: string | null;
+  solve_ra_deg?: number | null;
+  solve_dec_deg?: number | null;
+  solve_rotation_deg?: number | null;
+  solve_scale_arcsec_px?: number | null;
+  solve_field_width_deg?: number | null;
+  solve_field_height_deg?: number | null;
+  solve_provider?: string | null;
+  solve_error?: string | null;
   slug: string;
   title: string;
   description: string | null;
@@ -156,6 +165,24 @@ function mapVersions(rows: VersionRow[] | null): PhotoVersion[] | undefined {
 
 export function mapPhotoRow(row: PhotoRow): AstroPhoto {
   const bag = row.setup_text;
+
+  /*
+   * Çözüm alanları eski satırlarda ve tohum veride yok; `durum: 'yok'`
+   * bunun doğru karşılığı. `cozuldu` varsayıp boş değerler göstermek,
+   * ölçüm yapılmış ama sonucu kaybolmuş gibi okunurdu.
+   */
+  const solve: AstroPhoto['solve'] = {
+    durum:
+      (row.solve_status as AstroPhoto['solve']['durum'] | null) ?? 'yok',
+    raDeg: row.solve_ra_deg ?? null,
+    decDeg: row.solve_dec_deg ?? null,
+    rotationDeg: row.solve_rotation_deg ?? null,
+    scaleArcsecPx: row.solve_scale_arcsec_px ?? null,
+    fieldWidthDeg: row.solve_field_width_deg ?? null,
+    fieldHeightDeg: row.solve_field_height_deg ?? null,
+    provider: row.solve_provider ?? null,
+    error: row.solve_error ?? null,
+  };
   const capturedAt = row.captured_at ?? row.published_at ?? '';
 
   const displayUrl = publicPhotoUrl(row.display_path ?? row.thumb_path);
@@ -237,6 +264,7 @@ export function mapPhotoRow(row: PhotoRow): AstroPhoto {
       steps: text(bag, 'steps'),
       aiDeclared: row.ai_declared ?? false,
     },
+    solve,
     license: row.license ?? 'Tüm hakları saklıdır',
     likes: row.like_count ?? 0,
     comments: row.comment_count ?? 0,
@@ -249,6 +277,9 @@ const SELECT =
   'id, slug, title, description, photo_type, palette, captured_at, published_at, ' +
   'target_label, location_label, location_visibility, bortle, sqm, license, ' +
   'ai_declared, like_count, comment_count, display_path, thumb_path, setup_text, ' +
+  'solve_status, solve_ra_deg, solve_dec_deg, solve_rotation_deg, ' +
+  'solve_scale_arcsec_px, solve_field_width_deg, solve_field_height_deg, ' +
+  'solve_provider, solve_error, ' +
   /* Gömme ipucu ZORUNLU: `user_id` kolonunda iki yabancı anahtar var —
      biri `auth.users`a (kimlik bütünlüğü), biri `profiles`a (0015, gömme
      için). İpucu olmadan PostgREST hangisini izleyeceğini bilemiyor ve
