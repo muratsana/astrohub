@@ -38,7 +38,15 @@ export function LocationPicker({
   variant?: 'compact' | 'panel';
   className?: string;
 }) {
-  const { location, cities, permission, setCity, requestDeviceLocation } =
+  const {
+    location,
+    cities,
+    permission,
+    mode,
+    needsPermissionHelp,
+    setCity,
+    requestDeviceLocation,
+  } =
     useLocationContext();
 
   const [open, setOpen] = useState(false);
@@ -115,11 +123,25 @@ export function LocationPicker({
               onDevice ? 'text-primary' : 'text-cold'
             )}
           >
-            ◉ {pending ? 'Konum alınıyor…' : 'Cihaz konumumu kullan'}
+            {/*
+              METİN MODA GÖRE. Eskiden yalnızca iki hâl vardı: reddedildi
+              ya da değil. Zaman aşımı yaşayan kullanıcıya "izni açın"
+              demek, onu olmayan bir ayarı aramaya gönderiyordu.
+            */}
+            ◉{' '}
+            {pending
+              ? 'Konum alınıyor…'
+              : mode === 'MANUAL' || mode === 'DENIED' || mode === 'ERROR'
+                ? 'Otomatik konuma dön'
+                : 'Cihaz konumumu kullan'}
             <span className="mt-0.5 block text-meta leading-snug text-faint">
-              {permission === 'denied'
-                ? 'İzin reddedilmiş — tarayıcı ayarlarından açabilirsin'
-                : 'Koordinat sunucuya gönderilmez'}
+              {needsPermissionHelp
+                ? 'İzin reddedilmiş. Tarayıcı adres çubuğundaki kilit simgesinden konum iznini açıp tekrar deneyin.'
+                : mode === 'UNAVAILABLE'
+                  ? 'Bu tarayıcı cihaz konumunu desteklemiyor ya da bağlantı güvenli değil (HTTPS gerekir).'
+                  : mode === 'ERROR'
+                    ? 'Konum alınamadı — tekrar denenebilir.'
+                    : 'Koordinat sunucuya gönderilmez'}
             </span>
           </button>
           <span aria-hidden className="my-1 block h-px bg-border" />

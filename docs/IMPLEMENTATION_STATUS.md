@@ -98,8 +98,40 @@ tarayıcı iznini hem kullanıcının tercihini taşıyordu; şehir seçmek onu
 | Context'e bağlanması | DONE | `LocationContext` durum makinesini tüketiyor; `mode`, `modeLabel`, `canReturnToAuto`, `needsPermissionHelp` dışa veriliyor |
 | `setCity` izne dokunmuyor | DONE | Eski kod `permission`ı 'dismissed' yapıyordu — kilit buydu, kaldırıldı |
 | GPS hataları ayrıştırıldı | DONE | PERMISSION_DENIED / POSITION_UNAVAILABLE / TIMEOUT ayrı ele alınıyor; eskiden hepsi 'denied' sayılıyordu |
-| **Arayüzde "Otomatik konuma dön" düğmesi** | **NOT_STARTED** | Context alanları hazır; `LocationPicker` henüz çizmiyor |
+| Arayüzde "Otomatik konuma dön" | DONE | `LocationPicker` moda göre metin veriyor; DENIED'da tarayıcı ayar yönergesi, UNAVAILABLE'da HTTPS notu, ERROR'da tekrar denenebilir |
 | Reverse-geocoding adapter | NOT_STARTED | — |
 | Tarayıcı matrisi (Safari/iOS/Android/Edge) | NOT_STARTED | Kum havuzunda tek Chromium var; gerçek cihaz matrisi IMPLEMENTED_BLOCKED_EXTERNAL |
 | Çıkışta konum verisi temizliği | NOT_STARTED | — |
 ### 1.3 Supabase şema ve RLS denetimi — **NOT_STARTED**
+
+
+---
+
+## Sonraki oturum için devam notu
+
+**Bittiği yer:** Faz 1.1 ve 1.2'nin ölçülebilir tamamı. Faz 1.3 (Supabase
+şema + RLS denetimi) başlamadı.
+
+**Faz 1.3 için hazır bilgi** (yeniden keşfetmeye gerek yok):
+- 41 tablo, 40'ında RLS açık (`spatial_ref_sys` PostGIS'e ait, açılamıyor)
+- 97 politika; hepsinde `auth.*` çağrıları `(select …)` ile sarmalı (0037)
+- Bilinen açık denetçi bulguları: 129 `multiple_permissive_policies`
+  (politika birleştirme semantik risk taşır, tablo tablo bakılmalı),
+  31 `unindexed_foreign_keys` (dolu tablodakiler 0039'da kapatıldı)
+- `docs/BASELINE.md` bütün baseline sayılarını taşıyor
+
+**Faz 1.3'te yapılacaklar** (belge satır 204–257):
+1. Belgedeki tablo listesini mevcut şemayla karşılaştır; eksik olanları
+   çıkar (bildirimler, mesajlaşma, engelleme, radyo programı, TV kanalı,
+   ana sayfa modül konfigürasyonu, feature flag, kota kayıtları gibi
+   birçoğu henüz yok)
+2. `TO authenticated` tek başına yetkilendirme olan politikaları ara
+3. `UPDATE` politikalarında `WITH CHECK` eksiklerini ara
+4. Denetçi bulgularını yeniden çalıştır
+
+**Çalışma yöntemi** (bu oturumda işe yaradı):
+- Master belgeyi TAMAMEN okuma; yalnızca faz satır aralığını oku
+- Her veritabanı kuralını canlıda `raise exception` ile GERİ ALINAN
+  işlemde ölç — iddia etme
+- Her faz sonunda `npm run test:all`, sonra commit + push
+- Durum belgesini her fazda güncelle
