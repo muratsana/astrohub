@@ -672,10 +672,51 @@ await expectDenied(
   `update public.profiles set display_name = 'ele gecirildi' where id = '${ALICE}';`
 );
 
+/*
+ * ══════════════════════════════════════════════════════════════════════
+ * KULLANICI METİNLERİ — yorum, gönderi, saha yorumu
+ *
+ * Panel bu üçünü artık kaldırabiliyor. Sıradan bir üyenin BAŞKASININ
+ * metnini kaldırabilmesi, moderasyonu anlamsız kılardı: tartıştığı
+ * kişinin cevabını silen bir kullanıcı, tartışmayı tek taraflı bırakır.
+ * ══════════════════════════════════════════════════════════════════════
+ */
+{
+  await sql(`
+    insert into public.photo_comments (photo_id, user_id, body)
+    values ('${ALICE_PHOTO}', '${ALICE}', 'Alice''in yorumu')
+    on conflict do nothing;
+  `);
+
+  await expectDenied(
+    'sıradan üye başkasının yorumunu silemiyor',
+    'authenticated',
+    BOB,
+    `delete from public.photo_comments where user_id = '${ALICE}';`
+  );
+
+  /* Kendi yorumunu silebilmeli — kural "başkasınınkine dokunma",
+     "hiçbir şeye dokunma" değil. */
+  const kendi = await asRole(
+    'authenticated',
+    ALICE,
+    `with attempt as (delete from public.photo_comments
+                      where user_id = '${ALICE}' returning 1)
+     select count(*) from attempt;`
+  );
+  const silebildi = kendi.ok && Number(kendi.value.split('\n').pop()) > 0;
+  record(
+    'üye kendi yorumunu silebiliyor',
+    silebildi,
+    silebildi ? '' : 'kendi yorumunu silemedi — moderasyon fazla dar'
+  );
+}
+
 /* ── Temizlik ─────────────────────────────────────────────────────── */
 await sql(`
   delete from public.photo_ratings
    where user_id in ('${ALICE}','${BOB}');
+  delete from public.photo_comments where user_id in ('${ALICE}','${BOB}');
   delete from public.user_roles where user_id in ('${ALICE}','${BOB}');
   delete from public.listings where seller_id in ('${ALICE}','${BOB}');
   delete from public.astro_photos where user_id in ('${ALICE}','${BOB}');

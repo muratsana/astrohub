@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Panel, SpecList, SpecRow } from '@/components/ui/Panel';
@@ -19,6 +19,7 @@ import { EquipmentDataControl } from './EquipmentDataControl';
 import { SpecImportControl } from './SpecImportControl';
 import { UserControl } from './UserControl';
 import { RecordsControl, AuditControl } from './RecordsControl';
+import { CommentsControl } from './CommentsControl';
 import {
   fetchQueue,
   resolveItem,
@@ -56,6 +57,15 @@ const statusTone: Record<ModerationStatus, 'muted' | 'primary' | 'success' | 'da
 export function AdminPage() {
   const { user, configured, loading } = useAuth();
   const roles = useRoles();
+
+  const [params, setParams] = useSearchParams();
+  const bolumParam = params.get('bolum');
+  const bolum: BolumId = isBolum(bolumParam) ? bolumParam : 'moderasyon';
+
+  /* `replace`: sekme gezinmesi geri yığınını doldurmamalı — geri tuşu
+     panelden çıkmalı, önceki sekmeye değil. */
+  const setBolum = (id: BolumId) =>
+    setParams(id === 'moderasyon' ? {} : { bolum: id }, { replace: true });
 
   const [filter, setFilter] = useState<ModerationStatus | 'hepsi'>('pending');
   const [queue, setQueue] = useState<QueueResult | null>(null);
@@ -172,6 +182,10 @@ export function AdminPage() {
 
   return (
     <Shell header={header}>
+      <BolumSekmeleri aktif={bolum} onChange={setBolum} />
+
+      {bolum === 'moderasyon' && (
+        <>
       <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-5">
         {(
           [
@@ -355,79 +369,161 @@ export function AdminPage() {
         </div>
       </div>
 
-      {/*
-        İÇERİK KAYITLARI KUYRUĞUN HEMEN ALTINDA.
-
-        Moderasyon kuyruğu ŞİKÂYET EDİLENİ gösteriyor; bu liste ise
-        şikâyet beklemeden içeriğin tamamına bakma yolu. İkisi ayrı iş ve
-        sıraları da öyle: önce bildirilen, sonra bildirilmemiş olan.
-      */}
-      <div className="mt-4">
-        <RecordsControl />
-      </div>
+        </>
+      )}
 
       {/*
-        Kullanıcı yönetimi içeriğin altında: bir hesaba dokunmadan önce
-        genellikle o hesabın içeriğine bakılıyor. Rol vermek ve üyelik
-        değiştirmek seyrek ama etkisi büyük işlemler.
+        İÇERİK — sitenin okunan/yayımlanan malzemesi.
+
+        Haber ve yazılar üstte, kayıtlar altta: önce içerik yazılır,
+        sonra yayımlanmış olan denetlenir. Forum konusu bu sekmede YOK,
+        kendi bölümünde — aynı kaydı iki yerden yönetmek, biri
+        güncellenirken diğerinin eski kalması demekti.
       */}
-      {roles.isAdmin && (
-        <div className="mt-4">
-          <UserControl />
+      {bolum === 'icerik' && (
+        <div className="space-y-4">
+          <ContentControl canWrite={roles.isAdmin} />
+          <RecordsControl kinds={['photo', 'listing', 'event', 'site']} />
+          <CommentsControl kinds={['photoComment', 'siteReview']} />
         </div>
       )}
 
       {/*
-        Yayın kontrolü: moderasyon günlük iş, yayın programı ise seyrek
-        bir eylem. Sık kullanılanı üstte tutmak, panelin her açılışında
-        aşağı kaydırmayı gerektirmiyor.
+        KULLANICILAR — hesaplar ve onlara dokunan her şey.
+
+        Denetim kaydı burada, ayrı bir sekmede değil: "bu rolü kim
+        verdi" sorusu her zaman bir kullanıcı satırına bakarken
+        soruluyor. Ayrı sekmede olsaydı iki ekran arasında gidip gelmek
+        gerekirdi.
       */}
-      <div className="mt-4">
-        <BroadcastControl />
-      </div>
-
-      {/* İçerik yönetimi öne çıkanların ÜSTÜNDE: önce içerik yazılır,
-          sonra hangisinin öne çıkacağı seçilir. */}
-      <div className="mt-4">
-        <ContentControl canWrite={roles.isAdmin} />
-      </div>
-
-      {/* Öne çıkan içerik yayın kontrolünün yanında: ikisi de "bugün ne
-          görünsün" sorusunun cevabı. */}
-      <div className="mt-4">
-        <FeaturedControl canWrite={roles.isAdmin} />
-      </div>
-
-      {/*
-        Katalog kontrolü en altta: moderasyon her gece, yayın haftada bir,
-        katalog senkronizasyonu ise sürüm başına bir kez yapılan bir iş.
-        Sıklığa göre dizmek, panelin her açılışında en çok kullanılanı
-        aramayı gerektirmiyor.
-      */}
-      <div className="mt-4">
-        <CatalogControl canWrite={roles.isAdmin} />
-      </div>
-
-      {/* Eksik teknik veri raporu senkronizasyonun hemen altında:
-          senkronizasyondan sonra bakılacak ilk yer burası. */}
-      <div className="mt-4">
-        <EquipmentDataControl canWrite={roles.isAdmin} />
-      </div>
-
-      {/* İçe aktarma raporun hemen altında: rapor neyin eksik olduğunu
-          söylüyor, bu ekran o eksiği toplu doldurmanın yolu. */}
-      <div className="mt-4">
-        <SpecImportControl canWrite={roles.isAdmin} />
-      </div>
-
-      {/* Denetim kaydı en altta ve salt okunur: günlük iş değil, geriye
-          dönüp "bunu kim yaptı" sorusunun cevabı. */}
-      {roles.isAdmin && (
-        <div className="mt-4">
+      {bolum === 'kullanicilar' && roles.isAdmin && (
+        <div className="space-y-4">
+          <UserControl />
           <AuditControl />
         </div>
       )}
+      {bolum === 'kullanicilar' && !roles.isAdmin && (
+        <Panel title="Kullanıcılar">
+          <p className="py-4 text-center text-body-sm text-muted-foreground">
+            Kullanıcı yönetimi yalnızca yöneticilere açık. Moderatör
+            rolüyle içerik ve forum bölümlerini kullanabilirsiniz.
+          </p>
+        </Panel>
+      )}
+
+      {/*
+        FORUM — konu ve gönderi birlikte.
+
+        Tabloya göre bölseydik konu "içerik", gönderi "yorum" sekmesine
+        düşerdi; oysa foruma bakan biri ikisini birlikte düşünüyor:
+        konuyu kilitlemek mi yoksa tek bir gönderiyi kaldırmak mı
+        yeterli, bu karar ikisini yan yana görmeyi gerektiriyor.
+      */}
+      {bolum === 'forum' && (
+        <div className="space-y-4">
+          <RecordsControl kinds={['thread']} title="Forum konuları" />
+          <CommentsControl kinds={['forumPost']} />
+        </div>
+      )}
+
+      {/* ANA SAYFA — bugün ne görünsün. */}
+      {bolum === 'anasayfa' && <FeaturedControl canWrite={roles.isAdmin} />}
+
+      {/* YAYIN — TV ve radyo programı. */}
+      {bolum === 'yayin' && <BroadcastControl />}
+
+      {/*
+        KATALOG — sürüm başına bir kez yapılan işler.
+
+        Üçü aynı sırayla: senkronizasyon neyin geldiğini, rapor neyin
+        eksik olduğunu, içe aktarma o eksiği doldurmanın yolunu
+        söylüyor.
+      */}
+      {bolum === 'katalog' && (
+        <div className="space-y-4">
+          <CatalogControl canWrite={roles.isAdmin} />
+          <EquipmentDataControl canWrite={roles.isAdmin} />
+          <SpecImportControl canWrite={roles.isAdmin} />
+        </div>
+      )}
+
     </Shell>
+  );
+}
+
+/**
+ * SEKMELER — panel konularına göre bölündü.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * NEDEN SEKME
+ *
+ * Panel tek bir uzun yığındı ve on bir bölüme çıkmıştı. Bir yöneticinin
+ * radyo listesine ulaşması için moderasyon kuyruğunu, içerik kayıtlarını
+ * ve kullanıcı listesini geçmesi gerekiyordu — hepsi de o an ilgisiz.
+ * Uzun bir sayfada "aşağıda bir yerde" olan şey, pratikte yok gibidir.
+ *
+ * Gruplama İŞE göre yapıldı, tabloya göre değil: "Forum" sekmesi hem
+ * konuyu hem gönderiyi taşıyor çünkü foruma bakan biri ikisini birlikte
+ * düşünüyor. Tabloya göre bölseydik aynı iş iki sekmeye dağılırdı.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * SEKME ADRESTE TAŞINIYOR
+ *
+ * `?bolum=forum` — üç sebeple:
+ *   1. Yenileme sekmeyi kaybetmiyor (moderasyon uzun bir iş, sayfa
+ *      yenilenebiliyor),
+ *   2. Bağlantı paylaşılabiliyor ("şu kullanıcıya bak" derken),
+ *   3. Geri tuşu beklendiği gibi çalışıyor.
+ *
+ * Bilinmeyen bir değer varsayılana düşüyor; adres çubuğuna elle yazılan
+ * bir şey paneli boş bırakmamalı.
+ */
+const BOLUMLER = [
+  { id: 'moderasyon', label: 'Moderasyon' },
+  { id: 'icerik', label: 'İçerik' },
+  { id: 'kullanicilar', label: 'Kullanıcılar' },
+  { id: 'forum', label: 'Forum' },
+  { id: 'anasayfa', label: 'Ana sayfa' },
+  { id: 'yayin', label: 'Yayın' },
+  { id: 'katalog', label: 'Katalog' },
+] as const;
+
+type BolumId = (typeof BOLUMLER)[number]['id'];
+
+function isBolum(value: string | null): value is BolumId {
+  return BOLUMLER.some((b) => b.id === value);
+}
+
+function BolumSekmeleri({
+  aktif,
+  onChange,
+}: {
+  aktif: BolumId;
+  onChange: (id: BolumId) => void;
+}) {
+  return (
+    <div
+      role="tablist"
+      aria-label="Yönetim bölümleri"
+      className="mb-4 flex flex-wrap gap-1 border-b border-border"
+    >
+      {BOLUMLER.map((b) => (
+        <button
+          key={b.id}
+          role="tab"
+          aria-selected={aktif === b.id}
+          onClick={() => onChange(b.id)}
+          className={cn(
+            '-mb-px rounded-t-lg border-b-2 px-3.5 py-2.5 text-body-sm font-medium transition-colors',
+            aktif === b.id
+              ? 'border-primary text-primary'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
+          )}
+        >
+          {b.label}
+        </button>
+      ))}
+    </div>
   );
 }
 

@@ -52,8 +52,21 @@ const statusTone = (s: string): 'muted' | 'primary' | 'success' | 'danger' | 'wa
 
 const KIND_ORDER: RecordKind[] = ['photo', 'listing', 'thread', 'event', 'site'];
 
-export function RecordsControl() {
-  const [kind, setKind] = useState<RecordKind>('photo');
+export function RecordsControl({
+  kinds = KIND_ORDER,
+  title = 'İçerik kayıtları',
+}: {
+  /**
+   * Hangi türler gösterilsin.
+   *
+   * Sekmeli panelde forum kendi bölümüne taşındı; "İçerik" sekmesinin
+   * forum konusunu da listelemesi, aynı kaydı iki yerden yönetmek
+   * demekti — biri güncellenirken diğeri eski kalırdı.
+   */
+  kinds?: RecordKind[];
+  title?: string;
+}) {
+  const [kind, setKind] = useState<RecordKind>(kinds[0]);
   const [rows, setRows] = useState<RecordRow[] | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -89,16 +102,14 @@ export function RecordsControl() {
   const spec = RECORD_KINDS[kind];
 
   return (
-    <Panel
-      title="İçerik kayıtları"
-      status={rows ? `${rows.length} kayıt` : 'okunuyor…'}
-    >
+    <Panel title={title} status={rows ? `${rows.length} kayıt` : 'okunuyor…'}>
+      {kinds.length > 1 && (
       <div
         role="tablist"
         aria-label="İçerik türü"
         className="mb-3 flex flex-wrap gap-1.5"
       >
-        {KIND_ORDER.map((k) => (
+        {kinds.map((k) => (
           <button
             key={k}
             role="tab"
@@ -115,6 +126,7 @@ export function RecordsControl() {
           </button>
         ))}
       </div>
+      )}
 
       {error && <Alert className="mb-3">{error}</Alert>}
 
