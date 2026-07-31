@@ -1,7 +1,7 @@
 /**
  * Fotoğraf sürümleri ve teknik karşılaştırma (§8.1).
  *
- * KOTA KURALI: aynı fotoğrafın sürümleri 50'lik kotada ayrı fotoğraf
+ * KOTA KURALI: aynı fotoğrafın sürümleri fotoğraf kotasında ayrı fotoğraf
  * sayılmaz (§4.2). Kural burada yazılıdır çünkü hem ön yüzün göstereceği
  * sayı hem de sunucunun zorlayacağı sınır aynı tanımı kullanmalı — iki
  * yerde ayrı yazılırsa er ya da geç biri "sürümü de say" der ve kullanıcı

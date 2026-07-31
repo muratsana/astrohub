@@ -10,7 +10,7 @@ import { useAuth } from './AuthContext';
 import { loginSchema, type LoginValues } from './schema';
 import { Captcha, type CaptchaHandle } from './Captcha';
 import { captchaEnabled } from './captchaConfig';
-import { AuthDivider, GoogleButton } from './GoogleButton';
+import { SocialAuth } from './GoogleButton';
 import { Alert } from '@/components/ui/Alert';
 
 export function LoginPage() {
@@ -64,10 +64,7 @@ export function LoginPage() {
         </>
       }
     >
-      <div className="mb-4 space-y-4">
-        <GoogleButton />
-        <AuthDivider />
-      </div>
+      <SocialAuth />
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
         <Field label="E-posta" htmlFor="email" error={errors.email?.message}>

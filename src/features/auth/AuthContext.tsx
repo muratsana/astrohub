@@ -50,12 +50,26 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 /**
  * Yönlendirmelerin döneceği adres.
  *
- * Yayında `VITE_APP_URL` (https://www.astrohub.com.tr) kullanılıyor;
- * tanımsızsa o anki köken. Sabit bir adres yazmak yerel geliştirmede
- * doğrulama bağlantılarını canlıya gönderirdi.
+ * `VITE_SITE_URL` OKUNUYOR, `VITE_APP_URL` DEĞİL. Burada uzun süre
+ * `VITE_APP_URL` yazıyordu ve yorumunda "yayında bu kullanılıyor"
+ * deniyordu — ama o ad hiçbir yerde tanımlı değildi: ne
+ * `vite-env.d.ts`'te bildirilmiş, ne derleme nöbetinde (`envCheck`)
+ * doğrulanıyor, ne Vercel'de ayarlı. Yani koşul her zaman `false`'a
+ * düşüyor ve dönüş adresi sessizce `window.location.origin`'den
+ * geliyordu.
+ *
+ * Tarayıcıda bu tesadüfen doğru sonucu veriyordu, ama iki ad tutmanın
+ * bedeli görünmezdi: doğrulanan değişken bir yerde, kullanılan başka
+ * yerde. `VITE_SITE_URL` canonical/OG/sitemap için zaten üretimde
+ * ZORUNLU kılınıyor — tek ada indirmek, dönüş adresini de o nöbetin
+ * arkasına almak demek.
+ *
+ * Tanımsızsa yine o anki köken: yerel geliştirmede doğru davranış,
+ * çünkü sabit bir adres yazmak doğrulama bağlantılarını canlıya
+ * gönderirdi.
  */
 function appUrl(): string {
-  const configured = import.meta.env.VITE_APP_URL?.trim();
+  const configured = import.meta.env.VITE_SITE_URL?.trim();
   if (configured) return configured.replace(/\/+$/, '');
   return typeof window === 'undefined' ? '' : window.location.origin;
 }
@@ -136,7 +150,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           password,
           options: {
             /* Doğrulama e-postasındaki bağlantı yayındaki adrese
-               dönmeli. `VITE_APP_URL` tanımlı değilse o anki köken
+               dönmeli. `VITE_SITE_URL` tanımlı değilse o anki köken
                kullanılıyor — yerel geliştirmede doğru davranış. */
             emailRedirectTo: `${appUrl()}/giris`,
             ...(captchaToken ? { captchaToken } : {}),

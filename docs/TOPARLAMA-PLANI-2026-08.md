@@ -371,3 +371,209 @@ verilir. Middleware'in dinamik slug'ları (DB fotoğrafı/ilanı) tanıması
 için ya derlemede üretilen bir yol manifestosu ya da kenar katmanında
 Supabase sorgusu gerekir — bu yüzden T-201/T-202 (veri hizalaması) ile
 aynı bloka bırakıldı.
+
+---
+
+## 15. Durum güncellemesi — 30 Temmuz gecesi (üçüncü blok)
+
+Bu blokta Faz 2 ve Faz 6'nın açık kalan maddeleri kapandı. Hepsinde ortak
+bir yöntem var: **iddia edilen davranış ölçüldü.** Üç yerde ölçüm,
+kaynağa bakınca doğru görünen bir şeyin yanlış olduğunu gösterdi.
+
+### T-201 — migration + veri hizalaması ✅
+
+Sıfır bir veritabanına 27 migration uygulandı ve canlıyla karşılaştırıldı.
+
+**Şema: sıfır sapma.** 903 nesnenin (432 kolon, 183 kısıt, 103 indeks,
+90 RLS politikası — `using`/`with check` ifadeleri dahil, 39 tablo,
+24 tetikleyici, 15 enum, 15 fonksiyon, 2 görünüm) özeti iki tarafta da
+`c3745dffd4730d77a3d22f1873ea0454`.
+
+**Veri: kurulamıyordu.** Hiçbir migration `equipment_brands` satırı
+eklemiyordu, ama 0018–0020 o markalara yabancı anahtarla bağlı 1.086 model
+ekliyordu:
+
+| Migration | Temiz veritabanında sonuç |
+| --- | --- |
+| 0018/0019/0020 | yabancı anahtar hatası — migration düşüyor |
+| 0022/0023/0024 | "başarılı", ama **sıfır satır** güncelliyor |
+
+İkincisi birincisinden tehlikeli: teknik veri migration'ları güncelleyecek
+model bulamadığı için sessizce hiçbir şey yapıyordu.
+
+Katalog artık depoda: `supabase/seed/01_katalog.sql` (1.685 satır) ve
+editöryel anlık görüntü `02_ornek-icerik.sql` (65 satır) ayrı dosyalarda.
+`scripts/katalog-disa-aktar.mjs` canlıdan üretiyor, `scripts/seed.mjs`
+bir veritabanına uyguluyor. Dokuz tablonun satır özetleri iki tarafta aynı.
+
+**Eski seed bir tuzaktı.** `scripts/seed.mjs` demo dizilerinden SQL
+üretiyor ama ürettiğini hiçbir şey uygulamıyordu; üstelik dosya kataloğun
+alt kümesiydi (43 marka, 129 model) ve `on conflict do update` ile aynı
+tablolara yazıyordu. Canlıya uygulansa 129 modeli demo değerlerine geri
+çekerdi.
+
+### T-505 — kota yeniden tanımı ✅ *(senin kararın)*
+
+Standart 5, premium 30 fotoğraf; foto başına 10 MB. 10 MB bir ret eşiği
+değil hedef: büyük dosya reddedilmiyor, önce sıkıştırma sonra çözünürlük
+feda edilerek bütçeye indiriliyor. Asıl tavan bucket'ta
+(`photo-originals` 100 MB → 10 MB).
+
+| Kademe | Foto | Kullanıcı başına | 100 GB kaç dolu üye |
+| --- | --- | --- | --- |
+| standart | 5 | ~58 MB | ~1.700 |
+| premium | 30 | ~350 MB | ~290 |
+
+Eski kuralda (3/50 + 100 MB dosya) tek premium kullanıcı 5 GB tutabilirdi:
+yirmi kullanıcıda biten bir plan.
+
+### T-301 kalanı — gerçek 404 ✅
+
+`dist/404.html` üretiliyordu ama yakala-hepsini rewrite (`/(.*)`) her
+adresi karşıladığı için hiç kullanılmıyordu. Rewrite listesi artık rota
+ağacından üretiliyor (78 yol). Ölçüldü: **22 rotanın diskte dosyası yok**
+ve rewrite olmadan 404 alırdı (`/radyo`, `/tv`, `/forum`, `/giris`,
+`/panel`, dört `/harita` adresi, dört eski yönlendirme…). Elle tutulan bir
+listenin hatırlaması gereken 22 istisna — önceki denemenin geri
+alınmasının sebebi buydu.
+
+### T-502/T-503 — yükleme durum makinesi + yol sahipliği ✅
+
+**Açık:** `astro_photos.display_path` serbest metindi. RLS başkasının
+klasörüne *yazmayı* engelliyordu ama kendi satırında başkasının yolunu
+*göstermeyi* engellemiyordu. `photos` bucket'ı herkese açık okunur olduğu
+için bu, tek bir POST ile başkasının fotoğrafını kendi adına yayımlamak
+demekti. Tetikleyici kapattı; üç senaryo veritabanında denendi.
+
+**Çöp:** hata durumunda yalnızca taslak *satır* siliniyordu, yüklenmiş
+*nesneler* bucket'ta kalıyordu. Telafi yığını eklendi; dokuz test
+doğruluyor.
+
+**Biçim:** sihirli baytlar satır açılmadan önce okunuyor. Güvenlik sınırı
+değil (öyle olduğu iddia edilmiyor) — uzantısı değiştirilmiş dosyayı erken
+yakalıyor.
+
+### T-507 — CSP ✅
+
+Planda "Report-Only → enforce" yazıyordu; ölçünce **hiç CSP olmadığı**
+görüldü. Politika yazıldı ve gerçek Chromium'da sınandı.
+
+İlk sürüm `script-src 'self' 'sha256-…'` idi ve **7 rotada 16 ihlal**
+üretti: react-router'ın sayfa başına değişen hidrasyon verisi, React 19'un
+Suspense çalışma zamanı ve — varsayımın aksine — JSON-LD blokları.
+421 sayfa için hash header'ı onlarca kilobayta çıkarırdı; nonce statik CDN
+dağıtımını iptal ederdi.
+
+Politika gerçeğe göre yeniden yazıldı: satır içi izinli, **dış kaynaklı
+betik yasak**, ve sızdırma yolları (`connect-src`, `form-action`,
+`base-uri`, `object-src`) kapalı. `check:csp` derleme zincirinde.
+
+### T-204 — RLS matrisi ✅
+
+18 kontrol, hepsi geçiyor: taslak görünürlüğü, tam koordinat mahremiyeti
+(§15.3), üyelik/fatura yalıtımı, yetki yükseltme denemesi, oran limiti
+sayacının tamamen kapalı olması.
+
+Harness iki kez yanlış yazıldı ve ikisi de öğretici:
+
+- `auth.uid()` tanımı sürüme göre değişiyor (`request.jwt.claims` vs
+  `request.jwt.claim.sub`). Yalnızca birini yazmak `auth.uid()`i NULL
+  bırakıyor ve **her kontrol "göremiyor" diye geçiyordu** — matris
+  yeşilken hiçbir şey ölçmüyordu.
+- UPDATE/DELETE'i RLS hata vererek değil, satırı görünmez yaparak
+  engelliyor. "Hata yok = geçti" varsayımı iki yanlış kırmızı üretti.
+
+`permission denied` artık başarı sayılıyor: tablo yetkisinin hiç
+verilmemiş olması (0003) RLS'ten daha güçlü bir kapı.
+
+### Kalan sıra
+
+| # | İş | Kimde |
+| --- | --- | --- |
+| T-202 | Staging projesi | Sen (Pro plan bunu açıyor) |
+| B18 | `METEOBLUE_API_KEY` + sağlayıcı harcama limiti | Sen |
+| T-509 | Harita karo lisansı | Sen |
+| T-504 | Ödeme sistemi | Sen — bilinçli olarak en sona bırakıldı |
+| T-106 | Topocentric kütüphane değerlendirmesi | Faz 7 |
+| T-304 | Görselleri kendi CDN'ine taşıma (lisans/atıf kaydı) | Faz 7 |
+
+---
+
+## 16. Durum güncellemesi — 31 Temmuz
+
+### Google girişi ✅ *(canlıda çalışıyor)*
+
+Kod tarafı zaten `signInWithOAuth` çağırıyordu ve düğme giriş ekranında
+duruyordu. Üç ayrı hata vardı ve **üçü de sessizdi**.
+
+**1. Sağlayıcı kapalı, düğme açık.** `/auth/v1/settings` `"google": false`
+döndürüyordu; basan herkes `Unsupported provider` alıyordu. Düğme yalnızca
+"Supabase yapılandırılmış mı" diye bakıyordu — yapılandırılmış olmak
+sağlayıcının açık olduğu anlamına gelmiyor. Artık Supabase'e sorup
+doğruluyor; sağlayıcı panelden açıldığında düğme yeniden dağıtım olmadan
+beliriyor.
+
+**2. `VITE_APP_URL` diye bir değişken yok.** Dönüş adresi bu addan
+okunuyordu; hiçbir yerde tanımlı değildi (ne tip dosyasında, ne
+`envCheck`te, ne Vercel'de) ve koşul her zaman `window.location.origin`e
+düşüyordu. Doğrulanan değişken bir yerde, kullanılan başka yerdeydi;
+`VITE_SITE_URL`e indirildi.
+
+**3. Google'ın verdiği ad çöpe gidiyordu.** `handle_new_user()` adı
+yalnızca `display_name`den okuyordu; Google `full_name`/`name`/
+`given_name` gönderiyor (migration 0029).
+
+### Asıl engel koda değil VERİYE aitti
+
+Ayarlar baştan doğruydu. `muratsana@gmail.com` hesabı GoTrue üzerinden
+değil **elle SQL ile** açılmıştı ve token kolonları NULL kalmıştı. GoTrue
+onları Go tarafında `string` okuyor:
+
+```
+Scan error on column index 3, name "confirmation_token":
+converting NULL to string is unsupported
+```
+
+Kullanıcıyı e-postayla arayan her sorgu düşüyordu. `auth.flow_state`'te üç
+akış vardı, hiçbirinde kod üretilmemişti.
+
+**Bu hata Google'a özel değildi:** aynı sebep şifreli girişi de kırıyordu.
+`last_sign_in_at` bir kez bile dolmamıştı — o hesapla bugüne kadar hiç
+giriş yapılamamış. Google denemesi olmasaydı bunu ilk gerçek kullanıcı
+bulacaktı.
+
+Dört kolon `''` ile düzeltildi. Sonuç ölçüldü:
+
+```
+son giriş    : 2026-07-31 10:12:48
+sağlayıcılar : email, google      ← mevcut hesaba BAĞLANDI
+oturum       : 1
+rol          : admin              ← korundu
+```
+
+Yeni kullanıcı açılmadı; `murat` kullanıcı adı, profil adı ve admin rolü
+yerinde kaldı.
+
+### T-208 — kimlik tablosu bütünlük denetimi ✅ *(yeni)*
+
+`scripts/check-auth-integrity.mjs`: NULL token kolonu, kimliksiz kullanıcı
+(`auth.identities` satırı yok), profilsiz kullanıcı. Üretimde çalıştırıldı,
+üçü de temiz.
+
+Denetim **var olmayan kolonu ve tabloyu atlıyor** — GoTrue şeması sürüme
+göre değişiyor ve listeyi olduğu gibi sorgulamak denetimi çökertiyordu.
+Atlananlar çıktıda yazılıyor; hangi kontrolün çalışmadığını bilmeden
+"sağlam" demek, ölçülmemiş olanı ölçülmüş saymak olurdu.
+
+Kısıt değil denetim: `auth` şeması Supabase'e ait, elle konan bir
+`not null` bir sonraki GoTrue yükseltmesinde çakışabilir.
+
+**Bu denetim `test:all` zincirinde DEĞİL** — yerel test veritabanında
+bozukluk zaten olmaz, oraya bakan bir kapı yanlış güven verir. Periyodik
+olarak üretime karşı: `DATABASE_URL='<üretim>' npm run check:auth`.
+
+### Sen: bir daha yaşamamak için
+
+`auth.users`'a elle SQL ile satır ekleme. Supabase panelinde
+**Authentication → Users → Add user** kullan — GoTrue üzerinden gittiği
+için kolonları doğru dolduruyor.

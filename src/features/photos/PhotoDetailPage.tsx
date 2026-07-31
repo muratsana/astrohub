@@ -184,7 +184,7 @@ function PhotoDetail({ photo, all }: { photo: AstroPhoto; all: AstroPhoto[] }) {
           <section className="mt-8 border-t border-border pt-8">
             <SectionHeader
               title="Sürümler"
-              description="Aynı kaydın işleme sürümleri. Sürümler 50 fotoğraf kotasında ayrı fotoğraf sayılmaz (§4.2)."
+              description="Aynı kaydın işleme sürümleri. Sürümler fotoğraf kotasında ayrı fotoğraf sayılmaz (§4.2)."
               meta={`${photo.versions.length} sürüm`}
             />
             <VersionHistory versions={photo.versions} />

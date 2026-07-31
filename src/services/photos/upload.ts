@@ -1,12 +1,18 @@
 import { getSupabase } from '@/services/supabase/client';
 import {
   renderResized,
+  encodeWithinBudget,
   storagePath,
   extensionOf,
   DISPLAY_MAX_EDGE,
   THUMB_MAX_EDGE,
 } from '@/domain/photography/resize';
-import { checkUploadSize } from '@/domain/membership/quota';
+import {
+  checkUploadSize,
+  formatBytes,
+  MAX_STORED_BYTES,
+} from '@/domain/membership/quota';
+import { checkImageFormat, readHead } from '@/domain/photography/fileType';
 import { sanitizeText } from '@/lib/sanitize';
 
 /**
@@ -65,18 +71,25 @@ export interface UploadResult {
   height: number;
   /** Küçültme yapıldı mı — arayüz kullanıcıya bunu söylüyor. */
   optimized: boolean;
+  /** Bu fotoğrafın bucket'larda tuttuğu toplam yer. */
+  storedBytes: number;
+  /** Poz künyesi yazılabildi mi — yazılamadıysa fotoğraf yine geçerli. */
+  exposuresSaved: boolean;
 }
 
 export type UploadProgress =
-  | 'hazirlaniyor'
-  | 'kucultuluyor'
-  | 'yukleniyor'
-  | 'kaydediliyor';
+  'hazirlaniyor' | 'kucultuluyor' | 'yukleniyor' | 'kaydediliyor';
 
 async function client() {
   const promise = getSupabase();
   if (!promise) throw new Error('Veritabanı bağlantısı yapılandırılmamış');
   return promise;
+}
+
+/** Geri alınabilmesi için yüklenen her nesne kaydediliyor. */
+interface UploadedObject {
+  bucket: 'photos' | 'photo-originals';
+  path: string;
 }
 
 export async function uploadPhoto(
@@ -87,140 +100,295 @@ export async function uploadPhoto(
   if (verdict.kind === 'reject') throw new Error(verdict.reason);
 
   onProgress?.('hazirlaniyor');
-  const supabase = await client();
-
-  /* ── 1. Taslak satır ── */
-  const { data: created, error: insertError } = await supabase
-    .from('astro_photos')
-    .insert({
-      user_id: input.userId,
-      slug: input.slug,
-      title: sanitizeText(input.title, { maxLength: 160 }),
-      description: sanitizeText(input.description ?? '', {
-        multiline: true,
-        maxLength: 5000,
-      }),
-      photo_type: input.photoType,
-      object_id: input.objectId ?? null,
-      setup_id: input.setupId ?? null,
-      target_label: input.targetLabel
-        ? sanitizeText(input.targetLabel, { maxLength: 160 })
-        : null,
-      status: 'draft',
-      captured_at: input.capturedAt || null,
-      location_label: input.locationLabel || null,
-      location_visibility: input.locationVisibility ?? 'approximate',
-      license: input.license ?? 'Tüm hakları saklıdır',
-      ai_declared: input.aiDeclared ?? false,
-      optic_id: input.opticId ?? null,
-      camera_id: input.cameraId ?? null,
-      mount_id: input.mountId ?? null,
-      setup_text: input.setup ?? {},
-      bytes: input.file.size,
-    })
-    .select('id')
-    .single();
-
-  if (insertError) throw new Error(insertError.message);
-  const photoId = (created as { id: string }).id;
-
-  /* ── 2. Kopyalar ── */
-  onProgress?.('kucultuluyor');
-  const display = await renderResized(input.file, DISPLAY_MAX_EDGE);
-  const thumb = await renderResized(input.file, THUMB_MAX_EDGE);
-
-  if (!display || !thumb) {
-    /*
-     * Tarayıcı küçültemedi (createImageBitmap yok ya da biçim
-     * desteklenmiyor). Yarım kalmış taslağı bırakmıyoruz: kullanıcı
-     * panelinde görselsiz bir kayıt görüp ne olduğunu anlamaya
-     * çalışmasın.
-     */
-    await supabase.from('astro_photos').delete().eq('id', photoId);
-    throw new Error(
-      'Görsel bu tarayıcıda işlenemedi. JPEG ya da PNG deneyin; TIFF desteği tarayıcıya göre değişir.'
-    );
-  }
-
-  onProgress?.('yukleniyor');
-  const displayPath = storagePath(input.userId, photoId, 'display');
-  const thumbPath = storagePath(input.userId, photoId, 'thumb');
-
-  const uploads = await Promise.all([
-    supabase.storage
-      .from('photos')
-      .upload(displayPath, display.blob, { contentType: 'image/jpeg', upsert: true }),
-    supabase.storage
-      .from('photos')
-      .upload(thumbPath, thumb.blob, { contentType: 'image/jpeg', upsert: true }),
-  ]);
-
-  const failed = uploads.find((u) => u.error);
-  if (failed?.error) {
-    await supabase.from('astro_photos').delete().eq('id', photoId);
-    throw new Error(failed.error.message);
-  }
 
   /*
-   * ORİJİNAL GİZLİ BUCKET'A. Başarısız olursa akış durmuyor: gösterilecek
-   * kopyalar zaten yüklendi ve kullanıcının emeğini bir arşivleme hatası
-   * yüzünden çöpe atmak orantısız olurdu. Eksiklik `original_path`'in boş
-   * kalmasıyla görünür.
+   * BİÇİM DENETİMİ SATIR AÇILMADAN ÖNCE. Uzantısı `.jpg` ama içeriği RAW
+   * ya da PDF olan dosya eskiden akışın ortasında, küçültme aşamasında
+   * patlıyordu — o noktada zaten bir taslak satır açılmış oluyordu ve
+   * kullanıcı "işlenemedi" mesajıyla baş başa kalıyordu. Sihirli baytlar
+   * ilk 16 baytta okunuyor; dosyanın tamamı belleğe alınmıyor.
+   *
+   * Bu bir GÜVENLİK SINIRI DEĞİL (bkz. fileType.ts) — depolama API'sine
+   * doğrudan giden biri buradan geçmez. Asıl sınır bucket'ın
+   * `allowed_mime_types` ayarı.
    */
-  const originalPath = storagePath(
-    input.userId,
-    photoId,
-    'original',
-    extensionOf(input.file.name)
-  );
-  const { error: originalError } = await supabase.storage
-    .from('photo-originals')
-    .upload(originalPath, input.file, {
-      contentType: input.file.type || 'application/octet-stream',
-      upsert: true,
-    });
+  const format = checkImageFormat(await readHead(input.file), input.file.type);
+  if (format.kind === 'reject') throw new Error(format.reason);
 
-  /* ── 3. Yolları yaz ── */
-  onProgress?.('kaydediliyor');
-  const { error: updateError } = await supabase
-    .from('astro_photos')
-    .update({
-      display_path: displayPath,
-      thumb_path: thumbPath,
-      original_path: originalError ? null : originalPath,
-      width: display.size.width,
-      height: display.size.height,
-    })
-    .eq('id', photoId);
+  const supabase = await client();
 
-  if (updateError) throw new Error(updateError.message);
+  /*
+   * TELAFİ YIĞINI.
+   *
+   * Eski akış hata durumunda yalnızca taslak SATIRI siliyordu; o ana kadar
+   * yüklenmiş NESNELER bucket'ta kalıyordu. İki kopya paralel yükleniyor
+   * (`Promise.all`) ve biri başarılı olup diğeri düşerse, sahipsiz bir
+   * dosya geride kalıyordu: hiçbir satırın işaret etmediği, arayüzde
+   * görünmeyen, ama depolama kotasını yiyen bir nesne. Kullanıcı yeniden
+   * denediğinde yenileri ekleniyordu.
+   *
+   * Artık her başarılı yükleme kaydediliyor ve hata hâlinde hepsi
+   * siliniyor.
+   */
+  const uploaded: UploadedObject[] = [];
+  let photoId: string | null = null;
 
-  if (input.exposures && input.exposures.length > 0) {
-    const rows = input.exposures
-      .filter((e) => e.frames > 0 && e.exposureSeconds > 0)
-      .map((e, index) => ({
-        photo_id: photoId,
-        filter: e.filter,
-        frames: e.frames,
-        exposure_seconds: e.exposureSeconds,
-        position: index,
-      }));
-
-    if (rows.length > 0) {
-      const { error } = await supabase.from('photo_exposures').insert(rows);
-      if (error) throw new Error(error.message);
+  /**
+   * Yarım kalan işi geri alır — HER ADIMI DENER, biri düşse de durmaz.
+   *
+   * Geri alma başarısız olursa SESSİZ KALINIYOR: kullanıcıya gösterilecek
+   * hata asıl hatadır, temizlik hatası değil. Onu öne çıkarmak, "neden
+   * yüklenemedi" sorusunun cevabını gizlerdi. Yine de günlüğe yazılıyor.
+   */
+  async function rollback() {
+    for (const bucket of ['photos', 'photo-originals'] as const) {
+      const paths = uploaded
+        .filter((o) => o.bucket === bucket)
+        .map((o) => o.path);
+      if (paths.length === 0) continue;
+      try {
+        await supabase.storage.from(bucket).remove(paths);
+      } catch (cause) {
+        console.error(`geri alma: ${bucket} temizlenemedi`, cause);
+      }
+    }
+    if (photoId) {
+      try {
+        await supabase.from('astro_photos').delete().eq('id', photoId);
+      } catch (cause) {
+        console.error('geri alma: taslak satır silinemedi', cause);
+      }
     }
   }
 
-  return {
-    photoId,
-    displayPath,
-    thumbPath,
-    originalPath: originalError ? null : originalPath,
-    width: display.size.width,
-    height: display.size.height,
-    optimized: verdict.kind === 'optimize',
-  };
+  try {
+    return await runUpload();
+  } catch (cause) {
+    await rollback();
+    throw cause;
+  }
+
+  async function runUpload(): Promise<UploadResult> {
+    /* ── 1. Taslak satır ── */
+    const { data: created, error: insertError } = await supabase
+      .from('astro_photos')
+      .insert({
+        user_id: input.userId,
+        slug: input.slug,
+        title: sanitizeText(input.title, { maxLength: 160 }),
+        description: sanitizeText(input.description ?? '', {
+          multiline: true,
+          maxLength: 5000,
+        }),
+        photo_type: input.photoType,
+        object_id: input.objectId ?? null,
+        setup_id: input.setupId ?? null,
+        target_label: input.targetLabel
+          ? sanitizeText(input.targetLabel, { maxLength: 160 })
+          : null,
+        status: 'draft',
+        captured_at: input.capturedAt || null,
+        location_label: input.locationLabel || null,
+        location_visibility: input.locationVisibility ?? 'approximate',
+        license: input.license ?? 'Tüm hakları saklıdır',
+        ai_declared: input.aiDeclared ?? false,
+        optic_id: input.opticId ?? null,
+        camera_id: input.cameraId ?? null,
+        mount_id: input.mountId ?? null,
+        setup_text: input.setup ?? {},
+        bytes: input.file.size,
+      })
+      .select('id')
+      .single();
+
+    if (insertError) throw new Error(insertError.message);
+    photoId = (created as { id: string }).id;
+
+    /* ── 2. Kopyalar ── */
+    onProgress?.('kucultuluyor');
+    const display = await renderResized(input.file, DISPLAY_MAX_EDGE);
+    const thumb = await renderResized(input.file, THUMB_MAX_EDGE);
+
+    if (!display || !thumb) {
+      /*
+       * Tarayıcı küçültemedi. Biçim denetimi bunu çoğu durumda önceden
+       * yakalıyor; buraya düşen asıl durum TIFF — bucket kabul ediyor ama
+       * `createImageBitmap` çoğu tarayıcıda açamıyor.
+       */
+      throw new Error(
+        format.kind === 'risky'
+          ? format.reason
+          : 'Görsel bu tarayıcıda işlenemedi. JPEG ya da PNG deneyin.'
+      );
+    }
+
+    onProgress?.('yukleniyor');
+    const displayPath = storagePath(input.userId, photoId, 'display');
+    const thumbPath = storagePath(input.userId, photoId, 'thumb');
+
+    /*
+     * İki kopya paralel yükleniyor ama sonuçları TEK TEK kaydediliyor:
+     * biri başarılı olup diğeri düşerse, başarılı olan geri alınacak
+     * listeye girmiş olmalı. `Promise.all` sonucunu topluca "hata var mı"
+     * diye yoklamak, başarılı olanı unutmak demekti.
+     */
+    const uploads = await Promise.all([
+      supabase.storage
+        .from('photos')
+        .upload(displayPath, display.blob, {
+          contentType: 'image/jpeg',
+          upsert: true,
+        })
+        .then((result) => {
+          if (!result.error)
+            uploaded.push({ bucket: 'photos', path: displayPath });
+          return result;
+        }),
+      supabase.storage
+        .from('photos')
+        .upload(thumbPath, thumb.blob, {
+          contentType: 'image/jpeg',
+          upsert: true,
+        })
+        .then((result) => {
+          if (!result.error)
+            uploaded.push({ bucket: 'photos', path: thumbPath });
+          return result;
+        }),
+    ]);
+
+    const failed = uploads.find((u) => u.error);
+    if (failed?.error) throw new Error(failed.error.message);
+
+    /*
+     * ARŞİV KOPYASI GİZLİ BUCKET'A — ama 10 MB bütçesiyle (§4.2).
+     *
+     * Eskiden ham dosya olduğu gibi yükleniyordu ve tek maliyet kalemi buydu:
+     * 100 MB'lık bir TIFF, gösterim kopyalarının elli katı yer tutuyordu. Kota
+     * fotoğraf SAYISINI sınırlıyordu ama BOYUTU serbest bırakmıştı; asıl
+     * maliyet boyuttaydı.
+     *
+     * Bütçenin altındaki dosyaya DOKUNULMUYOR: 6 MB'lık bir JPEG'i yeniden
+     * kodlamak yer kazandırmaz, yalnızca kullanıcının dosyasını sessizce
+     * bozardı. Üstündeki `ARCHIVE_LADDER` ile bütçeye indiriliyor.
+     */
+    const oversize = input.file.size > MAX_STORED_BYTES;
+    let archiveBody: Blob = input.file;
+    let archiveType = input.file.type || 'application/octet-stream';
+    let archiveExtension = extensionOf(input.file.name);
+
+    if (oversize) {
+      const encoded = await encodeWithinBudget(input.file, MAX_STORED_BYTES);
+      if (!encoded || !encoded.withinBudget) {
+        /*
+         * Küçültme hedefe ulaşamadı. Yine de yüklemek, depolama API'sinin
+         * anlaşılmaz 413'üne düşmek olurdu.
+         */
+        throw new Error(
+          `Bu dosya ${formatBytes(MAX_STORED_BYTES)} sınırına indirilemedi. Kaydı dışa aktarırken çözünürlüğü düşürüp yeniden deneyin.`
+        );
+      }
+      archiveBody = encoded.blob;
+      archiveType = 'image/jpeg';
+      archiveExtension = 'jpg';
+    }
+
+    /*
+     * Arşiv yüklemesi başarısız olursa akış durmuyor: gösterilecek kopyalar
+     * zaten yüklendi ve kullanıcının emeğini bir arşivleme hatası yüzünden
+     * çöpe atmak orantısız olurdu. Eksiklik `original_path`'in boş kalmasıyla
+     * görünür.
+     */
+    const originalPath = storagePath(
+      input.userId,
+      photoId,
+      'original',
+      archiveExtension
+    );
+    const { error: originalError } = await supabase.storage
+      .from('photo-originals')
+      .upload(originalPath, archiveBody, {
+        contentType: archiveType,
+        upsert: true,
+      });
+
+    if (!originalError) {
+      uploaded.push({ bucket: 'photo-originals', path: originalPath });
+    }
+
+    /* ── 3. Yolları yaz ──
+     *
+     * `bytes` artık SAKLANAN toplam, seçilen dosyanın boyu değil. Taslak
+     * açılırken ham boyut yazılmıştı çünkü küçültme daha yapılmamıştı; o
+     * sayıyı bırakmak kapasite planını 40 MB'lık bir dosyada dört kat
+     * yanıltırdı. Kullanıcının diskinde ne olduğu bizi ilgilendirmiyor —
+     * bizim bucket'ımızda ne durduğu ilgilendiriyor. */
+    onProgress?.('kaydediliyor');
+    const storedBytes =
+      (originalError ? 0 : archiveBody.size) +
+      display.blob.size +
+      thumb.blob.size;
+
+    const { error: updateError } = await supabase
+      .from('astro_photos')
+      .update({
+        display_path: displayPath,
+        thumb_path: thumbPath,
+        original_path: originalError ? null : originalPath,
+        width: display.size.width,
+        height: display.size.height,
+        bytes: storedBytes,
+      })
+      .eq('id', photoId);
+
+    if (updateError) throw new Error(updateError.message);
+
+    /*
+     * POZ BİLGİLERİ FOTOĞRAFI GÖTÜRMEZ.
+     *
+     * Bu insert eskiden hata fırlatıyordu ve artık geri alma yığını devrede
+     * olduğu için, poz tablosundaki bir sorun YÜKLENMİŞ FOTOĞRAFIN TAMAMINI
+     * silerdi — orantısız. Fotoğraf pozsuz da geçerli bir kayıt; poz künyenin
+     * bir ayrıntısı.
+     *
+     * Ama sessizce de yutulmuyor: kullanıcı girdiği veriyi kaybettiğini
+     * bilmeli, `exposuresSaved` ile arayüze taşınıyor.
+     */
+    let exposuresSaved = true;
+    if (input.exposures && input.exposures.length > 0) {
+      const rows = input.exposures
+        .filter((e) => e.frames > 0 && e.exposureSeconds > 0)
+        .map((e, index) => ({
+          photo_id: photoId,
+          filter: e.filter,
+          frames: e.frames,
+          exposure_seconds: e.exposureSeconds,
+          position: index,
+        }));
+
+      if (rows.length > 0) {
+        const { error } = await supabase.from('photo_exposures').insert(rows);
+        if (error) {
+          console.error('poz bilgileri kaydedilemedi', error);
+          exposuresSaved = false;
+        }
+      }
+    }
+
+    return {
+      photoId,
+      displayPath,
+      thumbPath,
+      originalPath: originalError ? null : originalPath,
+      width: display.size.width,
+      height: display.size.height,
+      /* Niyet değil, olan biten: `verdict` yalnızca küçültmenin gerekeceğini
+       söylüyordu, `oversize` gerçekten yapıldığını. */
+      optimized: oversize,
+      storedBytes,
+      exposuresSaved,
+    };
+  }
 }
 
 /**

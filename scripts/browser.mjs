@@ -30,12 +30,25 @@ export function findChromium() {
   return undefined;
 }
 
-/** Testlerde kullanılan ortak tarayıcı örneği. */
-export async function launchBrowser() {
+/**
+ * Testlerde kullanılan ortak tarayıcı örneği.
+ *
+ * `options.direct` VEKİLİ DEVRE DIŞI BIRAKIR. Chromium ortamdaki
+ * `HTTPS_PROXY` değişkenini kendiliğinden kullanıyor; yerel bir sunucuya
+ * (`127.0.0.1`) giden istek de oraya yönleniyor ve gezinme zaman aşımına
+ * uğruyor. Diğer denetimler `file://` üzerinden çalıştığı için bunu hiç
+ * görmedi; CSP denetimi gerçek başlık göndermek zorunda olduğu için HTTP
+ * sunucusu kullanıyor ve vekili atlaması gerekiyor.
+ */
+export async function launchBrowser(options = {}) {
   const executablePath = findChromium();
   return chromium.launch({
     ...(executablePath ? { executablePath } : {}),
-    args: ['--no-sandbox', '--disable-dev-shm-usage'],
+    args: [
+      '--no-sandbox',
+      '--disable-dev-shm-usage',
+      ...(options.direct ? ['--no-proxy-server'] : []),
+    ],
   });
 }
 

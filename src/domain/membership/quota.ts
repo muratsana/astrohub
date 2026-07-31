@@ -8,21 +8,28 @@
  * verir.
  *
  * İKİ KADEME
- *   standart → 3 aktif yayımlanmış fotoğraf
- *   premium  → 50
+ *   standart → 5 aktif yayımlanmış fotoğraf
+ *   premium  → 30
  *
- * Küçük sınır bir kısıtlama değil, bir seçim zorunluluğu: üç fotoğrafla
- * gelen kullanıcı en iyi üçünü seçer ve galeri, herkesin arşivini
- * boşalttığı bir yığına dönmez. Premium'un 50 olması da sonsuz değil;
- * depolama ve moderasyon maliyeti gerçek.
+ * SAYILAR NEDEN BUNLAR. Kota bir "cömertlik" ayarı değil, depolama
+ * bütçesinin doğrudan kendisi: her fotoğraf en fazla 10 MB arşiv +
+ * gösterim kopyaları tuttuğuna göre (`MAX_STORED_BYTES`) standart üye
+ * ~58 MB, premium üye ~350 MB yer kaplıyor. Bu tavanlar olmadan tek bir
+ * kullanıcı 100 MB'lık ham TIFF'lerle bütçenin tamamını yiyebilirdi —
+ * eski sınırlar (3/50) sayıyı kısıtlıyordu ama BOYUTU serbest bırakmıştı
+ * ve asıl maliyet boyuttaydı.
+ *
+ * Küçük sınır ayrıca bir seçim zorunluluğu: beş fotoğrafla gelen kullanıcı
+ * en iyi beşini seçer ve galeri, herkesin arşivini boşalttığı bir yığına
+ * dönmez.
  */
 
 export type MembershipTier = 'standart' | 'premium';
 
 /** Kademeye göre aktif yayımlanmış fotoğraf üst sınırı. */
 export const PHOTO_LIMITS: Record<MembershipTier, number> = {
-  standart: 3,
-  premium: 50,
+  standart: 5,
+  premium: 30,
 };
 
 /** Premium sınırı — eski adıyla anılan yerler için korunuyor. */
@@ -32,18 +39,49 @@ export const MAX_ACTIVE_PHOTOS = PHOTO_LIMITS.premium;
 export const MAX_DRAFT_PHOTOS = 10;
 
 /**
- * Tek dosya için üst sınır: 50 MB.
+ * Tek fotoğraf için saklanan en büyük dosya: 10 MB.
  *
- * Bu sınırın altındaki büyük dosyalar reddedilmez, **küçültülür**: 16-bit
- * TIFF ya da işlenmemiş bir yığın çıktısı kolayca 200 MB olur ve
- * kullanıcıya "dosyanı küçült" demek, bizim yapabileceğimiz bir işi ona
- * elle yaptırmak olurdu. Sınır yine de var, çünkü tarayıcıda küçültme
- * dosyanın belleğe sığmasını gerektiriyor.
+ * Bu bir RET eşiği değil, bir HEDEF. Kullanıcı 40 MB'lık bir kare
+ * seçtiğinde ona "dosyanı küçült" demiyoruz — bizim yapabileceğimiz bir
+ * işi ona elle yaptırmak olurdu; yükleme sırasında bu bütçeye kadar
+ * yeniden kodluyoruz (`encodeWithinBudget`).
+ *
+ * Aynı sayı `photo-originals` bucket'ında `file_size_limit` olarak da
+ * duruyor. İstemci tarafı sınır yalnızca bir nezaket: tarayıcıyı atlayan
+ * biri doğrudan depolama API'sine yükleyebilir. Asıl tavan sunucudaki.
+ */
+export const MAX_STORED_BYTES = 10 * 1024 * 1024;
+
+/**
+ * Kullanıcının seçebileceği en büyük dosya: 50 MB.
+ *
+ * `MAX_STORED_BYTES` ile karıştırılmamalı — bu, işleyebildiğimiz girdinin
+ * sınırı, sakladığımızın değil. Tarayıcıda küçültme dosyanın çözülüp
+ * belleğe sığmasını gerektiriyor; 50 MB'lık bir JPEG zaten çözüldüğünde
+ * yüzlerce megabayt tutuyor. Üstündeki dosya reddediliyor çünkü
+ * küçültemediğimiz bir dosyayı "optimize edeceğiz" diye kabul etmek,
+ * sekmeyi kilitleyip kullanıcıyı hiçbir açıklama olmadan bırakmak olurdu.
  */
 export const MAX_UPLOAD_BYTES = 50 * 1024 * 1024;
 
-/** Bunun altındaki dosyalar olduğu gibi yüklenir; üstü optimize edilir. */
-export const DIRECT_UPLOAD_BYTES = 8 * 1024 * 1024;
+/**
+ * Bunun altındaki dosyalar olduğu gibi saklanır; üstü optimize edilir.
+ * Eşik doğrudan saklama tavanı: 10 MB'ın altındaki bir dosyayı yeniden
+ * kodlamak, kazanç getirmeden kaliteyi düşürürdü.
+ */
+export const DIRECT_UPLOAD_BYTES = MAX_STORED_BYTES;
+
+/**
+ * Kademenin kabaca tuttuğu yer.
+ *
+ * Arşiv kopyası tavana dayandığında bile gösterim (~1.5 MB) ve küçük
+ * resim (~150 KB) ekleniyor; kapasite planı bu toplamla yapılmalı, tek
+ * başına 10 MB ile değil.
+ */
+export function tierStorageBudgetBytes(tier: MembershipTier): number {
+  const perPhoto = MAX_STORED_BYTES + 1_600_000;
+  return PHOTO_LIMITS[tier] * perPhoto;
+}
 
 export interface QuotaState {
   activePublished: number;
@@ -71,7 +109,7 @@ export function remainingPhotoQuota(state: QuotaState): number {
   return Math.max(0, limitOf(state) - state.activePublished);
 }
 
-/** Panel için "2 / 3" biçiminde kota etiketi (§7.16). */
+/** Panel için "2 / 5" biçiminde kota etiketi (§7.16). */
 export function formatQuotaLabel(
   activePublished: number,
   tier: MembershipTier = 'standart'
@@ -111,13 +149,13 @@ export function checkUploadSize(bytes: number): UploadSizeVerdict {
   if (bytes > MAX_UPLOAD_BYTES) {
     return {
       kind: 'reject',
-      reason: `Dosya ${formatBytes(bytes)} — üst sınır ${formatBytes(MAX_UPLOAD_BYTES)}. Bu boyut tarayıcıda küçültülemiyor; kaydı dışa aktarırken çözünürlüğü düşürün.`,
+      reason: `Dosya ${formatBytes(bytes)} — işleyebildiğimiz üst sınır ${formatBytes(MAX_UPLOAD_BYTES)}. Bu boyut tarayıcıda açılamıyor; kaydı dışa aktarırken çözünürlüğü düşürün.`,
     };
   }
   if (bytes > DIRECT_UPLOAD_BYTES) {
     return {
       kind: 'optimize',
-      reason: `Dosya ${formatBytes(bytes)}; yükleme sırasında otomatik küçültülecek. Orijinal arşivde saklanır, galeride küçültülmüş kopya gösterilir.`,
+      reason: `Dosya ${formatBytes(bytes)}; yükleme sırasında ${formatBytes(MAX_STORED_BYTES)} sınırına otomatik küçültülecek. Çözünürlük korunur, yalnızca sıkıştırma artar.`,
     };
   }
   return { kind: 'ok' };

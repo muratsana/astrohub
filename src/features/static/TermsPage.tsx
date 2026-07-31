@@ -2,8 +2,10 @@ import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
 import { LegalLayout, LegalSection, LegalList } from './LegalLayout';
 import {
-  MAX_ACTIVE_PHOTOS,
+  PHOTO_LIMITS,
   MAX_DRAFT_PHOTOS,
+  MAX_STORED_BYTES,
+  formatBytes,
 } from '@/domain/membership/quota';
 import { GRACE_PERIOD_DAYS } from '@/domain/membership/entitlement';
 
@@ -45,9 +47,20 @@ export function TermsPage() {
           <LegalList
             items={[
               <>
-                Bir üye aynı anda en fazla{' '}
-                <strong>{MAX_ACTIVE_PHOTOS} aktif yayımlanmış fotoğraf</strong>{' '}
-                bulundurabilir.
+                Ücretsiz üyelikte aynı anda en fazla{' '}
+                <strong>
+                  {PHOTO_LIMITS.standart} aktif yayımlanmış fotoğraf
+                </strong>
+                , ücretli üyelikte{' '}
+                <strong>{PHOTO_LIMITS.premium}</strong> bulundurabilirsiniz.
+              </>,
+              <>
+                Her fotoğraf için saklanan dosya en fazla{' '}
+                <strong>{formatBytes(MAX_STORED_BYTES)}</strong> yer tutar. Daha
+                büyük bir dosya <em>reddedilmez</em>: yükleme sırasında bu
+                sınıra sıkıştırılır. Çözünürlük mümkün olduğunca korunur,
+                yalnızca sıkıştırma oranı artar; bu nedenle sakladığımız kopya
+                gönderdiğiniz dosyayla bit düzeyinde aynı olmayabilir.
               </>,
               <>
                 Aynı fotoğrafın yeni bir işleme sürümü kotada ayrı bir fotoğraf
