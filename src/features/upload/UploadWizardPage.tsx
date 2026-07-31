@@ -218,6 +218,27 @@ export function UploadWizardPage() {
             Yazılım: state.software,
           },
           exposures: state.exposures,
+          /*
+           * DOSYADAN OKUNANI SAKLA. Bu blok eskiden yoktu: EXIF yalnızca
+           * form alanlarını ÖNDOLDURMAK için okunuyor, gönderim anında
+           * çöpe gidiyordu. Kullanıcı bir alanı elle değiştirdiğinde
+           * dosyadaki asıl değer artık hiçbir yerde durmuyordu.
+           *
+           * Koordinat gönderilmiyor — yalnızca varlığı. Kullanıcı EXIF
+           * konumunu kullanmayı seçse bile (`useExifGps`) o seçim
+           * `locationLabel`'a yansıyor; ham koordinat sunucuya gitmiyor.
+           */
+          exif: exif
+            ? {
+                camera: cameraLabel(exif),
+                lens: exif.lens,
+                iso: exif.iso,
+                focalMm: exif.focalLength,
+                apertureF: exif.fNumber,
+                exposureSeconds: exif.exposureSeconds,
+                gpsPresent: exif.hasGps,
+              }
+            : undefined,
         },
         setPublishState
       );

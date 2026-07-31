@@ -3,6 +3,7 @@ import { FORECAST_DAYS } from '@/features/weather/openMeteo';
 import { Container } from '@/components/ui/Container';
 import { Button } from '@/components/ui/Button';
 import { useLocationContext } from '@/features/location/LocationContext';
+import { LocationPicker } from '@/features/location/LocationPicker';
 import { useTheme } from '@/features/theme/ThemeContext';
 import { DecisionColumn } from './tonight/DecisionColumn';
 import { TargetsColumn } from './tonight/TargetsColumn';
@@ -125,13 +126,21 @@ export function TonightPanel() {
         )}
 
         {/*
-          GECE SEÇİCİ. Efemerisin sınırı yok ama havanınki var; ileri
-          gitme düğmesi tahmin ufkunda duruyor. Ufkun ötesini
-          gösterebilirdik (karanlık ve ay hesaplanabiliyor) ama o zaman
-          panelin yarısı boş kalırdı ve kullanıcı sebebini aramak
-          zorunda kalırdı.
+          GECE SEÇİCİ VE KONUM AYNI SATIRDA. İkisi de "hangi hesap"
+          sorusunun parçası: nerede ve ne zaman. Konum seçici üst şeritten
+          buraya taşındı — orada her sayfada duruyordu ama asıl işine
+          yaradığı yer burası, çünkü değiştirince değişen şey bu panel.
+
+          Efemerisin sınırı yok ama havanınki var; ileri gitme düğmesi
+          tahmin ufkunda duruyor. Ufkun ötesini gösterebilirdik (karanlık
+          ve ay hesaplanabiliyor) ama o zaman panelin yarısı boş kalırdı
+          ve kullanıcı sebebini aramak zorunda kalırdı.
         */}
         <div className="mb-3 flex flex-wrap items-center gap-2">
+          <LocationPicker variant="panel" />
+
+          <span aria-hidden className="mx-1 h-4 w-px bg-border" />
+
           <Button
             size="sm"
             variant="ghost"

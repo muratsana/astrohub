@@ -91,6 +91,44 @@ export const COZUM_YOK: PlateSolve = {
   error: null,
 };
 
+/**
+ * DOSYADAN OKUNAN KÜNYE (EXIF).
+ *
+ * `setup` alanı KULLANICININ yazdığı ekipman künyesi; buradakiler
+ * dosyanın kendisinden okunan değerler. Ayrı duruyorlar çünkü ikisi
+ * çeliştiğinde hangisinin ne olduğu bilinmeli — plate solve tarafındaki
+ * "iddia / ölçüm" ayrımının aynısı.
+ *
+ * GPS KOORDİNATI YOK, yalnızca `gpsPresent` bayrağı var: konum §15.3
+ * gereği varsayılan olarak gizli ve veritabanına hiç yazılmıyor. Bayrak,
+ * sahibine "dosyanda konum verisi vardı, yayımlamadık" diyebilmek için.
+ */
+export interface PhotoExif {
+  camera: string | null;
+  lens: string | null;
+  iso: number | null;
+  /** Odak uzaklığı, mm. */
+  focalMm: number | null;
+  /** Diyafram f sayısı (f/2.8 → 2.8). */
+  apertureF: number | null;
+  /** TEK KARENİN poz süresi, saniye — toplam entegrasyon ayrı. */
+  exposureSeconds: number | null;
+  gpsPresent: boolean;
+}
+
+/** Künyede gösterilecek bir şey var mı — GPS bayrağı tek başına yetmez. */
+export function exifHasValues(exif: PhotoExif | undefined): boolean {
+  if (!exif) return false;
+  return (
+    exif.camera !== null ||
+    exif.lens !== null ||
+    exif.iso !== null ||
+    exif.focalMm !== null ||
+    exif.apertureF !== null ||
+    exif.exposureSeconds !== null
+  );
+}
+
 export type ProcessingPalette = 'RGB' | 'LRGB' | 'SHO' | 'HOO' | 'Mono';
 
 /** Konum görünürlüğü (§15.3): tam / yaklaşık / bölge / gizli */
@@ -138,6 +176,15 @@ export interface AstroPhoto {
     reducer?: string;
   };
   exposures: FilterExposure[];
+  /** Dosyadan okunan künye — kullanıcının yazdığı `setup`tan ayrı. */
+  exif?: PhotoExif;
+  /**
+   * Gösterim kopyasının piksel ölçüsü. Tam çözünürlük görüntüleyicisi
+   * yakınlaştırma sınırını buradan hesaplıyor; bilinmiyorsa yakınlaştırma
+   * kapalı kalıyor (uydurma bir sınırla yakınlaştırmak, bulanık bir
+   * görüntüyü "tam çözünürlük" diye sunmak olurdu).
+   */
+  pixels?: { width: number; height: number };
   palette: ProcessingPalette;
   /**
    * Aynı kaydın işleme sürümleri (§8.1). Kotada ayrı fotoğraf sayılmaz

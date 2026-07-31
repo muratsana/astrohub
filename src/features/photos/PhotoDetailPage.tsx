@@ -14,9 +14,12 @@ import { usePhotoCatalog } from '@/services/content/photos';
 import { usePhotoLike } from '@/services/content/engagement';
 import { PhotoComments } from './PhotoComments';
 import { PhotoComparison } from './PhotoComparison';
+import { PhotoViewer } from './PhotoViewer';
+import { BortleIndicator } from './BortleIndicator';
 import { VersionHistory } from './VersionHistory';
 import { ReportButton } from '@/features/admin/ReportButton';
-import { photoTypeLabels } from './types';
+import { exifHasValues, photoTypeLabels } from './types';
+import { formatExposure } from '@/domain/photography/exif';
 import type { AstroPhoto } from './types';
 import { cn } from '@/lib/cn';
 import { PageMeta } from '@/components/seo/PageMeta';
@@ -97,18 +100,7 @@ function PhotoDetail({ photo, all }: { photo: AstroPhoto; all: AstroPhoto[] }) {
         ]}
       />
       <Container className="py-8 sm:py-10">
-        {/* Görüntüleyici */}
-        <div className="relative overflow-hidden rounded-card border border-border">
-          <PhotoPlaceholder
-            gradient={photo.gradient}
-            alt={`${photo.title} — ${photo.target.catalog}`}
-            rounded="rounded-none"
-            className="aspect-[16/9] w-full sm:aspect-[2/1]"
-          />
-          <span className="absolute bottom-3 right-3 rounded-full bg-black/60 px-3 py-1 text-xs text-muted-foreground backdrop-blur-sm">
-            Tam çözünürlük Faz 1.2'de (görsel pipeline)
-          </span>
-        </div>
+        <PhotoViewer photo={photo} />
 
         {/* Temel bilgi */}
         <div className="mt-6 flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
@@ -269,16 +261,74 @@ function CaptureTab({ photo }: { photo: AstroPhoto }) {
 function EquipmentTab({ photo }: { photo: AstroPhoto }) {
   const s = photo.setup;
   return (
-    <DL
-      rows={[
-        ['Optik', s.optic],
-        ['Kamera', s.camera],
-        ['Montür', s.mount],
-        ['Guiding', s.guiding ?? '—'],
-        ['Filtreler', s.filters ?? '—'],
-        ['Reducer / Barlow', s.reducer ?? '—'],
-      ]}
-    />
+    <div className="space-y-6">
+      <DL
+        rows={[
+          ['Optik', s.optic],
+          ['Kamera', s.camera],
+          ['Montür', s.mount],
+          ['Guiding', s.guiding ?? '—'],
+          ['Filtreler', s.filters ?? '—'],
+          ['Reducer / Barlow', s.reducer ?? '—'],
+        ]}
+      />
+      <ExifPanel photo={photo} />
+    </div>
+  );
+}
+
+/**
+ * DOSYADAN OKUNAN KÜNYE.
+ *
+ * Yukarıdaki liste kullanıcının YAZDIĞI künye; buradaki değerler
+ * dosyanın kendisinden okundu. İkisi ayrı kutularda duruyor ve bu
+ * bilinçli: çeliştiklerinde hangisinin ne olduğu görünmeli. Kullanıcı
+ * "Canon EOS Ra" yazmış ama dosyada "NIKON D810A" varsa, bu bir bilgi —
+ * tek listede birleştirseydik biri diğerini sessizce ezerdi.
+ *
+ * Hiç EXIF yoksa kutu ÇİZİLMİYOR. İşlenmiş astrofotoğrafların çoğunda
+ * EXIF yığınlama sırasında kayboluyor ve bu normal; altı tire gösteren
+ * bir kutu, eksik bir şey varmış izlenimi verirdi.
+ */
+function ExifPanel({ photo }: { photo: AstroPhoto }) {
+  const exif = photo.exif;
+  if (!exif) return null;
+
+  const rows: [string, string][] = [];
+  if (exif.camera) rows.push(['Kamera (dosya)', exif.camera]);
+  if (exif.lens) rows.push(['Lens (dosya)', exif.lens]);
+  if (exif.iso !== null) rows.push(['ISO', String(exif.iso)]);
+  if (exif.focalMm !== null)
+    rows.push(['Odak uzaklığı', `${Number(exif.focalMm.toFixed(1))} mm`]);
+  if (exif.apertureF !== null)
+    rows.push(['Diyafram', `f/${Number(exif.apertureF.toFixed(1))}`]);
+  if (exif.exposureSeconds !== null)
+    rows.push(['Kare pozu', formatExposure(exif.exposureSeconds)]);
+
+  if (!exifHasValues(exif) && !exif.gpsPresent) return null;
+
+  return (
+    <div className="rounded-card border border-border bg-surface-1 p-4">
+      <p className="label caps mb-3 text-muted-foreground">
+        Dosyadan okunan künye (EXIF)
+      </p>
+
+      {rows.length > 0 ? (
+        <DL rows={rows} />
+      ) : (
+        <p className="text-meta text-faint">
+          Dosyada teknik künye alanı bulunamadı.
+        </p>
+      )}
+
+      {exif.gpsPresent && (
+        <p className="mt-3 rounded-card border border-cold/25 bg-cold/8 px-3 py-2 text-meta text-cold">
+          Dosyada konum verisi vardı; <strong>yayımlanmadı</strong>.
+          Koordinat veritabanına hiç yazılmıyor — konum yalnızca yukarıdaki
+          etikette, senin seçtiğin görünürlük seviyesinde duruyor.
+        </p>
+      )}
+    </div>
   );
 }
 
@@ -445,6 +495,17 @@ function PlateSolvePanel({ solve }: { solve: AstroPhoto['solve'] }) {
   );
 }
 
+/**
+ * KONUM SEKMESİ.
+ *
+ * Gizlilik politikası cümlesi buradan kaldırıldı: doğruydu ama her
+ * fotoğrafın altında tekrar eden bir POLİTİKA metniydi ve kullanıcının o
+ * ekranda sorduğu soruyu ("nasıl bir gökyüzü?") cevaplamıyordu. Politika
+ * yerinde duruyor — yükleme sihirbazında, seçim yapılırken söyleniyor;
+ * doğru yer orası, çünkü karar orada veriliyor.
+ *
+ * Yerine geçen Bortle şeridi aynı bilgiyi ölçekle veriyor.
+ */
 function LocationTab({ photo }: { photo: AstroPhoto }) {
   const loc = photo.location;
   const visibilityLabel = {
@@ -459,14 +520,14 @@ function LocationTab({ photo }: { photo: AstroPhoto }) {
         rows={[
           ['Lokasyon', loc.label],
           ['Konum görünürlüğü', visibilityLabel],
-          ['Bortle sınıfı', loc.bortle?.toString() ?? '—'],
-          ['SQM', loc.sqm ? `${loc.sqm} mag/arcsec²` : '—'],
         ]}
       />
-      <p className="text-xs text-muted-foreground/70">
-        Konum, fotoğrafçının seçtiği gizlilik seviyesinde gösterilir; tam
-        koordinatlar açık onay olmadan yayımlanmaz.
-      </p>
+      <BortleIndicator
+        bortle={loc.bortle}
+        city={photo.city}
+        locationLabel={loc.label}
+        sqm={loc.sqm}
+      />
     </div>
   );
 }

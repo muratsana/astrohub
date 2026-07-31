@@ -1,10 +1,11 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { photos as photosSeed } from '@/features/photos/data';
-import type {
-  AstroPhoto,
-  LocationVisibility,
-  PhotoType,
-  ProcessingPalette,
+import {
+  exifHasValues,
+  type AstroPhoto,
+  type LocationVisibility,
+  type PhotoType,
+  type ProcessingPalette,
 } from '@/features/photos/types';
 import type { PhotoVersion } from '@/domain/photography/versions';
 import { gradientFromSeed } from '@/components/media/tints';
@@ -81,6 +82,15 @@ interface PhotoRow {
   comment_count: number | null;
   display_path: string | null;
   thumb_path: string | null;
+  width: number | null;
+  height: number | null;
+  exif_camera?: string | null;
+  exif_lens?: string | null;
+  exif_iso?: number | null;
+  exif_focal_mm?: number | string | null;
+  exif_aperture_f?: number | string | null;
+  exif_exposure_seconds?: number | string | null;
+  exif_gps_present?: boolean | null;
   setup_text: Record<string, unknown> | null;
   profiles: { username: string; display_name: string | null } | null;
   celestial_objects: {
@@ -236,6 +246,28 @@ export function mapPhotoRow(row: PhotoRow): AstroPhoto {
       filters: text(bag, 'filter') ?? text(bag, 'filters'),
       reducer: text(bag, 'reducer'),
     },
+    /*
+     * EXIF alanları 0035 öncesi satırlarda yok. Hepsi boşsa `exif` hiç
+     * kurulmuyor — boş bir nesne göndermek, arayüzde "künye var ama
+     * hepsi tire" gibi bir bölüm çizdirirdi.
+     */
+    exif: (() => {
+      const exif = {
+        camera: row.exif_camera ?? null,
+        lens: row.exif_lens ?? null,
+        iso: row.exif_iso ?? null,
+        focalMm: num(row.exif_focal_mm),
+        apertureF: num(row.exif_aperture_f),
+        exposureSeconds: num(row.exif_exposure_seconds),
+        gpsPresent: row.exif_gps_present ?? false,
+      };
+      return exifHasValues(exif) || exif.gpsPresent ? exif : undefined;
+    })(),
+    /* Sıfır ya da eksik ölçü "bilinmiyor" demek; 0×0 bir görüntü yok. */
+    pixels:
+      row.width && row.height
+        ? { width: row.width, height: row.height }
+        : undefined,
     exposures: [...(row.photo_exposures ?? [])]
       .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
       .map((e) => ({
@@ -277,6 +309,8 @@ const SELECT =
   'id, slug, title, description, photo_type, palette, captured_at, published_at, ' +
   'target_label, location_label, location_visibility, bortle, sqm, license, ' +
   'ai_declared, like_count, comment_count, display_path, thumb_path, setup_text, ' +
+  'width, height, exif_camera, exif_lens, exif_iso, exif_focal_mm, ' +
+  'exif_aperture_f, exif_exposure_seconds, exif_gps_present, ' +
   'solve_status, solve_ra_deg, solve_dec_deg, solve_rotation_deg, ' +
   'solve_scale_arcsec_px, solve_field_width_deg, solve_field_height_deg, ' +
   'solve_provider, solve_error, ' +
