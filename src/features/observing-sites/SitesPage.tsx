@@ -56,7 +56,7 @@ export function SitesPage() {
           view={{ mode: view, onChange: setView }}
         />
 
-        <CardGrid view={view} density="tight">
+        <CardGrid view={view}>
           {catalog.items.map((site) => {
             const facilities = [
               site.facilities.tentArea && 'Çadır',

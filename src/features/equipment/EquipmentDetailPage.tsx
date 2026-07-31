@@ -350,7 +350,7 @@ export function EquipmentDetailPage() {
                   listelenir.
                 </p>
               ) : (
-                <CardGrid view="grid" density="tight">
+                <CardGrid view="grid">
                   {shotWith.map((photo) => (
                     <li key={photo.slug}>
                       <PhotoCard photo={photo} />

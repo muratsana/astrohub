@@ -185,7 +185,7 @@ export function EquipmentPage() {
             hint="Aramayı kısaltmayı ya da başka bir kategori seçmeyi deneyin. Katalogda olmayan model talebi Faz 1.5'te açılacak."
           />
         ) : (
-          <CardGrid view={view} density="tight">
+          <CardGrid view={view}>
             {result.map((model) => (
               <li key={model.slug}>
                 <EquipmentCard model={model} variant={view} />

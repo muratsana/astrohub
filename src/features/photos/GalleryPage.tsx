@@ -217,7 +217,7 @@ export function GalleryPage() {
             için duruyor (hedef kataloğu); fotoğraf bir veri karosu değil,
             asıl içerik — geniş olması hem tutarlı hem doğru.
           */
-          <CardGrid view={view} density="default">
+          <CardGrid view={view}>
             {result.map((photo) => (
               <li key={photo.slug}>
                 <PhotoCard photo={photo} variant={view} />

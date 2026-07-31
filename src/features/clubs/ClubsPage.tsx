@@ -126,7 +126,7 @@ export function ClubsPage() {
             hint="Filtreleri gevşetmeyi deneyin. Listede olmayan bir topluluk biliyorsanız etkinlik bildirimi üzerinden iletebilirsiniz."
           />
         ) : (
-          <CardGrid view={view} density="tight">
+          <CardGrid view={view}>
             {result.map((club) => (
               <li key={club.slug}>
                 <ClubCard club={club} variant={view} />

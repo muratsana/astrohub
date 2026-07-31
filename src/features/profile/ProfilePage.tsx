@@ -99,7 +99,7 @@ export function ProfilePage() {
         </div>
 
         <h2 className="label mb-2">Fotoğraflar</h2>
-        <CardGrid view="grid" density="tight" className="mb-6">
+        <CardGrid view="grid" className="mb-6">
           {userPhotos.map((photo) => (
             <li key={photo.slug}>
               <PhotoCard photo={photo} />

@@ -143,7 +143,7 @@ export function TargetsPage() {
             hint="Katalog kodu (M 31), alias (NGC 224), Türkçe ad (Rozet) veya takımyıldız adıyla deneyin. Tür ve zorluk filtrelerini gevşetmeyi de deneyebilirsiniz."
           />
         ) : (
-          <CardGrid view={view} density="tight">
+          <CardGrid view={view}>
             {result.map((t) => (
               <li key={t.slug}>
                 <TargetCard target={t} variant={view} />

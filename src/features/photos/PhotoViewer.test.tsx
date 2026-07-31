@@ -17,8 +17,7 @@ import { COZUM_YOK, type AstroPhoto } from './types';
 const withImage = photos.find((p) => p.image?.url)!;
 
 function withoutImage(): AstroPhoto {
-  const { image: _image, ...rest } = withImage;
-  return rest;
+  return { ...withImage, image: undefined };
 }
 
 function renderViewer(photo: AstroPhoto) {

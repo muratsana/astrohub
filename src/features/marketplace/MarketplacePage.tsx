@@ -179,7 +179,7 @@ export function MarketplacePage() {
           /* Yoğunluk `tight`: kart ölçüsü galeriyle aynı olsun.
              Pazaryeri tek başına 4 kolonda duruyordu ve aynı ekranda
              galeri karolarından belirgin biçimde iri görünüyordu. */
-          <CardGrid view={view} density="tight">
+          <CardGrid view={view}>
             {result.map((listing) => (
               <li key={listing.slug}>
                 <ListingCard listing={listing} variant={view} />
