@@ -176,8 +176,18 @@ export function NewsStrip() {
 
   return (
     <Container className="py-9 sm:py-11">
+      {/*
+        `min-w-0` ŞART. Izgara öğesinin varsayılan `min-width` değeri `auto`,
+        yani içeriğinin min-content genişliğinin altına inemiyor. Kredi
+        satırındaki `truncate` (`white-space: nowrap`) o genişliği bütün
+        kredi metni kadar büyütünce sütun 411px'e kilitlendi ve 390px'lik
+        ekranda sayfa yatay kaydı — önizleme kapısı ölçtü.
+
+        `truncate`in işe yaraması için kabın küçülebiliyor olması gerekiyor;
+        ikisi birlikte anlamlı, tek başına `truncate` taşmayı çözmüyor.
+      */}
       <div className="grid gap-10 lg:grid-cols-2 lg:gap-12">
-        <section>
+        <section className="min-w-0">
           <SectionHeader title="Haberler" linkTo="/haberler" linkLabel="Tümü" />
           <ul>
             {latestNews.map((item) => (
@@ -203,7 +213,7 @@ export function NewsStrip() {
           </ul>
         </section>
 
-        <section>
+        <section className="min-w-0">
           <SectionHeader title="Yazılar" linkTo="/yazilar" linkLabel="Tümü" />
           <ul>
             {latestArticles.map((article) => (
