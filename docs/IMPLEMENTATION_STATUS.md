@@ -102,32 +102,34 @@ tarayıcı iznini hem kullanıcının tercihini taşıyordu; şehir seçmek onu
 | Reverse-geocoding adapter | NOT_STARTED | — |
 | Tarayıcı matrisi (Safari/iOS/Android/Edge) | NOT_STARTED | Kum havuzunda tek Chromium var; gerçek cihaz matrisi IMPLEMENTED_BLOCKED_EXTERNAL |
 | Çıkışta konum verisi temizliği | NOT_STARTED | — |
-### 1.3 Supabase şema ve RLS denetimi — **NOT_STARTED**
+### 1.3 Supabase şema ve RLS denetimi — **PARTIAL**
 
+Tam ölçüm dökümü: **`docs/DATABASE_AND_RLS.md`**. Özet:
+
+| Madde | Durum | Kanıt |
+|---|---|---|
+| Bütün kullanıcı verisi tablolarında RLS | DONE | 43 tablodan 42'sinde açık; tek istisna PostGIS'in `spatial_ref_sys`'i |
+| Koşulsuz `TO authenticated` politikası | DONE | Canlı sorgu **0 satır** — hepsinde sahiplik ya da rol koşulu var |
+| `UPDATE`/`ALL` politikalarında `WITH CHECK` | DONE | Canlı sorgu **0 satır** eksik |
+| `anon`'a yazma veren politika | DONE | **0 politika** |
+| RLS açık ama politikasız tablo | DONE | Yalnızca `edge_rate_limits`; bilinçli "herkese kapalı" — `anon`/`authenticated` `select` yetkisi de ölçüldü: false |
+| `SECURITY DEFINER` fonksiyon denetimi | DONE | Bizim tek fonksiyon `consume_rate_limit`; ACL ölçüldü, istemci rollerinde execute **yok**, `search_path` sabit |
+| Privileged fonksiyonun kontrollü şemada olması | NOT_STARTED | `consume_rate_limit` hâlâ `public` içinde; `app`'e taşınacak (Faz 15) — açık boşluk değil, düzen işi |
+| Belgedeki alan modeliyle karşılaştırma | DONE | 18 tablo mevcut, **20 tablo eksik**; her biri kendi fazına atandı (DATABASE_AND_RLS §Şema boşluğu) |
+| `spatial_ref_sys` yazma yetkisi | IMPLEMENTED_BLOCKED_EXTERNAL | `revoke` `postgres` ile sessiz no-op (4→4 ayrıcalık ölçüldü); `supabase_admin` gerekiyor |
+| `multiple_permissive_policies` (129) | PARTIAL | Performans uyarısı, güvenlik açığı değil; `OR` birleştirme kapsam genişletme riski taşıdığı için tablo tablo yapılacak (Faz 15) |
+| `unindexed_foreign_keys` (31) | PARTIAL | Dolu tablodakiler `0039`'da kapandı; kalanlar boş tablolarda |
+
+Eksik 20 tablo Faz 5, 6, 7, 8, 9, 10 ve 16'nın girdisidir; o fazlarda
+RLS'leriyle birlikte oluşturulacak.
 
 ---
 
 ## Sonraki oturum için devam notu
 
-**Bittiği yer:** Faz 1.1 ve 1.2'nin ölçülebilir tamamı. Faz 1.3 (Supabase
-şema + RLS denetimi) başlamadı.
-
-**Faz 1.3 için hazır bilgi** (yeniden keşfetmeye gerek yok):
-- 41 tablo, 40'ında RLS açık (`spatial_ref_sys` PostGIS'e ait, açılamıyor)
-- 97 politika; hepsinde `auth.*` çağrıları `(select …)` ile sarmalı (0037)
-- Bilinen açık denetçi bulguları: 129 `multiple_permissive_policies`
-  (politika birleştirme semantik risk taşır, tablo tablo bakılmalı),
-  31 `unindexed_foreign_keys` (dolu tablodakiler 0039'da kapatıldı)
-- `docs/BASELINE.md` bütün baseline sayılarını taşıyor
-
-**Faz 1.3'te yapılacaklar** (belge satır 204–257):
-1. Belgedeki tablo listesini mevcut şemayla karşılaştır; eksik olanları
-   çıkar (bildirimler, mesajlaşma, engelleme, radyo programı, TV kanalı,
-   ana sayfa modül konfigürasyonu, feature flag, kota kayıtları gibi
-   birçoğu henüz yok)
-2. `TO authenticated` tek başına yetkilendirme olan politikaları ara
-3. `UPDATE` politikalarında `WITH CHECK` eksiklerini ara
-4. Denetçi bulgularını yeniden çalıştır
+**Bittiği yer:** Faz 1 tamamı ölçüldü ve raporlandı; taşınan iki kalem
+(fonksiyon şeması, politika birleştirme) Faz 15'e bağlandı. Sıradaki iş
+**Faz 2 — tek tasarım sistemi ve bütüncül arayüz** (belge satır 258–355).
 
 **Çalışma yöntemi** (bu oturumda işe yaradı):
 - Master belgeyi TAMAMEN okuma; yalnızca faz satır aralığını oku
