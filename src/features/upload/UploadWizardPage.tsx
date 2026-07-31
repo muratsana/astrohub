@@ -176,6 +176,7 @@ export function UploadWizardPage() {
           locationVisibility: state.locationVisibility,
           license: state.license,
           aiDeclared: state.aiDeclared,
+          copyrightConfirmed: state.copyrightConfirmed,
           objectId: await resolveTargetId(state.targetSlug),
           targetLabel: selectedTarget
             ? `${selectedTarget.catalog} — ${selectedTarget.name}`
