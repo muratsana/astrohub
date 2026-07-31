@@ -18,6 +18,7 @@ import { PhotoViewer } from './PhotoViewer';
 import { BortleIndicator } from './BortleIndicator';
 import { RatingControl, RatingBadge } from './RatingControl';
 import { VersionHistory } from './VersionHistory';
+import { VersionUpload } from './VersionUpload';
 import { ReportButton } from '@/features/admin/ReportButton';
 import { exifHasValues, photoTypeLabels } from './types';
 import { formatExposure } from '@/domain/photography/exif';
@@ -55,10 +56,20 @@ export function PhotoDetailPage() {
     );
   }
 
-  return <PhotoDetail photo={photo} all={catalog.items} />;
+  return (
+    <PhotoDetail photo={photo} all={catalog.items} onRefresh={catalog.refresh} />
+  );
 }
 
-function PhotoDetail({ photo, all }: { photo: AstroPhoto; all: AstroPhoto[] }) {
+function PhotoDetail({
+  photo,
+  all,
+  onRefresh,
+}: {
+  photo: AstroPhoto;
+  all: AstroPhoto[];
+  onRefresh: () => void;
+}) {
   const [tab, setTab] = useState<TabId>('cekim');
   const integration = totalIntegrationSeconds(photo.exposures);
 
@@ -173,17 +184,43 @@ function PhotoDetail({ photo, all }: { photo: AstroPhoto; all: AstroPhoto[] }) {
           {tab === 'konum' && <LocationTab photo={photo} />}
         </div>
 
-        {/* Sürümler ve karşılaştırma (§8.1) */}
-        {photo.versions && photo.versions.length > 1 && (
-          <section className="mt-8 border-t border-border pt-8">
-            <SectionHeader
-              title="Sürümler"
-              description="Aynı kaydın işleme sürümleri. Sürümler fotoğraf kotasında ayrı fotoğraf sayılmaz (§4.2)."
-              meta={`${photo.versions.length} sürüm`}
-            />
+        {/*
+          SÜRÜMLER BÖLÜMÜ TEK SÜRÜMDE DE ÇİZİLİYOR.
+
+          Eskiden `versions.length > 1` koşulu vardı ve bunun görünmeyen
+          bir sonucu vardı: sahibi ikinci sürümü ekleyemiyordu, çünkü
+          ekleme düğmesi bu bölümün içindeydi ve bölüm ancak İKİ sürüm
+          varken çiziliyordu. Yani sürüm eklemenin ön koşulu, zaten sürüm
+          eklemiş olmaktı.
+
+          Artık karşılaştırma sürgüsü iki sürüm gerektiriyor (tek sürümü
+          kendisiyle karşılaştırmanın anlamı yok) ama bölüm ve ekleme
+          düğmesi her zaman sahibine görünüyor.
+        */}
+        <section className="mt-8 border-t border-border pt-8">
+          <SectionHeader
+            title="Sürümler"
+            description="Aynı kaydın işleme sürümleri. Sürümler fotoğraf kotasında ayrı fotoğraf sayılmaz (§4.2)."
+            meta={
+              photo.versions && photo.versions.length > 0
+                ? `${photo.versions.length} sürüm`
+                : undefined
+            }
+          />
+
+          {photo.versions && photo.versions.length > 1 ? (
             <VersionHistory versions={photo.versions} />
-          </section>
-        )}
+          ) : (
+            <p className="mb-4 text-body-sm text-muted-foreground">
+              Bu kaydın tek bir işlemesi var. İkinci bir sürüm eklendiğinde
+              ikisi sürgüyle yan yana karşılaştırılabilir.
+            </p>
+          )}
+
+          <div className="mt-4">
+            <VersionUpload photo={photo} onUploaded={onRefresh} />
+          </div>
+        </section>
 
         {/*
           PUANLAMA SEKMELERİN ALTINDA, ÜSTÜNDE DEĞİL. Hüküm vermeden önce

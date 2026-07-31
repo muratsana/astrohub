@@ -58,18 +58,36 @@ export function VersionHistory({ versions }: { versions: PhotoVersion[] }) {
             Karşılaştırmak için iki farklı sürüm seçin.
           </p>
         ) : (
-          <VersionCompare
-            before={{
-              label: left.label,
-              gradient: left.gradient,
-              caption: describe(left),
-            }}
-            after={{
-              label: right.label,
-              gradient: right.gradient,
-              caption: describe(right),
-            }}
-          />
+          <>
+            <VersionCompare
+              before={{
+                label: left.label,
+                gradient: left.gradient,
+                imageUrl: left.imageUrl,
+                caption: describe(left),
+              }}
+              after={{
+                label: right.label,
+                gradient: right.gradient,
+                imageUrl: right.imageUrl,
+                caption: describe(right),
+              }}
+            />
+
+            {/*
+              GÖRSELSİZ KARŞILAŞTIRMA AÇIKÇA SÖYLENİYOR.
+              İki gradyanı yan yana koyup "işleme farkına bak" demek,
+              olmayan bir farkı varmış gibi göstermek olur. Sürgü yine
+              çalışıyor (künye satırları gerçek), ama görüntü kısmının
+              temsilî olduğu yazıyor.
+            */}
+            {(!left.imageUrl || !right.imageUrl) && (
+              <p className="rounded-card border border-border bg-surface-1 px-3 py-2 text-meta text-muted-foreground">
+                Bu sürümlerden en az birinin görseli yüklenmemiş — üstteki
+                kare temsilî. Alttaki künye satırları gerçek veriden geliyor.
+              </p>
+            )}
+          </>
         )}
       </div>
 

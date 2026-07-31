@@ -142,6 +142,15 @@ export interface AstroPhoto {
    * düğmeleri hiç göstermiyor.
    */
   id?: string;
+  /**
+   * Kaydın sahibinin kimliği.
+   *
+   * `user.username` GÖRÜNTÜ adı ve profil tablosundan geliyor; sahiplik
+   * kararı ona bakılarak verilemez (kullanıcı adı değişebilir, profil
+   * henüz oluşmamış olabilir). Revizyon yükleme gibi sahibe özel
+   * eylemler bu alanı oturumdaki kimlikle karşılaştırıyor.
+   */
+  ownerId?: string;
   slug: string;
   title: string;
   /** Astronomik hedef (canonical ad + katalog kodu) */

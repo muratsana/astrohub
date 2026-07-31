@@ -21,7 +21,41 @@ import { cn } from '@/lib/cn';
 export interface CompareSide {
   label: string;
   gradient: string;
+  /** Sürümün gerçek görseli; yoksa yer tutucu gradyan çiziliyor. */
+  imageUrl?: string;
   caption?: string;
+}
+
+/**
+ * Bir tarafın görselini çizer.
+ *
+ * `object-cover` ve sabit oran BİLİNÇLİ ve burada doğru — detay
+ * görüntüleyicisindeki kararın tersi. Orada kadraj eserin parçası ve
+ * kesmek kabul edilemezdi; burada iki sürümün AYNI KUTUYA oturması şart,
+ * çünkü karşılaştırmanın tek anlamı piksellerin aynı yerde olması. İki
+ * sürüm farklı oranlarda dışa aktarılmışsa (yeniden çerçevelenmiş bir
+ * revizyon) `contain` kullanmak sürgüyü anlamsız kılardı: sürgü kayarken
+ * görüntü de kayar ve fark okunamaz.
+ */
+function CompareLayer({ side }: { side: CompareSide }) {
+  if (side.imageUrl) {
+    return (
+      <img
+        src={side.imageUrl}
+        alt={side.label}
+        className="aspect-[16/9] w-full bg-black object-cover"
+        decoding="async"
+      />
+    );
+  }
+  return (
+    <PhotoPlaceholder
+      gradient={side.gradient}
+      alt={side.label}
+      rounded="rounded-none"
+      className="aspect-[16/9] w-full"
+    />
+  );
 }
 
 export function VersionCompare({
@@ -79,24 +113,14 @@ export function VersionCompare({
         className="relative touch-none select-none overflow-hidden rounded-card border border-border"
       >
         {/* Alt katman: yeni sürüm (tam görünür) */}
-        <PhotoPlaceholder
-          gradient={after.gradient}
-          alt={after.label}
-          rounded="rounded-none"
-          className="aspect-[16/9] w-full"
-        />
+        <CompareLayer side={after} />
 
         {/* Üst katman: eski sürüm, sürgüye kadar kırpılır */}
         <div
           className="absolute inset-0"
           style={{ clipPath: `inset(0 ${100 - position}% 0 0)` }}
         >
-          <PhotoPlaceholder
-            gradient={before.gradient}
-            alt={before.label}
-            rounded="rounded-none"
-            className="aspect-[16/9] w-full"
-          />
+          <CompareLayer side={before} />
         </div>
 
         {/* Etiketler */}

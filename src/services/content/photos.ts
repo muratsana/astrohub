@@ -51,10 +51,12 @@ interface VersionRow {
   palette: string | null;
   published_at: string | null;
   position: number | null;
+  storage_path: string | null;
 }
 
 interface PhotoRow {
   id: string;
+  user_id?: string | null;
   solve_status?: string | null;
   solve_ra_deg?: number | null;
   solve_dec_deg?: number | null;
@@ -171,6 +173,12 @@ function mapVersions(rows: VersionRow[] | null): PhotoVersion[] | undefined {
       note: row.note ?? '',
       publishedAt: row.published_at ?? '',
       gradient: gradientFromSeed(row.id),
+      /*
+       * Sürümün kendi görseli `photos` bucket'ında ve yol saklanıyor,
+       * tam adres değil (0009). Yol boşsa alan `undefined` kalıyor ve
+       * sürgü yer tutucuya düşüp bunu söylüyor.
+       */
+      imageUrl: publicPhotoUrl(row.storage_path) ?? undefined,
       palette: row.palette ?? undefined,
     }));
 }
@@ -202,6 +210,7 @@ export function mapPhotoRow(row: PhotoRow): AstroPhoto {
 
   return {
     id: row.id,
+    ownerId: row.user_id ?? undefined,
     slug: row.slug,
     title: row.title,
     target: {
@@ -312,7 +321,7 @@ export function mapPhotoRow(row: PhotoRow): AstroPhoto {
 }
 
 const SELECT =
-  'id, slug, title, description, photo_type, palette, captured_at, published_at, ' +
+  'id, user_id, slug, title, description, photo_type, palette, captured_at, published_at, ' +
   'target_label, location_label, location_visibility, bortle, sqm, license, ' +
   'ai_declared, like_count, comment_count, rating_sum, rating_count, ' +
   'display_path, thumb_path, setup_text, ' +
@@ -328,7 +337,7 @@ const SELECT =
   'profiles!astro_photos_user_id_profiles_fkey(username, display_name), ' +
   'celestial_objects(name, catalog, constellation), ' +
   'photo_exposures(filter, frames, exposure_seconds, position), ' +
-  'photo_versions(id, label, kind, note, palette, published_at, position)';
+  'photo_versions(id, label, kind, note, palette, published_at, position, storage_path)';
 
 async function fetchPhotos(client: SupabaseClient): Promise<AstroPhoto[]> {
   const { data, error } = await client
