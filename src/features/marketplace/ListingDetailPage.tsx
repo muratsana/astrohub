@@ -6,9 +6,7 @@ import { Panel, SpecList, SpecRow } from '@/components/ui/Panel';
 import { Badge } from '@/components/ui/Badge';
 import { Button, ButtonLink } from '@/components/ui/Button';
 import { Readout } from '@/components/ui/Readout';
-import { PlateFrame } from '@/components/media/PlateFrame';
-import { StarField } from '@/components/media/StarField';
-import { tintFromSeed } from '@/components/media/tints';
+import { ListingPhotos } from './ListingPhotos';
 import { NotFoundPage } from '@/components/NotFoundPage';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
@@ -107,24 +105,15 @@ export function ListingDetailPage() {
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
           {/* ───────── Sol: görsel + açıklama ───────── */}
           <div className="space-y-4">
-            <PlateFrame
-              ratio="aspect-[16/9]"
-              badge={
-                <span className="tabular rounded-[2px] bg-background/85 px-1.5 py-0.5 text-meta tracking-[0.02em] text-primary">
-                  {equipmentCategoryLabels[listing.category]}
-                </span>
-              }
-            >
-              <StarField
-                seed={listing.slug}
-                tint={tintFromSeed(listing.slug)}
-              />
-            </PlateFrame>
-
-            <p className="text-meta leading-snug text-faint">
-              Görsel yer tutucudur — ilan fotoğrafı yükleme akışı, medya
-              pipeline'ı (Faz 1.2) bağlandığında açılacak.
-            </p>
+            {/*
+              İkinci el ekipman ilanında fotoğraf SÜS DEĞİL, İLANIN
+              KENDİSİ: alıcı tüpteki çiziği, odaklayıcının boşluğunu,
+              kutudaki eksik parçayı oradan görüyor. Burada yıllarca
+              yıldız alanı çizilip "medya pipeline'ı bağlandığında
+              açılacak" yazıyordu; boru hattı 0012'de bağlanmıştı,
+              eksik olan ilan tarafıydı (0038).
+            */}
+            <ListingPhotos listing={listing} />
 
             {listing.description && (
               <Panel title="İlan metni">

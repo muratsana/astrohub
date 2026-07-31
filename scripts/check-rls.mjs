@@ -40,6 +40,8 @@ const ALICE = '11111111-1111-1111-1111-111111111111';
 const BOB = '22222222-2222-2222-2222-222222222222';
 const ALICE_PHOTO = 'aaaaaaaa-0000-0000-0000-00000000a001';
 const ALICE_DRAFT = 'aaaaaaaa-0000-0000-0000-00000000a002';
+const ALICE_LISTING = 'aaaaaaaa-0000-0000-0000-00000000b001';
+const ALICE_LISTING_DRAFT = 'aaaaaaaa-0000-0000-0000-00000000b002';
 
 async function sql(text) {
   const { stdout } = await run(
@@ -181,6 +183,21 @@ await sql(`
   insert into public.memberships (user_id, status)
   values ('${ALICE}', 'active')
   on conflict (user_id) do nothing;
+
+  /* İki ilan: biri aktif, biri taslak. Fotoğraf görünürlüğü ilanın
+     görünürlüğünü izlemeli — taslak ilanın fotoğrafı da gizli. */
+  insert into public.listings
+    (id, slug, seller_id, title, category_id, price, city, condition, status, posted_at)
+  values ('${ALICE_LISTING}','rls-ilan-aktif','${ALICE}','Aktif ilan','optik-tup',
+          1000,'Ankara','İyi','active', now()),
+         ('${ALICE_LISTING_DRAFT}','rls-ilan-taslak','${ALICE}','Taslak ilan','optik-tup',
+          1000,'Ankara','İyi','draft', now())
+  on conflict (id) do nothing;
+
+  insert into public.listing_photos (listing_id, storage_path, position)
+  values ('${ALICE_LISTING}', '${ALICE}/${ALICE_LISTING}/0.jpg', 0),
+         ('${ALICE_LISTING_DRAFT}', '${ALICE}/${ALICE_LISTING_DRAFT}/0.jpg', 0)
+  on conflict do nothing;
 `);
 
 /* ── FOTOĞRAF GÖRÜNÜRLÜĞÜ ─────────────────────────────────────────── */
@@ -502,10 +519,92 @@ await expectDenied(
   );
 }
 
+/*
+ * ══════════════════════════════════════════════════════════════════════
+ * İLAN FOTOĞRAFLARI (0038)
+ *
+ * Fotoğrafın görünürlüğü İLANIN görünürlüğünü izliyor. Ayrı bir kural
+ * yazmak, iki kuralın zamanla ayrışması demekti: ilan taslağa
+ * alındığında fotoğrafları görünür kalırdı ve satıcı yayından
+ * kaldırdığını sandığı ekipmanın fotoğraflarını herkese açık bırakırdı.
+ * ══════════════════════════════════════════════════════════════════════
+ */
+await expectCount(
+  'aktif ilanın fotoğrafı herkese açık',
+  'anon',
+  null,
+  `select count(*) from public.listing_photos where listing_id = '${ALICE_LISTING}';`,
+  1
+);
+
+await expectCount(
+  'taslak ilanın fotoğrafı anon\'a kapalı',
+  'anon',
+  null,
+  `select count(*) from public.listing_photos where listing_id = '${ALICE_LISTING_DRAFT}';`,
+  0
+);
+
+await expectCount(
+  'taslak ilanın fotoğrafı başka kullanıcıya da kapalı',
+  'authenticated',
+  BOB,
+  `select count(*) from public.listing_photos where listing_id = '${ALICE_LISTING_DRAFT}';`,
+  0
+);
+
+await expectCount(
+  'satıcı kendi taslak ilanının fotoğrafını görüyor',
+  'authenticated',
+  ALICE,
+  `select count(*) from public.listing_photos where listing_id = '${ALICE_LISTING_DRAFT}';`,
+  1
+);
+
+await expectDenied(
+  'başkasının ilanına fotoğraf eklenemiyor',
+  'authenticated',
+  BOB,
+  `insert into public.listing_photos (listing_id, storage_path, position)
+   values ('${ALICE_LISTING}', '${BOB}/sahte.jpg', 5);`
+);
+
+await expectDenied(
+  'başkasının ilan fotoğrafı silinemiyor',
+  'authenticated',
+  BOB,
+  `delete from public.listing_photos where listing_id = '${ALICE_LISTING}';`
+);
+
+/*
+ * SEKİZ FOTOĞRAF SINIRI TETİKLEYİCİDE, ARAYÜZDE DEĞİL. Arayüzde sayılan
+ * bir sınır, API'ye doğrudan giden biri için yok demektir.
+ */
+{
+  await sql(`
+    insert into public.listing_photos (listing_id, storage_path, position)
+    select '${ALICE_LISTING}', '${ALICE}/${ALICE_LISTING}/dolgu-' || i || '.jpg', i
+      from generate_series(1, 7) i;
+  `);
+  const asim = await asRole(
+    'authenticated',
+    ALICE,
+    `insert into public.listing_photos (listing_id, storage_path, position)
+     values ('${ALICE_LISTING}', '${ALICE}/${ALICE_LISTING}/dokuzuncu.jpg', 9);`
+  );
+  const reddedildi = !asim.ok && /en fazla 8/i.test(asim.error);
+  record(
+    'ilan başına 8 fotoğraf sınırı zorlanıyor',
+    reddedildi,
+    reddedildi ? '' : 'dokuzuncu fotoğraf eklenebildi'
+  );
+}
+
 /* ── Temizlik ─────────────────────────────────────────────────────── */
 await sql(`
   delete from public.photo_ratings
    where user_id in ('${ALICE}','${BOB}');
+  delete from public.listings where seller_id in ('${ALICE}','${BOB}');
   delete from public.astro_photos where user_id in ('${ALICE}','${BOB}');
   delete from public.memberships where user_id in ('${ALICE}','${BOB}');
   delete from auth.users where email like '%@rls.test';

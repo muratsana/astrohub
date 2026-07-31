@@ -6,7 +6,7 @@ import { PlateFrame } from '@/components/media/PlateFrame';
 import { StarField } from '@/components/media/StarField';
 import { tintFromSeed } from '@/components/media/tints';
 import { listings } from '@/features/marketplace/data';
-import { equipmentCategoryLabels } from '@/features/equipment/data';
+import { equipmentCategoryLabels } from '@/features/equipment/taxonomy';
 
 /**
  * SON İLANLAR — ana sayfanın son bölümü.

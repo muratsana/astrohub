@@ -5,10 +5,12 @@ import {
   type Listing,
   type ListingCondition,
 } from '@/features/marketplace/data';
+/* Taksonomiden — kataloğun kendisi burada gerekmiyor ve onu çekmek
+   ana sayfa paketine 80 kB ekliyordu (bkz. taxonomy.ts). */
 import {
   equipmentCategoryOrder,
   type EquipmentCategory,
-} from '@/features/equipment/data';
+} from '@/features/equipment/taxonomy';
 import { gradientFromSeed } from '@/components/media/tints';
 import { sanitizeText } from '@/lib/sanitize';
 import { threadSlug, slugSuffix } from './forum';
@@ -35,6 +37,7 @@ import type { ContentSelection } from './select';
 
 interface ListingRow {
   id: string;
+  seller_id?: string | null;
   slug: string;
   title: string;
   category_id: string;
@@ -73,6 +76,8 @@ function embeddedSlug(value: unknown): string | undefined {
 
 export function mapListingRow(row: ListingRow): Listing {
   return {
+    id: row.id,
+    sellerId: row.seller_id ?? undefined,
     slug: row.slug,
     title: row.title,
     /* Tanınmayan kategori ilanı listeden düşürmesin: filtre bir
@@ -108,7 +113,7 @@ export function mapListingRow(row: ListingRow): Listing {
 }
 
 const SELECT =
-  'id, slug, title, category_id, price, city, condition, has_invoice, ' +
+  'id, seller_id, slug, title, category_id, price, city, condition, has_invoice, ' +
   'shipping_ok, negotiable, description, includes, status, posted_at, ' +
   'profiles!listings_seller_id_profiles_fkey(username, display_name), ' +
   'equipment_models(slug)';

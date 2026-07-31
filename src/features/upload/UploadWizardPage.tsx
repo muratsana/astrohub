@@ -124,9 +124,14 @@ const initialState: WizardState = {
 };
 
 /**
- * Fotoğraf yükleme sihirbazı (§7.4) — 6 adımlı UI iskeleti.
- * Gerçek dosya yükleme + EXIF okuma + sunucu pipeline'ı Faz 1.2'de bağlanır;
- * bu iskelet form akışını, doğrulamaları ve özet ekranını tanımlar.
+ * Fotoğraf yükleme sihirbazı (§7.4) — 6 adım.
+ *
+ * BU YORUM ESKİDEN "gerçek dosya yükleme + EXIF okuma + sunucu pipeline'ı
+ * Faz 1.2'de bağlanır" diyordu ve YANLIŞTI: üçü de bağlı. EXIF tarayıcıda
+ * okunuyor (`domain/photography/exif`), dosya küçültülüp `photos`
+ * kovasına yazılıyor, satır `astro_photos`a düşüyor
+ * (`services/photos/upload`). Yanlış bırakılan bir "henüz yok" notu,
+ * sonraki okuyucuyu var olan bir özelliği yeniden yazmaya iter.
  */
 export function UploadWizardPage() {
   /*

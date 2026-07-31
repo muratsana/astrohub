@@ -2,8 +2,14 @@ import { COZUM_YOK, type AstroPhoto } from './types';
 import { commonsImage } from '../../lib/commons';
 
 /**
- * Galeri/detay demo verisi. Faz 1.2'de Supabase + object storage'a bağlanır;
- * bu dosya yalnızca UI'yi gerçekçi teknik veriyle doğrulamak içindir.
+ * Galeri/detay TOHUM verisi.
+ *
+ * Supabase bağlandı (`services/content/photos`): tablo doluysa otorite
+ * odur, bu dosya yalnızca yapılandırma yokken ya da tablo boşken devreye
+ * giriyor. Eskiden burada "Faz 1.2'de bağlanır" yazıyordu; bağlandı.
+ *
+ * Tohum kayıtların `id`si YOK ve bu bilinçli — beğeni, yorum ve puan
+ * gerçek bir satıra bağlanıyor.
  */
 /*
  * Tohum fotoğrafların alan çözümü yok — gerçek bir ölçüm değil, örnek

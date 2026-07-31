@@ -5,6 +5,21 @@ import type { EquipmentCategory } from '../equipment/data';
 export type ListingCondition = 'Sıfır gibi' | 'Çok iyi' | 'İyi' | 'Yıpranmış';
 
 export interface Listing {
+  /**
+   * Veritabanı kimliği. Tohum kayıtlarda YOK ve bu bilinçli: ilan
+   * fotoğrafları gerçek bir satıra bağlanıyor (0038). Tohum bir ilana
+   * fotoğraf eklemeye çalışmak yabancı anahtar hatası verirdi; arayüz
+   * `id` yokken yükleme denetimini hiç göstermiyor.
+   */
+  id?: string;
+  /**
+   * Satıcının kimliği — sahiplik kararı bununla veriliyor.
+   *
+   * `seller.username` bir GÖRÜNTÜ adı ve profil tablosundan geliyor;
+   * adını değiştiren ya da profili henüz oluşmamış birinde sessizce
+   * yanlış cevap verirdi.
+   */
+  sellerId?: string;
   slug: string;
   title: string;
   category: EquipmentCategory;
