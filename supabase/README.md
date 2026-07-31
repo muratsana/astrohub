@@ -12,7 +12,13 @@ biçimde yönetilir; StageHub migration mirası taşınmaz.
 | Ref | `eoqggvosegjbburyuyba` |
 | Bölge | `eu-central-1` (Frankfurt) |
 | API URL | `https://eoqggvosegjbburyuyba.supabase.co` |
-| Organizasyon | StageHub (ücretsiz plan — ikinci proje, ek ücret yok) |
+| Organizasyon | StageHub — **Pro plan** (2026-07'de yükseltildi) |
+
+Pro'nun bu proje için pratik karşılığı: proje hareketsizlikten
+**duraklatılmıyor**, günlük yedek alınıyor, kayıt geçmişi 1 yerine 7 gün
+saklanıyor ve **veritabanı dalları** (branching) açılabiliyor. Kota
+matematiği (`0027`) zaten Pro'nun 100 GB depolamasına göre yazılmıştı;
+ücretsiz plan hiçbir şeyi kısıtlamıyordu.
 
 Anahtarlar `.env` dosyasına konur (repoya girmez); şablon için `.env.example`.
 
@@ -24,7 +30,11 @@ Anahtarlar `.env` dosyasına konur (repoya girmez); şablon için `.env.example`
 | `0002_auth_profiles_membership.sql` | profiles, user_roles, memberships, billing, notification_preferences, push, KVKK tabloları + RLS |
 | `0003_grant_hardening.sql` | tablo yetkilerinin daraltılması, TRUNCATE boşluğunun kapatılması, fonksiyon `search_path` sabitlemesi |
 
-Sonraki gruplar (§12.4): `0004_equipment_and_setups` … `0012_storage_and_rls`.
+Tablo yalnızca ilk üç grubu anlatıyor; şema o zamandan beri `0034`'e
+kadar büyüdü. Güncel liste için klasörün kendisi kaynaktır
+(`ls supabase/migrations`) — her dosya ne yaptığını başındaki yorumda
+anlatıyor, ve buradaki tabloyu her migration'da güncellemek onu er geç
+yanlış hale getirirdi.
 
 ### Uzak projedeki migration adları
 
@@ -77,6 +87,21 @@ Uzak projeye dokunan komutlar iki ortam değişkeni ister — şablon
 
 İkisi de `VITE_` öneki almaz; alsalardı istemci paketine gömülürlerdi.
 
+## Edge fonksiyonları
+
+| Slug | `verify_jwt` | Ne yapıyor |
+|---|---|---|
+| `meteoblue` | açık | Hava vekili — anahtarı sunucuda tutuyor, oran limiti uyguluyor |
+| `plate-solve` | açık | Yüklenen fotoğrafı astrometry.net'e gönderiyor; sahiplik denetimi **çağıranın anahtarıyla** yapılıyor ki RLS cevap versin |
+| `plate-solve-poll` | **kapalı** | `pg_cron` beş dakikada bir çağırıyor; kimlik `x-poll-secret` başlığıyla elle doğrulanıyor (bkz. `docs/YAYIN.md` §6) |
+
+> **Silinecek: `taslak-temizle`.** Tek seferlik bir temizlik için
+> yazılmıştı ve işi bitti. Yalnızca JWT ile korunuyordu — yani oturum
+> açmış herhangi bir kullanıcı **herkesin** onaylanmamış taslaklarını
+> silebilirdi. Fark edilir edilmez içi boşaltıldı: şu an 410 döndürüyor
+> ve hiçbir şey yapmıyor. MCP'de fonksiyon silme aracı yok; panelden
+> (Edge Functions → `taslak-temizle` → Delete) kaldırılmalı.
+
 ## İlkeler
 
 - Her tabloda açık **RLS** vardır (§15.1). Yeni tablo eklerken RLS'i ve
@@ -97,4 +122,5 @@ Uzak projeye dokunan komutlar iki ortam değişkeni ister — şablon
 |---|---|
 | `spatial_ref_sys` üzerinde RLS kapalı **ve `anon` yazabiliyor** | Tablo `supabase_admin` rolüne aittir: RLS açamayız, yetkileri de geri alamayız (REVOKE yalnızca kendi verdiğin izni kaldırır — `postgres` ile denemek hata vermeden no-op olur). İçerik EPSG koordinat sistemi kataloğudur; kişisel veri yoktur ve PostGIS'ten yeniden doldurulabilir. Supabase'deki her PostGIS projesinde aynıdır. |
 | `postgis`, `citext`, `pg_trgm` `public` şemasında | `0001`'de kurulmuş ve `profiles.username citext` gibi sütun tipleri bunlara bağlı. Taşımak tip referanslarını kırar; kazanç düşük. |
-| `st_estimatedextent` çağrılabilir | PostGIS'in kendi fonksiyonu, bizim kodumuz değil. |
+| `st_estimatedextent` çağrılabilir | PostGIS'in kendi fonksiyonu, bizim kodumuz değil. `0016`'daki `revoke … from anon, authenticated` satırları **etkisiz** — yetki role değil `PUBLIC`'e verilmiş ve veren `supabase_admin`. ACL bunu açıkça gösteriyor: `=X/supabase_admin`. `postgres` başkasının verdiği izni geri alamaz, o yüzden komut hata vermeden hiçbir şey yapmıyor. Fonksiyon yalnızca geometri sütunlarının istatistiksel sınırlarını döndürüyor; bizim şemamızda geometri yalnızca etkinlik/gözlem alanı koordinatlarında ve zaten `approx_*` olarak yuvarlanmış halde. |
+| `edge_rate_limits` üzerinde RLS açık ama **hiç politika yok** | Kasıtlı: politikasız RLS "kimse okuyamaz/yazamaz" demektir ve bu tablo yalnızca `service_role` tarafından kullanılıyor. RLS matrisi (`0204`) bunu ayrıca ölçüyor. Denetçi bunu INFO seviyesinde bildiriyor, hata olarak değil. |

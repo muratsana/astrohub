@@ -18,8 +18,9 @@ yapılacak işler, çünkü hepsi gizli anahtar ya da hesap yetkisi istiyor.
 | Google ile giriş | `src/features/auth/GoogleButton.tsx`, `AuthContext.signInWithGoogle` |
 | CAPTCHA | `src/features/auth/Captcha.tsx` (Turnstile / hCaptcha) |
 | Ortam değişkeni şablonu | `.env.example` |
-| Veritabanı şeması | `supabase/migrations/0001…0016` — canlıya uygulandı |
+| Veritabanı şeması | `supabase/migrations/0001…0034` — canlıya uygulandı |
 | meteoblue vekili | `supabase/functions/meteoblue` — dağıtıldı, gizli anahtarı bekliyor |
+| Plate solve | `supabase/functions/plate-solve` + `plate-solve-poll` — dağıtıldı, **iki gizli anahtarı bekliyor** (§6) |
 
 **CAPTCHA site anahtarı boşsa** doğrulama tamamen devre dışı kalır ve
 formlar eskisi gibi çalışır. **Supabase yapılandırılmamışsa** Google
@@ -36,7 +37,7 @@ o özelliği kapatır.
 2. Framework **Vite** olarak algılanacak; `vercel.json` zaten build
    komutunu ve çıktı klasörünü veriyor, değiştirmeyin.
 3. **Production Branch**: `main`. Dal oluşturuldu ve bütün çalışma
-   orada; her push otomatik yayına çıkar (bkz. §7).
+   orada; her push otomatik yayına çıkar (bkz. §8).
 
 ### 2.2 Ortam değişkenleri
 
@@ -129,7 +130,21 @@ Site anahtarını Vercel'de `VITE_CAPTCHA_SITE_KEY` olarak tanımlayın —
 gizli anahtar Supabase'de, site anahtarı istemcide; ikisi karıştırılırsa
 doğrulama hep başarısız olur.
 
-### 3.4 E-posta şablonları
+### 3.4 Sızmış parola koruması
+
+Supabase → Authentication → **Attack Protection → Prevent use of leaked
+passwords**. Varsayılan olarak **kapalı**.
+
+Açıldığında Supabase, kayıt ve parola değiştirme sırasında parolayı
+HaveIBeenPwned'in sızıntı veritabanıyla karşılaştırıyor; eşleşirse
+reddediyor. Parolanın kendisi gönderilmiyor — SHA-1 özetinin ilk beş
+karakteri sorgulanıyor (k-anonimlik), yani parola siteden dışarı çıkmıyor.
+
+Sitede gerçek hesaplar açıldığı için bu tek düğmelik sertleştirmenin
+karşılığı yüksek: en sık hesap ele geçirme yolu zayıflık değil, başka bir
+sitede sızmış parolanın burada tekrar kullanılması.
+
+### 3.5 E-posta şablonları
 
 Varsayılan şablonlar İngilizce. Authentication → **Email Templates**
 altından Türkçeleştirmek, doğrulama e-postasının spam'e düşme ihtimalini
@@ -164,7 +179,64 @@ açmak, anahtar sızsa bile kullanımı sizin alan adınızla sınırlar.
 
 ---
 
-## 6. Yayın sonrası kontrol listesi
+## 6. Plate solve gizli anahtarları
+
+İki anahtar var ve **ikisi de gerekli**. Supabase → **Edge Functions →
+Secrets**:
+
+| Anahtar | Ne işe yarıyor |
+| --- | --- |
+| `ASTROMETRY_API_KEY` | nova.astrometry.net hesabınızın API anahtarı (astrometry.net → hesap → *my API key*) |
+| `PLATE_SOLVE_POLL_SECRET` | Yoklama uç noktasının kapı parolası — cron dışından çağrılamasın diye |
+
+### Neden ikinci bir parola
+
+`plate-solve-poll` fonksiyonunda `verify_jwt` **kapalı**: çağıran
+`pg_cron`, ve cron bir kullanıcı oturumu taşımıyor. JWT kontrolü
+kapalıyken uç nokta internete açık kalırdı; onun yerine kimlik
+`x-poll-secret` başlığıyla elle doğrulanıyor.
+
+Aynı değer **iki yerde** durmak zorunda:
+
+- Veritabanı tarafında — `supabase_vault` içinde, `plate_solve_poll_secret`
+  adıyla (0034 migration'ı koydu, cron isteği oradan okuyor).
+- Fonksiyon tarafında — yukarıdaki `PLATE_SOLVE_POLL_SECRET` sırrı.
+
+İkisi eşleşmezse fonksiyon 401 döner. Vault'taki değeri okumak için:
+
+```sql
+select decrypted_secret from vault.decrypted_secrets
+where name = 'plate_solve_poll_secret';
+```
+
+### Tanımlı değilken ne oluyor
+
+Site bozulmuyor — çözüm sırası boşta duruyor. Fotoğraflar yükleniyor,
+yayımlanıyor ve galeride görünüyor; yalnızca `solve_status` alanı
+`kuyrukta` değerinde asılı kalıyor ve profilde çözülmüş sürüm çıkmıyor.
+Yani eksik anahtar bir özelliği kapatıyor, siteyi değil.
+
+### Çalıştığını doğrulama
+
+Cron beş dakikada bir tetikliyor. `cron.job_run_details` tablosuna
+bakmak **yeterli değil**: orada "succeeded" yazması yalnızca isteğin
+gönderildiğini söyler, fonksiyonun ne cevap verdiğini değil. Gerçek
+cevap `pg_net`in kendi tablosunda:
+
+```sql
+select status_code, left(content, 120) as cevap, created
+from net._http_response order by created desc limit 5;
+```
+
+| Ne görüyorsunuz | Anlamı |
+| --- | --- |
+| `401 {"hata":"yetkisiz"}` | `PLATE_SOLVE_POLL_SECRET` tanımsız ya da Vault'takiyle eşleşmiyor |
+| `200 {"durum":"yok"}` | Poll parolası doğru ama `ASTROMETRY_API_KEY` tanımsız |
+| `200 {"islenen":…}` | İkisi de yerinde; kuyruk işleniyor |
+
+---
+
+## 7. Yayın sonrası kontrol listesi
 
 - [ ] `https://astrohub.com.tr` açılıyor, SSL geçerli
 - [ ] `www.astrohub.com.tr` → apex yönlendirmesi çalışıyor
@@ -176,14 +248,20 @@ açmak, anahtar sızsa bile kullanımı sizin alan adınızla sınırlar.
       reddediliyor
 - [ ] Forumda konu açılıyor ve `forum_threads` tablosunda görünüyor
 - [ ] Fotoğraf yükleniyor ve **galeride görünüyor** (okuma katmanı)
+- [ ] Yüklenen fotoğrafın `solve_status` alanı birkaç dakika içinde
+      `kuyrukta` → `cozuldu` geçiyor (§6'daki `net._http_response` sorgusu)
 - [ ] "Bu Gece" panelinde kaynak `meteoblue` yazıyor
+- [ ] "Bu Gece" panelinde ileri gecelere gidilebiliyor ve tahmin ufkunda
+      düğme kapanıyor
+- [ ] Yeni kayıtta KVKK ve kullanım koşulları onay kutuları geliyor —
+      hem e-posta hem Google ile
 - [ ] `/sitemap.xml` ve `/robots.txt` doğru alan adını gösteriyor
 
 ---
 
-## 7. Otomasyon — ne kendiliğinden oluyor
+## 8. Otomasyon — ne kendiliğinden oluyor
 
-### 7.1 Dağıtım
+### 8.1 Dağıtım
 
 Vercel'in **Git entegrasyonu** bir kez bağlandıktan sonra dağıtım
 tamamen otomatik:
@@ -197,25 +275,26 @@ tamamen otomatik:
 Token, iş akışı dosyası ya da elle tetikleme gerekmiyor. Kurulumdaki tek
 elle adım, projeyi ilk kez bağlamak.
 
-### 7.2 Doğrulama
+### 8.2 Doğrulama
 
 `.github/workflows/ci.yml` her push ve pull request'te tam zinciri
-koşuyor: tip kontrolü, lint, 701 birim testi, üretim derlemesi, önizleme
-derlemesi, yatay taşma denetimi ve 25 E2E senaryosu. Düşen bir senaryonun
-ekran görüntüleri iş çıktısına yükleniyor.
+koşuyor: tip kontrolü, lint, 1 089 birim testi, üretim derlemesi, önizleme
+derlemesi, yatay taşma denetimi, erişilebilirlik denetimi ve 26 E2E
+senaryosu. Düşen bir senaryonun ekran görüntüleri iş çıktısına
+yükleniyor.
 
 **Vercel'in kendi derlemesi bunları koşmuyor** — orada yalnızca
 `npm run build` var. CI olmadan bozuk bir akış derlenip yayına
 çıkabilirdi.
 
-### 7.3 Neden GitHub Actions'tan Vercel'e dağıtım yapmıyoruz
+### 8.3 Neden GitHub Actions'tan Vercel'e dağıtım yapmıyoruz
 
 Yapılabilir (`VERCEL_TOKEN` deposu sırrı olarak) ama gereksiz: Git
 entegrasyonu aynı işi sır saklamadan yapıyor. Actions'a taşımanın tek
 gerçek gerekçesi "CI geçmeden dağıtma" kuralı; onu Vercel tarafında
 **Settings → Git → Ignored Build Step** ile de kurabilirsiniz.
 
-### 7.4 Veritabanı değişiklikleri
+### 8.4 Veritabanı değişiklikleri
 
 Migration'lar otomatik uygulanmıyor — bilinçli. Şema değişikliği geri
 alınması en zor işlem ve bir push'un yan etkisi olmamalı. Yeni bir
@@ -223,9 +302,9 @@ migration `supabase/migrations/` altına yazılıyor ve elle uygulanıyor.
 
 ---
 
-## 8. Sık karşılaşılan tuzaklar
+## 9. Sık karşılaşılan tuzaklar
 
-### 8.1 Yayında eski sürüm görünüyor
+### 9.1 Yayında eski sürüm görünüyor
 
 **Belirti:** Vercel "Ready" diyor ama sitede eski tasarım var.
 
@@ -242,7 +321,7 @@ the main branch."*
 `main`. Böylece yeni bağlantılar ve pull request'ler de doğru dalı
 hedefler.
 
-### 8.2 Depoda gereksiz dal kalması
+### 9.2 Depoda gereksiz dal kalması
 
 Bu depoda `main` dışındaki dallar tarihsel; `main` hepsini kapsıyor
 (`git merge-base --is-ancestor` ile doğrulandı, birleştirilecek commit
@@ -251,7 +330,7 @@ ekranından silinebilirler.
 
 Varsayılan dal silinemez — önce değiştirmek gerekir.
 
-### 8.3 Google girişi `redirect_uri_mismatch` veriyor
+### 9.3 Google girişi `redirect_uri_mismatch` veriyor
 
 Sırasıyla kontrol edin:
 1. Supabase → Authentication → URL Configuration → **Redirect URLs**
