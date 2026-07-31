@@ -46,6 +46,51 @@ export const photoTypeLabels: Record<PhotoType, string> = {
 export const PHOTO_LICENSE =
   'Hakları sahibinde · Astrohub kaynak göstererek kullanabilir';
 
+/**
+ * ALAN ÇÖZÜMÜ (plate solve) — ÖLÇÜM, İDDİA DEĞİL.
+ *
+ * Künyedeki hedef adını kullanıcı yazıyor; buradaki değerler ise
+ * fotoğraftaki yıldız desenlerinden hesaplanıyor. İkisi ayrı tutuluyor
+ * ve bu alanlar sunucu dışından yazılamıyor (migration 0032).
+ *
+ * `durum` neden ayrı: boş değerler "henüz çözülmedi" ile "çözülemedi"yi
+ * ayırt edemezdi. Arayüzde bunlar farklı iki cümle — biri beklemeyi,
+ * diğeri sonucu anlatıyor.
+ */
+export interface PlateSolve {
+  durum: 'yok' | 'kuyrukta' | 'cozuldu' | 'basarisiz';
+  /** Alan merkezi, DERECE (katalog RA'yı saat tutuyor; birim adında). */
+  raDeg: number | null;
+  decDeg: number | null;
+  /** Kuzeye göre dönüklük. */
+  rotationDeg: number | null;
+  /** Piksel başına yay saniyesi — gösterim kopyasının ölçeği. */
+  scaleArcsecPx: number | null;
+  fieldWidthDeg: number | null;
+  fieldHeightDeg: number | null;
+  provider: string | null;
+  error: string | null;
+}
+
+/**
+ * Çözüm yapılmamış kayıtların varsayılanı.
+ *
+ * Tohum verinin ve 0032 öncesi satırların hepsi bu durumda. `cozuldu`
+ * varsayıp boş değerler göstermek, ölçüm yapılmış ama sonucu kaybolmuş
+ * gibi okunurdu.
+ */
+export const COZUM_YOK: PlateSolve = {
+  durum: 'yok',
+  raDeg: null,
+  decDeg: null,
+  rotationDeg: null,
+  scaleArcsecPx: null,
+  fieldWidthDeg: null,
+  fieldHeightDeg: null,
+  provider: null,
+  error: null,
+};
+
 export type ProcessingPalette = 'RGB' | 'LRGB' | 'SHO' | 'HOO' | 'Mono';
 
 /** Konum görünürlüğü (§15.3): tam / yaklaşık / bölge / gizli */
@@ -113,6 +158,8 @@ export interface AstroPhoto {
     aiDeclared?: boolean; // AI beyanı (§15.5)
   };
   license: string;
+  /** Alan çözümü — ölçüm. Hiç istenmemişse `durum: 'yok'`. */
+  solve: PlateSolve;
   likes: number;
   comments: number;
   editorsPick?: boolean;

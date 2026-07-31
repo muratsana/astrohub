@@ -4,6 +4,7 @@ import { MemoryRouter } from 'react-router';
 import { TonightPanel } from './TonightPanel';
 import { ThemeProvider } from '@/features/theme/ThemeContext';
 import { LocationProvider } from '@/features/location/LocationContext';
+import { FORECAST_DAYS } from '@/features/weather/openMeteo';
 
 /**
  * "BU GECE" MODÜLÜ — davranış denetimi.
@@ -152,5 +153,57 @@ describe('TonightPanel · hedef kolonu', () => {
     const link = screen.getByRole('link', { name: /tüm katalog/i });
     expect(link).toHaveAttribute('href', '/hedefler');
     expect(link.textContent).toMatch(/\d+ nesne/);
+  });
+});
+
+describe('TonightPanel · ileri tarihli gece', () => {
+  it('bu gecedeyken geri gitme kapalı', () => {
+    renderPanel();
+    expect(
+      screen.getByRole('button', { name: /önceki gece/i })
+    ).toBeDisabled();
+  });
+
+  it('ileri gidince tarih değişiyor ve dönüş yolu açılıyor', () => {
+    renderPanel();
+    fireEvent.click(screen.getByRole('button', { name: /sonraki gece/i }));
+
+    /*
+     * "Bu gece" metni karar kolonunun başlığında da geçiyor; yokluğunu
+     * aramak yanlış yeri ölçerdi. Ölçülen şey seçicinin artık bir TARİH
+     * göstermesi — yani gerçekten başka bir geceye geçilmiş olması.
+     */
+    expect(
+      screen.getByRole('button', { name: /bu geceye dön/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /önceki gece/i })
+    ).not.toBeDisabled();
+  });
+
+  /*
+   * ASIL KURAL: hava tahmininin ufku var, efemerisin yok. İleri gitme
+   * düğmesi o ufukta durmalı — yoksa panelin yarısı sebepsizce boşalır.
+   */
+  it('tahmin ufkunda ileri gitme kapanıyor ve sebebi yazıyor', () => {
+    renderPanel();
+    const ileri = screen.getByRole('button', { name: /sonraki gece/i });
+
+    for (let i = 0; i < FORECAST_DAYS + 3; i++) {
+      if (!(ileri as HTMLButtonElement).disabled) fireEvent.click(ileri);
+    }
+
+    expect(ileri).toBeDisabled();
+    expect(screen.getByText(/hava tahmini .* gün ileriye/i)).toBeInTheDocument();
+  });
+
+  /*
+   * Gelecekteki bir gecede "şu an" diye bir nokta yok; imleci çizmek
+   * olmayan bir anı göstermek olurdu.
+   */
+  it('ileri gecede "şu an" imleci çizilmiyor', () => {
+    renderPanel();
+    fireEvent.click(screen.getByRole('button', { name: /sonraki gece/i }));
+    expect(screen.queryByText('ŞU AN')).not.toBeInTheDocument();
   });
 });

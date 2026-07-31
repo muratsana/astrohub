@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { FORECAST_DAYS } from '@/features/weather/openMeteo';
 import { Container } from '@/components/ui/Container';
 import { Button } from '@/components/ui/Button';
 import { useLocationContext } from '@/features/location/LocationContext';
@@ -44,7 +45,14 @@ export function TonightPanel() {
     dismissGeolocationOffer,
   } = useLocationContext();
   const { theme } = useTheme();
-  const tonight = useTonight();
+
+  /*
+   * İLERİ TARİHLİ GECE. Gün sayısı durumda, tarih değil: efemeris zaten
+   * konumun takvimine göre hesaplıyor ve bir `Date` tutmak zaman dilimi
+   * sınırında iki farklı güne düşme riski getiriyordu.
+   */
+  const [offsetDays, setOffsetDays] = useState(0);
+  const tonight = useTonight(offsetDays);
 
   /*
    * ÜÇÜNCÜ KOLONDAN İKİNCİYE TEK BAĞ. Bir hedef satırı işaretlendiğinde
@@ -116,6 +124,45 @@ export function TonightPanel() {
           </div>
         )}
 
+        {/*
+          GECE SEÇİCİ. Efemerisin sınırı yok ama havanınki var; ileri
+          gitme düğmesi tahmin ufkunda duruyor. Ufkun ötesini
+          gösterebilirdik (karanlık ve ay hesaplanabiliyor) ama o zaman
+          panelin yarısı boş kalırdı ve kullanıcı sebebini aramak
+          zorunda kalırdı.
+        */}
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => setOffsetDays((d) => Math.max(0, d - 1))}
+            disabled={offsetDays === 0}
+          >
+            ← Önceki gece
+          </Button>
+          <span className="num text-body-sm font-medium text-foreground">
+            {offsetDays === 0 ? 'Bu gece' : tonight.dateLabel}
+          </span>
+          {offsetDays > 0 && (
+            <Button size="sm" variant="ghost" onClick={() => setOffsetDays(0)}>
+              Bu geceye dön
+            </Button>
+          )}
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => setOffsetDays((d) => Math.min(FORECAST_DAYS - 1, d + 1))}
+            disabled={offsetDays >= FORECAST_DAYS - 1}
+          >
+            Sonraki gece →
+          </Button>
+          {offsetDays >= FORECAST_DAYS - 1 && (
+            <span className="text-meta text-faint">
+              Hava tahmini {FORECAST_DAYS} gün ileriye kadar veriliyor.
+            </span>
+          )}
+        </div>
+
         {permission === 'denied' && (
           <p className="mb-3 rounded-card border border-border bg-surface-1 px-3 py-2 text-meta text-muted-foreground">
             Konum izni alınamadı — hesaplar seçili şehir üzerinden yapılıyor.
@@ -147,7 +194,8 @@ export function TonightPanel() {
               moon={tonight.moon}
               moonTimes={tonight.moonTimes}
               conditions={tonight.conditions}
-              nowAt={tonight.nowAt}
+              /* Gelecekteki bir gecede "şu an" diye bir nokta yok. */
+              nowAt={offsetDays === 0 ? tonight.nowAt : null}
               markAt={markAt}
               timeZone={tonight.timeZone}
             />

@@ -116,7 +116,33 @@ export function TermsPage() {
           />
         </LegalSection>
 
-        <LegalSection heading="4. Yapay zekâ içerik politikası">
+        <LegalSection heading="4. Alan çözümü (plate solve) ve dış servis">
+          <p>
+            Yüklediğiniz fotoğrafın gökyüzünde tam olarak nereye baktığını
+            belirlemek için <strong>alan çözümü</strong> yapılır: yıldız
+            desenlerinden alanın merkezi, dönüklüğü ve ölçeği hesaplanır.
+            Sonuç fotoğraf künyesinde gösterilir.
+          </p>
+          <p>
+            Bu işlem{' '}
+            <strong>
+              astrometry.net adlı üçüncü taraf servis üzerinden
+            </strong>{' '}
+            yapılır ve fotoğrafınızın gösterim kopyası çözülmek üzere o
+            servise gönderilir. Orijinal (tam çözünürlüklü) dosyanız
+            gönderilmez.
+          </p>
+          <LegalList
+            items={[
+              'Gönderim yalnızca yayımlanan fotoğraflar için ve yalnızca bir kez yapılır.',
+              'Gönderilen kopya astrometry.net hesabımızda “herkese açık değil” olarak işaretlenir.',
+              'Alan çözümü isteğe bağlı bir zenginleştirmedir; başarısız olması fotoğrafınızın yayınını etkilemez.',
+              'Çözüm sonucu ölçüm olduğu için elle değiştirilemez; künyedeki hedef bilgisinden ayrı tutulur.',
+            ]}
+          />
+        </LegalSection>
+
+        <LegalSection heading="5. Yapay zekâ içerik politikası">
           <p>
             Tamamen yapay zekâ ile üretilmiş görseller gerçek astrofotoğraf gibi
             sunulamaz. Yapay zekâ tabanlı gürültü azaltma, ölçek büyütme veya
@@ -126,7 +152,7 @@ export function TermsPage() {
           <p>Şüpheli içerik topluluk tarafından raporlanabilir.</p>
         </LegalSection>
 
-        <LegalSection heading="5. Topluluk kuralları">
+        <LegalSection heading="6. Topluluk kuralları">
           <LegalList
             items={[
               'Taciz, hakaret, nefret söylemi ve kişisel veri ifşası yasaktır.',
@@ -137,7 +163,7 @@ export function TermsPage() {
           />
         </LegalSection>
 
-        <LegalSection heading="6. Hizmetin sürekliliği">
+        <LegalSection heading="7. Hizmetin sürekliliği">
           <p>
             Astrohub, hizmeti geliştirmek için modülleri değiştirebilir veya
             kaldırabilir. Üyelik haklarını esaslı biçimde etkileyen

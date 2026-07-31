@@ -3,7 +3,11 @@ import { Link, useNavigate } from 'react-router';
 import { useAuth } from '@/features/auth/AuthContext';
 import { EquipmentPicker } from '@/features/equipment/EquipmentPicker';
 import { useEquipmentCatalog } from '@/services/content/equipment';
-import { uploadPhoto, publishPhoto } from '@/services/photos/upload';
+import {
+  uploadPhoto,
+  publishPhoto,
+  requestPlateSolve,
+} from '@/services/photos/upload';
 import { checkUploadSize, formatBytes } from '@/domain/membership/quota';
 import { Container } from '@/components/ui/Container';
 import { Button } from '@/components/ui/Button';
@@ -219,6 +223,13 @@ export function UploadWizardPage() {
       );
 
       await publishPhoto(result.photoId);
+
+      /*
+       * Çözüm isteği YAYINDAN SONRA ve BEKLENMEDEN. Fotoğraf artık
+       * yayında; alan çözümü dakikalar içinde arkadan geliyor.
+       */
+      void requestPlateSolve(result.photoId);
+
       setPublishState('bitti');
 
       /*

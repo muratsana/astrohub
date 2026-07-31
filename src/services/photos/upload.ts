@@ -428,6 +428,29 @@ export async function publishPhoto(photoId: string): Promise<void> {
   if (error) throw new Error(error.message);
 }
 
+/**
+ * Plate solve isteği — SONUCU BEKLEMİYOR.
+ *
+ * astrometry.net kuyruklu çalışıyor ve sonuç dakikalar sürebiliyor.
+ * Kullanıcıyı yayın ekranında bekletmenin bir anlamı yok: fotoğraf
+ * yayımlandı, çözüm arkadan geliyor ve hazır olduğunda fotoğraf
+ * sayfasında beliriyor (sunucu tarafında `pg_cron` yokluyor).
+ *
+ * HATASI YUTULUYOR VE BU BİLİNÇLİ. Çözüm bir EK: künye, dosyalar ve
+ * yayın zaten tamam. İsteğin düşmesi yüzünden kullanıcıya hata
+ * göstermek, başarılı bir yüklemeyi başarısız gibi sunmak olurdu.
+ * Durum veritabanında duruyor; çözülemezse fotoğraf sayfası bunu
+ * kendi söylüyor.
+ */
+export async function requestPlateSolve(photoId: string): Promise<void> {
+  try {
+    const supabase = await client();
+    await supabase.functions.invoke('plate-solve', { body: { photoId } });
+  } catch {
+    // Sessiz: bkz. yukarısı.
+  }
+}
+
 /** `photos` bucket'ı genel; yol doğrudan adrese çevrilebiliyor. */
 export function publicPhotoUrl(path: string | null | undefined): string | null {
   if (!path) return null;
