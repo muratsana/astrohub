@@ -44,6 +44,103 @@ function Thumb({ children }: { children: React.ReactNode }) {
 /** Şerit başına satır sayısı — ana sayfa iki şeridi de dörtle sınırlar. */
 const ROWS = 4;
 
+/**
+ * TEK SATIR — iki şerit de bunu kullanır.
+ *
+ * Önce iki şeridin işaretlemesi ayrı ayrı yazılmıştı ve BEKLENDİĞİ GİBİ
+ * AYRIŞTI: haber satırı görsel kredisini basıyor, yazı satırı basmıyordu.
+ * Bu yalnızca bir hizalama sorunu değildi — yazı görselleri de CC BY /
+ * CC BY-SA ve o lisansların şartı atfın GÖRÜNÜR olması. Dosyanın kendi
+ * açıklaması "kredi satırın altında görünür kalır" diyordu; kod bunu bir
+ * sütunda yapmıyordu.
+ *
+ * Tek bileşen hem lisans şartını hem hizayı aynı yerden garanti ediyor.
+ *
+ * `line-clamp-2` YANINDA `block` OLMAMALI. İkisi de `display` yazıyor ve
+ * hangisinin kazandığı sınıf sırasına değil üretilen CSS'in sırasına bağlı;
+ * `block` kazanınca clamp'ın gerektirdiği `-webkit-box` gitmiş oluyor ve
+ * KIRPMA HİÇ ÇALIŞMIYOR. Şeridin tırtıklı görünmesinin asıl sebebi buydu:
+ * özetler iki satıra indiriliyor sanılıyordu, bazıları üç satır çiziyordu.
+ *
+ * YÜKSEKLİKLER `lh` İLE SABİTLENİYOR. Başlık bir satır da olsa iki
+ * satırlık yer kaplıyor (`min-h`), özet de öyle. Yoksa kısa başlıklı bir
+ * satır komşusundan alçak kalıyor ve iki sütun kaydıkça şerit tırtıklı
+ * bitiyordu; eşitliği sağlayan şey kesmek değil, yeri HER DURUMDA ayırmak.
+ *
+ * `lh` satır yüksekliğinin kendisi: punto ya da `leading` değişse de
+ * ayrılan yer gerçek satır sayısı kadar kalır. Aynı çözüm `EditorialList`
+ * içinde de bu birimle yazılmıştı — iki yerde iki ayrı hesap tutmak,
+ * birinin sessizce eskimesi demekti.
+ */
+function StripRow({
+  to,
+  badge,
+  meta,
+  title,
+  summary,
+  image,
+  tint,
+  seed,
+}: {
+  to: string;
+  badge: React.ReactNode;
+  meta: string;
+  title: string;
+  summary: string;
+  image?: { url: string; credit: string };
+  tint: string;
+  seed: string;
+}) {
+  return (
+    <li>
+      <Link
+        to={to}
+        className="group flex gap-3 border-b border-border py-3 transition-colors hover:bg-surface-1"
+      >
+        <Thumb>
+          <RemoteImage
+            src={image?.url}
+            alt=""
+            sizes="86px"
+            widths={[120, 240]}
+            seed={seed}
+            tint={tint}
+          />
+        </Thumb>
+
+        <span className="min-w-0 flex-1">
+          <span className="mb-1 flex flex-wrap items-center gap-2">
+            {badge}
+            <span className="tabular text-meta text-faint">{meta}</span>
+          </span>
+
+          <span className="line-clamp-2 min-h-[2lh] text-[13px] leading-snug text-foreground transition-colors group-hover:text-primary">
+            {title}
+          </span>
+
+          <span className="mt-1 line-clamp-2 min-h-[2lh] text-meta leading-relaxed text-muted-foreground">
+            {summary}
+          </span>
+
+          {/* CC BY'nin şartı: kredi görünür olmalı. Görselsiz satırda da
+              yer ayrılıyor — yoksa o satır komşularından alçak kalırdı.
+
+              TEK SATIRA SABİTLENİYOR ama METİN KIRPILMIYOR: `truncate`
+              yalnızca görsel bir taşma kuralı, dize DOM'da tam duruyor.
+              Ekran okuyucu ve kopyala-yapıştır atfın tamamını alıyor —
+              lisans şartı korunuyor. Sarmalamaya izin verseydik uzun bir
+              kredi ("NASA, ESA, Hubble SM4 ERO Team") satırı yirmi piksel
+              uzatıyor ve iki sütun birbirinden kayıyordu; 1280 ve 1024
+              genişliğinde ölçülen tam olarak buydu. */}
+          <span className="mt-1 block min-h-[1lh] truncate text-meta text-faint">
+            {image ? `Görsel: ${image.credit}` : ''}
+          </span>
+        </span>
+      </Link>
+    </li>
+  );
+}
+
 export function NewsStrip() {
   /*
     SIRAYI YÖNETİCİ BELİRLER, TARİH DEĞİL.
@@ -84,49 +181,24 @@ export function NewsStrip() {
           <SectionHeader title="Haberler" linkTo="/haberler" linkLabel="Tümü" />
           <ul>
             {latestNews.map((item) => (
-              <li key={item.slug}>
-                <Link
-                  to={`/haber/${item.slug}`}
-                  className="group flex gap-3 border-b border-border py-3 transition-colors hover:bg-surface-1"
-                >
-                  <Thumb>
-                    <RemoteImage
-                      src={item.image?.url}
-                      alt=""
-                      sizes="86px"
-                      widths={[120, 240]}
-                      seed={item.slug}
-                      tint={item.tint}
-                    />
-                  </Thumb>
-
-                  <span className="min-w-0 flex-1">
-                    <span className="mb-1 flex flex-wrap items-center gap-2">
-                      <Badge tone="primary">
-                        {newsCategoryLabels[item.category]}
-                      </Badge>
-                      <span className="tabular text-meta text-faint">
-                        {new Date(item.publishedAt).toLocaleDateString('tr-TR', {
-                          day: '2-digit',
-                          month: 'short',
-                        })}
-                      </span>
-                    </span>
-                    <span className="block text-[13px] leading-snug text-foreground transition-colors group-hover:text-primary">
-                      {item.title}
-                    </span>
-                    <span className="mt-1 line-clamp-2 block text-meta leading-relaxed text-muted-foreground">
-                      {item.summary}
-                    </span>
-                    {/* CC BY'nin şartı: kredi görünür olmalı. */}
-                    {item.image && (
-                      <span className="mt-1 block text-meta text-faint">
-                        Görsel: {item.image.credit}
-                      </span>
-                    )}
-                  </span>
-                </Link>
-              </li>
+              <StripRow
+                key={item.slug}
+                to={`/haber/${item.slug}`}
+                badge={
+                  <Badge tone="primary">
+                    {newsCategoryLabels[item.category]}
+                  </Badge>
+                }
+                meta={new Date(item.publishedAt).toLocaleDateString('tr-TR', {
+                  day: '2-digit',
+                  month: 'short',
+                })}
+                title={item.title}
+                summary={item.summary}
+                image={item.image}
+                tint={item.tint}
+                seed={item.slug}
+              />
             ))}
           </ul>
         </section>
@@ -135,40 +207,21 @@ export function NewsStrip() {
           <SectionHeader title="Yazılar" linkTo="/yazilar" linkLabel="Tümü" />
           <ul>
             {latestArticles.map((article) => (
-              <li key={article.slug}>
-                <Link
-                  to={`/yazi/${article.slug}`}
-                  className="group flex gap-3 border-b border-border py-3 transition-colors hover:bg-surface-1"
-                >
-                  <Thumb>
-                    <RemoteImage
-                      src={article.image?.url}
-                      alt=""
-                      sizes="86px"
-                      widths={[120, 240]}
-                      seed={article.slug}
-                      tint={article.tint}
-                    />
-                  </Thumb>
-
-                  <span className="min-w-0 flex-1">
-                    <span className="mb-1 flex flex-wrap items-center gap-2">
-                      <Badge tone="cold">
-                        {articleCategoryLabels[article.category]}
-                      </Badge>
-                      <span className="tabular text-meta text-faint">
-                        {article.duration}
-                      </span>
-                    </span>
-                    <span className="block text-[13px] leading-snug text-foreground transition-colors group-hover:text-primary">
-                      {article.title}
-                    </span>
-                    <span className="mt-1 line-clamp-2 block text-meta leading-relaxed text-muted-foreground">
-                      {article.summary}
-                    </span>
-                  </span>
-                </Link>
-              </li>
+              <StripRow
+                key={article.slug}
+                to={`/yazi/${article.slug}`}
+                badge={
+                  <Badge tone="cold">
+                    {articleCategoryLabels[article.category]}
+                  </Badge>
+                }
+                meta={article.duration}
+                title={article.title}
+                summary={article.summary}
+                image={article.image}
+                tint={article.tint}
+                seed={article.slug}
+              />
             ))}
           </ul>
         </section>
