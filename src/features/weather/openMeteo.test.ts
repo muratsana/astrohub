@@ -38,9 +38,30 @@ describe('nearestHourIndex', () => {
     expect(nearestHourIndex(times, new Date('2026-07-27T21:10'))).toBe(1);
   });
 
-  it('aralığın dışında uçtaki saate düşer', () => {
-    expect(nearestHourIndex(times, new Date('2026-07-27T03:00'))).toBe(0);
-    expect(nearestHourIndex(times, new Date('2026-07-28T09:00'))).toBe(3);
+  /*
+   * KURAL DEĞİŞTİ (ileri tarihli gece seçimi geldiğinde).
+   *
+   * Eskiden aralığın dışındaki bir istek UÇTAKİ saate düşüyordu. Panel
+   * yalnızca "şimdi"yi gösterirken bu zararsızdı: istenen an her zaman
+   * dizinin içindeydi.
+   *
+   * Artık kullanıcı 16 gün ilerisine kadar bir gece seçebiliyor ve
+   * seçim tahmin ufkunu aşabiliyor. Uca düşmek o durumda yaklaştırma
+   * değil UYDURMA olurdu: on gün sonrasına bugünün bulut oranı yazılır
+   * ve kullanıcı bunu gerçek bir tahmin sanardı.
+   *
+   * Doğrusu "bilmiyorum" demek: komşu saatten (90 dk) uzak her istek
+   * -1 dönüyor ve arayüz hava satırlarını boş bırakıp sebebini yazıyor.
+   */
+  it('komşu saatin dışındaki istekte -1 döner — uca düşmez', () => {
+    expect(nearestHourIndex(times, new Date('2026-07-27T03:00'))).toBe(-1);
+    expect(nearestHourIndex(times, new Date('2026-07-28T09:00'))).toBe(-1);
+  });
+
+  it('komşu saat sayılan yakınlıkta hâlâ eşleşiyor', () => {
+    // 20:00 örneğine 75 dk uzaklık — yarım saatlik gecikmeler ve
+    // servis tarafındaki yuvarlamalar bu payın içinde kalmalı.
+    expect(nearestHourIndex(times, new Date('2026-07-27T19:15'))).toBe(0);
   });
 
   it('boş dizide -1 döner', () => {

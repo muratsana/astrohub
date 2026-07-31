@@ -100,13 +100,27 @@ const HOURLY_FIELDS = [
   'wind_speed_200hPa',
 ].join(',');
 
+/**
+ * HAVA TAHMİNİNİN UFKU — Open-Meteo'nun ücretsiz uçta verdiği azami gün.
+ *
+ * Panel artık ileri tarihli bir gece seçilmesine izin veriyor. Efemeris
+ * (karanlık penceresi, ay) İSTENEN HER TARİH için hesaplanabiliyor —
+ * gök mekaniği bir tahmin değil. Hava öyle değil: 16 günün ötesi için
+ * elimizde veri yok ve olmayacak.
+ *
+ * Bu sayı arayüzde de kullanılıyor: kullanıcı ufkun ötesine geçtiğinde
+ * "hava verisi yok" diye açıkça söyleniyor. Sınırı sessizce en yakın
+ * saate düşürmek — `nearestHourIndex`in kendi başına yapacağı şey —
+ * on gün sonrasına bugünün bulut oranını yazmak olurdu.
+ */
+export const FORECAST_DAYS = 16;
+
 export function skyConditionsUrl(latitude: number, longitude: number): string {
   const params = new URLSearchParams({
     latitude: latitude.toFixed(3),
     longitude: longitude.toFixed(3),
     hourly: HOURLY_FIELDS,
-    // Yalnızca yakın saatler lazım; 2 gün fazlasıyla yeter ve yanıt küçük kalır.
-    forecast_days: '2',
+    forecast_days: String(FORECAST_DAYS),
     timezone: 'auto',
     wind_speed_unit: 'kmh',
   });
@@ -121,6 +135,16 @@ export function skyConditionsUrl(latitude: number, longitude: number): string {
  * kullanıcı başka bir zaman diliminde olsa bile karşılaştırma kendi içinde
  * tutarlı kaldığı için en yakın saat doğru seçilir.
  */
+/**
+ * En yakın örneğin kabul edilebileceği azami uzaklık.
+ *
+ * Saatlik veride 90 dakika, "komşu saat" demek. Bunun ötesindeki bir
+ * eşleşme artık yaklaştırma değil UYDURMA: dizinin sonundan taşan bir
+ * istek, sessizce son saatin değerlerini alır ve kullanıcı on gün
+ * sonrasına bugünün havasını okur.
+ */
+const MAX_SAMPLE_DISTANCE_MS = 90 * 60_000;
+
 export function nearestHourIndex(times: string[], now: Date): number {
   if (times.length === 0) return -1;
 
@@ -133,6 +157,8 @@ export function nearestHourIndex(times: string[], now: Date): number {
       best = i;
     }
   }
+
+  if (bestDelta > MAX_SAMPLE_DISTANCE_MS) return -1;
   return best;
 }
 
@@ -259,10 +285,16 @@ export async function fetchSkyConditions(
  * gerekiyor — bulut ve sıcaklık oradan geliyor, seeing hâlâ buradan.
  * İkinci bir Open-Meteo isteği atmak aynı yanıtı iki kez indirmek olurdu.
  */
+/**
+ * `at` verilirse koşullar O ANA en yakın saatten okunuyor; verilmezse
+ * şimdiden. Ufkun ötesindeki bir an için `conditions` `null` döner —
+ * uydurulmuş bir değer değil.
+ */
 export async function fetchOpenMeteo(
   latitude: number,
   longitude: number,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  at?: Date
 ): Promise<{
   conditions: SkyConditions | null;
   upperAir: { wind200hPa: number; wind500hPa: number } | null;
@@ -273,10 +305,16 @@ export async function fetchOpenMeteo(
   if (!response.ok) return { conditions: null, upperAir: null };
 
   const raw = (await response.json()) as HourlyResponse;
-  const now = new Date();
+  /*
+   * Üst atmosfer de İSTENEN ANA göre okunuyor. Seeing tahmini jet akımı
+   * rüzgârından çıkıyor ve o rüzgâr on gün içinde bambaşka olur; yer
+   * koşullarını geleceğe taşıyıp seeing'i bugünden almak, tek bir
+   * panelde iki farklı geceyi karıştırmak olurdu.
+   */
+  const target = at ?? new Date();
   return {
-    conditions: parseSkyConditions(raw, now),
-    upperAir: parseUpperAir(raw, now),
+    conditions: parseSkyConditions(raw, target),
+    upperAir: parseUpperAir(raw, target),
   };
 }
 

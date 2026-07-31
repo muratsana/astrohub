@@ -43,8 +43,15 @@ interface CacheEntry {
 
 const cache = new Map<string, CacheEntry>();
 
-function keyFor(lat: number, lon: number) {
-  return `${lat.toFixed(2)},${lon.toFixed(2)}`;
+/*
+ * Önbellek anahtarı SEÇİLEN GECEYİ de taşıyor. Yalnızca konumla
+ * anahtarlansaydı, kullanıcı bir sonraki geceye geçtiğinde önbellekteki
+ * bugünün koşulları "taze" sayılıp olduğu gibi gösterilirdi — tarih
+ * değişir, sayılar değişmezdi.
+ */
+function keyFor(lat: number, lon: number, at?: Date) {
+  const gun = at ? at.toISOString().slice(0, 13) : 'simdi';
+  return `${lat.toFixed(2)},${lon.toFixed(2)},${gun}`;
 }
 
 /**
@@ -64,12 +71,12 @@ function keyFor(lat: number, lon: number) {
  */
 export async function fetchConditions(
   latitude: number,
-  longitude: number
+  longitude: number,
+  at?: Date
 ): Promise<SkyConditions | null> {
-  const open = await fetchOpenMeteo(latitude, longitude).catch(() => ({
-    conditions: null,
-    upperAir: null,
-  }));
+  const open = await fetchOpenMeteo(latitude, longitude, undefined, at).catch(
+    () => ({ conditions: null, upperAir: null })
+  );
 
   const meteoblue = await fetchMeteoblue(
     latitude,
@@ -80,9 +87,17 @@ export async function fetchConditions(
   return meteoblue ?? open.conditions;
 }
 
-export function useSkyConditions(): SkyState {
+/**
+ * `at`: koşulların okunacağı an. Verilmezse "şimdi".
+ *
+ * İleri tarihli bir gece seçildiğinde panel bu kancayı o gecenin
+ * ortasıyla çağırıyor; tahmin ufkunun ötesindeki bir an için servis
+ * veri döndürmüyor ve durum `error` yerine `ready`+`null` olmuyor —
+ * ayrımı `parseSkyConditions` yapıyor ve `null` dönüyor.
+ */
+export function useSkyConditions(at?: Date): SkyState {
   const { location } = useLocationContext();
-  const key = keyFor(location.latitude, location.longitude);
+  const key = keyFor(location.latitude, location.longitude, at);
 
   const [state, setState] = useState<Omit<SkyState, 'retry'>>(() => {
     const hit = cache.get(key);
@@ -122,7 +137,9 @@ export function useSkyConditions(): SkyState {
     // anda mount olduğunda tek istek gider.
     const inflight =
       hit?.promise ??
-      fetchConditions(location.latitude, location.longitude).catch(() => null);
+      fetchConditions(location.latitude, location.longitude, at).catch(
+        () => null
+      );
 
     cache.set(key, { at: hit?.at ?? 0, data: hit?.data ?? null, promise: inflight });
 
@@ -134,6 +151,11 @@ export function useSkyConditions(): SkyState {
     return () => {
       active = false;
     };
+    /* eslint-disable-next-line react-hooks/exhaustive-deps --
+       `at` bir Date nesnesi ve her render'da yenisi üretiliyor; bağımlılık
+       olarak eklenmesi effect'i sonsuz döngüye sokardı. Anahtar zaten
+       `at`in saat hassasiyetli karşılığını taşıyor, yani gerçekten
+       değiştiğinde `key` değişiyor. */
   }, [key, attempt, location.latitude, location.longitude]);
 
   return { ...state, retry };

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocationContext } from '@/features/location/LocationContext';
 import { useSkyConditions, type SkyState } from '@/features/weather/useSkyConditions';
+import { FORECAST_DAYS } from '@/features/weather/openMeteo';
 import { targets } from '@/features/targets/data';
 import type { CelestialTarget } from '@/features/targets/data';
 import {
@@ -72,6 +73,16 @@ export interface TonightData {
   dateLabel: string;
   timeZone: string;
   locationLabel: string;
+  /** Bugünden kaç gün ileri bakılıyor. */
+  offsetDays: number;
+  /**
+   * Seçilen gece hava tahmini ufkunun ötesinde mi?
+   *
+   * Efemerisin sınırı yok; bu bayrak yalnızca hava satırları için.
+   * Arayüz bunu görünce "veri yok" demek yerine SEBEBİNİ söylüyor —
+   * servis düşmüş sanılmasın.
+   */
+  beyondForecast: boolean;
 }
 
 /**
@@ -117,13 +128,38 @@ function useMinuteTick(): Date {
   return now;
 }
 
-export function useTonight(): TonightData {
+export function useTonight(offsetDays = 0): TonightData {
   const { location } = useLocationContext();
-  const conditions = useSkyConditions();
   const now = useMinuteTick();
 
-  // Gün, tarayıcının değil GÖZLEM KONUMUNUN takvimine göre (ASTRO-01).
-  const dayStartMs = zonedMidnight(now, location.timeZone).getTime();
+  /*
+   * Gün, tarayıcının değil GÖZLEM KONUMUNUN takvimine göre (ASTRO-01).
+   * `offsetDays` ileri bir geceye kaydırıyor; efemeris için sınır yok.
+   */
+  const dayStartMs =
+    zonedMidnight(now, location.timeZone).getTime() + offsetDays * 86_400_000;
+
+  /*
+   * HAVA SORGUSU GECENİN ORTASINA GÖRE.
+   *
+   * "Bugünün havası" diye bir şey yok — 03:00 ile 21:00 farklı hava.
+   * Gözlem gecesinin ortası (yerel 01:00) o gecenin koşullarını temsil
+   * eden en makul tek an: karanlık pencere neredeyse her mevsimde onu
+   * kapsıyor.
+   *
+   * Bugün için `undefined` gönderiliyor, yani "şimdi": ekranda duran
+   * kullanıcı için doğru olan, altı saat sonrasının tahmini değil şu
+   * anki gökyüzü.
+   */
+  const weatherAt = useMemo(
+    () =>
+      offsetDays === 0
+        ? undefined
+        : new Date(dayStartMs + 25 * 3_600_000),
+    [offsetDays, dayStartMs]
+  );
+
+  const conditions = useSkyConditions(weatherAt);
 
   const sky = useMemo(() => {
     const date = new Date(dayStartMs);
@@ -219,5 +255,7 @@ export function useTonight(): TonightData {
     dateLabel,
     timeZone: location.timeZone,
     locationLabel: location.label,
+    offsetDays,
+    beyondForecast: offsetDays >= FORECAST_DAYS,
   };
 }
