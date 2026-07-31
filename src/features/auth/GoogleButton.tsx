@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from './AuthContext';
 import { Alert } from '@/components/ui/Alert';
+import { useProviderEnabled } from '@/services/supabase/authProviders';
 
 /**
  * GOOGLE İLE GİRİŞ.
@@ -15,15 +16,26 @@ import { Alert } from '@/components/ui/Alert';
  * et" kabul edilen kalıplardan). Logo satır içi SVG — dış kaynaktan
  * görsel çekmek hem CSP hem gizlilik açısından gereksiz bir bağımlılık.
  *
- * Supabase yapılandırılmamışsa düğme hiç çizilmiyor: çalışmayacak bir
- * girişi göstermek, kullanıcıyı boşuna tıklatır.
+ * DÜĞME İKİ KOŞULA BAĞLI, BİRİNE DEĞİL.
+ *
+ * Önce yalnızca "Supabase yapılandırılmış mı" diye bakılıyordu. Ama
+ * yapılandırılmış olmak Google sağlayıcısının AÇIK olduğu anlamına
+ * gelmiyor — ikisi ayrı ayarlar. Üretimde ölçüldü: `/auth/v1/settings`
+ * `"google": false` döndürüyordu, yani canlıda düğme duruyor ama basan
+ * herkes Supabase'in "Unsupported provider" hatasını alıyordu. Kullanıcı
+ * için bu, olmayan bir kapıya yönlendirilmek demek.
+ *
+ * Artık sağlayıcının gerçekten açık olduğu Supabase'e sorulup
+ * doğrulanıyor (`useProviderEnabled`). Yan faydası: panelden açıldığı an
+ * düğme yeniden dağıtım olmadan beliriyor.
  */
 export function GoogleButton({ label = 'Google ile devam et' }: { label?: string }) {
   const { signInWithGoogle, configured } = useAuth();
+  const googleEnabled = useProviderEnabled('google');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  if (!configured) return null;
+  if (!configured || !googleEnabled) return null;
 
   async function start() {
     setBusy(true);
@@ -89,6 +101,28 @@ export function AuthDivider() {
       <span aria-hidden className="h-px flex-1 bg-border" />
       <span className="label">veya</span>
       <span aria-hidden className="h-px flex-1 bg-border" />
+    </div>
+  );
+}
+
+/**
+ * Düğme ve ayıracı BİRLİKTE taşıyan blok.
+ *
+ * Giriş ve kayıt ekranları ikisini ayrı ayrı diziyordu. Düğme gizlenince
+ * ayıraç yerinde kalıyor ve üstünde hiçbir şey olmayan bir "veya" satırı
+ * çiziliyordu — ayıracın ayırdığı iki şeyden biri yok. İkisini tek
+ * bileşende toplamak bu durumu yapısal olarak imkânsız kılıyor.
+ */
+export function SocialAuth({ label }: { label?: string }) {
+  const { configured } = useAuth();
+  const googleEnabled = useProviderEnabled('google');
+
+  if (!configured || !googleEnabled) return null;
+
+  return (
+    <div className="mb-4 space-y-4">
+      <GoogleButton label={label} />
+      <AuthDivider />
     </div>
   );
 }
