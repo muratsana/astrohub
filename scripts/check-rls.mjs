@@ -600,10 +600,83 @@ await expectDenied(
   );
 }
 
+/*
+ * ══════════════════════════════════════════════════════════════════════
+ * YÖNETİM PANELİNİN DAYANDIĞI YETKİLER
+ *
+ * Panel artık kullanıcı rolleri, üyelik ve beş içerik türü üzerinde
+ * yazıyor. Bu ekranın güvenliği tamamen RLS'e bağlı: istemcide gizlenen
+ * bir düğme, API'ye doğrudan giden birini durdurmaz.
+ *
+ * Alice'in HİÇBİR ROLÜ YOK (kurulum ona rol vermiyor) — yani buradaki
+ * "yapamaz" beklentileri sıradan bir üyeyi temsil ediyor.
+ * ══════════════════════════════════════════════════════════════════════
+ */
+
+/* Sıradan üye başkasının fotoğrafını moderasyondan geçiremez. */
+await expectDenied(
+  'sıradan üye başkasının fotoğrafını arşivleyemiyor',
+  'authenticated',
+  BOB,
+  `update public.astro_photos set status = 'archived' where id = '${ALICE_PHOTO}';`
+);
+
+await expectDenied(
+  'sıradan üye başkasının fotoğrafını silemiyor',
+  'authenticated',
+  BOB,
+  `delete from public.astro_photos where id = '${ALICE_PHOTO}';`
+);
+
+/*
+ * ROL YÜKSELTME — panelin en kritik yüzeyi. Kendine rol yazabilen bir
+ * kullanıcı bütün moderasyon sınırlarını tek istekte aşar.
+ */
+await expectDenied(
+  'kullanıcı kendine admin rolü veremiyor',
+  'authenticated',
+  BOB,
+  `insert into public.user_roles (user_id, role) values ('${BOB}', 'admin');`
+);
+
+await expectDenied(
+  'kullanıcı başkasına rol veremiyor',
+  'authenticated',
+  BOB,
+  `insert into public.user_roles (user_id, role) values ('${ALICE}', 'moderator');`
+);
+
+await expectDenied(
+  'kullanıcı kendi üyeliğini aktif yapamıyor',
+  'authenticated',
+  BOB,
+  `insert into public.memberships (user_id, status) values ('${BOB}', 'active');`
+);
+
+/*
+ * DENETİM KAYDI YAZILAMAZ. Değiştirilebilen bir denetim kaydı denetim
+ * kaydı değildir; panel de salt okunur çiziyor.
+ */
+await expectDenied(
+  'denetim kaydına satır eklenemiyor',
+  'authenticated',
+  BOB,
+  `insert into public.audit_logs (actor_id, action) values ('${BOB}', 'sahte');`
+);
+
+/* Başkasının profilini düzenlemek de kapalı olmalı. */
+await expectDenied(
+  'kullanıcı başkasının profilini düzenleyemiyor',
+  'authenticated',
+  BOB,
+  `update public.profiles set display_name = 'ele gecirildi' where id = '${ALICE}';`
+);
+
 /* ── Temizlik ─────────────────────────────────────────────────────── */
 await sql(`
   delete from public.photo_ratings
    where user_id in ('${ALICE}','${BOB}');
+  delete from public.user_roles where user_id in ('${ALICE}','${BOB}');
   delete from public.listings where seller_id in ('${ALICE}','${BOB}');
   delete from public.astro_photos where user_id in ('${ALICE}','${BOB}');
   delete from public.memberships where user_id in ('${ALICE}','${BOB}');

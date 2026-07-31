@@ -17,6 +17,8 @@ import { FeaturedControl } from './FeaturedControl';
 import { ContentControl } from './ContentControl';
 import { EquipmentDataControl } from './EquipmentDataControl';
 import { SpecImportControl } from './SpecImportControl';
+import { UserControl } from './UserControl';
+import { RecordsControl, AuditControl } from './RecordsControl';
 import {
   fetchQueue,
   resolveItem,
@@ -354,9 +356,31 @@ export function AdminPage() {
       </div>
 
       {/*
-        Yayın kontrolü kuyruğun altında: moderasyon günlük iş, yayın
-        programı ise seyrek bir eylem. Sık kullanılanı üstte tutmak,
-        panelin her açılışında aşağı kaydırmayı gerektirmiyor.
+        İÇERİK KAYITLARI KUYRUĞUN HEMEN ALTINDA.
+
+        Moderasyon kuyruğu ŞİKÂYET EDİLENİ gösteriyor; bu liste ise
+        şikâyet beklemeden içeriğin tamamına bakma yolu. İkisi ayrı iş ve
+        sıraları da öyle: önce bildirilen, sonra bildirilmemiş olan.
+      */}
+      <div className="mt-4">
+        <RecordsControl />
+      </div>
+
+      {/*
+        Kullanıcı yönetimi içeriğin altında: bir hesaba dokunmadan önce
+        genellikle o hesabın içeriğine bakılıyor. Rol vermek ve üyelik
+        değiştirmek seyrek ama etkisi büyük işlemler.
+      */}
+      {roles.isAdmin && (
+        <div className="mt-4">
+          <UserControl />
+        </div>
+      )}
+
+      {/*
+        Yayın kontrolü: moderasyon günlük iş, yayın programı ise seyrek
+        bir eylem. Sık kullanılanı üstte tutmak, panelin her açılışında
+        aşağı kaydırmayı gerektirmiyor.
       */}
       <div className="mt-4">
         <BroadcastControl />
@@ -395,6 +419,14 @@ export function AdminPage() {
       <div className="mt-4">
         <SpecImportControl canWrite={roles.isAdmin} />
       </div>
+
+      {/* Denetim kaydı en altta ve salt okunur: günlük iş değil, geriye
+          dönüp "bunu kim yaptı" sorusunun cevabı. */}
+      {roles.isAdmin && (
+        <div className="mt-4">
+          <AuditControl />
+        </div>
+      )}
     </Shell>
   );
 }
