@@ -36,7 +36,7 @@ import { Badge } from '@/components/ui/Badge';
  */
 export function AccountPage() {
   const navigate = useNavigate();
-  const { user, loading: authLoading, signOut } = useAuth();
+  const { user, loading: authLoading, signOut, signOutEverywhere } = useAuth();
   const roles = useRoles();
   const { profile, loading, error, refresh } = useMyProfile(user?.id);
 
@@ -50,6 +50,9 @@ export function AccountPage() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [failure, setFailure] = useState<string | null>(null);
+  /* Tüm oturumları iptal etmek geri alınamaz; ikinci tık ayrı düğmede. */
+  const [revokeArmed, setRevokeArmed] = useState(false);
+  const [revokeBusy, setRevokeBusy] = useState(false);
 
   /* Sunucudan gelen kayıt forma bir kez yansıtılıyor; kullanıcı yazmaya
      başladıktan sonra tazeleme onu ezmemeli. */
@@ -93,6 +96,21 @@ export function AccountPage() {
     } finally {
       setBusy(false);
     }
+  }
+
+  async function revokeEverywhere() {
+    setRevokeBusy(true);
+    setFailure(null);
+    const { error } = await signOutEverywhere();
+    setRevokeBusy(false);
+    if (error) {
+      /* Başarısızlıkta kurulu düğme geri alınıyor: "onayla" hâlinde
+         bırakmak, iptal edilmemiş bir işlemi edilmiş gibi gösterirdi. */
+      setRevokeArmed(false);
+      setFailure(error);
+      return;
+    }
+    navigate('/');
   }
 
   return (
@@ -288,7 +306,44 @@ export function AccountPage() {
                 >
                   Çıkış yap
                 </Button>
+                {revokeArmed ? (
+                  <>
+                    <Button
+                      size="sm"
+                      variant="danger"
+                      disabled={revokeBusy}
+                      onClick={() => void revokeEverywhere()}
+                    >
+                      {revokeBusy ? 'Kapatılıyor…' : 'Onayla — hepsini kapat'}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={revokeBusy}
+                      onClick={() => setRevokeArmed(false)}
+                    >
+                      Vazgeç
+                    </Button>
+                  </>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setRevokeArmed(true)}
+                  >
+                    Tüm cihazlardan çıkış
+                  </Button>
+                )}
               </div>
+
+              {revokeArmed && (
+                <p className="mt-2 text-meta leading-relaxed text-warning">
+                  Telefon, tablet ve diğer tarayıcılar dâhil her yerde
+                  oturumunuz kapanır ve yeniden giriş yapmanız gerekir. Açık
+                  duran cihazlar anında değil, en geç bir saat içinde düşer —
+                  erişim jetonunun ömrü dolduğunda.
+                </p>
+              )}
             </Panel>
 
             <Panel title="Henüz yapılamayanlar">

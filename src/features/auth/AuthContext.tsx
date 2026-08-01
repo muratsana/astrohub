@@ -8,6 +8,7 @@ import {
 } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 import { CONSENT_VERSION } from './consent';
+import { authRedirect } from './redirect';
 import { getSupabase, isSupabaseConfigured } from '@/services/supabase/client';
 
 interface AuthResult {
@@ -45,37 +46,21 @@ interface AuthContextValue {
    * doğrulatmak olurdu.
    */
   signInWithGoogle: () => Promise<AuthResult>;
+  /** Yalnızca bu cihazdaki oturumu kapatır; diğer cihazlar açık kalır. */
   signOut: () => Promise<void>;
+  /**
+   * Kullanıcının TÜM cihazlardaki oturumlarını iptal eder.
+   *
+   * Neden ayrı bir işlem: normal çıkış yalnızca bu tarayıcıdaki
+   * yenileme jetonunu düşürür. Telefonunu kaybeden ya da ortak
+   * bilgisayarda oturumunu açık bıraktığını fark eden kullanıcının,
+   * o cihaza fiziksel erişimi olmadan oturumu sonlandırabilmesi
+   * gerekiyor — şifre değiştirmek tek başına bunu yapmıyor.
+   */
+  signOutEverywhere: () => Promise<AuthResult>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
-
-/**
- * Yönlendirmelerin döneceği adres.
- *
- * `VITE_SITE_URL` OKUNUYOR, `VITE_APP_URL` DEĞİL. Burada uzun süre
- * `VITE_APP_URL` yazıyordu ve yorumunda "yayında bu kullanılıyor"
- * deniyordu — ama o ad hiçbir yerde tanımlı değildi: ne
- * `vite-env.d.ts`'te bildirilmiş, ne derleme nöbetinde (`envCheck`)
- * doğrulanıyor, ne Vercel'de ayarlı. Yani koşul her zaman `false`'a
- * düşüyor ve dönüş adresi sessizce `window.location.origin`'den
- * geliyordu.
- *
- * Tarayıcıda bu tesadüfen doğru sonucu veriyordu, ama iki ad tutmanın
- * bedeli görünmezdi: doğrulanan değişken bir yerde, kullanılan başka
- * yerde. `VITE_SITE_URL` canonical/OG/sitemap için zaten üretimde
- * ZORUNLU kılınıyor — tek ada indirmek, dönüş adresini de o nöbetin
- * arkasına almak demek.
- *
- * Tanımsızsa yine o anki köken: yerel geliştirmede doğru davranış,
- * çünkü sabit bir adres yazmak doğrulama bağlantılarını canlıya
- * gönderirdi.
- */
-function appUrl(): string {
-  const configured = import.meta.env.VITE_SITE_URL?.trim();
-  if (configured) return configured.replace(/\/+$/, '');
-  return typeof window === 'undefined' ? '' : window.location.origin;
-}
 
 const NOT_CONFIGURED: AuthResult = {
   error:
@@ -162,10 +147,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               consent_accepted: consentAccepted,
               consent_version: CONSENT_VERSION,
             },
-            /* Doğrulama e-postasındaki bağlantı yayındaki adrese
-               dönmeli. `VITE_SITE_URL` tanımlı değilse o anki köken
-               kullanılıyor — yerel geliştirmede doğru davranış. */
-            emailRedirectTo: `${appUrl()}/giris`,
+            /* Doğrulama e-postasındaki bağlantı yayındaki adrese dönmeli.
+               Tanınmayan bir kökende adres üretilmiyor; o durumda Supabase
+               kendi Site URL'ini kullanır (bkz. `authRedirect`). */
+            emailRedirectTo: authRedirect('/giris'),
             ...(captchaToken ? { captchaToken } : {}),
           },
         });
@@ -178,7 +163,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const client = await clientPromise;
         const { error } = await client.auth.signInWithOAuth({
           provider: 'google',
-          options: { redirectTo: `${appUrl()}/panel` },
+          options: { redirectTo: authRedirect('/panel') },
         });
         return { error: error?.message ?? null };
       },
@@ -188,6 +173,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!clientPromise) return;
         const client = await clientPromise;
         await client.auth.signOut();
+      },
+
+      async signOutEverywhere() {
+        const clientPromise = getSupabase();
+        if (!clientPromise) return NOT_CONFIGURED;
+        const client = await clientPromise;
+        /*
+         * `scope: 'global'` kullanıcının bütün yenileme jetonlarını
+         * sunucuda geçersiz kılıyor. Diğer cihazlardaki erişim jetonu
+         * süresi dolana kadar (varsayılan 1 saat) çalışmaya devam eder;
+         * bu Supabase'in JWT tasarımının sonucu, burada kapatılamıyor.
+         * Kullanıcıya bunu söylemek arayüzün işi — sessizce "hepsi
+         * kapandı" demek yanlış olurdu.
+         */
+        const { error } = await client.auth.signOut({ scope: 'global' });
+        return { error: error?.message ?? null };
       },
     }),
     [user, session, loading]
