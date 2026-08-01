@@ -159,3 +159,73 @@ describe('dewRisk', () => {
     expect(dewRisk(20, 5).label).toBe('Kuru');
   });
 });
+
+/**
+ * FAZ 3.4 — belgenin zorunlu tuttuğu üç alan.
+ *
+ * Üçü de KARAR GİRDİSİ, süs değil:
+ *   · hissedilen sıcaklık — gece boyunca sabit duran gözlemcinin
+ *     dayanma süresini belirleyen şey yer sıcaklığı değil bu.
+ *   · rüzgâr hamlesi — ortalama sorunsuz görünürken hamle montürü
+ *     sarsıp pozu çöpe atar.
+ *   · yağış ihtimali — ekipmanı toplama kararı.
+ */
+describe('Faz 3.4 alanları', () => {
+  const saat = new Date('2026-07-27T21:30:00Z');
+  const ham = {
+    hourly: {
+      time: ['2026-07-27T21:00'],
+      cloud_cover: [10],
+      relative_humidity_2m: [60],
+      temperature_2m: [2],
+      apparent_temperature: [-7],
+      dew_point_2m: [-1],
+      precipitation_probability: [35],
+      wind_speed_10m: [12],
+      wind_gusts_10m: [41],
+    },
+  };
+
+  it('üç alanı da okuyor', () => {
+    const o = parseSkyConditions(ham, saat)!;
+    expect(o.apparentTemperature).toBe(-7);
+    expect(o.windGust).toBe(41);
+    expect(o.precipitationProbability).toBe(35);
+  });
+
+  it('istek üç alanı da sorguyor', () => {
+    const url = skyConditionsUrl(39.93, 32.86);
+    for (const alan of [
+      'apparent_temperature',
+      'wind_gusts_10m',
+      'precipitation_probability',
+    ]) {
+      expect(decodeURIComponent(url), alan).toContain(alan);
+    }
+  });
+
+  /*
+   * EKSİK ALAN UYDURULMUYOR. Hamleyi ortalama rüzgâra, hissedileni yer
+   * sıcaklığına eşitlemek kolay olurdu; ikisi de gözlemciye yanlış
+   * bilgi verirdi. `null` arayüzde "veri yok" olarak okunuyor.
+   */
+  it('servis vermezse alanlar null kalıyor, ikame üretilmiyor', () => {
+    const eksik = {
+      hourly: {
+        time: ['2026-07-27T21:00'],
+        cloud_cover: [10],
+        relative_humidity_2m: [60],
+        temperature_2m: [2],
+        dew_point_2m: [-1],
+        wind_speed_10m: [12],
+      },
+    };
+    const o = parseSkyConditions(eksik, saat)!;
+    expect(o.apparentTemperature).toBeNull();
+    expect(o.windGust).toBeNull();
+    expect(o.precipitationProbability).toBeNull();
+    /* Zorunlu alanlar hâlâ okunuyor — üç yeni alan opsiyonel. */
+    expect(o.temperature).toBe(2);
+    expect(o.windSpeed).toBe(12);
+  });
+});

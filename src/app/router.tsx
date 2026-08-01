@@ -76,6 +76,10 @@ const equipmentModulePage = () =>
   );
 const panelPage = () =>
   route(named(() => import('@/features/panel/PanelPage'), 'PanelPage'));
+const messagesPage = () =>
+  route(
+    named(() => import('@/features/messages/MessagesPage'), 'MessagesPage')
+  );
 
 /**
  * Route haritası — yedi ana modül.
@@ -226,6 +230,36 @@ export const appRoutes = [
         path: 'radyo',
         element: route(
           named(() => import('@/features/radio/RadioPage'), 'RadioPage')
+        ),
+      },
+      {
+        path: 'radyo/program/:slug',
+        element: route(
+          named(() => import('@/features/radio/ProgramPage'), 'ProgramPage')
+        ),
+      },
+      {
+        path: 'radyo/yayinci/:slug',
+        element: route(
+          named(() => import('@/features/radio/HostPage'), 'HostPage')
+        ),
+      },
+      {
+        path: 'radyo/podcast',
+        element: route(
+          named(() => import('@/features/radio/PodcastPage'), 'PodcastPage')
+        ),
+      },
+      {
+        path: 'radyo/podcast/:slug',
+        element: route(
+          named(() => import('@/features/radio/PodcastPage'), 'PodcastPage')
+        ),
+      },
+      {
+        path: 'radyo/podcast/:slug/:bolum',
+        element: route(
+          named(() => import('@/features/radio/EpisodePage'), 'EpisodePage')
         ),
       },
 
@@ -404,6 +438,23 @@ export const appRoutes = [
           named(() => import('@/features/profile/AccountPage'), 'AccountPage')
         ),
       },
+      /*
+       * BİLDİRİM VE MESAJ — ikisi de oturuma bağlı, ikisi de `noIndex`.
+       * `/mesajlar` ve `/mesajlar/:id` AYNI bileşeni açıyor: liste ile
+       * konuşma geniş ekranda yan yana duruyor ve ayrı rotalara bölmek
+       * her sohbet değişiminde listeyi yeniden yüklemek olurdu.
+       */
+      {
+        path: 'bildirimler',
+        element: route(
+          named(
+            () => import('@/features/notifications/NotificationsPage'),
+            'NotificationsPage'
+          )
+        ),
+      },
+      { path: 'mesajlar', element: messagesPage() },
+      { path: 'mesajlar/:id', element: messagesPage() },
       { path: 'panel', element: panelPage() },
       { path: 'panel/:section', element: panelPage() },
       {

@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { cityFromLabel, mapPhotoRow } from './photos';
+import {
+  cityFromLabel,
+  isPhotoPubliclyVisible,
+  mapPhotoRow,
+  PUBLIC_PHOTO_STATUS,
+} from './photos';
 
 /**
  * Eşleyici testleri.
@@ -170,5 +175,26 @@ describe('mapPhotoRow', () => {
     // kırık görsel ikonu gösterirdi.
     const photo = mapPhotoRow(row({ display_path: null, thumb_path: null }));
     expect(photo.image).toBeUndefined();
+  });
+});
+
+/**
+ * Herkese açık sayfası olan durum — panelin hangi satırı bağlantı
+ * yapacağına bu karar veriyor.
+ *
+ * Kural kırılırsa hata sessiz olur: taslak fotoğrafı bağlantı yapmak
+ * kullanıcıyı kendi kaydına tıklattırıp "Fotoğraf bulunamadı" sayfasına
+ * gönderir, çünkü detay sayfası fotoğrafı yalnızca yayındakileri çeken
+ * kataloğun içinden arıyor.
+ */
+describe('isPhotoPubliclyVisible', () => {
+  it('yalnızca yayındaki kaydın sayfası var', () => {
+    expect(isPhotoPubliclyVisible('published')).toBe(true);
+    expect(isPhotoPubliclyVisible('draft')).toBe(false);
+    expect(isPhotoPubliclyVisible('archived')).toBe(false);
+  });
+
+  it('katalog süzgeciyle aynı değerden besleniyor', () => {
+    expect(isPhotoPubliclyVisible(PUBLIC_PHOTO_STATUS)).toBe(true);
   });
 });

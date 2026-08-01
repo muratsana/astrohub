@@ -1,8 +1,11 @@
-import { useMemo, useState } from 'react';
-import { Link } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Badge } from '@/components/ui/Badge';
+import {
+  ContentCard,
+  ContentCardMeta,
+  ContentCardTitle,
+} from '@/components/ui/ContentCard';
 import { Input, Select } from '@/components/ui/Input';
 import { CardGrid } from '@/components/ui/CardGrid';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -14,9 +17,12 @@ import {
   FilterToggle,
   filterControlClass,
 } from '@/components/ui/FilterBar';
+import { ActiveFilters } from '@/components/ui/ActiveFilters';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
-import { clubs, clubKindLabels, type ClubKind, type AstronomyClub } from './data';
+import { clubs, clubKindLabels, type AstronomyClub } from './data';
+import { useExplorer } from '@/features/explorer/useExplorer';
+import { clubsSpec } from './clubsSpec';
 import { cn } from '@/lib/cn';
 
 /**
@@ -31,26 +37,20 @@ import { cn } from '@/lib/cn';
  * gelecek. Sayfa bunu gizlemiyor, altında yazıyor.
  */
 export function ClubsPage() {
-  const [kind, setKind] = useState<ClubKind | 'hepsi'>('hepsi');
-  const [search, setSearch] = useState('');
-  const [onlyPublic, setOnlyPublic] = useState(false);
-  const [onlyEquipment, setOnlyEquipment] = useState(false);
   const [view, setView] = useViewMode('topluluklar');
 
-  const result = useMemo(() => {
-    let items = clubs;
-    if (kind !== 'hepsi') items = items.filter((c) => c.kind === kind);
-    if (onlyPublic) items = items.filter((c) => c.publicEvents);
-    if (onlyEquipment) items = items.filter((c) => c.sharedEquipment);
+  /*
+   * ORTAK DATA EXPLORER (Faz 4). Sayfa kendi `useState` filtresini
+   * bıraktı: durum artık URL'de, yani filtrelenmiş liste paylaşılabiliyor,
+   * geri düğmesi filtreyi geri alıyor ve arama ASCII katlıyor —
+   * "nevsehir" yazan kullanıcı "Nevşehir"i bulabiliyor.
+   */
+  const ex = useExplorer(clubs, clubsSpec);
+  const result = ex.items;
 
-    const q = search.trim().toLocaleLowerCase('tr-TR');
-    if (q) {
-      items = items.filter((c) =>
-        `${c.name} ${c.city} ${c.summary}`.toLocaleLowerCase('tr-TR').includes(q)
-      );
-    }
-    return items;
-  }, [kind, search, onlyPublic, onlyEquipment]);
+  /** Evet/hayır filtresi tek değerli bir facet. */
+  const acik = (param: string) => (ex.query.facets[param]?.length ?? 0) > 0;
+  const cevir = (param: string) => ex.toggleFacet(param, 'evet');
 
   return (
     <>
@@ -69,22 +69,28 @@ export function ClubsPage() {
           description="Dernekler, üniversite kulüpleri ve gözlem grupları. Teleskobunuz yoksa da katılabileceğiniz topluluklar için “ortak ekipman” filtresini açın."
         />
 
-        <FilterBar>
+        <FilterBar activeCount={ex.chips.length}>
           <FilterCell label="Ara" htmlFor="club-search" className="lg:col-span-2">
             <Input
               id="club-search"
               type="search"
               placeholder="Topluluk adı, şehir veya faaliyet"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              value={ex.searchInput}
+              onChange={(e) => ex.setSearch(e.target.value)}
               className={filterControlClass}
             />
           </FilterCell>
           <FilterCell label="Tür" htmlFor="club-kind">
             <Select
               id="club-kind"
-              value={kind}
-              onChange={(e) => setKind(e.target.value as ClubKind | 'hepsi')}
+              value={ex.query.facets.tur?.[0] ?? 'hepsi'}
+              onChange={(e) => {
+                const mevcut = ex.query.facets.tur?.[0];
+                if (mevcut) ex.toggleFacet('tur', mevcut);
+                if (e.target.value !== 'hepsi') {
+                  ex.toggleFacet('tur', e.target.value);
+                }
+              }}
               className={filterControlClass}
             >
               <option value="hepsi">Tüm türler</option>
@@ -98,25 +104,36 @@ export function ClubsPage() {
           <FilterToggle
             id="club-public"
             label="Halka açık etkinlik"
-            checked={onlyPublic}
-            onChange={setOnlyPublic}
+            checked={acik('halka-acik')}
+            onChange={() => cevir('halka-acik')}
           />
           <FilterToggle
             id="club-equipment"
             label="Ortak ekipman"
-            checked={onlyEquipment}
-            onChange={setOnlyEquipment}
+            checked={acik('ortak-ekipman')}
+            onChange={() => cevir('ortak-ekipman')}
           />
         </FilterBar>
 
+        <ActiveFilters
+          chips={ex.chips}
+          onRemove={ex.removeChip}
+          onClearAll={ex.clearAll}
+        />
+
         <ToolBar
           left={
-            <ResultCount
-              current={result.length}
-              total={clubs.length}
-              noun="topluluk"
-            />
+            <ResultCount current={ex.total} total={clubs.length} noun="topluluk" />
           }
+          sort={{
+            id: 'club-sort',
+            value: ex.query.sort,
+            onChange: ex.setSort,
+            options: clubsSpec.sorts.map((s) => ({
+              value: s.value,
+              label: s.label,
+            })),
+          }}
           view={{ mode: view, onChange: setView }}
         />
 
@@ -126,7 +143,7 @@ export function ClubsPage() {
             hint="Filtreleri gevşetmeyi deneyin. Listede olmayan bir topluluk biliyorsanız etkinlik bildirimi üzerinden iletebilirsiniz."
           />
         ) : (
-          <CardGrid view={view} density="tight">
+          <CardGrid view={view}>
             {result.map((club) => (
               <li key={club.slug}>
                 <ClubCard club={club} variant={view} />
@@ -161,18 +178,18 @@ function ClubCard({
   );
 
   return (
-    <Link
+    <ContentCard
       to={`/topluluk/${club.slug}`}
       className={cn(
-        'group flex h-full flex-col rounded-card border border-border bg-surface-1 p-3 transition-colors hover:border-border-strong',
+        'p-3',
         variant === 'list' && 'sm:flex-row sm:items-center sm:gap-3'
       )}
     >
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-          <h2 className="text-[13.5px] font-medium leading-snug text-foreground group-hover:text-primary">
+          <ContentCardTitle lines={2} className="font-medium leading-snug">
             {club.name}
-          </h2>
+          </ContentCardTitle>
           <span className="label">{club.city}</span>
         </div>
 
@@ -182,15 +199,15 @@ function ClubCard({
           </p>
         )}
 
-        <p className="tabular mt-1.5 text-meta text-faint">
+        <ContentCardMeta className="mt-1.5 text-faint">
           {club.foundedYear ? `${club.foundedYear} kuruluş` : 'kuruluş bilinmiyor'}
           {club.memberCount ? ` · ${club.memberCount} üye` : ''}
-        </p>
+        </ContentCardMeta>
       </div>
 
       <div className={cn('mt-2', variant === 'list' && 'sm:mt-0 sm:shrink-0')}>
         {badges}
       </div>
-    </Link>
+    </ContentCard>
   );
 }

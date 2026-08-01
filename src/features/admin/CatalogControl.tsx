@@ -199,7 +199,7 @@ export function CatalogControl({ canWrite }: { canWrite: boolean }) {
                 className="flex items-center gap-2 border-b border-border py-2 last:border-0"
               >
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[12.5px] text-foreground">
+                  <span className="block truncate text-caption text-foreground">
                     <span className="text-muted-foreground">{item.brand}</span>{' '}
                     {item.model}
                   </span>

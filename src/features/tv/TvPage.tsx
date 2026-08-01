@@ -82,7 +82,7 @@ export function TvPage() {
                 <Player broadcast={live} />
               ) : (
                 <Panel title="Şu an yayın yok">
-                  <p className="text-[12px] leading-relaxed text-muted-foreground">
+                  <p className="text-meta leading-relaxed text-muted-foreground">
                     Canlı yayın açıldığında bu alan otomatik olarak
                     oynatıcıya döner. Yaklaşan programlar yanda listeli.
                   </p>
@@ -110,7 +110,7 @@ export function TvPage() {
                       )}
                     </div>
 
-                    <p className="text-[12.5px] leading-snug text-foreground">
+                    <p className="text-caption leading-snug text-foreground">
                       {item.title}
                     </p>
                     {item.description && (
@@ -166,7 +166,7 @@ function Player({ broadcast }: { broadcast: Broadcast }) {
       )}
 
       {broadcast.description && (
-        <p className="mt-3 text-[12px] leading-relaxed text-muted-foreground">
+        <p className="mt-3 text-meta leading-relaxed text-muted-foreground">
           {broadcast.description}
         </p>
       )}

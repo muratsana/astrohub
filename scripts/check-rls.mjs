@@ -40,6 +40,8 @@ const ALICE = '11111111-1111-1111-1111-111111111111';
 const BOB = '22222222-2222-2222-2222-222222222222';
 const ALICE_PHOTO = 'aaaaaaaa-0000-0000-0000-00000000a001';
 const ALICE_DRAFT = 'aaaaaaaa-0000-0000-0000-00000000a002';
+const ALICE_LISTING = 'aaaaaaaa-0000-0000-0000-00000000b001';
+const ALICE_LISTING_DRAFT = 'aaaaaaaa-0000-0000-0000-00000000b002';
 
 async function sql(text) {
   const { stdout } = await run(
@@ -181,6 +183,21 @@ await sql(`
   insert into public.memberships (user_id, status)
   values ('${ALICE}', 'active')
   on conflict (user_id) do nothing;
+
+  /* İki ilan: biri aktif, biri taslak. Fotoğraf görünürlüğü ilanın
+     görünürlüğünü izlemeli — taslak ilanın fotoğrafı da gizli. */
+  insert into public.listings
+    (id, slug, seller_id, title, category_id, price, city, condition, status, posted_at)
+  values ('${ALICE_LISTING}','rls-ilan-aktif','${ALICE}','Aktif ilan','optik-tup',
+          1000,'Ankara','İyi','active', now()),
+         ('${ALICE_LISTING_DRAFT}','rls-ilan-taslak','${ALICE}','Taslak ilan','optik-tup',
+          1000,'Ankara','İyi','draft', now())
+  on conflict (id) do nothing;
+
+  insert into public.listing_photos (listing_id, storage_path, position)
+  values ('${ALICE_LISTING}', '${ALICE}/${ALICE_LISTING}/0.jpg', 0),
+         ('${ALICE_LISTING_DRAFT}', '${ALICE}/${ALICE_LISTING_DRAFT}/0.jpg', 0)
+  on conflict do nothing;
 `);
 
 /* ── FOTOĞRAF GÖRÜNÜRLÜĞÜ ─────────────────────────────────────────── */
@@ -402,8 +419,760 @@ for (const call of [
   );
 }
 
+/*
+ * ══════════════════════════════════════════════════════════════════════
+ * PUANLAMA (0036) — YARIŞMA SIRALAMASININ BÜTÜNLÜĞÜ
+ *
+ * Üç kural veritabanında duruyor ve üçü de doğrudan sıralamayı koruyor.
+ * İstemcide gizlenen bir düğme, API'ye doğrudan giden birini durdurmaz.
+ */
+
+/* 1. Kendi fotoğrafına puan verilemez — tek bir 10, yirmi oyluk bir
+      ortalamayı 0.15 kaydırır. */
+await expectDenied(
+  'kendi fotoğrafına puan verilemiyor',
+  'authenticated',
+  ALICE,
+  `insert into public.photo_ratings (photo_id, user_id, score)
+   values ('${ALICE_PHOTO}', '${ALICE}', 10);`
+);
+
+/* 2. Başkası adına oy yazılamaz. */
+await expectDenied(
+  'başkası adına puan yazılamıyor',
+  'authenticated',
+  BOB,
+  `insert into public.photo_ratings (photo_id, user_id, score)
+   values ('${ALICE_PHOTO}', '${ALICE}', 1);`
+);
+
+/* 3. Yayımlanmamış kayda oy verilemez — henüz var olmayan bir şeyi
+      puanlamak olurdu. */
+await expectDenied(
+  'taslak fotoğrafa puan verilemiyor',
+  'authenticated',
+  BOB,
+  `insert into public.photo_ratings (photo_id, user_id, score)
+   values ('${ALICE_DRAFT}', '${BOB}', 9);`
+);
+
+/*
+ * 4. SAYAÇ KOLONU ELLE YAZILAMAZ.
+ *
+ * `astro_photos_update_own` sahibin kendi satırını güncellemesine izin
+ * veriyor; koruma tetikleyicisi olmasaydı sahibi `rating_sum`'ı tek bir
+ * PATCH ile 9999 yapabilirdi. Tetikleyici hata FIRLATMIYOR, sessizce
+ * eski değeri geri koyuyor — bu yüzden burada "reddedildi mi" değil,
+ * "değer değişti mi" ölçülüyor.
+ */
+{
+  await sql(
+    `update public.astro_photos set rating_sum = 0 where id = '${ALICE_PHOTO}';`
+  );
+  await asRole(
+    'authenticated',
+    ALICE,
+    `update public.astro_photos set rating_sum = 9999 where id = '${ALICE_PHOTO}';`
+  );
+  const after = await sql(
+    `select rating_sum from public.astro_photos where id = '${ALICE_PHOTO}';`
+  );
+  const korundu = after.trim() === '0';
+  record(
+    'rating_sum elle yazılamıyor (sayaç koruması)',
+    korundu,
+    korundu ? '' : `sahibi sayacı değiştirebildi: ${after.trim()}`
+  );
+}
+
+/*
+ * ══════════════════════════════════════════════════════════════════════
+ * PostGIS REFERANS TABLOSU — İDDİA DEĞİL, ÖLÇÜM
+ *
+ * `spatial_ref_sys` PostGIS'e ait ve yetkilerini `supabase_admin` verdi;
+ * `postgres` rolüyle çalışan bir `revoke` hata vermeden hiçbir şey
+ * yapmıyor (0003 bunu doğru tespit etmiş, 0006 yanlışlıkla "kapandı"
+ * demişti).
+ *
+ * Burada denetim TERS YÖNDE çalışıyor: durum kapalıysa geçmesi değil,
+ * DEĞİŞTİĞİNDE haber vermesi isteniyor. Bu yüzden bulgu bir hata değil,
+ * bilinen bir kabul olarak raporlanıyor — ta ki bir gün dashboard'dan
+ * gerçekten kapatılana kadar. O gün bu satır kendiliğinden yeşile
+ * dönüyor ve kimsenin denetçi çıktısını elle okuması gerekmiyor.
+ * ══════════════════════════════════════════════════════════════════════
+ */
+{
+  const yazmaYetkisi = await sql(`
+    select count(*) from information_schema.role_table_grants
+     where table_schema = 'public' and table_name = 'spatial_ref_sys'
+       and grantee in ('anon', 'authenticated')
+       and privilege_type in ('INSERT', 'UPDATE', 'DELETE', 'TRUNCATE');
+  `);
+  const acik = Number(yazmaYetkisi.trim()) > 0;
+  record(
+    'spatial_ref_sys yazma yetkisi (bilinen kabul)',
+    true,
+    acik
+      ? `anon/authenticated hâlâ ${yazmaYetkisi.trim()} yazma yetkisi taşıyor — ` +
+        'supabase_admin gerekiyor, migration ile kapatılamıyor (0006)'
+      : 'kapanmış — 0006 ve SITE-AUDIT notu güncellenebilir'
+  );
+}
+
+/*
+ * ══════════════════════════════════════════════════════════════════════
+ * İLAN FOTOĞRAFLARI (0038)
+ *
+ * Fotoğrafın görünürlüğü İLANIN görünürlüğünü izliyor. Ayrı bir kural
+ * yazmak, iki kuralın zamanla ayrışması demekti: ilan taslağa
+ * alındığında fotoğrafları görünür kalırdı ve satıcı yayından
+ * kaldırdığını sandığı ekipmanın fotoğraflarını herkese açık bırakırdı.
+ * ══════════════════════════════════════════════════════════════════════
+ */
+await expectCount(
+  'aktif ilanın fotoğrafı herkese açık',
+  'anon',
+  null,
+  `select count(*) from public.listing_photos where listing_id = '${ALICE_LISTING}';`,
+  1
+);
+
+await expectCount(
+  'taslak ilanın fotoğrafı anon\'a kapalı',
+  'anon',
+  null,
+  `select count(*) from public.listing_photos where listing_id = '${ALICE_LISTING_DRAFT}';`,
+  0
+);
+
+await expectCount(
+  'taslak ilanın fotoğrafı başka kullanıcıya da kapalı',
+  'authenticated',
+  BOB,
+  `select count(*) from public.listing_photos where listing_id = '${ALICE_LISTING_DRAFT}';`,
+  0
+);
+
+await expectCount(
+  'satıcı kendi taslak ilanının fotoğrafını görüyor',
+  'authenticated',
+  ALICE,
+  `select count(*) from public.listing_photos where listing_id = '${ALICE_LISTING_DRAFT}';`,
+  1
+);
+
+await expectDenied(
+  'başkasının ilanına fotoğraf eklenemiyor',
+  'authenticated',
+  BOB,
+  `insert into public.listing_photos (listing_id, storage_path, position)
+   values ('${ALICE_LISTING}', '${BOB}/sahte.jpg', 5);`
+);
+
+await expectDenied(
+  'başkasının ilan fotoğrafı silinemiyor',
+  'authenticated',
+  BOB,
+  `delete from public.listing_photos where listing_id = '${ALICE_LISTING}';`
+);
+
+/*
+ * SEKİZ FOTOĞRAF SINIRI TETİKLEYİCİDE, ARAYÜZDE DEĞİL. Arayüzde sayılan
+ * bir sınır, API'ye doğrudan giden biri için yok demektir.
+ */
+{
+  await sql(`
+    insert into public.listing_photos (listing_id, storage_path, position)
+    select '${ALICE_LISTING}', '${ALICE}/${ALICE_LISTING}/dolgu-' || i || '.jpg', i
+      from generate_series(1, 7) i;
+  `);
+  const asim = await asRole(
+    'authenticated',
+    ALICE,
+    `insert into public.listing_photos (listing_id, storage_path, position)
+     values ('${ALICE_LISTING}', '${ALICE}/${ALICE_LISTING}/dokuzuncu.jpg', 9);`
+  );
+  const reddedildi = !asim.ok && /en fazla 8/i.test(asim.error);
+  record(
+    'ilan başına 8 fotoğraf sınırı zorlanıyor',
+    reddedildi,
+    reddedildi ? '' : 'dokuzuncu fotoğraf eklenebildi'
+  );
+}
+
+/*
+ * ══════════════════════════════════════════════════════════════════════
+ * YÖNETİM PANELİNİN DAYANDIĞI YETKİLER
+ *
+ * Panel artık kullanıcı rolleri, üyelik ve beş içerik türü üzerinde
+ * yazıyor. Bu ekranın güvenliği tamamen RLS'e bağlı: istemcide gizlenen
+ * bir düğme, API'ye doğrudan giden birini durdurmaz.
+ *
+ * Alice'in HİÇBİR ROLÜ YOK (kurulum ona rol vermiyor) — yani buradaki
+ * "yapamaz" beklentileri sıradan bir üyeyi temsil ediyor.
+ * ══════════════════════════════════════════════════════════════════════
+ */
+
+/* Sıradan üye başkasının fotoğrafını moderasyondan geçiremez. */
+await expectDenied(
+  'sıradan üye başkasının fotoğrafını arşivleyemiyor',
+  'authenticated',
+  BOB,
+  `update public.astro_photos set status = 'archived' where id = '${ALICE_PHOTO}';`
+);
+
+await expectDenied(
+  'sıradan üye başkasının fotoğrafını silemiyor',
+  'authenticated',
+  BOB,
+  `delete from public.astro_photos where id = '${ALICE_PHOTO}';`
+);
+
+/*
+ * ROL YÜKSELTME — panelin en kritik yüzeyi. Kendine rol yazabilen bir
+ * kullanıcı bütün moderasyon sınırlarını tek istekte aşar.
+ */
+await expectDenied(
+  'kullanıcı kendine admin rolü veremiyor',
+  'authenticated',
+  BOB,
+  `insert into public.user_roles (user_id, role) values ('${BOB}', 'admin');`
+);
+
+await expectDenied(
+  'kullanıcı başkasına rol veremiyor',
+  'authenticated',
+  BOB,
+  `insert into public.user_roles (user_id, role) values ('${ALICE}', 'moderator');`
+);
+
+await expectDenied(
+  'kullanıcı kendi üyeliğini aktif yapamıyor',
+  'authenticated',
+  BOB,
+  `insert into public.memberships (user_id, status) values ('${BOB}', 'active');`
+);
+
+/*
+ * DENETİM KAYDI YAZILAMAZ. Değiştirilebilen bir denetim kaydı denetim
+ * kaydı değildir; panel de salt okunur çiziyor.
+ */
+await expectDenied(
+  'denetim kaydına satır eklenemiyor',
+  'authenticated',
+  BOB,
+  `insert into public.audit_logs (actor_id, action) values ('${BOB}', 'sahte');`
+);
+
+/* Başkasının profilini düzenlemek de kapalı olmalı. */
+await expectDenied(
+  'kullanıcı başkasının profilini düzenleyemiyor',
+  'authenticated',
+  BOB,
+  `update public.profiles set display_name = 'ele gecirildi' where id = '${ALICE}';`
+);
+
+/*
+ * ══════════════════════════════════════════════════════════════════════
+ * KULLANICI METİNLERİ — yorum, gönderi, saha yorumu
+ *
+ * Panel bu üçünü artık kaldırabiliyor. Sıradan bir üyenin BAŞKASININ
+ * metnini kaldırabilmesi, moderasyonu anlamsız kılardı: tartıştığı
+ * kişinin cevabını silen bir kullanıcı, tartışmayı tek taraflı bırakır.
+ * ══════════════════════════════════════════════════════════════════════
+ */
+{
+  await sql(`
+    insert into public.photo_comments (photo_id, user_id, body)
+    values ('${ALICE_PHOTO}', '${ALICE}', 'Alice''in yorumu')
+    on conflict do nothing;
+  `);
+
+  await expectDenied(
+    'sıradan üye başkasının yorumunu silemiyor',
+    'authenticated',
+    BOB,
+    `delete from public.photo_comments where user_id = '${ALICE}';`
+  );
+
+  /* Kendi yorumunu silebilmeli — kural "başkasınınkine dokunma",
+     "hiçbir şeye dokunma" değil. */
+  const kendi = await asRole(
+    'authenticated',
+    ALICE,
+    `with attempt as (delete from public.photo_comments
+                      where user_id = '${ALICE}' returning 1)
+     select count(*) from attempt;`
+  );
+  const silebildi = kendi.ok && Number(kendi.value.split('\n').pop()) > 0;
+  record(
+    'üye kendi yorumunu silebiliyor',
+    silebildi,
+    silebildi ? '' : 'kendi yorumunu silemedi — moderasyon fazla dar'
+  );
+}
+
+/*
+ * ══════════════════════════════════════════════════════════════════════
+ * FAZ 5 — BİLDİRİM, MESAJ, TAKİP, ENGELLEME (0041–0044)
+ *
+ * Bu üç tablonun güvenliği tamamen RLS'e ve `security definer`
+ * yardımcılara bağlı. Üçünün de ortak bir yanı var: SAHİBİNDEN BAŞKASINA
+ * HİÇBİR ŞEY GÖSTERMEMEK. Bir bildirimi, bir yazışmayı ya da bir engel
+ * listesini yanlışlıkla açan bir politika, sızdırdığı şey kişisel olduğu
+ * için diğer tablolardan daha pahalıya patlar.
+ * ══════════════════════════════════════════════════════════════════════
+ */
+
+/*
+ * 1. BİLDİRİM İSTEMCİDEN ÜRETİLEMEZ.
+ *
+ * `insert` yetkisi HİÇBİR role verilmedi (0042); üretimin tek yolu
+ * `security definer` tetikleyiciler. Bu kural gevşerse bir kullanıcı
+ * başkasının adına "X seni takip etti" bildirimi uydurabilir — kimlik
+ * taklidinin en ucuz biçimi.
+ */
+await expectDenied(
+  'kullanıcı bildirim uyduramıyor',
+  'authenticated',
+  BOB,
+  `insert into public.notifications (user_id, kind, title)
+   values ('${ALICE}', 'announcement', 'Sahte duyuru')`
+);
+
+await expectDenied(
+  'anon bildirim uyduramıyor',
+  'anon',
+  null,
+  `insert into public.notifications (user_id, kind, title)
+   values ('${ALICE}', 'announcement', 'Sahte duyuru')`
+);
+
+/* 2. BAŞKASININ BİLDİRİMİ OKUNAMAZ. */
+{
+  /* Bildirim tetikleyiciyle üretiliyor: Bob Alice'i takip edince Alice'e
+     bildirim gidiyor. Doğrudan insert edemiyoruz (yukarıdaki kural) —
+     yani bu kurulum aynı zamanda tetikleyicinin çalıştığının kanıtı. */
+  await sql(`
+    insert into public.follows (follower_id, followee_id)
+    values ('${BOB}', '${ALICE}') on conflict do nothing;
+  `);
+
+  const uretildi = await sql(
+    `select count(*) from public.notifications
+      where user_id = '${ALICE}' and kind = 'follow';`
+  );
+  const varMi = Number(uretildi.trim()) > 0;
+  record(
+    'takip bildirimi tetikleyiciyle üretiliyor',
+    varMi,
+    varMi ? '' : 'takip sonrası bildirim satırı oluşmadı'
+  );
+
+  await expectCount(
+    "Bob, Alice'in bildirimini GÖREMEZ",
+    'authenticated',
+    BOB,
+    `select count(*) from public.notifications where user_id = '${ALICE}';`,
+    0
+  );
+
+  await expectCount(
+    'anon hiçbir bildirimi göremez',
+    'anon',
+    null,
+    `select count(*) from public.notifications;`,
+    0
+  );
+
+  await expectCount(
+    'Alice kendi bildirimini görüyor',
+    'authenticated',
+    ALICE,
+    `select count(*) from public.notifications where kind = 'follow';`,
+    1
+  );
+
+  /*
+   * 3. BİLDİRİM METNİ DEĞİŞTİRİLEMEZ.
+   *
+   * `update` yetkisi okundu/arşiv işaretlemek için GEREKLİ; koruma
+   * tetikleyicisi olmasaydı alıcı kendi bildiriminin başlığını
+   * değiştirip ekran görüntüsüyle "site bana şunu yazdı" diyebilirdi.
+   * Tetikleyici hata fırlatmıyor, eski değeri geri yazıyor — bu yüzden
+   * "reddedildi mi" değil, "değer değişti mi" ölçülüyor.
+   */
+  await asRole(
+    'authenticated',
+    ALICE,
+    `update public.notifications set title = 'Uydurma başlık'
+      where user_id = '${ALICE}';`
+  );
+  const baslik = await sql(
+    `select title from public.notifications where user_id = '${ALICE}' limit 1;`
+  );
+  const korundu = !baslik.includes('Uydurma');
+  record(
+    'bildirim metni alıcı tarafından değiştirilemiyor',
+    korundu,
+    korundu ? '' : `başlık değiştirilebildi: ${baslik.trim()}`
+  );
+}
+
+/* 4. YÖNETİCİ OLMAYAN DUYURU GÖNDEREMEZ. */
+{
+  const denendi = await asRole(
+    'authenticated',
+    BOB,
+    `select public.notify_user('${ALICE}', 'Sahte duyuru');`
+  );
+  const reddedildi =
+    !denendi.ok && /yalnızca yöneticiler|permission denied/i.test(denendi.error);
+  record(
+    'yönetici olmayan duyuru gönderemiyor',
+    reddedildi,
+    reddedildi ? '' : 'notify_user sıradan üyeye açık'
+  );
+}
+
+/*
+ * 5. ENGEL LİSTESİ TEK YÖNLÜ.
+ *
+ * Engellenen kişi engellendiğini TABLODAN öğrenememeli: sessiz bir
+ * uzaklaşmayı karşılaşmaya çevirmek, engellemenin var olma sebebini
+ * ortadan kaldırır.
+ */
+{
+  await sql(`
+    insert into public.user_blocks (blocker_id, blocked_id)
+    values ('${ALICE}', '${BOB}') on conflict do nothing;
+  `);
+
+  await expectCount(
+    'engellenen kişi engellendiğini GÖREMEZ',
+    'authenticated',
+    BOB,
+    `select count(*) from public.user_blocks;`,
+    0
+  );
+
+  await expectCount(
+    'engelleyen kendi listesini görüyor',
+    'authenticated',
+    ALICE,
+    `select count(*) from public.user_blocks;`,
+    1
+  );
+
+  /* Engelleme takibi iki yönde de koparıyor (0041 tetikleyicisi):
+     yarım bir engel, engellenen kişiyi akışta bırakırdı. */
+  const kalanTakip = await sql(
+    `select count(*) from public.follows
+      where (follower_id = '${ALICE}' and followee_id = '${BOB}')
+         or (follower_id = '${BOB}' and followee_id = '${ALICE}');`
+  );
+  const koptu = Number(kalanTakip.trim()) === 0;
+  record(
+    'engelleme takibi iki yönde koparıyor',
+    koptu,
+    koptu ? '' : `${kalanTakip.trim()} takip satırı ayakta kaldı`
+  );
+
+  /* Engelliyken takip yeniden kurulamıyor — RLS `with check`. */
+  await expectDenied(
+    'engelli kullanıcı takip edilemiyor',
+    'authenticated',
+    BOB,
+    `insert into public.follows (follower_id, followee_id)
+     values ('${BOB}', '${ALICE}')`
+  );
+
+  /* Engelliyken sohbet de açılamıyor; hangi tarafın engellediği
+     söylenmiyor. */
+  const sohbet = await asRole(
+    'authenticated',
+    BOB,
+    `select public.start_direct_conversation('${ALICE}');`
+  );
+  const engellendi =
+    !sohbet.ok && /mesajlaşamazsınız|permission denied/i.test(sohbet.error);
+  record(
+    'engelliyken sohbet açılamıyor',
+    engellendi,
+    engellendi ? '' : 'engel varken sohbet açıldı'
+  );
+
+  await sql(`delete from public.user_blocks where blocker_id = '${ALICE}';`);
+}
+
+/*
+ * 6. YAZIŞMA YALITIMI.
+ *
+ * Katılımcı olmayan biri ne sohbeti ne mesajı görebilmeli. Politika
+ * `app.in_conversation()` üstünden kuruluyor; doğrudan yazılsaydı
+ * politika kendi tablosunu sorgulayıp özyinelemeye girerdi.
+ */
+{
+  const acildi = await asRole(
+    'authenticated',
+    ALICE,
+    `select public.start_direct_conversation('${BOB}');`
+  );
+  const convId = acildi.ok ? acildi.value.split('\n').pop().trim() : null;
+  record(
+    'sohbet açılabiliyor',
+    Boolean(convId),
+    convId ? '' : acildi.error?.slice(0, 120)
+  );
+
+  if (convId) {
+    await sql(`
+      insert into public.messages (conversation_id, sender_id, body)
+      values ('${convId}', '${ALICE}', 'Gizli kalması gereken mesaj');
+    `);
+
+    await expectCount(
+      'anon yazışmaları göremiyor',
+      'anon',
+      null,
+      `select count(*) from public.messages;`,
+      0
+    );
+
+    /* Cem yok; üçüncü bir kullanıcı yerine ROLÜ olan ama katılımcı
+       OLMAYAN birini temsil etmek için yeni bir kimlik açılıyor. */
+    await sql(`
+      insert into auth.users (id, instance_id, aud, role, email, encrypted_password, created_at, updated_at)
+      values ('33333333-3333-3333-3333-333333333333','00000000-0000-0000-0000-000000000000',
+              'authenticated','authenticated','cem@rls.test','x',now(),now())
+      on conflict (id) do nothing;
+    `);
+
+    await expectCount(
+      'katılımcı olmayan yazışmayı GÖREMEZ',
+      'authenticated',
+      '33333333-3333-3333-3333-333333333333',
+      `select count(*) from public.messages;`,
+      0
+    );
+
+    await expectCount(
+      'katılımcı olmayan sohbeti GÖREMEZ',
+      'authenticated',
+      '33333333-3333-3333-3333-333333333333',
+      `select count(*) from public.conversations;`,
+      0
+    );
+
+    await expectCount(
+      'katılımcı kendi yazışmasını görüyor',
+      'authenticated',
+      BOB,
+      `select count(*) from public.messages where conversation_id = '${convId}';`,
+      1
+    );
+
+    /* Başkası adına mesaj yazmak — kimlik taklidi. */
+    await expectDenied(
+      'başkası adına mesaj yazılamıyor',
+      'authenticated',
+      BOB,
+      `insert into public.messages (conversation_id, sender_id, body)
+       values ('${convId}', '${ALICE}', 'Alice adına sahte mesaj')`
+    );
+
+    /* Katılımcı olmadığın sohbete yazmak. */
+    await expectDenied(
+      'katılımcı olmayan sohbete mesaj yazamıyor',
+      'authenticated',
+      '33333333-3333-3333-3333-333333333333',
+      `insert into public.messages (conversation_id, sender_id, body)
+       values ('${convId}', '33333333-3333-3333-3333-333333333333', 'araya girdim')`
+    );
+
+    /* Başkasının mesajını düzenlemek. */
+    await expectDenied(
+      'başkasının mesajı düzenlenemiyor',
+      'authenticated',
+      BOB,
+      `update public.messages set body = 'değiştirildi'
+        where conversation_id = '${convId}'`
+    );
+
+    /*
+     * SERT SİLME KAPALI. Yumuşak silme (`deleted_at`) karşı taraftaki
+     * konuşmanın bütünlüğünü koruyor; `delete` yetkisi hiç verilmedi.
+     */
+    await expectDenied(
+      'mesaj sert silinemiyor',
+      'authenticated',
+      ALICE,
+      `delete from public.messages where conversation_id = '${convId}'`
+    );
+
+    /* Sohbet satırı istemciden yazılamıyor: açmanın tek yolu RPC. */
+    await expectDenied(
+      'sohbet doğrudan eklenemiyor',
+      'authenticated',
+      BOB,
+      `insert into public.conversations (kind, direct_key)
+       values ('direct', 'uydurma-anahtar')`
+    );
+  }
+}
+
+/*
+ * 7. `app` YARDIMCILARININ YÜZEYİ (0045).
+ *
+ * 0030'un ilkesi: `app` şemasındaki bir fonksiyon BAŞKASININ kimliğini
+ * parametre alıyorsa istemciye kapalı olmalı. 0041–0043 aynı sınıftan
+ * beş fonksiyon daha açtı; en tehlikelisi `app.notify`, çünkü
+ * `notifications` tablosunda insert yetkisi olmamasının tek anlamı
+ * "bildirim üretimi kapalı" idi.
+ */
+for (const call of [
+  `app.notify('${ALICE}', null, 'announcement', 'Sahte duyuru')`,
+  `app.is_blocked('${ALICE}', '33333333-3333-3333-3333-333333333333')`,
+  `app.in_conversation('00000000-0000-0000-0000-000000000000', '${ALICE}')`,
+  `app.notification_allowed('${ALICE}', 'follow')`,
+]) {
+  const result = await asRole('authenticated', BOB, `select ${call};`);
+  const denied = !result.ok && /permission denied/i.test(result.error);
+  record(
+    `${call.split('(')[0]} istemciye kapalı`,
+    denied,
+    denied ? '' : 'çağrılabiliyor — başkasının kimliğiyle sorgulanabilir'
+  );
+}
+
+/*
+ * Politikaların çağırdığı iki yardımcı AÇIK KALMAK ZORUNDA: politika
+ * ifadeleri çağıran rolün yetkisiyle değerlendiriliyor. Kapalı olsalardı
+ * mesaj okuma ve takip yazma tümüyle kırılırdı — sessizce değil, gürültüyle,
+ * ama yine de kırılırdı.
+ */
+for (const call of [
+  `app.blocked_with('${ALICE}')`,
+  `app.in_conversation('00000000-0000-0000-0000-000000000000')`,
+]) {
+  const result = await asRole('authenticated', BOB, `select ${call};`);
+  record(
+    `${call.split('(')[0]} politikalar için açık`,
+    result.ok,
+    result.ok ? '' : result.error.slice(0, 120)
+  );
+}
+
+/*
+ * 8. YENİ RPC'LER `anon`A KAPALI (0044 + 0046).
+ *
+ * 0044 yalnızca `PUBLIC`ten geri almıştı ve YETMEDİ: Supabase `public`
+ * şeması için `alter default privileges … to anon, authenticated,
+ * service_role` tanımlıyor, yani her yeni fonksiyon `anon`a AÇIK doğuyor.
+ * Bu kontrol o farkı ölçüyor — iddiaya değil `proacl`e bakarak.
+ */
+for (const call of [
+  'public.my_conversations()',
+  `public.notify_user('${ALICE}', 'Deneme')`,
+  `public.start_direct_conversation('${ALICE}')`,
+]) {
+  const result = await asRole('anon', null, `select ${call};`);
+  const denied = !result.ok && /permission denied/i.test(result.error);
+  record(
+    `anon ${call.split('(')[0]} çağıramıyor`,
+    denied,
+    denied ? '' : 'anon rolüne EXECUTE yetkisi hâlâ açık'
+  );
+}
+
+/*
+ * 9. KOLEKSİYONLAR (0048).
+ *
+ * "Kaydedilenler" varsayılan olarak GİZLİ ve bu bir gizlilik kararı: bir
+ * okuma listesi, kullanıcının neyi sonra bakmak üzere ayırdığı — paylaşmak
+ * istediği bir seçki olmayabilir.
+ */
+{
+  /* Alice bir fotoğraf kaydediyor; koleksiyon tembel açılıyor. */
+  const kaydetti = await asRole(
+    'authenticated',
+    ALICE,
+    `select public.toggle_saved_photo('${ALICE_PHOTO}');`
+  );
+  record(
+    'kaydetme varsayılan koleksiyonu açıyor',
+    kaydetti.ok && kaydetti.value.split('\n').pop().trim() === 't',
+    kaydetti.ok ? '' : (kaydetti.error ?? '').slice(0, 120)
+  );
+
+  await expectCount(
+    "Bob, Alice'in gizli koleksiyonunu GÖREMEZ",
+    'authenticated',
+    BOB,
+    `select count(*) from public.collections;`,
+    0
+  );
+
+  await expectCount(
+    'gizli koleksiyonun içeriği de görünmüyor',
+    'authenticated',
+    BOB,
+    `select count(*) from public.collection_items;`,
+    0
+  );
+
+  await expectCount(
+    'anon koleksiyon göremiyor',
+    'anon',
+    null,
+    `select count(*) from public.collections;`,
+    0
+  );
+
+  /* Herkese açık bir koleksiyon HERKESİN EKLEYEBİLECEĞİ bir koleksiyon
+     değil: seçkiyi kuran kişi sahibi. */
+  await sql(`update public.collections set is_public = true;`);
+  await expectDenied(
+    'açık koleksiyona başkası fotoğraf ekleyemiyor',
+    'authenticated',
+    BOB,
+    `insert into public.collection_items (collection_id, photo_id)
+     select id, '${ALICE_PHOTO}' from public.collections limit 1`
+  );
+
+  /* anon kaydetme çağrısını hiç yapamıyor (0046'nın dersi uygulandı). */
+  const anonDeneme = await asRole(
+    'anon',
+    null,
+    `select public.toggle_saved_photo('${ALICE_PHOTO}');`
+  );
+  const reddedildi =
+    !anonDeneme.ok && /permission denied|giriş yapmalısınız/i.test(anonDeneme.error);
+  record(
+    'anon fotoğraf kaydedemiyor',
+    reddedildi,
+    reddedildi ? '' : 'toggle_saved_photo anon rolüne açık'
+  );
+}
+
 /* ── Temizlik ─────────────────────────────────────────────────────── */
 await sql(`
+  delete from public.collection_items;
+  delete from public.collections
+   where user_id in ('${ALICE}','${BOB}');
+  delete from public.notifications
+   where user_id in ('${ALICE}','${BOB}','33333333-3333-3333-3333-333333333333');
+  delete from public.conversations
+   where created_by in ('${ALICE}','${BOB}');
+  delete from public.follows
+   where follower_id in ('${ALICE}','${BOB}') or followee_id in ('${ALICE}','${BOB}');
+  delete from public.user_blocks
+   where blocker_id in ('${ALICE}','${BOB}') or blocked_id in ('${ALICE}','${BOB}');
+  delete from public.photo_ratings
+   where user_id in ('${ALICE}','${BOB}');
+  delete from public.photo_comments where user_id in ('${ALICE}','${BOB}');
+  delete from public.user_roles where user_id in ('${ALICE}','${BOB}');
+  delete from public.listings where seller_id in ('${ALICE}','${BOB}');
   delete from public.astro_photos where user_id in ('${ALICE}','${BOB}');
   delete from public.memberships where user_id in ('${ALICE}','${BOB}');
   delete from auth.users where email like '%@rls.test';

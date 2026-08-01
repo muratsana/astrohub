@@ -49,6 +49,10 @@
       "destination": "/app.html"
     },
     {
+      "source": "/bildirimler",
+      "destination": "/app.html"
+    },
+    {
       "source": "/bu-gece",
       "destination": "/app.html"
     },
@@ -245,6 +249,14 @@
       "destination": "/app.html"
     },
     {
+      "source": "/mesajlar",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/mesajlar/:id",
+      "destination": "/app.html"
+    },
+    {
       "source": "/mugla-astronomi-etkinlikleri",
       "destination": "/app.html"
     },
@@ -266,6 +278,26 @@
     },
     {
       "source": "/radyo",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/radyo/podcast",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/radyo/podcast/:slug",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/radyo/podcast/:slug/:bolum",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/radyo/program/:slug",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/radyo/yayinci/:slug",
       "destination": "/app.html"
     },
     {
@@ -361,7 +393,7 @@
         },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.supabase.co https://*.basemaps.cartocdn.com https://djlorenz.github.io https://commons.wikimedia.org https://upload.wikimedia.org https://cdn.esahubble.org; font-src 'self'; media-src 'self' blob: https://*.supabase.co; connect-src 'self' https://*.supabase.co https://api.open-meteo.com; frame-src https://www.youtube-nocookie.com https://open.spotify.com; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; upgrade-insecure-requests"
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.supabase.co https://*.basemaps.cartocdn.com https://djlorenz.github.io https://commons.wikimedia.org https://upload.wikimedia.org https://cdn.esahubble.org; font-src 'self'; media-src 'self' blob: https://*.supabase.co; connect-src 'self' https://*.supabase.co https://api.open-meteo.com https://air-quality-api.open-meteo.com; frame-src https://www.youtube-nocookie.com https://open.spotify.com; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; upgrade-insecure-requests"
         }
       ]
     }

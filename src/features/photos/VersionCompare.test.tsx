@@ -113,3 +113,83 @@ describe('sürüm geçmişi', () => {
     }
   });
 });
+
+/* ══════════════════════════════════════════════════════════════════════
+   GERÇEK GÖRSEL — sürgü artık gradyan değil, yüklenen kareyi çiziyor
+   ══════════════════════════════════════════════════════════════════════ */
+
+describe('VersionCompare · görsel katmanı', () => {
+  const sol = {
+    label: 'v1',
+    gradient: 'linear-gradient(#000,#111)',
+    imageUrl: 'https://ornek.test/v1.jpg',
+  };
+  const sag = {
+    label: 'v2',
+    gradient: 'linear-gradient(#000,#222)',
+    imageUrl: 'https://ornek.test/v2.jpg',
+  };
+
+  it('iki tarafın da gerçek görselini çiziyor', () => {
+    render(<VersionCompare before={sol} after={sag} />);
+    expect(screen.getByAltText('v1')).toHaveAttribute('src', sol.imageUrl);
+    expect(screen.getByAltText('v2')).toHaveAttribute('src', sag.imageUrl);
+  });
+
+  /*
+   * ASIL KURAL. İki sürüm AYNI kutuya oturmalı — karşılaştırmanın tek
+   * anlamı piksellerin aynı yerde olması. `contain` kullanılsaydı farklı
+   * oranda dışa aktarılmış bir revizyonda görüntü sürgüyle birlikte
+   * kayar ve fark okunamaz olurdu.
+   */
+  it('katmanlar aynı kutuya oturuyor (object-cover)', () => {
+    render(<VersionCompare before={sol} after={sag} />);
+    expect(screen.getByAltText('v1').className).toContain('object-cover');
+    expect(screen.getByAltText('v2').className).toContain('object-cover');
+  });
+
+  it('görseli olmayan taraf yer tutucuya düşüyor, çökmüyor', () => {
+    render(
+      <VersionCompare
+        before={{ label: 'v1', gradient: 'linear-gradient(#000,#111)' }}
+        after={sag}
+      />
+    );
+    /* Yer tutucu bir `<img>` DEĞİL — çizilen şey gradyanlı bir kutu.
+       Görselin hiç olmaması, kırık bir görsel ikonundan iyidir. */
+    expect(screen.queryByAltText('v1')).toBeNull();
+    expect(screen.getByAltText('v2')).toHaveAttribute('src', sag.imageUrl);
+    expect(screen.getByRole('slider')).toBeInTheDocument();
+  });
+});
+
+describe('VersionHistory · eksik görsel uyarısı', () => {
+  const withVersions = photos.find((p) => (p.versions?.length ?? 0) > 1)!;
+
+  /*
+   * İki gradyanı yan yana koyup "işleme farkına bak" demek, olmayan bir
+   * farkı varmış gibi göstermek olur. Sürgü çalışmaya devam ediyor ama
+   * görüntünün temsilî olduğu yazıyor.
+   */
+  it('sürümlerden birinin görseli yoksa bunu söylüyor', () => {
+    render(
+      <MemoryRouter>
+        <VersionHistory versions={withVersions.versions!} />
+      </MemoryRouter>
+    );
+    expect(screen.getByText(/temsilî/i)).toBeInTheDocument();
+  });
+
+  it('iki görsel de varsa uyarı çıkmıyor', () => {
+    const versions = withVersions.versions!.map((v, i) => ({
+      ...v,
+      imageUrl: `https://ornek.test/${i}.jpg`,
+    }));
+    render(
+      <MemoryRouter>
+        <VersionHistory versions={versions} />
+      </MemoryRouter>
+    );
+    expect(screen.queryByText(/temsilî/i)).not.toBeInTheDocument();
+  });
+});

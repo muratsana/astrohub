@@ -1,5 +1,6 @@
 import { dewPointFromHumidity } from '@/domain/weather/humidity';
 import { estimateSeeing, type SeeingEstimate } from './seeing';
+import type { TransparencyEstimate } from './airQuality';
 
 /**
  * HAVA SERVİSİ ADAPTÖRÜ — Open-Meteo.
@@ -43,10 +44,29 @@ export interface SkyConditions {
   humidity: number;
   /** Yer sıcaklığı (°C). */
   temperature: number;
+  /**
+   * Hissedilen sıcaklık (°C) — rüzgâr ve nem düzeltmesiyle.
+   *
+   * Gece boyunca sabit duran bir gözlemci için asıl belirleyici bu:
+   * −2 °C'de 25 km/sa rüzgâr, −9 °C gibi hissettirir ve dört saatlik bir
+   * seansı bitirir. Servis vermezse `null` — yer sıcaklığını hissedilen
+   * diye göstermek yanlış bilgi olur.
+   */
+  apparentTemperature: number | null;
   /** Çiy noktası (°C). Sıcaklığa yaklaştıkça optik çiylenir. */
   dewPoint: number;
   /** Yer rüzgârı (km/sa). */
   windSpeed: number;
+  /**
+   * Rüzgâr hamlesi (km/sa) — servis vermezse `null`.
+   *
+   * Ortalama rüzgârdan AYRI bir karar girdisi: 12 km/sa ortalama sorunsuz
+   * görünür ama 40 km/sa hamle, poz sırasında montürü sarsıp kareyi
+   * çöpe atar. Ortalamayı hamle yerine göstermek gözlemciyi yanıltır.
+   */
+  windGust: number | null;
+  /** Yağış ihtimali (%) — servis vermezse `null`. */
+  precipitationProbability: number | null;
   /**
    * Seeing tahmini — üst atmosfer (200/500 hPa) rüzgârı gelmediyse `null`.
    *
@@ -67,6 +87,16 @@ export interface SkyConditions {
   source: 'meteoblue' | 'open-meteo';
   /** Katman ayrımı — servis vermezse `null`. */
   layers: CloudLayers | null;
+  /**
+   * Şeffaflık — aerosol optik derinliğinden (§7.2'nin 17. alanı).
+   *
+   * BULUTTAN AYRI BİR SORU. Bulutsuz bir gece şeffaf olmak zorunda
+   * değil: toz taşınımında gökyüzü açık görünür ama sönük hedefler
+   * kaybolur. Ayrı bir servisten (hava kalitesi ucu) geliyor ve o
+   * istek düşerse `null` — nemden türetip "şeffaflık" demek,
+   * ölçülmemiş bir metriği ölçülmüş gibi sunmak olurdu.
+   */
+  transparency: TransparencyEstimate | null;
 }
 
 interface HourlyResponse {
@@ -79,8 +109,11 @@ interface HourlyResponse {
     visibility?: (number | null)[];
     relative_humidity_2m?: (number | null)[];
     temperature_2m?: (number | null)[];
+    apparent_temperature?: (number | null)[];
     dew_point_2m?: (number | null)[];
+    precipitation_probability?: (number | null)[];
     wind_speed_10m?: (number | null)[];
+    wind_gusts_10m?: (number | null)[];
     wind_speed_500hPa?: (number | null)[];
     wind_speed_200hPa?: (number | null)[];
   };
@@ -94,8 +127,11 @@ const HOURLY_FIELDS = [
   'visibility',
   'relative_humidity_2m',
   'temperature_2m',
+  'apparent_temperature',
   'dew_point_2m',
+  'precipitation_probability',
   'wind_speed_10m',
+  'wind_gusts_10m',
   'wind_speed_500hPa',
   'wind_speed_200hPa',
 ].join(',');
@@ -223,6 +259,9 @@ export function parseSkyConditions(
     cloudCover,
     humidity,
     temperature,
+    apparentTemperature: num(hourly.apparent_temperature, i),
+    precipitationProbability: num(hourly.precipitation_probability, i),
+    windGust: num(hourly.wind_gusts_10m, i),
     dewPoint:
       num(hourly.dew_point_2m, i) ??
       dewPointFromHumidity(temperature, humidity) ??
@@ -234,6 +273,10 @@ export function parseSkyConditions(
         : null,
     observedAt: new Date(times[i]),
     source: 'open-meteo',
+    /* Şeffaflık AYRI SERVİSTEN (hava kalitesi ucu); bu ayrıştırıcı onu
+       görmez. Birleştirme `useSkyConditions` içinde yapılıyor — tek
+       istekten iki uca ait alan üretmek, kaynağı belirsizleştirirdi. */
+    transparency: null,
     layers:
       low !== null && mid !== null && high !== null
         ? {

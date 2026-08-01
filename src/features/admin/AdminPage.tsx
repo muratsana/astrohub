@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Panel, SpecList, SpecRow } from '@/components/ui/Panel';
@@ -12,11 +12,18 @@ import { PageMeta } from '@/components/seo/PageMeta';
 import { useAuth } from '@/features/auth/AuthContext';
 import { useRoles, roleLabels } from './useRoles';
 import { BroadcastControl } from './BroadcastControl';
+import { ReminderControl } from './ReminderControl';
+import { RadioControl } from './RadioControl';
+import { TvControl } from './TvControl';
 import { CatalogControl } from './CatalogControl';
 import { FeaturedControl } from './FeaturedControl';
 import { ContentControl } from './ContentControl';
 import { EquipmentDataControl } from './EquipmentDataControl';
 import { SpecImportControl } from './SpecImportControl';
+import { UserControl } from './UserControl';
+import { RecordsControl, AuditControl } from './RecordsControl';
+import { CommentsControl } from './CommentsControl';
+import { ForumCategories } from './ForumCategories';
 import {
   fetchQueue,
   resolveItem,
@@ -54,6 +61,15 @@ const statusTone: Record<ModerationStatus, 'muted' | 'primary' | 'success' | 'da
 export function AdminPage() {
   const { user, configured, loading } = useAuth();
   const roles = useRoles();
+
+  const [params, setParams] = useSearchParams();
+  const bolumParam = params.get('bolum');
+  const bolum: BolumId = isBolum(bolumParam) ? bolumParam : 'moderasyon';
+
+  /* `replace`: sekme gezinmesi geri yığınını doldurmamalı — geri tuşu
+     panelden çıkmalı, önceki sekmeye değil. */
+  const setBolum = (id: BolumId) =>
+    setParams(id === 'moderasyon' ? {} : { bolum: id }, { replace: true });
 
   const [filter, setFilter] = useState<ModerationStatus | 'hepsi'>('pending');
   const [queue, setQueue] = useState<QueueResult | null>(null);
@@ -122,7 +138,7 @@ export function AdminPage() {
   if (loading || roles.status === 'loading') {
     return (
       <Shell header={header}>
-        <p className="py-10 text-center text-[12px] text-muted-foreground" role="status">
+        <p className="py-10 text-center text-meta text-muted-foreground" role="status">
           Yetkiler kontrol ediliyor…
         </p>
       </Shell>
@@ -170,6 +186,10 @@ export function AdminPage() {
 
   return (
     <Shell header={header}>
+      <BolumSekmeleri aktif={bolum} onChange={setBolum} />
+
+      {bolum === 'moderasyon' && (
+        <>
       <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-5">
         {(
           [
@@ -227,11 +247,11 @@ export function AdminPage() {
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
         <Panel title="Kuyruk" status={filter === 'hepsi' ? 'tümü' : statusLabels[filter]}>
           {!queue ? (
-            <p className="py-6 text-center text-[12px] text-muted-foreground">
+            <p className="py-6 text-center text-meta text-muted-foreground">
               Kuyruk okunuyor…
             </p>
           ) : queue.items.length === 0 ? (
-            <p className="py-6 text-center text-[12px] leading-relaxed text-muted-foreground">
+            <p className="py-6 text-center text-meta leading-relaxed text-muted-foreground">
               Bu filtrede kayıt yok. Kuyruk boşsa moderasyon bekleyen içerik
               yok demektir; yetkiniz eksikse de aynı görünür — RLS yetkisiz
               sorguya boş sonuç döndürür.
@@ -248,7 +268,7 @@ export function AdminPage() {
                       <Badge tone={statusTone[item.status]}>
                         {statusLabels[item.status]}
                       </Badge>
-                      <span className="text-[12.5px] font-medium text-foreground">
+                      <span className="text-caption font-medium text-foreground">
                         {targetLabels[item.target_type]}
                       </span>
                       <span className="text-meta text-muted-foreground">
@@ -353,49 +373,194 @@ export function AdminPage() {
         </div>
       </div>
 
-      {/*
-        Yayın kontrolü kuyruğun altında: moderasyon günlük iş, yayın
-        programı ise seyrek bir eylem. Sık kullanılanı üstte tutmak,
-        panelin her açılışında aşağı kaydırmayı gerektirmiyor.
-      */}
-      <div className="mt-4">
-        <BroadcastControl />
-      </div>
-
-      {/* İçerik yönetimi öne çıkanların ÜSTÜNDE: önce içerik yazılır,
-          sonra hangisinin öne çıkacağı seçilir. */}
-      <div className="mt-4">
-        <ContentControl canWrite={roles.isAdmin} />
-      </div>
-
-      {/* Öne çıkan içerik yayın kontrolünün yanında: ikisi de "bugün ne
-          görünsün" sorusunun cevabı. */}
-      <div className="mt-4">
-        <FeaturedControl canWrite={roles.isAdmin} />
-      </div>
+        </>
+      )}
 
       {/*
-        Katalog kontrolü en altta: moderasyon her gece, yayın haftada bir,
-        katalog senkronizasyonu ise sürüm başına bir kez yapılan bir iş.
-        Sıklığa göre dizmek, panelin her açılışında en çok kullanılanı
-        aramayı gerektirmiyor.
+        İÇERİK — sitenin okunan/yayımlanan malzemesi.
+
+        Haber ve yazılar üstte, kayıtlar altta: önce içerik yazılır,
+        sonra yayımlanmış olan denetlenir. Forum konusu bu sekmede YOK,
+        kendi bölümünde — aynı kaydı iki yerden yönetmek, biri
+        güncellenirken diğerinin eski kalması demekti.
       */}
-      <div className="mt-4">
-        <CatalogControl canWrite={roles.isAdmin} />
-      </div>
+      {bolum === 'icerik' && (
+        <div className="space-y-4">
+          <ContentControl canWrite={roles.isAdmin} />
+          <RecordsControl kinds={['photo', 'listing', 'event', 'site']} />
+          <CommentsControl kinds={['photoComment', 'siteReview']} />
+        </div>
+      )}
 
-      {/* Eksik teknik veri raporu senkronizasyonun hemen altında:
-          senkronizasyondan sonra bakılacak ilk yer burası. */}
-      <div className="mt-4">
-        <EquipmentDataControl canWrite={roles.isAdmin} />
-      </div>
+      {/*
+        KULLANICILAR — hesaplar ve onlara dokunan her şey.
 
-      {/* İçe aktarma raporun hemen altında: rapor neyin eksik olduğunu
-          söylüyor, bu ekran o eksiği toplu doldurmanın yolu. */}
-      <div className="mt-4">
-        <SpecImportControl canWrite={roles.isAdmin} />
-      </div>
+        Denetim kaydı burada, ayrı bir sekmede değil: "bu rolü kim
+        verdi" sorusu her zaman bir kullanıcı satırına bakarken
+        soruluyor. Ayrı sekmede olsaydı iki ekran arasında gidip gelmek
+        gerekirdi.
+      */}
+      {bolum === 'kullanicilar' && roles.isAdmin && (
+        <div className="space-y-4">
+          <UserControl />
+          <AuditControl />
+        </div>
+      )}
+      {bolum === 'kullanicilar' && !roles.isAdmin && (
+        <Panel title="Kullanıcılar">
+          <p className="py-4 text-center text-body-sm text-muted-foreground">
+            Kullanıcı yönetimi yalnızca yöneticilere açık. Moderatör
+            rolüyle içerik ve forum bölümlerini kullanabilirsiniz.
+          </p>
+        </Panel>
+      )}
+
+      {/*
+        FORUM — konu ve gönderi birlikte.
+
+        Tabloya göre bölseydik konu "içerik", gönderi "yorum" sekmesine
+        düşerdi; oysa foruma bakan biri ikisini birlikte düşünüyor:
+        konuyu kilitlemek mi yoksa tek bir gönderiyi kaldırmak mı
+        yeterli, bu karar ikisini yan yana görmeyi gerektiriyor.
+      */}
+      {bolum === 'forum' && (
+        <div className="space-y-4">
+          {/* Kategoriler üstte: forumun iskeleti, içerikten önce gelir. */}
+          <ForumCategories canWrite={roles.isAdmin} />
+          <RecordsControl kinds={['thread']} title="Forum konuları" />
+          <CommentsControl kinds={['forumPost']} />
+        </div>
+      )}
+
+      {/* ANA SAYFA — bugün ne görünsün. */}
+      {bolum === 'anasayfa' && <FeaturedControl canWrite={roles.isAdmin} />}
+
+      {/* YAYIN — TV ve radyo programı. */}
+      {bolum === 'yayin' && <BroadcastControl />}
+
+      {/*
+        RADYO — §10.5'in AstroHub'a düşen kısmı.
+
+        AzuraCast panelinin yerine geçmiyor: program takvimi, yayıncı
+        künyesi ve canlı duyurusu burada; playlist rotasyonu, mount ve
+        bitrate orada. Aynı ayarı iki yerde tutmak, ikisi ayrıştığında
+        hangisinin geçerli olduğunu belirsiz bırakırdı.
+      */}
+      {bolum === 'radyo' && <RadioControl canWrite={roles.isAdmin} />}
+
+      {/*
+        TV — §11.3'ün AstroHub'a düşen kısmı.
+
+        Kanal bağlantısı yokken sahte içerik göstermiyor (§11.2 son
+        madde) ve senkronizasyon düğmesi hiç görünmüyor: basılınca
+        "bağlı değil" diyecek bir düğme, çalışmayan bir kontroldür.
+      */}
+      {bolum === 'tv' && <TvControl canWrite={roles.isAdmin} />}
+
+      {/*
+        HATIRLATMA — sitenin kullanıcılara ne gönderdiği.
+
+        Teslim sayıları, hatalı işler ve yeniden deneme aynı ekranda:
+        hatayı görüp yeniden denemek için sekme değiştirmek gerekmiyor.
+        Zorunlu duyuru da burada, çünkü o da bir gönderim kanalı.
+      */}
+      {bolum === 'hatirlatma' && <ReminderControl canWrite={roles.isAdmin} />}
+
+      {/*
+        KATALOG — sürüm başına bir kez yapılan işler.
+
+        Üçü aynı sırayla: senkronizasyon neyin geldiğini, rapor neyin
+        eksik olduğunu, içe aktarma o eksiği doldurmanın yolunu
+        söylüyor.
+      */}
+      {bolum === 'katalog' && (
+        <div className="space-y-4">
+          <CatalogControl canWrite={roles.isAdmin} />
+          <EquipmentDataControl canWrite={roles.isAdmin} />
+          <SpecImportControl canWrite={roles.isAdmin} />
+        </div>
+      )}
+
     </Shell>
+  );
+}
+
+/**
+ * SEKMELER — panel konularına göre bölündü.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * NEDEN SEKME
+ *
+ * Panel tek bir uzun yığındı ve on bir bölüme çıkmıştı. Bir yöneticinin
+ * radyo listesine ulaşması için moderasyon kuyruğunu, içerik kayıtlarını
+ * ve kullanıcı listesini geçmesi gerekiyordu — hepsi de o an ilgisiz.
+ * Uzun bir sayfada "aşağıda bir yerde" olan şey, pratikte yok gibidir.
+ *
+ * Gruplama İŞE göre yapıldı, tabloya göre değil: "Forum" sekmesi hem
+ * konuyu hem gönderiyi taşıyor çünkü foruma bakan biri ikisini birlikte
+ * düşünüyor. Tabloya göre bölseydik aynı iş iki sekmeye dağılırdı.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * SEKME ADRESTE TAŞINIYOR
+ *
+ * `?bolum=forum` — üç sebeple:
+ *   1. Yenileme sekmeyi kaybetmiyor (moderasyon uzun bir iş, sayfa
+ *      yenilenebiliyor),
+ *   2. Bağlantı paylaşılabiliyor ("şu kullanıcıya bak" derken),
+ *   3. Geri tuşu beklendiği gibi çalışıyor.
+ *
+ * Bilinmeyen bir değer varsayılana düşüyor; adres çubuğuna elle yazılan
+ * bir şey paneli boş bırakmamalı.
+ */
+const BOLUMLER = [
+  { id: 'moderasyon', label: 'Moderasyon' },
+  { id: 'icerik', label: 'İçerik' },
+  { id: 'kullanicilar', label: 'Kullanıcılar' },
+  { id: 'forum', label: 'Forum' },
+  { id: 'anasayfa', label: 'Ana sayfa' },
+  { id: 'yayin', label: 'Yayın' },
+  { id: 'radyo', label: 'Radyo' },
+  { id: 'tv', label: 'TV' },
+  { id: 'hatirlatma', label: 'Hatırlatma' },
+  { id: 'katalog', label: 'Katalog' },
+] as const;
+
+type BolumId = (typeof BOLUMLER)[number]['id'];
+
+function isBolum(value: string | null): value is BolumId {
+  return BOLUMLER.some((b) => b.id === value);
+}
+
+function BolumSekmeleri({
+  aktif,
+  onChange,
+}: {
+  aktif: BolumId;
+  onChange: (id: BolumId) => void;
+}) {
+  return (
+    <div
+      role="tablist"
+      aria-label="Yönetim bölümleri"
+      className="mb-4 flex flex-wrap gap-1 border-b border-border"
+    >
+      {BOLUMLER.map((b) => (
+        <button
+          key={b.id}
+          role="tab"
+          aria-selected={aktif === b.id}
+          onClick={() => onChange(b.id)}
+          className={cn(
+            '-mb-px rounded-t-lg border-b-2 px-3.5 py-2.5 text-body-sm font-medium transition-colors',
+            aktif === b.id
+              ? 'border-primary text-primary'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
+          )}
+        >
+          {b.label}
+        </button>
+      ))}
+    </div>
   );
 }
 

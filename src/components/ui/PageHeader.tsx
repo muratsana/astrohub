@@ -62,7 +62,7 @@ export function PageHeader({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
           <div className="flex flex-wrap items-baseline gap-3">
-            <h1 className="text-[26px] text-foreground sm:text-[30px]">
+            <h1 className="type-page text-foreground">
               {title}
             </h1>
             {meta && (
@@ -70,7 +70,7 @@ export function PageHeader({
             )}
           </div>
           {description && (
-            <p className="mt-2 max-w-[70ch] text-[12px] leading-relaxed text-muted-foreground">
+            <p className="mt-2 max-w-[70ch] text-meta leading-relaxed text-muted-foreground">
               {description}
             </p>
           )}

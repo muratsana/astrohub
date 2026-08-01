@@ -35,15 +35,15 @@
  * bir geceye derin gök için "Çok iyi gece" demek doğru değil.
  *
  * README de zaten sayıların örnek, eşiklerin öneri olduğunu yazıyor.
- * Buradaki model aynı girdilerle 67 ("Orta gece") üretiyor: bulutsuz ve
- * sakin ama dolunay altında bir gece derin gök için gerçekten orta bir
- * gecedir — küme, çift yıldız ve gezegen için hâlâ iyidir ve öneri satırı
- * kullanıcıyı oraya yönlendiriyor.
+ * Buradaki model aynı girdilerle gözle gözlem için 53 ("Orta gece")
+ * üretiyor: bulutsuz ve sakin ama dolunay altında bir gece derin gök için
+ * gerçekten orta bir gecedir — küme, çift yıldız ve gezegen için hâlâ
+ * iyidir ve öneri satırı kullanıcıyı oraya yönlendiriyor.
  */
 
 /** Skor kırılımının tek satırı. */
 export interface ScoreRow {
-  key: 'transparency' | 'seeing' | 'darkness' | 'comfort';
+  key: 'clarity' | 'transparency' | 'seeing' | 'darkness' | 'comfort';
   label: string;
   /** 0–100; ölçülemeyen bileşende `null`. */
   value: number | null;
@@ -67,6 +67,8 @@ export interface NightScore {
   recommendation: string;
   /** Seeing ölçülemediği için hüküm sınırlandı mı? */
   limitedBySeeing: boolean;
+  /** Skorun hangi kullanım için hesaplandığı. */
+  profile: NightProfile;
 }
 
 export interface NightScoreInputs {
@@ -88,6 +90,24 @@ export interface NightScoreInputs {
   moonlessMinutes: number;
   /** Ay aydınlanma oranı (0–1). */
   moonIllumination: number;
+  /**
+   * Rüzgâr hamlesi (km/sa); ölçülmediyse `null`.
+   *
+   * ORTALAMADAN AYRI GİRDİ ve asıl olarak astrofotoğrafta belirleyici:
+   * 12 km/sa ortalama sorunsuz görünürken 40 km/sa hamle beş dakikalık
+   * pozu tek başına çöpe atar. Gözle gözlemde etkisi çok daha az —
+   * titreşim geçer, gözlemci bekler.
+   */
+  windGust?: number | null;
+  /**
+   * Şeffaflık indeksi (1 berrak – 5 bulanık); ölçülmediyse `null`.
+   *
+   * Bulut ÖRTÜSÜNDEN AYRI: toz taşınımında gökyüzü bulutsuz görünür ama
+   * sönük hedefler kaybolur. Ölçüm gelmediğinde bileşen skora hiç
+   * girmiyor — nemden türetilmiş bir sayı, ölçülmemişi ölçülmüş gibi
+   * göstermek olurdu.
+   */
+  transparencyIndex?: number | null;
 }
 
 const clamp = (value: number, min = 0, max = 100) =>
@@ -101,7 +121,45 @@ const clamp = (value: number, min = 0, max = 100) =>
  * (ay) en hafif değil ama ikinci sırada değil: dar bant filtre ayın
  * etkisini büyük ölçüde siliyor, yani "ay var" mutlak bir engel değil.
  */
-const WEIGHTS = { seeing: 0.45, comfort: 0.3, darkness: 0.25 } as const;
+/**
+ * ══════════════════════════════════════════════════════════════════════
+ * İKİ AYRI SKOR — belge ikisini de zorunlu tutuyor (§7.2, 18. alan).
+ *
+ * Tek skor vardı ve bu, iki farklı geceyi aynı sayıyla anlatıyordu.
+ * Aynı gece iki gözlemci için farklıdır:
+ *
+ * · GÖZLE GÖZLEM anlıktır. 30 km/sa rüzgârda gözlemci teleskobun
+ *   arkasına geçer, titreşim beklerken sönümlenir; çiy oküleri değil
+ *   objektifi geç yakalar ve silinir. Buna karşılık AY ACIMASIZDIR:
+ *   gözün eşiği yok, dolunayda sönük galaksi kaybolur ve dar bant
+ *   filtre gözle işe yaramaz.
+ * · ASTROFOTOĞRAF birikimlidir. Tek bir 40 km/sa hamle beş dakikalık
+ *   pozu çöpe atar; çiy tuttuğu anda gecenin geri kalanı gider. Ayın
+ *   etkisi ise dar bant filtreyle büyük ölçüde silinir — bu yüzden
+ *   karanlık AĞIRLIĞI DAHA DÜŞÜK, konfor ağırlığı daha yüksek.
+ *
+ * Seeing ikisinde de ağır ama sebebi farklı: gözle yüksek büyütmede
+ * görüntüyü kaynatır, fotoğrafta yıldızları şişirir.
+ *
+ * SEEING TOPLAMDA HÂLÂ EN AĞIRI DEĞİL ASTROFOTOĞRAFTA: rehberli poz
+ * seeing'i kısmen tolere eder (yıldız şişer ama kare kullanılabilir),
+ * oysa hamle ya da çiy kareyi TAMAMEN alır.
+ */
+export type NightProfile = 'gozlem' | 'astrofoto';
+
+const PROFILE_WEIGHTS: Record<
+  NightProfile,
+  { seeing: number; comfort: number; darkness: number }
+> = {
+  gozlem: { seeing: 0.45, comfort: 0.15, darkness: 0.4 },
+  astrofoto: { seeing: 0.35, comfort: 0.4, darkness: 0.25 },
+};
+
+export const PROFILE_LABELS: Record<NightProfile, string> = {
+  gozlem: 'Gözle gözlem',
+  astrofoto: 'Astrofotoğraf',
+};
+
 
 /** Kırılım çubuğunun turuncuya döndüğü eşik. */
 const WARN_BELOW = 55;
@@ -131,13 +189,44 @@ function seeingScore(index: number): number {
 function comfortScore(
   windSpeed: number,
   temperature: number,
-  dewPoint: number
+  dewPoint: number,
+  profile: NightProfile,
+  windGust: number | null | undefined
 ): number {
+  /*
+   * ASTROFOTOĞRAFTA RÜZGÂR HAMLESİ KULLANILIYOR, ORTALAMA DEĞİL.
+   * Poz birikimli: ortalaması sakin bir gecede tek bir hamle kareyi
+   * alır. Gözle gözlemde tersi doğru — anlık titreşim geçer, bu yüzden
+   * orada ortalama daha temsili.
+   */
+  const effectiveWind =
+    profile === 'astrofoto' && windGust != null
+      ? Math.max(windSpeed, windGust)
+      : windSpeed;
+
   // 0 km/sa → 100, 35 km/sa → 0.
-  const wind = clamp(100 - (windSpeed / 35) * 100);
+  const wind = clamp(100 - (effectiveWind / 35) * 100);
   // 8°C fark ve üstü tamam, 0°C fark çiy kesin.
   const spread = clamp(((temperature - dewPoint) / 8) * 100);
   return clamp(wind * 0.4 + spread * 0.6);
+}
+
+/**
+ * Aerosol ÇARPAN ama buluttan çok daha yumuşak.
+ *
+ * Bulut geceyi bitirir (çarpan 0'a kadar iner); pus bitirmez, sönük
+ * hedefleri alır. İndeks 1 → 1.00, indeks 5 → 0.75. Ölçüm yoksa çarpan
+ * 1: bilinmeyen bir bulanıklığı ceza olarak yazmak, veri eksikliğini
+ * kötü havaya çevirmek olurdu.
+ */
+function aerosolFactor(index: number | null | undefined): number {
+  if (index == null) return 1;
+  return 1 - (clamp(index, 1, 5) - 1) * 0.0625;
+}
+
+/** Şeffaflık indeksi 1–5 → 100–0 (kırılım çubuğu için). */
+function transparencyScore(index: number): number {
+  return clamp(((5 - index) / 4) * 100);
 }
 
 /**
@@ -167,16 +256,33 @@ const VERDICT_LABELS: Record<NightVerdict, string> = {
   zayif: 'Zayıf gece',
 };
 
-export function nightScore(inputs: NightScoreInputs): NightScore {
-  const transparency = clamp(100 - inputs.cloudCover);
+export function nightScore(
+  inputs: NightScoreInputs,
+  profile: NightProfile = 'gozlem'
+): NightScore {
+  const weights = PROFILE_WEIGHTS[profile];
+  /*
+   * "AÇIKLIK" ADI BİLİNÇLİ. Bu satır uzun süre "Şeffaflık" diye
+   * yazıyordu ama hesabı `100 - bulut` idi — yani açıklığı ölçüp
+   * şeffaflık diye sunuyordu. Gerçek şeffaflık (aerosol) artık ayrı bir
+   * ölçüm ve ayrı bir satır; ikisini aynı ada sıkıştırmak, toz taşınan
+   * bulutsuz bir geceye "şeffaflık 100" demek olurdu.
+   */
+  const clarity = clamp(100 - inputs.cloudCover);
   const seeing =
     inputs.seeingIndex === null ? null : seeingScore(inputs.seeingIndex);
   const comfort = comfortScore(
     inputs.windSpeed,
     inputs.temperature,
-    inputs.dewPoint
+    inputs.dewPoint,
+    profile,
+    inputs.windGust
   );
   const darkness = darknessScore(inputs.darkMinutes, inputs.moonlessMinutes);
+  const transparency =
+    inputs.transparencyIndex == null
+      ? null
+      : transparencyScore(inputs.transparencyIndex);
 
   /*
    * Seeing yoksa ağırlığı kalan ikisine oranlarını koruyarak dağıtılıyor.
@@ -185,20 +291,28 @@ export function nightScore(inputs: NightScoreInputs): NightScore {
    */
   const base =
     seeing === null
-      ? (comfort * WEIGHTS.comfort + darkness * WEIGHTS.darkness) /
-        (WEIGHTS.comfort + WEIGHTS.darkness)
-      : seeing * WEIGHTS.seeing +
-        comfort * WEIGHTS.comfort +
-        darkness * WEIGHTS.darkness;
+      ? (comfort * weights.comfort + darkness * weights.darkness) /
+        (weights.comfort + weights.darkness)
+      : seeing * weights.seeing +
+        comfort * weights.comfort +
+        darkness * weights.darkness;
 
-  const total = Math.round((transparency / 100) * base);
+  const total = Math.round(
+    (clarity / 100) * base * aerosolFactor(inputs.transparencyIndex)
+  );
   const limitedBySeeing = seeing === null;
 
   const rows: ScoreRow[] = [
     {
+      key: 'clarity',
+      label: 'Açıklık',
+      value: Math.round(clarity),
+      tone: toneFor(clarity),
+    },
+    {
       key: 'transparency',
       label: 'Şeffaflık',
-      value: Math.round(transparency),
+      value: transparency === null ? null : Math.round(transparency),
       tone: toneFor(transparency),
     },
     {
@@ -222,6 +336,7 @@ export function nightScore(inputs: NightScoreInputs): NightScore {
   ];
 
   const { pros, cons } = reasons(inputs, {
+    clarity,
     transparency,
     seeing,
     darkness,
@@ -235,8 +350,9 @@ export function nightScore(inputs: NightScoreInputs): NightScore {
     rows,
     pros,
     cons,
-    recommendation: recommend(inputs, darkness, seeing),
+    recommendation: recommend(inputs, darkness, seeing, profile),
     limitedBySeeing,
+    profile,
   };
 }
 
@@ -250,7 +366,8 @@ export function nightScore(inputs: NightScoreInputs): NightScore {
 function reasons(
   inputs: NightScoreInputs,
   scores: {
-    transparency: number;
+    clarity: number;
+    transparency: number | null;
     seeing: number | null;
     darkness: number;
     comfort: number;
@@ -260,12 +377,23 @@ function reasons(
   const cons: string[] = [];
   const spread = inputs.temperature - inputs.dewPoint;
 
-  if (scores.transparency >= 85) {
+  if (scores.clarity >= 85) {
     pros.push(
       `Gece boyunca %${Math.round(inputs.cloudCover)} bulut, çiy noktası ${Math.round(inputs.dewPoint)}°C`
     );
-  } else if (scores.transparency < 55) {
+  } else if (scores.clarity < 55) {
     cons.push(`%${Math.round(inputs.cloudCover)} bulut örtüsü — açıklık dar`);
+  }
+
+  /*
+   * PUS AYRI BİR GEREKÇE. Bulutsuz ama bulanık gecede kullanıcı skorun
+   * neden düştüğünü bulutta arar ve bulamaz; sebebi yazmak, sayıyı
+   * tekrarlamaktan farklı bir bilgi veriyor.
+   */
+  if (scores.transparency !== null && scores.transparency < 50) {
+    cons.push('Atmosferde toz/pus — sönük hedeflerde kontrast düşük');
+  } else if (scores.transparency !== null && scores.transparency >= 85) {
+    pros.push('Atmosfer berrak — sönük hedefler için iyi gece');
   }
 
   if (scores.seeing !== null) {
@@ -311,8 +439,26 @@ function reasons(
 function recommend(
   inputs: NightScoreInputs,
   darkness: number,
-  seeing: number | null
+  seeing: number | null,
+  profile: NightProfile
 ): string {
+  /*
+   * ÖNERİ DE PROFİLE GÖRE. Aynı ay parlaklığında gözlemciye "dar bant
+   * filtre tak" demek işe yaramaz — dar bant gözle çalışmaz, gözün
+   * eşiği yoktur. İki kullanıcıya aynı cümleyi kurmak, birinin
+   * gecesini boşa harcatmak demekti.
+   */
+  if (profile === 'gozlem' && darkness < 40 && inputs.cloudCover < 70) {
+    return 'Ay parlak: sönük galaksi yerine küme, çift yıldız ve gezegen; dar bant filtre gözle işe yaramaz.';
+  }
+  if (
+    profile === 'astrofoto' &&
+    inputs.windGust != null &&
+    inputs.windGust >= 30 &&
+    inputs.cloudCover < 70
+  ) {
+    return `Hamle ${Math.round(inputs.windGust)} km/sa — pozu kısaltın ya da rüzgâr siperi kurun.`;
+  }
   if (inputs.cloudCover >= 70) {
     return 'Bulut yoğun — ekipmanı kurmadan önce saatlik tahmini kontrol edin.';
   }

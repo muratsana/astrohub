@@ -220,7 +220,7 @@ export function EventMapPage() {
                         )}
                       >
                         <span className="min-w-0">
-                          <span className="block truncate text-[12.5px] text-foreground">
+                          <span className="block truncate text-caption text-foreground">
                             {item.title}
                           </span>
                           <span className="tabular mt-0.5 block text-meta text-muted-foreground">
@@ -250,7 +250,7 @@ export function EventMapPage() {
                         to={`/etkinlik/${item.slug}`}
                         className="flex items-baseline justify-between gap-3 py-2 transition-colors hover:text-primary"
                       >
-                        <span className="min-w-0 truncate text-[12.5px] text-foreground">
+                        <span className="min-w-0 truncate text-caption text-foreground">
                           {item.title}
                         </span>
                         <Badge tone="cold">Çevrimiçi</Badge>

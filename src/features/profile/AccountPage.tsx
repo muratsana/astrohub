@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { Container } from '@/components/ui/Container';
+import { ProvinceSelect } from '@/components/ui/ProvinceSelect';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Panel, SpecList, SpecRow } from '@/components/ui/Panel';
 import { Field } from '@/components/ui/Field';
@@ -16,6 +17,7 @@ import {
   type ProfileEdit,
 } from '@/services/content/profile';
 import { Badge } from '@/components/ui/Badge';
+import { BlockList } from '@/features/social/BlockList';
 
 /**
  * HESABIM — profil yönetimi (denetim maddesi L2).
@@ -36,7 +38,7 @@ import { Badge } from '@/components/ui/Badge';
  */
 export function AccountPage() {
   const navigate = useNavigate();
-  const { user, loading: authLoading, signOut } = useAuth();
+  const { user, loading: authLoading, signOut, signOutEverywhere } = useAuth();
   const roles = useRoles();
   const { profile, loading, error, refresh } = useMyProfile(user?.id);
 
@@ -50,6 +52,9 @@ export function AccountPage() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [failure, setFailure] = useState<string | null>(null);
+  /* Tüm oturumları iptal etmek geri alınamaz; ikinci tık ayrı düğmede. */
+  const [revokeArmed, setRevokeArmed] = useState(false);
+  const [revokeBusy, setRevokeBusy] = useState(false);
 
   /* Sunucudan gelen kayıt forma bir kez yansıtılıyor; kullanıcı yazmaya
      başladıktan sonra tazeleme onu ezmemeli. */
@@ -95,6 +100,21 @@ export function AccountPage() {
     }
   }
 
+  async function revokeEverywhere() {
+    setRevokeBusy(true);
+    setFailure(null);
+    const { error } = await signOutEverywhere();
+    setRevokeBusy(false);
+    if (error) {
+      /* Başarısızlıkta kurulu düğme geri alınıyor: "onayla" hâlinde
+         bırakmak, iptal edilmemiş bir işlemi edilmiş gibi gösterirdi. */
+      setRevokeArmed(false);
+      setFailure(error);
+      return;
+    }
+    navigate('/');
+  }
+
   return (
     <>
       <PageMeta
@@ -107,7 +127,10 @@ export function AccountPage() {
         <PageHeader
           breadcrumb={[{ label: 'Ana Sayfa', to: '/' }, { label: 'Hesabım' }]}
           title="Hesabım"
-          description="Profilinizde görünen bilgiler. Kullanıcı adı profil adresinizin parçasıdır."
+          /* İlk cümle başlığı tekrar ediyordu; ikinci cümle GERÇEK bir
+             yardım — kullanıcı adının adrese girdiği çoğu kişi için
+             sürpriz. Yalnızca o kaldı. */
+          description="Kullanıcı adı profil adresinizin parçasıdır."
           actions={
             profile ? (
               <ButtonLink
@@ -178,14 +201,13 @@ export function AccountPage() {
                 </Field>
 
                 <Field label="Şehir" htmlFor="p-city">
-                  <Input
+                  {/* Tek kaynak: profil şehri de `provinces` listesinden.
+                      Serbest metin döneminden kalan değer korunuyor. */}
+                  <ProvinceSelect
                     id="p-city"
                     value={edit.city}
-                    maxLength={60}
-                    placeholder="Ankara"
-                    onChange={(e) =>
-                      setEdit((v) => ({ ...v, city: e.target.value }))
-                    }
+                    placeholder="Belirtilmedi"
+                    onChange={(city) => setEdit((v) => ({ ...v, city }))}
                   />
                 </Field>
               </div>
@@ -218,7 +240,7 @@ export function AccountPage() {
                   onChange={(e) =>
                     setEdit((v) => ({ ...v, bio: e.target.value }))
                   }
-                  className="w-full resize-y rounded-card border border-border bg-surface-2 px-2.5 py-2 text-[12px] leading-relaxed text-foreground outline-none transition-colors focus:border-primary"
+                  className="w-full resize-y rounded-card border border-border bg-surface-2 px-2.5 py-2 text-meta leading-relaxed text-foreground outline-none transition-colors focus:border-primary"
                 />
               </Field>
 
@@ -285,8 +307,53 @@ export function AccountPage() {
                 >
                   Çıkış yap
                 </Button>
+                {revokeArmed ? (
+                  <>
+                    <Button
+                      size="sm"
+                      variant="danger"
+                      disabled={revokeBusy}
+                      onClick={() => void revokeEverywhere()}
+                    >
+                      {revokeBusy ? 'Kapatılıyor…' : 'Onayla — hepsini kapat'}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={revokeBusy}
+                      onClick={() => setRevokeArmed(false)}
+                    >
+                      Vazgeç
+                    </Button>
+                  </>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setRevokeArmed(true)}
+                  >
+                    Tüm cihazlardan çıkış
+                  </Button>
+                )}
               </div>
+
+              {revokeArmed && (
+                <p className="mt-2 text-meta leading-relaxed text-warning">
+                  Telefon, tablet ve diğer tarayıcılar dâhil her yerde
+                  oturumunuz kapanır ve yeniden giriş yapmanız gerekir. Açık
+                  duran cihazlar anında değil, en geç bir saat içinde düşer —
+                  erişim jetonunun ömrü dolduğunda.
+                </p>
+              )}
             </Panel>
+
+            {/*
+              ENGELLENENLER HESAP AYARLARINDA. Engellemek profil ve sohbet
+              içinden tek tıkla yapılıyor; geri almanın yolu yalnızca o
+              kişinin profilini yeniden bulmaktan geçseydi, adını
+              hatırlamayan kullanıcı için karar kalıcı olurdu.
+            */}
+            <BlockList />
 
             <Panel title="Henüz yapılamayanlar">
               {/*

@@ -1,8 +1,9 @@
 import { useParams } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { Badge } from '@/components/ui/Badge';
-import { Button, ButtonLink } from '@/components/ui/Button';
-import { EventRegistration } from './EventRegistration';
+import { ButtonLink } from '@/components/ui/Button';
+import { EventInterest } from './EventInterest';
+import { EventChanges } from './EventChanges';
 import { PhotoPlaceholder } from '@/components/media/PhotoPlaceholder';
 import { PlaceholderPage } from '@/components/PlaceholderPage';
 import { useEventCatalog } from '@/services/content/events';
@@ -92,7 +93,7 @@ export function EventDetailPage() {
               )}
             </div>
 
-            <h1 className="mt-3 text-[26px] text-foreground sm:text-[30px]">
+            <h1 className="mt-3 type-page text-foreground">
               {event.title}
             </h1>
             <p className="tabular mt-2 text-sm text-muted-foreground">
@@ -105,7 +106,7 @@ export function EventDetailPage() {
 
             {/* Program (§7.6 zaman çizelgesi) */}
             <section className="mt-8">
-              <h2 className="mb-3 text-lg font-semibold text-foreground">
+              <h2 className="type-section mb-3 font-semibold text-foreground">
                 Program
               </h2>
               <ol className="space-y-0 border-l border-border">
@@ -137,7 +138,7 @@ export function EventDetailPage() {
 
             {event.observedTargets.length > 0 && (
               <section className="mt-8">
-                <h2 className="mb-3 text-lg font-semibold text-foreground">
+                <h2 className="type-section mb-3 font-semibold text-foreground">
                   Gözlemlenecek Hedefler
                 </h2>
                 <div className="flex flex-wrap gap-1.5">
@@ -150,7 +151,7 @@ export function EventDetailPage() {
 
             {event.rules && event.rules.length > 0 && (
               <section className="mt-8">
-                <h2 className="mb-3 text-lg font-semibold text-foreground">
+                <h2 className="type-section mb-3 font-semibold text-foreground">
                   Katılımcı Kuralları
                 </h2>
                 <ul className="list-disc space-y-1.5 pl-5 text-sm text-muted-foreground">
@@ -160,6 +161,8 @@ export function EventDetailPage() {
                 </ul>
               </section>
             )}
+
+            <EventChanges eventId={event.id} />
           </div>
 
           {/* Sağ: aksiyon paneli */}
@@ -180,13 +183,10 @@ export function EventDetailPage() {
                 </p>
               )}
 
-              <Button className="mt-4 w-full" size="lg" disabled>
-                Katıl (üyelik gerektirir)
-              </Button>
-              <p className="mt-2 text-center text-xs text-muted-foreground/70">
-                Katılım kaydı hesap sistemi devreye alınınca açılacak.
-              </p>
-
+              {/* Buradaki devre dışı "Katıl (üyelik gerektirir)" düğmesi
+                  kaldırıldı: hesap sistemi çalışıyor ve gerçek katılım
+                  kontrolü aşağıda. Basılamayan bir düğme, altındaki
+                  çalışan kontrolü de şüpheli gösteriyordu. */}
               <hr className="my-4 border-border" />
 
               {/* Kaynak şeffaflığı (§8.4) */}
@@ -208,7 +208,7 @@ export function EventDetailPage() {
               </dl>
             </div>
 
-            <EventRegistration event={event} />
+            <EventInterest event={event} />
 
             <ButtonLink
               to="/etkinlikler"

@@ -185,6 +185,18 @@ export function MenuIcon(props: IconProps) {
   );
 }
 
+/** Tablo görünümü — üç satırlı ızgara. */
+export function TableIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M3 5h18v14H3z" />
+      <path d="M3 10h18" />
+      <path d="M3 14.5h18" />
+      <path d="M9 5v14" />
+    </svg>
+  );
+}
+
 export function CloseIcon(props: IconProps) {
   return (
     <svg {...base(props)}>
@@ -378,6 +390,24 @@ export function RouteIcon(props: IconProps) {
       <circle cx="6" cy="6" r="2.2" />
       <circle cx="18" cy="18" r="2.2" />
       <path d="M8.2 6H15a3 3 0 0 1 0 6H9a3 3 0 0 0 0 6h6.8" />
+    </svg>
+  );
+}
+
+/*
+ * Bildirim zili (Faz 5). Üst çubukta rozetle birlikte duruyor, bu yüzden
+ * gövdesi kapalı: 14px'te açık uçlu bir çizim rozetin yanında dağılıyor.
+ *
+ * Mesaj ve takip için ikon EKLENMEDİ — ikisinin de ikon gerektiren bir
+ * yeri yok (mesajlar modül haritasında metin girişi, takip düğmesi
+ * etiketli). Kullanılmayan ikon, dosyayı okuyan kişiye var olmayan bir
+ * yüzey vaat eder.
+ */
+export function BellIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M18 15.5V11a6 6 0 0 0-12 0v4.5L4.5 18h15L18 15.5z" />
+      <path d="M10 18a2 2 0 0 0 4 0" />
     </svg>
   );
 }

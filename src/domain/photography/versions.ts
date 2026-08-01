@@ -38,8 +38,17 @@ export interface PhotoVersion {
   publishedAt: string;
   /** Bu sürümde ne değişti — tek cümle. */
   note: string;
-  /** Yer tutucu görsel tonu; medya pipeline'ı gelince dosya URL'i olacak. */
+  /** Görsel yokken çizilen yer tutucu tonu. */
   gradient: string;
+  /**
+   * Sürümün kendi görselinin genel adresi.
+   *
+   * Yoksa karşılaştırma sürgüsü yer tutucu gradyana düşüyor ve bunu
+   * AÇIKÇA söylüyor. Gradyan bir görüntü değil; iki gradyanı yan yana
+   * koyup "işleme farkına bak" demek, olmayan bir farkı varmış gibi
+   * göstermek olurdu.
+   */
+  imageUrl?: string;
   /** Bu sürümdeki toplam entegrasyon (değiştiyse). */
   exposures?: FilterExposure[];
   /** Bu sürümde kullanılan palet (değiştiyse). */

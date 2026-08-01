@@ -43,9 +43,26 @@ create policy radio_objects_list_editors on storage.objects
  *    Tablo PostGIS uzantısına aittir; sahibi biz değiliz ve `alter table
  *    ... enable row level security` yetkisi yok. Zaten koordinat sistemi
  *    referans kataloğudur: EPSG tanımları kamuya açık veridir, kişisel veri
- *    içermez. 0003 migration'ında anon/authenticated yetkileri salt okura
- *    indirildi; yazma yolu kapalı. Kalan risk yok, denetçi uyarısı
- *    kapatılamıyor.
+ *    içermez.
+ *
+ *    DÜZELTME (0038 ile ölçüldü): bu paragraf önceden "0003 migration'ında
+ *    yetkiler salt okura indirildi; yazma yolu kapalı" diyordu. YANLIŞTI.
+ *    Canlı veritabanında `anon` hâlâ INSERT/UPDATE/DELETE/TRUNCATE
+ *    taşıyor. Sebebi 0003'te zaten yazılı ve burada gözden kaçmış:
+ *    `revoke` yalnızca ÇAĞIRAN rolün verdiği yetkileri kaldırır, bu
+ *    yetkileri `supabase_admin` verdi, dolayısıyla `postgres` rolüyle
+ *    çalışan bir revoke hata vermeden hiçbir şey yapmıyor. Geri alınan
+ *    bir işlemde ölçüldü: dört yetki, revoke sonrası yine dört.
+ *
+ *    Kalan risk: `anon` bu tabloya yazabilir. Kapsam EPSG kataloğudur —
+ *    kişisel veri yok; kötüye kullanım en fazla ST_Transform sonuçlarını
+ *    bozar ve tablo PostGIS'ten yeniden doldurulabilir. Supabase
+ *    üzerindeki her PostGIS projesi bu durumda.
+ *
+ *    Kapatmak için `supabase_admin` yetkisi gerekiyor (destek/dashboard).
+ *    Bu iddia artık YAZILI DEĞİL, ÖLÇÜLÜ: `check:rls` betiği yetkinin
+ *    gerçek durumunu raporluyor, böylece bir gün dashboard'dan
+ *    kapatıldığında bunu kimsenin elle fark etmesi gerekmiyor.
  *
  * 2. Uzantılar public şemasında (0014, WARN).
  *    postgis, citext ve pg_trgm Supabase tarafından public şemaya kurulur.

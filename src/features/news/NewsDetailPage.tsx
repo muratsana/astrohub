@@ -82,11 +82,11 @@ export function NewsDetailPage() {
             </span>
           </div>
 
-          <h1 className="text-[28px] leading-tight text-foreground sm:text-[36px]">
+          <h1 className="type-page-lg text-foreground">
             {item.title}
           </h1>
 
-          <p className="mt-4 border-l-2 border-primary pl-4 text-[14px] leading-relaxed text-foreground">
+          <p className="mt-4 border-l-2 border-primary pl-4 text-body-sm leading-relaxed text-foreground">
             {item.summary}
           </p>
 
@@ -94,7 +94,7 @@ export function NewsDetailPage() {
             <StarField seed={item.slug} tint={item.tint} density={1.2} />
           </PlateFrame>
 
-          <div className="mt-8 space-y-5 text-[13.5px] leading-[1.85] text-muted-foreground">
+          <div className="mt-8 space-y-5 text-body-sm leading-[1.85] text-muted-foreground">
             {item.body.map((paragraph, i) => (
               <p key={i}>{paragraph}</p>
             ))}
@@ -102,7 +102,7 @@ export function NewsDetailPage() {
 
           <footer className="mt-10 border-t border-border pt-5">
             <p className="label mb-1">Kaynak</p>
-            <p className="text-[12.5px] text-foreground">
+            <p className="text-caption text-foreground">
               {/*
                 Kaynak adresi dış veriden gelir; `ExternalLink` güvenli
                 olmayan şemalarda bağlantı kurmaz, düz metin bırakır (§15.4).
@@ -130,7 +130,7 @@ export function NewsDetailPage() {
                       to={`/haber/${r.slug}`}
                       className="flex items-baseline justify-between gap-4 border-b border-border py-2.5 transition-colors hover:text-primary"
                     >
-                      <span className="text-[12.5px] text-foreground">
+                      <span className="text-caption text-foreground">
                         {r.title}
                       </span>
                       <span className="tabular shrink-0 text-meta text-faint">

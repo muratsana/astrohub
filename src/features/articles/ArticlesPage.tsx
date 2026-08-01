@@ -1,5 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Container } from '@/components/ui/Container';
+import { FilterBar, FilterCell, filterControlClass } from '@/components/ui/FilterBar';
+import { ActiveFilters } from '@/components/ui/ActiveFilters';
+import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
@@ -13,6 +16,8 @@ import {
   type ArticleLevel,
 } from './data';
 import { useArticles } from './useArticles';
+import { useExplorer } from '@/features/explorer/useExplorer';
+import { articlesSpec } from './articlesSpec';
 
 /**
  * YAZILAR — rehberler, eğitim yazıları ve işleme dersleri.
@@ -49,22 +54,28 @@ function levelTone(level: ArticleLevel) {
 }
 
 export function ArticlesPage() {
-  const [level, setLevel] = useState<ArticleLevel | 'hepsi'>('hepsi');
-  const [category, setCategory] = useState<ArticleCategory | 'hepsi'>('hepsi');
   const [view, setView] = useViewMode('yazilar');
 
   // Tohum + panelden yayımlananlar tek listede (useArticles.ts).
   const { items: allArticles } = useArticles();
 
-  const result = useMemo(
-    () =>
-      allArticles.filter(
-        (a) =>
-          (level === 'hepsi' || a.level === level) &&
-          (category === 'hepsi' || a.category === category)
-      ),
-    [allArticles, level, category]
-  );
+  /*
+   * ORTAK DATA EXPLORER (Faz 4). Sayfada arama HİÇ yoktu; seviye ve
+   * kategori `useState`teydi, yani "başlangıç seviyesi işleme yazıları"
+   * gibi bir seçim paylaşılamıyordu.
+   */
+  const ex = useExplorer(allArticles, articlesSpec);
+  const result = ex.items;
+  const level = ex.query.facets.seviye?.[0] ?? 'hepsi';
+  const category = ex.query.facets.kategori?.[0] ?? 'hepsi';
+
+  /** Sekme şeritleri tek seçim. */
+  const tekSec = (param: string, mevcut: string, next: string) => {
+    if (mevcut !== 'hepsi') ex.toggleFacet(param, mevcut);
+    if (next !== 'hepsi' && next !== mevcut) ex.toggleFacet(param, next);
+  };
+  const setLevel = (next: string) => tekSec('seviye', level, next);
+  const setCategory = (next: string) => tekSec('kategori', category, next);
 
   /*
    * Haber, yazı ve etkinlik aynı editöryel düzeni paylaşıyor
@@ -107,13 +118,38 @@ export function ArticlesPage() {
 
       <Container className="py-8 sm:py-10">
         <header className="mb-5 border-b border-border pb-5">
-          <h1 className="text-[26px] text-foreground sm:text-[30px]">Yazılar</h1>
-          <p className="mt-2 max-w-[70ch] text-[12px] leading-relaxed text-muted-foreground">
+          <h1 className="type-page text-foreground">Yazılar</h1>
+          <p className="mt-2 max-w-[70ch] text-meta leading-relaxed text-muted-foreground">
             Başlangıçtan ileri seviyeye rehberler, işleme dersleri ve saha
             notları. Her yazı bir prosedür gibi kurulur: ne yapılır, neden
             yapılır, ne zaman işe yaramaz.
           </p>
         </header>
+
+        {/*
+          ARAMA KUTUSU BURAYA GEÇ GELDİ. Motor (`useExplorer`) tam metin
+          aramayı en baştan destekliyordu; bu iki sayfada yalnızca ARAYÜZ
+          yoktu. Kategori sekmesi az sayıda kategoriyi iyi gösteriyor ama
+          "perseid" arayan kullanıcı sekmelerde gezinmek zorunda kalıyordu.
+        */}
+        <FilterBar activeCount={ex.chips.length} columns={2}>
+          <FilterCell label="Ara" htmlFor="articles-search">
+            <Input
+              id="articles-search"
+              type="search"
+              placeholder="Yazı başlığı veya konu"
+              value={ex.searchInput}
+              onChange={(e) => ex.setSearch(e.target.value)}
+              className={filterControlClass}
+            />
+          </FilterCell>
+        </FilterBar>
+
+        <ActiveFilters
+          chips={ex.chips}
+          onRemove={ex.removeChip}
+          onClearAll={ex.clearAll}
+        />
 
         <div className="mb-4 grid gap-px border border-border bg-border sm:grid-cols-2">
           <div className="bg-surface-1 px-3 py-2">

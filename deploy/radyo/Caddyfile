@@ -1,0 +1,55 @@
+# Ters vekil — TLS sonlandırma ve yönetim panelinin korunması.
+#
+# TLS ZORUNLU, TERCİH DEĞİL. Site https; tarayıcılar https bir sayfadan
+# http bir ses akışını engelliyor (karışık içerik). Kullanıcıya bu
+# "ses gelmiyor" olarak görünür ve sebebi konsola bakmadan anlaşılmaz.
+# `radio_stations.stream_url` kolonundaki `^https://` kısıtı (0051) bu
+# hatayı veritabanında da imkânsız kılıyor.
+
+{
+	# Sertifika bildirimlerinin gideceği adres. Kurulumda doldurulmalı.
+	email yonetim@astrohub.example
+}
+
+# ── Yayın ────────────────────────────────────────────────────────────
+yayin.astrohub.example {
+	# Yayın akışı: uzun ömürlü bağlantı. Varsayılan zaman aşımları
+	# dinleyiciyi dakikalar içinde düşürürdü.
+	reverse_proxy web:8000 {
+		flush_interval -1
+		transport http {
+			read_timeout 0
+			write_timeout 0
+		}
+	}
+
+	# Yayın adresi her yerden çalınabilmeli — bir <audio> etiketi
+	# CORS istemez ama fetch tabanlı görselleştiriciler ister.
+	header Access-Control-Allow-Origin "*"
+
+	# Sunucu sürümünü söylememek küçük ama bedava bir kazanç.
+	header -Server
+}
+
+# ── Yönetim paneli ───────────────────────────────────────────────────
+panel.astrohub.example {
+	# PANEL AYRI ALAN ADINDA. Yayınla aynı adreste olsaydı, yayın
+	# adresini bilen herkes panel adresini de bilirdi ve tek yanlış
+	# yapılandırma ikisini birden açardı.
+	reverse_proxy web:8080
+
+	# İSTEĞE BAĞLI AMA ÖNERİLİR: paneli IP ile sınırla. Yayın herkese
+	# açık olmalı, panel değil. Kurulumda kendi adresinle doldur;
+	# boş bırakırsan panel yalnızca AzuraCast'in kendi girişiyle
+	# korunuyor demektir.
+	# @disarisi not remote_ip 203.0.113.0/24
+	# respond @disarisi 403
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "no-referrer"
+		-Server
+	}
+}

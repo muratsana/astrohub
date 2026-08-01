@@ -262,7 +262,7 @@ function IconButton({
       aria-label={label}
       disabled={disabled}
       onClick={onClick}
-      className="h-5 w-5 rounded-[2px] border border-border text-meta leading-none text-muted-foreground transition-colors hover:border-border-strong hover:text-foreground disabled:opacity-30"
+      className="h-5 w-5 rounded-card border border-border text-meta leading-none text-muted-foreground transition-colors hover:border-border-strong hover:text-foreground disabled:opacity-30"
     >
       {children}
     </button>

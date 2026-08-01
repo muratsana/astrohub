@@ -29,6 +29,8 @@ interface Props {
   locationLabel: string;
   dateLabel: string;
   timeZone: string;
+  /** Aynı gecenin astrofotoğraf skoru — ağırlıkları farklı. */
+  photoScore: NightScore | null;
 }
 
 /** Hüküm → token. Tasarımın yeşil/amber/turuncu üçlüsünün karşılığı. */
@@ -52,6 +54,7 @@ const VERDICT_TONE: Record<
 
 export function DecisionColumn({
   score,
+  photoScore,
   conditions,
   locationLabel,
   dateLabel,
@@ -91,6 +94,7 @@ export function DecisionColumn({
       {score ? (
         <ScoreBlock
           score={score}
+          photoScore={photoScore}
           locationLabel={locationLabel}
           dateLabel={dateLabel}
         />
@@ -126,10 +130,12 @@ export function DecisionColumn({
 
 function ScoreBlock({
   score,
+  photoScore,
   locationLabel,
   dateLabel,
 }: {
   score: NightScore;
+  photoScore: NightScore | null;
   locationLabel: string;
   dateLabel: string;
 }) {
@@ -156,7 +162,7 @@ function ScoreBlock({
         >
           <div className="grid h-[62px] w-[62px] place-items-center rounded-full bg-background">
             <span
-              className={cn('num text-[23px] font-semibold leading-none', tone.text)}
+              className={cn('num text-readout-lg font-semibold leading-none', tone.text)}
             >
               {score.total}
             </span>
@@ -164,7 +170,7 @@ function ScoreBlock({
         </div>
 
         <div className="min-w-0">
-          <p className="text-[21px] font-bold leading-tight text-foreground">
+          <p className="text-readout font-bold leading-tight text-foreground">
             {score.verdictLabel}
           </p>
           <p className="mt-0.5 text-meta font-medium text-muted-foreground">
@@ -178,6 +184,28 @@ function ScoreBlock({
           {score.limitedBySeeing && (
             <p className="mt-1 text-meta text-faint">
               Seeing ölçülemedi — hüküm bir kademe sınırlandı.
+            </p>
+          )}
+
+          {/*
+            İKİNCİ SKOR AYNI GECENİN FOTOĞRAF KARŞILIĞI (§7.2, 18. alan).
+            Halkadaki sayı GÖZLE gözlem; ikisi aynı olmadığı için ikincisi
+            küçük de olsa görünmek zorunda. Aynı dolunay gecesi gözle
+            "orta", dar bant filtreyle çeken için "iyi" olabilir — tek
+            sayı bu iki kullanıcıdan birine yanlış cevap veriyordu.
+          */}
+          {photoScore && (
+            <p className="mt-1 text-meta text-muted-foreground">
+              Astrofotoğraf:{' '}
+              <span
+                className={cn(
+                  'num font-semibold',
+                  VERDICT_TONE[photoScore.verdict].text
+                )}
+              >
+                {photoScore.total}
+              </span>{' '}
+              · {photoScore.verdictLabel.toLocaleLowerCase('tr-TR')}
             </p>
           )}
         </div>

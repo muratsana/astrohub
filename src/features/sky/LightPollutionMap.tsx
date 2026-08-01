@@ -152,7 +152,7 @@ export function LightPollutionMap() {
     <section aria-labelledby="lp-map-title">
       <div className="mx-auto w-full max-w-content border-y border-border px-4 py-4 sm:px-6 lg:px-8 xl:px-12">
         <header className="mb-2.5 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <h2 id="lp-map-title" className="text-[16px] text-foreground">
+          <h2 id="lp-map-title" className="type-panel text-foreground">
             Işık Kirliliği Haritası
           </h2>
           <span className="label">{location.label}</span>
@@ -411,7 +411,7 @@ function Legend({ kind }: { kind: 'atlas' | 'radiance' }) {
       </p>
       {kind === 'atlas' ? (
         <>
-          <div className="flex h-2 w-40 overflow-hidden rounded-[2px]">
+          <div className="flex h-2 w-40 overflow-hidden rounded-card">
             {ATLAS_SCALE.map((color) => (
               <span
                 key={color}
@@ -428,7 +428,7 @@ function Legend({ kind }: { kind: 'atlas' | 'radiance' }) {
       ) : (
         <>
           <div
-            className="h-2 w-40 rounded-[2px]"
+            className="h-2 w-40 rounded-card"
             style={{
               backgroundImage: 'linear-gradient(90deg, #000000, #fff3c4)',
             }}
@@ -463,12 +463,12 @@ function PickPanel({
           type="button"
           onClick={onClose}
           aria-label="Nokta bilgisini kapat"
-          className="text-[13px] leading-none text-muted-foreground hover:text-foreground"
+          className="text-body-sm leading-none text-muted-foreground hover:text-foreground"
         >
           ×
         </button>
       </div>
-      <p className="tabular mt-1 text-[12px] text-foreground">
+      <p className="tabular mt-1 text-meta text-foreground">
         {point.lat.toFixed(4)}° · {point.lng.toFixed(4)}°
       </p>
 
@@ -477,7 +477,7 @@ function PickPanel({
           <p className="label">En yakın gözlem noktası</p>
           <Link
             to={`/saha/${nearest.site.slug}`}
-            className="mt-0.5 block text-[12px] text-foreground hover:text-primary"
+            className="mt-0.5 block text-meta text-foreground hover:text-primary"
           >
             {nearest.site.name}
           </Link>
@@ -523,7 +523,7 @@ function ZoomButton({
       aria-label={label}
       disabled={disabled}
       onClick={onClick}
-      className="h-7 w-7 text-[15px] leading-none text-muted-foreground transition-colors hover:bg-surface-2 hover:text-foreground disabled:opacity-35 disabled:hover:bg-transparent"
+      className="h-7 w-7 text-body leading-none text-muted-foreground transition-colors hover:bg-surface-2 hover:text-foreground disabled:opacity-35 disabled:hover:bg-transparent"
     >
       {sign}
     </button>
@@ -541,7 +541,7 @@ function Notice({
 }) {
   return (
     <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-center">
-      <p className="text-[13px] text-foreground">{title}</p>
+      <p className="text-body-sm text-foreground">{title}</p>
       <p className="max-w-[52ch] text-body-sm leading-relaxed text-muted-foreground">
         {body}
       </p>

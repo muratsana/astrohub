@@ -1,7 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { Outlet, ScrollRestoration } from 'react-router';
 import { ConsentGate } from '@/features/auth/ConsentGate';
-import { StatusBar } from './StatusBar';
 import { Topbar } from './Topbar';
 import { Footer } from './Footer';
 import { MobileNav } from './MobileNav';
@@ -71,9 +70,26 @@ export function AppShell() {
         İçeriğe atla
       </a>
 
-      {/* Durum çubuğu ve nav birlikte yapışkan — gece durumu hep görünür */}
-      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-md">
-        <StatusBar />
+      {/*
+        DURUM ÇUBUĞU ŞERİDİ KALDIRILDI (Faz 3.1).
+
+        Şerit her sayfada "Bulut %x · Seeing y" gösteriyordu. Aynı veri
+        "Bu Gece" modülünde — hem daha büyük, hem çizelgeyle, hem ileri
+        tarihli gecelerle — zaten var. Ana görev belgesi §6.1 bunu
+        kaldırmayı açıkça istiyor ve gerekçelerinin hepsi ölçülebilirdi:
+
+          · Üst alan yüksekliği: kabuk 88px → 56px (ölçüldü).
+          · Ağ: `useSkyConditions` kabukta çağrıldığı için galeri, forum,
+            ilan gibi hava durumuyla hiç ilgisi olmayan HER sayfada bir
+            hava isteği kuruluyordu.
+          · Hiyerarşi: navigasyonun üstünde ikinci bir yatay şerit,
+            gezinmeyi ikinci sıraya itiyordu.
+
+        Konum seçici KALDI ve üst çubuğa taşındı: hava değil, kullanıcının
+        her sayfada değiştirebilmesi gereken bir tercih (etkinlik mesafesi,
+        gözlem noktası sıralaması, tesis uzaklığı hep ona bağlı).
+      */}
+      <div className="sticky top-0 z-[var(--z-sticky)] bg-background/95 backdrop-blur-md">
         <Topbar onOpenNav={openNav} />
       </div>
 

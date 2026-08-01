@@ -1,13 +1,28 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router';
 import { FORECAST_DAYS } from '@/features/weather/openMeteo';
 import { Container } from '@/components/ui/Container';
 import { Button } from '@/components/ui/Button';
 import { useLocationContext } from '@/features/location/LocationContext';
+import { LocationPicker } from '@/features/location/LocationPicker';
 import { useTheme } from '@/features/theme/ThemeContext';
 import { DecisionColumn } from './tonight/DecisionColumn';
 import { TargetsColumn } from './tonight/TargetsColumn';
 import { TimelineColumn } from './tonight/TimelineColumn';
 import { useTonight } from './tonight/useTonight';
+import {
+  MAX_OFFSET,
+  clampOffset,
+  dateBounds,
+  dateToOffset,
+  fromISODate,
+  offsetFromParam,
+  offsetToDate,
+  toISODate,
+} from './tonight/nightOffset';
+
+/** Paylaşılabilir gece parametresi — `?gece=2026-08-05`. */
+const GECE_PARAM = 'gece';
 
 /**
  * BU GECE — ana sayfanın enstrüman paneli (§7.9).
@@ -51,7 +66,34 @@ export function TonightPanel() {
    * konumun takvimine göre hesaplıyor ve bir `Date` tutmak zaman dilimi
    * sınırında iki farklı güne düşme riski getiriyordu.
    */
-  const [offsetDays, setOffsetDays] = useState(0);
+  /*
+   * GECE SEÇİMİ URL'DE (§6.4 "URL veya state ile paylaşılabilir
+   * tarih/konum").
+   *
+   * Parametre TARİH taşıyor, offset değil: `?gun=3` yazsaydık paylaşılan
+   * bağlantı ertesi gün açıldığında başka bir geceyi gösterirdi.
+   * Çeviri ve sınır kontrolü `nightOffset.ts` içinde, testli.
+   *
+   * `replace: true`: gece değiştirmek bir gezinme değil bir filtre;
+   * her tıklama geçmişe bir kayıt eklerse geri düğmesi kullanıcıyı
+   * sayfadan çıkarmak yerine gece gece geri sarar.
+   */
+  const [params, setParams] = useSearchParams();
+  const bugun = useMemo(() => new Date(), []);
+  const offsetDays = offsetFromParam(params.get(GECE_PARAM), bugun);
+
+  const setOffsetDays = useCallback(
+    (next: number | ((d: number) => number)) => {
+      const hedef = clampOffset(
+        typeof next === 'function' ? next(offsetDays) : next
+      );
+      const sonraki = new URLSearchParams(params);
+      if (hedef === 0) sonraki.delete(GECE_PARAM);
+      else sonraki.set(GECE_PARAM, toISODate(offsetToDate(hedef, bugun)));
+      setParams(sonraki, { replace: true });
+    },
+    [offsetDays, params, setParams, bugun]
+  );
   const tonight = useTonight(offsetDays);
 
   /*
@@ -104,42 +146,115 @@ export function TonightPanel() {
       </div>
 
       <Container className="border-b border-border py-5 sm:py-6">
-        {shouldOfferGeolocation && (
-          <div className="mb-3 flex flex-wrap items-center gap-3 rounded-card border border-cold/40 bg-surface-1 px-3 py-2.5">
-            <p className="w-full text-body-sm leading-relaxed text-muted-foreground sm:w-auto sm:flex-1">
-              Hesaplar{' '}
-              <span className="text-foreground">{tonight.locationLabel}</span>{' '}
-              için yapılıyor.{' '}
-              <span className="text-cold">Koordinat sunucumuza gönderilmez</span>
-              ; yalnızca tarayıcında kalır.
-            </p>
-            <div className="flex shrink-0 gap-2">
-              <Button size="sm" onClick={requestDeviceLocation}>
-                Konum izni ver
-              </Button>
-              <Button size="sm" variant="ghost" onClick={dismissGeolocationOffer}>
-                Şehir seçeyim
-              </Button>
-            </div>
-          </div>
-        )}
-
         {/*
-          GECE SEÇİCİ. Efemerisin sınırı yok ama havanınki var; ileri
-          gitme düğmesi tahmin ufkunda duruyor. Ufkun ötesini
-          gösterebilirdik (karanlık ve ay hesaplanabiliyor) ama o zaman
-          panelin yarısı boş kalırdı ve kullanıcı sebebini aramak
-          zorunda kalırdı.
+          GECE SEÇİCİ VE KONUM AYNI SATIRDA. İkisi de "hangi hesap"
+          sorusunun parçası: nerede ve ne zaman. Konum seçici üst şeritten
+          buraya taşındı — orada her sayfada duruyordu ama asıl işine
+          yaradığı yer burası, çünkü değiştirince değişen şey bu panel.
+
+          Efemerisin sınırı yok ama havanınki var; ileri gitme düğmesi
+          tahmin ufkunda duruyor. Ufkun ötesini gösterebilirdik (karanlık
+          ve ay hesaplanabiliyor) ama o zaman panelin yarısı boş kalırdı
+          ve kullanıcı sebebini aramak zorunda kalırdı.
         */}
         <div className="mb-3 flex flex-wrap items-center gap-2">
+          <LocationPicker variant="panel" />
+
+          {/*
+            KONUM İZNİ TEKLİFİ AYNI SATIRA GİRDİ (Faz 3.1).
+
+            Önce üstte ayrı bir şeritti: kendi kenarlığı, kendi dolgusu ve
+            iki satırlık bir açıklamayla ilk ekranda 60px kaplıyordu.
+            Ölçüm (1280×720) şunu gösterdi: kabuk + hero + bu şerit + konum
+            satırı toplanınca "Bu Gece" fold'un altına düşüyordu.
+
+            İki blok zaten AYNI SORUYU cevaplıyordu — "nerede". Şeridin ilk
+            cümlesi ("X için hesaplanıyor") yanındaki seçicinin etiketini
+            kelimesi kelimesine tekrar ediyordu; §5.4'ün kaldırılacak
+            açıklama tanımı bu.
+
+            GİZLİLİK CÜMLESİ KALDI ve düğmenin yanında duruyor: kullanıcıdan
+            konum izni isteniyor, neyin nereye gittiğini istemeden ÖNCE
+            söylemek gerekiyor. Kısaldı, kaybolmadı.
+          */}
+          {shouldOfferGeolocation && (
+            <>
+              <span aria-hidden className="mx-1 h-4 w-px bg-border" />
+              <Button size="sm" onClick={requestDeviceLocation}>
+                Konumumu kullan
+              </Button>
+              <span className="text-meta leading-snug text-cold">
+                Tarayıcında kalır, sunucuya gönderilmez
+              </span>
+              <button
+                type="button"
+                onClick={dismissGeolocationOffer}
+                /* `min-h-6` + yatay dolgu: metin 17px yüksekliğindeydi ve
+                   WCAG 2.5.8'in 24×24 alt sınırının altında kalıyordu —
+                   `check:a11y` yakaladı. Punto değişmedi, hedef büyüdü. */
+                className="inline-flex min-h-6 items-center px-1 text-meta text-faint underline-offset-2 hover:text-muted-foreground hover:underline"
+              >
+                gizle
+              </button>
+            </>
+          )}
+
+          <span aria-hidden className="mx-1 h-4 w-px bg-border" />
+
+          {/*
+            ÇİFT OK BİR HAFTA (§6.4). Tek ok bir gece; 16 günlük ufkun
+            sonuna tek okla gitmek 15 tıklama demekti.
+
+            Etiketler `aria-label` ile ayrıca yazılıyor: «`, », ‹ ve ›
+            işaretleri ekran okuyucuda "sol tırnak" diye okunur.
+          */}
           <Button
             size="sm"
             variant="ghost"
-            onClick={() => setOffsetDays((d) => Math.max(0, d - 1))}
+            onClick={() => setOffsetDays((d) => d - 7)}
+            disabled={offsetDays === 0}
+            aria-label="Bir hafta geri"
+            title="Bir hafta geri"
+          >
+            «
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => setOffsetDays((d) => d - 1)}
             disabled={offsetDays === 0}
           >
             ← Önceki gece
           </Button>
+
+          {/*
+            MANUEL TARİH SEÇİCİ. `min`/`max` ufkun kendisinden geliyor,
+            yani tarayıcı takviminde ulaşılamayacak günler zaten kapalı.
+
+            Yerel `<input type="date">` bilinçli: kendi takvimini yazmak
+            klavye gezinmesini, ekran okuyucu desteğini ve mobil yerel
+            tekerlek arayüzünü sıfırdan üretmek demekti.
+          */}
+          <label className="flex items-center gap-1.5">
+            <span className="sr-only">Gece tarihi seç</span>
+            <input
+              type="date"
+              value={toISODate(offsetToDate(offsetDays, bugun))}
+              min={dateBounds(bugun).min}
+              max={dateBounds(bugun).max}
+              onChange={(e) => {
+                const secilen = fromISODate(e.target.value);
+                if (!secilen) return;
+                const hedef = dateToOffset(secilen, bugun);
+                /* Aralık dışı sessizce kırpılmıyor: tarayıcı `min`/`max`
+                   dışına izin verirse (bazıları elle yazmaya izin verir)
+                   seçim yok sayılıyor, uydurma bir geceye atlanmıyor. */
+                if (hedef !== null) setOffsetDays(hedef);
+              }}
+              className="min-h-9 rounded-card border border-border bg-surface-1 px-2 text-meta text-foreground hover:border-border-strong"
+            />
+          </label>
+
           <span className="num text-body-sm font-medium text-foreground">
             {offsetDays === 0 ? 'Bu gece' : tonight.dateLabel}
           </span>
@@ -151,10 +266,20 @@ export function TonightPanel() {
           <Button
             size="sm"
             variant="ghost"
-            onClick={() => setOffsetDays((d) => Math.min(FORECAST_DAYS - 1, d + 1))}
-            disabled={offsetDays >= FORECAST_DAYS - 1}
+            onClick={() => setOffsetDays((d) => d + 1)}
+            disabled={offsetDays >= MAX_OFFSET}
           >
             Sonraki gece →
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => setOffsetDays((d) => d + 7)}
+            disabled={offsetDays >= MAX_OFFSET}
+            aria-label="Bir hafta ileri"
+            title="Bir hafta ileri"
+          >
+            »
           </Button>
           {offsetDays >= FORECAST_DAYS - 1 && (
             <span className="text-meta text-faint">
@@ -182,6 +307,7 @@ export function TonightPanel() {
         <div className="grid gap-px overflow-hidden rounded-card border border-border-strong bg-border lg:grid-cols-2 xl:grid-cols-[308px_minmax(0,1fr)_412px]">
           <DecisionColumn
             score={tonight.score}
+            photoScore={tonight.photoScore}
             conditions={tonight.conditions}
             locationLabel={tonight.locationLabel}
             dateLabel={tonight.dateLabel}

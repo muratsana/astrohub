@@ -72,6 +72,42 @@ export interface UploadInput {
   /** Hedefin okunabilir adı — katalog bağı kurulamasa da künye eksik kalmasın. */
   targetLabel?: string | null;
   exposures?: { filter: string; frames: number; exposureSeconds: number }[];
+  /**
+   * Dosyadan okunan künye.
+   *
+   * KOORDİNAT ALINMIYOR — yalnızca varlığı. `ExifData` GPS'i de taşıyor
+   * ama buraya `gpsPresent` bayrağı olarak geliyor; ham koordinat
+   * veritabanına hiç girmiyor (§15.3). Alanın tipini `ExifData` yapmak
+   * kolaydı ama o zaman koordinat bu sınıra kadar taşınır ve bir gün
+   * yanlışlıkla yazılırdı. Sınırı tipin kendisi çiziyor.
+   */
+  exif?: {
+    camera?: string;
+    lens?: string;
+    iso?: number;
+    focalMm?: number;
+    apertureF?: number;
+    exposureSeconds?: number;
+    gpsPresent: boolean;
+  };
+}
+
+/**
+ * EXIF sayısını veritabanının kabul edeceği aralığa indirger.
+ *
+ * Ayrıştırıcı bozuk bir dosyada saçma değerler üretebiliyor (sıfıra
+ * bölme, işaretli/işaretsiz karışması). `astro_photos_exif_makul` kısıtı
+ * bunları zaten reddediyor — ama kısıt ihlali BÜTÜN YÜKLEMEYİ düşürürdü:
+ * kullanıcının fotoğrafı, dosyasındaki bozuk bir ISO alanı yüzünden
+ * kaydedilemezdi. Burada eleniyor, künyede o satır boş kalıyor.
+ */
+function exifNumber(
+  value: number | undefined,
+  max: number
+): number | null {
+  if (value === undefined || !Number.isFinite(value)) return null;
+  if (value <= 0 || value > max) return null;
+  return value;
 }
 
 export interface UploadResult {
@@ -215,6 +251,19 @@ export async function uploadPhoto(
         camera_id: input.cameraId ?? null,
         mount_id: input.mountId ?? null,
         setup_text: input.setup ?? {},
+        /*
+         * DOSYADAN OKUNAN KÜNYE — kullanıcının yazdığından ayrı kolonlarda
+         * (0035). Değerler burada bir kez süzülüyor: bozuk bir EXIF
+         * bloğu yüzünden kısıt ihlali alıp bütün yüklemeyi düşürmek
+         * orantısız olurdu.
+         */
+        exif_camera: input.exif?.camera ?? null,
+        exif_lens: input.exif?.lens ?? null,
+        exif_iso: exifNumber(input.exif?.iso, 4_000_000),
+        exif_focal_mm: exifNumber(input.exif?.focalMm, 100_000),
+        exif_aperture_f: exifNumber(input.exif?.apertureF, 1000),
+        exif_exposure_seconds: exifNumber(input.exif?.exposureSeconds, 86_400),
+        exif_gps_present: input.exif?.gpsPresent ?? false,
         bytes: input.file.size,
       })
       .select('id')

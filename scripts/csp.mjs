@@ -99,7 +99,18 @@ const DIRECTIVES = {
 
   /* Supabase: veritabanı, kimlik doğrulama, depolama, kenar fonksiyonları.
      Open-Meteo: yedek hava servisi (meteoblue vekil üzerinden gidiyor). */
-  'connect-src': ["'self'", 'https://*.supabase.co', 'https://api.open-meteo.com'],
+  /*
+   * Hava kalitesi ucu AYRI HOST. Şeffaflık (aerosol optik derinliği)
+   * `air-quality-api.open-meteo.com`ta; tahmin ucuyla aynı alan adı
+   * değil ve joker (`*.open-meteo.com`) yazmak gerekmeyen alt alanları
+   * da açardı. İki host, iki satır.
+   */
+  'connect-src': [
+    "'self'",
+    'https://*.supabase.co',
+    'https://api.open-meteo.com',
+    'https://air-quality-api.open-meteo.com',
+  ],
 
   /* YouTube yayın gömme (nocookie) ve Spotify parça gömme. */
   'frame-src': ['https://www.youtube-nocookie.com', 'https://open.spotify.com'],

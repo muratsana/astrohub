@@ -125,7 +125,7 @@ export function CommandPalette({
       >
         {/* Giriş satırı: terminal istemi */}
         <div className="flex items-center gap-2.5 border-b border-border px-4">
-          <span aria-hidden className="text-[15px] leading-none text-primary">
+          <span aria-hidden className="text-body leading-none text-primary">
             ›
           </span>
           <input
@@ -140,9 +140,9 @@ export function CommandPalette({
             aria-activedescendant={activeId}
             autoComplete="off"
             spellCheck={false}
-            className="h-12 w-full bg-transparent text-[14px] text-foreground outline-none placeholder:text-faint"
+            className="h-12 w-full bg-transparent text-body-sm text-foreground outline-none placeholder:text-faint"
           />
-          <kbd className="hidden shrink-0 rounded-[2px] border border-border px-1.5 py-0.5 text-meta tracking-widest text-faint sm:block">
+          <kbd className="hidden shrink-0 rounded-card border border-border px-1.5 py-0.5 text-meta tracking-widest text-faint sm:block">
             Esc
           </kbd>
         </div>
@@ -155,7 +155,7 @@ export function CommandPalette({
           className="overflow-y-auto py-1"
         >
           {flat.length === 0 ? (
-            <p className="px-4 py-10 text-center text-[12px] leading-relaxed text-muted-foreground">
+            <p className="px-4 py-10 text-center text-meta leading-relaxed text-muted-foreground">
               <span className="text-foreground">“{query}”</span> için sonuç yok.
               <br />
               Katalog kodu (M31, NGC 7000), şehir ya da ekipman adı deneyin.
@@ -196,11 +196,11 @@ export function CommandPalette({
 
                           <span className="min-w-0 flex-1">
                             <span className="flex items-center gap-2">
-                              <span className="truncate text-[13px] font-medium text-foreground">
+                              <span className="truncate text-body-sm font-medium text-foreground">
                                 {command.title}
                               </span>
                               {command.soon && (
-                                <span className="shrink-0 rounded-[2px] border border-border px-1 text-meta tracking-widest text-faint">
+                                <span className="shrink-0 rounded-card border border-border px-1 text-meta tracking-widest text-faint">
                                   Yakında
                                 </span>
                               )}

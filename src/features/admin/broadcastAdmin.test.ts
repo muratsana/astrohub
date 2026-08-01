@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { validateBroadcast, validateTrack } from './broadcastAdmin';
+import {
+  RADIO_MAX_BYTES,
+  radioObjectPath,
+  validateAudioFile,
+  validateBroadcast,
+  validateTrack,
+} from './broadcastAdmin';
 
 const base = {
   slug: 'perseid-gecesi',
@@ -110,5 +116,84 @@ describe('validateTrack', () => {
     expect(
       validateTrack({ title: '  ', artist: '', source: 'mp3', path: 'a.mp3', note: '' })
     ).toContain('Başlık');
+  });
+});
+
+/* ══════════════════════════════════════════════════════════════════════
+   RADYO KASASI — sürükle bırak yüklemenin saf parçaları
+   ══════════════════════════════════════════════════════════════════════ */
+
+describe('radioObjectPath', () => {
+  /*
+   * ASIL KURAL. Depolama yolu ASCII kalmalı: Supabase Türkçe karakteri
+   * kabul ediyor ama üretilen genel URL'de yüzde kodlamasına dönüşüyor
+   * ve elle kopyalanan bir adres bozuluyor.
+   */
+  it('Türkçe harfleri karşılıklarına indiriyor', () => {
+    expect(radioObjectPath('Gökyüzü Sessizliği.mp3', 'abc123')).toBe(
+      'gokyuzu-sessizligi-abc123.mp3'
+    );
+  });
+
+  it('boşluk ve noktalama yerine tek tire koyuyor', () => {
+    expect(radioObjectPath('Gece   Yürüyüşü (v2).mp3', 'x1')).toBe(
+      'gece-yuruyusu-v2-x1.mp3'
+    );
+  });
+
+  it('baştaki ve sondaki tireleri atıyor', () => {
+    expect(radioObjectPath('!!! deneme !!!.ogg', 'q9')).toBe('deneme-q9.ogg');
+  });
+
+  /*
+   * Rastgele son ek olmasaydı aynı adlı ikinci dosya ilkini sessizce
+   * ezerdi — editör iki farklı parça yükleyip birini kaybederdi.
+   */
+  it('son ek yolu benzersizleştiriyor', () => {
+    expect(radioObjectPath('a.mp3', 'aaa')).not.toBe(
+      radioObjectPath('a.mp3', 'bbb')
+    );
+  });
+
+  it('uzantısız dosyayı mp3 sayıyor', () => {
+    expect(radioObjectPath('nocturne', 'z1')).toBe('nocturne-z1.mp3');
+  });
+
+  it('adı tamamen elenen dosyaya yine de geçerli bir yol veriyor', () => {
+    expect(radioObjectPath('###.mp3', 'k2')).toBe('parca-k2.mp3');
+  });
+});
+
+describe('validateAudioFile', () => {
+  const dosya = (ad: string, tur: string, boyut: number): File => {
+    const f = new File(['x'], ad, { type: tur });
+    Object.defineProperty(f, 'size', { value: boyut });
+    return f;
+  };
+
+  it('geçerli MP3 kabul ediliyor', () => {
+    expect(validateAudioFile(dosya('a.mp3', 'audio/mpeg', 1024))).toBeNull();
+  });
+
+  it('sınırı aşan dosya reddediliyor ve boyutu söyleniyor', () => {
+    const sonuc = validateAudioFile(
+      dosya('a.mp3', 'audio/mpeg', RADIO_MAX_BYTES + 1)
+    );
+    expect(sonuc).toContain('MB');
+  });
+
+  /*
+   * Tarayıcı bazı .mp3 dosyalarına boş tür veriyor. Uzantıyı yedek
+   * saymasaydık, geçerli bir dosya "türü tanınmadı" diye reddedilirdi.
+   */
+  it('tür boşsa uzantıya bakıyor', () => {
+    expect(validateAudioFile(dosya('a.mp3', '', 1024))).toBeNull();
+    expect(validateAudioFile(dosya('a.txt', '', 1024))).toContain('tanınmadı');
+  });
+
+  it('ses olmayan türü reddediyor', () => {
+    expect(validateAudioFile(dosya('a.pdf', 'application/pdf', 1024))).toContain(
+      'yüklenebilir'
+    );
   });
 });

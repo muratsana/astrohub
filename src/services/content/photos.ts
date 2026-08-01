@@ -1,13 +1,17 @@
+import { useCallback, useEffect, useState } from 'react';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { photos as photosSeed } from '@/features/photos/data';
-import type {
-  AstroPhoto,
-  LocationVisibility,
-  PhotoType,
-  ProcessingPalette,
+import {
+  exifHasValues,
+  type AstroPhoto,
+  type LocationVisibility,
+  type PhotoStatus,
+  type PhotoType,
+  type ProcessingPalette,
 } from '@/features/photos/types';
 import type { PhotoVersion } from '@/domain/photography/versions';
 import { gradientFromSeed } from '@/components/media/tints';
+import { getSupabase } from '@/services/supabase/client';
 import { publicPhotoUrl } from '@/services/photos/upload';
 import { useCatalog } from './useCatalog';
 import type { ContentSelection } from './select';
@@ -50,10 +54,12 @@ interface VersionRow {
   palette: string | null;
   published_at: string | null;
   position: number | null;
+  storage_path: string | null;
 }
 
 interface PhotoRow {
   id: string;
+  user_id?: string | null;
   solve_status?: string | null;
   solve_ra_deg?: number | null;
   solve_dec_deg?: number | null;
@@ -79,8 +85,19 @@ interface PhotoRow {
   ai_declared: boolean | null;
   like_count: number | null;
   comment_count: number | null;
+  rating_sum?: number | null;
+  rating_count?: number | null;
   display_path: string | null;
   thumb_path: string | null;
+  width: number | null;
+  height: number | null;
+  exif_camera?: string | null;
+  exif_lens?: string | null;
+  exif_iso?: number | null;
+  exif_focal_mm?: number | string | null;
+  exif_aperture_f?: number | string | null;
+  exif_exposure_seconds?: number | string | null;
+  exif_gps_present?: boolean | null;
   setup_text: Record<string, unknown> | null;
   profiles: { username: string; display_name: string | null } | null;
   celestial_objects: {
@@ -159,6 +176,12 @@ function mapVersions(rows: VersionRow[] | null): PhotoVersion[] | undefined {
       note: row.note ?? '',
       publishedAt: row.published_at ?? '',
       gradient: gradientFromSeed(row.id),
+      /*
+       * Sürümün kendi görseli `photos` bucket'ında ve yol saklanıyor,
+       * tam adres değil (0009). Yol boşsa alan `undefined` kalıyor ve
+       * sürgü yer tutucuya düşüp bunu söylüyor.
+       */
+      imageUrl: publicPhotoUrl(row.storage_path) ?? undefined,
       palette: row.palette ?? undefined,
     }));
 }
@@ -190,6 +213,7 @@ export function mapPhotoRow(row: PhotoRow): AstroPhoto {
 
   return {
     id: row.id,
+    ownerId: row.user_id ?? undefined,
     slug: row.slug,
     title: row.title,
     target: {
@@ -236,6 +260,28 @@ export function mapPhotoRow(row: PhotoRow): AstroPhoto {
       filters: text(bag, 'filter') ?? text(bag, 'filters'),
       reducer: text(bag, 'reducer'),
     },
+    /*
+     * EXIF alanları 0035 öncesi satırlarda yok. Hepsi boşsa `exif` hiç
+     * kurulmuyor — boş bir nesne göndermek, arayüzde "künye var ama
+     * hepsi tire" gibi bir bölüm çizdirirdi.
+     */
+    exif: (() => {
+      const exif = {
+        camera: row.exif_camera ?? null,
+        lens: row.exif_lens ?? null,
+        iso: row.exif_iso ?? null,
+        focalMm: num(row.exif_focal_mm),
+        apertureF: num(row.exif_aperture_f),
+        exposureSeconds: num(row.exif_exposure_seconds),
+        gpsPresent: row.exif_gps_present ?? false,
+      };
+      return exifHasValues(exif) || exif.gpsPresent ? exif : undefined;
+    })(),
+    /* Sıfır ya da eksik ölçü "bilinmiyor" demek; 0×0 bir görüntü yok. */
+    pixels:
+      row.width && row.height
+        ? { width: row.width, height: row.height }
+        : undefined,
     exposures: [...(row.photo_exposures ?? [])]
       .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
       .map((e) => ({
@@ -268,15 +314,22 @@ export function mapPhotoRow(row: PhotoRow): AstroPhoto {
     license: row.license ?? 'Tüm hakları saklıdır',
     likes: row.like_count ?? 0,
     comments: row.comment_count ?? 0,
+    rating: {
+      toplam: row.rating_sum ?? 0,
+      sayi: row.rating_count ?? 0,
+    },
     year: capturedAt ? new Date(capturedAt).getFullYear() : 0,
     city: cityFromLabel(row.location_label),
   };
 }
 
 const SELECT =
-  'id, slug, title, description, photo_type, palette, captured_at, published_at, ' +
+  'id, user_id, slug, title, description, photo_type, palette, captured_at, published_at, ' +
   'target_label, location_label, location_visibility, bortle, sqm, license, ' +
-  'ai_declared, like_count, comment_count, display_path, thumb_path, setup_text, ' +
+  'ai_declared, like_count, comment_count, rating_sum, rating_count, ' +
+  'display_path, thumb_path, setup_text, ' +
+  'width, height, exif_camera, exif_lens, exif_iso, exif_focal_mm, ' +
+  'exif_aperture_f, exif_exposure_seconds, exif_gps_present, ' +
   'solve_status, solve_ra_deg, solve_dec_deg, solve_rotation_deg, ' +
   'solve_scale_arcsec_px, solve_field_width_deg, solve_field_height_deg, ' +
   'solve_provider, solve_error, ' +
@@ -287,13 +340,32 @@ const SELECT =
   'profiles!astro_photos_user_id_profiles_fkey(username, display_name), ' +
   'celestial_objects(name, catalog, constellation), ' +
   'photo_exposures(filter, frames, exposure_seconds, position), ' +
-  'photo_versions(id, label, kind, note, palette, published_at, position)';
+  'photo_versions(id, label, kind, note, palette, published_at, position, storage_path)';
+
+/**
+ * Galeriye — ve dolayısıyla `/fotograf/:slug` sayfasına — giren tek durum.
+ *
+ * Detay sayfası fotoğrafı kataloğun içinden arıyor; katalog yalnızca bu
+ * durumu çekiyor. Yani taslak ve arşivlenmiş kayıtların herkese açık
+ * sayfası YOK — sahibi RLS sayesinde satırı okuyabilse bile.
+ *
+ * Dışa açık: sahibinin kendi listesinde (`/panel/fotograflar`) hangi
+ * satırın tıklanabileceğine bu değer karar veriyor. Ayrı bir sabit
+ * tutmak, panelin kullanıcıyı "Fotoğraf bulunamadı" sayfasına
+ * göndermesi demekti.
+ */
+export const PUBLIC_PHOTO_STATUS: PhotoStatus = 'published';
+
+/** Fotoğrafın herkese açık detay sayfası var mı? */
+export function isPhotoPubliclyVisible(status: PhotoStatus): boolean {
+  return status === PUBLIC_PHOTO_STATUS;
+}
 
 async function fetchPhotos(client: SupabaseClient): Promise<AstroPhoto[]> {
   const { data, error } = await client
     .from('astro_photos')
     .select(SELECT)
-    .eq('status', 'published')
+    .eq('status', PUBLIC_PHOTO_STATUS)
     .order('published_at', { ascending: false })
     /* Ana sayfa on karo, galeri sayfası filtreleme yapıyor. İki yüz kayıt
        ikisine de fazlasıyla yetiyor ve tarayıcıya bütün arşivi indirmiyor.
@@ -307,4 +379,149 @@ async function fetchPhotos(client: SupabaseClient): Promise<AstroPhoto[]> {
 /** Fotoğraflar: veritabanı varsa oradan, yoksa tohum diziden. */
 export function usePhotoCatalog(): ContentSelection<AstroPhoto> {
   return useCatalog('fotograf', photosSeed, fetchPhotos);
+}
+
+/* ══════════════════════ Sahibinin kendi fotoğrafları ══════════════════════ */
+
+/** Panel listesi için gereken en küçük kayıt — künyenin tamamı değil. */
+export interface MyPhotoSummary {
+  id: string;
+  slug: string;
+  title: string;
+  status: PhotoStatus;
+  /** Çekim tarihi; yoksa yayın tarihi, o da yoksa boş. */
+  capturedAt: string;
+  thumbUrl: string | null;
+}
+
+export interface MyPhotosState {
+  photos: MyPhotoSummary[];
+  /** Kotayı tüketen kayıt sayısı — `app.active_photo_count` ile aynı tanım. */
+  published: number;
+  /** Ayrı sınıra tabi taslaklar (`MAX_DRAFT_PHOTOS`). */
+  drafts: number;
+  loading: boolean;
+  error: string | null;
+  refresh: () => void;
+}
+
+const PHOTO_STATUSES: PhotoStatus[] = ['draft', 'published', 'archived'];
+
+/*
+ * Panel listesi künyenin tamamını istemiyor. Katalog `SELECT`'i beş tablo
+ * gömüyor (profil, katalog nesnesi, pozlar, sürümler); panelde tek satır
+ * için başlık, durum ve tarih yetiyor. Aynı sorguyu yeniden kullanmak,
+ * bir liste çizmek için kullanıcının bütün arşivini indirmek olurdu.
+ */
+const MY_PHOTO_SELECT =
+  'id, slug, title, status, captured_at, published_at, thumb_path, display_path';
+
+interface MyPhotoRow {
+  id: string;
+  slug: string;
+  title: string;
+  status: string;
+  captured_at: string | null;
+  published_at: string | null;
+  thumb_path: string | null;
+  display_path: string | null;
+}
+
+const EMPTY_MY_PHOTOS = {
+  photos: [] as MyPhotoSummary[],
+  published: 0,
+  drafts: 0,
+};
+
+/**
+ * Oturum açmış kullanıcının KENDİ fotoğrafları — her durumdan.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * NEDEN `usePhotoCatalog` YETMİYOR — `useMyListings` ile aynı iki sebep
+ *
+ * 1. `fetchPhotos` yalnızca `status = 'published'` çekiyor. Taslağını ve
+ *    arşivlediği kaydı göremeyen kullanıcı ne taslağını bitirebilir ne
+ *    arşivlediğini geri yayına alabilir — üstelik panelin "Taslak"
+ *    sayacı da hep 0 gösterirdi.
+ * 2. `useCatalog` tablo boşken TOHUM veriye düşüyor. Galeride bu doğru
+ *    (site boş görünmesin), burada felaket: hiç fotoğraf yüklememiş
+ *    kullanıcı yabancı kareleri "senin fotoğrafların" diye görürdü.
+ *
+ * SAYILAR AYRICA DÖNÜYOR ÇÜNKÜ KOTA KUTUSU PANELİN HER BÖLÜMÜNDE VAR.
+ * `published` sayısı `app.active_photo_count` ile birebir aynı tanımı
+ * kullanıyor (yalnızca `published`, sürümler sayılmaz). İki taraf
+ * ayrışırsa kazanan veritabanı; buradaki sayı hızlı geri bildirim.
+ */
+export function useMyPhotos(userId: string | undefined): MyPhotosState {
+  const [state, setState] = useState(EMPTY_MY_PHOTOS);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [tick, setTick] = useState(0);
+
+  useEffect(() => {
+    const clientPromise = userId ? getSupabase() : null;
+    if (!userId || !clientPromise) {
+      setState(EMPTY_MY_PHOTOS);
+      setError(null);
+      setLoading(false);
+      return;
+    }
+
+    let active = true;
+    setLoading(true);
+
+    clientPromise
+      .then(async (client) => {
+        const { data, error: queryError } = await client
+          .from('astro_photos')
+          .select(MY_PHOTO_SELECT)
+          .eq('user_id', userId)
+          /* Çekim tarihi boş olabilir (eski kayıtlar), yayın tarihi
+             taslakta boş. Sıralama kolonu olarak `created_at` ikisinde de
+             dolu — liste hiçbir durumda rastgele sıraya düşmüyor. */
+          .order('created_at', { ascending: false })
+          .limit(200);
+        if (queryError) throw new Error(queryError.message);
+        return (data as unknown as MyPhotoRow[]).map(mapMyPhotoRow);
+      })
+      .then((photos) => {
+        if (!active) return;
+        setState({
+          photos,
+          published: photos.filter((p) => p.status === 'published').length,
+          drafts: photos.filter((p) => p.status === 'draft').length,
+        });
+        setError(null);
+      })
+      .catch((e: unknown) => {
+        if (!active) return;
+        setError(e instanceof Error ? e.message : 'Fotoğraflar okunamadı');
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [userId, tick]);
+
+  const refresh = useCallback(() => setTick((t) => t + 1), []);
+  return { ...state, loading, error, refresh };
+}
+
+function mapMyPhotoRow(row: MyPhotoRow): MyPhotoSummary {
+  return {
+    id: row.id,
+    slug: row.slug,
+    title: row.title,
+    /* Tanınmayan durum `draft` sayılıyor: bilinmeyen bir değeri "Yayında"
+       göstermek, kullanıcıya kaydının galeride olduğunu söylemek olurdu.
+       Taslak varsaymak yalnızca "henüz görünmüyor" der. */
+    status: PHOTO_STATUSES.includes(row.status as PhotoStatus)
+      ? (row.status as PhotoStatus)
+      : 'draft',
+    capturedAt: row.captured_at ?? row.published_at ?? '',
+    thumbUrl: publicPhotoUrl(row.thumb_path ?? row.display_path),
+  };
 }

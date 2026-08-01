@@ -298,7 +298,7 @@ export function TonightPage() {
                     >
                       <Link
                         to={`/hedef/${target.slug}`}
-                        className="text-[13px] font-medium text-foreground transition-colors hover:text-primary"
+                        className="text-body-sm font-medium text-foreground transition-colors hover:text-primary"
                       >
                         {target.name}
                       </Link>

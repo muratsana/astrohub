@@ -66,6 +66,8 @@ export interface TonightData {
   conditions: SkyState;
   /** Hava verisi yokken null — skor uydurulmuyor. */
   score: NightScore | null;
+  /** Aynı gecenin astrofotoğraf karşılığı — ağırlıkları farklı. */
+  photoScore: NightScore | null;
   /** Dakikada bir güncellenen an. */
   now: Date;
   /** Eksen üzerinde "şu an" (0–1); gece dışındaysa null. */
@@ -201,25 +203,44 @@ export function useTonight(offsetDays = 0): TonightData {
   const weather = conditions.data;
   const { timeline } = sky;
 
-  const score = useMemo(() => {
+  /*
+   * İKİ SKOR, TEK GİRDİ KÜMESİ. Girdileri iki kez kurmak, birine
+   * eklenen alanın diğerinde unutulması demekti — aynı gece iki
+   * pencerede iki farklı sebeple puanlanırdı.
+   */
+  const scoreInputs = useMemo(() => {
     if (!weather) return null;
     const darkMinutes = timeline.dark
       ? Math.round(
           (timeline.dark.to.getTime() - timeline.dark.from.getTime()) / 60_000
         )
       : 0;
-    return nightScore({
+    return {
       cloudCover: weather.cloudCover,
       seeingIndex: weather.seeing?.index ?? null,
       humidity: weather.humidity,
       windSpeed: weather.windSpeed,
+      windGust: weather.windGust,
+      transparencyIndex: weather.transparency?.index ?? null,
       temperature: weather.temperature,
       dewPoint: weather.dewPoint,
       darkMinutes,
       moonlessMinutes: timeline.moonlessMinutes,
       moonIllumination: sky.moon.illumination,
-    });
+    };
   }, [weather, timeline, sky.moon.illumination]);
+
+  /** Gözle gözlem skoru — panelin ana sayısı. */
+  const score = useMemo(
+    () => (scoreInputs ? nightScore(scoreInputs, 'gozlem') : null),
+    [scoreInputs]
+  );
+
+  /** Astrofotoğraf skoru — rüzgâr hamlesi ve çiy ağırlıklı. */
+  const photoScore = useMemo(
+    () => (scoreInputs ? nightScore(scoreInputs, 'astrofoto') : null),
+    [scoreInputs]
+  );
 
   /*
    * İmleç oranı burada, `timeline.now` ile değil. Çizelge güne göre
@@ -250,6 +271,7 @@ export function useTonight(offsetDays = 0): TonightData {
     ...sky,
     conditions,
     score,
+    photoScore,
     now,
     nowAt,
     dateLabel,

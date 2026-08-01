@@ -1,3 +1,4 @@
+import { normalizeTr } from '@/lib/text';
 import { photos } from '@/features/photos/data';
 import { photoTypeLabels } from '@/features/photos/types';
 import { targets, targetKindLabels } from '@/features/targets/data';
@@ -76,29 +77,13 @@ export interface SearchGroup {
 }
 
 /**
- * Türkçe duyarlı normalizasyon: "İSTANBUL", "istanbul" ve "Istanbul"
- * aynı anahtara indirgenir. Aksan/özel harfler ASCII karşılığına çevrilir ki
- * klavye düzeni farkı arama sonucunu değiştirmesin.
+ * Arama normalizasyonu `lib/text.ts`ten geliyor (Faz 4.1).
+ *
+ * Buradaki kopya kaldırıldı: aynı kural üç ayrı dosyada duruyordu ve biri
+ * değişince diğerleri geride kalırdı — "cankiri" yazan kullanıcı bir
+ * modülde Çankırı'yı bulup ötekinde bulamazdı.
  */
-const FOLD: Record<string, string> = {
-  ı: 'i',
-  ş: 's',
-  ğ: 'g',
-  ü: 'u',
-  ö: 'o',
-  ç: 'c',
-  â: 'a',
-  î: 'i',
-  û: 'u',
-};
-
-export function normalize(value: string): string {
-  return value
-    .toLocaleLowerCase('tr-TR')
-    .replace(/[ışğüöçâîû]/g, (ch) => FOLD[ch] ?? ch)
-    .replace(/\s+/g, ' ')
-    .trim();
-}
+export const normalize = normalizeTr;
 
 function doc(
   category: SearchCategory,

@@ -24,26 +24,31 @@ import { cn } from '@/lib/cn';
  * (etkinliklerde ölçtüm: 410px'e karşı 428px). `auto-rows-fr` bütün
  * satırlara aynı yüksekliği verir, böylece sayfadaki her kart eşit olur.
  *
- * `density` ızgara kolon sayısını belirler:
- *   tight    küçük karolar (galeri, hedef kataloğu) — 5 kolona kadar
- *   default  orta kartlar (etkinlik, ilan) — 4 kolona kadar
- *   wide     geniş kartlar (gözlem noktaları) — 3 kolona kadar
+ * ══════════════════════════════════════════════════════════════════════
+ * TEK ÖLÇEK — ÜÇ YOĞUNLUK KALDIRILDI
+ *
+ * Bileşen üç yoğunluk sunuyordu: `tight` (5 kolon), `default` (4) ve
+ * `wide` (3). Sayım şunu gösterdi: `wide` hiçbir yerde kullanılmıyordu ve
+ * `default` yalnızca TEK yerde — galeride. Diğer sekiz modülün hepsi
+ * `tight` kullanıyordu.
+ *
+ * Yani galeri kartı sitedeki en BÜYÜK karttı ve bu bir tasarım kararı
+ * değil, bir tutarsızlıktı: fotoğraf kartı, ekipman ve hedef kartlarından
+ * geniş çıkıyordu. Galeri `tight`e alınınca xl'de 4 kolondan 5 kolona
+ * geçiyor — kart genişliği tam olarak 4/5 = %80'e, yani %20 daralıyor —
+ * ve sitedeki her kart aynı ölçüye oturuyor.
+ *
+ * Yoğunluk seçeneği tamamen kalktı. Kullanılmayan bir esneklik, ileride
+ * birinin farkında olmadan tutarsızlığı geri getirmesinin yolu.
  */
-const densities = {
-  tight:
-    'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5',
-  default: 'sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4',
-  wide: 'sm:grid-cols-2 xl:grid-cols-3',
-} as const;
+const COLUMNS = 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5';
 
 export function CardGrid({
   view,
-  density = 'default',
   children,
   className,
 }: {
   view: ViewMode;
-  density?: keyof typeof densities;
   children: ReactNode;
   className?: string;
 }) {
@@ -51,9 +56,7 @@ export function CardGrid({
     <ul
       className={cn(
         'grid [&>li]:h-full',
-        view === 'grid'
-          ? cn('auto-rows-fr gap-2.5', densities[density])
-          : 'gap-2',
+        view === 'grid' ? cn('auto-rows-fr gap-2.5', COLUMNS) : 'gap-2',
         className
       )}
     >

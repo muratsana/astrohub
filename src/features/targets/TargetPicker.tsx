@@ -130,7 +130,7 @@ export function TargetPicker({
         {selected ? (
           <div className="flex items-center gap-2 rounded-card border border-primary/40 bg-surface-2 px-3 py-2.5">
             <Badge tone="primary">{selected.catalog}</Badge>
-            <span className="min-w-0 flex-1 truncate text-[13px] text-foreground">
+            <span className="min-w-0 flex-1 truncate text-body-sm text-foreground">
               {selected.name}
             </span>
             <span className="hidden shrink-0 text-meta text-muted-foreground sm:inline">
@@ -157,7 +157,7 @@ export function TargetPicker({
             />
 
             {open && (
-              <div className="absolute left-0 right-0 z-20 mt-1 overflow-hidden rounded-card border border-border-strong bg-surface-1 shadow-lg">
+              <div className="absolute left-0 right-0 z-[var(--z-popover)] mt-1 overflow-hidden rounded-card border border-border-strong bg-surface-1 shadow-overlay">
                 {options.length === 0 ? (
                   <p className="px-3 py-3 text-body-sm leading-relaxed text-muted-foreground">
                     Bu türde eşleşen kayıt yok. Katalogda olmayan bir hedef
@@ -177,7 +177,7 @@ export function TargetPicker({
                             <span className="tabular w-16 shrink-0 text-body-sm font-medium text-primary">
                               {t.catalog}
                             </span>
-                            <span className="min-w-0 flex-1 truncate text-[12.5px] text-foreground">
+                            <span className="min-w-0 flex-1 truncate text-caption text-foreground">
                               {t.name}
                             </span>
                             <span className="hidden shrink-0 text-meta text-faint sm:inline">

@@ -5,6 +5,7 @@ import {
   statusLabels,
   reasonLabels,
   type ModerationStatus,
+  type ModerationTarget,
 } from './moderation';
 
 describe('moderasyon kuyruğu sayımı', () => {
@@ -31,9 +32,22 @@ describe('moderasyon kuyruğu sayımı', () => {
 });
 
 describe('etiket sözlükleri', () => {
-  it('her hedef türünün Türkçe karşılığı var', () => {
-    expect(Object.keys(targetLabels)).toHaveLength(8);
+  /*
+   * SAYI SABİTİ KALDIRILDI. Test "8 hedef türü olmalı" diyordu ve dokuzuncu
+   * tür eklenince (0047: özel mesaj) kırıldı — oysa ölçmek istediği şey
+   * sayı değil, HER TÜRÜN BİR KARŞILIĞI OLMASI. Zaten `Record<
+   * ModerationTarget, string>` tipi eksik anahtarı derlemede yakalıyor;
+   * buradaki testin işi etiketin BOŞ ya da yer tutucu olmadığını
+   * doğrulamak.
+   */
+  it('her hedef türünün dolu bir Türkçe karşılığı var', () => {
+    const targets = Object.keys(targetLabels) as ModerationTarget[];
+    expect(targets.length).toBeGreaterThan(0);
+    for (const target of targets) {
+      expect(targetLabels[target].trim().length).toBeGreaterThan(2);
+    }
     expect(targetLabels.forum_post).toBe('Forum mesajı');
+    expect(targetLabels.message).toBe('Özel mesaj');
   });
 
   it('her durumun karşılığı var ve boş değil', () => {

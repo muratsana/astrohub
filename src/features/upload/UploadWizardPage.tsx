@@ -35,6 +35,14 @@ import {
   type ExifData,
 } from '@/domain/photography/exif';
 import { Alert } from '@/components/ui/Alert';
+import { CropTool } from './CropTool';
+import { slugify } from '@/lib/slug';
+import {
+  applyCropToFile,
+  isFullFrame,
+  FULL_FRAME,
+  type CropRect,
+} from '@/domain/photography/crop';
 
 const steps = [
   'Dosya',
@@ -117,11 +125,26 @@ const initialState: WizardState = {
 };
 
 /**
- * Fotoğraf yükleme sihirbazı (§7.4) — 6 adımlı UI iskeleti.
- * Gerçek dosya yükleme + EXIF okuma + sunucu pipeline'ı Faz 1.2'de bağlanır;
- * bu iskelet form akışını, doğrulamaları ve özet ekranını tanımlar.
+ * Fotoğraf yükleme sihirbazı (§7.4) — 6 adım.
+ *
+ * BU YORUM ESKİDEN "gerçek dosya yükleme + EXIF okuma + sunucu pipeline'ı
+ * Faz 1.2'de bağlanır" diyordu ve YANLIŞTI: üçü de bağlı. EXIF tarayıcıda
+ * okunuyor (`domain/photography/exif`), dosya küçültülüp `photos`
+ * kovasına yazılıyor, satır `astro_photos`a düşüyor
+ * (`services/photos/upload`). Yanlış bırakılan bir "henüz yok" notu,
+ * sonraki okuyucuyu var olan bir özelliği yeniden yazmaya iter.
  */
 export function UploadWizardPage() {
+  /*
+   * KIRPMA DURUMU DOSYADAN AYRI TUTULUYOR.
+   *
+   * Kırpılmış dosyayı `file` yerine koymak akla yakın ama yanlış:
+   * kullanıcı oranı değiştirdiğinde yeniden kırpmak için ÖZGÜN dosya
+   * gerekiyor. Kırpılmışın üstüne kırpmak, her ayarda biraz daha kalite
+   * kaybetmek demekti. Dosya olduğu gibi duruyor; kırpma yalnızca bir
+   * dikdörtgen ve gönderim anında bir kez uygulanıyor.
+   */
+  const [crop, setCrop] = useState<CropRect>(FULL_FRAME);
   const [exif, setExif] = useState<ExifData | null>(null);
   const [exifState, setExifState] = useState<'idle' | 'reading' | 'read' | 'none'>(
     'idle'
@@ -174,11 +197,21 @@ export function UploadWizardPage() {
     setPublishError(null);
 
     try {
+      /*
+       * KIRPMA GÖNDERİM ANINDA, TEK SEFERDE UYGULANIYOR.
+       *
+       * Her ayarda dosyayı yeniden üretmek, JPEG'de her seferinde biraz
+       * daha kalite kaybetmek olurdu. Kırpma yokken `applyCropToFile`
+       * dosyaya hiç dokunmuyor ve özgün bayt dizisi olduğu gibi
+       * yükleniyor.
+       */
+      const gonderilecek = await applyCropToFile(file, crop);
+
       const result = await uploadPhoto(
         {
-          file,
+          file: gonderilecek,
           userId: user.id,
-          slug: slugify(state.title || file.name),
+          slug: slugifyPhoto(state.title || file.name),
           title: state.title || file.name,
           photoType: state.type,
           capturedAt: state.capturedAt || undefined,
@@ -218,6 +251,27 @@ export function UploadWizardPage() {
             Yazılım: state.software,
           },
           exposures: state.exposures,
+          /*
+           * DOSYADAN OKUNANI SAKLA. Bu blok eskiden yoktu: EXIF yalnızca
+           * form alanlarını ÖNDOLDURMAK için okunuyor, gönderim anında
+           * çöpe gidiyordu. Kullanıcı bir alanı elle değiştirdiğinde
+           * dosyadaki asıl değer artık hiçbir yerde durmuyordu.
+           *
+           * Koordinat gönderilmiyor — yalnızca varlığı. Kullanıcı EXIF
+           * konumunu kullanmayı seçse bile (`useExifGps`) o seçim
+           * `locationLabel`'a yansıyor; ham koordinat sunucuya gitmiyor.
+           */
+          exif: exif
+            ? {
+                camera: cameraLabel(exif),
+                lens: exif.lens,
+                iso: exif.iso,
+                focalMm: exif.focalLength,
+                apertureF: exif.fNumber,
+                exposureSeconds: exif.exposureSeconds,
+                gpsPresent: exif.hasGps,
+              }
+            : undefined,
         },
         setPublishState
       );
@@ -304,6 +358,8 @@ export function UploadWizardPage() {
     });
     setExif(null);
     setUseExifGps(false);
+    /* Yeni dosya, yeni kadraj: önceki seçim başka bir görüntüye aitti. */
+    setCrop(FULL_FRAME);
     setExifState('reading');
 
     try {
@@ -357,7 +413,7 @@ export function UploadWizardPage() {
       />
       <Container className="py-8 sm:py-10">
         <header className="mb-8">
-          <h1 className="text-[26px] text-foreground sm:text-[30px]">
+          <h1 className="type-page text-foreground">
             Fotoğraf Yükle
           </h1>
           <p className="mt-2 max-w-xl text-muted-foreground">
@@ -423,8 +479,40 @@ export function UploadWizardPage() {
                 onChange={(event) => void handleFile(event.target.files?.[0])}
               />
 
+              {/*
+                KIRPMA DOSYA ADIMINDA, AYRI BİR ADIMDA DEĞİL.
+
+                Ayrı bir "kadraj" adımı düşünüldü ve reddedildi: kırpma
+                yapmayacak kullanıcı — ki çoğunluk bu — sihirbazda
+                geçmesi gereken bir adım daha görürdü. Burada, dosya
+                seçildiği anda ve isteğe bağlı olarak duruyor.
+
+                Alan ölçüsü ekipman adımından SONRA anlam kazanıyor
+                (piksel ölçeği orada hesaplanıyor); araç o değeri
+                aldığında satırı kendisi açıyor, almadığında sebebini
+                yazıyor.
+              */}
+              {file && (
+                <div className="rounded-card border border-border bg-surface-2/40 p-3">
+                  <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-3">
+                    <h3 className="label text-foreground">Kadraj</h3>
+                    <span className="text-meta text-faint">
+                      {isFullFrame(crop)
+                        ? 'kırpma yapılmadı — dosya olduğu gibi yüklenir'
+                        : 'kırpma gönderim anında uygulanır'}
+                    </span>
+                  </div>
+                  <CropTool
+                    file={file}
+                    arcsecPerPixel={state.pixelScaleArcsec}
+                    value={crop}
+                    onChange={setCrop}
+                  />
+                </div>
+              )}
+
               {exifState === 'reading' && (
-                <p className="text-[12px] text-muted-foreground" role="status">
+                <p className="text-meta text-muted-foreground" role="status">
                   EXIF okunuyor…
                 </p>
               )}
@@ -497,7 +585,7 @@ export function UploadWizardPage() {
                               });
                             }
                           }}
-                          className="h-3.5 w-3.5 rounded-[2px] border-border accent-primary"
+                          className="h-3.5 w-3.5 rounded-card border-border accent-primary"
                         />
                         Koordinatı konum alanına yaz (yaklaşık görünürlükle)
                       </label>
@@ -969,27 +1057,21 @@ function progressLabel(stage: string): string {
   }
 }
 
-function slugify(input: string): string {
-  const base = input
-    .toLocaleLowerCase('tr-TR')
-    .replace(/ı/g, 'i')
-    .replace(/ş/g, 's')
-    .replace(/ğ/g, 'g')
-    .replace(/ü/g, 'u')
-    .replace(/ö/g, 'o')
-    .replace(/ç/g, 'c')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 90);
-
+/**
+ * Fotoğraf adresi — dönüşüm `lib/slug`ta, son ek burada.
+ *
+ * Son ek ÇAKIŞMA İÇİN: aynı hedefi iki kez yükleyen kullanıcı
+ * "m31" adresini ikinci kez alamaz ve yükleme sessizce düşerdi.
+ */
+function slugifyPhoto(input: string): string {
   const suffix = Math.floor(Math.random() * 46656).toString(36);
-  return `${base || 'fotograf'}-${suffix}`;
+  return `${slugify(input) || 'fotograf'}-${suffix}`;
 }
 
 function StepTitle({ title, hint }: { title: string; hint?: string }) {
   return (
     <div>
-      <h2 className="text-lg font-semibold text-foreground">{title}</h2>
+      <h2 className="type-section font-semibold text-foreground">{title}</h2>
       {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
     </div>
   );

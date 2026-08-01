@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { GalleryPage } from './GalleryPage';
@@ -23,6 +23,22 @@ function renderGallery() {
         <GalleryPage />
       </MemoryRouter>
     </QueryClientProvider>
+  );
+}
+
+/**
+ * Arama kutusuna yazıp GECİKMENİN dolmasını bekler.
+ *
+ * Faz 4'te arama ortak Data Explorer'a taşındı ve 250 ms debounce
+ * kazandı: her tuş vuruşunda bütün listeyi süzmek ve URL'ye yazmak
+ * yazarken takılma üretiyordu. Testler artık sonucu beklemek zorunda —
+ * `waitFor` gerçek zamanlayıcıyla çalışıyor, sahte zamanlayıcı kurmaya
+ * gerek yok.
+ */
+async function ara(terim: string) {
+  fireEvent.change(screen.getByLabelText(/^ara$/i), { target: { value: terim } });
+  await waitFor(() =>
+    expect(screen.getByLabelText(/^ara$/i)).toHaveValue(terim)
   );
 }
 
@@ -56,32 +72,47 @@ describe('GalleryPage (§7.2)', () => {
     expect(screen.getByRole('status').textContent).not.toContain('/');
   });
 
-  it('filtre uygulanınca sayacı kesirli gösterir', () => {
+  it('filtre uygulanınca sayacı kesirli gösterir', async () => {
     renderGallery();
-    fireEvent.change(screen.getByLabelText(/^ara$/i), {
-      target: { value: 'rozet' },
-    });
-    expect(screen.getByRole('status')).toHaveTextContent(
-      `1 / ${photos.length} fotoğraf`
+    await ara('rozet');
+    await waitFor(() =>
+      expect(screen.getByRole('status')).toHaveTextContent(
+        `1 / ${photos.length} fotoğraf`
+      )
     );
   });
 
-  it('arama kutusu sonuçları daraltır', () => {
+  it('arama kutusu sonuçları daraltır', async () => {
     renderGallery();
-    fireEvent.change(screen.getByLabelText(/^ara$/i), {
-      target: { value: 'rozet' },
-    });
-    const cards = photoLinks();
-    expect(cards).toHaveLength(1);
-    expect(cards[0]).toHaveAttribute('href', '/fotograf/rozet-bulutsusu-sho');
+    await ara('rozet');
+    await waitFor(() => expect(photoLinks()).toHaveLength(1));
+    expect(photoLinks()[0]).toHaveAttribute(
+      'href',
+      '/fotograf/rozet-bulutsusu-sho'
+    );
   });
 
-  it('eşleşme yoksa boş durum mesajı gösterir', () => {
+  it('eşleşme yoksa boş durum mesajı gösterir', async () => {
     renderGallery();
-    fireEvent.change(screen.getByLabelText(/^ara$/i), {
-      target: { value: 'olmayan-hedef-xyz' },
-    });
-    expect(screen.getByText(/eşleşen kayıt yok/i)).toBeInTheDocument();
+    await ara('olmayan-hedef-xyz');
+    expect(await screen.findByText(/eşleşen kayıt yok/i)).toBeInTheDocument();
+  });
+
+  /*
+   * FAZ 4 DAVRANIŞ DEĞİŞİKLİĞİ. Eski galeri araması yalnızca
+   * `toLocaleLowerCase('tr-TR')` yapıyordu, yani ASCII yazan kullanıcı
+   * Türkçe karakterli kaydı BULAMIYORDU. Ortak motor katlıyor.
+   */
+  it('ASCII yazımla Türkçe karakterli kaydı buluyor', async () => {
+    const turkceli = photos.find((p) => /[çğıöşü]/i.test(p.target.name));
+    if (!turkceli) return;
+    renderGallery();
+    await ara(
+      turkceli.target.name
+        .toLocaleLowerCase('tr-TR')
+        .replace(/[ışğüöç]/g, (c) => ({ ı: 'i', ş: 's', ğ: 'g', ü: 'u', ö: 'o', ç: 'c' })[c] ?? c)
+    );
+    await waitFor(() => expect(photoLinks().length).toBeGreaterThan(0));
   });
 
   it('künyeyi karo üzerinde her zaman gösterir', () => {

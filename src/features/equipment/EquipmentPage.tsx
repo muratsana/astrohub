@@ -1,8 +1,14 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Link, useParams } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
+import {
+  ContentCard,
+  ContentCardActions,
+  ContentCardMeta,
+  ContentCardTitle,
+} from '@/components/ui/ContentCard';
 import { ButtonLink } from '@/components/ui/Button';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -14,6 +20,7 @@ import {
   FilterCell,
   filterControlClass,
 } from '@/components/ui/FilterBar';
+import { ActiveFilters } from '@/components/ui/ActiveFilters';
 import {
   equipmentCategoryLabels,
   equipmentCategoryOrder,
@@ -24,14 +31,12 @@ import {
 import { EquipmentGlyph } from './EquipmentGlyph';
 import { RemoteImage } from '@/components/media/RemoteImage';
 import { useEquipmentCatalog } from '@/services/content/equipment';
+import { useExplorer } from '@/features/explorer/useExplorer';
+import { equipmentSpec } from './equipmentSpec';
 import { CatalogSourceNote } from '@/components/ui/CatalogSourceNote';
 import { cn } from '@/lib/cn';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
-
-function trLower(s: string): string {
-  return s.toLocaleLowerCase('tr-TR');
-}
 
 /*
  * Sekmeler kategori tablosundan geliyor: liste iki yerde yazılıyken yeni
@@ -62,22 +67,26 @@ export function EquipmentPage() {
     ? categoryParam
     : 'hepsi';
 
-  const [search, setSearch] = useState('');
   const [view, setView] = useViewMode('ekipman');
 
   const catalog = useEquipmentCatalog();
 
-  const result = useMemo(() => {
-    let items = catalog.items;
-    if (category !== 'hepsi') items = items.filter((e) => e.category === category);
-    const q = trLower(search.trim());
-    if (q) {
-      items = items.filter((e) =>
-        trLower(`${e.brand} ${e.model} ${Object.values(e.specs).join(' ')}`).includes(q)
-      );
-    }
-    return items;
-  }, [catalog.items, category, search]);
+  /*
+   * Kategori süzmesi explorer'ın DIŞINDA: rota yolunda taşınıyor
+   * (`/ekipman/montur`) ve o adresler prerender ediliyor. Sorgu
+   * parametresine taşımak verilmiş bağlantıları kırardı — ayrıntı
+   * `equipmentSpec.ts` başında.
+   */
+  const kategoriliste = useMemo(
+    () =>
+      category === 'hepsi'
+        ? catalog.items
+        : catalog.items.filter((e) => e.category === category),
+    [catalog.items, category]
+  );
+
+  const ex = useExplorer(kategoriliste, equipmentSpec);
+  const result = ex.items;
 
   const title =
     category === 'hepsi'
@@ -153,18 +162,24 @@ export function EquipmentPage() {
           })}
         </div>
 
-        <FilterBar columns={2}>
+        <FilterBar activeCount={ex.chips.length} columns={2}>
           <FilterCell label="Ara" htmlFor="eq-search">
             <Input
               id="eq-search"
               type="search"
               placeholder="Marka, model veya teknik değer (ör. EQ6, 3.76 µm)"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              value={ex.searchInput}
+              onChange={(e) => ex.setSearch(e.target.value)}
               className={filterControlClass}
             />
           </FilterCell>
         </FilterBar>
+
+        <ActiveFilters
+          chips={ex.chips}
+          onRemove={ex.removeChip}
+          onClearAll={ex.clearAll}
+        />
 
         <CatalogSourceNote selection={catalog} />
 
@@ -185,7 +200,7 @@ export function EquipmentPage() {
             hint="Aramayı kısaltmayı ya da başka bir kategori seçmeyi deneyin. Katalogda olmayan model talebi Faz 1.5'te açılacak."
           />
         ) : (
-          <CardGrid view={view} density="tight">
+          <CardGrid view={view}>
             {result.map((model) => (
               <li key={model.slug}>
                 <EquipmentCard model={model} variant={view} />
@@ -207,39 +222,33 @@ function EquipmentCard({
 }) {
   if (variant === 'list') {
     return (
-      <Link
-        to={equipmentPath(model)}
-        className="group flex h-full items-center gap-3 rounded-card border border-border bg-surface-1 px-3 py-2.5 transition-colors hover:border-border-strong"
-      >
+      <ContentCard to={equipmentPath(model)} variant="list">
         <EquipmentVisual model={model} className="h-9 w-9 shrink-0" />
         <div className="min-w-0 flex-1">
-          <h2 className="truncate text-[13px] font-medium text-foreground group-hover:text-primary">
+          <ContentCardTitle className="font-medium">
             <span className="text-muted-foreground">{model.brand}</span>{' '}
             {model.model}
-          </h2>
-          <p className="tabular mt-0.5 truncate text-meta text-muted-foreground">
+          </ContentCardTitle>
+          <ContentCardMeta className="mt-0.5">
             {Object.entries(model.specs)
               .map(([k, v]) => `${k}: ${v}`)
               .join(' · ')}
-          </p>
+          </ContentCardMeta>
         </div>
         <Badge>{equipmentCategoryLabels[model.category]}</Badge>
-      </Link>
+      </ContentCard>
     );
   }
 
   return (
-    <Link
-      to={equipmentPath(model)}
-      className="group flex h-full flex-col rounded-card border border-border bg-surface-1 p-3 transition-colors hover:border-border-strong"
-    >
+    <ContentCard to={equipmentPath(model)} className="p-3">
       <div className="mb-2 flex items-start gap-2.5">
         <EquipmentVisual model={model} className="h-11 w-11 shrink-0" />
         <div className="min-w-0 flex-1">
           <p className="label">{model.brand}</p>
-          <h2 className="mt-0.5 text-[14px] font-medium leading-snug text-foreground group-hover:text-primary">
+          <ContentCardTitle lines={2} className="mt-0.5 font-medium leading-snug">
             {model.model}
-          </h2>
+          </ContentCardTitle>
         </div>
         <Badge>{equipmentCategoryLabels[model.category]}</Badge>
       </div>
@@ -256,7 +265,7 @@ function EquipmentCard({
         ))}
       </dl>
 
-      <div className="mt-auto flex items-center justify-between gap-2 pt-2.5">
+      <ContentCardActions className="justify-between pt-2.5">
         {model.priceHint && (
           <span className="text-meta tracking-[0.03em] text-faint">
             {model.priceHint}
@@ -265,8 +274,8 @@ function EquipmentCard({
         <span className="ml-auto text-meta tracking-[0.04em] text-muted-foreground transition-colors group-hover:text-primary">
           künye →
         </span>
-      </div>
-    </Link>
+      </ContentCardActions>
+    </ContentCard>
   );
 }
 

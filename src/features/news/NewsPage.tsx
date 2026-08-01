@@ -1,5 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Container } from '@/components/ui/Container';
+import { FilterBar, FilterCell, filterControlClass } from '@/components/ui/FilterBar';
+import { ActiveFilters } from '@/components/ui/ActiveFilters';
+import { Input } from '@/components/ui/Input';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
 import { ViewToggle } from '@/components/ui/ViewToggle';
@@ -8,6 +11,8 @@ import { useViewMode } from '@/components/ui/useViewMode';
 import { cn } from '@/lib/cn';
 import { newsCategoryLabels, type NewsCategory } from './data';
 import { useNewsItems } from './useNews';
+import { useExplorer } from '@/features/explorer/useExplorer';
+import { newsSpec } from './newsSpec';
 
 /**
  * HABERLER — güncel astronomi ve uzay gündemi.
@@ -35,15 +40,24 @@ function formatDate(iso: string): string {
 }
 
 export function NewsPage() {
-  const [category, setCategory] = useState<NewsCategory | 'hepsi'>('hepsi');
   const [view, setView] = useViewMode('haberler');
 
   // Tohum + panelden yayımlananlar tek listede (useNews.ts).
   const { items: all } = useNewsItems();
-  const result = useMemo(
-    () => (category === 'hepsi' ? all : all.filter((n) => n.category === category)),
-    [all, category]
-  );
+
+  /*
+   * ORTAK DATA EXPLORER (Faz 4). Sayfada arama HİÇ yoktu ve kategori
+   * `useState`teydi — yani seçilen kategori paylaşılamıyordu.
+   */
+  const ex = useExplorer(all, newsSpec);
+  const result = ex.items;
+  const category = ex.query.facets.kategori?.[0] ?? 'hepsi';
+
+  /** Kategori sekmeleri tek seçim. */
+  const setCategory = (next: string) => {
+    if (category !== 'hepsi') ex.toggleFacet('kategori', category);
+    if (next !== 'hepsi' && next !== category) ex.toggleFacet('kategori', next);
+  };
 
   /* Ortak editöryel düzen — yazı ve etkinlikle aynı kart yapısı. */
   const items: EditorialItem[] = useMemo(
@@ -76,12 +90,37 @@ export function NewsPage() {
 
       <Container className="py-8 sm:py-10">
         <header className="mb-5 border-b border-border pb-5">
-          <h1 className="text-[26px] text-foreground sm:text-[30px]">Haberler</h1>
-          <p className="mt-2 max-w-[70ch] text-[12px] leading-relaxed text-muted-foreground">
+          <h1 className="type-page text-foreground">Haberler</h1>
+          <p className="mt-2 max-w-[70ch] text-meta leading-relaxed text-muted-foreground">
             Astronomi ve uzay gündemi. Her haber, dayandığı kaynağın adıyla
             birlikte yayımlanır.
           </p>
         </header>
+
+        {/*
+          ARAMA KUTUSU BURAYA GEÇ GELDİ. Motor (`useExplorer`) tam metin
+          aramayı en baştan destekliyordu; bu iki sayfada yalnızca ARAYÜZ
+          yoktu. Kategori sekmesi az sayıda kategoriyi iyi gösteriyor ama
+          "perseid" arayan kullanıcı sekmelerde gezinmek zorunda kalıyordu.
+        */}
+        <FilterBar activeCount={ex.chips.length} columns={2}>
+          <FilterCell label="Ara" htmlFor="news-search">
+            <Input
+              id="news-search"
+              type="search"
+              placeholder="Haber başlığı veya kaynak"
+              value={ex.searchInput}
+              onChange={(e) => ex.setSearch(e.target.value)}
+              className={filterControlClass}
+            />
+          </FilterCell>
+        </FilterBar>
+
+        <ActiveFilters
+          chips={ex.chips}
+          onRemove={ex.removeChip}
+          onClearAll={ex.clearAll}
+        />
 
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div

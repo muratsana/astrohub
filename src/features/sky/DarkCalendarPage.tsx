@@ -106,7 +106,7 @@ export function DarkCalendarPage() {
             >
               ←
             </Button>
-            <span className="tabular min-w-[9ch] text-center text-[13px] text-foreground">
+            <span className="tabular min-w-[9ch] text-center text-body-sm text-foreground">
               {MONTH_NAMES[month]} {year}
             </span>
             <Button
@@ -196,7 +196,7 @@ export function DarkCalendarPage() {
                       className="flex w-full items-baseline justify-between gap-3 py-2 text-left transition-colors hover:text-primary"
                     >
                       <span className="min-w-0">
-                        <span className="tabular text-[13px] text-foreground">
+                        <span className="tabular text-body-sm text-foreground">
                           {entry.date.getDate()} {MONTH_NAMES[month]}
                         </span>
                         <span className="ml-2 text-meta text-muted-foreground">
@@ -310,7 +310,7 @@ function DayCell({
     >
       <span
         className={cn(
-          'tabular text-[12px] leading-none',
+          'tabular text-meta leading-none',
           isToday ? 'font-bold text-primary' : 'text-foreground'
         )}
       >

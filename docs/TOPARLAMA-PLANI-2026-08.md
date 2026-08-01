@@ -203,8 +203,12 @@ geçmez**. Önerilen sıra (QA MUST setinden, mevcut koda en çok yaslananlar
    alanlar; form "temel/çekim/kalibrasyon/işleme" gruplarında.
 5. **Saha modu derinleştirme** (MUST-07) — `field` teması mevcut; offline
    gece planı + büyük kontroller + parlak içerik bastırma.
-6. **Bildirim/alarm merkezi** (MUST-10) — `notification_preferences` ve
-   `push_subscriptions` tabloları hazır; e-posta sağlayıcısı kararı **Sen**.
+6. **Bildirim/alarm merkezi** (MUST-10) — ~~`notification_preferences` ve
+   `push_subscriptions` tabloları hazır~~ **Site içi kısmı Faz 5'te
+   yapıldı** (`0042`): `notifications` tablosu, altı üretim tetikleyicisi,
+   kategori tercihleri ve `/bildirimler` merkezi. Kalan tek parça
+   TESLİMAT: e-posta sağlayıcısı kararı **Sen**. `push_subscriptions`
+   tablosu hâlâ boş — teslimat kanalı seçilene kadar öyle kalıyor.
 7. **Moderasyon/güven** (MUST-09) — tek kuyruk mevcut; rapor nedenleri,
    telif başvurusu, itiraz akışı eklenir.
 8. Plate solving + FITS analizi (MUST-05/06) ve MUST-08 veri tazelik
@@ -841,3 +845,97 @@ gönderildiği açıkça yazıyor. Orijinal dosya gönderilmiyor.
    `setImmediate` ile yeniden kuyruğa atıyor). Hata bu turla ilgisiz —
    değişiklikler stash'lenip yeniden denendi, aynı şekilde asılı kaldı.
    Eşik kontrolünden sonra açık `process.exit(0)`.
+
+---
+
+## 19. Auth sertleştirme ve panelin ölü hedefleri (1 Ağustos)
+
+### T-508 — auth sertleştirme ✅
+
+Üç iş; üçü de "ayar değiştirmek" değil, davranış değiştirmek.
+
+**Şifre alt sınırı 8 → 10.** Sekiz karakter Supabase'in varsayılanıydı ve
+varsayılan olduğu için seçilmişti. İki karakter arama uzayını ~4.000 kat
+büyütüyor. Üst sınır 72'de kalıyor: bcrypt girdiyi orada kesiyor, daha
+uzununu kabul etmek sakladığımızdan fazlasını koruduğumuzu söylemek olurdu.
+Sızmış şifre listesi istemciye indirilmiyor — o kontrol sunucuda (dashboard
+ayarı, hâlâ **sende**).
+
+**OAuth dönüş adresi artık kökene sorulmuyor.** Asıl açık buydu: adres
+`VITE_SITE_URL` yokken `window.location.origin`'e düşüyordu, yani
+uygulamayı barındıran kim olursa dönüş adresini o belirliyordu. Saldırgan
+paketi kendi alan adından sunduğunda `redirectTo` kendiliğinden ona işaret
+ediyor; Supabase'teki "Redirect URLs" listesi genişse OAuth kodu onun
+sayfasına teslim ediliyordu.
+
+Kural artık iki köken: derlemeye gömülü `VITE_SITE_URL` ya da localhost.
+Tanınmayan kökende adres **üretilmiyor** ve `undefined` dönüyor — supabase-js
+alanı hiç göndermiyor, sunucu kendi Site URL'ini kullanıyor. Seçim
+istemciden alınıp sunucuya veriliyor. Boş dize dönmek yanlış olurdu:
+`'' + '/giris'` göreli bir adres üretir ve alan olarak gönderilir.
+
+Mantık `AuthContext`ten çıkıp `features/auth/redirect.ts`ye taşındı, çünkü
+sağlayıcının içinde sınanamıyordu. Dokuz test; aralarında
+`localhost.evil.example` (alt dize araması yapan bir kontrol buna kanardı).
+
+**Bu istemci kontrolü dashboard listesinin yerine geçmez** — "Redirect
+URLs"i daraltmak hâlâ ayrı bir iş.
+
+**Oturum iptali.** Normal çıkış yalnızca bu tarayıcının yenileme jetonunu
+düşürüyordu; telefonunu kaybeden kullanıcının o cihaza dokunmadan oturumu
+sonlandırma yolu yoktu (şifre değiştirmek tek başına bunu yapmıyor).
+`signOut({ scope: 'global' })` hesabın bütün yenileme jetonlarını iptal
+ediyor. Arayüz iki tıklı: ikinci düğme ayrı, geri alınamaz bir işlem için
+tek tık yeterli olmamalı.
+
+Uyarı metni gerçeği söylüyor: diğer cihazlar **anında değil**, erişim
+jetonu ömrünü doldurunca (varsayılan bir saat) düşüyor. Bu Supabase'in JWT
+tasarımının sonucu, kapatılamıyor — "hepsi kapandı" demek yalan olurdu.
+
+### T-505 — panelin "Yakında" hedefleri ✅
+
+Menüde üç ölü bağlantı vardı ve üçü farklı biçimde yalan söylüyordu:
+
+| Bağlantı | Gittiği yer | Sorun |
+| --- | --- | --- |
+| Planlarım | `/planlayici` | Planlayıcı planı KAYDETMİYOR; kullanıcı dönünce boş sayfa buluyordu |
+| İlanlarım | `/ilanlar` | Herkese açık pazaryeri — kendi ilanları değil |
+| Üyelik ve Ödeme | `/panel` | Zaten üzerinde olduğu sayfa: tıklayınca hiçbir şey olmuyordu |
+
+"Planlarım" → **Planlayıcı** oldu (araç ne yapıyorsa o); kaydedilen plan
+ayrı bir iş. "Üyelik ve Ödeme" gizlenmedi, **kaldırıldı**: sağlayıcı
+seçilmeden (T-504) arkasına koyacak sayfa yok, üyelik durumu ölçüm
+kutusunda zaten dürüstçe duruyor. "İlanlarım" ve "Fotoğraflarım" ise
+gerçekten yazıldı: `/panel/ilanlar`, `/panel/fotograflar`.
+
+**Kota sayıları artık gerçek.** Panelde `activePhotos = 0` sabiti vardı:
+kotası dolu üyeye "0 / 5" ve "5 hak kaldı" diyordu. Sayılar `useMyPhotos`
+üzerinden geliyor; veri gelene kadar `0` değil `…` çiziliyor — yükleme
+sırasında sıfır göstermek aynı yanlış cümleyi kurardı. Doluluk çubuğu
+%100'de kesiliyor (kademe düşen kullanıcıda kutusundan taşıyordu).
+
+**Kendi kayıtları için ayrı sorgu gerekti**, katalog kancaları
+kullanılamadı — iki sebeple:
+
+1. Kataloglar yalnızca herkese açık durumları çekiyor. Satıcı ilanını
+   "satıldı" işaretleyince kendi listesinden de kaybolurdu; taslağını
+   göremeyen kullanıcı onu bitiremezdi.
+2. `useCatalog` tablo boşken **tohum veriye** düşüyor. Galeride bu doğru
+   (site boş görünmesin), burada felaket: hiç fotoğrafı olmayan kullanıcı
+   yabancı kareleri "senin fotoğrafların" diye görürdü.
+
+RLS bu ekranı zaten destekliyor; ölçüldü: `astro_photos_read` ve
+`listings_read` politikaları `user_id = auth.uid()` / `seller_id =
+auth.uid()` satırlarını **durumdan bağımsız** okutuyor. Yani sahibinin
+taslağını görmesi için politika değişikliği gerekmedi.
+
+**Satır bağlantısı duruma bakıyor.** Detay sayfaları kaydı kataloğun
+içinden arıyor, katalog da yalnızca herkese açık durumları çekiyor —
+taslak fotoğrafı ya da satılmış ilanı bağlantı yapmak, kullanıcıyı kendi
+kaydına tıklattırıp "bulunamadı" sayfasına göndermek olurdu. Sayfası olan
+satır bağlantı, olmayan düz satır ve yanında gerekçesi ("galeride
+görünmüyor"). Karar veren küme sorgunun süzgeciyle **aynı sabitten**
+okuyor (`PUBLIC_PHOTO_STATUS`, `PUBLIC_LISTING_STATUSES`); iki liste
+tutmak, panelin kullanıcıyı 404'e göndermesi demekti.
+
+Düzenleme ekranı hâlâ yok (Faz 7): panel şimdilik gösteriyor, yönetmiyor.

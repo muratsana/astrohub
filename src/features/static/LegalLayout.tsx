@@ -24,9 +24,9 @@ export function LegalLayout({
     <Container className="py-10 sm:py-14">
       <div className="mx-auto max-w-[68ch]">
         <header className="mb-9 border-b border-border pb-6">
-          <h1 className="text-[24px] text-foreground sm:text-[28px]">{title}</h1>
+          <h1 className="type-page-sm text-foreground">{title}</h1>
           {intro && (
-            <p className="mt-3 text-[13px] leading-relaxed text-muted-foreground">
+            <p className="mt-3 text-body-sm leading-relaxed text-muted-foreground">
               {intro}
             </p>
           )}
@@ -58,12 +58,12 @@ export function LegalSection({
   return (
     <section>
       <div className="mb-3 flex items-center gap-3">
-        <h2 className="whitespace-nowrap text-[15px] text-foreground">
+        <h2 className="whitespace-nowrap text-body text-foreground">
           {heading}
         </h2>
         <span aria-hidden className="h-px flex-1 bg-border" />
       </div>
-      <div className="space-y-3 text-[13px] leading-[1.75] text-muted-foreground [&_a]:text-link [&_a:hover]:underline [&_strong]:text-foreground">
+      <div className="space-y-3 text-body-sm leading-[1.75] text-muted-foreground [&_a]:text-link [&_a:hover]:underline [&_strong]:text-foreground">
         {children}
       </div>
     </section>

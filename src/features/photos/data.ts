@@ -2,8 +2,14 @@ import { COZUM_YOK, type AstroPhoto } from './types';
 import { commonsImage } from '../../lib/commons';
 
 /**
- * Galeri/detay demo verisi. Faz 1.2'de Supabase + object storage'a bağlanır;
- * bu dosya yalnızca UI'yi gerçekçi teknik veriyle doğrulamak içindir.
+ * Galeri/detay TOHUM verisi.
+ *
+ * Supabase bağlandı (`services/content/photos`): tablo doluysa otorite
+ * odur, bu dosya yalnızca yapılandırma yokken ya da tablo boşken devreye
+ * giriyor. Eskiden burada "Faz 1.2'de bağlanır" yazıyordu; bağlandı.
+ *
+ * Tohum kayıtların `id`si YOK ve bu bilinçli — beğeni, yorum ve puan
+ * gerçek bir satıra bağlanıyor.
  */
 /*
  * Tohum fotoğrafların alan çözümü yok — gerçek bir ölçüm değil, örnek
@@ -11,7 +17,7 @@ import { commonsImage } from '../../lib/commons';
  * yazılmasın ve biri unutulduğunda tip hatası yerine sessiz bir
  * tutarsızlık çıkmasın.
  */
-const ham: Omit<AstroPhoto, 'solve'>[] = [
+const ham: Omit<AstroPhoto, 'solve' | 'rating'>[] = [
   {
     slug: 'ic434-at-basi-sho',
     title: 'At Başı ve Alev Bulutsusu',
@@ -415,9 +421,15 @@ const ham: Omit<AstroPhoto, 'solve'>[] = [
   },
 ];
 
+/*
+ * Tohum kayıtlarda PUAN YOK ve bu bilinçli: puan gerçek bir veritabanı
+ * satırına bağlanıyor (0036) ve tohum fotoğrafların `id`si yok. Uydurma
+ * bir ortalama göstermek, oylanmamış bir kareyi oylanmış gibi sunardı.
+ */
 export const photos: AstroPhoto[] = ham.map((foto) => ({
   ...foto,
   solve: COZUM_YOK,
+  rating: { toplam: 0, sayi: 0 },
 }));
 
 export function getPhotoBySlug(slug: string): AstroPhoto | undefined {

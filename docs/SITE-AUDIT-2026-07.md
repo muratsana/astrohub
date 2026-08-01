@@ -204,7 +204,7 @@ gerektiriyor.
 | Üyelik ve ödeme, webhook idempotency | §4, §14.5 | Ödeme sağlayıcısı |
 | Kota zorlaması (DB fonksiyonu + RLS) | §4.2, §15.1 | Migration 3+ |
 | Admin paneli ve moderasyon kuyrukları | §13, §19.6 | Rol tablosu + RLS |
-| Bildirimler (e-posta/push) | §8.13, §14.6 | E-posta sağlayıcısı |
+| Bildirimler (e-posta/push) | §8.13, §14.6 | E-posta sağlayıcısı — **site içi bildirim merkezi Faz 5'te açıldı**; eksik olan yalnızca teslimat kanalı |
 | Global aramanın sunucuya taşınması | §11.4 | Postgres FTS; `searchAll` imzası korunacak şekilde tasarlandı |
 
 ### 4.2 Harita ve dış veri bağımlı
@@ -351,12 +351,20 @@ Moderasyon şeması (`0007_moderation_and_audit.sql`):
 | Işık kirliliği (§14.1) | Harita yerine **karşılaştırma**: kendi SQM/Bortle kayıtlarımızdan hesaplanan fon parlaklığı oranı ve süre kazancı |
 | EXIF okuma (§10.3) | Bağımlılıksız JPEG/TIFF ayrıştırıcı; GPS okunur ama **asla otomatik yayımlanmaz** (§15.3) |
 | PWA ikonları, robots Sitemap | Kontrol edildi — zaten tamamdı |
-| İçerik bildirme (§13) | Fotoğraf ve ilan sayfalarında "Bildir"; kayıt doğrudan moderasyon kuyruğuna, RLS `reported_by = auth.uid()` şartıyla |
+| İçerik bildirme (§13) | Fotoğraf ve ilan sayfalarında "Bildir"; kayıt doğrudan moderasyon kuyruğuna, RLS `reported_by = auth.uid()` şartıyla. Faz 5'te özel mesaj da eklendi (`0047`) — moderatöre yazışma açmadan, şikâyet edilen metin rapor notunda taşınarak |
 
-Bildirim gönderildikten sonra **durum takibi gösterilmiyor**: raporlayanın
-kuyruğu izleyebilmesi, bildirilen kullanıcının kimin şikâyet ettiğini
-çıkarmasına kapı açar. Arayüz "iletildi" der ve orada durur — sahte bir
-takip ekranı göstermek, gizliliği koruyormuş gibi yapıp korumamak olurdu.
+Bildirim gönderildikten sonra **canlı kuyruk takibi gösterilmiyor**:
+raporlayanın kuyruğu izleyebilmesi, bildirilen kullanıcının kimin şikâyet
+ettiğini çıkarmasına kapı açar. Arayüz "iletildi" der ve orada durur —
+sahte bir takip ekranı göstermek, gizliliği koruyormuş gibi yapıp
+korumamak olurdu.
+
+**Faz 5 güncellemesi:** rapor SONUÇLANDIĞINDA artık raporlayana bildirim
+gidiyor (`moderation_queue` üstündeki tetikleyici, `0042`). Bu, kuyruğu
+izlemekten farklı: kullanıcı ne zaman ve neyle sonuçlandığını öğreniyor,
+kimin baktığını değil. Bildirimin `actor_id`'si bilerek boş — kararı veren
+moderatörün kimliği raporlayana açılmıyor, çünkü bu bir kurum kararı,
+kişisel bir cevap değil.
 
 **Tek kalan placeholder:** `/saha/istasyonlar` (canlı SQM / all-sky ağı).
 Donanım ve veri toplama altyapısı gerektiriyor; Faz 3. Sayfa artık neyin

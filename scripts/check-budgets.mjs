@@ -60,7 +60,46 @@ console.log(
     `CSS ${cssTotal.toFixed(1)} kB (bütçe ${BUDGETS.css})`
 );
 
+/*
+ * ══════════════════════════════════════════════════════════════════════
+ * AĞIR TOHUM VERİSİ İLK ROTAYA SIZMASIN
+ *
+ * Toplam bütçe bir gerilemeyi YAKALIYOR ama SEBEBİNİ söylemiyor: "JS 201
+ * kB" diyen bir hata, hangi modülün sızdığını aramak için yarım saat
+ * demek.
+ *
+ * Bu denetim tam olarak bir kez gerçekleşmiş bir hatayı adıyla kapatıyor:
+ * ana sayfadaki "Son ilanlar" şeridi, on satırlık bir etiket haritası
+ * için 80 kB'lık ürün kataloğunu ilk rota paketine çekiyordu (kategori
+ * etiketleri kataloğun kendisiyle aynı modüldeydi; taxonomy.ts ayrımı
+ * bunu çözdü). Katalog ana sayfada hiç kullanılmıyordu.
+ *
+ * İMZA MARKA ADI, dosya adı değil: paketleyici chunk adlarını hash'liyor
+ * ve modül sınırlarını birleştirebiliyor, ama katalog içeriği pakete
+ * girdiyse markaların adı da girer.
+ * ══════════════════════════════════════════════════════════════════════
+ */
+const KATALOG_IMZALARI = [
+  { imza: 'Esprit 100ED', ne: 'ekipman kataloğu (features/equipment/data)' },
+];
+
+const sizinti = [];
+for (const file of new Set(jsFiles)) {
+  const text = readFileSync(path.join(distDir, file), 'utf8');
+  for (const { imza, ne } of KATALOG_IMZALARI) {
+    if (text.includes(imza)) sizinti.push(`${ne} → ${file}`);
+  }
+}
+
 const errors = [];
+for (const yer of sizinti) {
+  errors.push(
+    `İlk rota paketine ağır tohum verisi sızdı: ${yer}\n` +
+      '  Taksonomi için `@/features/equipment/taxonomy` içe aktarılmalı, ' +
+      '`data` değil.'
+  );
+}
+
 if (jsTotal > BUDGETS.js)
   errors.push(`İlk rota JS bütçeyi aştı: ${jsTotal.toFixed(1)} > ${BUDGETS.js} kB gzip`);
 if (cssTotal > BUDGETS.css)

@@ -14,11 +14,20 @@ import {
 import { usePhotoCatalog } from '@/services/content/photos';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
+import { UserActions } from '@/features/social/UserActions';
 
 /**
- * Kullanıcı profili (§7.15). MVP: fotoğraf verisinden türetilen kamuya açık
- * profil — fotoğraflar, toplam entegrasyon, şehirler. Takip/mesaj hesap
- * sistemiyle gelecek.
+ * Kullanıcı profili (§7.15). Kamuya açık kısım fotoğraf kayıtlarından
+ * türetiliyor: fotoğraflar, toplam entegrasyon, şehirler.
+ *
+ * TAKİP, MESAJ VE ENGELLEME ARTIK ÇALIŞIYOR (Faz 5). Sayfanın altındaki
+ * "hesap sistemiyle birlikte açılacak" cümlesi kalktı — o cümle yazıldığı
+ * gün doğruydu, bugün olsa yalan olurdu.
+ *
+ * EYLEMLER KAYIT SAHİBİNİN KİMLİĞİNE BAĞLI. `ownerId` yalnızca veritabanı
+ * kaydından geliyor; tohum fotoğraflarda yok. Bu yüzden örnek içerikle
+ * çalışan bir kurulumda eylem şeridi hiç çizilmiyor — var olmayan bir
+ * kullanıcıyı takip etmeyi teklif etmek yerine.
  */
 export function ProfilePage() {
   const { username } = useParams<{ username: string }>();
@@ -39,6 +48,9 @@ export function ProfilePage() {
   }
 
   const displayName = userPhotos[0].user.displayName;
+  /* Tohum kayıtlarda `ownerId` yok; eylem şeridi o durumda kendini
+     gizliyor (bkz. UserActions). */
+  const ownerId = userPhotos.find((p) => p.ownerId)?.ownerId;
   const totalSeconds = userPhotos.reduce(
     (sum, p) => sum + totalIntegrationSeconds(p.exposures),
     0
@@ -71,9 +83,16 @@ export function ProfilePage() {
           title={displayName}
           meta={`@${username}`}
           description={`${cities.join(', ')} çevresinden ${userPhotos.length} kayıt.`}
-          actions={cities.map((city) => (
-            <Badge key={city}>{city}</Badge>
-          ))}
+          actions={
+            <div className="flex flex-col items-start gap-2 sm:items-end">
+              <div className="flex flex-wrap gap-1.5">
+                {cities.map((city) => (
+                  <Badge key={city}>{city}</Badge>
+                ))}
+              </div>
+              <UserActions targetUserId={ownerId} displayName={displayName} />
+            </div>
+          }
         />
 
         <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -99,7 +118,7 @@ export function ProfilePage() {
         </div>
 
         <h2 className="label mb-2">Fotoğraflar</h2>
-        <CardGrid view="grid" density="tight" className="mb-6">
+        <CardGrid view="grid" className="mb-6">
           {userPhotos.map((photo) => (
             <li key={photo.slug}>
               <PhotoCard photo={photo} />
@@ -107,10 +126,13 @@ export function ProfilePage() {
           ))}
         </CardGrid>
 
-        <p className="text-center text-meta leading-relaxed text-faint">
-          Takip etme, mesaj gönderme ve koleksiyonlar hesap sistemiyle birlikte
-          açılacak.
-        </p>
+        {/*
+          "Takip etme, mesaj gönderme ve koleksiyonlar hesap sistemiyle
+          birlikte açılacak" cümlesi kaldırıldı: ilk ikisi artık başlıktaki
+          eylem şeridinde çalışıyor. Koleksiyonlar hâlâ yok ve tek başına
+          bir sayfa dibi vaadi olmayı hak etmiyor — geldiğinde kendi
+          bölümüyle gelecek.
+        */}
       </Container>
     </>
   );

@@ -47,7 +47,7 @@ export function PhotoComments({ photo }: { photo: AstroPhoto }) {
             <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
               <Link
                 to={`/profil/${comment.author.username}`}
-                className="text-[12px] font-medium text-foreground hover:text-primary"
+                className="text-meta font-medium text-foreground hover:text-primary"
               >
                 {comment.author.displayName}
               </Link>
@@ -85,7 +85,7 @@ export function PhotoComments({ photo }: { photo: AstroPhoto }) {
             onChange={(e) => setDraft(e.target.value)}
             aria-label="Yorum metni"
             placeholder="Künyeye dair bir sorunuz ya da öneriniz varsa yazın."
-            className="w-full resize-y rounded-card border border-border bg-surface-2 px-3 py-2 text-[12px] leading-relaxed text-foreground outline-none placeholder:text-faint focus:border-primary"
+            className="w-full resize-y rounded-card border border-border bg-surface-2 px-3 py-2 text-meta leading-relaxed text-foreground outline-none placeholder:text-faint focus:border-primary"
           />
           <div className="mt-2 flex justify-end">
             <Button

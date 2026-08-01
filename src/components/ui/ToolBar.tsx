@@ -21,7 +21,7 @@ import { cn } from '@/lib/cn';
  *      kutucuklar yerine bitişik bir enstrüman paneli gibi durur.
  *   3. Dar ekranda sayaç ve kontroller alt alta geçer, sıkışmaz.
  */
-export function ToolBar({
+export function ToolBar<M extends string = ViewMode>({
   left,
   sort,
   view,
@@ -37,8 +37,17 @@ export function ToolBar({
     options: { value: string; label: string }[];
     id?: string;
   };
-  /** Izgara/liste anahtarı. */
-  view?: { mode: ViewMode; onChange: (mode: ViewMode) => void };
+  /**
+   * Görünüm anahtarı. `modes` verilmezse ızgara/liste; tabloyu
+   * destekleyen modül kendi kümesini geçiyor. Şerit görünüm kümesinde
+   * GENEL olduğu için tabloyu desteklemeyen sayfalar hiçbir şey
+   * değiştirmiyor.
+   */
+  view?: {
+    mode: M;
+    onChange: (mode: M) => void;
+    modes?: readonly M[];
+  };
   /** Gruba eklenecek ekstra kontrol. */
   extra?: ReactNode;
   className?: string;
@@ -86,7 +95,13 @@ export function ToolBar({
             </div>
           )}
 
-          {view && <ViewToggle mode={view.mode} onChange={view.onChange} />}
+          {view && (
+            <ViewToggle
+              mode={view.mode}
+              onChange={view.onChange}
+              modes={view.modes}
+            />
+          )}
         </div>
       )}
     </div>

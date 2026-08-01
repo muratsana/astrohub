@@ -160,6 +160,12 @@ export const siteMap: NavGroup[] = [
         description: 'Gece çekimi için kesintisiz çalma listesi',
         keywords: ['radyo', 'müzik', 'çalma listesi', 'spotify', 'mp3'],
       },
+      {
+        label: 'Podcast Arşivi',
+        to: '/radyo/podcast',
+        description: 'Kayıtlı yayınlar ve konuk programları',
+        keywords: ['podcast', 'bölüm', 'arşiv', 'sohbet', 'kayıt'],
+      },
     ],
   },
   {
@@ -299,6 +305,24 @@ export const siteMap: NavGroup[] = [
     title: 'Hesap',
     items: [
       { label: 'Üye Paneli', to: '/panel', description: 'Fotoğraflar, kota, üyelik' },
+      {
+        label: 'Kaydedilenler',
+        to: '/panel/kaydedilenler',
+        description: 'Sonra bakmak üzere ayırdığın fotoğraflar',
+        keywords: ['kaydet', 'favori', 'koleksiyon', 'saved'],
+      },
+      {
+        label: 'Bildirimler',
+        to: '/bildirimler',
+        description: 'Takip, yorum, etkinlik ve sistem bildirimleri',
+        keywords: ['bildirim', 'uyarı', 'zil', 'okunmamış'],
+      },
+      {
+        label: 'Mesajlar',
+        to: '/mesajlar',
+        description: 'Üyelerle birebir yazışma',
+        keywords: ['mesaj', 'sohbet', 'yazış', 'dm', 'satıcı'],
+      },
       {
         label: 'Yönetim Paneli',
         to: '/admin',

@@ -1,18 +1,26 @@
-import { useMemo, useState } from 'react';
-import { Link } from 'react-router';
+import { useMemo } from 'react';
 import { Container } from '@/components/ui/Container';
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { FilterBar, FilterCell, filterControlClass } from '@/components/ui/FilterBar';
+import { ActiveFilters } from '@/components/ui/ActiveFilters';
 import { CardGrid } from '@/components/ui/CardGrid';
 import { ToolBar, ResultCount } from '@/components/ui/ToolBar';
 import { useViewMode } from '@/components/ui/useViewMode';
-import { PlateFrame } from '@/components/media/PlateFrame';
+import {
+  ContentCard,
+  ContentCardBody,
+  ContentCardMedia,
+  ContentCardMeta,
+  ContentCardTitle,
+} from '@/components/ui/ContentCard';
 import { StarField } from '@/components/media/StarField';
 import { tintFor } from '@/components/media/tints';
-import { targets, targetKindLabels, searchTargets } from './data';
+import { useExplorer } from '@/features/explorer/useExplorer';
+import { targetsSpec } from './targetsSpec';
+import { targets, targetKindLabels } from './data';
 import { isMovingKind, type TargetKind } from '@/domain/targets/derive';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
@@ -32,30 +40,28 @@ function difficultyTone(difficulty: string) {
  * iki yerde tanımayı zorlaştırırdı.
  */
 export function TargetsPage() {
-  const [search, setSearch] = useState('');
   const [view, setView] = useViewMode('hedefler');
 
-  const [kind, setKind] = useState<TargetKind | 'hepsi'>('hepsi');
-  const [difficulty, setDifficulty] = useState<'hepsi' | 'Kolay' | 'Orta' | 'Zor'>(
-    'hepsi'
-  );
-
   /*
-   * Katalog 200 kaydı aştıktan sonra tek bir arama kutusu yetmiyor: "bu gece
-   * ne çekebilirim" sorusu tür ve zorluk üzerinden sorulur, ad üzerinden
-   * değil. Arama sırasında sonuç sayısını kırpmıyoruz — kırpılmış bir liste,
-   * kullanıcının aradığı kaydın var olmadığı izlenimini verir.
+   * ORTAK DATA EXPLORER (Faz 4).
+   *
+   * Bu sayfa en son taşındı çünkü kendi araması (`searchTargets`) genel
+   * motorun yapmadığı iki şey yapıyordu: boşlukları yok sayıyor ("m 31"
+   * ≡ "m31") ve sonucu ALAKAYA göre sıralıyordu. Naif bir taşıma ikisini
+   * de sessizce kaybettirirdi. İkisi de önce motora eklendi ve
+   * testlendi.
+   *
+   * Arama sırasında sonuç KIRPILMIYOR — kırpılmış bir liste, aranan
+   * kaydın var olmadığı izlenimini verir.
    */
-  const result = useMemo(() => {
-    const base = search.trim()
-      ? searchTargets(search, targets.length)
-      : targets;
-    return base.filter(
-      (t) =>
-        (kind === 'hepsi' || t.kind === kind) &&
-        (difficulty === 'hepsi' || t.difficulty === difficulty)
-    );
-  }, [search, kind, difficulty]);
+  const ex = useExplorer(targets, targetsSpec);
+  const result = ex.items;
+
+  const tekSec = (param: string, next: string) => {
+    const mevcut = ex.query.facets[param]?.[0];
+    if (mevcut) ex.toggleFacet(param, mevcut);
+    if (next !== 'hepsi' && next !== mevcut) ex.toggleFacet(param, next);
+  };
 
   /* Boş kalan tür seçeneklerini listelemek, tıklandığında hiçbir şey
      göstermeyen bir menü üretirdi. */
@@ -82,22 +88,22 @@ export function TargetsPage() {
           description={`Messier kataloğunun tamamı, popüler NGC/IC/Sharpless hedefleri ve güneş sistemi — ${targets.length} kayıt. Görünürlük penceresi, önerilen odak ve filtre önerisi ölçülen koordinat ve parlaklıktan hesaplanır.`}
         />
 
-        <FilterBar columns={4}>
+        <FilterBar activeCount={ex.chips.length} columns={4}>
           <FilterCell label="Ara" htmlFor="target-search" className="sm:col-span-2">
             <Input
               id="target-search"
               type="search"
               placeholder="M 31, NGC 7000, Andromeda, Jüpiter…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              value={ex.searchInput}
+              onChange={(e) => ex.setSearch(e.target.value)}
               className={filterControlClass}
             />
           </FilterCell>
           <FilterCell label="Tür" htmlFor="target-kind">
             <select
               id="target-kind"
-              value={kind}
-              onChange={(e) => setKind(e.target.value as TargetKind | 'hepsi')}
+              value={ex.query.facets.tur?.[0] ?? 'hepsi'}
+              onChange={(e) => tekSec('tur', e.target.value)}
               className={filterControlClass}
             >
               <option value="hepsi">Tüm türler</option>
@@ -112,9 +118,9 @@ export function TargetsPage() {
           <FilterCell label="Zorluk" htmlFor="target-difficulty">
             <select
               id="target-difficulty"
-              value={difficulty}
+              value={ex.query.facets.zorluk?.[0] ?? 'hepsi'}
               onChange={(e) =>
-                setDifficulty(e.target.value as typeof difficulty)
+                tekSec('zorluk', e.target.value)
               }
               className={filterControlClass}
             >
@@ -126,10 +132,16 @@ export function TargetsPage() {
           </FilterCell>
         </FilterBar>
 
+        <ActiveFilters
+          chips={ex.chips}
+          onRemove={ex.removeChip}
+          onClearAll={ex.clearAll}
+        />
+
         <ToolBar
           left={
             <ResultCount
-              current={result.length}
+              current={ex.total}
               total={targets.length}
               noun="hedef"
             />
@@ -143,7 +155,7 @@ export function TargetsPage() {
             hint="Katalog kodu (M 31), alias (NGC 224), Türkçe ad (Rozet) veya takımyıldız adıyla deneyin. Tür ve zorluk filtrelerini gevşetmeyi de deneyebilirsiniz."
           />
         ) : (
-          <CardGrid view={view} density="tight">
+          <CardGrid view={view}>
             {result.map((t) => (
               <li key={t.slug}>
                 <TargetCard target={t} variant={view} />
@@ -178,17 +190,14 @@ function TargetCard({
 
   if (variant === 'list') {
     return (
-      <Link
-        to={`/hedef/${t.slug}`}
-        className="group flex items-center gap-3 rounded-card border border-border bg-surface-1 p-2 transition-colors hover:border-border-strong"
-      >
-        <PlateFrame className="w-24 shrink-0 sm:w-32">
+      <ContentCard to={`/hedef/${t.slug}`} variant="list">
+        <ContentCardMedia variant="list">
           <StarField seed={t.slug} tint={tintFor(t.kind)} />
-        </PlateFrame>
+        </ContentCardMedia>
 
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <span className="truncate font-display text-[14px] font-bold text-foreground transition-colors group-hover:text-primary">
+            <span className="truncate font-display text-body-sm font-bold text-foreground transition-colors group-hover:text-primary">
               {t.catalog}
             </span>
             {difficulty}
@@ -204,37 +213,26 @@ function TargetCard({
             {t.constellation} · {t.bestMonths}
           </span>
         </div>
-      </Link>
+      </ContentCard>
     );
   }
 
   return (
-    <Link
-      to={`/hedef/${t.slug}`}
-      className="group flex h-full flex-col rounded-card border border-border bg-surface-1 transition-colors hover:border-border-strong"
-    >
-      <PlateFrame
-        className="shrink-0 border-0 border-b border-border"
-        flag={difficulty}
-        fieldOfView={t.bestMonths}
-      >
+    <ContentCard to={`/hedef/${t.slug}`}>
+      <ContentCardMedia flag={difficulty} fieldOfView={t.bestMonths}>
         <StarField seed={t.slug} tint={tintFor(t.kind)} />
-      </PlateFrame>
+      </ContentCardMedia>
 
-      <div className="flex flex-1 flex-col px-2.5 py-2">
-        <p className="truncate font-display text-[13px] font-bold leading-tight text-foreground transition-colors group-hover:text-primary">
-          {t.catalog}
-        </p>
+      <ContentCardBody>
+        <ContentCardTitle>{t.catalog}</ContentCardTitle>
         <p className="truncate text-meta leading-snug text-muted-foreground">
           {t.name}
         </p>
-        <p className="tabular mt-auto truncate pt-1 text-meta leading-snug text-cold">
+        <ContentCardMeta tone="cold" className="mt-auto pt-1">
           {targetKindLabels[t.kind]}
-        </p>
-        <p className="tabular truncate text-meta leading-snug text-muted-foreground">
-          {t.constellation}
-        </p>
-      </div>
-    </Link>
+        </ContentCardMeta>
+        <ContentCardMeta>{t.constellation}</ContentCardMeta>
+      </ContentCardBody>
+    </ContentCard>
   );
 }

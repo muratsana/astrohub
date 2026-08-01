@@ -184,7 +184,7 @@ export function CityPage() {
                       className="group flex items-baseline justify-between gap-3 py-2.5"
                     >
                       <span className="min-w-0">
-                        <span className="block truncate text-[13px] text-foreground group-hover:text-primary">
+                        <span className="block truncate text-body-sm text-foreground group-hover:text-primary">
                           {event.title}
                         </span>
                         <span className="tabular mt-0.5 block text-meta text-muted-foreground">
@@ -215,7 +215,7 @@ export function CityPage() {
               status={`${nearbySites.length} nokta`}
             >
               {nearbySites.length === 0 ? (
-                <p className="py-4 text-[12px] text-muted-foreground">
+                <p className="py-4 text-meta text-muted-foreground">
                   Bu şehrin yakınında kayıtlı gözlem noktası yok. Bildiğiniz bir
                   nokta varsa saha modülünden ekleyebilirsiniz.
                 </p>
@@ -228,7 +228,7 @@ export function CityPage() {
                         className="group flex items-baseline justify-between gap-3 py-2"
                       >
                         <span className="min-w-0">
-                          <span className="block truncate text-[12.5px] text-foreground group-hover:text-primary">
+                          <span className="block truncate text-caption text-foreground group-hover:text-primary">
                             {site.name}
                           </span>
                           <span className="tabular mt-0.5 block text-meta text-muted-foreground">

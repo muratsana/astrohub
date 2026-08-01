@@ -31,13 +31,15 @@ export function UpcomingEvents() {
       <SectionHeader
         title="Yaklaşan Etkinlikler"
         meta={`${catalog.items.length} kayıt`}
-        description="Gözlem şenlikleri, kamplar, halk gözlemleri ve atölyeler — her kayıt kaynağı ve son doğrulama tarihiyle birlikte."
+        /* Kısaltıldı (§5.4): kaynak ve doğrulama tarihi etkinlik
+           detayında duruyor; listenin başında yer kaplaması gerekmiyor. */
+        description="Gözlem şenlikleri, kamplar ve atölyeler."
         linkTo="/etkinlikler"
         linkLabel="Takvim"
       />
 
       {upcoming.length === 0 ? (
-        <p className="rounded-card border border-border bg-surface-1 px-3 py-6 text-center text-[12px] text-muted-foreground">
+        <p className="rounded-card border border-border bg-surface-1 px-3 py-6 text-center text-meta text-muted-foreground">
           Yaklaşan etkinlik yok.
         </p>
       ) : (
@@ -63,7 +65,7 @@ function EventRow({ event }: { event: AstroEvent }) {
     >
       {/* Tarih bloğu — sabit genişlik, satırlar arası dikey hizayı tutar. */}
       <span className="tabular flex w-11 shrink-0 flex-col items-center leading-none">
-        <span className="font-display text-[19px] font-bold text-foreground">
+        <span className="font-display type-panel font-bold text-foreground">
           {date.toLocaleDateString('tr-TR', { day: '2-digit' })}
         </span>
         <span className="mt-1 text-meta text-muted-foreground">
@@ -74,7 +76,7 @@ function EventRow({ event }: { event: AstroEvent }) {
       <span aria-hidden className="h-9 w-px shrink-0 bg-border" />
 
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-[13.5px] font-medium leading-snug text-foreground transition-colors group-hover:text-primary">
+        <span className="block truncate text-body-sm font-medium leading-snug text-foreground transition-colors group-hover:text-primary">
           {event.title}
         </span>
         <span className="mt-0.5 block truncate text-meta text-muted-foreground">

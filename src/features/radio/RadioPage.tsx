@@ -1,3 +1,4 @@
+import { Link } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -8,6 +9,7 @@ import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
 import { useRadio } from './RadioContext';
 import { radioGuidelines } from './data';
+import { RadioSchedule } from './RadioSchedule';
 import { formatTrackTime, spotifyEmbedUrl } from './types';
 import { cn } from '@/lib/cn';
 
@@ -55,7 +57,7 @@ export function RadioPage() {
             />
 
             <Panel title="Yayın nasıl işler">
-              <ul className="space-y-3 text-[12px] leading-relaxed text-muted-foreground">
+              <ul className="space-y-3 text-meta leading-relaxed text-muted-foreground">
                 <li>
                   <span className="label mb-0.5 block text-cold">
                     Programı Astrohub yapar
@@ -127,7 +129,7 @@ export function RadioPage() {
                     <div className="min-w-0 flex-1">
                       <p
                         className={cn(
-                          'truncate text-[12.5px] font-medium',
+                          'truncate text-caption font-medium',
                           isCurrent ? 'text-primary' : 'text-foreground'
                         )}
                       >
@@ -183,6 +185,23 @@ export function RadioPage() {
             </div>
           </div>
         )}
+
+        {/* Takvim listenin İÇİNDE değil, yanında: canlı yayın ile yerel
+            mp3 kasası iki ayrı şey ve biri boşken diğeri dolu olabilir.
+            Kasa boş diye takvimi gizlemek, programı olan bir radyoyu
+            programsız göstermek olurdu. */}
+        <RadioSchedule />
+
+        {/* Podcast arşivine bağlantı: bağlantısı olmayan bir sayfa yok
+            sayılır. Arşiv canlı yayından bağımsız çalışıyor — yayın
+            sunucusu kurulmasa da bölümler dinlenebilir. */}
+        <p className="mt-8 text-body-sm text-muted-foreground">
+          Kayıtlı yayınlar ve konuk programları için{' '}
+          <Link to="/radyo/podcast" className="text-primary hover:underline">
+            podcast arşivine
+          </Link>{' '}
+          bakabilirsiniz.
+        </p>
       </Container>
     </>
   );

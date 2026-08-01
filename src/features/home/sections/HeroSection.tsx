@@ -38,8 +38,20 @@ const AUTOPLAY_MS = 7000;
 export function HeroSection() {
   const { slides, enabled, selection } = usePreviewEditor();
   const [index, setIndex] = useState(0);
-  const [paused, setPaused] = useState(false);
+  /** Fare/odak kaynaklı geçici duraklama. */
+  const [hovered, setHovered] = useState(false);
+  /**
+   * Kullanıcının AÇIKÇA durdurması (§6.3).
+   *
+   * `hovered`dan ayrı tutuluyor çünkü ikisi farklı şeyler: fare çekilince
+   * hover duraklaması kalkar, kullanıcının kararı kalkmaz. Tek değişkende
+   * tutulsaydı, durdur düğmesine basan biri fareyi hero'dan çekince
+   * gösteri yeniden başlardı — yani düğme çalışmıyormuş gibi görünürdü.
+   */
+  const [stopped, setStopped] = useState(false);
   const regionRef = useRef<HTMLElement>(null);
+  /** Dokunma kaydırmasının başlangıç noktası. */
+  const touchX = useRef<number | null>(null);
 
   const count = slides.length;
   const go = useCallback(
@@ -49,7 +61,7 @@ export function HeroSection() {
 
   // Otomatik geçiş — hareket azaltma tercihinde hiç kurulmaz.
   useEffect(() => {
-    if (paused) return;
+    if (hovered || stopped) return;
     const reduced = window.matchMedia?.(
       '(prefers-reduced-motion: reduce)'
     ).matches;
@@ -57,7 +69,7 @@ export function HeroSection() {
 
     const timer = setInterval(() => go(index + 1), AUTOPLAY_MS);
     return () => clearInterval(timer);
-  }, [index, paused, go]);
+  }, [index, hovered, stopped, go]);
 
   // Bölge odaktayken sol/sağ ok tuşlarıyla gezinme.
   function onKeyDown(event: React.KeyboardEvent) {
@@ -90,13 +102,36 @@ export function HeroSection() {
       aria-roledescription="carousel"
       aria-label="Astrohub modülleri"
       onKeyDown={onKeyDown}
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
-      onFocusCapture={() => setPaused(true)}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onFocusCapture={() => setHovered(true)}
       onBlurCapture={(e) => {
         if (!regionRef.current?.contains(e.relatedTarget as Node)) {
-          setPaused(false);
+          setHovered(false);
         }
+      }}
+      /*
+        DOKUNMA KAYDIRMASI (§6.3) — mobilde okların yerini alıyor.
+
+        `touchmove` DİNLENMİYOR ve `preventDefault` çağrılmıyor: hero
+        sayfanın en üstünde ve dikey kaydırmayı kesmek, kullanıcıyı
+        sayfanın başında kilitler. Yalnızca başlangıç ve bitiş noktası
+        karşılaştırılıyor.
+
+        Eşik 48px: parmağın dikey kaydırma sırasındaki doğal yatay
+        salınımı ~20–30px. Daha düşük bir eşik, sayfayı kaydırmaya
+        çalışan kullanıcıyı yanlışlıkla slayt değiştirmeye sürüklerdi.
+      */
+      onTouchStart={(e) => {
+        touchX.current = e.changedTouches[0]?.clientX ?? null;
+      }}
+      onTouchEnd={(e) => {
+        const bas = touchX.current;
+        touchX.current = null;
+        if (bas === null) return;
+        const fark = (e.changedTouches[0]?.clientX ?? bas) - bas;
+        if (Math.abs(fark) < 48) return;
+        go(fark < 0 ? index + 1 : index - 1);
       }}
       className="bg-background"
     >
@@ -142,17 +177,84 @@ export function HeroSection() {
 
           {/* İçerik */}
           <div
-            className="relative flex min-h-[300px] flex-col justify-center px-5 py-8 sm:min-h-[360px] sm:px-9 lg:min-h-[400px] lg:px-12"
+            /*
+              HERO ALÇALDI: min-h 300/360/400 → 240/272/300, dikey dolgu
+              py-8 → py-6/7 (Faz 2.3).
+
+              ÖLÇÜM (`npm run check:viewports`, 1280×720): kabuk 88px,
+              başlık altı 353px, ana içerik 779px'de başlıyordu — yani
+              "Bu Gece", sitenin amiral modülü, fold'un 59px altındaydı.
+              Belge §5.3 bu iki çözünürlüğü adıyla anıyor.
+
+              ÖLÇÜMÜN ÖĞRETTİĞİ: `min-h` BAĞLAYICI KISIT DEĞİLDİ. lg'de
+              400px'e indirmek hiçbir şey kazandırmadı, çünkü hero zaten
+              içeriğiyle o boyu geçiyor — üç satırlık 48px başlık, açıklama
+              ve düğme. Gerçek kazanç yalnızca dolgudan geldi: içerik
+              779 → 769px. Yani 10px.
+
+              Kalan mesafeyi kapatmak hero'nun İÇERİĞİNİ yeniden
+              düzenlemeyi gerektiriyor (başlık ölçeği, carousel yapısı) ve
+              bu Faz 3'ün konusu — belgede "Ana sayfa, navbar, hero" ayrı
+              bir faz. Burada yapılan, ölçüm aracını kurmak ve orantısız
+              dolguyu almak.
+
+              Punto ve dokunma hedefleri KÜÇÜLMEDİ; yalnızca boşluk
+              alındı. Metni küçülterek yer kazanmak §5.3'te ayrıca
+              yasaklanmış.
+            */
+            /*
+              METİN İÇİN GÜVENLİ ALAN (Faz 3.3 / §6.3).
+
+              Ölçüm: sol ok HER genişlikte `<h1>`in üstüne biniyordu —
+              320px'te 36×19px, 1920px'te 8×44px. Belgenin ilk maddesi
+              bunu yasaklıyor: "sağ/sol kontroller içerik ve yazıların
+              üzerine gelmemelidir".
+
+              Ok `left-3`te ve 44px geniş, yani sağ kenarı 56px'te bitiyor.
+              Metin `sm`den itibaren 64px'ten başlıyor: 56 + 8px nefes.
+              Mobilde oklar zaten kalktığı (aşağıya bak) için orada dar
+              yatay dolgu korunuyor — yer kazanmak için değil, alacak
+              kimse olmadığı için.
+
+              ALT DOLGU MOBİLDE 64px. Gösterge şeridi + durdurma düğmesi
+              `absolute bottom-4` ve 44px yüksek, yani alttan 60px'lik bir
+              bandı kaplıyor. Dolgu verilmeyince CTA düğmesi tam o bandın
+              üstüne oturdu ve durdurma düğmesi CTA'nın altında kaldı —
+              yani BİR KONTROL İÇERİĞİN ÜSTÜNE BİNDİ, §6.3'ün yasakladığı
+              şeyi bu sefer ben yaptım. Ekran görüntüsü yakaladı, sonra
+              kapı da yakalayacak hâle getirildi.
+
+              `sm`den itibaren gerekmiyor: orada metin sütunu dar ve
+              kontroller ortada, CTA'nın sağında kalıyor.
+            */
+            className="relative flex min-h-[240px] flex-col justify-center px-5 pb-16 pt-6 sm:min-h-[272px] sm:py-7 sm:pl-16 sm:pr-9 lg:min-h-[300px] lg:pl-20 lg:pr-12"
             aria-live="polite"
           >
-            <div className="max-w-[46ch]">
+            {/*
+              METİN SÜTUNU GENİŞLEDİ: 46ch → 62ch (Faz 3.3).
+
+              Ölçüm: 1280px'te metin 97–475px arasındaydı, yani hero'nun
+              %30'u. Kalan %70 boş yıldız alanıydı ve başlık o dar sütunda
+              ÜÇ satıra bölünüyordu. Sütunu genişletmek başlığı iki satıra
+              indiriyor — punto küçülmeden hero alçalıyor.
+
+              Belgedeki iki madde aynı yere bakıyor: "tek satırlık içerik
+              dev panellere yerleştirilmemelidir" ve "hero, düşük
+              çözünürlükte ana içeriği tamamen aşağı itmemelidir".
+
+              62ch üst sınır; okuma metni değil başlık olduğu için satır
+              uzunluğu kuralı (65–75ch) bağlamıyor, ama sınırsız bırakmak
+              geniş ekranda başlığı tek uzun satıra çekip carousel oklarının
+              altına sokardı.
+            */}
+            <div className="max-w-[62ch]">
               <Editable slide={slide} field="badge" className="w-fit">
                 <span className="inline-block rounded-card bg-primary px-2.5 py-1 text-meta font-medium tracking-[0.04em] text-primary-foreground">
                   {slide.badge}
                 </span>
               </Editable>
 
-              <Editable slide={slide} field="title" className="mt-5 block">
+              <Editable slide={slide} field="title" className="mt-4 block">
                 {/*
                   Büyük harf CSS ile değil, `tr-TR` yerel ayarıyla JS'te
                   yapılıyor: `text-transform` sayfanın `lang` bilgisine
@@ -160,18 +262,18 @@ export function HeroSection() {
                   bilgi bizim değil — "i" harfi "I" olup başlık "KARENIN"
                   diye çıkıyor. Ayrıntı: lib/text.ts
                 */}
-                <h1 className="caps text-[28px] text-foreground sm:text-[40px] lg:text-[48px]">
+                <h1 className="caps type-hero text-foreground">
                   {upperTr(slide.title)}
                 </h1>
               </Editable>
 
               <Editable slide={slide} field="subtitle" className="mt-4 block">
-                <p className="text-[13px] leading-relaxed text-muted-foreground sm:text-[14px]">
+                <p className="text-body-sm leading-relaxed text-muted-foreground sm:text-body-sm">
                   {slide.subtitle}
                 </p>
               </Editable>
 
-              <Editable slide={slide} field="ctaLabel" className="mt-7 block w-fit">
+              <Editable slide={slide} field="ctaLabel" className="mt-5 block w-fit">
                 <Link
                   to={slide.ctaTo}
                   // Editör açıkken bağlantı gezinmez; tıklama alanı seçer.
@@ -189,12 +291,49 @@ export function HeroSection() {
           <NavArrow side="left" onClick={() => go(index - 1)} />
           <NavArrow side="right" onClick={() => go(index + 1)} />
 
-          {/* Göstergeler */}
-          <div
-            role="tablist"
-            aria-label="Slayt seçimi"
-            className="absolute inset-x-0 bottom-4 flex items-center justify-center gap-1.5"
-          >
+          {/*
+            GÖSTERGELER VE OTOMATİK GEÇİŞİ DURDURMA (§6.3).
+
+            `prefers-reduced-motion` otomatik geçişi zaten hiç kurmuyor
+            ama o bir SİSTEM tercihi; ayarlarından açmamış ama şu an
+            okumak isteyen kullanıcının elinde hiçbir kontrol yoktu.
+            Hover duraklaması da yetmiyor: dokunmatik cihazda hover diye
+            bir şey yok.
+
+            Düğme tablist'in DIŞINDA duruyor — içine konsaydı ekran
+            okuyucu onu bir slayt sekmesi sanardı.
+          */}
+          <div className="absolute inset-x-0 bottom-4 flex items-center justify-center gap-1">
+            <button
+              type="button"
+              onClick={() => setStopped((v) => !v)}
+              aria-pressed={stopped}
+              aria-label={
+                stopped
+                  ? 'Otomatik slayt geçişini başlat'
+                  : 'Otomatik slayt geçişini durdur'
+              }
+              className="flex h-11 w-11 items-center justify-center text-muted-foreground transition-colors hover:text-primary"
+            >
+              {/* Duraklat/oynat işareti mevcut çizgi diliyle çiziliyor;
+                  ikon setine yeni dosya eklemeye değmez. */}
+              <span aria-hidden className="flex items-center gap-[3px]">
+                {stopped ? (
+                  <span className="ml-px block h-0 w-0 border-y-[5px] border-l-[8px] border-y-transparent border-l-current" />
+                ) : (
+                  <>
+                    <span className="block h-2.5 w-[3px] bg-current" />
+                    <span className="block h-2.5 w-[3px] bg-current" />
+                  </>
+                )}
+              </span>
+            </button>
+
+            <div
+              role="tablist"
+              aria-label="Slayt seçimi"
+              className="flex items-center gap-1.5"
+            >
             {slides.map((s, i) => (
               <button
                 key={s.id}
@@ -222,6 +361,7 @@ export function HeroSection() {
                 />
               </button>
             ))}
+            </div>
           </div>
 
           {/* Slayt sayacı — terminal künyesi */}
@@ -324,6 +464,15 @@ function NavArrow({
         'absolute top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center',
         'rounded-card border border-border bg-background/70 text-muted-foreground backdrop-blur-sm',
         'transition-colors hover:border-primary hover:text-primary',
+        /*
+          MOBİLDE OK YOK — belge açıkça izin veriyor: "mobilde swipe ve
+          küçük pagination; gerekirse okları kaldırma".
+
+          320px'lik bir ekranda 44px'lik iki ok, metin sütununun %28'ini
+          yiyordu. Yerini kaydırma (swipe) ve gösterge çizgileri alıyor;
+          ikisi de dokunmatikte oktan daha doğal.
+        */
+        'hidden sm:flex',
         side === 'left' ? 'left-3' : 'right-3'
       )}
     >

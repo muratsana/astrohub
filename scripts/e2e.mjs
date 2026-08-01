@@ -364,7 +364,22 @@ await scenario('ilan formu eksikleri yazarken bildirir, tamamlanınca açılır'
 
   await page.fill('#l-title', 'Sky-Watcher Esprit 100ED apokromatik refraktör');
   await page.fill('#l-price', '48500');
-  await page.fill('#l-city', 'Ankara');
+  /*
+   * ŞEHİR ARTIK SERBEST METİN DEĞİL (§4.1). Alan `provinces` listesinden
+   * beslenen bir `select`; liste asenkron geldiği için seçenek DOM'a
+   * girene kadar bekleniyor. Önizleme derlemesinde veritabanı yok,
+   * dolayısıyla burada görünen tohum yedeği — ölçülen şey listenin
+   * dolduğu ve seçimin form durumuna geçtiği.
+   */
+  await page.waitForFunction(
+    () =>
+      Array.from(document.querySelectorAll('#l-city option')).some(
+        (o) => o.value === 'Ankara'
+      ),
+    null,
+    { timeout: 5000 }
+  );
+  await page.selectOption('#l-city', 'Ankara');
   await page.fill(
     '#l-desc',
     '2023 yılında alındı, yaklaşık 40 gece kullanıldı. Optikte çizik yok, kutusu ve faturası duruyor.'
@@ -628,6 +643,128 @@ await scenario('"içeriğe atla" bağlantısı ilk odaklanabilir öğedir', asyn
  * doğru değildi. Ölçüt: her genişlikte ya düz menü ya da modül düğmesi
  * ÜST çubukta görünür olacak.
  */
+/**
+ * TABLO GÖRÜNÜMÜ (§7.3).
+ *
+ * Ölçülen asıl şey SIRALAMANIN NEREDE TUTULDUĞU: başlığa tıklamak
+ * motorun sıralamasını değiştirmeli, yani URL'ye yazılmalı. Tablo kendi
+ * iç sıralamasını tutsaydı ızgaraya geçen kullanıcı sıralamasını
+ * kaybeder ve `?sirala=` ile başlıktaki ok farklı şeyler söylerdi.
+ */
+await scenario('tablo başlığı sıralamayı URL\'ye yazıyor', async () => {
+  await goto('/ilanlar');
+  await page.evaluate(() => {
+    document.querySelector('button[aria-label="Tablo görünümü"]').click();
+  });
+  await page.waitForTimeout(400);
+
+  assert(
+    await page.evaluate(() => !!document.querySelector('table')),
+    'tablo görünümü çizilmedi'
+  );
+
+  await page.evaluate(() => {
+    [...document.querySelectorAll('th button')]
+      .find((b) => b.textContent.includes('Fiyat'))
+      .click();
+  });
+  await page.waitForTimeout(400);
+
+  const durum = await page.evaluate(() => ({
+    hash: location.hash,
+    /* Yön duyurulmazsa başlık tıklayınca ne olacağını söylemiyor. */
+    sort: [...document.querySelectorAll('th')].map((t) =>
+      t.getAttribute('aria-sort')
+    ),
+    sabit: getComputedStyle(document.querySelector('thead th')).position,
+  }));
+
+  assert(
+    durum.hash.includes('sirala=ucuz'),
+    `sıralama URL'ye yazılmadı: ${durum.hash}`
+  );
+  assert(durum.sort.includes('ascending'), 'aria-sort duyurulmuyor');
+  assert(durum.sabit === 'sticky', 'başlık sabit değil');
+
+  /* Görünüm tercihi saklanıyor; sonraki senaryolar ızgara beklemesin. */
+  await page.evaluate(() => localStorage.removeItem('astrohub:view:ilanlar'));
+});
+
+/**
+ * MOBİL FİLTRE ÇEKMECESİ (§7.1).
+ *
+ * Birim testte `matchMedia` taklit ediliyor; burada ölçülen GERÇEK
+ * kırılım noktası. İki şey birlikte doğrulanıyor:
+ *
+ * · Dar ekranda kontroller DOM'da HİÇ YOK (gizli değil) — gizli bir
+ *   kopya, `id` çakışması ve yanlış etiket bağlaması demekti.
+ * · Geniş ekranda çekmece düğmesi yok, kontroller doğrudan görünür.
+ */
+await scenario('filtreler mobilde çekmeceye giriyor', async () => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await goto('/galeri?ara=m31');
+  await page.waitForTimeout(400);
+
+  const dar = await page.evaluate(() => {
+    const btn = [...document.querySelectorAll('button')].find((b) =>
+      b.textContent.trim().startsWith('Filtreler')
+    );
+    return {
+      dugme: !!btn,
+      /* Rozet: gizlenen filtrenin sayısı düğmede yazmalı. */
+      sayi: btn ? btn.textContent.replace(/[^0-9]/g, '') : '',
+      kontrolSayisi: document.querySelectorAll('#gallery-search').length,
+      chip: [...document.querySelectorAll('button')].some((b) =>
+        (b.getAttribute('aria-label') || '').includes('filtresini kaldır')
+      ),
+    };
+  });
+
+  assert(dar.dugme, 'mobilde filtre çekmecesi düğmesi yok');
+  assert(dar.sayi === '1', `aktif filtre sayısı yazmıyor: "${dar.sayi}"`);
+  assert(
+    dar.kontrolSayisi === 0,
+    'çekmece kapalıyken kontrol DOM\'da duruyor — id çakışması riski'
+  );
+  assert(dar.chip, 'aktif filtre chip\'i çizilmiyor');
+
+  await page.evaluate(() => {
+    [...document.querySelectorAll('button')]
+      .find((b) => b.textContent.trim().startsWith('Filtreler'))
+      .click();
+  });
+  await page.waitForTimeout(300);
+
+  const acik = await page.evaluate(() => ({
+    dialog: !!document.querySelector('[role="dialog"][aria-modal="true"]'),
+    arama: document.querySelectorAll('#gallery-search').length,
+    kilit: document.body.style.overflow,
+  }));
+  assert(acik.dialog, 'çekmece diyalog olarak açılmadı');
+  assert(acik.arama === 1, `çekmecede arama kutusu yok (${acik.arama})`);
+  assert(acik.kilit === 'hidden', 'arka plan kaydırması kilitlenmedi');
+
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(200);
+  assert(
+    await page.evaluate(() => !document.querySelector('[role="dialog"]')),
+    'Escape çekmeceyi kapatmadı'
+  );
+
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.waitForTimeout(300);
+  const genis = await page.evaluate(() => ({
+    dugme: [...document.querySelectorAll('button')].some((b) =>
+      b.textContent.trim().startsWith('Filtreler')
+    ),
+    arama: document.querySelectorAll('#gallery-search').length,
+  }));
+  assert(!genis.dugme, 'geniş ekranda çekmece düğmesi hâlâ duruyor');
+  assert(genis.arama === 1, 'geniş ekranda filtreler doğrudan görünmüyor');
+
+  await page.setViewportSize({ width: 1440, height: 950 });
+});
+
 await scenario('üst çubukta her genişlikte gezinme girişi var', async () => {
   const widths = [390, 768, 1024, 1280, 1440];
   const missing = [];

@@ -74,7 +74,7 @@ export function TargetDetailPage() {
                 </span>
               )}
             </p>
-            <h1 className="mt-1 text-[26px] text-foreground sm:text-[30px]">
+            <h1 className="mt-1 type-page text-foreground">
               {target.name}
             </h1>
             <div className="mt-3 flex flex-wrap gap-1.5">
@@ -127,8 +127,9 @@ export function TargetDetailPage() {
         {/* Bu hedefin fotoğrafları */}
         <section className="mt-14 border-t border-border pt-10">
           <SectionHeader
+            /* Başlık zaten hedefin adını taşıyor; açıklama onu uzun
+               yoldan tekrar ediyordu. */
             title={`${target.catalog} Fotoğrafları`}
-            description="Bu hedefin Astrohub topluluğundaki kareleri"
             linkTo="/galeri"
           />
           {targetPhotos.length === 0 ? (

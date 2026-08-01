@@ -31,8 +31,24 @@ export function Logo() {
         Harf aralığı çok dar ekranlarda kırılıyor: 0.2em'lik tracking
         390px'te üst çubuğun sağ kümesini taşırıyordu. Küçük ekranda daha
         sıkı.
+
+        360px ALTINDA KELİME MARKASI DÜŞÜYOR.
+
+        Ölçüm (Faz 2.3, 320×568): üst çubuğun kapsayıcısı 288px, künye
+        143px, sağ aksiyon kümesi 158px — toplam 301px. Sayfa 9px yana
+        kayıyordu ve yatay kaydırma çubuğu çıkıyordu.
+
+        Harf aralığını iyice kısmak farkı ancak son pikselde kapatıyordu;
+        yani bir kelime uzasa ya da bir düğme eklense taşma geri gelirdi.
+        Kelime markasını düşürmek bu sınırı tamamen kaldırıyor ve açıklık
+        işareti markayı taşımaya devam ediyor. `aria-label` bağlantıda
+        durduğu için ekran okuyucuda hiçbir şey kaybolmuyor.
+
+        Sınır 360px: piyasadaki en dar yaygın telefon 360 (Android) ve
+        320 (iPhone SE 1. nesil); ikisi de işaretle açılıyor, 375'ten
+        itibaren kelime markası geri geliyor.
       */}
-      <span className="font-display text-[17px] uppercase leading-none tracking-[0.1em] sm:tracking-[0.16em]">
+      <span className="hidden font-display text-readout-sm uppercase leading-none tracking-[0.1em] min-[360px]:inline sm:tracking-[0.16em]">
         <span className="font-bold">Astro</span>
         <span className="font-normal text-primary">hub</span>
       </span>

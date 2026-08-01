@@ -1,5 +1,3 @@
-import { useMemo, useState } from 'react';
-import { Link } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
@@ -9,14 +7,25 @@ import { CardGrid } from '@/components/ui/CardGrid';
 import { ButtonLink } from '@/components/ui/Button';
 import { ToolBar, ResultCount } from '@/components/ui/ToolBar';
 import { CatalogSourceNote } from '@/components/ui/CatalogSourceNote';
-import { useViewMode } from '@/components/ui/useViewMode';
+import {
+  useStoredChoice,
+  type ListView,
+} from '@/components/ui/useViewMode';
+import { DataTable, type Column } from '@/components/ui/DataTable';
 import {
   FilterBar,
   FilterCell,
   FilterToggle,
   filterControlClass,
 } from '@/components/ui/FilterBar';
-import { PlateFrame } from '@/components/media/PlateFrame';
+import { ActiveFilters } from '@/components/ui/ActiveFilters';
+import {
+  ContentCard,
+  ContentCardBody,
+  ContentCardMedia,
+  ContentCardMeta,
+  ContentCardTitle,
+} from '@/components/ui/ContentCard';
 import { StarField } from '@/components/media/StarField';
 import { tintFromSeed } from '@/components/media/tints';
 import {
@@ -24,6 +33,8 @@ import {
   type EquipmentCategory,
 } from '@/features/equipment/data';
 import { useListings } from '@/services/content/listings';
+import { useExplorer } from '@/features/explorer/useExplorer';
+import { listingsSpec } from './listingsSpec';
 import type { Listing } from './data';
 import { cn } from '@/lib/cn';
 import { PageMeta } from '@/components/seo/PageMeta';
@@ -40,8 +51,6 @@ const categories: (EquipmentCategory | 'hepsi')[] = [
   'aksesuar',
 ];
 
-type SortKey = 'yeni' | 'ucuz' | 'pahali';
-
 /**
  * İKİNCİ EL PAZARYERİ (§7.13).
  *
@@ -55,35 +64,36 @@ type SortKey = 'yeni' | 'ucuz' | 'pahali';
  * sonucu veriyordu.
  */
 export function MarketplacePage() {
-  const [category, setCategory] = useState<EquipmentCategory | 'hepsi'>('hepsi');
-  const [search, setSearch] = useState('');
-  const [sort, setSort] = useState<SortKey>('yeni');
-  const [onlyInvoice, setOnlyInvoice] = useState(false);
-  const [view, setView] = useViewMode('ilanlar');
-
+  /*
+   * PAZARYERİ TABLO GÖRÜNÜMÜNÜ DESTEKLİYOR (§7.3).
+   *
+   * Neden burası: ilanın karar verdiren alanları (fiyat, şehir, durum,
+   * tarih) sayısal ve karşılaştırmalı. Kart ızgarası bir ilana bakmak
+   * için, tablo ON İLANI KARŞILAŞTIRMAK için iyi — ikinci el alırken
+   * kullanıcının yaptığı da bu.
+   */
+  const [view, setView] = useStoredChoice<ListView>(
+    'ilanlar',
+    ['grid', 'list', 'table'],
+    'grid'
+  );
   const catalog = useListings();
 
-  const result = useMemo(() => {
-    let items = catalog.items;
+  /*
+   * ORTAK DATA EXPLORER (Faz 4). Sayfanın kendi filtre durumu bıraktı;
+   * arama artık ASCII katlıyor ("sanliurfa" → Şanlıurfa) ve şehir
+   * filtresi geldi — ikinci elde elden teslim yaygın olduğu için "hangi
+   * şehirde" fiyat kadar belirleyici, ama sayfada hiç yoktu.
+   */
+  const ex = useExplorer(catalog.items, listingsSpec);
+  const result = ex.items;
+  const category = ex.query.facets.kategori?.[0] ?? 'hepsi';
 
-    if (category !== 'hepsi') items = items.filter((l) => l.category === category);
-    if (onlyInvoice) items = items.filter((l) => l.hasInvoice);
-
-    const q = search.trim().toLocaleLowerCase('tr-TR');
-    if (q) {
-      items = items.filter((l) =>
-        `${l.title} ${l.city} ${l.seller.username}`
-          .toLocaleLowerCase('tr-TR')
-          .includes(q)
-      );
-    }
-
-    return [...items].sort((a, b) => {
-      if (sort === 'ucuz') return a.price - b.price;
-      if (sort === 'pahali') return b.price - a.price;
-      return b.postedAt.localeCompare(a.postedAt);
-    });
-  }, [catalog.items, category, search, sort, onlyInvoice]);
+  /** Kategori sekmeleri tek seçim: bir sekme şeridi, çoklu liste değil. */
+  const setCategory = (next: string) => {
+    if (category !== 'hepsi') ex.toggleFacet('kategori', category);
+    if (next !== 'hepsi' && next !== category) ex.toggleFacet('kategori', next);
+  };
 
   return (
     <>
@@ -126,48 +136,57 @@ export function MarketplacePage() {
           ))}
         </div>
 
-        <FilterBar>
+        <FilterBar activeCount={ex.chips.length}>
           <FilterCell label="Ara" htmlFor="listing-search" className="lg:col-span-2">
             <Input
               id="listing-search"
               type="search"
               placeholder="İlan başlığı, şehir veya satıcı"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              value={ex.searchInput}
+              onChange={(e) => ex.setSearch(e.target.value)}
               className={filterControlClass}
             />
           </FilterCell>
           <FilterToggle
             id="listing-invoice"
             label="Yalnızca faturalı"
-            checked={onlyInvoice}
-            onChange={setOnlyInvoice}
+            checked={(ex.query.facets.faturali?.length ?? 0) > 0}
+            onChange={() => ex.toggleFacet('faturali', 'evet')}
           />
           {/* "Doğrulanmış satıcı" süzgeci kalktı: ilan yalnızca kayıtlı
               kullanıcıdan açılıyor, yani süzgeç herkesi geçiriyordu. */}
         </FilterBar>
+
+        <ActiveFilters
+          chips={ex.chips}
+          onRemove={ex.removeChip}
+          onClearAll={ex.clearAll}
+        />
 
         <CatalogSourceNote selection={catalog} />
 
         <ToolBar
           left={
             <ResultCount
-              current={result.length}
+              current={ex.total}
               total={catalog.items.length}
               noun="ilan"
             />
           }
           sort={{
             id: 'listing-sort',
-            value: sort,
-            onChange: (v) => setSort(v as SortKey),
-            options: [
-              { value: 'yeni', label: 'En yeni' },
-              { value: 'ucuz', label: 'Artan fiyat' },
-              { value: 'pahali', label: 'Azalan fiyat' },
-            ],
+            value: ex.query.sort,
+            onChange: ex.setSort,
+            options: listingsSpec.sorts.map((s) => ({
+              value: s.value,
+              label: s.label,
+            })),
           }}
-          view={{ mode: view, onChange: setView }}
+          view={{
+            mode: view,
+            onChange: setView,
+            modes: ['grid', 'list', 'table'],
+          }}
         />
 
         {result.length === 0 ? (
@@ -175,11 +194,27 @@ export function MarketplacePage() {
             message="Eşleşen ilan yok"
             hint="Filtreleri gevşetmeyi deneyin — ya da elinizdeki ekipman için ilan açın."
           />
+        ) : view === 'table' ? (
+          /*
+             SIRALAMA TABLONUN İÇİNDE TUTULMUYOR: başlıklar motorun
+             `sort` değerini değiştiriyor, yani tablodan ızgaraya geçen
+             kullanıcı sıralamasını koruyor ve URL'deki `?sirala=` ile
+             başlıktaki ok her zaman aynı şeyi söylüyor.
+          */
+          <DataTable
+            caption="İlanlar"
+            preferenceKey="ilanlar"
+            rows={result}
+            rowKey={(l) => l.slug}
+            rowHref={(l) => `/ilan/${l.slug}`}
+            sort={{ value: ex.query.sort, onChange: ex.setSort }}
+            columns={listingColumns}
+          />
         ) : (
           /* Yoğunluk `tight`: kart ölçüsü galeriyle aynı olsun.
              Pazaryeri tek başına 4 kolonda duruyordu ve aynı ekranda
              galeri karolarından belirgin biçimde iri görünüyordu. */
-          <CardGrid view={view} density="tight">
+          <CardGrid view={view}>
             {result.map((listing) => (
               <li key={listing.slug}>
                 <ListingCard listing={listing} variant={view} />
@@ -196,6 +231,44 @@ export function MarketplacePage() {
     </>
   );
 }
+
+/**
+ * TABLO SÜTUNLARI — kararın hangi alanlarda verildiği.
+ *
+ * Sıralama değerleri `listingsSpec.sorts` ile AYNI adları taşıyor;
+ * başlık tıklaması açılır kutuyla aynı durumu kuruyor. Sütun kendi
+ * sıralamasını hesaplasaydı iki farklı "en ucuz" tanımı olurdu.
+ */
+const listingColumns: Column<Listing>[] = [
+  {
+    key: 'baslik',
+    header: 'İlan',
+    cell: (l) => l.title,
+    alwaysVisible: true,
+    sort: { asc: 'baslik' },
+  },
+  {
+    key: 'fiyat',
+    header: 'Fiyat',
+    numeric: true,
+    cell: (l) => `${l.price.toLocaleString('tr-TR')} ₺`,
+    sort: { asc: 'ucuz', desc: 'pahali' },
+  },
+  { key: 'durum', header: 'Durum', cell: (l) => l.condition },
+  { key: 'sehir', header: 'Şehir', cell: (l) => l.city },
+  {
+    key: 'satici',
+    header: 'Satıcı',
+    cell: (l) => `@${l.seller.username}`,
+    sort: { desc: 'satici' },
+  },
+  {
+    key: 'tarih',
+    header: 'Yayın',
+    cell: (l) => new Date(l.postedAt).toLocaleDateString('tr-TR'),
+    sort: { desc: 'yeni' },
+  },
+];
 
 function ListingCard({
   listing,
@@ -219,39 +292,31 @@ function ListingCard({
   */
   if (variant === 'list') {
     return (
-      <Link
-        to={`/ilan/${listing.slug}`}
-        className="group flex h-full items-center gap-3 rounded-card border border-border bg-surface-1 px-3 py-2.5 transition-colors hover:border-border-strong"
-      >
+      <ContentCard to={`/ilan/${listing.slug}`} variant="list">
         <div className="min-w-0 flex-1">
-          <h2 className="truncate text-[13px] font-medium text-foreground group-hover:text-primary">
+          <ContentCardTitle className="font-medium">
             {listing.title}
-          </h2>
-          <p className="tabular mt-0.5 truncate text-meta text-muted-foreground">
+          </ContentCardTitle>
+          <ContentCardMeta className="mt-0.5">
             {listing.city} · @{listing.seller.username} · ★{' '}
             {listing.seller.rating.toFixed(1)}
-          </p>
+          </ContentCardMeta>
         </div>
-        <span className="tabular shrink-0 font-display text-[15px] font-bold text-primary">
+        <span className="tabular shrink-0 font-display text-body font-bold text-primary">
           {listing.price.toLocaleString('tr-TR')} ₺
         </span>
         <Badge tone="muted" className="hidden shrink-0 sm:inline-flex">
           {equipmentCategoryLabels[listing.category]}
         </Badge>
-      </Link>
+      </ContentCard>
     );
   }
 
   return (
-    <Link
-      to={`/ilan/${listing.slug}`}
-      className="group flex h-full flex-col rounded-card border border-border bg-surface-1 transition-colors hover:border-border-strong"
-    >
-      {/* Oran galeri karosuyla aynı (4:3, PlateFrame varsayılanı):
-          16:9 kart, aynı ızgarada galeri karosundan alçak kalıyor ve
-          satır hizası bozuluyordu. */}
-      <PlateFrame
-        className="shrink-0 border-0 border-b border-border"
+    <ContentCard to={`/ilan/${listing.slug}`}>
+      {/* Standart oran (4:3): ilan kartı galeri karosuyla aynı ızgarada
+          duruyor; ayrı bir oran seçilseydi satır hizası bozulurdu. */}
+      <ContentCardMedia
         badge={
           <Badge tone="muted" className="bg-background/85">
             {equipmentCategoryLabels[listing.category]}
@@ -259,20 +324,20 @@ function ListingCard({
         }
       >
         <StarField seed={listing.slug} tint={tintFromSeed(listing.slug)} />
-      </PlateFrame>
+      </ContentCardMedia>
 
-      <div className="flex flex-1 flex-col px-2.5 py-2">
-        <h2 className="text-[13px] font-medium leading-snug text-foreground group-hover:text-primary">
+      <ContentCardBody>
+        <ContentCardTitle lines={2} className="font-medium leading-snug">
           {listing.title}
-        </h2>
-        <p className="tabular mt-1.5 font-display text-[17px] font-bold leading-none text-primary">
+        </ContentCardTitle>
+        <p className="tabular mt-1.5 font-display text-readout-sm font-bold leading-none text-primary">
           {listing.price.toLocaleString('tr-TR')} ₺
         </p>
-        <p className="tabular mt-auto truncate pt-1 text-meta text-muted-foreground">
+        <ContentCardMeta className="mt-auto pt-1">
           {listing.city} · @{listing.seller.username} · ★{' '}
           {listing.seller.rating.toFixed(1)}
-        </p>
-      </div>
-    </Link>
+        </ContentCardMeta>
+      </ContentCardBody>
+    </ContentCard>
   );
 }

@@ -1,12 +1,17 @@
-import { Link } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { Badge } from '@/components/ui/Badge';
-import { PlateFrame } from '@/components/media/PlateFrame';
+import {
+  ContentCard,
+  ContentCardBody,
+  ContentCardMedia,
+  ContentCardMeta,
+  ContentCardTitle,
+} from '@/components/ui/ContentCard';
 import { StarField } from '@/components/media/StarField';
 import { tintFromSeed } from '@/components/media/tints';
 import { listings } from '@/features/marketplace/data';
-import { equipmentCategoryLabels } from '@/features/equipment/data';
+import { equipmentCategoryLabels } from '@/features/equipment/taxonomy';
 
 /**
  * SON İLANLAR — ana sayfanın son bölümü.
@@ -37,25 +42,22 @@ export function RecentListings() {
       <SectionHeader
         title="Son İlanlar"
         meta={`${listings.length} ilan`}
-        description="Topluluğun ikinci el ekipman ilanları — künyesi ekipman veritabanına bağlı, satıcı puanıyla birlikte."
+        /* Kısaltıldı: satıcı puanı kartın künyesinde görünüyor. */
+        description="Topluluğun ikinci el ekipman ilanları."
         linkTo="/ilanlar"
         linkLabel="Tüm ilanlar"
       />
 
       {recent.length === 0 ? (
-        <p className="rounded-card border border-border bg-surface-1 px-3 py-6 text-center text-[12px] text-muted-foreground">
+        <p className="rounded-card border border-border bg-surface-1 px-3 py-6 text-center text-meta text-muted-foreground">
           Yayında ilan yok.
         </p>
       ) : (
         <ul className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5">
           {recent.map((listing) => (
             <li key={listing.slug}>
-              <Link
-                to={`/ilan/${listing.slug}`}
-                className="group flex h-full flex-col rounded-card border border-border bg-surface-1 transition-colors hover:border-border-strong"
-              >
-                <PlateFrame
-                  className="shrink-0 border-0 border-b border-border"
+              <ContentCard to={`/ilan/${listing.slug}`}>
+                <ContentCardMedia
                   badge={
                     <Badge tone="muted" className="bg-background/85">
                       {equipmentCategoryLabels[listing.category]}
@@ -66,21 +68,21 @@ export function RecentListings() {
                     seed={listing.slug}
                     tint={tintFromSeed(listing.slug)}
                   />
-                </PlateFrame>
+                </ContentCardMedia>
 
-                <div className="flex flex-1 flex-col px-2.5 py-2">
-                  <h3 className="line-clamp-2 text-[12.5px] font-medium leading-snug text-foreground transition-colors group-hover:text-primary">
+                <ContentCardBody>
+                  <ContentCardTitle lines={2} className="font-medium leading-snug">
                     {listing.title}
-                  </h3>
-                  <p className="tabular mt-1.5 font-display text-[17px] font-bold leading-none text-primary">
+                  </ContentCardTitle>
+                  <p className="tabular mt-1.5 font-display text-readout-sm font-bold leading-none text-primary">
                     {listing.price.toLocaleString('tr-TR')} ₺
                   </p>
-                  <p className="tabular mt-auto truncate pt-1 text-meta text-muted-foreground">
+                  <ContentCardMeta className="mt-auto pt-1">
                     {listing.city} · @{listing.seller.username} · ★{' '}
                     {listing.seller.rating.toFixed(1)}
-                  </p>
-                </div>
-              </Link>
+                  </ContentCardMeta>
+                </ContentCardBody>
+              </ContentCard>
             </li>
           ))}
         </ul>

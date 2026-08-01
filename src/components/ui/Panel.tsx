@@ -66,7 +66,7 @@ export function SpecRow({
   return (
     <div className="flex items-baseline justify-between gap-4 border-b border-border py-2 last:border-0">
       <dt className="label shrink-0">{label}</dt>
-      <dd className={cn('tabular text-right text-[12px]', toneClass)}>
+      <dd className={cn('tabular text-right text-meta', toneClass)}>
         {value}
       </dd>
     </div>

@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router';
 import { Logo } from './Logo';
+import { LocationPicker } from '@/features/location/LocationPicker';
 import { ButtonLink } from '@/components/ui/Button';
 import { Container } from '@/components/ui/Container';
 import { MenuIcon, UserIcon } from '@/components/ui/icons';
@@ -8,6 +9,7 @@ import { useAuth } from '@/features/auth/AuthContext';
 import { ThemeToggle } from '@/features/theme/ThemeToggle';
 import { RadioToggle } from '@/features/radio/RadioToggle';
 import { TvToggle } from '@/features/tv/TvToggle';
+import { NotificationBell } from '@/features/notifications/NotificationBell';
 import { cn } from '@/lib/cn';
 
 /**
@@ -69,7 +71,22 @@ export function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
           */}
           <nav
             aria-label="Ana navigasyon"
-            className="ml-2 hidden items-stretch self-stretch xl:flex"
+            /*
+              KIRILMA NOKTASI xl (1280) → 1400 (Faz 3.1).
+
+              Konum seçici bu satıra katılınca 1280px'te yer kalmadı ve
+              ölçüm bunu açıkça gösterdi: künye 155 + nav 640 + seçici ~100
+              + aksiyonlar 335 = 1230, kapsayıcı 1184. Seçici `min-w-0`
+              taşıdığı için hata vermeden SIFIR genişliğe çöküyor ve
+              düğmesi nav'ın üstüne taşıyordu — ekran görüntüsünde
+              yakalandı.
+
+              1400 ölçülen sayıdan geliyor: 96 (kapsayıcı dolgusu) + 155 +
+              20 + 640 + 12 + 100 + 335 = 1358, üstüne pay. Altındaki
+              genişliklerde düz menü zaten tasarlanmış yedeğine —
+              "Modüller" çekmecesine — düşüyor.
+            */
+            className="ml-2 hidden items-stretch self-stretch min-[1400px]:flex"
           >
             {primaryNav.map((item) => (
               <NavLink
@@ -77,7 +94,7 @@ export function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
                 to={item.to}
                 className={({ isActive }) =>
                   cn(
-                    'relative flex items-center px-3 text-[13px] font-medium transition-colors',
+                    'relative flex items-center px-3 text-body-sm font-medium transition-colors',
                     /* Aktif alt çizgi `inset` gölge ile veriliyor: gerçek
                        bir `border-bottom` hücreyi 2px yükseltip diğer
                        girişlerin dikey hizasını bozuyor. */
@@ -97,6 +114,23 @@ export function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
             denetimi ölçtü). Telefonda boşluk ve yatay dolgu daraltılıyor;
             dokunma hedefi 32px yüksekliğini koruyor (§6.7).
           */}
+          {/*
+            KONUM SEÇİCİ ÜST ÇUBUĞA TAŞINDI (Faz 3.1).
+
+            Kaldırılan durum çubuğunun tek kalıcı işlevi buydu. Konum bir
+            hava okuması değil, kullanıcının her sayfada değiştirebilmesi
+            gereken bir tercih: etkinlik mesafesi, gözlem noktası
+            sıralaması ve tesis uzaklığı ona bağlı.
+
+            `sm` altında GİZLİ ve modül haritası çekmecesinde duruyor.
+            320px'te ölçüldü: kapsayıcı 288px, aksiyon kümesi 158px,
+            künye işareti 36px — geriye ~90px kalıyor ve "İstanbul ˅"
+            tetikleyicisi tek başına onu doldurup taşırıyordu.
+          */}
+          <div className="ml-3 hidden shrink-0 sm:block">
+            <LocationPicker variant="compact" />
+          </div>
+
           <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
             {/*
               `xl` altında düz menü gizlendiği için burası navigasyonun ÜST
@@ -116,7 +150,7 @@ export function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
               type="button"
               onClick={onOpenNav}
               aria-label="Modül haritasını aç"
-              className="inline-flex h-8 items-center gap-1.5 rounded-card border border-border px-2 text-meta tracking-[0.03em] text-muted-foreground transition-colors hover:border-border-strong hover:text-foreground sm:px-2.5 xl:hidden"
+              className="inline-flex h-8 items-center gap-1.5 rounded-card border border-border px-2 text-meta tracking-[0.03em] text-muted-foreground transition-colors hover:border-border-strong hover:text-foreground sm:px-2.5 min-[1400px]:hidden"
             >
               <MenuIcon className="h-3.5 w-3.5" />
               <span className="hidden lg:inline">Modüller</span>
@@ -131,6 +165,23 @@ export function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
             */}
             <TvToggle />
             <RadioToggle />
+
+            {/*
+              BİLDİRİM ZİLİ `sm` VE ÜSTÜNDE.
+
+              390px'te üst çubuk zaten sınırda: TV + radyo + modül düğmesi +
+              hesap ikonu ölçülmüş genişliği doldurup 10px taşırıyordu
+              (önizleme denetimi; tema düğmesi tam bu yüzden çekmeceye
+              taşındı). Onuncu bir kontrol koymak o taşmayı geri getirirdi.
+
+              Telefonda kaybolmuyor: "Bildirimler" ve "Mesajlar" modül
+              haritasında (çekmece + footer + komut paleti) duruyor. Zil
+              oturum yokken zaten hiç çizilmiyor, yani ziyaretçi için üst
+              çubukta hiçbir şey değişmiyor.
+            */}
+            <span className="hidden sm:inline-flex">
+              <NotificationBell />
+            </span>
 
             {/*
               Tema düğmesi `sm` altında ÜST ÇUBUKTA DEĞİL, çekmecede.

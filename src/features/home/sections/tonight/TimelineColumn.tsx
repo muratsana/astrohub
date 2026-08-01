@@ -70,7 +70,7 @@ export function TimelineColumn({
           <h3 className="label caps text-muted-foreground">
             Karanlık penceresi
           </h3>
-          <p className="num mt-1 text-[26px] font-semibold leading-none text-foreground sm:text-[32px]">
+          <p className="num mt-1 text-readout-xl font-semibold leading-none text-foreground sm:text-readout-xl">
             {dark ? (
               <>
                 {clock(dark.from)}
@@ -78,7 +78,7 @@ export function TimelineColumn({
                 {clock(dark.to)}
               </>
             ) : (
-              <span className="text-[22px] font-normal text-faint">
+              <span className="text-readout-lg font-normal text-faint">
                 bu enlemde oluşmuyor
               </span>
             )}
@@ -88,7 +88,7 @@ export function TimelineColumn({
         <dl className="flex items-end gap-6 border-border xl:border-l xl:pl-6">
           <div>
             <dt className="text-meta text-faint">süre</dt>
-            <dd className="num text-[19px] font-semibold leading-tight text-primary">
+            <dd className="num text-readout font-semibold leading-tight text-primary">
               {dark ? formatDuration(darkMinutes) : '—'}
             </dd>
           </div>
@@ -101,7 +101,7 @@ export function TimelineColumn({
             <dt className="text-meta text-faint">aysız</dt>
             <dd
               className={cn(
-                'text-[19px] font-semibold leading-tight',
+                'text-readout font-semibold leading-tight',
                 !dark
                   ? 'text-faint'
                   : timeline.moonlessMinutes === 0
@@ -145,7 +145,10 @@ export function TimelineColumn({
                 ? /* Katman ayrımı varsa onu göster: alçak bulut geceyi
                      bitirir, yüksek sirrus yalnızca zorlaştırır. Toplam
                      yüzde bu farkı gizliyor. */
-                  `alçak %${Math.round(weather.layers.low)} · yüksek %${Math.round(weather.layers.high)}`
+                  `alçak %${Math.round(weather.layers.low)} · yüksek %${Math.round(weather.layers.high)}` +
+                  (weather.precipitationProbability !== null
+                    ? ` · yağış %${Math.round(weather.precipitationProbability)}`
+                    : '')
                 : `${Math.round(weather.temperature)}°C`
               : hint
           }
@@ -182,6 +185,52 @@ export function TimelineColumn({
               : null
           }
           tone={dew?.tone === 'danger' ? 'warn' : 'good'}
+        />
+
+        {/*
+          RÜZGÂR PANELDE HİÇ YOKTU (Faz 3.4).
+
+          `windSpeed` ilk günden beri çekiliyordu ve yalnızca seeing
+          hesabının yerel bileşeni olarak kullanılıyordu — gözlemci onu
+          hiç görmüyordu. Oysa rüzgâr, buluttan sonra gecenin en sert
+          karar girdisi: 25 km/sa üstünde ince optikle rehberli poz
+          tutmuyor.
+
+          HAMLE AYRI GÖSTERİLİYOR. Ortalama 12 km/sa sorunsuz görünür ama
+          40 km/sa hamle poz sırasında montürü sarsıp kareyi çöpe atar;
+          ortalamayı tek başına göstermek gözlemciyi yanıltır.
+        */}
+        <ConditionCard
+          label="Rüzgâr"
+          value={weather ? `${Math.round(weather.windSpeed)} km/sa` : '—'}
+          hint={
+            weather
+              ? weather.windGust !== null
+                ? `hamle ${Math.round(weather.windGust)} km/sa`
+                : 'hamle verisi yok'
+              : hint
+          }
+          /* 30 km/sa üstü pratikte gözlem dışı; ölçek oraya göre. */
+          meter={
+            weather ? Math.min(1, Math.max(0, 1 - weather.windSpeed / 30)) : null
+          }
+        />
+
+        <ConditionCard
+          label="Sıcaklık"
+          value={weather ? `${Math.round(weather.temperature)}°C` : '—'}
+          hint={
+            weather
+              ? weather.apparentTemperature !== null
+                ? /* Gece boyunca sabit duran gözlemcinin dayanma süresini
+                     belirleyen şey yer sıcaklığı değil bu. */
+                  `hissedilen ${Math.round(weather.apparentTemperature)}°C`
+                : 'hissedilen sıcaklık verisi yok'
+              : hint
+          }
+          /* Ölçek YOK: sıcaklık "iyi/kötü" değil, giyinme kararı. Uydurma
+             bir eşik (kaç derece iyi?) coğrafyaya göre değişir. */
+          meter={null}
         />
 
         <ConditionCard

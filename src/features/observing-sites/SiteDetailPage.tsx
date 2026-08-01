@@ -64,7 +64,7 @@ export function SiteDetailPage() {
 
         <div className="mt-6 flex flex-col gap-8 lg:flex-row">
           <div className="min-w-0 flex-1">
-            <h1 className="text-[26px] text-foreground sm:text-[30px]">
+            <h1 className="type-page text-foreground">
               {site.name}
             </h1>
             <p className="tabular mt-1 text-sm text-muted-foreground">
@@ -87,7 +87,7 @@ export function SiteDetailPage() {
 
             {site.warnings && site.warnings.length > 0 && (
               <div className="mt-6 rounded-card border border-warning/30 bg-warning/10 p-4">
-                <h2 className="text-sm font-semibold text-warning">Uyarılar</h2>
+                <h2 className="text-body-sm font-semibold text-warning">Uyarılar</h2>
                 <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-muted-foreground">
                   {site.warnings.map((w) => (
                     <li key={w}>{w}</li>
@@ -97,7 +97,7 @@ export function SiteDetailPage() {
             )}
 
             <section className="mt-8">
-              <h2 className="mb-3 text-lg font-semibold text-foreground">
+              <h2 className="type-section mb-3 font-semibold text-foreground">
                 Erişim ve Tesisler
               </h2>
               <p className="mb-3 text-sm text-muted-foreground">
@@ -133,7 +133,7 @@ export function SiteDetailPage() {
           </div>
 
           <aside className="w-full shrink-0 lg:w-72">
-            <div className="rounded-card border border-border bg-surface-1 p-4 text-[12px] leading-relaxed text-muted-foreground">
+            <div className="rounded-card border border-border bg-surface-1 p-4 text-meta leading-relaxed text-muted-foreground">
               <p className="font-medium text-foreground">Konum bilgisi</p>
               <p className="mt-2 text-xs leading-relaxed">
                 Koordinatlar gizlilik politikası gereği yaklaşık paylaşılır

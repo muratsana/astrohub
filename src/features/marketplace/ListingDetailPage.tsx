@@ -4,11 +4,9 @@ import { Container } from '@/components/ui/Container';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Panel, SpecList, SpecRow } from '@/components/ui/Panel';
 import { Badge } from '@/components/ui/Badge';
-import { Button, ButtonLink } from '@/components/ui/Button';
+import { ButtonLink } from '@/components/ui/Button';
 import { Readout } from '@/components/ui/Readout';
-import { PlateFrame } from '@/components/media/PlateFrame';
-import { StarField } from '@/components/media/StarField';
-import { tintFromSeed } from '@/components/media/tints';
+import { ListingPhotos } from './ListingPhotos';
 import { NotFoundPage } from '@/components/NotFoundPage';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
@@ -18,6 +16,7 @@ import {
   equipmentPath,
 } from '@/features/equipment/data';
 import { ReportButton } from '@/features/admin/ReportButton';
+import { MessageButton } from '@/features/social/MessageButton';
 import { getListingBySlug, relatedListings, priceRange } from './data';
 
 /**
@@ -107,28 +106,19 @@ export function ListingDetailPage() {
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
           {/* ───────── Sol: görsel + açıklama ───────── */}
           <div className="space-y-4">
-            <PlateFrame
-              ratio="aspect-[16/9]"
-              badge={
-                <span className="tabular rounded-[2px] bg-background/85 px-1.5 py-0.5 text-meta tracking-[0.02em] text-primary">
-                  {equipmentCategoryLabels[listing.category]}
-                </span>
-              }
-            >
-              <StarField
-                seed={listing.slug}
-                tint={tintFromSeed(listing.slug)}
-              />
-            </PlateFrame>
-
-            <p className="text-meta leading-snug text-faint">
-              Görsel yer tutucudur — ilan fotoğrafı yükleme akışı, medya
-              pipeline'ı (Faz 1.2) bağlandığında açılacak.
-            </p>
+            {/*
+              İkinci el ekipman ilanında fotoğraf SÜS DEĞİL, İLANIN
+              KENDİSİ: alıcı tüpteki çiziği, odaklayıcının boşluğunu,
+              kutudaki eksik parçayı oradan görüyor. Burada yıllarca
+              yıldız alanı çizilip "medya pipeline'ı bağlandığında
+              açılacak" yazıyordu; boru hattı 0012'de bağlanmıştı,
+              eksik olan ilan tarafıydı (0038).
+            */}
+            <ListingPhotos listing={listing} />
 
             {listing.description && (
               <Panel title="İlan metni">
-                <p className="whitespace-pre-line text-[12.5px] leading-relaxed text-muted-foreground">
+                <p className="whitespace-pre-line text-caption leading-relaxed text-muted-foreground">
                   {listing.description}
                 </p>
               </Panel>
@@ -140,7 +130,7 @@ export function ListingDetailPage() {
                   {listing.includes.map((item) => (
                     <li
                       key={item}
-                      className="flex gap-2 text-[12px] leading-relaxed text-muted-foreground"
+                      className="flex gap-2 text-meta leading-relaxed text-muted-foreground"
                     >
                       <span aria-hidden className="text-primary">
                         ·
@@ -153,7 +143,7 @@ export function ListingDetailPage() {
             )}
 
             <Panel title="Alım-satım güvenliği" className="border-warning/35">
-              <ul className="space-y-2 text-[12px] leading-relaxed text-muted-foreground">
+              <ul className="space-y-2 text-meta leading-relaxed text-muted-foreground">
                 <li>
                   Astrohub bir <strong className="text-foreground">emanet
                   (escrow) hizmeti sunmaz</strong>. Ödeme ve teslimat tamamen
@@ -213,19 +203,26 @@ export function ListingDetailPage() {
                   : 'Satıcı fiyatın sabit olduğunu belirtmiş.'}
               </p>
 
+              {/*
+                DÜĞME ARTIK ÇALIŞIYOR (Faz 5). Buraya kadar `disabled`
+                duruyordu ve yanındaki metin "Faz 2'de açılacak" diyordu:
+                alıcının satıcıya ulaşmasının HİÇBİR yolu yoktu ve
+                kullanıcılar iletişimi yorum alanına taşıyordu — tam olarak
+                engellemeye çalıştığımız şey.
+
+                Satıcı kimliği yalnızca veritabanı kaydında var; tohum
+                ilanlarda yok. `MessageButton` o durumda kendini gizliyor,
+                yerine aşağıdaki açıklama kalıyor.
+              */}
               <div className="mt-3 space-y-2">
-                <Button
-                  className="w-full"
-                  disabled
-                  title="Platform içi mesajlaşma Faz 2'de açılacak"
-                >
-                  Satıcıya Mesaj Gönder
-                </Button>
+                <MessageButton
+                  targetUserId={listing.sellerId}
+                  label="Satıcıya Mesaj Gönder"
+                />
                 <p className="text-meta leading-snug text-faint">
-                  Platform içi mesajlaşma Faz 2'de açılacak. İletişimin
-                  platform içinde kalması, anlaşmazlıkta kaydın moderasyona
-                  açık olmasını sağlar — bu yüzden ilanlarda telefon ve
-                  e-posta yayımlanmaz.
+                  İletişimin platform içinde kalması, anlaşmazlıkta kaydın
+                  moderasyona açık olmasını sağlar — bu yüzden ilanlarda
+                  telefon ve e-posta yayımlanmaz.
                 </p>
               </div>
             </Panel>
@@ -234,7 +231,7 @@ export function ListingDetailPage() {
               <div className="flex items-center gap-2">
                 <Link
                   to={`/profil/${listing.seller.username}`}
-                  className="text-[13px] font-medium text-foreground transition-colors hover:text-primary"
+                  className="text-body-sm font-medium text-foreground transition-colors hover:text-primary"
                 >
                   @{listing.seller.username}
                 </Link>
@@ -300,7 +297,7 @@ export function ListingDetailPage() {
                         to={`/ilan/${item.slug}`}
                         className="flex items-baseline justify-between gap-3 py-2 transition-colors hover:text-primary"
                       >
-                        <span className="min-w-0 truncate text-[12px] text-foreground">
+                        <span className="min-w-0 truncate text-meta text-foreground">
                           {item.title}
                         </span>
                         <span className="tabular shrink-0 text-body-sm text-primary">

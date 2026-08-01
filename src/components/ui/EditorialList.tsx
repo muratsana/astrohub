@@ -2,11 +2,13 @@ import type { ReactNode } from 'react';
 import { Link } from 'react-router';
 import { Badge } from './Badge';
 import { CardGrid } from './CardGrid';
-import { PlateFrame } from '@/components/media/PlateFrame';
+import {
+  ContentCard,
+  ContentCardMedia,
+} from '@/components/ui/ContentCard';
 import { RemoteImage } from '@/components/media/RemoteImage';
 import { tintFromSeed } from '@/components/media/tints';
 import type { ViewMode } from './useViewMode';
-import { cn } from '@/lib/cn';
 
 /**
  * EDİTÖRYEL LİSTE — haber, yazı ve etkinlik için tek düzen.
@@ -60,7 +62,7 @@ export function EditorialList({
 }) {
   if (items.length === 0) {
     return (
-      <p className="rounded-card border border-border bg-surface-1 px-4 py-16 text-center text-[12px] text-muted-foreground">
+      <p className="rounded-card border border-border bg-surface-1 px-4 py-16 text-center text-meta text-muted-foreground">
         {emptyMessage}
       </p>
     );
@@ -111,14 +113,18 @@ function seedTint(item: EditorialItem): string {
 
 function LeadCard({ item, label }: { item: EditorialItem; label: string }) {
   return (
-    <Link
+    <ContentCard
       to={item.to}
-      className="group mb-2.5 grid gap-3.5 rounded-card border border-border bg-surface-1 p-2.5 transition-colors hover:border-border-strong md:grid-cols-[minmax(0,340px)_minmax(0,1fr)]"
+      className="mb-2.5 grid gap-3.5 p-2.5 md:grid-cols-[minmax(0,340px)_minmax(0,1fr)]"
     >
-      <PlateFrame
-        ratio="aspect-[16/9]"
+      {/* `wide` (16:9) kart ailesindeki üçüncü orandır ve YALNIZCA
+          manşete aittir: sayfa başına bir tane, tam genişlik bir sütun
+          kaplar, ızgara satır hizasını etkilemez. */}
+      <ContentCardMedia
+        ratio="wide"
+        className="border border-border"
         badge={
-          <span className="rounded-[2px] border border-primary/50 bg-primary/15 px-1.5 py-0.5 text-meta tracking-[0.02em] text-primary backdrop-blur-sm">
+          <span className="rounded-card border border-primary/50 bg-primary/15 px-1.5 py-0.5 text-meta tracking-[0.02em] text-primary backdrop-blur-sm">
             {label}
           </span>
         }
@@ -130,7 +136,7 @@ function LeadCard({ item, label }: { item: EditorialItem; label: string }) {
           seed={item.slug}
           tint={seedTint(item)}
         />
-      </PlateFrame>
+      </ContentCardMedia>
 
       <div className="flex flex-col py-1 pr-1">
         <div className="mb-2 flex flex-wrap items-center gap-2">
@@ -140,10 +146,10 @@ function LeadCard({ item, label }: { item: EditorialItem; label: string }) {
           )}
         </div>
 
-        <h2 className="text-[18px] text-foreground transition-colors group-hover:text-primary sm:text-[21px]">
+        <h2 className="type-section text-foreground transition-colors group-hover:text-primary">
           {item.title}
         </h2>
-        <p className="mt-2.5 text-[12px] leading-relaxed text-muted-foreground">
+        <p className="mt-2.5 text-meta leading-relaxed text-muted-foreground">
           {item.summary}
         </p>
 
@@ -155,7 +161,7 @@ function LeadCard({ item, label }: { item: EditorialItem; label: string }) {
 
         {item.footer && <div className="mt-auto pt-3">{item.footer}</div>}
       </div>
-    </Link>
+    </ContentCard>
   );
 }
 
@@ -169,19 +175,13 @@ function LeadCard({ item, label }: { item: EditorialItem; label: string }) {
  */
 function EditorialCard({ item }: { item: EditorialItem }) {
   return (
-    <Link
-      to={item.to}
-      className={cn(
-        'group flex h-full flex-col overflow-hidden rounded-card border border-border bg-surface-1',
-        'transition-colors hover:border-border-strong'
-      )}
-    >
+    <ContentCard to={item.to} className="overflow-hidden">
       {/* Oran galeri karosuyla aynı (4:3, PlateFrame varsayılanı):
           site genelinde ızgara kartlarının tek bir ölçüsü var. Bir
           modülün 16:9 kalması, aynı sayfada iki farklı kart yüksekliği
           demekti. Üstteki geniş "öne çıkan" kart bunun dışında —
           o bir ızgara karosu değil, tam genişlik bir manşet. */}
-      <PlateFrame className="shrink-0 rounded-none border-0 border-b border-border">
+      <ContentCardMedia className="rounded-none">
         <RemoteImage
           src={item.imageUrl}
           alt={item.title}
@@ -189,7 +189,7 @@ function EditorialCard({ item }: { item: EditorialItem }) {
           seed={item.slug}
           tint={seedTint(item)}
         />
-      </PlateFrame>
+      </ContentCardMedia>
 
       <div className="flex flex-1 flex-col p-3">
         <div className="mb-2 flex flex-wrap items-center gap-2">
@@ -214,7 +214,7 @@ function EditorialCard({ item }: { item: EditorialItem }) {
           `lh` birimi satır yüksekliğinin kendisi — 13px ve `leading-snug`
           değişse de ayrılan yer başlığın gerçek iki satırı kadar kalır.
         */}
-        <h2 className="line-clamp-2 min-h-[2lh] text-[13px] leading-snug text-foreground transition-colors group-hover:text-primary">
+        <h2 className="line-clamp-2 min-h-[2lh] text-body-sm leading-snug text-foreground transition-colors group-hover:text-primary">
           {item.title}
         </h2>
         <p className="mt-1.5 line-clamp-3 min-h-[3lh] text-meta leading-relaxed text-muted-foreground">
@@ -244,7 +244,7 @@ function EditorialCard({ item }: { item: EditorialItem }) {
           </div>
         )}
       </div>
-    </Link>
+    </ContentCard>
   );
 }
 
@@ -256,7 +256,7 @@ function EditorialRow({ item }: { item: EditorialItem }) {
       className="group flex h-full items-baseline gap-3 bg-surface-1 px-3 py-2.5 transition-colors hover:bg-surface-2"
     >
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-[13px] text-foreground transition-colors group-hover:text-primary">
+        <span className="block truncate text-body-sm text-foreground transition-colors group-hover:text-primary">
           {item.title}
         </span>
         <span className="mt-0.5 block truncate text-meta text-muted-foreground">

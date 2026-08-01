@@ -18,7 +18,11 @@ export type ModerationTarget =
   | 'forum_post'
   | 'event'
   | 'site'
-  | 'profile';
+  | 'profile'
+  /* Özel mesaj (0047). Moderatör `messages` tablosunu OKUYAMIYOR;
+     şikâyet edilen metin rapor notunda taşınıyor — tek bir cümle için
+     iki kişinin bütün yazışmasını açmak orantısız olurdu. */
+  | 'message';
 
 export type ModerationStatus =
   | 'pending'
@@ -45,6 +49,7 @@ export const targetLabels: Record<ModerationTarget, string> = {
   event: 'Etkinlik',
   site: 'Gözlem noktası',
   profile: 'Profil',
+  message: 'Özel mesaj',
 };
 
 export const statusLabels: Record<ModerationStatus, string> = {

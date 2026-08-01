@@ -153,7 +153,7 @@ export function PreviewEditorPanel() {
                       onChange={(e) =>
                         updateField(activeSlide.id, field.key, e.target.value)
                       }
-                      className="w-full resize-y rounded-card border border-border bg-surface-1 px-2.5 py-2 text-[12px] leading-relaxed text-foreground outline-none focus:border-primary"
+                      className="w-full resize-y rounded-card border border-border bg-surface-1 px-2.5 py-2 text-meta leading-relaxed text-foreground outline-none focus:border-primary"
                     />
                   ) : (
                     <Input
@@ -165,7 +165,7 @@ export function PreviewEditorPanel() {
                       onChange={(e) =>
                         updateField(activeSlide.id, field.key, e.target.value)
                       }
-                      className="h-9 text-[12px]"
+                      className="h-9 text-meta"
                     />
                   )}
 
