@@ -294,13 +294,14 @@ Belgenin zorunlu tuttuğu 18 bilgi alanı tek tek karşılaştırıldı.
 | Madde | Durum |
 |---|---|
 | Tek sol/sağ ok — bir gün | DONE |
-| Çift ok — bir hafta | NOT_STARTED |
-| Manuel tarih seçici | NOT_STARTED |
-| "Bugün" kısayolu | NOT_STARTED |
+| Çift ok — bir hafta | DONE |
+| Manuel tarih seçici | DONE — yerel `<input type="date">`, sınırlar ufuktan |
+| "Bugün" kısayolu | DONE — "Bu geceye dön" |
 | Klavye erişimi | DONE (düğmeler) |
 | Tahmin ufku dışında sahte veri göstermeme | DONE — `FORECAST_DAYS = 16`, ötesinde açıkça "hava verisi yok" |
 | Tarih değişince konumu kaybetmeme | DONE |
-| URL/state ile paylaşılabilir tarih+konum | NOT_STARTED |
+| URL ile paylaşılabilir tarih | DONE — `?gece=2026-08-08`; offset DEĞİL tarih yazılıyor ki bağlantı ertesi gün başka geceyi göstermesin. Tarayıcıda gidiş-dönüş doğrulandı |
+| URL ile paylaşılabilir konum | NOT_STARTED — konum `LocationContext`te, URL'ye bağlı değil |
 | Europe/Istanbul + seçili konum zaman dilimi | DONE — gece tarihi IANA diliminde kuruluyor |
 
 **Sağlayıcı katmanı**
