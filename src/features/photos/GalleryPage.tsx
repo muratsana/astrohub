@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Container } from '@/components/ui/Container';
 import { ButtonLink } from '@/components/ui/Button';
 import { Input, Select } from '@/components/ui/Input';
@@ -15,14 +15,11 @@ import { CatalogSourceNote } from '@/components/ui/CatalogSourceNote';
 import { useViewMode } from '@/components/ui/useViewMode';
 import { PhotoCard } from './PhotoCard';
 import { usePhotoCatalog } from '@/services/content/photos';
-import {
-  filterPhotos,
-  defaultFilters,
-  availableCities,
-  type GalleryFilters,
-} from './filtering';
+import { availableCities } from './filtering';
+import { useExplorer } from '@/features/explorer/useExplorer';
+import { gallerySpec } from './gallerySpec';
 import { type ProcessingPalette } from './types';
-import { familyOf, photoFamilies, familyOrder, type PhotoFamily } from './families';
+import { photoFamilies, familyOrder } from './families';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
 import { cn } from '@/lib/cn';
@@ -44,28 +41,27 @@ const paletteOptions: (ProcessingPalette | 'hepsi')[] = [
  * Izgara ve liste görünümü arasında geçiş yapılabilir; seçim saklanır.
  */
 export function GalleryPage() {
-  const [filters, setFilters] = useState<GalleryFilters>(defaultFilters);
-  const [family, setFamily] = useState<PhotoFamily | 'hepsi'>('hepsi');
   const [view, setView] = useViewMode('galeri');
 
   const catalog = usePhotoCatalog();
   const photos = catalog.items;
 
+  /*
+   * ORTAK DATA EXPLORER (Faz 4).
+   *
+   * Galeri kendi `useState` filtre durumunu taşıyordu: liste
+   * paylaşılamıyor, geri düğmesi filtreyi geri almıyor, yenilemede
+   * seçim uçuyordu. Artık durum URL'de ve motor bütün liste
+   * sayfalarıyla ortak.
+   *
+   * ARAMADA BİR DAVRANIŞ DEĞİŞTİ: eski galeri araması yalnızca küçük
+   * harfe çeviriyordu, yani "cankiri" yazan kullanıcı "Çankırı"yı
+   * bulamıyordu. Ortak motor ASCII de katlıyor.
+   */
+  const ex = useExplorer(photos, gallerySpec);
   const cities = useMemo(() => availableCities(photos), [photos]);
-
-  const result = useMemo(() => {
-    const base = filterPhotos(photos, filters);
-    return family === 'hepsi'
-      ? base
-      : base.filter((p) => familyOf(p.type) === family);
-  }, [photos, filters, family]);
-
-  function set<K extends keyof GalleryFilters>(
-    key: K,
-    value: GalleryFilters[K]
-  ) {
-    setFilters((f) => ({ ...f, [key]: value }));
-  }
+  const family = ex.query.facets.aile?.[0] ?? 'hepsi';
+  const result = ex.items;
 
   return (
     <>
@@ -98,7 +94,11 @@ export function GalleryPage() {
           <button
             role="tab"
             aria-selected={family === 'hepsi'}
-            onClick={() => setFamily('hepsi')}
+            onClick={() => {
+              /* Tek seçim davranışı korunuyor: aile sekmeleri bir sekme
+                 şeridi, çoklu seçim listesi değil. */
+              if (family !== 'hepsi') ex.toggleFacet('aile', family);
+            }}
             className={cn(
               'rounded-card border px-2.5 py-1 text-meta tracking-[0.03em] transition-colors',
               family === 'hepsi'
@@ -118,7 +118,10 @@ export function GalleryPage() {
                 role="tab"
                 aria-selected={active}
                 title={info.description}
-                onClick={() => setFamily(key)}
+                onClick={() => {
+                  if (family !== 'hepsi') ex.toggleFacet('aile', family);
+                  if (family !== key) ex.toggleFacet('aile', key);
+                }}
                 className={cn(
                   'rounded-card border px-2.5 py-1 text-meta tracking-[0.03em] transition-colors',
                   active
@@ -139,8 +142,8 @@ export function GalleryPage() {
               id="gallery-search"
               type="search"
               placeholder="Hedef, katalog (M31, NGC 7000) veya kullanıcı"
-              value={filters.search}
-              onChange={(e) => set('search', e.target.value)}
+              value={ex.searchInput}
+              onChange={(e) => ex.setSearch(e.target.value)}
               className={filterControlClass}
             />
           </FilterCell>
@@ -148,10 +151,14 @@ export function GalleryPage() {
           <FilterCell label="Palet" htmlFor="f-palette">
             <Select
               id="f-palette"
-              value={filters.palette}
-              onChange={(e) =>
-                set('palette', e.target.value as GalleryFilters['palette'])
-              }
+              value={ex.query.facets.palet?.[0] ?? 'hepsi'}
+              onChange={(e) => {
+                const mevcut = ex.query.facets.palet?.[0];
+                if (mevcut) ex.toggleFacet('palet', mevcut);
+                if (e.target.value !== 'hepsi') {
+                  ex.toggleFacet('palet', e.target.value);
+                }
+              }}
               className={filterControlClass}
             >
               {paletteOptions.map((p) => (
@@ -165,8 +172,14 @@ export function GalleryPage() {
           <FilterCell label="Şehir" htmlFor="f-city">
             <Select
               id="f-city"
-              value={filters.city}
-              onChange={(e) => set('city', e.target.value)}
+              value={ex.query.facets.sehir?.[0] ?? 'hepsi'}
+              onChange={(e) => {
+                const mevcut = ex.query.facets.sehir?.[0];
+                if (mevcut) ex.toggleFacet('sehir', mevcut);
+                if (e.target.value !== 'hepsi') {
+                  ex.toggleFacet('sehir', e.target.value);
+                }
+              }}
               className={filterControlClass}
             >
               <option value="hepsi">Tüm şehirler</option>
@@ -183,22 +196,18 @@ export function GalleryPage() {
 
         <ToolBar
           left={
-            <ResultCount
-              current={result.length}
-              total={photos.length}
-              noun="fotoğraf"
-            />
+            <ResultCount current={ex.total} total={photos.length} noun="fotoğraf" />
           }
           sort={{
             id: 'f-sort',
-            value: filters.sort,
-            onChange: (v) => set('sort', v as GalleryFilters['sort']),
-            options: [
-              { value: 'yeni', label: 'En yeni' },
-              { value: 'populer', label: 'Popüler' },
-              { value: 'editor', label: 'Editör seçimi' },
-              { value: 'yorum', label: 'En çok yorumlanan' },
-            ],
+            value: ex.query.sort,
+            onChange: ex.setSort,
+            /* Seçenekler tanımdan geliyor: burada elle sayılsaydı yeni
+               bir sıralama eklenince listede görünmezdi. */
+            options: gallerySpec.sorts.map((s) => ({
+              value: s.value,
+              label: s.label,
+            })),
           }}
           view={{ mode: view, onChange: setView }}
         />
