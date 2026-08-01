@@ -155,6 +155,12 @@ export const siteMap: NavGroup[] = [
         keywords: ['tv', 'canlı', 'yayın', 'youtube', 'video', 'izle'],
       },
       {
+        label: 'TV Video Arşivi',
+        to: '/tv/arsiv',
+        description: 'Kayıtlı yayınlar ve seriler',
+        keywords: ['tv', 'arşiv', 'video', 'seri', 'kayıt', 'izle'],
+      },
+      {
         label: 'Astrohub Radyo',
         to: '/radyo',
         description: 'Gece çekimi için kesintisiz çalma listesi',

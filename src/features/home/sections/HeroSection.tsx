@@ -145,7 +145,13 @@ export function HeroSection() {
           fetchPriority="high"
         />
       )}
-      <Container className="py-5 sm:py-6">
+      <Container className="pt-5 sm:pt-5">
+        {/* ALT DOLGU YOK ve bu bilinçli: "Bu Gece" bölümü kendi ÜST
+            dolgusunu taşıyor. İkisi birden olduğunda aradaki boşluk iki
+            katına çıkıyordu (24 + 24 = 48px) ve o fazlalık hero'yu
+            büyütürken fold'un altına ittiği içerikten çalıyordu.
+            Kaldırılan şey banner değil, iki bölüm arasındaki
+            tekrarlanmış boşluk. */}
         <div className="relative overflow-hidden rounded-card border border-border">
           {/* Arka plan — gerçek fotoğraf, altında çizilen sahne */}
           <div className="absolute inset-0">
@@ -198,6 +204,16 @@ export function HeroSection() {
               bir faz. Burada yapılan, ölçüm aracını kurmak ve orantısız
               dolguyu almak.
 
+              SONRADAN %15 BÜYÜTÜLDÜ (kullanıcı kararı: "çok küçük
+              kaldı"). min-h 240/272/300 → 276/313/345 ve dikey dolgu da
+              aynı oranda arttı. İKİSİ BİRDEN gerekliydi: yukarıdaki
+              ölçümün öğrettiği gibi `min-h` masaüstünde bağlayıcı değil,
+              yüksekliği içerik + dolgu belirliyor. Yalnızca min-h'ı
+              artırmak lg'de hiçbir şey değiştirmezdi.
+
+              Fold etkisi `npm run check:viewports` ile ölçüldü ve kapı
+              geçiyor — ayrıntı aşağıdaki ölçüm çıktısında.
+
               Punto ve dokunma hedefleri KÜÇÜLMEDİ; yalnızca boşluk
               alındı. Metni küçülterek yer kazanmak §5.3'te ayrıca
               yasaklanmış.
@@ -227,7 +243,7 @@ export function HeroSection() {
               `sm`den itibaren gerekmiyor: orada metin sütunu dar ve
               kontroller ortada, CTA'nın sağında kalıyor.
             */
-            className="relative flex min-h-[240px] flex-col justify-center px-5 pb-16 pt-6 sm:min-h-[272px] sm:py-7 sm:pl-16 sm:pr-9 lg:min-h-[300px] lg:pl-20 lg:pr-12"
+            className="relative flex min-h-[276px] flex-col justify-center px-5 pb-[4.6rem] pt-7 sm:min-h-[313px] sm:py-8 sm:pl-16 sm:pr-9 lg:min-h-[345px] lg:pl-20 lg:pr-12"
             aria-live="polite"
           >
             {/*

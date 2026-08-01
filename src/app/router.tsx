@@ -227,6 +227,18 @@ export const appRoutes = [
         element: route(named(() => import('@/features/tv/TvPage'), 'TvPage')),
       },
       {
+        path: 'tv/arsiv',
+        element: route(
+          named(() => import('@/features/tv/TvArchivePage'), 'TvArchivePage')
+        ),
+      },
+      {
+        path: 'tv/arsiv/:slug',
+        element: route(
+          named(() => import('@/features/tv/TvArchivePage'), 'TvArchivePage')
+        ),
+      },
+      {
         path: 'radyo',
         element: route(
           named(() => import('@/features/radio/RadioPage'), 'RadioPage')

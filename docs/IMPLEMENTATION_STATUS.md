@@ -84,6 +84,20 @@ Bunlar hata değil, **kullanıcının verdiği kararlar**; koda geçmeden
 önce buraya yazılıyorlar ki sonraki tur "belge böyle diyor" deyip geri
 almasın.
 
+### Her faz bitince canlıya alınacak
+
+Kullanıcı talimatı: bir faz tamamlandığında `main`'e birleştir ve
+canlıya al; oturumun son hâli de canlıya alınacak.
+
+**Vercel'de eski dağıtımların temizlenmesi (son 2 kalacak) YAPILAMIYOR**
+ve sebebi ortamda: Vercel CLI kurulu değil, `VERCEL_TOKEN` yok ve
+`api.vercel.com` kimliksiz 403 dönüyor. Depo tarafından dağıtım
+silmenin bir yolu yok — bu Vercel API'sinden yapılır.
+
+Açmak için gereken: `VERCEL_TOKEN` (ve proje/takım kimliği). O
+geldiğinde `GET /v6/deployments` + `DELETE /v13/deployments/{id}` ile
+en yeni ikisi dışındakiler silinebilir.
+
 ### Radyo ÜÇ şeyi birden yapıyor
 
 Kullanıcının netleştirmesi: radyo hem yöneticinin yüklediği mp3'leri

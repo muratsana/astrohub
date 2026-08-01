@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { Link } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Panel } from '@/components/ui/Panel';
@@ -126,6 +127,17 @@ export function TvPage() {
             </Panel>
           </div>
         )}
+
+        {/* Arşive bağlantı: bağlantısı olmayan bir sayfa yok sayılır.
+            Arşiv canlı yayından bağımsız — kanal bağlanmasa da rota
+            çalışıyor ve boş olduğunu söylüyor. */}
+        <p className="mt-8 text-body-sm text-muted-foreground">
+          Kayıtlı yayınlar ve seriler için{' '}
+          <Link to="/tv/arsiv" className="text-primary hover:underline">
+            video arşivine
+          </Link>{' '}
+          bakabilirsiniz.
+        </p>
       </Container>
     </>
   );

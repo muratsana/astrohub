@@ -337,6 +337,14 @@
       "destination": "/app.html"
     },
     {
+      "source": "/tv/arsiv",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/tv/arsiv/:slug",
+      "destination": "/app.html"
+    },
+    {
       "source": "/van-astronomi-etkinlikleri",
       "destination": "/app.html"
     },
