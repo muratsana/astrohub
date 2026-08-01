@@ -7,14 +7,21 @@ import {
   useState,
   type ReactNode,
 } from 'react';
+import { findCity, DEFAULT_CITY_ID, TURKEY_TIME_ZONE, type City } from './cities';
 import {
-  cities,
-  findCity,
-  nearestCity,
-  DEFAULT_CITY_ID,
-  TURKEY_TIME_ZONE,
-  type City,
-} from './cities';
+  readStoredLocation as readStored,
+  writeStoredLocation as writeStored,
+} from './storage';
+import type {
+  LocationSource,
+  ObservingLocation,
+  PermissionState,
+} from './types';
+import {
+  fetchProvinces,
+  type Province,
+} from '@/services/content/provinces';
+import { createLocalReverseGeocoder } from '@/domain/location/geocode';
 import {
   reduce as reduceLocationMode,
   canReturnToAuto as canReturnToAutoOf,
@@ -36,32 +43,43 @@ import {
  * gösterilir — ekranda ham koordinat teşhir edilmez.
  */
 
-const STORAGE_KEY = 'astrohub:location';
+export type {
+  LocationSource,
+  ObservingLocation,
+  PermissionState,
+} from './types';
 
-export type LocationSource = 'default' | 'city' | 'device';
+/**
+ * CİHAZ KONUMU ETİKETİ — il eşleşmediğinde.
+ *
+ * Eskiden 15 şehirlik listeden "en yakın" koşulsuz seçiliyordu; sınırın
+ * ötesindeki (ya da VPN arkasındaki) kullanıcı ekranda gerçek olmayan
+ * bir il adı görüyordu. Eşleşme yoksa artık iddiada bulunulmuyor —
+ * hesap yine gerçek koordinatla yapılıyor, yalnızca etiket susuyor.
+ */
+const DEVICE_LABEL = 'Cihaz konumu';
 
-export interface ObservingLocation {
-  /** Ekranda gösterilecek ad. */
-  label: string;
-  latitude: number;
-  longitude: number;
-  timeZone: string;
-  source: LocationSource;
-  /** Şehir ön ayarından geliyorsa tipik Bortle sınıfı. */
-  bortle?: number;
-}
-
-/** Konum izni akışının hangi aşamada olduğu. */
-export type PermissionState =
-  | 'unasked' // kullanıcıya henüz sorulmadı
-  | 'granted' // cihaz konumu kullanılıyor
-  | 'denied' // reddedildi ya da hata aldı
-  | 'dismissed' // "şehir seçeyim" dendi
-  | 'pending'; // tarayıcı diyaloğu açık
+/**
+ * Ters kodlayıcı modül düzeyinde: il listesi `fetchProvinces` içinde
+ * zaten önbellekli, çözücünün kendisi durumsuz.
+ */
+const geocoder = createLocalReverseGeocoder(async () =>
+  (await fetchProvinces()).items.map((p) => ({
+    name: p.name,
+    latitude: p.latitude,
+    longitude: p.longitude,
+    ref: p.slug,
+  }))
+);
 
 interface LocationContextValue {
   location: ObservingLocation;
-  cities: City[];
+  /**
+   * Şehir seçicinin listesi — 81 il (`provinces`), yapılandırma yoksa
+   * tohum yedeği. Modül başına ayrı liste tutmak §4.1'in yasakladığı
+   * şeydi: "Ankara" altı yerde altı ayrı yazımla bulunuyordu.
+   */
+  provinces: Province[];
   permission: PermissionState;
   /**
    * Konum MODU — kullanıcının ne istediği (`permission` tarayıcının ne
@@ -96,30 +114,27 @@ function cityLocation(city: City, source: LocationSource): ObservingLocation {
   };
 }
 
-interface StoredLocation {
-  source: LocationSource;
-  cityId?: string;
-  latitude?: number;
-  longitude?: number;
-  label?: string;
-  permission?: PermissionState;
-}
-
-function readStored(): StoredLocation | null {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as StoredLocation) : null;
-  } catch {
-    return null;
-  }
-}
-
-function writeStored(value: StoredLocation) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
-  } catch {
-    // Depolama yoksa seçim yalnızca bu oturumda geçerli olur.
-  }
+/**
+ * İl kaydından gözlem konumu.
+ *
+ * BORTLE YALNIZCA ÖLÇÜLÜ OLANLARDA. Tohum listedeki 15 il merkezinin
+ * tipik Bortle sınıfı elde var; kalan 66 için yok. Bir sayı uydurmak
+ * (ör. nüfusa bakıp tahmin etmek) kullanıcının gökyüzü beklentisini
+ * yanlış kurardı — alan boş kalıyor ve ışık kirliliği sayfası kendi
+ * varsayılanını kullanıyor.
+ */
+function provinceLocation(
+  province: Province,
+  source: LocationSource
+): ObservingLocation {
+  return {
+    label: province.name,
+    latitude: province.latitude,
+    longitude: province.longitude,
+    timeZone: TURKEY_TIME_ZONE,
+    source,
+    bortle: findCity(province.slug)?.bortle,
+  };
 }
 
 export function LocationProvider({ children }: { children: ReactNode }) {
@@ -128,7 +143,10 @@ export function LocationProvider({ children }: { children: ReactNode }) {
 
     if (stored?.source === 'device' && stored.latitude != null && stored.longitude != null) {
       return {
-        label: stored.label ?? nearestCity(stored.latitude, stored.longitude).name,
+        /* Saklanan etiket yoksa iddiasız başlanıyor; il listesi geldiğinde
+           aşağıdaki etki onu çözüyor. Eskiden burada 15 şehirlik listeden
+           senkron bir tahmin yapılıyordu. */
+        label: stored.label ?? DEVICE_LABEL,
         latitude: stored.latitude,
         longitude: stored.longitude,
         timeZone: TURKEY_TIME_ZONE,
@@ -156,10 +174,61 @@ export function LocationProvider({ children }: { children: ReactNode }) {
       : LOCATION_MODE_INITIAL;
   });
 
+  /*
+   * İL LİSTESİ TEK KAYNAKTAN (§4.1). Yükleme asenkron; gelene kadar
+   * tohum yedeği kullanılıyor, böylece seçici hiçbir anda boş açılmıyor.
+   * `fetchProvinces` kendi içinde önbellekli — dört seçici dört istek
+   * atmıyor.
+   */
+  const [provinces, setProvinces] = useState<Province[]>([]);
+
+  useEffect(() => {
+    let active = true;
+    fetchProvinces()
+      .then((result) => {
+        if (!active) return;
+        setProvinces(result.items);
+
+        /*
+         * SAKLANAN SEÇİM TOHUMDA OLMAYAN BİR İL OLABİLİR. İlk render
+         * yalnızca 15 şehri tanıyor; "Sivas" seçmiş kullanıcı sayfayı
+         * yenilediğinde varsayılana düşüyordu. Liste gelince kendi ili
+         * geri konuyor.
+         */
+        const stored = readStored();
+        if (stored?.source !== 'city' || !stored.cityId) return;
+        const province = result.items.find((p) => p.slug === stored.cityId);
+        if (!province) return;
+        setLocation((current) =>
+          current.label === province.name
+            ? current
+            : provinceLocation(province, 'city')
+        );
+      })
+      .catch(() => {
+        /* Liste okunamadıysa tohum yedeği yerinde kalıyor. */
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const setCity = useCallback((id: string) => {
+    /*
+     * ÖNCE İL LİSTESİ, SONRA TOHUM. Sıra önemli: aynı slug ikisinde de
+     * varsa kazanan veritabanı kaydı olmalı — koordinatı orada güncellenir.
+     */
+    const province = provinces.find((p) => p.slug === id);
     const city = findCity(id);
-    if (!city) return;
-    setLocation(cityLocation(city, 'city'));
+    if (!province && !city) return;
+    setLocation(
+      province ? provinceLocation(province, 'city') : cityLocation(city!, 'city')
+    );
+    const fix = {
+      label: province?.name ?? city!.name,
+      latitude: province?.latitude ?? city!.latitude,
+      longitude: province?.longitude ?? city!.longitude,
+    };
     /*
      * ASIL DÜZELTME: burada eskiden `permission` 'dismissed' yapılıyordu.
      * Yani şehir seçmek, izni hiç reddetmemiş bir kullanıcıda bile GPS
@@ -167,21 +236,13 @@ export function LocationProvider({ children }: { children: ReactNode }) {
      * kalmıyordu. Manuel seçim artık YALNIZCA modu değiştiriyor.
      */
     setModeState((s) =>
-      reduceLocationMode(s, {
-        type: 'SELECT_MANUAL',
-        fix: {
-          label: city.name,
-          latitude: city.latitude,
-          longitude: city.longitude,
-          ref: id,
-        },
-      })
+      reduceLocationMode(s, { type: 'SELECT_MANUAL', fix: { ...fix, ref: id } })
     );
     setPermission((current) => {
       writeStored({ source: 'city', cityId: id, permission: current });
       return current;
     });
-  }, []);
+  }, [provinces]);
 
   const requestDeviceLocation = useCallback(() => {
     if (!navigator.geolocation) {
@@ -196,11 +257,16 @@ export function LocationProvider({ children }: { children: ReactNode }) {
     setPermission('pending');
     navigator.geolocation.getCurrentPosition(
       ({ coords }) => {
-        const label = nearestCity(coords.latitude, coords.longitude).name;
+        const { latitude, longitude } = coords;
+        /*
+         * KONUM ÖNCE, ETİKET SONRA. Hesaplar koordinatı hemen kullanmalı;
+         * il adını beklemek "bu gece"yi bir tur boyunca varsayılan şehirde
+         * bırakırdı. Etiket çözülene kadar iddiasız duruyor.
+         */
         const next: ObservingLocation = {
-          label,
-          latitude: coords.latitude,
-          longitude: coords.longitude,
+          label: DEVICE_LABEL,
+          latitude,
+          longitude,
           timeZone: TURKEY_TIME_ZONE,
           source: 'device',
         };
@@ -208,16 +274,42 @@ export function LocationProvider({ children }: { children: ReactNode }) {
         setModeState((s) =>
           reduceLocationMode(s, {
             type: 'GPS_OK',
-            fix: { label, latitude: coords.latitude, longitude: coords.longitude },
+            fix: { label: DEVICE_LABEL, latitude, longitude },
           })
         );
         setPermission('granted');
         writeStored({
           source: 'device',
-          latitude: coords.latitude,
-          longitude: coords.longitude,
-          label,
+          latitude,
+          longitude,
+          label: DEVICE_LABEL,
           permission: 'granted',
+        });
+
+        void geocoder.resolve(latitude, longitude).then((match) => {
+          /* Eşleşme yoksa etiket "Cihaz konumu" kalıyor — sınır ötesinde
+             ya da liste okunamadığında il adı uydurulmuyor. */
+          if (!match) return;
+          setLocation((current) =>
+            current.source === 'device' &&
+            current.latitude === latitude &&
+            current.longitude === longitude
+              ? { ...current, label: match.label }
+              : current
+          );
+          setModeState((s) =>
+            reduceLocationMode(s, {
+              type: 'GPS_OK',
+              fix: { label: match.label, latitude, longitude, ref: match.ref },
+            })
+          );
+          writeStored({
+            source: 'device',
+            latitude,
+            longitude,
+            label: match.label,
+            permission: 'granted',
+          });
         });
       },
       (err) => {
@@ -305,7 +397,7 @@ export function LocationProvider({ children }: { children: ReactNode }) {
   const value = useMemo<LocationContextValue>(
     () => ({
       location,
-      cities,
+      provinces,
       permission,
       mode: modeState.mode,
       modeLabel: modeLabels[modeState.mode],
@@ -318,6 +410,7 @@ export function LocationProvider({ children }: { children: ReactNode }) {
     }),
     [
       location,
+      provinces,
       permission,
       modeState,
       setCity,

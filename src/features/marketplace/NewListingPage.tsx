@@ -5,6 +5,7 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { Panel } from '@/components/ui/Panel';
 import { Field } from '@/components/ui/Field';
 import { Input, Select } from '@/components/ui/Input';
+import { ProvinceSelect } from '@/components/ui/ProvinceSelect';
 import { Button, ButtonLink } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { PageMeta } from '@/components/seo/PageMeta';
@@ -281,12 +282,10 @@ export function NewListingPage() {
                 </Field>
 
                 <Field label="Şehir" htmlFor="l-city">
-                  <Input
-                    id="l-city"
-                    value={city}
-                    maxLength={60}
-                    onChange={(e) => setCity(e.target.value)}
-                  />
+                  {/* Serbest metindi: "Muğla", "Mugla", "MUĞLA" ayrı
+                      şehirler gibi kaydediliyor ve pazaryeri süzgecinde
+                      aynı il dört kez çıkıyordu. */}
+                  <ProvinceSelect id="l-city" value={city} onChange={setCity} />
                 </Field>
 
                 <Field label="Durum" htmlFor="l-condition">

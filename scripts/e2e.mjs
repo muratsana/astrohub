@@ -364,7 +364,22 @@ await scenario('ilan formu eksikleri yazarken bildirir, tamamlanınca açılır'
 
   await page.fill('#l-title', 'Sky-Watcher Esprit 100ED apokromatik refraktör');
   await page.fill('#l-price', '48500');
-  await page.fill('#l-city', 'Ankara');
+  /*
+   * ŞEHİR ARTIK SERBEST METİN DEĞİL (§4.1). Alan `provinces` listesinden
+   * beslenen bir `select`; liste asenkron geldiği için seçenek DOM'a
+   * girene kadar bekleniyor. Önizleme derlemesinde veritabanı yok,
+   * dolayısıyla burada görünen tohum yedeği — ölçülen şey listenin
+   * dolduğu ve seçimin form durumuna geçtiği.
+   */
+  await page.waitForFunction(
+    () =>
+      Array.from(document.querySelectorAll('#l-city option')).some(
+        (o) => o.value === 'Ankara'
+      ),
+    null,
+    { timeout: 5000 }
+  );
+  await page.selectOption('#l-city', 'Ankara');
   await page.fill(
     '#l-desc',
     '2023 yılında alındı, yaklaşık 40 gece kullanıldı. Optikte çizik yok, kutusu ve faturası duruyor.'

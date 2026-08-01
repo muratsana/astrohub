@@ -115,6 +115,38 @@ let cache: ProvinceResult | null = null;
 let inflight: Promise<ProvinceResult> | null = null;
 
 /**
+ * SORGU BU SÜREDE DÖNMEZSE TOHUM YEDEĞİNE GEÇİLİYOR.
+ *
+ * Ölçülerek bulundu: önizleme derlemesinde il seçici BOŞ açılıyordu.
+ * Sebep hata değil, SESSİZLİKTİ — `fetch` yanıt vermiyordu (o ortamda
+ * dış çıkış kesik) ve düşme payı yalnızca hata dalında kuruluydu.
+ * Yanıtsız bir istekte hata dalı hiç çalışmaz; söz sonsuza kadar bekler
+ * ve seçici hiçbir zaman dolmaz. Şebekesi kopmuş bir kullanıcıda aynısı
+ * olurdu: şehir seçemediği için ilan veremez, profilini düzenleyemezdi.
+ *
+ * Beş saniye: yavaş mobil bağlantıda gerçek yanıtın gelmesine yetecek
+ * kadar uzun, kullanıcıyı boş bir seçiciyle baş başa bırakmayacak kadar
+ * kısa. Zaman aşımı isteği İPTAL ETMİYOR; geç gelen yanıt bir sonraki
+ * çağrıda kullanılabilsin diye önbellek yalnızca gerçek sonuçla
+ * doldurulur.
+ */
+const FETCH_TIMEOUT_MS = 5000;
+
+const TIMED_OUT = Symbol('provinces-timeout');
+
+/** `ms` sonra çözülen işaret; kazanan istek olursa zamanlayıcı iptal edilir. */
+function timeoutAfter(ms: number): {
+  promise: Promise<typeof TIMED_OUT>;
+  cancel: () => void;
+} {
+  let handle: ReturnType<typeof setTimeout>;
+  const promise = new Promise<typeof TIMED_OUT>((resolve) => {
+    handle = setTimeout(() => resolve(TIMED_OUT), ms);
+  });
+  return { promise, cancel: () => clearTimeout(handle) };
+}
+
+/**
  * 81 ili getirir.
  *
  * TEK İSTEK: liste sürüm başına sabit ve her şehir seçici onu istiyor.
@@ -124,7 +156,15 @@ export async function fetchProvinces(): Promise<ProvinceResult> {
   if (cache) return cache;
   if (inflight) return inflight;
 
-  inflight = (async (): Promise<ProvinceResult> => {
+  /*
+   * `inflight` yerine yerel bir söz bekleniyor ve temizlik `cache`
+   * yazıldıktan SONRA yapılıyor. Eski sırada `finally` içindeki
+   * `inflight = null`, `cache` atanmadan önce çalışıyordu: tam o
+   * aralıkta gelen ikinci çağrı ne önbelleği ne uçuşan isteği görür,
+   * ikinci bir sorgu başlatırdı. Görünür bir hata değildi; sıranın
+   * doğrusu bu.
+   */
+  const request = (async (): Promise<ProvinceResult> => {
     if (!isSupabaseConfigured) {
       return { items: seedToProvinces(), source: 'seed' };
     }
@@ -157,13 +197,52 @@ export async function fetchProvinces(): Promise<ProvinceResult> {
       /* Ağ hatası listeyi boş bırakmamalı: şehir seçici olmadan
          etkinlik, ilan ve hava durumu akışları kullanılamaz. */
       return { items: seedToProvinces(), source: 'seed' };
+    }
+  })();
+
+  /*
+   * ══════════════════════════════════════════════════════════════════
+   * ZAMAN AŞIMI `inflight`İN İÇİNDE, DIŞINDA DEĞİL.
+   *
+   * İlk yazımda yarış burada, `fetchProvinces` gövdesinde kuruluydu ve
+   * `inflight` çıplak isteği taşıyordu. Sonuç: koruma YALNIZCA İLK
+   * ÇAĞRIYI kapsıyordu. Sayfada iki tüketici var (konum sağlayıcısı ve
+   * form seçicisi); ikincisi `if (inflight) return inflight` dalına
+   * düşüp hiç çözülmeyen sözü bekliyordu.
+   *
+   * Tarayıcıda ölçülerek görüldü: zaman aşımı eklendikten SONRA bile
+   * ilan formundaki seçici yedi saniye sonra hâlâ boştu. Yarış ortak
+   * söze taşındı — artık kim beklerse beklesin aynı korumayı alıyor.
+   */
+  const guarded = (async (): Promise<ProvinceResult> => {
+    const timer = timeoutAfter(FETCH_TIMEOUT_MS);
+    try {
+      const raced = await Promise.race([request, timer.promise]);
+
+      if (raced === TIMED_OUT) {
+        /*
+         * ZAMAN AŞIMI ÖNBELLEĞE YAZILMIYOR. Yazılsaydı, ağı bir saniye
+         * sonra geri gelen kullanıcı oturum boyunca 15 ille kalırdı —
+         * sayfayı yenilemeden 81'e dönemezdi. İstek de iptal edilmiyor:
+         * geç gelen gerçek liste önbelleğe konuyor, bir sonraki seçici
+         * onu buluyor.
+         */
+        void request.then((late) => {
+          if (late.source === 'db') cache = late;
+        });
+        return { items: seedToProvinces(), source: 'seed' };
+      }
+
+      cache = raced;
+      return raced;
     } finally {
+      timer.cancel();
       inflight = null;
     }
   })();
 
-  cache = await inflight;
-  return cache;
+  inflight = guarded;
+  return guarded;
 }
 
 /** Testler için — modül düzeyi önbelleği sıfırlar. */

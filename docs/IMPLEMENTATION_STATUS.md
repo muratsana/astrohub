@@ -60,10 +60,13 @@ tabloda `DONE` ile birleştirilmez:
 
 ### 1.1 Merkezî konum ve idari birimler — **PARTIAL**
 
+> **1 Ağustos turu:** tüketiciler bağlandı. Açık kalan tek madde ilçe
+> tohum verisi — resmî kaynak erişimi gerektiriyor (aşağıda gerekçesi).
+
 | Madde | Durum | Kanıt |
 |---|---|---|
 | 81 il veritabanında | DONE | `0040`; canlıda `count(*) = 81` ölçüldü |
-| Modül bazında hardcode kaldırılması | PARTIAL | `provinces` servisi kuruldu; tüketici modüller Faz 2'de bağlanacak |
+| Modül bazında hardcode kaldırılması | DONE | Konum seçici, ilan formu ve profil düzenleme aynı `provinces` kaynağından; serbest metin şehir alanları kalktı |
 | İl–ilçe FK | DONE | `districts.province_code → provinces.code` (restrict) |
 | Plaka kodu, Türkçe ad, normalize ad, slug, aktiflik, sıra | DONE | Altı kolon da mevcut |
 | Türkçe I/İ/Ş/Ğ/Ü/Ö/Ç arama ve sıralama | DONE | `app.tr_normalize` + istemci `normalizeTr`; 14 il adında birebir eşleşme testi |
@@ -72,10 +75,14 @@ tabloda `DONE` ile birleştirilmez:
 | Idempotent seed | DONE | `on conflict do update`; migration sonunda 81 doğrulaması |
 | 81 il testi | DONE | Migration'ın kendi bloğu + canlı ölçüm |
 | Tekrar/eksik kod testi | DONE | Migration slug tekrarında düşüyor |
-| E2E: bütün dropdown'larda 81 il | NOT_STARTED | Tüketici modüller bağlanmadan ölçülemez (Faz 2) |
+| E2E: bütün dropdown'larda 81 il | DONE | Ölçüm E2E'de DEĞİL, bileşen testinde: önizleme derlemesinde veritabanı yok, orada seçici tohuma düşer ve E2E ölçütü ölçemez. `LocationPicker.test.tsx` kaynağı taklit edip 81 seçeneği sayıyor; E2E ilan formunun seçiciyi doldurduğunu doğruluyor |
 | **İlçe tohum verisi** | **NOT_STARTED** | Bilinçli: 973 ilçe adını çevrimdışı üretmek uydurma riski taşıyor. Tablo+FK+RLS hazır; resmî kaynak (TÜİK/NVİ) erişiminde tek `insert` ile dolar. Arayüzde ilçe seçimi olmadığı için hiçbir akış kırık değil. |
 
 ### 1.2 Konum modu durum makinesi — **PARTIAL**
+
+> **1 Ağustos turu:** ters kodlama adapter'ı ve çıkış temizliği kapandı.
+> Açık kalan tek madde tarayıcı matrisi — kum havuzunda tek Chromium var,
+> gerçek cihaz matrisi `IMPLEMENTED_BLOCKED_EXTERNAL`.
 
 **Düzeltilen hata:** belgedeki "manuel seçimden sonra GPS yeniden
 etkinleştirilemiyor". Sebep mimariydi — tek `permission` değişkeni hem
@@ -99,9 +106,9 @@ tarayıcı iznini hem kullanıcının tercihini taşıyordu; şehir seçmek onu
 | `setCity` izne dokunmuyor | DONE | Eski kod `permission`ı 'dismissed' yapıyordu — kilit buydu, kaldırıldı |
 | GPS hataları ayrıştırıldı | DONE | PERMISSION_DENIED / POSITION_UNAVAILABLE / TIMEOUT ayrı ele alınıyor; eskiden hepsi 'denied' sayılıyordu |
 | Arayüzde "Otomatik konuma dön" | DONE | `LocationPicker` moda göre metin veriyor; DENIED'da tarayıcı ayar yönergesi, UNAVAILABLE'da HTTPS notu, ERROR'da tekrar denenebilir |
-| Reverse-geocoding adapter | NOT_STARTED | — |
+| Reverse-geocoding adapter | DONE | `domain/location/geocode.ts`: `ReverseGeocoder` arayüzü + yerel çözücü (81 il, haversine). Dışarıya istek YOK — koordinat kişisel veri ve "sunucuya gönderilmez" sözü var. 250 km eşiği: sınır/VPN'de il adı uydurulmuyor (belgedeki 10. senaryo). 14 test |
 | Tarayıcı matrisi (Safari/iOS/Android/Edge) | NOT_STARTED | Kum havuzunda tek Chromium var; gerçek cihaz matrisi IMPLEMENTED_BLOCKED_EXTERNAL |
-| Çıkışta konum verisi temizliği | NOT_STARTED | — |
+| Çıkışta konum verisi temizliği | DONE | `features/location/storage.ts` + `AuthContext`; temizlik sunucu çağrısından ÖNCE ve koşulsuz — arkasına konduğunda yapılandırma yokken atlanıyordu |
 ### 1.3 Supabase şema ve RLS denetimi — **PARTIAL**
 
 Tam ölçüm dökümü: **`docs/DATABASE_AND_RLS.md`**. Özet:

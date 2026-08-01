@@ -1,6 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronDownIcon, PinIcon } from '@/components/ui/icons';
 import { useLocationContext } from './LocationContext';
+import { findCity } from './cities';
+import { matchesProvince, rankProvinces } from '@/services/content/provinces';
 import { cn } from '@/lib/cn';
 
 /**
@@ -40,7 +42,7 @@ export function LocationPicker({
 }) {
   const {
     location,
-    cities,
+    provinces,
     permission,
     mode,
     needsPermissionHelp,
@@ -50,6 +52,12 @@ export function LocationPicker({
     useLocationContext();
 
   const [open, setOpen] = useState(false);
+  /*
+   * ARAMA 15 ŞEHİRDE GEREKSİZDİ, 81 İLDE ZORUNLU. Kaydırılan bir listede
+   * "Şırnak" aramak, yazarak bulmaktan yavaş. Eşleme Türkçe katlanmış
+   * adlar üzerinden: "sanliurfa" yazan Şanlıurfa'yı buluyor.
+   */
+  const [query, setQuery] = useState('');
   const wrapRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -70,6 +78,15 @@ export function LocationPicker({
 
   const onDevice = location.source === 'device';
   const pending = permission === 'pending';
+
+  const visible = useMemo(
+    () =>
+      rankProvinces(
+        provinces.filter((p) => p.isActive && matchesProvince(p, query)),
+        query
+      ),
+    [provinces, query]
+  );
 
   return (
     <div ref={wrapRef} className={cn('relative shrink-0', className)}>
@@ -146,29 +163,51 @@ export function LocationPicker({
           </button>
           <span aria-hidden className="my-1 block h-px bg-border" />
 
-          {cities.map((city) => (
-            <button
-              key={city.id}
-              type="button"
-              role="option"
-              aria-selected={!onDevice && location.label === city.name}
-              onClick={() => {
-                setCity(city.id);
-                setOpen(false);
-              }}
-              className={cn(
-                'flex w-full items-baseline justify-between gap-3 px-3 py-1.5 text-left text-meta transition-colors hover:bg-surface-2',
-                !onDevice && location.label === city.name
-                  ? 'text-primary'
-                  : 'text-foreground'
-              )}
-            >
-              {city.name}
-              <span className="tabular text-meta text-faint">
-                B{city.bortle}
-              </span>
-            </button>
-          ))}
+          <div className="px-2 pb-1">
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="İl ara"
+              aria-label="İl ara"
+              className="h-8 w-full rounded-card border border-border bg-surface-2 px-2 text-meta text-foreground placeholder:text-faint focus-visible:border-primary"
+            />
+          </div>
+
+          {visible.length === 0 && (
+            <p className="px-3 py-2 text-meta leading-snug text-muted-foreground">
+              “{query}” için il bulunamadı.
+            </p>
+          )}
+
+          {visible.map((province) => {
+            /* Bortle yalnızca ölçülü illerde yazılıyor; 66 il için elde
+               bir değer yok ve tahmin etmek gökyüzü beklentisini yanlış
+               kurardı. */
+            const bortle = findCity(province.slug)?.bortle;
+            const selected = !onDevice && location.label === province.name;
+            return (
+              <button
+                key={province.code}
+                type="button"
+                role="option"
+                aria-selected={selected}
+                onClick={() => {
+                  setCity(province.slug);
+                  setOpen(false);
+                }}
+                className={cn(
+                  'flex w-full items-baseline justify-between gap-3 px-3 py-1.5 text-left text-meta transition-colors hover:bg-surface-2',
+                  selected ? 'text-primary' : 'text-foreground'
+                )}
+              >
+                {province.name}
+                {bortle != null && (
+                  <span className="tabular text-meta text-faint">B{bortle}</span>
+                )}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>

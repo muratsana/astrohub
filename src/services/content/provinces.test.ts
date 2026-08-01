@@ -1,4 +1,4 @@
-import { describe, expect, it, beforeEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   fetchProvinces,
   matchesProvince,
@@ -148,5 +148,106 @@ describe('fetchProvinces · yapılandırma yokken', () => {
     const a = await fetchProvinces();
     const b = await fetchProvinces();
     expect(a).toBe(b);
+  });
+});
+
+/**
+ * ASKIDA KALAN SORGU — tarayıcıda ölçülerek bulundu.
+ *
+ * Önizleme derlemesinde il seçici boş açılıyordu. Sebep bir hata değil,
+ * SESSİZLİKTİ: dış çıkış kesik olduğu için `fetch` ne yanıt ne hata
+ * veriyordu, düşme payı ise yalnızca hata dalında kuruluydu. Yanıtsız
+ * bir istekte hata dalı hiç çalışmaz — söz sonsuza kadar bekler.
+ *
+ * Aynısı şebekesi kopmuş kullanıcıda olurdu: şehir seçemediği için ilan
+ * veremez, profilini düzenleyemezdi.
+ */
+describe('fetchProvinces — yanıtsız sorgu', () => {
+  beforeEach(() => {
+    resetProvinceCache();
+    vi.resetModules();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.doUnmock('@/services/supabase/client');
+    resetProvinceCache();
+  });
+
+  it('sorgu hiç dönmezse tohum yedeğine geçiyor', async () => {
+    vi.doMock('@/services/supabase/client', () => ({
+      isSupabaseConfigured: true,
+      /* Hiç çözülmeyen söz: askıda kalan ağ isteğinin taklidi. */
+      getSupabase: () => new Promise(() => {}),
+    }));
+    const mod = await import('./provinces');
+    mod.resetProvinceCache();
+
+    vi.useFakeTimers();
+    const pending = mod.fetchProvinces();
+    await vi.advanceTimersByTimeAsync(6000);
+    const result = await pending;
+
+    expect(result.source).toBe('seed');
+    expect(result.items.length).toBeGreaterThan(0);
+  });
+
+  /* Yedek önbelleğe yazılmamalı: ağı geri gelen kullanıcı oturum boyunca
+     15 ille kalmamalı. */
+  it('zaman aşımı yedeği önbelleğe yazılmıyor', async () => {
+    vi.doMock('@/services/supabase/client', () => ({
+      isSupabaseConfigured: true,
+      getSupabase: () => new Promise(() => {}),
+    }));
+    const mod = await import('./provinces');
+    mod.resetProvinceCache();
+
+    vi.useFakeTimers();
+    const first = mod.fetchProvinces();
+    await vi.advanceTimersByTimeAsync(6000);
+    const a = await first;
+
+    const second = mod.fetchProvinces();
+    await vi.advanceTimersByTimeAsync(6000);
+    const b = await second;
+
+    expect(a).not.toBe(b);
+    expect(b.source).toBe('seed');
+  });
+});
+
+/**
+ * İKİNCİ TÜKETİCİ DE KORUNUYOR.
+ *
+ * İlk yazımda zaman aşımı `fetchProvinces` gövdesindeydi ve `inflight`
+ * çıplak isteği taşıyordu: `if (inflight) return inflight` dalına düşen
+ * ikinci çağrı hiç çözülmeyen sözü bekliyordu. Sayfada iki tüketici var
+ * (konum sağlayıcısı ve form seçicisi), yani gerçek kullanımda ikincisi
+ * hep korumasız kalıyordu — tarayıcıda ölçülene kadar görünmedi.
+ */
+describe('fetchProvinces — eşzamanlı ikinci çağrı', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.doUnmock('@/services/supabase/client');
+    resetProvinceCache();
+  });
+
+  it('askıda kalan sorguda ikinci çağrı da yedeğe düşüyor', async () => {
+    vi.resetModules();
+    vi.doMock('@/services/supabase/client', () => ({
+      isSupabaseConfigured: true,
+      getSupabase: () => new Promise(() => {}),
+    }));
+    const mod = await import('./provinces');
+    mod.resetProvinceCache();
+
+    vi.useFakeTimers();
+    const first = mod.fetchProvinces();
+    const second = mod.fetchProvinces();
+    await vi.advanceTimersByTimeAsync(6000);
+
+    expect((await first).source).toBe('seed');
+    expect((await second).source).toBe('seed');
+    expect((await second).items.length).toBeGreaterThan(0);
   });
 });

@@ -9,6 +9,7 @@ import {
 import type { Session, User } from '@supabase/supabase-js';
 import { CONSENT_VERSION } from './consent';
 import { authRedirect } from './redirect';
+import { clearStoredLocation } from '@/features/location/storage';
 import { getSupabase, isSupabaseConfigured } from '@/services/supabase/client';
 
 interface AuthResult {
@@ -61,6 +62,24 @@ interface AuthContextValue {
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+
+/**
+ * ÇIKIŞTA CİHAZDA KALAN KİŞİSEL İZLER (§4.2 son madde).
+ *
+ * Oturumu kapatmak jetonu düşürüyordu ama gözlem konumu tarayıcıda
+ * kalıyordu — cihaz konumunda bu HAM KOORDİNAT demek. Ortak bir
+ * bilgisayarda çıkış yapan kullanıcının evinin koordinatı bir sonraki
+ * kişinin tarayıcısında duruyordu.
+ *
+ * Şehir seçimi de siliniyor: açılışta "Erzurum" görmek, önceki kişinin
+ * nerede olduğunu söyler. Bedeli bir kez daha şehir seçmek.
+ *
+ * Tema, ölçü birimi gibi kişisel olmayan tercihler DOKUNULMUYOR;
+ * "çıkışta her şeyi sil" kullanıcıya ait olmayan bir karar olurdu.
+ */
+function forgetLocalTraces(): void {
+  clearStoredLocation();
+}
 
 const NOT_CONFIGURED: AuthResult = {
   error:
@@ -169,6 +188,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
 
       async signOut() {
+        /*
+         * TEMİZLİK ÖNCE VE KOŞULSUZ. Sunucu çağrısının arkasına
+         * koyduğumda, yapılandırma yokken (ya da çağrı düştüğünde)
+         * erken dönüş temizliği atlıyordu: kullanıcı "çıkış yap" diyor,
+         * koordinatı tarayıcıda kalıyordu. Silmenin sunucuya bağımlı
+         * olmaması gereken bir iş olduğu buradan görüldü.
+         */
+        forgetLocalTraces();
         const clientPromise = getSupabase();
         if (!clientPromise) return;
         const client = await clientPromise;
@@ -188,6 +215,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
          * kapandı" demek yanlış olurdu.
          */
         const { error } = await client.auth.signOut({ scope: 'global' });
+        forgetLocalTraces();
         return { error: error?.message ?? null };
       },
     }),

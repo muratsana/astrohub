@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { Container } from '@/components/ui/Container';
+import { ProvinceSelect } from '@/components/ui/ProvinceSelect';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Panel, SpecList, SpecRow } from '@/components/ui/Panel';
 import { Field } from '@/components/ui/Field';
@@ -199,14 +200,13 @@ export function AccountPage() {
                 </Field>
 
                 <Field label="Şehir" htmlFor="p-city">
-                  <Input
+                  {/* Tek kaynak: profil şehri de `provinces` listesinden.
+                      Serbest metin döneminden kalan değer korunuyor. */}
+                  <ProvinceSelect
                     id="p-city"
                     value={edit.city}
-                    maxLength={60}
-                    placeholder="Ankara"
-                    onChange={(e) =>
-                      setEdit((v) => ({ ...v, city: e.target.value }))
-                    }
+                    placeholder="Belirtilmedi"
+                    onChange={(city) => setEdit((v) => ({ ...v, city }))}
                   />
                 </Field>
               </div>
