@@ -76,6 +76,20 @@ describe('PanelPage menüsü', () => {
   });
 
   /*
+   * Oturumsuz başlık "hesap sistemi devreye alındığında" diyordu. Sistem
+   * DEVREDE: giriş çalışıyor ve panel gerçek kayıt okuyor. Ziyaretçiye
+   * beklemesi gereken bir şey varmış gibi söylemek, yapması gereken tek
+   * şeyi gizliyordu.
+   */
+  it('oturumsuz metin hesap sistemini gelecek zamanda anlatmaz', () => {
+    renderPanel();
+    expect(screen.queryByText(/devreye alındığında/i)).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: /giriş yap/i })
+    ).toBeInTheDocument();
+  });
+
+  /*
    * Fotoğraf bölümü de oturumsuzken tohum kare göstermemeli — galeri
    * tohuma düşüyor, sahibin listesi düşmemeli.
    */

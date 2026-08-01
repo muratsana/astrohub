@@ -118,8 +118,11 @@ function PanelRow({
 
 /**
  * Üye paneli (§7.16). Kamuya açık sayfalardan farklı olarak daha işlevsel
- * bir yerleşime izin verilir (§6.6). Gerçek veriler hesap sistemi
- * bağlandığında dolacak; kota göstergesi domain kurallarından beslenir.
+ * bir yerleşime izin verilir (§6.6).
+ *
+ * Sayılar ve listeler oturum açmış kullanıcının GERÇEK kayıtlarından
+ * geliyor; sınırlar domain kurallarından. Bekleyen tek şey üyelik
+ * kademesi: T-504 kararı verilene kadar herkes `standart`.
  */
 export function PanelPage() {
   const { user, configured } = useAuth();
@@ -207,16 +210,27 @@ export function PanelPage() {
       <Container className="py-8 sm:py-10">
         <PageHeader
           title="Üye Paneli"
+          /*
+           * OTURUMSUZ METİN "hesap sistemi devreye alındığında" DİYORDU —
+           * artık alındı: giriş çalışıyor, panel gerçek kayıt okuyor.
+           * Ziyaretçiye beklemesi gereken bir şey varmış gibi söylemek,
+           * yapması gereken tek şeyi (giriş) gizliyordu.
+           */
           description={
             user
               ? `Hoş geldin, ${user.email}`
-              : 'Hesap sistemi devreye alındığında burada içeriklerini yöneteceksin.'
+              : "Fotoğraflarını, ilanlarını ve setup'larını burada yönetirsin — giriş yapman yeterli."
           }
           actions={
             !user && (
-              <ButtonLink to="/kayit" size="sm">
-                Üye Ol
-              </ButtonLink>
+              <div className="flex gap-2">
+                <ButtonLink to="/giris" size="sm">
+                  Giriş yap
+                </ButtonLink>
+                <ButtonLink to="/kayit" size="sm" variant="ghost">
+                  Üye Ol
+                </ButtonLink>
+              </div>
             )
           }
         />
