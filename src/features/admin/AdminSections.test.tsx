@@ -87,6 +87,7 @@ const BOLUMLER = [
   'Kullanıcılar',
   'Forum',
   'Ana sayfa',
+  'Site yönetimi',
   'Yayın',
   'Radyo',
   'TV',
@@ -95,13 +96,13 @@ const BOLUMLER = [
 ];
 
 describe('sekme çubuğu', () => {
-  it('on bölümü de veriyor ve sırası konudan işe doğru', () => {
+  it('on bir bölümü de veriyor ve sırası konudan işe doğru', () => {
     renderPanel();
     const adlar = screen
       .getAllByRole('tab')
       .map((t) => t.textContent?.trim())
       .filter((t): t is string => Boolean(t));
-    /* Sekme çubuğu ilk on sekmedir; panellerin kendi iç sekmeleri
+    /* Sekme çubuğu ilk on bir sekmedir; panellerin kendi iç sekmeleri
        sonra geliyor. */
     expect(adlar.slice(0, BOLUMLER.length)).toEqual(BOLUMLER);
   });
@@ -141,7 +142,14 @@ describe('bölümler ne açıyor', () => {
     İçerik: ['İçerik yönetimi', 'İçerik kayıtları', 'Kullanıcı metinleri'],
     Kullanıcılar: ['Kullanıcılar', 'Denetim kaydı'],
     Forum: ['Forum kategorileri', 'Forum konuları', 'Kullanıcı metinleri'],
+    /* İki ayrı sekme, iki ayrı iş: "Ana sayfa" hangi İÇERİĞİN öne
+       çıkacağını, "Site yönetimi" ana sayfanın YAPISINI yönetiyor. */
     'Ana sayfa': ['Ana sayfada öne çıkanlar'],
+    'Site yönetimi': [
+      'Ana sayfa modülleri',
+      'Özellik anahtarları',
+      'Değişiklik geçmişi',
+    ],
     Yayın: ['TV Kontrolü', 'Radyo Kontrolü'],
   };
 

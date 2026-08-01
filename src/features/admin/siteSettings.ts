@@ -19,14 +19,26 @@ import { sanitizeText } from '@/lib/sanitize';
  * kısıtı da veritabanında.
  *
  * ══════════════════════════════════════════════════════════════════════
- * OKUMA DA `home_layout` RPC'SİNDEN
+ * OKUMA DA RPC'DEN — AMA PANEL `home_layout` OKUMAZ
  *
  * Ana sayfa düzenini tabloyu okuyarak da alabilirdik. Alınmıyor çünkü
- * zamanlanmış yayın penceresi (`publish_from`/`publish_to`) ve taslak
- * birleştirme mantığı fonksiyonun içinde. İstemcide ikinci bir kopyasını
- * yazmak, iki mantığın zamanla ayrışması demekti — ve ayrışan iki
- * mantıktan hangisinin doğru olduğu ancak kullanıcı şikâyet edince
+ * taslak birleştirme mantığı fonksiyonun içinde. İstemcide ikinci bir
+ * kopyasını yazmak, iki mantığın zamanla ayrışması demekti — ve ayrışan
+ * iki mantıktan hangisinin doğru olduğu ancak kullanıcı şikâyet edince
  * anlaşılır.
+ *
+ * İKİ AYRI OKUMA YOLU VAR ve karıştırılmamalı:
+ *
+ *   `home_layout(onizleme)`  → ZİYARETÇİ görüşü. Yayın penceresini
+ *                              UYGULAR: ileri tarihli modül dönmez.
+ *   `home_modules_admin()`   → YÖNETİCİ görüşü. Pencereyi uygulamaz,
+ *                              hepsini döndürür ve pencereyi ayrıca
+ *                              alan olarak verir.
+ *
+ * Panel ikincisini okur. Birincisini okusaydı bir modüle ileri tarih
+ * verildiği anda modül panelden de kaybolurdu: düzenlemek için görmek
+ * gerekir, görmek için yayında olması gerekirdi. Yönetici kendi kurduğu
+ * zamanlamayı geri alamazdı. (0059 bu tuzağı kapatmak için yazıldı.)
  */
 
 async function client() {
@@ -48,7 +60,11 @@ export interface HomeModule {
   hide_when_empty: boolean;
   show_mobile: boolean;
   show_desktop: boolean;
-  has_draft: boolean;
+  publish_from: string | null;
+  publish_to: string | null;
+  /** Yayımlanmamış değişiklikler. `null` = taslak yok. */
+  draft: HomeDraftPatch | null;
+  updated_at: string;
 }
 
 /** Modül anahtarlarının okunabilir adı. Anahtar teknik, başlık yönetici
@@ -62,29 +78,35 @@ export const moduleLabels: Record<string, string> = {
   listings: 'Son ilanlar',
 };
 
-export async function fetchHomeModules(preview = false): Promise<HomeModule[]> {
+/** Panelin okuma yolu — yayın penceresini UYGULAMAZ (yukarıdaki nota bak). */
+export async function fetchHomeModules(): Promise<HomeModule[]> {
   const supabase = await client();
-  const { data, error } = await supabase.rpc('home_layout', {
-    onizleme: preview,
-  });
+  const { data, error } = await supabase.rpc('home_modules_admin');
   if (error) throw new Error(error.message);
   return (data ?? []) as HomeModule[];
 }
 
-export type HomeDraftPatch = Partial<
-  Pick<
-    HomeModule,
-    | 'title'
-    | 'subtitle'
-    | 'enabled'
-    | 'position'
-    | 'item_limit'
-    | 'layout'
-    | 'hide_when_empty'
-    | 'show_mobile'
-    | 'show_desktop'
-  >
->;
+/**
+ * Taslağa yazılabilecek alanlar.
+ *
+ * `HomeModule`dan `Pick` ile TÜRETİLMİYOR: `HomeModule.draft` bu tipi
+ * kullandığı için ikisi birbirine bakar ve döngü olurdu. Ayrıca listenin
+ * 0059'daki anahtar beyaz listesiyle BİREBİR aynı kalması gerekiyor —
+ * ayrı durunca o eşleşme gözle görülebilir kalıyor.
+ */
+export interface HomeDraftPatch {
+  title?: string | null;
+  subtitle?: string | null;
+  enabled?: boolean;
+  position?: number;
+  item_limit?: number;
+  layout?: 'grid' | 'list';
+  hide_when_empty?: boolean;
+  show_mobile?: boolean;
+  show_desktop?: boolean;
+  publish_from?: string | null;
+  publish_to?: string | null;
+}
 
 export async function saveHomeDraft(
   moduleKey: string,
@@ -199,16 +221,33 @@ export async function upsertNavLink(input: {
     new_tab: input.new_tab,
     auth_only: input.auth_only,
   };
-  const { error } = input.id
-    ? await supabase.from('nav_links').update(satir).eq('id', input.id)
-    : await supabase.from('nav_links').insert(satir);
+  /* `.select()` SÜS DEĞİL — RLS'in sessizliğini kırıyor.
+     Bir `update`/`delete` RLS yüzünden hiçbir satıra dokunamazsa
+     PostgREST HATA DÖNDÜRMEZ: `error` null, iş bitmiş görünür. Yönetici
+     "kaydedildi" yazısını görür, veri eskisi gibi durur. Dönen satırı
+     isteyip saymak, "yetkim yokmuş" ile "kaydettim"i ayıran tek şey. */
+  const { data, error } = input.id
+    ? await supabase.from('nav_links').update(satir).eq('id', input.id).select('id')
+    : await supabase.from('nav_links').insert(satir).select('id');
   if (error) throw new Error(error.message);
+  if (!data || data.length === 0)
+    throw new Error(
+      input.id
+        ? 'Bağlantı güncellenemedi — kayıt bulunamadı ya da yetkiniz yok.'
+        : 'Bağlantı eklenemedi — yetkiniz yok.'
+    );
 }
 
 export async function deleteNavLink(id: string): Promise<void> {
   const supabase = await client();
-  const { error } = await supabase.from('nav_links').delete().eq('id', id);
+  const { data, error } = await supabase
+    .from('nav_links')
+    .delete()
+    .eq('id', id)
+    .select('id');
   if (error) throw new Error(error.message);
+  if (!data || data.length === 0)
+    throw new Error('Bağlantı silinemedi — kayıt bulunamadı ya da yetkiniz yok.');
 }
 
 /* ── Feature flag'ler ────────────────────────────────────────────────── */

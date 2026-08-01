@@ -16,6 +16,7 @@ import { ReminderControl } from './ReminderControl';
 import { RadioControl } from './RadioControl';
 import { TvControl } from './TvControl';
 import { CatalogControl } from './CatalogControl';
+import { SiteControl } from './SiteControl';
 import { FeaturedControl } from './FeaturedControl';
 import { ContentControl } from './ContentControl';
 import { EquipmentDataControl } from './EquipmentDataControl';
@@ -435,6 +436,14 @@ export function AdminPage() {
       {/* ANA SAYFA — bugün ne görünsün. */}
       {bolum === 'anasayfa' && <FeaturedControl canWrite={roles.isAdmin} />}
 
+      {/* "Ana sayfa" ile "Site yönetimi" AYRI sekmeler ve ayrı işler:
+          ilki hangi İÇERİĞİN öne çıkacağını seçiyor (öne çıkan fotoğraf,
+          haber), ikincisi ana sayfanın YAPISINI yönetiyor (modül açık mı,
+          hangi sırada, kaç öğe). Tek sekmede birleştirilseydi "bu
+          fotoğrafı öne çıkar" ile "galeri modülünü kapat" yan yana
+          dururdu ve ikincisi birincisini görünmez kılardı. */}
+      {bolum === 'site' && <SiteControl canWrite={roles.isAdmin} />}
+
       {/* YAYIN — TV ve radyo programı. */}
       {bolum === 'yayin' && <BroadcastControl />}
 
@@ -518,6 +527,7 @@ const BOLUMLER = [
   { id: 'kullanicilar', label: 'Kullanıcılar' },
   { id: 'forum', label: 'Forum' },
   { id: 'anasayfa', label: 'Ana sayfa' },
+  { id: 'site', label: 'Site yönetimi' },
   { id: 'yayin', label: 'Yayın' },
   { id: 'radyo', label: 'Radyo' },
   { id: 'tv', label: 'TV' },
