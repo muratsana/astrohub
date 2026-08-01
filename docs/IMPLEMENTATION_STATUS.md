@@ -28,7 +28,7 @@ tabloda `DONE` ile birleştirilmez:
 | 4 | Ortak arama, filtreleme, sıralama, görünüm | 462–548 | PARTIAL |
 | 5 | Bildirim, mesajlaşma, sosyal aktivite | 549–632 | PARTIAL² |
 | 6 | Etkinlik takip ve hatırlatma | 633–682 | PARTIAL³ |
-| 7 | Çalışan AstroHub Radyo | 683–832 | NOT_STARTED |
+| 7 | Çalışan AstroHub Radyo | 683–832 | PARTIAL⁴ |
 | 8 | AstroHub TV ve YouTube'a hazır altyapı | 833–922 | NOT_STARTED |
 | 9 | Standart/Premium üyelik altyapısı | 923–1005 | NOT_STARTED |
 | 10 | Admin panelinden kodsuz site yönetimi | 1006–1164 | NOT_STARTED |
@@ -40,6 +40,13 @@ tabloda `DONE` ile birleştirilmez:
 | 16 | Performans, SEO, analitik, gözlemlenebilirlik | 1607–1690 | NOT_STARTED |
 | 17 | Test stratejisi ve kabul kriterleri | 1691–… | NOT_STARTED |
 | 18 | (belgenin sonu) | …–1956 | NOT_STARTED |
+
+⁴ **Faz 7'nin veri ve sunucu katmanı bitti, arayüzü sürüyor.**
+Şema (11 tablo), AzuraCast adaptörü, sağlık yoklaması, dağıtım
+dosyaları, güvenlik ayarları, yedekleme planı ve program takvimi hesabı
+hazır. Canlı yayın aktivasyonu **IMPLEMENTED_BLOCKED_EXTERNAL** — dış
+VPS gerekiyor, §10.1 bu durumu açıkça tarif ediyor. Kalan iş kullanıcı
+sayfaları ve panel sekmesi. Ayrıntı: Faz 7 bölümü.
 
 ³ **Faz 6'da kodla kapatılabilecek iş kalmadı.** Kullanıcı tarafının
 altı maddesi, hatırlatmanın on bir maddesinden onu ve yöneticinin yedi
@@ -729,6 +736,104 @@ iki bileşen de `event_registrations`a yazsaydı durumları ayrışırdı.
 
 ---
 
+## Faz 7 — ayrıntı (sürüyor)
+
+Migration `0051` (istasyon/yayıncı/program/sağlık), `0052` (bildirim
+türü), `0053` (podcast); üçü de uzak projeye uygulandı. Sunucu tarafı:
+`supabase/functions/radyo-durum` ve `deploy/radyo/`.
+
+### Kapanan
+
+| Madde | Durum | Kanıt |
+|---|---|---|
+| Şema — istasyon, yayıncı, program, yayın saati, takip, sağlık | DONE | `0051`, 11 kural canlıda ölçüldü |
+| Podcast — seri, bölüm, konuk, ilerleme, takip | DONE | `0053`, 9 kural canlıda ölçüldü |
+| AzuraCast API adaptörü | DONE | 20 test |
+| Sağlık yoklaması ve teslim kaydı | DONE | `radio_stream_health` |
+| Dağıtım dosyaları, güvenlik, yedekleme | DONE | `deploy/radyo/` |
+| Program takvimi hesabı | DONE | 25 test |
+| **Canlı yayın aktivasyonu** | **IMPLEMENTED_BLOCKED_EXTERNAL** | VPS yok |
+| Kullanıcı sayfaları, panel sekmesi | NOT_STARTED | sıradaki iş |
+
+### "Canlı" üç yerde birden korunuyor
+
+§10.2'nin son maddesi sahte "canlı" ibaresini yasaklıyor. Tek bir yerde
+uygulamak yetmezdi:
+
+1. **Şemada `is_live` kolonu yok.** Olsaydı yayın düşer, kolon `true`
+   kalır, site "canlı yayındayız" yazardı. Canlılık
+   `radio_stream_health`teki ÖLÇÜM; `app.station_is_live` üç dakikadan
+   eski yoklamayı canlı saymıyor — canlıda ölçüldü, 5 dakikalık yoklama
+   `false` döndürüyor.
+2. **Adaptörde hata yolu her zaman `canli: false`.** Bu bir arayüz
+   kuralı gibi görünüyor ama asıl yeri burası: hata yolundan "canlı"
+   dönerse arayüzün yapabileceği bir şey yok.
+3. **Takvim "canlı" demiyor.** `currentOccurrence` "bu saatte şu program
+   olmalı" diyor. İkisini karıştırmak, sunucu düştüğünde sitenin "Gece
+   Gökyüzü canlı yayında" yazması demekti.
+
+Bunun **tersi de** ölçüldü: AzuraCast'in `live.is_live` alanı "DJ bağlı
+mı" demek, "yayın var mı" değil. AutoDJ çalarken `false` döner ama
+dinleyici müzik duyar. O alanı ölçüt yapsaydık yayın sürerken
+"çevrimdışı" yazardı — sahte canlının tersi, aynı derecede yanlış.
+`is_online` okunuyor.
+
+**Sonuç: kurulum yapılmadan site radyoyu çevrimdışı gösteriyor ve bu
+doğru cevap.** Bugünkü davranış bir eksiklik değil.
+
+### Sır saklamayan şema
+
+§10.1 "secret'ların yalnızca server-side saklanması" diyor. Üç tablonun
+hiçbirinde API anahtarı, yayıncı şifresi ya da mount parolası yok.
+Gerekçe tek cümle: bir tablo satırı yanlış yazılmış bir politikayla
+okunabilir hâle gelir, ortam değişkeni veritabanında hiç değildir.
+Tablolarda duran şey zaten kamuya açık — yayın adresi, bitrate, program
+takvimi.
+
+### Dinleyici sayısı var, dinleyici listesi yok
+
+Adaptör AzuraCast'in `/listeners` uç noktasına **hiç gitmiyor**; o uç
+nokta IP, konum ve user-agent döndürüyor. Gösterilecek şey sayı ve
+sayıyı almak için listeyi çekmek gerekmiyor — çekmediğimiz veri
+sızdıramayacağımız veridir. Sayı bilinmiyorsa kolon **boş** kalıyor,
+`0` değil: "kimse dinlemiyor" ile "sayamadık" farklı cümleler.
+
+Podcast tarafında aynı karar: dinleme ilerlemesi kişi başına bölüm
+başına TEK satır (üzerine yazılıyor, biriktirilmiyor — "kaldığın yer"
+bir imleçtir, bir günlük değil) ve analitik tek sayaç. Her oynatmaya
+satır yazsaydık ortaya kullanıcıların ne dinlediğini gösteren bir
+geçmiş veritabanı çıkardı.
+
+### Zamanlanmış yayın RLS'in içinde
+
+`status = 'published'` yeterli değil: saati gelmemiş bölüm de o statüde
+bekliyor. Zaman politikanın içinde olmasaydı bölüm yayın saatinden önce
+API'den okunabilirdi ve "yayında değil" yalnızca arayüzün söylediği bir
+şey olurdu. Ölçüldü: yönetici olmayan kimlik beş bölümden yalnızca
+birini görüyor — zamanlanmış, taslak, yayın saati boş ve taslak serinin
+yayımlanmış bölümü dördü de gizli.
+
+### Saat dilimi matematiği tek kaynağa çıktı
+
+Aynı hesap iki yerde lazım oldu: etkinlik hatırlatmaları ("etkinlik
+günü sabahı 09:00") ve radyo takvimi ("her salı 21:00"). İki kopya
+kaçınılmaz olarak ayrışırdı — biri düzeltilir, diğeri unutulur ve fark
+"bir bildirim bir saat erken geldi" olarak görünürdü. `src/lib/zone.ts`
+tek kaynak; `reminders.ts` ona geçti ve 19 testi değişmeden geçiyor.
+
+Sabit `+03` yazılmadı. Türkiye 2016'dan beri yaz saati uygulamıyor ama
+sabitlemek, kural değişirse kodun sessizce yanlış hesaplaması demekti.
+
+### Telif — kodla çözülmeyen kısım
+
+Türkiye'de müzik yayını MESAM/MSG lisans yükümlülüğü doğurur ve bu
+yükümlülük **işletmenindir**; AzuraCast'in açık kaynak olması müziği
+telifsiz yapmıyor. `deploy/radyo/README.md` bunu yazıyor ve yükümlülük
+doğurmayan yolu gösteriyor: kendi içeriğiniz, açık lisanslı müzik,
+konuşma programları. Sitedeki `radio_tracks` kasası bu kullanım için.
+
+---
+
 ## Sonraki oturum için devam notu
 
 **Bittiği yer:** Faz 2, Faz 5 ve Faz 6 kapandı. Faz 3'ün 3.1'i
@@ -762,12 +867,28 @@ panelde sekizinci sekme. Migration numaraları `0051`den devam ediyor.
 Faz 6'da kodla kapatılabilecek iş kalmadı; kalan tek şey e-posta
 sağlayıcısı kararı (**Sen**) ve belgenin "ileride" dediği web push.
 
-**Sıradaki iş: Faz 7 — çalışan AstroHub Radyo** (satır 683–832).
-NOT_STARTED fazların ilki. Hazır olan parçalar: `RadioVault` (admin mp3
-kasası, sürükle-bırak), `BroadcastControl` (yayın programı), üst
-çubuktaki play/pause düğmesi ve rota değişiminde ayakta kalan radyo
-rıhtımı (E2E'de ölçülü). Dış yayın sunucusu (Icecast/VPS) kimlik
-bilgisi yok — o uçta `IMPLEMENTED_BLOCKED_EXTERNAL` sınırı var.
+**Faz 7'nin veri ve sunucu katmanı kapandı** (bkz. Faz 7 bölümü): üç
+migration (`0051`–`0053`), on bir yeni tablo, AzuraCast adaptörü, sağlık
+yoklaması, dağıtım paketi (`deploy/radyo/`) ve program takvimi hesabı.
+Migration numaraları `0054`ten devam ediyor.
+
+**Sıradaki iş: Faz 7'nin arayüzü.** Sırayla:
+  1. Servis katmanı — istasyon, program, slot, yayıncı, podcast okumaları
+     (`src/services/content/radio.ts`). Şema hazır, RLS ölçüldü.
+  2. `RadioPage`e program takvimi (haftalık ızgara) — hesap
+     `src/features/radio/schedule.ts`te, 25 testle sabit.
+  3. Program / yayıncı / podcast / bölüm detay sayfaları + rotalar +
+     `vercel.json` rewrite'ları.
+  4. Program takip düğmesi (`program_follows`), Media Session metadata,
+     bağlantı kopmasında yeniden bağlanma.
+  5. Panelde **Radyo** sekmesi (§10.5'in on beş alt bölümü).
+
+Hazır olan parçalar: `RadioVault` (admin mp3 kasası), `BroadcastControl`
+(yayın programı), üst çubuktaki play/pause ve rota değişiminde ayakta
+kalan radyo rıhtımı (E2E'de ölçülü).
+
+**Kurulum yapılmadan site radyoyu çevrimdışı gösteriyor ve bu doğru
+cevap** — arayüz yazılırken bu davranış korunmalı.
 
 Sırada bekleyen iki bağımsız iş:
   · **`collections`** — explorer'ın "favoriler" facet'ini açar.
