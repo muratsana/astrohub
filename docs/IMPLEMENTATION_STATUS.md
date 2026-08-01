@@ -23,7 +23,7 @@ tabloda `DONE` ile birleştirilmez:
 |---|---|---|---|
 | 0 | Envanter, baseline, güvenli ortam | 102–135 | DONE |
 | 1 | Veri modeli, Supabase güvenliği, merkezi yapılandırma | 136–257 | PARTIAL |
-| 2 | Tek tasarım sistemi ve bütüncül arayüz | 258–355 | PARTIAL |
+| 2 | Tek tasarım sistemi ve bütüncül arayüz | 258–355 | DONE |
 | 3 | Ana sayfa, navbar, hero, hava durumu | 356–461 | PARTIAL |
 | 4 | Ortak arama, filtreleme, sıralama, görünüm | 462–548 | NOT_STARTED |
 | 5 | Bildirim, mesajlaşma, sosyal aktivite | 549–632 | NOT_STARTED |
