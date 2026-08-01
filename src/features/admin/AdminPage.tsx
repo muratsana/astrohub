@@ -14,6 +14,7 @@ import { useRoles, roleLabels } from './useRoles';
 import { BroadcastControl } from './BroadcastControl';
 import { ReminderControl } from './ReminderControl';
 import { RadioControl } from './RadioControl';
+import { TvControl } from './TvControl';
 import { CatalogControl } from './CatalogControl';
 import { FeaturedControl } from './FeaturedControl';
 import { ContentControl } from './ContentControl';
@@ -448,6 +449,15 @@ export function AdminPage() {
       {bolum === 'radyo' && <RadioControl canWrite={roles.isAdmin} />}
 
       {/*
+        TV — §11.3'ün AstroHub'a düşen kısmı.
+
+        Kanal bağlantısı yokken sahte içerik göstermiyor (§11.2 son
+        madde) ve senkronizasyon düğmesi hiç görünmüyor: basılınca
+        "bağlı değil" diyecek bir düğme, çalışmayan bir kontroldür.
+      */}
+      {bolum === 'tv' && <TvControl canWrite={roles.isAdmin} />}
+
+      {/*
         HATIRLATMA — sitenin kullanıcılara ne gönderdiği.
 
         Teslim sayıları, hatalı işler ve yeniden deneme aynı ekranda:
@@ -510,6 +520,7 @@ const BOLUMLER = [
   { id: 'anasayfa', label: 'Ana sayfa' },
   { id: 'yayin', label: 'Yayın' },
   { id: 'radyo', label: 'Radyo' },
+  { id: 'tv', label: 'TV' },
   { id: 'hatirlatma', label: 'Hatırlatma' },
   { id: 'katalog', label: 'Katalog' },
 ] as const;
