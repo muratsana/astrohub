@@ -1,4 +1,5 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router';
 import { FORECAST_DAYS } from '@/features/weather/openMeteo';
 import { Container } from '@/components/ui/Container';
 import { Button } from '@/components/ui/Button';
@@ -9,6 +10,19 @@ import { DecisionColumn } from './tonight/DecisionColumn';
 import { TargetsColumn } from './tonight/TargetsColumn';
 import { TimelineColumn } from './tonight/TimelineColumn';
 import { useTonight } from './tonight/useTonight';
+import {
+  MAX_OFFSET,
+  clampOffset,
+  dateBounds,
+  dateToOffset,
+  fromISODate,
+  offsetFromParam,
+  offsetToDate,
+  toISODate,
+} from './tonight/nightOffset';
+
+/** Paylaşılabilir gece parametresi — `?gece=2026-08-05`. */
+const GECE_PARAM = 'gece';
 
 /**
  * BU GECE — ana sayfanın enstrüman paneli (§7.9).
@@ -52,7 +66,34 @@ export function TonightPanel() {
    * konumun takvimine göre hesaplıyor ve bir `Date` tutmak zaman dilimi
    * sınırında iki farklı güne düşme riski getiriyordu.
    */
-  const [offsetDays, setOffsetDays] = useState(0);
+  /*
+   * GECE SEÇİMİ URL'DE (§6.4 "URL veya state ile paylaşılabilir
+   * tarih/konum").
+   *
+   * Parametre TARİH taşıyor, offset değil: `?gun=3` yazsaydık paylaşılan
+   * bağlantı ertesi gün açıldığında başka bir geceyi gösterirdi.
+   * Çeviri ve sınır kontrolü `nightOffset.ts` içinde, testli.
+   *
+   * `replace: true`: gece değiştirmek bir gezinme değil bir filtre;
+   * her tıklama geçmişe bir kayıt eklerse geri düğmesi kullanıcıyı
+   * sayfadan çıkarmak yerine gece gece geri sarar.
+   */
+  const [params, setParams] = useSearchParams();
+  const bugun = useMemo(() => new Date(), []);
+  const offsetDays = offsetFromParam(params.get(GECE_PARAM), bugun);
+
+  const setOffsetDays = useCallback(
+    (next: number | ((d: number) => number)) => {
+      const hedef = clampOffset(
+        typeof next === 'function' ? next(offsetDays) : next
+      );
+      const sonraki = new URLSearchParams(params);
+      if (hedef === 0) sonraki.delete(GECE_PARAM);
+      else sonraki.set(GECE_PARAM, toISODate(offsetToDate(hedef, bugun)));
+      setParams(sonraki, { replace: true });
+    },
+    [offsetDays, params, setParams, bugun]
+  );
   const tonight = useTonight(offsetDays);
 
   /*
@@ -160,14 +201,60 @@ export function TonightPanel() {
 
           <span aria-hidden className="mx-1 h-4 w-px bg-border" />
 
+          {/*
+            ÇİFT OK BİR HAFTA (§6.4). Tek ok bir gece; 16 günlük ufkun
+            sonuna tek okla gitmek 15 tıklama demekti.
+
+            Etiketler `aria-label` ile ayrıca yazılıyor: «`, », ‹ ve ›
+            işaretleri ekran okuyucuda "sol tırnak" diye okunur.
+          */}
           <Button
             size="sm"
             variant="ghost"
-            onClick={() => setOffsetDays((d) => Math.max(0, d - 1))}
+            onClick={() => setOffsetDays((d) => d - 7)}
+            disabled={offsetDays === 0}
+            aria-label="Bir hafta geri"
+            title="Bir hafta geri"
+          >
+            «
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => setOffsetDays((d) => d - 1)}
             disabled={offsetDays === 0}
           >
             ← Önceki gece
           </Button>
+
+          {/*
+            MANUEL TARİH SEÇİCİ. `min`/`max` ufkun kendisinden geliyor,
+            yani tarayıcı takviminde ulaşılamayacak günler zaten kapalı.
+
+            Yerel `<input type="date">` bilinçli: kendi takvimini yazmak
+            klavye gezinmesini, ekran okuyucu desteğini ve mobil yerel
+            tekerlek arayüzünü sıfırdan üretmek demekti.
+          */}
+          <label className="flex items-center gap-1.5">
+            <span className="sr-only">Gece tarihi seç</span>
+            <input
+              type="date"
+              value={toISODate(offsetToDate(offsetDays, bugun))}
+              min={dateBounds(bugun).min}
+              max={dateBounds(bugun).max}
+              onChange={(e) => {
+                const secilen = fromISODate(e.target.value);
+                if (!secilen) return;
+                const hedef = dateToOffset(secilen, bugun);
+                /* Aralık dışı sessizce kırpılmıyor: tarayıcı `min`/`max`
+                   dışına izin verirse (bazıları elle yazmaya izin verir)
+                   seçim yok sayılıyor, uydurma bir geceye atlanmıyor. */
+                if (hedef !== null) setOffsetDays(hedef);
+              }}
+              className="min-h-9 rounded-card border border-border bg-surface-1 px-2 text-meta text-foreground hover:border-border-strong"
+            />
+          </label>
+
           <span className="num text-body-sm font-medium text-foreground">
             {offsetDays === 0 ? 'Bu gece' : tonight.dateLabel}
           </span>
@@ -179,10 +266,20 @@ export function TonightPanel() {
           <Button
             size="sm"
             variant="ghost"
-            onClick={() => setOffsetDays((d) => Math.min(FORECAST_DAYS - 1, d + 1))}
-            disabled={offsetDays >= FORECAST_DAYS - 1}
+            onClick={() => setOffsetDays((d) => d + 1)}
+            disabled={offsetDays >= MAX_OFFSET}
           >
             Sonraki gece →
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => setOffsetDays((d) => d + 7)}
+            disabled={offsetDays >= MAX_OFFSET}
+            aria-label="Bir hafta ileri"
+            title="Bir hafta ileri"
+          >
+            »
           </Button>
           {offsetDays >= FORECAST_DAYS - 1 && (
             <span className="text-meta text-faint">
