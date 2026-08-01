@@ -1,9 +1,11 @@
+import { useCallback, useEffect, useState } from 'react';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { getSupabase } from '@/services/supabase/client';
 import {
   listings as listingsSeed,
   type Listing,
   type ListingCondition,
+  type ListingStatus,
 } from '@/features/marketplace/data';
 /* Taksonomiden — kataloğun kendisi burada gerekmiyor ve onu çekmek
    ana sayfa paketine 80 kB ekliyordu (bkz. taxonomy.ts). */
@@ -54,6 +56,16 @@ interface ListingRow {
   profiles: { username: string; display_name: string | null } | null;
   equipment_models: { slug: string } | { slug: string }[] | null;
 }
+
+/* Tanınmayan durum `undefined` kalıyor: uydurulmuş bir "Yayında"
+   etiketi, satıcıya ilanının göründüğünü söylemek olurdu. */
+const LISTING_STATUSES: ListingStatus[] = [
+  'draft',
+  'active',
+  'reserved',
+  'sold',
+  'archived',
+];
 
 const CONDITIONS: ListingCondition[] = [
   'Sıfır gibi',
@@ -109,6 +121,9 @@ export function mapListingRow(row: ListingRow): Listing {
     description: row.description || undefined,
     includes: row.includes && row.includes.length > 0 ? row.includes : undefined,
     equipmentSlug: embeddedSlug(row.equipment_models),
+    status: LISTING_STATUSES.includes(row.status as ListingStatus)
+      ? (row.status as ListingStatus)
+      : undefined,
   };
 }
 
@@ -118,11 +133,35 @@ const SELECT =
   'profiles!listings_seller_id_profiles_fkey(username, display_name), ' +
   'equipment_models(slug)';
 
+/**
+ * Pazaryeri listesine — ve dolayısıyla `/ilan/:slug` sayfasına — giren
+ * durumlar.
+ *
+ * `sold` BURADA YOK, RLS'te VAR. Satır güvenliği satılmış ilanı okutuyor
+ * (bkz. `listings_read`), ama katalog onu çekmiyor: pazaryeri satılmış
+ * ilanla dolmasın. Sonuç: detay sayfası satılmış ilanı BULAMAZ, çünkü
+ * sayfa kataloğun içinden arıyor.
+ *
+ * Dışa açık olmasının sebebi tam da bu: satıcının kendi listesinde
+ * (`/panel/ilanlar`) hangi satırın tıklanabileceğine bu küme karar
+ * veriyor. İki yerde iki ayrı liste tutmak, panelin kullanıcıyı 404'e
+ * göndermesi demekti.
+ */
+export const PUBLIC_LISTING_STATUSES: ListingStatus[] = ['active', 'reserved'];
+
+/** İlanın herkese açık detay sayfası var mı? */
+export function isListingPubliclyVisible(status: ListingStatus | undefined) {
+  /* Durumu okunamamış kayıt tıklanabilir sayılıyor: tohum ilanlarda durum
+     yok ve onların sayfası var. Yanlış tarafa düşmek ölü bağlantı değil,
+     yalnızca gereksiz bir tıklama. */
+  return status === undefined || PUBLIC_LISTING_STATUSES.includes(status);
+}
+
 async function fetchListings(client: SupabaseClient): Promise<Listing[]> {
   const { data, error } = await client
     .from('listings')
     .select(SELECT)
-    .in('status', ['active', 'reserved'])
+    .in('status', PUBLIC_LISTING_STATUSES)
     .order('posted_at', { ascending: false })
     .limit(200);
 
@@ -132,6 +171,87 @@ async function fetchListings(client: SupabaseClient): Promise<Listing[]> {
 
 export function useListings(): ContentSelection<Listing> {
   return useCatalog('ilan', listingsSeed, fetchListings);
+}
+
+/* ══════════════════════ Satıcının kendi ilanları ══════════════════════ */
+
+export interface MyListingsState {
+  listings: Listing[];
+  loading: boolean;
+  error: string | null;
+  refresh: () => void;
+}
+
+/**
+ * Oturum açmış kullanıcının KENDİ ilanları — her durumdan.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * NEDEN `useListings` YETMİYOR
+ *
+ * İki fark var ve ikisi de bu ekranı imkânsız kılıyordu:
+ *
+ * 1. `fetchListings` yalnızca `active`/`reserved` çekiyor. Satıcı
+ *    ilanını "satıldı" işaretlediği anda kendi listesinden de kaybolurdu
+ *    — yani yanlışlıkla satıldı diyen biri geri dönemezdi. Burada durum
+ *    süzgeci YOK; RLS zaten `seller_id = auth.uid()` satırlarını her
+ *    durumda okutuyor.
+ *
+ * 2. `useCatalog` tablo boşken TOHUM veriye düşüyor. Herkese açık
+ *    listede bu doğru (site boş görünmesin), burada felaket olurdu:
+ *    kullanıcı hiç ilan vermemişken dört tane yabancı ilanı "senin
+ *    ilanların" diye görürdü. Bu yüzden doğrudan sorgu.
+ *
+ * Supabase yapılandırılmamışsa boş liste döner — panelde "henüz ilan
+ * yok" görünür, bu da doğrudur: yapılandırma olmadan ilan verilemez.
+ */
+export function useMyListings(userId: string | undefined): MyListingsState {
+  const [listings, setListings] = useState<Listing[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [tick, setTick] = useState(0);
+
+  useEffect(() => {
+    const clientPromise = userId ? getSupabase() : null;
+    if (!userId || !clientPromise) {
+      setListings([]);
+      setLoading(false);
+      return;
+    }
+
+    let active = true;
+    setLoading(true);
+
+    clientPromise
+      .then(async (client) => {
+        const { data, error: queryError } = await client
+          .from('listings')
+          .select(SELECT)
+          .eq('seller_id', userId)
+          .order('posted_at', { ascending: false })
+          .limit(200);
+        if (queryError) throw new Error(queryError.message);
+        return (data as unknown as ListingRow[]).map(mapListingRow);
+      })
+      .then((rows) => {
+        if (!active) return;
+        setListings(rows);
+        setError(null);
+      })
+      .catch((e: unknown) => {
+        if (!active) return;
+        setError(e instanceof Error ? e.message : 'İlanlar okunamadı');
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [userId, tick]);
+
+  const refresh = useCallback(() => setTick((t) => t + 1), []);
+  return { listings, loading, error, refresh };
 }
 
 /* ══════════════════════ Yazma ══════════════════════ */

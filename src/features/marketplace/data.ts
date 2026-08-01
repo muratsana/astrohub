@@ -4,6 +4,30 @@ import type { EquipmentCategory } from '../equipment/data';
 
 export type ListingCondition = 'Sıfır gibi' | 'Çok iyi' | 'İyi' | 'Yıpranmış';
 
+/**
+ * İlan durumu — `app.listing_status` enum'unun aynısı.
+ *
+ * Pazaryeri listesi yalnızca `active`/`reserved` gösterir, bu yüzden
+ * durum uzun süre arayüze hiç taşınmadı. "İlanlarım" ise satıcının
+ * KENDİ kayıtlarını yönettiği yer: satılmış ya da arşivlenmiş ilanını
+ * göremeyen satıcı, onu yeniden yayına alamaz.
+ */
+export type ListingStatus =
+  | 'draft'
+  | 'active'
+  | 'reserved'
+  | 'sold'
+  | 'archived';
+
+/** Satıcıya gösterilen durum etiketleri. */
+export const listingStatusLabels: Record<ListingStatus, string> = {
+  draft: 'Taslak',
+  active: 'Yayında',
+  reserved: 'Rezerve',
+  sold: 'Satıldı',
+  archived: 'Arşivde',
+};
+
 export interface Listing {
   /**
    * Veritabanı kimliği. Tohum kayıtlarda YOK ve bu bilinçli: ilan
@@ -46,6 +70,14 @@ export interface Listing {
   equipmentSlug?: string;
   /** Pazarlık payı olup olmadığı; ilanda açıkça yazmak mesaj trafiğini azaltır. */
   negotiable?: boolean;
+  /**
+   * İlan durumu — yalnızca satıcının kendi listesinde anlamlı.
+   *
+   * Herkese açık listede taşınmıyor: orada zaten yalnızca yayındaki
+   * ilanlar var, her karta "Yayında" rozeti basmak gürültü olurdu.
+   * Tohum kayıtlarda tanımsız.
+   */
+  status?: ListingStatus;
 }
 
 export const listings: Listing[] = [

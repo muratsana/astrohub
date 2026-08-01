@@ -27,6 +27,24 @@ export const photoTypeLabels: Record<PhotoType, string> = {
 };
 
 /**
+ * Kayıt durumu — `astro_photos.status` enum'unun aynısı.
+ *
+ * Galeri yalnızca `published` gösteriyor, bu yüzden durum uzun süre
+ * arayüze hiç taşınmadı. Ama KOTA bu üç değerin ikisini ayrı ayrı
+ * sayıyor (yayımlanan sınırlı, taslak ayrı sınırlı) ve sahibinin kendi
+ * listesi üçünü de görmek zorunda: arşivlediği kaydı göremeyen kullanıcı
+ * onu geri yayına alamaz.
+ */
+export type PhotoStatus = 'draft' | 'published' | 'archived';
+
+/** Sahibine gösterilen durum etiketleri. */
+export const photoStatusLabels: Record<PhotoStatus, string> = {
+  draft: 'Taslak',
+  published: 'Yayında',
+  archived: 'Arşivde',
+};
+
+/**
  * FOTOĞRAF LİSANSI — TEK KURAL, SEÇENEK YOK.
  *
  * Yükleme sihirbazında dört seçenekli bir açılır liste vardı (Tüm
