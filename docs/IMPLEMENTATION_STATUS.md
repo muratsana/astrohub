@@ -77,6 +77,30 @@ gerçek cihaz/tarayıcı matrisi (kum havuzunda tek Chromium) ve
 birleştirmesi (ikisi de Faz 15'e atandı, açık boşluk değil düzen işi).
 Otomatik devam turu buradan **Faz 3'e** geçmeli.
 
+## Ürün kararları — belgeden sapılan yerler
+
+Ana görev belgesi bir şey söylüyor, işletme başka bir şey istiyor.
+Bunlar hata değil, **kullanıcının verdiği kararlar**; koda geçmeden
+önce buraya yazılıyorlar ki sonraki tur "belge böyle diyor" deyip geri
+almasın.
+
+### Sitede TEK admin olacak
+
+Çoklu admin rolü, admin kademesi ya da "teknik admin / içerik admini"
+ayrımı **kurulmayacak**. Belgede geçen "yalnızca yetkili teknik admin"
+(§11.3) gibi ifadeler tek admin varsayımıyla okunacak.
+
+Mevcut yapı zaten buna uygun: `user_roles` tablosunda tek bir `admin`
+rolü var ve bütün kapılar `app.is_admin()` üstünden geçiyor. **Yapılacak
+iş bir şey EKLEMEMEK** — rol modeli Faz 13'te (yönetim paneli) ele
+alınırken kademe icat edilmeyecek.
+
+`moderator` rolü ayrı bir şey ve duruyor: o bir admin kademesi değil,
+farklı bir görev (moderasyon kuyruğu). Karar admin rolünün
+çoğaltılmamasıyla ilgili.
+
+---
+
 ## Bulunan ve kapatılan sessiz hatalar
 
 | Ne | Nasıl bulundu | Nerede |
