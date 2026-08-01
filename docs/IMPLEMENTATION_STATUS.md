@@ -27,7 +27,7 @@ tabloda `DONE` ile birleştirilmez:
 | 3 | Ana sayfa, navbar, hero, hava durumu | 356–461 | PARTIAL |
 | 4 | Ortak arama, filtreleme, sıralama, görünüm | 462–548 | PARTIAL |
 | 5 | Bildirim, mesajlaşma, sosyal aktivite | 549–632 | PARTIAL² |
-| 6 | Etkinlik takip ve hatırlatma | 633–682 | NOT_STARTED |
+| 6 | Etkinlik takip ve hatırlatma | 633–682 | PARTIAL³ |
 | 7 | Çalışan AstroHub Radyo | 683–832 | NOT_STARTED |
 | 8 | AstroHub TV ve YouTube'a hazır altyapı | 833–922 | NOT_STARTED |
 | 9 | Standart/Premium üyelik altyapısı | 923–1005 | NOT_STARTED |
@@ -40,6 +40,14 @@ tabloda `DONE` ile birleştirilmez:
 | 16 | Performans, SEO, analitik, gözlemlenebilirlik | 1607–1690 | NOT_STARTED |
 | 17 | Test stratejisi ve kabul kriterleri | 1691–… | NOT_STARTED |
 | 18 | (belgenin sonu) | …–1956 | NOT_STARTED |
+
+³ **Faz 6'da kodla kapatılabilecek iş kalmadı.** Kullanıcı tarafının
+altı maddesi, hatırlatmanın on bir maddesinden onu ve yöneticinin yedi
+maddesinin hepsi çalışıyor. Kalan tek şey TESLİMAT KANALI: e-posta
+sağlayıcısı kararı verilmedi (TOPARLAMA §11, **Sen**) ve web push'u
+belgenin kendisi "ileride" diye yazıyor. Mimarinin "Queue → Edge
+Function" ayağı da bu karara bağlı — site içi teslimat için gerekmiyor
+ve gerekçesi `0049`ün başında yazılı. Ayrıntı: Faz 6 bölümü.
 
 ² **Faz 5'in çekirdeği bitti, kenarları duruyor.** Bildirim merkezi,
 mesajlaşma ve sosyal graf (takip + engelleme) uçtan uca çalışıyor:
@@ -64,6 +72,8 @@ Otomatik devam turu buradan **Faz 3'e** geçmeli.
 | `0034` göç dosyası depoda yoktu (uzak geçmişte vardı) — sıfırdan kurulumda plate solve cron işi hiç oluşmazdı | Faz 6 için cron kalıbına bakarken `ls` 0033'ten 0035'e atladı | `DATABASE_AND_RLS.md` §Kaybolmuş göç |
 | `app.notify` istemciye açıktı — "bildirim üretimi kapalı" kararını boşa çıkarıyordu | Faz 5 sonrası yetki denetimi | `0045` |
 | `0044`ün `PUBLIC` revoke'u yetmiyordu; `anon`un açık grant'ı duruyordu | Supabase denetçisi ısrar edince `proacl` okundu | `0046` |
+| Etkinlik sayfasında devre dışı "Katıl (üyelik gerektirir)" düğmesi ve "hesap sistemi devreye alınınca açılacak" cümlesi — hesap sistemi çoktan çalışıyordu ve gerçek kayıt kontrolü hemen altındaydı | Faz 6 arayüzünü bağlarken sağ panel okundu | `EventDetailPage.tsx` |
+| Etkinlik ÖNE alınınca özel hatırlatma etkinlikten SONRAYA düşüyordu: "15 Eylül'de hatırlat" diyen kullanıcı, etkinlik 5 Eylül'e çekilince on gün sonra "yaklaşıyor" bildirimi alacaktı | Yeniden hesaplama kuralı yazılırken ters yön düşünüldü | `0049` (`event_change_fanout`) |
 
 ## Bilinen ortam kısıtları
 
@@ -571,10 +581,158 @@ uygulandı.
 
 ---
 
+## Faz 6 — ayrıntı
+
+Migration `0049` (takip + hatırlatma) ve `0050` (yönetici tarafı); ikisi
+de uzak projeye uygulandı. Arayüz: `EventInterest`, `EventChanges`,
+`ReminderControl` ve panelde sekizinci sekme (`?bolum=hatirlatma`).
+
+### 6.1 Etkinlik takibi — **DONE**
+
+| Madde | Durum | Kanıt |
+|---|---|---|
+| Takip et / takibi bırak | DONE | `event_follows` + `set_event_interest` |
+| Katılacağım / ilgileniyorum ayrımı | DONE | İki tablo, tek kontrol (aşağıda) |
+| Takvime ekle | DONE | `.ics` tarayıcıda üretiliyor; 8 test |
+| Etkinlik değişikliklerini takip et | DONE | `event_changes` + `EventChanges` |
+| İptal / tarih / konum değişikliğinde bildirim | DONE | `app.event_change_fanout` |
+| Hatırlatma yönetimi | DONE | `ReminderPanel` |
+
+**İkinci bir kayıt tablosu açılmadı.** İlk akla gelen çözüm
+`event_follows`a bir `interest` kolonu koymaktı. Yapılmadı:
+`event_registrations` 0010'dan beri var, kontenjanı
+`app.enforce_event_capacity` koruyor ve `events.registered_count` ona
+bağlı. İki tabloda iki "katılacağım" olsaydı kontenjan hangisine
+bakacaktı? İş bölümü net — `event_follows` "haberdar olmak istiyorum",
+`event_registrations` "geleceğim". Kullanıcı **tek kontrol** görüyor.
+
+**Arayüzde üç durum, dört değil.** "Takip et" ve "katılacağım" ayrı
+düğmeler olsaydı dört bileşim çıkardı ve biri anlamsızdı ("takip
+etmiyorum ama katılacağım"). Seçili düğmeye ikinci basış vazgeçmek
+demek; ayrı bir "Vazgeç" düğmesi hiçbir şey seçili değilken de dururdu.
+
+**Takvim dosyası sunucuya gitmiyor.** "Google Takvime ekle" bağlantısı
+etkinliğin adını, yerini ve saatini üçüncü tarafa taşırdı. `.ics` her
+takvim uygulamasında açılıyor ve kimseye bir şey söylemiyor. İki
+ayrıntı ölçüldü: RFC 5545 satır katlaması **oktet** sayıyor (Türkçe
+harfler UTF-8'de iki oktet; karakter sayan bir katlama 75'lik sınırı
+sessizce aşardı) ve `VALARM` gömülmedi — sitede hatırlatma kuran
+kullanıcı aynı an için iki bildirim alırdı.
+
+### 6.2 Hatırlatma — **PARTIAL** (teslimat kanalı hariç DONE)
+
+| Madde | Durum | Kanıt |
+|---|---|---|
+| 1 hafta / 1 gün / etkinlik günü / özel | DONE | `app.reminder_offset` dört değer |
+| Bir etkinliğe birden fazla hatırlatma | DONE | Tekil indeks türe göre, satıra göre değil |
+| Saat dilimi güvenliği | DONE | Her şey `timestamptz`; "etkinlik günü" `Europe/Istanbul` 09:00, canlıda ölçüldü (13.12.2026 15:00Z → 13.12.2026 06:00Z) |
+| Geçmişe hatırlatma kurmayı engelleme | DONE | `app.reminders_before_write`; canlıda ölçüldü |
+| Tekrarlı bildirim engeli | DONE | Tekil indeks; canlıda `unique_violation` ölçüldü |
+| Kullanıcı tercihleri | DONE | `app.notify` tercih + engel kontrolü yapıyor (0042) |
+| Uygulama içi teslimat | DONE | `app.dispatch_due_reminders`, 5 dakikada bir cron |
+| Etkinlik saati değişince yeniden hesapla | DONE | Niyet korunuyor, an değişiyor; geçersizleşenler siliniyor |
+| Takipten çıkınca gelecek hatırlatmaları iptal | DONE | `event_follows_cancel_reminders` |
+| Her gönderimin teslim durumu | DONE | `sent_at`, `attempts`, `last_error` |
+| **E-posta teslimatı** | **IMPLEMENTED_BLOCKED_EXTERNAL** | Sağlayıcı kararı verilmedi (TOPARLAMA §11). Tablo hazır: `attempts` ve `last_error` kolonları o gün için duruyor |
+| **Web push** | **NOT_STARTED** | Belgenin kendisi "ileride" diyor; `push_subscriptions` tablosu boş |
+| Queue + Edge Function | IMPLEMENTED_DISABLED | Site içi teslimat için gerekmiyor — gerekçe aşağıda |
+
+**Hatırlatma "ne zaman" değil "ne kadar önce" olarak saklanıyor.**
+`due_at` tek başına saklansaydı, etkinlik tarihi değişince hatırlatma
+eski tarihte kalırdı: kullanıcı "1 gün önce" dediği hâlde etkinlikten
+üç gün sonra bildirim alırdı. Niyet (`offset_kind`) saklanıyor, `due_at`
+ondan türetiliyor, etkinlik saati kayınca tetikleyici yeniden
+hesaplıyor.
+
+**Görünmez bir tuzak kapatıldı:** etkinlik ÖNE alındığında, "15 Eylül
+20:00'de hatırlat" diyen özel hatırlatma artık etkinlikten sonraya
+düşüyordu — kullanıcı etkinlik bittikten on gün sonra "yaklaşıyor"
+bildirimi alacaktı. Yeniden hesapta bu satırlar siliniyor.
+
+**Kuyruk ve Edge Function neden yok.** §9'un mimarisi "Cron → Queue →
+Edge Function" diyor. Site içi teslimat için aradaki iki adım gereksiz:
+bildirim üretmek `app.notify` çağrısı, yani veritabanının kendi içinde
+biten bir iş. Araya kuyruk ve HTTP sıçraması koymak, veritabanından
+veritabanına gitmek için ağdan dolaşmak olurdu. İdempotanslık yine var
+(`sent_at is null` + `for update skip locked`). Kuyruk E-POSTA için
+gerekecek: dış servis, gerçek başarısızlık, gerçek yeniden deneme.
+
+**İstemci sunucunun kopyası değil, ön görünümü.** `reminders.ts`
+sunucunun üç kuralını önden uyguluyor ki yarın olan bir etkinlikte
+"1 hafta önce" seçeneği tıklanabilir görünmesin. Kuralın sahibi yine
+sunucu — istemcinin saati yanlış olabilir, kullanıcı sayfayı açık
+bırakabilir. Testlerdeki beklenen anlar `app.reminder_due_at` canlıda
+çalıştırılarak alındı; saat dilimi farkı sabit yazılmadı (`Intl`
+üstünden hesaplanıyor), çünkü kural değişirse sessizce yanlış
+hesaplamak yerine testte düşmeli.
+
+### 6.3 Yönetici tarafı — **DONE**
+
+| Madde | Durum | Kanıt |
+|---|---|---|
+| Teslim istatistikleri | DONE | `reminder_delivery_stats` — altı sayaç, SQL'de toplanıyor |
+| Hatalı işler | DONE | `failed_reminders`; hata metni kırpılmadan gösteriliyor |
+| Yeniden deneme | DONE | `retry_reminder` → `app.deliver_reminder` (cron'un gövdesi) |
+| Global varsayılanlar | DONE | `app_settings.reminder_defaults` |
+| Zorunlu duyuru | DONE | `broadcast_announcement`, iki adımlı onay |
+| Kullanıcı tercihlerini hukuka aykırı aşmama | DONE | Aşağıda |
+| Etkinlik değişiklik geçmişi | DONE | `event_changes` + tetikleyici |
+
+**Yeniden deneme ikinci bir gönderim yolu değil.** Gövde
+`app.deliver_reminder` — cron'un çağırdığı fonksiyonun ta kendisi.
+Yöneticiye ayrı bir yol yazsaydık biri düzeltilip diğeri unutulurdu.
+
+**Değişiklik geçmişi `audit_logs`a doldurulmadı.** O tablo yönetici
+EYLEMLERİNİ tutuyor ("kim hangi yetkiyle ne yaptı"). Etkinlik
+değişikliği farklı bir soru soruyor — "bu etkinliğin tarihi kaç kez
+kaydı" — ve cevabı **katılımcıya da** gösterilmeli. İkisini aynı tabloya
+doldurmak, katılımcıya gösterilecek bir kaydı denetim kaydının içine
+gömmek olurdu. Satır kullanıcı tarafından yazılamıyor: yalnızca
+tetikleyici yazıyor, kimseye `insert` yetkisi verilmedi.
+
+**İzlenen alanlar sınırlı.** Her kolonu kaydetmek `registered_count`
+güncellemeleriyle tabloyu doldururdu — kayıt sayacı her katılımcıda
+değişiyor ve bu bir "etkinlik değişikliği" değil.
+
+**Pazarlama sınırı.** Duyuru `announcement` türünde üretiliyor, o da
+`sistem` kategorisinde ve o kategori kapatılamıyor (0042). Sebebi
+"yönetici istediğini gönderebilsin" değil: hesabı, üyeliği, güvenliği
+ilgilendiren bilgiler kapatılamaz olmalı. `marketing_opt_in` AYRI bir
+alan ve duyuru fonksiyonu ona bakmıyor, çünkü bu fonksiyonla pazarlama
+gönderilmiyor. Kural kodda değil kullanımda — bu yüzden sınır ekranda
+da yazılı ve her duyuru `audit_logs`a kimin gönderdiğiyle düşüyor.
+
+**Yöneticiye `reminders` tablosu açılmadı.** Dört RPC de
+`security definer` ve dönen alanlar sınırlı; tabloya "yönetici her şeyi
+görür" politikası eklemek, herkesin hangi etkinliğe ne zaman hatırlatma
+kurduğunu okunur yapardı.
+
+### Ölçüm
+
+Altı veritabanı kuralı canlıda, **geri alınan bir işlemde** ölçüldü:
+`due_at`in BEFORE tetikleyiciden dolması (kolon `not null` ve insert'te
+verilmiyor), "etkinlik günü" 09:00 yerel karşılığı, hatırlatma kuranın
+takipçi olması, aynı türden ikinci hatırlatmanın reddi, etkinlik
+sonrasına ve geçmişe kurmanın reddi.
+
+İstemcide **33 yeni test**: 19'u hatırlatma anı ve `.ics` üretimi
+(`reminders.test.ts`), 14'ü arayüz (`EventInterest.test.tsx`,
+`ReminderControl.test.tsx`). `test:all` tamamı geçiyor; JS bütçesi
+190.9/200 kB (yeni kod etkinlik ve panel rotalarında, ana pakette değil).
+
+**Kaldırılan ölü kod:** etkinlik sayfasındaki devre dışı "Katıl (üyelik
+gerektirir)" düğmesi ve altındaki "hesap sistemi devreye alınınca
+açılacak" cümlesi. Hesap sistemi çoktan çalışıyordu ve gerçek kayıt
+kontrolü hemen altındaydı; basılamayan düğme çalışan kontrolü de
+şüpheli gösteriyordu. `EventRegistration` `EventInterest` içinde eridi —
+iki bileşen de `event_registrations`a yazsaydı durumları ayrışırdı.
+
+---
+
 ## Sonraki oturum için devam notu
 
-**Bittiği yer:** Faz 2 kapandı. Faz 3'ün 3.1'i kapandı; 3.2, 3.3 ve
-3.4'ün ölçülebilir tamamı bitti. Faz 3'te kalanlar iki kümede
+**Bittiği yer:** Faz 2, Faz 5 ve Faz 6 kapandı. Faz 3'ün 3.1'i
+kapandı; 3.2, 3.3 ve 3.4'ün ölçülebilir tamamı bitti. Faz 3'te kalanlar iki kümede
 toplanıyor:
   · **Faz 10'a bağlı** (tablo gerektiriyor): hero slaytlarının admin
     yönetimi, "boşsa gizle" anahtarı, hava sağlayıcı seçimi.
@@ -595,13 +753,24 @@ panelde bir yeni bölüm. Migration numaraları `0049`dan devam ediyor.
 Faz 5'te kalan tek tablo `clubs`; §8.11'in konusu ve kendi turunu hak
 ediyor.
 
-**Sıradaki iş için üç aday:**
-  · **Faz 6 — etkinlik takip ve hatırlatma** (satır 633–682). `reminders`
-    tablosu gerekiyor ve bildirim altyapısı artık hazır: hatırlatma
-    tetikleyicisi `app.notify(…, 'event_reminder', …)` çağırmakla
-    yetinecek.
-  · **`collections`** — explorer'ın "favoriler" facet'ini açar ve
-    fotoğraf detayındaki "kaydet" düğmesini gerçek yapar.
+**Faz 6 kapandı** (bkz. Faz 6 bölümü): iki migration (`0049`, `0050`),
+üç yeni tablo (`event_follows`, `reminders`, `event_changes`) + bir ayar
+tablosu (`app_settings`), beş dakikada bir çalışan `hatirlatma-gonderimi`
+cron işi, etkinlik sayfasında takip/hatırlatma/takvim kontrolü ve
+panelde sekizinci sekme. Migration numaraları `0051`den devam ediyor.
+
+Faz 6'da kodla kapatılabilecek iş kalmadı; kalan tek şey e-posta
+sağlayıcısı kararı (**Sen**) ve belgenin "ileride" dediği web push.
+
+**Sıradaki iş: Faz 7 — çalışan AstroHub Radyo** (satır 683–832).
+NOT_STARTED fazların ilki. Hazır olan parçalar: `RadioVault` (admin mp3
+kasası, sürükle-bırak), `BroadcastControl` (yayın programı), üst
+çubuktaki play/pause düğmesi ve rota değişiminde ayakta kalan radyo
+rıhtımı (E2E'de ölçülü). Dış yayın sunucusu (Icecast/VPS) kimlik
+bilgisi yok — o uçta `IMPLEMENTED_BLOCKED_EXTERNAL` sınırı var.
+
+Sırada bekleyen iki bağımsız iş:
+  · **`collections`** — explorer'ın "favoriler" facet'ini açar.
   · **Aktivite akışı** — `follows` hazır; "takip ettiklerin ne yaptı"
     akışı §8'in kalan parçası.
 
@@ -622,12 +791,5 @@ ediyor.
 - Arayüz iddialarını gerçek tarayıcıda `getBoundingClientRect` ile ölç;
   ölçüm aracının kendi kusurunu ürünün kusuru sanma (galeride "ilk blok
   1979px" böyle bir yanlış alarmdı)
-- Her faz sonunda `npm run test:all`, sonra commit + push
-- Durum belgesini her fazda güncelle
-
-**Çalışma yöntemi** (bu oturumda işe yaradı):
-- Master belgeyi TAMAMEN okuma; yalnızca faz satır aralığını oku
-- Her veritabanı kuralını canlıda `raise exception` ile GERİ ALINAN
-  işlemde ölç — iddia etme
 - Her faz sonunda `npm run test:all`, sonra commit + push
 - Durum belgesini her fazda güncelle

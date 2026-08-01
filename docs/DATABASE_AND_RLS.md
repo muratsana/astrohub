@@ -120,7 +120,7 @@ açık bir güvenlik boşluğu değil. Faz 15'te taşınacak.
 
 ## Şema boşluğu — belgedeki alan modeliyle karşılaştırma
 
-Ana görev belgesinin gerektirdiği tabloların 26'sı mevcut, **12'si yok**.
+Ana görev belgesinin gerektirdiği tabloların 30'u mevcut, **11'i yok**.
 Eksiklerin her biri, onu gerektiren fazda RLS'iyle birlikte
 oluşturulacak; burada listelenmesi o fazların girdisidir.
 
@@ -132,7 +132,8 @@ oluşturulacak; burada listelenmesi o fazların girdisidir.
 `listings` · `observing_sites` · `provinces` · `districts` ·
 `tv_broadcasts` · `edge_rate_limits` · `notifications` · `conversations` ·
 `conversation_participants` · `messages` · `follows` · `user_blocks` ·
-`collections` · `collection_items`
+`collections` · `collection_items` · `event_follows` · `reminders` ·
+`event_changes` · `app_settings`
 
 ### Eksik
 
@@ -143,7 +144,6 @@ bir "okundu" satırı isterdi.
 | Tablo | Alan | Oluşturulacağı faz |
 |---|---|---|
 | `clubs` | Kulüp / topluluk | §8.11 — kendi turu |
-| `reminders` | Hatırlatma | 6 |
 | `radio_stations` | Radyo istasyonu | 7 |
 | `radio_programs` | Radyo programı | 7 |
 | `radio_hosts` | Radyo sunucusu | 7 |
