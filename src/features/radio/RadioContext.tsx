@@ -11,6 +11,8 @@ import {
 import { radioTracks } from './data';
 import type { RadioTrack } from './types';
 import { fetchRadioTracks } from '@/services/content/radio';
+import { useStation } from '@/services/content/radioStation';
+import { decideSource, onTrackEnd, type RadioSource } from './handover';
 
 /**
  * RADYO BAĞLAMI — kalıcı oynatıcının beyni.
@@ -40,6 +42,10 @@ interface RadioState {
   play: (trackId?: string) => void;
   pause: () => void;
   next: () => void;
+  /** Şu an hangi kaynak çalıyor: kayıtlı kasa mı, canlı yayın mı. */
+  source: RadioSource;
+  /** Canlı yayın başladı, çalan parça bitince devredilecek. */
+  pendingLive: boolean;
   previous: () => void;
   setVolume: (v: number) => void;
   hideDock: () => void;
@@ -90,6 +96,23 @@ export function RadioProvider({ children }: { children: ReactNode }) {
     });
   }, [mp3Tracks.length]);
   const [playing, setPlaying] = useState(false);
+
+  /* CANLI YAYIN ↔ KASA. Gerekçe ve kurallar `handover.ts` içinde;
+     buradaki iş yalnızca kararı uygulamak. Yoklama aralığı 45 saniye:
+     `station_is_live` üç dakikalık bayatlık penceresi kullanıyor, daha
+     seyrek yoklamak canlı yayının başlangıcını dakikalarca kaçırırdı. */
+  const { station, live } = useStation(45_000);
+  const [source, setSource] = useState<RadioSource>('kasa');
+  const [pendingLive, setPendingLive] = useState(false);
+
+  /* `onEnded` dinleyicisi bir kez kuruluyor ve `pendingLive`i kapanışta
+     yakalıyor — o değer parça biterken BAYAT olurdu. Ref güncel değeri
+     taşıyor: dinleyiciyi her değişimde yeniden kurmak, çalan sesi
+     kesme riski taşırdı. */
+  const pendingLiveRef = useRef(false);
+  useEffect(() => {
+    pendingLiveRef.current = pendingLive;
+  }, [pendingLive]);
   const [spotifyTrack, setSpotifyTrack] = useState<RadioTrack | null>(null);
   const [dockVisible, setDockVisible] = useState(true);
 
@@ -100,6 +123,18 @@ export function RadioProvider({ children }: { children: ReactNode }) {
   });
 
   const current = index >= 0 ? (mp3Tracks[index] ?? null) : null;
+
+  useEffect(() => {
+    const karar = decideSource({
+      live,
+      streamUrl: station?.streamUrl ?? null,
+      hasTracks: mp3Tracks.length > 0,
+      current: source,
+      playing,
+    });
+    setSource(karar.source);
+    setPendingLive(karar.pending);
+  }, [live, station?.streamUrl, mp3Tracks.length, source, playing]);
 
   // Ses öğesi bir kez kurulur ve uygulama boyunca yaşar.
   useEffect(() => {
@@ -137,7 +172,16 @@ export function RadioProvider({ children }: { children: ReactNode }) {
     const audio = audioRef.current;
     if (!audio) return;
 
-    const onEnded = () => next();
+    const onEnded = () => {
+      /* Bekleyen canlı yayın varsa sıradaki parçaya GEÇMİYORUZ —
+         devir teslim tam bu anda oluyor (gerekçe `handover.ts`). */
+      if (onTrackEnd(pendingLiveRef.current) === 'canli') {
+        setSource('canli');
+        setPendingLive(false);
+        return;
+      }
+      next();
+    };
     const onError = () => {
       // Bir parça çalınamıyorsa (silinmiş dosya, ağ hatası) yayın durmamalı;
       // sıradakine geçilir. Tek bozuk dosya bütün radyoyu susturmamalı.
@@ -156,10 +200,15 @@ export function RadioProvider({ children }: { children: ReactNode }) {
   // Kaynak değişince yükle; çalıyorduysa devam et.
   useEffect(() => {
     const audio = audioRef.current;
-    if (!audio || !current) return;
+    if (!audio) return;
 
-    if (audio.src !== current.url) {
-      audio.src = current.url;
+    /* Canlı yayında adres akıştan gelir, listeden değil. Akışın
+       "bitişi" yok; `ended` olayı da gelmiyor ve gerekmiyor. */
+    const hedef = source === 'canli' ? station?.streamUrl : current?.url;
+    if (!hedef) return;
+
+    if (audio.src !== hedef) {
+      audio.src = hedef;
       audio.load();
     }
 
@@ -171,7 +220,7 @@ export function RadioProvider({ children }: { children: ReactNode }) {
     } else {
       audio.pause();
     }
-  }, [current, playing]);
+  }, [current, playing, source, station?.streamUrl]);
 
   const play = useCallback(
     (trackId?: string) => {
@@ -226,6 +275,8 @@ export function RadioProvider({ children }: { children: ReactNode }) {
       pause,
       next,
       previous,
+      source,
+      pendingLive,
       setVolume,
       hideDock: () => setDockVisible(false),
       showDock: () => setDockVisible(true),
@@ -233,6 +284,8 @@ export function RadioProvider({ children }: { children: ReactNode }) {
       closeSpotify,
     }),
     [
+      source,
+      pendingLive,
       tracks,
       index,
       current,

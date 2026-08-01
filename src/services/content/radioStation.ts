@@ -72,11 +72,16 @@ export interface StationState {
  * çalışıyor. Bunu hata olarak göstermek, kullanıcıya düzeltemeyeceği bir
  * şeyi bozukmuş gibi sunmak olurdu.
  */
-export function useStation(): StationState {
+export function useStation(pollMs = 0): StationState {
   const [station, setStation] = useState<RadioStation | null>(null);
   const [live, setLive] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  /* CANLILIK YOKLANIYOR, BİR KEZ OKUNMUYOR — `pollMs` verildiğinde.
+     Oynatıcı devir teslimi buna bağlı: yayın sayfa açıkken başlarsa,
+     tek seferlik bir okuma onu hiç görmezdi ve dinleyici canlı yayını
+     kaçırırdı. Yapılandırma (istasyon satırı) yine bir kez okunuyor;
+     değişen şey ölçüm. */
   useEffect(() => {
     if (!isSupabaseConfigured) {
       setLoading(false);
@@ -84,6 +89,8 @@ export function useStation(): StationState {
     }
 
     let active = true;
+    let zamanlayici: ReturnType<typeof setInterval> | undefined;
+
     void (async () => {
       try {
         const supabase = await client();
@@ -119,10 +126,17 @@ export function useStation(): StationState {
            canlılık bir ölçüm. Aynı satırdan okunsaydı yapılandırma
            önbelleğe alındığında ölçüm de bayatlardı — ve bayat bir
            "canlı" tam olarak §10.2'nin yasakladığı şey. */
-        const { data: canli } = await supabase.rpc('station_is_live', {
-          target: row.id as string,
-        });
-        if (active) setLive(canli === true);
+        const olc = async () => {
+          const { data: canli } = await supabase.rpc('station_is_live', {
+            target: row.id as string,
+          });
+          if (active) setLive(canli === true);
+        };
+
+        await olc();
+        if (pollMs > 0 && active) {
+          zamanlayici = setInterval(() => void olc(), pollMs);
+        }
       } catch {
         /* Okunamadıysa kapalı. "Bilmiyorum" ile "canlı" arasında
            varsayılan asla "canlı" olamaz. */
@@ -137,8 +151,9 @@ export function useStation(): StationState {
 
     return () => {
       active = false;
+      if (zamanlayici) clearInterval(zamanlayici);
     };
-  }, []);
+  }, [pollMs]);
 
   return { station, live, loading };
 }

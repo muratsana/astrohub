@@ -84,6 +84,19 @@ Bunlar hata değil, **kullanıcının verdiği kararlar**; koda geçmeden
 önce buraya yazılıyorlar ki sonraki tur "belge böyle diyor" deyip geri
 almasın.
 
+### Radyo ÜÇ şeyi birden yapıyor
+
+Kullanıcının netleştirmesi: radyo hem yöneticinin yüklediği mp3'leri
+döngüde çalacak, hem canlı yayın yapacak, hem de podcast'i olacak.
+Program takvimi ve podcast arşivi **kalıyor**.
+
+Bu, bir ara "casting yok, sadece mp3 loop" olarak anlaşıldı ve canlı
+yayın altyapısını kaldırmak üzereydim. Sormak doğru karardı: kaldırsaydım
+`0051`in istasyon/sağlık tabloları, AzuraCast adaptörü ve
+`deploy/radyo/` paketi silinecekti — hepsi gerekliymiş.
+
+**Sonuç: hiçbir şey silinmedi**, eksik olan parça eklendi (aşağıda).
+
 ### Sitede TEK admin olacak
 
 Çoklu admin rolü, admin kademesi ya da "teknik admin / içerik admini"
@@ -827,6 +840,31 @@ dinleyici müzik duyar. O alanı ölçüt yapsaydık yayın sürerken
 
 **Sonuç: kurulum yapılmadan site radyoyu çevrimdışı gösteriyor ve bu
 doğru cevap.** Bugünkü davranış bir eksiklik değil.
+
+### Devir teslim: kasa ↔ canlı yayın
+
+İki kaynak vardı ve **birbirlerinden habersizdiler**: canlı yayın
+başlasa bile oynatıcı kasadan çalmaya devam ediyordu. `handover.ts` bunu
+kapatıyor.
+
+**Devir parça sonunda, ortasında değil.** Canlı yayın başladığı an çalan
+mp3'ü kesmek teknik olarak daha kolaydı ve yanlış olurdu: dinleyici bir
+parçanın ortasında, hiçbir şey yapmadan başka bir sese atlar. Gerçek
+radyo otomasyonu da böyle yapmaz — AutoDJ parçayı bitirir, sonra
+mikrofonu devreder. Ara durum (`pending`) bunun için var ve arayüzde
+yazılı: "canlı yayın bu parçadan sonra". Sessiz bir bekleme,
+açıklanmamış bir gecikmedir.
+
+**Tersi beklemiyor.** Canlı yayın düştüğünde beklenecek bir şey yok —
+ortada ses kalmadı, kasaya hemen dönülüyor.
+
+**Canlıya geçmenin iki şartı var:** ölçüm canlı olmalı VE bir yayın
+adresi bulunmalı. Adres olmadan "canlı" demek, çalınacak bir şey olmadan
+canlı demektir.
+
+Yoklama 45 saniyede bir: `station_is_live` üç dakikalık bayatlık
+penceresi kullanıyor, daha seyrek yoklamak yayının başlangıcını
+dakikalarca kaçırırdı.
 
 ### Sır saklamayan şema
 

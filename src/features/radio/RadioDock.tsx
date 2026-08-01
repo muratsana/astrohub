@@ -28,6 +28,8 @@ export function RadioDock() {
     volume,
     dockVisible,
     spotifyTrack,
+    source,
+    pendingLive,
     toggle,
     next,
     setVolume,
@@ -102,8 +104,26 @@ export function RadioDock() {
             to="/radyo"
             className="min-w-0 flex-1 truncate text-meta text-foreground transition-colors hover:text-primary"
           >
-            <span className="font-medium">{current.title}</span>
-            <span className="ml-2 text-muted-foreground">{current.artist}</span>
+            {/* KAYNAK GÖRÜNÜR. Canlı yayınla kayıtlı kasa bir radyonun
+                iki hâli ama aynı şey değil; dinleyici hangisini
+                duyduğunu bilmeli. Canlıda parça künyesi yok — akışta
+                ne çaldığını yayın sunucusu söylüyor. */}
+            {source === 'canli' ? (
+              <span className="font-medium text-success">Canlı yayın</span>
+            ) : (
+              <>
+                <span className="font-medium">{current.title}</span>
+                <span className="ml-2 text-muted-foreground">
+                  {current.artist}
+                </span>
+                {/* Sessiz bir bekleme, açıklanmamış bir gecikmedir. */}
+                {pendingLive && (
+                  <span className="ml-2 text-warning">
+                    · canlı yayın bu parçadan sonra
+                  </span>
+                )}
+              </>
+            )}
           </Link>
 
           <label className="hidden items-center gap-1.5 sm:flex">
