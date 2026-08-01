@@ -264,21 +264,73 @@ seçicisi de İKİ KEZ yanlıştı (`h1 ~ * p` kardeş değil,
 yarım ölçüyordu. Üçü de düzeltildi; kural artık carousel bölgesindeki
 her düğmeyi ve her metni kapsıyor.
 
-### 3.4 "Bu Gece" astronomi hava modülü — **NOT_STARTED**
+### 3.4 "Bu Gece" astronomi hava modülü — **PARTIAL**
 
-Belge satır 424–459. Zorunlu 18 bilgi alanı, tarih kontrolleri (tek/çift
-ok, manuel seçici, "Bugün", klavye), sağlayıcı adapter katmanı, cache,
-rate limit ve veri kaynağı zamanı. Modülün bir kısmı zaten var; alan alan
-karşılaştırma yapılmadı.
+Belgenin zorunlu tuttuğu 18 bilgi alanı tek tek karşılaştırıldı.
+
+| # | Alan | Durum | Nerede |
+|---|---|---|---|
+| 1 | Seçili konum | DONE | `LocationPicker` panel içinde |
+| 2 | Tarih | DONE | Gece seçici + "Bu gece" |
+| 3 | Gün batımı / doğumu | DONE | `NightTimelineChart` ekseninin iki ucu |
+| 4 | Astronomik alacakaranlık başlangıç/bitiş | DONE | "Karanlık penceresi" okuması |
+| 5 | Ay doğuş / batış | DONE | Ay kartı ipucu |
+| 6 | Ay fazı ve aydınlanma | DONE | Ay kartı + `MoonDisc` |
+| 7 | Sıcaklık | DONE | **Yeni** sıcaklık kartı |
+| 8 | Hissedilen sıcaklık | DONE | **Yeni** — `apparent_temperature` |
+| 9 | Nem | DONE | Çiylenme kartı ipucu |
+| 10 | Çiy noktası ve yoğuşma riski | DONE | Çiylenme kartı + `dewRisk` |
+| 11 | Rüzgâr ve hamle | DONE | **Yeni** rüzgâr kartı — veri çekiliyordu ama panelde HİÇ görünmüyordu |
+| 12 | Yağış ihtimali | DONE | **Yeni** — bulut kartı ipucunda |
+| 13 | Görüş mesafesi | DONE | `layers.visibilityKm` |
+| 14 | Genel bulut örtüsü | DONE | Bulut kartı, sol sütunda ana metrik |
+| 15 | Alçak/orta/yüksek bulut | DONE | Bulut kartı ipucu |
+| 16 | Seeing | DONE | Seeing kartı + `estimateSeeing` |
+| 17 | **Transparency** | **NOT_STARTED** | Doğrudan API alanı değil. Yaygın vekiller (aerosol optik derinliği, toplam su buharı sütunu) Open-Meteo'nun tahmin ucunda değil, hava kalitesi ucunda. Nem ve çiy noktasından "transparency" türetip öyle adlandırmak, ölçülmemiş bir metriği ölçülmüş gibi sunmak olurdu |
+| 18 | Gözlem / astrofotoğraf uygunluk skoru | PARTIAL | Tek "gece skoru" var; belge İKİ ayrı skor istiyor (gözlem gözle, astrofotoğraf rehberli poz — rüzgâr ve seeing ağırlıkları farklı olmalı) |
+
+**Tarih kontrolleri**
+
+| Madde | Durum |
+|---|---|
+| Tek sol/sağ ok — bir gün | DONE |
+| Çift ok — bir hafta | NOT_STARTED |
+| Manuel tarih seçici | NOT_STARTED |
+| "Bugün" kısayolu | NOT_STARTED |
+| Klavye erişimi | DONE (düğmeler) |
+| Tahmin ufku dışında sahte veri göstermeme | DONE — `FORECAST_DAYS = 16`, ötesinde açıkça "hava verisi yok" |
+| Tarih değişince konumu kaybetmeme | DONE |
+| URL/state ile paylaşılabilir tarih+konum | NOT_STARTED |
+| Europe/Istanbul + seçili konum zaman dilimi | DONE — gece tarihi IANA diliminde kuruluyor |
+
+**Sağlayıcı katmanı**
+
+| Madde | Durum |
+|---|---|
+| Adapter katmanı | DONE — meteoblue + Open-Meteo, ortak `SkyConditions` |
+| Hata fallback'i | DONE — meteoblue düşerse Open-Meteo |
+| Veri kaynağı görünürlüğü | DONE — `source` arayüzde |
+| Cache | DONE — 15 dk, `retry` önbelleği atlıyor |
+| Rate limit | DONE — meteoblue vekilinde |
+| Sağlayıcı seçiminin admin ayarından değişmesi | NOT_STARTED — `site_settings` tablosu gerekiyor (Faz 10) |
+| Veri kaynağı ZAMANI görünürlüğü | PARTIAL — `observedAt` var, arayüzde gösterilmiyor |
 
 ---
 
 ## Sonraki oturum için devam notu
 
-**Bittiği yer:** Faz 2 kapandı. Faz 3'ün 3.1'i kapandı; 3.2 ve 3.3'ün
-ölçülebilir tamamı bitti, kalanları `home_modules` tablosuna (Faz 10)
-bağlı. Sıradaki iş **Faz 3.4 — "Bu Gece" modülünün 18 zorunlu alanı ve
-tarih kontrolleri** (belge satır 424–459).
+**Bittiği yer:** Faz 2 kapandı. Faz 3'ün 3.1'i kapandı; 3.2, 3.3 ve
+3.4'ün ölçülebilir tamamı bitti. Faz 3'te kalanlar iki kümede
+toplanıyor:
+  · **Faz 10'a bağlı** (tablo gerektiriyor): hero slaytlarının admin
+    yönetimi, "boşsa gizle" anahtarı, hava sağlayıcı seçimi.
+  · **Bağımsız, yapılabilir**: tarih kontrolleri (çift ok, manuel seçici,
+    "Bugün", URL'de paylaşılabilir tarih), iki ayrı uygunluk skoru,
+    `observedAt`ın arayüzde gösterilmesi.
+
+Sıradaki iş **Faz 4 — ortak arama, filtreleme, sıralama, görünüm**
+(belge satır 462–548). Faz 3'ün bağımsız kalanları Faz 10'dan önce
+kapatılabilir.
 
 **Faz 3 için hazır bilgi:**
 - `check:viewports` artık `test:all` içinde ve geçiyor; ana sayfayı
