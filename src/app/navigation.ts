@@ -312,6 +312,12 @@ export const siteMap: NavGroup[] = [
     items: [
       { label: 'Üye Paneli', to: '/panel', description: 'Fotoğraflar, kota, üyelik' },
       {
+        label: 'Üyelik ve Premium',
+        to: '/uyelik',
+        description: 'Kademeler, kotalar ve Premium neden var',
+        keywords: ['üyelik', 'premium', 'kota', 'plan', 'ücret'],
+      },
+      {
         label: 'Kaydedilenler',
         to: '/panel/kaydedilenler',
         description: 'Sonra bakmak üzere ayırdığın fotoğraflar',

@@ -345,6 +345,10 @@
       "destination": "/app.html"
     },
     {
+      "source": "/uyelik",
+      "destination": "/app.html"
+    },
+    {
       "source": "/van-astronomi-etkinlikleri",
       "destination": "/app.html"
     },

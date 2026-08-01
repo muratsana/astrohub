@@ -496,6 +496,12 @@ export const appRoutes = [
         ),
       },
       {
+        path: 'uyelik',
+        element: route(
+          named(() => import('@/features/membership/PremiumPage'), 'PremiumPage')
+        ),
+      },
+      {
         path: 'kullanim-kosullari',
         element: route(
           named(() => import('@/features/static/TermsPage'), 'TermsPage')

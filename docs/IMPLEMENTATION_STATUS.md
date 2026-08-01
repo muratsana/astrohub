@@ -30,7 +30,7 @@ tabloda `DONE` ile birleştirilmez:
 | 6 | Etkinlik takip ve hatırlatma | 633–682 | PARTIAL³ |
 | 7 | Çalışan AstroHub Radyo | 683–832 | PARTIAL⁴ |
 | 8 | AstroHub TV ve YouTube'a hazır altyapı | 833–922 | PARTIAL⁵ |
-| 9 | Standart/Premium üyelik altyapısı | 923–1005 | PARTIAL⁶ |
+| 9 | Standart/Premium üyelik altyapısı | 923–1005 | IMPLEMENTED_DISABLED⁶ |
 | 10 | Admin panelinden kodsuz site yönetimi | 1006–1164 | NOT_STARTED |
 | 11 | Zorunlu ürün modülleri | 1165–1349 | NOT_STARTED |
 | 12 | Organik kullanıcı kazanımı | 1350–1419 | NOT_STARTED |
@@ -41,12 +41,15 @@ tabloda `DONE` ile birleştirilmez:
 | 17 | Test stratejisi ve kabul kriterleri | 1691–… | NOT_STARTED |
 | 18 | (belgenin sonu) | …–1956 | NOT_STARTED |
 
-⁶ **Faz 9'un veri katmanı bitti, arayüzü sürüyor.** Kota ayarları,
-kademe fonksiyonları, yarış durumuna kapalı fotoğraf kotası, depolama
-sayacı, test entitlement'ı ve ödeme anahtarı (KAPALI) kuruldu; yedi
-kural canlıda ölçüldü. **Ödeme sağlayıcısı kullanıcı kararıyla
-kurulmuyor** — §12.2 zaten bu fazda bağlanmamasını istiyor. Kalan iş:
-premium sayfası, kota göstergesi ve panel üyelik yüzeyi.
+⁶ **Faz 9 tamam — ödeme kapalı olduğu için `IMPLEMENTED_DISABLED`.**
+§12.2 bu etiketi açıkça öneriyor: "bu faz kod ve test açısından
+tamamlanırsa `IMPLEMENTED_DISABLED` olarak raporlanabilir".
+
+Kota ayarları, kademe fonksiyonları, yarış durumuna kapalı fotoğraf
+kotası, depolama sayacı, test entitlement'ı, `/uyelik` sayfası ve panel
+düğmesi bitti. Ödeme anahtarı KAPALI ve satın alma yüzeyi hiç yok —
+devre dışı düğme bile. **Ödeme sağlayıcısı kullanıcı kararıyla
+kurulmuyor**; sağlayıcı seçilince yazılacak tek şey webhook.
 
 ⁵ **Faz 8'de kodla kapatılabilecek iş kalmadı.** Şema, YouTube OAuth
 adaptörü, kota izleme, video arşivi/seri sayfaları, yayın takibi ve
@@ -1056,6 +1059,75 @@ alınmasıydı.
 Birincisi `0011`den beri var: gömme adresi **kodda** kuruluyor,
 veritabanından gelmiyor. İkincisi kimlik biçim kısıtı ve `0055` onu
 `tv_videos`a da taşıdı — canlıda ölçüldü, `'"><script>x'` reddedildi.
+
+---
+
+## Faz 9 — ayrıntı
+
+Migration `0057`. Arayüz: `/uyelik` sayfası, panelde test premium
+düğmesi, `membership.ts` servis katmanı.
+
+### Ödeme, üyeliğin sebebi değil tetikleyicisi
+
+Sınır bilinçli bir yerde: `memberships` kademeyi tutuyor ve onu
+değiştiren şey bugün yönetici, yarın bir ödeme webhook'u olacak.
+Sağlayıcı alanları (`provider`, `provider_customer_id`,
+`provider_subscription_id`) `0021`den beri var ve boş bekliyor.
+Sağlayıcı seçilince yazılacak tek şey o webhook — kademe, kota ve
+yetki mantığı yerinde duruyor.
+
+Ödeme anahtarı `app_settings.billing`de, kodda değil: koda gömseydik
+açmak için yeni bir dağıtım gerekirdi. Arayüz varsayılan olarak KAPALI
+kabul ediyor — ayar okunamazsa açık sanmak, kullanıcıyı çalışmayan bir
+ödeme akışına sokmak olurdu.
+
+### Satın alma düğmesi yok — devre dışı bile değil
+
+§12.2'nin son maddesi "premium kapalıyken public kullanıcı 'satın al'
+düğmesiyle çıkmaza sokulmamalıdır" diyor. Devre dışı bir düğme bu
+maddeyi teknik olarak sağlar ve ruhunu çiğner: kullanıcı ona bakıp
+bekler, tıklamayı dener, neden çalışmadığını arar.
+
+`/uyelik` sayfası bunun yerine ne olduğunu ve ne zaman olacağını
+söylüyor. Kart bilgisi istenecek bir alan sayfada hiç yok.
+
+### Yarış durumu kapatıldı
+
+`enforce_photo_quota` say-sonra-karşılaştır yapıyordu: iki eşzamanlı
+yayımlama isteği ikisi de "4 var, limit 5" görüp geçebiliyordu — sonuç
+6 fotoğraf. §12.3 bunu adıyla anıyor. Kullanıcı başına danışma kilidi
+eklendi; aynı kullanıcının kontrolleri sıraya giriyor, farklı
+kullanıcılar birbirini beklemiyor.
+
+### Türetilmiş dosyalar depolamaya giriyor — ama eski satırlar sayılmıyor
+
+§12.1: türetilmiş varyantlar fotoğraf ADEDİNE girmiyor, DEPOLAMAYA
+giriyor. `photo_versions`ta boyut kolonu yoktu; eklendi. **Eski satırlar
+boş kalıyor** ve bu dürüst bir eksik: geriye dönük doldurmak her dosyayı
+storage'dan okumayı gerektirir. Bugün depolama kullanımı olduğundan AZ
+görünüyor, fazla değil.
+
+### Test premium: süre ve işaret zorunlu
+
+Süresiz bir test premium'u, unutulduğunda ücretsiz kalıcı premium olur —
+en fazla 90 gün. `provider='test'` kalıcı bir işaret: sağlayıcı
+bağlandığında gerçek abonelikleri bunlardan ayırmak gerekecek. Geri
+alma yalnızca test üyeliğine dokunuyor; gerçek bir aboneliği sitede
+kapatıp sağlayıcıda açık bırakmak, kullanıcının parasını ödeyip
+erişimini kaybetmesi olurdu.
+
+### Premium bitince fotoğraflar silinmiyor
+
+§12.3'ün şartı. Kota aşımı `over_limit` olarak dönüyor ve `/uyelik`
+sayfası bunu açıkça yazıyor: "mevcut fotoğrafların silinmedi ve
+silinmeyecek — yalnızca yeni fotoğraf yayımlaman durduruldu". Kullanıcı
+bunu görmezse hesabını kaybettiğini sanar.
+
+### Enum değerleri tahmin edilmez
+
+Yazarken `interval` ve `status` enum değerlerini tahmin etmiştim
+(`'month'`, `'cancelled'`). İkisi de tabloda yok — gerçekte
+`monthly`/`yearly` ve `canceled` (tek L). Veritabanı reddetti.
 
 ---
 

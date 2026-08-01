@@ -3,6 +3,7 @@ import { Panel } from '@/components/ui/Panel';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Input, Select } from '@/components/ui/Input';
+import { grantTestPremium } from '@/services/content/membership';
 import { Alert } from '@/components/ui/Alert';
 import { useAuth } from '@/features/auth/AuthContext';
 import {
@@ -254,6 +255,37 @@ export function UserControl() {
                         {new Date(u.membershipEnds).toLocaleDateString('tr-TR')}
                       </span>
                     )}
+
+                    {/*
+                      TEST PREMIUM — §12.2 "admin test kullanıcılarına
+                      kontrollü Premium entitlement verebilmelidir".
+
+                      Yukarıdaki açılır liste üyelik DURUMUNU değiştiriyor;
+                      bu düğme farklı bir şey yapıyor ve ayrı durmasının
+                      sebebi o: 30 GÜNLÜK bir süre koyuyor, kaydı
+                      `provider='test'` diye işaretliyor ve denetim
+                      kaydına yazıyor.
+
+                      Süre zorunlu çünkü süresiz bir test premium'u,
+                      unutulduğunda ücretsiz kalıcı premium olur.
+                      İşaret zorunlu çünkü ödeme sağlayıcısı bağlandığında
+                      gerçek abonelikleri bunlardan ayırmak gerekecek.
+                    */}
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="secondary"
+                      disabled={busy}
+                      onClick={() =>
+                        /* `run` void bekliyor; dönen bitiş tarihi
+                           listenin tazelenmesiyle zaten görünüyor. */
+                        void run(async () => {
+                          await grantTestPremium(u.id, 30);
+                        })
+                      }
+                    >
+                      Test premium (30 gün)
+                    </Button>
                   </div>
 
                   {/*
