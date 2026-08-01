@@ -24,7 +24,7 @@ tabloda `DONE` ile birleştirilmez:
 | 0 | Envanter, baseline, güvenli ortam | 102–135 | DONE |
 | 1 | Veri modeli, Supabase güvenliği, merkezi yapılandırma | 136–257 | PARTIAL |
 | 2 | Tek tasarım sistemi ve bütüncül arayüz | 258–355 | PARTIAL |
-| 3 | Ana sayfa, navbar, hero, hava durumu | 356–461 | NOT_STARTED |
+| 3 | Ana sayfa, navbar, hero, hava durumu | 356–461 | PARTIAL |
 | 4 | Ortak arama, filtreleme, sıralama, görünüm | 462–548 | NOT_STARTED |
 | 5 | Bildirim, mesajlaşma, sosyal aktivite | 549–632 | NOT_STARTED |
 | 6 | Etkinlik takip ve hatırlatma | 633–682 | NOT_STARTED |
@@ -175,7 +175,7 @@ orandaydı**; **hiçbir kartın yükleme iskeleti yoktu.**
 | İçerik tipini gösteren tutarlı badge | DONE | `PlateFrame` rozet yuvası |
 | Dağılmayı engelleyen kapı | DONE | Kaynak taraması: kopya kök + kayıt dışı oran |
 
-### 2.3 Alan kullanımı — **PARTIAL**
+### 2.3 Alan kullanımı — **DONE**
 
 `scripts/check-viewports.mjs` 11 çözünürlüğü gerçek tarayıcıda ölçüyor.
 
@@ -185,9 +185,9 @@ orandaydı**; **hiçbir kartın yükleme iskeleti yoktu.**
 | Yatay taşma | DONE | 320×568'de 9px taşıyordu (künye 143 + aksiyon 158 > kapsayıcı 288); kelime markası 360px altında düşüyor |
 | Dokunmatik hedefler | DONE | `check:a11y` zaten ölçüyor: ikon ≥44px, diğer ≥24px |
 | Gereksiz üst bilgi şeritleri | DONE | Hero dikey dolgusu alındı |
-| **1280×720 / 1366×768'de fold üstü içerik** | **NOT_STARTED** | Ölçüldü: içerik 769px'de başlıyor, fold 720/768. Hero'nun `min-h`i bağlayıcı kısıt değilmiş — içeriğinin yeniden düzenlenmesi gerekiyor ve bu **Faz 3**'ün konusu |
-| Büyük ekranda aşırı yayılma | NOT_STARTED | Ölçüm eklendi ama eşik konmadı |
-| `check:viewports` kapı zincirinde | NOT_STARTED | Bilinçli: yukarıdaki madde açıkken zincire eklemek kapıyı yalancı yapardı |
+| **1280×720 / 1366×768'de fold üstü içerik** | DONE | Faz 3.1'de kapandı: içerik 779px → 583px. Kapı 2 sayfa × 11 çözünürlükte geçiyor |
+| Büyük ekranda aşırı yayılma | DONE | `--spacing-content` 1520px; 2560px'te içerik sütunu 1424px'te duruyor (ölçüldü) |
+| `check:viewports` kapı zincirinde | DONE | `test:all` içinde |
 
 ### 2.4 Gereksiz açıklama metinleri — **DONE**
 
@@ -203,21 +203,61 @@ değerlendirildi.
 
 ---
 
+## Faz 3 — ayrıntı
+
+### 3.1 Navbar üzerindeki hava durumu — **DONE**
+
+| Madde | Durum | Kanıt |
+|---|---|---|
+| Tekrar eden hava şeridi kaldırıldı | DONE | `StatusBar.tsx` silindi; kabuk 88px → 56px |
+| Aynı veri "Bu Gece"de | DONE | Bulut ve seeing orada, çizelgeyle birlikte |
+| Gereksiz ağ isteği | DONE | `useSkyConditions` kabuktan çıktı; hava ile ilgisi olmayan sayfalar artık istek kurmuyor |
+| Navigasyon hiyerarşisi | DONE | Tek yatay şerit kaldı |
+| Konum erişimi korundu | DONE | Üst çubukta (≥sm) ve çekmecede (<sm) |
+
+### 3.2 Boş fotoğraf modülü — **NOT_STARTED**
+
+Belge satır 380–402. Altı durumun ayrıştırılması (içerik yok / yükleniyor
+/ hata / görsel yok / moderasyonda / admin kapattı), boşsa otomatik
+gizlenme, admin'den yönetilebilir "boşsa gizle" ve E2E doğrulaması.
+
+### 3.3 Hero banner — **PARTIAL**
+
+| Madde | Durum | Kanıt |
+|---|---|---|
+| Hero ana içeriği aşağı itmiyor | DONE | 1280×720'de içerik 583px'de; kapı geçiyor |
+| Klavye ile kontrol | DONE | Sol/sağ ok, göstergeler gerçek düğme |
+| Erişilebilir isimler | DONE | `aria-roledescription="carousel"` |
+| `prefers-reduced-motion` | DONE | Otomatik geçiş hiç kurulmuyor |
+| Hover/focus sırasında pause | DONE | `onMouseEnter` / `onFocusCapture` |
+| Okların metnin üzerine gelmemesi | NOT_STARTED | Oklar `absolute`; dar ekranda metin sütunuyla örtüşme ölçülmedi |
+| Mobilde swipe | NOT_STARTED | — |
+| Otomatik geçişi durdurma düğmesi | NOT_STARTED | Kullanıcının açıkça durdurabileceği bir kontrol yok |
+| Admin'den yayın tarihi, sıra, odak noktası, CTA | NOT_STARTED | — |
+| Görsel–metin kontrast kontrolü | NOT_STARTED | Perde var ama ölçülmedi |
+
+### 3.4 "Bu Gece" astronomi hava modülü — **NOT_STARTED**
+
+Belge satır 424–459. Zorunlu 18 bilgi alanı, tarih kontrolleri (tek/çift
+ok, manuel seçici, "Bugün", klavye), sağlayıcı adapter katmanı, cache,
+rate limit ve veri kaynağı zamanı. Modülün bir kısmı zaten var; alan alan
+karşılaştırma yapılmadı.
+
+---
+
 ## Sonraki oturum için devam notu
 
-**Bittiği yer:** Faz 2'nin 2.1, 2.2 ve 2.4'ü kapandı; 2.3 ölçüldü ve
-yarısı kapandı. Sıradaki iş **Faz 3 — ana sayfa, navbar, hero, hava
-durumu** (belge satır 356–461).
+**Bittiği yer:** Faz 2 kapandı (2.1/2.2/2.3/2.4 DONE). Faz 3'ün 3.1'i
+kapandı, 3.3 kısmen. Sıradaki iş **Faz 3.2 — boş fotoğraf modülü**
+(belge satır 380–402), sonra 3.3'ün kalanı ve 3.4.
 
-**Faz 3'e devredilen ölçülmüş iş** (yeniden keşfetmeye gerek yok):
-- Ana sayfada içerik 1366px ve altında fold'un altında başlıyor.
-  1280×720 ölçümü: kabuk 88 · başlık altı 348 · içerik 769 · ekran 720.
-- Hero yüksekliğini `min-h` belirlemiyor, İÇERİK belirliyor: üç satırlık
-  48px başlık + açıklama + düğme. Küçültmek için başlık ölçeği ya da
-  carousel yapısı değişmeli.
-- Ana sayfada hero'nun hemen altında bir konum izni şeridi ve bir konum
-  çubuğu var; ikisi birlikte ~85px. Fold hesabına dahil.
-- Faz 3 bitince `check:viewports` `test:all` zincirine eklenmeli.
+**Faz 3 için hazır bilgi:**
+- `check:viewports` artık `test:all` içinde ve geçiyor; ana sayfayı
+  büyüten her değişiklik kapıda düşer. 1280×720 payı: içerik 583px'de,
+  eşik 600px (720 − 120).
+- Hero yüksekliğini `min-h` değil İÇERİK belirliyor.
+- Ana sayfadaki fotoğraf şeridi `RecentRecords.tsx`; boş durum ayrımı
+  yok, `ContentCardSkeleton` hazır ve bağlanmayı bekliyor.
 
 **Çalışma yöntemi** (bu oturumda işe yaradı):
 - Master belgeyi TAMAMEN okuma; yalnızca faz satır aralığını oku
