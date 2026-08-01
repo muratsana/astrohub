@@ -151,6 +151,20 @@ export function parseMeteoblue(
     cloudCover: total,
     humidity,
     temperature,
+    /*
+     * Üç alan meteoblue'nun bu uç noktasında YOK ve `null` bırakılıyor.
+     *
+     * Hissedilen sıcaklığı yer sıcaklığına, hamleyi ortalama rüzgâra
+     * eşitlemek kolay olurdu ama ikisi de yanlış bilgi üretir: hamle,
+     * ortalamanın üç katına çıkabilir ve poz sırasında montürü sarsan
+     * şey odur. `null`, arayüzde "veri yok" olarak okunuyor.
+     *
+     * Open-Meteo yedeği bu üçünü veriyor; kullanıcı hangi servisten
+     * baktığını `source` alanından zaten görüyor.
+     */
+    apparentTemperature: null,
+    windGust: null,
+    precipitationProbability: null,
     /* meteoblue çiy noktasını doğrudan vermiyor; sıcaklık ve bağıl
        nemden hesaplanıyor (Magnus). Hesaplanamıyorsa sıcaklığın kendisi
        yazılıyor — o durumda "açıklık sıfır", yani en kötü durum

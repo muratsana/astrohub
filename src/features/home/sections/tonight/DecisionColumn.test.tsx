@@ -22,6 +22,9 @@ import type { SkyConditions } from '@/features/weather/openMeteo';
 const CONDITIONS: SkyConditions = {
   cloudCover: 8,
   humidity: 42,
+  apparentTemperature: null,
+  windGust: null,
+  precipitationProbability: null,
   temperature: 19,
   dewPoint: 7,
   windSpeed: 6,
