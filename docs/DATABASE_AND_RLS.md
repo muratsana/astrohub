@@ -386,6 +386,7 @@ uygulananlar:
 
 | Dosya | Konu |
 |---|---|
+| `0034` | **Yeniden yazıldı** — plate solve yoklama zamanlayıcısı (aşağıda) |
 | `0036` | Puanlama sayaçları ve koruma tetikleyicisi |
 | `0037` | RLS InitPlan optimizasyonu (52 politika) |
 | `0038` | İlan fotoğrafları |
@@ -403,3 +404,26 @@ uygulananlar:
 `0040` kendi kendini doğrular: seed sonunda il sayısı 81 değilse
 `raise exception` ile migration düşer. Sessizce eksik veriyle
 tamamlanmasındansa gürültüyle başarısız olması yeğdir.
+
+### Kaybolmuş göç: `0034` (2026-08-01'de bulundu)
+
+`0034_plate_solve_yoklama_zamanlayici` uzak veritabanının geçmişinde
+vardı (`20260731140452`) ama **dosyası depoda yoktu**: `0033`ten
+`0035`e atlıyordu ve silindiğine dair bir commit de yoktu — hiç
+işlenmemişti.
+
+Sonucu sessiz ama ağır: **sıfırdan kurulan bir projede cron işi hiç
+oluşmazdı.** Plate solve kuyruğu dolar, `kuyrukta` durumundaki
+fotoğraflar sonsuza dek orada kalırdı — hata vermeden, çünkü kimse
+yoklamıyor. Üretimde iş zaten kurulu olduğu için de fark edilmezdi.
+
+Dosya canlı veritabanından okunarak yeniden kuruldu: `cron.job`
+tablosundaki komut, `vault.secrets`teki iki anahtar adı ve eklentilerin
+gerçek şemaları (`pg_net` → `extensions`). Yerelde iki durumda ölçüldü —
+sır yokken iş kurulmuyor ve `notice` düşüyor, sır varken tek kopya
+kuruluyor ve ikinci çalıştırma çoğaltmıyor.
+
+**Ders:** T-201 "migration hizalaması" turu dosya SAYISINI
+karşılaştırmıştı. Karşılaştırılması gereken şey uzak GEÇMİŞ (`supabase
+migration list --linked`, depoda `npm run db:migrations`) ile dosya
+listesiydi. Sayı tutabilir ve yine de bir dosya eksik olabilir.

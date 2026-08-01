@@ -57,6 +57,14 @@ gerçek cihaz/tarayıcı matrisi (kum havuzunda tek Chromium) ve
 birleştirmesi (ikisi de Faz 15'e atandı, açık boşluk değil düzen işi).
 Otomatik devam turu buradan **Faz 3'e** geçmeli.
 
+## Bulunan ve kapatılan sessiz hatalar
+
+| Ne | Nasıl bulundu | Nerede |
+|---|---|---|
+| `0034` göç dosyası depoda yoktu (uzak geçmişte vardı) — sıfırdan kurulumda plate solve cron işi hiç oluşmazdı | Faz 6 için cron kalıbına bakarken `ls` 0033'ten 0035'e atladı | `DATABASE_AND_RLS.md` §Kaybolmuş göç |
+| `app.notify` istemciye açıktı — "bildirim üretimi kapalı" kararını boşa çıkarıyordu | Faz 5 sonrası yetki denetimi | `0045` |
+| `0044`ün `PUBLIC` revoke'u yetmiyordu; `anon`un açık grant'ı duruyordu | Supabase denetçisi ısrar edince `proacl` okundu | `0046` |
+
 ## Bilinen ortam kısıtları
 
 - **Otomatik devam oturumlarında MCP araçları yok.** Tetikleyici
