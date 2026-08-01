@@ -1,5 +1,6 @@
 import { getSupabase, isSupabaseConfigured } from '@/services/supabase/client';
 import { cities as seedCities, type City } from '@/features/location/cities';
+import { normalizeTr } from '@/lib/text';
 
 /**
  * TÜRKİYE İLLERİ — tek merkezî kaynak (Faz 1.1).
@@ -46,16 +47,12 @@ export interface Province {
   isActive: boolean;
 }
 
-const HARFLER: Record<string, string> = {
-  ı: 'i', ş: 's', ğ: 'g', ü: 'u', ö: 'o', ç: 'c', â: 'a', î: 'i', û: 'u',
-};
-
-/** Veritabanındaki `app.tr_normalize` ile AYNI kuralı uygular. */
-export function normalizeTr(input: string): string {
-  return input
-    .toLocaleLowerCase('tr-TR')
-    .replace(/[ışğüöçâîû]/g, (c) => HARFLER[c] ?? c);
-}
+/**
+ * Normalizasyon `lib/text.ts`te (Faz 4.1). Buradaki kopya kaldırıldı;
+ * kural veritabanındaki `app.tr_normalize` ile birebir aynı kalmalı ve
+ * iki kopyanın ayrışması "cankiri" arayanın Çankırı'yı bulamaması demek.
+ */
+export { normalizeTr };
 
 /** Arama terimi bir ile uyuyor mu — baştan eşleşme önce gelir. */
 export function matchesProvince(p: Province, term: string): boolean {
