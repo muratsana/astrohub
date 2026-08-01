@@ -752,10 +752,14 @@ türü), `0053` (podcast); üçü de uzak projeye uygulandı. Sunucu tarafı:
 | Sağlık yoklaması ve teslim kaydı | DONE | `radio_stream_health` |
 | Dağıtım dosyaları, güvenlik, yedekleme | DONE | `deploy/radyo/` |
 | Program takvimi hesabı | DONE | 25 test |
+| Program takvimi arayüzü (haftalık ızgara, şu an / sonraki) | DONE | `RadioSchedule` |
+| Servis katmanı (istasyon, canlılık, program, takip) | DONE | `radioStation.ts` |
+| Panel **Radyo** sekmesi (istasyon durumu, programlar, canlı duyurusu) | DONE | `RadioControl` |
 | **Canlı yayın aktivasyonu** | **IMPLEMENTED_BLOCKED_EXTERNAL** | VPS yok |
-| Kullanıcı sayfaları, panel sekmesi | NOT_STARTED | sıradaki iş |
+| Program / yayıncı / podcast / bölüm detay SAYFALARI | NOT_STARTED | sıradaki iş |
+| Media Session, yeniden bağlanma, kalite seçimi | NOT_STARTED | canlı yayın gerektiriyor |
 
-### "Canlı" üç yerde birden korunuyor
+### "Canlı" beş yerde birden korunuyor
 
 §10.2'nin son maddesi sahte "canlı" ibaresini yasaklıyor. Tek bir yerde
 uygulamak yetmezdi:
@@ -771,6 +775,16 @@ uygulamak yetmezdi:
 3. **Takvim "canlı" demiyor.** `currentOccurrence` "bu saatte şu program
    olmalı" diyor. İkisini karıştırmak, sunucu düştüğünde sitenin "Gece
    Gökyüzü canlı yayında" yazması demekti.
+4. **Arayüzde dört durumlu rozet**, iki değil: `CANLI` (yayın ayakta ve
+   takvimde program var), `YAYINDA` (yayın ayakta, takvim boş — AutoDJ),
+   `PROGRAMDA — yayın kapalı` (takvimde var ama yayın yok),
+   `ÇEVRİMDIŞI`. Üçüncüsü tuhaf görünüyor ve tam da bu yüzden var:
+   takvimi hiç göstermemek dinleyiciyi "program iptal mi oldu" diye
+   bırakırdı.
+5. **Saat tik atıyor.** `new Date()`i render sırasında kurup bırakmak,
+   sayfa açık kalınca "şu an"ı donduruyordu — program bittiği hâlde
+   "Şu an: Gece Gökyüzü" yazmaya devam ederdi. Canlı olmayan bir şeyi
+   canlı göstermenin sessiz hâli; otuz saniyede bir tik.
 
 Bunun **tersi de** ölçüldü: AzuraCast'in `live.is_live` alanı "DJ bağlı
 mı" demek, "yayın var mı" değil. AutoDJ çalarken `false` döner ama
@@ -872,16 +886,17 @@ migration (`0051`–`0053`), on bir yeni tablo, AzuraCast adaptörü, sağlık
 yoklaması, dağıtım paketi (`deploy/radyo/`) ve program takvimi hesabı.
 Migration numaraları `0054`ten devam ediyor.
 
-**Sıradaki iş: Faz 7'nin arayüzü.** Sırayla:
-  1. Servis katmanı — istasyon, program, slot, yayıncı, podcast okumaları
-     (`src/services/content/radio.ts`). Şema hazır, RLS ölçüldü.
-  2. `RadioPage`e program takvimi (haftalık ızgara) — hesap
-     `src/features/radio/schedule.ts`te, 25 testle sabit.
-  3. Program / yayıncı / podcast / bölüm detay sayfaları + rotalar +
-     `vercel.json` rewrite'ları.
-  4. Program takip düğmesi (`program_follows`), Media Session metadata,
-     bağlantı kopmasında yeniden bağlanma.
-  5. Panelde **Radyo** sekmesi (§10.5'in on beş alt bölümü).
+**Faz 7'nin arayüzü başladı**: servis katmanı, program takvimi ve panel
+Radyo sekmesi bitti. **Sıradaki iş** sırayla:
+  1. Program / yayıncı / podcast / bölüm detay sayfaları + rotalar +
+     `vercel.json` rewrite'ları + prerender girdileri.
+  2. Program takip düğmesi — kanca hazır (`useProgramFollow`), düğmesi
+     detay sayfasını bekliyor.
+  3. Podcast arşivi ve bölüm oynatıcısı (`episode_progress` şeması
+     hazır, `count_episode_play` RPC'si hazır).
+  4. Media Session metadata, bağlantı kopmasında yeniden bağlanma,
+     kalite seçimi — üçü de **canlı yayın gerektiriyor**, bugün
+     doğrulanamaz.
 
 Hazır olan parçalar: `RadioVault` (admin mp3 kasası), `BroadcastControl`
 (yayın programı), üst çubuktaki play/pause ve rota değişiminde ayakta
