@@ -348,16 +348,31 @@ hiçbirinde yok.
 | Null değerlerin kontrollü konumu | DONE | Eksik sayısal değer sona; sıfır sayılmıyor |
 | Loading / empty / error | DONE | `ContentSelection.status` (Faz 3.2) |
 
-### Geçiş — **PARTIAL · 1/10**
+### Geçiş — **DONE · 10/10**
 
-`adoption.test.ts` iki yönlü sayaç: geçen sayfa listeden çıkarılmazsa
-düşer, listede olmayan yeni sayfa kendi filtre durumunu kurarsa düşer.
+`adoption.test.ts` sayaç olarak başladı (borç ne saklanabilir ne
+büyüyebilirdi), liste boşalınca kapıya dönüştü: kendi filtre durumunu
+kuran YENİ bir sayfa artık düşer.
 
-| Sayfa | Durum |
+| Sayfa | Not |
 |---|---|
-| Galeri | DONE — tarayıcıda doğrulandı; ASCII katlama artık çalışıyor ("nevsehir" → Nevşehir) |
-| Pazaryeri, Ekipman, Topluluklar, Saha, Etkinlikler, Forum, Haberler, Yazılar | NOT_STARTED | Mekanik geçiş; desen `gallerySpec.ts`te |
-| **Hedefler** | NOT_STARTED — **dikkat** | `searchTargets` ALAKA SIRALAMASI yapıyor (tam eşleşme > baştan > içinde) ve genel motor alakayı modellemiyor. Naif taşıma o sıralamayı kaybettirir. Boşluk duyarsızlığı ortak motora eklendi (m 31 ≡ m31), kalan tek fark alaka. Taşımadan önce motora alaka sıralaması eklenmeli |
+| Galeri | ASCII katlama kazandı ("nevsehir" → Nevşehir) |
+| Topluluklar | — |
+| Saha | HİÇ filtre yoktu; arama + Bortle facet'i + dört sıralama geldi |
+| Pazaryeri | Şehir filtresi geldi — ikinci elde elden teslim yaygın |
+| Haberler | Arama hiç yoktu; kategori artık paylaşılabiliyor |
+| Yazılar | Arama hiç yoktu; seviye + kategori paylaşılabiliyor |
+| Ekipman | **Kısmi ve bilerek**: kategori rota yolunda (`/ekipman/montur`) ve o rotalar prerender ediliyor; sorgu parametresine taşımak verilmiş bağlantıları kırardı. Explorer kategorinin üstünde çalışıyor |
+| Etkinlikler | Belgenin istediği gelecek/geçmiş süzgeci geldi; kıyas anı değil GÜNÜ alıyor |
+| **Hedefler** | Alaka sıralaması motora eklendikten SONRA taşındı — naif taşıma "m31" aramasında tam eşleşmeyi ilk sıradan düşürürdü |
+| **Forum** | Sabitlenmiş konular her sıralamada üstte kalacak şekilde taşındı; bu bir sıralama tercihi değil moderasyon kararı. Dört sıralamada tarayıcıda ölçüldü |
+
+Motora geçiş sırasında eklenen iki yetenek:
+
+| Yetenek | Sebep |
+|---|---|
+| Boşluk duyarsız arama | Katalog kodları hem "M 31" hem "M31" yazılıyor. Tek başına boşluksuz karşılaştırma yetmiyor — "orion bulutsu" kırılırdı; iki yol birlikte çalışıyor |
+| Alaka sıralaması (`relevance`) | Yalnızca arama varken devrede; eşit alakada kullanıcının seçtiği sıralama geçerli |
 
 ### Kapsam dışı kalanlar
 
@@ -387,14 +402,16 @@ toplanıyor:
     "Bugün", URL'de paylaşılabilir tarih), iki ayrı uygunluk skoru,
     `observedAt`ın arayüzde gösterilmesi.
 
-Sıradaki iş **Faz 4'ün geçişi** — kalan dokuz liste sayfasını
-`useExplorer`a taşımak. Desen galeride kurulu ve `gallerySpec.ts` örnek:
-her sayfa için bir `ExplorerSpec` yazılıyor, sayfa kendi `useState`
-filtresini bırakıyor, `adoption.test.ts` içindeki BEKLEYEN listesinden
-çıkarılıyor. Sonra **Faz 5 — bildirim, mesajlaşma, sosyal aktivite**
-(belge satır 549–632); o faz yedi yeni tablo gerektiriyor
-(`notifications`, `conversations`, `messages`, `follows`, `user_blocks`,
-`collections`, `clubs` — bkz. DATABASE_AND_RLS §Şema boşluğu).
+Faz 4'ün geçişi BİTTİ (10/10). Faz 4'te kalanlar tablo ya da ürün
+kararı bekliyor (kaydedilmiş görünümler, CSV, tablo görünümü, mobil
+filtre drawer'ı, sunucu tarafı sayfalama).
+
+Sıradaki iş **Faz 5 — bildirim, mesajlaşma, sosyal aktivite** (belge
+satır 549–632). Bu faz YEDİ yeni tablo gerektiriyor: `notifications`,
+`conversations`, `messages`, `follows`, `user_blocks`, `collections`,
+`clubs` (bkz. `DATABASE_AND_RLS.md` §Şema boşluğu). Her biri RLS'iyle
+birlikte versiyonlu bir migration dosyasında oluşturulmalı; migration
+numaraları `0041`den devam ediyor.
 
 **Faz 3 için hazır bilgi:**
 - `check:viewports` artık `test:all` içinde ve geçiyor; ana sayfayı
