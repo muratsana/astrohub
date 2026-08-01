@@ -215,11 +215,27 @@ değerlendirildi.
 | Navigasyon hiyerarşisi | DONE | Tek yatay şerit kaldı |
 | Konum erişimi korundu | DONE | Üst çubukta (≥sm) ve çekmecede (<sm) |
 
-### 3.2 Boş fotoğraf modülü — **NOT_STARTED**
+### 3.2 Boş fotoğraf modülü — **PARTIAL**
 
-Belge satır 380–402. Altı durumun ayrıştırılması (içerik yok / yükleniyor
-/ hata / görsel yok / moderasyonda / admin kapattı), boşsa otomatik
-gizlenme, admin'den yönetilebilir "boşsa gizle" ve E2E doğrulaması.
+`ContentSelection` artık bir `status` alanı taşıyor
+(`loading` / `ready` / `error`). Asıl kazanım: sorgu sonuçlanana kadar
+**tohum listesi çiziliyordu**, yani kullanıcı bir an kurgu fotoğrafları
+gerçek sanıp sonra hepsinin değiştiğini görüyordu.
+
+| Belgedeki durum | Durum | Nerede çözülüyor |
+|---|---|---|
+| Gerçekten içerik yok | DONE | Otoriter boş sonuç → çağrılı boş durum |
+| Veri yükleniyor | DONE | `status === 'loading'` → `ContentCardSkeleton`, ızgara sınıfı gerçek listeyle aynı (CLS yok) |
+| İstek hata verdi | DONE | `status === 'error'` → `Alert` + "Yeniden dene"; tohum listesi ÇİZİLMİYOR |
+| Görsel dosyası bulunamadı | DONE | `RemoteImage` yıldız alanına iniyor — kırık görsel ikonu hiç çıkmıyor |
+| İçerik moderasyonda | DONE | Satır sorgudan zaten dönmüyor (RLS + `status` filtresi); modül için "içerik yok"tan farksız |
+| Modül admin tarafından kapalı | NOT_STARTED | `home_modules` tablosu gerekiyor — Faz 10 |
+| Boşsa otomatik gizlenme | IMPLEMENTED_DISABLED | `hideWhenEmpty` prop'u yazıldı ve test edildi; **varsayılan kapalı**. Belge gizlemeyi "admin panelinden yönetilebilir" bir davranış olarak tanımlıyor, yani mutlak kural değil tercih. Galeri sitenin çekirdek içeriği: boş olması ilk yükleyecek kişi için fırsat, modülü gizlemek o fırsatı da gizler. Faz 10'da admin anahtarına bağlanacak |
+| E2E doğrulaması | NOT_STARTED | Durum ayrımı 10 birim testiyle ölçülüyor; E2E'de yükleme/hata durumunu üretmek ağ kesintisi taklidi gerektiriyor |
+
+**Kendi testimin yakaladığı hata:** ilk yazımda boş-durum dalı hata
+dalının ÜSTÜNDEYDİ; okuma düştüğünde kullanıcıya "henüz fotoğraf yok"
+deniyordu. Yanlış bilgi, sessiz boşluktan kötü. Sıra düzeltildi.
 
 ### 3.3 Hero banner — **PARTIAL**
 
@@ -247,17 +263,20 @@ karşılaştırma yapılmadı.
 
 ## Sonraki oturum için devam notu
 
-**Bittiği yer:** Faz 2 kapandı (2.1/2.2/2.3/2.4 DONE). Faz 3'ün 3.1'i
-kapandı, 3.3 kısmen. Sıradaki iş **Faz 3.2 — boş fotoğraf modülü**
-(belge satır 380–402), sonra 3.3'ün kalanı ve 3.4.
+**Bittiği yer:** Faz 2 kapandı. Faz 3'ün 3.1'i kapandı, 3.2 ve 3.3
+kısmen. Sıradaki iş **Faz 3.3'ün kalanı** (hero okları, swipe, otomatik
+geçiş durdurma, admin yönetimi) ve **Faz 3.4 — "Bu Gece" modülünün 18
+zorunlu alanı ve tarih kontrolleri** (belge satır 424–459).
 
 **Faz 3 için hazır bilgi:**
 - `check:viewports` artık `test:all` içinde ve geçiyor; ana sayfayı
   büyüten her değişiklik kapıda düşer. 1280×720 payı: içerik 583px'de,
   eşik 600px (720 − 120).
 - Hero yüksekliğini `min-h` değil İÇERİK belirliyor.
-- Ana sayfadaki fotoğraf şeridi `RecentRecords.tsx`; boş durum ayrımı
-  yok, `ContentCardSkeleton` hazır ve bağlanmayı bekliyor.
+- `ContentSelection.status` (`loading`/`ready`/`error`) artık her katalog
+  kancasında var. Diğer ana sayfa şeritleri (`RecentListings`,
+  `UpcomingEvents`, `DarkSkyStrip`) hâlâ bu ayrımı yapmıyor — aynı
+  desenle bağlanabilirler.
 
 **Çalışma yöntemi** (bu oturumda işe yaradı):
 - Master belgeyi TAMAMEN okuma; yalnızca faz satır aralığını oku
