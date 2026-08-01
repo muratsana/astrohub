@@ -23,7 +23,7 @@ tabloda `DONE` ile birleştirilmez:
 |---|---|---|---|
 | 0 | Envanter, baseline, güvenli ortam | 102–135 | DONE |
 | 1 | Veri modeli, Supabase güvenliği, merkezi yapılandırma | 136–257 | PARTIAL |
-| 2 | Tek tasarım sistemi ve bütüncül arayüz | 258–355 | NOT_STARTED |
+| 2 | Tek tasarım sistemi ve bütüncül arayüz | 258–355 | PARTIAL |
 | 3 | Ana sayfa, navbar, hero, hava durumu | 356–461 | NOT_STARTED |
 | 4 | Ortak arama, filtreleme, sıralama, görünüm | 462–548 | NOT_STARTED |
 | 5 | Bildirim, mesajlaşma, sosyal aktivite | 549–632 | NOT_STARTED |
@@ -125,11 +125,109 @@ RLS'leriyle birlikte oluşturulacak.
 
 ---
 
+## Faz 2 — ayrıntı
+
+Tam döküm: **`docs/DESIGN_SYSTEM.md`**.
+
+### 2.1 Design token sistemi — **DONE**
+
+Sisteme token eklemek değil, token'ın etrafından dolaşmayı imkânsız
+kılmak gerekiyordu. Ölçülen kaçaklar: `text-[12px]` 113 yerde,
+`text-[13px]` 50, `text-[12.5px]` 41, `rounded-[2px]` 21.
+
+| Madde | Durum | Kanıt |
+|---|---|---|
+| Font ailesi (en fazla bir ana aile) | DONE | Inter tek aile; mono yalnızca gösterge sayısında |
+| Başlık ve gövde tipografi ölçeği | DONE | 6 rol sınıfı (`type-hero`…`type-panel`), kırılma noktası sınıfın içinde |
+| Font ağırlıkları, satır yükseklikleri | DONE | Her punto token'ı kendi `--line-height`ını taşıyor |
+| Renk, yüzey, arka plan seviyeleri | DONE | 3 yüzey + 3 metin kademesi, üç temada da AA |
+| Spacing, container genişlikleri | DONE | `--spacing-content`, `--spacing-shell` |
+| Radius ölçeği | DONE | Tek değer (2px) — bilinçli; serbest radius sayısı **0** |
+| Border kuralları | DONE | `--color-border` / `--color-border-strong` |
+| Shadow seviyeleri | DONE | Tek yükselti kademesi (`--shadow-overlay`), temaya göre çevriliyor; üç açılır liste üç ayrı gölge kullanıyordu |
+| Breakpoint'ler | DONE | Tailwind varsayılanı — bilinçli, belgede yazılı |
+| İkon boyutları | DONE | 3 kademe |
+| Form alanı boyutları | DONE | 3 kademe + `--spacing-touch-min` 44px |
+| Button / Badge varyantları | DONE | 4 varyant × 3 ölçü · 6 ton |
+| Status renkleri | DONE | success / warning / danger |
+| Skeleton, loading, empty, error | DONE | `ContentCardSkeleton`, `EmptyState`, `Alert`, `RouteFallback` |
+| Modal, drawer, popover, tooltip kuralları | PARTIAL | Katman sırası ve yükselti token'landı, üç açılır liste hizalandı; **`Tooltip` bileşeni yok** — §5.4 "tooltip'e taşınmalı" sınıfı için gerekecek, Faz 11'de |
+| Focus, hover, active, disabled, selected | PARTIAL | Focus halkası global, hover/disabled `Button`da, kartta `focus-visible`; `selected` durumu için ortak bir kural yok |
+| Serbest punto/radius kaçağı | DONE | Sitede **0** — `designSystem.test.ts` kapıyı tutuyor |
+
+### 2.2 Birleşik kart sistemi — **DONE**
+
+Kart kökü **11 dosyada birebir** kopyalanmıştı; kart görselleri **6 ayrı
+orandaydı**; **hiçbir kartın yükleme iskeleti yoktu.**
+
+| Madde | Durum | Kanıt |
+|---|---|---|
+| Tek `ContentCard` ailesi | DONE | 11 modül geçti; kaynak taraması kopya kök bulmuyor |
+| Standart görsel oranı | DONE | 6 → 3 (`standard`/`square`/`wide`), her birinin yazılı gerekçesi var |
+| Aynı radius, border, shadow | DONE | Kök tek yerde (`CARD_ROOT`) |
+| Ortak başlık ve metadata alanları | DONE | `ContentCardTitle` / `ContentCardMeta` |
+| Ortak aksiyon bölgesi | DONE | `ContentCardActions`, `mt-auto` ile hizalı |
+| Ortak hover/focus davranışı | DONE | Kökte; `focus-visible:border-primary` |
+| Ortak skeleton | DONE | `ContentCardSkeleton` kartın kendi sabitlerini kullanıyor |
+| Ortak boş ve kırık görsel fallback'i | DONE | `RemoteImage` üç duruma dayanıklı → `StarField` |
+| Uzun başlık taşma kuralları | DONE | `lines={1\|2}`, iki satırda yer **önceden** ayrılıyor |
+| Masaüstü/mobil tutarlı yükseklik | DONE | `CardGrid` `auto-rows-fr` + kart `h-full` |
+| İçerik tipini gösteren tutarlı badge | DONE | `PlateFrame` rozet yuvası |
+| Dağılmayı engelleyen kapı | DONE | Kaynak taraması: kopya kök + kayıt dışı oran |
+
+### 2.3 Alan kullanımı — **PARTIAL**
+
+`scripts/check-viewports.mjs` 11 çözünürlüğü gerçek tarayıcıda ölçüyor.
+
+| Madde | Durum | Kanıt |
+|---|---|---|
+| 11 çözünürlükte ölçüm aracı | DONE | `npm run check:viewports` |
+| Yatay taşma | DONE | 320×568'de 9px taşıyordu (künye 143 + aksiyon 158 > kapsayıcı 288); kelime markası 360px altında düşüyor |
+| Dokunmatik hedefler | DONE | `check:a11y` zaten ölçüyor: ikon ≥44px, diğer ≥24px |
+| Gereksiz üst bilgi şeritleri | DONE | Hero dikey dolgusu alındı |
+| **1280×720 / 1366×768'de fold üstü içerik** | **NOT_STARTED** | Ölçüldü: içerik 769px'de başlıyor, fold 720/768. Hero'nun `min-h`i bağlayıcı kısıt değilmiş — içeriğinin yeniden düzenlenmesi gerekiyor ve bu **Faz 3**'ün konusu |
+| Büyük ekranda aşırı yayılma | NOT_STARTED | Ölçüm eklendi ama eşik konmadı |
+| `check:viewports` kapı zincirinde | NOT_STARTED | Bilinçli: yukarıdaki madde açıkken zincire eklemek kapıyı yalancı yapardı |
+
+### 2.4 Gereksiz açıklama metinleri — **DONE**
+
+36 başlık/açıklama çifti §5.4'ün altı sınıfına göre tek tek
+değerlendirildi.
+
+| Madde | Durum | Kanıt |
+|---|---|---|
+| Başlığı tekrar eden açıklamalar | DONE | 4 tanesi kaldırıldı (Astrofotoğrafçılar, Popüler Hedefler, Benzer Fotoğraflar, {katalog} Fotoğrafları) |
+| Kartların gösterdiğini tekrar edenler | DONE | 4 tanesi kısaltıldı (Karanlık Gökyüzü, Son İlanlar, Yaklaşan Etkinlikler, Hesabım) |
+| Astronomi terimi yardım metinleri korundu | DONE | Hesaplayıcılar, gece planı, forum, hukuki uyarılar dokunulmadı |
+| "Tooltip'e taşınmalı" sınıfı | NOT_STARTED | `Tooltip` bileşeni yok; bu sınıfa giren metin de çıkmadı — gerekirse Faz 11 |
+
+---
+
 ## Sonraki oturum için devam notu
 
-**Bittiği yer:** Faz 1 tamamı ölçüldü ve raporlandı; taşınan iki kalem
-(fonksiyon şeması, politika birleştirme) Faz 15'e bağlandı. Sıradaki iş
-**Faz 2 — tek tasarım sistemi ve bütüncül arayüz** (belge satır 258–355).
+**Bittiği yer:** Faz 2'nin 2.1, 2.2 ve 2.4'ü kapandı; 2.3 ölçüldü ve
+yarısı kapandı. Sıradaki iş **Faz 3 — ana sayfa, navbar, hero, hava
+durumu** (belge satır 356–461).
+
+**Faz 3'e devredilen ölçülmüş iş** (yeniden keşfetmeye gerek yok):
+- Ana sayfada içerik 1366px ve altında fold'un altında başlıyor.
+  1280×720 ölçümü: kabuk 88 · başlık altı 348 · içerik 769 · ekran 720.
+- Hero yüksekliğini `min-h` belirlemiyor, İÇERİK belirliyor: üç satırlık
+  48px başlık + açıklama + düğme. Küçültmek için başlık ölçeği ya da
+  carousel yapısı değişmeli.
+- Ana sayfada hero'nun hemen altında bir konum izni şeridi ve bir konum
+  çubuğu var; ikisi birlikte ~85px. Fold hesabına dahil.
+- Faz 3 bitince `check:viewports` `test:all` zincirine eklenmeli.
+
+**Çalışma yöntemi** (bu oturumda işe yaradı):
+- Master belgeyi TAMAMEN okuma; yalnızca faz satır aralığını oku
+- Her veritabanı kuralını canlıda `raise exception` ile GERİ ALINAN
+  işlemde ölç — iddia etme
+- Arayüz iddialarını gerçek tarayıcıda `getBoundingClientRect` ile ölç;
+  ölçüm aracının kendi kusurunu ürünün kusuru sanma (galeride "ilk blok
+  1979px" böyle bir yanlış alarmdı)
+- Her faz sonunda `npm run test:all`, sonra commit + push
+- Durum belgesini her fazda güncelle
 
 **Çalışma yöntemi** (bu oturumda işe yaradı):
 - Master belgeyi TAMAMEN okuma; yalnızca faz satır aralığını oku

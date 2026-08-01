@@ -80,8 +80,10 @@ export function DiscoverPage() {
         {/* Astrofotoğrafçılar */}
         <section className="mb-8">
           <SectionHeader
+            /* Açıklama kaldırıldı (§5.4): "Topluluğun aktif üreticileri"
+               başlığın eş anlamlısıydı; altındaki kartlar zaten her
+               üreticinin foto sayısını ve entegrasyonunu gösteriyor. */
             title="Astrofotoğrafçılar"
-            description="Topluluğun aktif üreticileri"
           />
           <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {photographers.map((u) => (
@@ -115,8 +117,9 @@ export function DiscoverPage() {
         {/* Popüler hedefler */}
         <section className="mb-8">
           <SectionHeader
+            /* "Bu sezon en çok çalışılan gökcisimleri" = "Popüler
+               Hedefler". Aynı cümleyi iki kez yazmak vurgu değil gürültü. */
             title="Popüler Hedefler"
-            description="Bu sezon en çok çalışılan gökcisimleri"
             linkTo="/hedefler"
           />
           <ul className="grid grid-cols-2 gap-4 lg:grid-cols-4">

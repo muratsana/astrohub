@@ -107,7 +107,10 @@ export function AccountPage() {
         <PageHeader
           breadcrumb={[{ label: 'Ana Sayfa', to: '/' }, { label: 'Hesabım' }]}
           title="Hesabım"
-          description="Profilinizde görünen bilgiler. Kullanıcı adı profil adresinizin parçasıdır."
+          /* İlk cümle başlığı tekrar ediyordu; ikinci cümle GERÇEK bir
+             yardım — kullanıcı adının adrese girdiği çoğu kişi için
+             sürpriz. Yalnızca o kaldı. */
+          description="Kullanıcı adı profil adresinizin parçasıdır."
           actions={
             profile ? (
               <ButtonLink

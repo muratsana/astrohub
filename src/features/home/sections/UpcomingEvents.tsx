@@ -31,7 +31,9 @@ export function UpcomingEvents() {
       <SectionHeader
         title="Yaklaşan Etkinlikler"
         meta={`${catalog.items.length} kayıt`}
-        description="Gözlem şenlikleri, kamplar, halk gözlemleri ve atölyeler — her kayıt kaynağı ve son doğrulama tarihiyle birlikte."
+        /* Kısaltıldı (§5.4): kaynak ve doğrulama tarihi etkinlik
+           detayında duruyor; listenin başında yer kaplaması gerekmiyor. */
+        description="Gözlem şenlikleri, kamplar ve atölyeler."
         linkTo="/etkinlikler"
         linkLabel="Takvim"
       />

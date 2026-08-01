@@ -127,8 +127,9 @@ export function TargetDetailPage() {
         {/* Bu hedefin fotoğrafları */}
         <section className="mt-14 border-t border-border pt-10">
           <SectionHeader
+            /* Başlık zaten hedefin adını taşıyor; açıklama onu uzun
+               yoldan tekrar ediyordu. */
             title={`${target.catalog} Fotoğrafları`}
-            description="Bu hedefin Astrohub topluluğundaki kareleri"
             linkTo="/galeri"
           />
           {targetPhotos.length === 0 ? (

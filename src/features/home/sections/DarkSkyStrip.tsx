@@ -27,7 +27,9 @@ export function DarkSkyStrip() {
       <SectionHeader
         title="Karanlık Gökyüzü"
         meta={`${catalog.items.length} nokta`}
-        description="Bortle sınıfı, SQM ölçümü, rakım ve kamp olanaklarıyla değerlendirilmiş gözlem noktaları."
+        /* Kısaltıldı (§5.4): Bortle, SQM ve rakım zaten her kartın
+           künyesinde yazılı — cümle onları okumadan önce sayıyordu. */
+        description="Ölçülmüş en karanlık gözlem noktaları."
         linkTo="/saha"
         linkLabel="Tüm noktalar"
       />

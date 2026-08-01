@@ -42,7 +42,8 @@ export function RecentListings() {
       <SectionHeader
         title="Son İlanlar"
         meta={`${listings.length} ilan`}
-        description="Topluluğun ikinci el ekipman ilanları — künyesi ekipman veritabanına bağlı, satıcı puanıyla birlikte."
+        /* Kısaltıldı: satıcı puanı kartın künyesinde görünüyor. */
+        description="Topluluğun ikinci el ekipman ilanları."
         linkTo="/ilanlar"
         linkLabel="Tüm ilanlar"
       />

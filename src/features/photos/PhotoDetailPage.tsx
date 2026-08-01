@@ -247,8 +247,9 @@ function PhotoDetail({
         {related.length > 0 && (
           <section className="mt-8 border-t border-border pt-10">
             <SectionHeader
+              /* Açıklama başlığın tanımıydı: "benzer" zaten "aynı hedef
+                 veya aynı tür" demek. */
               title="Benzer Fotoğraflar"
-              description="Aynı hedef veya aynı türden diğer kareler"
               linkTo="/galeri"
             />
             <ul className="grid grid-cols-2 gap-4 lg:grid-cols-4">
