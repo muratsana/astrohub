@@ -297,7 +297,7 @@ export function useEpisode(
         const row = data as Record<string, unknown>;
         const { data: konuklar } = await supabase
           .from('episode_guests')
-          .select('id, name, role, url, radio_hosts(slug)')
+          .select('id, name, role, url, broadcast_hosts(slug)')
           .eq('episode_id', row.id as string)
           .order('position');
 
@@ -321,7 +321,7 @@ export function useEpisode(
             role: (g.role as string | null) ?? null,
             url: (g.url as string | null) ?? null,
             hostSlug:
-              ((g.radio_hosts as Record<string, unknown> | null)?.slug as
+              ((g.broadcast_hosts as Record<string, unknown> | null)?.slug as
                 | string
                 | undefined) ?? null,
           })),

@@ -103,6 +103,11 @@ create unique index if not exists radio_stations_default_uniq
 -- YAYINCI
 -- ══════════════════════════════════════════════════════════════════════════
 
+-- NOT: Bu tablo `0055`te `broadcast_hosts` olarak yeniden adlandırıldı —
+-- TV sunucusu ile radyo yayıncısı aynı kişi olabiliyor ve iki tablo o
+-- kişiye iki profil verirdi. Buradaki ad değiştirilmedi: migration'lar
+-- sırayla çalışıyor ve geçmişi düzeltmek, uygulanmış bir migration'ı
+-- yeniden yazmak olurdu.
 create table if not exists public.radio_hosts (
   id          uuid primary key default gen_random_uuid(),
   slug        text not null unique,

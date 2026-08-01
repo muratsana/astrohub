@@ -215,7 +215,7 @@ export function useSchedule(): ScheduleState {
             ),
           supabase
             .from('program_hosts')
-            .select('program_id, position, radio_hosts(id, slug, name, avatar_url)')
+            .select('program_id, position, broadcast_hosts(id, slug, name, avatar_url)')
             .order('position'),
         ]);
 
@@ -223,7 +223,7 @@ export function useSchedule(): ScheduleState {
 
         const hostsByProgram = new Map<string, ProgramHost[]>();
         for (const row of (hostRes.data ?? []) as Record<string, unknown>[]) {
-          const host = row.radio_hosts as Record<string, unknown> | null;
+          const host = row.broadcast_hosts as Record<string, unknown> | null;
           if (!host) continue;
           const key = row.program_id as string;
           const list = hostsByProgram.get(key) ?? [];
@@ -450,7 +450,7 @@ export function useProgram(slug: string | undefined): {
             .eq('program_id', id),
           supabase
             .from('program_hosts')
-            .select('position, radio_hosts(id, slug, name, avatar_url)')
+            .select('position, broadcast_hosts(id, slug, name, avatar_url)')
             .eq('program_id', id)
             .order('position'),
         ]);
@@ -468,7 +468,7 @@ export function useProgram(slug: string | undefined): {
           tags: (row.tags as string[]) ?? [],
           featured: row.featured === true,
           hosts: ((hostRes.data ?? []) as Record<string, unknown>[])
-            .map((r) => r.radio_hosts as Record<string, unknown> | null)
+            .map((r) => r.broadcast_hosts as Record<string, unknown> | null)
             .filter((h): h is Record<string, unknown> => Boolean(h))
             .map((h) => ({
               id: h.id as string,
@@ -548,7 +548,7 @@ export function useRadioHost(slug: string | undefined): {
       try {
         const supabase = await client();
         const { data } = await supabase
-          .from('radio_hosts')
+          .from('broadcast_hosts')
           .select('id, slug, name, bio, avatar_url, suspended_at')
           .eq('slug', slug)
           .eq('published', true)
