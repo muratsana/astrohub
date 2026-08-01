@@ -25,7 +25,7 @@ tabloda `DONE` ile birleştirilmez:
 | 1 | Veri modeli, Supabase güvenliği, merkezi yapılandırma | 136–257 | PARTIAL |
 | 2 | Tek tasarım sistemi ve bütüncül arayüz | 258–355 | DONE |
 | 3 | Ana sayfa, navbar, hero, hava durumu | 356–461 | PARTIAL |
-| 4 | Ortak arama, filtreleme, sıralama, görünüm | 462–548 | NOT_STARTED |
+| 4 | Ortak arama, filtreleme, sıralama, görünüm | 462–548 | PARTIAL |
 | 5 | Bildirim, mesajlaşma, sosyal aktivite | 549–632 | NOT_STARTED |
 | 6 | Etkinlik takip ve hatırlatma | 633–682 | NOT_STARTED |
 | 7 | Çalışan AstroHub Radyo | 683–832 | NOT_STARTED |
@@ -318,6 +318,63 @@ Belgenin zorunlu tuttuğu 18 bilgi alanı tek tek karşılaştırıldı.
 
 ---
 
+## Faz 4 — ayrıntı
+
+**Ölçülen başlangıç durumu:** on liste sayfası, her biri kendi `useState`
+filtre durumuyla. Hiçbiri URL'ye yazmıyor, hiçbirinde debounce yok,
+sıralama yalnızca üçünde, aktif filtre chip'i ve "hepsini temizle"
+hiçbirinde yok.
+
+### Çekirdek — **DONE**
+
+`src/features/explorer/query.ts` saf (React yok, URL yok) ve 31 testle
+ölçülüyor; `useExplorer.ts` URL'ye bağlıyor, 7 testle.
+
+| Yetenek | Durum | Not |
+|---|---|---|
+| Tam metin arama | DONE | |
+| Türkçe normalize arama | DONE | `normalizeTr` tek kaynağa indi — ÜÇ kopyası vardı; kural `app.tr_normalize` ile aynı |
+| Debounce | DONE | 250 ms; kutu anında, sorgu gecikmeli |
+| Sonuç sayısı | DONE | `total` sayfalama öncesi |
+| Arama terimini temizleme | DONE | |
+| Faceted filtreler + her facet için sayı | DONE | Sayım o facet'in kendi seçimi hariç — yoksa kullanıcı seçimini değiştiremez |
+| Çoklu seçim | DONE | Facetler arası VE, değerler arası VEYA |
+| Aktif filtre chip'leri | DONE | Arama terimi de chip |
+| Tek tek / tümünü temizleme | DONE | "Tümünü temizle" sıralamayı KORUYOR |
+| Filtrelerin URL'ye yazılması | DONE | Varsayılanlar yazılmıyor, yabancı parametre korunuyor |
+| Geri/ileri tarayıcı davranışı | DONE | Durum URL'de olduğu için bedava |
+| Sayfalama | DONE (istemci) | Aralık dışı sayfa son sayfaya çekiliyor |
+| Türkçe alfabetik sıralama | DONE | `Intl.Collator('tr')`; yerelsiz `localeCompare` Ç'yi C'den önce koyuyor (ölçüldü) |
+| Null değerlerin kontrollü konumu | DONE | Eksik sayısal değer sona; sıfır sayılmıyor |
+| Loading / empty / error | DONE | `ContentSelection.status` (Faz 3.2) |
+
+### Geçiş — **PARTIAL · 1/10**
+
+`adoption.test.ts` iki yönlü sayaç: geçen sayfa listeden çıkarılmazsa
+düşer, listede olmayan yeni sayfa kendi filtre durumunu kurarsa düşer.
+
+| Sayfa | Durum |
+|---|---|
+| Galeri | DONE — tarayıcıda doğrulandı; ASCII katlama artık çalışıyor ("nevsehir" → Nevşehir) |
+| Pazaryeri, Ekipman, Hedefler, Topluluklar, Saha, Etkinlikler, Forum, Haberler, Yazılar | NOT_STARTED |
+
+### Kapsam dışı kalanlar
+
+| Madde | Durum | Sebep |
+|---|---|---|
+| **Server-side arama/filtre/sayfalama** | NOT_STARTED | Kataloglar bugün tamamı belleğe inen listeler (tohum dizisi ya da birkaç yüz satır); sunucu tarafı sayfalama veri hacmi onu gerektirdiğinde açılır. `ExplorerQuery` sayfa ve sayfa boyutu taşıdığı için ŞEKLİ hazır, ama bugün çalışan şey istemci tarafı ve rapor bunu böyle söylüyor |
+| İl/ilçe filtresi | PARTIAL | İl facet olarak çalışıyor; ilçe verisi yok (Faz 1.1) |
+| Takip edilenler, favoriler | NOT_STARTED | `follows` / `collections` tabloları yok — Faz 5 |
+| Onay/yayın durumu, premium görünürlük | NOT_STARTED | Faz 9/10 |
+| Kaydedilmiş görünümler, kullanıcı varsayılanı, admin paylaşılan görünümü | NOT_STARTED | Tablo gerekiyor — Faz 10 |
+| CSV dışa aktarma (yalnız admin) | NOT_STARTED | |
+| Mobil filtre drawer'ı | NOT_STARTED | |
+| Tablo görünümü (sütun göster/gizle, sıra, yoğunluk, sabit başlık) | NOT_STARTED | `DataTable` var ama bu yeteneklere sahip değil |
+| Harita / takvim / zaman çizelgesi görünümleri | PARTIAL | `EventMapPage` ve `EventCalendar` ayrı sayfa olarak var; explorer'ın görünüm seçeneği değiller |
+| Görünüm tercihinin hesapta saklanması | PARTIAL | `localStorage`da saklanıyor, hesapta değil |
+
+---
+
 ## Sonraki oturum için devam notu
 
 **Bittiği yer:** Faz 2 kapandı. Faz 3'ün 3.1'i kapandı; 3.2, 3.3 ve
@@ -329,9 +386,14 @@ toplanıyor:
     "Bugün", URL'de paylaşılabilir tarih), iki ayrı uygunluk skoru,
     `observedAt`ın arayüzde gösterilmesi.
 
-Sıradaki iş **Faz 4 — ortak arama, filtreleme, sıralama, görünüm**
-(belge satır 462–548). Faz 3'ün bağımsız kalanları Faz 10'dan önce
-kapatılabilir.
+Sıradaki iş **Faz 4'ün geçişi** — kalan dokuz liste sayfasını
+`useExplorer`a taşımak. Desen galeride kurulu ve `gallerySpec.ts` örnek:
+her sayfa için bir `ExplorerSpec` yazılıyor, sayfa kendi `useState`
+filtresini bırakıyor, `adoption.test.ts` içindeki BEKLEYEN listesinden
+çıkarılıyor. Sonra **Faz 5 — bildirim, mesajlaşma, sosyal aktivite**
+(belge satır 549–632); o faz yedi yeni tablo gerektiriyor
+(`notifications`, `conversations`, `messages`, `follows`, `user_blocks`,
+`collections`, `clubs` — bkz. DATABASE_AND_RLS §Şema boşluğu).
 
 **Faz 3 için hazır bilgi:**
 - `check:viewports` artık `test:all` içinde ve geçiyor; ana sayfayı
