@@ -231,13 +231,28 @@ export function matchesSearch<T>(
 ): boolean {
   const terim = normalizeTr(q);
   if (!terim) return true;
-  const alan = normalizeTr(
-    spec.searchFields(item).filter(Boolean).join(' ')
-  );
-  /* Kelime kelime: "orion bulutsu" yazan biri "Orion Bulutsusu"nu
-     bulmalı, kelimelerin sırası ve arada başka kelime olması fark
-     etmemeli. */
-  return terim.split(' ').every((kelime) => alan.includes(kelime));
+  const alan = normalizeTr(spec.searchFields(item).filter(Boolean).join(' '));
+
+  /*
+   * BOŞLUK AYIRT EDİCİ BİR BİLGİ DEĞİL.
+   *
+   * Katalog kodları hem "M 31" hem "M31" diye yazılıyor ve hangisinin
+   * yazıldığı kullanıcıya göre değişiyor — "NGC 7000" ile "ngc7000"
+   * aynı hedef. Boşluksuz hâller de karşılaştırılıyor.
+   *
+   * Yalnızca boşluksuz karşılaştırma yapmak YETMEZ: o zaman "orion
+   * bulutsu" yazan biri "Orion Bulutsusu"nu bulamaz, çünkü boşluksuz
+   * hâlde "orionbulutsu" aranır ve alanda "orionbulutsusu" olsa bile
+   * araya giren kelimeler eşleşmeyi bozar. İki yol birlikte:
+   * kelime kelime VEYA tamamen boşluksuz.
+   */
+  const kelimeceEsler = terim
+    .split(' ')
+    .every((kelime) => alan.includes(kelime));
+  if (kelimeceEsler) return true;
+
+  const sik = (v: string) => v.replace(/\s+/g, '');
+  return sik(alan).includes(sik(terim));
 }
 
 /** Kayıt facet seçimlerine uyuyor mu — facet'ler VE, değerler VEYA. */

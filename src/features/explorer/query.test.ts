@@ -150,6 +150,31 @@ describe('arama', () => {
     expect(ara('   ')).toHaveLength(veri.length);
   });
 
+  /*
+   * BOŞLUK AYIRT EDİCİ DEĞİL. Katalog kodları hem "M 31" hem "M31" diye
+   * yazılıyor; hangisinin yazıldığı kullanıcıya göre değişir.
+   */
+  it('boşluk farkını yok sayıyor', () => {
+    const kod: Kayit[] = [k('M 31 Andromeda', 'gok', 'x'), k('NGC 7000', 'gok', 'y')];
+    const bul = (q: string) =>
+      applyQuery(kod, { ...EMPTY_QUERY, q, sort: 'ad' }, spec).items.map((i) => i.ad);
+    expect(bul('m31')).toEqual(['M 31 Andromeda']);
+    expect(bul('M 31')).toEqual(['M 31 Andromeda']);
+    expect(bul('ngc7000')).toEqual(['NGC 7000']);
+    expect(bul('ngc 7000')).toEqual(['NGC 7000']);
+  });
+
+  /*
+   * Boşluksuz karşılaştırma TEK BAŞINA kullanılsaydı bu kırılırdı:
+   * "orionbulutsu" alanda aranır ve araya giren kelime eşleşmeyi bozar.
+   */
+  it('boşluksuz karşılaştırma kelime aramasını bozmuyor', () => {
+    const veri2: Kayit[] = [k('Orion Büyük Bulutsusu', 'gok', 'x')];
+    const bul = (q: string) =>
+      applyQuery(veri2, { ...EMPTY_QUERY, q, sort: 'ad' }, spec).items.length;
+    expect(bul('orion bulutsu')).toBe(1);
+  });
+
   it('arama alanı dışındaki metni eşleştirmiyor', () => {
     /* `tur` arama alanlarında yok; "kulup" yazmak kayıt getirmemeli. */
     expect(ara('kulup')).toEqual([]);
