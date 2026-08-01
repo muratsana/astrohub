@@ -14,15 +14,11 @@ import { EditorialList, type EditorialItem } from '@/components/ui/EditorialList
 import { ToolBar, ResultCount } from '@/components/ui/ToolBar';
 import { useViewMode } from '@/components/ui/useViewMode';
 import { useEventCatalog } from '@/services/content/events';
+import { useExplorer } from '@/features/explorer/useExplorer';
+import { eventsSpec } from './eventsSpec';
 import { CatalogSourceNote } from '@/components/ui/CatalogSourceNote';
-import {
-  filterEvents,
-  defaultEventFilters,
-  availableEventCities,
-  capacityLabel,
-  type EventFilters,
-} from './filtering';
-import { eventTypeLabels, type EventType } from './types';
+import { availableEventCities, capacityLabel } from './filtering';
+import { eventTypeLabels } from './types';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
 import { EventCalendar } from './EventCalendar';
@@ -37,7 +33,6 @@ import { cn } from '@/lib/cn';
  * Filtreler üçünde de aynıdır; görünüm veriyi değil, okumayı değiştirir.
  */
 export function EventsPage() {
-  const [filters, setFilters] = useState<EventFilters>(defaultEventFilters);
   const [view, setView] = useViewMode('etkinlikler');
   /*
    * Kart / takvim ayrımı `useViewMode` ile birleştirilmedi: o kanca ızgara ve
@@ -51,10 +46,12 @@ export function EventsPage() {
     () => availableEventCities(catalog.items),
     [catalog.items]
   );
-  const result = useMemo(
-    () => filterEvents(catalog.items, filters),
-    [catalog.items, filters]
-  );
+  /*
+   * ORTAK DATA EXPLORER (Faz 4). Ayrıca belgenin §7.1'de adıyla istediği
+   * "gelecek/geçmiş etkinlikler" süzgeci geldi — sayfada hiç yoktu.
+   */
+  const ex = useExplorer(catalog.items, eventsSpec);
+  const result = ex.items;
 
   /*
     Etkinlikler de haber ve yazıyla aynı editöryel düzeni kullanıyor.
@@ -91,9 +88,12 @@ export function EventsPage() {
     [result]
   );
 
-  function set<K extends keyof EventFilters>(key: K, value: EventFilters[K]) {
-    setFilters((f) => ({ ...f, [key]: value }));
-  }
+  /** Tek seçimli açılır listeler için: eskiyi kapat, yeniyi aç. */
+  const tekSec = (param: string, next: string) => {
+    const mevcut = ex.query.facets[param]?.[0];
+    if (mevcut) ex.toggleFacet(param, mevcut);
+    if (next !== 'hepsi' && next !== mevcut) ex.toggleFacet(param, next);
+  };
 
   return (
     <>
@@ -117,8 +117,8 @@ export function EventsPage() {
               id="event-search"
               type="search"
               placeholder="Etkinlik, şehir veya organizatör"
-              value={filters.search}
-              onChange={(e) => set('search', e.target.value)}
+              value={ex.searchInput}
+              onChange={(e) => ex.setSearch(e.target.value)}
               className={filterControlClass}
             />
           </FilterCell>
@@ -126,8 +126,8 @@ export function EventsPage() {
           <FilterCell label="Şehir" htmlFor="e-city">
             <Select
               id="e-city"
-              value={filters.city}
-              onChange={(e) => set('city', e.target.value)}
+              value={ex.query.facets.sehir?.[0] ?? 'hepsi'}
+              onChange={(e) => tekSec('sehir', e.target.value)}
               className={filterControlClass}
             >
               <option value="hepsi">Tüm şehirler</option>
@@ -142,8 +142,8 @@ export function EventsPage() {
           <FilterCell label="Tür" htmlFor="e-type">
             <Select
               id="e-type"
-              value={filters.type}
-              onChange={(e) => set('type', e.target.value as EventType | 'hepsi')}
+              value={ex.query.facets.tur?.[0] ?? 'hepsi'}
+              onChange={(e) => tekSec('tur', e.target.value)}
               className={filterControlClass}
             >
               <option value="hepsi">Tüm türler</option>
@@ -158,14 +158,14 @@ export function EventsPage() {
           <FilterToggle
             id="e-free"
             label="Ücretsiz"
-            checked={filters.onlyFree}
-            onChange={(v) => set('onlyFree', v)}
+            checked={(ex.query.facets.ucretsiz?.length ?? 0) > 0}
+            onChange={() => ex.toggleFacet('ucretsiz', 'evet')}
           />
           <FilterToggle
             id="e-camping"
             label="Kamp imkânı"
-            checked={filters.onlyCamping}
-            onChange={(v) => set('onlyCamping', v)}
+            checked={(ex.query.facets.kamp?.length ?? 0) > 0}
+            onChange={() => ex.toggleFacet('kamp', 'evet')}
           />
         </FilterBar>
 
@@ -174,7 +174,7 @@ export function EventsPage() {
         <ToolBar
           left={
             <ResultCount
-              current={result.length}
+              current={ex.total}
               total={catalog.items.length}
               noun="etkinlik"
             />

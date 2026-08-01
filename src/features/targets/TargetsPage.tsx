@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Container } from '@/components/ui/Container';
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
@@ -17,7 +17,9 @@ import {
 } from '@/components/ui/ContentCard';
 import { StarField } from '@/components/media/StarField';
 import { tintFor } from '@/components/media/tints';
-import { targets, targetKindLabels, searchTargets } from './data';
+import { useExplorer } from '@/features/explorer/useExplorer';
+import { targetsSpec } from './targetsSpec';
+import { targets, targetKindLabels } from './data';
 import { isMovingKind, type TargetKind } from '@/domain/targets/derive';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
@@ -37,30 +39,28 @@ function difficultyTone(difficulty: string) {
  * iki yerde tanımayı zorlaştırırdı.
  */
 export function TargetsPage() {
-  const [search, setSearch] = useState('');
   const [view, setView] = useViewMode('hedefler');
 
-  const [kind, setKind] = useState<TargetKind | 'hepsi'>('hepsi');
-  const [difficulty, setDifficulty] = useState<'hepsi' | 'Kolay' | 'Orta' | 'Zor'>(
-    'hepsi'
-  );
-
   /*
-   * Katalog 200 kaydı aştıktan sonra tek bir arama kutusu yetmiyor: "bu gece
-   * ne çekebilirim" sorusu tür ve zorluk üzerinden sorulur, ad üzerinden
-   * değil. Arama sırasında sonuç sayısını kırpmıyoruz — kırpılmış bir liste,
-   * kullanıcının aradığı kaydın var olmadığı izlenimini verir.
+   * ORTAK DATA EXPLORER (Faz 4).
+   *
+   * Bu sayfa en son taşındı çünkü kendi araması (`searchTargets`) genel
+   * motorun yapmadığı iki şey yapıyordu: boşlukları yok sayıyor ("m 31"
+   * ≡ "m31") ve sonucu ALAKAYA göre sıralıyordu. Naif bir taşıma ikisini
+   * de sessizce kaybettirirdi. İkisi de önce motora eklendi ve
+   * testlendi.
+   *
+   * Arama sırasında sonuç KIRPILMIYOR — kırpılmış bir liste, aranan
+   * kaydın var olmadığı izlenimini verir.
    */
-  const result = useMemo(() => {
-    const base = search.trim()
-      ? searchTargets(search, targets.length)
-      : targets;
-    return base.filter(
-      (t) =>
-        (kind === 'hepsi' || t.kind === kind) &&
-        (difficulty === 'hepsi' || t.difficulty === difficulty)
-    );
-  }, [search, kind, difficulty]);
+  const ex = useExplorer(targets, targetsSpec);
+  const result = ex.items;
+
+  const tekSec = (param: string, next: string) => {
+    const mevcut = ex.query.facets[param]?.[0];
+    if (mevcut) ex.toggleFacet(param, mevcut);
+    if (next !== 'hepsi' && next !== mevcut) ex.toggleFacet(param, next);
+  };
 
   /* Boş kalan tür seçeneklerini listelemek, tıklandığında hiçbir şey
      göstermeyen bir menü üretirdi. */
@@ -93,16 +93,16 @@ export function TargetsPage() {
               id="target-search"
               type="search"
               placeholder="M 31, NGC 7000, Andromeda, Jüpiter…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              value={ex.searchInput}
+              onChange={(e) => ex.setSearch(e.target.value)}
               className={filterControlClass}
             />
           </FilterCell>
           <FilterCell label="Tür" htmlFor="target-kind">
             <select
               id="target-kind"
-              value={kind}
-              onChange={(e) => setKind(e.target.value as TargetKind | 'hepsi')}
+              value={ex.query.facets.tur?.[0] ?? 'hepsi'}
+              onChange={(e) => tekSec('tur', e.target.value)}
               className={filterControlClass}
             >
               <option value="hepsi">Tüm türler</option>
@@ -117,9 +117,9 @@ export function TargetsPage() {
           <FilterCell label="Zorluk" htmlFor="target-difficulty">
             <select
               id="target-difficulty"
-              value={difficulty}
+              value={ex.query.facets.zorluk?.[0] ?? 'hepsi'}
               onChange={(e) =>
-                setDifficulty(e.target.value as typeof difficulty)
+                tekSec('zorluk', e.target.value)
               }
               className={filterControlClass}
             >
@@ -134,7 +134,7 @@ export function TargetsPage() {
         <ToolBar
           left={
             <ResultCount
-              current={result.length}
+              current={ex.total}
               total={targets.length}
               noun="hedef"
             />

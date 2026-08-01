@@ -10,33 +10,28 @@ import { describe, expect, it } from 'vitest';
  * Belge §7: "Her modül aynı arama/filtre motorunu kullanmalı; ayrı ve
  * tutarsız filtre bileşenleri üretilmemelidir."
  *
- * Bu dosya bir KAPI değil, bir SAYAÇ. Geçiş tek oturumda bitmiyor ve
- * bitmemiş bir işi kırmızı kapıyla göstermek, kapının tamamen
- * kapatılmasına yol açar. Onun yerine liste burada duruyor:
+ * Bu dosya bir SAYAÇ olarak başladı: geçiş tek oturumda bitmiyordu ve
+ * bitmemiş işi kırmızı kapıyla göstermek, kapının tamamen kapatılmasına
+ * yol açar. Sayaç iki yönlü çalıştı — geçen bir sayfa listeden
+ * çıkarılmazsa düştü, listede olmayan yeni bir sayfa kendi filtre
+ * durumunu kurarsa düştü. Yani borç ne saklanabildi ne büyüyebildi.
  *
- *   · Geçen bir sayfa listeden çıkarılmazsa test DÜŞER — yani "geçtim"
- *     demeden geçmek mümkün değil.
- *   · Listede olmayan yeni bir sayfa kendi filtre durumunu yazarsa test
- *     DÜŞER — yani borç büyüyemez.
- *
- * Liste boşaldığında bu dosya sıradan bir kapıya dönüşür.
+ * BORÇ KAPANDI: on liste sayfasının onu da geçti. `BEKLEYEN` boş ve
+ * dosya artık sıradan bir kapı — kendi filtre durumunu kuran YENİ bir
+ * sayfa burada düşer.
  */
 
 const src = resolve(__dirname, '../..');
 
 /**
- * Henüz ortak motora geçmemiş liste sayfaları.
+ * Henüz ortak motora geçmemiş liste sayfaları — ARTIK BOŞ.
  *
- * Her biri kendi `useState` filtre durumunu taşıyor; sonucu: filtrelenmiş
- * liste paylaşılamıyor, geri düğmesi filtreyi geri almıyor, sayfa
- * yenilenince seçim uçuyor ve aramada ASCII katlama yok ("nevsehir"
- * yazan kullanıcı "Nevşehir"i bulamıyor).
+ * Başlangıçta ondu. Her biri kendi `useState` filtre durumunu
+ * taşıyordu; sonucu: filtrelenmiş liste paylaşılamıyor, geri düğmesi
+ * filtreyi geri almıyor, sayfa yenilenince seçim uçuyor ve aramada
+ * ASCII katlama yok ("nevsehir" yazan kullanıcı "Nevşehir"i bulamıyor).
  */
-const BEKLEYEN = [
-  'features/targets/TargetsPage.tsx',
-  'features/events/EventsPage.tsx',
-  'features/forum/ForumPage.tsx',
-];
+const BEKLEYEN: string[] = [];
 
 /** Ortak motora geçmiş sayfalar — burada kalmaları test edilir. */
 const GECEN = [
@@ -53,6 +48,18 @@ const GECEN = [
    * üstleniyor, kategori süzmesi sayfada kalıyor.
    */
   'features/equipment/EquipmentPage.tsx',
+  'features/events/EventsPage.tsx',
+  /*
+   * Hedefler ve Forum EN SON taşındı; ikisi de genel motorun yapmadığı
+   * bir şey yapıyordu ve naif taşıma sessizce kaybettirirdi:
+   *   · Hedefler — alaka sıralaması (tam eşleşme > baştan > içinde).
+   *   · Forum — sabitlenmiş konular her sıralamada üstte; bu bir
+   *     sıralama tercihi değil moderasyon kararı.
+   * Alaka motora eklendi; sabitleme `forumSpec` içinde her
+   * karşılaştırıcıyı saran bir yardımcıyla korundu.
+   */
+  'features/targets/TargetsPage.tsx',
+  'features/forum/ForumPage.tsx',
 ];
 
 const oku = (p: string) => readFileSync(join(src, p), 'utf8');
@@ -95,11 +102,8 @@ describe('geçiş takibi', () => {
     ).toEqual([]);
   });
 
-  it('borç azalıyor — sayaç raporlanıyor', () => {
-    const toplam = BEKLEYEN.length + GECEN.length;
-    /* Sayı testin kendisi değil; başarısızlık mesajında görünsün diye
-       burada. Geçiş bittiğinde BEKLEYEN boşalır. */
-    expect(GECEN.length, `${GECEN.length}/${toplam} sayfa geçti`).toBeGreaterThan(0);
+  it('borç kapandı — bekleyen sayfa yok', () => {
+    expect(BEKLEYEN, 'Geçiş tamamlandı; liste boş kalmalı').toEqual([]);
   });
 });
 

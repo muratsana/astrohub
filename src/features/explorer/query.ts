@@ -73,6 +73,18 @@ export interface ExplorerSpec<T> {
   defaultSort: string;
   /** Sayfa başına kayıt; 0 ise sayfalama yok. */
   pageSize?: number;
+  /**
+   * Arama varken sonucu ALAKAYA göre sırala.
+   *
+   * Katalog aramalarında sıralama tercihi yanlış cevap verir: "M31"
+   * yazan kullanıcı, adı alfabetik olarak önce gelen başka bir kaydı
+   * değil, TAM EŞLEŞEN kaydı ilk sırada bekler.
+   *
+   * Yalnızca arama terimi VARKEN devreye giriyor; terim boşken
+   * kullanıcının seçtiği sıralama geçerli. İkisini birden uygulamak
+   * "en yeni" seçmiş kullanıcıya alaka sırası göstermek olurdu.
+   */
+  relevance?: boolean;
 }
 
 export interface ExplorerQuery {
@@ -255,6 +267,36 @@ export function matchesSearch<T>(
   return sik(alan).includes(sik(terim));
 }
 
+/**
+ * Arama alakası — küçük daha alakalı.
+ *
+ * Üç kademe: tam eşleşme (0), baştan eşleşme (1), içinde geçme (2).
+ * Katalog kodlarında boşluk yok sayılıyor ("M 31" ≡ "m31").
+ *
+ * Eşleşmeyen kayıt bu fonksiyona hiç gelmiyor — `matchesSearch` onu
+ * zaten elemiş oluyor; buradaki iş yalnızca SIRALAMA.
+ */
+export function relevanceScore<T>(
+  item: T,
+  q: string,
+  spec: ExplorerSpec<T>
+): number {
+  const terim = normalizeTr(q);
+  if (!terim) return 0;
+  const sik = (v: string) => v.replace(/\s+/g, '');
+  const hedef = sik(terim);
+
+  let en = 3;
+  for (const ham of spec.searchFields(item)) {
+    if (!ham) continue;
+    const alan = sik(normalizeTr(ham));
+    if (alan === hedef) return 0;
+    if (alan.startsWith(hedef)) en = Math.min(en, 1);
+    else if (alan.includes(hedef)) en = Math.min(en, 2);
+  }
+  return en;
+}
+
 /** Kayıt facet seçimlerine uyuyor mu — facet'ler VE, değerler VEYA. */
 export function matchesFacets<T>(
   item: T,
@@ -301,7 +343,23 @@ export function applyQuery<T>(
   );
 
   const sirala = spec.sorts.find((s) => s.value === query.sort);
-  const sirali = sirala ? [...suzulmus].sort(sirala.compare) : suzulmus;
+
+  /*
+   * ALAKA, ARAMA VARKEN SIRALAMANIN ÖNÜNE GEÇİYOR — ama onu silmiyor:
+   * eşit alakadaki kayıtlar kullanıcının seçtiği sıraya göre diziliyor.
+   * Alakayı tek başına kullanmak, aynı skoru paylaşan onlarca kaydı
+   * rastgele sıralar.
+   */
+  const alakali = spec.relevance && query.q.trim() !== '';
+  const sirali = alakali
+    ? [...suzulmus].sort(
+        (a, b) =>
+          relevanceScore(a, query.q, spec) - relevanceScore(b, query.q, spec) ||
+          (sirala ? sirala.compare(a, b) : 0)
+      )
+    : sirala
+      ? [...suzulmus].sort(sirala.compare)
+      : suzulmus;
 
   const boyut = spec.pageSize ?? 0;
   if (boyut <= 0) {

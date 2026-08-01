@@ -1,4 +1,3 @@
-import { useMemo, useState } from 'react';
 import { Link } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { Input, Select } from '@/components/ui/Input';
@@ -18,20 +17,16 @@ import { PinIcon, LockIcon, ChatIcon } from '@/components/ui/icons';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
 import { useForumThreads } from '@/services/content/forum';
+import { useExplorer } from '@/features/explorer/useExplorer';
+import { forumSpec } from './forumSpec';
 import {
   forumCategories,
   forumCategoryOrder,
   forumLabels,
   forumLabelOrder,
   forumDensities,
-  forumSortOptions,
-  filterThreads,
-  sortThreads,
   relativeTime,
-  type ForumCategoryId,
   type ForumDensity,
-  type ForumLabelId,
-  type ForumSortId,
   type ForumThread,
 } from './types';
 import { LabelChip } from './LabelChip';
@@ -50,11 +45,7 @@ import { cn } from '@/lib/cn';
  * her ziyarette yeniden yaptırmak, iki kullanımdan birini hep cezalandırır.
  */
 export function ForumPage() {
-  const [category, setCategory] = useState<ForumCategoryId | 'hepsi'>('hepsi');
-  const [label, setLabel] = useState<ForumLabelId | 'hepsi'>('hepsi');
-  const [search, setSearch] = useState('');
-  const [onlyUnsolved, setOnlyUnsolved] = useState(false);
-  const [sort, setSort] = useState<ForumSortId>('son-etkinlik');
+
   const [density, setDensity] = useStoredChoice<ForumDensity>(
     'forum',
     forumDensities,
@@ -64,14 +55,24 @@ export function ForumPage() {
   const threadCatalog = useForumThreads();
   const threads = threadCatalog.items;
 
-  const result = useMemo(
-    () =>
-      sortThreads(
-        filterThreads(threads, { category, label, search, onlyUnsolved }),
-        sort
-      ),
-    [threads, category, label, search, onlyUnsolved, sort]
-  );
+  /*
+   * ORTAK DATA EXPLORER (Faz 4).
+   *
+   * SABİTLENMİŞ KONULAR KORUNDU: `forumSpec` her sıralamayı sabitleme
+   * kontrolüyle sarıyor. Genel motor bunu bilmiyor — naif bir taşıma
+   * duyuru ve kural konularını listenin ortasına gömerdi ve yeni gelen
+   * kullanıcı forumun kurallarını hiç görmezdi.
+   */
+  const ex = useExplorer(threads, forumSpec);
+  const result = ex.items;
+  const category = ex.query.facets.kategori?.[0] ?? 'hepsi';
+
+  const tekSec = (param: string, next: string) => {
+    const mevcut = ex.query.facets[param]?.[0];
+    if (mevcut) ex.toggleFacet(param, mevcut);
+    if (next !== 'hepsi' && next !== mevcut) ex.toggleFacet(param, next);
+  };
+  const setCategory = (next: string) => tekSec('kategori', next);
 
   return (
     <>
@@ -144,18 +145,16 @@ export function ForumPage() {
               id="forum-search"
               type="search"
               placeholder="Konu başlığı, rozet veya kullanıcı"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              value={ex.searchInput}
+              onChange={(e) => ex.setSearch(e.target.value)}
               className={filterControlClass}
             />
           </FilterCell>
           <FilterCell label="Rozet" htmlFor="forum-label">
             <Select
               id="forum-label"
-              value={label}
-              onChange={(e) =>
-                setLabel(e.target.value as ForumLabelId | 'hepsi')
-              }
+              value={ex.query.facets.rozet?.[0] ?? 'hepsi'}
+              onChange={(e) => tekSec('rozet', e.target.value)}
               className={filterControlClass}
             >
               <option value="hepsi">Tümü</option>
@@ -169,8 +168,8 @@ export function ForumPage() {
           <FilterToggle
             id="forum-unsolved"
             label="Yalnızca yanıt bekleyenler"
-            checked={onlyUnsolved}
-            onChange={setOnlyUnsolved}
+            checked={(ex.query.facets.cozulmemis?.length ?? 0) > 0}
+            onChange={() => ex.toggleFacet('cozulmemis', 'evet')}
           />
         </FilterBar>
 
@@ -179,16 +178,19 @@ export function ForumPage() {
         <ToolBar
           left={
             <ResultCount
-              current={result.length}
+              current={ex.total}
               total={threads.length}
               noun="konu"
             />
           }
           sort={{
             id: 'forum-sort',
-            value: sort,
-            onChange: (value) => setSort(value as ForumSortId),
-            options: forumSortOptions,
+            value: ex.query.sort,
+            onChange: ex.setSort,
+            options: forumSpec.sorts.map((s) => ({
+              value: s.value,
+              label: s.label,
+            })),
           }}
           extra={<DensityToggle density={density} onChange={setDensity} />}
         />

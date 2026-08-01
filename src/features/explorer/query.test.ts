@@ -354,3 +354,61 @@ describe('chipler ve temizleme', () => {
     expect(hasActiveFilters({ ...EMPTY_QUERY, sort: 'puan', page: 3 })).toBe(false);
   });
 });
+
+/**
+ * ALAKA SIRALAMASI (Faz 4).
+ *
+ * Hedef kataloğunun kendi araması bunu yapıyordu ve genel motor
+ * yapmıyordu; taşımak o davranışı sessizce kaybettirecekti.
+ */
+describe('alaka sıralaması', () => {
+  const alakaSpec: ExplorerSpec<Kayit> = { ...spec, relevance: true };
+  const katalog: Kayit[] = [
+    k('M 310 Uzak Hedef', 'gok', 'x'),
+    k('Andromeda M 31', 'gok', 'y'),
+    k('M 31', 'gok', 'z'),
+  ];
+  const bul = (q: string, s = alakaSpec) =>
+    applyQuery(katalog, { ...EMPTY_QUERY, q, sort: 'ad' }, s).items.map((i) => i.ad);
+
+  /*
+   * "m31" yazan biri TAM EŞLEŞEN kaydı ilk sırada bekler — alfabetik
+   * olarak önce gelen "Andromeda M 31"i değil.
+   */
+  it('tam eşleşme başa geliyor', () => {
+    expect(bul('m31')[0]).toBe('M 31');
+  });
+
+  it('baştan eşleşme içinde geçmeden önce', () => {
+    const sira = bul('m 31');
+    expect(sira.indexOf('M 31')).toBeLessThan(sira.indexOf('Andromeda M 31'));
+  });
+
+  /*
+   * ALAKA SIRALAMAYI SİLMİYOR: eşit alakadaki kayıtlar kullanıcının
+   * seçtiği sıraya göre diziliyor. Yoksa aynı skoru paylaşan onlarca
+   * kayıt rastgele sıralanırdı.
+   */
+  it('eşit alakada seçilen sıralama geçerli', () => {
+    const esit: Kayit[] = [k('Zeta Hedefi', 'gok', 'x'), k('Alfa Hedefi', 'gok', 'y')];
+    const r = applyQuery(
+      esit,
+      { ...EMPTY_QUERY, q: 'hedefi', sort: 'ad' },
+      alakaSpec
+    ).items.map((i) => i.ad);
+    expect(r).toEqual(['Alfa Hedefi', 'Zeta Hedefi']);
+  });
+
+  /*
+   * Terim BOŞKEN alaka devreye girmiyor; kullanıcının seçtiği sıralama
+   * geçerli. İkisini birden uygulamak "en yeni" seçmiş kullanıcıya
+   * alaka sırası göstermek olurdu.
+   */
+  it('arama yokken alaka devreye girmiyor', () => {
+    expect(bul('')).toEqual(['Andromeda M 31', 'M 31', 'M 310 Uzak Hedef']);
+  });
+
+  it('relevance kapalıyken sıralama değişmiyor', () => {
+    expect(bul('m31', spec)).toEqual(['Andromeda M 31', 'M 31', 'M 310 Uzak Hedef']);
+  });
+});
