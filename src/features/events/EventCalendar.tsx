@@ -76,7 +76,7 @@ export function EventCalendar({ events }: { events: AstroEvent[] }) {
           >
             ←
           </Button>
-          <span className="tabular min-w-[10ch] text-center text-[12.5px] text-foreground">
+          <span className="tabular min-w-[10ch] text-center text-caption text-foreground">
             {MONTH_NAMES[month]} {year}
           </span>
           <Button
@@ -135,7 +135,7 @@ export function EventCalendar({ events }: { events: AstroEvent[] }) {
                         to={`/etkinlik/${event.slug}`}
                         title={`${event.title} — ${event.city}`}
                         className={cn(
-                          'block truncate rounded-[2px] px-1 py-0.5 text-meta leading-tight transition-colors',
+                          'block truncate rounded-card px-1 py-0.5 text-meta leading-tight transition-colors',
                           continuing
                             ? 'border-l-2 border-cold/60 bg-surface-2 text-muted-foreground'
                             : 'bg-primary/12 text-primary hover:bg-primary/20'
@@ -176,7 +176,7 @@ export function EventCalendar({ events }: { events: AstroEvent[] }) {
                       month: 'short',
                     })}
                   </span>
-                  <span className="min-w-0 flex-1 truncate text-[12.5px] text-foreground">
+                  <span className="min-w-0 flex-1 truncate text-caption text-foreground">
                     {event.title}
                   </span>
                   <span className="shrink-0 text-meta text-muted-foreground">

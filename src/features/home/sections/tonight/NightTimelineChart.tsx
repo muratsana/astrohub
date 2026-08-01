@@ -440,7 +440,7 @@ export function NightTimelineChart({
             <li key={kind} className="inline-flex items-center gap-1.5">
               <span
                 aria-hidden
-                className="h-[9px] w-[9px] rounded-[2px] border border-border"
+                className="h-[9px] w-[9px] rounded-card border border-border"
                 style={{ background: SEGMENT_FILL[kind] }}
               />
               {SEGMENT_LABEL[kind]}

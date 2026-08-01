@@ -48,7 +48,7 @@ export function RecentListings() {
       />
 
       {recent.length === 0 ? (
-        <p className="rounded-card border border-border bg-surface-1 px-3 py-6 text-center text-[12px] text-muted-foreground">
+        <p className="rounded-card border border-border bg-surface-1 px-3 py-6 text-center text-meta text-muted-foreground">
           Yayında ilan yok.
         </p>
       ) : (
@@ -73,7 +73,7 @@ export function RecentListings() {
                   <ContentCardTitle lines={2} className="font-medium leading-snug">
                     {listing.title}
                   </ContentCardTitle>
-                  <p className="tabular mt-1.5 font-display text-[17px] font-bold leading-none text-primary">
+                  <p className="tabular mt-1.5 font-display text-readout-sm font-bold leading-none text-primary">
                     {listing.price.toLocaleString('tr-TR')} ₺
                   </p>
                   <ContentCardMeta className="mt-auto pt-1">

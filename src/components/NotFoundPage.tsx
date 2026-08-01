@@ -25,14 +25,14 @@ export function NotFoundPage() {
       <Container className="py-16 sm:py-24">
         <div className="mx-auto max-w-2xl">
           <div className="flex items-start gap-4 border-b border-border pb-6">
-            <p className="tabular font-display text-[46px] font-bold leading-none text-primary sm:text-[58px]">
+            <p className="tabular type-hero font-display font-bold leading-none text-primary">
               404
             </p>
             <div className="min-w-0 pt-1">
-              <h1 className="text-[22px] text-foreground sm:text-[26px]">
+              <h1 className="type-page-sm text-foreground">
                 Sayfa Bulunamadı
               </h1>
-              <p className="mt-2 text-[12px] leading-relaxed text-muted-foreground">
+              <p className="mt-2 text-meta leading-relaxed text-muted-foreground">
                 Bu adres değişmiş ya da bu bölüm henüz yayına alınmamış olabilir.
               </p>
             </div>
@@ -40,7 +40,7 @@ export function NotFoundPage() {
 
           <div className="mt-4 rounded-card border border-border bg-surface-1 px-3 py-2.5">
             <p className="label">İstenen yol</p>
-            <p className="tabular mt-1 break-all text-[12px] text-foreground">
+            <p className="tabular mt-1 break-all text-meta text-foreground">
               {pathname}
             </p>
           </div>

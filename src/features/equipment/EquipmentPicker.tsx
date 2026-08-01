@@ -122,7 +122,7 @@ export function EquipmentPicker({
         /* Seçili durum: katalog bağı kurulmuş. */
         <div className="flex items-center gap-2 rounded-card border border-primary/40 bg-surface-2 px-3 py-2">
           <Badge tone="primary">Katalog</Badge>
-          <span className="min-w-0 flex-1 truncate text-[12.5px] text-foreground">
+          <span className="min-w-0 flex-1 truncate text-caption text-foreground">
             {value.text}
           </span>
           <Button
@@ -147,11 +147,11 @@ export function EquipmentPicker({
               setOpen(true);
             }}
             onFocus={() => setOpen(true)}
-            className="h-10 text-[13px]"
+            className="h-10 text-body-sm"
           />
 
           {open && (
-            <div className="absolute left-0 right-0 z-20 mt-1 max-h-72 overflow-auto rounded-card border border-border-strong bg-surface-1 shadow-lg">
+            <div className="absolute left-0 right-0 z-[var(--z-popover)] mt-1 max-h-72 overflow-auto rounded-card border border-border-strong bg-surface-1 shadow-overlay">
               {options.length > 0 ? (
                 <ul>
                   {options.map((model) => (
@@ -161,7 +161,7 @@ export function EquipmentPicker({
                         onClick={() => select(model)}
                         className="flex w-full items-baseline gap-2 border-b border-border px-3 py-2 text-left transition-colors last:border-0 hover:bg-surface-2"
                       >
-                        <span className="text-[12.5px] text-foreground">
+                        <span className="text-caption text-foreground">
                           <span className="text-muted-foreground">
                             {model.brand}
                           </span>{' '}
@@ -187,13 +187,13 @@ export function EquipmentPicker({
                       value={newBrand}
                       onChange={(e) => setNewBrand(e.target.value)}
                       placeholder="Marka (ör. Takahashi)"
-                      className="h-9 text-[12px]"
+                      className="h-9 text-meta"
                     />
                     <Input
                       value={newModel}
                       onChange={(e) => setNewModel(e.target.value)}
                       placeholder="Model (ör. FSQ-106EDX4)"
-                      className="h-9 text-[12px]"
+                      className="h-9 text-meta"
                     />
                     {error && (
                       <Alert variant="text">
@@ -277,7 +277,7 @@ export function FilterSelect({
       id={id}
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className={cn('h-10 text-[13px]')}
+      className={cn('h-10 text-body-sm')}
     >
       <option value="">Filtre seçin (isteğe bağlı)</option>
       {filters.map((f) => (

@@ -85,7 +85,7 @@ export function NavDrawer({
           >
             <SearchIcon className="h-3.5 w-3.5" />
             Komut paleti
-            <kbd className="ml-auto rounded-[2px] border border-border px-1 py-px text-meta text-faint">
+            <kbd className="ml-auto rounded-card border border-border px-1 py-px text-meta text-faint">
               ⌘K
             </kbd>
           </button>
@@ -122,7 +122,7 @@ export function NavDrawer({
                 <li key={`${group.title}-${item.to}-${item.label}`}>
                   <NavLink
                     to={item.to}
-                    className="flex items-baseline justify-between gap-2 border-b border-border py-2.5 text-[12px] text-foreground transition-colors hover:text-primary"
+                    className="flex items-baseline justify-between gap-2 border-b border-border py-2.5 text-meta text-foreground transition-colors hover:text-primary"
                   >
                     {item.label}
                     {item.soon && (

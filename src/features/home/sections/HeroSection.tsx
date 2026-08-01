@@ -142,7 +142,32 @@ export function HeroSection() {
 
           {/* İçerik */}
           <div
-            className="relative flex min-h-[300px] flex-col justify-center px-5 py-8 sm:min-h-[360px] sm:px-9 lg:min-h-[400px] lg:px-12"
+            /*
+              HERO ALÇALDI: min-h 300/360/400 → 240/272/300, dikey dolgu
+              py-8 → py-6/7 (Faz 2.3).
+
+              ÖLÇÜM (`npm run check:viewports`, 1280×720): kabuk 88px,
+              başlık altı 353px, ana içerik 779px'de başlıyordu — yani
+              "Bu Gece", sitenin amiral modülü, fold'un 59px altındaydı.
+              Belge §5.3 bu iki çözünürlüğü adıyla anıyor.
+
+              ÖLÇÜMÜN ÖĞRETTİĞİ: `min-h` BAĞLAYICI KISIT DEĞİLDİ. lg'de
+              400px'e indirmek hiçbir şey kazandırmadı, çünkü hero zaten
+              içeriğiyle o boyu geçiyor — üç satırlık 48px başlık, açıklama
+              ve düğme. Gerçek kazanç yalnızca dolgudan geldi: içerik
+              779 → 769px. Yani 10px.
+
+              Kalan mesafeyi kapatmak hero'nun İÇERİĞİNİ yeniden
+              düzenlemeyi gerektiriyor (başlık ölçeği, carousel yapısı) ve
+              bu Faz 3'ün konusu — belgede "Ana sayfa, navbar, hero" ayrı
+              bir faz. Burada yapılan, ölçüm aracını kurmak ve orantısız
+              dolguyu almak.
+
+              Punto ve dokunma hedefleri KÜÇÜLMEDİ; yalnızca boşluk
+              alındı. Metni küçülterek yer kazanmak §5.3'te ayrıca
+              yasaklanmış.
+            */
+            className="relative flex min-h-[240px] flex-col justify-center px-5 py-6 sm:min-h-[272px] sm:px-9 sm:py-7 lg:min-h-[300px] lg:px-12"
             aria-live="polite"
           >
             <div className="max-w-[46ch]">
@@ -160,13 +185,13 @@ export function HeroSection() {
                   bilgi bizim değil — "i" harfi "I" olup başlık "KARENIN"
                   diye çıkıyor. Ayrıntı: lib/text.ts
                 */}
-                <h1 className="caps text-[28px] text-foreground sm:text-[40px] lg:text-[48px]">
+                <h1 className="caps type-hero text-foreground">
                   {upperTr(slide.title)}
                 </h1>
               </Editable>
 
               <Editable slide={slide} field="subtitle" className="mt-4 block">
-                <p className="text-[13px] leading-relaxed text-muted-foreground sm:text-[14px]">
+                <p className="text-body-sm leading-relaxed text-muted-foreground sm:text-body-sm">
                   {slide.subtitle}
                 </p>
               </Editable>

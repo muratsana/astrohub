@@ -141,7 +141,7 @@ function TvControl() {
                   {broadcastKindLabels[item.kind]}
                 </Badge>
                 {!item.published && <Badge tone="warning">Taslak</Badge>}
-                <span className="min-w-0 flex-1 truncate text-[12px] text-foreground">
+                <span className="min-w-0 flex-1 truncate text-meta text-foreground">
                   {item.title}
                 </span>
               </div>
@@ -212,7 +212,7 @@ function TvControl() {
               value={slug}
               onChange={(e) => setSlug(e.target.value)}
               placeholder="perseid-gecesi"
-              className="h-8 text-[12px]"
+              className="h-8 text-meta"
             />
           </Field>
 
@@ -221,7 +221,7 @@ function TvControl() {
               id="tv-title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="h-8 text-[12px]"
+              className="h-8 text-meta"
             />
           </Field>
 
@@ -230,7 +230,7 @@ function TvControl() {
               id="tv-ref"
               value={refKind}
               onChange={(e) => setRefKind(e.target.value as YoutubeRef)}
-              className="h-8 text-[12px]"
+              className="h-8 text-meta"
             >
               <option value="video">Video (izleme adresindeki v=)</option>
               <option value="channel">Kanal (UC… ile başlar)</option>
@@ -243,7 +243,7 @@ function TvControl() {
               value={youtubeId}
               onChange={(e) => setYoutubeId(e.target.value)}
               placeholder={refKind === 'video' ? 'dQw4w9WgXcQ' : 'UC…'}
-              className="h-8 text-[12px]"
+              className="h-8 text-meta"
             />
           </Field>
 
@@ -252,7 +252,7 @@ function TvControl() {
               id="tv-kind"
               value={kind}
               onChange={(e) => setKind(e.target.value as BroadcastKind)}
-              className="h-8 text-[12px]"
+              className="h-8 text-meta"
             >
               <option value="scheduled">Programda</option>
               <option value="archive">Arşiv</option>
@@ -265,7 +265,7 @@ function TvControl() {
               type="datetime-local"
               value={startsAt}
               onChange={(e) => setStartsAt(e.target.value)}
-              className="h-8 text-[12px]"
+              className="h-8 text-meta"
             />
           </Field>
 
@@ -379,7 +379,7 @@ function RadioControl() {
               </Badge>
               {!track.published && <Badge tone="warning">Taslak</Badge>}
 
-              <span className="min-w-0 flex-1 truncate text-[12px] text-foreground">
+              <span className="min-w-0 flex-1 truncate text-meta text-foreground">
                 {track.title}
                 {track.artist && (
                   <span className="text-muted-foreground"> · {track.artist}</span>
@@ -430,7 +430,7 @@ function RadioControl() {
               id="radio-title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="h-8 text-[12px]"
+              className="h-8 text-meta"
             />
           </Field>
 
@@ -439,7 +439,7 @@ function RadioControl() {
               id="radio-artist"
               value={artist}
               onChange={(e) => setArtist(e.target.value)}
-              className="h-8 text-[12px]"
+              className="h-8 text-meta"
             />
           </Field>
 
@@ -448,7 +448,7 @@ function RadioControl() {
               id="radio-source"
               value={source}
               onChange={(e) => setSource(e.target.value as 'mp3' | 'spotify')}
-              className="h-8 text-[12px]"
+              className="h-8 text-meta"
             >
               <option value="mp3">MP3 (radio bucket'ındaki yol)</option>
               <option value="spotify">Spotify bağlantısı</option>
@@ -468,7 +468,7 @@ function RadioControl() {
                   ? 'gece/nocturne.mp3'
                   : 'https://open.spotify.com/track/…'
               }
-              className="h-8 text-[12px]"
+              className="h-8 text-meta"
             />
           </Field>
 

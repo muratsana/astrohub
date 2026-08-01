@@ -119,7 +119,7 @@ export function CommentsControl({
         {(rows ?? []).map((row) => (
           <li key={row.id} className="border-b border-border py-2.5 last:border-0">
             <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-              <span className="text-[12.5px] font-medium text-foreground">
+              <span className="text-caption font-medium text-foreground">
                 {row.authorName
                   ? `@${row.authorName}`
                   : (row.authorId?.slice(0, 8) ?? 'bilinmiyor')}

@@ -55,7 +55,7 @@ export function GoogleButton({ label = 'Google ile devam et' }: { label?: string
         type="button"
         onClick={() => void start()}
         disabled={busy}
-        className="inline-flex h-11 w-full items-center justify-center gap-2.5 rounded-card border border-border bg-surface-1 px-4 text-[13px] font-medium text-foreground transition-colors hover:border-border-strong disabled:opacity-60"
+        className="inline-flex h-11 w-full items-center justify-center gap-2.5 rounded-card border border-border bg-surface-1 px-4 text-body-sm font-medium text-foreground transition-colors hover:border-border-strong disabled:opacity-60"
       >
         <GoogleMark />
         {busy ? 'Google’a yönlendiriliyor…' : label}

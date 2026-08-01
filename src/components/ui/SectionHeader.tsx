@@ -30,7 +30,7 @@ export function SectionHeader({
         ölçüldü). Başlık artık kırpılır, bağlantı hiç büzülmez.
       */}
       <div className="flex items-center gap-3">
-        <h2 className="min-w-0 truncate text-[17px] text-foreground sm:text-[19px]">
+        <h2 className="type-section min-w-0 truncate text-foreground">
           {title}
         </h2>
 
@@ -54,7 +54,7 @@ export function SectionHeader({
       </div>
 
       {description && (
-        <p className="mt-2 max-w-[70ch] text-[12px] leading-relaxed text-muted-foreground">
+        <p className="mt-2 max-w-[70ch] text-meta leading-relaxed text-muted-foreground">
           {description}
         </p>
       )}

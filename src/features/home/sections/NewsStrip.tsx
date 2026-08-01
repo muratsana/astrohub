@@ -114,7 +114,7 @@ function StripRow({
             <span className="tabular text-meta text-faint">{meta}</span>
           </span>
 
-          <span className="line-clamp-2 min-h-[2lh] text-[13px] leading-snug text-foreground transition-colors group-hover:text-primary">
+          <span className="line-clamp-2 min-h-[2lh] text-body-sm leading-snug text-foreground transition-colors group-hover:text-primary">
             {title}
           </span>
 

@@ -218,7 +218,7 @@ export function AccountPage() {
                   onChange={(e) =>
                     setEdit((v) => ({ ...v, bio: e.target.value }))
                   }
-                  className="w-full resize-y rounded-card border border-border bg-surface-2 px-2.5 py-2 text-[12px] leading-relaxed text-foreground outline-none transition-colors focus:border-primary"
+                  className="w-full resize-y rounded-card border border-border bg-surface-2 px-2.5 py-2 text-meta leading-relaxed text-foreground outline-none transition-colors focus:border-primary"
                 />
               </Field>
 

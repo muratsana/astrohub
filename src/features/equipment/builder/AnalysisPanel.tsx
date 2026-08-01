@@ -58,11 +58,11 @@ export function Metric({
     <div className="rounded-card border border-border bg-surface-1 px-2.5 py-2">
       <p className="label text-meta">{label}</p>
       {value === null ? (
-        <p className="text-[12px] text-faint" title={computation.assumptions[0]}>
+        <p className="text-meta text-faint" title={computation.assumptions[0]}>
           veri yok
         </p>
       ) : (
-        <p className="tabular text-[14px] leading-tight text-foreground">
+        <p className="tabular text-body-sm leading-tight text-foreground">
           {value}
           <span className="ml-0.5 text-meta text-muted-foreground">
             {computation.unit}
@@ -144,7 +144,7 @@ function CheckRow({ check }: { check: SetupCheck }) {
         </span>
         <span className="min-w-0 flex-1">
           <span className="flex flex-wrap items-baseline gap-x-2">
-            <span className="text-[12.5px] font-medium text-foreground">
+            <span className="text-caption font-medium text-foreground">
               {check.title}
             </span>
             <span className="tabular text-meta text-cold">{check.headline}</span>
@@ -236,7 +236,7 @@ export function BackfocusChainView({
       </ul>
       <div className="mt-2 flex items-baseline justify-between border-t border-border pt-1.5">
         <span className="label text-meta">Toplam</span>
-        <span className="tabular text-[12px] text-foreground">
+        <span className="tabular text-meta text-foreground">
           {Math.round(total * 100) / 100} mm
           {requiredMm !== null && (
             <span className="ml-1 text-meta text-muted-foreground">

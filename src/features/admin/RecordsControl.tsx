@@ -145,7 +145,7 @@ export function RecordsControl({
             <div className="flex flex-wrap items-center gap-2">
               <Badge tone={statusTone(row.status)}>{row.status}</Badge>
 
-              <span className="min-w-0 flex-1 truncate text-[12.5px] text-foreground">
+              <span className="min-w-0 flex-1 truncate text-caption text-foreground">
                 {row.path ? (
                   <Link to={row.path} className="hover:text-primary">
                     {row.title}
@@ -175,7 +175,7 @@ export function RecordsControl({
                       setRecordStatus(kind, row.id, e.target.value)
                     )
                   }
-                  className="h-8 w-auto text-[12px]"
+                  className="h-8 w-auto text-meta"
                 >
                   {spec.statuses.map((st) => (
                     <option key={st} value={st}>

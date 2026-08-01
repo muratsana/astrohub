@@ -110,7 +110,7 @@ export function UserControl() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Kullanıcı adı ya da görünen ad"
-          className="h-9 max-w-xs flex-1 text-[12px]"
+          className="h-9 max-w-xs flex-1 text-meta"
           aria-label="Kullanıcı ara"
         />
         <Button size="sm" type="submit" disabled={busy}>
@@ -151,7 +151,7 @@ export function UserControl() {
                   aria-expanded={expanded}
                   className="min-w-0 flex-1 text-left"
                 >
-                  <span className="block truncate text-[12.5px] font-medium text-foreground">
+                  <span className="block truncate text-caption font-medium text-foreground">
                     @{u.username}
                     {u.displayName && (
                       <span className="text-muted-foreground">
@@ -239,7 +239,7 @@ export function UserControl() {
                             )
                           )
                         }
-                        className="h-8 text-[12px]"
+                        className="h-8 text-meta"
                       >
                         {MEMBERSHIP_STATUSES.map((m) => (
                           <option key={m} value={m}>

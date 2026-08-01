@@ -190,7 +190,7 @@ function TargetCard({
 
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <span className="truncate font-display text-[14px] font-bold text-foreground transition-colors group-hover:text-primary">
+            <span className="truncate font-display text-body-sm font-bold text-foreground transition-colors group-hover:text-primary">
               {t.catalog}
             </span>
             {difficulty}

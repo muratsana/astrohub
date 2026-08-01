@@ -55,7 +55,7 @@ export function RadioPage() {
             />
 
             <Panel title="Yayın nasıl işler">
-              <ul className="space-y-3 text-[12px] leading-relaxed text-muted-foreground">
+              <ul className="space-y-3 text-meta leading-relaxed text-muted-foreground">
                 <li>
                   <span className="label mb-0.5 block text-cold">
                     Programı Astrohub yapar
@@ -127,7 +127,7 @@ export function RadioPage() {
                     <div className="min-w-0 flex-1">
                       <p
                         className={cn(
-                          'truncate text-[12.5px] font-medium',
+                          'truncate text-caption font-medium',
                           isCurrent ? 'text-primary' : 'text-foreground'
                         )}
                       >

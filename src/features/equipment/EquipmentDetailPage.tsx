@@ -172,7 +172,7 @@ export function EquipmentDetailPage() {
                   {model.notes.map((note) => (
                     <li
                       key={note}
-                      className="flex gap-2 text-[12px] leading-relaxed text-muted-foreground"
+                      className="flex gap-2 text-meta leading-relaxed text-muted-foreground"
                     >
                       <span aria-hidden className="text-primary">
                         ·
@@ -319,7 +319,7 @@ export function EquipmentDetailPage() {
             </Panel>
 
             <Panel title="Hesaplayıcılarda kullan">
-              <p className="text-[12px] leading-relaxed text-muted-foreground">
+              <p className="text-meta leading-relaxed text-muted-foreground">
                 Bu modelin değerlerini FOV, mozaik ve uyumluluk hesaplarına
                 elle girebilirsiniz; hazır ön ayar listesinde de bulunur.
               </p>
@@ -344,7 +344,7 @@ export function EquipmentDetailPage() {
               status={`${shotWith.length} fotoğraf`}
             >
               {shotWith.length === 0 ? (
-                <p className="py-4 text-[12px] text-muted-foreground">
+                <p className="py-4 text-meta text-muted-foreground">
                   Bu modelle çekilmiş kayıtlı fotoğraf yok. Kendi kaydınızı
                   eklerken setup alanına model adını yazarsanız burada
                   listelenir.
@@ -372,10 +372,10 @@ export function EquipmentDetailPage() {
                         to={`/ilan/${listing.slug}`}
                         className="flex items-baseline justify-between gap-3 py-2 transition-colors hover:text-primary"
                       >
-                        <span className="min-w-0 truncate text-[12.5px] text-foreground">
+                        <span className="min-w-0 truncate text-caption text-foreground">
                           {listing.title}
                         </span>
-                        <span className="tabular shrink-0 text-[12px] text-primary">
+                        <span className="tabular shrink-0 text-meta text-primary">
                           {listing.price.toLocaleString('tr-TR')} ₺
                         </span>
                       </Link>
@@ -397,7 +397,7 @@ export function EquipmentDetailPage() {
                         to={equipmentPath(alt)}
                         className="flex items-baseline justify-between gap-3 py-2 transition-colors hover:text-primary"
                       >
-                        <span className="min-w-0 truncate text-[12.5px] text-foreground">
+                        <span className="min-w-0 truncate text-caption text-foreground">
                           <span className="text-muted-foreground">{alt.brand}</span>{' '}
                           {alt.model}
                         </span>

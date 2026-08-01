@@ -97,7 +97,7 @@ export function ModelPicker({ categories, catalog, value, onChange, label }: Pro
           <EquipmentGlyph category={value.category} className="block h-full w-full" />
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-[13px] font-medium text-foreground">
+          <span className="block truncate text-body-sm font-medium text-foreground">
             {value.model}
           </span>
           <span className="tabular block truncate text-meta text-muted-foreground">
@@ -191,7 +191,7 @@ export function ModelPicker({ categories, catalog, value, onChange, label }: Pro
         placeholder={`${label} ara — marka ya da model`}
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        className="mb-2 h-9 text-[12.5px]"
+        className="mb-2 h-9 text-caption"
       />
 
       {shown.length === 0 ? (
@@ -214,7 +214,7 @@ export function ModelPicker({ categories, catalog, value, onChange, label }: Pro
                   className="h-7 w-7 shrink-0 text-muted-foreground"
                 />
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[12.5px] text-foreground">
+                  <span className="block truncate text-caption text-foreground">
                     {m.model}
                   </span>
                   <span className="tabular block truncate text-meta text-muted-foreground">

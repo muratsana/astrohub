@@ -245,7 +245,7 @@ export function NewListingPage() {
                     placeholder={
                       '2023 yılında alındı, yaklaşık 40 gece kullanıldı.\nOptikte çizik yok, tüpte taşımadan kalan hafif bir iz var.\nDaha uzun odağa geçtiğim için satıyorum.'
                     }
-                    className="w-full resize-y rounded-card border border-border bg-surface-2 px-2.5 py-2 text-[12px] leading-relaxed text-foreground outline-none transition-colors focus:border-primary"
+                    className="w-full resize-y rounded-card border border-border bg-surface-2 px-2.5 py-2 text-meta leading-relaxed text-foreground outline-none transition-colors focus:border-primary"
                   />
                 </Field>
 
@@ -260,7 +260,7 @@ export function NewListingPage() {
                     rows={4}
                     onChange={(e) => setIncludes(e.target.value)}
                     placeholder={'Orijinal kutu\nAlan düzleştirici\n2" uzatma tüpü'}
-                    className="w-full resize-y rounded-card border border-border bg-surface-2 px-2.5 py-2 text-[12px] leading-relaxed text-foreground outline-none transition-colors focus:border-primary"
+                    className="w-full resize-y rounded-card border border-border bg-surface-2 px-2.5 py-2 text-meta leading-relaxed text-foreground outline-none transition-colors focus:border-primary"
                   />
                 </Field>
               </div>
@@ -382,10 +382,10 @@ export function NewListingPage() {
             {/* Önizleme: yayımlanacak künyenin aynısı. */}
             <div className="mt-4 rounded-card border border-border bg-surface-1 p-3">
               <p className="label mb-2">Önizleme</p>
-              <p className="line-clamp-2 text-[12.5px] font-medium leading-snug text-foreground">
+              <p className="line-clamp-2 text-caption font-medium leading-snug text-foreground">
                 {sanitizeText(title, { maxLength: 160 }) || 'Başlık'}
               </p>
-              <p className="tabular mt-1.5 font-display text-[17px] font-bold leading-none text-primary">
+              <p className="tabular mt-1.5 font-display text-readout-sm font-bold leading-none text-primary">
                 {Number.isFinite(input.price) && input.price > 0
                   ? `${input.price.toLocaleString('tr-TR')} ₺`
                   : '— ₺'}

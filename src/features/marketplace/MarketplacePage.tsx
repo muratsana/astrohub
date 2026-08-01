@@ -234,7 +234,7 @@ function ListingCard({
             {listing.seller.rating.toFixed(1)}
           </ContentCardMeta>
         </div>
-        <span className="tabular shrink-0 font-display text-[15px] font-bold text-primary">
+        <span className="tabular shrink-0 font-display text-body font-bold text-primary">
           {listing.price.toLocaleString('tr-TR')} ₺
         </span>
         <Badge tone="muted" className="hidden shrink-0 sm:inline-flex">
@@ -262,7 +262,7 @@ function ListingCard({
         <ContentCardTitle lines={2} className="font-medium leading-snug">
           {listing.title}
         </ContentCardTitle>
-        <p className="tabular mt-1.5 font-display text-[17px] font-bold leading-none text-primary">
+        <p className="tabular mt-1.5 font-display text-readout-sm font-bold leading-none text-primary">
           {listing.price.toLocaleString('tr-TR')} ₺
         </p>
         <ContentCardMeta className="mt-auto pt-1">

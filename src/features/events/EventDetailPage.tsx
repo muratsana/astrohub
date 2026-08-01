@@ -92,7 +92,7 @@ export function EventDetailPage() {
               )}
             </div>
 
-            <h1 className="mt-3 text-[26px] text-foreground sm:text-[30px]">
+            <h1 className="mt-3 type-page text-foreground">
               {event.title}
             </h1>
             <p className="tabular mt-2 text-sm text-muted-foreground">
@@ -105,7 +105,7 @@ export function EventDetailPage() {
 
             {/* Program (§7.6 zaman çizelgesi) */}
             <section className="mt-8">
-              <h2 className="mb-3 text-lg font-semibold text-foreground">
+              <h2 className="type-section mb-3 font-semibold text-foreground">
                 Program
               </h2>
               <ol className="space-y-0 border-l border-border">
@@ -137,7 +137,7 @@ export function EventDetailPage() {
 
             {event.observedTargets.length > 0 && (
               <section className="mt-8">
-                <h2 className="mb-3 text-lg font-semibold text-foreground">
+                <h2 className="type-section mb-3 font-semibold text-foreground">
                   Gözlemlenecek Hedefler
                 </h2>
                 <div className="flex flex-wrap gap-1.5">
@@ -150,7 +150,7 @@ export function EventDetailPage() {
 
             {event.rules && event.rules.length > 0 && (
               <section className="mt-8">
-                <h2 className="mb-3 text-lg font-semibold text-foreground">
+                <h2 className="type-section mb-3 font-semibold text-foreground">
                   Katılımcı Kuralları
                 </h2>
                 <ul className="list-disc space-y-1.5 pl-5 text-sm text-muted-foreground">

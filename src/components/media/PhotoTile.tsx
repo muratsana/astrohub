@@ -88,7 +88,7 @@ export function PhotoTile({
 
         <span className="min-w-0 flex-1">
           <span className="flex items-center gap-2">
-            <span className="truncate font-display text-[14px] font-bold text-foreground transition-colors group-hover:text-primary">
+            <span className="truncate font-display text-body-sm font-bold text-foreground transition-colors group-hover:text-primary">
               {target}
             </span>
             {family && <FamilyBadge {...family} />}
@@ -164,7 +164,7 @@ export function FamilyBadge({
   return (
     <span
       className={cn(
-        'inline-block shrink-0 rounded-[2px] border px-1.5 py-0.5 text-meta font-medium leading-[1.5] tracking-[0.02em] backdrop-blur-sm',
+        'inline-block shrink-0 rounded-card border px-1.5 py-0.5 text-meta font-medium leading-[1.5] tracking-[0.02em] backdrop-blur-sm',
         className
       )}
     >

@@ -46,12 +46,12 @@ export function PhotoComparison({ photo }: { photo: AstroPhoto }) {
   if (!other) {
     return (
       <Panel title="Karşılaştırma">
-        <p className="text-[12px] leading-relaxed text-muted-foreground">
+        <p className="text-meta leading-relaxed text-muted-foreground">
           {photo.target.catalog} için galeride başka kayıt yok, bu yüzden
           karşılaştıracak ikinci fotoğraf bulunamadı. Aynı hedefi siz de
           çektiyseniz kaydınızı ekleyerek bu karşılaştırmayı açabilirsiniz.
         </p>
-        <p className="mt-2 text-[12px]">
+        <p className="mt-2 text-meta">
           <Link to="/galeri" className="text-primary hover:underline">
             Galeriye dön →
           </Link>
@@ -102,7 +102,7 @@ export function PhotoComparison({ photo }: { photo: AstroPhoto }) {
             id="compare-with"
             value={other.slug}
             onChange={(e) => setOtherSlug(e.target.value)}
-            className="h-8 border-0 bg-transparent px-0 text-[12px] focus:bg-transparent"
+            className="h-8 border-0 bg-transparent px-0 text-meta focus:bg-transparent"
           >
             {candidates.map((candidate) => (
               <option key={candidate.slug} value={candidate.slug}>

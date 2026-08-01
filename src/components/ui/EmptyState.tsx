@@ -25,9 +25,9 @@ export function EmptyState({
         className
       )}
     >
-      <p className="text-[13px] text-foreground">{message}</p>
+      <p className="text-body-sm text-foreground">{message}</p>
       {hint && (
-        <p className="mx-auto mt-2 max-w-[52ch] text-[12px] leading-relaxed text-muted-foreground">
+        <p className="mx-auto mt-2 max-w-[52ch] text-meta leading-relaxed text-muted-foreground">
           {hint}
         </p>
       )}

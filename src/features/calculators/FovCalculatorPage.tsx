@@ -250,7 +250,7 @@ export function FovCalculatorPage() {
           <div className="space-y-4">
             {!result ? (
               <Panel title="Sonuç">
-                <p className="text-[12px] text-muted-foreground">
+                <p className="text-meta text-muted-foreground">
                   Geçerli değerler girin: odak uzaklığı, piksel ve sensör
                   boyutu pozitif olmalı.
                 </p>
@@ -297,7 +297,7 @@ export function FovCalculatorPage() {
                     </Badge>
                   }
                 >
-                  <p className="text-[12px] leading-relaxed text-muted-foreground">
+                  <p className="text-meta leading-relaxed text-muted-foreground">
                     {result.sampling.hint}
                   </p>
                   <p className="mt-2 text-meta leading-snug text-faint">
@@ -405,7 +405,7 @@ function FramePreview({
 
       <p
         className={cn(
-          'mt-3 text-center text-[12px]',
+          'mt-3 text-center text-meta',
           fits ? 'text-success' : 'text-warning'
         )}
       >

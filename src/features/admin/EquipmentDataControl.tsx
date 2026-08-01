@@ -132,12 +132,12 @@ export function EquipmentDataControl({ canWrite }: { canWrite: boolean }) {
                   {model ? (
                     <Link
                       to={equipmentPath(model)}
-                      className="text-[12.5px] text-foreground hover:text-primary"
+                      className="text-caption text-foreground hover:text-primary"
                     >
                       {row.brand} {row.model}
                     </Link>
                   ) : (
-                    <span className="text-[12.5px] text-foreground">
+                    <span className="text-caption text-foreground">
                       {row.brand} {row.model}
                     </span>
                   )}
@@ -249,7 +249,7 @@ function EditForm({
                 connection_input: e.target.value || null,
               }))
             }
-            className="h-9 text-[12px]"
+            className="h-9 text-meta"
           >
             <option value="">Değiştirme</option>
             {CONNECTION_OPTIONS.map((c) => (
@@ -268,7 +268,7 @@ function EditForm({
                 connection_output: e.target.value || null,
               }))
             }
-            className="h-9 text-[12px]"
+            className="h-9 text-meta"
           >
             <option value="">Değiştirme</option>
             {CONNECTION_OPTIONS.map((c) => (
@@ -300,7 +300,7 @@ function EditForm({
               step={0.01}
               placeholder="boş = değiştirme"
               onChange={(e) => num(key, e.target.value)}
-              className="h-9 text-[12px]"
+              className="h-9 text-meta"
             />
           </Field>
         ))}

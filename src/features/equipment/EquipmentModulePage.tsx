@@ -103,7 +103,7 @@ export function EquipmentModulePage() {
                   setParams(t.id === 'olustur' ? {} : { sekme: t.id })
                 }
                 className={cn(
-                  'rounded-card border px-3 py-1.5 text-[12px] transition-colors',
+                  'rounded-card border px-3 py-1.5 text-meta transition-colors',
                   active
                     ? 'border-primary/50 bg-surface-2 text-foreground'
                     : 'border-border text-muted-foreground hover:border-border-strong hover:text-foreground'
@@ -237,7 +237,7 @@ function CatalogTab() {
           placeholder="Marka ya da model ara"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="mt-3 h-10 text-[13px]"
+          className="mt-3 h-10 text-body-sm"
         />
       </Panel>
 
@@ -332,7 +332,7 @@ function SetupCard({
   return (
     <div className="flex h-full flex-col rounded-card border border-border bg-surface-1 p-3">
       <div className="mb-1 flex flex-wrap items-baseline gap-2">
-        <h3 className="text-[14px] font-medium text-foreground">{setup.name}</h3>
+        <h3 className="text-body-sm font-medium text-foreground">{setup.name}</h3>
         {setup.isDefault && <Badge tone="primary">varsayılan</Badge>}
         <Badge tone="muted">{visibilityLabels[setup.visibility]}</Badge>
       </div>
@@ -434,7 +434,7 @@ function InventoryTab() {
           placeholder="Eklemek için marka ya da model ara"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="h-10 text-[13px]"
+          className="h-10 text-body-sm"
         />
 
         {results.length > 0 && (
@@ -450,7 +450,7 @@ function InventoryTab() {
                     category={m.category}
                     className="h-6 w-6 shrink-0 text-muted-foreground"
                   />
-                  <span className="min-w-0 flex-1 truncate text-[12px] text-foreground">
+                  <span className="min-w-0 flex-1 truncate text-meta text-foreground">
                     {m.brand} {m.model}
                   </span>
                   <span className="shrink-0 text-meta text-primary">
@@ -489,7 +489,7 @@ function InventoryTab() {
               <span className="min-w-0 flex-1">
                 <Link
                   to={equipmentPath(m)}
-                  className="block truncate text-[13px] text-foreground hover:text-primary"
+                  className="block truncate text-body-sm text-foreground hover:text-primary"
                 >
                   {m.model}
                 </Link>

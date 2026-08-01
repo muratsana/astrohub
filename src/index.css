@@ -113,12 +113,124 @@
   --text-caption--line-height: 1.55;
   --text-body-sm: 14px;
   --text-body-sm--line-height: 1.6;
+  /*
+   * Gövde ölçüsünün kendisi (`body` 15px). Bir bloğun gövde metnine
+   * dönmesi gerektiğinde adıyla istenir; `text-[15px]` yazılınca o
+   * eleman gövde ölçüsü değişse bile geride kalırdı.
+   */
+  --text-body: 15px;
+  --text-body--line-height: 1.65;
+
+  /*
+   * ---- GÖSTERGE ÖLÇEĞİ (Faz 2.1) ----
+   *
+   * Enstrüman değerleri (fiyat, SQM, skor, süre, derece) başlık DEĞİL:
+   * okunacak bir cümle değil, bakılacak bir sayıdır. Bu yüzden başlık
+   * ölçeğinden ayrı bir kademesi var — biri diğerini bozmadan
+   * ayarlanabilsin.
+   *
+   * Ölçülen dağınıklık: 17, 19, 21, 22, 23, 26 ve 32 punto aynı işi
+   * yapan yerlerde yan yana duruyordu; en görünür hâli "Bu Gece"
+   * panelinde tek ekranda beş ayrı gösterge ölçüsüydü.
+   *
+   *   sm  17px  kart içi sayı — fiyat, SQM, tekil ölçüm
+   *   md  19px  panel gösterge değeri
+   *   lg  23px  büyük gösterge — skor, öne çıkan ölçüm
+   *   xl  26px  ana gösterge — panelin baş değeri
+   *
+   * `leading-none` çağıranda kalıyor: göstergeler çoğu zaman kendi
+   * kutusuna ortalanıyor ve satır yüksekliği o hizayı bozuyor.
+   */
+  --text-readout-sm: 17px;
+  --text-readout: 19px;
+  --text-readout-lg: 23px;
+  --text-readout-xl: 26px;
 
   /* İçerik genişliği (§6.4) */
   --spacing-content: 1520px;
 
   /* Sertlik: "dengeli" — 2px, her yerde aynı */
   --radius-card: 2px;
+
+  /*
+   * ---- İKON ÖLÇEĞİ (Faz 2.1) ----
+   *
+   * İkonlar `h-3`, `h-3.5`, `h-4`, `h-5`, `h-6`, `h-8`, `h-11` gibi
+   * doğrudan Tailwind ölçeğinden seçiliyordu — yani ikon boyutu bir
+   * TASARIM kararı değil, o an elin gittiği sayıydı. Üç kademe:
+   *
+   *   inline  14px  metin satırının içinde, x-yüksekliğine oturur
+   *   ui      16px  düğme ve giriş alanı ikonu — varsayılan
+   *   lead    20px  bir bloğun başındaki tanıtıcı ikon
+   *
+   * Daha büyüğü ikon değil illüstrasyondur ve kendi ölçüsünü taşır.
+   */
+  --spacing-icon-inline: 14px;
+  --spacing-icon-ui: 16px;
+  --spacing-icon-lead: 20px;
+
+  /*
+   * ---- FORM VE DÜĞME YÜKSEKLİĞİ (Faz 2.1) ----
+   *
+   * `h-8` (32) · `h-9` (36) · `h-10` (40) · `h-11` (44) dördü birden
+   * kullanılıyordu ve hangisinin ne demek olduğu yazılı değildi.
+   *
+   *   sm  32px  yoğun araç çubuğu — YALNIZCA fare hedefi olan yerlerde
+   *   md  40px  varsayılan giriş alanı ve düğme
+   *   lg  48px  birincil eylem, mobil öncelikli formlar
+   *
+   * DOKUNMATİK HEDEF ayrı bir ölçü: WCAG 2.5.8 en az 24×24 CSS piksel
+   * istiyor, WCAG 2.5.5 (AAA) ve platform kılavuzları 44×44 diyor.
+   * Görsel yüksekliği 32px olan bir düğme, tıklanabilir alanı 44px'e
+   * çıkaran bir dolguyla sarılmalıdır — ölçüyü küçültmek metni
+   * küçültmekten farksız bir "yer kazanma" numarasıdır (§5.3).
+   */
+  --spacing-control-sm: 32px;
+  --spacing-control-md: 40px;
+  --spacing-control-lg: 48px;
+  --spacing-touch-min: 44px;
+
+  /*
+   * ---- TEK YÜKSELTİ KADEMESİ (Faz 2.1) ----
+   *
+   * Sitenin künyesi "yüzey ayrımı gölgeyle değil çizgiyle yapılır" diyor
+   * ve bu her yerde geçerli — BİR istisna dışında: bir açılır liste,
+   * altındaki içeriğin ÜSTÜNDE yüzer. Orada çizgi yetmez; panel arka
+   * plandan ayrılmazsa satır arasına sıkışmış bir blok gibi okunur.
+   *
+   * Ölçülen durum üç ayrı çözümdü: iki seçici Tailwind'in `shadow-lg`sini
+   * (paletle hiçbir ilişkisi olmayan bir varsayılan), biri elle
+   * ayarlanmış `0 8px 24px -12px` gölgeyi kullanıyordu. Yani üç açılır
+   * liste birbirinden farklı yüzüyordu.
+   *
+   * Artık tek kademe var ve temaya göre çeviriliyor: koyu zeminde derin
+   * bir siyah, açık zeminde grafitin şeffaf hâli. Açık temada koyu
+   * temanın gölgesi kirli bir leke gibi durur.
+   *
+   * Yükselti bundan ibaret. İkinci bir kademe eklemek "bu panel şunun
+   * üstünde" hiyerarşisi kurmaya başlamak demektir ve terminal dili
+   * bunu taşımaz.
+   */
+  --shadow-overlay: 0 8px 24px -12px rgba(0, 0, 0, 0.9);
+
+  /*
+   * ---- KATMAN SIRASI (Faz 2.1) ----
+   *
+   * Örtü katmanlarının z-index'i dosyadan dosyaya elle yazılıyordu —
+   * aynı işi yapan üç açılır listede `z-20`, `z-20` ve `z-[60]`.
+   * Adlandırılmış kademeler, "hangisi üstte" sorusunu tek yerde
+   * cevaplıyor. Aralar 10'ar: araya bir şey girmesi gerekirse sayıları
+   * yeniden dizmek gerekmesin.
+   *
+   * Tailwind'in `z-*` diye bir tema alanı yok, bu yüzden kullanımı
+   * `z-[var(--z-popover)]` biçiminde. Sayı yerine ad yazılıyor olması
+   * yeterli — asıl kazanç sıranın tek dosyada okunabilmesi.
+   */
+  --z-sticky: 30;
+  --z-drawer: 40;
+  --z-modal: 50;
+  --z-popover: 60;
+  --z-toast: 70;
 
   /* Yapışkan kabuk yüksekliği: durum çubuğu + nav.
      Bölüm bağlantılarının başlığın altında kalmaması için kullanılır. */
@@ -186,6 +298,9 @@
     --color-success: #12704a;
     --color-warning: #875c0d;
     --color-danger: #a93325;
+
+    /* Açık zeminde saf siyah gölge leke gibi durur; grafitin şeffafı. */
+    --shadow-overlay: 0 8px 24px -12px rgba(18, 24, 26, 0.3);
   }
 
   /*
@@ -226,6 +341,10 @@
     --color-success: #c26a4a;
     --color-warning: #d4703f;
     --color-danger: #ff5c49;
+
+    /* Saha modunda gölge de kırmızıya kayar; nötr siyah bile ekranın
+       geri kalanından soğuk görünüyor. */
+    --shadow-overlay: 0 8px 24px -12px rgba(40, 0, 0, 0.95);
   }
 
   html {
@@ -360,6 +479,101 @@
 }
 
 @layer components {
+  /*
+   * ═══════════════════════════════════════════════════════════════════
+   * BAŞLIK ÖLÇEĞİ — role göre, punto göre değil (Faz 2.1)
+   * ═══════════════════════════════════════════════════════════════════
+   *
+   * ÖLÇÜLEN DURUM
+   *
+   * `<h1>` sitede BEŞ ayrı ölçü çiftiyle yazılmıştı:
+   *
+   *   26 → 30   sayfa başlığı (8 yerde)
+   *   22 → 26   hata / 404 / yer tutucu (3 yerde)
+   *   28 → 36   haber ve yazı detayı (2 yerde)
+   *   24 → 28   hukuki metin (1 yerde)
+   *   28 → 34   araçlar dizini (1 yerde)
+   *
+   * Aynı eleman, aynı iş, beş ölçü. Diyalog başlıkları da 16 ile 19
+   * arasında dağılmıştı. Kimse bunları bilerek seçmemişti; her ekran
+   * kendi sayısını yazmıştı ve site "farklı projelerden birleştirilmiş"
+   * görünmesinin bir sebebi buydu.
+   *
+   * ─────────────────────────────────────────────────────────────────
+   * NEDEN TOKEN DEĞİL, SINIF
+   *
+   * Ölçünün kendisi değil ÇİFTİ önemli: 26 tek başına yanlış değil, ama
+   * "26 yazıp `sm:30`u unutmak" mobil ile masaüstü arasındaki oranı
+   * bozuyor. Bir `@theme` punto token'ı duyarlı olamaz, bu yüzden her
+   * rol tek bir sınıf: kırılma noktası sınıfın İÇİNDE, yani yarısını
+   * yazmak mümkün değil.
+   *
+   * Sınıf adları ROL taşıyor. "22px lazım" diye seçilmez; "bu bir
+   * yardımcı sayfa başlığı" diye seçilir.
+   */
+
+  /* Ana sayfa hero'su — sayfada bir tane, en büyük ölçü. */
+  .type-hero {
+    font-size: 28px;
+    line-height: 1.12;
+  }
+
+  /* Uzun okuma başlığı: haber ve yazı detayı. Gövde metnini taşıyan
+     sayfalarda başlık daha güçlü durmalı — okuma başlıyor. */
+  .type-page-lg {
+    font-size: 28px;
+    line-height: 1.16;
+  }
+
+  /* VARSAYILAN sayfa başlığı. Yeni bir sayfanın h1'i bunu kullanır. */
+  .type-page {
+    font-size: 26px;
+    line-height: 1.16;
+  }
+
+  /* Yardımcı sayfa başlığı: 404, hata, yer tutucu, hukuki metin.
+     Üstünde zaten büyük bir sayı ya da simge var; başlık ona ikincil. */
+  .type-page-sm {
+    font-size: 22px;
+    line-height: 1.18;
+  }
+
+  /* Bölüm başlığı (h2) — sayfa içi ayraç. */
+  .type-section {
+    font-size: 17px;
+    line-height: 1.25;
+  }
+
+  /* Diyalog, çekmece ve panel başlığı. 16 ile 19 arasında dağılmıştı. */
+  .type-panel {
+    font-size: 19px;
+    line-height: 1.25;
+  }
+
+  @media (min-width: 640px) {
+    .type-hero {
+      font-size: 40px;
+    }
+    .type-page-lg {
+      font-size: 36px;
+    }
+    .type-page {
+      font-size: 30px;
+    }
+    .type-page-sm {
+      font-size: 26px;
+    }
+    .type-section {
+      font-size: 19px;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .type-hero {
+      font-size: 48px;
+    }
+  }
+
   /*
    * ÖLÇÜ ÇENTİKLERİ — fotoğraf karolarının çerçevesi.
    * Görsel bir "ölçüm" gibi çerçevelenir: üst ve alt kenarda ince

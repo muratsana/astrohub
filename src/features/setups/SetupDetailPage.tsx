@@ -225,7 +225,7 @@ export function SetupDetailPage() {
                               : 'bg-danger'
                         )}
                       />
-                      <span className="text-[12.5px] font-medium text-foreground">
+                      <span className="text-caption font-medium text-foreground">
                         {check.title}
                       </span>
                       <span className="sr-only">
@@ -317,7 +317,7 @@ export function SetupDetailPage() {
         </div>
 
         {deleted && (
-          <p className="mt-4 text-center text-[12px] text-muted-foreground">
+          <p className="mt-4 text-center text-meta text-muted-foreground">
             Setup silindi.{' '}
             <Link to="/araclar/setup-uyumluluk" className="text-primary">
               Yeni bir tane kurabilirsiniz.

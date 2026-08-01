@@ -34,7 +34,7 @@ export function Badge({
   return (
     <span
       className={cn(
-        'inline-block rounded-[2px] border px-1.5 py-0.5 text-meta font-medium leading-[1.5] tracking-[0.03em]',
+        'inline-block rounded-card border px-1.5 py-0.5 text-meta font-medium leading-[1.5] tracking-[0.03em]',
         tones[tone],
         className
       )}

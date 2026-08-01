@@ -74,7 +74,7 @@ export function TargetDetailPage() {
                 </span>
               )}
             </p>
-            <h1 className="mt-1 text-[26px] text-foreground sm:text-[30px]">
+            <h1 className="mt-1 type-page text-foreground">
               {target.name}
             </h1>
             <div className="mt-3 flex flex-wrap gap-1.5">

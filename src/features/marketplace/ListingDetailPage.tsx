@@ -117,7 +117,7 @@ export function ListingDetailPage() {
 
             {listing.description && (
               <Panel title="İlan metni">
-                <p className="whitespace-pre-line text-[12.5px] leading-relaxed text-muted-foreground">
+                <p className="whitespace-pre-line text-caption leading-relaxed text-muted-foreground">
                   {listing.description}
                 </p>
               </Panel>
@@ -129,7 +129,7 @@ export function ListingDetailPage() {
                   {listing.includes.map((item) => (
                     <li
                       key={item}
-                      className="flex gap-2 text-[12px] leading-relaxed text-muted-foreground"
+                      className="flex gap-2 text-meta leading-relaxed text-muted-foreground"
                     >
                       <span aria-hidden className="text-primary">
                         ·
@@ -142,7 +142,7 @@ export function ListingDetailPage() {
             )}
 
             <Panel title="Alım-satım güvenliği" className="border-warning/35">
-              <ul className="space-y-2 text-[12px] leading-relaxed text-muted-foreground">
+              <ul className="space-y-2 text-meta leading-relaxed text-muted-foreground">
                 <li>
                   Astrohub bir <strong className="text-foreground">emanet
                   (escrow) hizmeti sunmaz</strong>. Ödeme ve teslimat tamamen
@@ -223,7 +223,7 @@ export function ListingDetailPage() {
               <div className="flex items-center gap-2">
                 <Link
                   to={`/profil/${listing.seller.username}`}
-                  className="text-[13px] font-medium text-foreground transition-colors hover:text-primary"
+                  className="text-body-sm font-medium text-foreground transition-colors hover:text-primary"
                 >
                   @{listing.seller.username}
                 </Link>
@@ -289,7 +289,7 @@ export function ListingDetailPage() {
                         to={`/ilan/${item.slug}`}
                         className="flex items-baseline justify-between gap-3 py-2 transition-colors hover:text-primary"
                       >
-                        <span className="min-w-0 truncate text-[12px] text-foreground">
+                        <span className="min-w-0 truncate text-meta text-foreground">
                           {item.title}
                         </span>
                         <span className="tabular shrink-0 text-body-sm text-primary">

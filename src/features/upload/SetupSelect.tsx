@@ -141,7 +141,7 @@ export function SetupSelect({ onApply }: { onApply: (fill: SetupFill) => void })
               setSelected(e.target.value);
               setApplied(false);
             }}
-            className="h-10 text-[13px]"
+            className="h-10 text-body-sm"
           >
             <option value="">Setup seçin</option>
             {setups.map((s) => (

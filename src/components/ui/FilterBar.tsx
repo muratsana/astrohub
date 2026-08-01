@@ -79,7 +79,7 @@ export function FilterCell({
  * çerçeveyi hücre çizer; alan yalnızca içine yazılan değerdir.
  */
 export const filterControlClass =
-  'h-8 w-full rounded-none border-0 bg-transparent px-0 text-[12px] ' +
+  'h-8 w-full rounded-none border-0 bg-transparent px-0 text-meta ' +
   'focus:bg-transparent focus-visible:outline-none';
 
 /**
@@ -118,7 +118,7 @@ export function FilterToggle({
           onChange={(e) => onChange(e.target.checked)}
           /* 24px: WCAG 2.2 AA dokunma hedefi (2.5.8). 14px'lik kutu
              mobilde parmakla vurulamıyordu. */
-          className="h-6 w-6 rounded-[2px] border-border accent-primary"
+          className="h-6 w-6 rounded-card border-border accent-primary"
         />
         {label}
       </label>

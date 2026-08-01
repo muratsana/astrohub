@@ -70,7 +70,7 @@ export function TimelineColumn({
           <h3 className="label caps text-muted-foreground">
             Karanlık penceresi
           </h3>
-          <p className="num mt-1 text-[26px] font-semibold leading-none text-foreground sm:text-[32px]">
+          <p className="num mt-1 text-readout-xl font-semibold leading-none text-foreground sm:text-readout-xl">
             {dark ? (
               <>
                 {clock(dark.from)}
@@ -78,7 +78,7 @@ export function TimelineColumn({
                 {clock(dark.to)}
               </>
             ) : (
-              <span className="text-[22px] font-normal text-faint">
+              <span className="text-readout-lg font-normal text-faint">
                 bu enlemde oluşmuyor
               </span>
             )}
@@ -88,7 +88,7 @@ export function TimelineColumn({
         <dl className="flex items-end gap-6 border-border xl:border-l xl:pl-6">
           <div>
             <dt className="text-meta text-faint">süre</dt>
-            <dd className="num text-[19px] font-semibold leading-tight text-primary">
+            <dd className="num text-readout font-semibold leading-tight text-primary">
               {dark ? formatDuration(darkMinutes) : '—'}
             </dd>
           </div>
@@ -101,7 +101,7 @@ export function TimelineColumn({
             <dt className="text-meta text-faint">aysız</dt>
             <dd
               className={cn(
-                'text-[19px] font-semibold leading-tight',
+                'text-readout font-semibold leading-tight',
                 !dark
                   ? 'text-faint'
                   : timeline.moonlessMinutes === 0

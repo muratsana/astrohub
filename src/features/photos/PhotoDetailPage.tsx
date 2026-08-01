@@ -120,7 +120,7 @@ function PhotoDetail({
             <p className="text-sm font-medium text-primary">
               {photo.target.catalog} · {photoTypeLabels[photo.type]}
             </p>
-            <h1 className="mt-1 text-[26px] text-foreground sm:text-[30px]">
+            <h1 className="mt-1 type-page text-foreground">
               {photo.title}
             </h1>
             <p className="tabular mt-2 text-sm text-muted-foreground">

@@ -77,7 +77,7 @@ export function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
                 to={item.to}
                 className={({ isActive }) =>
                   cn(
-                    'relative flex items-center px-3 text-[13px] font-medium transition-colors',
+                    'relative flex items-center px-3 text-body-sm font-medium transition-colors',
                     /* Aktif alt çizgi `inset` gölge ile veriliyor: gerçek
                        bir `border-bottom` hücreyi 2px yükseltip diğer
                        girişlerin dikey hizasını bozuyor. */

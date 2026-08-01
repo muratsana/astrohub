@@ -46,7 +46,7 @@ export function MobileNav({ onOpenNav }: { onOpenNav: () => void }) {
           aria-label="Fotoğraf yükle"
           className="flex flex-1 items-center justify-center py-2"
         >
-          <span className="flex h-8 w-8 items-center justify-center rounded-[2px] bg-primary text-primary-foreground">
+          <span className="flex h-8 w-8 items-center justify-center rounded-card bg-primary text-primary-foreground">
             <PlusIcon className="h-4.5 w-4.5" />
           </span>
         </NavLink>

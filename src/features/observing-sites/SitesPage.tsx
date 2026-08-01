@@ -161,7 +161,7 @@ function BortleBlock({ bortle }: { bortle: number }) {
     <div className="flex w-11 shrink-0 flex-col items-center rounded-card border border-border bg-surface-2 py-1">
       <span
         className={cn(
-          'tabular font-display text-[17px] font-bold leading-none',
+          'tabular font-display text-readout-sm font-bold leading-none',
           tone
         )}
       >

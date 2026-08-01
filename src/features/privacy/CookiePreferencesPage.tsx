@@ -81,7 +81,7 @@ export function CookiePreferencesPage() {
                   >
                     <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
                       <span className="flex items-center gap-2">
-                        <span className="text-[13px] font-medium text-foreground">
+                        <span className="text-body-sm font-medium text-foreground">
                           {item.label}
                         </span>
                         <Badge
@@ -106,7 +106,7 @@ export function CookiePreferencesPage() {
                       )}
                     </div>
 
-                    <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground">
+                    <p className="mt-1 text-meta leading-relaxed text-muted-foreground">
                       {item.description}
                     </p>
 
@@ -121,7 +121,7 @@ export function CookiePreferencesPage() {
             </Panel>
 
             <Panel title="Tümünü sil">
-              <p className="text-[12px] leading-relaxed text-muted-foreground">
+              <p className="text-meta leading-relaxed text-muted-foreground">
                 Astrohub'ın yazdığı tüm kayıtları siler. Tema, konum ve görünüm
                 tercihleriniz varsayılana döner; hesabınıza ya da sunucudaki
                 verilerinize dokunmaz.
@@ -141,7 +141,7 @@ export function CookiePreferencesPage() {
 
           <div className="space-y-4">
             <Panel title="Neden çerez uyarısı görmüyorsunuz?">
-              <div className="space-y-2 text-[12px] leading-relaxed text-muted-foreground">
+              <div className="space-y-2 text-meta leading-relaxed text-muted-foreground">
                 <p>
                   Astrohub <strong className="text-foreground">izleme çerezi
                   kullanmıyor</strong>. Reklam ağı, üçüncü parti analitik ve
@@ -166,7 +166,7 @@ export function CookiePreferencesPage() {
             </Panel>
 
             <Panel title="Dış servisler">
-              <div className="space-y-2 text-[12px] leading-relaxed text-muted-foreground">
+              <div className="space-y-2 text-meta leading-relaxed text-muted-foreground">
                 <p>
                   Hava ve seeing verisi{' '}
                   <span className="text-foreground">Open-Meteo</span>'dan
@@ -181,7 +181,7 @@ export function CookiePreferencesPage() {
             </Panel>
 
             <Panel title="İlgili sayfalar">
-              <ul className="space-y-1.5 text-[12px]">
+              <ul className="space-y-1.5 text-meta">
                 <li>
                   <Link
                     to="/kvkk"

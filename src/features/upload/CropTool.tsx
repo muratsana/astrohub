@@ -271,7 +271,7 @@ export function CropTool({
               /* 12px görünür kutu ama dokunma hedefi 24px (WCAG 2.5.8):
                  görünür tutamağı büyütmek kadrajı kapatırdı. */
               className={cn(
-                'absolute h-3 w-3 rounded-[2px] border border-background bg-primary',
+                'absolute h-3 w-3 rounded-card border border-background bg-primary',
                 'after:absolute after:-inset-1.5 after:content-[""]',
                 konum
               )}

@@ -144,7 +144,7 @@ export function FacilitiesPage() {
                     </Badge>
                   </div>
 
-                  <p className="text-[12px] leading-relaxed text-muted-foreground">
+                  <p className="text-meta leading-relaxed text-muted-foreground">
                     {facility.summary}
                   </p>
 

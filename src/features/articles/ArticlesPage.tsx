@@ -107,8 +107,8 @@ export function ArticlesPage() {
 
       <Container className="py-8 sm:py-10">
         <header className="mb-5 border-b border-border pb-5">
-          <h1 className="text-[26px] text-foreground sm:text-[30px]">Yazılar</h1>
-          <p className="mt-2 max-w-[70ch] text-[12px] leading-relaxed text-muted-foreground">
+          <h1 className="type-page text-foreground">Yazılar</h1>
+          <p className="mt-2 max-w-[70ch] text-meta leading-relaxed text-muted-foreground">
             Başlangıçtan ileri seviyeye rehberler, işleme dersleri ve saha
             notları. Her yazı bir prosedür gibi kurulur: ne yapılır, neden
             yapılır, ne zaman işe yaramaz.

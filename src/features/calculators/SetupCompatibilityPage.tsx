@@ -455,7 +455,7 @@ export function SetupCompatibilityPage() {
           <div className="space-y-4">
             {!report ? (
               <Panel title="Rapor">
-                <p className="text-[12px] text-muted-foreground">
+                <p className="text-meta text-muted-foreground">
                   Geçerli değerler girin: odak, açıklık, piksel, sensör ölçüleri
                   ve yük kapasitesi pozitif olmalı.
                 </p>
@@ -486,7 +486,7 @@ export function SetupCompatibilityPage() {
                       {report.checks.length} kontrol temiz
                     </span>
                   </div>
-                  <p className="mt-2 text-[12px] leading-relaxed text-foreground">
+                  <p className="mt-2 text-meta leading-relaxed text-foreground">
                     {verdictSummary[report.verdict]}
                   </p>
                 </div>
@@ -546,7 +546,7 @@ export function SetupCompatibilityPage() {
                                     : 'bg-danger'
                               )}
                             />
-                            <span className="text-[12.5px] font-medium text-foreground">
+                            <span className="text-caption font-medium text-foreground">
                               {check.title}
                             </span>
                             <span className="sr-only">
@@ -588,7 +588,7 @@ export function SetupCompatibilityPage() {
                       onChange={(e) => setSetupName(e.target.value)}
                       placeholder="Setup adı (ör. Yayla kurulumu)"
                       maxLength={60}
-                      className="h-9 min-w-0 flex-1 text-[12px]"
+                      className="h-9 min-w-0 flex-1 text-meta"
                     />
                     <Button type="submit" size="sm">
                       Kaydet

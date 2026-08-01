@@ -62,7 +62,7 @@ export function EditorialList({
 }) {
   if (items.length === 0) {
     return (
-      <p className="rounded-card border border-border bg-surface-1 px-4 py-16 text-center text-[12px] text-muted-foreground">
+      <p className="rounded-card border border-border bg-surface-1 px-4 py-16 text-center text-meta text-muted-foreground">
         {emptyMessage}
       </p>
     );
@@ -146,10 +146,10 @@ function LeadCard({ item, label }: { item: EditorialItem; label: string }) {
           )}
         </div>
 
-        <h2 className="text-[18px] text-foreground transition-colors group-hover:text-primary sm:text-[21px]">
+        <h2 className="type-section text-foreground transition-colors group-hover:text-primary">
           {item.title}
         </h2>
-        <p className="mt-2.5 text-[12px] leading-relaxed text-muted-foreground">
+        <p className="mt-2.5 text-meta leading-relaxed text-muted-foreground">
           {item.summary}
         </p>
 
@@ -214,7 +214,7 @@ function EditorialCard({ item }: { item: EditorialItem }) {
           `lh` birimi satır yüksekliğinin kendisi — 13px ve `leading-snug`
           değişse de ayrılan yer başlığın gerçek iki satırı kadar kalır.
         */}
-        <h2 className="line-clamp-2 min-h-[2lh] text-[13px] leading-snug text-foreground transition-colors group-hover:text-primary">
+        <h2 className="line-clamp-2 min-h-[2lh] text-body-sm leading-snug text-foreground transition-colors group-hover:text-primary">
           {item.title}
         </h2>
         <p className="mt-1.5 line-clamp-3 min-h-[3lh] text-meta leading-relaxed text-muted-foreground">
@@ -256,7 +256,7 @@ function EditorialRow({ item }: { item: EditorialItem }) {
       className="group flex h-full items-baseline gap-3 bg-surface-1 px-3 py-2.5 transition-colors hover:bg-surface-2"
     >
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-[13px] text-foreground transition-colors group-hover:text-primary">
+        <span className="block truncate text-body-sm text-foreground transition-colors group-hover:text-primary">
           {item.title}
         </span>
         <span className="mt-0.5 block truncate text-meta text-muted-foreground">

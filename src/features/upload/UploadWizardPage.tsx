@@ -413,7 +413,7 @@ export function UploadWizardPage() {
       />
       <Container className="py-8 sm:py-10">
         <header className="mb-8">
-          <h1 className="text-[26px] text-foreground sm:text-[30px]">
+          <h1 className="type-page text-foreground">
             Fotoğraf Yükle
           </h1>
           <p className="mt-2 max-w-xl text-muted-foreground">
@@ -512,7 +512,7 @@ export function UploadWizardPage() {
               )}
 
               {exifState === 'reading' && (
-                <p className="text-[12px] text-muted-foreground" role="status">
+                <p className="text-meta text-muted-foreground" role="status">
                   EXIF okunuyor…
                 </p>
               )}
@@ -585,7 +585,7 @@ export function UploadWizardPage() {
                               });
                             }
                           }}
-                          className="h-3.5 w-3.5 rounded-[2px] border-border accent-primary"
+                          className="h-3.5 w-3.5 rounded-card border-border accent-primary"
                         />
                         Koordinatı konum alanına yaz (yaklaşık görünürlükle)
                       </label>
@@ -1071,7 +1071,7 @@ function slugifyPhoto(input: string): string {
 function StepTitle({ title, hint }: { title: string; hint?: string }) {
   return (
     <div>
-      <h2 className="text-lg font-semibold text-foreground">{title}</h2>
+      <h2 className="type-section font-semibold text-foreground">{title}</h2>
       {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
     </div>
   );

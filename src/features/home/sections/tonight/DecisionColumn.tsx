@@ -156,7 +156,7 @@ function ScoreBlock({
         >
           <div className="grid h-[62px] w-[62px] place-items-center rounded-full bg-background">
             <span
-              className={cn('num text-[23px] font-semibold leading-none', tone.text)}
+              className={cn('num text-readout-lg font-semibold leading-none', tone.text)}
             >
               {score.total}
             </span>
@@ -164,7 +164,7 @@ function ScoreBlock({
         </div>
 
         <div className="min-w-0">
-          <p className="text-[21px] font-bold leading-tight text-foreground">
+          <p className="text-readout font-bold leading-tight text-foreground">
             {score.verdictLabel}
           </p>
           <p className="mt-0.5 text-meta font-medium text-muted-foreground">

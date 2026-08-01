@@ -135,7 +135,7 @@ export function AdminPage() {
   if (loading || roles.status === 'loading') {
     return (
       <Shell header={header}>
-        <p className="py-10 text-center text-[12px] text-muted-foreground" role="status">
+        <p className="py-10 text-center text-meta text-muted-foreground" role="status">
           Yetkiler kontrol ediliyor…
         </p>
       </Shell>
@@ -244,11 +244,11 @@ export function AdminPage() {
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
         <Panel title="Kuyruk" status={filter === 'hepsi' ? 'tümü' : statusLabels[filter]}>
           {!queue ? (
-            <p className="py-6 text-center text-[12px] text-muted-foreground">
+            <p className="py-6 text-center text-meta text-muted-foreground">
               Kuyruk okunuyor…
             </p>
           ) : queue.items.length === 0 ? (
-            <p className="py-6 text-center text-[12px] leading-relaxed text-muted-foreground">
+            <p className="py-6 text-center text-meta leading-relaxed text-muted-foreground">
               Bu filtrede kayıt yok. Kuyruk boşsa moderasyon bekleyen içerik
               yok demektir; yetkiniz eksikse de aynı görünür — RLS yetkisiz
               sorguya boş sonuç döndürür.
@@ -265,7 +265,7 @@ export function AdminPage() {
                       <Badge tone={statusTone[item.status]}>
                         {statusLabels[item.status]}
                       </Badge>
-                      <span className="text-[12.5px] font-medium text-foreground">
+                      <span className="text-caption font-medium text-foreground">
                         {targetLabels[item.target_type]}
                       </span>
                       <span className="text-meta text-muted-foreground">

@@ -35,7 +35,7 @@ export function AuthLayout({
           <header className="flex items-center gap-3 border-b border-border px-5 py-4">
             <LogoMark className="h-8 w-8 shrink-0 text-primary" />
             <div className="min-w-0">
-              <h1 className="text-[17px] text-foreground">{title}</h1>
+              <h1 className="type-panel text-foreground">{title}</h1>
               <p className="mt-0.5 text-meta leading-snug text-muted-foreground">
                 {subtitle}
               </p>
@@ -55,7 +55,7 @@ export function AuthLayout({
           <div className="px-5 py-5">{children}</div>
         </div>
 
-        <p className="mt-4 text-center text-[12px] text-muted-foreground">
+        <p className="mt-4 text-center text-meta text-muted-foreground">
           {footer}
         </p>
 

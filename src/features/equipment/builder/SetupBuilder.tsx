@@ -165,7 +165,7 @@ export function SetupBuilder({
                 onChange={(e) =>
                   onChange({ ...draft, spacerMm: Number(e.target.value) || 0 })
                 }
-                className="h-10 text-[13px]"
+                className="h-10 text-body-sm"
               />
             </Field>
             <Field
@@ -182,7 +182,7 @@ export function SetupBuilder({
                 onChange={(e) =>
                   onChange({ ...draft, extraWeightKg: Number(e.target.value) || 0 })
                 }
-                className="h-10 text-[13px]"
+                className="h-10 text-body-sm"
               />
             </Field>
             <Field
@@ -203,7 +203,7 @@ export function SetupBuilder({
                     seeingArcsec: Number(e.target.value) || 3,
                   })
                 }
-                className="h-10 text-[13px]"
+                className="h-10 text-body-sm"
               />
             </Field>
           </div>
@@ -226,7 +226,7 @@ export function SetupBuilder({
                     setName(e.target.value);
                     setSaved(false);
                   }}
-                  className="h-10 text-[13px]"
+                  className="h-10 text-body-sm"
                 />
               </Field>
               <div className="grid gap-3 sm:grid-cols-2">
@@ -236,7 +236,7 @@ export function SetupBuilder({
                     placeholder="Geniş alan / galaksi / gezegen"
                     value={purpose}
                     onChange={(e) => setPurpose(e.target.value)}
-                    className="h-10 text-[13px]"
+                    className="h-10 text-body-sm"
                   />
                 </Field>
                 <Field label="Görünürlük" htmlFor="sb-visibility">
@@ -246,7 +246,7 @@ export function SetupBuilder({
                     onChange={(e) =>
                       setVisibility(e.target.value as SetupVisibility)
                     }
-                    className="h-10 text-[13px]"
+                    className="h-10 text-body-sm"
                   >
                     {Object.entries(visibilityLabels).map(([value, label]) => (
                       <option key={value} value={value}>
@@ -262,7 +262,7 @@ export function SetupBuilder({
                   placeholder="Bu setupla ne çekiyorsunuz?"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="h-10 text-[13px]"
+                  className="h-10 text-body-sm"
                 />
               </Field>
 

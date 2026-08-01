@@ -124,10 +124,10 @@ export function VersionCompare({
         </div>
 
         {/* Etiketler */}
-        <span className="pointer-events-none absolute left-2 top-2 rounded-[2px] bg-background/85 px-1.5 py-0.5 text-meta tracking-[0.02em] text-foreground">
+        <span className="pointer-events-none absolute left-2 top-2 rounded-card bg-background/85 px-1.5 py-0.5 text-meta tracking-[0.02em] text-foreground">
           {before.label}
         </span>
-        <span className="pointer-events-none absolute right-2 top-2 rounded-[2px] bg-background/85 px-1.5 py-0.5 text-meta tracking-[0.02em] text-foreground">
+        <span className="pointer-events-none absolute right-2 top-2 rounded-card bg-background/85 px-1.5 py-0.5 text-meta tracking-[0.02em] text-foreground">
           {after.label}
         </span>
 

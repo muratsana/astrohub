@@ -24,7 +24,6 @@ import {
 import { targets } from '@/features/targets/data';
 import { useCalculatorPresets } from './presets';
 import { PresetSelect } from './PresetSelect';
-import { cn } from '@/lib/cn';
 
 /**
  * MOZAİK PLANLAYICI (§7.12).
@@ -363,7 +362,7 @@ export function MosaicPlannerPage() {
           <div className="space-y-4">
             {!plan || !optics || !time ? (
               <Panel title="Sonuç">
-                <p className="text-[12px] text-muted-foreground">
+                <p className="text-meta text-muted-foreground">
                   Geçerli değerler girin: odak uzaklığı, piksel ve sensör
                   boyutu ile hedef ölçüleri pozitif olmalı.
                 </p>
@@ -504,10 +503,9 @@ function PanelGrid({ columns, rows }: { columns: number; rows: number }) {
       {cells.map((n) => (
         <div
           key={n}
-          className={cn(
-            'flex aspect-[3/2] items-center justify-center bg-surface-2',
-            showNumbers ? 'text-meta' : 'text-[0px]'
-          )}
+          /* `showNumbers` kapalıyken span zaten boş metin çiziyor;
+             ayrıca punto sıfırlamak gereksizdi. */
+          className="flex aspect-[3/2] items-center justify-center bg-surface-2 text-meta"
         >
           <span className="tabular text-muted-foreground">
             {showNumbers ? n : ''}

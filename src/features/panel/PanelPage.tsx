@@ -140,7 +140,7 @@ export function PanelPage() {
             className="mb-4"
           >
             {setups.length === 0 ? (
-              <p className="py-3 text-[12px] leading-relaxed text-muted-foreground">
+              <p className="py-3 text-meta leading-relaxed text-muted-foreground">
                 Henüz kayıtlı setup yok. Uyumluluk aracında bir zincir kurup
                 kaydettiğinizde burada listelenir.{' '}
                 <Link to="/araclar/setup-uyumluluk" className="text-primary">
@@ -156,7 +156,7 @@ export function PanelPage() {
                       className="group flex items-baseline justify-between gap-3 py-2.5"
                     >
                       <span className="min-w-0">
-                        <span className="block truncate text-[12.5px] text-foreground group-hover:text-primary">
+                        <span className="block truncate text-caption text-foreground group-hover:text-primary">
                           {setup.name}
                         </span>
                         <span className="mt-0.5 block truncate text-meta text-muted-foreground">

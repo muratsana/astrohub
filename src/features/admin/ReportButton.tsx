@@ -114,7 +114,7 @@ export function ReportButton({
             id="report-reason"
             value={reason}
             onChange={(e) => setReason(e.target.value as ModerationReason)}
-            className="mb-2 h-8 text-[12px]"
+            className="mb-2 h-8 text-meta"
           >
             {Object.entries(reasonLabels).map(([value, label]) => (
               <option key={value} value={value}>
@@ -133,7 +133,7 @@ export function ReportButton({
             onChange={(e) => setNote(e.target.value)}
             maxLength={2000}
             placeholder="Moderatörün hızlı karar verebilmesi için somut yazın."
-            className="mb-2 w-full resize-y rounded-card border border-border bg-surface-2 px-2.5 py-2 text-[12px] leading-relaxed text-foreground outline-none placeholder:text-faint focus:border-primary"
+            className="mb-2 w-full resize-y rounded-card border border-border bg-surface-2 px-2.5 py-2 text-meta leading-relaxed text-foreground outline-none placeholder:text-faint focus:border-primary"
           />
 
           {error && (

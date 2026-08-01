@@ -103,7 +103,7 @@ export function LocationPicker({
         <div
           role="listbox"
           aria-label="Gözlem konumu"
-          className="absolute left-0 top-full z-[60] mt-1 max-h-[70vh] w-60 overflow-y-auto rounded-card border border-border-strong bg-surface-1 py-1 shadow-[0_8px_24px_-12px_rgba(0,0,0,0.9)]"
+          className="absolute left-0 top-full z-[var(--z-popover)] mt-1 max-h-[70vh] w-60 overflow-y-auto rounded-card border border-border-strong bg-surface-1 py-1 shadow-overlay"
         >
           {/*
             HER ZAMAN EN ÜSTTE, HER ZAMAN GÖRÜNÜR. Kaynağa göre işaretli;

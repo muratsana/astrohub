@@ -43,7 +43,7 @@ export function DataTable<T>({
 }) {
   if (rows.length === 0) {
     return (
-      <p className="border border-border bg-surface-1 px-4 py-10 text-center text-[12px] text-muted-foreground">
+      <p className="border border-border bg-surface-1 px-4 py-10 text-center text-meta text-muted-foreground">
         {empty}
       </p>
     );
@@ -83,7 +83,7 @@ export function DataTable<T>({
                 <td
                   key={col.key}
                   className={cn(
-                    'py-2.5 pr-4 align-middle text-[12px] last:pr-0',
+                    'py-2.5 pr-4 align-middle text-meta last:pr-0',
                     col.numeric && 'tabular text-right',
                     col.hideOnMobile && 'hidden md:table-cell'
                   )}

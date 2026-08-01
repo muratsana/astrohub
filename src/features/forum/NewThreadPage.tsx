@@ -202,7 +202,7 @@ export function NewThreadPage() {
                   'Koşullar: Bortle, ay fazı, seeing\n' +
                   'Denedikleriniz ve sonuç'
                 }
-                className="w-full resize-y rounded-card border border-border bg-surface-1 px-3 py-2.5 text-[12.5px] leading-[1.7] text-foreground outline-none placeholder:text-faint focus:border-primary"
+                className="w-full resize-y rounded-card border border-border bg-surface-1 px-3 py-2.5 text-caption leading-[1.7] text-foreground outline-none placeholder:text-faint focus:border-primary"
               />
             </Field>
 
@@ -236,7 +236,7 @@ export function NewThreadPage() {
                 status={changed ? 'metin sadeleştirildi' : 'değişiklik yok'}
               >
                 {cleanTitle && (
-                  <p className="text-[13px] font-medium leading-snug text-foreground">
+                  <p className="text-body-sm font-medium leading-snug text-foreground">
                     {cleanTitle}
                   </p>
                 )}

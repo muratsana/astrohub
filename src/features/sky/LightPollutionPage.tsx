@@ -113,7 +113,7 @@ export function LightPollutionPage() {
               id="home-bortle"
               value={bortle}
               onChange={(e) => setBortle(clampBortle(Number(e.target.value)))}
-              className="h-8 border-0 bg-transparent px-0 text-[12px] focus:bg-transparent"
+              className="h-8 border-0 bg-transparent px-0 text-meta focus:bg-transparent"
             >
               {Object.values(bortleScale).map((info) => (
                 <option key={info.bortle} value={info.bortle}>
@@ -124,7 +124,7 @@ export function LightPollutionPage() {
           </div>
           <div className="bg-surface-1 px-3 py-2.5">
             <p className="label">Karşılık gelen SQM</p>
-            <p className="tabular mt-0.5 text-[13px] text-cold">
+            <p className="tabular mt-0.5 text-body-sm text-cold">
               ≈ {homeSqm.toFixed(2)} mag/arcsec²
             </p>
           </div>
@@ -166,7 +166,7 @@ export function LightPollutionPage() {
                   <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
                     <Link
                       to={`/saha/${site.slug}`}
-                      className="text-[13px] font-medium text-foreground transition-colors hover:text-primary"
+                      className="text-body-sm font-medium text-foreground transition-colors hover:text-primary"
                     >
                       {site.name}
                     </Link>
@@ -217,7 +217,7 @@ export function LightPollutionPage() {
                     )}
                   >
                     <div className="flex items-baseline justify-between gap-3">
-                      <span className="text-[12px] font-medium text-foreground">
+                      <span className="text-meta font-medium text-foreground">
                         {info.bortle} · {info.label}
                       </span>
                       <span className="tabular shrink-0 text-meta text-cold">

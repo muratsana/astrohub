@@ -157,7 +157,7 @@ function PostCard({ post, opening }: { post: ForumPost; opening?: boolean }) {
       )}
     >
       <header className="flex flex-wrap items-center gap-2 border-b border-border px-3 py-2">
-        <span className="text-[12px] font-medium text-foreground">
+        <span className="text-meta font-medium text-foreground">
           {post.author.displayName}
         </span>
         <span className="tabular text-meta text-muted-foreground">
@@ -176,7 +176,7 @@ function PostCard({ post, opening }: { post: ForumPost; opening?: boolean }) {
         `dangerouslySetInnerHTML` bilerek kullanılmıyor — zengin metin
         eklendiğinde önce sanitize katmanı gelecek (bkz. lib/sanitize.ts).
       */}
-      <p className="whitespace-pre-line px-3 py-3 text-[12.5px] leading-[1.7] text-muted-foreground">
+      <p className="whitespace-pre-line px-3 py-3 text-caption leading-[1.7] text-muted-foreground">
         {post.body}
       </p>
     </article>
@@ -231,7 +231,7 @@ function ReplyBox({
         onChange={(e) => setBody(e.target.value)}
         placeholder="Ekipmanını ve koşullarını da yazarsan çok daha isabetli yanıt alırsın."
         aria-label="Yanıt metni"
-        className="w-full resize-y rounded-card border border-border bg-surface-2 px-3 py-2 text-[12px] leading-relaxed text-foreground outline-none placeholder:text-faint focus:border-primary"
+        className="w-full resize-y rounded-card border border-border bg-surface-2 px-3 py-2 text-meta leading-relaxed text-foreground outline-none placeholder:text-faint focus:border-primary"
       />
 
       {error && (

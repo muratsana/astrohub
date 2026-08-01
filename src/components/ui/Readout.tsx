@@ -43,7 +43,7 @@ export function Readout({
       <p className="label">{label}</p>
       <p
         className={cn(
-          'tabular mt-1 font-display text-[23px] font-bold leading-none',
+          'tabular mt-1 font-display text-readout-lg font-bold leading-none',
           toneClass
         )}
       >

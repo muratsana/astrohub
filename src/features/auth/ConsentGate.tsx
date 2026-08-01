@@ -81,7 +81,7 @@ export function ConsentGate() {
       className="fixed inset-0 z-50 grid place-items-center bg-background/90 p-4 backdrop-blur-sm"
     >
       <div className="w-full max-w-lg rounded-card border border-border-strong bg-surface-1 p-6">
-        <h2 id="consent-title" className="text-[19px] font-bold text-foreground">
+        <h2 id="consent-title" className="type-panel font-bold text-foreground">
           Devam etmeden önce
         </h2>
         <p className="mt-2 text-body-sm leading-relaxed text-muted-foreground">

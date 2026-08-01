@@ -157,7 +157,7 @@ export function ForumCategories({ canWrite }: { canWrite: boolean }) {
           >
             <span className="tabular w-6 text-meta text-faint">{i + 1}</span>
             <span className="min-w-0 flex-1">
-              <span className="block truncate text-[12.5px] font-medium text-foreground">
+              <span className="block truncate text-caption font-medium text-foreground">
                 {k.name}
               </span>
               <span className="block truncate text-meta text-faint">
@@ -202,7 +202,7 @@ export function ForumCategories({ canWrite }: { canWrite: boolean }) {
                 onChange={(e) => setAd(e.target.value)}
                 placeholder="Gözlem Raporları"
                 maxLength={80}
-                className="h-8 text-[12px]"
+                className="h-8 text-meta"
               />
               {ad.trim() && (
                 <span className="mt-1 block text-meta text-faint">
@@ -217,7 +217,7 @@ export function ForumCategories({ canWrite }: { canWrite: boolean }) {
                 onChange={(e) => setAciklama(e.target.value)}
                 placeholder="Tek cümlelik tanım"
                 maxLength={300}
-                className="h-8 text-[12px]"
+                className="h-8 text-meta"
               />
             </label>
             <div className="flex flex-wrap gap-2">

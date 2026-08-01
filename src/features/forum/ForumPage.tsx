@@ -300,14 +300,14 @@ function ThreadRow({
               aria-label="Kilitli konu"
             />
           )}
-          <h2 className="text-[13px] font-medium leading-snug text-foreground group-hover:text-primary">
+          <h2 className="text-body-sm font-medium leading-snug text-foreground group-hover:text-primary">
             {thread.title}
           </h2>
           {labels.map((id) => (
             <LabelChip key={id} id={id} />
           ))}
           {thread.solved && (
-            <span className="shrink-0 rounded-[2px] border border-success/45 px-1.5 py-0.5 text-meta font-medium tracking-[0.02em] text-success">
+            <span className="shrink-0 rounded-card border border-success/45 px-1.5 py-0.5 text-meta font-medium tracking-[0.02em] text-success">
               Çözüldü
             </span>
           )}
@@ -325,7 +325,7 @@ function ThreadRow({
             <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
               <span
                 className={cn(
-                  'rounded-[2px] border px-1.5 py-0.5 text-meta font-medium tracking-[0.02em]',
+                  'rounded-card border px-1.5 py-0.5 text-meta font-medium tracking-[0.02em]',
                   info.className
                 )}
               >
@@ -346,7 +346,7 @@ function ThreadRow({
           <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
             <span
               className={cn(
-                'rounded-[2px] border px-1.5 py-0.5 text-meta font-medium tracking-[0.02em]',
+                'rounded-card border px-1.5 py-0.5 text-meta font-medium tracking-[0.02em]',
                 info.className
               )}
             >

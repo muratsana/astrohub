@@ -121,7 +121,7 @@ export function BortleIndicator({
               />
               <span
                 className={cn(
-                  'tabular mt-1 block text-center text-[10px] leading-none',
+                  'tabular mt-1 block text-center text-meta leading-none',
                   active ? 'font-semibold text-foreground' : 'text-faint'
                 )}
               >

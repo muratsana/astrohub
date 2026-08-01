@@ -162,7 +162,7 @@ export function EquipmentComparePage() {
                   category={model.category}
                   className="h-5 w-5 shrink-0 text-primary"
                 />
-                <span className="text-[12px] text-foreground">
+                <span className="text-meta text-foreground">
                   <span className="text-muted-foreground">{model.brand}</span>{' '}
                   {model.model}
                 </span>
@@ -190,7 +190,7 @@ export function EquipmentComparePage() {
                     <th key={model.slug} className="px-3 py-2 align-top">
                       <Link
                         to={equipmentPath(model)}
-                        className="block text-[12.5px] font-medium text-foreground hover:text-primary"
+                        className="block text-caption font-medium text-foreground hover:text-primary"
                       >
                         {model.model}
                       </Link>
@@ -225,7 +225,7 @@ export function EquipmentComparePage() {
                       <td
                         key={selected[i].slug}
                         className={cn(
-                          'tabular px-3 py-2 align-top text-[12px]',
+                          'tabular px-3 py-2 align-top text-meta',
                           row.differs ? 'text-foreground' : 'text-muted-foreground'
                         )}
                       >
@@ -260,7 +260,7 @@ export function EquipmentComparePage() {
                 placeholder="Marka ya da model"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="h-10 text-[13px]"
+                className="h-10 text-body-sm"
               />
             </div>
             <div>
@@ -273,7 +273,7 @@ export function EquipmentComparePage() {
                 onChange={(e) =>
                   setCategory(e.target.value as EquipmentCategory | 'hepsi')
                 }
-                className="h-10 text-[13px]"
+                className="h-10 text-body-sm"
               >
                 <option value="hepsi">
                   {lockedCategory
@@ -308,14 +308,14 @@ export function EquipmentComparePage() {
                       className="h-6 w-6 shrink-0 text-muted-foreground"
                     />
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[12px] text-foreground">
+                      <span className="block truncate text-meta text-foreground">
                         {model.model}
                       </span>
                       <span className="block truncate text-meta text-muted-foreground">
                         {model.brand}
                       </span>
                     </span>
-                    <span className="shrink-0 text-[16px] leading-none text-primary">
+                    <span className="shrink-0 text-readout-sm leading-none text-primary">
                       +
                     </span>
                   </button>

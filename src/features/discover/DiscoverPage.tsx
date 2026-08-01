@@ -150,7 +150,7 @@ export function DiscoverPage() {
 
         {/* Topluluklar çağrısı */}
         <Panel title="Kulüpler ve Topluluklar" status="Faz 2">
-          <p className="max-w-[70ch] text-[12px] leading-relaxed text-muted-foreground">
+          <p className="max-w-[70ch] text-meta leading-relaxed text-muted-foreground">
             Dernekler, üniversite kulüpleri ve gözlem grupları için kurumsal
             profiller (§8.11) yol haritasında. O zamana kadar etkinlik
             kayıtlarında organizatör adı ve doğrulama durumu görünüyor.

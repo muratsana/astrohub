@@ -247,7 +247,7 @@ export function PlannerPage() {
                           <div className="min-w-0 flex-1">
                             <Link
                               to={`/hedef/${target.slug}`}
-                              className="block truncate text-[12.5px] text-foreground transition-colors hover:text-primary"
+                              className="block truncate text-caption text-foreground transition-colors hover:text-primary"
                             >
                               <span className="font-medium">{target.catalog}</span>
                               <span className="ml-1.5 text-muted-foreground">
@@ -310,7 +310,7 @@ export function PlannerPage() {
                     }
                   >
                     {!plan || plan.scheduled.length === 0 ? (
-                      <p className="py-6 text-center text-[12px] text-muted-foreground">
+                      <p className="py-6 text-center text-meta text-muted-foreground">
                         Seçilen hedeflerin hiçbiri bu gece {minAltitude}° üstünde
                         yeterli süre kalmıyor. Minimum yüksekliği düşürmeyi ya da
                         başka hedef seçmeyi deneyin.
@@ -334,7 +334,7 @@ export function PlannerPage() {
                                   </span>
                                   <Link
                                     to={`/hedef/${target.slug}`}
-                                    className="text-[13px] font-medium text-foreground transition-colors hover:text-primary"
+                                    className="text-body-sm font-medium text-foreground transition-colors hover:text-primary"
                                   >
                                     {target.catalog} — {target.name}
                                   </Link>
@@ -385,7 +385,7 @@ export function PlannerPage() {
                               key={skip.id}
                               className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 border-b border-border pb-1.5 last:border-0 last:pb-0"
                             >
-                              <span className="text-[12px] text-foreground">
+                              <span className="text-meta text-foreground">
                                 {target.catalog} — {target.name}
                               </span>
                               <span className="text-meta text-muted-foreground">

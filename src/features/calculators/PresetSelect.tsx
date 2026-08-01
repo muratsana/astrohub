@@ -86,7 +86,7 @@ export function PresetSelect<T extends PresetOption>({
         <Select
           id={id}
           value={value}
-          className="h-9 w-full text-[12.5px]"
+          className="h-9 w-full text-caption"
           onChange={(e) => {
             const next = options.find((o) => o.slug === e.target.value);
             onSelect(next ?? null);

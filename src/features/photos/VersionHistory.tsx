@@ -54,7 +54,7 @@ export function VersionHistory({ versions }: { versions: PhotoVersion[] }) {
         </div>
 
         {same ? (
-          <p className="rounded-card border border-border bg-surface-1 px-3 py-6 text-center text-[12px] text-muted-foreground">
+          <p className="rounded-card border border-border bg-surface-1 px-3 py-6 text-center text-meta text-muted-foreground">
             Karşılaştırmak için iki farklı sürüm seçin.
           </p>
         ) : (
@@ -104,7 +104,7 @@ export function VersionHistory({ versions }: { versions: PhotoVersion[] }) {
                 )}
               >
                 <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-                  <span className="text-[12.5px] font-medium text-foreground">
+                  <span className="text-caption font-medium text-foreground">
                     {version.label}
                   </span>
                   <Badge>{versionKindLabels[version.kind]}</Badge>
@@ -165,7 +165,7 @@ function VersionPicker({
         id={id}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="h-8 border-0 bg-transparent px-0 text-[12px] focus:bg-transparent"
+        className="h-8 border-0 bg-transparent px-0 text-meta focus:bg-transparent"
       >
         {versions.map((version) => (
           <option key={version.id} value={version.id}>

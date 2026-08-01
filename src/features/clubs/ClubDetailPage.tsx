@@ -99,7 +99,7 @@ export function ClubDetailPage() {
               status={`${clubEvents.upcoming.length} kayıt`}
             >
               {clubEvents.upcoming.length === 0 ? (
-                <p className="py-3 text-[12px] leading-relaxed text-muted-foreground">
+                <p className="py-3 text-meta leading-relaxed text-muted-foreground">
                   Bu topluluğun takvimde duyurulmuş yaklaşan etkinliği yok.
                   Geçmiş etkinlikleri aşağıda görebilirsiniz.
                 </p>
@@ -112,7 +112,7 @@ export function ClubDetailPage() {
                         className="group flex items-baseline justify-between gap-3 py-2.5"
                       >
                         <span className="min-w-0">
-                          <span className="block truncate text-[12.5px] text-foreground group-hover:text-primary">
+                          <span className="block truncate text-caption text-foreground group-hover:text-primary">
                             {event.title}
                           </span>
                           <span className="tabular mt-0.5 block text-meta text-muted-foreground">
@@ -141,7 +141,7 @@ export function ClubDetailPage() {
                         to={`/etkinlik/${event.slug}`}
                         className="flex items-baseline justify-between gap-3 py-2 text-muted-foreground transition-colors hover:text-primary"
                       >
-                        <span className="min-w-0 truncate text-[12px]">
+                        <span className="min-w-0 truncate text-meta">
                           {event.title}
                         </span>
                         <span className="tabular shrink-0 text-meta">
@@ -198,7 +198,7 @@ export function ClubDetailPage() {
                 {club.activities.map((activity) => (
                   <li
                     key={activity}
-                    className="flex gap-2 text-[12px] leading-relaxed text-muted-foreground"
+                    className="flex gap-2 text-meta leading-relaxed text-muted-foreground"
                   >
                     <span aria-hidden className="text-primary">
                       ·

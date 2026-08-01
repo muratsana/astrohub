@@ -59,7 +59,7 @@ export function RecentRecords() {
          * Cevap ölü bir cümle değil çağrı: burası sitenin çekirdek içeriği
          * ve boş olması ilk yükleyecek kişi için bir fırsat.
          */
-        <p className="rounded-card border border-border bg-surface-1 px-3 py-6 text-center text-[12px] text-muted-foreground">
+        <p className="rounded-card border border-border bg-surface-1 px-3 py-6 text-center text-meta text-muted-foreground">
           Galeride henüz yayımlanmış fotoğraf yok.{' '}
           <Link to="/galeri/yukle" className="text-primary hover:underline">
             İlk kareyi sen yükle →

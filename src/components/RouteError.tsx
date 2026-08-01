@@ -34,10 +34,10 @@ export function RouteError() {
       <div className="mx-auto max-w-2xl">
         <div className="border-b border-danger/30 pb-6">
           <Badge tone="danger">Hata</Badge>
-          <h1 className="mt-3 text-[22px] text-foreground sm:text-[26px]">
+          <h1 className="mt-3 type-page-sm text-foreground">
             Sayfa Yüklenemedi
           </h1>
-          <p className="mt-2 max-w-[70ch] text-[12px] leading-relaxed text-muted-foreground">
+          <p className="mt-2 max-w-[70ch] text-meta leading-relaxed text-muted-foreground">
             Bu sayfa yüklenirken beklenmeyen bir hata oluştu. Bağlantınızı
             kontrol edip yenilemeyi deneyin.
           </p>
@@ -46,7 +46,7 @@ export function RouteError() {
         {detail && (
           <div className="mt-4 rounded-card border border-border bg-surface-1 px-3 py-2.5">
             <p className="label">Hata çıktısı</p>
-            <p className="tabular mt-1 break-words text-[12px] leading-relaxed text-danger">
+            <p className="tabular mt-1 break-words text-meta leading-relaxed text-danger">
               {detail}
             </p>
           </div>
