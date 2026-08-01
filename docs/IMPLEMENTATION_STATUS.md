@@ -281,6 +281,10 @@ her düğmeyi ve her metni kapsıyor.
 
 ### 3.4 "Bu Gece" astronomi hava modülü — **PARTIAL**
 
+> **1 Ağustos turu:** 18 zorunlu alanın 18'i de dolu. Kalan maddeler
+> yalnızca `site_settings`/`home_modules` tablolarına (Faz 10) ve URL'ye
+> yazılacak konuma bağlı.
+
 Belgenin zorunlu tuttuğu 18 bilgi alanı tek tek karşılaştırıldı.
 
 | # | Alan | Durum | Nerede |
@@ -301,8 +305,8 @@ Belgenin zorunlu tuttuğu 18 bilgi alanı tek tek karşılaştırıldı.
 | 14 | Genel bulut örtüsü | DONE | Bulut kartı, sol sütunda ana metrik |
 | 15 | Alçak/orta/yüksek bulut | DONE | Bulut kartı ipucu |
 | 16 | Seeing | DONE | Seeing kartı + `estimateSeeing` |
-| 17 | **Transparency** | **NOT_STARTED** | Doğrudan API alanı değil. Yaygın vekiller (aerosol optik derinliği, toplam su buharı sütunu) Open-Meteo'nun tahmin ucunda değil, hava kalitesi ucunda. Nem ve çiy noktasından "transparency" türetip öyle adlandırmak, ölçülmemiş bir metriği ölçülmüş gibi sunmak olurdu |
-| 18 | Gözlem / astrofotoğraf uygunluk skoru | PARTIAL | Tek "gece skoru" var; belge İKİ ayrı skor istiyor (gözlem gözle, astrofotoğraf rehberli poz — rüzgâr ve seeing ağırlıkları farklı olmalı) |
+| 17 | **Transparency** | **DONE** | Önceki gerekçe doğruydu ama eksikti: AOD tahmin ucunda yok, HAVA KALİTESİ ucunda var ve o uç da anahtarsız. `features/weather/airQuality.ts` — 5 kademe + zenit kadir kaybı. Canlı uçtan ölçüldü (1 Ağustos, Ankara: AOD 0.15 → "Berrak", ~0.16 kadir). Ölçüm gelmezse `null` ve skora HİÇ girmiyor; nemden türetilmedi. CSP'ye ayrı host eklendi |
+| 18 | Gözlem / astrofotoğraf uygunluk skoru | DONE | `nightScore(inputs, profil)` — gözlem `{seeing .45, konfor .15, karanlık .40}`, astrofoto `{.35, .40, .25}`. Ayrım gerçek: astrofotoda rüzgâr HAMLESİ kullanılıyor (poz birikimli), gözlemde ay cezası ağır (gözün eşiği yok, dar bant gözle çalışmaz). Öneri satırı da profile göre değişiyor. Panelde halka gözlem, altında astrofotoğraf satırı |
 
 **Tarih kontrolleri**
 
@@ -329,7 +333,7 @@ Belgenin zorunlu tuttuğu 18 bilgi alanı tek tek karşılaştırıldı.
 | Cache | DONE — 15 dk, `retry` önbelleği atlıyor |
 | Rate limit | DONE — meteoblue vekilinde |
 | Sağlayıcı seçiminin admin ayarından değişmesi | NOT_STARTED — `site_settings` tablosu gerekiyor (Faz 10) |
-| Veri kaynağı ZAMANI görünürlüğü | PARTIAL — `observedAt` var, arayüzde gösterilmiyor |
+| Veri kaynağı ZAMANI görünürlüğü | DONE — panel başlığında "HH:MM güncellendi" olarak duruyor (`DecisionColumn`); durum kaydı bayattı, kod ölçülünce görüldü |
 
 ---
 

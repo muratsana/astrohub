@@ -96,9 +96,13 @@ describe('nightScore — karanlık', () => {
    * yukarıda. Referans buna 92 ve "Çok iyi gece" diyor; kendi eksi
    * maddesi ise "aysız pencere yok". İkisi bir arada tutarsız.
    *
-   * Bu model 67 veriyor — "Orta gece". Dolunay altında derin gök için
-   * doğru cevap bu; küme ve gezegen için hâlâ iyi ve öneri satırı
-   * kullanıcıyı oraya gönderiyor.
+   * Bu model GÖZLE GÖZLEM için 53 veriyor — "Orta gece". Dolunay altında
+   * derin gök için doğru cevap bu; küme ve gezegen için hâlâ iyi ve öneri
+   * satırı kullanıcıyı oraya gönderiyor.
+   *
+   * Sayı 67'den 53'e indi çünkü iki skor ayrıldı: gözle gözlemde ay
+   * ağırlığı 0.25 → 0.40 oldu. Gözün eşiği yok, dolunayda sönük galaksi
+   * kayboluyor — ayın cezası gözlemde fotoğraftan ağır olmalı.
    */
   it('referans gecesi "çok iyi" değil "orta" çıkıyor', () => {
     const referans = nightScore({
@@ -112,7 +116,7 @@ describe('nightScore — karanlık', () => {
       moonlessMinutes: 0,
       moonIllumination: 0.98,
     });
-    expect(referans.total).toBe(67);
+    expect(referans.total).toBe(53);
     expect(referans.verdict).toBe('orta');
     expect(referans.recommendation).toContain('dar bant');
     expect(referans.cons.join(' ')).toContain('ay');
@@ -132,9 +136,10 @@ describe('nightScore — kırılım ile toplam tutarlı', () => {
    * Toplamı ve çubukları ayrı yerlerde hesaplamak, arayüzde "92" yazarken
    * altındaki dört çubuğun başka bir şey söylemesi demekti.
    */
-  it('her satır 0–100 aralığında ve dört satır var', () => {
+  it('her satır 0–100 aralığında ve beş satır var', () => {
     const score = nightScore(IDEAL);
-    expect(score.rows).toHaveLength(4);
+    /* Açıklık ve şeffaflık AYRI satırlar: biri bulut, diğeri aerosol. */
+    expect(score.rows).toHaveLength(5);
     for (const row of score.rows) {
       if (row.value !== null) {
         expect(row.value).toBeGreaterThanOrEqual(0);
@@ -180,5 +185,97 @@ describe('nightScore — öneri', () => {
 
   it('açık gecede zayıf hedeflere yönlendiriyor', () => {
     expect(nightScore(IDEAL).recommendation).toContain('zayıf hedeflere');
+  });
+});
+
+/**
+ * İKİ SKOR — belgenin 18. alanı tek değil İKİ skor istiyor.
+ *
+ * Tek skor vardı ve aynı geceyi iki farklı gözlemciye aynı sayıyla
+ * anlatıyordu. Testin koruduğu şey ayrımın GERÇEK olması: iki profilin
+ * aynı girdide farklı cevap verdiği ölçülüyor, yoksa "iki skor" iki
+ * kez yazılmış tek skordan ibaret kalır.
+ */
+describe('nightScore — iki profil', () => {
+  it('dolunay gözlemi fotoğraftan daha çok cezalandırıyor', () => {
+    const dolunay = at({
+      cloudCover: 0,
+      seeingIndex: 2,
+      moonlessMinutes: 0,
+      moonIllumination: 1,
+    });
+    const gozlem = nightScore(dolunay, 'gozlem');
+    const foto = nightScore(dolunay, 'astrofoto');
+    /* Dar bant filtre ayın etkisini siliyor; göz için böyle bir çare yok. */
+    expect(gozlem.total).toBeLessThan(foto.total);
+  });
+
+  /*
+   * HAMLE YALNIZCA FOTOĞRAFTA. Ortalaması sakin bir gecede tek bir 45
+   * km/sa hamle beş dakikalık pozu alır; gözlemci ise titreşim geçene
+   * kadar bekler.
+   */
+  it('rüzgâr hamlesi fotoğraf skorunu düşürüyor, gözlemi değil', () => {
+    const sakin = at({ windSpeed: 6, windGust: null });
+    const hamleli = at({ windSpeed: 6, windGust: 45 });
+
+    expect(nightScore(hamleli, 'astrofoto').total).toBeLessThan(
+      nightScore(sakin, 'astrofoto').total
+    );
+    expect(nightScore(hamleli, 'gozlem').total).toBe(
+      nightScore(sakin, 'gozlem').total
+    );
+  });
+
+  it('öneri profile göre değişiyor', () => {
+    const dolunay = at({
+      cloudCover: 0,
+      moonlessMinutes: 0,
+      moonIllumination: 1,
+    });
+    expect(nightScore(dolunay, 'gozlem').recommendation).toContain(
+      'gözle işe yaramaz'
+    );
+    expect(nightScore(dolunay, 'astrofoto').recommendation).toContain(
+      'dar bant'
+    );
+  });
+
+  it('profil sonuçta yazılı', () => {
+    expect(nightScore(IDEAL, 'astrofoto').profile).toBe('astrofoto');
+    /* Varsayılan gözlem: çağıranların çoğu "bu gece bakılır mı" soruyor. */
+    expect(nightScore(IDEAL).profile).toBe('gozlem');
+  });
+});
+
+/**
+ * ŞEFFAFLIK — ölçülmemişse skora HİÇ girmiyor.
+ *
+ * Bulut örtüsünden ayrı bir büyüklük: toz taşınımında gökyüzü bulutsuz
+ * görünür ama sönük hedefler kaybolur. Ölçüm yoksa ceza da yok — veri
+ * eksikliğini kötü havaya çevirmek, uydurmanın başka bir biçimi.
+ */
+describe('nightScore — şeffaflık', () => {
+  it('ölçüm yokken skor değişmiyor ve satır boş kalıyor', () => {
+    const olcumsuz = nightScore(at({ transparencyIndex: null }));
+    const berrak = nightScore(at({ transparencyIndex: 1 }));
+    expect(olcumsuz.total).toBe(berrak.total);
+    expect(
+      olcumsuz.rows.find((r) => r.key === 'transparency')?.value
+    ).toBeNull();
+  });
+
+  it('bulanık atmosfer skoru düşürüyor', () => {
+    const berrak = nightScore(at({ transparencyIndex: 1 }));
+    const bulanik = nightScore(at({ transparencyIndex: 5 }));
+    expect(bulanik.total).toBeLessThan(berrak.total);
+    expect(bulanik.cons.join(' ')).toContain('toz/pus');
+  });
+
+  /* Pus geceyi BİTİRMİYOR — bulut gibi çarpanı sıfıra indirmemeli. */
+  it('en bulanık gece bile açık gecenin dörtte üçünden iyi', () => {
+    const berrak = nightScore(at({ transparencyIndex: 1 }));
+    const bulanik = nightScore(at({ transparencyIndex: 5 }));
+    expect(bulanik.total).toBeGreaterThan(berrak.total * 0.7);
   });
 });

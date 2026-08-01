@@ -307,6 +307,7 @@ export function TonightPanel() {
         <div className="grid gap-px overflow-hidden rounded-card border border-border-strong bg-border lg:grid-cols-2 xl:grid-cols-[308px_minmax(0,1fr)_412px]">
           <DecisionColumn
             score={tonight.score}
+            photoScore={tonight.photoScore}
             conditions={tonight.conditions}
             locationLabel={tonight.locationLabel}
             dateLabel={tonight.dateLabel}

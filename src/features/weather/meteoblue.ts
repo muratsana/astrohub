@@ -174,6 +174,9 @@ export function parseMeteoblue(
     seeing,
     observedAt: new Date(`${times[i]}Z`),
     source: 'meteoblue',
+    /* Şeffaflık meteoblue'nun temel paketinde yok; Open-Meteo hava
+       kalitesi ucundan geliyor ve `useSkyConditions` içinde birleşiyor. */
+    transparency: null,
     layers,
   };
 }

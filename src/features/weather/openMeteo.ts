@@ -1,5 +1,6 @@
 import { dewPointFromHumidity } from '@/domain/weather/humidity';
 import { estimateSeeing, type SeeingEstimate } from './seeing';
+import type { TransparencyEstimate } from './airQuality';
 
 /**
  * HAVA SERVİSİ ADAPTÖRÜ — Open-Meteo.
@@ -86,6 +87,16 @@ export interface SkyConditions {
   source: 'meteoblue' | 'open-meteo';
   /** Katman ayrımı — servis vermezse `null`. */
   layers: CloudLayers | null;
+  /**
+   * Şeffaflık — aerosol optik derinliğinden (§7.2'nin 17. alanı).
+   *
+   * BULUTTAN AYRI BİR SORU. Bulutsuz bir gece şeffaf olmak zorunda
+   * değil: toz taşınımında gökyüzü açık görünür ama sönük hedefler
+   * kaybolur. Ayrı bir servisten (hava kalitesi ucu) geliyor ve o
+   * istek düşerse `null` — nemden türetip "şeffaflık" demek,
+   * ölçülmemiş bir metriği ölçülmüş gibi sunmak olurdu.
+   */
+  transparency: TransparencyEstimate | null;
 }
 
 interface HourlyResponse {
@@ -262,6 +273,10 @@ export function parseSkyConditions(
         : null,
     observedAt: new Date(times[i]),
     source: 'open-meteo',
+    /* Şeffaflık AYRI SERVİSTEN (hava kalitesi ucu); bu ayrıştırıcı onu
+       görmez. Birleştirme `useSkyConditions` içinde yapılıyor — tek
+       istekten iki uca ait alan üretmek, kaynağı belirsizleştirirdi. */
+    transparency: null,
     layers:
       low !== null && mid !== null && high !== null
         ? {

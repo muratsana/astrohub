@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useLocationContext } from '@/features/location/LocationContext';
 import { fetchOpenMeteo, type SkyConditions } from './openMeteo';
 import { fetchMeteoblue } from './meteoblue';
+import { fetchTransparency } from './airQuality';
 import { hasNetworkAccess } from '@/lib/runtime';
 
 /**
@@ -78,13 +79,19 @@ export async function fetchConditions(
     () => ({ conditions: null, upperAir: null })
   );
 
-  const meteoblue = await fetchMeteoblue(
-    latitude,
-    longitude,
-    open.upperAir
-  ).catch(() => null);
+  /*
+   * ŞEFFAFLIK ÜÇÜNCÜ İSTEK AMA SIRAYA GİRMİYOR. Ayrı bir uçtan (hava
+   * kalitesi) geliyor ve diğer 17 alanla ilgisi yok; arka arkaya
+   * çağırmak paneli bir tur daha bekletirdi. Hatası da ayrı: düşerse
+   * yalnızca o alan "veri yok" olur, koşulların tamamı değil.
+   */
+  const [meteoblue, transparency] = await Promise.all([
+    fetchMeteoblue(latitude, longitude, open.upperAir).catch(() => null),
+    fetchTransparency(latitude, longitude, at).catch(() => null),
+  ]);
 
-  return meteoblue ?? open.conditions;
+  const base = meteoblue ?? open.conditions;
+  return base ? { ...base, transparency } : null;
 }
 
 /**
