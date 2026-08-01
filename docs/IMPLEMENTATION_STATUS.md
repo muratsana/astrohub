@@ -897,9 +897,10 @@ vardı (`tv_broadcasts`, `TvPage`, `BroadcastControl`): onay kapaklı
 | Sunucu/konuk profili | DONE | `broadcast_hosts` (radyoyla ortak) |
 | YouTube bağlantı şeması + durum fonksiyonu | DONE | 8 kural canlıda ölçüldü |
 | API kota izleme | DONE | `youtube_quota_log` |
-| **OAuth akışı, kanal bağlama, senkronizasyon** | **IMPLEMENTED_BLOCKED_EXTERNAL** | gerçek kanal/OAuth kimliği yok |
-| Kullanıcı sayfaları (arşiv, seri, program detayı) | NOT_STARTED | sıradaki iş |
-| Panel **TV** sekmesi | NOT_STARTED | sıradaki iş |
+| OAuth akışı, jeton yenileme, senkronizasyon, kota sayacı, yeniden deneme | DONE | `supabase/functions/youtube`, 35 test |
+| Panel **TV** sekmesi (bağlantı durumu, kota, video arşivi) | DONE | `TvControl` |
+| **Canlı kanal bağlantısı** | **IMPLEMENTED_BLOCKED_EXTERNAL** | gerçek OAuth kimliği yok |
+| Kullanıcı sayfaları (video arşivi, seri/playlist detayı) | NOT_STARTED | sıradaki iş |
 
 ### Sır tablosunda politika yokluğu bir kusur değil
 
@@ -940,6 +941,37 @@ sıfırlıyor. Tek bir toplam sayaç dünkü harcamayı bugüne taşırdı.
 Kotayı izlemeden senkronlayan bir sistem günün ortasında sessizce
 durur ve sebebi "video listesi güncellenmiyor" olarak görünür —
 kaynağı bulunması zor bir hata.
+
+### OAuth'ta üç tuzak ve üçü de testte sabit
+
+1. **`prompt=consent` olmadan yenileme jetonu gelmiyor.** Kullanıcı daha
+   önce izin verdiyse Google jetonu tekrar göndermiyor ve bağlantı bir
+   saat sonra ölüyor. Entegrasyonlarda en sık yapılan hata.
+2. **Yenileme yanıtında `refresh_token` yok** ve bu normal. Üzerine
+   `null` yazan bir kod, bağlantıyı ilk yenilemede öldürür.
+3. **403 kota hatası yeniden denenmemeli**, 429 ve 5xx denenmeli. İkisi
+   de "başarısız" görünüyor ama biri bekleyerek çözülüyor, diğeri
+   ertesi günü bekliyor.
+
+`search` çağrısı hiç kullanılmıyor: yüz kota birimi yerine bir birim.
+Kanalın yükleme playlist'i (`UCxxx` → `UUxxx`) aynı listeyi veriyor ve
+kimliği çağrı yapmadan türetilebiliyor.
+
+### Yazarken düzeltilen iki kendi kusurum
+
+**`state` yanlış kolondaydı.** CSRF nonce'ını `access_token` kolonuna
+yazmıştım. Çalışıyordu — ama yetki akışı sürerken bir senkronizasyon
+çalışsa, state dizgisi bearer jeton sanılıp YouTube'a gönderilirdi. 401
+alınır, kimse ölmez; ama sebebi "senkronizasyon bazen çalışmıyor"
+olarak görünürdü. Kendi kolonuna taşındı (`0056`) ve on dakikalık
+geçerlilik penceresi eklendi.
+
+**Yorum, kodun yapmadığı bir şeyi iddia ediyordu.** "Elle eklenen kayıt
+ezilmiyor" yazmıştım ama `on_conflict=youtube_id` upsert'i ayrım
+yapmadan her satırı eziyordu. İddiayı koda çevirdim: manuel satırların
+kimlikleri önce okunuyor ve yazmadan çıkarılıyor. Bir sorguya mal
+oluyor; alternatifi editörün düzeltmesinin her senkronizasyonda geri
+alınmasıydı.
 
 ### `<iframe src>` güvenliğinin iki yarısı
 
@@ -1004,15 +1036,20 @@ Radyo sekmesi. Beş yeni rota, 86 rewrite.
 tablo, YouTube bağlantı şeması. Migration numaraları `0056`dan devam
 ediyor.
 
-**Sıradaki iş: Faz 8'in kalanı.** Sırayla:
-  1. YouTube adapter'ı — OAuth 2.0 sunucu tarafı akışı, video/playlist
-     senkronizasyonu, jeton yenileme, kota sayacı, yeniden deneme.
-     Gerçek kanal olmadan `IMPLEMENTED_BLOCKED_EXTERNAL`; radyodaki
-     `deploy/radyo/` deseni izlenebilir.
-  2. Kullanıcı sayfaları: video arşivi, seri/playlist, program detayı,
-     sunucu profili (`broadcast_hosts` hazır, radyo sayfası da aynı
-     tabloyu okuyor).
-  3. Panelde **TV** sekmesi (§11.3'ün on beş alt bölümü).
+**Faz 8'in sunucu tarafı ve paneli kapandı**: `0055`–`0056`, YouTube
+adaptörü (35 test) ve panelde onuncu sekme. Migration numaraları
+`0057`den devam ediyor.
+
+**Sıradaki iş: Faz 8'in kullanıcı sayfaları.**
+  1. Video arşivi sayfası (`/tv/arsiv`) — `tv_videos` hazır, onay
+     kapaklı `youtube-nocookie` gömme `TvPage`de zaten var.
+  2. Seri/playlist sayfası (`tv_playlists`, `tv_playlist_items`).
+  3. Yayın takip düğmesi (`tv_follows`) — şema ve
+     `announce_tv_live` hazır, düğmesi yok.
+
+**Kanal bağlı değilken sahte içerik gösterilmemeli** (§11.2 son madde).
+Adaptör ve panel bu kurala uyuyor; kullanıcı sayfaları yazılırken de
+uyacak — boş arşiv boş görünmeli, "yakında" satırı yazılmamalı.
 
 **Kanal bağlantısı yokken sahte içerik gösterilmemeli** (§11.2 son
 madde) — radyodaki "sahte canlı" yasağının TV karşılığı. Arayüz
