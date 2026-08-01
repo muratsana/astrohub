@@ -1,0 +1,87 @@
+# AstroHub Radyo — yayın sunucusu (§10.1)
+#
+# ══════════════════════════════════════════════════════════════════════
+# BU DOSYA VERCEL'DE ÇALIŞMAZ, ÇALIŞMAMALI
+#
+# §10.1'in ilk cümlesi: radyo yayını serverless fonksiyon içinde sürekli
+# çalıştırılmamalı. Sebep mimari değil fiziksel — bir Icecast yayını
+# saatlerce açık kalan bir TCP bağlantısıdır; serverless fonksiyon
+# saniyeler içinde sonlanır. Bu yığın ayrı bir VPS'te çalışır, Vercel
+# yalnızca arayüzü ve adaptörü barındırır.
+#
+# ══════════════════════════════════════════════════════════════════════
+# LİSANS
+#
+# Dört bileşenin dördü de açık kaynak ve ücretsiz:
+#   AzuraCast   Apache-2.0
+#   Liquidsoap  GPL-2.0   (AutoDJ)
+#   Icecast-KH  GPL-2.0   (yayın frontend'i)
+#   Caddy       Apache-2.0 (TLS sonlandırma)
+# §10.1'in "lisans maliyeti gerektirmeyen" şartı bu seçimle sağlanıyor.
+# Telif ödemesi ayrı bir konu ve KODLA ÇÖZÜLMÜYOR: çalınan müziğin
+# MESAM/MSG yükümlülüğü işletmenindir (bkz. README, "Telif").
+#
+# ══════════════════════════════════════════════════════════════════════
+# DOĞRULANMASI GEREKEN
+#
+# AzuraCast kendi kurucusunu (`docker-compose.yml` üreten `install.sh`)
+# dağıtıyor ve sürümler arasında servis adları değişebiliyor. Bu dosya
+# ÇALIŞAN BİR KURULUMDA DOĞRULANMADI — dış sunucu erişimi yok
+# (IMPLEMENTED_BLOCKED_EXTERNAL). İlk kurulumda README'deki "Aktivasyon"
+# listesi izlenmeli; oradaki adımların her biri bu dosyanın bir
+# varsayımını sınıyor.
+
+services:
+  web:
+    image: ghcr.io/azuracast/azuracast:stable
+    restart: always
+    env_file: .env
+    environment:
+      # Salt okunur kurulum: AzuraCast'in kendi kendini güncellemesi
+      # kapalı. Güncelleme imaj etiketiyle yapılır ki hangi sürümün
+      # çalıştığı depodan okunabilsin.
+      AZURACAST_VERSION: stable
+      LANG: tr_TR.UTF-8
+      # Panel yalnızca ters vekilden erişilebilir; doğrudan 80/443
+      # açılmıyor (aşağıdaki `ports` bloğuna bak).
+      AZURACAST_HTTP_PORT: 8080
+    volumes:
+      - station_data:/var/azuracast/stations
+      - backups:/var/azuracast/backups
+    ports:
+      # SADECE YEREL ARAYÜZE BAĞLANIYOR. `8080:8080` yazsaydık panel
+      # doğrudan internete açılırdı ve TLS'siz bir yönetim paneli
+      # olurdu. Caddy dışarıya bakan tek servis.
+      - '127.0.0.1:8080:8080'
+      # Yayın portları dışarı açık: dinleyici buraya bağlanıyor.
+      # Aralık AzuraCast'in istasyon başına ayırdığı bloğa denk gelmeli.
+      - '8000:8000'
+      - '8005-8100:8005-8100'
+    healthcheck:
+      # Sağlık yoklaması yayının kendisine bakıyor, panele değil: panel
+      # ayakta olup yayın düşmüş olabilir ve bu tam olarak kullanıcının
+      # şikâyet ettiği durumdur.
+      test: ['CMD', 'curl', '-fsS', 'http://localhost:8080/api/status']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 120s
+
+  proxy:
+    image: caddy:2-alpine
+    restart: always
+    depends_on:
+      - web
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  station_data:
+  backups:
+  caddy_data:
+  caddy_config:

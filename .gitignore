@@ -49,3 +49,6 @@ pnpm-debug.log*
 
 # Claude Code kişisel ayarları — otonomi kipi burada, takıma dayatılmaz.
 .claude/settings.local.json
+
+# Radyo sunucusu sırları — asla depoya girmez
+deploy/radyo/.env
