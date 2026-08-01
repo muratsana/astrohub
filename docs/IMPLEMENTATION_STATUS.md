@@ -29,7 +29,7 @@ tabloda `DONE` ile birleştirilmez:
 | 5 | Bildirim, mesajlaşma, sosyal aktivite | 549–632 | PARTIAL² |
 | 6 | Etkinlik takip ve hatırlatma | 633–682 | PARTIAL³ |
 | 7 | Çalışan AstroHub Radyo | 683–832 | PARTIAL⁴ |
-| 8 | AstroHub TV ve YouTube'a hazır altyapı | 833–922 | NOT_STARTED |
+| 8 | AstroHub TV ve YouTube'a hazır altyapı | 833–922 | PARTIAL⁵ |
 | 9 | Standart/Premium üyelik altyapısı | 923–1005 | NOT_STARTED |
 | 10 | Admin panelinden kodsuz site yönetimi | 1006–1164 | NOT_STARTED |
 | 11 | Zorunlu ürün modülleri | 1165–1349 | NOT_STARTED |
@@ -40,6 +40,11 @@ tabloda `DONE` ile birleştirilmez:
 | 16 | Performans, SEO, analitik, gözlemlenebilirlik | 1607–1690 | NOT_STARTED |
 | 17 | Test stratejisi ve kabul kriterleri | 1691–… | NOT_STARTED |
 | 18 | (belgenin sonu) | …–1956 | NOT_STARTED |
+
+⁵ **Faz 8'in veri katmanı bitti.** Yedi tablo, YouTube bağlantı şeması
+ve kota izleme kuruldu; sekiz kural canlıda ölçüldü. Kanal bağlantısı
+**IMPLEMENTED_BLOCKED_EXTERNAL** — gerçek OAuth kimliği yok. Kalan iş
+adapter, kullanıcı sayfaları ve panel TV sekmesi. Ayrıntı: Faz 8 bölümü.
 
 ⁴ **Faz 7'nin veri ve sunucu katmanı bitti, arayüzü sürüyor.**
 Şema (11 tablo), AzuraCast adaptörü, sağlık yoklaması, dağıtım
@@ -852,6 +857,74 @@ konuşma programları. Sitedeki `radio_tracks` kasası bu kullanım için.
 
 ---
 
+## Faz 8 — ayrıntı (sürüyor)
+
+Migration `0055`; uzak projeye uygulandı. TV modülünün bir kısmı zaten
+vardı (`tv_broadcasts`, `TvPage`, `BroadcastControl`): onay kapaklı
+`youtube-nocookie` gömme, kimlik biçim kısıtı ve program listesi
+`0011`den beri çalışıyor.
+
+### Kapanan
+
+| Madde | Durum | Kanıt |
+|---|---|---|
+| Video arşivi, seri/playlist şeması | DONE | `0055` |
+| Yayın takibi + bildirim tercihi + canlı duyurusu | DONE | `tv_follows`, `announce_tv_live` |
+| Sunucu/konuk profili | DONE | `broadcast_hosts` (radyoyla ortak) |
+| YouTube bağlantı şeması + durum fonksiyonu | DONE | 8 kural canlıda ölçüldü |
+| API kota izleme | DONE | `youtube_quota_log` |
+| **OAuth akışı, kanal bağlama, senkronizasyon** | **IMPLEMENTED_BLOCKED_EXTERNAL** | gerçek kanal/OAuth kimliği yok |
+| Kullanıcı sayfaları (arşiv, seri, program detayı) | NOT_STARTED | sıradaki iş |
+| Panel **TV** sekmesi | NOT_STARTED | sıradaki iş |
+
+### Sır tablosunda politika yokluğu bir kusur değil
+
+OAuth yenileme jetonu `youtube_connection` tablosunda durmak **zorunda**:
+çalışma anında alınıyor, ortam değişkenine yazılamıyor ve fonksiyon
+çağrıları arasında yaşaması gerekiyor. Radyoda kullanılan "sırrı hiç
+veritabanına koyma" çözümü burada mümkün değil.
+
+O hâlde koruma "kim okuyabilir" sorusuna taşındı: RLS açık, `select`
+politikası **hiç yok**, `anon` ve `authenticated` grant'ları geri
+alındı. Yalnızca service role (RLS'i atlayan) erişiyor.
+
+**Yöneticiye bile açılmadı.** §11.3 "kanalı bağlama, yalnızca yetkili
+teknik admin" diyor — ama *bağlayabilmek* ile *jetonu okuyabilmek* aynı
+şey değil. Yönetici bağlantıyı `youtube_connection_status()`
+fonksiyonundan görüyor ve o fonksiyon jeton alanlarına hiç dokunmuyor:
+yalnızca "var mı" ve "süresi geçmiş mi" diye bakıyor.
+
+Canlıda ölçüldü: **yönetici kimliğiyle tablo okunamadı** (yetki reddi),
+ama durum fonksiyonu `bagli=true` ve kanal adını döndürdü.
+
+### Aynı kişiye iki profil açılmadı
+
+§11.1 "sunucu/konuk profilleri" istiyor ve ilk akla gelen `tv_hosts`
+açmaktı. Radyoda program sunan biri TV'de de sunabilir; iki tablo o
+kişiye iki profil, iki adres ve iki biyografi verirdi — hangisinin
+güncel olduğu da kimsenin bilmediği bir soru olurdu.
+
+`radio_hosts` → `broadcast_hosts` olarak yeniden adlandırıldı. Sunucu
+bir **kişi**; radyo ve TV onun çalıştığı iki mecra ve tablo mecraya
+değil kişiye ait. `0051`deki özgün tanım değiştirilmedi (uygulanmış bir
+migration'ı yeniden yazmak olurdu), yalnızca not düşüldü.
+
+### Kota gün sınırı Pasifik saatinde
+
+YouTube Data API günlük 10.000 birim veriyor ve kotayı Pasifik saatinde
+sıfırlıyor. Tek bir toplam sayaç dünkü harcamayı bugüne taşırdı.
+Kotayı izlemeden senkronlayan bir sistem günün ortasında sessizce
+durur ve sebebi "video listesi güncellenmiyor" olarak görünür —
+kaynağı bulunması zor bir hata.
+
+### `<iframe src>` güvenliğinin iki yarısı
+
+Birincisi `0011`den beri var: gömme adresi **kodda** kuruluyor,
+veritabanından gelmiyor. İkincisi kimlik biçim kısıtı ve `0055` onu
+`tv_videos`a da taşıdı — canlıda ölçüldü, `'"><script>x'` reddedildi.
+
+---
+
 ## Sonraki oturum için devam notu
 
 **Bittiği yer:** Faz 2, Faz 5 ve Faz 6 kapandı. Faz 3'ün 3.1'i
@@ -903,7 +976,23 @@ Radyo sekmesi. Beş yeni rota, 86 rewrite.
   · **RSS feed** — alanlar `0053`te hazır (`author`, `owner_email`,
     `explicit`, `language`); üreticisi bir sonraki turun işi.
 
-**Sıradaki faz: Faz 8 — AstroHub TV** (satır 833–922).
+**Faz 8'in veri katmanı kapandı** (bkz. Faz 8 bölümü): `0055`, yedi
+tablo, YouTube bağlantı şeması. Migration numaraları `0056`dan devam
+ediyor.
+
+**Sıradaki iş: Faz 8'in kalanı.** Sırayla:
+  1. YouTube adapter'ı — OAuth 2.0 sunucu tarafı akışı, video/playlist
+     senkronizasyonu, jeton yenileme, kota sayacı, yeniden deneme.
+     Gerçek kanal olmadan `IMPLEMENTED_BLOCKED_EXTERNAL`; radyodaki
+     `deploy/radyo/` deseni izlenebilir.
+  2. Kullanıcı sayfaları: video arşivi, seri/playlist, program detayı,
+     sunucu profili (`broadcast_hosts` hazır, radyo sayfası da aynı
+     tabloyu okuyor).
+  3. Panelde **TV** sekmesi (§11.3'ün on beş alt bölümü).
+
+**Kanal bağlantısı yokken sahte içerik gösterilmemeli** (§11.2 son
+madde) — radyodaki "sahte canlı" yasağının TV karşılığı. Arayüz
+yazılırken bu davranış korunmalı.
 
 Hazır olan parçalar: `RadioVault` (admin mp3 kasası), `BroadcastControl`
 (yayın programı), üst çubuktaki play/pause ve rota değişiminde ayakta
