@@ -73,6 +73,13 @@ const SAYFALAR = [
  * yalnızca bir kenar çizgisi gösterir ve "anlamlı" sayılmaz.
  */
 const MIN_FOLD_ICERIK = 120;
+
+/*
+ * `MAX_BASLIK_ORANI` — kabuk + hero, ilk ekranın en fazla %70'ini
+ * kaplayabilir. Kalan %30, altındaki bloğun başlığının görünmesine ve
+ * kullanıcının sayfanın devam ettiğini anlamasına yetiyor.
+ */
+const MAX_BASLIK_ORANI = 0.7;
 const ODAK_GENISLIKLER = [1280, 1366];
 
 const browser = await launchBrowser();
@@ -163,16 +170,31 @@ for (const sayfa of SAYFALAR) {
     if (o.yatayTasma > 0) {
       hatalar.push(`${yer}: yatay taşma ${o.yatayTasma}px — sayfa yana kayıyor`);
     }
-    if (o.foldIcerik <= 0) {
+    /*
+     * KURAL B — belge: "Header + navbar + hero toplamı düşük çözünürlükte
+     * BÜTÜN ilk ekranı kaplamamalıdır." Her genişlikte geçerli.
+     */
+    if (o.baslikAlt > vp.h * MAX_BASLIK_ORANI) {
       hatalar.push(
-        `${yer}: ana içerik fold'un tamamen altında başlıyor ` +
-          `(içerik ${o.icerikUst}px'de, ekran ${vp.h}px) — ilk ekranda ` +
-          `yalnızca başlık ve araç çubuğu görünüyor`
+        `${yer}: kabuk + hero ilk ekranın %${Math.round((o.baslikAlt / vp.h) * 100)}'ini ` +
+          `kaplıyor (üst sınır %${Math.round(MAX_BASLIK_ORANI * 100)})`
       );
-    } else if (ODAK_GENISLIKLER.includes(vp.w) && o.foldIcerik < MIN_FOLD_ICERIK) {
+    }
+
+    /*
+     * KURAL C — belge YALNIZCA iki dizüstü çözünürlüğünü adıyla anıyor:
+     * "1366×768 ve 1280×720'de ana içeriğin anlamlı bir bölümü fold
+     * üzerinde görünmelidir."
+     *
+     * Bu kuralı bütün genişliklere yaymak, belgenin istemediği bir şeyi
+     * istemek olurdu — telefonda hero'nun altında modülün başlaması
+     * beklenmiyor, ilk ekranı kaplamaması bekleniyor (Kural B). Ölçüm
+     * yine de her genişlikte raporlanıyor; kapı yalnızca burada iniyor.
+     */
+    if (ODAK_GENISLIKLER.includes(vp.w) && o.foldIcerik < MIN_FOLD_ICERIK) {
       hatalar.push(
-        `${yer}: fold üstünde yalnızca ${o.foldIcerik}px içerik var; ` +
-          `belge bu çözünürlükte anlamlı bir bölüm istiyor (≥${MIN_FOLD_ICERIK}px)`
+        `${yer}: fold üstünde yalnızca ${o.foldIcerik}px içerik var ` +
+          `(içerik ${o.icerikUst}px'de başlıyor, gereken ≥${MIN_FOLD_ICERIK}px)`
       );
     }
 

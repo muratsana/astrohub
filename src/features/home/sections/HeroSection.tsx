@@ -170,14 +170,31 @@ export function HeroSection() {
             className="relative flex min-h-[240px] flex-col justify-center px-5 py-6 sm:min-h-[272px] sm:px-9 sm:py-7 lg:min-h-[300px] lg:px-12"
             aria-live="polite"
           >
-            <div className="max-w-[46ch]">
+            {/*
+              METİN SÜTUNU GENİŞLEDİ: 46ch → 62ch (Faz 3.3).
+
+              Ölçüm: 1280px'te metin 97–475px arasındaydı, yani hero'nun
+              %30'u. Kalan %70 boş yıldız alanıydı ve başlık o dar sütunda
+              ÜÇ satıra bölünüyordu. Sütunu genişletmek başlığı iki satıra
+              indiriyor — punto küçülmeden hero alçalıyor.
+
+              Belgedeki iki madde aynı yere bakıyor: "tek satırlık içerik
+              dev panellere yerleştirilmemelidir" ve "hero, düşük
+              çözünürlükte ana içeriği tamamen aşağı itmemelidir".
+
+              62ch üst sınır; okuma metni değil başlık olduğu için satır
+              uzunluğu kuralı (65–75ch) bağlamıyor, ama sınırsız bırakmak
+              geniş ekranda başlığı tek uzun satıra çekip carousel oklarının
+              altına sokardı.
+            */}
+            <div className="max-w-[62ch]">
               <Editable slide={slide} field="badge" className="w-fit">
                 <span className="inline-block rounded-card bg-primary px-2.5 py-1 text-meta font-medium tracking-[0.04em] text-primary-foreground">
                   {slide.badge}
                 </span>
               </Editable>
 
-              <Editable slide={slide} field="title" className="mt-5 block">
+              <Editable slide={slide} field="title" className="mt-4 block">
                 {/*
                   Büyük harf CSS ile değil, `tr-TR` yerel ayarıyla JS'te
                   yapılıyor: `text-transform` sayfanın `lang` bilgisine
@@ -196,7 +213,7 @@ export function HeroSection() {
                 </p>
               </Editable>
 
-              <Editable slide={slide} field="ctaLabel" className="mt-7 block w-fit">
+              <Editable slide={slide} field="ctaLabel" className="mt-5 block w-fit">
                 <Link
                   to={slide.ctaTo}
                   // Editör açıkken bağlantı gezinmez; tıklama alanı seçer.

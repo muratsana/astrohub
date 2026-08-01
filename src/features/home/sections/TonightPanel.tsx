@@ -105,26 +105,6 @@ export function TonightPanel() {
       </div>
 
       <Container className="border-b border-border py-5 sm:py-6">
-        {shouldOfferGeolocation && (
-          <div className="mb-3 flex flex-wrap items-center gap-3 rounded-card border border-cold/40 bg-surface-1 px-3 py-2.5">
-            <p className="w-full text-body-sm leading-relaxed text-muted-foreground sm:w-auto sm:flex-1">
-              Hesaplar{' '}
-              <span className="text-foreground">{tonight.locationLabel}</span>{' '}
-              için yapılıyor.{' '}
-              <span className="text-cold">Koordinat sunucumuza gönderilmez</span>
-              ; yalnızca tarayıcında kalır.
-            </p>
-            <div className="flex shrink-0 gap-2">
-              <Button size="sm" onClick={requestDeviceLocation}>
-                Konum izni ver
-              </Button>
-              <Button size="sm" variant="ghost" onClick={dismissGeolocationOffer}>
-                Şehir seçeyim
-              </Button>
-            </div>
-          </div>
-        )}
-
         {/*
           GECE SEÇİCİ VE KONUM AYNI SATIRDA. İkisi de "hangi hesap"
           sorusunun parçası: nerede ve ne zaman. Konum seçici üst şeritten
@@ -138,6 +118,45 @@ export function TonightPanel() {
         */}
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <LocationPicker variant="panel" />
+
+          {/*
+            KONUM İZNİ TEKLİFİ AYNI SATIRA GİRDİ (Faz 3.1).
+
+            Önce üstte ayrı bir şeritti: kendi kenarlığı, kendi dolgusu ve
+            iki satırlık bir açıklamayla ilk ekranda 60px kaplıyordu.
+            Ölçüm (1280×720) şunu gösterdi: kabuk + hero + bu şerit + konum
+            satırı toplanınca "Bu Gece" fold'un altına düşüyordu.
+
+            İki blok zaten AYNI SORUYU cevaplıyordu — "nerede". Şeridin ilk
+            cümlesi ("X için hesaplanıyor") yanındaki seçicinin etiketini
+            kelimesi kelimesine tekrar ediyordu; §5.4'ün kaldırılacak
+            açıklama tanımı bu.
+
+            GİZLİLİK CÜMLESİ KALDI ve düğmenin yanında duruyor: kullanıcıdan
+            konum izni isteniyor, neyin nereye gittiğini istemeden ÖNCE
+            söylemek gerekiyor. Kısaldı, kaybolmadı.
+          */}
+          {shouldOfferGeolocation && (
+            <>
+              <span aria-hidden className="mx-1 h-4 w-px bg-border" />
+              <Button size="sm" onClick={requestDeviceLocation}>
+                Konumumu kullan
+              </Button>
+              <span className="text-meta leading-snug text-cold">
+                Tarayıcında kalır, sunucuya gönderilmez
+              </span>
+              <button
+                type="button"
+                onClick={dismissGeolocationOffer}
+                /* `min-h-6` + yatay dolgu: metin 17px yüksekliğindeydi ve
+                   WCAG 2.5.8'in 24×24 alt sınırının altında kalıyordu —
+                   `check:a11y` yakaladı. Punto değişmedi, hedef büyüdü. */
+                className="inline-flex min-h-6 items-center px-1 text-meta text-faint underline-offset-2 hover:text-muted-foreground hover:underline"
+              >
+                gizle
+              </button>
+            </>
+          )}
 
           <span aria-hidden className="mx-1 h-4 w-px bg-border" />
 

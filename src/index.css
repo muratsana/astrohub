@@ -225,12 +225,25 @@
    * Tailwind'in `z-*` diye bir tema alanı yok, bu yüzden kullanımı
    * `z-[var(--z-popover)]` biçiminde. Sayı yerine ad yazılıyor olması
    * yeterli — asıl kazanç sıranın tek dosyada okunabilmesi.
+   *
+   * DEĞERLER KAYNAKTAN OKUNDU, UYDURULMADI. İlk taslakta "temiz" bir
+   * dizi yazmıştım (30/40/50/60/70) ve kabuğun gerçek katmanıyla
+   * çakışıyordu: kabuk 40'tan 30'a düşünce radyo rıhtımıyla aynı
+   * seviyeye geliyordu. Ölçek, var olan sistemi TARİF etmeli; sistemi
+   * yeniden numaralandırmak ayrı ve riskli bir iş.
+   *
+   * `--z-popover` kendi yığın bağlamının İÇİNDE çalışır: açılır menü
+   * yapışkan kabuğun içinde duruyor ve kabuk `position: sticky` +
+   * `z-index` ile yeni bir bağlam açıyor. Yani 60 sayısı çekmecenin
+   * 70'iyle yarışmaz — menü kabuğun içinde en üstte, çekmece hepsinin
+   * üstünde kalır. İstenen davranış bu.
    */
-  --z-sticky: 30;
-  --z-drawer: 40;
+  --z-dock: 30;
+  --z-sticky: 40;
   --z-modal: 50;
   --z-popover: 60;
-  --z-toast: 70;
+  --z-drawer: 70;
+  --z-viewer: 100;
 
   /* Yapışkan kabuk yüksekliği: durum çubuğu + nav.
      Bölüm bağlantılarının başlığın altında kalmaması için kullanılır. */

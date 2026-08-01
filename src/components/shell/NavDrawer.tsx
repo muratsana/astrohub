@@ -3,6 +3,7 @@ import { NavLink, useLocation } from 'react-router';
 import { siteMap, mobileDrawerPrimary } from '@/app/navigation';
 import { CloseIcon, UserIcon, SearchIcon } from '@/components/ui/icons';
 import { ThemeToggleRow } from '@/features/theme/ThemeToggle';
+import { LocationPicker } from '@/features/location/LocationPicker';
 
 /**
  * MODÜL HARİTASI ÇEKMECESİ.
@@ -72,6 +73,20 @@ export function NavDrawer({
           >
             <CloseIcon className="h-4 w-4" />
           </button>
+        </div>
+
+        {/*
+          KONUM SEÇİCİ — dar ekranın tek girişi (Faz 3.1).
+
+          Üst çubuktaki seçici `sm` altında gizli: 320px'te aksiyon
+          kümesiyle birlikte taşırıyor. Buraya konmasaydı telefonda konum
+          hiç değiştirilemezdi ve etkinlik mesafesi, gözlem noktası
+          sıralaması, tesis uzaklığı hep varsayılan şehre bağlı kalırdı.
+          `sm:hidden` çünkü daha geniş ekranda zaten üst çubukta duruyor
+          ve iki seçici bir gün ayrışır.
+        */}
+        <div className="border-b border-border px-4 py-3 sm:hidden">
+          <LocationPicker variant="panel" />
         </div>
 
         <div className="space-y-2 px-4 pt-4">
