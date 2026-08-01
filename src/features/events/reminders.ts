@@ -1,3 +1,4 @@
+import { wallToInstant, zonedParts } from '@/lib/zone';
 import type { AstroEvent } from './types';
 
 /**
@@ -33,62 +34,13 @@ export const reminderLabels: Record<ReminderKind, string> = {
 /** Etkinlik takviminin referans dilimi — site Türkiye'ye ait (0049). */
 const ZONE = 'Europe/Istanbul';
 
-/**
- * Bir anın verilen saat dilimindeki UTC farkı (dakika).
- *
- * Türkiye 2016'dan beri yaz saati uygulamıyor, yani bugün sonuç her zaman
- * +180. Sabit yazmadık: kural değişirse bu dosya sessizce yanlış
- * hesaplamaya başlardı ve hatanın kaynağı "bir hatırlatma bir saat erken
- * geldi" olarak görünürdü — bulunması en zor hata türü.
- */
-function zoneOffsetMinutes(instant: Date): number {
-  const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone: ZONE,
-    hour12: false,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  }).formatToParts(instant);
-
-  const get = (type: string) =>
-    Number(parts.find((p) => p.type === type)?.value ?? '0');
-
-  /* `hour12: false` bazı motorlarda gece yarısını 24 olarak veriyor. */
-  const hour = get('hour') % 24;
-
-  const asUtc = Date.UTC(
-    get('year'),
-    get('month') - 1,
-    get('day'),
-    hour,
-    get('minute'),
-    get('second')
-  );
-
-  return (asUtc - instant.getTime()) / 60_000;
-}
-
 /** Etkinliğin YEREL günündeki sabah 09:00 — `app.reminder_due_at` ile aynı. */
 export function eventMorning(startsAt: string | Date): Date {
-  const start = new Date(startsAt);
-  const offset = zoneOffsetMinutes(start);
-
-  /* Etkinliğin yerel tarihi: ana farkı ekleyip UTC alanlarını okuyoruz. */
-  const local = new Date(start.getTime() + offset * 60_000);
-  const wall = Date.UTC(
-    local.getUTCFullYear(),
-    local.getUTCMonth(),
-    local.getUTCDate(),
-    9
+  const local = zonedParts(new Date(startsAt), ZONE);
+  return wallToInstant(
+    { year: local.year, month: local.month, day: local.day, hour: 9 },
+    ZONE
   );
-
-  /* Duvar saatinden ana dönüş. İki geçiş: ilk tahminin farkı, sonucun
-     kendi farkından ayrılabilir (yaz saati sınırında). */
-  const guess = new Date(wall - offset * 60_000);
-  return new Date(wall - zoneOffsetMinutes(guess) * 60_000);
 }
 
 /** `app.reminder_due_at` karşılığı. `ozel` için özel an aynen dönüyor. */
