@@ -10,6 +10,12 @@ export const broadcastKindLabels: Record<BroadcastKind, string> = {
 };
 
 export interface Broadcast {
+  /**
+   * Veritabanı kimliği. Tohum kayıtlarda YOK: yayın takibi gerçek bir
+   * satıra bağlanır ve tohum bir yayını takip etmek yabancı anahtar
+   * hatası verirdi. `AstroEvent.id` ile aynı gerekçe.
+   */
+  id?: string;
   slug: string;
   title: string;
   description: string;

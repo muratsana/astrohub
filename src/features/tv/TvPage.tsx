@@ -9,6 +9,7 @@ import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
 import { ExternalLink } from '@/components/ExternalLink';
 import { CatalogSourceNote } from '@/components/ui/CatalogSourceNote';
+import { TvFollow } from './TvFollow';
 import { useBroadcastCatalog } from '@/services/content/broadcasts';
 import { hasNetworkAccess } from '@/lib/runtime';
 import {
@@ -80,7 +81,12 @@ export function TvPage() {
           <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,340px)]">
             <div className="space-y-4">
               {live ? (
-                <Player broadcast={live} />
+                <>
+                  <Player broadcast={live} />
+                  {/* Takip düğmesi canlı yayının yanında: takip etmek
+                      istediğin şey o an izlediğin yayındır. */}
+                  <TvFollow broadcast={live} />
+                </>
               ) : (
                 <Panel title="Şu an yayın yok">
                   <p className="text-meta leading-relaxed text-muted-foreground">

@@ -20,6 +20,7 @@ import type { ContentSelection } from './select';
  */
 
 interface BroadcastRow {
+  id: string;
   slug: string;
   title: string;
   description: string;
@@ -40,6 +41,7 @@ export function mapBroadcastRow(row: BroadcastRow): Broadcast | null {
     description: row.description,
     kind: row.kind,
     refKind: row.ref_kind,
+    id: row.id,
     youtubeId: row.youtube_id,
     startsAt: row.starts_at ?? undefined,
     endsAt: row.ends_at ?? undefined,
@@ -51,7 +53,7 @@ async function fetchBroadcasts(client: SupabaseClient): Promise<Broadcast[]> {
   const { data, error } = await client
     .from('tv_broadcasts')
     .select(
-      'slug, title, description, kind, ref_kind, youtube_id, starts_at, ends_at, position'
+      'id, slug, title, description, kind, ref_kind, youtube_id, starts_at, ends_at, position'
     )
     .eq('published', true)
     .order('position');

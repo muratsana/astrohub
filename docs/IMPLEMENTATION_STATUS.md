@@ -41,10 +41,11 @@ tabloda `DONE` ile birleştirilmez:
 | 17 | Test stratejisi ve kabul kriterleri | 1691–… | NOT_STARTED |
 | 18 | (belgenin sonu) | …–1956 | NOT_STARTED |
 
-⁵ **Faz 8'in veri katmanı bitti.** Yedi tablo, YouTube bağlantı şeması
-ve kota izleme kuruldu; sekiz kural canlıda ölçüldü. Kanal bağlantısı
-**IMPLEMENTED_BLOCKED_EXTERNAL** — gerçek OAuth kimliği yok. Kalan iş
-adapter, kullanıcı sayfaları ve panel TV sekmesi. Ayrıntı: Faz 8 bölümü.
+⁵ **Faz 8'de kodla kapatılabilecek iş kalmadı.** Şema, YouTube OAuth
+adaptörü, kota izleme, video arşivi/seri sayfaları, yayın takibi ve
+panel TV sekmesi bitti. Kalan tek şey **canlı kanal bağlantısı**
+(`IMPLEMENTED_BLOCKED_EXTERNAL`) — gerçek Google OAuth kimliği
+gerekiyor. Ayrıntı: Faz 8 bölümü.
 
 ⁴ **Faz 7'nin veri ve sunucu katmanı bitti, arayüzü sürüyor.**
 Şema (11 tablo), AzuraCast adaptörü, sağlık yoklaması, dağıtım
@@ -952,7 +953,8 @@ vardı (`tv_broadcasts`, `TvPage`, `BroadcastControl`): onay kapaklı
 | OAuth akışı, jeton yenileme, senkronizasyon, kota sayacı, yeniden deneme | DONE | `supabase/functions/youtube`, 35 test |
 | Panel **TV** sekmesi (bağlantı durumu, kota, video arşivi) | DONE | `TvControl` |
 | **Canlı kanal bağlantısı** | **IMPLEMENTED_BLOCKED_EXTERNAL** | gerçek OAuth kimliği yok |
-| Kullanıcı sayfaları (video arşivi, seri/playlist detayı) | NOT_STARTED | sıradaki iş |
+| Video arşivi ve seri sayfaları | DONE | `TvArchivePage` |
+| Yayın takip düğmesi + bildirim tercihi | DONE | `TvFollow` |
 
 ### Sır tablosunda politika yokluğu bir kusur değil
 
