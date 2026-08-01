@@ -1,4 +1,3 @@
-import { useMemo, useState } from 'react';
 import { Container } from '@/components/ui/Container';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Badge } from '@/components/ui/Badge';
@@ -20,7 +19,9 @@ import {
 } from '@/components/ui/FilterBar';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
-import { clubs, clubKindLabels, type ClubKind, type AstronomyClub } from './data';
+import { clubs, clubKindLabels, type AstronomyClub } from './data';
+import { useExplorer } from '@/features/explorer/useExplorer';
+import { clubsSpec } from './clubsSpec';
 import { cn } from '@/lib/cn';
 
 /**
@@ -35,26 +36,20 @@ import { cn } from '@/lib/cn';
  * gelecek. Sayfa bunu gizlemiyor, altında yazıyor.
  */
 export function ClubsPage() {
-  const [kind, setKind] = useState<ClubKind | 'hepsi'>('hepsi');
-  const [search, setSearch] = useState('');
-  const [onlyPublic, setOnlyPublic] = useState(false);
-  const [onlyEquipment, setOnlyEquipment] = useState(false);
   const [view, setView] = useViewMode('topluluklar');
 
-  const result = useMemo(() => {
-    let items = clubs;
-    if (kind !== 'hepsi') items = items.filter((c) => c.kind === kind);
-    if (onlyPublic) items = items.filter((c) => c.publicEvents);
-    if (onlyEquipment) items = items.filter((c) => c.sharedEquipment);
+  /*
+   * ORTAK DATA EXPLORER (Faz 4). Sayfa kendi `useState` filtresini
+   * bıraktı: durum artık URL'de, yani filtrelenmiş liste paylaşılabiliyor,
+   * geri düğmesi filtreyi geri alıyor ve arama ASCII katlıyor —
+   * "nevsehir" yazan kullanıcı "Nevşehir"i bulabiliyor.
+   */
+  const ex = useExplorer(clubs, clubsSpec);
+  const result = ex.items;
 
-    const q = search.trim().toLocaleLowerCase('tr-TR');
-    if (q) {
-      items = items.filter((c) =>
-        `${c.name} ${c.city} ${c.summary}`.toLocaleLowerCase('tr-TR').includes(q)
-      );
-    }
-    return items;
-  }, [kind, search, onlyPublic, onlyEquipment]);
+  /** Evet/hayır filtresi tek değerli bir facet. */
+  const acik = (param: string) => (ex.query.facets[param]?.length ?? 0) > 0;
+  const cevir = (param: string) => ex.toggleFacet(param, 'evet');
 
   return (
     <>
@@ -79,16 +74,22 @@ export function ClubsPage() {
               id="club-search"
               type="search"
               placeholder="Topluluk adı, şehir veya faaliyet"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              value={ex.searchInput}
+              onChange={(e) => ex.setSearch(e.target.value)}
               className={filterControlClass}
             />
           </FilterCell>
           <FilterCell label="Tür" htmlFor="club-kind">
             <Select
               id="club-kind"
-              value={kind}
-              onChange={(e) => setKind(e.target.value as ClubKind | 'hepsi')}
+              value={ex.query.facets.tur?.[0] ?? 'hepsi'}
+              onChange={(e) => {
+                const mevcut = ex.query.facets.tur?.[0];
+                if (mevcut) ex.toggleFacet('tur', mevcut);
+                if (e.target.value !== 'hepsi') {
+                  ex.toggleFacet('tur', e.target.value);
+                }
+              }}
               className={filterControlClass}
             >
               <option value="hepsi">Tüm türler</option>
@@ -102,25 +103,30 @@ export function ClubsPage() {
           <FilterToggle
             id="club-public"
             label="Halka açık etkinlik"
-            checked={onlyPublic}
-            onChange={setOnlyPublic}
+            checked={acik('halka-acik')}
+            onChange={() => cevir('halka-acik')}
           />
           <FilterToggle
             id="club-equipment"
             label="Ortak ekipman"
-            checked={onlyEquipment}
-            onChange={setOnlyEquipment}
+            checked={acik('ortak-ekipman')}
+            onChange={() => cevir('ortak-ekipman')}
           />
         </FilterBar>
 
         <ToolBar
           left={
-            <ResultCount
-              current={result.length}
-              total={clubs.length}
-              noun="topluluk"
-            />
+            <ResultCount current={ex.total} total={clubs.length} noun="topluluk" />
           }
+          sort={{
+            id: 'club-sort',
+            value: ex.query.sort,
+            onChange: ex.setSort,
+            options: clubsSpec.sorts.map((s) => ({
+              value: s.value,
+              label: s.label,
+            })),
+          }}
           view={{ mode: view, onChange: setView }}
         />
 

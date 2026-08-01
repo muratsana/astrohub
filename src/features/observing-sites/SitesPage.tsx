@@ -18,6 +18,10 @@ import { useSiteCatalog } from '@/services/content/sites';
 import { CatalogSourceNote } from '@/components/ui/CatalogSourceNote';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
+import { Input, Select } from '@/components/ui/Input';
+import { FilterBar, FilterCell, filterControlClass } from '@/components/ui/FilterBar';
+import { useExplorer } from '@/features/explorer/useExplorer';
+import { sitesSpec } from './sitesSpec';
 import { cn } from '@/lib/cn';
 
 /**
@@ -32,6 +36,15 @@ import { cn } from '@/lib/cn';
 export function SitesPage() {
   const [view, setView] = useViewMode('saha');
   const catalog = useSiteCatalog();
+
+  /*
+   * ORTAK DATA EXPLORER (Faz 4).
+   *
+   * Bu sayfada HİÇ filtre yoktu — ne arama, ne sıralama. Katalog
+   * büyüdükçe kullanıcı aradığı sahayı gözle taramak zorundaydı.
+   * Varsayılan sıralama "en karanlık": sayfaya gelen soru bu.
+   */
+  const ex = useExplorer(catalog.items, sitesSpec);
 
   return (
     <>
@@ -49,21 +62,66 @@ export function SitesPage() {
           description="Türkiye'nin karanlık gökyüzü noktaları — Bortle/SQM ölçümleri, erişim ve tesis bilgileriyle."
         />
 
+        <FilterBar columns={2}>
+          <FilterCell label="Ara" htmlFor="site-search">
+            <Input
+              id="site-search"
+              type="search"
+              placeholder="Saha adı, bölge veya yol erişimi"
+              value={ex.searchInput}
+              onChange={(e) => ex.setSearch(e.target.value)}
+              className={filterControlClass}
+            />
+          </FilterCell>
+          <FilterCell label="Bortle" htmlFor="site-bortle">
+            <Select
+              id="site-bortle"
+              value={ex.query.facets.bortle?.[0] ?? 'hepsi'}
+              onChange={(e) => {
+                const mevcut = ex.query.facets.bortle?.[0];
+                if (mevcut) ex.toggleFacet('bortle', mevcut);
+                if (e.target.value !== 'hepsi') {
+                  ex.toggleFacet('bortle', e.target.value);
+                }
+              }}
+              className={filterControlClass}
+            >
+              <option value="hepsi">Tüm sınıflar</option>
+              {[...ex.counts('bortle').entries()]
+                .sort((a, b) => Number(a[0]) - Number(b[0]))
+                .map(([v, n]) => (
+                  <option key={v} value={v}>
+                    Bortle {v} ({n})
+                  </option>
+                ))}
+            </Select>
+          </FilterCell>
+        </FilterBar>
+
         <CatalogSourceNote selection={catalog} />
 
         <ToolBar
           left={
             <ResultCount
-              current={catalog.items.length}
+              current={ex.total}
               total={catalog.items.length}
               noun="nokta"
             />
           }
+          sort={{
+            id: 'site-sort',
+            value: ex.query.sort,
+            onChange: ex.setSort,
+            options: sitesSpec.sorts.map((s) => ({
+              value: s.value,
+              label: s.label,
+            })),
+          }}
           view={{ mode: view, onChange: setView }}
         />
 
         <CardGrid view={view}>
-          {catalog.items.map((site) => {
+          {ex.items.map((site) => {
             const facilities = [
               site.facilities.tentArea && 'Çadır',
               site.facilities.caravanOk && 'Karavan',

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Container } from '@/components/ui/Container';
 import { Badge } from '@/components/ui/Badge';
 import { PageMeta } from '@/components/seo/PageMeta';
@@ -13,6 +13,8 @@ import {
   type ArticleLevel,
 } from './data';
 import { useArticles } from './useArticles';
+import { useExplorer } from '@/features/explorer/useExplorer';
+import { articlesSpec } from './articlesSpec';
 
 /**
  * YAZILAR — rehberler, eğitim yazıları ve işleme dersleri.
@@ -49,22 +51,28 @@ function levelTone(level: ArticleLevel) {
 }
 
 export function ArticlesPage() {
-  const [level, setLevel] = useState<ArticleLevel | 'hepsi'>('hepsi');
-  const [category, setCategory] = useState<ArticleCategory | 'hepsi'>('hepsi');
   const [view, setView] = useViewMode('yazilar');
 
   // Tohum + panelden yayımlananlar tek listede (useArticles.ts).
   const { items: allArticles } = useArticles();
 
-  const result = useMemo(
-    () =>
-      allArticles.filter(
-        (a) =>
-          (level === 'hepsi' || a.level === level) &&
-          (category === 'hepsi' || a.category === category)
-      ),
-    [allArticles, level, category]
-  );
+  /*
+   * ORTAK DATA EXPLORER (Faz 4). Sayfada arama HİÇ yoktu; seviye ve
+   * kategori `useState`teydi, yani "başlangıç seviyesi işleme yazıları"
+   * gibi bir seçim paylaşılamıyordu.
+   */
+  const ex = useExplorer(allArticles, articlesSpec);
+  const result = ex.items;
+  const level = ex.query.facets.seviye?.[0] ?? 'hepsi';
+  const category = ex.query.facets.kategori?.[0] ?? 'hepsi';
+
+  /** Sekme şeritleri tek seçim. */
+  const tekSec = (param: string, mevcut: string, next: string) => {
+    if (mevcut !== 'hepsi') ex.toggleFacet(param, mevcut);
+    if (next !== 'hepsi' && next !== mevcut) ex.toggleFacet(param, next);
+  };
+  const setLevel = (next: string) => tekSec('seviye', level, next);
+  const setCategory = (next: string) => tekSec('kategori', category, next);
 
   /*
    * Haber, yazı ve etkinlik aynı editöryel düzeni paylaşıyor

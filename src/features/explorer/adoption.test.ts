@@ -33,19 +33,27 @@ const src = resolve(__dirname, '../..');
  * yazan kullanıcı "Nevşehir"i bulamıyor).
  */
 const BEKLEYEN = [
-  'features/marketplace/MarketplacePage.tsx',
-  'features/equipment/EquipmentPage.tsx',
   'features/targets/TargetsPage.tsx',
-  'features/clubs/ClubsPage.tsx',
-  'features/observing-sites/SitesPage.tsx',
   'features/events/EventsPage.tsx',
   'features/forum/ForumPage.tsx',
-  'features/news/NewsPage.tsx',
-  'features/articles/ArticlesPage.tsx',
 ];
 
 /** Ortak motora geçmiş sayfalar — burada kalmaları test edilir. */
-const GECEN = ['features/photos/GalleryPage.tsx'];
+const GECEN = [
+  'features/photos/GalleryPage.tsx',
+  'features/clubs/ClubsPage.tsx',
+  'features/observing-sites/SitesPage.tsx',
+  'features/marketplace/MarketplacePage.tsx',
+  'features/news/NewsPage.tsx',
+  'features/articles/ArticlesPage.tsx',
+  /*
+   * Ekipman KISMİ: kategori rota yolunda (`/ekipman/montur`) ve o rotalar
+   * prerender ediliyor — sorgu parametresine taşımak verilmiş bağlantıları
+   * kırardı. Explorer kategorinin ÜSTÜNDE çalışıyor: arama ve sıralamayı
+   * üstleniyor, kategori süzmesi sayfada kalıyor.
+   */
+  'features/equipment/EquipmentPage.tsx',
+];
 
 const oku = (p: string) => readFileSync(join(src, p), 'utf8');
 

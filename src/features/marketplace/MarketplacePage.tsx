@@ -1,4 +1,3 @@
-import { useMemo, useState } from 'react';
 import { Container } from '@/components/ui/Container';
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
@@ -29,6 +28,8 @@ import {
   type EquipmentCategory,
 } from '@/features/equipment/data';
 import { useListings } from '@/services/content/listings';
+import { useExplorer } from '@/features/explorer/useExplorer';
+import { listingsSpec } from './listingsSpec';
 import type { Listing } from './data';
 import { cn } from '@/lib/cn';
 import { PageMeta } from '@/components/seo/PageMeta';
@@ -45,8 +46,6 @@ const categories: (EquipmentCategory | 'hepsi')[] = [
   'aksesuar',
 ];
 
-type SortKey = 'yeni' | 'ucuz' | 'pahali';
-
 /**
  * İKİNCİ EL PAZARYERİ (§7.13).
  *
@@ -60,35 +59,24 @@ type SortKey = 'yeni' | 'ucuz' | 'pahali';
  * sonucu veriyordu.
  */
 export function MarketplacePage() {
-  const [category, setCategory] = useState<EquipmentCategory | 'hepsi'>('hepsi');
-  const [search, setSearch] = useState('');
-  const [sort, setSort] = useState<SortKey>('yeni');
-  const [onlyInvoice, setOnlyInvoice] = useState(false);
   const [view, setView] = useViewMode('ilanlar');
-
   const catalog = useListings();
 
-  const result = useMemo(() => {
-    let items = catalog.items;
+  /*
+   * ORTAK DATA EXPLORER (Faz 4). Sayfanın kendi filtre durumu bıraktı;
+   * arama artık ASCII katlıyor ("sanliurfa" → Şanlıurfa) ve şehir
+   * filtresi geldi — ikinci elde elden teslim yaygın olduğu için "hangi
+   * şehirde" fiyat kadar belirleyici, ama sayfada hiç yoktu.
+   */
+  const ex = useExplorer(catalog.items, listingsSpec);
+  const result = ex.items;
+  const category = ex.query.facets.kategori?.[0] ?? 'hepsi';
 
-    if (category !== 'hepsi') items = items.filter((l) => l.category === category);
-    if (onlyInvoice) items = items.filter((l) => l.hasInvoice);
-
-    const q = search.trim().toLocaleLowerCase('tr-TR');
-    if (q) {
-      items = items.filter((l) =>
-        `${l.title} ${l.city} ${l.seller.username}`
-          .toLocaleLowerCase('tr-TR')
-          .includes(q)
-      );
-    }
-
-    return [...items].sort((a, b) => {
-      if (sort === 'ucuz') return a.price - b.price;
-      if (sort === 'pahali') return b.price - a.price;
-      return b.postedAt.localeCompare(a.postedAt);
-    });
-  }, [catalog.items, category, search, sort, onlyInvoice]);
+  /** Kategori sekmeleri tek seçim: bir sekme şeridi, çoklu liste değil. */
+  const setCategory = (next: string) => {
+    if (category !== 'hepsi') ex.toggleFacet('kategori', category);
+    if (next !== 'hepsi' && next !== category) ex.toggleFacet('kategori', next);
+  };
 
   return (
     <>
@@ -137,16 +125,16 @@ export function MarketplacePage() {
               id="listing-search"
               type="search"
               placeholder="İlan başlığı, şehir veya satıcı"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              value={ex.searchInput}
+              onChange={(e) => ex.setSearch(e.target.value)}
               className={filterControlClass}
             />
           </FilterCell>
           <FilterToggle
             id="listing-invoice"
             label="Yalnızca faturalı"
-            checked={onlyInvoice}
-            onChange={setOnlyInvoice}
+            checked={(ex.query.facets.faturali?.length ?? 0) > 0}
+            onChange={() => ex.toggleFacet('faturali', 'evet')}
           />
           {/* "Doğrulanmış satıcı" süzgeci kalktı: ilan yalnızca kayıtlı
               kullanıcıdan açılıyor, yani süzgeç herkesi geçiriyordu. */}
@@ -157,20 +145,19 @@ export function MarketplacePage() {
         <ToolBar
           left={
             <ResultCount
-              current={result.length}
+              current={ex.total}
               total={catalog.items.length}
               noun="ilan"
             />
           }
           sort={{
             id: 'listing-sort',
-            value: sort,
-            onChange: (v) => setSort(v as SortKey),
-            options: [
-              { value: 'yeni', label: 'En yeni' },
-              { value: 'ucuz', label: 'Artan fiyat' },
-              { value: 'pahali', label: 'Azalan fiyat' },
-            ],
+            value: ex.query.sort,
+            onChange: ex.setSort,
+            options: listingsSpec.sorts.map((s) => ({
+              value: s.value,
+              label: s.label,
+            })),
           }}
           view={{ mode: view, onChange: setView }}
         />

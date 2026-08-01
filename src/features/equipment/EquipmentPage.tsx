@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Link, useParams } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { Input } from '@/components/ui/Input';
@@ -30,14 +30,12 @@ import {
 import { EquipmentGlyph } from './EquipmentGlyph';
 import { RemoteImage } from '@/components/media/RemoteImage';
 import { useEquipmentCatalog } from '@/services/content/equipment';
+import { useExplorer } from '@/features/explorer/useExplorer';
+import { equipmentSpec } from './equipmentSpec';
 import { CatalogSourceNote } from '@/components/ui/CatalogSourceNote';
 import { cn } from '@/lib/cn';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
-
-function trLower(s: string): string {
-  return s.toLocaleLowerCase('tr-TR');
-}
 
 /*
  * Sekmeler kategori tablosundan geliyor: liste iki yerde yazılıyken yeni
@@ -68,22 +66,26 @@ export function EquipmentPage() {
     ? categoryParam
     : 'hepsi';
 
-  const [search, setSearch] = useState('');
   const [view, setView] = useViewMode('ekipman');
 
   const catalog = useEquipmentCatalog();
 
-  const result = useMemo(() => {
-    let items = catalog.items;
-    if (category !== 'hepsi') items = items.filter((e) => e.category === category);
-    const q = trLower(search.trim());
-    if (q) {
-      items = items.filter((e) =>
-        trLower(`${e.brand} ${e.model} ${Object.values(e.specs).join(' ')}`).includes(q)
-      );
-    }
-    return items;
-  }, [catalog.items, category, search]);
+  /*
+   * Kategori süzmesi explorer'ın DIŞINDA: rota yolunda taşınıyor
+   * (`/ekipman/montur`) ve o adresler prerender ediliyor. Sorgu
+   * parametresine taşımak verilmiş bağlantıları kırardı — ayrıntı
+   * `equipmentSpec.ts` başında.
+   */
+  const kategoriliste = useMemo(
+    () =>
+      category === 'hepsi'
+        ? catalog.items
+        : catalog.items.filter((e) => e.category === category),
+    [catalog.items, category]
+  );
+
+  const ex = useExplorer(kategoriliste, equipmentSpec);
+  const result = ex.items;
 
   const title =
     category === 'hepsi'
@@ -165,8 +167,8 @@ export function EquipmentPage() {
               id="eq-search"
               type="search"
               placeholder="Marka, model veya teknik değer (ör. EQ6, 3.76 µm)"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              value={ex.searchInput}
+              onChange={(e) => ex.setSearch(e.target.value)}
               className={filterControlClass}
             />
           </FilterCell>

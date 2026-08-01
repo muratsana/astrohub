@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Container } from '@/components/ui/Container';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
@@ -8,6 +8,8 @@ import { useViewMode } from '@/components/ui/useViewMode';
 import { cn } from '@/lib/cn';
 import { newsCategoryLabels, type NewsCategory } from './data';
 import { useNewsItems } from './useNews';
+import { useExplorer } from '@/features/explorer/useExplorer';
+import { newsSpec } from './newsSpec';
 
 /**
  * HABERLER — güncel astronomi ve uzay gündemi.
@@ -35,15 +37,24 @@ function formatDate(iso: string): string {
 }
 
 export function NewsPage() {
-  const [category, setCategory] = useState<NewsCategory | 'hepsi'>('hepsi');
   const [view, setView] = useViewMode('haberler');
 
   // Tohum + panelden yayımlananlar tek listede (useNews.ts).
   const { items: all } = useNewsItems();
-  const result = useMemo(
-    () => (category === 'hepsi' ? all : all.filter((n) => n.category === category)),
-    [all, category]
-  );
+
+  /*
+   * ORTAK DATA EXPLORER (Faz 4). Sayfada arama HİÇ yoktu ve kategori
+   * `useState`teydi — yani seçilen kategori paylaşılamıyordu.
+   */
+  const ex = useExplorer(all, newsSpec);
+  const result = ex.items;
+  const category = ex.query.facets.kategori?.[0] ?? 'hepsi';
+
+  /** Kategori sekmeleri tek seçim. */
+  const setCategory = (next: string) => {
+    if (category !== 'hepsi') ex.toggleFacet('kategori', category);
+    if (next !== 'hepsi' && next !== category) ex.toggleFacet('kategori', next);
+  };
 
   /* Ortak editöryel düzen — yazı ve etkinlikle aynı kart yapısı. */
   const items: EditorialItem[] = useMemo(
