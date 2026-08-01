@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router';
 import { Panel } from '@/components/ui/Panel';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -206,9 +207,12 @@ export function RadioSchedule() {
                               var (§10.5 "tekrar planı"). */}
                           {o.isRepeat && ' · tekrar'}
                         </p>
-                        <p className="text-body-sm leading-snug text-foreground">
+                        <Link
+                          to={`/radyo/program/${program.slug}`}
+                          className="block text-body-sm leading-snug text-foreground hover:text-primary"
+                        >
                           {program.title}
-                        </p>
+                        </Link>
                         {program.hosts.length > 0 && (
                           <p className="text-meta text-faint">
                             {program.hosts.map((h) => h.name).join(', ')}

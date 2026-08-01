@@ -232,6 +232,18 @@ export const appRoutes = [
           named(() => import('@/features/radio/RadioPage'), 'RadioPage')
         ),
       },
+      {
+        path: 'radyo/program/:slug',
+        element: route(
+          named(() => import('@/features/radio/ProgramPage'), 'ProgramPage')
+        ),
+      },
+      {
+        path: 'radyo/yayinci/:slug',
+        element: route(
+          named(() => import('@/features/radio/HostPage'), 'HostPage')
+        ),
+      },
 
       /* ═════════════ ARAÇLAR ═════════════ */
       {

@@ -381,3 +381,220 @@ export function useProgramFollow(
 
   return { following, notify, usable, busy, toggle, setNotify };
 }
+
+export interface ProgramDetail extends RadioProgram {
+  slots: ProgramSlot[];
+}
+
+/**
+ * Tek program — detay sayfası için.
+ *
+ * LİSTEYİ SÜZMEK YERİNE AYRI SORGU. `useSchedule()` zaten bütün
+ * programları çekiyor ve slug'a göre süzmek bedava görünüyor. Değil:
+ * detay sayfası tek başına açılabiliyor (paylaşılan bağlantı, arama
+ * sonucu) ve o durumda bütün takvimi indirmek, tek satır için haftalık
+ * ızgaranın verisini çekmek olurdu.
+ *
+ * BULUNAMAYAN PROGRAM `null`, HATA DEĞİL. Yayımdan kaldırılmış bir
+ * programın adresi paylaşılmış olabilir; RLS satırı vermiyor ve doğru
+ * cevap 404, "bir şeyler ters gitti" değil.
+ */
+export function useProgram(slug: string | undefined): {
+  program: ProgramDetail | null;
+  loading: boolean;
+  notFound: boolean;
+} {
+  const [program, setProgram] = useState<ProgramDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
+
+  useEffect(() => {
+    if (!slug || !isSupabaseConfigured) {
+      setLoading(false);
+      setNotFound(Boolean(slug));
+      return;
+    }
+
+    let active = true;
+    setLoading(true);
+    setNotFound(false);
+
+    void (async () => {
+      try {
+        const supabase = await client();
+        const { data } = await supabase
+          .from('radio_programs')
+          .select(
+            'id, slug, title, summary, description, artwork_url, category, tags, featured'
+          )
+          .eq('slug', slug)
+          .eq('published', true)
+          .maybeSingle();
+
+        if (!active) return;
+        if (!data) {
+          setProgram(null);
+          setNotFound(true);
+          return;
+        }
+
+        const row = data as Record<string, unknown>;
+        const id = row.id as string;
+
+        const [slotRes, hostRes] = await Promise.all([
+          supabase
+            .from('program_slots')
+            .select(
+              'id, program_id, weekday, local_time, airs_at, duration_min, starts_on, ends_on, is_repeat'
+            )
+            .eq('program_id', id),
+          supabase
+            .from('program_hosts')
+            .select('position, radio_hosts(id, slug, name, avatar_url)')
+            .eq('program_id', id)
+            .order('position'),
+        ]);
+
+        if (!active) return;
+
+        setProgram({
+          id,
+          slug: row.slug as string,
+          title: row.title as string,
+          summary: (row.summary as string) ?? '',
+          description: (row.description as string) ?? '',
+          artworkUrl: (row.artwork_url as string | null) ?? null,
+          category: (row.category as string | null) ?? null,
+          tags: (row.tags as string[]) ?? [],
+          featured: row.featured === true,
+          hosts: ((hostRes.data ?? []) as Record<string, unknown>[])
+            .map((r) => r.radio_hosts as Record<string, unknown> | null)
+            .filter((h): h is Record<string, unknown> => Boolean(h))
+            .map((h) => ({
+              id: h.id as string,
+              slug: h.slug as string,
+              name: h.name as string,
+              avatarUrl: (h.avatar_url as string | null) ?? null,
+            })),
+          slots: ((slotRes.data ?? []) as Record<string, unknown>[]).map((r) => ({
+            id: r.id as string,
+            programId: r.program_id as string,
+            weekday: (r.weekday as number | null) ?? null,
+            localTime: (r.local_time as string | null) ?? null,
+            airsAt: (r.airs_at as string | null) ?? null,
+            durationMin: (r.duration_min as number) ?? 60,
+            startsOn: (r.starts_on as string | null) ?? null,
+            endsOn: (r.ends_on as string | null) ?? null,
+            isRepeat: r.is_repeat === true,
+          })),
+        });
+      } catch {
+        if (active) {
+          setProgram(null);
+          setNotFound(true);
+        }
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [slug]);
+
+  return { program, loading, notFound };
+}
+
+export interface RadioHostDetail {
+  id: string;
+  slug: string;
+  name: string;
+  bio: string;
+  avatarUrl: string | null;
+  suspended: boolean;
+  programs: { slug: string; title: string }[];
+}
+
+/**
+ * Yayıncı profili (§10.2 "yayıncı profilleri").
+ *
+ * ASKIYA ALINMIŞ YAYINCININ PROFİLİ DURUYOR. `suspended_at` yayın
+ * yetkisini kaldırıyor, künyeyi değil (0051): geçmiş programların
+ * sunucusu silinirse o programların künyesi boşalırdı. Arayüz "şu an
+ * yayın yapmıyor" diyor, kişiyi yok saymıyor.
+ */
+export function useRadioHost(slug: string | undefined): {
+  host: RadioHostDetail | null;
+  loading: boolean;
+  notFound: boolean;
+} {
+  const [host, setHost] = useState<RadioHostDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
+
+  useEffect(() => {
+    if (!slug || !isSupabaseConfigured) {
+      setLoading(false);
+      setNotFound(Boolean(slug));
+      return;
+    }
+
+    let active = true;
+    setLoading(true);
+    setNotFound(false);
+
+    void (async () => {
+      try {
+        const supabase = await client();
+        const { data } = await supabase
+          .from('radio_hosts')
+          .select('id, slug, name, bio, avatar_url, suspended_at')
+          .eq('slug', slug)
+          .eq('published', true)
+          .maybeSingle();
+
+        if (!active) return;
+        if (!data) {
+          setHost(null);
+          setNotFound(true);
+          return;
+        }
+
+        const row = data as Record<string, unknown>;
+        const { data: programlar } = await supabase
+          .from('program_hosts')
+          .select('radio_programs(slug, title, published)')
+          .eq('host_id', row.id as string);
+
+        if (!active) return;
+
+        setHost({
+          id: row.id as string,
+          slug: row.slug as string,
+          name: row.name as string,
+          bio: (row.bio as string) ?? '',
+          avatarUrl: (row.avatar_url as string | null) ?? null,
+          suspended: Boolean(row.suspended_at),
+          programs: ((programlar ?? []) as Record<string, unknown>[])
+            .map((r) => r.radio_programs as Record<string, unknown> | null)
+            .filter((p): p is Record<string, unknown> => Boolean(p?.published))
+            .map((p) => ({ slug: p.slug as string, title: p.title as string })),
+        });
+      } catch {
+        if (active) {
+          setHost(null);
+          setNotFound(true);
+        }
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [slug]);
+
+  return { host, loading, notFound };
+}

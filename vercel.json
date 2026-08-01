@@ -281,6 +281,14 @@
       "destination": "/app.html"
     },
     {
+      "source": "/radyo/program/:slug",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/radyo/yayinci/:slug",
+      "destination": "/app.html"
+    },
+    {
       "source": "/saha",
       "destination": "/app.html"
     },
