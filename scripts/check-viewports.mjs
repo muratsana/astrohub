@@ -141,7 +141,56 @@ for (const sayfa of SAYFALAR) {
         ? icerikEl.getBoundingClientRect().top
         : window.innerHeight;
 
+      /*
+       * CAROUSEL KONTROLLERİ METNİN ÜSTÜNE BİNİYOR MU (§6.3).
+       *
+       * Ölçüm gerekliydi: oklar `absolute` konumlu ve metin sütununun
+       * dolgusuyla ilişkileri hiçbir dosyada yazmıyor. İlk ölçümde HER
+       * genişlikte örtüşme çıktı — 320px'te 36×19px, 1920px'te bile
+       * 8×44px.
+       */
+      /*
+       * CAROUSEL'İN BÜTÜN KONTROLLERİ — yalnızca oklar değil.
+       *
+       * İlk yazımda seçici `button[aria-label$="slayt"]`di, yani sadece
+       * okları buluyordu. Sonra carousel'e bir "otomatik geçişi durdur"
+       * düğmesi ekledim ve o düğme mobilde CTA'nın altına bindi — kapı
+       * fark etmedi, ekran görüntüsü fark etti. Kural artık carousel
+       * bölgesindeki HER düğmeyi kapsıyor.
+       */
+      const carousel = document.querySelector('[aria-roledescription="carousel"]');
+      const oklar = [...(carousel?.querySelectorAll('button') ?? [])]
+        .map((el) => el.getBoundingClientRect())
+        .filter((r) => r.width > 0 && r.height > 0);
+      /*
+       * Carousel'deki BÜTÜN metin: başlık, alt metin ve CTA.
+       *
+       * İKİ KEZ YANLIŞ SEÇTİM, ikisi de kuralı sessizce yarım bıraktı:
+       *   1. `h1 ~ * p` kardeş seçicisi — alt metin h1'in kardeşi değil.
+       *   2. `h1.closest('div')` — o div, h1'i saran `Editable`
+       *      sarmalayıcısı; içinde h1'den başka bir şey yok.
+       * İkisinde de sonuç "yalnızca h1" oldu ve CTA hiç ölçülmedi.
+       *
+       * Artık carousel bölgesinin kendisinden iniliyor. Düğmelerin
+       * İÇİNDEKİ metin dışarıda: bir düğmenin kendi etiketiyle
+       * "örtüşmesi" anlamsız.
+       */
+      const metinler = [...(carousel?.querySelectorAll('h1, p, a') ?? [])]
+        .filter((el) => !el.closest('button'))
+        .map((el) => el.getBoundingClientRect())
+        .filter((r) => r.width > 0 && r.height > 0);
+
+      let okOrtusmesi = 0;
+      for (const ok of oklar) {
+        for (const m of metinler) {
+          const x = Math.min(ok.right, m.right) - Math.max(ok.left, m.left);
+          const y = Math.min(ok.bottom, m.bottom) - Math.max(ok.top, m.top);
+          if (x > 0 && y > 0) okOrtusmesi = Math.max(okOrtusmesi, Math.round(x * y));
+        }
+      }
+
       return {
+        okOrtusmesi,
         kabuk: Math.round(kabuk),
         baslikAlt: Math.round(baslikAlt),
         icerikUst: Math.round(icerikUst),
@@ -169,6 +218,17 @@ for (const sayfa of SAYFALAR) {
 
     if (o.yatayTasma > 0) {
       hatalar.push(`${yer}: yatay taşma ${o.yatayTasma}px — sayfa yana kayıyor`);
+    }
+
+    /*
+     * KURAL D — belge: "Mevcut sağ/sol kontroller içerik ve yazıların
+     * üzerine gelmemelidir." Sıfır tolerans: 1px örtüşme bile okun
+     * metnin üstünde durduğu anlamına gelir.
+     */
+    if (o.okOrtusmesi > 0) {
+      hatalar.push(
+        `${yer}: carousel kontrolü metnin üstüne biniyor (${o.okOrtusmesi}px² örtüşme)`
+      );
     }
     /*
      * KURAL B — belge: "Header + navbar + hero toplamı düşük çözünürlükte

@@ -241,16 +241,28 @@ deniyordu. Yanlış bilgi, sessiz boşluktan kötü. Sıra düzeltildi.
 
 | Madde | Durum | Kanıt |
 |---|---|---|
-| Hero ana içeriği aşağı itmiyor | DONE | 1280×720'de içerik 583px'de; kapı geçiyor |
-| Klavye ile kontrol | DONE | Sol/sağ ok, göstergeler gerçek düğme |
-| Erişilebilir isimler | DONE | `aria-roledescription="carousel"` |
-| `prefers-reduced-motion` | DONE | Otomatik geçiş hiç kurulmuyor |
-| Hover/focus sırasında pause | DONE | `onMouseEnter` / `onFocusCapture` |
-| Okların metnin üzerine gelmemesi | NOT_STARTED | Oklar `absolute`; dar ekranda metin sütunuyla örtüşme ölçülmedi |
-| Mobilde swipe | NOT_STARTED | — |
-| Otomatik geçişi durdurma düğmesi | NOT_STARTED | Kullanıcının açıkça durdurabileceği bir kontrol yok |
-| Admin'den yayın tarihi, sıra, odak noktası, CTA | NOT_STARTED | — |
-| Görsel–metin kontrast kontrolü | NOT_STARTED | Perde var ama ölçülmedi |
+| Kontroller metnin üzerine gelmiyor | DONE | Ölçüldü: sol ok HER genişlikte `<h1>`e biniyordu (320px'te 36×19, 1920px'te 8×44). Metne güvenli alan verildi; kural `check:viewports`ta ve kaldırıldığında düşüyor (kanıtlandı) |
+| Metin için güvenli içerik alanı | DONE | `sm:pl-16 lg:pl-20` — ok 56px'te bitiyor, metin 64px'ten başlıyor |
+| Oklar kenar güvenli alanında | DONE | `left-3`/`right-3`, 44×44 |
+| Mobilde swipe | DONE | 48px eşikli dokunma kaydırması, 3 test; eşik dikey kaydırmanın doğal yatay salınımını (20–30px) eliyor |
+| Mobilde okların kaldırılması | DONE | `hidden sm:flex` — 320px'te iki ok metin sütununun %28'ini yiyordu |
+| Klavye ile kontrol | DONE | Sol/sağ ok tuşları |
+| Erişilebilir isimler | DONE | `aria-roledescription="carousel"`, göstergeler gerçek `tab` |
+| `prefers-reduced-motion` | DONE | Otomatik geçiş hiç kurulmuyor; test var |
+| Hover/focus sırasında pause | DONE | Ayrı `hovered` durumu |
+| **Otomatik geçişi durdurma** | DONE | `aria-pressed` taşıyan düğme; kullanıcının kararı `hovered`dan AYRI tutuluyor — tek değişken olsaydı fare çekilince gösteri yeniden başlar, düğme çalışmıyormuş gibi görünürdü (test var) |
+| Hero ana içeriği aşağı itmiyor | DONE | `check:viewports` 2 sayfa × 11 çözünürlükte geçiyor |
+| Görsel–metin kontrast kontrolü | NOT_STARTED | Perde var ama ölçülmedi; fotoğraf değişken olduğu için statik ölçüm yetmez, örnekleme gerekiyor |
+| Admin'den yayın tarihi, sıra, odak noktası, metin hizası, CTA | NOT_STARTED | Slaytlar `slides.ts` içinde sabit; `home_modules` tablosunu gerektiriyor — Faz 10 |
+| Slider gerçekten gerekli mi | NOT_STARTED | Beş slaytın etkileşim verisi yok; ölçmeden tek hero'ya indirmek tahmin olur |
+
+**Kendi eklediğim regresyon, kendi kapımla yakalandı:** durdurma düğmesi
+mobilde CTA'nın altına bindi — §6.3'ün yasakladığı şeyi bu sefer ben
+yaptım. Kapı görmedi çünkü seçicisi yalnızca okları kapsıyordu; metin
+seçicisi de İKİ KEZ yanlıştı (`h1 ~ * p` kardeş değil,
+`h1.closest('div')` yalnızca `Editable` sarmalayıcısı) ve sessizce
+yarım ölçüyordu. Üçü de düzeltildi; kural artık carousel bölgesindeki
+her düğmeyi ve her metni kapsıyor.
 
 ### 3.4 "Bu Gece" astronomi hava modülü — **NOT_STARTED**
 
@@ -263,10 +275,10 @@ karşılaştırma yapılmadı.
 
 ## Sonraki oturum için devam notu
 
-**Bittiği yer:** Faz 2 kapandı. Faz 3'ün 3.1'i kapandı, 3.2 ve 3.3
-kısmen. Sıradaki iş **Faz 3.3'ün kalanı** (hero okları, swipe, otomatik
-geçiş durdurma, admin yönetimi) ve **Faz 3.4 — "Bu Gece" modülünün 18
-zorunlu alanı ve tarih kontrolleri** (belge satır 424–459).
+**Bittiği yer:** Faz 2 kapandı. Faz 3'ün 3.1'i kapandı; 3.2 ve 3.3'ün
+ölçülebilir tamamı bitti, kalanları `home_modules` tablosuna (Faz 10)
+bağlı. Sıradaki iş **Faz 3.4 — "Bu Gece" modülünün 18 zorunlu alanı ve
+tarih kontrolleri** (belge satır 424–459).
 
 **Faz 3 için hazır bilgi:**
 - `check:viewports` artık `test:all` içinde ve geçiyor; ana sayfayı
