@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
@@ -9,7 +8,13 @@ import { FilterBar, FilterCell, filterControlClass } from '@/components/ui/Filte
 import { CardGrid } from '@/components/ui/CardGrid';
 import { ToolBar, ResultCount } from '@/components/ui/ToolBar';
 import { useViewMode } from '@/components/ui/useViewMode';
-import { PlateFrame } from '@/components/media/PlateFrame';
+import {
+  ContentCard,
+  ContentCardBody,
+  ContentCardMedia,
+  ContentCardMeta,
+  ContentCardTitle,
+} from '@/components/ui/ContentCard';
 import { StarField } from '@/components/media/StarField';
 import { tintFor } from '@/components/media/tints';
 import { targets, targetKindLabels, searchTargets } from './data';
@@ -178,13 +183,10 @@ function TargetCard({
 
   if (variant === 'list') {
     return (
-      <Link
-        to={`/hedef/${t.slug}`}
-        className="group flex items-center gap-3 rounded-card border border-border bg-surface-1 p-2 transition-colors hover:border-border-strong"
-      >
-        <PlateFrame className="w-24 shrink-0 sm:w-32">
+      <ContentCard to={`/hedef/${t.slug}`} variant="list">
+        <ContentCardMedia variant="list">
           <StarField seed={t.slug} tint={tintFor(t.kind)} />
-        </PlateFrame>
+        </ContentCardMedia>
 
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
@@ -204,37 +206,26 @@ function TargetCard({
             {t.constellation} · {t.bestMonths}
           </span>
         </div>
-      </Link>
+      </ContentCard>
     );
   }
 
   return (
-    <Link
-      to={`/hedef/${t.slug}`}
-      className="group flex h-full flex-col rounded-card border border-border bg-surface-1 transition-colors hover:border-border-strong"
-    >
-      <PlateFrame
-        className="shrink-0 border-0 border-b border-border"
-        flag={difficulty}
-        fieldOfView={t.bestMonths}
-      >
+    <ContentCard to={`/hedef/${t.slug}`}>
+      <ContentCardMedia flag={difficulty} fieldOfView={t.bestMonths}>
         <StarField seed={t.slug} tint={tintFor(t.kind)} />
-      </PlateFrame>
+      </ContentCardMedia>
 
-      <div className="flex flex-1 flex-col px-2.5 py-2">
-        <p className="truncate font-display text-[13px] font-bold leading-tight text-foreground transition-colors group-hover:text-primary">
-          {t.catalog}
-        </p>
+      <ContentCardBody>
+        <ContentCardTitle>{t.catalog}</ContentCardTitle>
         <p className="truncate text-meta leading-snug text-muted-foreground">
           {t.name}
         </p>
-        <p className="tabular mt-auto truncate pt-1 text-meta leading-snug text-cold">
+        <ContentCardMeta tone="cold" className="mt-auto pt-1">
           {targetKindLabels[t.kind]}
-        </p>
-        <p className="tabular truncate text-meta leading-snug text-muted-foreground">
-          {t.constellation}
-        </p>
-      </div>
-    </Link>
+        </ContentCardMeta>
+        <ContentCardMeta>{t.constellation}</ContentCardMeta>
+      </ContentCardBody>
+    </ContentCard>
   );
 }

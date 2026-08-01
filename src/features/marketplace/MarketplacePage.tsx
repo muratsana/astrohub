@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
@@ -16,7 +15,13 @@ import {
   FilterToggle,
   filterControlClass,
 } from '@/components/ui/FilterBar';
-import { PlateFrame } from '@/components/media/PlateFrame';
+import {
+  ContentCard,
+  ContentCardBody,
+  ContentCardMedia,
+  ContentCardMeta,
+  ContentCardTitle,
+} from '@/components/ui/ContentCard';
 import { StarField } from '@/components/media/StarField';
 import { tintFromSeed } from '@/components/media/tints';
 import {
@@ -219,18 +224,15 @@ function ListingCard({
   */
   if (variant === 'list') {
     return (
-      <Link
-        to={`/ilan/${listing.slug}`}
-        className="group flex h-full items-center gap-3 rounded-card border border-border bg-surface-1 px-3 py-2.5 transition-colors hover:border-border-strong"
-      >
+      <ContentCard to={`/ilan/${listing.slug}`} variant="list">
         <div className="min-w-0 flex-1">
-          <h2 className="truncate text-[13px] font-medium text-foreground group-hover:text-primary">
+          <ContentCardTitle className="font-medium">
             {listing.title}
-          </h2>
-          <p className="tabular mt-0.5 truncate text-meta text-muted-foreground">
+          </ContentCardTitle>
+          <ContentCardMeta className="mt-0.5">
             {listing.city} · @{listing.seller.username} · ★{' '}
             {listing.seller.rating.toFixed(1)}
-          </p>
+          </ContentCardMeta>
         </div>
         <span className="tabular shrink-0 font-display text-[15px] font-bold text-primary">
           {listing.price.toLocaleString('tr-TR')} ₺
@@ -238,20 +240,15 @@ function ListingCard({
         <Badge tone="muted" className="hidden shrink-0 sm:inline-flex">
           {equipmentCategoryLabels[listing.category]}
         </Badge>
-      </Link>
+      </ContentCard>
     );
   }
 
   return (
-    <Link
-      to={`/ilan/${listing.slug}`}
-      className="group flex h-full flex-col rounded-card border border-border bg-surface-1 transition-colors hover:border-border-strong"
-    >
-      {/* Oran galeri karosuyla aynı (4:3, PlateFrame varsayılanı):
-          16:9 kart, aynı ızgarada galeri karosundan alçak kalıyor ve
-          satır hizası bozuluyordu. */}
-      <PlateFrame
-        className="shrink-0 border-0 border-b border-border"
+    <ContentCard to={`/ilan/${listing.slug}`}>
+      {/* Standart oran (4:3): ilan kartı galeri karosuyla aynı ızgarada
+          duruyor; ayrı bir oran seçilseydi satır hizası bozulurdu. */}
+      <ContentCardMedia
         badge={
           <Badge tone="muted" className="bg-background/85">
             {equipmentCategoryLabels[listing.category]}
@@ -259,20 +256,20 @@ function ListingCard({
         }
       >
         <StarField seed={listing.slug} tint={tintFromSeed(listing.slug)} />
-      </PlateFrame>
+      </ContentCardMedia>
 
-      <div className="flex flex-1 flex-col px-2.5 py-2">
-        <h2 className="text-[13px] font-medium leading-snug text-foreground group-hover:text-primary">
+      <ContentCardBody>
+        <ContentCardTitle lines={2} className="font-medium leading-snug">
           {listing.title}
-        </h2>
+        </ContentCardTitle>
         <p className="tabular mt-1.5 font-display text-[17px] font-bold leading-none text-primary">
           {listing.price.toLocaleString('tr-TR')} ₺
         </p>
-        <p className="tabular mt-auto truncate pt-1 text-meta text-muted-foreground">
+        <ContentCardMeta className="mt-auto pt-1">
           {listing.city} · @{listing.seller.username} · ★{' '}
           {listing.seller.rating.toFixed(1)}
-        </p>
-      </div>
-    </Link>
+        </ContentCardMeta>
+      </ContentCardBody>
+    </ContentCard>
   );
 }

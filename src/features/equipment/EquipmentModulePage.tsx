@@ -4,6 +4,7 @@ import { Container } from '@/components/ui/Container';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Panel } from '@/components/ui/Panel';
 import { Badge } from '@/components/ui/Badge';
+import { ContentCard } from '@/components/ui/ContentCard';
 import { Button, ButtonLink } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -253,16 +254,17 @@ function CatalogTab() {
         <ul className="grid gap-2 sm:grid-cols-2">
           {results.map((m) => (
             <li key={m.slug}>
-              <Link
+              <ContentCard
                 to={equipmentPath(m)}
-                className="group flex h-full items-center gap-2.5 rounded-card border border-border bg-surface-1 px-3 py-2.5 transition-colors hover:border-border-strong"
+                variant="list"
+                className="gap-2.5"
               >
                 <EquipmentGlyph
                   category={m.category}
                   className="h-8 w-8 shrink-0 text-muted-foreground group-hover:text-primary"
                 />
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[13px] text-foreground group-hover:text-primary">
+                  <span className="block truncate text-body-sm text-foreground transition-colors group-hover:text-primary">
                     {m.model}
                   </span>
                   <span className="tabular block truncate text-meta text-muted-foreground">
@@ -274,7 +276,7 @@ function CatalogTab() {
                     {productionStatusLabels[m.productionStatus]}
                   </Badge>
                 )}
-              </Link>
+              </ContentCard>
             </li>
           ))}
         </ul>

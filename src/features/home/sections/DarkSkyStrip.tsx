@@ -1,7 +1,12 @@
-import { Link } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { SectionHeader } from '@/components/ui/SectionHeader';
-import { PlateFrame } from '@/components/media/PlateFrame';
+import {
+  ContentCard,
+  ContentCardBody,
+  ContentCardMedia,
+  ContentCardMeta,
+  ContentCardTitle,
+} from '@/components/ui/ContentCard';
 import { StarField } from '@/components/media/StarField';
 import { useSiteCatalog } from '@/services/content/sites';
 
@@ -30,29 +35,24 @@ export function DarkSkyStrip() {
       <ul className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
         {darkest.map((site) => (
           <li key={site.slug}>
-            <Link
-              to={`/saha/${site.slug}`}
-              className="group block rounded-card border border-border bg-surface-1 transition-colors hover:border-border-strong"
-            >
-              <PlateFrame
-                ratio="aspect-[16/7]"
-                className="border-0 border-b border-border"
-                badge={`Bortle ${site.bortle}`}
-              >
+            <ContentCard to={`/saha/${site.slug}`}>
+              {/* Standart oran; şerit 16:7 kullanıyordu ve altındaki
+                  gözlem noktası kartlarıyla farklı yükseklikte çıkıyordu. */}
+              <ContentCardMedia badge={`Bortle ${site.bortle}`}>
                 <StarField
                   seed={site.slug}
                   tint="150,185,235"
                   density={site.bortle <= 2 ? 1.6 : site.bortle <= 3 ? 1.2 : 0.8}
                 />
-              </PlateFrame>
+              </ContentCardMedia>
 
-              <div className="px-3 py-2.5">
-                <h3 className="truncate text-[13px] text-foreground transition-colors group-hover:text-primary">
+              <ContentCardBody className="px-3 py-2.5">
+                <ContentCardTitle className="font-normal">
                   {site.name}
-                </h3>
-                <p className="mt-0.5 text-meta text-muted-foreground">
+                </ContentCardTitle>
+                <ContentCardMeta className="mt-0.5">
                   {site.region} · {site.roadAccess.toLocaleLowerCase('tr-TR')}
-                </p>
+                </ContentCardMeta>
 
                 <dl className="mt-2.5 grid grid-cols-3 gap-px border border-border bg-border">
                   {[
@@ -68,8 +68,8 @@ export function DarkSkyStrip() {
                     </div>
                   ))}
                 </dl>
-              </div>
-            </Link>
+              </ContentCardBody>
+            </ContentCard>
           </li>
         ))}
       </ul>

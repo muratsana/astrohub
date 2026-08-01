@@ -1,11 +1,17 @@
-import { Link } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { Badge } from '@/components/ui/Badge';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { CardGrid } from '@/components/ui/CardGrid';
 import { ToolBar, ResultCount } from '@/components/ui/ToolBar';
 import { useViewMode } from '@/components/ui/useViewMode';
-import { PlateFrame } from '@/components/media/PlateFrame';
+import {
+  ContentCard,
+  ContentCardActions,
+  ContentCardBody,
+  ContentCardMedia,
+  ContentCardMeta,
+  ContentCardTitle,
+} from '@/components/ui/ContentCard';
 import { StarField } from '@/components/media/StarField';
 import { tintFromSeed } from '@/components/media/tints';
 import { useSiteCatalog } from '@/services/content/sites';
@@ -66,38 +72,33 @@ export function SitesPage() {
             if (view === 'list') {
               return (
                 <li key={site.slug}>
-                  <Link
-                    to={`/saha/${site.slug}`}
-                    className="group flex items-center gap-3 rounded-card border border-border bg-surface-1 px-3 py-2.5 transition-colors hover:border-border-strong"
-                  >
+                  <ContentCard to={`/saha/${site.slug}`} variant="list">
                     <BortleBlock bortle={site.bortle} />
                     <div className="min-w-0 flex-1">
-                      <h2 className="truncate text-[13px] font-medium text-foreground group-hover:text-primary">
+                      <ContentCardTitle className="font-medium">
                         {site.name}
-                      </h2>
-                      <p className="tabular mt-0.5 truncate text-meta text-muted-foreground">
+                      </ContentCardTitle>
+                      <ContentCardMeta className="mt-0.5">
                         {site.region} · {site.altitude} m · {site.roadAccess}
                         {site.sqm && ` · SQM ${site.sqm}`}
-                      </p>
+                      </ContentCardMeta>
                     </div>
                     <p className="tabular shrink-0 text-meta text-muted-foreground">
                       ★ {site.rating.toFixed(1)}{' '}
                       <span className="text-faint">({site.reviewCount})</span>
                     </p>
-                  </Link>
+                  </ContentCard>
                 </li>
               );
             }
 
             return (
               <li key={site.slug}>
-                <Link
-                  to={`/saha/${site.slug}`}
-                  className="group flex h-full flex-col rounded-card border border-border bg-surface-1 transition-colors hover:border-border-strong"
-                >
-                  <PlateFrame
-                    ratio="aspect-[21/9]"
-                    className="border-0 border-b border-border"
+                <ContentCard to={`/saha/${site.slug}`}>
+                  {/* Standart oran. Panoramik 21:9 kullanılıyordu; aynı
+                      ızgaradaki ilan ve hedef kartlarından alçak kalıyor,
+                      satır hizasını bozuyordu (bkz. CARD_RATIO). */}
+                  <ContentCardMedia
                     badge={
                       <Badge tone="primary" className="bg-background/85">
                         Bortle {site.bortle}
@@ -106,30 +107,33 @@ export function SitesPage() {
                     fieldOfView={site.sqm ? `SQM ${site.sqm}` : undefined}
                   >
                     <StarField seed={site.slug} tint={tintFromSeed(site.slug)} />
-                  </PlateFrame>
+                  </ContentCardMedia>
 
-                  <div className="flex flex-1 flex-col px-2.5 py-2">
+                  <ContentCardBody>
                     <div className="flex items-start justify-between gap-2">
-                      <h2 className="text-[13px] font-medium leading-snug text-foreground group-hover:text-primary">
+                      <ContentCardTitle
+                        lines={2}
+                        className="font-medium leading-snug"
+                      >
                         {site.name}
-                      </h2>
+                      </ContentCardTitle>
                       <p className="tabular shrink-0 text-meta text-muted-foreground">
                         ★ {site.rating.toFixed(1)}
                       </p>
                     </div>
-                    <p className="tabular mt-0.5 text-meta text-muted-foreground">
+                    <ContentCardMeta className="mt-0.5">
                       {site.region} · {site.altitude} m
-                    </p>
-                    <div className="mt-auto flex flex-wrap gap-1 pt-2">
+                    </ContentCardMeta>
+                    <ContentCardActions>
                       <Badge>{site.roadAccess}</Badge>
                       {facilities.map((f) => (
                         <Badge key={f} tone="cold">
                           {f}
                         </Badge>
                       ))}
-                    </div>
-                  </div>
-                </Link>
+                    </ContentCardActions>
+                  </ContentCardBody>
+                </ContentCard>
               </li>
             );
           })}

@@ -1,7 +1,12 @@
 import type { ReactNode } from 'react';
-import { Link } from 'react-router';
-import { PlateFrame } from './PlateFrame';
 import { RemoteImage } from './RemoteImage';
+import {
+  ContentCard,
+  ContentCardBody,
+  ContentCardMedia,
+  ContentCardMeta,
+  ContentCardTitle,
+} from '@/components/ui/ContentCard';
 import { cn } from '@/lib/cn';
 
 /**
@@ -69,15 +74,8 @@ export function PhotoTile({
 
   if (variant === 'list') {
     return (
-      <Link
-        to={to}
-        className={cn(
-          'group flex items-center gap-3 rounded-card border border-border bg-surface-1 p-2 transition-colors',
-          'hover:border-border-strong focus-visible:border-primary',
-          className
-        )}
-      >
-        <PlateFrame className="w-24 shrink-0 border-border sm:w-32">
+      <ContentCard to={to} variant="list" className={className}>
+        <ContentCardMedia variant="list">
           <RemoteImage
             src={imageUrl}
             alt={target}
@@ -86,7 +84,7 @@ export function PhotoTile({
             seed={seed}
             tint={tint}
           />
-        </PlateFrame>
+        </ContentCardMedia>
 
         <span className="min-w-0 flex-1">
           <span className="flex items-center gap-2">
@@ -107,21 +105,12 @@ export function PhotoTile({
           <span className="block text-cold">{meta || '—'}</span>
           <span className="block text-muted-foreground">{origin || '—'}</span>
         </span>
-      </Link>
+      </ContentCard>
     );
   }
 
   return (
-    <Link
-      to={to}
-      className={cn(
-        // h-full + flex: ızgara hücresi gerildiğinde kart da gerilir,
-        // künye bloğu altta hizalı kalır (bkz. CardGrid).
-        'group flex h-full flex-col rounded-card border border-border bg-surface-1 transition-colors',
-        'hover:border-border-strong focus-visible:border-primary',
-        className
-      )}
-    >
+    <ContentCard to={to} className={className}>
       {/*
         ORAN KARE, 4:3 DEĞİL.
 
@@ -135,34 +124,32 @@ export function PhotoTile({
         galerisinde asıl içerik fotoğrafın kendisi, ona daha çok yer vermek
         hem boşluk üretmiyor hem de kare oran galeri ızgaralarının
         alışılmış biçimi.
+
+        `square` kart ailesindeki üç kayıtlı orandan biri ve YALNIZCA
+        buraya ait — kayıt `ContentCard`ın `CARD_RATIO`sunda.
       */}
-      <PlateFrame
-        ratio="aspect-square"
+      <ContentCardMedia
+        ratio="square"
         fieldOfView={fieldOfView}
         badge={family ? <FamilyBadge {...family} /> : undefined}
         flag={flag}
-        className="shrink-0 border-0 border-b border-border"
       >
         <RemoteImage src={imageUrl} alt={target} seed={seed} tint={tint} />
-      </PlateFrame>
+      </ContentCardMedia>
 
-      <div className="flex flex-1 flex-col px-2.5 py-2">
-        <p className="truncate font-display text-[13px] font-bold leading-tight text-foreground transition-colors group-hover:text-primary">
-          {target}
-        </p>
+      <ContentCardBody>
+        <ContentCardTitle>{target}</ContentCardTitle>
         {title && (
           <p className="truncate text-meta leading-snug text-muted-foreground">
             {title}
           </p>
         )}
-        <p className="tabular mt-auto truncate pt-1 text-meta leading-snug text-cold">
+        <ContentCardMeta tone="cold" className="mt-auto pt-1">
           {meta || '—'}
-        </p>
-        <p className="tabular truncate text-meta leading-snug text-muted-foreground">
-          {origin || '—'}
-        </p>
-      </div>
-    </Link>
+        </ContentCardMeta>
+        <ContentCardMeta>{origin || '—'}</ContentCardMeta>
+      </ContentCardBody>
+    </ContentCard>
   );
 }
 

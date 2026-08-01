@@ -1,8 +1,12 @@
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Badge } from '@/components/ui/Badge';
+import {
+  ContentCard,
+  ContentCardMeta,
+  ContentCardTitle,
+} from '@/components/ui/ContentCard';
 import { Input, Select } from '@/components/ui/Input';
 import { CardGrid } from '@/components/ui/CardGrid';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -161,18 +165,18 @@ function ClubCard({
   );
 
   return (
-    <Link
+    <ContentCard
       to={`/topluluk/${club.slug}`}
       className={cn(
-        'group flex h-full flex-col rounded-card border border-border bg-surface-1 p-3 transition-colors hover:border-border-strong',
+        'p-3',
         variant === 'list' && 'sm:flex-row sm:items-center sm:gap-3'
       )}
     >
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-          <h2 className="text-[13.5px] font-medium leading-snug text-foreground group-hover:text-primary">
+          <ContentCardTitle lines={2} className="font-medium leading-snug">
             {club.name}
-          </h2>
+          </ContentCardTitle>
           <span className="label">{club.city}</span>
         </div>
 
@@ -182,15 +186,15 @@ function ClubCard({
           </p>
         )}
 
-        <p className="tabular mt-1.5 text-meta text-faint">
+        <ContentCardMeta className="mt-1.5 text-faint">
           {club.foundedYear ? `${club.foundedYear} kuruluş` : 'kuruluş bilinmiyor'}
           {club.memberCount ? ` · ${club.memberCount} üye` : ''}
-        </p>
+        </ContentCardMeta>
       </div>
 
       <div className={cn('mt-2', variant === 'list' && 'sm:mt-0 sm:shrink-0')}>
         {badges}
       </div>
-    </Link>
+    </ContentCard>
   );
 }

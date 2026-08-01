@@ -1,12 +1,17 @@
 import { useMemo } from 'react';
-import { Link } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Panel } from '@/components/ui/Panel';
 import { Badge } from '@/components/ui/Badge';
 import { ButtonLink } from '@/components/ui/Button';
-import { PlateFrame } from '@/components/media/PlateFrame';
+import {
+  ContentCard,
+  ContentCardBody,
+  ContentCardMedia,
+  ContentCardMeta,
+  ContentCardTitle,
+} from '@/components/ui/ContentCard';
 import { StarField } from '@/components/media/StarField';
 import { tintFor } from '@/components/media/tints';
 import { usePhotoCatalog } from '@/services/content/photos';
@@ -81,9 +86,10 @@ export function DiscoverPage() {
           <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {photographers.map((u) => (
               <li key={u.username}>
-                <Link
+                <ContentCard
                   to={`/profil/${u.username}`}
-                  className="flex h-full items-center gap-3 rounded-card border border-border bg-surface-1 p-4 transition-colors hover:border-border-strong hover:bg-surface-2"
+                  variant="list"
+                  className="p-4 hover:bg-surface-2"
                 >
                   <span
                     aria-hidden
@@ -100,7 +106,7 @@ export function DiscoverPage() {
                       {u.likes}
                     </span>
                   </span>
-                </Link>
+                </ContentCard>
               </li>
             ))}
           </ul>
@@ -116,30 +122,27 @@ export function DiscoverPage() {
           <ul className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             {popularTargets.map((t) => (
               <li key={t.slug}>
-                <Link
-                  to={`/hedef/${t.slug}`}
-                  className="group flex h-full flex-col rounded-card border border-border bg-surface-1 transition-colors hover:border-border-strong"
-                >
-                  <PlateFrame
-                    ratio="aspect-[16/10]"
-                    className="border-0 border-b border-border"
+                <ContentCard to={`/hedef/${t.slug}`}>
+                  {/* Standart oran; burada 16:10 kullanılıyordu ve aynı
+                      sayfadaki diğer kartlarla hizalanmıyordu. */}
+                  <ContentCardMedia
                     badge={
-                      <span className="tabular rounded-[2px] bg-background/85 px-1.5 py-0.5 text-meta tracking-[0.02em] text-primary">
+                      <span className="tabular rounded-card bg-background/85 px-1.5 py-0.5 text-meta tracking-[0.02em] text-primary">
                         {t.catalog}
                       </span>
                     }
                   >
                     <StarField seed={t.slug} tint={tintFor(t.kind)} />
-                  </PlateFrame>
-                  <div className="px-2.5 py-2">
-                    <p className="text-[12.5px] font-medium leading-snug text-foreground group-hover:text-primary">
+                  </ContentCardMedia>
+                  <ContentCardBody>
+                    <ContentCardTitle lines={2} className="font-medium leading-snug">
                       {t.name}
-                    </p>
-                    <p className="mt-0.5 text-meta text-muted-foreground">
+                    </ContentCardTitle>
+                    <ContentCardMeta className="mt-0.5">
                       {t.bestMonths}
-                    </p>
-                  </div>
-                </Link>
+                    </ContentCardMeta>
+                  </ContentCardBody>
+                </ContentCard>
               </li>
             ))}
           </ul>
