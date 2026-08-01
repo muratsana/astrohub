@@ -1,29 +1,39 @@
 -- ══════════════════════════════════════════════════════════════════════════
--- FAZ 10 — ADMIN PANELİNDEN KODSUZ SİTE YÖNETİMİ
+-- FAZ 10 — ADMIN PANELİNDEN KODSUZ SİTE YÖNETİMİ (UYGULAMA BELGESİ §13)
 --
--- BELGEDEKİ KARŞILIĞI: §13.1 admin menüsünün iki maddesi — "Sistem
--- Ayarları" ve "Ana Sayfa Editörü". Belge bu ikisini menüde SAYIYOR,
--- içeriğini tarif etmiyor. Dolayısıyla aşağıdaki şemanın çoğu belgeden
--- değil bu göçten çıkan bir karar; hangisinin hangisi olduğu tek tek
--- yazıldı ki sonradan "belge böyle istemişti" diye okunmasın.
+-- ATIFLAR HANGİ BELGEYE: aşağıdaki bütün "§13.x" atıfları UYGULAMA
+-- BELGESİNE (master implementation prompt, "13. Faz 10") aittir.
+-- `docs/ASTROHUB_PRODUCT_UI_TECHNICAL_SPEC.md`in de bir §13'ü var ama o
+-- başka bir şey (Admin paneli menü listesi, §13.2'si "Ekipman yönetimi").
+-- İkisi karıştırılırsa her atıf yanlış yere gider; bu satır o yüzden var.
 --
--- KURAL: yönetilebilir olan her şey bir SÜTUN; serbest metin kutusu
--- değil. Modül anahtarı bir listeden geliyor, düzen iki değerden birini
--- alıyor, bağlantı adresi bir CHECK'ten geçiyor. Panele keyfî SQL/JS/CSS
--- alanı açılmıyor. Panelden site bozulabilir ama site GÜVENLİĞİ bozulamaz.
+-- §13'ün ilk cümlesi: "Admin paneli sitenin işletim sistemi olmalıdır."
+-- İkinci cümlesi bunun sınırını çiziyor: "admin paneline keyfî SQL,
+-- JavaScript, CSS veya güvenlik politikası çalıştırma alanı ekleme.
+-- Yönetim kontrollü, şemalı, doğrulamalı ve geri alınabilir olmalıdır."
+--
+-- Bu göç ikinci cümleyi ciddiye alıyor. Yönetilebilir olan her şey bir
+-- SÜTUN; serbest metin kutusu değil. Modül anahtarı bir listeden geliyor,
+-- düzen iki değerden birini alıyor, bağlantı adresi bir CHECK'ten geçiyor.
+-- Panelden site bozulabilir ama site GÜVENLİĞİ bozulamaz.
 --
 -- ══════════════════════════════════════════════════════════════════════════
--- ÜRÜN KARARI: SİTEDE TEK ADMİN VAR
+-- ÜRÜN KARARI: SİTEDE TEK ADMİN VAR (§13.4'TEN BİLİNÇLİ SAPMA)
 --
--- Belgenin §4 rol tablosu yedi rol tanımlıyor ve yönetim tarafında tek bir
--- "Admin" var; ayrı admin kademeleri belgede zaten yok. Kullanıcı kararı
--- da bunu doğruluyor: "sitede tek admin olacak, birden fazla admin rolü
--- hazırlama." Bu göç YENİ ROL AÇMIYOR.
+-- Belgenin §13.4'ü en az on iki admin rolü istiyor: Süper Admin, Teknik
+-- Admin, İçerik Editörü, Fotoğraf Moderatörü, Etkinlik Moderatörü,
+-- Lokasyon Moderatörü, Radyo Yöneticisi, Radyo Yayıncısı/DJ, TV
+-- Yöneticisi, Kullanıcı ve Destek Yöneticisi, Analitik Görüntüleyici,
+-- Hukuk/KVKK Görüntüleyici — ve her modül için ayrı gör/oluştur/düzenle/
+-- sil/onayla/yayınla/geri al/dışa aktar yetkileri.
 --
--- Gerekçe kayda değer: rol ayrımı, o rolleri taşıyan ayrı kişiler
+-- KULLANICI KARARI: "sitede tek admin olacak, birden fazla admin rolü
+-- hazırlama." Bu göç o karara uyuyor ve YENİ ROL AÇMIYOR.
+--
+-- Gerekçe kayda değer: on iki rol, on iki rolü taşıyan on iki kişi
 -- olduğunda anlamlıdır. Tek kişilik bir ekipte her rol aynı hesapta
--- toplanır ve geriye yalnızca maliyeti kalır — çoklu yetki matrisi, çoklu
--- RLS dalı, çoklu test ekseni ve hiçbirini ayırt etmeyen tek bir
+-- toplanır ve geriye yalnızca maliyeti kalır — on iki yetki matrisi, on
+-- iki RLS dalı, on iki test ekseni ve hiçbirini ayırt etmeyen tek bir
 -- kullanıcı. Yetki ayrımı ekip büyüdüğünde eklenir; bugün eklenirse
 -- yalnızca bakım borcu olur.
 --
@@ -33,15 +43,14 @@
 -- yetkisi herkeste; moderatör site düzenini değiştiremiyor.
 --
 -- ══════════════════════════════════════════════════════════════════════════
--- YÜKSEK RİSKLİ DEĞİŞİKLİK: ONAY AKIŞI KURULMADI, YERİNE NE VAR
+-- §13.3 "İKİ AŞAMALI ONAY" — TEK ADMİNLE MÜMKÜN DEĞİL, YERİNE NE VAR
 --
--- Siteyi kapatan düğmeler (bakım modu, kayıt kapatma) için iki aşamalı
--- onay akışı düşünüldü ve KURULMADI. İki aşamalı onayın anlamı İKİ
--- KİŞİ'dir; aynı kişiye iki kez sormak onay değil gecikmedir. Tek adminli
--- bir sitede o akış tiyatro olurdu. (Belge böyle bir madde istemiyor —
--- bu tamamen bu göçün kararı.)
+-- §13.3 yüksek riskli işlemlerde iki aşamalı onay istiyor. İki aşamalı
+-- onayın anlamı İKİ KİŞİ'dir; aynı kişiye iki kez sormak onay değil,
+-- gecikmedir. Tek adminli bir sitede bu madde karşılanamaz ve
+-- karşılanmış gibi yapmak daha kötüdür.
 --
--- Yerine konan, tek kişinin kendini koruyabileceği iki mekanizma:
+-- Yerine konan şey, tek kişinin kendini koruyabileceği tek mekanizma:
 -- YÜKSEK RİSKLİ DEĞİŞİKLİKTE GEREKÇE ZORUNLU (aşağıdaki tetikleyici) ve
 -- HER DEĞİŞİKLİK GERİ ALINABİLİR (`setting_history` + `rollback_setting`).
 -- Gerekçe alanı boş bırakılamaz; bakım moduna almak, sebebini yazmayı
@@ -49,7 +58,7 @@
 -- ══════════════════════════════════════════════════════════════════════════
 
 -- ══════════════════════════════════════════════════════════════════════════
--- 1) ANA SAYFA MODÜLLERİ (§13.1 "Ana Sayfa Editörü")
+-- 1) ANA SAYFA MODÜLLERİ (§13.2)
 --
 -- ANAHTAR LİSTEDEN GELİYOR, PANELDEN YAZILMIYOR. Modül anahtarı bir React
 -- bileşenine karşılık gelir; panelden `yeni_modul` diye bir satır
@@ -73,7 +82,7 @@ create table if not exists public.home_modules (
   publish_to     timestamptz,
   show_mobile    boolean not null default true,
   show_desktop   boolean not null default true,
-  /* Yayımlanmamış değişiklikler. NULL ise taslak yok. */
+  /* Yayımlanmamış değişiklikler. NULL ise taslak yok (§13.3 draft). */
   draft          jsonb,
   updated_at     timestamptz not null default now(),
   updated_by     uuid references auth.users(id) on delete set null,
@@ -88,7 +97,7 @@ create table if not exists public.home_modules (
 );
 
 comment on table public.home_modules is
-  'Ana sayfa modül düzeni (§13.1 "Ana Sayfa Editörü"). Anahtarlar kodda karşılığı olan modüllerdir; panelden yeni anahtar eklenemez.';
+  'Ana sayfa modül düzeni (§13.2). Anahtarlar kodda karşılığı olan modüllerdir; panelden yeni anahtar eklenemez.';
 
 create unique index if not exists home_modules_position_uniq
   on public.home_modules (position);
@@ -119,12 +128,12 @@ values
 on conflict (key) do nothing;
 
 -- ══════════════════════════════════════════════════════════════════════════
--- 2) NAVİGASYON VE FOOTER (§13.1 "Sistem Ayarları")
+-- 2) NAVİGASYON VE FOOTER (§13.2)
 --
 -- ADRES DOĞRULANIYOR. Bir yönetim paneli üzerinden `javascript:` şemalı
 -- bağlantı yazılabilseydi, panel yetkisi site geneline XSS'e dönüşürdü —
--- başlıktaki "panele keyfî SQL/JS/CSS alanı açılmıyor" kuralının tam
--- olarak engellediği şey. CHECK yalnızca site içi yolu (`/...`) veya `https://`
+-- "keyfî JavaScript çalıştırma alanı ekleme" maddesinin tam olarak
+-- yasakladığı şey. CHECK yalnızca site içi yolu (`/...`) veya `https://`
 -- adresini kabul ediyor. Doğrulama arayüzde DEĞİL burada: arayüz
 -- atlanabilir, kısıt atlanamaz.
 --
@@ -159,7 +168,7 @@ create table if not exists public.nav_links (
 );
 
 comment on table public.nav_links is
-  'Menü ve footer bağlantıları (§13.1 "Sistem Ayarları"). Adres kısıtı javascript:/data: şemalarını veritabanı düzeyinde reddeder.';
+  'Menü ve footer bağlantıları (§13.2). Adres kısıtı javascript:/data: şemalarını veritabanı düzeyinde reddeder.';
 
 create index if not exists nav_links_menu_idx on public.nav_links (menu, position);
 
@@ -177,7 +186,7 @@ grant select on public.nav_links to anon, authenticated;
 grant insert, update, delete on public.nav_links to authenticated;
 
 -- ══════════════════════════════════════════════════════════════════════════
--- 3) FEATURE FLAG'LER (§13.1 "Sistem Ayarları")
+-- 3) FEATURE FLAG'LER (§13.2)
 --
 -- BURADA DA ANAHTAR LİSTEDEN GELİYOR. Bir bayrağın kodda karşılığı yoksa
 -- açmak da kapatmak da hiçbir şey yapmaz; panelde duran ve hiçbir şey
@@ -197,7 +206,7 @@ create table if not exists public.feature_flags (
 );
 
 comment on table public.feature_flags is
-  'Kod içindeki isteğe bağlı yüzeylerin anahtarları (§13.1 "Sistem Ayarları"). Panelden yeni anahtar eklenemez — karşılığı olmayan bayrak yanıltır.';
+  'Kod içindeki isteğe bağlı yüzeylerin anahtarları (§13.2). Panelden yeni anahtar eklenemez — karşılığı olmayan bayrak yanıltır.';
 
 alter table public.feature_flags enable row level security;
 
@@ -224,7 +233,7 @@ values
 on conflict (key) do nothing;
 
 -- ══════════════════════════════════════════════════════════════════════════
--- 4) SİTE DUYURUSU VE BAKIM MODU (§13.1 "Sistem Ayarları")
+-- 4) SİTE DUYURUSU VE BAKIM MODU (§13.2)
 --
 -- `app_settings` içinde duruyorlar; ikisi de tek satırlık ayar ve kendi
 -- tablolarını hak etmiyor. Bakım modunun ANAHTARI feature_flags'te,
@@ -252,12 +261,13 @@ values (
 on conflict (key) do nothing;
 
 -- ══════════════════════════════════════════════════════════════════════════
--- 5) DEĞİŞİKLİK GEÇMİŞİ VE GERİ ALMA (belgede karşılığı yok)
+-- 5) DEĞİŞİKLİK GEÇMİŞİ VE GERİ ALMA (§13.3)
 --
--- Belge site ayarları için bir denetim kaydı istemiyor; bu tablo bu göçün
--- kararı. Tek tabloyla yedi soru cevaplanıyor: kim değiştirdi, ne zaman,
--- önceki değer neydi, yeni değer ne, gerekçesi ne, hangi kapsam ve geri
--- alınabilir mi.
+-- §13.3'ün istediği on üç maddeden yedisi tek tabloyla karşılanıyor:
+-- değişiklik özeti, kim değiştirdi, önceki değer, yeni değer, gerekçe,
+-- rollback ve audit log. Kalan altısı başka yerde: draft/preview/publish
+-- ve zamanlanmış yayın aşağıdaki `home_modules` akışında, yetki kontrolü
+-- RLS'te, iki aşamalı onay ise başlıkta yazdığı gibi kurulmadı.
 --
 -- GEÇMİŞ TETİKLEYİCİYLE YAZILIYOR, UYGULAMADAN DEĞİL. Uygulama katmanına
 -- bırakılsaydı, geçmişi atlamanın yolu tek bir UPDATE olurdu — ve denetim
@@ -287,7 +297,7 @@ create table if not exists public.setting_history (
 );
 
 comment on table public.setting_history is
-  'Site ayarı değişiklik geçmişi. Tetikleyiciyle yazılır; uygulamadan atlanamaz.';
+  'Site ayarı değişiklik geçmişi (§13.3). Tetikleyiciyle yazılır; uygulamadan atlanamaz.';
 
 create index if not exists setting_history_scope_idx
   on public.setting_history (scope, record_key, created_at desc);
@@ -344,9 +354,9 @@ begin
     yeni ->> 'id',  eski ->> 'id'
   );
 
-  /* YÜKSEK RİSKLİ DEĞİŞİKLİKTE GEREKÇE ZORUNLU — başlıktaki "onay akışı
-     yok" kararının karşılığı. Gerekçe yazmak, düğmeye basmadan önce bir
-     saniye düşünmeyi zorunlu kılar. */
+  /* YÜKSEK RİSKLİ DEĞİŞİKLİKTE GEREKÇE ZORUNLU — §13.3'ün "iki aşamalı
+     onay" maddesinin tek adminle karşılanabilen hâli. Gerekçe yazmak,
+     düğmeye basmadan önce bir saniye düşünmeyi zorunlu kılar. */
   if kapsam = 'feature_flags' then
     riskli := coalesce((yeni ->> 'high_risk')::boolean, (eski ->> 'high_risk')::boolean, false)
               and (eski ->> 'enabled') is distinct from (yeni ->> 'enabled');
@@ -452,7 +462,7 @@ end;
 $$;
 
 -- ══════════════════════════════════════════════════════════════════════════
--- GERİ ALMA — rollback
+-- GERİ ALMA (§13.3 "rollback")
 --
 -- Geçmişteki bir satırın ÖNCEKİ değerini geri yazıyor. Geçmiş satırını
 -- silmiyor; geri alma yeni bir geçmiş satırı üretiyor ve `rolled_back_from`
@@ -546,7 +556,7 @@ end;
 $$;
 
 -- ══════════════════════════════════════════════════════════════════════════
--- TASLAK → ÖNİZLEME → YAYIN
+-- TASLAK → ÖNİZLEME → YAYIN (§13.3)
 --
 -- Ana sayfa düzeni herkesin gördüğü yüzey; yanlış bir sıralama anında
 -- yayında oluyor. `draft` sütunu bunu ayırıyor: yönetici taslağa yazıyor,
@@ -596,7 +606,7 @@ as $$
     case when t.uygula and m.draft ? 'show_desktop' then (m.draft ->> 'show_desktop')::boolean else m.show_desktop end,
     m.draft is not null
   from public.home_modules m cross join taslak t
-  /* ZAMANLANMIŞ YAYIN BURADA UYGULANIYOR. İstemciye bırakılsaydı
+  /* ZAMANLANMIŞ YAYIN BURADA UYGULANIYOR (§13.3). İstemciye bırakılsaydı
      her istemcinin saatine güvenmek gerekirdi; sunucu saati tek. */
   where (m.publish_from is null or m.publish_from <= now())
     and (m.publish_to   is null or m.publish_to   >  now())
