@@ -49,6 +49,10 @@
       "destination": "/app.html"
     },
     {
+      "source": "/bildirimler",
+      "destination": "/app.html"
+    },
+    {
       "source": "/bu-gece",
       "destination": "/app.html"
     },
@@ -242,6 +246,14 @@
     },
     {
       "source": "/kvkk",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/mesajlar",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/mesajlar/:id",
       "destination": "/app.html"
     },
     {

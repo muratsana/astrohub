@@ -9,6 +9,7 @@ import { useAuth } from '@/features/auth/AuthContext';
 import { ThemeToggle } from '@/features/theme/ThemeToggle';
 import { RadioToggle } from '@/features/radio/RadioToggle';
 import { TvToggle } from '@/features/tv/TvToggle';
+import { NotificationBell } from '@/features/notifications/NotificationBell';
 import { cn } from '@/lib/cn';
 
 /**
@@ -164,6 +165,23 @@ export function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
             */}
             <TvToggle />
             <RadioToggle />
+
+            {/*
+              BİLDİRİM ZİLİ `sm` VE ÜSTÜNDE.
+
+              390px'te üst çubuk zaten sınırda: TV + radyo + modül düğmesi +
+              hesap ikonu ölçülmüş genişliği doldurup 10px taşırıyordu
+              (önizleme denetimi; tema düğmesi tam bu yüzden çekmeceye
+              taşındı). Onuncu bir kontrol koymak o taşmayı geri getirirdi.
+
+              Telefonda kaybolmuyor: "Bildirimler" ve "Mesajlar" modül
+              haritasında (çekmece + footer + komut paleti) duruyor. Zil
+              oturum yokken zaten hiç çizilmiyor, yani ziyaretçi için üst
+              çubukta hiçbir şey değişmiyor.
+            */}
+            <span className="hidden sm:inline-flex">
+              <NotificationBell />
+            </span>
 
             {/*
               Tema düğmesi `sm` altında ÜST ÇUBUKTA DEĞİL, çekmecede.

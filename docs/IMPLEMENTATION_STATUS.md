@@ -26,7 +26,7 @@ tabloda `DONE` ile birleştirilmez:
 | 2 | Tek tasarım sistemi ve bütüncül arayüz | 258–355 | DONE |
 | 3 | Ana sayfa, navbar, hero, hava durumu | 356–461 | PARTIAL |
 | 4 | Ortak arama, filtreleme, sıralama, görünüm | 462–548 | PARTIAL |
-| 5 | Bildirim, mesajlaşma, sosyal aktivite | 549–632 | NOT_STARTED |
+| 5 | Bildirim, mesajlaşma, sosyal aktivite | 549–632 | PARTIAL² |
 | 6 | Etkinlik takip ve hatırlatma | 633–682 | NOT_STARTED |
 | 7 | Çalışan AstroHub Radyo | 683–832 | NOT_STARTED |
 | 8 | AstroHub TV ve YouTube'a hazır altyapı | 833–922 | NOT_STARTED |
@@ -40,6 +40,14 @@ tabloda `DONE` ile birleştirilmez:
 | 16 | Performans, SEO, analitik, gözlemlenebilirlik | 1607–1690 | NOT_STARTED |
 | 17 | Test stratejisi ve kabul kriterleri | 1691–… | NOT_STARTED |
 | 18 | (belgenin sonu) | …–1956 | NOT_STARTED |
+
+² **Faz 5'in çekirdeği bitti, kenarları duruyor.** Bildirim merkezi,
+mesajlaşma ve sosyal graf (takip + engelleme) uçtan uca çalışıyor:
+şema + RLS (`0041`–`0044`), servis katmanı, üç yeni ekran ve giriş
+noktaları. Kalan iki tablo `collections` (favori/koleksiyon) ve `clubs`
+(kulüp/topluluk) — ikisi de §8'in bu bölümünde değil, kendi
+bölümlerinde tanımlı ve kendi turlarını hak ediyor. Ayrıntı: Faz 5
+bölümü.
 
 ¹ **Faz 1'de kodla kapatılabilecek iş kalmadı.** Kalan üç madde ya dış
 kaynak ya da bilinçli erteleme: ilçe tohum verisi (resmî TÜİK/NVİ
@@ -404,7 +412,8 @@ Motora geçiş sırasında eklenen iki yetenek:
 |---|---|---|
 | **Server-side arama/filtre/sayfalama** | NOT_STARTED | Kataloglar bugün tamamı belleğe inen listeler (tohum dizisi ya da birkaç yüz satır); sunucu tarafı sayfalama veri hacmi onu gerektirdiğinde açılır. `ExplorerQuery` sayfa ve sayfa boyutu taşıdığı için ŞEKLİ hazır, ama bugün çalışan şey istemci tarafı ve rapor bunu böyle söylüyor |
 | İl/ilçe filtresi | PARTIAL | İl facet olarak çalışıyor; ilçe verisi yok (Faz 1.1) |
-| Takip edilenler, favoriler | NOT_STARTED | `follows` / `collections` tabloları yok — Faz 5 |
+| Takip edilenler | PARTIAL | `follows` tablosu Faz 5'te geldi; explorer facet'i olarak henüz bağlanmadı |
+| Favoriler | NOT_STARTED | `collections` tablosu yok — Faz 5'in kalanı |
 | Onay/yayın durumu, premium görünürlük | NOT_STARTED | Faz 9/10 |
 | Kaydedilmiş görünümler, kullanıcı varsayılanı, admin paylaşılan görünümü | NOT_STARTED | Tablo gerekiyor — Faz 10 |
 | CSV dışa aktarma (yalnız admin) | NOT_STARTED | |
@@ -413,6 +422,124 @@ Motora geçiş sırasında eklenen iki yetenek:
 | Tablo görünümü (sütun göster/gizle, yoğunluk, sabit başlık, başlıktan sıralama) | DONE | `DataTable` vardı ama HİÇBİR SAYFA KULLANMIYORDU (tek eşleşme kendi dosyası). Sıralama motorun `sort` değerine yazılıyor — tablo kendi durumunu tutsaydı ızgaraya geçen kullanıcı sıralamasını kaybederdi. Sabit başlık + sabit ilk sütun, yoğunluk, sütun göster/gizle (`localStorage`), mobilde etiket-değer kartı. Pazaryerinde üçüncü görünüm olarak bağlı. 12 birim + 1 E2E |
 | Harita / takvim / zaman çizelgesi görünümleri | PARTIAL | `EventMapPage` ve `EventCalendar` ayrı sayfa olarak var; explorer'ın görünüm seçeneği değiller |
 | Görünüm tercihinin hesapta saklanması | PARTIAL | `localStorage`da saklanıyor (görünüm, yoğunluk, gizli sütunlar), hesapta değil — kullanıcı tercihleri tablosu Faz 10 |
+
+---
+
+## Faz 5 — ayrıntı
+
+### 5.1 Sosyal graf (takip + engelleme) — **DONE**
+
+`follows` ve `user_blocks` (`0041`). Takip açık bilgi, engelleme değil:
+engellenen kişi engellendiğini tablodan öğrenemiyor. Engelleme takibi
+iki yönde de koparıyor. Takipçi sayısı denormalize sayaç kolonu yerine
+indeksli `count(*)` ile — sayaç kolonu, kullanıcının kendi profil
+satırını güncelleyebildiği bir şemada ayrıca korunması gereken bir alan
+demekti.
+
+Arayüz: profil başlığında takip/mesaj/engelle şeridi, hesap
+ayarlarında engellenenler listesi.
+
+### 5.2 Bildirim merkezi — **DONE**
+
+`notifications` + altı üretim tetikleyicisi (`0042`). §8.13'ün
+karşılığı. `notification_preferences` 0003'ten beri duruyor ve hiçbir
+şeyi yönetmiyordu; artık kategori anahtarları gerçekten bildirim
+üretimini durduruyor (kontrol tetikleyicinin içinde, istemcinin insaf
+ettiği yerde değil).
+
+Arayüz: üst çubukta canlı rozetli zil (`sm` ve üstü; telefonda modül
+haritasında), zilden açılan bildirim merkezi paneli (son beş bildirim +
+toplu okundu + tam listeye bağlantı), `/bildirimler` sayfası (gelen/arşiv
++ altı kategori sekmesi + toplu okundu) ve aynı sayfada tercih kutusu.
+Rozet üst sınırı `99+`; sayı `useUnreadCount` üstünden realtime.
+
+**Panel neden sayfayı öldürmüyor:** §8.1 merkezin ikondan açılmasını
+istiyor, panel bunu karşılıyor. Ama altı kategori sekmesini ve arşivi
+320px genişliğinde bir kutuya sıkıştırmak kullanılamaz bir ekran
+üretirdi — panel hızlı bakış, sayfa yönetim.
+
+**Bilinçli eksikler:** e-posta ve anlık bildirim gönderilmiyor
+(sağlayıcı kararı bekliyor — TOPARLAMA §11), sessiz saatler ve toplu
+özet yok. Üçü de tercih ekranında KUTU olarak gösterilmiyor; bunun
+yerine neden olmadıkları yazıyor. §8.13'ün on maddelik tercih listesi
+dörde indi çünkü kalan altısını üretecek tetikleyici henüz yok
+(hatırlatma Faz 6, yayın Faz 7/8).
+
+### 5.3 Mesajlaşma — **DONE**
+
+`conversations` + `conversation_participants` + `messages` (`0043`).
+Pazaryerinde satıcıya ulaşmanın hiçbir yolu yoktu; ilan detayındaki
+"Satıcıya Mesaj Gönder" düğmesi `disabled` duruyordu ve kullanıcılar
+iletişimi yorum alanına taşıyordu — tam olarak engellenmek istenen şey.
+
+Çalışanlar: birebir sohbet (tekil), gerçek zamanlı mesaj akışı, okunmamış
+sayacı, okundu durumu, sohbet listesi ve sohbet içi arama, düzenleme
+(15 dk pencere), yumuşak silme, sessize alma, yazıyor göstergesi
+(realtime broadcast — veritabanına yazmıyor), sohbet içinden engelleme
+ve raporlama, dakikada 20 mesaj sınırı.
+
+**Okundu durumu ayrı bir tablo değil**, karşı tarafın okuma imleci:
+mesajım onun `last_read_at` damgasından eskiyse okunmuş demektir. Mesaj
+başına "okundu" satırı tutmak, her mesaj için katılımcı sayısı kadar
+satır ve her açılışta bir yazma demekti. "Teslim edildi" diye ayrı bir
+kademe YOK — mesaj veritabanına yazıldıysa teslim edilmiştir; arada
+kaybolabileceği bir kuyruk yok ve üç kademeli bir gösterge, hep birlikte
+gerçekleşen iki durumu ayrıymış gibi gösterirdi.
+
+**Raporlama moderatöre yazışma açmıyor** (`0047`). İlk akla gelen çözüm
+`messages` üstüne "moderatör her şeyi görür" politikası eklemekti;
+eklenmedi. Tek bir cümle şikâyet edildiğinde aylarca süren özel bir
+konuşmanın tamamını moderasyona açmak orantısız bir yetki olurdu. Bunun
+yerine rapor eden kişi şikâyet ettiği metni rapor notunda taşıyor:
+moderatör tam olarak şikâyet edilen cümleyi görüyor, bir fazlasını
+değil.
+
+**Bilinçli eksikler:** medya/ek desteği (ayrı kova + kota işi),
+grup sohbeti (şema `kind = 'group'` taşıyor ama arayüzü yok — §8.2 zaten
+"çalışmayan grup mesajlaşma düğmesi gösterme" diyor), çevrimiçi/son
+görülme. Sonuncusu bir ölçüm sorunu: realtime "presence"
+yalnızca aynı sayfayı açık tutanı görür, bunu "çevrimiçi" diye yazmak
+uygulamayı kullanan ama bu sohbeti açmamış birini çevrimdışı göstermek
+olurdu.
+
+### 5.4 Kalanlar — **NOT_STARTED**
+
+| Madde | Sebep |
+|---|---|
+| `collections` (favori/koleksiyon) | §7'nin konusu; explorer'ın "favoriler" facet'i buna bağlı |
+| `clubs` (kulüp/topluluk) | §8.11 kurumsal profil — kendi turu |
+| Aktivite akışı ("takip ettiklerin ne yaptı") | `follows` hazır; akış sorgusu ve sayfası ayrı bir iş |
+| E-posta/push teslimatı | Sağlayıcı kararı **Sen** (TOPARLAMA §11) |
+
+### Ölçüm
+
+Şema davranışı yerel PostgreSQL 16 üzerinde **52 kontrolle** ölçüldü:
+bildirim üretimi ve tekilleştirme, tercih kontrolü, engelleme yayılımı,
+RLS yalıtımı (anon + üçüncü kullanıcı), kimlik taklidi denemeleri,
+düzenleme penceresi, oran sınırı, sert silme reddi, `app` yardımcılarının
+yüzeyi. `check:rls` matrisine aynı kuralların 26'sı eklendi.
+
+**İki güvenlik açığı bu ölçümlerde bulundu ve kapatıldı**, ikisi de
+"yazdım demek kapattım demek değil" kategorisinden:
+
+· `0045` — `app.notify` ve dört kardeşi istemciye açık kalmıştı.
+  `notifications` tablosunda `insert` yetkisi vermemenin tek anlamı
+  "bildirim üretimi kapalı" idi; `app.notify` çağrılabilir olduğu sürece
+  o karar bir kapıyı kilitleyip yanındaki pencereyi açık bırakmaktı.
+  (PostgREST `app` şemasını açmadığı için sömürülebilir değildi.)
+· `0046` — `0044`ün `PUBLIC`ten revoke'u yetmiyordu: Supabase `public`
+  şeması için `anon`a AÇIK grant veren varsayılan ayrıcalık tanımlıyor.
+  Denetçi ısrar edince `proacl` okundu ve fark göründü.
+
+Arayüz tarafında 40 yeni birim testi (bildirim listesi, bildirim paneli
+ve mesajlaşma — üçü de oturum açık hâlleriyle) ve `relativeTime` için
+7 test. `test:all`
+tamamı geçiyor; JS bütçesi 190.8/200 kB (bildirim paneli üst çubukta
+olduğu için ana pakete giriyor — 0.5 kB).
+
+**Migration listesi:** `0041` sosyal graf · `0042` bildirimler ·
+`0043` mesajlaşma · `0044`+`0046` RPC yüzeyi · `0045` `app` yardımcıları ·
+`0047` mesaj raporlama. Yedisi de uzak projeye uygulandı.
 
 ---
 
@@ -431,12 +558,23 @@ Faz 4'ün geçişi BİTTİ (10/10). Faz 4'te kalanlar tablo ya da ürün
 kararı bekliyor (kaydedilmiş görünümler, CSV, tablo görünümü, mobil
 filtre drawer'ı, sunucu tarafı sayfalama).
 
-Sıradaki iş **Faz 5 — bildirim, mesajlaşma, sosyal aktivite** (belge
-satır 549–632). Bu faz YEDİ yeni tablo gerektiriyor: `notifications`,
-`conversations`, `messages`, `follows`, `user_blocks`, `collections`,
-`clubs` (bkz. `DATABASE_AND_RLS.md` §Şema boşluğu). Her biri RLS'iyle
-birlikte versiyonlu bir migration dosyasında oluşturulmalı; migration
-numaraları `0041`den devam ediyor.
+**Faz 5'in çekirdeği kapandı** (bkz. Faz 5 bölümü): altı yeni tablo
+(`follows`, `user_blocks`, `notifications`, `conversations`,
+`conversation_participants`, `messages`), yedi migration (`0041`–`0047`),
+üç yeni ekran. Migration numaraları `0048`den devam ediyor.
+
+Faz 5'te kalan iki tablo `collections` ve `clubs`; ikisi de §8.13'ün
+değil kendi bölümlerinin konusu ve kendi turlarını hak ediyor.
+
+**Sıradaki iş için üç aday:**
+  · **Faz 6 — etkinlik takip ve hatırlatma** (satır 633–682). `reminders`
+    tablosu gerekiyor ve bildirim altyapısı artık hazır: hatırlatma
+    tetikleyicisi `app.notify(…, 'event_reminder', …)` çağırmakla
+    yetinecek.
+  · **`collections`** — explorer'ın "favoriler" facet'ini açar ve
+    fotoğraf detayındaki "kaydet" düğmesini gerçek yapar.
+  · **Aktivite akışı** — `follows` hazır; "takip ettiklerin ne yaptı"
+    akışı §8'in kalan parçası.
 
 **Faz 3 için hazır bilgi:**
 - `check:viewports` artık `test:all` içinde ve geçiyor; ana sayfayı

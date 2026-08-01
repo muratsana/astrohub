@@ -4,7 +4,7 @@ import { Container } from '@/components/ui/Container';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Panel, SpecList, SpecRow } from '@/components/ui/Panel';
 import { Badge } from '@/components/ui/Badge';
-import { Button, ButtonLink } from '@/components/ui/Button';
+import { ButtonLink } from '@/components/ui/Button';
 import { Readout } from '@/components/ui/Readout';
 import { ListingPhotos } from './ListingPhotos';
 import { NotFoundPage } from '@/components/NotFoundPage';
@@ -16,6 +16,7 @@ import {
   equipmentPath,
 } from '@/features/equipment/data';
 import { ReportButton } from '@/features/admin/ReportButton';
+import { MessageButton } from '@/features/social/MessageButton';
 import { getListingBySlug, relatedListings, priceRange } from './data';
 
 /**
@@ -202,19 +203,26 @@ export function ListingDetailPage() {
                   : 'Satıcı fiyatın sabit olduğunu belirtmiş.'}
               </p>
 
+              {/*
+                DÜĞME ARTIK ÇALIŞIYOR (Faz 5). Buraya kadar `disabled`
+                duruyordu ve yanındaki metin "Faz 2'de açılacak" diyordu:
+                alıcının satıcıya ulaşmasının HİÇBİR yolu yoktu ve
+                kullanıcılar iletişimi yorum alanına taşıyordu — tam olarak
+                engellemeye çalıştığımız şey.
+
+                Satıcı kimliği yalnızca veritabanı kaydında var; tohum
+                ilanlarda yok. `MessageButton` o durumda kendini gizliyor,
+                yerine aşağıdaki açıklama kalıyor.
+              */}
               <div className="mt-3 space-y-2">
-                <Button
-                  className="w-full"
-                  disabled
-                  title="Platform içi mesajlaşma Faz 2'de açılacak"
-                >
-                  Satıcıya Mesaj Gönder
-                </Button>
+                <MessageButton
+                  targetUserId={listing.sellerId}
+                  label="Satıcıya Mesaj Gönder"
+                />
                 <p className="text-meta leading-snug text-faint">
-                  Platform içi mesajlaşma Faz 2'de açılacak. İletişimin
-                  platform içinde kalması, anlaşmazlıkta kaydın moderasyona
-                  açık olmasını sağlar — bu yüzden ilanlarda telefon ve
-                  e-posta yayımlanmaz.
+                  İletişimin platform içinde kalması, anlaşmazlıkta kaydın
+                  moderasyona açık olmasını sağlar — bu yüzden ilanlarda
+                  telefon ve e-posta yayımlanmaz.
                 </p>
               </div>
             </Panel>

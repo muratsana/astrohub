@@ -17,6 +17,7 @@ import {
   type ProfileEdit,
 } from '@/services/content/profile';
 import { Badge } from '@/components/ui/Badge';
+import { BlockList } from '@/features/social/BlockList';
 
 /**
  * HESABIM — profil yönetimi (denetim maddesi L2).
@@ -345,6 +346,14 @@ export function AccountPage() {
                 </p>
               )}
             </Panel>
+
+            {/*
+              ENGELLENENLER HESAP AYARLARINDA. Engellemek profil ve sohbet
+              içinden tek tıkla yapılıyor; geri almanın yolu yalnızca o
+              kişinin profilini yeniden bulmaktan geçseydi, adını
+              hatırlamayan kullanıcı için karar kalıcı olurdu.
+            */}
+            <BlockList />
 
             <Panel title="Henüz yapılamayanlar">
               {/*

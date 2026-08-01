@@ -203,8 +203,12 @@ geçmez**. Önerilen sıra (QA MUST setinden, mevcut koda en çok yaslananlar
    alanlar; form "temel/çekim/kalibrasyon/işleme" gruplarında.
 5. **Saha modu derinleştirme** (MUST-07) — `field` teması mevcut; offline
    gece planı + büyük kontroller + parlak içerik bastırma.
-6. **Bildirim/alarm merkezi** (MUST-10) — `notification_preferences` ve
-   `push_subscriptions` tabloları hazır; e-posta sağlayıcısı kararı **Sen**.
+6. **Bildirim/alarm merkezi** (MUST-10) — ~~`notification_preferences` ve
+   `push_subscriptions` tabloları hazır~~ **Site içi kısmı Faz 5'te
+   yapıldı** (`0042`): `notifications` tablosu, altı üretim tetikleyicisi,
+   kategori tercihleri ve `/bildirimler` merkezi. Kalan tek parça
+   TESLİMAT: e-posta sağlayıcısı kararı **Sen**. `push_subscriptions`
+   tablosu hâlâ boş — teslimat kanalı seçilene kadar öyle kalıyor.
 7. **Moderasyon/güven** (MUST-09) — tek kuyruk mevcut; rapor nedenleri,
    telif başvurusu, itiraz akışı eklenir.
 8. Plate solving + FITS analizi (MUST-05/06) ve MUST-08 veri tazelik

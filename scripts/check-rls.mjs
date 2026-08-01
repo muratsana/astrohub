@@ -712,8 +712,389 @@ await expectDenied(
   );
 }
 
+/*
+ * ══════════════════════════════════════════════════════════════════════
+ * FAZ 5 — BİLDİRİM, MESAJ, TAKİP, ENGELLEME (0041–0044)
+ *
+ * Bu üç tablonun güvenliği tamamen RLS'e ve `security definer`
+ * yardımcılara bağlı. Üçünün de ortak bir yanı var: SAHİBİNDEN BAŞKASINA
+ * HİÇBİR ŞEY GÖSTERMEMEK. Bir bildirimi, bir yazışmayı ya da bir engel
+ * listesini yanlışlıkla açan bir politika, sızdırdığı şey kişisel olduğu
+ * için diğer tablolardan daha pahalıya patlar.
+ * ══════════════════════════════════════════════════════════════════════
+ */
+
+/*
+ * 1. BİLDİRİM İSTEMCİDEN ÜRETİLEMEZ.
+ *
+ * `insert` yetkisi HİÇBİR role verilmedi (0042); üretimin tek yolu
+ * `security definer` tetikleyiciler. Bu kural gevşerse bir kullanıcı
+ * başkasının adına "X seni takip etti" bildirimi uydurabilir — kimlik
+ * taklidinin en ucuz biçimi.
+ */
+await expectDenied(
+  'kullanıcı bildirim uyduramıyor',
+  'authenticated',
+  BOB,
+  `insert into public.notifications (user_id, kind, title)
+   values ('${ALICE}', 'announcement', 'Sahte duyuru')`
+);
+
+await expectDenied(
+  'anon bildirim uyduramıyor',
+  'anon',
+  null,
+  `insert into public.notifications (user_id, kind, title)
+   values ('${ALICE}', 'announcement', 'Sahte duyuru')`
+);
+
+/* 2. BAŞKASININ BİLDİRİMİ OKUNAMAZ. */
+{
+  /* Bildirim tetikleyiciyle üretiliyor: Bob Alice'i takip edince Alice'e
+     bildirim gidiyor. Doğrudan insert edemiyoruz (yukarıdaki kural) —
+     yani bu kurulum aynı zamanda tetikleyicinin çalıştığının kanıtı. */
+  await sql(`
+    insert into public.follows (follower_id, followee_id)
+    values ('${BOB}', '${ALICE}') on conflict do nothing;
+  `);
+
+  const uretildi = await sql(
+    `select count(*) from public.notifications
+      where user_id = '${ALICE}' and kind = 'follow';`
+  );
+  const varMi = Number(uretildi.trim()) > 0;
+  record(
+    'takip bildirimi tetikleyiciyle üretiliyor',
+    varMi,
+    varMi ? '' : 'takip sonrası bildirim satırı oluşmadı'
+  );
+
+  await expectCount(
+    "Bob, Alice'in bildirimini GÖREMEZ",
+    'authenticated',
+    BOB,
+    `select count(*) from public.notifications where user_id = '${ALICE}';`,
+    0
+  );
+
+  await expectCount(
+    'anon hiçbir bildirimi göremez',
+    'anon',
+    null,
+    `select count(*) from public.notifications;`,
+    0
+  );
+
+  await expectCount(
+    'Alice kendi bildirimini görüyor',
+    'authenticated',
+    ALICE,
+    `select count(*) from public.notifications where kind = 'follow';`,
+    1
+  );
+
+  /*
+   * 3. BİLDİRİM METNİ DEĞİŞTİRİLEMEZ.
+   *
+   * `update` yetkisi okundu/arşiv işaretlemek için GEREKLİ; koruma
+   * tetikleyicisi olmasaydı alıcı kendi bildiriminin başlığını
+   * değiştirip ekran görüntüsüyle "site bana şunu yazdı" diyebilirdi.
+   * Tetikleyici hata fırlatmıyor, eski değeri geri yazıyor — bu yüzden
+   * "reddedildi mi" değil, "değer değişti mi" ölçülüyor.
+   */
+  await asRole(
+    'authenticated',
+    ALICE,
+    `update public.notifications set title = 'Uydurma başlık'
+      where user_id = '${ALICE}';`
+  );
+  const baslik = await sql(
+    `select title from public.notifications where user_id = '${ALICE}' limit 1;`
+  );
+  const korundu = !baslik.includes('Uydurma');
+  record(
+    'bildirim metni alıcı tarafından değiştirilemiyor',
+    korundu,
+    korundu ? '' : `başlık değiştirilebildi: ${baslik.trim()}`
+  );
+}
+
+/* 4. YÖNETİCİ OLMAYAN DUYURU GÖNDEREMEZ. */
+{
+  const denendi = await asRole(
+    'authenticated',
+    BOB,
+    `select public.notify_user('${ALICE}', 'Sahte duyuru');`
+  );
+  const reddedildi =
+    !denendi.ok && /yalnızca yöneticiler|permission denied/i.test(denendi.error);
+  record(
+    'yönetici olmayan duyuru gönderemiyor',
+    reddedildi,
+    reddedildi ? '' : 'notify_user sıradan üyeye açık'
+  );
+}
+
+/*
+ * 5. ENGEL LİSTESİ TEK YÖNLÜ.
+ *
+ * Engellenen kişi engellendiğini TABLODAN öğrenememeli: sessiz bir
+ * uzaklaşmayı karşılaşmaya çevirmek, engellemenin var olma sebebini
+ * ortadan kaldırır.
+ */
+{
+  await sql(`
+    insert into public.user_blocks (blocker_id, blocked_id)
+    values ('${ALICE}', '${BOB}') on conflict do nothing;
+  `);
+
+  await expectCount(
+    'engellenen kişi engellendiğini GÖREMEZ',
+    'authenticated',
+    BOB,
+    `select count(*) from public.user_blocks;`,
+    0
+  );
+
+  await expectCount(
+    'engelleyen kendi listesini görüyor',
+    'authenticated',
+    ALICE,
+    `select count(*) from public.user_blocks;`,
+    1
+  );
+
+  /* Engelleme takibi iki yönde de koparıyor (0041 tetikleyicisi):
+     yarım bir engel, engellenen kişiyi akışta bırakırdı. */
+  const kalanTakip = await sql(
+    `select count(*) from public.follows
+      where (follower_id = '${ALICE}' and followee_id = '${BOB}')
+         or (follower_id = '${BOB}' and followee_id = '${ALICE}');`
+  );
+  const koptu = Number(kalanTakip.trim()) === 0;
+  record(
+    'engelleme takibi iki yönde koparıyor',
+    koptu,
+    koptu ? '' : `${kalanTakip.trim()} takip satırı ayakta kaldı`
+  );
+
+  /* Engelliyken takip yeniden kurulamıyor — RLS `with check`. */
+  await expectDenied(
+    'engelli kullanıcı takip edilemiyor',
+    'authenticated',
+    BOB,
+    `insert into public.follows (follower_id, followee_id)
+     values ('${BOB}', '${ALICE}')`
+  );
+
+  /* Engelliyken sohbet de açılamıyor; hangi tarafın engellediği
+     söylenmiyor. */
+  const sohbet = await asRole(
+    'authenticated',
+    BOB,
+    `select public.start_direct_conversation('${ALICE}');`
+  );
+  const engellendi =
+    !sohbet.ok && /mesajlaşamazsınız|permission denied/i.test(sohbet.error);
+  record(
+    'engelliyken sohbet açılamıyor',
+    engellendi,
+    engellendi ? '' : 'engel varken sohbet açıldı'
+  );
+
+  await sql(`delete from public.user_blocks where blocker_id = '${ALICE}';`);
+}
+
+/*
+ * 6. YAZIŞMA YALITIMI.
+ *
+ * Katılımcı olmayan biri ne sohbeti ne mesajı görebilmeli. Politika
+ * `app.in_conversation()` üstünden kuruluyor; doğrudan yazılsaydı
+ * politika kendi tablosunu sorgulayıp özyinelemeye girerdi.
+ */
+{
+  const acildi = await asRole(
+    'authenticated',
+    ALICE,
+    `select public.start_direct_conversation('${BOB}');`
+  );
+  const convId = acildi.ok ? acildi.value.split('\n').pop().trim() : null;
+  record(
+    'sohbet açılabiliyor',
+    Boolean(convId),
+    convId ? '' : acildi.error?.slice(0, 120)
+  );
+
+  if (convId) {
+    await sql(`
+      insert into public.messages (conversation_id, sender_id, body)
+      values ('${convId}', '${ALICE}', 'Gizli kalması gereken mesaj');
+    `);
+
+    await expectCount(
+      'anon yazışmaları göremiyor',
+      'anon',
+      null,
+      `select count(*) from public.messages;`,
+      0
+    );
+
+    /* Cem yok; üçüncü bir kullanıcı yerine ROLÜ olan ama katılımcı
+       OLMAYAN birini temsil etmek için yeni bir kimlik açılıyor. */
+    await sql(`
+      insert into auth.users (id, instance_id, aud, role, email, encrypted_password, created_at, updated_at)
+      values ('33333333-3333-3333-3333-333333333333','00000000-0000-0000-0000-000000000000',
+              'authenticated','authenticated','cem@rls.test','x',now(),now())
+      on conflict (id) do nothing;
+    `);
+
+    await expectCount(
+      'katılımcı olmayan yazışmayı GÖREMEZ',
+      'authenticated',
+      '33333333-3333-3333-3333-333333333333',
+      `select count(*) from public.messages;`,
+      0
+    );
+
+    await expectCount(
+      'katılımcı olmayan sohbeti GÖREMEZ',
+      'authenticated',
+      '33333333-3333-3333-3333-333333333333',
+      `select count(*) from public.conversations;`,
+      0
+    );
+
+    await expectCount(
+      'katılımcı kendi yazışmasını görüyor',
+      'authenticated',
+      BOB,
+      `select count(*) from public.messages where conversation_id = '${convId}';`,
+      1
+    );
+
+    /* Başkası adına mesaj yazmak — kimlik taklidi. */
+    await expectDenied(
+      'başkası adına mesaj yazılamıyor',
+      'authenticated',
+      BOB,
+      `insert into public.messages (conversation_id, sender_id, body)
+       values ('${convId}', '${ALICE}', 'Alice adına sahte mesaj')`
+    );
+
+    /* Katılımcı olmadığın sohbete yazmak. */
+    await expectDenied(
+      'katılımcı olmayan sohbete mesaj yazamıyor',
+      'authenticated',
+      '33333333-3333-3333-3333-333333333333',
+      `insert into public.messages (conversation_id, sender_id, body)
+       values ('${convId}', '33333333-3333-3333-3333-333333333333', 'araya girdim')`
+    );
+
+    /* Başkasının mesajını düzenlemek. */
+    await expectDenied(
+      'başkasının mesajı düzenlenemiyor',
+      'authenticated',
+      BOB,
+      `update public.messages set body = 'değiştirildi'
+        where conversation_id = '${convId}'`
+    );
+
+    /*
+     * SERT SİLME KAPALI. Yumuşak silme (`deleted_at`) karşı taraftaki
+     * konuşmanın bütünlüğünü koruyor; `delete` yetkisi hiç verilmedi.
+     */
+    await expectDenied(
+      'mesaj sert silinemiyor',
+      'authenticated',
+      ALICE,
+      `delete from public.messages where conversation_id = '${convId}'`
+    );
+
+    /* Sohbet satırı istemciden yazılamıyor: açmanın tek yolu RPC. */
+    await expectDenied(
+      'sohbet doğrudan eklenemiyor',
+      'authenticated',
+      BOB,
+      `insert into public.conversations (kind, direct_key)
+       values ('direct', 'uydurma-anahtar')`
+    );
+  }
+}
+
+/*
+ * 7. `app` YARDIMCILARININ YÜZEYİ (0045).
+ *
+ * 0030'un ilkesi: `app` şemasındaki bir fonksiyon BAŞKASININ kimliğini
+ * parametre alıyorsa istemciye kapalı olmalı. 0041–0043 aynı sınıftan
+ * beş fonksiyon daha açtı; en tehlikelisi `app.notify`, çünkü
+ * `notifications` tablosunda insert yetkisi olmamasının tek anlamı
+ * "bildirim üretimi kapalı" idi.
+ */
+for (const call of [
+  `app.notify('${ALICE}', null, 'announcement', 'Sahte duyuru')`,
+  `app.is_blocked('${ALICE}', '33333333-3333-3333-3333-333333333333')`,
+  `app.in_conversation('00000000-0000-0000-0000-000000000000', '${ALICE}')`,
+  `app.notification_allowed('${ALICE}', 'follow')`,
+]) {
+  const result = await asRole('authenticated', BOB, `select ${call};`);
+  const denied = !result.ok && /permission denied/i.test(result.error);
+  record(
+    `${call.split('(')[0]} istemciye kapalı`,
+    denied,
+    denied ? '' : 'çağrılabiliyor — başkasının kimliğiyle sorgulanabilir'
+  );
+}
+
+/*
+ * Politikaların çağırdığı iki yardımcı AÇIK KALMAK ZORUNDA: politika
+ * ifadeleri çağıran rolün yetkisiyle değerlendiriliyor. Kapalı olsalardı
+ * mesaj okuma ve takip yazma tümüyle kırılırdı — sessizce değil, gürültüyle,
+ * ama yine de kırılırdı.
+ */
+for (const call of [
+  `app.blocked_with('${ALICE}')`,
+  `app.in_conversation('00000000-0000-0000-0000-000000000000')`,
+]) {
+  const result = await asRole('authenticated', BOB, `select ${call};`);
+  record(
+    `${call.split('(')[0]} politikalar için açık`,
+    result.ok,
+    result.ok ? '' : result.error.slice(0, 120)
+  );
+}
+
+/*
+ * 8. YENİ RPC'LER `anon`A KAPALI (0044 + 0046).
+ *
+ * 0044 yalnızca `PUBLIC`ten geri almıştı ve YETMEDİ: Supabase `public`
+ * şeması için `alter default privileges … to anon, authenticated,
+ * service_role` tanımlıyor, yani her yeni fonksiyon `anon`a AÇIK doğuyor.
+ * Bu kontrol o farkı ölçüyor — iddiaya değil `proacl`e bakarak.
+ */
+for (const call of [
+  'public.my_conversations()',
+  `public.notify_user('${ALICE}', 'Deneme')`,
+  `public.start_direct_conversation('${ALICE}')`,
+]) {
+  const result = await asRole('anon', null, `select ${call};`);
+  const denied = !result.ok && /permission denied/i.test(result.error);
+  record(
+    `anon ${call.split('(')[0]} çağıramıyor`,
+    denied,
+    denied ? '' : 'anon rolüne EXECUTE yetkisi hâlâ açık'
+  );
+}
+
 /* ── Temizlik ─────────────────────────────────────────────────────── */
 await sql(`
+  delete from public.notifications
+   where user_id in ('${ALICE}','${BOB}','33333333-3333-3333-3333-333333333333');
+  delete from public.conversations
+   where created_by in ('${ALICE}','${BOB}');
+  delete from public.follows
+   where follower_id in ('${ALICE}','${BOB}') or followee_id in ('${ALICE}','${BOB}');
+  delete from public.user_blocks
+   where blocker_id in ('${ALICE}','${BOB}') or blocked_id in ('${ALICE}','${BOB}');
   delete from public.photo_ratings
    where user_id in ('${ALICE}','${BOB}');
   delete from public.photo_comments where user_id in ('${ALICE}','${BOB}');

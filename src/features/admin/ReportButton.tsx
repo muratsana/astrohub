@@ -25,18 +25,33 @@ export function ReportButton({
   targetType,
   targetId,
   targetPath,
+  prefillNote,
+  compact = false,
   className,
 }: {
   targetType: ModerationTarget;
   targetId: string;
   /** Moderatörün içeriğe gitmesi için hazır yol. */
   targetPath: string;
+  /**
+   * Not alanının başlangıç metni.
+   *
+   * ÖZEL MESAJ RAPORLAMASI İÇİN VAR ve tek kullanım yeri orası. Moderatör
+   * `messages` tablosunu okuyamıyor (0047: iki kişinin bütün yazışma
+   * geçmişini tek bir cümle için açmak orantısız olurdu), bu yüzden
+   * şikâyet edilen metni RAPORLAYAN taşıyor. Kullanıcı gönderilecek
+   * metni ekranda görüyor ve silebiliyor — arkasından bir şey
+   * taşınmıyor.
+   */
+  prefillNote?: string;
+  /** Satır içi kullanım: düğme metin gibi görünür, kutuya sığar. */
+  compact?: boolean;
   className?: string;
 }) {
   const { user, configured } = useAuth();
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState<ModerationReason>('spam');
-  const [note, setNote] = useState('');
+  const [note, setNote] = useState(prefillNote ?? '');
   const [state, setState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
   const [error, setError] = useState<string | null>(null);
 
@@ -79,6 +94,20 @@ export function ReportButton({
   }
 
   if (!open) {
+    /* Satır içi biçim: mesaj balonunun altındaki damga şeridine sığması
+       gerekiyor ve orada bir düğme kutusu görsel olarak fazla ağır. */
+    if (compact) {
+      return (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className={cn('transition-colors hover:text-danger', className)}
+        >
+          Bildir
+        </button>
+      );
+    }
+
     return (
       <Button
         size="sm"
@@ -95,6 +124,9 @@ export function ReportButton({
     <div
       className={cn(
         'rounded-card border border-border bg-surface-1 p-3',
+        /* Satır içi tetikleyiciden açıldığında form, dar bir damga
+           şeridinin içinde değil onun ÜSTÜNDE durmalı. */
+        compact && 'absolute right-0 z-[var(--z-popover)] mt-1 w-72 text-left shadow-overlay',
         className
       )}
     >

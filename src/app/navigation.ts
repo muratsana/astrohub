@@ -300,6 +300,18 @@ export const siteMap: NavGroup[] = [
     items: [
       { label: 'Üye Paneli', to: '/panel', description: 'Fotoğraflar, kota, üyelik' },
       {
+        label: 'Bildirimler',
+        to: '/bildirimler',
+        description: 'Takip, yorum, etkinlik ve sistem bildirimleri',
+        keywords: ['bildirim', 'uyarı', 'zil', 'okunmamış'],
+      },
+      {
+        label: 'Mesajlar',
+        to: '/mesajlar',
+        description: 'Üyelerle birebir yazışma',
+        keywords: ['mesaj', 'sohbet', 'yazış', 'dm', 'satıcı'],
+      },
+      {
         label: 'Yönetim Paneli',
         to: '/admin',
         description: 'Moderasyon kuyruğu (yetki gerektirir)',

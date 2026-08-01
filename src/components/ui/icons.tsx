@@ -393,3 +393,21 @@ export function RouteIcon(props: IconProps) {
     </svg>
   );
 }
+
+/*
+ * Bildirim zili (Faz 5). Üst çubukta rozetle birlikte duruyor, bu yüzden
+ * gövdesi kapalı: 14px'te açık uçlu bir çizim rozetin yanında dağılıyor.
+ *
+ * Mesaj ve takip için ikon EKLENMEDİ — ikisinin de ikon gerektiren bir
+ * yeri yok (mesajlar modül haritasında metin girişi, takip düğmesi
+ * etiketli). Kullanılmayan ikon, dosyayı okuyan kişiye var olmayan bir
+ * yüzey vaat eder.
+ */
+export function BellIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M18 15.5V11a6 6 0 0 0-12 0v4.5L4.5 18h15L18 15.5z" />
+      <path d="M10 18a2 2 0 0 0 4 0" />
+    </svg>
+  );
+}
