@@ -356,7 +356,8 @@ düşer, listede olmayan yeni sayfa kendi filtre durumunu kurarsa düşer.
 | Sayfa | Durum |
 |---|---|
 | Galeri | DONE — tarayıcıda doğrulandı; ASCII katlama artık çalışıyor ("nevsehir" → Nevşehir) |
-| Pazaryeri, Ekipman, Hedefler, Topluluklar, Saha, Etkinlikler, Forum, Haberler, Yazılar | NOT_STARTED |
+| Pazaryeri, Ekipman, Topluluklar, Saha, Etkinlikler, Forum, Haberler, Yazılar | NOT_STARTED | Mekanik geçiş; desen `gallerySpec.ts`te |
+| **Hedefler** | NOT_STARTED — **dikkat** | `searchTargets` ALAKA SIRALAMASI yapıyor (tam eşleşme > baştan > içinde) ve genel motor alakayı modellemiyor. Naif taşıma o sıralamayı kaybettirir. Boşluk duyarsızlığı ortak motora eklendi (m 31 ≡ m31), kalan tek fark alaka. Taşımadan önce motora alaka sıralaması eklenmeli |
 
 ### Kapsam dışı kalanlar
 
