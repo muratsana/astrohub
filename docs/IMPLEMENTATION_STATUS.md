@@ -30,7 +30,7 @@ tabloda `DONE` ile birleştirilmez:
 | 6 | Etkinlik takip ve hatırlatma | 633–682 | PARTIAL³ |
 | 7 | Çalışan AstroHub Radyo | 683–832 | PARTIAL⁴ |
 | 8 | AstroHub TV ve YouTube'a hazır altyapı | 833–922 | PARTIAL⁵ |
-| 9 | Standart/Premium üyelik altyapısı | 923–1005 | NOT_STARTED |
+| 9 | Standart/Premium üyelik altyapısı | 923–1005 | PARTIAL⁶ |
 | 10 | Admin panelinden kodsuz site yönetimi | 1006–1164 | NOT_STARTED |
 | 11 | Zorunlu ürün modülleri | 1165–1349 | NOT_STARTED |
 | 12 | Organik kullanıcı kazanımı | 1350–1419 | NOT_STARTED |
@@ -40,6 +40,13 @@ tabloda `DONE` ile birleştirilmez:
 | 16 | Performans, SEO, analitik, gözlemlenebilirlik | 1607–1690 | NOT_STARTED |
 | 17 | Test stratejisi ve kabul kriterleri | 1691–… | NOT_STARTED |
 | 18 | (belgenin sonu) | …–1956 | NOT_STARTED |
+
+⁶ **Faz 9'un veri katmanı bitti, arayüzü sürüyor.** Kota ayarları,
+kademe fonksiyonları, yarış durumuna kapalı fotoğraf kotası, depolama
+sayacı, test entitlement'ı ve ödeme anahtarı (KAPALI) kuruldu; yedi
+kural canlıda ölçüldü. **Ödeme sağlayıcısı kullanıcı kararıyla
+kurulmuyor** — §12.2 zaten bu fazda bağlanmamasını istiyor. Kalan iş:
+premium sayfası, kota göstergesi ve panel üyelik yüzeyi.
 
 ⁵ **Faz 8'de kodla kapatılabilecek iş kalmadı.** Şema, YouTube OAuth
 adaptörü, kota izleme, video arşivi/seri sayfaları, yayın takibi ve
@@ -84,6 +91,23 @@ Ana görev belgesi bir şey söylüyor, işletme başka bir şey istiyor.
 Bunlar hata değil, **kullanıcının verdiği kararlar**; koda geçmeden
 önce buraya yazılıyorlar ki sonraki tur "belge böyle diyor" deyip geri
 almasın.
+
+### Ödeme sağlayıcısı KURULMAYACAK (kullanıcı söyleyene kadar)
+
+Kullanıcı talimatı: "ödeme sağlayıcısını ben kur diyene kadar şu an
+kurma". Faz 9 (üyelik altyapısı) bu sınırla yapılıyor.
+
+**Yapılan:** üyelik kademeleri, kota/hak tanımları, yükseltme-düşürme
+kayıtları, yönetici tarafı ve kullanıcıya planını gösteren yüzey.
+
+**Yapılmayan:** Stripe/iyzico/PayTR gibi bir sağlayıcı entegrasyonu,
+ödeme SDK'sı, checkout akışı, webhook alıcısı.
+
+Sınır bilinçli bir yerde: ödeme, üyeliğin SEBEBİ değil TETİKLEYİCİSİ.
+Üyelik kademesi veritabanında duruyor ve onu değiştiren şey bugün
+yönetici, yarın bir ödeme webhook'u olacak. Sağlayıcı seçilince
+yazılacak tek şey o webhook — kademe, kota ve yetki mantığı yerinde
+duruyor ve değişmiyor.
 
 ### Her faz bitince canlıya alınacak
 
