@@ -755,9 +755,13 @@ türü), `0053` (podcast); üçü de uzak projeye uygulandı. Sunucu tarafı:
 | Program takvimi arayüzü (haftalık ızgara, şu an / sonraki) | DONE | `RadioSchedule` |
 | Servis katmanı (istasyon, canlılık, program, takip) | DONE | `radioStation.ts` |
 | Panel **Radyo** sekmesi (istasyon durumu, programlar, canlı duyurusu) | DONE | `RadioControl` |
+| Program ve yayıncı detay sayfaları | DONE | `ProgramPage`, `HostPage` |
+| Podcast arşivi, seri ve bölüm sayfaları | DONE | `PodcastPage`, `EpisodePage` |
+| Dinleme ilerlemesi ve oynatma sayacı | DONE | `useEpisodeProgress`, `countPlay` |
+| Program takip düğmesi + bildirim tercihi | DONE | `ProgramPage` |
 | **Canlı yayın aktivasyonu** | **IMPLEMENTED_BLOCKED_EXTERNAL** | VPS yok |
-| Program / yayıncı / podcast / bölüm detay SAYFALARI | NOT_STARTED | sıradaki iş |
-| Media Session, yeniden bağlanma, kalite seçimi | NOT_STARTED | canlı yayın gerektiriyor |
+| Media Session, yeniden bağlanma, kalite seçimi | **BLOCKED_EXTERNAL** | canlı yayın olmadan doğrulanamaz |
+| RSS feed üretimi | NOT_STARTED | alanlar hazır (`0053`), üretici yok |
 
 ### "Canlı" beş yerde birden korunuyor
 
@@ -886,17 +890,20 @@ migration (`0051`–`0053`), on bir yeni tablo, AzuraCast adaptörü, sağlık
 yoklaması, dağıtım paketi (`deploy/radyo/`) ve program takvimi hesabı.
 Migration numaraları `0054`ten devam ediyor.
 
-**Faz 7'nin arayüzü başladı**: servis katmanı, program takvimi ve panel
-Radyo sekmesi bitti. **Sıradaki iş** sırayla:
-  1. Program / yayıncı / podcast / bölüm detay sayfaları + rotalar +
-     `vercel.json` rewrite'ları + prerender girdileri.
-  2. Program takip düğmesi — kanca hazır (`useProgramFollow`), düğmesi
-     detay sayfasını bekliyor.
-  3. Podcast arşivi ve bölüm oynatıcısı (`episode_progress` şeması
-     hazır, `count_episode_play` RPC'si hazır).
-  4. Media Session metadata, bağlantı kopmasında yeniden bağlanma,
-     kalite seçimi — üçü de **canlı yayın gerektiriyor**, bugün
-     doğrulanamaz.
+**Faz 7'nin arayüzü de kapandı**: servis katmanı, program takvimi,
+program/yayıncı/podcast/bölüm sayfaları, dinleme ilerlemesi ve panel
+Radyo sekmesi. Beş yeni rota, 86 rewrite.
+
+**Faz 7'de kodla kapatılabilecek iş kalmadı.** Kalan üç madde:
+  · **Canlı yayın aktivasyonu** — VPS gerekiyor, on iki adımlık kurulum
+    listesi `deploy/radyo/README.md`de.
+  · **Media Session, yeniden bağlanma, kalite seçimi** — üçü de çalışan
+    bir yayın akışı olmadan doğrulanamaz. Yazılabilirdi ama test
+    edilemeyen bir kod, çalıştığı varsayılan bir koddur.
+  · **RSS feed** — alanlar `0053`te hazır (`author`, `owner_email`,
+    `explicit`, `language`); üreticisi bir sonraki turun işi.
+
+**Sıradaki faz: Faz 8 — AstroHub TV** (satır 833–922).
 
 Hazır olan parçalar: `RadioVault` (admin mp3 kasası), `BroadcastControl`
 (yayın programı), üst çubuktaki play/pause ve rota değişiminde ayakta
