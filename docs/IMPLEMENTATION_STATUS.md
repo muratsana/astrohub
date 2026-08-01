@@ -408,10 +408,11 @@ Motora geçiş sırasında eklenen iki yetenek:
 | Onay/yayın durumu, premium görünürlük | NOT_STARTED | Faz 9/10 |
 | Kaydedilmiş görünümler, kullanıcı varsayılanı, admin paylaşılan görünümü | NOT_STARTED | Tablo gerekiyor — Faz 10 |
 | CSV dışa aktarma (yalnız admin) | NOT_STARTED | |
+| Sütun SIRASI (sürükle-bırak) | NOT_STARTED | Göster/gizle geldi; sıra değiştirme ayrı bir etkileşim (sürükleme + klavye alternatifi) ve tek başına bir tur |
 | Mobil filtre drawer'ı | DONE | `FilterBar`ın kendi içinde: ayrı bir bileşen "tutarsız filtre bileşeni üretme" yasağını çiğnerdi. Çocuklar TEK KEZ çiziliyor (çift `id` olmasın); prerender'da masaüstü varsayılıyor. Odak tuzağı, Escape, gövde kilidi, aktif filtre rozeti. 11 birim + 1 E2E (390px ve 1280px'te gerçek tarayıcıda) |
-| Tablo görünümü (sütun göster/gizle, sıra, yoğunluk, sabit başlık) | NOT_STARTED | `DataTable` var ama bu yeteneklere sahip değil |
+| Tablo görünümü (sütun göster/gizle, yoğunluk, sabit başlık, başlıktan sıralama) | DONE | `DataTable` vardı ama HİÇBİR SAYFA KULLANMIYORDU (tek eşleşme kendi dosyası). Sıralama motorun `sort` değerine yazılıyor — tablo kendi durumunu tutsaydı ızgaraya geçen kullanıcı sıralamasını kaybederdi. Sabit başlık + sabit ilk sütun, yoğunluk, sütun göster/gizle (`localStorage`), mobilde etiket-değer kartı. Pazaryerinde üçüncü görünüm olarak bağlı. 12 birim + 1 E2E |
 | Harita / takvim / zaman çizelgesi görünümleri | PARTIAL | `EventMapPage` ve `EventCalendar` ayrı sayfa olarak var; explorer'ın görünüm seçeneği değiller |
-| Görünüm tercihinin hesapta saklanması | PARTIAL | `localStorage`da saklanıyor, hesapta değil |
+| Görünüm tercihinin hesapta saklanması | PARTIAL | `localStorage`da saklanıyor (görünüm, yoğunluk, gizli sütunlar), hesapta değil — kullanıcı tercihleri tablosu Faz 10 |
 
 ---
 

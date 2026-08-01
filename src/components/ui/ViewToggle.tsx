@@ -1,5 +1,5 @@
-import { GridIcon, ListIcon } from './icons';
-import type { ViewMode } from './useViewMode';
+import { GridIcon, ListIcon, TableIcon } from './icons';
+import type { ListView, ViewMode } from './useViewMode';
 import { cn } from '@/lib/cn';
 
 /**
@@ -12,18 +12,29 @@ import { cn } from '@/lib/cn';
  * ızgara kalabilir; kullanıcı her sayfada tercihini yeniden yapmaz.
  */
 
-const options: { mode: ViewMode; label: string; Icon: typeof GridIcon }[] = [
-  { mode: 'grid', label: 'Izgara görünümü', Icon: GridIcon },
-  { mode: 'list', label: 'Liste görünümü', Icon: ListIcon },
-];
+const OPTIONS: Record<ListView, { label: string; Icon: typeof GridIcon }> = {
+  grid: { label: 'Izgara görünümü', Icon: GridIcon },
+  list: { label: 'Liste görünümü', Icon: ListIcon },
+  table: { label: 'Tablo görünümü', Icon: TableIcon },
+};
 
-export function ViewToggle({
+const DEFAULT_MODES: readonly ViewMode[] = ['grid', 'list'];
+
+/**
+ * Bileşen GÖRÜNÜM KÜMESİNDE genel: tablo yalnızca onu gerçekten
+ * destekleyen modülde çıkıyor. Üçüncü düğmeyi her sayfaya koyup
+ * bazılarında işlevsiz bırakmak, panelde kapattığımız "ölü hedef"
+ * hatasının aynısı olurdu.
+ */
+export function ViewToggle<M extends string = ViewMode>({
   mode,
   onChange,
+  modes = DEFAULT_MODES as readonly M[],
   className,
 }: {
-  mode: ViewMode;
-  onChange: (mode: ViewMode) => void;
+  mode: M;
+  onChange: (mode: M) => void;
+  modes?: readonly M[];
   className?: string;
 }) {
   return (
@@ -35,7 +46,9 @@ export function ViewToggle({
         className
       )}
     >
-      {options.map(({ mode: value, label, Icon }) => (
+      {modes.map((value) => {
+        const { label, Icon } = OPTIONS[value as ListView];
+        return (
         <button
           key={value}
           type="button"
@@ -55,7 +68,8 @@ export function ViewToggle({
         >
           <Icon className="h-4 w-4" />
         </button>
-      ))}
+        );
+      })}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { cn } from '@/lib/cn';
 import { CloseIcon } from './icons';
+import { useIsNarrow } from './useIsNarrow';
 
 /**
  * FİLTRE ŞERİDİ — hücrelere bölünmüş kontrol paneli.
@@ -28,35 +29,9 @@ import { CloseIcon } from './icons';
  * Burada çocuklar TEK KEZ çiziliyor; değişen yalnızca içinde
  * durdukları kap. On sayfa da hiçbir şey değiştirmeden çekmeceyi aldı.
  *
- * ══════════════════════════════════════════════════════════════════════
- * NEDEN CSS DEĞİL JS İLE AYIRIYORUZ
- *
- * `hidden sm:grid` + ikinci bir kopya en ucuz yol gibi görünüyor ama
- * kontroller `id` taşıyor (`FilterCell` etiketi `htmlFor` ile
- * bağlıyor). İki kopya, DOM'da çift `id` demek: ekran okuyucu etiketi
- * yanlış alana bağlar ve `document.getElementById` hangisini bulacağı
- * belirsizleşir. Erişilebilirlik kapısı bunu yakalamazdı çünkü ikisi de
- * "adlandırılmış" görünür.
- *
- * PRERENDER'DA MASAÜSTÜ VARSAYILIYOR: `matchMedia` Node'da yok ve
- * statik HTML'de filtrelerin görünür olması doğru varsayılan — JS
- * çalışmadan da sayfa kullanılabilir kalıyor.
+ * Kırılma noktası `useIsNarrow`da — tablo görünümü de aynı noktada
+ * karta dönüşüyor ve iki kopya tutmak ikisinin ayrışması demekti.
  */
-function useIsNarrow(): boolean {
-  const [narrow, setNarrow] = useState(false);
-
-  useEffect(() => {
-    if (typeof window.matchMedia !== 'function') return;
-    const mq = window.matchMedia('(max-width: 639px)');
-    const apply = () => setNarrow(mq.matches);
-    apply();
-    mq.addEventListener('change', apply);
-    return () => mq.removeEventListener('change', apply);
-  }, []);
-
-  return narrow;
-}
-
 export function FilterBar({
   children,
   columns = 4,

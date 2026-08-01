@@ -644,6 +644,53 @@ await scenario('"içeriğe atla" bağlantısı ilk odaklanabilir öğedir', asyn
  * ÜST çubukta görünür olacak.
  */
 /**
+ * TABLO GÖRÜNÜMÜ (§7.3).
+ *
+ * Ölçülen asıl şey SIRALAMANIN NEREDE TUTULDUĞU: başlığa tıklamak
+ * motorun sıralamasını değiştirmeli, yani URL'ye yazılmalı. Tablo kendi
+ * iç sıralamasını tutsaydı ızgaraya geçen kullanıcı sıralamasını
+ * kaybeder ve `?sirala=` ile başlıktaki ok farklı şeyler söylerdi.
+ */
+await scenario('tablo başlığı sıralamayı URL\'ye yazıyor', async () => {
+  await goto('/ilanlar');
+  await page.evaluate(() => {
+    document.querySelector('button[aria-label="Tablo görünümü"]').click();
+  });
+  await page.waitForTimeout(400);
+
+  assert(
+    await page.evaluate(() => !!document.querySelector('table')),
+    'tablo görünümü çizilmedi'
+  );
+
+  await page.evaluate(() => {
+    [...document.querySelectorAll('th button')]
+      .find((b) => b.textContent.includes('Fiyat'))
+      .click();
+  });
+  await page.waitForTimeout(400);
+
+  const durum = await page.evaluate(() => ({
+    hash: location.hash,
+    /* Yön duyurulmazsa başlık tıklayınca ne olacağını söylemiyor. */
+    sort: [...document.querySelectorAll('th')].map((t) =>
+      t.getAttribute('aria-sort')
+    ),
+    sabit: getComputedStyle(document.querySelector('thead th')).position,
+  }));
+
+  assert(
+    durum.hash.includes('sirala=ucuz'),
+    `sıralama URL'ye yazılmadı: ${durum.hash}`
+  );
+  assert(durum.sort.includes('ascending'), 'aria-sort duyurulmuyor');
+  assert(durum.sabit === 'sticky', 'başlık sabit değil');
+
+  /* Görünüm tercihi saklanıyor; sonraki senaryolar ızgara beklemesin. */
+  await page.evaluate(() => localStorage.removeItem('astrohub:view:ilanlar'));
+});
+
+/**
  * MOBİL FİLTRE ÇEKMECESİ (§7.1).
  *
  * Birim testte `matchMedia` taklit ediliyor; burada ölçülen GERÇEK

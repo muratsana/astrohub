@@ -7,7 +7,11 @@ import { CardGrid } from '@/components/ui/CardGrid';
 import { ButtonLink } from '@/components/ui/Button';
 import { ToolBar, ResultCount } from '@/components/ui/ToolBar';
 import { CatalogSourceNote } from '@/components/ui/CatalogSourceNote';
-import { useViewMode } from '@/components/ui/useViewMode';
+import {
+  useStoredChoice,
+  type ListView,
+} from '@/components/ui/useViewMode';
+import { DataTable, type Column } from '@/components/ui/DataTable';
 import {
   FilterBar,
   FilterCell,
@@ -60,7 +64,19 @@ const categories: (EquipmentCategory | 'hepsi')[] = [
  * sonucu veriyordu.
  */
 export function MarketplacePage() {
-  const [view, setView] = useViewMode('ilanlar');
+  /*
+   * PAZARYERİ TABLO GÖRÜNÜMÜNÜ DESTEKLİYOR (§7.3).
+   *
+   * Neden burası: ilanın karar verdiren alanları (fiyat, şehir, durum,
+   * tarih) sayısal ve karşılaştırmalı. Kart ızgarası bir ilana bakmak
+   * için, tablo ON İLANI KARŞILAŞTIRMAK için iyi — ikinci el alırken
+   * kullanıcının yaptığı da bu.
+   */
+  const [view, setView] = useStoredChoice<ListView>(
+    'ilanlar',
+    ['grid', 'list', 'table'],
+    'grid'
+  );
   const catalog = useListings();
 
   /*
@@ -166,13 +182,33 @@ export function MarketplacePage() {
               label: s.label,
             })),
           }}
-          view={{ mode: view, onChange: setView }}
+          view={{
+            mode: view,
+            onChange: setView,
+            modes: ['grid', 'list', 'table'],
+          }}
         />
 
         {result.length === 0 ? (
           <EmptyState
             message="Eşleşen ilan yok"
             hint="Filtreleri gevşetmeyi deneyin — ya da elinizdeki ekipman için ilan açın."
+          />
+        ) : view === 'table' ? (
+          /*
+             SIRALAMA TABLONUN İÇİNDE TUTULMUYOR: başlıklar motorun
+             `sort` değerini değiştiriyor, yani tablodan ızgaraya geçen
+             kullanıcı sıralamasını koruyor ve URL'deki `?sirala=` ile
+             başlıktaki ok her zaman aynı şeyi söylüyor.
+          */
+          <DataTable
+            caption="İlanlar"
+            preferenceKey="ilanlar"
+            rows={result}
+            rowKey={(l) => l.slug}
+            rowHref={(l) => `/ilan/${l.slug}`}
+            sort={{ value: ex.query.sort, onChange: ex.setSort }}
+            columns={listingColumns}
           />
         ) : (
           /* Yoğunluk `tight`: kart ölçüsü galeriyle aynı olsun.
@@ -195,6 +231,44 @@ export function MarketplacePage() {
     </>
   );
 }
+
+/**
+ * TABLO SÜTUNLARI — kararın hangi alanlarda verildiği.
+ *
+ * Sıralama değerleri `listingsSpec.sorts` ile AYNI adları taşıyor;
+ * başlık tıklaması açılır kutuyla aynı durumu kuruyor. Sütun kendi
+ * sıralamasını hesaplasaydı iki farklı "en ucuz" tanımı olurdu.
+ */
+const listingColumns: Column<Listing>[] = [
+  {
+    key: 'baslik',
+    header: 'İlan',
+    cell: (l) => l.title,
+    alwaysVisible: true,
+    sort: { asc: 'baslik' },
+  },
+  {
+    key: 'fiyat',
+    header: 'Fiyat',
+    numeric: true,
+    cell: (l) => `${l.price.toLocaleString('tr-TR')} ₺`,
+    sort: { asc: 'ucuz', desc: 'pahali' },
+  },
+  { key: 'durum', header: 'Durum', cell: (l) => l.condition },
+  { key: 'sehir', header: 'Şehir', cell: (l) => l.city },
+  {
+    key: 'satici',
+    header: 'Satıcı',
+    cell: (l) => `@${l.seller.username}`,
+    sort: { desc: 'satici' },
+  },
+  {
+    key: 'tarih',
+    header: 'Yayın',
+    cell: (l) => new Date(l.postedAt).toLocaleDateString('tr-TR'),
+    sort: { desc: 'yeni' },
+  },
+];
 
 function ListingCard({
   listing,

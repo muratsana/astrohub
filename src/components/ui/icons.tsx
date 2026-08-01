@@ -185,6 +185,18 @@ export function MenuIcon(props: IconProps) {
   );
 }
 
+/** Tablo görünümü — üç satırlı ızgara. */
+export function TableIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M3 5h18v14H3z" />
+      <path d="M3 10h18" />
+      <path d="M3 14.5h18" />
+      <path d="M9 5v14" />
+    </svg>
+  );
+}
+
 export function CloseIcon(props: IconProps) {
   return (
     <svg {...base(props)}>
