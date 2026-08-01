@@ -13,6 +13,7 @@ import {
   FilterToggle,
   filterControlClass,
 } from '@/components/ui/FilterBar';
+import { ActiveFilters } from '@/components/ui/ActiveFilters';
 import { PinIcon, LockIcon, ChatIcon } from '@/components/ui/icons';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
@@ -139,7 +140,7 @@ export function ForumPage() {
           })}
         </div>
 
-        <FilterBar columns={3}>
+        <FilterBar activeCount={ex.chips.length} columns={3}>
           <FilterCell label="Ara" htmlFor="forum-search">
             <Input
               id="forum-search"
@@ -172,6 +173,12 @@ export function ForumPage() {
             onChange={() => ex.toggleFacet('cozulmemis', 'evet')}
           />
         </FilterBar>
+
+        <ActiveFilters
+          chips={ex.chips}
+          onRemove={ex.removeChip}
+          onClearAll={ex.clearAll}
+        />
 
         <CatalogSourceNote selection={threadCatalog} />
 

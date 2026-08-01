@@ -20,6 +20,7 @@ import {
   FilterCell,
   filterControlClass,
 } from '@/components/ui/FilterBar';
+import { ActiveFilters } from '@/components/ui/ActiveFilters';
 import {
   equipmentCategoryLabels,
   equipmentCategoryOrder,
@@ -161,7 +162,7 @@ export function EquipmentPage() {
           })}
         </div>
 
-        <FilterBar columns={2}>
+        <FilterBar activeCount={ex.chips.length} columns={2}>
           <FilterCell label="Ara" htmlFor="eq-search">
             <Input
               id="eq-search"
@@ -173,6 +174,12 @@ export function EquipmentPage() {
             />
           </FilterCell>
         </FilterBar>
+
+        <ActiveFilters
+          chips={ex.chips}
+          onRemove={ex.removeChip}
+          onClearAll={ex.clearAll}
+        />
 
         <CatalogSourceNote selection={catalog} />
 

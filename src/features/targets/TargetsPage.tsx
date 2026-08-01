@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/Badge';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { FilterBar, FilterCell, filterControlClass } from '@/components/ui/FilterBar';
+import { ActiveFilters } from '@/components/ui/ActiveFilters';
 import { CardGrid } from '@/components/ui/CardGrid';
 import { ToolBar, ResultCount } from '@/components/ui/ToolBar';
 import { useViewMode } from '@/components/ui/useViewMode';
@@ -87,7 +88,7 @@ export function TargetsPage() {
           description={`Messier kataloğunun tamamı, popüler NGC/IC/Sharpless hedefleri ve güneş sistemi — ${targets.length} kayıt. Görünürlük penceresi, önerilen odak ve filtre önerisi ölçülen koordinat ve parlaklıktan hesaplanır.`}
         />
 
-        <FilterBar columns={4}>
+        <FilterBar activeCount={ex.chips.length} columns={4}>
           <FilterCell label="Ara" htmlFor="target-search" className="sm:col-span-2">
             <Input
               id="target-search"
@@ -130,6 +131,12 @@ export function TargetsPage() {
             </select>
           </FilterCell>
         </FilterBar>
+
+        <ActiveFilters
+          chips={ex.chips}
+          onRemove={ex.removeChip}
+          onClearAll={ex.clearAll}
+        />
 
         <ToolBar
           left={

@@ -358,7 +358,7 @@ hiçbirinde yok.
 | Arama terimini temizleme | DONE | |
 | Faceted filtreler + her facet için sayı | DONE | Sayım o facet'in kendi seçimi hariç — yoksa kullanıcı seçimini değiştiremez |
 | Çoklu seçim | DONE | Facetler arası VE, değerler arası VEYA |
-| Aktif filtre chip'leri | DONE | Arama terimi de chip |
+| Aktif filtre chip'leri | DONE | Motor üretiyordu, HİÇBİR SAYFA ÇİZMİYORDU — tek tüketici testlerdi. `ActiveFilters` yazıldı ve on sayfaya bağlandı; arama terimi de chip |
 | Tek tek / tümünü temizleme | DONE | "Tümünü temizle" sıralamayı KORUYOR |
 | Filtrelerin URL'ye yazılması | DONE | Varsayılanlar yazılmıyor, yabancı parametre korunuyor |
 | Geri/ileri tarayıcı davranışı | DONE | Durum URL'de olduğu için bedava |
@@ -379,8 +379,8 @@ kuran YENİ bir sayfa artık düşer.
 | Topluluklar | — |
 | Saha | HİÇ filtre yoktu; arama + Bortle facet'i + dört sıralama geldi |
 | Pazaryeri | Şehir filtresi geldi — ikinci elde elden teslim yaygın |
-| Haberler | Arama hiç yoktu; kategori artık paylaşılabiliyor |
-| Yazılar | Arama hiç yoktu; seviye + kategori paylaşılabiliyor |
+| Haberler | Kategori paylaşılabiliyor; **arama kutusu 1 Ağustos'ta geldi** — motor destekliyordu, sayfada arayüzü yoktu |
+| Yazılar | Seviye + kategori paylaşılabiliyor; **arama kutusu 1 Ağustos'ta geldi** — motor destekliyordu, sayfada arayüzü yoktu |
 | Ekipman | **Kısmi ve bilerek**: kategori rota yolunda (`/ekipman/montur`) ve o rotalar prerender ediliyor; sorgu parametresine taşımak verilmiş bağlantıları kırardı. Explorer kategorinin üstünde çalışıyor |
 | Etkinlikler | Belgenin istediği gelecek/geçmiş süzgeci geldi; kıyas anı değil GÜNÜ alıyor |
 | **Hedefler** | Alaka sıralaması motora eklendikten SONRA taşındı — naif taşıma "m31" aramasında tam eşleşmeyi ilk sıradan düşürürdü |
@@ -393,6 +393,11 @@ Motora geçiş sırasında eklenen iki yetenek:
 | Boşluk duyarsız arama | Katalog kodları hem "M 31" hem "M31" yazılıyor. Tek başına boşluksuz karşılaştırma yetmiyor — "orion bulutsu" kırılırdı; iki yol birlikte çalışıyor |
 | Alaka sıralaması (`relevance`) | Yalnızca arama varken devrede; eşit alakada kullanıcının seçtiği sıralama geçerli |
 
+> **1 Ağustos turu:** mobil çekmece kapandı, aktif filtre chip'leri
+> arayüze bağlandı, Haberler ve Yazılar'a arama kutusu geldi. Kalanlar
+> tablo görünümü yetenekleri, kaydedilmiş görünümler (tablo gerekiyor)
+> ve sunucu tarafı arama.
+
 ### Kapsam dışı kalanlar
 
 | Madde | Durum | Sebep |
@@ -403,7 +408,7 @@ Motora geçiş sırasında eklenen iki yetenek:
 | Onay/yayın durumu, premium görünürlük | NOT_STARTED | Faz 9/10 |
 | Kaydedilmiş görünümler, kullanıcı varsayılanı, admin paylaşılan görünümü | NOT_STARTED | Tablo gerekiyor — Faz 10 |
 | CSV dışa aktarma (yalnız admin) | NOT_STARTED | |
-| Mobil filtre drawer'ı | NOT_STARTED | |
+| Mobil filtre drawer'ı | DONE | `FilterBar`ın kendi içinde: ayrı bir bileşen "tutarsız filtre bileşeni üretme" yasağını çiğnerdi. Çocuklar TEK KEZ çiziliyor (çift `id` olmasın); prerender'da masaüstü varsayılıyor. Odak tuzağı, Escape, gövde kilidi, aktif filtre rozeti. 11 birim + 1 E2E (390px ve 1280px'te gerçek tarayıcıda) |
 | Tablo görünümü (sütun göster/gizle, sıra, yoğunluk, sabit başlık) | NOT_STARTED | `DataTable` var ama bu yeteneklere sahip değil |
 | Harita / takvim / zaman çizelgesi görünümleri | PARTIAL | `EventMapPage` ve `EventCalendar` ayrı sayfa olarak var; explorer'ın görünüm seçeneği değiller |
 | Görünüm tercihinin hesapta saklanması | PARTIAL | `localStorage`da saklanıyor, hesapta değil |

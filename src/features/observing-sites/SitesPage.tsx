@@ -20,6 +20,7 @@ import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
 import { Input, Select } from '@/components/ui/Input';
 import { FilterBar, FilterCell, filterControlClass } from '@/components/ui/FilterBar';
+import { ActiveFilters } from '@/components/ui/ActiveFilters';
 import { useExplorer } from '@/features/explorer/useExplorer';
 import { sitesSpec } from './sitesSpec';
 import { cn } from '@/lib/cn';
@@ -62,7 +63,7 @@ export function SitesPage() {
           description="Türkiye'nin karanlık gökyüzü noktaları — Bortle/SQM ölçümleri, erişim ve tesis bilgileriyle."
         />
 
-        <FilterBar columns={2}>
+        <FilterBar activeCount={ex.chips.length} columns={2}>
           <FilterCell label="Ara" htmlFor="site-search">
             <Input
               id="site-search"
@@ -97,6 +98,12 @@ export function SitesPage() {
             </Select>
           </FilterCell>
         </FilterBar>
+
+        <ActiveFilters
+          chips={ex.chips}
+          onRemove={ex.removeChip}
+          onClearAll={ex.clearAll}
+        />
 
         <CatalogSourceNote selection={catalog} />
 

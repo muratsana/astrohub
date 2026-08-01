@@ -14,6 +14,7 @@ import {
   FilterToggle,
   filterControlClass,
 } from '@/components/ui/FilterBar';
+import { ActiveFilters } from '@/components/ui/ActiveFilters';
 import {
   ContentCard,
   ContentCardBody,
@@ -119,7 +120,7 @@ export function MarketplacePage() {
           ))}
         </div>
 
-        <FilterBar>
+        <FilterBar activeCount={ex.chips.length}>
           <FilterCell label="Ara" htmlFor="listing-search" className="lg:col-span-2">
             <Input
               id="listing-search"
@@ -139,6 +140,12 @@ export function MarketplacePage() {
           {/* "Doğrulanmış satıcı" süzgeci kalktı: ilan yalnızca kayıtlı
               kullanıcıdan açılıyor, yani süzgeç herkesi geçiriyordu. */}
         </FilterBar>
+
+        <ActiveFilters
+          chips={ex.chips}
+          onRemove={ex.removeChip}
+          onClearAll={ex.clearAll}
+        />
 
         <CatalogSourceNote selection={catalog} />
 

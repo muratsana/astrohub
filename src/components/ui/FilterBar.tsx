@@ -1,5 +1,6 @@
-import type { ReactNode } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { cn } from '@/lib/cn';
+import { CloseIcon } from './icons';
 
 /**
  * FİLTRE ŞERİDİ — hücrelere bölünmüş kontrol paneli.
@@ -11,30 +12,209 @@ import { cn } from '@/lib/cn';
  * Galeri sayfasında yerinde yazılmıştı; etkinlikler, ilanlar, ekipman ve saha
  * sayfaları da aynı şeridi kullandığı için buraya çıkarıldı.
  */
+/**
+ * MOBİLDE ÇEKMECE — §7.1'in "mobil filtre drawer'ı" maddesi.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * NEDEN ŞERİDİN İÇİNDE, AYRI BİR BİLEŞENDE DEĞİL
+ *
+ * Belge aynı bölümde "her modül aynı arama/filtre motorunu kullanmalı;
+ * ayrı ve tutarsız filtre bileşenleri üretilmemelidir" diyor. Ayrı bir
+ * `MobileFilterDrawer` yazmak, on sayfanın her birinde İKİ filtre
+ * ağacı tutmak demekti — biri masaüstü, biri mobil. İkisinin zamanla
+ * ayrışması kaçınılmaz: yeni bir facet birine eklenir, diğerinde
+ * unutulur.
+ *
+ * Burada çocuklar TEK KEZ çiziliyor; değişen yalnızca içinde
+ * durdukları kap. On sayfa da hiçbir şey değiştirmeden çekmeceyi aldı.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * NEDEN CSS DEĞİL JS İLE AYIRIYORUZ
+ *
+ * `hidden sm:grid` + ikinci bir kopya en ucuz yol gibi görünüyor ama
+ * kontroller `id` taşıyor (`FilterCell` etiketi `htmlFor` ile
+ * bağlıyor). İki kopya, DOM'da çift `id` demek: ekran okuyucu etiketi
+ * yanlış alana bağlar ve `document.getElementById` hangisini bulacağı
+ * belirsizleşir. Erişilebilirlik kapısı bunu yakalamazdı çünkü ikisi de
+ * "adlandırılmış" görünür.
+ *
+ * PRERENDER'DA MASAÜSTÜ VARSAYILIYOR: `matchMedia` Node'da yok ve
+ * statik HTML'de filtrelerin görünür olması doğru varsayılan — JS
+ * çalışmadan da sayfa kullanılabilir kalıyor.
+ */
+function useIsNarrow(): boolean {
+  const [narrow, setNarrow] = useState(false);
+
+  useEffect(() => {
+    if (typeof window.matchMedia !== 'function') return;
+    const mq = window.matchMedia('(max-width: 639px)');
+    const apply = () => setNarrow(mq.matches);
+    apply();
+    mq.addEventListener('change', apply);
+    return () => mq.removeEventListener('change', apply);
+  }, []);
+
+  return narrow;
+}
+
 export function FilterBar({
   children,
   columns = 4,
   className,
+  /**
+   * Çekmece düğmesinde gösterilecek aktif filtre sayısı.
+   *
+   * Filtreler kapalıyken kaç tanesinin açık olduğunu SÖYLEMEK ZORUNDA:
+   * gizlenmiş bir filtre, olmayan bir filtreden ayırt edilemezse
+   * kullanıcı kısa listenin sebebini aramaya başlar.
+   */
+  activeCount = 0,
 }: {
   children: ReactNode;
   /** Geniş ekrandaki sütun sayısı. */
   columns?: 2 | 3 | 4;
   className?: string;
+  activeCount?: number;
 }) {
   const lg = { 2: 'lg:grid-cols-2', 3: 'lg:grid-cols-3', 4: 'lg:grid-cols-4' }[
     columns
   ];
+  const narrow = useIsNarrow();
+  const [open, setOpen] = useState(false);
+  const titleId = useId();
+  const panelRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
-  return (
+  /* Geniş ekrana dönüldüğünde çekmece açık kalmamalı: kullanıcı cihazı
+     yatay çevirdiğinde ekranın ortasında asılı bir panel bulurdu. */
+  useEffect(() => {
+    if (!narrow) setOpen(false);
+  }, [narrow]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    /* Arkadaki liste kaymasın — çekmece açıkken sayfanın kendisi
+       kaydırılırsa kullanıcı filtreyi kapatmadan içeriği kaybeder. */
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setOpen(false);
+        return;
+      }
+      /*
+       * ODAK TUZAĞI. `aria-modal` yalnızca ekran okuyucuya "arkası yok"
+       * der; klavye odağı hâlâ arkadaki bağlantılara geçer. Tuzak
+       * olmadan Tab'a basan kullanıcı görünmeyen bir listede gezinir.
+       */
+      if (e.key !== 'Tab' || !panelRef.current) return;
+      const focusable = panelRef.current.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      );
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.body.style.overflow = previous;
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [open]);
+
+  const grid = (
     <div
       className={cn(
-        'mb-4 grid gap-px border border-border bg-border sm:grid-cols-2',
+        'grid gap-px border border-border bg-border sm:grid-cols-2',
+        !narrow && 'mb-4',
         lg,
         className
       )}
     >
       {children}
     </div>
+  );
+
+  if (!narrow) return grid;
+
+  return (
+    <>
+      <button
+        ref={triggerRef}
+        type="button"
+        onClick={() => setOpen(true)}
+        aria-expanded={open}
+        className="mb-4 flex min-h-11 w-full items-center justify-between rounded-card border border-border-strong bg-surface-1 px-3.5 text-body-sm font-medium text-foreground"
+      >
+        Filtreler
+        {activeCount > 0 && (
+          <span className="num rounded-card bg-primary px-2 py-0.5 text-meta text-primary-foreground">
+            {activeCount}
+          </span>
+        )}
+      </button>
+
+      {open && (
+        <div className="fixed inset-0 z-[var(--z-modal)] flex flex-col justify-end">
+          {/* Perde: dışına dokunmak kapatıyor — mobilde en beklenen
+              kapatma hareketi bu. */}
+          <button
+            type="button"
+            aria-label="Filtreleri kapat"
+            onClick={() => setOpen(false)}
+            className="absolute inset-0 bg-background/80"
+          />
+
+          <div
+            ref={panelRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={titleId}
+            className="relative max-h-[85vh] overflow-y-auto rounded-t-card border-t border-border-strong bg-background p-4 shadow-overlay"
+          >
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <h2 id={titleId} className="text-caption font-semibold text-foreground">
+                Filtreler
+              </h2>
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                aria-label="Filtreleri kapat"
+                className="grid h-11 w-11 place-items-center rounded-card text-muted-foreground transition-colors hover:text-foreground"
+              >
+                <CloseIcon aria-hidden className="h-4 w-4" />
+              </button>
+            </div>
+
+            {grid}
+
+            {/*
+              "Sonuçları gör" kapatmaktan başka bir şey YAPMIYOR ve
+              yapmamalı: filtreler zaten anında uygulanıyor. Düğme
+              sonucu "onaylıyormuş" gibi görünmesin diye adı da eylemi
+              söylüyor — sonuçlara dönmek.
+            */}
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="mt-4 h-11 w-full rounded-card border border-primary bg-primary text-body-sm font-medium text-primary-foreground"
+            >
+              Sonuçları gör
+            </button>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 

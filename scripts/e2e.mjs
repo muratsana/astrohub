@@ -643,6 +643,81 @@ await scenario('"içeriğe atla" bağlantısı ilk odaklanabilir öğedir', asyn
  * doğru değildi. Ölçüt: her genişlikte ya düz menü ya da modül düğmesi
  * ÜST çubukta görünür olacak.
  */
+/**
+ * MOBİL FİLTRE ÇEKMECESİ (§7.1).
+ *
+ * Birim testte `matchMedia` taklit ediliyor; burada ölçülen GERÇEK
+ * kırılım noktası. İki şey birlikte doğrulanıyor:
+ *
+ * · Dar ekranda kontroller DOM'da HİÇ YOK (gizli değil) — gizli bir
+ *   kopya, `id` çakışması ve yanlış etiket bağlaması demekti.
+ * · Geniş ekranda çekmece düğmesi yok, kontroller doğrudan görünür.
+ */
+await scenario('filtreler mobilde çekmeceye giriyor', async () => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await goto('/galeri?ara=m31');
+  await page.waitForTimeout(400);
+
+  const dar = await page.evaluate(() => {
+    const btn = [...document.querySelectorAll('button')].find((b) =>
+      b.textContent.trim().startsWith('Filtreler')
+    );
+    return {
+      dugme: !!btn,
+      /* Rozet: gizlenen filtrenin sayısı düğmede yazmalı. */
+      sayi: btn ? btn.textContent.replace(/[^0-9]/g, '') : '',
+      kontrolSayisi: document.querySelectorAll('#gallery-search').length,
+      chip: [...document.querySelectorAll('button')].some((b) =>
+        (b.getAttribute('aria-label') || '').includes('filtresini kaldır')
+      ),
+    };
+  });
+
+  assert(dar.dugme, 'mobilde filtre çekmecesi düğmesi yok');
+  assert(dar.sayi === '1', `aktif filtre sayısı yazmıyor: "${dar.sayi}"`);
+  assert(
+    dar.kontrolSayisi === 0,
+    'çekmece kapalıyken kontrol DOM\'da duruyor — id çakışması riski'
+  );
+  assert(dar.chip, 'aktif filtre chip\'i çizilmiyor');
+
+  await page.evaluate(() => {
+    [...document.querySelectorAll('button')]
+      .find((b) => b.textContent.trim().startsWith('Filtreler'))
+      .click();
+  });
+  await page.waitForTimeout(300);
+
+  const acik = await page.evaluate(() => ({
+    dialog: !!document.querySelector('[role="dialog"][aria-modal="true"]'),
+    arama: document.querySelectorAll('#gallery-search').length,
+    kilit: document.body.style.overflow,
+  }));
+  assert(acik.dialog, 'çekmece diyalog olarak açılmadı');
+  assert(acik.arama === 1, `çekmecede arama kutusu yok (${acik.arama})`);
+  assert(acik.kilit === 'hidden', 'arka plan kaydırması kilitlenmedi');
+
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(200);
+  assert(
+    await page.evaluate(() => !document.querySelector('[role="dialog"]')),
+    'Escape çekmeceyi kapatmadı'
+  );
+
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.waitForTimeout(300);
+  const genis = await page.evaluate(() => ({
+    dugme: [...document.querySelectorAll('button')].some((b) =>
+      b.textContent.trim().startsWith('Filtreler')
+    ),
+    arama: document.querySelectorAll('#gallery-search').length,
+  }));
+  assert(!genis.dugme, 'geniş ekranda çekmece düğmesi hâlâ duruyor');
+  assert(genis.arama === 1, 'geniş ekranda filtreler doğrudan görünmüyor');
+
+  await page.setViewportSize({ width: 1440, height: 950 });
+});
+
 await scenario('üst çubukta her genişlikte gezinme girişi var', async () => {
   const widths = [390, 768, 1024, 1280, 1440];
   const missing = [];

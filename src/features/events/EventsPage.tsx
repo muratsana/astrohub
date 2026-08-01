@@ -10,6 +10,7 @@ import {
   FilterToggle,
   filterControlClass,
 } from '@/components/ui/FilterBar';
+import { ActiveFilters } from '@/components/ui/ActiveFilters';
 import { EditorialList, type EditorialItem } from '@/components/ui/EditorialList';
 import { ToolBar, ResultCount } from '@/components/ui/ToolBar';
 import { useViewMode } from '@/components/ui/useViewMode';
@@ -111,7 +112,7 @@ export function EventsPage() {
           description="Türkiye'deki astronomi etkinlikleri — gözlem şenlikleri, kamplar, atölyeler ve halk gözlemleri tek takvimde."
         />
 
-        <FilterBar>
+        <FilterBar activeCount={ex.chips.length}>
           <FilterCell label="Ara" htmlFor="event-search" className="lg:col-span-2">
             <Input
               id="event-search"
@@ -168,6 +169,12 @@ export function EventsPage() {
             onChange={() => ex.toggleFacet('kamp', 'evet')}
           />
         </FilterBar>
+
+        <ActiveFilters
+          chips={ex.chips}
+          onRemove={ex.removeChip}
+          onClearAll={ex.clearAll}
+        />
 
         <CatalogSourceNote selection={catalog} />
 

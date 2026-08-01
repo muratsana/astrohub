@@ -1,5 +1,8 @@
 import { useMemo } from 'react';
 import { Container } from '@/components/ui/Container';
+import { FilterBar, FilterCell, filterControlClass } from '@/components/ui/FilterBar';
+import { ActiveFilters } from '@/components/ui/ActiveFilters';
+import { Input } from '@/components/ui/Input';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
 import { ViewToggle } from '@/components/ui/ViewToggle';
@@ -93,6 +96,31 @@ export function NewsPage() {
             birlikte yayımlanır.
           </p>
         </header>
+
+        {/*
+          ARAMA KUTUSU BURAYA GEÇ GELDİ. Motor (`useExplorer`) tam metin
+          aramayı en baştan destekliyordu; bu iki sayfada yalnızca ARAYÜZ
+          yoktu. Kategori sekmesi az sayıda kategoriyi iyi gösteriyor ama
+          "perseid" arayan kullanıcı sekmelerde gezinmek zorunda kalıyordu.
+        */}
+        <FilterBar activeCount={ex.chips.length} columns={2}>
+          <FilterCell label="Ara" htmlFor="news-search">
+            <Input
+              id="news-search"
+              type="search"
+              placeholder="Haber başlığı veya kaynak"
+              value={ex.searchInput}
+              onChange={(e) => ex.setSearch(e.target.value)}
+              className={filterControlClass}
+            />
+          </FilterCell>
+        </FilterBar>
+
+        <ActiveFilters
+          chips={ex.chips}
+          onRemove={ex.removeChip}
+          onClearAll={ex.clearAll}
+        />
 
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div

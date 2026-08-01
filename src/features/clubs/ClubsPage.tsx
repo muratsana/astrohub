@@ -17,6 +17,7 @@ import {
   FilterToggle,
   filterControlClass,
 } from '@/components/ui/FilterBar';
+import { ActiveFilters } from '@/components/ui/ActiveFilters';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
 import { clubs, clubKindLabels, type AstronomyClub } from './data';
@@ -68,7 +69,7 @@ export function ClubsPage() {
           description="Dernekler, üniversite kulüpleri ve gözlem grupları. Teleskobunuz yoksa da katılabileceğiniz topluluklar için “ortak ekipman” filtresini açın."
         />
 
-        <FilterBar>
+        <FilterBar activeCount={ex.chips.length}>
           <FilterCell label="Ara" htmlFor="club-search" className="lg:col-span-2">
             <Input
               id="club-search"
@@ -113,6 +114,12 @@ export function ClubsPage() {
             onChange={() => cevir('ortak-ekipman')}
           />
         </FilterBar>
+
+        <ActiveFilters
+          chips={ex.chips}
+          onRemove={ex.removeChip}
+          onClearAll={ex.clearAll}
+        />
 
         <ToolBar
           left={

@@ -9,6 +9,7 @@ import {
   FilterCell,
   filterControlClass,
 } from '@/components/ui/FilterBar';
+import { ActiveFilters } from '@/components/ui/ActiveFilters';
 import { CardGrid } from '@/components/ui/CardGrid';
 import { ToolBar, ResultCount } from '@/components/ui/ToolBar';
 import { CatalogSourceNote } from '@/components/ui/CatalogSourceNote';
@@ -136,7 +137,7 @@ export function GalleryPage() {
         </div>
 
         {/* Filtre paneli */}
-        <FilterBar>
+        <FilterBar activeCount={ex.chips.length}>
           <FilterCell label="Ara" htmlFor="gallery-search" className="lg:col-span-2">
             <Input
               id="gallery-search"
@@ -191,6 +192,12 @@ export function GalleryPage() {
             </Select>
           </FilterCell>
         </FilterBar>
+
+        <ActiveFilters
+          chips={ex.chips}
+          onRemove={ex.removeChip}
+          onClearAll={ex.clearAll}
+        />
 
         <CatalogSourceNote selection={catalog} />
 
