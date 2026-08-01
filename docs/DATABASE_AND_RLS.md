@@ -120,7 +120,7 @@ açık bir güvenlik boşluğu değil. Faz 15'te taşınacak.
 
 ## Şema boşluğu — belgedeki alan modeliyle karşılaştırma
 
-Ana görev belgesinin gerektirdiği tabloların 24'ü mevcut, **14'ü yok**.
+Ana görev belgesinin gerektirdiği tabloların 26'sı mevcut, **12'si yok**.
 Eksiklerin her biri, onu gerektiren fazda RLS'iyle birlikte
 oluşturulacak; burada listelenmesi o fazların girdisidir.
 
@@ -131,7 +131,8 @@ oluşturulacak; burada listelenmesi o fazların girdisidir.
 `photo_exposures` · `content_entries` · `events` · `event_registrations` ·
 `listings` · `observing_sites` · `provinces` · `districts` ·
 `tv_broadcasts` · `edge_rate_limits` · `notifications` · `conversations` ·
-`conversation_participants` · `messages` · `follows` · `user_blocks`
+`conversation_participants` · `messages` · `follows` · `user_blocks` ·
+`collections` · `collection_items`
 
 ### Eksik
 
@@ -141,8 +142,7 @@ bir "okundu" satırı isterdi.
 
 | Tablo | Alan | Oluşturulacağı faz |
 |---|---|---|
-| `collections` | Favori / koleksiyon | 5 (kalan) |
-| `clubs` | Kulüp / topluluk | 5 (kalan) |
+| `clubs` | Kulüp / topluluk | §8.11 — kendi turu |
 | `reminders` | Hatırlatma | 6 |
 | `radio_stations` | Radyo istasyonu | 7 |
 | `radio_programs` | Radyo programı | 7 |
@@ -160,8 +160,8 @@ bir "okundu" satırı isterdi.
 ## Faz 5 — bildirim, mesaj, sosyal graf (0041–0044)
 
 Dört tasarım kararı bu göçleri şekillendirdi. Hepsi davranış olarak
-ölçüldü (yerel PostgreSQL 16 üzerinde 52 kontrol) ve `check:rls`
-matrisine 26 yeni satır olarak eklendi.
+ölçüldü (yerel PostgreSQL 16 üzerinde 63 kontrol) ve `check:rls`
+matrisine 32 yeni satır olarak eklendi.
 
 ### 1. Bildirim istemciden yazılamaz
 
@@ -340,6 +340,30 @@ Daha derin bir inceleme gerekirse (taciz kalıbı, dolandırıcılık ağı) o
 ayrı bir süreç: yasal talep + `service_role` erişimi + denetim kaydı.
 Onu bir RLS politikasına gömmek, istisnayı varsayılan yapmak olurdu.
 
+### 0048 — koleksiyonlar: bugünün ihtiyacı tek liste, şema iki tablo
+
+Fotoğraf detayında iki yıldır ölü bir `<span>` duruyordu: "Kaydet". Düğme
+bile değildi. Kullanıcı bir fotoğrafı beğenebiliyor ama SAKLAYAMIYORDU.
+
+Bugünün ihtiyacını `saved_photos(user_id, photo_id)` tek tablosuyla
+karşılamak mümkündü ve daha az kod olurdu. Yapılmadı: ana görev belgesi
+"Favori / koleksiyon" diyor, yani adlandırılmış listeler. O geldiğinde tek
+tablodan iki tabloya geçmek, kullanıcıların birikmiş kayıtlarını taşıyan
+bir göç demekti. **Bu "ileride lazım olur" diye özellik eklemek değil** —
+eklenen şey bir özellik değil, aynı verinin doğru biçimi. Kullanıcıya
+görünen yüzey tek düğme.
+
+Varsayılan koleksiyon TEMBEL açılıyor (`toggle_saved_photo` ilk kayıtta
+kendisi oluşturuyor): her yeni kullanıcıya boş bir satır açmak, hiç
+kaydetmeyecek kullanıcılar için ölü satır demekti.
+
+Varsayılanı GİZLİ. "Kaydedilenler" bir okuma listesi; kullanıcının neyi
+sonra bakmak üzere ayırdığı, paylaşmak istediği bir seçki olmayabilir.
+Herkese açık başlamak, kimsenin istemediği bir paylaşımı varsayılan
+yapmaktı. Herkese açık bir koleksiyon da HERKESİN EKLEYEBİLECEĞİ bir
+koleksiyon değil: okuma politikası `is_public`e bakıyor, yazma politikası
+yalnızca sahibine.
+
 ## Açık denetçi bulguları
 
 | Bulgu | Adet | Durum |
@@ -374,6 +398,7 @@ uygulananlar:
 | `0045` | `app` yardımcıları başkasının kimliğini parametre almasın |
 | `0046` | 0044'ün eksiği: `anon`un AÇIK grant'ı da geri alınıyor |
 | `0047` | Mesaj raporlama: `moderation_target` enum'una `message` |
+| `0048` | Koleksiyonlar: `collections` + `collection_items` |
 
 `0040` kendi kendini doğrular: seed sonunda il sayısı 81 değilse
 `raise exception` ile migration düşer. Sessizce eksik veriyle

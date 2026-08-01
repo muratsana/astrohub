@@ -300,6 +300,12 @@ export const siteMap: NavGroup[] = [
     items: [
       { label: 'Üye Paneli', to: '/panel', description: 'Fotoğraflar, kota, üyelik' },
       {
+        label: 'Kaydedilenler',
+        to: '/panel/kaydedilenler',
+        description: 'Sonra bakmak üzere ayırdığın fotoğraflar',
+        keywords: ['kaydet', 'favori', 'koleksiyon', 'saved'],
+      },
+      {
         label: 'Bildirimler',
         to: '/bildirimler',
         description: 'Takip, yorum, etkinlik ve sistem bildirimleri',

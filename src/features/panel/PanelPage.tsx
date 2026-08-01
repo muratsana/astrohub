@@ -16,6 +16,7 @@ import {
 import { PageMeta } from '@/components/seo/PageMeta';
 import { Badge, type BadgeTone } from '@/components/ui/Badge';
 import { listSetups } from '@/features/setups/storage';
+import { useSavedPhotos } from '@/services/content/collections';
 import {
   isListingPubliclyVisible,
   useMyListings,
@@ -147,6 +148,12 @@ export function PanelPage() {
    * uydurmak demekti.
    */
   const myPhotos = useMyPhotos(user?.id);
+  /*
+   * Kayıtlar yalnızca kendi bölümünde okunuyor: kota kutusunun aksine
+   * panelin geri kalanında kullanılmıyorlar ve her ziyarette çekmek,
+   * kullanıcının bakmadığı bir liste için istek harcamak olurdu.
+   */
+  const saved = useSavedPhotos();
 
   /*
    * Kademe STANDART varsayılıyor: üyelik sistemi yokken (T-504 kararı
@@ -186,6 +193,7 @@ export function PanelPage() {
      */
     { label: 'Planlayıcı', to: '/planlayici' },
     { label: 'Etkinliklerim', to: '/etkinlikler' },
+    { label: 'Kaydedilenler', to: '/panel/kaydedilenler' },
     { label: 'Kayıtlı Noktalar', to: '/saha' },
     { label: 'İlanlarım', to: '/panel/ilanlar' },
     /*
@@ -416,6 +424,48 @@ export function PanelPage() {
               Setup'lar hesap sistemi gelene kadar bu tarayıcıda saklanır.
               Paylaşmak için setup sayfasındaki bağlantıyı kopyalayın — bağlantı
               değerleri kendi içinde taşır.
+            </p>
+          </Panel>
+        )}
+
+        {section === 'kaydedilenler' && (
+          <Panel
+            title="Kaydedilenler"
+            status={saved.loading ? 'yükleniyor…' : `${saved.items.length} kayıt`}
+            className="mb-4"
+          >
+            {saved.error ? (
+              <p className="py-3 text-meta leading-relaxed text-danger">
+                Kayıtlar okunamadı: {saved.error}
+              </p>
+            ) : saved.loading ? (
+              <p className="py-3 text-meta leading-relaxed text-muted-foreground">
+                Kayıtlarınız yükleniyor…
+              </p>
+            ) : saved.items.length === 0 ? (
+              <p className="py-3 text-meta leading-relaxed text-muted-foreground">
+                Henüz fotoğraf kaydetmediniz. Galeride beğendiğiniz bir
+                fotoğrafın sayfasındaki "Kaydet" düğmesi onu buraya ekler.
+              </p>
+            ) : (
+              <ul>
+                {saved.items.map((item) => (
+                  <PanelRow
+                    key={item.photoId}
+                    to={`/fotograf/${item.slug}`}
+                    title={item.title}
+                    meta={`${new Date(item.addedAt).toLocaleDateString('tr-TR')} tarihinde kaydedildi`}
+                    badge={<Badge tone="muted">Kayıtlı</Badge>}
+                  />
+                ))}
+              </ul>
+            )}
+
+            {/* Koleksiyon gizli ve bunu SÖYLÜYOR: kullanıcı kaydettiği
+                şeyin kimseye görünmediğini bilmeli. */}
+            <p className="mt-2 text-meta leading-snug text-faint">
+              Kaydedilenler listeniz size özeldir; kimse göremez. Adlandırılmış
+              koleksiyonlar (birden çok liste) sonraki turda açılacak.
             </p>
           </Panel>
         )}

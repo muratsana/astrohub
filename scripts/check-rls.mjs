@@ -1085,8 +1085,81 @@ for (const call of [
   );
 }
 
+/*
+ * 9. KOLEKSİYONLAR (0048).
+ *
+ * "Kaydedilenler" varsayılan olarak GİZLİ ve bu bir gizlilik kararı: bir
+ * okuma listesi, kullanıcının neyi sonra bakmak üzere ayırdığı — paylaşmak
+ * istediği bir seçki olmayabilir.
+ */
+{
+  /* Alice bir fotoğraf kaydediyor; koleksiyon tembel açılıyor. */
+  const kaydetti = await asRole(
+    'authenticated',
+    ALICE,
+    `select public.toggle_saved_photo('${ALICE_PHOTO}');`
+  );
+  record(
+    'kaydetme varsayılan koleksiyonu açıyor',
+    kaydetti.ok && kaydetti.value.split('\n').pop().trim() === 't',
+    kaydetti.ok ? '' : (kaydetti.error ?? '').slice(0, 120)
+  );
+
+  await expectCount(
+    "Bob, Alice'in gizli koleksiyonunu GÖREMEZ",
+    'authenticated',
+    BOB,
+    `select count(*) from public.collections;`,
+    0
+  );
+
+  await expectCount(
+    'gizli koleksiyonun içeriği de görünmüyor',
+    'authenticated',
+    BOB,
+    `select count(*) from public.collection_items;`,
+    0
+  );
+
+  await expectCount(
+    'anon koleksiyon göremiyor',
+    'anon',
+    null,
+    `select count(*) from public.collections;`,
+    0
+  );
+
+  /* Herkese açık bir koleksiyon HERKESİN EKLEYEBİLECEĞİ bir koleksiyon
+     değil: seçkiyi kuran kişi sahibi. */
+  await sql(`update public.collections set is_public = true;`);
+  await expectDenied(
+    'açık koleksiyona başkası fotoğraf ekleyemiyor',
+    'authenticated',
+    BOB,
+    `insert into public.collection_items (collection_id, photo_id)
+     select id, '${ALICE_PHOTO}' from public.collections limit 1`
+  );
+
+  /* anon kaydetme çağrısını hiç yapamıyor (0046'nın dersi uygulandı). */
+  const anonDeneme = await asRole(
+    'anon',
+    null,
+    `select public.toggle_saved_photo('${ALICE_PHOTO}');`
+  );
+  const reddedildi =
+    !anonDeneme.ok && /permission denied|giriş yapmalısınız/i.test(anonDeneme.error);
+  record(
+    'anon fotoğraf kaydedemiyor',
+    reddedildi,
+    reddedildi ? '' : 'toggle_saved_photo anon rolüne açık'
+  );
+}
+
 /* ── Temizlik ─────────────────────────────────────────────────────── */
 await sql(`
+  delete from public.collection_items;
+  delete from public.collections
+   where user_id in ('${ALICE}','${BOB}');
   delete from public.notifications
    where user_id in ('${ALICE}','${BOB}','33333333-3333-3333-3333-333333333333');
   delete from public.conversations

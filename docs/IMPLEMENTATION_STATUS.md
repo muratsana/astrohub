@@ -413,7 +413,7 @@ Motora geçiş sırasında eklenen iki yetenek:
 | **Server-side arama/filtre/sayfalama** | NOT_STARTED | Kataloglar bugün tamamı belleğe inen listeler (tohum dizisi ya da birkaç yüz satır); sunucu tarafı sayfalama veri hacmi onu gerektirdiğinde açılır. `ExplorerQuery` sayfa ve sayfa boyutu taşıdığı için ŞEKLİ hazır, ama bugün çalışan şey istemci tarafı ve rapor bunu böyle söylüyor |
 | İl/ilçe filtresi | PARTIAL | İl facet olarak çalışıyor; ilçe verisi yok (Faz 1.1) |
 | Takip edilenler | PARTIAL | `follows` tablosu Faz 5'te geldi; explorer facet'i olarak henüz bağlanmadı |
-| Favoriler | NOT_STARTED | `collections` tablosu yok — Faz 5'in kalanı |
+| Favoriler | PARTIAL | `collections` Faz 5'te geldi ve "Kaydet" çalışıyor; explorer facet'i olarak henüz bağlanmadı |
 | Onay/yayın durumu, premium görünürlük | NOT_STARTED | Faz 9/10 |
 | Kaydedilmiş görünümler, kullanıcı varsayılanı, admin paylaşılan görünümü | NOT_STARTED | Tablo gerekiyor — Faz 10 |
 | CSV dışa aktarma (yalnız admin) | NOT_STARTED | |
@@ -502,22 +502,41 @@ yalnızca aynı sayfayı açık tutanı görür, bunu "çevrimiçi" diye yazmak
 uygulamayı kullanan ama bu sohbeti açmamış birini çevrimdışı göstermek
 olurdu.
 
-### 5.4 Kalanlar — **NOT_STARTED**
+### 5.4 Koleksiyonlar (kaydedilenler) — **DONE**
+
+`collections` + `collection_items` (`0048`). Fotoğraf detayındaki
+"Kaydet" ve "Paylaş" çipleri tıklanamayan `<span>`lerdi; ikisi de artık
+çalışıyor. Panelde `/panel/kaydedilenler` bölümü açıldı.
+
+Şema adlandırılmış listeleri destekliyor, **arayüz bugün tek koleksiyon
+gösteriyor**: varsayılan "Kaydedilenler". İkinci listenin arayüzü gelene
+kadar kullanıcıya seçim sunulmuyor — çalışmayan bir "koleksiyona ekle"
+menüsü, olmayan bir özelliği varmış gibi göstermekti. Tek tabloyla
+başlayıp sonra bölmek ise kullanıcı kayıtlarını taşıyan bir göç
+gerektirirdi.
+
+"Paylaş" sunucu gerektirmiyordu ama yine de ölüydü — `navigator.share`,
+yoksa panoya kopyalama. "Altyapı bekliyordu" denemez; sadece
+yazılmamıştı.
+
+### 5.5 Kalanlar — **NOT_STARTED**
 
 | Madde | Sebep |
 |---|---|
-| `collections` (favori/koleksiyon) | §7'nin konusu; explorer'ın "favoriler" facet'i buna bağlı |
+| Adlandırılmış koleksiyonlar (birden çok liste) | Şema hazır (`0048`); liste yönetimi arayüzü ayrı bir tur |
+| Explorer "favoriler" facet'i | `collection_items` hazır; explorer sorgusuna bağlanması ayrı iş |
 | `clubs` (kulüp/topluluk) | §8.11 kurumsal profil — kendi turu |
 | Aktivite akışı ("takip ettiklerin ne yaptı") | `follows` hazır; akış sorgusu ve sayfası ayrı bir iş |
 | E-posta/push teslimatı | Sağlayıcı kararı **Sen** (TOPARLAMA §11) |
 
 ### Ölçüm
 
-Şema davranışı yerel PostgreSQL 16 üzerinde **52 kontrolle** ölçüldü:
+Şema davranışı yerel PostgreSQL 16 üzerinde **63 kontrolle** ölçüldü:
 bildirim üretimi ve tekilleştirme, tercih kontrolü, engelleme yayılımı,
 RLS yalıtımı (anon + üçüncü kullanıcı), kimlik taklidi denemeleri,
 düzenleme penceresi, oran sınırı, sert silme reddi, `app` yardımcılarının
-yüzeyi. `check:rls` matrisine aynı kuralların 26'sı eklendi.
+yüzeyi, koleksiyon görünürlüğü. `check:rls` matrisine aynı kuralların
+32'si eklendi.
 
 **İki güvenlik açığı bu ölçümlerde bulundu ve kapatıldı**, ikisi de
 "yazdım demek kapattım demek değil" kategorisinden:
@@ -534,12 +553,13 @@ yüzeyi. `check:rls` matrisine aynı kuralların 26'sı eklendi.
 Arayüz tarafında 40 yeni birim testi (bildirim listesi, bildirim paneli
 ve mesajlaşma — üçü de oturum açık hâlleriyle) ve `relativeTime` için
 7 test. `test:all`
-tamamı geçiyor; JS bütçesi 190.8/200 kB (bildirim paneli üst çubukta
-olduğu için ana pakete giriyor — 0.5 kB).
+tamamı geçiyor; JS bütçesi 190.9/200 kB (bildirim paneli üst çubukta
+olduğu için ana pakete giriyor — 0.6 kB).
 
 **Migration listesi:** `0041` sosyal graf · `0042` bildirimler ·
 `0043` mesajlaşma · `0044`+`0046` RPC yüzeyi · `0045` `app` yardımcıları ·
-`0047` mesaj raporlama. Yedisi de uzak projeye uygulandı.
+`0047` mesaj raporlama · `0048` koleksiyonlar. Sekizi de uzak projeye
+uygulandı.
 
 ---
 
@@ -560,11 +580,12 @@ filtre drawer'ı, sunucu tarafı sayfalama).
 
 **Faz 5'in çekirdeği kapandı** (bkz. Faz 5 bölümü): altı yeni tablo
 (`follows`, `user_blocks`, `notifications`, `conversations`,
-`conversation_participants`, `messages`), yedi migration (`0041`–`0047`),
-üç yeni ekran. Migration numaraları `0048`den devam ediyor.
+`conversation_participants`, `messages`, `collections`,
+`collection_items`), sekiz migration (`0041`–`0048`), üç yeni ekran ve
+panelde bir yeni bölüm. Migration numaraları `0049`dan devam ediyor.
 
-Faz 5'te kalan iki tablo `collections` ve `clubs`; ikisi de §8.13'ün
-değil kendi bölümlerinin konusu ve kendi turlarını hak ediyor.
+Faz 5'te kalan tek tablo `clubs`; §8.11'in konusu ve kendi turunu hak
+ediyor.
 
 **Sıradaki iş için üç aday:**
   · **Faz 6 — etkinlik takip ve hatırlatma** (satır 633–682). `reminders`

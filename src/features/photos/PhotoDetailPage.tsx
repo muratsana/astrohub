@@ -11,6 +11,7 @@ import {
   exposureRowSeconds,
 } from '@/domain/photography/integration';
 import { usePhotoCatalog } from '@/services/content/photos';
+import { useSavedPhoto } from '@/services/content/collections';
 import { usePhotoLike } from '@/services/content/engagement';
 import { PhotoComments } from './PhotoComments';
 import { PhotoComparison } from './PhotoComparison';
@@ -142,8 +143,8 @@ function PhotoDetail({
             <RatingBadge rating={photo.rating} />
             <LikeChip photo={photo} />
             <ActionChip>💬 {photo.comments}</ActionChip>
-            <ActionChip>Kaydet</ActionChip>
-            <ActionChip>Paylaş</ActionChip>
+            <SaveChip photo={photo} />
+            <ShareChip photo={photo} />
             <ReportButton
               targetType="photo"
               targetId={photo.slug}
@@ -626,6 +627,101 @@ function LikeChip({ photo }: { photo: AstroPhoto }) {
       )}
     >
       ♥ {like.count}
+    </button>
+  );
+}
+
+/**
+ * KAYDET — §7.3'ün "kaydet"i.
+ *
+ * Buraya kadar tıklanamayan bir `<span>`di: imleç bile değişmiyordu.
+ * Kullanıcı bir fotoğrafı beğenebiliyor ama SAKLAYAMIYORDU; "sonra
+ * bakarım" diye bir yer yoktu.
+ *
+ * Tohum fotoğrafta `photo.id` yok — o durumda çip yine düz metin kalıyor
+ * (kaydı olmayan bir kaydı saklamak anlamsız), tıpkı beğenide olduğu
+ * gibi.
+ */
+function SaveChip({ photo }: { photo: AstroPhoto }) {
+  const save = useSavedPhoto(photo.id);
+
+  if (!save.canSave) {
+    return <ActionChip>Kaydet</ActionChip>;
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => void save.toggle()}
+      disabled={save.busy}
+      aria-pressed={save.saved}
+      aria-label={save.saved ? 'Kaydı kaldır' : 'Kaydet'}
+      title={save.error ?? undefined}
+      className={cn(
+        'rounded-full border px-3 py-1.5 transition-colors',
+        save.saved
+          ? 'border-primary/60 bg-primary/10 text-primary'
+          : 'border-border bg-surface-1 text-muted-foreground hover:border-border-strong hover:text-foreground'
+      )}
+    >
+      {save.saved ? 'Kaydedildi' : 'Kaydet'}
+    </button>
+  );
+}
+
+/**
+ * PAYLAŞ.
+ *
+ * SUNUCU GEREKTİRMİYORDU AMA YİNE DE ÖLÜYDÜ. Paylaşmak bir adres
+ * kopyalamaktan ibaret; arkasında tablo yok, bu yüzden "altyapı
+ * bekliyordu" denemez — sadece yazılmamıştı.
+ *
+ * Önce `navigator.share` deneniyor (telefonda işletim sisteminin kendi
+ * paylaşım sayfası açılıyor), yoksa panoya kopyalanıyor. İkisi de yoksa
+ * çip düz metne dönüyor: çalışmayan bir düğme göstermek yerine.
+ */
+function ShareChip({ photo }: { photo: AstroPhoto }) {
+  const [state, setState] = useState<'idle' | 'copied' | 'error'>('idle');
+
+  const canShare =
+    typeof navigator !== 'undefined' &&
+    (typeof navigator.share === 'function' ||
+      typeof navigator.clipboard?.writeText === 'function');
+
+  if (!canShare) return <ActionChip>Paylaş</ActionChip>;
+
+  async function share() {
+    const url = `${window.location.origin}/fotograf/${photo.slug}`;
+    try {
+      if (typeof navigator.share === 'function') {
+        await navigator.share({ title: photo.title, url });
+        setState('idle');
+        return;
+      }
+      await navigator.clipboard.writeText(url);
+      setState('copied');
+      /* İki saniye sonra eski etiketine dönüyor: kalıcı "kopyalandı",
+         ikinci kez kopyalanıp kopyalanmadığını belirsiz bırakırdı. */
+      setTimeout(() => setState('idle'), 2000);
+    } catch {
+      /* Kullanıcı paylaşım sayfasını kapattıysa da buraya düşüyor;
+         "hata" demek yerine sessizce eski hâline dönüyor. */
+      setState('error');
+      setTimeout(() => setState('idle'), 2000);
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => void share()}
+      className="rounded-full border border-border bg-surface-1 px-3 py-1.5 text-muted-foreground transition-colors hover:border-border-strong hover:text-foreground"
+    >
+      {state === 'copied'
+        ? 'Bağlantı kopyalandı'
+        : state === 'error'
+          ? 'Paylaşılamadı'
+          : 'Paylaş'}
     </button>
   );
 }
