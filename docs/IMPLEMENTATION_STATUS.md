@@ -22,7 +22,7 @@ tabloda `DONE` ile birleştirilmez:
 | Faz | Konu | Belgedeki satır | Durum |
 |---|---|---|---|
 | 0 | Envanter, baseline, güvenli ortam | 102–135 | DONE |
-| 1 | Veri modeli, Supabase güvenliği, merkezi yapılandırma | 136–257 | PARTIAL |
+| 1 | Veri modeli, Supabase güvenliği, merkezi yapılandırma | 136–257 | PARTIAL¹ |
 | 2 | Tek tasarım sistemi ve bütüncül arayüz | 258–355 | DONE |
 | 3 | Ana sayfa, navbar, hero, hava durumu | 356–461 | PARTIAL |
 | 4 | Ortak arama, filtreleme, sıralama, görünüm | 462–548 | PARTIAL |
@@ -40,6 +40,14 @@ tabloda `DONE` ile birleştirilmez:
 | 16 | Performans, SEO, analitik, gözlemlenebilirlik | 1607–1690 | NOT_STARTED |
 | 17 | Test stratejisi ve kabul kriterleri | 1691–… | NOT_STARTED |
 | 18 | (belgenin sonu) | …–1956 | NOT_STARTED |
+
+¹ **Faz 1'de kodla kapatılabilecek iş kalmadı.** Kalan üç madde ya dış
+kaynak ya da bilinçli erteleme: ilçe tohum verisi (resmî TÜİK/NVİ
+kaynağı gerekiyor — 973 ilçe adını çevrimdışı üretmek uydurma olurdu),
+gerçek cihaz/tarayıcı matrisi (kum havuzunda tek Chromium) ve
+`consume_rate_limit`in `app` şemasına taşınması + 129 permissive policy
+birleştirmesi (ikisi de Faz 15'e atandı, açık boşluk değil düzen işi).
+Otomatik devam turu buradan **Faz 3'e** geçmeli.
 
 ## Bilinen ortam kısıtları
 
