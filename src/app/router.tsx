@@ -244,6 +244,24 @@ export const appRoutes = [
           named(() => import('@/features/radio/HostPage'), 'HostPage')
         ),
       },
+      {
+        path: 'radyo/podcast',
+        element: route(
+          named(() => import('@/features/radio/PodcastPage'), 'PodcastPage')
+        ),
+      },
+      {
+        path: 'radyo/podcast/:slug',
+        element: route(
+          named(() => import('@/features/radio/PodcastPage'), 'PodcastPage')
+        ),
+      },
+      {
+        path: 'radyo/podcast/:slug/:bolum',
+        element: route(
+          named(() => import('@/features/radio/EpisodePage'), 'EpisodePage')
+        ),
+      },
 
       /* ═════════════ ARAÇLAR ═════════════ */
       {

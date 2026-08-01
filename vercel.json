@@ -281,6 +281,18 @@
       "destination": "/app.html"
     },
     {
+      "source": "/radyo/podcast",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/radyo/podcast/:slug",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/radyo/podcast/:slug/:bolum",
+      "destination": "/app.html"
+    },
+    {
       "source": "/radyo/program/:slug",
       "destination": "/app.html"
     },

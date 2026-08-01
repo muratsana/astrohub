@@ -1,3 +1,4 @@
+import { Link } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -190,6 +191,17 @@ export function RadioPage() {
             Kasa boş diye takvimi gizlemek, programı olan bir radyoyu
             programsız göstermek olurdu. */}
         <RadioSchedule />
+
+        {/* Podcast arşivine bağlantı: bağlantısı olmayan bir sayfa yok
+            sayılır. Arşiv canlı yayından bağımsız çalışıyor — yayın
+            sunucusu kurulmasa da bölümler dinlenebilir. */}
+        <p className="mt-8 text-body-sm text-muted-foreground">
+          Kayıtlı yayınlar ve konuk programları için{' '}
+          <Link to="/radyo/podcast" className="text-primary hover:underline">
+            podcast arşivine
+          </Link>{' '}
+          bakabilirsiniz.
+        </p>
       </Container>
     </>
   );
