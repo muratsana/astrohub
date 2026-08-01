@@ -8,6 +8,7 @@ import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
 import { useRadio } from './RadioContext';
 import { radioGuidelines } from './data';
+import { RadioSchedule } from './RadioSchedule';
 import { formatTrackTime, spotifyEmbedUrl } from './types';
 import { cn } from '@/lib/cn';
 
@@ -183,6 +184,12 @@ export function RadioPage() {
             </div>
           </div>
         )}
+
+        {/* Takvim listenin İÇİNDE değil, yanında: canlı yayın ile yerel
+            mp3 kasası iki ayrı şey ve biri boşken diğeri dolu olabilir.
+            Kasa boş diye takvimi gizlemek, programı olan bir radyoyu
+            programsız göstermek olurdu. */}
+        <RadioSchedule />
       </Container>
     </>
   );

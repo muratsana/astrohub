@@ -13,6 +13,7 @@ import { useAuth } from '@/features/auth/AuthContext';
 import { useRoles, roleLabels } from './useRoles';
 import { BroadcastControl } from './BroadcastControl';
 import { ReminderControl } from './ReminderControl';
+import { RadioControl } from './RadioControl';
 import { CatalogControl } from './CatalogControl';
 import { FeaturedControl } from './FeaturedControl';
 import { ContentControl } from './ContentControl';
@@ -437,6 +438,16 @@ export function AdminPage() {
       {bolum === 'yayin' && <BroadcastControl />}
 
       {/*
+        RADYO — §10.5'in AstroHub'a düşen kısmı.
+
+        AzuraCast panelinin yerine geçmiyor: program takvimi, yayıncı
+        künyesi ve canlı duyurusu burada; playlist rotasyonu, mount ve
+        bitrate orada. Aynı ayarı iki yerde tutmak, ikisi ayrıştığında
+        hangisinin geçerli olduğunu belirsiz bırakırdı.
+      */}
+      {bolum === 'radyo' && <RadioControl canWrite={roles.isAdmin} />}
+
+      {/*
         HATIRLATMA — sitenin kullanıcılara ne gönderdiği.
 
         Teslim sayıları, hatalı işler ve yeniden deneme aynı ekranda:
@@ -498,6 +509,7 @@ const BOLUMLER = [
   { id: 'forum', label: 'Forum' },
   { id: 'anasayfa', label: 'Ana sayfa' },
   { id: 'yayin', label: 'Yayın' },
+  { id: 'radyo', label: 'Radyo' },
   { id: 'hatirlatma', label: 'Hatırlatma' },
   { id: 'katalog', label: 'Katalog' },
 ] as const;

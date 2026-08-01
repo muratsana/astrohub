@@ -88,18 +88,19 @@ const BOLUMLER = [
   'Forum',
   'Ana sayfa',
   'Yayın',
+  'Radyo',
   'Hatırlatma',
   'Katalog',
 ];
 
 describe('sekme çubuğu', () => {
-  it('sekiz bölümü de veriyor ve sırası konudan işe doğru', () => {
+  it('dokuz bölümü de veriyor ve sırası konudan işe doğru', () => {
     renderPanel();
     const adlar = screen
       .getAllByRole('tab')
       .map((t) => t.textContent?.trim())
       .filter((t): t is string => Boolean(t));
-    /* Sekme çubuğu ilk sekiz sekmedir; panellerin kendi iç sekmeleri
+    /* Sekme çubuğu ilk dokuz sekmedir; panellerin kendi iç sekmeleri
        sonra geliyor. */
     expect(adlar.slice(0, BOLUMLER.length)).toEqual(BOLUMLER);
   });
