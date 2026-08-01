@@ -1,8 +1,9 @@
 import { useParams } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { Badge } from '@/components/ui/Badge';
-import { Button, ButtonLink } from '@/components/ui/Button';
-import { EventRegistration } from './EventRegistration';
+import { ButtonLink } from '@/components/ui/Button';
+import { EventInterest } from './EventInterest';
+import { EventChanges } from './EventChanges';
 import { PhotoPlaceholder } from '@/components/media/PhotoPlaceholder';
 import { PlaceholderPage } from '@/components/PlaceholderPage';
 import { useEventCatalog } from '@/services/content/events';
@@ -160,6 +161,8 @@ export function EventDetailPage() {
                 </ul>
               </section>
             )}
+
+            <EventChanges eventId={event.id} />
           </div>
 
           {/* Sağ: aksiyon paneli */}
@@ -180,13 +183,10 @@ export function EventDetailPage() {
                 </p>
               )}
 
-              <Button className="mt-4 w-full" size="lg" disabled>
-                Katıl (üyelik gerektirir)
-              </Button>
-              <p className="mt-2 text-center text-xs text-muted-foreground/70">
-                Katılım kaydı hesap sistemi devreye alınınca açılacak.
-              </p>
-
+              {/* Buradaki devre dışı "Katıl (üyelik gerektirir)" düğmesi
+                  kaldırıldı: hesap sistemi çalışıyor ve gerçek katılım
+                  kontrolü aşağıda. Basılamayan bir düğme, altındaki
+                  çalışan kontrolü de şüpheli gösteriyordu. */}
               <hr className="my-4 border-border" />
 
               {/* Kaynak şeffaflığı (§8.4) */}
@@ -208,7 +208,7 @@ export function EventDetailPage() {
               </dl>
             </div>
 
-            <EventRegistration event={event} />
+            <EventInterest event={event} />
 
             <ButtonLink
               to="/etkinlikler"

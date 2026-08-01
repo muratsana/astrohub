@@ -88,19 +88,20 @@ const BOLUMLER = [
   'Forum',
   'Ana sayfa',
   'Yayın',
+  'Hatırlatma',
   'Katalog',
 ];
 
 describe('sekme çubuğu', () => {
-  it('yedi bölümü de veriyor ve sırası konudan işe doğru', () => {
+  it('sekiz bölümü de veriyor ve sırası konudan işe doğru', () => {
     renderPanel();
     const adlar = screen
       .getAllByRole('tab')
       .map((t) => t.textContent?.trim())
       .filter((t): t is string => Boolean(t));
-    /* Sekme çubuğu ilk yedi sekmedir; panellerin kendi iç sekmeleri
+    /* Sekme çubuğu ilk sekiz sekmedir; panellerin kendi iç sekmeleri
        sonra geliyor. */
-    expect(adlar.slice(0, 7)).toEqual(BOLUMLER);
+    expect(adlar.slice(0, BOLUMLER.length)).toEqual(BOLUMLER);
   });
 
   it('varsayılan bölüm moderasyon — günlük iş orada', () => {

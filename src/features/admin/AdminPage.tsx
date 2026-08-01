@@ -12,6 +12,7 @@ import { PageMeta } from '@/components/seo/PageMeta';
 import { useAuth } from '@/features/auth/AuthContext';
 import { useRoles, roleLabels } from './useRoles';
 import { BroadcastControl } from './BroadcastControl';
+import { ReminderControl } from './ReminderControl';
 import { CatalogControl } from './CatalogControl';
 import { FeaturedControl } from './FeaturedControl';
 import { ContentControl } from './ContentControl';
@@ -436,6 +437,15 @@ export function AdminPage() {
       {bolum === 'yayin' && <BroadcastControl />}
 
       {/*
+        HATIRLATMA — sitenin kullanıcılara ne gönderdiği.
+
+        Teslim sayıları, hatalı işler ve yeniden deneme aynı ekranda:
+        hatayı görüp yeniden denemek için sekme değiştirmek gerekmiyor.
+        Zorunlu duyuru da burada, çünkü o da bir gönderim kanalı.
+      */}
+      {bolum === 'hatirlatma' && <ReminderControl canWrite={roles.isAdmin} />}
+
+      {/*
         KATALOG — sürüm başına bir kez yapılan işler.
 
         Üçü aynı sırayla: senkronizasyon neyin geldiğini, rapor neyin
@@ -488,6 +498,7 @@ const BOLUMLER = [
   { id: 'forum', label: 'Forum' },
   { id: 'anasayfa', label: 'Ana sayfa' },
   { id: 'yayin', label: 'Yayın' },
+  { id: 'hatirlatma', label: 'Hatırlatma' },
   { id: 'katalog', label: 'Katalog' },
 ] as const;
 
