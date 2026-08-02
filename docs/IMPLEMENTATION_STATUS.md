@@ -605,7 +605,41 @@ Motora geçiş sırasında eklenen iki yetenek:
 | Mobil filtre drawer'ı | DONE | `FilterBar`ın kendi içinde: ayrı bir bileşen "tutarsız filtre bileşeni üretme" yasağını çiğnerdi. Çocuklar TEK KEZ çiziliyor (çift `id` olmasın); prerender'da masaüstü varsayılıyor. Odak tuzağı, Escape, gövde kilidi, aktif filtre rozeti. 11 birim + 1 E2E (390px ve 1280px'te gerçek tarayıcıda) |
 | Tablo görünümü (sütun göster/gizle, yoğunluk, sabit başlık, başlıktan sıralama) | DONE | `DataTable` vardı ama HİÇBİR SAYFA KULLANMIYORDU (tek eşleşme kendi dosyası). Sıralama motorun `sort` değerine yazılıyor — tablo kendi durumunu tutsaydı ızgaraya geçen kullanıcı sıralamasını kaybederdi. Sabit başlık + sabit ilk sütun, yoğunluk, sütun göster/gizle (`localStorage`), mobilde etiket-değer kartı. Pazaryerinde üçüncü görünüm olarak bağlı. 12 birim + 1 E2E |
 | Harita / takvim / zaman çizelgesi görünümleri | PARTIAL | `EventMapPage` ve `EventCalendar` ayrı sayfa olarak var; explorer'ın görünüm seçeneği değiller |
-| Görünüm tercihinin hesapta saklanması | PARTIAL | `localStorage`da saklanıyor (görünüm, yoğunluk, gizli sütunlar), hesapta değil — kullanıcı tercihleri tablosu Faz 10 |
+| Görünüm tercihinin hesapta saklanması | DONE | `ui_preferences` (`0070`) + `preferenceStore` defteri. `localStorage` ilk kare, hesap gelince gerçek kaynak. Tasarım sistemi ürün katmanına BAĞLANMADI — gerekçe aşağıda |
+
+### Görünüm tercihi hesapta — ve tasarım sistemi ürün katmanına bağlanmadan
+
+`useStoredChoice` bir TASARIM SİSTEMİ kancası (`components/ui`); hesapta
+saklama Supabase ve oturum gerektiriyor, yani `features/`e ait. Kancanın
+oradan içe aktarma yapması, okun ters yöne bakması demekti —
+`components/ui` tek başına test edilemez hâle gelirdi.
+
+Çözüm bir KAYIT DEFTERİ (`preferenceStore.ts`): React'siz, Supabase'siz,
+yalnızca bir kayıt noktası. Ürün katmanı (`UiPreferencesProvider`)
+kendini oraya yazıyor, kanca yalnızca deftere bakıyor. Adaptör
+kaydedilmemişse — testlerde, önizleme derlemesinde, oturumsuz
+kullanıcıda — her şey `localStorage` ile çalışmaya devam ediyor ve
+kancada "hesap var mı" diye bir dal yok.
+
+**Sıra: yerel ilk kare, hesap gerçek kaynak.** `localStorage` anında
+okunuyor (titremesiz), hesap satırı bir ağ turu sonra üstüne yazıyor.
+Bedeli, iki seçim farklıysa bir karelik bir değişim; kazancı,
+"masaüstünde tabloya geçtim, telefonda da tablo görüyorum". Ters sıra
+özelliği anlamsız kılardı: telefondaki seçim masaüstüne hiç ulaşmazdı,
+çünkü orada zaten bir yerel değer var.
+
+**Kullanıcının o oturumda yaptığı seçim korunuyor:** ağdan gelen satır
+`cache.has` kontrolüyle üstüne yazmıyor. Yazma da önce belleğe gidip
+aboneleri uyandırıyor, sonra ağa; aksi hâlde defter eski değeri döndürür
+ve "hesap kazanır" etkisi kullanıcının seçimini GERİ ALIRDI.
+
+Çıkışta defter temizleniyor (`setPreferenceAdapter(null)`): bir sonraki
+kullanıcıya önceki hesabın tercihleri sızmamalı.
+
+`profiles`a `ui_prefs jsonb` sütunu eklenmedi: o satır kullanıcının
+KİMLİĞİNE dair. Her görünüm değişikliğinde profil satırını yazmak
+`updated_at`i anlamsızca kaydırır ve "ızgaradan listeye geçtim" profil
+güncellemesiyle aynı denetim izine karışırdı.
 
 ### CSV dışa aktarmanın gerçek riski biçimlendirme değil
 

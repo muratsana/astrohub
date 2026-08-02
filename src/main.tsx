@@ -9,6 +9,7 @@ import { LocationProvider } from '@/features/location/LocationContext';
 import { PreviewEditorProvider } from '@/features/preview-editor/PreviewEditorContext';
 import { RadioProvider } from '@/features/radio/RadioContext';
 import { SiteConfigProvider } from '@/features/site/SiteConfigContext';
+import { UiPreferencesProvider } from '@/features/preferences/UiPreferencesProvider';
 import { registerServiceWorker } from '@/pwa/register';
 import './index.css';
 
@@ -42,9 +43,18 @@ createRoot(rootEl).render(
                 yeniden okumaları gereksiz bir istek olurdu.
               */}
               <SiteConfigProvider>
-                <PreviewEditorProvider>
-                  <RouterProvider router={router} />
-                </PreviewEditorProvider>
+                {/*
+                  Arayüz tercihleri de router'ın DIŞINDA: `useViewMode`
+                  her liste sayfasında çağrılıyor ve tercih satırları
+                  rota başına yeniden okunmamalı. Sağlayıcı çocuk
+                  çizmiyor, yalnızca `preferenceStore` defterine kayıt
+                  yapıyor (bkz. o dosyanın başlığı).
+                */}
+                <UiPreferencesProvider>
+                  <PreviewEditorProvider>
+                    <RouterProvider router={router} />
+                  </PreviewEditorProvider>
+                </UiPreferencesProvider>
               </SiteConfigProvider>
             </RadioProvider>
           </AuthProvider>
