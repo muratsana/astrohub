@@ -507,8 +507,10 @@ gerçek koda göre hâlâ açıktı.
 - `src/features/home/sections/TonightPanel.test.tsx`, `src/features/home/sections/tonight/DecisionColumn.test.tsx`, `src/features/home/sections/tonight/TimelineColumn.test.tsx` — yeni gece seçici, servis künyesi temizliği, hedef sıralama ve koşul kartı yoğunluğu testlendi.
 - `src/index.css` — hero başlığındaki geniş harf aralığı kaldırıldı.
 - `src/components/shell/Footer.tsx`, `src/app/navigation.ts`, `src/app/navigation.test.ts`, `src/features/site/navLinks.ts` — footer tekrar eden modül nav yerine kurumsal bağlantıları gösteriyor.
-- `src/features/home/sections/tonight/TimelineColumn.tsx`, `src/features/home/sections/tonight/NightTimelineChart.tsx`, `src/features/home/sections/tonight/TargetsColumn.tsx`, `src/features/home/sections/tonight/DecisionColumn.tsx` — Bu Gece modülünde formül metni kaldırıldı, `Aysız Pencere` etiketi eklendi, zaman metrikleri aynı stile çekildi, grafik yükseltildi ve hedef listesi 9 objeye çıkarıldı.
+- `src/features/home/sections/tonight/TimelineColumn.tsx`, `src/features/home/sections/tonight/NightTimelineChart.tsx`, `src/features/home/sections/tonight/TargetsColumn.tsx`, `src/features/home/sections/tonight/DecisionColumn.tsx` — Bu Gece modülünde formül metni kaldırıldı, `Aysız Pencere` etiketi eklendi, zaman metrikleri çakışmayacak grid'e alındı, grafik yükseltildi, hedef türü filtresi kaldırıldı ve hedef listesi 10 objeye çıkarıldı.
+- `src/domain/astronomy/nightScore.ts` — gece skoru 4 denetlenebilir girdiye sadeleştirildi: `Bulut örtüsü`, `Seeing`, `Karanlık/Ay`, `Rüzgâr/Çiy`; ayrı `Açıklık`, `Şeffaflık` ve `Ay aydınlığı` satırları kaldırıldı.
 - `src/components/shell/Logo.tsx`, `src/components/shell/Footer.tsx` — üst bar ve footer logosuna gri `(Beta test yayını)` etiketi eklendi; footer altındaki tekrar eden veri notu kaldırıldı ve telif satırı ana footer satırına taşındı.
+- `src/components/shell/Topbar.tsx`, `src/components/ui/EditorialList.tsx` — üst bar yüksekliği yaklaşık %15 artırıldı; haber/yazı liste başlıklarının hover rengi beyaza eşitlendi.
 
 ### Doğrulama
 

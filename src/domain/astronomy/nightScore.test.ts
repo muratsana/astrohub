@@ -29,7 +29,7 @@ describe('nightScore — bulut çarpan gibi davranır', () => {
   /*
    * ASIL KURAL. Dört bileşeni ortalayan bir model kapalı gecede 60
    * civarı verirdi: seeing mükemmel, rüzgâr yok, ay yok. Oysa teleskop
-   * hiçbir şey görmüyor. Şeffaflık çarpan olduğu için skor da çöküyor.
+   * hiçbir şey görmüyor. Bulut çarpan olduğu için skor da çöküyor.
    */
   it('tam kapalı gecede diğerleri mükemmel olsa bile skor çöker', () => {
     const kapali = nightScore(at({ cloudCover: 100 }));
@@ -140,11 +140,8 @@ describe('nightScore — kırılım ile toplam tutarlı', () => {
     const score = nightScore(IDEAL);
     expect(score.rows.map((row) => row.key)).toEqual([
       'cloudCover',
-      'clarity',
-      'transparency',
       'seeing',
       'darkness',
-      'moon',
       'comfort',
     ]);
     for (const row of score.rows) {
@@ -263,34 +260,13 @@ describe('nightScore — iki profil', () => {
   });
 });
 
-/**
- * ŞEFFAFLIK — ölçülmemişse skora HİÇ girmiyor.
- *
- * Bulut örtüsünden ayrı bir büyüklük: toz taşınımında gökyüzü bulutsuz
- * görünür ama sönük hedefler kaybolur. Ölçüm yoksa ceza da yok — veri
- * eksikliğini kötü havaya çevirmek, uydurmanın başka bir biçimi.
- */
-describe('nightScore — şeffaflık', () => {
-  it('ölçüm yokken skor değişmiyor ve satır boş kalıyor', () => {
+describe('nightScore — şeffaflık sadeleştirildi', () => {
+  it('şeffaflık indeksi artık skor girdisi değil', () => {
     const olcumsuz = nightScore(at({ transparencyIndex: null }));
     const berrak = nightScore(at({ transparencyIndex: 1 }));
+    const bulanik = nightScore(at({ transparencyIndex: 5 }));
     expect(olcumsuz.total).toBe(berrak.total);
-    expect(
-      olcumsuz.rows.find((r) => r.key === 'transparency')?.value
-    ).toBeNull();
-  });
-
-  it('bulanık atmosfer skoru düşürüyor', () => {
-    const berrak = nightScore(at({ transparencyIndex: 1 }));
-    const bulanik = nightScore(at({ transparencyIndex: 5 }));
-    expect(bulanik.total).toBeLessThan(berrak.total);
-    expect(bulanik.cons.join(' ')).toContain('toz/pus');
-  });
-
-  /* Pus geceyi BİTİRMİYOR — bulut gibi çarpanı sıfıra indirmemeli. */
-  it('en bulanık gece bile açık gecenin dörtte üçünden iyi', () => {
-    const berrak = nightScore(at({ transparencyIndex: 1 }));
-    const bulanik = nightScore(at({ transparencyIndex: 5 }));
-    expect(bulanik.total).toBeGreaterThan(berrak.total * 0.7);
+    expect(bulanik.total).toBe(berrak.total);
+    expect(olcumsuz.rows.map((r) => r.key)).not.toContain('transparency');
   });
 });

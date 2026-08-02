@@ -3,11 +3,6 @@ import { Link } from 'react-router';
 import { formatAltitude, formatClock } from '@/domain/astronomy/ephemeris';
 import { properName, targetKindLabels } from '@/domain/targets/derive';
 import { targets as catalog } from '@/features/targets/data';
-import {
-  matchesGroup,
-  TARGET_GROUP_CHIPS,
-  type TargetGroupFilter,
-} from '@/features/targets/grouping';
 import { cn } from '@/lib/cn';
 import type { TonightTarget } from './useTonight';
 
@@ -20,20 +15,12 @@ import type { TonightTarget } from './useTonight';
  * işleme bunu geri getirmiyor.
  *
  * ══════════════════════════════════════════════════════════════════════
- * ÖNCE SÜZ, SONRA KES.
- *
- * Liste altı satır gösteriyor ama süzme ALTI SATIRA DEĞİL, tam sıralamaya
- * uygulanıyor. Tersi yapılsaydı "Galaksi" çipi çoğu gece boş çıkardı:
- * ilk altı sırayı küresel kümeler kapmışken katalogda o gece yüksekte
- * onlarca galaksi olurdu. Kullanıcı bunu "arıza" diye okur.
- *
- * Çipler tek seçimli ve `radiogroup` semantiğinde. `aria-pressed` taşıyan
- * dört ayrı düğme, ekran okuyucuda dördü de basılabilir dört bağımsız
- * anahtar gibi okunuyordu; oysa biri açıkken diğerleri kapanıyor.
+ * Liste doğrudan sıralanır. Tür filtresi yok: panelin işi hızlı öneri,
+ * katalog gezgini olmak değil.
  */
 
 /** Kolonun gösterdiği satır sayısı. */
-const ROWS = 9;
+const ROWS = 10;
 type SortKey = 'peak' | 'altitude';
 type SortDir = 'asc' | 'desc';
 
@@ -48,7 +35,6 @@ interface Props {
 }
 
 export function TargetsColumn({ ranked, timeZone, onMark }: Props) {
-  const [filter, setFilter] = useState<TargetGroupFilter>('hepsi');
   const [sort, setSort] = useState<{ key: SortKey; dir: SortDir }>({
     key: 'altitude',
     dir: 'desc',
@@ -56,7 +42,7 @@ export function TargetsColumn({ ranked, timeZone, onMark }: Props) {
 
   const visible = useMemo(
     () =>
-      [...ranked.filter((entry) => matchesGroup(entry.target.kind, filter))]
+      [...ranked]
         .sort((a, b) => {
           const delta =
             sort.key === 'peak'
@@ -65,18 +51,8 @@ export function TargetsColumn({ ranked, timeZone, onMark }: Props) {
           return sort.dir === 'asc' ? delta : -delta;
         })
         .slice(0, ROWS),
-    [ranked, filter, sort]
+    [ranked, sort]
   );
-
-  /*
-   * Çip değişince işaret kalkıyor. Kalmasaydı, artık listede olmayan bir
-   * nesnenin zirvesi çizelgede asılı kalırdı — hiçbir satırla eşleşmeyen
-   * bir imleç.
-   */
-  const choose = (value: TargetGroupFilter) => {
-    setFilter(value);
-    onMark(null);
-  };
 
   const toggleSort = (key: SortKey) => {
     setSort((current) =>
@@ -107,44 +83,9 @@ export function TargetsColumn({ ranked, timeZone, onMark }: Props) {
         />
       </div>
 
-      <div
-        role="radiogroup"
-        aria-label="Nesne türü süzgeci"
-        className="flex flex-wrap gap-1.5"
-      >
-        {TARGET_GROUP_CHIPS.map((chip) => {
-          const active = chip.value === filter;
-          return (
-            <button
-              key={chip.value}
-              type="button"
-              role="radio"
-              aria-checked={active}
-              onClick={() => choose(chip.value)}
-              className={cn(
-                /*
-                  py-1.5 → ~29px. WCAG 2.5.8 AA dokunma hedefi 24px ve
-                  py-1 ile 25.4px çıkıyordu: standardı geçen ama parmakla
-                  ıskalanan bir ölçü. Metni olan bir kontrolde asıl
-                  belirleyici yükseklik.
-                */
-                'rounded-full px-3 py-1.5 text-meta font-medium transition-colors',
-                active
-                  ? 'bg-foreground text-background'
-                  : 'border border-border text-muted-foreground hover:border-border-strong hover:text-foreground'
-              )}
-            >
-              {chip.label}
-            </button>
-          );
-        })}
-      </div>
-
       {visible.length === 0 ? (
         <p className="py-6 text-center text-meta text-muted-foreground">
-          {ranked.length === 0
-            ? 'Bu gece karanlık pencere oluşmuyor; hedef sıralaması hesaplanamadı.'
-            : 'Bu filtreye uygun nesne yok.'}
+          Bu gece karanlık pencere oluşmuyor; hedef sıralaması hesaplanamadı.
         </p>
       ) : (
         <ol className="flex flex-col gap-px">

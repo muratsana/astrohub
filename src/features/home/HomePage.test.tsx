@@ -152,13 +152,11 @@ describe('HomePage · bölümler', () => {
       .not.toBeInTheDocument();
   });
 
-  it('hedef süzgeci çipleri tek seçimli bir grup', () => {
+  it('hedef süzgeci göstermiyor', () => {
     renderHome();
-    const group = screen.getByRole('radiogroup', { name: /nesne türü/i });
-    const chips = within(group).getAllByRole('radio');
-    expect(chips).toHaveLength(4);
-    expect(chips.filter((c) => c.getAttribute('aria-checked') === 'true'))
-      .toHaveLength(1);
+    expect(
+      screen.queryByRole('radiogroup', { name: /nesne türü/i })
+    ).not.toBeInTheDocument();
   });
 
   it('galeri şeridini künyeli karolarla gösterir', () => {

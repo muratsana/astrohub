@@ -14,7 +14,7 @@
  * seeing'in mükemmel olması hiçbir işe yaramaz, teleskop hiçbir şey
  * görmez. Ortalama alan bir model o geceye 60 verirdi.
  *
- * Bu yüzden şeffaflık diğerlerini ÇARPIYOR. Aynı karar depoda zaten
+ * Bu yüzden bulut diğerlerini ÇARPIYOR. Aynı karar depoda zaten
  * verilmişti (`observingVerdict`, seeing.ts) — iki yerde iki ayrı
  * felsefe tutmak, aynı gece için iki farklı hüküm üretmek olurdu.
  *
@@ -45,11 +45,8 @@
 export interface ScoreRow {
   key:
     | 'cloudCover'
-    | 'clarity'
-    | 'transparency'
     | 'seeing'
     | 'darkness'
-    | 'moon'
     | 'comfort';
   label: string;
   /** 0–100; ölçülemeyen bileşende `null`. */
@@ -108,14 +105,7 @@ export interface NightScoreInputs {
    * titreşim geçer, gözlemci bekler.
    */
   windGust?: number | null;
-  /**
-   * Şeffaflık indeksi (1 berrak – 5 bulanık); ölçülmediyse `null`.
-   *
-   * Bulut ÖRTÜSÜNDEN AYRI: toz taşınımında gökyüzü bulutsuz görünür ama
-   * sönük hedefler kaybolur. Ölçüm gelmediğinde bileşen skora hiç
-   * girmiyor — nemden türetilmiş bir sayı, ölçülmemişi ölçülmüş gibi
-   * göstermek olurdu.
-   */
+  /** Eski API uyumluluğu; skor artık şeffaflığı ayrı bileşen yapmıyor. */
   transparencyIndex?: number | null;
 }
 
@@ -123,7 +113,7 @@ const clamp = (value: number, min = 0, max = 100) =>
   Math.min(max, Math.max(min, value));
 
 /**
- * Ağırlıklar. Şeffaflık burada YOK — o çarpan.
+ * Ağırlıklar. Bulut burada YOK — o çarpan.
  *
  * Seeing en ağır çünkü ölçüyü o belirliyor: bulutsuz ama çalkantılı bir
  * gecede yıldızlar şişer ve hiçbir işleme bunu geri getirmez. Karanlık
@@ -221,24 +211,6 @@ function comfortScore(
 }
 
 /**
- * Aerosol ÇARPAN ama buluttan çok daha yumuşak.
- *
- * Bulut geceyi bitirir (çarpan 0'a kadar iner); pus bitirmez, sönük
- * hedefleri alır. İndeks 1 → 1.00, indeks 5 → 0.75. Ölçüm yoksa çarpan
- * 1: bilinmeyen bir bulanıklığı ceza olarak yazmak, veri eksikliğini
- * kötü havaya çevirmek olurdu.
- */
-function aerosolFactor(index: number | null | undefined): number {
-  if (index == null) return 1;
-  return 1 - (clamp(index, 1, 5) - 1) * 0.0625;
-}
-
-/** Şeffaflık indeksi 1–5 → 100–0 (kırılım çubuğu için). */
-function transparencyScore(index: number): number {
-  return clamp(((5 - index) / 4) * 100);
-}
-
-/**
  * Karanlık: gecenin ne kadarı AYSIZ karanlık.
  *
  * Payda tam karanlık süresi, gecenin tamamı değil — alacakaranlıkta ay
@@ -270,14 +242,7 @@ export function nightScore(
   profile: NightProfile = 'gozlem'
 ): NightScore {
   const weights = PROFILE_WEIGHTS[profile];
-  /*
-   * "AÇIKLIK" ADI BİLİNÇLİ. Bu satır uzun süre "Şeffaflık" diye
-   * yazıyordu ama hesabı `100 - bulut` idi — yani açıklığı ölçüp
-   * şeffaflık diye sunuyordu. Gerçek şeffaflık (aerosol) artık ayrı bir
-   * ölçüm ve ayrı bir satır; ikisini aynı ada sıkıştırmak, toz taşınan
-   * bulutsuz bir geceye "şeffaflık 100" demek olurdu.
-   */
-  const clarity = clamp(100 - inputs.cloudCover);
+  const cloudClear = clamp(100 - inputs.cloudCover);
   const seeing =
     inputs.seeingIndex === null ? null : seeingScore(inputs.seeingIndex);
   const comfort = comfortScore(
@@ -288,10 +253,6 @@ export function nightScore(
     inputs.windGust
   );
   const darkness = darknessScore(inputs.darkMinutes, inputs.moonlessMinutes);
-  const transparency =
-    inputs.transparencyIndex == null
-      ? null
-      : transparencyScore(inputs.transparencyIndex);
 
   /*
    * Seeing yoksa ağırlığı kalan ikisine oranlarını koruyarak dağıtılıyor.
@@ -306,9 +267,7 @@ export function nightScore(
         comfort * weights.comfort +
         darkness * weights.darkness;
 
-  const total = Math.round(
-    (clarity / 100) * base * aerosolFactor(inputs.transparencyIndex)
-  );
+  const total = Math.round((cloudClear / 100) * base);
   const limitedBySeeing = seeing === null;
 
   const rows: ScoreRow[] = [
@@ -316,20 +275,8 @@ export function nightScore(
       key: 'cloudCover',
       label: 'Bulut örtüsü',
       value: Math.round(inputs.cloudCover),
-      barValue: Math.round(clarity),
-      tone: toneFor(clarity),
-    },
-    {
-      key: 'clarity',
-      label: 'Açıklık',
-      value: Math.round(clarity),
-      tone: toneFor(clarity),
-    },
-    {
-      key: 'transparency',
-      label: 'Şeffaflık',
-      value: transparency === null ? null : Math.round(transparency),
-      tone: toneFor(transparency),
+      barValue: Math.round(cloudClear),
+      tone: toneFor(cloudClear),
     },
     {
       key: 'seeing',
@@ -339,28 +286,20 @@ export function nightScore(
     },
     {
       key: 'darkness',
-      label: 'Karanlık',
+      label: 'Karanlık/Ay',
       value: Math.round(darkness),
       tone: toneFor(darkness),
     },
     {
-      key: 'moon',
-      label: 'Ay aydınlığı',
-      value: Math.round(inputs.moonIllumination * 100),
-      barValue: Math.round(100 - inputs.moonIllumination * 100),
-      tone: toneFor(100 - inputs.moonIllumination * 100),
-    },
-    {
       key: 'comfort',
-      label: 'Rüzgâr & çiy',
+      label: 'Rüzgâr/Çiy',
       value: Math.round(comfort),
       tone: toneFor(comfort),
     },
   ];
 
   const { pros, cons } = reasons(inputs, {
-    clarity,
-    transparency,
+    cloudClear,
     seeing,
     darkness,
     comfort,
@@ -382,15 +321,14 @@ export function nightScore(
 /**
  * Gerekçeler — SAYIYI TEKRARLAMIYOR, SEBEBİNİ SÖYLÜYOR.
  *
- * "Şeffaflık 97" zaten çubukta yazıyor. Buradaki satırların işi kullanıcının
- * karar verirken ihtiyaç duyduğu somut bilgiyi vermek: bulut yüzdesi değil
+ * "Bulut örtüsü 12" zaten çubukta yazıyor. Buradaki satırların işi kullanıcının
+ * karar verirken ihtiyaç duyduğu somut bilgiyi vermek: sadece yüzde değil
  * "gece boyunca %3 bulut, kuru hava (çiy 8°C)".
  */
 function reasons(
   inputs: NightScoreInputs,
   scores: {
-    clarity: number;
-    transparency: number | null;
+    cloudClear: number;
     seeing: number | null;
     darkness: number;
     comfort: number;
@@ -400,23 +338,12 @@ function reasons(
   const cons: string[] = [];
   const spread = inputs.temperature - inputs.dewPoint;
 
-  if (scores.clarity >= 85) {
+  if (scores.cloudClear >= 85) {
     pros.push(
       `Gece boyunca %${Math.round(inputs.cloudCover)} bulut, çiy noktası ${Math.round(inputs.dewPoint)}°C`
     );
-  } else if (scores.clarity < 55) {
+  } else if (scores.cloudClear < 55) {
     cons.push(`%${Math.round(inputs.cloudCover)} bulut örtüsü — açıklık dar`);
-  }
-
-  /*
-   * PUS AYRI BİR GEREKÇE. Bulutsuz ama bulanık gecede kullanıcı skorun
-   * neden düştüğünü bulutta arar ve bulamaz; sebebi yazmak, sayıyı
-   * tekrarlamaktan farklı bir bilgi veriyor.
-   */
-  if (scores.transparency !== null && scores.transparency < 50) {
-    cons.push('Atmosferde toz/pus — sönük hedeflerde kontrast düşük');
-  } else if (scores.transparency !== null && scores.transparency >= 85) {
-    pros.push('Atmosfer berrak — sönük hedefler için iyi gece');
   }
 
   if (scores.seeing !== null) {

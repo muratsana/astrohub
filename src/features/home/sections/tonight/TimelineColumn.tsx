@@ -57,63 +57,56 @@ export function TimelineColumn({
 
   return (
     <div className="flex flex-col gap-5 p-5">
-      <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-end">
-        <dl className="grid gap-3 sm:grid-cols-3">
-          <div>
-            <dt className="label caps text-muted-foreground">
-              Karanlık penceresi
-            </dt>
-            <dd className="mt-1 text-readout-xl font-semibold leading-none text-foreground">
-              {dark ? (
+      <div className="grid gap-2">
+        <dl className="grid gap-3 min-[560px]:grid-cols-[minmax(13rem,1.35fr)_minmax(7rem,0.75fr)_minmax(8rem,0.9fr)]">
+          <SummaryMetric
+            label="Karanlık penceresi"
+            value={
+              dark ? (
                 <>
                   {clock(dark.from)}
                   <span className="mx-1.5 text-faint">→</span>
                   {clock(dark.to)}
                 </>
               ) : (
-                <span className="text-readout-lg font-normal text-faint">
-                  bu enlemde oluşmuyor
-                </span>
-              )}
-            </dd>
-          </div>
+                'bu enlemde oluşmuyor'
+              )
+            }
+          />
 
-          <div>
-            <dt className="label caps text-muted-foreground">Toplam Süre</dt>
-            <dd className="mt-1 text-readout-xl font-semibold leading-none text-primary">
-              {dark ? formatDuration(darkMinutes) : '—'}
-            </dd>
-          </div>
+          <SummaryMetric
+            label="Toplam Süre"
+            value={dark ? formatDuration(darkMinutes) : '—'}
+            tone="primary"
+          />
 
-          <div>
-            <dt className="label caps text-muted-foreground">Aysız Pencere</dt>
-            <dd
-              className={cn(
-                'mt-1 text-readout-xl font-semibold leading-none',
-                !dark
-                  ? 'text-faint'
-                  : timeline.moonlessMinutes === 0
-                    ? 'text-warning'
-                    : 'text-success'
-              )}
-            >
-              {!dark
+          <SummaryMetric
+            label="Aysız Pencere"
+            value={
+              !dark
                 ? '—'
                 : timeline.moonlessMinutes === 0
                   ? 'yok'
-                  : formatDuration(timeline.moonlessMinutes)}
-            </dd>
-          </div>
+                  : formatDuration(timeline.moonlessMinutes)
+            }
+            tone={
+              !dark
+                ? 'faint'
+                : timeline.moonlessMinutes === 0
+                  ? 'warning'
+                  : 'success'
+            }
+          />
         </dl>
 
-        <dl className="text-left xl:text-right">
-          <dt className="text-meta text-faint">gece</dt>
-          <dd className="text-body-sm font-medium leading-tight text-muted-foreground">
+        <p className="justify-self-start text-meta text-muted-foreground min-[560px]:justify-self-end">
+          <span className="text-faint">gece</span>{' '}
+          <span className="tabular font-medium">
             {clock(timeline.from)}
             <span className="mx-1 text-faint">→</span>
             {clock(timeline.to)}
-          </dd>
-        </dl>
+          </span>
+        </p>
       </div>
 
       <NightTimelineChart
@@ -189,6 +182,38 @@ export function TimelineColumn({
       </div>
 
       <MoonPhaseStrip moon={moon} moonTimes={moonTimes} timeZone={timeZone} />
+    </div>
+  );
+}
+
+function SummaryMetric({
+  label,
+  value,
+  tone = 'foreground',
+}: {
+  label: string;
+  value: React.ReactNode;
+  tone?: 'foreground' | 'primary' | 'success' | 'warning' | 'faint';
+}) {
+  const toneClass = {
+    foreground: 'text-foreground',
+    primary: 'text-primary',
+    success: 'text-success',
+    warning: 'text-warning',
+    faint: 'text-faint',
+  }[tone];
+
+  return (
+    <div className="min-w-0">
+      <dt className="label caps truncate text-muted-foreground">{label}</dt>
+      <dd
+        className={cn(
+          'tabular mt-1 overflow-hidden text-ellipsis whitespace-nowrap text-readout-lg font-semibold leading-none min-[560px]:text-readout-xl',
+          toneClass
+        )}
+      >
+        {value}
+      </dd>
     </div>
   );
 }

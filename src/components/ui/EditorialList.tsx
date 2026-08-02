@@ -146,7 +146,7 @@ function LeadCard({ item, label }: { item: EditorialItem; label: string }) {
           )}
         </div>
 
-        <h2 className="type-section text-foreground transition-colors group-hover:text-primary">
+        <h2 className="type-section text-foreground transition-colors group-hover:text-white">
           {item.title}
         </h2>
         <p className="mt-2.5 text-meta leading-relaxed text-muted-foreground">
@@ -214,7 +214,7 @@ function EditorialCard({ item }: { item: EditorialItem }) {
           `lh` birimi satır yüksekliğinin kendisi — 13px ve `leading-snug`
           değişse de ayrılan yer başlığın gerçek iki satırı kadar kalır.
         */}
-        <h2 className="line-clamp-2 min-h-[2lh] text-body-sm leading-snug text-foreground transition-colors group-hover:text-primary">
+        <h2 className="line-clamp-2 min-h-[2lh] text-body-sm leading-snug text-foreground transition-colors group-hover:text-white">
           {item.title}
         </h2>
         <p className="mt-1.5 line-clamp-3 min-h-[3lh] text-meta leading-relaxed text-muted-foreground">
@@ -256,7 +256,7 @@ function EditorialRow({ item }: { item: EditorialItem }) {
       className="group flex h-full items-baseline gap-3 bg-surface-1 px-3 py-2.5 transition-colors hover:bg-surface-2"
     >
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-body-sm text-foreground transition-colors group-hover:text-primary">
+        <span className="block truncate text-body-sm text-foreground transition-colors group-hover:text-white">
           {item.title}
         </span>
         <span className="mt-0.5 block truncate text-meta text-muted-foreground">

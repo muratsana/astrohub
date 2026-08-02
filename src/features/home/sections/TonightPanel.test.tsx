@@ -96,51 +96,13 @@ describe('TonightPanel · zaman kolonu', () => {
 });
 
 describe('TonightPanel · hedef kolonu', () => {
-  it('çipler tek seçimli bir grup ve biri açık', () => {
+  it('nesne türü filtresi göstermiyor', () => {
     renderPanel();
-    const group = screen.getByRole('radiogroup', { name: /nesne türü/i });
-    const chips = within(group).getAllByRole('radio');
-    expect(chips.map((c) => c.textContent)).toEqual([
-      'Tümü',
-      'Bulutsu',
-      'Küme',
-      'Galaksi',
-    ]);
     expect(
-      chips.filter((c) => c.getAttribute('aria-checked') === 'true')
-    ).toHaveLength(1);
-  });
-
-  it('çipe basınca seçim o çipe geçiyor', () => {
-    renderPanel();
-    const group = screen.getByRole('radiogroup', { name: /nesne türü/i });
-    const galaksi = within(group).getByRole('radio', { name: 'Galaksi' });
-
-    fireEvent.click(galaksi);
-
-    expect(galaksi).toHaveAttribute('aria-checked', 'true');
-    expect(within(group).getByRole('radio', { name: 'Tümü' })).toHaveAttribute(
-      'aria-checked',
-      'false'
-    );
-  });
-
-  /*
-   * SÜZME TAM SIRALAMAYA UYGULANIYOR, altı satıra değil. Bu test onu
-   * dolaylı ölçüyor: bir çipe basınca liste boşalıyorsa süzme kesilmiş
-   * listenin üstünde çalışıyor demektir — katalogda o türden onlarca
-   * kayıt var ve her gece en az birkaçı yükselir.
-   */
-  it('her çip için liste doluyor — süzme kesilmiş listeye uygulanmıyor', () => {
-    renderPanel();
-    const group = screen.getByRole('radiogroup', { name: /nesne türü/i });
-
-    for (const name of ['Bulutsu', 'Küme', 'Galaksi']) {
-      fireEvent.click(within(group).getByRole('radio', { name }));
-      expect(
-        screen.queryByText(/bu filtreye uygun nesne yok/i),
-        `${name} çipi boş liste veriyor`
-      ).not.toBeInTheDocument();
+      screen.queryByRole('radiogroup', { name: /nesne türü/i })
+    ).not.toBeInTheDocument();
+    for (const name of ['Tümü', 'Bulutsu', 'Küme', 'Galaksi']) {
+      expect(screen.queryByRole('radio', { name })).not.toBeInTheDocument();
     }
   });
 
@@ -149,7 +111,7 @@ describe('TonightPanel · hedef kolonu', () => {
     const links = screen
       .getAllByRole('link')
       .filter((a) => a.getAttribute('href')?.startsWith('/hedef/'));
-    expect(links.length).toBeGreaterThan(0);
+    expect(links).toHaveLength(10);
   });
 
   it('tüm katalog bağlantısı nesne sayısını taşıyor', () => {
