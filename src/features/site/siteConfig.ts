@@ -204,3 +204,61 @@ export function maintenanceBypass(pathname: string): boolean {
     (yol) => pathname === yol || pathname.startsWith(`${yol}/`)
   );
 }
+
+/* ── Hava sağlayıcısı ────────────────────────────────────────────────── */
+
+/**
+ * HAVA SERVİSİ SEÇİMİ (§3.4 "sağlayıcı seçiminin admin ayarından
+ * değişmesi").
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * İKİ SEÇENEK VAR, ÜÇ DEĞİL
+ *
+ * İlk tasarımda üç seçenek düşünüldü: `auto`, `meteoblue`, `open-meteo`.
+ * `meteoblue` seçeneği ELENDİ çünkü `auto`dan farkı yoktu — otomatik
+ * mod zaten meteoblue varsa onu kullanıyor. Farkı olmayan bir seçenek,
+ * panelde bir şey yapıyormuş gibi duran bir kontrol demekti; fazın
+ * kuralı "çalışmayan placeholder gösterme".
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * SEÇENEKLERİN ANLAMI
+ *
+ *   `auto`       → meteoblue yapılandırılmışsa yer koşulları ve bulut
+ *                  ondan; düşerse Open-Meteo. Bugünkü davranış.
+ *   `open-meteo` → meteoblue HİÇ ÇAĞRILMIYOR. Bu bir maliyet kararı
+ *                  (meteoblue anahtarı kredili) ve bir arıza kaçış
+ *                  yolu (vekil bozulursa her istekte bir kez daha
+ *                  denemenin anlamı yok).
+ *
+ * Ters yön güvenli: Open-Meteo her koşulda çağrılıyor (seeing hesabının
+ * ihtiyaç duyduğu 200/500 hPa rüzgârını yalnızca o veriyor), yani
+ * `open-meteo` seçmek paneli boş bırakmıyor. Tersini —"yalnızca
+ * meteoblue"— eklemek TEHLİKELİ olurdu: vekil düşerse ayar yüzünden
+ * hiçbir ziyaretçi hava verisi göremezdi ve düzeltmek için panele
+ * girmek gerekirdi.
+ */
+export type WeatherProvider = 'auto' | 'open-meteo';
+
+export const DEFAULT_WEATHER_PROVIDER: WeatherProvider = 'auto';
+
+export const weatherProviderLabels: Record<WeatherProvider, string> = {
+  auto: 'Otomatik (meteoblue, düşerse Open-Meteo)',
+  'open-meteo': 'Yalnızca Open-Meteo',
+};
+
+/**
+ * `app_settings.weather_provider` değerini okur.
+ *
+ * BİLİNMEYEN DEĞER VARSAYILANA DÜŞÜYOR. Tabloya elle yazılmış bir dize
+ * ya da kaldırılmış bir seçenek, hava panelini kapatmamalı — yedek yönü
+ * burada da "site normal çalışıyor".
+ */
+export function toWeatherProvider(value: unknown): WeatherProvider {
+  const ham =
+    typeof value === 'string'
+      ? value
+      : value && typeof value === 'object'
+        ? (value as { saglayici?: unknown }).saglayici
+        : null;
+  return ham === 'open-meteo' ? 'open-meteo' : DEFAULT_WEATHER_PROVIDER;
+}

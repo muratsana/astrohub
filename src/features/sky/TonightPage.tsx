@@ -1,11 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Panel } from '@/components/ui/Panel';
 import { Readout } from '@/components/ui/Readout';
 import { Badge } from '@/components/ui/Badge';
-import { ButtonLink } from '@/components/ui/Button';
+import { Button, ButtonLink } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Select } from '@/components/ui/Input';
 import { PageMeta } from '@/components/seo/PageMeta';
@@ -29,6 +29,11 @@ import { moonlessDarkMinutes } from '@/domain/astronomy/nightCalendar';
 import { zonedMidnight } from '@/domain/time/zonedDay';
 import { altitudeCurve, usableWindow } from '@/domain/astronomy/sessionPlan';
 import { AltitudeChart } from './AltitudeChart';
+import {
+  readCityParam,
+  shareableCityId,
+  withCityParam,
+} from './locationShare';
 import { cn } from '@/lib/cn';
 
 /**
@@ -48,10 +53,48 @@ type SortKey = 'pencere' | 'zirve' | 'ad';
 const MIN_ALTITUDE = 30;
 
 export function TonightPage() {
-  const { location } = useLocationContext();
+  const { location, provinces, setCity } = useLocationContext();
   const conditions = useSkyConditions();
   const [sort, setSort] = useState<SortKey>('pencere');
   const [kind, setKind] = useState<TargetKind | 'hepsi'>('hepsi');
+  const [kopyalandi, setKopyalandi] = useState(false);
+
+  /*
+   * ADRESTEKİ ŞEHİR BİR KEZ UYGULANIYOR (§3.4 "URL ile paylaşılabilir
+   * konum"). `useRef` kilidi şart: il listesi asenkron geliyor ve
+   * effect ikinci kez çalışıyor. Kilit olmasaydı, bağlantıyı açıp
+   * sonra başka şehir seçen kullanıcı liste yüklenince adresteki
+   * şehre GERİ ATILIRDI — kendi seçimini geri alan bir sayfa.
+   */
+  const adresUygulandi = useRef(false);
+
+  useEffect(() => {
+    if (adresUygulandi.current) return;
+    const slug = readCityParam(window.location.search);
+    if (!slug) {
+      adresUygulandi.current = true;
+      return;
+    }
+    /* İl listesi gelene kadar bekliyoruz: erken çağrı `setCity`nin
+       aramasında eşleşmez ve parametre sessizce yutulurdu. */
+    if (provinces.length === 0) return;
+    adresUygulandi.current = true;
+    if (slug !== location.cityId) setCity(slug);
+  }, [provinces, location.cityId, setCity]);
+
+  const paylasilabilir = shareableCityId(location);
+
+  function paylas() {
+    const adres = withCityParam(
+      `${window.location.pathname}${window.location.search}${window.location.hash}`,
+      paylasilabilir
+    );
+    window.history.replaceState(null, '', adres);
+    void navigator.clipboard
+      ?.writeText(`${window.location.origin}${adres}`)
+      .then(() => setKopyalandi(true))
+      .catch(() => setKopyalandi(false));
+  }
 
   // Gün, gözlem konumunun takvimine göre anahtarlanır (ASTRO-01) —
   // tarayıcısı başka dilimde olan kullanıcı yanlış geceyi hesaplamasın.
@@ -168,6 +211,23 @@ export function TonightPage() {
                   {verdict.label}
                 </Badge>
               )}
+              {/* KONUM PAYLAŞIMI (§3.4). Cihaz konumunda düğme
+                  ÇALIŞMIYOR ve sebebi yazılı — kullanıcının nerede
+                  gözlem yaptığını bağlantıya koymak §14.4'ün korumaya
+                  çalıştığı şey. */}
+              <Button
+                size="sm"
+                variant="ghost"
+                disabled={!paylasilabilir}
+                title={
+                  paylasilabilir
+                    ? `${location.label} için bağlantı`
+                    : 'Cihaz konumu paylaşılmıyor — bağlantıya koyulacak olan sizin bulunduğunuz nokta olurdu. Şehir seçerseniz paylaşılabilir.'
+                }
+                onClick={paylas}
+              >
+                {kopyalandi ? 'Kopyalandı' : 'Bağlantıyı kopyala'}
+              </Button>
               <ButtonLink to="/planlayici" size="sm" variant="secondary">
                 Gece Planı Kur
               </ButtonLink>

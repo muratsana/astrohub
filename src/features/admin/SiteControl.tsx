@@ -17,6 +17,8 @@ import {
   describePathProblem,
   fetchFeatureFlags,
   setFeatureFlag,
+  fetchAppSettings,
+  setAppSetting,
   fetchHistory,
   rollbackSetting,
   summarize,
@@ -30,6 +32,12 @@ import {
   type FeatureFlag,
   type HistoryEntry,
 } from './siteSettings';
+import {
+  DEFAULT_WEATHER_PROVIDER,
+  toWeatherProvider,
+  weatherProviderLabels,
+  type WeatherProvider,
+} from '@/features/site/siteConfig';
 
 /**
  * SİTE YÖNETİMİ — panelin ana sayfa, özellik anahtarı ve geçmiş yüzeyi
@@ -69,6 +77,7 @@ export function SiteControl({ canWrite }: { canWrite: boolean }) {
       <HomeModulesSection canWrite={canWrite} onChange={yenile} />
       <HeroSlidesSection canWrite={canWrite} onChange={yenile} />
       <NavLinksSection canWrite={canWrite} onChange={yenile} />
+      <WeatherProviderSection canWrite={canWrite} onChange={yenile} />
       <FeatureFlagsSection canWrite={canWrite} onChange={yenile} />
       <HistorySection canWrite={canWrite} tazele={tazele} onChange={yenile} />
     </div>
@@ -1343,5 +1352,110 @@ function HeroSlideRowEditor({
         />
       </div>
     </li>
+  );
+}
+
+/* ── Hava sağlayıcısı ────────────────────────────────────────────────── */
+
+/**
+ * HAVA SERVİSİ TERCİHİ (§3.4).
+ *
+ * Faz 3'te "sağlayıcı seçiminin admin ayarından değişmesi" maddesi
+ * `site_settings` tablosu olmadığı için açıkta kalmıştı. Tablo Faz 10'da
+ * geldi; bu bölüm o maddeyi kapatıyor.
+ *
+ * İKİ SEÇENEK VAR, ÜÇ DEĞİL — "yalnızca meteoblue" seçeneği bilerek
+ * yok: vekil düştüğünde hiçbir ziyaretçi hava verisi göremezdi ve
+ * düzeltmek için panele girmek gerekirdi. Gerekçenin tamamı
+ * `siteConfig.ts` içinde.
+ */
+function WeatherProviderSection({
+  canWrite,
+  onChange,
+}: {
+  canWrite: boolean;
+  onChange: () => void;
+}) {
+  const [deger, setDeger] = useState<WeatherProvider | null>(null);
+  const [hata, setHata] = useState<string | null>(null);
+  const [mesgul, setMesgul] = useState(false);
+
+  const yukle = useCallback(async () => {
+    setHata(null);
+    try {
+      const rows = await fetchAppSettings();
+      const row = rows.find((r) => r.key === 'weather_provider');
+      /* Satır hiç yoksa varsayılan: ayar henüz yazılmamış demek,
+         bozuk değil. */
+      setDeger(toWeatherProvider(row?.value));
+    } catch (e) {
+      setDeger(DEFAULT_WEATHER_PROVIDER);
+      setHata(e instanceof Error ? e.message : 'Ayar okunamadı');
+    }
+  }, []);
+
+  useEffect(() => {
+    void yukle();
+  }, [yukle]);
+
+  async function uygula(hedef: WeatherProvider) {
+    setMesgul(true);
+    setHata(null);
+    try {
+      await setAppSetting(
+        'weather_provider',
+        { saglayici: hedef },
+        `Hava sağlayıcısı: ${weatherProviderLabels[hedef]}`
+      );
+      await yukle();
+      onChange();
+    } catch (e) {
+      setHata(e instanceof Error ? e.message : 'Kaydedilemedi');
+    } finally {
+      setMesgul(false);
+    }
+  }
+
+  return (
+    <Panel
+      title="Hava servisi"
+      status={deger ? weatherProviderLabels[deger] : 'okunuyor…'}
+    >
+      {hata && <Alert className="mb-3">{hata}</Alert>}
+
+      <p className="mb-3 text-meta leading-relaxed text-muted-foreground">
+        Open-Meteo <strong className="text-foreground">her koşulda</strong>{' '}
+        çağrılır: seeing hesabının ihtiyaç duyduğu üst atmosfer rüzgârını
+        yalnızca o veriyor. Buradaki seçim, meteoblue’nun bulut ve yer
+        koşulları verisinin kullanılıp kullanılmayacağını belirliyor —
+        meteoblue anahtarı kredili olduğu için bu aynı zamanda bir maliyet
+        kararı.
+      </p>
+
+      <div className="space-y-1.5">
+        {(Object.keys(weatherProviderLabels) as WeatherProvider[]).map((k) => (
+          <label
+            key={k}
+            className="flex items-start gap-2 text-body-sm text-foreground"
+          >
+            <input
+              type="radio"
+              name="weather-provider"
+              className="mt-1"
+              checked={deger === k}
+              disabled={!canWrite || mesgul || deger === null}
+              onChange={() => void uygula(k)}
+            />
+            <span>{weatherProviderLabels[k]}</span>
+          </label>
+        ))}
+      </div>
+
+      <p className="mt-3 text-meta leading-relaxed text-faint">
+        “Yalnızca meteoblue” seçeneği bilerek YOK: vekil düşerse hiçbir
+        ziyaretçi hava verisi göremez ve düzeltmenin tek yolu bu panele
+        girmek olurdu.
+      </p>
+    </Panel>
   );
 }

@@ -11,13 +11,16 @@ import {
   DEFAULT_ANNOUNCEMENT,
   DEFAULT_FLAGS,
   DEFAULT_MAINTENANCE,
+  DEFAULT_WEATHER_PROVIDER,
   toAnnouncement,
   toFlags,
   toMaintenance,
+  toWeatherProvider,
   type Announcement,
   type FlagKey,
   type Maintenance,
   type SiteFlags,
+  type WeatherProvider,
 } from './siteConfig';
 import {
   DEFAULT_NAV_LINKS,
@@ -76,6 +79,8 @@ interface SiteConfigValue {
   navLinks: NavLinkView[];
   /** Hero slaytları (§6.3). Yayın penceresini RLS uyguluyor. */
   heroSlides: HeroSlideView[];
+  /** Hava servisi tercihi (§3.4). */
+  weatherProvider: WeatherProvider;
   status: 'loading' | 'ready' | 'unconfigured';
 }
 
@@ -85,6 +90,7 @@ const VARSAYILAN: SiteConfigValue = {
   maintenance: DEFAULT_MAINTENANCE,
   navLinks: DEFAULT_NAV_LINKS,
   heroSlides: DEFAULT_HERO_SLIDES,
+  weatherProvider: DEFAULT_WEATHER_PROVIDER,
   status: 'loading',
 };
 
@@ -110,7 +116,7 @@ export function SiteConfigProvider({ children }: { children: ReactNode }) {
           supabase
             .from('app_settings')
             .select('key, value')
-            .in('key', ['announcement', 'maintenance']),
+            .in('key', ['announcement', 'maintenance', 'weather_provider']),
           supabase
             .from('nav_links')
             .select('menu, group_label, label, path, position, enabled, new_tab, auth_only'),
@@ -155,6 +161,7 @@ export function SiteConfigProvider({ children }: { children: ReactNode }) {
           maintenance: toMaintenance(bul('maintenance')),
           navLinks: toNavLinks(menuSatirlari),
           heroSlides: toHeroSlides(slaytSatirlari),
+          weatherProvider: toWeatherProvider(bul('weather_provider')),
           status: 'ready',
         });
       } catch {
@@ -233,4 +240,16 @@ export function useMenu(menu: 'header' | 'footer'): NavLinkView[] {
 // eslint-disable-next-line react-refresh/only-export-components
 export function useHeroSlides(): HeroSlideView[] {
   return useContext(SiteConfigContext).heroSlides;
+}
+
+/**
+ * Hava servisi tercihi (§3.4).
+ *
+ * Ayrı bir kanca: `useSkyConditions` bütün site yapılandırmasına değil
+ * yalnızca bu değere bağlı olmalı — bağlamın başka bir alanı değiştiğinde
+ * hava isteği yeniden kurulmasın.
+ */
+// eslint-disable-next-line react-refresh/only-export-components
+export function useWeatherProvider(): WeatherProvider {
+  return useContext(SiteConfigContext).weatherProvider;
 }

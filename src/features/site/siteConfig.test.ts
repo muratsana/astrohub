@@ -8,6 +8,7 @@ import {
   toFlags,
   toMaintenance,
 } from './siteConfig';
+import { toWeatherProvider, weatherProviderLabels } from './siteConfig';
 import { siteMap, withoutPrefixes } from '@/app/navigation';
 
 /**
@@ -186,5 +187,40 @@ describe('withoutPrefixes', () => {
 
   it('kapalı bölüm yokken harita olduğu gibi kalır', () => {
     expect(withoutPrefixes(siteMap, [])).toBe(siteMap);
+  });
+});
+
+describe('toWeatherProvider', () => {
+  it('ayar yoksa otomatik', () => {
+    /* Yedek yönü: "site normal çalışıyor". Ayar okunamadığında hava
+       panelini kapatan bir varsayılan, tek bir başarısız istekte
+       meteoblue'yu kalıcı devre dışı bırakırdı. */
+    expect(toWeatherProvider(undefined)).toBe('auto');
+    expect(toWeatherProvider(null)).toBe('auto');
+    expect(toWeatherProvider({})).toBe('auto');
+  });
+
+  it('nesne biçimini okuyor', () => {
+    expect(toWeatherProvider({ saglayici: 'open-meteo' })).toBe('open-meteo');
+    expect(toWeatherProvider({ saglayici: 'auto' })).toBe('auto');
+  });
+
+  it('düz dize de kabul ediliyor', () => {
+    expect(toWeatherProvider('open-meteo')).toBe('open-meteo');
+  });
+
+  it('tanımsız değer varsayılana düşüyor', () => {
+    /* Tabloya elle yazılmış ya da kaldırılmış bir seçenek, paneli
+       kapatmamalı. "Yalnızca meteoblue" seçeneği hiç YOK — vekil
+       düşerse ziyaretçi hava verisi göremezdi. */
+    expect(toWeatherProvider({ saglayici: 'meteoblue' })).toBe('auto');
+    expect(toWeatherProvider({ saglayici: 'uydurma' })).toBe('auto');
+    expect(toWeatherProvider(42)).toBe('auto');
+  });
+
+  it('her seçeneğin bir etiketi var', () => {
+    for (const k of ['auto', 'open-meteo'] as const) {
+      expect(weatherProviderLabels[k]).toBeTruthy();
+    }
   });
 });

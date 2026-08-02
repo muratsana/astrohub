@@ -24,7 +24,7 @@ tabloda `DONE` ile birleştirilmez:
 | 0 | Envanter, baseline, güvenli ortam | 102–135 | DONE |
 | 1 | Veri modeli, Supabase güvenliği, merkezi yapılandırma | 136–257 | PARTIAL¹ |
 | 2 | Tek tasarım sistemi ve bütüncül arayüz | 258–355 | DONE |
-| 3 | Ana sayfa, navbar, hero, hava durumu | 356–461 | PARTIAL |
+| 3 | Ana sayfa, navbar, hero, hava durumu | 356–461 | PARTIAL⁹ |
 | 4 | Ortak arama, filtreleme, sıralama, görünüm | 462–548 | PARTIAL |
 | 5 | Bildirim, mesajlaşma, sosyal aktivite | 549–632 | PARTIAL² |
 | 6 | Etkinlik takip ve hatırlatma | 633–682 | PARTIAL³ |
@@ -40,6 +40,16 @@ tabloda `DONE` ile birleştirilmez:
 | 16 | Performans, SEO, analitik, gözlemlenebilirlik | 1607–1690 | NOT_STARTED |
 | 17 | Test stratejisi ve kabul kriterleri | 1691–… | NOT_STARTED |
 | 18 | (belgenin sonu) | …–1956 | NOT_STARTED |
+
+⁹ **Faz 3'te kodla kapatılabilecek iş kalmadı.** Son iki `NOT_STARTED`
+madde bu turda kapandı: hava sağlayıcısı seçimi artık panelden
+yönetiliyor (`0068`) ve konum adres çubuğuna yazılabiliyor
+(`?sehir=ankara`). İki bayat satır da düzeltildi (modül kapatma ve
+"boşsa gizle" Faz 10'da kapanmıştı, kayıt güncellenmemişti). Kalan üç
+madde ÖLÇÜM işi, kod işi değil: hero görsel–metin kontrastının
+örneklemeyle ölçülmesi, "slider gerçekten gerekli mi" sorusunun
+etkileşim verisiyle cevaplanması ve boş modül durumlarının E2E'de
+üretilmesi (ağ kesintisi taklidi gerekiyor). Ayrıntı: Faz 3 bölümü.
 
 ⁸ **Faz 11'in envanteri çıkarıldı; §14.6 kapandı.** Fazın açılış kuralı
 "çakışan modülleri birleştir, çalışmayan placeholder gösterme" diyor, bu
@@ -384,8 +394,8 @@ gerçek sanıp sonra hepsinin değiştiğini görüyordu.
 | İstek hata verdi | DONE | `status === 'error'` → `Alert` + "Yeniden dene"; tohum listesi ÇİZİLMİYOR |
 | Görsel dosyası bulunamadı | DONE | `RemoteImage` yıldız alanına iniyor — kırık görsel ikonu hiç çıkmıyor |
 | İçerik moderasyonda | DONE | Satır sorgudan zaten dönmüyor (RLS + `status` filtresi); modül için "içerik yok"tan farksız |
-| Modül admin tarafından kapalı | NOT_STARTED | `home_modules` tablosu gerekiyor — Faz 10 |
-| Boşsa otomatik gizlenme | IMPLEMENTED_DISABLED | `hideWhenEmpty` prop'u yazıldı ve test edildi; **varsayılan kapalı**. Belge gizlemeyi "admin panelinden yönetilebilir" bir davranış olarak tanımlıyor, yani mutlak kural değil tercih. Galeri sitenin çekirdek içeriği: boş olması ilk yükleyecek kişi için fırsat, modülü gizlemek o fırsatı da gizler. Faz 10'da admin anahtarına bağlanacak |
+| Modül admin tarafından kapalı | DONE | `home_modules.enabled`; `toHomeLayout` süzüyor, `HomePage` yalnızca gelen modülleri çiziyor (Faz 10'da kapandı, satır bayattı) |
+| Boşsa otomatik gizlenme | DONE | `home_modules.hide_when_empty` → `HomePage` → `RecentRecords hideWhenEmpty`. Varsayılan hâlâ KAPALI ve gerekçesi duruyor: galeri sitenin çekirdek içeriği, boş olması ilk yükleyecek kişi için fırsat. Artık bu bir TERCİH, panelden çevriliyor (Faz 10'da kapandı, satır bayattı) |
 | E2E doğrulaması | NOT_STARTED | Durum ayrımı 10 birim testiyle ölçülüyor; E2E'de yükleme/hata durumunu üretmek ağ kesintisi taklidi gerektiriyor |
 
 **Kendi testimin yakaladığı hata:** ilk yazımda boş-durum dalı hata
@@ -460,7 +470,7 @@ Belgenin zorunlu tuttuğu 18 bilgi alanı tek tek karşılaştırıldı.
 | Tahmin ufku dışında sahte veri göstermeme | DONE — `FORECAST_DAYS = 16`, ötesinde açıkça "hava verisi yok" |
 | Tarih değişince konumu kaybetmeme | DONE |
 | URL ile paylaşılabilir tarih | DONE — `?gece=2026-08-08`; offset DEĞİL tarih yazılıyor ki bağlantı ertesi gün başka geceyi göstermesin. Tarayıcıda gidiş-dönüş doğrulandı |
-| URL ile paylaşılabilir konum | NOT_STARTED — konum `LocationContext`te, URL'ye bağlı değil |
+| URL ile paylaşılabilir konum | DONE — `?sehir=ankara`. **Koordinat DEĞİL şehir slug'ı** yazılıyor; cihaz konumu paylaşılamıyor ve düğme sebebini söylüyor (`locationShare.ts`, 12 test) |
 | Europe/Istanbul + seçili konum zaman dilimi | DONE — gece tarihi IANA diliminde kuruluyor |
 
 **Sağlayıcı katmanı**
@@ -472,8 +482,50 @@ Belgenin zorunlu tuttuğu 18 bilgi alanı tek tek karşılaştırıldı.
 | Veri kaynağı görünürlüğü | DONE — `source` arayüzde |
 | Cache | DONE — 15 dk, `retry` önbelleği atlıyor |
 | Rate limit | DONE — meteoblue vekilinde |
-| Sağlayıcı seçiminin admin ayarından değişmesi | NOT_STARTED — `site_settings` tablosu gerekiyor (Faz 10) |
+| Sağlayıcı seçiminin admin ayarından değişmesi | DONE — `app_settings.weather_provider` (`0068`); panelde **Hava servisi** bölümü. İki seçenek: `auto` ve `open-meteo`. "Yalnızca meteoblue" bilerek YOK (gerekçe aşağıda) |
 | Veri kaynağı ZAMANI görünürlüğü | DONE — panel başlığında "HH:MM güncellendi" olarak duruyor (`DecisionColumn`); durum kaydı bayattı, kod ölçülünce görüldü |
+
+### Faz 3'ün son iki maddesi — Faz 10 açtı, bu tur kapattı
+
+**Sağlayıcı seçimi: iki seçenek var, üç değil.** İlk tasarımda `auto`,
+`meteoblue`, `open-meteo` düşünüldü. `meteoblue` ELENDİ çünkü `auto`dan
+farkı yoktu — otomatik mod zaten meteoblue varsa onu kullanıyor. Farkı
+olmayan bir seçenek, panelde bir şey yapıyormuş gibi duran bir kontrol
+demekti.
+
+**"Yalnızca meteoblue" seçeneği de bilerek YOK ve sebebi asimetrik:**
+Open-Meteo her koşulda çağrılıyor (seeing hesabının ihtiyaç duyduğu
+200/500 hPa rüzgârını yalnızca o veriyor), yani `open-meteo` seçmek
+paneli boş bırakmıyor. Tersi tehlikeliydi — vekil düşerse ayar yüzünden
+hiçbir ziyaretçi hava verisi göremez ve düzeltmenin tek yolu panele
+girmek olurdu.
+
+`open-meteo` seçilince meteoblue isteği **hiç kurulmuyor**, `catch` ile
+yutulmuyor: ayarın sebebi maliyet (anahtar kredili) ve arıza kaçışı;
+isteği atıp sonucu atmak ikisini de çözmezdi. Önbellek anahtarı da
+sağlayıcıyı taşıyor — yoksa ayar değişir, sayılar değişmez ve ayarın
+çalışmadığı sanılırdı.
+
+**Paylaşılabilir konum: koordinat değil ŞEHİR SLUG'I.** `?enlem=&boylam=`
+çalışırdı ve yanlış olurdu: cihaz konumu kullanan biri "bu geceye bak"
+diye bağlantı gönderdiğinde bahçesinin GPS'ini de göndermiş olurdu.
+`?sehir=ankara` paylaşılan şeyi kişisel bir konumdan herkese açık bir
+referansa çeviriyor. `planShare.ts` aynı kararı gece planı için zaten
+vermişti; bu ikinci yer.
+
+Sonuç: **cihaz konumu paylaşılamıyor** ve arayüz düğmeyi gizlemek yerine
+sebebini yazıyor — sessizce çalışmayan bir düğme, açıkça çalışmayan bir
+düğmeden kötü.
+
+Adresteki şehir **bir kez** uygulanıyor (`useRef` kilidi). Kilit şart:
+il listesi asenkron geliyor ve effect ikinci kez çalışıyor; kilit
+olmasaydı bağlantıyı açıp sonra başka şehir seçen kullanıcı liste
+yüklenince adresteki şehre geri atılırdı.
+
+**İki bayat satır da düzeltildi:** "modül admin tarafından kapalı" ve
+"boşsa otomatik gizlenme" Faz 10'da kapanmıştı ama durum kaydı
+güncellenmemişti. Kod okundu, `home_modules.enabled` ve
+`hide_when_empty` gerçekten `HomePage`e bağlıydı.
 
 ---
 

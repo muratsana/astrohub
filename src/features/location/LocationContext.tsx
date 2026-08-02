@@ -110,6 +110,7 @@ function cityLocation(city: City, source: LocationSource): ObservingLocation {
     longitude: city.longitude,
     timeZone: TURKEY_TIME_ZONE,
     source,
+    cityId: city.id,
     bortle: city.bortle,
   };
 }
@@ -133,6 +134,7 @@ function provinceLocation(
     longitude: province.longitude,
     timeZone: TURKEY_TIME_ZONE,
     source,
+    cityId: province.slug,
     bortle: findCity(province.slug)?.bortle,
   };
 }

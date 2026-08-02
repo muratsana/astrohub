@@ -23,6 +23,15 @@ export interface ObservingLocation {
   longitude: number;
   timeZone: string;
   source: LocationSource;
+  /**
+   * Konum bir ŞEHİR ön ayarından geliyorsa o şehrin slug'ı.
+   *
+   * Cihaz konumunda YOK ve olmaması bilinçli: bu alan paylaşılabilir
+   * bağlantıya yazılıyor (`/bu-gece?sehir=...`) ve cihaz konumunun
+   * paylaşılacak bir karşılığı olmamalı — kullanıcının nerede gözlem
+   * yaptığını yayımlamak §14.4'ün korumaya çalıştığı şey.
+   */
+  cityId?: string;
   /** Şehir ön ayarından geliyorsa tipik Bortle sınıfı. */
   bortle?: number;
 }

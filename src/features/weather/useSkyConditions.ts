@@ -4,6 +4,8 @@ import { fetchOpenMeteo, type SkyConditions } from './openMeteo';
 import { fetchMeteoblue } from './meteoblue';
 import { fetchTransparency } from './airQuality';
 import { hasNetworkAccess } from '@/lib/runtime';
+import { useWeatherProvider } from '@/features/site/SiteConfigContext';
+import type { WeatherProvider } from '@/features/site/siteConfig';
 
 /**
  * `offline`: dış istek yapılamayan bir derlemede çalışıyoruz (tek dosya
@@ -50,9 +52,14 @@ const cache = new Map<string, CacheEntry>();
  * bugünün koşulları "taze" sayılıp olduğu gibi gösterilirdi — tarih
  * değişir, sayılar değişmezdi.
  */
-function keyFor(lat: number, lon: number, at?: Date) {
+/*
+ * SAĞLAYICI DA ANAHTARDA. Yönetici tercihi değiştirdiğinde önbellekteki
+ * eski sonuç "taze" sayılıp olduğu gibi gösterilirdi — ayar değişir,
+ * sayılar değişmezdi ve değişmediği için ayarın çalışmadığı sanılırdı.
+ */
+function keyFor(lat: number, lon: number, provider: WeatherProvider, at?: Date) {
   const gun = at ? at.toISOString().slice(0, 13) : 'simdi';
-  return `${lat.toFixed(2)},${lon.toFixed(2)},${gun}`;
+  return `${lat.toFixed(2)},${lon.toFixed(2)},${gun},${provider}`;
 }
 
 /**
@@ -73,7 +80,8 @@ function keyFor(lat: number, lon: number, at?: Date) {
 export async function fetchConditions(
   latitude: number,
   longitude: number,
-  at?: Date
+  at?: Date,
+  provider: WeatherProvider = 'auto'
 ): Promise<SkyConditions | null> {
   const open = await fetchOpenMeteo(latitude, longitude, undefined, at).catch(
     () => ({ conditions: null, upperAir: null })
@@ -85,8 +93,15 @@ export async function fetchConditions(
    * çağırmak paneli bir tur daha bekletirdi. Hatası da ayrı: düşerse
    * yalnızca o alan "veri yok" olur, koşulların tamamı değil.
    */
+  /*
+   * `open-meteo` seçiliyse meteoblue İSTEĞİ HİÇ ATILMIYOR — `catch` ile
+   * yutulmuyor, kurulmuyor. Ayarın sebebi maliyet ve arıza kaçışı;
+   * isteği atıp sonucu atmak ikisini de çözmezdi.
+   */
   const [meteoblue, transparency] = await Promise.all([
-    fetchMeteoblue(latitude, longitude, open.upperAir).catch(() => null),
+    provider === 'open-meteo'
+      ? Promise.resolve(null)
+      : fetchMeteoblue(latitude, longitude, open.upperAir).catch(() => null),
     fetchTransparency(latitude, longitude, at).catch(() => null),
   ]);
 
@@ -104,7 +119,8 @@ export async function fetchConditions(
  */
 export function useSkyConditions(at?: Date): SkyState {
   const { location } = useLocationContext();
-  const key = keyFor(location.latitude, location.longitude, at);
+  const provider = useWeatherProvider();
+  const key = keyFor(location.latitude, location.longitude, provider, at);
 
   const [state, setState] = useState<Omit<SkyState, 'retry'>>(() => {
     const hit = cache.get(key);
@@ -144,7 +160,7 @@ export function useSkyConditions(at?: Date): SkyState {
     // anda mount olduğunda tek istek gider.
     const inflight =
       hit?.promise ??
-      fetchConditions(location.latitude, location.longitude, at).catch(
+      fetchConditions(location.latitude, location.longitude, at, provider).catch(
         () => null
       );
 
@@ -163,7 +179,7 @@ export function useSkyConditions(at?: Date): SkyState {
        olarak eklenmesi effect'i sonsuz döngüye sokardı. Anahtar zaten
        `at`in saat hassasiyetli karşılığını taşıyor, yani gerçekten
        değiştiğinde `key` değişiyor. */
-  }, [key, attempt, location.latitude, location.longitude]);
+  }, [key, attempt, location.latitude, location.longitude, provider]);
 
   return { ...state, retry };
 }
