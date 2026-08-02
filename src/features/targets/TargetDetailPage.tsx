@@ -10,6 +10,7 @@ import { usePhotoCatalog } from '@/services/content/photos';
 import { getTargetBySlug, targetKindLabels } from './data';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
+import { FavoriteTargetButton } from './FavoriteTargetButton';
 
 /**
  * Hedef detay sayfası (§8.2): teknik künye + bu hedefin Astrohub'daki
@@ -92,6 +93,10 @@ export function TargetDetailPage() {
                 {target.difficulty}
               </Badge>
             </div>
+
+            {/* Favori / gözlem listesi (§14.1) — oturum yoksa hiç
+                çizilmiyor, gerekçe bileşenin başlığında. */}
+            <FavoriteTargetButton slug={target.slug} />
 
             <p className="mt-4 leading-relaxed text-muted-foreground">
               {target.description}

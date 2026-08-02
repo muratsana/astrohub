@@ -1345,7 +1345,7 @@ karşılaştırma yapılmadan yazılan her şey ikinci bir kopya olurdu.
 
 | Bölüm | Karşılık | Durum |
 |---|---|---|
-| §14.1 Gözlem ve gökyüzü planlama | `/planlayici`, `/bu-gece`, `/hedefler`, `features/sky` | PARTIAL — hedef arama, yükseklik grafiği, alacakaranlık ve ay ayrımı var; **favori hedef / gözlem listesi**, **paylaşılabilir plan** ve **takvime ekleme** yok |
+| §14.1 Gözlem ve gökyüzü planlama | `/planlayici`, `/bu-gece`, `/hedefler`, `features/sky` | PARTIAL — hedef arama, yükseklik grafiği, alacakaranlık, ay ayrımı ve **favori hedef / gözlem listesi** (`0066`) var; **paylaşılabilir plan** ve **takvime ekleme** yok |
 | §14.2 Astrofotoğraf hesaplama | `/araclar/*` — FOV, pixel scale, mozaik, setup uyumluluk | PARTIAL — çekirdek hesaplar test edilmiş durumda; **poz/entegrasyon planı**, **depolama ihtiyacı**, **dither aralığı** yok |
 | §14.3 Gökyüzü olayları takvimi | `/araclar/takvim`, `events` | PARTIAL — ay fazı ve karanlık takvimi var; **meteor yağmuru**, **tutulma**, **ISS geçişi** yok (dış veri kaynağı gerekiyor) |
 | §14.4 Karanlık gökyüzü haritası | `/saha`, `observing_sites`, ışık kirliliği katmanı | DONE'a yakın — koordinat gizliliği `photo_exact_locations` deseniyle çözülmüş |
@@ -1390,6 +1390,49 @@ talep hiç yok. Talep de temizlenince ölçüm geçti.
 Bu, "politika doğru görünüyor" ile "politika doğru davranıyor"
 arasındaki farkın somut örneği: ölçüm olmasaydı yanlış olan test değil
 varsayımımız olurdu ve bunu hiç öğrenemezdik.
+
+### §14.1'de "birleştir" kuralı SORULDU ve cevabı HAYIR çıktı
+
+§14.9'da `content_entries` genişletilerek yeni tablo açılmamıştı. Aynı
+soru favori hedefler için de soruldu — `collections` / `collection_items`
+kullanılabilir mi? Cevap farklı çıktı ve bu, kuralın körlemesine
+uygulanmadığının kanıtı.
+
+`collection_items` şöyle: `photo_id uuid NOT NULL references
+astro_photos(id)`, birincil anahtar `(collection_id, photo_id)`.
+Hedefleri sokmanın tek yolu `photo_id`yi nullable yapmak, bir
+`target_slug` sütunu eklemek, birincil anahtarı değiştirmek ve "bu satır
+foto mu hedef mi" diye soran bir ayrım sütunu koymaktı — yani 0064'te
+gözlem günlüğü için REDDETTİĞİMİZ şeklin aynısı.
+
+Kavramsal olarak da tutmuyor:
+
+    collections     → ADLANDIRILMIŞ, paylaşılabilir, sıralı foto seçkisi
+    favori hedefler → adsız düz küme; "yıldızladım" demek
+
+Koleksiyonun adı, slug'ı, gizlilik anahtarı ve paylaşım adresi var;
+favori hedefte bunların hiçbiri yok ve olması da istenmiyor. Birleştirme
+kuralı "her şeyi tek tabloya yığ" demek değil, ÇAKIŞAN modülleri
+birleştir demek.
+
+### "Gözlem listesi" ayrı bir tablo değil — bir YORUM, gizli bir eksik değil
+
+§14.1 "favori hedefler" ve "gözlem listesi"ni ayrı maddeler sayıyor.
+İkincisini birincinin BU GECEYE göre süzülmüş hâli olarak yorumladık:
+sıralamayı gökyüzü belirliyor (yükseklik, transit), kullanıcı değil —
+saklanacak bir sıra yok. Pratik karşılığı, favorilenen hedeflerin
+planlayıcıyı açtığında seçili gelmesi.
+
+İki ayrı liste, kullanıcıya aynı hedefi iki kez işaretletirdi
+("favoriledim ama listeye eklemedim") ve aradaki farkı kimseye
+anlatamazdık. Bu yorum burada yazılı olduğu için, ileride biri "gözlem
+listesi nerede" diye sorduğunda cevabı var.
+
+Planlayıcıda favoriler BAŞLANGIÇ DEĞERİ, bağlayıcı kaynak değil:
+kullanıcı bu gece favorisi olmayan bir hedef eklemek isteyebilir ve
+bunun için favorilemek zorunda kalmamalı. Favori listesi geç gelen bir
+yanıt olduğu için seçim yalnızca BİR KEZ değiştiriliyor — her yüklemede
+uygulasaydık kullanıcının o sırada eklediği hedefleri silerdi.
 
 ### §14.9 için YENİ TABLO AÇILMADI — fazın kendi kuralı
 
@@ -1522,25 +1565,23 @@ Faz 3'ün "Faz 10'a bağlı" kalemlerinden hero slaytlarının admin
 yönetimi de bu turda açıldı. Kalan iki kalem (hava sağlayıcı seçimi,
 "boşsa gizle" anahtarı) Faz 3'ün kendi bölümünde duruyor.
 
-**Faz 11'in envanteri çıkarıldı; §14.6 ve §14.9 kapandı** (bkz. Faz 11
-bölümü). Dokuz alt bölümün ikisi gerçek boşluktu; ikisi de yazıldı.
+**Faz 11'de §14.6, §14.9 ve §14.1'in favori/gözlem listesi kapandı**
+(bkz. Faz 11 bölümü). Üç turda üç göç: `0064`, `0065`, `0066`.
 
-**Sıradaki iş: Faz 11'in kalan `PARTIAL` satırları.** Öncelik sırası,
-ilk ikisi dış veri kaynağı GEREKTİRMEDİĞİ için:
-  1. **§14.1 favori hedef / gözlem listesi** — `collections` ve
-     `collection_items` tabloları ZATEN VAR (fotoğraf koleksiyonu için).
-     Hedefler için ikinci tablo açmadan önce oranın genişletilip
-     genişletilemeyeceğine bakılmalı; §14.9'da `content_entries` için
-     yaptığımızın aynısı.
-  2. **§14.2 poz/entegrasyon planı + depolama ihtiyacı hesabı** — saf
-     matematik, dış veri yok. §14.2 "hesapların formüllerini testlerle
-     doğrula" ve "bilimsel sonucu belirsiz alanlarda kesinlik iddiası
-     kullanma" diyor; ikisi de bağlayıcı.
+**Sıradaki iş: Faz 11'in kalan `PARTIAL` satırları.**
+  1. **§14.2 poz/entegrasyon planı + depolama ihtiyacı hesabı** — saf
+     matematik, dış veri yok. §14.2 iki şeyi birden emrediyor:
+     "hesapların formüllerini testlerle doğrula" ve "bilimsel sonucu
+     belirsiz alanlarda kesinlik iddiası kullanma". İkincisi özellikle
+     poz süresi önerisinde bağlayıcı — optimum poz, gökyüzü parlaklığına
+     ve kamera okuma gürültüsüne bağlı ve tek bir doğru sayı yok.
+  2. **§14.1 paylaşılabilir plan + takvime ekleme** — `.ics` üretimi
+     `features/events/reminders.ts`te ZATEN VAR; planlayıcı için
+     yeniden yazmadan önce oraya bakılmalı (fazın birleştirme kuralı).
   3. **§14.7 kulüp yöneticisi doğrulama + yerel SEO sayfaları.**
   4. **§14.3 meteor/tutulma/ISS** — dış veri lisansı gerektiriyor;
      adapter + feature flag ile hazırlanacak, placeholder
-     GÖSTERİLMEYECEK. Bayrak altyapısı Faz 10'da kuruldu ve ziyaretçi
-     tarafında çalışıyor.
+     GÖSTERİLMEYECEK.
 
 **Kanal bağlı değilken sahte içerik gösterilmemeli** (§11.2 son madde).
 Adaptör ve panel bu kurala uyuyor; kullanıcı sayfaları yazılırken de

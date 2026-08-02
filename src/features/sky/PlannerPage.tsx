@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -33,6 +33,7 @@ import {
 import type { PlanRequest } from '@/domain/astronomy/sessionPlan';
 import { AltitudeChart } from './AltitudeChart';
 import { cn } from '@/lib/cn';
+import { useTargetFavorites } from '@/features/targets/favorites';
 
 /**
  * GÖZLEM VE ÇEKİM PLANLAYICI (§7.10).
@@ -44,6 +45,22 @@ import { cn } from '@/lib/cn';
  * gerektiriyor (§4). Buradaki plan tarayıcıda hesaplanır ve yazdırılabilir bir
  * çıktı gibi davranır. Sunucu tarafı geldiğinde `planSession` imzası
  * değişmeden aynı sonuç saklanabilir — bu yüzden hesap domain katmanında.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * GÖZLEM LİSTESİ = FAVORİLER (§14.1)
+ *
+ * §14.1 "favori hedefler" ve "gözlem listesi"ni ayrı maddeler sayıyor;
+ * biz ikinciyi birincinin BU GECEYE göre süzülmüş hâli olarak
+ * yorumladık (gerekçe `0066`da). Pratik karşılığı: kullanıcının
+ * favorilediği hedefler planlayıcıyı açtığında SEÇİLİ geliyor.
+ *
+ * Favori yoksa eski davranış duruyor — katalogdan ilk üç hedef. Boş bir
+ * planlayıcı, aracın ne yaptığını göstermez; kullanıcı önce bir şey
+ * görmeli, sonra kendi listesini kurmalı.
+ *
+ * SEÇİM YİNE YEREL DURUM: favoriler başlangıç değeri, bağlayıcı kaynak
+ * değil. Kullanıcı bu gece favorisi olmayan bir hedef eklemek isteyebilir
+ * ve bunun için favorilemek zorunda kalmamalı.
  */
 
 /** Varsayılan seçili hedefler — kullanıcı boş ekranla karşılaşmasın. */
@@ -57,10 +74,25 @@ interface Selection {
 export function PlannerPage() {
   const { location } = useLocationContext();
   const [minAltitude, setMinAltitude] = useState(30);
+  const favorites = useTargetFavorites();
   const [selection, setSelection] = useState<Selection[]>(() =>
     targets.slice(0, DEFAULT_SELECTION).map((t) => ({ slug: t.slug, minutes: 90 }))
   );
   const [pick, setPick] = useState('');
+  /* Favoriler ağdan geliyor; geldiklerinde seçimi BİR KEZ değiştiriyoruz.
+     `dokunuldu` olmadan her yüklemede kullanıcının eklediği hedefler
+     silinirdi — favori listesi geç gelen bir yanıt olduğu için bu,
+     kullanıcı yazarken elini vurmak demekti. */
+  const [dokunuldu, setDokunuldu] = useState(false);
+
+  useEffect(() => {
+    if (dokunuldu || favorites.loading || favorites.slugs.size === 0) return;
+    const bilinen = new Set(targets.map((t) => t.slug));
+    const favori = [...favorites.slugs].filter((s) => bilinen.has(s));
+    if (favori.length === 0) return;
+    setSelection(favori.map((slug) => ({ slug, minutes: 90 })));
+    setDokunuldu(true);
+  }, [dokunuldu, favorites.loading, favorites.slugs]);
 
   // Gün, gözlem konumunun takvimine göre anahtarlanır (ASTRO-01).
   const dayStartMs = zonedMidnight(new Date(), location.timeZone).getTime();
