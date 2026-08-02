@@ -450,7 +450,7 @@ gerçek koda göre hâlâ açıktı.
 |---|---|---|
 | Navbar şehir seçimi kaldırılacak | `Topbar` hâlâ `LocationPicker variant="compact"` çiziyordu | DONE — üst çubuktan kaldırıldı; tek ürün kontrolü `Bu Gece`/çekmece hattında kalacak |
 | Navbar `Ekipman` kaldırılacak | `primaryNav` ve `0062` tohumu `/ekipman` taşıyordu | DONE — üst menüden çıkarıldı; route ve modül haritası korunuyor |
-| Canlı `nav_links` hizası | Eski canlı/tohum satırı production'da kalabilirdi | DONE — `20260802202412_remove_equipment_from_header_nav.sql` canlı Astrohub Supabase projesine uygulandı; `/ekipman` header'da `enabled=false`, kalan header sırası 1-8 |
+| Canlı `nav_links` hizası | Eski canlı/tohum satırı production'da kalabilirdi | DONE — `20260802203529_remove_equipment_from_header_nav.sql` canlı Astrohub Supabase projesine uygulandı; `/ekipman` header'da `enabled=false`, kalan header sırası 1-8 |
 | Ana sayfa `Son İlanlar` thumbnail | `RecentListings` statik seed + `StarField` çiziyordu; `listing_photos` hiç okunmuyordu | DONE — liste sorgusu kapak fotoğrafını okuyor ve ana sayfa `RemoteImage` kullanıyor |
 | İlan liste kartları thumbnail | Marketplace grid kartı `Listing.imageUrl` geldiği halde `StarField` çiziyordu | DONE — `MarketplacePage` grid kartı da ilan kapak görselini tüketiyor; görsel yoksa ortak fallback'e düşüyor |
 | Ana sayfa galeri thumbnail | Repo `RecentRecords -> PhotoCard` zinciriyle `imageUrl` tüketiyor | PARTIAL — kod zinciri doğru görünüyor; kullanıcı canlıda görmediği için gerçek preview/canlı veriyle tekrar doğrulanacak |
@@ -463,7 +463,7 @@ gerçek koda göre hâlâ açıktı.
 - `src/components/shell/Topbar.tsx` — üst çubuktaki ikinci şehir seçici kaldırıldı.
 - `src/app/navigation.ts` — `Ekipman` ana navigasyondan çıkarıldı.
 - `supabase/migrations/0062_nav_links_tohumu.sql` — yeni kurulum tohumu sekiz header bağlantısıyla hizalandı.
-- `supabase/migrations/20260802202412_remove_equipment_from_header_nav.sql` — mevcut canlı header menüsünde `/ekipman` satırını kapatan göç eklendi.
+- `supabase/migrations/20260802203529_remove_equipment_from_header_nav.sql` — mevcut canlı header menüsünde `/ekipman` satırını kapatan göç eklendi.
 - `src/services/content/listings.ts` — `listing_photos` ilişkisi okunup kapak görseli `Listing.imageUrl` alanına taşındı.
 - `src/services/marketplace/photoUrl.ts` — ilan fotoğraf URL üretimi hafif ortak yardımcıya ayrıldı.
 - `src/features/home/sections/RecentListings.tsx` — ana sayfa ilan kartları gerçek kapak görselini kullanır; yoksa ortak fallback'e düşer.

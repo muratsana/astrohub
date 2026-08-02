@@ -37,6 +37,6 @@ begin
      and enabled;
 
   if '/ekipman' = any(coalesce(olculen, array[]::text[])) then
-    raise exception '20260802202412 ölçümü: /ekipman header menüsünde kaldı.';
+    raise exception '20260802203529 ölçümü: /ekipman header menüsünde kaldı.';
   end if;
 end $$;
