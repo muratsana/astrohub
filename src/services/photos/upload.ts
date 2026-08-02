@@ -500,10 +500,8 @@ export async function requestPlateSolve(photoId: string): Promise<void> {
   }
 }
 
-/** `photos` bucket'ı genel; yol doğrudan adrese çevrilebiliyor. */
-export function publicPhotoUrl(path: string | null | undefined): string | null {
-  if (!path) return null;
-  const base = import.meta.env.VITE_SUPABASE_URL?.trim();
-  if (!base) return null;
-  return `${base}/storage/v1/object/public/photos/${path}`;
-}
+/* `publicPhotoUrl` `./publicUrl`e TAŞINDI ve buradan yeniden dışa
+   aktarılıyor. Sebep ölçüldü: galeri katmanı yalnızca bu beş satır için
+   yükleme boru hattının tamamını ilk pakete çekiyordu. Yeniden dışa
+   aktarma, mevcut çağıranları değiştirmeden bırakıyor. */
+export { publicPhotoUrl } from './publicUrl';

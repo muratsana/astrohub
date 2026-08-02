@@ -12,7 +12,7 @@ import {
 import type { PhotoVersion } from '@/domain/photography/versions';
 import { gradientFromSeed } from '@/components/media/tints';
 import { getSupabase } from '@/services/supabase/client';
-import { publicPhotoUrl } from '@/services/photos/upload';
+import { publicPhotoUrl } from '@/services/photos/publicUrl';
 import { useCatalog } from './useCatalog';
 import type { ContentSelection } from './select';
 

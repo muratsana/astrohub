@@ -128,13 +128,18 @@ describe('fetchProvinces · yapılandırma yokken', () => {
   });
 
   /*
-   * Tohumda gerçek plaka kodu YOK. Uydurulmuş bir kod, kod üzerinden
-   * eşleşen bir sorguyu sessizce yanlış ile bağlardı — bu yüzden
-   * negatif veriliyor ve gerçek plakayla asla karışmıyor.
+   * TOHUM GERÇEK PLAKA KODU TAŞIYOR.
+   *
+   * Eskiden uydurma negatif kodlar üretiliyordu ve testi de bunu
+   * ölçüyordu. Sessiz sonucu şuydu: ilçeler `province_code` ile
+   * sorgulandığı için, veritabanı yokken İLÇE SEÇİCİ HİÇ AÇILMIYORDU.
+   * Ölçülen artık şu — yedek kayıt gerçek bir ille eşleşebiliyor.
    */
-  it('tohum kayıtlarının plaka kodu gerçek koddan ayırt edilebilir', async () => {
+  it('tohum kayıtları gerçek plaka kodu taşıyor', async () => {
     const { items } = await fetchProvinces();
-    expect(items.every((p) => p.code < 0)).toBe(true);
+    expect(items).toHaveLength(81);
+    expect(items.every((p) => p.code >= 1 && p.code <= 81)).toBe(true);
+    expect(new Set(items.map((p) => p.code)).size).toBe(81);
   });
 
   it('tohum kayıtları da normalize arama adı taşıyor', async () => {

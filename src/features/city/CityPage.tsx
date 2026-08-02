@@ -180,9 +180,9 @@ export function CityPage() {
           />
           <Readout
             label="Şehir Bortle"
-            value={city.bortle}
-            unit="/9"
-            hint="il merkezi tipik değeri"
+            value={city.bortle ?? '—'}
+            unit={city.bortle ? '/9' : undefined}
+            hint={city.bortle ? 'il merkezi tipik değeri' : 'ölçüm yok'}
             tone="muted"
           />
         </div>

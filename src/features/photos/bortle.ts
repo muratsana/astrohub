@@ -1,5 +1,5 @@
 import type { BortleClass } from '@/domain/astronomy/skyQuality';
-import { cities } from '@/features/location/cities';
+import { cities, type City } from '@/features/location/cities';
 
 /**
  * KONUMDAN BORTLE TÜRETME.
@@ -49,11 +49,48 @@ export function deriveBortle(input: {
 
   if (haystack.length === 0) return null;
 
-  const match = cities.find((c) => {
-    const name = c.name.toLocaleLowerCase('tr-TR');
-    return haystack.some((h) => h.includes(name));
-  });
+  for (const h of haystack) {
+    const match = matchProvince(h);
+    if (!match) continue;
+    const derived = clampClass(match.bortle);
+    return derived ? { value: derived, source: 'il' } : null;
+  }
 
-  const derived = match ? clampClass(match.bortle) : null;
-  return derived ? { value: derived, source: 'il' } : null;
+  return null;
+}
+
+/**
+ * Bir etikette geçen ili bulur — EN SONDAKİ eşleşme kazanır.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * NEDEN "İLK BULUNAN" DEĞİL
+ *
+ * Liste 15 ilken sıra önemsizdi; 81 ile çıkınca bir il adı BAŞKA BİR
+ * İLİN İLÇE ADI olabiliyor. Örnek: "Aksaray, İstanbul". Aksaray hem bir
+ * il hem de İstanbul'un bir semti; katalogda alfabetik olarak İstanbul'un
+ * önünde. "İlk eşleşen" kuralıyla fotoğraf Aksaray iline bağlanır ve
+ * İstanbul'un Bortle 9'u yerine hiçbir değer üretilmezdi.
+ *
+ * Türkçe adres yazımı "ilçe, il" biçiminde daralarak değil GENİŞLEYEREK
+ * gider: en sondaki parça en büyük idari birimdir. Bu yüzden eşleşmenin
+ * KONUMU sıralamadan daha iyi bir işaret — en sağdaki il adı alınıyor.
+ */
+function matchProvince(haystack: string): City | null {
+  let best: City | null = null;
+  let bestIndex = -1;
+
+  for (const city of cities) {
+    /*
+     * `toLowerCase()` DEĞİL: Türkçede "İzmir" → "i̇zmir" (noktalı i +
+     * birleşen nokta) olur ve etiketteki "izmir" ile eşleşmez; il
+     * tanınmaz, gösterge sessizce çizilmezdi.
+     */
+    const index = haystack.lastIndexOf(city.name.toLocaleLowerCase('tr-TR'));
+    if (index > bestIndex) {
+      bestIndex = index;
+      best = city;
+    }
+  }
+
+  return best;
 }

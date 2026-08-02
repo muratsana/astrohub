@@ -9,7 +9,27 @@
       "destination": "/app.html"
     },
     {
+      "source": "/adiyaman-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
       "source": "/admin",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/afyonkarahisar-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/agri-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/aksaray-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/amasya-astronomi-etkinlikleri",
       "destination": "/app.html"
     },
     {
@@ -53,11 +73,59 @@
       "destination": "/app.html"
     },
     {
+      "source": "/ardahan-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/artvin-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/aydin-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/balikesir-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/bartin-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/batman-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/bayburt-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
       "source": "/bildirimler",
       "destination": "/app.html"
     },
     {
+      "source": "/bilecik-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/bingol-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/bitlis-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/bolu-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
       "source": "/bu-gece",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/burdur-astronomi-etkinlikleri",
       "destination": "/app.html"
     },
     {
@@ -69,11 +137,31 @@
       "destination": "/app.html"
     },
     {
+      "source": "/cankiri-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
       "source": "/cerezler",
       "destination": "/app.html"
     },
     {
+      "source": "/corum-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/denizli-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
       "source": "/diyarbakir-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/duzce-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/edirne-astronomi-etkinlikleri",
       "destination": "/app.html"
     },
     {
@@ -101,7 +189,19 @@
       "destination": "/app.html"
     },
     {
+      "source": "/elazig-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/erzincan-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
       "source": "/erzurum-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/eskisehir-astronomi-etkinlikleri",
       "destination": "/app.html"
     },
     {
@@ -153,11 +253,19 @@
       "destination": "/app.html"
     },
     {
+      "source": "/giresun-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
       "source": "/giris",
       "destination": "/app.html"
     },
     {
       "source": "/gozlem-noktasi/:slug",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/gumushane-astronomi-etkinlikleri",
       "destination": "/app.html"
     },
     {
@@ -170,6 +278,10 @@
     },
     {
       "source": "/haberler",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/hakkari-astronomi-etkinlikleri",
       "destination": "/app.html"
     },
     {
@@ -197,6 +309,10 @@
       "destination": "/app.html"
     },
     {
+      "source": "/hatay-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
       "source": "/hedef/:slug",
       "destination": "/app.html"
     },
@@ -206,6 +322,10 @@
     },
     {
       "source": "/hesap",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/igdir-astronomi-etkinlikleri",
       "destination": "/app.html"
     },
     {
@@ -225,11 +345,35 @@
       "destination": "/app.html"
     },
     {
+      "source": "/isparta-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
       "source": "/istanbul-astronomi-etkinlikleri",
       "destination": "/app.html"
     },
     {
       "source": "/izmir-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/kahramanmaras-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/karabuk-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/karaman-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/kars-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/kastamonu-astronomi-etkinlikleri",
       "destination": "/app.html"
     },
     {
@@ -245,6 +389,26 @@
       "destination": "/app.html"
     },
     {
+      "source": "/kilis-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/kirikkale-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/kirklareli-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/kirsehir-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/kocaeli-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
       "source": "/konya-astronomi-etkinlikleri",
       "destination": "/app.html"
     },
@@ -253,7 +417,27 @@
       "destination": "/app.html"
     },
     {
+      "source": "/kutahya-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
       "source": "/kvkk",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/malatya-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/manisa-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/mardin-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/mersin-astronomi-etkinlikleri",
       "destination": "/app.html"
     },
     {
@@ -266,6 +450,26 @@
     },
     {
       "source": "/mugla-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/mus-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/nevsehir-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/nigde-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/ordu-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/osmaniye-astronomi-etkinlikleri",
       "destination": "/app.html"
     },
     {
@@ -309,6 +513,10 @@
       "destination": "/app.html"
     },
     {
+      "source": "/rize-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
       "source": "/saha",
       "destination": "/app.html"
     },
@@ -321,7 +529,35 @@
       "destination": "/app.html"
     },
     {
+      "source": "/sakarya-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/samsun-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/sanliurfa-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
       "source": "/setup/:id",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/siirt-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/sinop-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/sirnak-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/sivas-astronomi-etkinlikleri",
       "destination": "/app.html"
     },
     {
@@ -333,7 +569,15 @@
       "destination": "/app.html"
     },
     {
+      "source": "/tekirdag-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
       "source": "/tesisler",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/tokat-astronomi-etkinlikleri",
       "destination": "/app.html"
     },
     {
@@ -349,6 +593,10 @@
       "destination": "/app.html"
     },
     {
+      "source": "/tunceli-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
       "source": "/tv",
       "destination": "/app.html"
     },
@@ -361,6 +609,10 @@
       "destination": "/app.html"
     },
     {
+      "source": "/usak-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
       "source": "/uyelik",
       "destination": "/app.html"
     },
@@ -369,11 +621,23 @@
       "destination": "/app.html"
     },
     {
+      "source": "/yalova-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
       "source": "/yazi/:slug",
       "destination": "/app.html"
     },
     {
       "source": "/yazilar",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/yozgat-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/zonguldak-astronomi-etkinlikleri",
       "destination": "/app.html"
     }
   ],

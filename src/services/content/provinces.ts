@@ -89,13 +89,16 @@ interface Row {
 /**
  * Tohum şehirleri il modeline çevirir.
  *
- * Plaka kodu YOK — tohumda gerçek kod bilgisi yok ve uydurmak, kod
- * üzerinden eşleşen bir sorgunun sessizce yanlış ile bağlanması demek.
- * Negatif değer veriliyor ki gerçek bir plakayla asla karışmasın.
+ * PLAKA KODU ARTIK GERÇEK. Eskiden tohumda kod bilgisi yoktu ve burada
+ * negatif sayılar üretiliyordu — "uydurma bir kod, gerçek bir plakayla
+ * karışmasın" diye. Sonucu görünmez ama ağırdı: ilçeler `province_code`
+ * ile sorgulandığı için, yedeğe düşen her ortamda İLÇE SEÇİCİ SESSİZCE
+ * BOŞ KALIYORDU. `cities.ts` 81 ili plakasıyla taşıdığından kod artık
+ * uydurulmuyor; yedek yol da tam çalışıyor.
  */
 function seedToProvinces(): Province[] {
-  return seedCities.map((c: City, i) => ({
-    code: -(i + 1),
+  return seedCities.map((c: City) => ({
+    code: c.code,
     name: c.name,
     slug: c.id,
     searchName: normalizeTr(c.name),

@@ -58,6 +58,42 @@ describe('deriveBortle · il eşleştirme', () => {
     });
     expect(deriveBortle({ city: 'Muğla' })).toEqual({ value: 6, source: 'il' });
   });
+
+  /*
+   * ══════════════════════════════════════════════════════════════════
+   * 81 İLE ÇIKINCA ORTAYA ÇIKAN TUZAK.
+   *
+   * Bir il adı başka bir ilin İLÇE/SEMT adı olabiliyor. Katalog 15 ilken
+   * bu hiç görünmüyordu; 81'de "Aksaray" hem bir il hem de İstanbul'un
+   * bir semti ve alfabetik olarak İstanbul'un ÖNÜNDE. "İlk eşleşen"
+   * kuralı fotoğrafı Aksaray'a bağlar, Aksaray'ın ölçümü olmadığı için
+   * de gösterge hiç çizilmezdi.
+   *
+   * Kural: Türkçe adres SONA doğru genişler, en sağdaki eşleşme kazanır.
+   */
+  it('semt adı bir il adıyla çakıştığında sondaki ili seçiyor', () => {
+    expect(deriveBortle({ locationLabel: 'Aksaray, İstanbul' })).toEqual({
+      value: 9,
+      source: 'il',
+    });
+    expect(deriveBortle({ locationLabel: 'Ereğli, Konya' })).toEqual({
+      value: 7,
+      source: 'il',
+    });
+  });
+
+  /*
+   * ÖLÇÜMÜ OLMAYAN İL SAYI ÜRETMİYOR. Altmış altı il için Bortle ölçümü
+   * yok; nüfusa bakıp tahmin etmek kullanıcının gökyüzü beklentisini
+   * yanlış kurardı. İl TANINIYOR ama değer uydurulmuyor.
+   */
+  it('ölçümü olmayan ilde tahmin üretmiyor', () => {
+    expect(deriveBortle({ city: 'Bayburt' })).toBeNull();
+    expect(deriveBortle({ locationLabel: 'Uzungöl, Trabzon' })).toEqual({
+      value: 7,
+      source: 'il',
+    });
+  });
 });
 
 describe('deriveBortle · aralık dışı değerler', () => {
