@@ -599,13 +599,52 @@ Motora geçiş sırasında eklenen iki yetenek:
 | Takip edilenler | DONE | `useFollowingIds` + `personalFacet`; galeride "Takip ettiklerim" süzgeci. Oturumsuzda ve küme yüklenirken facet HİÇ çizilmiyor |
 | Favoriler | DONE | `useSavedPhotoIds` + `personalFacet`; galeride "Kaydettiklerim" süzgeci. Sınıra dayanırsa `truncated` ile SÖYLENİYOR — sessiz kırpma yok |
 | Onay/yayın durumu, premium görünürlük | NOT_STARTED | Faz 9/10 |
-| Kaydedilmiş görünümler, kullanıcı varsayılanı, admin paylaşılan görünümü | NOT_STARTED | Tablo gerekiyor — Faz 10 |
+| Kaydedilmiş görünümler, kullanıcı varsayılanı, admin paylaşılan görünümü | DONE | `saved_views` (`0069`) + `SavedViewsMenu`; galeride bağlı. Varsayılan kısmi tekil indeksle zorlanıyor ve `set_default_view` RPC'siyle TEK transaction'da atanıyor. `is_shared` kullanıcıya kapalı — kural bir tetikleyicide, çünkü RLS satıra izin verir SÜTUNA değil |
 | CSV dışa aktarma (yalnız admin) | NOT_STARTED | |
 | Sütun SIRASI (sürükle-bırak) | NOT_STARTED | Göster/gizle geldi; sıra değiştirme ayrı bir etkileşim (sürükleme + klavye alternatifi) ve tek başına bir tur |
 | Mobil filtre drawer'ı | DONE | `FilterBar`ın kendi içinde: ayrı bir bileşen "tutarsız filtre bileşeni üretme" yasağını çiğnerdi. Çocuklar TEK KEZ çiziliyor (çift `id` olmasın); prerender'da masaüstü varsayılıyor. Odak tuzağı, Escape, gövde kilidi, aktif filtre rozeti. 11 birim + 1 E2E (390px ve 1280px'te gerçek tarayıcıda) |
 | Tablo görünümü (sütun göster/gizle, yoğunluk, sabit başlık, başlıktan sıralama) | DONE | `DataTable` vardı ama HİÇBİR SAYFA KULLANMIYORDU (tek eşleşme kendi dosyası). Sıralama motorun `sort` değerine yazılıyor — tablo kendi durumunu tutsaydı ızgaraya geçen kullanıcı sıralamasını kaybederdi. Sabit başlık + sabit ilk sütun, yoğunluk, sütun göster/gizle (`localStorage`), mobilde etiket-değer kartı. Pazaryerinde üçüncü görünüm olarak bağlı. 12 birim + 1 E2E |
 | Harita / takvim / zaman çizelgesi görünümleri | PARTIAL | `EventMapPage` ve `EventCalendar` ayrı sayfa olarak var; explorer'ın görünüm seçeneği değiller |
 | Görünüm tercihinin hesapta saklanması | PARTIAL | `localStorage`da saklanıyor (görünüm, yoğunluk, gizli sütunlar), hesapta değil — kullanıcı tercihleri tablosu Faz 10 |
+
+### Kaydedilmiş görünümler — üç madde, tek tablo (`0069`)
+
+**Saklanan şey JSON değil ADRES PARÇASI.** `{"q":…,"facets":…}` gibi bir
+jsonb düşünüldü ve yapılmadı: explorer'ın tek kaynağı zaten adres
+çubuğu. İkinci bir gösterim, iki tarafın ayrışabileceği bir yer açardı —
+bir facet eklendiğinde jsonb şeması da güncellenmeli, unutulursa
+kaydedilmiş görünüm sessizce eksik uygulanırdı. Yan fayda: `parseQuery`
+bilinmeyen parametreyi zaten sessizce düşürüyor, yani bir facet
+kaldırılırsa eski kayıt patlamıyor.
+
+**`is_shared` kullanıcının yazabileceği bir alan değil.** "Admin
+paylaşılan görünümü" maddesi yöneticinin bir görünümü herkese açması
+demek; satırın sahibi kullanıcı ama bu bayrağı çeviremiyor. Kural bir
+TETİKLEYİCİDE, politikada değil — **RLS satıra izin verir, SÜTUNA
+değil**: "kendi satırını yazabilir ama bu sütununu yazamaz" politikayla
+ifade edilemiyor.
+
+**Varsayılan tekil ve bu sefer tekillik ZORLANABİLİYOR.** `nav_links` ve
+`hero_slides`ta sıra benzersizliği bilerek zorlanmamıştı: panel iki
+satırı iki ayrı transaction'da takas ediyor ve birinci yazma
+reddediliyordu. Burada durum farklı — varsayılan değiştirmek bir takas
+değil, "eskisini bırak yenisini al" ve `set_default_view` ikisini tek
+transaction'da yapıyor. Kısmi tekil indeks o yüzden güvenli.
+
+RPC `security invoker`: RLS hâlâ geçerli, yani başkasının görünümünü
+varsayılan yapmaya çalışan kullanıcı sıfır satır günceller. `definer`
+yazsaydık o kapı açılırdı.
+
+**Varsayılan görünüm AÇIK BİR BAĞLANTIYI EZMİYOR.** Maddenin en kolay
+yanlış uygulaması "sayfa açılır açılmaz varsayılanı uygula" olurdu;
+sonuç, birinin paylaştığı `?ara=m31` bağlantısını açan kullanıcının
+kendi varsayılanına ışınlanması olurdu. Hiyerarşi `?sehir=` ve
+`planShare` ile aynı: **ADRES → KİŞİSEL TERCİH → VARSAYILAN**.
+
+Ölçüm bloğu ilk yazımda İKİ `do $$` bloğuna bölünmüştü ve birincinin
+`exception` dalı bütün bloğu geri alıyordu — ikinci blok, birincinin
+kurduğu kullanıcıları bulamıyordu. Beklenen hatalar artık iç
+`begin … exception` alt bloklarında yakalanıyor.
 
 ### Kişisel facet'ler — "veri var, arayüz okumuyor"un dördüncü örneği
 

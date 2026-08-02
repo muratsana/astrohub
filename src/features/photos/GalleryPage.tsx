@@ -21,6 +21,7 @@ import { availableCities } from './filtering';
 import { useExplorer } from '@/features/explorer/useExplorer';
 import { gallerySpec } from './gallerySpec';
 import { personalFacet, withFacets } from '@/features/explorer/personalFacets';
+import { SavedViewsMenu } from '@/features/explorer/SavedViewsMenu';
 import { useSavedPhotoIds } from '@/services/content/collections';
 import { useFollowingIds } from '@/services/content/social';
 import { type ProcessingPalette } from './types';
@@ -288,6 +289,11 @@ export function GalleryPage() {
             })),
           }}
           view={{ mode: view, onChange: setView }}
+          /* Kaydedilmiş görünümler ortak kontrol: `extra` yuvası
+             sayesinde her liste sayfası aynı bileşeni takabiliyor.
+             Oturumsuz ziyaretçide bileşen `null` dönüyor, yani şerit
+             bugünkü hâlinde kalıyor. */
+          extra={<SavedViewsMenu module="galeri" />}
         />
 
         {result.length === 0 ? (
