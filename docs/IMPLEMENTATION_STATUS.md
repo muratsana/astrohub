@@ -105,7 +105,7 @@ panel TV sekmesi bitti. Kalan tek şey **canlı kanal bağlantısı**
 (`IMPLEMENTED_BLOCKED_EXTERNAL`) — gerçek Google OAuth kimliği
 gerekiyor. Ayrıntı: Faz 8 bölümü.
 
-⁴ **Faz 7'nin veri ve sunucu katmanı bitti, arayüzü sürüyor.**
+⁴ **Faz 7'de kodla kapatılabilecek iş kalmadı** (RSS de bu turda kapandı).
 Şema (11 tablo), AzuraCast adaptörü, sağlık yoklaması, dağıtım
 dosyaları, güvenlik ayarları, yedekleme planı ve program takvimi hesabı
 hazır. Canlı yayın aktivasyonu **IMPLEMENTED_BLOCKED_EXTERNAL** — dış
@@ -1129,6 +1129,53 @@ Migration `0051` (istasyon/yayıncı/program/sağlık), `0052` (bildirim
 türü), `0053` (podcast); üçü de uzak projeye uygulandı. Sunucu tarafı:
 `supabase/functions/radyo-durum` ve `deploy/radyo/`.
 
+### RSS feed — canlı ölçüm iki hata yakaladı (2 Ağustos turu)
+
+Belge "RSS feed üretimine hazır yapı" diyor ve şema gerçekten hazırdı:
+`0053` seriye `language`, `author`, `owner_email`, `explicit`; bölüme
+`audio_url`, `audio_bytes`, `duration_sec`, `season`, `episode_no` koymuş.
+İndeksin adı bile `podcast_episodes_feed_idx` — `(podcast_id, publish_at
+desc)`, tam bu sorgunun sırası. Alanlar duruyordu, hiçbiri okunmuyordu.
+
+**Statik dosya değil edge fonksiyonu.** Feed'i derleme zamanında üretmek
+ZAMANLANMIŞ YAYINI bozardı: `0053` bölümü `status='published'` + ileri
+tarihli `publish_at` ile kaydetmeye izin veriyor, yani bölüm kendi saati
+gelince yayına giriyor. Statik feed o saatte değil, bir sonraki
+derlemede güncellenirdi.
+
+**Servis anahtarı YOK, `anon` yeterli.** İş salt okuma ve okunan şey
+zaten herkese açık. Servis anahtarıyla okumak, RLS'i atlayıp taslak
+bölümleri sızdırma riskini bu dosyanın doğru filtre yazmasına bağlardı;
+`anon` ile o risk veritabanında kalıyor.
+
+**Adres site yolunda değil fonksiyonun kendi yolunda.**
+`/radyo/podcast/<slug>.xml` daha güzeldi ve bir rewrite gerektirirdi ama
+`vercel.json` rewrite listesi rota ağacından ÜRETİLİYOR (CI `--check`
+ile doğruluyor) — elle eklenen satır bir sonraki üretimde silinir ve
+feed adresi bir gün 404 döner, üstelik abonelerin uygulamasında, kimse
+görmeden.
+
+**Canlı ölçüm iki hata buldu; ikisini de birim test göremezdi:**
+
+1. **`podcast_episodes.explicit` YOK.** Kolonu seçen sorgu PostgREST'e
+   400 verdiriyor, feed 502 dönüyordu. `0053` bu işareti yalnızca
+   SERİYE koymuş. Sahte veriyle çalışan test kolon listesini bilmez;
+   ancak gerçek bir istek gösterir. Üretici zaten
+   `episode.explicit ?? podcast.explicit` düşüşünü destekliyordu,
+   dolayısıyla düzeltme tek satır oldu.
+2. **`atom:link rel="self"` yanlış adresi yazıyordu.** İlk sürüm
+   `istek.url`i kullanıyordu; edge çalışma zamanı isteği İÇ adresiyle
+   görüyor ve feed `http://<proje>.supabase.co/podcast-rss` diyordu —
+   şema `http`, `/functions/v1` öneki yok. Dizinler bu alanla gerçekten
+   çektikleri adresin aynı olmasını bekliyor, uyuşmazlık "feed taşındı"
+   diye yorumlanıp aboneliği kırabiliyor. Bağlantı artık `SUPABASE_URL`
+   üzerinden kuruluyor.
+
+**Ölçüm yöntemi:** geçici bir seri açıldı, önce `draft` iken 404 verdiği
+görüldü (RLS/status süzgeci), sonra yayımlanıp üç bölüm eklendi — vakti
+gelmiş, ileri tarihli, sessiz. Feed yalnızca birincisini içeriyordu.
+Fikstür silindi; `podcasts` ve `podcast_episodes` yeniden 0 satır.
+
 ### Kapanan
 
 | Madde | Durum | Kanıt |
@@ -1148,7 +1195,7 @@ türü), `0053` (podcast); üçü de uzak projeye uygulandı. Sunucu tarafı:
 | Program takip düğmesi + bildirim tercihi | DONE | `ProgramPage` |
 | **Canlı yayın aktivasyonu** | **IMPLEMENTED_BLOCKED_EXTERNAL** | VPS yok |
 | Media Session, yeniden bağlanma, kalite seçimi | **BLOCKED_EXTERNAL** | canlı yayın olmadan doğrulanamaz |
-| RSS feed üretimi | NOT_STARTED | alanlar hazır (`0053`), üretici yok |
+| RSS feed üretimi | **DONE** | `podcast-rss` edge fonksiyonu (v3, `verify_jwt: false`) + saf üretici `feed.ts` (22 test). Canlıda uçtan uca ölçüldü: geçici seriyle 200 + `application/rss+xml`, taslak seri 404, ileri tarihli ve sessiz bölüm feed'e girmiyor. Fikstür silindi |
 
 ### "Canlı" beş yerde birden korunuyor
 
@@ -2017,14 +2064,14 @@ Migration numaraları `0054`ten devam ediyor.
 program/yayıncı/podcast/bölüm sayfaları, dinleme ilerlemesi ve panel
 Radyo sekmesi. Beş yeni rota, 86 rewrite.
 
-**Faz 7'de kodla kapatılabilecek iş kalmadı.** Kalan üç madde:
+**Faz 7'de kodla kapatılabilecek iş kalmadı.** RSS feed 2 Ağustos
+turunda kapandı (`podcast-rss` edge fonksiyonu, canlıda ölçüldü). Kalan
+iki madde dış kaynağa bağlı:
   · **Canlı yayın aktivasyonu** — VPS gerekiyor, on iki adımlık kurulum
     listesi `deploy/radyo/README.md`de.
   · **Media Session, yeniden bağlanma, kalite seçimi** — üçü de çalışan
     bir yayın akışı olmadan doğrulanamaz. Yazılabilirdi ama test
     edilemeyen bir kod, çalıştığı varsayılan bir koddur.
-  · **RSS feed** — alanlar `0053`te hazır (`author`, `owner_email`,
-    `explicit`, `language`); üreticisi bir sonraki turun işi.
 
 **Faz 8'in veri katmanı kapandı** (bkz. Faz 8 bölümü): `0055`, yedi
 tablo, YouTube bağlantı şeması. Migration numaraları `0056`dan devam
@@ -2125,6 +2172,11 @@ aileden ("veri var, arayüz okumuyor"un yeni yüzleri):
 Bu turda ayrıca `0071` tohumu canlıya uygulandı (974 ilçe, hepsinde
 koordinat, 81 il) ve cihaz konumu ilçe adıyla etiketlenmeye başladı —
 Faz 4'ün "il/ilçe filtresi" satırının ikinci yarısı.
+
+**Faz 7'nin son kod maddesi de kapandı** (RSS feed, bkz. Faz 7 bölümü).
+Edge fonksiyonu canlıya alındı ve uçtan uca ölçüldü; ölçüm iki hata
+buldu ki ikisini de birim test göremezdi (şemada olmayan kolon,
+`rel="self"` iç adresi).
 
 **Sıradaki iş:** Faz 11'in kalan `PARTIAL` satırları (yukarıdaki liste),
 ardından Faz 12 (organik kullanıcı kazanımı, belge 1350–1419) — tablodaki

@@ -7,6 +7,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { NotFoundPage } from '@/components/NotFoundPage';
 import { breadcrumbJsonLd } from '@/lib/seo';
+import { podcastFeedUrl } from './feedUrl';
 import { usePodcast, usePodcasts, type EpisodeSummary } from '@/services/content/podcast';
 import { formatTrackTime } from './types';
 
@@ -97,6 +98,7 @@ function SeriListesi() {
 
 function SeriSayfasi({ slug }: { slug: string }) {
   const { podcast, episodes, loading, notFound } = usePodcast(slug);
+  const feedUrl = podcastFeedUrl(slug);
 
   if (notFound) return <NotFoundPage />;
 
@@ -112,6 +114,13 @@ function SeriSayfasi({ slug }: { slug: string }) {
 
   return (
     <>
+      {/*
+        Podcast istemcileri sayfayı açıp `rel="alternate"` arıyor: adresi
+        yapıştıran kullanıcı feed'i elle bulmak zorunda kalmıyor.
+      */}
+      {feedUrl && (
+        <link rel="alternate" type="application/rss+xml" title={podcast.title} href={feedUrl} />
+      )}
       <PageMeta
         title={`${podcast.title} — Astrohub Podcast`}
         description={podcast.summary || podcast.description.slice(0, 160)}
@@ -179,6 +188,28 @@ function SeriSayfasi({ slug }: { slug: string }) {
             {podcast.author && (
               <Panel title="Hazırlayan" bodyClassName="p-3">
                 <p className="text-body-sm text-foreground">{podcast.author}</p>
+              </Panel>
+            )}
+            {/*
+              ABONELİK BAĞLANTISI — feed'in tek görünür kapısı.
+
+              Dizine (Apple/Spotify) verilecek adres bu. Yapılandırma
+              yoksa `podcastFeedUrl` `null` dönüyor ve panel HİÇ
+              çizilmiyor: çalışmayan bir "RSS" düğmesi, olmayan bir
+              düğmeden kötü.
+            */}
+            {feedUrl && (
+              <Panel title="Abone ol" bodyClassName="p-3">
+                <p className="mb-2 text-meta leading-relaxed text-muted-foreground">
+                  Adresi podcast uygulamanıza ekleyin; yeni bölümler
+                  kendiliğinden düşer.
+                </p>
+                <a
+                  href={feedUrl}
+                  className="block break-all text-body-sm text-primary hover:underline"
+                >
+                  RSS feed
+                </a>
               </Panel>
             )}
           </aside>
