@@ -1348,7 +1348,7 @@ karşılaştırma yapılmadan yazılan her şey ikinci bir kopya olurdu.
 | Bölüm | Karşılık | Durum |
 |---|---|---|
 | §14.1 Gözlem ve gökyüzü planlama | `/planlayici`, `/bu-gece`, `/hedefler`, `features/sky` | DONE'a yakın — hedef arama, yükseklik grafiği, alacakaranlık, ay ayrımı, favori/gözlem listesi (`0066`), **paylaşılabilir plan** ve **takvime ekleme** (`planShare.ts`) var; kalan tek madde **interaktif gökyüzü haritası** (dış veri/lisans gerektiriyor) |
-| §14.2 Astrofotoğraf hesaplama | `/araclar/*` — FOV, pixel scale, mozaik, setup uyumluluk, **poz-plani** | DONE'a yakın — poz/entegrasyon planı, depolama ihtiyacı ve dither aralığı eklendi (`capturePlan.ts`, 17 formül testi); kalan: **filtre–hedef uyumu** ve **kalibrasyon rehberi** (ikisi de içerik işi, hesap değil) |
+| **§14.2 Astrofotoğraf hesaplama** | `/araclar/*` — FOV, pixel scale, mozaik, setup uyumluluk, **poz-plani** | **DONE — bu turda kapandı**: filtre–hedef uyumu, ay/ışık kirliliğine göre çekim planı ve kalibrasyon rehberi `poz-plani` sayfasına eklendi (`filterPlan.ts`, `calibration.ts`; 37 test) |
 | §14.3 Gökyüzü olayları takvimi | `/araclar/takvim`, `events` | PARTIAL — ay fazı ve karanlık takvimi var; **meteor yağmuru**, **tutulma**, **ISS geçişi** yok (dış veri kaynağı gerekiyor) |
 | §14.4 Karanlık gökyüzü haritası | `/saha`, `observing_sites`, ışık kirliliği katmanı | DONE'a yakın — koordinat gizliliği `photo_exact_locations` deseniyle çözülmüş |
 | §14.5 Ekipman envanteri | `/ekipman`, `user_equipment`, `user_setups` | DONE |
@@ -1440,6 +1440,59 @@ geçmek ve o kararı verecek kişi gerekçeyi kodda bulacak.
 Seçimin kaynak sırası: **adres çubuğu → favoriler → katalog**.
 Paylaşılan bağlantı kazanıyor — birinin gönderdiği planı açan kullanıcı
 kendi favorilerini değil, gönderilen planı görmeli.
+
+### §14.2'nin son üç maddesi: filtre uyumu, ay planı, kalibrasyon
+
+Üçü de `poz-plani` sayfasına eklendi — **yeni rota açılmadı**. Girdilerin
+çoğu ortak (hangi hedef, hangi filtreler, kaç gece); ayrı bir araç
+kullanıcıya aynı bilgileri iki kez girdirir, iki sonucu kendi
+birleştirtirdi.
+
+**Filtre–hedef uyumu tek bir fiziksel soruya dayanıyor:** hedefin ışığı
+ÇİZGİ mi, SÜREKLİLİK mi? Emisyon bulutsusu belirli dalga boylarında
+parlar (Ha 656,3 / OIII 500,7 / SII 671,6 nm) — dar bant o pencereleri
+açıp gerisini kapatır. Galaksi, küme ve yansıma bulutsusu süreklilik
+yayar; dar bant hedefin ışığını da keser. Karanlık bulutsu ise "duruma
+bağlı" dönüyor ve sebebini söylüyor: kendi ışığı yok, arka perdeye
+karşı siluet, o perdenin ne olduğunu bilmiyoruz.
+
+**"Uygun değil" satırları GİZLENMİYOR.** Bir filtrenin neden işe
+yaramayacağını öğrenmek, hangisinin yarayacağını öğrenmek kadar
+değerli — kullanıcının elinde zaten o filtre olabilir.
+
+**LP filtresi hiçbir koşulda `uygun` dönmüyor** ve bu, §14.2'nin
+"belirsiz alanda kesinlik iddiası kullanma" kuralının en somut
+uygulaması. O filtreler sodyum/cıva lambalarının AYRIK çizgilerini
+kesmek için tasarlandı; aydınlatma LED'e geçtikçe kesilecek çizgi
+kalmıyor, çünkü LED'in tayfı sürekli. Aynı filtre aynı şehirde on yıl
+önce işe yarıyordu, bugün büyük ölçüde yaramıyor — ve bu, ürünün
+kutusunda yazmıyor. Test bunu kilitliyor: üç ayrı gökyüzü koşulunda da
+`uygun` dönmediği ölçülüyor.
+
+**Ay etkisi BANT olarak veriliyor, magnitüd olarak değil.** Sayısal
+modeli var (Krisciunas & Schaefer 1991) ama ayın yüksekliğini, hava
+kütlesini ve aerosol saçılmasını ister; o girdiler bu araçta yok. Bir
+sayı uydurmak yerine "hafif / belirgin / ağır" dönülüyor ve ekranda
+neden öyle olduğu yazıyor.
+
+**Hesaplanan tek şey süreklilik reddi:** 7 nm'lik bir filtre 300 nm'lik
+pencerenin %2,3'ünü geçirir. Düz süreklilik varsayımı ekranda AÇIKÇA
+yazılı ve neyin ihmal edildiği sayılıyor (lamba/hava parıltısı
+çizgileri, filtre geçirgenliğinin tepede bile %100 olmaması, kameranın
+dalga boyuna göre değişen verimi). "SNR şu kadar artar" denmiyor.
+
+**Güneş her sınıfta reddediliyor** ve gerekçe filtre tercihi değil
+güvenlik: yanlış filtre göze kalıcı zarar verir. Test bunu da
+kilitliyor.
+
+**Kalibrasyon rehberi metin değil VERİ**, çünkü cevap kurulumla
+değişiyor: dark-flat çeken bir CMOS kullanıcısı için bias GEREKSİZ ve
+listeye hiç girmiyor — yarım çalışan bir adım göstermektense hiç
+göstermemek. Kare sayıları aralık; yığınlamada gürültü √N ile azaldığı
+için "50 yerine 200" dört katı emek, iki katı iyileşme demek ve ekran
+bu oranı yazıyor. Formülün yalnızca ilişkisiz gürültü için geçerli
+olduğu da yazılı: sabit desen, amp glow ve ışık sızıntısı yığınlamayla
+gitmez.
 
 ### §14.7: dizin VARDI ama tablosu YOKTU
 
@@ -1721,10 +1774,10 @@ Faz 3'ün "Faz 10'a bağlı" kalemlerinden hero slaytlarının admin
 yönetimi de bu turda açıldı. Kalan iki kalem (hava sağlayıcı seçimi,
 "boşsa gizle" anahtarı) Faz 3'ün kendi bölümünde duruyor.
 
-**Faz 11'de §14.6, §14.9, §14.7, §14.2 ve §14.1'in beş maddesi
-kapandı** (bkz. Faz 11 bölümü). Altı turda dört göç (`0064`, `0065`,
-`0066`, `0067`), iki domain modülü (`capturePlan.ts`, `planShare.ts`)
-ve bir ortaklaştırma (`lib/ics.ts`).
+**Faz 11'de §14.2, §14.6, §14.7, §14.9 ve §14.1'in beş maddesi
+kapandı** (bkz. Faz 11 bölümü). Yedi turda dört göç (`0064`, `0065`,
+`0066`, `0067`), dört domain modülü (`capturePlan.ts`, `planShare.ts`,
+`filterPlan.ts`, `calibration.ts`) ve bir ortaklaştırma (`lib/ics.ts`).
 
 Bu turda düzeltilen bir BELGE HATASI: önceki not "`clubs` tablosu var"
 diyordu, YOKTU. Dizin sabit bir koddan besleniyordu ve §14.7'nin
@@ -1737,10 +1790,7 @@ açtı.
      madde, doğrulanmış bir kulübün yöneticisinin kendi etkinliğini
      girebilmesi demek; `events` tarafında sahiplik ve moderasyon
      kararı gerektiriyor.
-  2. **§14.2 kalanı** — filtre–hedef uyumu ve kalibrasyon rehberi; ikisi
-     de hesap değil İÇERİK işi, `content_entries` üzerinden gidebilir
-     (§14.9'da kurulan `sozluk`/`sss` deseninin aynısı).
-  3. **§14.3 meteor/tutulma/ISS** ve **§14.1 interaktif gökyüzü
+  2. **§14.3 meteor/tutulma/ISS** ve **§14.1 interaktif gökyüzü
      haritası** — dış veri lisansı ya da servis gerektiriyor; adapter +
      feature flag ile hazırlanacak, placeholder GÖSTERİLMEYECEK. Bayrak
      altyapısı Faz 10'da kuruldu ve ziyaretçi tarafında çalışıyor.

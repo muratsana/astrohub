@@ -15,6 +15,20 @@ import {
   planCapture,
   type FilterPlanInput,
 } from '@/domain/photography/capturePlan';
+import {
+  continuumRejection,
+  filterClassLabels,
+  moonImpact,
+  planFilters,
+  type Fit,
+} from '@/domain/photography/filterPlan';
+import {
+  calibrationPlan,
+  rangeGain,
+  type SensorKind,
+} from '@/domain/photography/calibration';
+import { targetKindLabels, type TargetKind } from '@/domain/targets/derive';
+import { Badge } from '@/components/ui/Badge';
 
 /**
  * POZ, ENTEGRASYON VE DEPOLAMA PLANI (§14.2).
@@ -66,6 +80,34 @@ export function CapturePlannerPage() {
   const [yukseklik, setYukseklik] = useState(4176);
   const [bit, setBit] = useState(16);
   const [kalibrasyon, setKalibrasyon] = useState(60);
+
+  /* Filtre–hedef uyumu ve gökyüzü koşulları (§14.2). */
+  const [tur, setTur] = useState<TargetKind>('emisyon-bulutsusu');
+  const [ayOran, setAyOran] = useState(30);
+  const [ayVar, setAyVar] = useState(true);
+  const [ayUzaklik, setAyUzaklik] = useState(60);
+  const [bortle, setBortle] = useState(5);
+  const [bant, setBant] = useState(7);
+
+  /* Kalibrasyon rehberi (§14.2). */
+  const [sensor, setSensor] = useState<SensorKind>('cmos');
+  const [darkFlat, setDarkFlat] = useState(true);
+
+  const gokyuzu = useMemo(
+    () => ({
+      moonIllumination: ayOran / 100,
+      moonSeparationDeg: ayVar ? ayUzaklik : null,
+      bortle,
+    }),
+    [ayOran, ayVar, ayUzaklik, bortle]
+  );
+
+  const filtreler = useMemo(() => planFilters(tur, gokyuzu), [tur, gokyuzu]);
+  const ayEtkisi = moonImpact(gokyuzu);
+  const kalibrasyonAdimlari = useMemo(
+    () => calibrationPlan({ sensor, useDarkFlats: darkFlat }),
+    [sensor, darkFlat]
+  );
 
   const plan = useMemo(() => {
     try {
@@ -262,6 +304,111 @@ export function CapturePlannerPage() {
                 </Field>
               </div>
             </Panel>
+
+            {/*
+              FİLTRE–HEDEF UYUMU (§14.2) BURADA, AYRI BİR SAYFADA DEĞİL.
+
+              Girdilerin çoğu ortak: hangi hedef, hangi filtreler, kaç
+              gece. Ayrı bir araç açsaydık kullanıcı aynı bilgileri iki
+              kez girer, iki ayrı sonucu kendi birleştirirdi. Fazın
+              açılış kuralı da bunu söylüyor: çakışan modülleri birleştir.
+            */}
+            <Panel title="Hedef ve gökyüzü">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="col-span-2">
+                <Field label="Hedef türü" htmlFor="p-tur">
+                  <Select
+                    id="p-tur"
+                    value={tur}
+                    onChange={(e) => setTur(e.target.value as TargetKind)}
+                  >
+                    {(Object.keys(targetKindLabels) as TargetKind[]).map((k) => (
+                      <option key={k} value={k}>
+                        {targetKindLabels[k]}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+                </div>
+
+                <Field label="Gökyüzü (Bortle)" htmlFor="p-bortle">
+                  <Input
+                    id="p-bortle"
+                    type="number"
+                    min={1}
+                    max={9}
+                    value={bortle}
+                    onChange={(e) => setBortle(Number(e.target.value))}
+                  />
+                </Field>
+                <Field label="Ay aydınlanması (%)" htmlFor="p-ay">
+                  <Input
+                    id="p-ay"
+                    type="number"
+                    min={0}
+                    max={100}
+                    value={ayOran}
+                    onChange={(e) => setAyOran(Number(e.target.value))}
+                  />
+                </Field>
+
+                <div className="col-span-2 flex flex-wrap items-end gap-3">
+                  <label className="flex items-center gap-2 text-body-sm text-foreground">
+                    <input
+                      type="checkbox"
+                      checked={ayVar}
+                      onChange={(e) => setAyVar(e.target.checked)}
+                    />
+                    Ay ufkun üstünde
+                  </label>
+                  {ayVar && (
+                    <div className="flex-1">
+                    <Field label="Hedefe uzaklığı (°)" htmlFor="p-ay-uzaklik">
+                      <Input
+                        id="p-ay-uzaklik"
+                        type="number"
+                        min={0}
+                        max={180}
+                        value={ayUzaklik}
+                        onChange={(e) => setAyUzaklik(Number(e.target.value))}
+                      />
+                    </Field>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <p className="mt-2 text-meta leading-relaxed text-faint">
+                Ay etkisi bir BANT olarak veriliyor (“{ayEtkisi}”), magnitüd
+                olarak değil: sayısal modeli ayın yüksekliğini ve hava
+                kütlesini ister, bu araçta o girdiler yok.
+              </p>
+            </Panel>
+
+            <Panel title="Kalibrasyon">
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Sensör" htmlFor="p-sensor">
+                  <Select
+                    id="p-sensor"
+                    value={sensor}
+                    onChange={(e) => setSensor(e.target.value as SensorKind)}
+                  >
+                    <option value="cmos">CMOS</option>
+                    <option value="ccd">CCD</option>
+                  </Select>
+                </Field>
+                <div className="flex items-end">
+                  <label className="flex items-center gap-2 text-body-sm text-foreground">
+                    <input
+                      type="checkbox"
+                      checked={darkFlat}
+                      onChange={(e) => setDarkFlat(e.target.checked)}
+                    />
+                    Dark-flat çekiyorum
+                  </label>
+                </div>
+              </div>
+            </Panel>
           </div>
 
           {/* ── Sonuç ── */}
@@ -370,11 +517,137 @@ export function CapturePlannerPage() {
                 )}
               </>
             )}
+
+            {/*
+              FİLTRE UYUMU — yargılar gerekçeleriyle.
+
+              Sıralama modülde yapıldı (uygun → sınırlı → uygun değil);
+              burada yalnızca çiziliyor. "Uygun değil" satırları
+              GİZLENMİYOR: bir filtrenin neden işe yaramayacağını
+              öğrenmek, hangisinin yarayacağını öğrenmek kadar değerli
+              ve kullanıcının elinde zaten o filtre olabilir.
+            */}
+            <Panel
+              title="Filtre–hedef uyumu"
+              status={targetKindLabels[tur].toLocaleLowerCase('tr')}
+            >
+              <ul className="space-y-2.5">
+                {filtreler.map((v) => (
+                  <li
+                    key={v.filterClass}
+                    className="border-b border-border/60 pb-2.5 last:border-0 last:pb-0"
+                  >
+                    <div className="flex flex-wrap items-baseline gap-2">
+                      <span className="text-body-sm font-medium text-foreground">
+                        {filterClassLabels[v.filterClass]}
+                      </span>
+                      <Badge tone={uyumRengi(v.fit)}>{uyumEtiketi(v.fit)}</Badge>
+                    </div>
+                    <ul className="mt-1 space-y-0.5">
+                      {v.reasons.map((r) => (
+                        <li
+                          key={r}
+                          className="text-meta leading-relaxed text-muted-foreground"
+                        >
+                          {r}
+                        </li>
+                      ))}
+                    </ul>
+                  </li>
+                ))}
+              </ul>
+
+              <div className="mt-3 border-t border-border pt-3">
+                <div className="flex flex-wrap items-end gap-3">
+                  <Field label="Dar bant genişliği (nm)" htmlFor="p-bant">
+                    <Input
+                      id="p-bant"
+                      type="number"
+                      min={1}
+                      max={100}
+                      value={bant}
+                      onChange={(e) => setBant(Number(e.target.value))}
+                    />
+                  </Field>
+                  <p className="flex-1 text-body-sm leading-relaxed text-foreground">
+                    Bu genişlik, 300 nm’lik görünür pencerenin{' '}
+                    <strong>
+                      %{(continuumRejection(Math.max(1, bant)) * 100).toFixed(1)}
+                    </strong>
+                    ’ini geçirir.
+                  </p>
+                </div>
+                <p className="mt-2 text-meta leading-relaxed text-faint">
+                  DÜZ SÜREKLİLİK varsayımıyla, birinci mertebe bir yaklaşım.
+                  Gerçek fon tayfı düz değil (lamba ve hava parıltısı
+                  çizgileri), filtre geçirgenliği tepede bile %100 değil ve
+                  kameranın verimi dalga boyuna göre değişiyor. Bu sayı “ne
+                  kadar fon elenir”in kaba ölçüsü — “SNR şu kadar artar”
+                  demek DEĞİL.
+                </p>
+              </div>
+            </Panel>
+
+            <Panel
+              title="Kalibrasyon rehberi"
+              status={`${kalibrasyonAdimlari.length} kare türü`}
+            >
+              <ul className="space-y-3">
+                {kalibrasyonAdimlari.map((s) => (
+                  <li
+                    key={s.kind}
+                    className="border-b border-border/60 pb-3 last:border-0 last:pb-0"
+                  >
+                    <div className="flex flex-wrap items-baseline justify-between gap-2">
+                      <span className="text-body-sm font-medium text-foreground">
+                        {s.title}
+                      </span>
+                      <span className="tabular text-meta text-muted-foreground">
+                        {s.countRange[0]}–{s.countRange[1]} kare
+                      </span>
+                    </div>
+                    <p className="mt-1 text-meta leading-relaxed text-muted-foreground">
+                      {s.removes}
+                    </p>
+                    <p className="mt-1 text-meta leading-relaxed text-muted-foreground">
+                      <span className="text-foreground">Eşleşmesi gereken:</span>{' '}
+                      {s.mustMatch.join(' · ')}
+                    </p>
+                    <p className="mt-1 text-meta leading-relaxed text-faint">
+                      {s.pitfall}
+                    </p>
+                    <p className="mt-1 text-meta text-faint">
+                      Aralığın üst ucuna çıkmak gürültüyü yalnızca{' '}
+                      <span className="tabular">
+                        {rangeGain(s.countRange).toFixed(2)}
+                      </span>{' '}
+                      kat daha azaltır ({s.countRange[1] / s.countRange[0]} katı
+                      emek).
+                    </p>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-3 text-meta leading-relaxed text-faint">
+                Kare sayıları ARALIK, çünkü tek doğru yok: yığınlamada
+                rastgele gürültü √N ile azalır, yani kazanç hızla küçülür.
+                Formül yalnızca İLİŞKİSİZ gürültü için geçerli — sabit desen,
+                amp glow ve ışık sızıntısı yığınlamayla gitmez.
+              </p>
+            </Panel>
           </div>
         </div>
       </Container>
     </>
   );
+}
+
+/** Uygunluk kademesinin rozet rengi — metin tek başına da anlaşılır. */
+function uyumRengi(fit: Fit): 'success' | 'warning' | 'muted' {
+  return fit === 'uygun' ? 'success' : fit === 'sinirli' ? 'warning' : 'muted';
+}
+
+function uyumEtiketi(fit: Fit): string {
+  return fit === 'uygun' ? 'Uygun' : fit === 'sinirli' ? 'Sınırlı' : 'Uygun değil';
 }
 
 function Satir({ ad, deger }: { ad: string; deger: string }) {
