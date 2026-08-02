@@ -186,6 +186,8 @@ farklı bir görev (moderasyon kuyruğu). Karar admin rolünün
 | `0044`ün `PUBLIC` revoke'u yetmiyordu; `anon`un açık grant'ı duruyordu | Supabase denetçisi ısrar edince `proacl` okundu | `0046` |
 | Etkinlik sayfasında devre dışı "Katıl (üyelik gerektirir)" düğmesi ve "hesap sistemi devreye alınınca açılacak" cümlesi — hesap sistemi çoktan çalışıyordu ve gerçek kayıt kontrolü hemen altındaydı | Faz 6 arayüzünü bağlarken sağ panel okundu | `EventDetailPage.tsx` |
 | Etkinlik ÖNE alınınca özel hatırlatma etkinlikten SONRAYA düşüyordu: "15 Eylül'de hatırlat" diyen kullanıcı, etkinlik 5 Eylül'e çekilince on gün sonra "yaklaşıyor" bildirimi alacaktı | Yeniden hesaplama kuralı yazılırken ters yön düşünüldü | `0049` (`event_change_fanout`) |
+| **`0063`–`0066` uzak projeye HİÇ uygulanmamıştı** — dosyalar depoda, tablolar canlıda yok. Ziyaretçi bunu görmezdi (hepsi koddaki yedeğe düşüyor) ama hero yönetimi, gözlem günlüğü ve favoriler canlıda çalışmıyordu | `0067`i uygulamadan önce `list_migrations` okundu, son kayıt `0061`de duruyordu | Beşi de (`0062`–`0067`) uygulandı ve `select count(*)` ile ölçüldü |
+| **`nav_links` tablosu canlıda vardı ama BOŞTU** — tablo elle açılmış, `0062`nin tohumu hiç çalışmamış. Menü koddaki yedekten çiziliyordu, yani §13.2'nin "menü panelden yönetilir" vaadi canlıda geçersizdi ve kimse fark etmezdi (yedek doğru menüyü gösteriyor) | Aynı denetimde `count(*) = 0` görüldü | `0062` uygulandı: 9 üst menü + 3 footer satırı |
 
 ## Bilinen ortam kısıtları
 
@@ -1351,7 +1353,7 @@ karşılaştırma yapılmadan yazılan her şey ikinci bir kopya olurdu.
 | §14.4 Karanlık gökyüzü haritası | `/saha`, `observing_sites`, ışık kirliliği katmanı | DONE'a yakın — koordinat gizliliği `photo_exact_locations` deseniyle çözülmüş |
 | §14.5 Ekipman envanteri | `/ekipman`, `user_equipment`, `user_setups` | DONE |
 | **§14.6 Gözlem günlüğü** | **`/gunluk`, `observation_logs` (`0064`)** | **DONE — bu turda yazıldı** |
-| §14.7 Kulüpler ve dizin | `/topluluklar`, `clubs` | PARTIAL — dizin var; **kulüp yöneticisi doğrulama** ve **yerel SEO sayfaları** yok |
+| **§14.7 Kulüpler ve dizin** | **`/topluluklar`, `clubs` (`0067`), `/{sehir}-astronomi-etkinlikleri`** | **DONE'a yakın — bu turda dizin veritabanına taşındı**; doğrulama rozeti, iletişim/katılım alanları, şehir bazlı keşif ve panel bölümü var. Kalan tek madde: **kulübün etkinlik yayımlaması** (yönetici bağı `manager_user_id` olarak duruyor, yetki verilmedi — gerekçe aşağıda) |
 | §14.8 İlanlar | `/ilanlar`, `listings` | DONE — §14.8'in on yedi maddesi karşılanıyor |
 | §14.9 Bilgi merkezi | `/yazilar`, `/haberler`, **`/sozluk`, `/sss`** | DONE'a yakın — sözlük ve SSS bu turda eklendi (`0065`); kalan tek madde "video/radyo/podcast ilişkileri" |
 
@@ -1438,6 +1440,63 @@ geçmek ve o kararı verecek kişi gerekçeyi kodda bulacak.
 Seçimin kaynak sırası: **adres çubuğu → favoriler → katalog**.
 Paylaşılan bağlantı kazanıyor — birinin gönderdiği planı açan kullanıcı
 kendi favorilerini değil, gönderilen planı görmeli.
+
+### §14.7: dizin VARDI ama tablosu YOKTU
+
+Belgede `clubs` tablosu varmış gibi yazıyordu; yoktu. `/topluluklar`
+tamamen `features/clubs/data.ts` içindeki altı sabit kayıttan
+besleniyordu ve §14.7'nin dört maddesi bu yüzden İMKÂNSIZDI: bir
+telefonu düzeltmek, kapanmış bir kulübü çıkarmak, bir kaydı doğrulamak
+ya da güncelliğini işaretlemek — hepsi dağıtım almak demekti.
+
+`0067` tabloyu açtı. Tohum ELLE YAZILMADI, `data.ts` okunarak üretildi
+ve `clubsSource.test.ts` hizayı kilitliyor (0058'in elle yazılmış
+tohumu koddan ayrışmış ve 0061'i yazdırmıştı).
+
+**İki ayrı "doğrulama" var ve karıştırılmıyor:**
+
+| Alan | Ne söyler | Ziyaretçide |
+|---|---|---|
+| `verified_at` | KULÜBÜN KENDİSİ teyit edildi: yöneticisiyle iletişim kuruldu | "Doğrulanmış" rozeti |
+| `info_checked_on` | BİLGİNİN tazeliği: adres/iletişim en son ne zaman kontrol edildi | Künyede tarih |
+
+Birincisi bir GÜVEN ifadesi, ikincisi bir TAZELİK ölçüsü. Tek alanda
+toplasaydık "doğrulanmış ama bilgisi iki yıl eski" kulüp ile "bilgisi
+taze ama kim olduğu belirsiz" kulüp aynı görünürdü. Panelde de ayrı:
+"Doğrula" kendi düğmesinde, tarih formun içinde — bir telefon numarası
+düzelten yönetici farkında olmadan kulübü doğrulanmış ilan etmesin.
+
+**Tohum HİÇBİR kulübü doğrulanmış işaretlemiyor.** Rozeti tohumla
+vermek onu daha ilk günde yalan hâline getirirdi; göçün ölçüm bloğu
+bunu kontrol ediyor.
+
+**`manager_user_id` bir BAĞ, bir YETKİ değil.** Kulübü yöneten
+kullanıcıyı işaret ediyor ama yazma hakkı vermiyor: yazma politikası
+yalnızca `app.is_admin()`. Sebep, dizinin editoryal olması — kulüpler
+kendi kayıtlarını serbestçe düzenleyebilseydi dizin bir tanıtım
+panosuna döner ve "doğrulanmış" rozeti anlamını yitirirdi. §14.7'nin
+"etkinlik yayınlama" maddesi bu bağın üstüne kurulacak ve o iş açıkken
+duruyor.
+
+**İletişim ve katılım alanları tohumda BOŞ.** Kayıtlar gerçek kurumlara
+ait; olmayan bir e-posta uydurmak ziyaretçiyi var olmayan bir adrese
+yazmaya yollamak olurdu. Alanlar panelden dolduruluyor, boşken profilde
+o satırlar hiç çizilmiyor.
+
+**`mergeWithSeed` KULLANILMADI — ve bu bilinçli bir ayrım.** Haber,
+yazı ve sözlükte veritabanı satırları koddaki tohumun ÜSTÜNE ekleniyor.
+Burada olmaz: tablo zaten tohumun tamamını içeriyor, birleştirme
+yapsaydık yöneticinin dizinden ÇIKARDIĞI kulüp koddaki kopyasından geri
+gelirdi — moderasyon kararı sessizce iptal olurdu. Tablo okunabildiği
+sürece tek kaynak tablo; kod yalnızca yedek.
+
+**Yerel SEO için İKİNCİ bir şehir sayfası ailesi açılmadı.** Sitede
+zaten `/{sehir}-astronomi-etkinlikleri` sayfaları var (§20) ve "ankara
+astronomi" sorgusu ikisini de hedefliyor; ayrı bir `/topluluklar/{sehir}`
+ailesi aynı niyet için birbiriyle yarışan iki adres üretirdi. Fazın
+açılış kuralı çakışan modülleri BİRLEŞTİRMEK — kulüpler o sayfalara bir
+bölüm olarak eklendi. Sayfası olmayan şehir (ör. Nevşehir) süzgeçli
+dizine gidiyor: olmayan bir adrese bağlantı vermektense.
 
 ### §14.2: neyin hesaplanacağına da fazın kuralı karar verdi
 
@@ -1662,15 +1721,22 @@ Faz 3'ün "Faz 10'a bağlı" kalemlerinden hero slaytlarının admin
 yönetimi de bu turda açıldı. Kalan iki kalem (hava sağlayıcı seçimi,
 "boşsa gizle" anahtarı) Faz 3'ün kendi bölümünde duruyor.
 
-**Faz 11'de §14.6, §14.9, §14.2 ve §14.1'in beş maddesi kapandı**
-(bkz. Faz 11 bölümü). Beş turda üç göç (`0064`, `0065`, `0066`), iki
-domain modülü (`capturePlan.ts`, `planShare.ts`) ve bir ortaklaştırma
-(`lib/ics.ts`).
+**Faz 11'de §14.6, §14.9, §14.7, §14.2 ve §14.1'in beş maddesi
+kapandı** (bkz. Faz 11 bölümü). Altı turda dört göç (`0064`, `0065`,
+`0066`, `0067`), iki domain modülü (`capturePlan.ts`, `planShare.ts`)
+ve bir ortaklaştırma (`lib/ics.ts`).
+
+Bu turda düzeltilen bir BELGE HATASI: önceki not "`clubs` tablosu var"
+diyordu, YOKTU. Dizin sabit bir koddan besleniyordu ve §14.7'nin
+doğrulama/moderasyon maddeleri bu yüzden imkânsızdı. `0067` tabloyu
+açtı.
 
 **Sıradaki iş: Faz 11'in kalan `PARTIAL` satırları.**
-  1. **§14.7 kulüp yöneticisi doğrulama + yerel SEO sayfaları** — dış
-     veri gerektirmiyor, sıradaki en somut iş. `clubs` tablosu var;
-     doğrulama rozeti ve şehir bazlı sayfalar eklenecek.
+  1. **§14.7 kalanı — kulübün etkinlik yayımlaması.** `manager_user_id`
+     bağı `0067`de duruyor ama YETKİ vermiyor (dizin editoryal). Bu
+     madde, doğrulanmış bir kulübün yöneticisinin kendi etkinliğini
+     girebilmesi demek; `events` tarafında sahiplik ve moderasyon
+     kararı gerektiriyor.
   2. **§14.2 kalanı** — filtre–hedef uyumu ve kalibrasyon rehberi; ikisi
      de hesap değil İÇERİK işi, `content_entries` üzerinden gidebilir
      (§14.9'da kurulan `sozluk`/`sss` deseninin aynısı).

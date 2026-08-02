@@ -19,6 +19,7 @@ import { CatalogControl } from './CatalogControl';
 import { SiteControl } from './SiteControl';
 import { FeaturedControl } from './FeaturedControl';
 import { ContentControl } from './ContentControl';
+import { ClubControl } from './ClubControl';
 import { EquipmentDataControl } from './EquipmentDataControl';
 import { SpecImportControl } from './SpecImportControl';
 import { UserControl } from './UserControl';
@@ -389,6 +390,11 @@ export function AdminPage() {
         <div className="space-y-4">
           <ContentControl canWrite={roles.isAdmin} />
           <RecordsControl kinds={['photo', 'listing', 'event', 'site']} />
+          {/* Kulüp dizini burada, "kayıtlar"ın içinde değil: dizin
+              EDİTORYAL bir kaynak — sahibi, durumu ve moderasyon kuyruğu
+              olan kullanıcı kayıtlarıyla aynı ekrana sıkıştırmak, orada
+              anlamı olmayan sütunlar taşımak olurdu. */}
+          <ClubControl canWrite={roles.isAdmin} />
           <CommentsControl kinds={['photoComment', 'siteReview']} />
         </div>
       )}

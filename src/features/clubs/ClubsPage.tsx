@@ -1,11 +1,6 @@
+import { useMemo } from 'react';
 import { Container } from '@/components/ui/Container';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { Badge } from '@/components/ui/Badge';
-import {
-  ContentCard,
-  ContentCardMeta,
-  ContentCardTitle,
-} from '@/components/ui/ContentCard';
 import { Input, Select } from '@/components/ui/Input';
 import { CardGrid } from '@/components/ui/CardGrid';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -20,24 +15,30 @@ import {
 import { ActiveFilters } from '@/components/ui/ActiveFilters';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
-import { clubs, clubKindLabels, type AstronomyClub } from './data';
+import { Link } from 'react-router';
+import { clubKindLabels } from './data';
+import { citiesOf, useClubs } from './clubsSource';
+import { ClubCard } from './ClubCard';
 import { useExplorer } from '@/features/explorer/useExplorer';
 import { clubsSpec } from './clubsSpec';
-import { cn } from '@/lib/cn';
+import { cityPathForName } from '@/features/city/routes';
 
 /**
- * KULÜPLER VE TOPLULUKLAR (§8.11).
+ * KULÜPLER VE TOPLULUKLAR (§8.11, §14.7).
  *
  * Listede iki filtre öne çıkıyor: **halka açık etkinlik** ve **ortak
  * ekipman**. Bu ikisi, "bu topluluğa katılabilir miyim, teleskobum yoksa
  * ne olacak" sorusunun cevabı — yeni başlayan biri için tür ya da kuruluş
  * yılından çok daha belirleyici.
  *
- * Kayıtlar editoryaldir; kurumun kendi profilini devralması hesap sistemiyle
- * gelecek. Sayfa bunu gizlemiyor, altında yazıyor.
+ * Kayıtlar EDİTORYAL ve artık veritabanından geliyor (`0067`): bir
+ * telefonu düzeltmek ya da kapanmış bir kulübü dizinden çıkarmak dağıtım
+ * gerektirmiyor. "Doğrulanmış" rozeti kulübün kendisinin teyit edildiğini
+ * söylüyor; bilginin tazeliği ayrı bir alan ve profilde yazılı.
  */
 export function ClubsPage() {
   const [view, setView] = useViewMode('topluluklar');
+  const { clubs } = useClubs();
 
   /*
    * ORTAK DATA EXPLORER (Faz 4). Sayfa kendi `useState` filtresini
@@ -47,6 +48,7 @@ export function ClubsPage() {
    */
   const ex = useExplorer(clubs, clubsSpec);
   const result = ex.items;
+  const cities = useMemo(() => citiesOf(clubs), [clubs]);
 
   /** Evet/hayır filtresi tek değerli bir facet. */
   const acik = (param: string) => (ex.query.facets[param]?.length ?? 0) > 0;
@@ -101,6 +103,27 @@ export function ClubsPage() {
               ))}
             </Select>
           </FilterCell>
+          <FilterCell label="Şehir" htmlFor="club-city">
+            <Select
+              id="club-city"
+              value={ex.query.facets.sehir?.[0] ?? 'hepsi'}
+              onChange={(e) => {
+                const mevcut = ex.query.facets.sehir?.[0];
+                if (mevcut) ex.toggleFacet('sehir', mevcut);
+                if (e.target.value !== 'hepsi') {
+                  ex.toggleFacet('sehir', e.target.value);
+                }
+              }}
+              className={filterControlClass}
+            >
+              <option value="hepsi">Tüm şehirler</option>
+              {cities.map(({ city, count }) => (
+                <option key={city} value={city}>
+                  {city} ({count})
+                </option>
+              ))}
+            </Select>
+          </FilterCell>
           <FilterToggle
             id="club-public"
             label="Halka açık etkinlik"
@@ -112,6 +135,12 @@ export function ClubsPage() {
             label="Ortak ekipman"
             checked={acik('ortak-ekipman')}
             onChange={() => cevir('ortak-ekipman')}
+          />
+          <FilterToggle
+            id="club-verified"
+            label="Yalnızca doğrulanmış"
+            checked={acik('dogrulanmis')}
+            onChange={() => cevir('dogrulanmis')}
           />
         </FilterBar>
 
@@ -152,62 +181,48 @@ export function ClubsPage() {
           </CardGrid>
         )}
 
+        {/*
+          ŞEHİR BAZLI KEŞİF (§14.7).
+
+          AYRI BİR `/topluluklar/{sehir}` AİLESİ AÇILMADI. Sitede zaten
+          `/{sehir}-astronomi-etkinlikleri` sayfaları var (§20) ve aranan
+          sorgu ("ankara astronomi") ikisini de hedefliyor. İkinci bir
+          şehir sayfası ailesi, aynı niyet için birbiriyle yarışan iki
+          adres üretirdi; fazın açılış kuralı çakışan modülleri
+          BİRLEŞTİRMEK. Kulüpler o sayfalara bir bölüm olarak eklendi.
+
+          Sayfası olmayan şehir (ör. Nevşehir) süzgece gidiyor — olmayan
+          bir adrese bağlantı vermektense filtrelenmiş dizin doğru cevap.
+        */}
+        {cities.length > 1 && (
+          <nav aria-label="Şehre göre topluluklar" className="mt-8">
+            <h2 className="type-section">Şehre göre</h2>
+            <ul className="mt-3 flex flex-wrap gap-2">
+              {cities.map(({ city, count }) => (
+                <li key={city}>
+                  <Link
+                    to={
+                      cityPathForName(city) ??
+                      `/topluluklar?sehir=${encodeURIComponent(city)}`
+                    }
+                    className="inline-flex items-baseline gap-1.5 rounded-md border border-border px-2.5 py-1 text-meta text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+                  >
+                    {city}
+                    <span className="tabular text-faint">{count}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        )}
+
         <p className="mt-6 text-center text-meta leading-relaxed text-faint">
-          Kayıtlar kurumların kendi duyurularından derlenmiştir ve doğrulama
-          tarihi her profilde yazılıdır. Kurumların kendi profillerini
-          devralması hesap sistemiyle birlikte açılacak (§8.11).
+          Kayıtlar kurumların kendi duyurularından derlenmiştir; kaynağı ve son
+          güncellik kontrolü her profilde yazılıdır. “Doğrulanmış” rozeti, kulüp
+          yöneticisiyle iletişim kurulup kaydın teyit edildiği anlamına gelir —
+          bilginin bugün de güncel olduğu anlamına gelmez.
         </p>
       </Container>
     </>
-  );
-}
-
-function ClubCard({
-  club,
-  variant,
-}: {
-  club: AstronomyClub;
-  variant: 'grid' | 'list';
-}) {
-  const badges = (
-    <div className="flex flex-wrap gap-1">
-      <Badge tone="primary">{clubKindLabels[club.kind]}</Badge>
-      {club.publicEvents && <Badge tone="success">Halka açık</Badge>}
-      {club.sharedEquipment && <Badge tone="cold">Ortak ekipman</Badge>}
-    </div>
-  );
-
-  return (
-    <ContentCard
-      to={`/topluluk/${club.slug}`}
-      className={cn(
-        'p-3',
-        variant === 'list' && 'sm:flex-row sm:items-center sm:gap-3'
-      )}
-    >
-      <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-          <ContentCardTitle lines={2} className="font-medium leading-snug">
-            {club.name}
-          </ContentCardTitle>
-          <span className="label">{club.city}</span>
-        </div>
-
-        {variant === 'grid' && (
-          <p className="mt-1.5 line-clamp-3 text-body-sm leading-relaxed text-muted-foreground">
-            {club.summary}
-          </p>
-        )}
-
-        <ContentCardMeta className="mt-1.5 text-faint">
-          {club.foundedYear ? `${club.foundedYear} kuruluş` : 'kuruluş bilinmiyor'}
-          {club.memberCount ? ` · ${club.memberCount} üye` : ''}
-        </ContentCardMeta>
-      </div>
-
-      <div className={cn('mt-2', variant === 'list' && 'sm:mt-0 sm:shrink-0')}>
-        {badges}
-      </div>
-    </ContentCard>
   );
 }

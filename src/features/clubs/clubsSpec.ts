@@ -1,5 +1,6 @@
 import { byText, type ExplorerSpec } from '@/features/explorer/query';
-import { clubKindLabels, type AstronomyClub } from './data';
+import { clubKindLabels } from './data';
+import type { ClubView } from './clubsSource';
 
 /**
  * TOPLULUKLARIN DATA EXPLORER TANIMI (Faz 4).
@@ -14,7 +15,7 @@ import { clubKindLabels, type AstronomyClub } from './data';
  * kaydı geçirir, kapalı seçim hiçbir şey süzmez — üç durumlu bir onay
  * kutusu yazmaya gerek kalmıyor.
  */
-export const clubsSpec: ExplorerSpec<AstronomyClub> = {
+export const clubsSpec: ExplorerSpec<ClubView> = {
   searchFields: (c) => [c.name, c.city, c.summary],
 
   facets: [
@@ -37,6 +38,15 @@ export const clubsSpec: ExplorerSpec<AstronomyClub> = {
       labelOf: () => 'var',
     },
     { param: 'sehir', label: 'Şehir', valueOf: (c) => c.city },
+    {
+      /* Doğrulanmış kulüpler (§14.7). Rozeti gösterip süzmeyi
+         vermemek, ziyaretçiye "bunlardan hangileri teyitli" sorusunu
+         tek tek kart okutarak cevaplatırdı. */
+      param: 'dogrulanmis',
+      label: 'Doğrulanmış',
+      valueOf: (c) => (c.verifiedAt ? 'evet' : null),
+      labelOf: () => 'evet',
+    },
   ],
 
   sorts: [

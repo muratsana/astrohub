@@ -14,6 +14,8 @@ import { findCity, TURKEY_TIME_ZONE } from '@/features/location/cities';
 import { useEventCatalog } from '@/services/content/events';
 import { eventTypeLabels } from '@/features/events/types';
 import { useSiteCatalog } from '@/services/content/sites';
+import { useClubs } from '@/features/clubs/clubsSource';
+import { clubKindLabels } from '@/features/clubs/data';
 import { haversineKm, formatDistance } from '@/domain/geography/distance';
 import { nightEntry } from '@/domain/astronomy/nightCalendar';
 import { formatClock, formatDuration } from '@/domain/astronomy/ephemeris';
@@ -43,6 +45,24 @@ export function CityPage() {
   const city = cityId ? findCity(cityId) : undefined;
   const siteCatalog = useSiteCatalog();
   const eventCatalog = useEventCatalog();
+  const { clubs } = useClubs();
+
+  /*
+   * ŞEHİRDEKİ TOPLULUKLAR (§14.7 "şehir bazlı keşif" + "yerel SEO").
+   *
+   * Kulüpler için ayrı bir `/topluluklar/{sehir}` ailesi AÇILMADI: aranan
+   * sorgu ("ankara astronomi") bu sayfayla birebir aynı ve iki adres
+   * birbiriyle yarışırdı. Dizin buraya bir bölüm olarak eklendi — sayfa
+   * zaten şehre ait dört veri kümesini birleştiriyor, bu beşincisi.
+   *
+   * Eşleşme şehir ADIYLA, mesafeyle değil: bir kulüp "Ankara'ya 180 km"
+   * diye tarif edilmez, bir şehre aittir. Etkinliklerde mesafe anlamlı
+   * (yola çıkılır), kurumda değil.
+   */
+  const cityClubs = useMemo(
+    () => (city ? clubs.filter((c) => c.city === city.name) : []),
+    [clubs, city]
+  );
 
   const cityEvents = useMemo(() => {
     if (!city) return [];
@@ -245,6 +265,48 @@ export function CityPage() {
                 </ul>
               )}
             </Panel>
+
+            {cityClubs.length > 0 && (
+              <Panel
+                title={`${city.name} toplulukları`}
+                status={`${cityClubs.length} kayıt`}
+              >
+                <ul>
+                  {cityClubs.map((club) => (
+                    <li key={club.slug} className="border-b border-border last:border-0">
+                      <Link
+                        to={`/topluluk/${club.slug}`}
+                        className="group flex items-baseline justify-between gap-3 py-2"
+                      >
+                        <span className="min-w-0">
+                          <span className="block truncate text-caption text-foreground group-hover:text-primary">
+                            {club.name}
+                          </span>
+                          <span className="mt-0.5 block text-meta text-muted-foreground">
+                            {clubKindLabels[club.kind]}
+                            {club.publicEvents && ' · halka açık etkinlik'}
+                            {club.sharedEquipment && ' · ortak ekipman'}
+                          </span>
+                        </span>
+                        {/* Doğrulama rozeti (§14.7): kulübün kendisi
+                            teyit edildiyse. Bilginin tazeliği ayrı bir
+                            ölçü ve profilde yazılı. */}
+                        {club.verifiedAt && (
+                          <span className="shrink-0">
+                            <Badge tone="success">Doğrulanmış</Badge>
+                          </span>
+                        )}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+                <div className="mt-3">
+                  <ButtonLink to="/topluluklar" size="sm" variant="ghost">
+                    Tüm Topluluklar
+                  </ButtonLink>
+                </div>
+              </Panel>
+            )}
 
             {tonight && (
               <Panel title={`${city.name} — bu gece`}>

@@ -36,3 +36,18 @@ export function cityIdFromPath(pathname: string): string | null {
 
 /** Tüm şehir sayfası yolları — router ve sitemap aynı listeyi kullanır. */
 export const cityRoutePaths: string[] = cities.map((c) => cityRouteSlug(c.id));
+
+/**
+ * Şehir ADINDAN sayfa yolu; o şehrin sayfası yoksa `null`.
+ *
+ * Kulüp dizini (§14.7) şehir adıyla çalışıyor, bu modül kimlikle. Eşleme
+ * burada duruyor ki "Nevşehir'in sayfası var mı" sorusunun cevabı tek
+ * yerde olsun — çağıran taraf `cities` listesini kendi taramaya
+ * kalksaydı, listeye şehir eklendiğinde bir yer güncellenir, öteki
+ * unutulurdu. `null` dönmesi bir hata değil: şehir sayfaları seçili bir
+ * liste ve olmayan bir adrese bağlantı vermek kırık bağlantı demek.
+ */
+export function cityPathForName(name: string): string | null {
+  const city = cities.find((c) => c.name === name);
+  return city ? `/${cityRouteSlug(city.id)}` : null;
+}

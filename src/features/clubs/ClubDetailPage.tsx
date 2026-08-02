@@ -11,10 +11,12 @@ import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd, absoluteUrl } from '@/lib/seo';
 import { events } from '@/features/events/data';
 import { eventTypeLabels } from '@/features/events/types';
-import { getClubBySlug, clubKindLabels } from './data';
+import { clubKindLabels } from './data';
+import { useClub } from './clubsSource';
+import { cityPathForName } from '@/features/city/routes';
 
 /**
- * TOPLULUK PROFİLİ (§8.11).
+ * TOPLULUK PROFİLİ (§8.11, §14.7).
  *
  * Profilin omurgası **etkinlik geçmişi ve takvimi**: bir topluluğu tanımak,
  * ne yaptığını görmekle olur. Etkinlikler organizatör adıyla eşleştirilir;
@@ -24,10 +26,23 @@ import { getClubBySlug, clubKindLabels } from './data';
  * Organization yapılandırılmış verisi basılır — arama motorunda kurum
  * kartı çıkması, bir derneği aramanın en yaygın yolu olan "şehir + dernek"
  * sorgusunda görünürlük sağlar.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * SAYFADA İKİ AYRI "DOĞRULAMA" VAR VE AYRI ANLATILIYOR
+ *
+ *   Rozet (`verifiedAt`)  → KULÜBÜN KENDİSİ teyit edildi: yöneticiyle
+ *                           iletişim kuruldu, kulübün gerçek ve aktif
+ *                           olduğu doğrulandı.
+ *   Künye (`source`)      → BİLGİNİN tazeliği: bu satırlar en son ne
+ *                           zaman kontrol edildi.
+ *
+ * Tek satırda birleştirmek, "doğrulanmış ama bilgisi iki yıl eski" bir
+ * kulübü "bilgisi taze ama kim olduğu belirsiz" bir kulüple aynı
+ * gösterirdi.
  */
 export function ClubDetailPage() {
   const { slug } = useParams<{ slug: string }>();
-  const club = slug ? getClubBySlug(slug) : undefined;
+  const { club, loading } = useClub(slug);
 
   const clubEvents = useMemo(() => {
     if (!club?.organizerName) return { upcoming: [], past: [] };
@@ -42,7 +57,11 @@ export function ClubDetailPage() {
     };
   }, [club]);
 
-  if (!club) return <NotFoundPage />;
+  /* Veri gelmeden 404 basmıyoruz: ilk kare koddaki yedekle çiziliyor ve
+     orada olmayan bir kulüp veritabanında olabilir. */
+  if (!club) return loading ? null : <NotFoundPage />;
+
+  const sehirYolu = cityPathForName(club.city);
 
   const organizationJson = {
     '@context': 'https://schema.org',
@@ -86,7 +105,8 @@ export function ClubDetailPage() {
           actions={
             <>
               <Badge tone="primary">{clubKindLabels[club.kind]}</Badge>
-              {club.publicEvents && <Badge tone="success">Halka açık</Badge>}
+              {club.verifiedAt && <Badge tone="success">Doğrulanmış</Badge>}
+              {club.publicEvents && <Badge>Halka açık</Badge>}
               {club.sharedEquipment && <Badge tone="cold">Ortak ekipman</Badge>}
             </>
           }
@@ -190,7 +210,41 @@ export function ClubDetailPage() {
                     }
                   />
                 )}
+                {/* İLETİŞİM VE KATILIM (§14.7). Satırlar ancak veri
+                    varsa çiziliyor: boş bir "İletişim: —" satırı,
+                    ziyaretçiye çalışmayan bir yol göstermek olurdu. */}
+                {club.contactEmail && (
+                  <SpecRow
+                    label="İletişim"
+                    value={
+                      <a
+                        href={`mailto:${club.contactEmail}`}
+                        className="text-primary hover:underline"
+                      >
+                        {club.contactEmail}
+                      </a>
+                    }
+                  />
+                )}
+                {club.joinUrl && (
+                  <SpecRow
+                    label="Üyelik"
+                    value={
+                      <ExternalLink href={club.joinUrl} showHost>
+                        Katılım formu
+                      </ExternalLink>
+                    }
+                  />
+                )}
               </SpecList>
+
+              {sehirYolu && (
+                <div className="mt-3">
+                  <ButtonLink to={sehirYolu} size="sm" variant="ghost">
+                    {club.city} sayfası
+                  </ButtonLink>
+                </div>
+              )}
             </Panel>
 
             <Panel title="Düzenli faaliyetler">
@@ -209,14 +263,49 @@ export function ClubDetailPage() {
               </ul>
             </Panel>
 
-            <Panel title="Kaynak" status={club.source.lastVerifiedAt}>
+            <Panel
+              title="Kaynak ve doğrulama"
+              status={club.verifiedAt ? 'doğrulanmış' : 'doğrulanmamış'}
+            >
               <p className="text-body-sm leading-relaxed text-muted-foreground">
-                Bu profil <span className="text-foreground">{club.source.name}</span>{' '}
-                üzerinden derlendi; son doğrulama{' '}
-                {new Date(club.source.lastVerifiedAt).toLocaleDateString('tr-TR')}.
-                Bilgiler değişmiş olabilir — katılmadan önce topluluğun kendi
-                duyurusunu kontrol edin.
+                {club.verifiedAt ? (
+                  <>
+                    Bu kulüp{' '}
+                    <span className="text-foreground">
+                      {new Date(club.verifiedAt).toLocaleDateString('tr-TR')}
+                    </span>{' '}
+                    tarihinde <span className="text-foreground">doğrulandı</span>:
+                    kulüp yöneticisiyle iletişim kuruldu ve kaydın gerçek bir
+                    topluluğa ait olduğu teyit edildi.
+                  </>
+                ) : (
+                  <>
+                    Bu kayıt <span className="text-foreground">doğrulanmadı</span>:
+                    kulüp yöneticisiyle henüz iletişim kurulmadı. Kaydın yanlış
+                    olduğu anlamına gelmez, teyit edilmediği anlamına gelir.
+                  </>
+                )}
               </p>
+
+              <p className="mt-2 text-body-sm leading-relaxed text-muted-foreground">
+                Bilgiler{' '}
+                <span className="text-foreground">{club.source.name}</span>{' '}
+                üzerinden derlendi
+                {club.source.lastVerifiedAt && (
+                  <>
+                    ; en son{' '}
+                    <span className="tabular">
+                      {new Date(club.source.lastVerifiedAt).toLocaleDateString(
+                        'tr-TR'
+                      )}
+                    </span>{' '}
+                    tarihinde kontrol edildi
+                  </>
+                )}
+                . Değişmiş olabilir — yola çıkmadan önce topluluğun kendi
+                duyurusuna bakın.
+              </p>
+
               <div className="mt-3">
                 <ButtonLink to="/etkinlikler" size="sm" variant="secondary">
                   Tüm Etkinlikler
