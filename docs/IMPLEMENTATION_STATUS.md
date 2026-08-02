@@ -32,7 +32,7 @@ tabloda `DONE` ile birleştirilmez:
 | 8 | AstroHub TV ve YouTube'a hazır altyapı | 833–922 | PARTIAL⁵ |
 | 9 | Standart/Premium üyelik altyapısı | 923–1005 | IMPLEMENTED_DISABLED⁶ |
 | 10 | Admin panelinden kodsuz site yönetimi | 1006–1164 | DONE⁷ |
-| 11 | Zorunlu ürün modülleri | 1165–1349 | NOT_STARTED |
+| 11 | Zorunlu ürün modülleri | 1165–1349 | PARTIAL⁸ |
 | 12 | Organik kullanıcı kazanımı | 1350–1419 | NOT_STARTED |
 | 13 | Fotoğraf, Storage, medya mimarisi | 1420–1462 | NOT_STARTED |
 | 14 | macOS, tarayıcı, responsive, erişilebilirlik | 1463–1528 | NOT_STARTED |
@@ -40,6 +40,14 @@ tabloda `DONE` ile birleştirilmez:
 | 16 | Performans, SEO, analitik, gözlemlenebilirlik | 1607–1690 | NOT_STARTED |
 | 17 | Test stratejisi ve kabul kriterleri | 1691–… | NOT_STARTED |
 | 18 | (belgenin sonu) | …–1956 | NOT_STARTED |
+
+⁸ **Faz 11'in envanteri çıkarıldı; §14.6 kapandı.** Fazın açılış kuralı
+"çakışan modülleri birleştir, çalışmayan placeholder gösterme" diyor, bu
+yüzden ilk iş kod yazmak değil KARŞILAŞTIRMAK oldu: dokuz alt bölümün
+yedisi mevcut modüllerle büyük ölçüde karşılanıyor (ayrıntı: Faz 11
+bölümü). Gerçek boşluk ikiydi — gözlem günlüğü (§14.6) ve bilgi
+merkezinin sözlük/SSS ayağı (§14.9). Birincisi bu turda yazıldı
+(`0064`), ikincisi açık.
 
 ⁷ **Faz 10 kapandı.** Beş tablo (`home_modules`, `hero_slides`,
 `nav_links`, `feature_flags`, `site_settings`), değişiklik geçmişi +
@@ -1326,6 +1334,72 @@ etmezdi.
 
 ---
 
+## Faz 11 — ayrıntı
+
+### Önce envanter, sonra kod
+
+Fazın kendi açılışı şunu istiyor: *"Aşağıdaki özellikleri mevcut ürün
+mimarisiyle karşılaştır. Çakışan modülleri birleştir… Çalışmayan
+placeholder gösterme."* Sitede 76 rota ve 33 özellik dizini var;
+karşılaştırma yapılmadan yazılan her şey ikinci bir kopya olurdu.
+
+| Bölüm | Karşılık | Durum |
+|---|---|---|
+| §14.1 Gözlem ve gökyüzü planlama | `/planlayici`, `/bu-gece`, `/hedefler`, `features/sky` | PARTIAL — hedef arama, yükseklik grafiği, alacakaranlık ve ay ayrımı var; **favori hedef / gözlem listesi**, **paylaşılabilir plan** ve **takvime ekleme** yok |
+| §14.2 Astrofotoğraf hesaplama | `/araclar/*` — FOV, pixel scale, mozaik, setup uyumluluk | PARTIAL — çekirdek hesaplar test edilmiş durumda; **poz/entegrasyon planı**, **depolama ihtiyacı**, **dither aralığı** yok |
+| §14.3 Gökyüzü olayları takvimi | `/araclar/takvim`, `events` | PARTIAL — ay fazı ve karanlık takvimi var; **meteor yağmuru**, **tutulma**, **ISS geçişi** yok (dış veri kaynağı gerekiyor) |
+| §14.4 Karanlık gökyüzü haritası | `/saha`, `observing_sites`, ışık kirliliği katmanı | DONE'a yakın — koordinat gizliliği `photo_exact_locations` deseniyle çözülmüş |
+| §14.5 Ekipman envanteri | `/ekipman`, `user_equipment`, `user_setups` | DONE |
+| **§14.6 Gözlem günlüğü** | **`/gunluk`, `observation_logs` (`0064`)** | **DONE — bu turda yazıldı** |
+| §14.7 Kulüpler ve dizin | `/topluluklar`, `clubs` | PARTIAL — dizin var; **kulüp yöneticisi doğrulama** ve **yerel SEO sayfaları** yok |
+| §14.8 İlanlar | `/ilanlar`, `listings` | DONE — §14.8'in on yedi maddesi karşılanıyor |
+| §14.9 Bilgi merkezi | `/yazilar`, `/haberler` | PARTIAL — **terimler sözlüğü** ve **SSS** hiç yok |
+
+### §14.6 neden yeni bir tablo — birleştirme denendi, olmadı
+
+`astro_photos` bir GÖRÜNTÜNÜN künyesi; zorunlu çıktısı bir dosya.
+`observation_logs` bir GECENİN kaydı ve çıktısı olmayabilir — dürbünle
+bakıp not almak da gözlemdir, §14.6 "çizim/fotoğraf" diyerek fotoğrafı
+zorunlu saymıyor. Tek tabloda toplamak, fotoğrafsız kayıtlar için yarısı
+boş bir satır ve "bu foto mu gözlem mi" diye soran bir tür sütunu
+demekti. Ayrı duruyorlar ama `photo_id` ile bağlılar.
+
+### Gizlilik varsayılanı ÖZEL — ve bu geri alınamaz bir karar
+
+§14.6 "özel veya public" diyor, varsayılanı söylemiyor. ÖZEL seçildi:
+günlük kişisel bir defter ve içinde konum bilgisi var. Yanlış varsayılan
+GERİ ALINAMAZ — kullanıcı fark ettiğinde kayıt zaten görünmüş olur.
+Tersi zararsız: paylaşmak isteyen tek tıkla açıyor.
+
+Aynı sebeple günlükte KOORDİNAT ALANI YOK, serbest metin var. §14.4
+"hassas lokasyonların tam koordinatını koruma seçeneği" istiyor;
+günlüğe koordinat koysaydık herkese açık bir kayıt kullanıcının
+bahçesinin GPS'ini yayınlayabilirdi.
+
+### RLS'i yazmak değil, ÖLÇMEK
+
+`0064` politikaları kurduktan sonra kendi ölçüm bloğunu çalıştırıyor:
+iki kullanıcı kurup dört soruyu cevaplıyor (kendi özelim görünür mü,
+başkasının özeli görünür mü, başkasının açığı görünür mü, anonim ne
+görür). İlk çalıştırmada **ölçüm patladı** — "anonim 2 kayıt görüyor".
+Hata politikada değil ölçümdeydi: `set local role anon` yalnızca rolü
+değiştiriyor, `request.jwt.claims` hâlâ önceki kullanıcının `sub`unu
+taşıdığı için `auth.uid()` onu döndürüyordu. Gerçek bir anonim istekte o
+talep hiç yok. Talep de temizlenince ölçüm geçti.
+
+Bu, "politika doğru görünüyor" ile "politika doğru davranıyor"
+arasındaki farkın somut örneği: ölçüm olmasaydı yanlış olan test değil
+varsayımımız olurdu ve bunu hiç öğrenemezdik.
+
+### Sorgu niyeti RLS'e bırakılmıyor
+
+`fetchMyLogs` `user_id` üzerinde AYRICA filtreliyor. RLS başkasının
+özel kaydını zaten vermiyor ama başkasının AÇIK kaydını veriyor —
+filtresiz sorgu "benim günlüğüm" sayfasına bütün sitenin açık
+kayıtlarını dökerdi. RLS bir güvenlik sınırı, sorgu niyeti değil.
+
+---
+
 ## Sonraki oturum için devam notu
 
 **Bittiği yer:** Faz 2, Faz 5 ve Faz 6 kapandı. Faz 3'ün 3.1'i
@@ -1405,18 +1479,27 @@ Faz 3'ün "Faz 10'a bağlı" kalemlerinden hero slaytlarının admin
 yönetimi de bu turda açıldı. Kalan iki kalem (hava sağlayıcı seçimi,
 "boşsa gizle" anahtarı) Faz 3'ün kendi bölümünde duruyor.
 
-**Sıradaki iş: Faz 11 — zorunlu ürün modülleri (belge satırı 1165–1349).**
-  1. Belge fazın başında AÇIK bir kural koyuyor: "Çakışan modülleri
-     birleştir… Çalışmayan placeholder gösterme." Yani ilk iş yeni kod
-     yazmak değil, MEVCUT modüllerle karşılaştırmak — §14.1'in istediği
-     çoğu şey (hedef arama, yükseklik/azimut, alacakaranlık, ay ayrımı)
-     `araclar` ve `bu-gece` altında kısmen var.
-  2. Envanteri çıkarmadan tabloya/koda dokunma: "zaten var" ile "yeni
-     modül" ayrımı yapılmadan yazılan her şey ikinci bir kopya olur.
-  3. Dış veri lisansı gerektirenler (katalog, gökyüzü haritası verisi)
-     adapter + feature flag ile hazırlanacak — bayrak altyapısı bu fazda
-     kuruldu ve ziyaretçi tarafında ÇALIŞIYOR, yani "kapalıyken
-     görünmez" artık gerçek.
+**Faz 11'in envanteri çıkarıldı ve §14.6 kapandı** (bkz. Faz 11
+bölümü). Dokuz alt bölümün ikisi gerçek boşluktu; biri yazıldı.
+
+**Sıradaki iş: Faz 11'in kalan boşlukları.** Envanter tablosundaki
+`PARTIAL` satırları sırayla kapatılacak; öncelik sırası şu, çünkü ilk
+ikisi dış veri kaynağı GEREKTİRMİYOR:
+  1. **§14.9 sözlük + SSS** — sitede hiç yok. `content_entries` şeması
+     hazır (haber/yazı oradan geliyor); yeni tabloya gerek olmayabilir,
+     önce tür alanı kontrol edilmeli. Editoryal doğrulama ve "kaynak +
+     güncelleme tarihi" alanları §14.9'un açık şartı.
+  2. **§14.1 favori hedef / gözlem listesi** — `collections` ve
+     `collection_items` tabloları ZATEN VAR (fotoğraf koleksiyonu için).
+     Hedefler için ikinci bir tablo açmadan önce oranın genişletilip
+     genişletilemeyeceğine bakılmalı; fazın kuralı bunu emrediyor.
+  3. **§14.2 poz/entegrasyon planı ve depolama hesabı** — saf hesap,
+     dış veri yok, test edilebilir. §14.2 "hesapların formüllerini
+     testlerle doğrula" diyor.
+  4. **§14.3 meteor/tutulma/ISS** — bunlar dış veri lisansı ya da
+     servis gerektiriyor; fazın kuralına göre adapter + feature flag ile
+     hazırlanacak, placeholder GÖSTERİLMEYECEK. Bayrak altyapısı Faz
+     10'da kuruldu ve ziyaretçi tarafında çalışıyor.
 
 **Kanal bağlı değilken sahte içerik gösterilmemeli** (§11.2 son madde).
 Adaptör ve panel bu kurala uyuyor; kullanıcı sayfaları yazılırken de

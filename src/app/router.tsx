@@ -299,6 +299,17 @@ export const appRoutes = [
         ),
       },
 
+      /* Gözlem günlüğü (§14.6) — kişisel kayıt, oturum gerekli. */
+      {
+        path: 'gunluk',
+        element: route(
+          named(
+            () => import('@/features/observing-log/ObservingLogPage'),
+            'ObservingLogPage'
+          )
+        ),
+      },
+
       /* ═════════════ ARAÇLAR ═════════════ */
       {
         path: 'araclar',

@@ -157,6 +157,10 @@
       "destination": "/app.html"
     },
     {
+      "source": "/gunluk",
+      "destination": "/app.html"
+    },
+    {
       "source": "/haber/:slug",
       "destination": "/app.html"
     },
