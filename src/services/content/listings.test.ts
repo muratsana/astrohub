@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   isListingPubliclyVisible,
   mapListingRow,
@@ -25,6 +25,7 @@ function row(over: Record<string, unknown> = {}): any {
     posted_at: '2026-07-20T09:00:00Z',
     profiles: { username: 'deniz', display_name: 'Deniz K.' },
     equipment_models: { slug: 'sky-watcher-esprit-100ed' },
+    listing_photos: null,
     ...over,
   };
 }
@@ -49,6 +50,27 @@ describe('mapListingRow — durum', () => {
     expect(mapListingRow(row({ status: 'pending_review' })).status).toBe(
       undefined
     );
+  });
+});
+
+describe('mapListingRow — ilan görseli', () => {
+  it('kapak fotoğrafı olarak en düşük sıralı görseli taşır', () => {
+    vi.stubEnv('VITE_SUPABASE_URL', 'https://astrohub.test');
+    expect(
+      mapListingRow(
+        row({
+          listing_photos: [
+            { storage_path: 'u/l/2.jpg', position: 2 },
+            { storage_path: 'u/l/0.jpg', position: 0 },
+          ],
+        })
+      ).imageUrl
+    ).toContain('/storage/v1/object/public/listings/u/l/0.jpg');
+    vi.unstubAllEnvs();
+  });
+
+  it('fotoğraf yoksa görsel adresi uydurmaz', () => {
+    expect(mapListingRow(row({ listing_photos: [] })).imageUrl).toBeUndefined();
   });
 });
 

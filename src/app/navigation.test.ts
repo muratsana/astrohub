@@ -61,12 +61,10 @@ describe('navigasyon bağlantıları', () => {
     }
   });
 
-  it('üst menü dokuz ana giriş taşır (§5.1)', () => {
-    // Sayıyı sabitlemek bilinçli: onuncu bir giriş `xl` kırılımında da
-    // taşırıyor. Taşma `scripts/check-preview.mjs` ile ölçülüyor.
-    expect(primaryNav).toHaveLength(9);
+  it('üst menü sekiz ana giriş taşır; ekipman profil/araç akışındadır', () => {
+    expect(primaryNav).toHaveLength(8);
     expect(primaryNav.map((i) => i.to)).toContain('/forum');
-    expect(primaryNav.map((i) => i.to)).toContain('/ekipman');
+    expect(primaryNav.map((i) => i.to)).not.toContain('/ekipman');
   });
 
   it('yayın modülleri menüde metin girişi değil, üst çubukta ikon', () => {

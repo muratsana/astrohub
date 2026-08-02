@@ -4,22 +4,9 @@ import { sanitizeText } from '@/lib/sanitize';
 /**
  * FORUM KATEGORİLERİ — veri katmanı.
  *
- * ══════════════════════════════════════════════════════════════════════
- * NEDEN `records.ts`E EKLENMEDİ
- *
- * `records.ts` KAYIT yönetiyor: kullanıcının ürettiği, durumu olan,
- * moderasyondan geçen şeyler. Kategori bunların hiçbiri değil — o bir
- * YAPILANDIRMA. Durumu yok, sahibi yok, moderasyonu yok; tek soru
- * "hangi başlıklar var ve hangi sırada". Aynı bileşene sıkıştırmak,
- * orada anlamı olmayan bir durum sütunu ve sahip alanı taşımak demekti.
- *
- * ══════════════════════════════════════════════════════════════════════
- * SİLME YOK
- *
- * Kategori silmek altındaki konuları sahipsiz bırakır (`category_id`
- * yabancı anahtarı). Kullanımdan kaldırmanın doğru yolu listenin sonuna
- * almak; gerçekten silinecekse önce konuların taşınması gerekir ve o iş
- * bu modülün işi değil.
+ * `records.ts` kullanıcı/moderasyon kaydı yönetir; forum kategorisi ise
+ * yapılandırmadır. Ayrı kalması admin yüzeyine gereksiz durum/sahip
+ * alanları taşınmasını engeller.
  */
 
 export interface Kategori {
@@ -63,4 +50,3 @@ export async function upsertCategory(input: {
   );
   if (error) throw new Error(error.message);
 }
-

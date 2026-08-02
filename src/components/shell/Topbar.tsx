@@ -1,6 +1,5 @@
 import { NavLink } from 'react-router';
 import { Logo } from './Logo';
-import { LocationPicker } from '@/features/location/LocationPicker';
 import { ButtonLink } from '@/components/ui/Button';
 import { Container } from '@/components/ui/Container';
 import { MenuIcon, UserIcon } from '@/components/ui/icons';
@@ -120,23 +119,6 @@ export function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
             denetimi ölçtü). Telefonda boşluk ve yatay dolgu daraltılıyor;
             dokunma hedefi 32px yüksekliğini koruyor (§6.7).
           */}
-          {/*
-            KONUM SEÇİCİ ÜST ÇUBUĞA TAŞINDI (Faz 3.1).
-
-            Kaldırılan durum çubuğunun tek kalıcı işlevi buydu. Konum bir
-            hava okuması değil, kullanıcının her sayfada değiştirebilmesi
-            gereken bir tercih: etkinlik mesafesi, gözlem noktası
-            sıralaması ve tesis uzaklığı ona bağlı.
-
-            `sm` altında GİZLİ ve modül haritası çekmecesinde duruyor.
-            320px'te ölçüldü: kapsayıcı 288px, aksiyon kümesi 158px,
-            künye işareti 36px — geriye ~90px kalıyor ve "İstanbul ˅"
-            tetikleyicisi tek başına onu doldurup taşırıyordu.
-          */}
-          <div className="ml-3 hidden shrink-0 sm:block">
-            <LocationPicker variant="compact" />
-          </div>
-
           <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
             {/*
               `xl` altında düz menü gizlendiği için burası navigasyonun ÜST

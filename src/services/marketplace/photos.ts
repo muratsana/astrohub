@@ -1,6 +1,7 @@
 import { getSupabase } from '@/services/supabase/client';
 import { renderResized } from '@/domain/photography/resize';
 import { checkImageFormat, readHead } from '@/domain/photography/fileType';
+import { listingPhotoUrl } from './photoUrl';
 
 /**
  * İLAN FOTOĞRAFLARI — yükleme ve okuma.
@@ -42,19 +43,6 @@ async function client() {
   const promise = getSupabase();
   if (!promise) throw new Error('Veritabanı bağlantısı yapılandırılmamış');
   return promise;
-}
-
-/**
- * `listings` kovasındaki nesnenin genel adresi.
- *
- * Yol saklanıyor, URL üretiliyor — proje/CDN adresi değişirse satırlar
- * elden geçmesin (0038 şema kararı).
- */
-export function listingPhotoUrl(path: string | null): string | null {
-  if (!path) return null;
-  const base = import.meta.env.VITE_SUPABASE_URL?.trim();
-  if (!base) return null;
-  return `${base.replace(/\/+$/, '')}/storage/v1/object/public/listings/${path}`;
 }
 
 interface PhotoRow {

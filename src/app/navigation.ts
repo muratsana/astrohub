@@ -1,17 +1,15 @@
 /**
  * Navigasyon haritası — Rasathane Terminali.
  *
- * Yedi ana modül düz biçimde durur; üst menüde açılır menü **yoktur**.
+ * Sekiz ana modül düz biçimde durur; üst menüde açılır menü **yoktur**.
  * Alt sayfalara ⌘K komut paletinden ve footer'daki tam modül haritasından
  * ulaşılır. Terminal metaforuyla tutarlı: gezinme tıklanarak değil, yazılarak.
  *
  * `siteMap` tek kaynaktır — footer, komut paleti ve mobil çekmece hep
  * buradan beslenir, hiçbir bağlantı iki yerde ayrı ayrı tanımlanmaz.
  *
- * Not: Hedef kataloğu üst menüde değildir — galeri, bu gece ve araçların
- * içinden doğal olarak kullanılan bir referans modülüdür. Ekipman ise
- * üst menüde: artık bir katalog değil, setup kuran ve uyumluluk hesaplayan
- * kendi başına gezilen bir modül.
+ * Not: Hedef kataloğu ve ekipman üst menüde değildir — galeri, bu gece,
+ * profil ve araçların içinden doğal olarak kullanılan referans alanlarıdır.
  */
 
 export interface NavItem {
@@ -31,15 +29,15 @@ export interface NavGroup {
 }
 
 /**
- * Üst menü — dokuz ana modül.
+ * Üst menü — sekiz ana modül.
  *
  * Forum, sitenin "gece boyunca açık kalan" modülü: çekim aralarında
  * yazışmak için. TV ve Radyo metin girişi değil, üst çubukta durum
  * düğmesi — açılıp kapatılan bir yayın, gidilecek bir sayfa değil.
  *
- * Dokuz giriş `xl` kırılımının altında sığmıyor; nav orada çekmeceye
+ * Sekiz giriş `xl` kırılımının altında sığmıyor; nav orada çekmeceye
  * katlanıyor ve dar pencerede hamburger düğmesi görünüyor — bu tasarlanan
- * davranış, taşma değil. Onuncu giriş `xl`'de de taşırır; eklemeden önce
+   * davranış, taşma değil. Dokuzuncu giriş `xl`'de de taşırır; eklemeden önce
  * `scripts/check-preview.mjs` ile 390/1024/1440 px'te ölçün.
  */
 export const primaryNav: NavItem[] = [
@@ -48,7 +46,6 @@ export const primaryNav: NavItem[] = [
   { label: 'Haberler', to: '/haberler' },
   { label: 'Yazılar', to: '/yazilar' },
   { label: 'Forum', to: '/forum' },
-  { label: 'Ekipman', to: '/ekipman' },
   { label: 'Araçlar', to: '/araclar' },
   { label: 'İlanlar', to: '/ilanlar' },
   { label: 'Saha', to: '/saha' },

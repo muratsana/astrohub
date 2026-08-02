@@ -18,6 +18,7 @@ import { sanitizeText } from '@/lib/sanitize';
 import { threadSlug, slugSuffix } from './forum';
 import { useCatalog } from './useCatalog';
 import type { ContentSelection } from './select';
+import { listingPhotoUrl } from '@/services/marketplace/photoUrl';
 
 /**
  * İLANLAR — okuma ve yazma.
@@ -55,6 +56,10 @@ interface ListingRow {
   posted_at: string | null;
   profiles: { username: string; display_name: string | null } | null;
   equipment_models: { slug: string } | { slug: string }[] | null;
+  listing_photos:
+    | { storage_path: string | null; position: number | null }[]
+    | { storage_path: string | null; position: number | null }
+    | null;
 }
 
 /* Tanınmayan durum `undefined` kalıyor: uydurulmuş bir "Yayında"
@@ -84,6 +89,13 @@ function embeddedSlug(value: unknown): string | undefined {
   const items = Array.isArray(value) ? value : [value];
   const slug = (items[0] as { slug?: unknown } | null)?.slug;
   return typeof slug === 'string' ? slug : undefined;
+}
+
+function coverPhotoUrl(value: ListingRow['listing_photos']): string | undefined {
+  const photos = (Array.isArray(value) ? value : value ? [value] : [])
+    .filter((photo) => typeof photo.storage_path === 'string')
+    .sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+  return listingPhotoUrl(photos[0]?.storage_path) ?? undefined;
 }
 
 export function mapListingRow(row: ListingRow): Listing {
@@ -121,6 +133,7 @@ export function mapListingRow(row: ListingRow): Listing {
     description: row.description || undefined,
     includes: row.includes && row.includes.length > 0 ? row.includes : undefined,
     equipmentSlug: embeddedSlug(row.equipment_models),
+    imageUrl: coverPhotoUrl(row.listing_photos),
     status: LISTING_STATUSES.includes(row.status as ListingStatus)
       ? (row.status as ListingStatus)
       : undefined,
@@ -131,7 +144,7 @@ const SELECT =
   'id, seller_id, slug, title, category_id, price, city, condition, has_invoice, ' +
   'shipping_ok, negotiable, description, includes, status, posted_at, ' +
   'profiles!listings_seller_id_profiles_fkey(username, display_name), ' +
-  'equipment_models(slug)';
+  'equipment_models(slug), listing_photos(storage_path, position)';
 
 /**
  * Pazaryeri listesine — ve dolayısıyla `/ilan/:slug` sayfasına — giren

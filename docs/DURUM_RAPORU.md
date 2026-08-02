@@ -432,3 +432,94 @@ Yeni UI belgesi geldiğinde önerilen sıra:
 3. Yeni tasarımı **token ve ortak bileşen üzerinden** uygula — sayfa
    sayfa sınıf yazmak `designSystem.test.ts` kapısına takılır ve zaten
    Faz 2'nin çözdüğü dağınıklığı geri getirir.
+
+---
+
+## 9. 2 Ağustos 2026 audit ve patch başlangıcı
+
+Kaynak karşılaştırması: dış rapor `DURUM_RAPORU_GUNCEL(2).md` ile
+`main` dalındaki güncel repo karşılaştırıldı. Genel mimari ve envanter
+uyumlu: React/Vite, Supabase `0001`-`0071` göçleri, ortak Explorer
+motoru, admin yüzeyleri, fotoğraf/ilan/radyo/üyelik servisleri repoda
+mevcut. Ancak rapordaki kullanıcı doğrulaması sonrası açılan bazı işler
+gerçek koda göre hâlâ açıktı.
+
+### Bu audit'te doğrulanan açıklar
+
+| Madde | Repo durumu | Yeni durum |
+|---|---|---|
+| Navbar şehir seçimi kaldırılacak | `Topbar` hâlâ `LocationPicker variant="compact"` çiziyordu | DONE — üst çubuktan kaldırıldı; tek ürün kontrolü `Bu Gece`/çekmece hattında kalacak |
+| Navbar `Ekipman` kaldırılacak | `primaryNav` ve `0062` tohumu `/ekipman` taşıyordu | DONE — üst menüden çıkarıldı; route ve modül haritası korunuyor |
+| Canlı `nav_links` hizası | Eski canlı/tohum satırı production'da kalabilirdi | DONE — `20260802202412_remove_equipment_from_header_nav.sql` canlı Astrohub Supabase projesine uygulandı; `/ekipman` header'da `enabled=false`, kalan header sırası 1-8 |
+| Ana sayfa `Son İlanlar` thumbnail | `RecentListings` statik seed + `StarField` çiziyordu; `listing_photos` hiç okunmuyordu | PARTIAL — liste sorgusu kapak fotoğrafını okuyor ve ana sayfa `RemoteImage` kullanıyor; canlıda fotoğraflı ilanla görsel doğrulama gerekir |
+| Ana sayfa galeri thumbnail | Repo `RecentRecords -> PhotoCard` zinciriyle `imageUrl` tüketiyor | PARTIAL — kod zinciri doğru görünüyor; kullanıcı canlıda görmediği için gerçek preview/canlı veriyle tekrar doğrulanacak |
+| `Tooltip` ve ortak `selected` state | Bileşen düzeyinde hâlâ eksik | NOT_STARTED — sonraki UI temel işi |
+| Ortak Explorer Toolbar görsel standardı | Motor var; sayfa yüzeyleri hâlâ farklı yoğunlukta | NOT_STARTED — geniş UI patch'e kaldı |
+
+### Bu patch'te değişen dosyalar
+
+- `src/components/shell/Topbar.tsx` — üst çubuktaki ikinci şehir seçici kaldırıldı.
+- `src/app/navigation.ts` — `Ekipman` ana navigasyondan çıkarıldı.
+- `supabase/migrations/0062_nav_links_tohumu.sql` — yeni kurulum tohumu sekiz header bağlantısıyla hizalandı.
+- `supabase/migrations/20260802202412_remove_equipment_from_header_nav.sql` — mevcut canlı header menüsünde `/ekipman` satırını kapatan göç eklendi.
+- `src/services/content/listings.ts` — `listing_photos` ilişkisi okunup kapak görseli `Listing.imageUrl` alanına taşındı.
+- `src/services/marketplace/photoUrl.ts` — ilan fotoğraf URL üretimi hafif ortak yardımcıya ayrıldı.
+- `src/features/home/sections/RecentListings.tsx` — ana sayfa ilan kartları gerçek kapak görselini kullanır; yoksa ortak fallback'e düşer.
+- `src/services/content/recentListings.ts` — ana sayfa için hafif ilan sorgusu eklendi; ilk JS bütçesi aşılmadan kapak fotoğrafı okunur.
+- `src/features/home/sections/TonightPanel.tsx` — 1280×720'de konum izni satırı sarılıp `Bu Gece` karar kartını fold altına itmesin diye gizlilik ibaresi kısaltıldı.
+- `src/features/admin/ForumCategories.tsx`, `src/features/admin/forumCategoryData.ts` — macOS'ta gizlenen ama TypeScript build'i bozan büyük/küçük harf çakışması temizlendi.
+- `src/test/setup.ts`, `src/entry-prerender.tsx` — yerel test/prerender ortamında eksik `localStorage` API'si için güvenli bellek yedeği eklendi.
+- `src/features/weather/openMeteo.test.ts` — Open-Meteo `timezone=auto` saatlerinin yerel saat olarak parse edilmesi testle hizalandı.
+
+### Doğrulama
+
+Bu audit/patch diliminden sonra çalışan kapılar:
+
+```bash
+npm run typecheck
+npm run lint
+npm test
+npm run build
+npm run check:budgets
+npm run build:preview
+npm run check:rewrites
+npm run check:preview
+npm run check:csp
+npm run check:a11y
+npm run check:viewports
+npm run test:e2e
+```
+
+Sonuçlar:
+
+- TypeScript ve lint geçti.
+- Unit/integration test: **161 dosya / 2036 test geçti.**
+- Production build geçti; prerender **490/490 rota** üretti.
+- Budget geçti: ilk rota JS **197.7 kB gzip** / bütçe 200 kB, CSS **14.3 kB gzip** / bütçe 25 kB.
+- Preview, CSP, erişilebilirlik ve viewport kapıları geçti.
+- E2E: **28 senaryo geçti**, sayfa hatası yok; ekran görüntüleri `dist-preview/screens/` altında üretildi.
+- `check:rewrites` geçti: `vercel.json` **159 rewrite** ile güncel.
+- Canlı Supabase migration uygulandı ve `nav_links` doğrulandı.
+
+Çalışmayan/harici doğrulama isteyen kapılar:
+
+- `npm run check:rls` ve `npm run check:auth` yerel ortamda `DATABASE_URL` olmadığı için çalışmadı. Bunlar üretim/veri tabanı bağlantısıyla ayrıca koşulmalı.
+- `npm run build` sırasında sitemap üretimi `VITE_SITE_URL` tanımsız olduğu için yerelde atlandı; Vercel production ortamında bu değişken tanımlı olmalı.
+- Yerel Node `v25.9.0`; proje `node: 22.x` istiyor. Bu koşudaki sonuçlar geçerli, ama CI/Vercel Node 22 ile nihai kapı kabul edilmeli.
+
+### Sonraki blokajsız sıra
+
+1. `Tooltip` ve ortak `selected` state bileşenlerini ekle.
+2. Ortak `Explorer Toolbar`ı tek bileşen üzerinden yenile.
+3. Etkinlik/Haber/Yazı/İlan kart-liste-thumbnail görünümünü aynı sisteme taşı.
+4. Yazılardaki `Başlangıç / Orta / İleri` seviye yüzeylerini ürün arayüzünden kaldır.
+5. Galeri ve ilan thumbnail davranışını gerçek preview/canlı veriyle ekran görüntülü doğrula.
+
+### Blokaj veya dış kaynak isteyenler
+
+Radyo gerçek stream, PDF/Word import güvenliği, astronomik survey
+thumbnail, Türkiye saha veri araştırması, Vercel production deploy,
+gerçek Safari/iOS/Android matrisi ve ödeme/e-posta/analitik gibi
+entegrasyonlar ayrı kimlik, servis, veri veya cihaz erişimi gerektirir.
+Bu alanlarda kod yazılsa bile gerçek uçtan uca doğrulama olmadan `DONE`
+raporlanmayacak.

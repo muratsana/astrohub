@@ -8,10 +8,10 @@ import {
   ContentCardMeta,
   ContentCardTitle,
 } from '@/components/ui/ContentCard';
-import { StarField } from '@/components/media/StarField';
+import { RemoteImage } from '@/components/media/RemoteImage';
 import { tintFromSeed } from '@/components/media/tints';
-import { listings } from '@/features/marketplace/data';
 import { equipmentCategoryLabels } from '@/features/equipment/taxonomy';
+import { useRecentListings } from '@/services/content/recentListings';
 
 /**
  * SON İLANLAR — ana sayfanın son bölümü.
@@ -28,15 +28,17 @@ import { equipmentCategoryLabels } from '@/features/equipment/taxonomy';
  *
  * Fiyat karttaki en güçlü öğe — ikinci el ekipmanda ilk bakılan şey o.
  *
- * Görsel yok: ilan fotoğrafları satıcıya ait ve medya hattı (Faz 2)
- * devreye girene kadar yükleme yok. Yıldız alanı yer tutuyor;
- * internetten bulunmuş bir ürün fotoğrafı koymak telif sorunu olurdu.
+ * Kart görseli ilanın kendi fotoğrafından gelir. Fotoğraf yoksa ya da
+ * adres bozulduysa ortak `RemoteImage` fallback'i yıldız alanına iner;
+ * kırık görsel ikonu gösterilmez.
  */
 /** Sayı ve başlık `home_modules`tan gelir; verilmezse bugünkü davranış. */
 export function RecentListings({
   limit = 5,
   title = 'Son İlanlar',
 }: { limit?: number; title?: string } = {}) {
+  const catalog = useRecentListings();
+  const listings = catalog.items;
   const recent = [...listings]
     .sort((a, b) => new Date(b.postedAt).getTime() - new Date(a.postedAt).getTime())
     .slice(0, limit);
@@ -68,9 +70,12 @@ export function RecentListings({
                     </Badge>
                   }
                 >
-                  <StarField
+                  <RemoteImage
+                    src={listing.imageUrl}
+                    alt={`${listing.title} fotoğrafı`}
                     seed={listing.slug}
                     tint={tintFromSeed(listing.slug)}
+                    sizes="(min-width: 1024px) 180px, (min-width: 640px) 33vw, 50vw"
                   />
                 </ContentCardMedia>
 

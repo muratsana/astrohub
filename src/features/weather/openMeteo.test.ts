@@ -171,7 +171,7 @@ describe('dewRisk', () => {
  *   · yağış ihtimali — ekipmanı toplama kararı.
  */
 describe('Faz 3.4 alanları', () => {
-  const saat = new Date('2026-07-27T21:30:00Z');
+  const saat = new Date('2026-07-27T21:30');
   const ham = {
     hourly: {
       time: ['2026-07-27T21:00'],

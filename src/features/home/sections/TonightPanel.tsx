@@ -184,7 +184,7 @@ export function TonightPanel() {
                 Konumumu kullan
               </Button>
               <span className="text-meta leading-snug text-cold">
-                Tarayıcında kalır, sunucuya gönderilmez
+                Sunucuya gönderilmez
               </span>
               <button
                 type="button"

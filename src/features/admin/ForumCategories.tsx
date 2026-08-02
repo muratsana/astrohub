@@ -8,7 +8,7 @@ import {
   fetchCategories,
   upsertCategory,
   type Kategori,
-} from './forumCategories';
+} from './forumCategoryData';
 
 /**
  * FORUM KATEGORİLERİ — forumun iskeleti.

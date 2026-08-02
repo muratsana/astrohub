@@ -68,6 +68,8 @@ export interface Listing {
   includes?: string[];
   /** Ekipman veritabanındaki karşılığı — künye ve alternatifler oradan gelir. */
   equipmentSlug?: string;
+  /** Kapak/ilk ilan fotoğrafının gösterim adresi. */
+  imageUrl?: string;
   /** Pazarlık payı olup olmadığı; ilanda açıkça yazmak mesaj trafiğini azaltır. */
   negotiable?: boolean;
   /**
