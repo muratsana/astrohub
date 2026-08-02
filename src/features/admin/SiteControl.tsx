@@ -9,6 +9,8 @@ import {
   saveHomeDraft,
   publishHomeDraft,
   discardHomeDraft,
+  fetchHeroSlides,
+  updateHeroSlide,
   fetchNavLinks,
   upsertNavLink,
   deleteNavLink,
@@ -23,6 +25,8 @@ import {
   type HomeModule,
   type HomeDraftPatch,
   type NavLink,
+  type HeroSlideRow,
+  type HeroSlidePatch,
   type FeatureFlag,
   type HistoryEntry,
 } from './siteSettings';
@@ -63,6 +67,7 @@ export function SiteControl({ canWrite }: { canWrite: boolean }) {
   return (
     <div className="space-y-4">
       <HomeModulesSection canWrite={canWrite} onChange={yenile} />
+      <HeroSlidesSection canWrite={canWrite} onChange={yenile} />
       <NavLinksSection canWrite={canWrite} onChange={yenile} />
       <FeatureFlagsSection canWrite={canWrite} onChange={yenile} />
       <HistorySection canWrite={canWrite} tazele={tazele} onChange={yenile} />
@@ -1046,6 +1051,295 @@ function NavLinkRow({
           isaretli={link.auth_only}
           disabled={!canWrite}
           onChange={(v) => yaz({ auth_only: v })}
+        />
+      </div>
+    </li>
+  );
+}
+
+/* ── Hero slaytları ──────────────────────────────────────────────────── */
+
+/**
+ * HERO SLAYT YÖNETİMİ (§6.3 son madde, §13.2).
+ *
+ * §6.3'ün istediği beş kontrol burada: yayın tarihleri, sıralama, görsel
+ * odak noktası, metin hizası ve CTA.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * EKLEME/SİLME YOK, DÜZENLEME VAR
+ *
+ * `home_modules` ile aynı karar ve aynı sebep: her slaytın `scene` alanı
+ * kodda çizilen bir bileşene karşılık geliyor (`nebula`, `ridge`…).
+ * Panelden yeni anahtar eklenebilseydi çizilecek sahnesi olmayan bir
+ * slayt oluşurdu — panelde görünen, sitede boş kutu.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * ODAK NOKTASI İKİ SAYI, GÖRSEL SEÇİCİ DEĞİL
+ *
+ * Görselin üstünde tıklanan bir odak seçici daha iyi olurdu; yazılmadı
+ * çünkü hero görseli panelde 1800px genişliğinde iniyor ve küçültülmüş
+ * bir önizleme üzerinde seçilen nokta ile gerçek kırpma arasındaki
+ * ilişkiyi doğru kurmak, bu turda ölçemeyeceğimiz bir iş. İki sayı
+ * kaba ama DOĞRU; yanlış çalışan bir seçiciden iyi.
+ */
+function HeroSlidesSection({
+  canWrite,
+  onChange,
+}: {
+  canWrite: boolean;
+  onChange: () => void;
+}) {
+  const [slides, setSlides] = useState<HeroSlideRow[] | null>(null);
+  const [hata, setHata] = useState<string | null>(null);
+  const [mesgul, setMesgul] = useState(false);
+
+  const yukle = useCallback(async () => {
+    setHata(null);
+    try {
+      setSlides(await fetchHeroSlides());
+    } catch (e) {
+      setHata(e instanceof Error ? e.message : 'Slaytlar okunamadı');
+    }
+  }, []);
+
+  useEffect(() => {
+    void yukle();
+  }, [yukle]);
+
+  async function calistir(is: () => Promise<void>) {
+    setMesgul(true);
+    setHata(null);
+    try {
+      await is();
+      await yukle();
+      onChange();
+    } catch (e) {
+      setHata(e instanceof Error ? e.message : 'İşlem uygulanamadı');
+    } finally {
+      setMesgul(false);
+    }
+  }
+
+  function tasi(index: number, yon: -1 | 1) {
+    if (!slides) return;
+    const a = slides[index];
+    const b = slides[index + yon];
+    if (!a || !b) return;
+    /* Sıra takası: `position` benzersiz ama kısıt `deferrable`, yani
+       geçici çakışma commit'e kadar sorun değil. */
+    void calistir(async () => {
+      await updateHeroSlide(a.key, { position: b.position });
+      await updateHeroSlide(b.key, { position: a.position });
+    });
+  }
+
+  return (
+    <Panel title="Hero slaytları">
+      {hata && (
+        <Alert tone="danger" className="mb-3">
+          {hata}
+        </Alert>
+      )}
+
+      {slides === null ? (
+        <p className="text-body-sm text-muted-foreground">Yükleniyor…</p>
+      ) : slides.length === 0 ? (
+        <p className="text-body-sm text-muted-foreground">
+          Tanımlı slayt yok — ziyaretçi koddaki varsayılan beş slaytı
+          görüyor.
+        </p>
+      ) : (
+        <ul className="space-y-2">
+          {slides.map((slide, i) => (
+            <HeroSlideRowEditor
+              key={slide.key}
+              slide={slide}
+              canWrite={canWrite && !mesgul}
+              ilk={i === 0}
+              son={i === slides.length - 1}
+              onTasi={(yon) => tasi(i, yon)}
+              onYaz={(patch) =>
+                void calistir(() => updateHeroSlide(slide.key, patch))
+              }
+            />
+          ))}
+        </ul>
+      )}
+    </Panel>
+  );
+}
+
+function HeroSlideRowEditor({
+  slide,
+  canWrite,
+  ilk,
+  son,
+  onTasi,
+  onYaz,
+}: {
+  slide: HeroSlideRow;
+  canWrite: boolean;
+  ilk: boolean;
+  son: boolean;
+  onTasi: (yon: -1 | 1) => void;
+  onYaz: (patch: HeroSlidePatch) => void;
+}) {
+  return (
+    <li className="rounded-card border border-border bg-surface-2 px-3 py-2.5">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="tabular text-meta text-muted-foreground">
+          {slide.position}
+        </span>
+        <span className="text-body-sm font-medium text-foreground">
+          {slide.badge}
+        </span>
+        <code className="text-meta text-faint">{slide.key}</code>
+        {!slide.enabled && <Badge tone="muted">kapalı</Badge>}
+        {(slide.publish_from || slide.publish_to) && (
+          <Badge tone="cold">zamanlı</Badge>
+        )}
+
+        <div className="ml-auto flex items-center gap-1">
+          <Button
+            size="sm"
+            variant="ghost"
+            aria-label="Yukarı taşı"
+            disabled={!canWrite || ilk}
+            onClick={() => onTasi(-1)}
+          >
+            ↑
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            aria-label="Aşağı taşı"
+            disabled={!canWrite || son}
+            onClick={() => onTasi(1)}
+          >
+            ↓
+          </Button>
+        </div>
+      </div>
+
+      <div className="mt-2 grid gap-2 sm:grid-cols-2">
+        <Alan etiket="Başlık">
+          <Input
+            defaultValue={slide.title}
+            maxLength={90}
+            disabled={!canWrite}
+            onBlur={(e) => {
+              const v = e.target.value.trim();
+              if (v && v !== slide.title) onYaz({ title: v });
+            }}
+          />
+        </Alan>
+        <Alan etiket="Alt metin">
+          <Input
+            defaultValue={slide.subtitle}
+            maxLength={180}
+            disabled={!canWrite}
+            onBlur={(e) => {
+              const v = e.target.value.trim();
+              if (v !== slide.subtitle) onYaz({ subtitle: v });
+            }}
+          />
+        </Alan>
+        <Alan etiket="CTA metni">
+          <Input
+            defaultValue={slide.cta_label}
+            maxLength={40}
+            disabled={!canWrite}
+            onBlur={(e) => {
+              const v = e.target.value.trim();
+              if (v && v !== slide.cta_label) onYaz({ cta_label: v });
+            }}
+          />
+        </Alan>
+        <Alan etiket="CTA adresi">
+          <Input
+            defaultValue={slide.cta_to}
+            disabled={!canWrite}
+            onBlur={(e) => {
+              const v = e.target.value.trim();
+              if (v && v !== slide.cta_to) onYaz({ cta_to: v });
+            }}
+          />
+        </Alan>
+        <Alan etiket="Metin hizası">
+          <Select
+            value={slide.text_align}
+            disabled={!canWrite}
+            onChange={(e) =>
+              onYaz({ text_align: e.target.value as 'left' | 'center' })
+            }
+          >
+            <option value="left">Sola</option>
+            <option value="center">Ortaya</option>
+          </Select>
+        </Alan>
+        <Alan etiket="Odak noktası (yatay % / dikey %)">
+          <div className="flex gap-2">
+            <Input
+              type="number"
+              min={0}
+              max={100}
+              defaultValue={slide.focal_x}
+              disabled={!canWrite}
+              aria-label="Yatay odak yüzdesi"
+              onBlur={(e) => {
+                const v = Number(e.target.value);
+                if (Number.isFinite(v) && v !== slide.focal_x)
+                  onYaz({ focal_x: v });
+              }}
+            />
+            <Input
+              type="number"
+              min={0}
+              max={100}
+              defaultValue={slide.focal_y}
+              disabled={!canWrite}
+              aria-label="Dikey odak yüzdesi"
+              onBlur={(e) => {
+                const v = Number(e.target.value);
+                if (Number.isFinite(v) && v !== slide.focal_y)
+                  onYaz({ focal_y: v });
+              }}
+            />
+          </div>
+        </Alan>
+        <Alan etiket="Yayın başlangıcı">
+          <Input
+            type="datetime-local"
+            defaultValue={yerelZaman(slide.publish_from)}
+            disabled={!canWrite}
+            onBlur={(e) => onYaz({ publish_from: utcDamga(e.target.value) })}
+          />
+        </Alan>
+        <Alan etiket="Yayın bitişi">
+          <Input
+            type="datetime-local"
+            defaultValue={yerelZaman(slide.publish_to)}
+            disabled={!canWrite}
+            onBlur={(e) => onYaz({ publish_to: utcDamga(e.target.value) })}
+          />
+        </Alan>
+      </div>
+
+      {/* GÖRSEL KÜNYESİ: adres, kredi ve lisans birlikte yaşar. Kısıt
+          veritabanında (`hero_slides_credit_check`) — görsel varsa kredi
+          ve lisans boş bırakılamıyor, çünkü CC BY'nin şartı atıf. */}
+      {slide.image_url && (
+        <p className="mt-2 truncate text-meta text-faint">
+          Görsel: {slide.image_credit} · {slide.image_licence}
+        </p>
+      )}
+
+      <div className="mt-2">
+        <Kutu
+          etiket="Açık"
+          isaretli={slide.enabled}
+          disabled={!canWrite}
+          onChange={(v) => onYaz({ enabled: v })}
         />
       </div>
     </li>

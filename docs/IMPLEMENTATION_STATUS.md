@@ -31,7 +31,7 @@ tabloda `DONE` ile birleştirilmez:
 | 7 | Çalışan AstroHub Radyo | 683–832 | PARTIAL⁴ |
 | 8 | AstroHub TV ve YouTube'a hazır altyapı | 833–922 | PARTIAL⁵ |
 | 9 | Standart/Premium üyelik altyapısı | 923–1005 | IMPLEMENTED_DISABLED⁶ |
-| 10 | Admin panelinden kodsuz site yönetimi | 1006–1164 | PARTIAL⁷ |
+| 10 | Admin panelinden kodsuz site yönetimi | 1006–1164 | DONE⁷ |
 | 11 | Zorunlu ürün modülleri | 1165–1349 | NOT_STARTED |
 | 12 | Organik kullanıcı kazanımı | 1350–1419 | NOT_STARTED |
 | 13 | Fotoğraf, Storage, medya mimarisi | 1420–1462 | NOT_STARTED |
@@ -41,14 +41,18 @@ tabloda `DONE` ile birleştirilmez:
 | 17 | Test stratejisi ve kabul kriterleri | 1691–… | NOT_STARTED |
 | 18 | (belgenin sonu) | …–1956 | NOT_STARTED |
 
-⁷ **Faz 10'un yönetim yüzeyi ve ziyaretçi bağlantısı kuruldu.** Dört
-tablo (`home_modules`, `nav_links`, `feature_flags`, `site_settings`),
-değişiklik geçmişi + geri alma, taslak/önizleme/yayın akışı ve panelin
-**Site** sekmesi çalışıyor. Ana sayfa düzeni, yedi bayrak ve menü artık
-ziyaretçi tarafından da OKUNUYOR — panelin en büyük riski buydu ve üç
-turda kapandı. Kalan tek bağlanmamış yüzey hero banner yönetimi (tablo
-yok). §13.4'ün çoklu admin rolleri **kurulmayacak** — ürün kararı, tek
-admin (bkz. görev #73). Ayrıntı: Faz 10 bölümü.
+⁷ **Faz 10 kapandı.** Beş tablo (`home_modules`, `hero_slides`,
+`nav_links`, `feature_flags`, `site_settings`), değişiklik geçmişi +
+geri alma, taslak/önizleme/yayın akışı ve panelin **Site** sekmesi
+çalışıyor. §13.2'nin yönetilebilir yüzeyleri —ana sayfa düzeni, hero
+slaytları, menü/footer, yedi bayrak, bakım modu, site duyurusu— hem
+panelden yazılıyor hem ziyaretçi tarafından OKUNUYOR. Fazın tekrar eden
+hatası ("panel yazıyor, ziyaretçi okumuyor") dört turda kapatıldı.
+
+İKİ MADDE BİLEREK YAPILMADI ve ikisi de kapsam dışı sayıldı:
+§13.4'ün çoklu admin rolleri **kurulmayacak** (ürün kararı, tek admin —
+bkz. görev #73) ve §13.5'in tek ekran dashboard'u PARTIAL kalıyor
+(panel sekmeleri var, birleşik özet ekranı yok). Ayrıntı: Faz 10.
 
 ⁶ **Faz 9 tamam — ödeme kapalı olduğu için `IMPLEMENTED_DISABLED`.**
 §12.2 bu etiketi açıkça öneriyor: "bu faz kod ve test açısından
@@ -378,7 +382,7 @@ gerçek sanıp sonra hepsinin değiştiğini görüyordu.
 dalının ÜSTÜNDEYDİ; okuma düştüğünde kullanıcıya "henüz fotoğraf yok"
 deniyordu. Yanlış bilgi, sessiz boşluktan kötü. Sıra düzeltildi.
 
-### 3.3 Hero banner — **PARTIAL**
+### 3.3 Hero banner — **PARTIAL** (yönetim maddesi Faz 10'da kapandı)
 
 | Madde | Durum | Kanıt |
 |---|---|---|
@@ -394,7 +398,7 @@ deniyordu. Yanlış bilgi, sessiz boşluktan kötü. Sıra düzeltildi.
 | **Otomatik geçişi durdurma** | DONE | `aria-pressed` taşıyan düğme; kullanıcının kararı `hovered`dan AYRI tutuluyor — tek değişken olsaydı fare çekilince gösteri yeniden başlar, düğme çalışmıyormuş gibi görünürdü (test var) |
 | Hero ana içeriği aşağı itmiyor | DONE | `check:viewports` 2 sayfa × 11 çözünürlükte geçiyor |
 | Görsel–metin kontrast kontrolü | NOT_STARTED | Perde var ama ölçülmedi; fotoğraf değişken olduğu için statik ölçüm yetmez, örnekleme gerekiyor |
-| Admin'den yayın tarihi, sıra, odak noktası, metin hizası, CTA | NOT_STARTED | Slaytlar `slides.ts` içinde sabit; `home_modules` tablosunu gerektiriyor — Faz 10 |
+| **Admin'den yayın tarihi, sıra, odak noktası, metin hizası, CTA** | DONE | `0063` + `heroSlides.ts` + panel bölümü. Yayın penceresi RLS'te; odak `object-position`a, hiza sütun sınıfına bağlandı |
 | Slider gerçekten gerekli mi | NOT_STARTED | Beş slaytın etkileşim verisi yok; ölçmeden tek hero'ya indirmek tahmin olur |
 
 **Kendi eklediğim regresyon, kendi kapımla yakalandı:** durdurma düğmesi
@@ -1152,7 +1156,7 @@ Yazarken `interval` ve `status` enum değerlerini tahmin etmiştim
 | **Bayrakların ziyaretçi tarafında çalışması** | DONE | `siteConfig.ts` — yedi bayrak |
 | Bakım modu + site duyurusu | DONE | `MaintenanceGate`, `AnnouncementBar` |
 | **`nav_links` → gerçek menü/footer** | DONE | `navLinks.ts`, `0062`, panel bölümü |
-| Hero banner yönetimi | NOT_STARTED | tablo yok |
+| **Hero banner yönetimi** | DONE | `0063`, `heroSlides.ts`, panel bölümü |
 | Modül `layout` (ızgara/liste) ve `subtitle` | NOT_STARTED | gerekçe `HomePage.tsx`te |
 | §13.4 çoklu admin rolleri | — | ürün kararı: kurulmayacak |
 | §13.5 dashboard | PARTIAL | panel sekmeleri var, tek ekran özet yok |
@@ -1258,6 +1262,44 @@ kapatabilir. İki yapılandırma birbirinden habersiz olsaydı panel kendi
 kendisiyle çelişirdi: bir yerde kapattığın bölüm başka bir yerde
 duruyor olurdu. `selectMenu` bayrak öneklerini de süzüyor.
 
+### Hero: kuralı veritabanına koymak, istemciye anlatmaktan iyi
+
+`home_modules`ta yayın penceresi `home_layout()` RPC'sinde uygulanıyor —
+orada zaten taslak birleştirme için bir fonksiyon vardı. Hero'da taslak
+akışı yok, dolayısıyla RPC'nin TEK işi pencereyi uygulamak olurdu.
+Bunun yerine pencere `hero_slides`ın SELECT politikasına yazıldı:
+
+    using (
+      ((publish_from is null or publish_from <= now())
+       and (publish_to is null or publish_to > now()))
+      or app.is_admin()
+    )
+
+Sonuç ölçüldü: `anon` rolü ileri tarihli slaytı GÖRMÜYOR, yönetici
+görüyor. Kural veritabanında olduğu için istemcinin unutması, yeni bir
+sorgu yazılması ya da tabloya PostgREST'ten doğrudan gidilmesi durumu
+değiştirmiyor. Bunun bir sonucu `heroSlides.ts`te `publish_from` diye
+bir alanın HİÇ olmaması — okunmayan bir alanı tipe koymak, birinin onu
+istemcide "uygulamaya" çalışmasına davetiye olurdu.
+
+0059'un tuzağı (düzenlemek için görmek gerekir, görmek için yayında
+olmak gerekirdi) aynı politikadaki `or app.is_admin()` ile çözüldü;
+panel ayrı bir okuma yoluna ihtiyaç duymuyor.
+
+### Lisans kuralı yorumdan kısıta çıktı
+
+`slides.ts` şunu yazıyordu: "Kredi ekranda gösteriliyor — CC BY'nin şartı
+bu ve gösterilmediğinde lisans ihlali olur." Doğru bir cümleydi ama
+hiçbir şey onu zorlamıyordu; slaytlar kodda sabitken yeterliydi.
+Panelden görsel eklenebilir olduğu anda yetersiz hâle geldi: krediyi boş
+bırakmak lisans ihlalini tek tıkla mümkün kılardı.
+
+`hero_slides_credit_check` artık görsel varsa kredi ve lisansın dolu
+olmasını zorluyor (canlı ölçüldü: boş kredi `update`i reddediliyor).
+Okuma katmanında ikinci kapı var — kredisiz görsel EKRANA ÇIKMIYOR, ama
+slayt atılmıyor: çizilen sahnesiyle kalıyor, çünkü bir künye eksikliğini
+içerik kaybına çevirmek orantısız.
+
 ### Tohum, kod okunarak yazılmamıştı
 
 0058 `home_modules` tohumunu doldururken makul tahminler kullandı; o
@@ -1354,16 +1396,27 @@ duyurusu çalışıyor.
 panelde "Menü ve footer" bölümü açıldı, üst çubuk ve footer tabloyu
 okuyor. Fazın üç kopuk zincirinin üçü de kapandı.
 
-**Sıradaki iş: Faz 10'un son maddesi — hero banner yönetimi.**
-  1. §13.2 "Hero banner yönetimi", "görsel odak noktası", "CTA ve link"
-     istiyor. Tablo YOK — bu turda şema da yazılacak.
-  2. Faz 3'ün "Faz 10'a bağlı" kalemleri de burada açılıyor: hero
-     slaytlarının admin yönetimi ve hava sağlayıcı seçimi.
-  3. Kalıp hazır: `home_modules` → `homeLayout.ts` zinciri aynen
-     tekrarlanacak — tohum koddan türetilmeli, yedek "bugünkü sayfa"
-     olmalı, panel yüzeyi ile okuma AYNI commit'te gitmeli.
-  4. Faz 10 kapandığında sırada Faz 11 (zorunlu ürün modülleri,
-     belge satırı 1165–1349) var.
+**FAZ 10 KAPANDI** (bkz. Faz 10 bölümü). Dört tur sürdü ve dördünde de
+aynı hata çıktı: panel yazıyor, ziyaretçi okumuyor. Sırasıyla
+`home_modules`, `feature_flags`, `nav_links`, `hero_slides`. Dördü de
+kapalı; §13.2'nin yönetilebilir yüzeyleri artık uçtan uca çalışıyor.
+
+Faz 3'ün "Faz 10'a bağlı" kalemlerinden hero slaytlarının admin
+yönetimi de bu turda açıldı. Kalan iki kalem (hava sağlayıcı seçimi,
+"boşsa gizle" anahtarı) Faz 3'ün kendi bölümünde duruyor.
+
+**Sıradaki iş: Faz 11 — zorunlu ürün modülleri (belge satırı 1165–1349).**
+  1. Belge fazın başında AÇIK bir kural koyuyor: "Çakışan modülleri
+     birleştir… Çalışmayan placeholder gösterme." Yani ilk iş yeni kod
+     yazmak değil, MEVCUT modüllerle karşılaştırmak — §14.1'in istediği
+     çoğu şey (hedef arama, yükseklik/azimut, alacakaranlık, ay ayrımı)
+     `araclar` ve `bu-gece` altında kısmen var.
+  2. Envanteri çıkarmadan tabloya/koda dokunma: "zaten var" ile "yeni
+     modül" ayrımı yapılmadan yazılan her şey ikinci bir kopya olur.
+  3. Dış veri lisansı gerektirenler (katalog, gökyüzü haritası verisi)
+     adapter + feature flag ile hazırlanacak — bayrak altyapısı bu fazda
+     kuruldu ve ziyaretçi tarafında ÇALIŞIYOR, yani "kapalıyken
+     görünmez" artık gerçek.
 
 **Kanal bağlı değilken sahte içerik gösterilmemeli** (§11.2 son madde).
 Adaptör ve panel bu kurala uyuyor; kullanıcı sayfaları yazılırken de

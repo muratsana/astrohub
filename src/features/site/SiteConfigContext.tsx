@@ -25,6 +25,11 @@ import {
   toNavLinks,
   type NavLinkView,
 } from './navLinks';
+import {
+  DEFAULT_HERO_SLIDES,
+  toHeroSlides,
+  type HeroSlideView,
+} from './heroSlides';
 import { flaggedNavPrefixes } from '@/app/navigation';
 import { useAuth } from '@/features/auth/AuthContext';
 
@@ -69,6 +74,8 @@ interface SiteConfigValue {
   maintenance: Maintenance;
   /** Üst menü + footer bağlantıları (§13.2). Kapalı olanlar süzülmüş. */
   navLinks: NavLinkView[];
+  /** Hero slaytları (§6.3). Yayın penceresini RLS uyguluyor. */
+  heroSlides: HeroSlideView[];
   status: 'loading' | 'ready' | 'unconfigured';
 }
 
@@ -77,6 +84,7 @@ const VARSAYILAN: SiteConfigValue = {
   announcement: DEFAULT_ANNOUNCEMENT,
   maintenance: DEFAULT_MAINTENANCE,
   navLinks: DEFAULT_NAV_LINKS,
+  heroSlides: DEFAULT_HERO_SLIDES,
   status: 'loading',
 };
 
@@ -97,7 +105,7 @@ export function SiteConfigProvider({ children }: { children: ReactNode }) {
         const supabase = await getSupabase();
         if (!supabase) return;
 
-        const [bayraklar, ayarlar, menuler] = await Promise.all([
+        const [bayraklar, ayarlar, menuler, slaytlar] = await Promise.all([
           supabase.from('feature_flags').select('key, enabled'),
           supabase
             .from('app_settings')
@@ -106,6 +114,13 @@ export function SiteConfigProvider({ children }: { children: ReactNode }) {
           supabase
             .from('nav_links')
             .select('menu, group_label, label, path, position, enabled, new_tab, auth_only'),
+          /* Yayın penceresi SELECT politikasında; ileri tarihli slayt
+             buraya HİÇ gelmiyor, süzmeye gerek yok. */
+          supabase
+            .from('hero_slides')
+            .select(
+              'key, badge, title, subtitle, cta_label, cta_to, scene, tint, image_url, image_credit, image_licence, focal_x, focal_y, text_align, position, enabled'
+            ),
         ]);
         if (!active) return;
 
@@ -125,6 +140,7 @@ export function SiteConfigProvider({ children }: { children: ReactNode }) {
            Üç sorguyu tek bir "hep ya da hiç"e bağlamak, menüdeki bir
            izin hatasını bakım moduna da bulaştırırdı. */
         const menuSatirlari = menuler.error ? null : menuler.data;
+        const slaytSatirlari = slaytlar.error ? null : slaytlar.data;
 
         const satirlar = (ayarlar.data ?? []) as {
           key: string;
@@ -138,6 +154,7 @@ export function SiteConfigProvider({ children }: { children: ReactNode }) {
           announcement: toAnnouncement(bul('announcement')),
           maintenance: toMaintenance(bul('maintenance')),
           navLinks: toNavLinks(menuSatirlari),
+          heroSlides: toHeroSlides(slaytSatirlari),
           status: 'ready',
         });
       } catch {
@@ -204,4 +221,16 @@ export function useMenu(menu: 'header' | 'footer'): NavLinkView[] {
       hiddenPrefixes: gizli,
     });
   }, [navLinks, flags, menu, user]);
+}
+
+/**
+ * Yayındaki hero slaytları (§6.3).
+ *
+ * Yayın penceresi burada uygulanmıyor — `hero_slides`ın SELECT
+ * politikası ileri tarihli satırı zaten döndürmüyor. Kuralın tek yerde
+ * durması bilinçli: iki yerde olsaydı biri güncellenir, öteki eskirdi.
+ */
+// eslint-disable-next-line react-refresh/only-export-components
+export function useHeroSlides(): HeroSlideView[] {
+  return useContext(SiteConfigContext).heroSlides;
 }

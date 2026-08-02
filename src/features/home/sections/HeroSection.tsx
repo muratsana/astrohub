@@ -1,10 +1,12 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { HeroBackdrop } from '@/components/media/HeroBackdrop';
 import { ChevronDownIcon } from '@/components/ui/icons';
 import { usePreviewEditor } from '@/features/preview-editor/PreviewEditorContext';
 import type { EditableField, HeroSlide } from '../hero/slides';
+import { useHeroSlides } from '@/features/site/SiteConfigContext';
+import { focalPosition, type HeroSlideView } from '@/features/site/heroSlides';
 import { commonsSrcSet, commonsWidthUrl } from '@/lib/commons';
 import { cn } from '@/lib/cn';
 import { upperTr } from '@/lib/text';
@@ -36,7 +38,32 @@ const HERO_SIZES = '(min-width: 1520px) 1424px, 100vw';
 const AUTOPLAY_MS = 7000;
 
 export function HeroSection() {
-  const { slides, enabled, selection } = usePreviewEditor();
+  const { slides: editorSlides, enabled, selection } = usePreviewEditor();
+  /*
+    KAYNAK SEÇİMİ: önizleme editörü AÇIKKEN onun listesi kazanıyor.
+    Editör bir tasarım aracı — tasarımcı slaytı ekranda düzenlerken
+    veritabanının onu ezmesi aracı kullanılamaz hâle getirirdi. Üretimde
+    editör hiç yüklenmiyor, dolayısıyla kaynak her zaman tablo.
+  */
+  const yayindaki = useHeroSlides();
+  /*
+    Editörün slaytlarında odak noktası ve metin hizası YOK — o alanlar
+    panelin konusu, tasarım aracının değil. Varsayılanlarla tamamlanıyor
+    ki bileşen tek bir tip görsün; iki ayrı şekli render'da ayırmak, her
+    alan okumasına bir koşul eklemek demekti.
+  */
+  const slides = useMemo<HeroSlideView[]>(
+    () =>
+      enabled
+        ? editorSlides.map((s) => ({
+            ...s,
+            focalX: 50,
+            focalY: 50,
+            textAlign: 'left' as const,
+          }))
+        : yayindaki,
+    [enabled, editorSlides, yayindaki]
+  );
   const [index, setIndex] = useState(0);
   /** Fare/odak kaynaklı geçici duraklama. */
   const [hovered, setHovered] = useState(false);
@@ -82,7 +109,17 @@ export function HeroSection() {
     }
   }
 
+  /*
+    HİÇ SLAYT YOKSA HERO ÇİZİLMİYOR.
+
+    Yönetici bütün slaytları kapatabilir (ya da hepsine ileri tarih
+    verebilir) — `toHeroSlides` bunu bir KARAR sayıp boş liste döndürüyor,
+    yedeğe düşmüyor. O durumda `slides[index]` `undefined` olur ve
+    aşağıdaki `slide.id` sayfayı komple düşürürdü: yöneticinin bir içerik
+    kararı, ziyaretçi için beyaz ekran demek olurdu.
+  */
   const slide = slides[index];
+  if (!slide) return null;
 
   /*
     LCP GÖRSELİ ÖNDEN YÜKLENİR. İlk slaytın fotoğrafı sayfanın en büyük
@@ -168,6 +205,7 @@ export function HeroSection() {
                 alt=""
                 credit={`${slide.image.credit} · ${slide.image.licence}`}
                 priority={index === 0}
+                focal={focalPosition(slide)}
               />
             )}
             {/* Metnin okunurluğu için soldan sağa koyulaşan perde */}
@@ -263,7 +301,20 @@ export function HeroSection() {
               geniş ekranda başlığı tek uzun satıra çekip carousel oklarının
               altına sokardı.
             */}
-            <div className="max-w-[62ch]">
+            {/*
+              METİN HİZASI (§6.3) — panelden geliyor.
+
+              `center` seçildiğinde sütun ortalanıyor (`mx-auto`) ve metin
+              de ortalanıyor. Yalnızca `text-center` verseydik sütun solda
+              kalır, içindeki satırlar kendi dar kutusunda ortalanırdı —
+              yani hiçbir şey ortalanmış GÖRÜNMEZDİ.
+            */}
+            <div
+              className={cn(
+                'max-w-[62ch]',
+                slide.textAlign === 'center' && 'mx-auto text-center'
+              )}
+            >
               <Editable slide={slide} field="badge" className="w-fit">
                 <span className="inline-block rounded-card bg-primary px-2.5 py-1 text-meta font-medium tracking-[0.04em] text-primary-foreground">
                   {slide.badge}
@@ -415,12 +466,25 @@ function HeroPhoto({
   alt,
   credit,
   priority = false,
+  focal,
 }: {
   src: string;
   alt: string;
   credit: string;
   /** İlk slayt = LCP adayı; yüksek öncelikle iner. */
   priority?: boolean;
+  /**
+   * GÖRSEL ODAK NOKTASI (§6.3) — `object-position` değeri.
+   *
+   * `object-cover` görseli kırpıyor ve kırpma varsayılan olarak merkezden
+   * yapılıyor. Geniş bir hero'da ilgi çekici kısım çoğu zaman merkezde
+   * DEĞİL; odak noktası olmadan bunu düzeltmenin tek yolu başka bir
+   * görsel seçmekti.
+   *
+   * Sınıf değil `style`: yüzde değeri sürekli bir sayı, Tailwind'in
+   * derleme zamanı sınıf üretimiyle ifade edilemez.
+   */
+  focal?: string;
 }) {
   const [state, setState] = useState<'loading' | 'ready' | 'failed'>('loading');
   if (state === 'failed') return null;
@@ -437,6 +501,7 @@ function HeroPhoto({
         decoding="async"
         onLoad={() => setState('ready')}
         onError={() => setState('failed')}
+        style={focal ? { objectPosition: focal } : undefined}
         className={cn(
           'absolute inset-0 h-full w-full object-cover transition-opacity duration-700',
           state === 'ready' ? 'opacity-100' : 'opacity-0'

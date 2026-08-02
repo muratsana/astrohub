@@ -250,6 +250,98 @@ export async function deleteNavLink(id: string): Promise<void> {
     throw new Error('Bağlantı silinemedi — kayıt bulunamadı ya da yetkiniz yok.');
 }
 
+/* ── Hero slaytları ──────────────────────────────────────────────────── */
+
+export interface HeroSlideRow {
+  key: string;
+  badge: string;
+  title: string;
+  subtitle: string;
+  cta_label: string;
+  cta_to: string;
+  image_url: string | null;
+  image_credit: string | null;
+  image_licence: string | null;
+  focal_x: number;
+  focal_y: number;
+  text_align: 'left' | 'center';
+  position: number;
+  enabled: boolean;
+  publish_from: string | null;
+  publish_to: string | null;
+}
+
+/**
+ * Panelin hero okuma yolu.
+ *
+ * `home_modules_admin` gibi AYRI BİR RPC'YE GEREK YOK: `hero_slides`ın
+ * SELECT politikası yöneticiye pencereyi aşma izni veriyor
+ * (`or app.is_admin()`), yani aynı tablo sorgusu yönetici için ileri
+ * tarihli slaytları da döndürüyor. 0059'un tuzağı (düzenlemek için görmek
+ * gerekir, görmek için yayında olmak gerekirdi) politikada çözüldüğü için
+ * ikinci bir yol yazılmadı.
+ */
+export async function fetchHeroSlides(): Promise<HeroSlideRow[]> {
+  const supabase = await client();
+  const { data, error } = await supabase
+    .from('hero_slides')
+    .select(
+      'key, badge, title, subtitle, cta_label, cta_to, image_url, image_credit, image_licence, focal_x, focal_y, text_align, position, enabled, publish_from, publish_to'
+    )
+    .order('position');
+  if (error) throw new Error(error.message);
+  return (data ?? []) as HeroSlideRow[];
+}
+
+/** Panelden düzenlenebilen alanlar. `key` ve `scene` yok — ikisi de kodla eşleşir. */
+export type HeroSlidePatch = Partial<
+  Omit<HeroSlideRow, 'key'>
+>;
+
+/**
+ * GEREKÇE ALANI YOK — `nav_links` ile aynı gerekçe.
+ *
+ * Gerekçe yalnızca `set_*` RPC'lerinden geçen yazmalarda kaydedilebiliyor:
+ * tetikleyici onu `astrohub.reason` oturum değişkeninden okuyor ve
+ * PostgREST tek çağrıda `set local` çalıştıramıyor. Hero için ayrı bir
+ * RPC yazmadık; değişiklik geçmişi yine tam çalışıyor (kim, ne zaman,
+ * önceki değer, yeni değer, geri alma) — eksik olan tek alan gerekçe.
+ *
+ * Bunu yazılı bırakmak önemli: geçmişte gerekçesi boş satırlar görüp
+ * "tetikleyici bozuk" diye aramak, olmayan bir hatayı kovalamak olurdu.
+ */
+export async function updateHeroSlide(
+  key: string,
+  patch: HeroSlidePatch
+): Promise<void> {
+  if (typeof patch.cta_to === 'string') {
+    const sorun = describePathProblem(patch.cta_to);
+    if (sorun) throw new Error(sorun);
+  }
+
+  const temiz: Record<string, unknown> = { ...patch };
+  if (typeof patch.badge === 'string')
+    temiz.badge = sanitizeText(patch.badge, { maxLength: 40 });
+  if (typeof patch.title === 'string')
+    temiz.title = sanitizeText(patch.title, { maxLength: 90 });
+  if (typeof patch.subtitle === 'string')
+    temiz.subtitle = sanitizeText(patch.subtitle, { maxLength: 180 });
+  if (typeof patch.cta_label === 'string')
+    temiz.cta_label = sanitizeText(patch.cta_label, { maxLength: 40 });
+
+  const supabase = await client();
+  /* `.select()` RLS'in sessizliğini kırıyor — `upsertNavLink`teki
+     gerekçenin aynısı. */
+  const { data, error } = await supabase
+    .from('hero_slides')
+    .update(temiz)
+    .eq('key', key)
+    .select('key');
+  if (error) throw new Error(error.message);
+  if (!data || data.length === 0)
+    throw new Error('Slayt güncellenemedi — kayıt bulunamadı ya da yetkiniz yok.');
+}
+
 /* ── Feature flag'ler ────────────────────────────────────────────────── */
 
 export interface FeatureFlag {
