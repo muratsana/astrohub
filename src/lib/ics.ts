@@ -1,3 +1,5 @@
+import { downloadText as indir } from './download';
+
 /**
  * TAKVİM DOSYASI (RFC 5545) — ortak yazıcı.
  *
@@ -129,22 +131,18 @@ export function buildCalendar(
 }
 
 /**
- * Metni tarayıcıya indirtir.
+ * Metni tarayıcıya indirtir — takvim MIME türüyle.
  *
- * `Blob` + `URL.createObjectURL`: veri zaten istemcide, sunucuya gidip
- * geri getirmenin anlamı yok. `revokeObjectURL` çağrılıyor — çağrılmazsa
- * nesne URL'si sekme kapanana kadar bellekte kalır.
+ * Genel indirme işi `lib/download.ts`e TAŞINDI: CSV dışa aktarma (Faz 4)
+ * ikinci çağıran olunca burada durması, RFC 5545 ile ilgisi olmayan bir
+ * fonksiyonu takvim modülünde tutmak demekti. Bu sarmalayıcı yalnızca
+ * takvim MIME türünü varsayılan yapıyor ve mevcut çağıranları
+ * değiştirmeden bırakıyor.
  */
 export function downloadText(
   fileName: string,
   content: string,
   mime = 'text/calendar;charset=utf-8'
 ): void {
-  const blob = new Blob([content], { type: mime });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = fileName;
-  a.click();
-  URL.revokeObjectURL(url);
+  indir(fileName, content, mime);
 }

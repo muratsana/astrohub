@@ -600,12 +600,33 @@ Motora geçiş sırasında eklenen iki yetenek:
 | Favoriler | DONE | `useSavedPhotoIds` + `personalFacet`; galeride "Kaydettiklerim" süzgeci. Sınıra dayanırsa `truncated` ile SÖYLENİYOR — sessiz kırpma yok |
 | Onay/yayın durumu, premium görünürlük | NOT_STARTED | Faz 9/10 |
 | Kaydedilmiş görünümler, kullanıcı varsayılanı, admin paylaşılan görünümü | DONE | `saved_views` (`0069`) + `SavedViewsMenu`; galeride bağlı. Varsayılan kısmi tekil indeksle zorlanıyor ve `set_default_view` RPC'siyle TEK transaction'da atanıyor. `is_shared` kullanıcıya kapalı — kural bir tetikleyicide, çünkü RLS satıra izin verir SÜTUNA değil |
-| CSV dışa aktarma (yalnız admin) | NOT_STARTED | |
+| CSV dışa aktarma (yalnız admin) | DONE | `lib/csv.ts` + `CsvExportButton`; galeride bağlı. RFC 4180 + BOM (Excel Türkçe harfleri bozmasın) + **formül enjeksiyonu koruması**. Yönetici değilse düğme HİÇ çizilmiyor |
 | Sütun SIRASI (sürükle-bırak) | NOT_STARTED | Göster/gizle geldi; sıra değiştirme ayrı bir etkileşim (sürükleme + klavye alternatifi) ve tek başına bir tur |
 | Mobil filtre drawer'ı | DONE | `FilterBar`ın kendi içinde: ayrı bir bileşen "tutarsız filtre bileşeni üretme" yasağını çiğnerdi. Çocuklar TEK KEZ çiziliyor (çift `id` olmasın); prerender'da masaüstü varsayılıyor. Odak tuzağı, Escape, gövde kilidi, aktif filtre rozeti. 11 birim + 1 E2E (390px ve 1280px'te gerçek tarayıcıda) |
 | Tablo görünümü (sütun göster/gizle, yoğunluk, sabit başlık, başlıktan sıralama) | DONE | `DataTable` vardı ama HİÇBİR SAYFA KULLANMIYORDU (tek eşleşme kendi dosyası). Sıralama motorun `sort` değerine yazılıyor — tablo kendi durumunu tutsaydı ızgaraya geçen kullanıcı sıralamasını kaybederdi. Sabit başlık + sabit ilk sütun, yoğunluk, sütun göster/gizle (`localStorage`), mobilde etiket-değer kartı. Pazaryerinde üçüncü görünüm olarak bağlı. 12 birim + 1 E2E |
 | Harita / takvim / zaman çizelgesi görünümleri | PARTIAL | `EventMapPage` ve `EventCalendar` ayrı sayfa olarak var; explorer'ın görünüm seçeneği değiller |
 | Görünüm tercihinin hesapta saklanması | PARTIAL | `localStorage`da saklanıyor (görünüm, yoğunluk, gizli sütunlar), hesapta değil — kullanıcı tercihleri tablosu Faz 10 |
+
+### CSV dışa aktarmanın gerçek riski biçimlendirme değil
+
+Excel ve LibreOffice `=`, `+`, `-`, `@` ile başlayan hücreyi FORMÜL
+sayıyor. Kullanıcı adı `=HYPERLINK("http://…")` olan biri varsa, o
+satırı dışa aktaran YÖNETİCİ dosyayı açtığında hücre çalışıyor —
+saldırı kullanıcıdan yöneticiye, veri yoluyla geçiyor. `csvCell` böyle
+hücrelerin başına tek tırnak koyuyor; tırnak görünen değeri bozmuyor
+ama formül olmasını engelliyor.
+
+BOM da standart dışı ama gerekli: BOM'suz bir CSV'yi Excel sistem kod
+sayfasıyla açıyor ve "Çankırı" → "Ã‡ankÄ±rÄ±" oluyor.
+
+Düğme yönetici değilse HİÇ çizilmiyor — devre dışı bir düğme, sıradan
+kullanıcıya erişemeyeceği bir yetenek göstermek olurdu. Ama bu bir
+ARAYÜZ kararı, yetki kontrolü değil: gerçek koruma RLS'te ve dışa
+aktarılan satırlar zaten kullanıcının görebildiği satırlar.
+
+`downloadText` `ics.ts`ten `lib/download.ts`e TAŞINDI: indirme işleminin
+RFC 5545 ile ilgisi yok ve CSV ikinci çağıran olunca seçenek ikiydi —
+kopyalamak ya da taşımak.
 
 ### Kaydedilmiş görünümler — üç madde, tek tablo (`0069`)
 
