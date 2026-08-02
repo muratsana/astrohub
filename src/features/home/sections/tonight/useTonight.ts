@@ -66,8 +66,6 @@ export interface TonightData {
   conditions: SkyState;
   /** Hava verisi yokken null — skor uydurulmuyor. */
   score: NightScore | null;
-  /** Aynı gecenin astrofotoğraf karşılığı — ağırlıkları farklı. */
-  photoScore: NightScore | null;
   /** Dakikada bir güncellenen an. */
   now: Date;
   /** Eksen üzerinde "şu an" (0–1); gece dışındaysa null. */
@@ -203,11 +201,7 @@ export function useTonight(offsetDays = 0): TonightData {
   const weather = conditions.data;
   const { timeline } = sky;
 
-  /*
-   * İKİ SKOR, TEK GİRDİ KÜMESİ. Girdileri iki kez kurmak, birine
-   * eklenen alanın diğerinde unutulması demekti — aynı gece iki
-   * pencerede iki farklı sebeple puanlanırdı.
-   */
+  /* Skor girdileri tek yerde kurulur; kolonlar kendi gece hesabını yapmaz. */
   const scoreInputs = useMemo(() => {
     if (!weather) return null;
     const darkMinutes = timeline.dark
@@ -233,12 +227,6 @@ export function useTonight(offsetDays = 0): TonightData {
   /** Gözle gözlem skoru — panelin ana sayısı. */
   const score = useMemo(
     () => (scoreInputs ? nightScore(scoreInputs, 'gozlem') : null),
-    [scoreInputs]
-  );
-
-  /** Astrofotoğraf skoru — rüzgâr hamlesi ve çiy ağırlıklı. */
-  const photoScore = useMemo(
-    () => (scoreInputs ? nightScore(scoreInputs, 'astrofoto') : null),
     [scoreInputs]
   );
 
@@ -271,7 +259,6 @@ export function useTonight(offsetDays = 0): TonightData {
     ...sky,
     conditions,
     score,
-    photoScore,
     now,
     nowAt,
     dateLabel,

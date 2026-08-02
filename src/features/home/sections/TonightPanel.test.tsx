@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router';
 import { TonightPanel } from './TonightPanel';
 import { ThemeProvider } from '@/features/theme/ThemeContext';
 import { LocationProvider } from '@/features/location/LocationContext';
-import { FORECAST_DAYS } from '@/features/weather/openMeteo';
+import { MAX_OFFSET, NIGHT_PICKER_DAYS } from './tonight/nightOffset';
 
 /**
  * "BU GECE" MODÜLÜ — davranış denetimi.
@@ -46,9 +46,9 @@ describe('TonightPanel · karar kolonu', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('veri kaynağını her koşulda künyeliyor', () => {
+  it('servis künyesini kullanıcı arayüzünde göstermiyor', () => {
     renderPanel();
-    expect(screen.getByText(/efemeris yerel hesap/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Open-Meteo|efemeris yerel hesap/i)).not.toBeInTheDocument();
   });
 });
 
@@ -154,47 +154,57 @@ describe('TonightPanel · hedef kolonu', () => {
     expect(link).toHaveAttribute('href', '/hedefler');
     expect(link.textContent).toMatch(/\d+ nesne/);
   });
+
+  it('zirve ve yükseklik başlıkları sıralama kontrolü', () => {
+    renderPanel();
+    const zirve = screen.getByRole('button', { name: /zirve sütununu artan sırala/i });
+    const yukseklik = screen.getByRole('button', {
+      name: /yükseklik sütununu artan sırala/i,
+    });
+
+    fireEvent.click(yukseklik);
+
+    expect(
+      screen.getByRole('button', { name: /yükseklik sütununu azalan sırala/i })
+    ).toBeInTheDocument();
+    expect(zirve).toBeInTheDocument();
+  });
 });
 
 describe('TonightPanel · ileri tarihli gece', () => {
-  it('bu gecedeyken geri gitme kapalı', () => {
+  it('gece seçimi haftalık tek satırlı kontrol olarak çiziliyor', () => {
     renderPanel();
-    expect(
-      screen.getByRole('button', { name: /önceki gece/i })
-    ).toBeDisabled();
+    const group = screen.getByRole('tablist', { name: /gece tarihi seç/i });
+    const tabs = within(group).getAllByRole('tab');
+
+    expect(tabs).toHaveLength(NIGHT_PICKER_DAYS);
+    expect(tabs[0]).toHaveAttribute('aria-selected', 'true');
+    expect(tabs[MAX_OFFSET]).toBeInTheDocument();
   });
 
-  it('ileri gidince tarih değişiyor ve dönüş yolu açılıyor', () => {
+  it('ileri güne tıklayınca seçim değişiyor ve ilk sekme geri döndürüyor', () => {
     renderPanel();
-    fireEvent.click(screen.getByRole('button', { name: /sonraki gece/i }));
+    const tabs = screen.getAllByRole('tab');
+    fireEvent.click(tabs[1]);
 
-    /*
-     * "Bu gece" metni karar kolonunun başlığında da geçiyor; yokluğunu
-     * aramak yanlış yeri ölçerdi. Ölçülen şey seçicinin artık bir TARİH
-     * göstermesi — yani gerçekten başka bir geceye geçilmiş olması.
-     */
-    expect(
-      screen.getByRole('button', { name: /bu geceye dön/i })
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: /önceki gece/i })
-    ).not.toBeDisabled();
+    expect(tabs[1]).toHaveAttribute('aria-selected', 'true');
+    expect(tabs[0]).toHaveAttribute('aria-selected', 'false');
+
+    fireEvent.click(tabs[0]);
+    expect(tabs[0]).toHaveAttribute('aria-selected', 'true');
   });
 
   /*
-   * ASIL KURAL: hava tahmininin ufku var, efemerisin yok. İleri gitme
-   * düğmesi o ufukta durmalı — yoksa panelin yarısı sebepsizce boşalır.
+   * ASIL KURAL: ana sayfa seçicisi haftalık karar yüzeyi. Hava adaptörü
+   * daha uzun veri çekse bile bu kontrol tek haftayı aşmıyor.
    */
-  it('tahmin ufkunda ileri gitme kapanıyor ve sebebi yazıyor', () => {
+  it('haftanın son günü seçilebiliyor, daha ileri kontrol çizilmiyor', () => {
     renderPanel();
-    const ileri = screen.getByRole('button', { name: /sonraki gece/i });
+    const tabs = screen.getAllByRole('tab');
+    fireEvent.click(tabs[MAX_OFFSET]);
 
-    for (let i = 0; i < FORECAST_DAYS + 3; i++) {
-      if (!(ileri as HTMLButtonElement).disabled) fireEvent.click(ileri);
-    }
-
-    expect(ileri).toBeDisabled();
-    expect(screen.getByText(/hava tahmini .* gün ileriye/i)).toBeInTheDocument();
+    expect(tabs[MAX_OFFSET]).toHaveAttribute('aria-selected', 'true');
+    expect(tabs).toHaveLength(7);
   });
 
   /*
@@ -203,77 +213,22 @@ describe('TonightPanel · ileri tarihli gece', () => {
    */
   it('ileri gecede "şu an" imleci çizilmiyor', () => {
     renderPanel();
-    fireEvent.click(screen.getByRole('button', { name: /sonraki gece/i }));
+    fireEvent.click(screen.getAllByRole('tab')[1]);
     expect(screen.queryByText('ŞU AN')).not.toBeInTheDocument();
   });
 });
 
 /**
- * GEZİNME DÜĞMELERİ YERİNDE DURUYOR MU.
+ * ESKİ GEZİNME YÜZEYİ GERİ GELMESİN.
  *
- * BULUNAN HATA: "Bu geceye dön" yalnızca ileri gidilince çiziliyor ve
- * SONRAKİ GECE'nin SOLUNA giriyordu. Kullanıcı düğmeye basıyor, yeni
- * düğme beliriyor ve bastığı düğme sağa kayıyordu — ikinci tık artık
- * başka bir yere gidiyordu. Ortadaki etiketin "Bu gece" ile uzun bir
- * tarih arasında gidip gelmesi aynı kaymayı her seferinde tekrarlıyordu.
- *
- * Ölçülen şey piksel değil SIRA: belirip kaybolan öge, gezinme
- * kümesinin ARKASINDA olmak zorunda. Böylece göründüğünde yalnızca
- * kendinden sonrasını iter.
+ * Kullanıcı yorumundaki sorun ayrı ok düğmeleri ve date input'un panelin
+ * üstünde dağınık görünmesiydi. Yeni yüzey haftalık tab çizgisi.
  */
-describe('TonightPanel · gezinme düğmeleri sabit', () => {
-  /** Belge sırasına göre a'dan b'ye ilerleniyor mu. */
-  function oncedir(a: Element, b: Element): boolean {
-    return Boolean(
-      a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING
-    );
-  }
-
-  it('"Bu geceye dön" gezinme düğmelerinin ARKASINDA çiziliyor', () => {
+describe('TonightPanel · eski gezinme yüzeyi kapalı', () => {
+  it('önceki/sonraki okları ve date input çizilmiyor', () => {
     renderPanel();
-    fireEvent.click(screen.getByRole('button', { name: /sonraki gece/i }));
-
-    const donus = screen.getByRole('button', { name: /bu geceye dön/i });
-    for (const ad of [/önceki gece/i, /sonraki gece/i, /bir hafta ileri/i]) {
-      expect(oncedir(screen.getByRole('button', { name: ad }), donus)).toBe(
-        true
-      );
-    }
-  });
-
-  /*
-   * Etiket "Bu gece" (7 karakter) ile "2 Ağustos Cumartesi" (19) arasında
-   * gidip geliyor. Genişliği sabitlenmezse aradaki fark sağındaki her
-   * düğmeyi sürükler.
-   */
-  it('tarih etiketinin genişliği sabit', () => {
-    const { container } = renderPanel();
-    const etiket = container.querySelector('[class*="min-w-[18ch]"]');
-    expect(etiket).not.toBeNull();
-    expect(etiket?.textContent).toBe('Bu gece');
-  });
-
-  /*
-   * `.num` mono aile ve `latin-ext` alt kümesi bilerek indirilmiyor
-   * (`index.css`). "2 Ağustos Cumartesi" içindeki ğ/ı/ş Inter'e düşüyor
-   * ve tek etiket iki aileyle çiziliyordu. Sayı hizası için doğru sınıf
-   * `.tabular`: gövde fontunda kalıyor.
-   */
-  it('tarih etiketi mono aileye düşmüyor', () => {
-    const { container } = renderPanel();
-    const etiket = container.querySelector('[class*="min-w-[18ch]"]');
-    expect(etiket?.className).not.toMatch(/\bnum\b/);
-    expect(etiket?.className).toMatch(/\btabular\b/);
-  });
-
-  /*
-   * Form denetimleri yazı ailesini kendiliğinden miras almaz; tarih
-   * kutusu tarayıcının arayüz fontuna düşüyor ve satır iki aileli
-   * görünüyordu.
-   */
-  it('tarih kutusu site fontunu kullanıyor', () => {
-    renderPanel();
-    const kutu = screen.getByLabelText(/gece tarihi seç/i);
-    expect(kutu.className).toMatch(/font-sans/);
+    expect(screen.queryByRole('button', { name: /önceki gece/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /sonraki gece/i })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/gece tarihi seç/i, { selector: 'input' })).not.toBeInTheDocument();
   });
 });

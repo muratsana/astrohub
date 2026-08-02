@@ -1,6 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router';
-import { FORECAST_DAYS } from '@/features/weather/openMeteo';
 import { Container } from '@/components/ui/Container';
 import { Button } from '@/components/ui/Button';
 import { useLocationContext } from '@/features/location/LocationContext';
@@ -10,12 +9,10 @@ import { DecisionColumn } from './tonight/DecisionColumn';
 import { TargetsColumn } from './tonight/TargetsColumn';
 import { TimelineColumn } from './tonight/TimelineColumn';
 import { useTonight } from './tonight/useTonight';
+import { cn } from '@/lib/cn';
 import {
-  MAX_OFFSET,
+  NIGHT_PICKER_DAYS,
   clampOffset,
-  dateBounds,
-  dateToOffset,
-  fromISODate,
   offsetFromParam,
   offsetToDate,
   toISODate,
@@ -57,7 +54,6 @@ export function TonightPanel() {
     permission,
     shouldOfferGeolocation,
     requestDeviceLocation,
-    dismissGeolocationOffer,
   } = useLocationContext();
   const { theme } = useTheme();
 
@@ -95,7 +91,32 @@ export function TonightPanel() {
     [offsetDays, params, setParams, bugun]
   );
   const tonight = useTonight(offsetDays);
-
+  const nightSteps = useMemo(
+    () =>
+      Array.from({ length: NIGHT_PICKER_DAYS }, (_, offset) => {
+        const date = offsetToDate(offset, bugun);
+        return {
+          offset,
+          iso: toISODate(date),
+          label:
+            offset === 0
+              ? 'Bu gece'
+              : date.toLocaleDateString('tr-TR', {
+                  weekday: 'short',
+                }),
+          detail: date.toLocaleDateString('tr-TR', {
+            day: '2-digit',
+            month: '2-digit',
+          }),
+          long: date.toLocaleDateString('tr-TR', {
+            day: 'numeric',
+            month: 'long',
+            weekday: 'long',
+          }),
+        };
+      }),
+    [bugun]
+  );
   /*
    * ÜÇÜNCÜ KOLONDAN İKİNCİYE TEK BAĞ. Bir hedef satırı işaretlendiğinde
    * çizelge o nesnenin zirve anını gösteriyor. Durum burada duruyor
@@ -145,7 +166,7 @@ export function TonightPanel() {
         {theme !== 'light' && <BackdropStars />}
       </div>
 
-      <Container className="border-b border-border py-5 sm:py-6">
+      <Container className="border-b border-border py-3 sm:py-4">
         {/*
           GECE SEÇİCİ VE KONUM AYNI SATIRDA. İkisi de "hangi hesap"
           sorusunun parçası: nerede ve ne zaman. Konum seçici üst şeritten
@@ -157,235 +178,108 @@ export function TonightPanel() {
           ve ay hesaplanabiliyor) ama o zaman panelin yarısı boş kalırdı
           ve kullanıcı sebebini aramak zorunda kalırdı.
         */}
-        <div className="mb-3 flex flex-wrap items-center gap-2">
-          <LocationPicker variant="panel" />
+        <div className="overflow-hidden rounded-card border border-border-strong bg-border">
+          <div className="bg-background p-3 sm:p-4">
+            <div className="grid gap-3 xl:grid-cols-[minmax(220px,280px)_minmax(0,1fr)] xl:items-center">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <LocationPicker variant="panel" />
+                  {shouldOfferGeolocation && (
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={requestDeviceLocation}
+                    >
+                      Konumumu kullan
+                    </Button>
+                  )}
+                </div>
+                {permission === 'denied' && (
+                  <p className="mt-2 text-meta leading-relaxed text-warning">
+                    Konum izni kapalı; seçili şehir kullanılıyor.
+                  </p>
+                )}
+              </div>
 
-          {/*
-            KONUM İZNİ TEKLİFİ AYNI SATIRA GİRDİ (Faz 3.1).
-
-            Önce üstte ayrı bir şeritti: kendi kenarlığı, kendi dolgusu ve
-            iki satırlık bir açıklamayla ilk ekranda 60px kaplıyordu.
-            Ölçüm (1280×720) şunu gösterdi: kabuk + hero + bu şerit + konum
-            satırı toplanınca "Bu Gece" fold'un altına düşüyordu.
-
-            İki blok zaten AYNI SORUYU cevaplıyordu — "nerede". Şeridin ilk
-            cümlesi ("X için hesaplanıyor") yanındaki seçicinin etiketini
-            kelimesi kelimesine tekrar ediyordu; §5.4'ün kaldırılacak
-            açıklama tanımı bu.
-
-            GİZLİLİK CÜMLESİ KALDI ve düğmenin yanında duruyor: kullanıcıdan
-            konum izni isteniyor, neyin nereye gittiğini istemeden ÖNCE
-            söylemek gerekiyor. Kısaldı, kaybolmadı.
-          */}
-          {shouldOfferGeolocation && (
-            <>
-              <span aria-hidden className="mx-1 h-4 w-px bg-border" />
-              <Button size="sm" onClick={requestDeviceLocation}>
-                Konumumu kullan
-              </Button>
-              <span className="text-meta leading-snug text-cold">
-                Sunucuya gönderilmez
-              </span>
-              <button
-                type="button"
-                onClick={dismissGeolocationOffer}
-                /* `min-h-6` + yatay dolgu: metin 17px yüksekliğindeydi ve
-                   WCAG 2.5.8'in 24×24 alt sınırının altında kalıyordu —
-                   `check:a11y` yakaladı. Punto değişmedi, hedef büyüdü. */
-                className="inline-flex min-h-6 items-center px-1 text-meta text-faint underline-offset-2 hover:text-muted-foreground hover:underline"
-              >
-                gizle
-              </button>
-            </>
-          )}
-
-          <span aria-hidden className="mx-1 h-4 w-px bg-border" />
-
-          {/*
-            ══════════════════════════════════════════════════════════════
-            GEZİNME ÜÇ KÜMEYE AYRILDI — DÜĞMELER YERİNDE DURSUN
-
-            BULUNAN HATA: bütün satır tek bir `flex-wrap` listesiydi ve
-            "önceki/sonraki gece" düğmeleri kullanıcının altından kayıyordu.
-            Üç ayrı sebepten:
-
-              1. "Bu geceye dön" yalnızca `offsetDays > 0` iken çiziliyor
-                 ve tam da SONRAKİ GECE'nin soluna giriyordu. Kullanıcı
-                 "Sonraki gece"ye basıyor, düğme beliriyor ve bastığı
-                 düğme sağa kayıyordu — ikinci tık boşa gidiyordu.
-              2. Ortadaki etiket "Bu gece" (7 karakter) ile "2 Ağustos
-                 Cumartesi" (19 karakter) arasında gidip geliyor; aradaki
-                 ~90px'i sağındaki her şey yiyordu.
-              3. Sarma noktası konum seçicinin genişliğine bağlıydı. İlçe
-                 adı eklenince ("Ankara / Çankaya") satır uzuyor ve oklar
-                 alt satıra tek tek dökülüyordu — kullanıcının "yer
-                 değiştiriyor" dediği şey.
-
-            ÇÖZÜM: geri kümesi, tarih kümesi ve ileri kümesi kendi
-            içlerinde SARMIYOR. Satır dar geldiğinde küme BÜTÜN olarak alt
-            satıra iniyor; ok etiketinden hiçbir zaman kopmuyor. Etiketin
-            genişliği sabitlendi ve "Bu geceye dön" en sona alındı — artık
-            belirdiğinde yalnızca kendinden sonrasını itiyor.
-
-            ÇİFT OK BİR HAFTA (§6.4). Tek ok bir gece; 16 günlük ufkun
-            sonuna tek okla gitmek 15 tıklama demekti.
-
-            Etiketler `aria-label` ile ayrıca yazılıyor: «`, », ‹ ve ›
-            işaretleri ekran okuyucuda "sol tırnak" diye okunur.
-          */}
-          <span className="flex shrink-0 items-center gap-2">
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => setOffsetDays((d) => d - 7)}
-              disabled={offsetDays === 0}
-              aria-label="Bir hafta geri"
-              title="Bir hafta geri"
-            >
-              «
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => setOffsetDays((d) => d - 1)}
-              disabled={offsetDays === 0}
-            >
-              ← Önceki gece
-            </Button>
-          </span>
-
-          <span className="flex shrink-0 items-center gap-2">
-            {/*
-              MANUEL TARİH SEÇİCİ. `min`/`max` ufkun kendisinden geliyor,
-              yani tarayıcı takviminde ulaşılamayacak günler zaten kapalı.
-
-              Yerel `<input type="date">` bilinçli: kendi takvimini yazmak
-              klavye gezinmesini, ekran okuyucu desteğini ve mobil yerel
-              tekerlek arayüzünü sıfırdan üretmek demekti.
-
-              `font-sans` AÇIKÇA yazılı: form denetimleri yazı ailesini
-              kendiliğinden miras almaz, tarayıcının kendi arayüz fontuna
-              düşerler. Yanındaki etiket Inter, kutunun içi sistem fontu
-              olunca aynı satır iki aileli görünüyordu.
-            */}
-            <label className="flex items-center gap-1.5">
-              <span className="sr-only">Gece tarihi seç</span>
-              <input
-                type="date"
-                value={toISODate(offsetToDate(offsetDays, bugun))}
-                min={dateBounds(bugun).min}
-                max={dateBounds(bugun).max}
-                onChange={(e) => {
-                  const secilen = fromISODate(e.target.value);
-                  if (!secilen) return;
-                  const hedef = dateToOffset(secilen, bugun);
-                  /* Aralık dışı sessizce kırpılmıyor: tarayıcı `min`/`max`
-                     dışına izin verirse (bazıları elle yazmaya izin verir)
-                     seçim yok sayılıyor, uydurma bir geceye atlanmıyor. */
-                  if (hedef !== null) setOffsetDays(hedef);
-                }}
-                className="min-h-9 rounded-card border border-border bg-surface-1 px-2 font-sans text-meta text-foreground hover:border-border-strong"
-              />
-            </label>
-
-            {/*
-              `.num` KALDIRILDI — burada bir OKUMA DEĞERİ yok, cümle var.
-
-              Sınıfın kendi tanımı bunu yasaklıyor (`index.css`): mono
-              ailenin `latin-ext` alt kümesi bilerek indirilmiyor, yani
-              "2 Ağustos Cumartesi" içindeki ğ, ı ve ş Inter'e düşüyor ve
-              tek etiket iki aileyle çiziliyordu. Sayı hizası için doğru
-              sınıf `.tabular`: gövde fontunda kalıp yalnızca rakamları
-              sabit genişliğe alıyor.
-
-              Genişlik sabit: etiket "Bu gece" ile uzun tarih arasında
-              gidip gelirken sağındaki düğmeleri sürüklemesin.
-            */}
-            <span className="tabular inline-block min-w-[18ch] text-center text-body-sm font-medium text-foreground">
-              {offsetDays === 0 ? 'Bu gece' : tonight.dateLabel}
-            </span>
-          </span>
-
-          <span className="flex shrink-0 items-center gap-2">
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => setOffsetDays((d) => d + 1)}
-              disabled={offsetDays >= MAX_OFFSET}
-            >
-              Sonraki gece →
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => setOffsetDays((d) => d + 7)}
-              disabled={offsetDays >= MAX_OFFSET}
-              aria-label="Bir hafta ileri"
-              title="Bir hafta ileri"
-            >
-              »
-            </Button>
-          </span>
-
-          {/* Belirip kaybolan tek öge EN SONDA: kendinden öncesini —
-              yani bütün gezinme kümesini — artık hiç itmiyor. */}
-          {offsetDays > 0 && (
-            <Button size="sm" variant="ghost" onClick={() => setOffsetDays(0)}>
-              Bu geceye dön
-            </Button>
-          )}
-          {offsetDays >= FORECAST_DAYS - 1 && (
-            <span className="text-meta text-faint">
-              Hava tahmini {FORECAST_DAYS} gün ileriye kadar veriliyor.
-            </span>
-          )}
-        </div>
-
-        {permission === 'denied' && (
-          <p className="mb-3 rounded-card border border-border bg-surface-1 px-3 py-2 text-meta text-muted-foreground">
-            Konum izni alınamadı — hesaplar seçili şehir üzerinden yapılıyor.
-            Üstteki konum seçiciden değiştirebilirsin.
-          </p>
-        )}
-
-        {/*
-          h2, h1 DEĞİL. Ana sayfada iki h1 vardı (hero başlığı + bu panel);
-          ekran okuyucu için sayfanın iki ana başlığı olmuş oluyor ve belge
-          hiyerarşisi kırılıyordu (QA GUI-03/SEO-04). Başlık kararın
-          üstünde, karar kolonunun içinde duruyor.
-
-          308/412px sabit sütunlar yalnızca ≥1280'de: altında iki kolon,
-          900'ün altında tek kolon (tasarım paketi, "Responsive").
-        */}
-        <div className="grid gap-px overflow-hidden rounded-card border border-border-strong bg-border lg:grid-cols-2 xl:grid-cols-[308px_minmax(0,1fr)_412px]">
-          <DecisionColumn
-            score={tonight.score}
-            photoScore={tonight.photoScore}
-            conditions={tonight.conditions}
-            locationLabel={tonight.locationLabel}
-            dateLabel={tonight.dateLabel}
-            timeZone={tonight.timeZone}
-          />
-
-          <div className="bg-surface-1">
-            <TimelineColumn
-              timeline={tonight.timeline}
-              moon={tonight.moon}
-              moonTimes={tonight.moonTimes}
-              conditions={tonight.conditions}
-              /* Gelecekteki bir gecede "şu an" diye bir nokta yok. */
-              nowAt={offsetDays === 0 ? tonight.nowAt : null}
-              markAt={markAt}
-              timeZone={tonight.timeZone}
-            />
+              <div className="min-w-0">
+                <div
+                  role="tablist"
+                  aria-label="Gece tarihi seç"
+                  className="overflow-x-auto pb-1"
+                >
+                  <div className="min-w-[560px]">
+                    <div className="grid grid-cols-7 gap-1.5">
+                      {nightSteps.map((step) => {
+                        const selected = step.offset === offsetDays;
+                        return (
+                          <button
+                            key={step.iso}
+                            type="button"
+                            role="tab"
+                            aria-selected={selected}
+                            aria-label={`${step.long} gecesine git`}
+                            onClick={() => setOffsetDays(step.offset)}
+                            className={cn(
+                              'flex min-h-10 items-center justify-center gap-1.5 rounded-card border px-2 text-center text-meta font-medium transition-colors hover:border-border-strong hover:bg-surface-2',
+                              selected
+                                ? 'border-primary bg-primary/12 text-foreground'
+                                : step.offset < offsetDays
+                                  ? 'border-primary/40 text-muted-foreground'
+                                  : 'border-border text-muted-foreground'
+                            )}
+                          >
+                            <span>{step.label}</span>
+                            <span className="tabular text-faint">
+                              {step.detail}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <div className="bg-background lg:col-span-2 xl:col-span-1">
-            <TargetsColumn
-              ranked={tonight.ranked}
+          {/*
+            h2, h1 DEĞİL. Ana sayfada iki h1 vardı (hero başlığı + bu panel);
+            ekran okuyucu için sayfanın iki ana başlığı olmuş oluyor ve belge
+            hiyerarşisi kırılıyordu (QA GUI-03/SEO-04). Başlık kararın
+            üstünde, karar kolonunun içinde duruyor.
+
+            308/412px sabit sütunlar yalnızca ≥1280'de: altında iki kolon,
+            900'ün altında tek kolon (tasarım paketi, "Responsive").
+          */}
+          <div className="grid gap-px bg-border lg:grid-cols-2 xl:grid-cols-[308px_minmax(0,1fr)_412px]">
+            <DecisionColumn
+              score={tonight.score}
+              conditions={tonight.conditions}
+              locationLabel={tonight.locationLabel}
+              dateLabel={tonight.dateLabel}
               timeZone={tonight.timeZone}
-              onMark={handleMark}
             />
+
+            <div className="bg-surface-1">
+              <TimelineColumn
+                timeline={tonight.timeline}
+                moon={tonight.moon}
+                moonTimes={tonight.moonTimes}
+                conditions={tonight.conditions}
+                /* Gelecekteki bir gecede "şu an" diye bir nokta yok. */
+                nowAt={offsetDays === 0 ? tonight.nowAt : null}
+                markAt={markAt}
+                timeZone={tonight.timeZone}
+              />
+            </div>
+
+            <div className="bg-background lg:col-span-2 xl:col-span-1">
+              <TargetsColumn
+                ranked={tonight.ranked}
+                timeZone={tonight.timeZone}
+                onMark={handleMark}
+              />
+            </div>
           </div>
         </div>
       </Container>

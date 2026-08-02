@@ -30,12 +30,12 @@ import { cn } from '@/lib/cn';
  * yazısı) token kullanıyor; onlar kolon zemininin üstünde duruyor.
  */
 
-/** Alacakaranlık bantlarının dolgusu — tasarım paketindeki gradyanlar. */
+/** Alacakaranlık bantlarının dolgusu — kenarlar bindirilip maskeyle yumuşatılır. */
 const SEGMENT_FILL: Record<SegmentKind, string> = {
-  civil: 'linear-gradient(180deg, #4d67ad, #3e5493)',
-  nautical: 'linear-gradient(180deg, #314275, #26335c)',
-  astronomical: 'linear-gradient(180deg, #1b2544, #121930)',
-  dark: '#04060a',
+  civil: 'linear-gradient(180deg, #5a75bc, #354b8a)',
+  nautical: 'linear-gradient(180deg, #354a84, #1e2e55)',
+  astronomical: 'linear-gradient(180deg, #202d55, #0d152b)',
+  dark: 'linear-gradient(180deg, #080b14, #03050a)',
 };
 
 const SEGMENT_LABEL: Record<SegmentKind, string> = {
@@ -199,6 +199,16 @@ export function NightTimelineChart({
     : 0;
 
   const pct = (value: number) => `${(value * 100).toFixed(3)}%`;
+  const softSegment = (segment: NightTimeline['segments'][number]) =>
+    ({
+      left: `calc(${pct(segment.start)} - 14px)`,
+      width: `calc(${pct(segment.span)} + 28px)`,
+      background: SEGMENT_FILL[segment.kind],
+      WebkitMaskImage:
+        'linear-gradient(90deg, transparent, #000 14px, #000 calc(100% - 14px), transparent)',
+      maskImage:
+        'linear-gradient(90deg, transparent, #000 14px, #000 calc(100% - 14px), transparent)',
+    }) as React.CSSProperties;
   /** Yükseklik (derece) → SVG y ekseni (0 üst, 100 alt). */
   const y = (altitude: number) =>
     100 - Math.min(1, Math.max(0, altitude / 90)) * CURVE_BAND * 100;
@@ -251,20 +261,29 @@ export function NightTimelineChart({
         role="img"
         aria-label={summary}
         className="relative h-[46px] overflow-hidden rounded-card border border-border-strong lg:h-[58px]"
-        style={{ backgroundColor: SEGMENT_FILL.dark }}
+        style={{
+          background:
+            'linear-gradient(90deg, #4f6eb9 0%, #1f2f59 23%, #070a13 48%, #070a13 58%, #1f2f59 78%, #4f6eb9 100%)',
+          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -18px 36px rgba(0,0,0,0.28)',
+        }}
       >
         {timeline.segments.map((segment) => (
           <span
             key={`${segment.kind}-${segment.start}`}
             title={SEGMENT_LABEL[segment.kind]}
             className="absolute inset-y-0"
-            style={{
-              left: pct(segment.start),
-              width: pct(segment.span),
-              background: SEGMENT_FILL[segment.kind],
-            }}
+            style={softSegment(segment)}
           />
         ))}
+
+        <span
+          aria-hidden
+          className="absolute inset-0"
+          style={{
+            background:
+              'radial-gradient(80% 120% at 50% 0%, rgba(255,255,255,0.12), transparent 58%)',
+          }}
+        />
 
         {/*
           AY EĞRİSİ. `preserveAspectRatio="none"` ile eksene geriliyor;
@@ -376,29 +395,18 @@ export function NightTimelineChart({
         {nowAt !== null && (
           <span
             aria-hidden
-            className="absolute inset-y-0 w-[2px]"
-            /*
-              Şeffaflık `opacity` ile DEĞİL, rengin alfasıyla: `opacity`
-              çocuklara da iniyor ve üstteki "ŞU AN" plakasını da
-              soldururdu. Plaka okunması gereken bir etiket, çizginin
-              tonu ise bantları tamamen kapatmasın diye kısılıyor.
-            */
-            style={{ left: pct(nowAt), backgroundColor: `${NOW}d9` }}
+            className="absolute inset-y-0 w-px"
+            title="Bulunulan an"
+            style={{
+              left: pct(nowAt),
+              background: `linear-gradient(180deg, transparent, ${NOW}f2 18%, ${NOW}f2 82%, transparent)`,
+              boxShadow: `0 0 14px ${NOW}99`,
+            }}
           >
             <span
-              style={{ backgroundColor: NOW, color: NOW_TEXT }}
-              className={cn(
-                'num absolute top-0 rounded-b-[3px] px-1.5 py-px text-meta font-semibold leading-tight',
-                // Uçlarda etiket dışarı taşmasın.
-                nowAt > 0.9
-                  ? 'right-0'
-                  : nowAt < 0.1
-                    ? 'left-0'
-                    : 'left-1/2 -translate-x-1/2'
-              )}
-            >
-              ŞU AN
-            </span>
+              className="absolute left-1/2 top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full border"
+              style={{ borderColor: NOW, backgroundColor: NOW_TEXT }}
+            />
           </span>
         )}
       </div>

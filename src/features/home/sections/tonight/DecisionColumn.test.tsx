@@ -55,13 +55,11 @@ const SCORE = nightScore({
 
 function renderColumn(
   score: NightScore | null = SCORE,
-  conditions: SkyState = READY,
-  photoScore: NightScore | null = null
+  conditions: SkyState = READY
 ) {
   return render(
     <DecisionColumn
       score={score}
-      photoScore={photoScore}
       conditions={conditions}
       locationLabel="Ankara"
       dateLabel="31 Temmuz Cuma"
@@ -110,10 +108,10 @@ describe('DecisionColumn · skor dolu', () => {
     expect(screen.getByText(SCORE.recommendation)).toBeInTheDocument();
   });
 
-  it('güncelleme saatini ve kaynağı künyeliyor', () => {
+  it('güncelleme saatini gösteriyor, servis künyesini arayüzde göstermiyor', () => {
     renderColumn();
     expect(screen.getByText('18:40')).toBeInTheDocument();
-    expect(screen.getByText(/Open-Meteo · efemeris yerel hesap/)).toBeInTheDocument();
+    expect(screen.queryByText(/Open-Meteo|efemeris yerel hesap/)).not.toBeInTheDocument();
   });
 
   /*
@@ -172,46 +170,14 @@ describe('DecisionColumn · hata', () => {
     button.click();
     expect(denendi).toBe(1);
 
-    // Kaynak künyesi veri yokken hava servisini saymıyor.
-    expect(screen.getByText(/^Veri: efemeris yerel hesap$/)).toBeInTheDocument();
+    expect(screen.queryByText(/^Veri:/)).not.toBeInTheDocument();
   });
 });
 
-/**
- * İKİNCİ SKOR EKRANA ÇIKIYOR MU.
- *
- * Belge iki skor istiyor; ikisini hesaplayıp yalnızca birini çizmek
- * ölçütü kâğıt üzerinde kapatır, kullanıcı için hiçbir şeyi değiştirmez.
- * Halkadaki sayı gözle gözlem, ikincisi fotoğraf.
- */
-describe('DecisionColumn — astrofotoğraf skoru', () => {
-  const FOTO = nightScore(
-    {
-      cloudCover: 5,
-      seeingIndex: 2,
-      humidity: 55,
-      windSpeed: 9,
-      windGust: 40,
-      temperature: 14,
-      dewPoint: 6,
-      darkMinutes: 366,
-      moonlessMinutes: 300,
-      moonIllumination: 0.12,
-    },
-    'astrofoto'
-  );
-
-  it('ikinci skor sayısıyla ve hükmüyle yazılıyor', () => {
-    renderColumn(SCORE, READY, FOTO);
-    const satir = screen.getByText(/Astrofotoğraf:/);
-    expect(satir).toBeInTheDocument();
-    expect(satir.textContent).toContain(String(FOTO.total));
-  });
-
-  /* Skor yoksa satır hiç çizilmiyor — "Astrofotoğraf: —" yazmak, olmayan
-     bir ölçümü varmış gibi göstermek olurdu. */
-  it('ikinci skor yokken satır çizilmiyor', () => {
-    renderColumn(SCORE, READY, null);
+describe('DecisionColumn — tekrar eden ürün metni', () => {
+  it('astrofotoğraf skor satırını çizmez', () => {
+    renderColumn();
     expect(screen.queryByText(/Astrofotoğraf:/)).not.toBeInTheDocument();
+    expect(screen.getByText(/Ankara · 31 Temmuz Cuma/)).toBeInTheDocument();
   });
 });

@@ -25,8 +25,15 @@ import { FORECAST_DAYS } from '@/features/weather/openMeteo';
  * atılmış YEREL GÜN kimlikleri üzerinden alınıyor.
  */
 
-/** Panelin izin verdiği en ileri gece (bugün dahil sayıldığında). */
-export const MAX_OFFSET = FORECAST_DAYS - 1;
+/**
+ * Panelin izin verdiği en ileri gece.
+ *
+ * Hava adaptörü 16 güne kadar veri çekebiliyor, ama ana sayfadaki bu modül
+ * bir haftalık karar aracı. Daha uzun ufuk görselde "tahmin" kesinliği
+ * varmış gibi okunuyor; seçim yüzeyi bu yüzden 7 günle sınırlı.
+ */
+export const NIGHT_PICKER_DAYS = Math.min(FORECAST_DAYS, 7);
+export const MAX_OFFSET = NIGHT_PICKER_DAYS - 1;
 
 /** `YYYY-MM-DD` — yerel takvim gününü zaman diliminden bağımsız kimlikler. */
 export function toISODate(d: Date): string {

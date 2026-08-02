@@ -15,7 +15,7 @@ import { legalNav, primaryNav, type NavItem } from '@/app/navigation';
  * Sitede üç ayrı bağlantı listesi var ve ikisi yönetilebilir, biri
  * DEĞİL:
  *
- *   `primaryNav`  → üst menü + footer'ın modül satırı   → YÖNETİLİR
+ *   `primaryNav`  → üst menü                            → YÖNETİLİR
  *   `legalNav`    → footer'ın kurumsal satırı           → YÖNETİLİR
  *   `siteMap`     → tam modül haritası (çekmece, palet) → KODDA KALIR
  *

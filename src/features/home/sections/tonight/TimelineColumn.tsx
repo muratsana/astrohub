@@ -139,19 +139,7 @@ export function TimelineColumn({
         <ConditionCard
           label="Bulut örtüsü"
           value={weather ? `%${Math.round(weather.cloudCover)}` : '—'}
-          hint={
-            weather
-              ? weather.layers
-                ? /* Katman ayrımı varsa onu göster: alçak bulut geceyi
-                     bitirir, yüksek sirrus yalnızca zorlaştırır. Toplam
-                     yüzde bu farkı gizliyor. */
-                  `alçak %${Math.round(weather.layers.low)} · yüksek %${Math.round(weather.layers.high)}` +
-                  (weather.precipitationProbability !== null
-                    ? ` · yağış %${Math.round(weather.precipitationProbability)}`
-                    : '')
-                : `${Math.round(weather.temperature)}°C`
-              : hint
-          }
+          hint={weather ? cloudHint(weather) : hint}
           meter={weather ? 1 - weather.cloudCover / 100 : null}
         />
 
@@ -251,6 +239,22 @@ export function TimelineColumn({
       </div>
     </div>
   );
+}
+
+function cloudHint(weather: NonNullable<SkyState['data']>): string {
+  if (!weather.layers) return `toplam %${Math.round(weather.cloudCover)}`;
+
+  const parts = [
+    `alçak %${Math.round(weather.layers.low)}`,
+    `orta %${Math.round(weather.layers.mid)}`,
+    `yüksek %${Math.round(weather.layers.high)}`,
+  ];
+
+  if (weather.precipitationProbability !== null) {
+    parts.push(`yağış %${Math.round(weather.precipitationProbability)}`);
+  }
+
+  return parts.join(' · ');
 }
 
 /**

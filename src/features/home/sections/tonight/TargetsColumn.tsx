@@ -34,6 +34,8 @@ import type { TonightTarget } from './useTonight';
 
 /** Kolonun gösterdiği satır sayısı. */
 const ROWS = 6;
+type SortKey = 'peak' | 'altitude';
+type SortDir = 'asc' | 'desc';
 
 interface Props {
   ranked: TonightTarget[];
@@ -47,13 +49,23 @@ interface Props {
 
 export function TargetsColumn({ ranked, timeZone, onMark }: Props) {
   const [filter, setFilter] = useState<TargetGroupFilter>('hepsi');
+  const [sort, setSort] = useState<{ key: SortKey; dir: SortDir }>({
+    key: 'altitude',
+    dir: 'desc',
+  });
 
   const visible = useMemo(
     () =>
-      ranked
-        .filter((entry) => matchesGroup(entry.target.kind, filter))
+      [...ranked.filter((entry) => matchesGroup(entry.target.kind, filter))]
+        .sort((a, b) => {
+          const delta =
+            sort.key === 'peak'
+              ? a.peak.peakAt.getTime() - b.peak.peakAt.getTime()
+              : a.peak.peakAltitude - b.peak.peakAltitude;
+          return sort.dir === 'asc' ? delta : -delta;
+        })
         .slice(0, ROWS),
-    [ranked, filter]
+    [ranked, filter, sort]
   );
 
   /*
@@ -66,13 +78,33 @@ export function TargetsColumn({ ranked, timeZone, onMark }: Props) {
     onMark(null);
   };
 
+  const toggleSort = (key: SortKey) => {
+    setSort((current) =>
+      current.key === key
+        ? { key, dir: current.dir === 'asc' ? 'desc' : 'asc' }
+        : { key, dir: key === 'peak' ? 'asc' : 'desc' }
+    );
+    onMark(null);
+  };
+
   return (
     <div className="flex h-full flex-col gap-3.5 p-5">
-      <div className="flex items-baseline justify-between gap-3">
-        <h3 className="text-body-sm font-semibold text-foreground">
+      <div className="grid grid-cols-[1.5rem_minmax(0,1fr)_4.75rem_6rem] items-end gap-x-2.5">
+        <h3 className="col-span-2 text-body-sm font-semibold text-foreground">
           Bu gece yüksek
         </h3>
-        <span className="label caps text-faint">Zirve · yükseklik</span>
+        <SortButton
+          active={sort.key === 'peak'}
+          dir={sort.key === 'peak' ? sort.dir : 'asc'}
+          label="Zirve"
+          onClick={() => toggleSort('peak')}
+        />
+        <SortButton
+          active={sort.key === 'altitude'}
+          dir={sort.key === 'altitude' ? sort.dir : 'desc'}
+          label="Yükseklik"
+          onClick={() => toggleSort('altitude')}
+        />
       </div>
 
       <div
@@ -138,6 +170,38 @@ export function TargetsColumn({ ranked, timeZone, onMark }: Props) {
   );
 }
 
+function SortButton({
+  active,
+  dir,
+  label,
+  onClick,
+}: {
+  active: boolean;
+  dir: SortDir;
+  label: string;
+  onClick: () => void;
+}) {
+  const nextDir = active ? (dir === 'asc' ? 'desc' : 'asc') : dir;
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={`${label} sütununu ${
+        nextDir === 'asc' ? 'artan' : 'azalan'
+      } sırala`}
+      className={cn(
+        'label caps inline-flex min-h-6 items-center justify-end gap-1 text-right transition-colors',
+        active ? 'text-primary' : 'text-faint hover:text-muted-foreground'
+      )}
+    >
+      <span>{label}</span>
+      <span aria-hidden className="num text-[0.62rem] leading-none">
+        {active ? (dir === 'asc' ? '↑' : '↓') : '↕'}
+      </span>
+    </button>
+  );
+}
+
 /**
  * Tek hedef satırı.
  *
@@ -179,7 +243,7 @@ function TargetRow({
         to={`/hedef/${target.slug}`}
         {...mark}
         className={cn(
-          'grid grid-cols-[1.5rem_minmax(0,1fr)_auto_auto] items-center gap-x-2.5 rounded-card border px-2 py-2 transition-colors',
+          'grid grid-cols-[1.5rem_minmax(0,1fr)_4.75rem_6rem] items-center gap-x-2.5 rounded-card border px-2 py-2 transition-colors',
           index === 0
             ? 'border-cold/25 bg-cold/8 hover:bg-cold/12'
             : 'border-transparent hover:bg-surface-2'

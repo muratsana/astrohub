@@ -10,11 +10,11 @@ import { router } from './router';
 import { defaultCommands, runCommandSearch } from '@/features/search/commands';
 
 /**
- * Navigasyon regresyon testi: menü, footer, çekmece ve komut paletindeki her
- * bağlantının router'da karşılığı olmalı. Bu test "footer'da var ama route
- * yok" tipi ölü bağlantıların geri gelmesini engeller.
+ * Navigasyon regresyon testi: menü, kurumsal footer, çekmece ve komut
+ * paletindeki her bağlantının router'da karşılığı olmalı. Bu test "footer'da
+ * var ama route yok" tipi ölü bağlantıların geri gelmesini engeller.
  *
- * Rasathane Terminali yönünde üst menüde açılır menü yoktur; keşif footer'a
+ * Rasathane Terminali yönünde üst menüde açılır menü yoktur; keşif çekmeceye
  * ve komut paletine bırakıldığı için `siteMap`'in eksiksizliği kritik.
  */
 
@@ -75,7 +75,7 @@ describe('navigasyon bağlantıları', () => {
     expect(primaryNav.map((i) => i.to)).not.toContain('/tv');
   });
 
-  it('üst menüde açılır menü yoktur — keşif palete ve footer’a bırakılır', () => {
+  it('üst menüde açılır menü yoktur — keşif palete ve çekmeceye bırakılır', () => {
     for (const item of primaryNav) {
       expect(Object.keys(item)).not.toContain('children');
     }

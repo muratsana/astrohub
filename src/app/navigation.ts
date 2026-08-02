@@ -2,10 +2,10 @@
  * Navigasyon haritası — Rasathane Terminali.
  *
  * Sekiz ana modül düz biçimde durur; üst menüde açılır menü **yoktur**.
- * Alt sayfalara ⌘K komut paletinden ve footer'daki tam modül haritasından
+ * Alt sayfalara ⌘K komut paletinden ve mobil çekmecedeki tam modül haritasından
  * ulaşılır. Terminal metaforuyla tutarlı: gezinme tıklanarak değil, yazılarak.
  *
- * `siteMap` tek kaynaktır — footer, komut paleti ve mobil çekmece hep
+ * `siteMap` tek kaynaktır — komut paleti ve mobil çekmece
  * buradan beslenir, hiçbir bağlantı iki yerde ayrı ayrı tanımlanmaz.
  *
  * Not: Hedef kataloğu ve ekipman üst menüde değildir — galeri, bu gece,
@@ -66,7 +66,7 @@ export const legalNav: NavItem[] = [
 ];
 
 /**
- * Tam modül haritası. Footer ve komut paletinin "GİT" bölümü bunu kullanır.
+ * Tam modül haritası. Komut paletinin "GİT" bölümü ve mobil çekmece bunu kullanır.
  * Üst menüde görünmeyen her sayfa burada görünür olmalıdır — aksi hâlde
  * erişilemez hâle gelir.
  */
@@ -405,9 +405,9 @@ export function allNavItems(): NavItem[] {
  * BAYRAĞA BAĞLI BÖLÜMLERİN ADRES ÖNEKLERİ (§13.2).
  *
  * `radyo_acik` ve `tv_acik` kapatıldığında bu öneklerle başlayan her
- * bağlantı menüden, footer'dan ve komut paletinden düşüyor. Tek yerde
+ * bağlantı menüden, çekmeceden ve komut paletinden düşüyor. Tek yerde
  * durması bilinçli: bağlantı listesi dört yerden okunuyor ve "radyoyu
- * kapattık ama footer'da kaldı" hatası tam olarak böyle doğar.
+ * kapattık ama çekmecede kaldı" hatası tam olarak böyle doğar.
  *
  * Rotanın kendisi ayrıca `FlagRoute` ile kapalı — bağlantıyı gizlemek
  * sayfayı kapatmaz, adresi bilen yine girerdi.
@@ -421,8 +421,7 @@ export const flaggedNavPrefixes = {
  * Verilen öneklerle başlayan bağlantıları eler.
  *
  * BOŞALAN GRUP DA DÜŞÜYOR: "Yayın" başlığı altında hiç giriş kalmadığında
- * başlığın kendisi de kalkmalı, yoksa footer'da boş bir sütun başlığı
- * kalırdı.
+ * başlığın kendisi de kalkmalı, yoksa çekmecede boş bir grup başlığı kalırdı.
  */
 export function withoutPrefixes(
   groups: NavGroup[],
@@ -458,5 +457,5 @@ export const mobileDrawerPrimary: NavItem = {
   to: '/panel',
 };
 
-/** Footer ve mobil çekmece aynı haritayı gösterir. */
+/** Mobil çekmece tam modül haritasını gösterir. */
 export const footerGroups = siteMap;

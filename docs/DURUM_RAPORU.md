@@ -33,10 +33,10 @@ kalan iş ağırlıklı olarak **kanıtlama** ve **cilalama**.
 | Canlı tablo | 84 · RLS açık: **83/84** (istisna: PostGIS `spatial_ref_sys`) |
 | RLS politikası | 176 |
 | Edge fonksiyonu | 6 (meteoblue, plate-solve, plate-solve-poll, radyo-durum, youtube, podcast-rss) |
-| Test | **2.043 test / 163 dosya** — hepsi geçiyor |
+| Test | **2.041 test / 164 dosya** — hepsi geçiyor |
 | Rota | 80 tanım · 490 prerender edilmiş statik HTML · 159 Vercel rewrite |
 | Sitemap | 484 adres (ince şehir sayfaları bilerek hariç) |
-| İlk rota JS | **197.2 kB gzip** (bütçe 200) · CSS 14.4 kB (bütçe 25) |
+| İlk rota JS | **197.2 kB gzip** (bütçe 200) · CSS 14.5 kB (bütçe 25) |
 
 **Kalite kapıları (hepsi CI'da):** `lint`, `typecheck`, `test`,
 `check:budgets`, `check:a11y`, `check:viewports`, `check:csp`,
@@ -463,6 +463,11 @@ gerçek koda göre hâlâ açıktı.
 | `Tooltip` ve ortak `selected` state | Bileşen düzeyinde hâlâ eksik | DONE — `Tooltip` ve `SegmentedControl` eklendi; Forum/Marketplace/Articles/News/Gallery/Equipment/Events kategori, yoğunluk ve görünüm kontrolleri buna taşındı |
 | Yazı seviye yüzeyleri | `Başlangıç / Orta / İleri` filtre ve kart rozeti ürün arayüzünde görünüyordu | DONE — veri modeli korunarak UI filtresi, chip'i ve kart rozeti kaldırıldı |
 | Ortak Explorer Toolbar görsel standardı | Motor var; sayfa yüzeyleri hâlâ farklı yoğunlukta | PARTIAL — Articles görünüm şeridi `ToolBar`a taşındı; Events mode switch ve News/Gallery/Equipment kategori segmentleri ortak yüzeye geçti; select-heavy Explorer sayfalarında kalan toolbar yoğunluğu ayrıca sadeleşecek |
+| `Bu Gece` konum/tarih kontrolü | Konum seçici, ileri/geri okları ve tarih kutusu modül üstünde dağınık görünüyordu | DONE — konum ve 7 günlük gece seçimi panel içine alındı; hafta çizgisi tıklanabilir, eski ok/date input yüzeyi kaldırıldı |
+| `Bu Gece` veri/tekrar metni | Open-Meteo/efemeris künyesi ve `Astrofotoğraf: 34 · zayıf gece` satırı karar metnini tekrarlıyordu | DONE — public UI'dan kaldırıldı; konum + tarih bağlamı karar altında kaldı |
+| Bulut ve hedef tablo tutarlılığı | Orta bulut katmanı gizlendiği için toplam yüzde detayla çelişiyor gibi görünüyordu; hedef başlıkları sıralanamıyordu | DONE — alçak/orta/yüksek/yağış birlikte gösteriliyor; `Zirve` ve `Yükseklik` başlıkları hizalı ve tıklanabilir sıralama kontrolü |
+| Hero ve footer görsel geri bildirimi | Hero büyük harf aralığı fazla genişti; footer üst menüyü tekrar ediyordu | DONE — hero letter-spacing sıfırlandı; footer’da modül tekrarı kaldırıldı, aynı alana `Hakkında/KVKK/Kullanım Koşulları` taşındı |
+| Karanlık grafiği | Segmentler sert bloklar gibi görünüyordu | DONE — segment geçişleri maskeli bindirme ve üst ışık katmanı ile yumuşatıldı |
 
 ### Bu patch'te değişen dosyalar
 
@@ -487,6 +492,13 @@ gerçek koda göre hâlâ açıktı.
 - `src/features/radio/RadioContext.tsx`, `src/features/radio/RadioDock.tsx`, `src/features/radio/RadioToggle.tsx`, `src/features/radio/RadioPage.tsx` — public radyo playlist görünümü kaldırıldı; kullanıcı tarafında yalnızca canlı yayın başlat/duraklat kaldı, resume akışı güncel yayına eşlenir.
 - `src/features/radio/handover.ts`, `src/features/radio/handover.test.ts`, `src/features/radio/RadioPage.test.tsx` — yayın saatine göre kasa pozisyonu ve public radyo kontrol sınırı testlendi.
 - `src/features/news/NewsPage.tsx`, `src/features/photos/GalleryPage.tsx`, `src/features/equipment/EquipmentPage.tsx`, `src/features/events/EventsPage.tsx` — kalan Explorer kategori/görünüm segmentleri ortak `SegmentedControl` bileşenine taşındı.
+- `src/features/home/sections/TonightPanel.tsx`, `src/features/home/sections/tonight/nightOffset.ts` — `Bu Gece` konum ve gece seçimi panel içi 7 günlük timeline kontrolüne taşındı.
+- `src/features/home/sections/tonight/DecisionColumn.tsx`, `src/features/home/sections/tonight/useTonight.ts` — tekrar eden astrofotoğraf skoru ve kullanıcıya görünen hava servisi künyesi kaldırıldı.
+- `src/features/home/sections/tonight/TimelineColumn.tsx`, `src/features/home/sections/tonight/NightTimelineChart.tsx` — bulut katman detayı toplamla uyumlu hale getirildi; bulunulan an çizelgede sade dikey imleç oldu.
+- `src/features/home/sections/tonight/TargetsColumn.tsx` — `Zirve` ve `Yükseklik` başlıkları hizalı, tıklanabilir sıralama kontrollerine çevrildi.
+- `src/features/home/sections/TonightPanel.test.tsx`, `src/features/home/sections/tonight/DecisionColumn.test.tsx`, `src/features/home/sections/tonight/TimelineColumn.test.tsx` — yeni gece seçici, servis künyesi temizliği, hedef sıralama ve bulut katmanı davranışı testlendi.
+- `src/index.css` — hero başlığındaki geniş harf aralığı kaldırıldı.
+- `src/components/shell/Footer.tsx`, `src/app/navigation.ts`, `src/app/navigation.test.ts`, `src/features/site/navLinks.ts` — footer tekrar eden modül nav yerine kurumsal bağlantıları gösteriyor.
 
 ### Doğrulama
 
@@ -510,11 +522,11 @@ npm run test:e2e
 Sonuçlar:
 
 - TypeScript ve lint geçti.
-- Unit/integration test: **163 dosya / 2043 test geçti.**
+- Unit/integration test: **164 dosya / 2041 test geçti.**
 - Production build geçti; prerender **490/490 rota** üretti.
-- Budget geçti: ilk rota JS **197.2 kB gzip** / bütçe 200 kB, CSS **14.4 kB gzip** / bütçe 25 kB.
+- Budget geçti: ilk rota JS **197.2 kB gzip** / bütçe 200 kB, CSS **14.5 kB gzip** / bütçe 25 kB.
 - Preview, CSP, erişilebilirlik ve viewport kapıları geçti.
-- Viewport kontrolü ilk paralel koşuda `dist-preview` yeniden yazılırken `main` bekleme timeout'u aldı; tek başına yeniden çalıştırıldı ve geçti.
+- Viewport kontrolü son ölçümde geçti; 1280×720'de fold üstü içerik **184px**.
 - E2E: **28 senaryo geçti**, sayfa hatası yok; ekran görüntüleri `dist-preview/screens/` altında üretildi.
 - Radyo public yüzey testi eklendi: kullanıcı tarafında `Sonraki parça` ve Spotify yüzeyi görünmüyor, tek kontrol `Canlı yayın` başlat/duraklat.
 - `check:rewrites` geçti: `vercel.json` **159 rewrite** ile güncel.
@@ -532,7 +544,8 @@ Sonuçlar:
 1. Select-heavy Explorer filtrelerini ve toolbar yoğunluğunu sayfa sayfa sadeleştir.
 2. Etkinlik/Haber kart-liste-thumbnail görünümünü aynı sisteme taşı.
 3. Galeri ve ilan thumbnail davranışını gerçek canlı veriyle ekran görüntülü doğrula.
-4. `DATABASE_URL` sağlanınca `check:rls` ve `check:auth` kapılarını production DB'ye karşı çalıştır.
+4. Canlı hava verisiyle `Bu Gece` bulut/katman yüzdesini prod üzerinde tekrar ekran görüntülü doğrula.
+5. `DATABASE_URL` sağlanınca `check:rls` ve `check:auth` kapılarını production DB'ye karşı çalıştır.
 
 ### Blokaj veya dış kaynak isteyenler
 

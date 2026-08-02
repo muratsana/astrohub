@@ -29,8 +29,6 @@ interface Props {
   locationLabel: string;
   dateLabel: string;
   timeZone: string;
-  /** Aynı gecenin astrofotoğraf skoru — ağırlıkları farklı. */
-  photoScore: NightScore | null;
 }
 
 /** Hüküm → token. Tasarımın yeşil/amber/turuncu üçlüsünün karşılığı. */
@@ -54,7 +52,6 @@ const VERDICT_TONE: Record<
 
 export function DecisionColumn({
   score,
-  photoScore,
   conditions,
   locationLabel,
   dateLabel,
@@ -76,7 +73,7 @@ export function DecisionColumn({
       }}
     >
       <div className="flex items-baseline justify-between gap-3">
-        <h2 className="label caps text-muted-foreground">Bu gece</h2>
+        <h2 className="label caps min-h-7 text-muted-foreground">Bu gece</h2>
         {conditions.data && (
           <span className="inline-flex items-center gap-1.5 text-meta text-faint">
             <span
@@ -94,7 +91,6 @@ export function DecisionColumn({
       {score ? (
         <ScoreBlock
           score={score}
-          photoScore={photoScore}
           locationLabel={locationLabel}
           dateLabel={dateLabel}
         />
@@ -112,30 +108,16 @@ export function DecisionColumn({
         </>
       )}
 
-      {/*
-        Künye SADECE GELEN veriyi sayıyor. Hava servisine ulaşılamamışken
-        "Veri: Open-Meteo" yazmak, ekrandaki tirelerin arkasında bir
-        ölçüm varmış izlenimi verirdi. Efemeris her koşulda yerel hesap
-        ve her koşulda yazıyor.
-      */}
-      <p className="text-meta text-faint">
-        Veri:{' '}
-        {conditions.data &&
-          `${conditions.data.source === 'meteoblue' ? 'meteoblue' : 'Open-Meteo'} · `}
-        efemeris yerel hesap
-      </p>
     </div>
   );
 }
 
 function ScoreBlock({
   score,
-  photoScore,
   locationLabel,
   dateLabel,
 }: {
   score: NightScore;
-  photoScore: NightScore | null;
   locationLabel: string;
   dateLabel: string;
 }) {
@@ -187,27 +169,6 @@ function ScoreBlock({
             </p>
           )}
 
-          {/*
-            İKİNCİ SKOR AYNI GECENİN FOTOĞRAF KARŞILIĞI (§7.2, 18. alan).
-            Halkadaki sayı GÖZLE gözlem; ikisi aynı olmadığı için ikincisi
-            küçük de olsa görünmek zorunda. Aynı dolunay gecesi gözle
-            "orta", dar bant filtreyle çeken için "iyi" olabilir — tek
-            sayı bu iki kullanıcıdan birine yanlış cevap veriyordu.
-          */}
-          {photoScore && (
-            <p className="mt-1 text-meta text-muted-foreground">
-              Astrofotoğraf:{' '}
-              <span
-                className={cn(
-                  'num font-semibold',
-                  VERDICT_TONE[photoScore.verdict].text
-                )}
-              >
-                {photoScore.total}
-              </span>{' '}
-              · {photoScore.verdictLabel.toLocaleLowerCase('tr-TR')}
-            </p>
-          )}
         </div>
       </div>
 
