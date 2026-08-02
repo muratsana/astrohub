@@ -1,5 +1,6 @@
 import { wallToInstant, zonedParts } from '@/lib/zone';
 import type { AstroEvent } from './types';
+import { buildCalendar } from '@/lib/ics';
 
 /**
  * HATIRLATMA ANI VE TAKVİM DOSYASI (§9).
@@ -116,52 +117,6 @@ export function reminderAvailability(
  * yönetimi sitenin işi; takvim dosyasının işi etkinliği takvime koymak.
  * ══════════════════════════════════════════════════════════════════════ */
 
-/** RFC 5545 §3.3.11: ters bölü, noktalı virgül, virgül ve satır sonu. */
-function escapeIcs(value: string): string {
-  return value
-    .replace(/\\/g, '\\\\')
-    .replace(/;/g, '\\;')
-    .replace(/,/g, '\\,')
-    .replace(/\r?\n/g, '\\n');
-}
-
-/**
- * RFC 5545 §3.1: satırlar 75 OKTETİ geçemez, taşan kısım bir boşlukla
- * katlanır. Ölçü karakter değil oktet — "Gözlem Şenliği"nin Türkçe
- * harfleri UTF-8'de iki oktet ve karakter sayarak katlayan bir kod
- * sınırı sessizce aşardı.
- */
-function foldIcsLine(line: string): string {
-  const encoder = new TextEncoder();
-  if (encoder.encode(line).length <= 75) return line;
-
-  const parts: string[] = [];
-  let current = '';
-  let bytes = 0;
-  /* Karakter karakter ilerliyoruz: bir karakteri iki satıra bölmek
-     UTF-8 dizisini ortadan keserdi. */
-  for (const char of line) {
-    const size = encoder.encode(char).length;
-    /* Devam satırları baştaki boşlukla birlikte 75 okteti geçmemeli. */
-    const limit = parts.length === 0 ? 75 : 74;
-    if (bytes + size > limit) {
-      parts.push(current);
-      current = '';
-      bytes = 0;
-    }
-    current += char;
-    bytes += size;
-  }
-  parts.push(current);
-
-  return parts.join('\r\n ');
-}
-
-/** `20260815T203000Z` — UTC biçimi, VTIMEZONE bloğuna gerek bırakmıyor. */
-function icsStamp(value: Date): string {
-  return `${value.toISOString().replace(/[-:]/g, '').split('.')[0]}Z`;
-}
-
 export interface IcsOptions {
   /** Etkinliğin site adresi — takvim kaydından geri dönülebilsin. */
   url?: string;
@@ -184,31 +139,27 @@ export function buildIcs(event: AstroEvent, options: IcsOptions = {}): string {
     ? new Date(event.endsAt)
     : new Date(start.getTime() + 2 * 60 * 60 * 1000);
 
-  const location = [event.venue, event.city].filter(Boolean).join(', ');
-
-  const lines = [
-    'BEGIN:VCALENDAR',
-    'VERSION:2.0',
-    'PRODID:-//AstroHub//Etkinlik//TR',
-    'CALSCALE:GREGORIAN',
-    'METHOD:PUBLISH',
-    'BEGIN:VEVENT',
-    /* Kimlik slug'a bağlı: aynı etkinlik ikinci kez indirilince takvim
-       yeni bir kayıt açmak yerine mevcut olanı güncelliyor. */
-    `UID:${event.slug}@astrohub`,
-    `DTSTAMP:${icsStamp(options.now ?? new Date())}`,
-    `DTSTART:${icsStamp(start)}`,
-    `DTEND:${icsStamp(end)}`,
-    `SUMMARY:${escapeIcs(event.title)}`,
-    `DESCRIPTION:${escapeIcs(event.description)}`,
-    `LOCATION:${escapeIcs(location)}`,
-    ...(options.url ? [`URL:${escapeIcs(options.url)}`] : []),
-    'END:VEVENT',
-    'END:VCALENDAR',
-  ];
-
-  /* RFC 5545 satır sonu CRLF; sonda da bir tane olmalı. */
-  return lines.map(foldIcsLine).join('\r\n') + '\r\n';
+  /* RFC katmanı `lib/ics`e taşındı (§14.1): kaçışlama ve 75 oktetlik
+     satır katlama etkinliğe değil STANDARDA ait kurallar ve planlayıcı
+     da aynılarına ihtiyaç duyuyordu. Buradaki üç karar ETKİNLİĞE ait ve
+     burada kalıyor: iki saatlik varsayılan bitiş, slug'a bağlı `UID`
+     ve mekân + şehir birleşimi. */
+  return buildCalendar(
+    [
+      {
+        /* Kimlik slug'a bağlı: aynı etkinlik ikinci kez indirilince
+           takvim yeni bir kayıt açmak yerine mevcut olanı güncelliyor. */
+        uid: `${event.slug}@astrohub`,
+        start,
+        end,
+        summary: event.title,
+        description: event.description,
+        location: [event.venue, event.city].filter(Boolean).join(', '),
+        ...(options.url ? { url: options.url } : {}),
+      },
+    ],
+    { product: 'Etkinlik', ...(options.now ? { now: options.now } : {}) }
+  );
 }
 
 /** Dosya adı — Türkçe harfler ve boşluklar indirmede sorun çıkarıyor. */

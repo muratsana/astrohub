@@ -34,6 +34,13 @@ import type { PlanRequest } from '@/domain/astronomy/sessionPlan';
 import { AltitudeChart } from './AltitudeChart';
 import { cn } from '@/lib/cn';
 import { useTargetFavorites } from '@/features/targets/favorites';
+import { downloadText } from '@/lib/ics';
+import {
+  buildPlanIcs,
+  decodeSelection,
+  encodeSelection,
+  planIcsFileName,
+} from './planShare';
 
 /**
  * GÖZLEM VE ÇEKİM PLANLAYICI (§7.10).
@@ -75,15 +82,39 @@ export function PlannerPage() {
   const { location } = useLocationContext();
   const [minAltitude, setMinAltitude] = useState(30);
   const favorites = useTargetFavorites();
-  const [selection, setSelection] = useState<Selection[]>(() =>
-    targets.slice(0, DEFAULT_SELECTION).map((t) => ({ slug: t.slug, minutes: 90 }))
-  );
+  /*
+    SEÇİMİN KAYNAK SIRASI: adres çubuğu → favoriler → katalog.
+
+    Paylaşılan bir bağlantı açılmışsa o KAZANIR ve favoriler devreye
+    girmez; birinin gönderdiği planı açan kullanıcı kendi favorilerini
+    değil, gönderilen planı görmeli. `dokunuldu` bu yüzden burada da
+    işaretleniyor.
+
+    `window` PRERENDER'DA DA VAR: `scripts/prerender.mjs` jsdom kuruyor ve
+    `globalThis.window`a atıyor. Statik çıktıda arama parçası boş olduğu
+    için katalog varsayılanı yazılıyor — ölçüldü, `/planlayici` ham
+    HTML'de tam içerikle çıkıyor. Bu bağımlılık yazılı olsun ki prerender
+    ortamı değişirse burasının da gözden geçirilmesi gerektiği bilinsin.
+  */
+  const [selection, setSelection] = useState<Selection[]>(() => {
+    const bilinen = new Set(targets.map((t) => t.slug));
+    const paylasilan = decodeSelection(
+      new URLSearchParams(window.location.search).get('h'),
+      bilinen
+    );
+    if (paylasilan.length > 0) return paylasilan;
+    return targets
+      .slice(0, DEFAULT_SELECTION)
+      .map((t) => ({ slug: t.slug, minutes: 90 }));
+  });
   const [pick, setPick] = useState('');
   /* Favoriler ağdan geliyor; geldiklerinde seçimi BİR KEZ değiştiriyoruz.
      `dokunuldu` olmadan her yüklemede kullanıcının eklediği hedefler
      silinirdi — favori listesi geç gelen bir yanıt olduğu için bu,
      kullanıcı yazarken elini vurmak demekti. */
-  const [dokunuldu, setDokunuldu] = useState(false);
+  const [dokunuldu, setDokunuldu] = useState(
+    () => new URLSearchParams(window.location.search).has('h')
+  );
 
   useEffect(() => {
     if (dokunuldu || favorites.loading || favorites.slugs.size === 0) return;
@@ -163,6 +194,46 @@ export function PlannerPage() {
     (t) => !selection.some((s) => s.slug === t.slug)
   );
 
+  const [kopyalandi, setKopyalandi] = useState(false);
+
+  /**
+   * Planı paylaş — adres çubuğuna kodlanıyor, sunucuya YAZILMIYOR.
+   *
+   * Gerekçenin tamamı `planShare.ts` başlığında: paylaşılan şey birkaç
+   * yüz baytlık bir seçim ve tablo açmak; RLS, sahiplik, silme akışı ve
+   * "paylaştığım plan ne zaman silinir" sorusu demekti.
+   *
+   * `history.replaceState` KULLANILIYOR, `pushState` DEĞİL: her paylaş
+   * tıklaması geri düğmesine bir adım eklemesin.
+   */
+  async function paylas() {
+    const url = new URL(window.location.href);
+    url.searchParams.set('h', encodeSelection(selection));
+    url.searchParams.set('y', String(minAltitude));
+    window.history.replaceState(null, '', url.toString());
+
+    try {
+      await navigator.clipboard.writeText(url.toString());
+      setKopyalandi(true);
+      window.setTimeout(() => setKopyalandi(false), 2000);
+    } catch {
+      /* Pano izni yoksa adres çubuğu zaten güncellendi — kullanıcı
+         oradan kopyalayabilir. Sessiz kalmak burada doğru: yapılacak iş
+         yapıldı, yalnızca kısayol çalışmadı. */
+    }
+  }
+
+  function takvimeEkle() {
+    if (!plan || plan.scheduled.length === 0) return;
+    const metin = buildPlanIcs({
+      slots: plan.scheduled,
+      labelOf: (slug) =>
+        targets.find((t) => t.slug === slug)?.name ?? slug,
+      locationLabel: location.label,
+    });
+    downloadText(planIcsFileName(plan.scheduled), metin);
+  }
+
   return (
     <>
       <PageMeta
@@ -181,9 +252,22 @@ export function PlannerPage() {
           description="Hedefleri seçin, her birine ayırmak istediğiniz süreyi girin. Plan, batmak üzere olan hedefi öne alır — kaybedilecek olanı kurtarmak ilk kuraldır."
           meta={location.label}
           actions={
-            <ButtonLink to="/bu-gece" size="sm" variant="secondary">
-              Bu Gece
-            </ButtonLink>
+            <>
+              <Button size="sm" variant="secondary" onClick={paylas}>
+                {kopyalandi ? 'Bağlantı kopyalandı' : 'Planı paylaş'}
+              </Button>
+              <Button
+                size="sm"
+                variant="secondary"
+                disabled={!plan || plan.scheduled.length === 0}
+                onClick={takvimeEkle}
+              >
+                Takvime ekle
+              </Button>
+              <ButtonLink to="/bu-gece" size="sm" variant="secondary">
+                Bu Gece
+              </ButtonLink>
+            </>
           }
         />
 

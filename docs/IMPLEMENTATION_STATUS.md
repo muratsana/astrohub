@@ -1345,7 +1345,7 @@ karşılaştırma yapılmadan yazılan her şey ikinci bir kopya olurdu.
 
 | Bölüm | Karşılık | Durum |
 |---|---|---|
-| §14.1 Gözlem ve gökyüzü planlama | `/planlayici`, `/bu-gece`, `/hedefler`, `features/sky` | PARTIAL — hedef arama, yükseklik grafiği, alacakaranlık, ay ayrımı ve **favori hedef / gözlem listesi** (`0066`) var; **paylaşılabilir plan** ve **takvime ekleme** yok |
+| §14.1 Gözlem ve gökyüzü planlama | `/planlayici`, `/bu-gece`, `/hedefler`, `features/sky` | DONE'a yakın — hedef arama, yükseklik grafiği, alacakaranlık, ay ayrımı, favori/gözlem listesi (`0066`), **paylaşılabilir plan** ve **takvime ekleme** (`planShare.ts`) var; kalan tek madde **interaktif gökyüzü haritası** (dış veri/lisans gerektiriyor) |
 | §14.2 Astrofotoğraf hesaplama | `/araclar/*` — FOV, pixel scale, mozaik, setup uyumluluk, **poz-plani** | DONE'a yakın — poz/entegrasyon planı, depolama ihtiyacı ve dither aralığı eklendi (`capturePlan.ts`, 17 formül testi); kalan: **filtre–hedef uyumu** ve **kalibrasyon rehberi** (ikisi de içerik işi, hesap değil) |
 | §14.3 Gökyüzü olayları takvimi | `/araclar/takvim`, `events` | PARTIAL — ay fazı ve karanlık takvimi var; **meteor yağmuru**, **tutulma**, **ISS geçişi** yok (dış veri kaynağı gerekiyor) |
 | §14.4 Karanlık gökyüzü haritası | `/saha`, `observing_sites`, ışık kirliliği katmanı | DONE'a yakın — koordinat gizliliği `photo_exact_locations` deseniyle çözülmüş |
@@ -1390,6 +1390,54 @@ talep hiç yok. Talep de temizlenince ölçüm geçti.
 Bu, "politika doğru görünüyor" ile "politika doğru davranıyor"
 arasındaki farkın somut örneği: ölçüm olmasaydı yanlış olan test değil
 varsayımımız olurdu ve bunu hiç öğrenemezdik.
+
+### `.ics` yazıcısı İKİNCİ KEZ YAZILMADI — RFC katmanı ortaklaştı
+
+§14.1 planlayıcıdan "takvime ekleme" istiyor ve `features/events/
+reminders.ts` içinde çalışan bir `.ics` yazıcısı ZATEN vardı. Fazın
+birleştirme kuralı gereği ikinci bir yazıcı yazmak yerine RFC katmanı
+`lib/ics.ts`e taşındı: kaçışlama (§3.3.11), 75 OKTETLİK satır katlama
+(§3.1) ve UTC damgası.
+
+Bunlar RFC'nin kuralları — etkinliğe ya da gece planına ait değil. İki
+kopya olsaydı biri düzeltilir, öteki sessizce bozuk kalırdı; üstelik
+hata takvim uygulamasında görünürdü, bizde değil.
+
+`reminders.ts` kendi kararlarını KORUYOR ve orada kalıyor: iki saatlik
+varsayılan bitiş, slug'a bağlı `UID`, mekân + şehir birleşimi. Bunlar
+etkinliğe ait, RFC'ye değil. Mevcut 19 `.ics` testi taşımadan sonra
+değişmeden geçti — ortaklaştırmanın davranışı bozmadığının ölçüsü.
+
+Ortak yazıcı ÇOKLU VEVENT alıyor; gece planı için gerekliydi (bir
+gecede beş hedef, beş kayıt). Tek etkinlik yazan bir imza planlayıcıya
+beş ayrı dosya indirtirdi.
+
+### Paylaşılabilir plan için TABLO AÇILMADI
+
+§14.1 "paylaşılabilir plan" istiyor. Bir `plans` tablosu açmak
+mümkündü ve yapılmadı: paylaşılan şey birkaç yüz baytlık bir seçim
+(hedef slug'ları ve dakikalar). Tablo demek; RLS, kısa adres üretimi,
+sahiplik, silme akışı ve "paylaştığım plan ne zaman silinir" sorusu
+demekti.
+
+Adres çubuğu bu veriyi zaten taşıyor:
+`/planlayici?h=m31-andromeda:90,m42-orion:120&y=30`. Bağlantı
+kopyalanabiliyor, forumda paylaşılabiliyor, yer imine eklenebiliyor ve
+SUNUCUDA HİÇBİR ŞEY SAKLANMIYOR — silinecek bir şey de yok. Plan zaten
+tarayıcıda hesaplanıyor, yani bağlantıyı açan kişi aynı hesabı kendi
+konumuyla yapıyor.
+
+KONUM PAYLAŞILMIYOR: bağlantıda yalnızca hedefler ve süreler var.
+Konumu da koysaydık, planını paylaşan kullanıcı nerede gözlem yaptığını
+da paylaşmış olurdu — §14.4'ün korumaya çalıştığı şey.
+
+Sınır yazılı: çok uzun listeler adres sınırlarını zorlar. Bir gecede
+5–8 hedef gerçekçi olduğu için bugün sorun değil; olursa çözüm tabloya
+geçmek ve o kararı verecek kişi gerekçeyi kodda bulacak.
+
+Seçimin kaynak sırası: **adres çubuğu → favoriler → katalog**.
+Paylaşılan bağlantı kazanıyor — birinin gönderdiği planı açan kullanıcı
+kendi favorilerini değil, gönderilen planı görmeli.
 
 ### §14.2: neyin hesaplanacağına da fazın kuralı karar verdi
 
@@ -1614,24 +1662,22 @@ Faz 3'ün "Faz 10'a bağlı" kalemlerinden hero slaytlarının admin
 yönetimi de bu turda açıldı. Kalan iki kalem (hava sağlayıcı seçimi,
 "boşsa gizle" anahtarı) Faz 3'ün kendi bölümünde duruyor.
 
-**Faz 11'de §14.6, §14.9, §14.1'in favori/gözlem listesi ve §14.2'nin
-hesap boşlukları kapandı** (bkz. Faz 11 bölümü). Dört turda üç göç
-(`0064`, `0065`, `0066`) ve bir domain modülü (`capturePlan.ts`).
+**Faz 11'de §14.6, §14.9, §14.2 ve §14.1'in beş maddesi kapandı**
+(bkz. Faz 11 bölümü). Beş turda üç göç (`0064`, `0065`, `0066`), iki
+domain modülü (`capturePlan.ts`, `planShare.ts`) ve bir ortaklaştırma
+(`lib/ics.ts`).
 
 **Sıradaki iş: Faz 11'in kalan `PARTIAL` satırları.**
-  1. **§14.1 paylaşılabilir plan + takvime ekleme** — `.ics` üretimi
-     `features/events/reminders.ts`te ZATEN VAR. Fazın birleştirme
-     kuralı gereği önce oraya bakılmalı: planlayıcı için ikinci bir
-     `.ics` yazıcısı değil, oradakinin genelleştirilmesi gerekir.
-     Paylaşılabilir plan için URL'ye kodlama (query string) yeterli
-     olabilir — tablo açmadan önce ölçülmeli.
-  2. **§14.7 kulüp yöneticisi doğrulama + yerel SEO sayfaları.**
-  3. **§14.3 meteor/tutulma/ISS** — dış veri lisansı gerektiriyor;
-     adapter + feature flag ile hazırlanacak, placeholder
-     GÖSTERİLMEYECEK. Bayrak altyapısı Faz 10'da kuruldu ve ziyaretçi
-     tarafında çalışıyor.
-  4. **§14.2 kalanı** — filtre–hedef uyumu ve kalibrasyon rehberi; ikisi
-     de hesap değil İÇERİK işi, `content_entries` üzerinden gidebilir.
+  1. **§14.7 kulüp yöneticisi doğrulama + yerel SEO sayfaları** — dış
+     veri gerektirmiyor, sıradaki en somut iş. `clubs` tablosu var;
+     doğrulama rozeti ve şehir bazlı sayfalar eklenecek.
+  2. **§14.2 kalanı** — filtre–hedef uyumu ve kalibrasyon rehberi; ikisi
+     de hesap değil İÇERİK işi, `content_entries` üzerinden gidebilir
+     (§14.9'da kurulan `sozluk`/`sss` deseninin aynısı).
+  3. **§14.3 meteor/tutulma/ISS** ve **§14.1 interaktif gökyüzü
+     haritası** — dış veri lisansı ya da servis gerektiriyor; adapter +
+     feature flag ile hazırlanacak, placeholder GÖSTERİLMEYECEK. Bayrak
+     altyapısı Faz 10'da kuruldu ve ziyaretçi tarafında çalışıyor.
 
 **Kanal bağlı değilken sahte içerik gösterilmemeli** (§11.2 son madde).
 Adaptör ve panel bu kurala uyuyor; kullanıcı sayfaları yazılırken de
