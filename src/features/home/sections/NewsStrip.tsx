@@ -141,7 +141,18 @@ function StripRow({
   );
 }
 
-export function NewsStrip() {
+/**
+ * `limit` `home_modules`tan gelir; verilmezse `ROWS`.
+ *
+ * BAŞLIK BAĞLANMADI — bilerek. Bu bölümün TEK başlığı yok; içinde
+ * "Haberler" ve "Yazılar" diye iki ayrı sütun başlığı var. Modülün tek
+ * `title` alanını ikisinden hangisine yazacağımızın doğru cevabı yok;
+ * birine yazmak diğerini sessizce yanlış yapardı. Panelde `news` için
+ * girilen başlığın ekranda karşılığı olmadığı `moduleLabels` notunda
+ * yazıyor. Sayı ise ikisine de aynı uygulanıyor — sütunlar eşit uzunlukta
+ * olmalı, aksi hâlde ızgara tek tarafa sarkıyor.
+ */
+export function NewsStrip({ limit = ROWS }: { limit?: number } = {}) {
   /*
     SIRAYI YÖNETİCİ BELİRLER, TARİH DEĞİL.
     Önce ikisi de "en yeni dört" idi. Bu, editoryal bir kararı tarih
@@ -165,13 +176,13 @@ export function NewsStrip() {
     allNews,
     featuredNews.slugs,
     (n) => n.slug,
-    ROWS
+    limit
   );
   const latestArticles = applyFeatured(
     allArticles,
     featuredArticles.slugs,
     (a) => a.slug,
-    ROWS
+    limit
   );
 
   return (

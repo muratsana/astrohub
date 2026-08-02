@@ -32,15 +32,19 @@ import { equipmentCategoryLabels } from '@/features/equipment/taxonomy';
  * devreye girene kadar yükleme yok. Yıldız alanı yer tutuyor;
  * internetten bulunmuş bir ürün fotoğrafı koymak telif sorunu olurdu.
  */
-export function RecentListings() {
+/** Sayı ve başlık `home_modules`tan gelir; verilmezse bugünkü davranış. */
+export function RecentListings({
+  limit = 5,
+  title = 'Son İlanlar',
+}: { limit?: number; title?: string } = {}) {
   const recent = [...listings]
     .sort((a, b) => new Date(b.postedAt).getTime() - new Date(a.postedAt).getTime())
-    .slice(0, 5);
+    .slice(0, limit);
 
   return (
     <Container className="py-9 sm:py-11">
       <SectionHeader
-        title="Son İlanlar"
+        title={title}
         meta={`${listings.length} ilan`}
         /* Kısaltıldı: satıcı puanı kartın künyesinde görünüyor. */
         description="Topluluğun ikinci el ekipman ilanları."

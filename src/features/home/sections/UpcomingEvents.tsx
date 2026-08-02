@@ -18,18 +18,22 @@ import { eventTypeLabels, type AstroEvent } from '@/features/events/types';
  * Tarih solda kendi bloğunda: gün büyük, ay küçük. Ajandada göz önce
  * "ne zaman"a bakar, sonra "ne"ye; okuma sırası düzenle aynı olmalı.
  */
-export function UpcomingEvents() {
+/** Sayı ve başlık `home_modules`tan gelir; verilmezse bugünkü davranış. */
+export function UpcomingEvents({
+  limit = 5,
+  title = 'Yaklaşan Etkinlikler',
+}: { limit?: number; title?: string } = {}) {
   const catalog = useEventCatalog();
   const upcoming = [...catalog.items]
     .sort(
       (a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime()
     )
-    .slice(0, 5);
+    .slice(0, limit);
 
   return (
     <Container className="py-9 sm:py-11">
       <SectionHeader
-        title="Yaklaşan Etkinlikler"
+        title={title}
         meta={`${catalog.items.length} kayıt`}
         /* Kısaltıldı (§5.4): kaynak ve doğrulama tarihi etkinlik
            detayında duruyor; listenin başında yer kaplaması gerekmiyor. */

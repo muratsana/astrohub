@@ -37,10 +37,20 @@ function tintForPhoto(catalog: string): string {
 const IZGARA = 'grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5';
 const KAC_KART = 10;
 
-export function RecentRecords({ hideWhenEmpty = false }: { hideWhenEmpty?: boolean } = {}) {
+/**
+ * `limit` ve `title` artık `home_modules`tan geliyor (§13.2); verilmezse
+ * `KAC_KART` ve bugünkü başlık. Yorumdaki "Faz 10'da bağlanır" sözü
+ * `hideWhenEmpty` için de gerçekleşti: anahtar `HomePage` üzerinden
+ * doğrudan tablodan besleniyor.
+ */
+export function RecentRecords({
+  hideWhenEmpty = false,
+  limit = KAC_KART,
+  title = 'Galeriden Son Yüklenenler',
+}: { hideWhenEmpty?: boolean; limit?: number; title?: string } = {}) {
   const catalog = usePhotoCatalog();
   const photos = catalog.items;
-  const recent = photos.slice(0, KAC_KART);
+  const recent = photos.slice(0, limit);
 
   /*
    * "BOŞSA GİZLE" BİR AYAR, MUTLAK KURAL DEĞİL (§6.2).
@@ -66,7 +76,7 @@ export function RecentRecords({ hideWhenEmpty = false }: { hideWhenEmpty?: boole
   return (
     <Container className="py-9 sm:py-11">
       <SectionHeader
-        title="Galeriden Son Yüklenenler"
+        title={title}
         meta={`${photos.length} fotoğraf`}
         linkTo="/galeri"
         linkLabel="Galeri"
@@ -83,7 +93,10 @@ export function RecentRecords({ hideWhenEmpty = false }: { hideWhenEmpty?: boole
          * gelince hiçbir şey yerinden oynamıyor.
          */
         <ul className={IZGARA} aria-busy="true">
-          <ContentCardSkeletonGrid count={KAC_KART} ratio="square" />
+          {/* İskelet sayısı da `limit` — sabit kalsaydı yönetici sayıyı
+              değiştirdiğinde yükleme ile sonuç farklı sayıda kart çizer,
+              liste gelince ızgara zıplardı. */}
+          <ContentCardSkeletonGrid count={limit} ratio="square" />
         </ul>
       ) : catalog.status === 'error' ? (
         /*
