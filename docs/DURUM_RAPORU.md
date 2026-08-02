@@ -464,6 +464,7 @@ gerçek koda göre hâlâ açıktı.
 - `src/app/navigation.ts` — `Ekipman` ana navigasyondan çıkarıldı.
 - `supabase/migrations/0062_nav_links_tohumu.sql` — yeni kurulum tohumu sekiz header bağlantısıyla hizalandı.
 - `supabase/migrations/20260802203529_remove_equipment_from_header_nav.sql` — mevcut canlı header menüsünde `/ekipman` satırını kapatan göç eklendi.
+- `supabase/migrations/20260802202412_remove_equipment_from_header_nav.sql` — önceki Supabase Preview branch sürümüyle drift oluşmaması için aynı idempotent göç korundu.
 - `src/services/content/listings.ts` — `listing_photos` ilişkisi okunup kapak görseli `Listing.imageUrl` alanına taşındı.
 - `src/services/marketplace/photoUrl.ts` — ilan fotoğraf URL üretimi hafif ortak yardımcıya ayrıldı.
 - `src/features/home/sections/RecentListings.tsx` — ana sayfa ilan kartları gerçek kapak görselini kullanır; yoksa ortak fallback'e düşer.
