@@ -95,6 +95,21 @@ interface LocationContextValue {
   /** Öneri kutusu gösterilmeli mi? (yalnızca hiç sorulmadıysa) */
   shouldOfferGeolocation: boolean;
   setCity: (id: string) => void;
+  /**
+   * İl + ilçe seçimi (§4.1).
+   *
+   * `setCity`den AYRI bir fonksiyon: ilçe seçmek ili de değiştirebilir
+   * ve iki çağrı yapmak arada bir kare il merkezini göstermek demekti.
+   * Tek çağrı, tek durum güncellemesi.
+   */
+  setDistrict: (input: {
+    provinceSlug: string;
+    provinceName: string;
+    districtId: string;
+    districtName: string;
+    latitude: number;
+    longitude: number;
+  }) => void;
   requestDeviceLocation: () => void;
   dismissGeolocationOffer: () => void;
 }
@@ -245,6 +260,48 @@ export function LocationProvider({ children }: { children: ReactNode }) {
       return current;
     });
   }, [provinces]);
+
+  const setDistrict = useCallback(
+    (input: {
+      provinceSlug: string;
+      provinceName: string;
+      districtId: string;
+      districtName: string;
+      latitude: number;
+      longitude: number;
+    }) => {
+      setLocation({
+        /* Etiket İKİ KADEMELİ: "Ankara / Çankaya". Yalnızca ilçe adı
+           yazsaydık "Merkez" gibi onlarca ilde tekrarlanan adlar
+           anlamsız olurdu. */
+        label: `${input.provinceName} / ${input.districtName}`,
+        latitude: input.latitude,
+        longitude: input.longitude,
+        timeZone: TURKEY_TIME_ZONE,
+        source: 'city',
+        cityId: input.provinceSlug,
+        districtId: input.districtId,
+        districtName: input.districtName,
+        bortle: findCity(input.provinceSlug)?.bortle,
+      });
+      setModeState((s) =>
+        reduceLocationMode(s, {
+          type: 'SELECT_MANUAL',
+          fix: {
+            label: `${input.provinceName} / ${input.districtName}`,
+            latitude: input.latitude,
+            longitude: input.longitude,
+            ref: input.provinceSlug,
+          },
+        })
+      );
+      setPermission((current) => {
+        writeStored({ source: 'city', cityId: input.provinceSlug, permission: current });
+        return current;
+      });
+    },
+    []
+  );
 
   const requestDeviceLocation = useCallback(() => {
     if (!navigator.geolocation) {
@@ -407,6 +464,7 @@ export function LocationProvider({ children }: { children: ReactNode }) {
       needsPermissionHelp: needsPermissionHelpOf(modeState),
       shouldOfferGeolocation: permission === 'unasked',
       setCity,
+      setDistrict,
       requestDeviceLocation,
       dismissGeolocationOffer,
     }),
@@ -416,6 +474,7 @@ export function LocationProvider({ children }: { children: ReactNode }) {
       permission,
       modeState,
       setCity,
+      setDistrict,
       requestDeviceLocation,
       dismissGeolocationOffer,
     ]

@@ -595,7 +595,7 @@ Motora geçiş sırasında eklenen iki yetenek:
 | Madde | Durum | Sebep |
 |---|---|---|
 | **Server-side arama/filtre/sayfalama** | NOT_STARTED | Kataloglar bugün tamamı belleğe inen listeler (tohum dizisi ya da birkaç yüz satır); sunucu tarafı sayfalama veri hacmi onu gerektirdiğinde açılır. `ExplorerQuery` sayfa ve sayfa boyutu taşıdığı için ŞEKLİ hazır, ama bugün çalışan şey istemci tarafı ve rapor bunu böyle söylüyor |
-| İl/ilçe filtresi | PARTIAL | İl facet olarak çalışıyor; ilçe verisi yok (Faz 1.1) |
+| İl/ilçe filtresi | DONE'a yakın | 974 ilçe koordinatlarıyla `districts` tablosunda (`0071`, GeoNames ADM2 / CC BY 4.0); konum seçici iki kademeli. Kalan: explorer facet'i olarak ilçe süzgeci ve cihaz konumunun ilçe adıyla etiketlenmesi |
 | Takip edilenler | DONE | `useFollowingIds` + `personalFacet`; galeride "Takip ettiklerim" süzgeci. Oturumsuzda ve küme yüklenirken facet HİÇ çizilmiyor |
 | Favoriler | DONE | `useSavedPhotoIds` + `personalFacet`; galeride "Kaydettiklerim" süzgeci. Sınıra dayanırsa `truncated` ile SÖYLENİYOR — sessiz kırpma yok |
 | Onay/yayın durumu, premium görünürlük | NOT_STARTED | Faz 9/10 |

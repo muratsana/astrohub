@@ -32,6 +32,15 @@ export interface ObservingLocation {
    * yaptığını yayımlamak §14.4'ün korumaya çalıştığı şey.
    */
   cityId?: string;
+  /**
+   * İlçe seçildiyse onun slug'ı ve adı.
+   *
+   * KOORDİNAT İLÇE MERKEZİNDEN geliyor ve bu bir YAKLAŞIKLIK: gözlem
+   * yeri merkezde değil, çoğu zaman şehirden uzakta. Cihaz konumu bir
+   * ÖLÇÜM; arayüz ikisini ayrı gösteriyor.
+   */
+  districtId?: string;
+  districtName?: string;
   /** Şehir ön ayarından geliyorsa tipik Bortle sınıfı. */
   bortle?: number;
 }
