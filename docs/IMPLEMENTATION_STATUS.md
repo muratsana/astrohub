@@ -33,13 +33,21 @@ tabloda `DONE` ile birleştirilmez:
 | 9 | Standart/Premium üyelik altyapısı | 923–1005 | IMPLEMENTED_DISABLED⁶ |
 | 10 | Admin panelinden kodsuz site yönetimi | 1006–1164 | DONE⁷ |
 | 11 | Zorunlu ürün modülleri | 1165–1349 | PARTIAL⁸ |
-| 12 | Organik kullanıcı kazanımı | 1350–1419 | NOT_STARTED |
+| 12 | Organik kullanıcı kazanımı | 1350–1419 | PARTIAL¹¹ |
 | 13 | Fotoğraf, Storage, medya mimarisi | 1420–1462 | NOT_STARTED |
 | 14 | macOS, tarayıcı, responsive, erişilebilirlik | 1463–1528 | NOT_STARTED |
 | 15 | Güvenlik, KVKK, telif, kötüye kullanım | 1529–1606 | NOT_STARTED |
 | 16 | Performans, SEO, analitik, gözlemlenebilirlik | 1607–1690 | NOT_STARTED |
 | 17 | Test stratejisi ve kabul kriterleri | 1691–… | NOT_STARTED |
 | 18 | (belgenin sonu) | …–1956 | NOT_STARTED |
+
+¹¹ **Faz 12'nin §15.3'ü açıldı; §15.1/§15.2 büyük ölçüde önceki
+fazlarda karşılanmış.** Envanterde iki gerçek boşluk çıktı ve ikisi de
+bu turda kapandı: (1) `sitemap.xml` HİÇ ÜRETİLMİYORDU — üretici yazılmış,
+beş testi var, hiçbir yerden çağrılmıyordu ve `robots.txt` onu ilan
+ediyordu; (2) 81 şehir sayfasının hepsi koşulsuz indekslenebilirdi.
+Kalan maddeler (challenge/tema, haftalık özet, davet altyapısı, watermark)
+kendi turlarını hak ediyor. Ayrıntı: Faz 12 bölümü.
 
 ¹⁰ **Faz 4'ün motor tarafı kapandı; kalanların hiçbiri süzgeç işi
 değil.** 2 Ağustos turunda §7.1'in üç maddesi geldi: sayısal aralık,
@@ -2066,6 +2074,87 @@ kayıtlarını dökerdi. RLS bir güvenlik sınırı, sorgu niyeti değil.
 
 ---
 
+## Faz 12 — ayrıntı
+
+### Envanter: beş alt bölümün üçü zaten karşılanmış
+
+Fazın kuralı "sayı artırmak için değil, tekrar kullanım için" ve
+maddelerin çoğu önceki fazlarda kendiliğinden kapanmış: takip sistemi
+(Faz 5), favori/koleksiyon (Faz 5), editörün seçimi, fotoğrafın hikâyesi
+ve teknik künyesi (Faz 1.2), OG görseli ve canonical (T-302/T-301),
+paylaşılabilir gözlem planı (`planShare.ts`), fotoğrafçıya atıf ve telif
+(§10.2), bildirim tercihleri ve sessiz saat (Faz 5/6).
+
+Envanterde **iki gerçek boşluk** çıktı ve ikisi de §15.3'teydi.
+
+### `sitemap.xml` HİÇ ÜRETİLMİYORDU
+
+`buildSitemapXml` yazılmış, dışa aktarılmış ve **beş testle ölçülüyordu**
+— ama hiçbir yerden çağrılmıyordu. `public/robots.txt` ise
+`Sitemap: https://astrohub.com.tr/sitemap.xml` diye ilan ediyordu; arama
+motoruna var olmayan bir adres veriliyordu.
+
+Bu, deponun defalarca yakaladığı hatanın aynısı — kod yazılmış, kimse
+çağırmıyor — ama bu seferki daha sinsiydi: **testlerin geçiyor olması
+durumu gizliyordu.** Üretici doğru XML üretiyordu, yalnızca kimse
+üretmesini istemiyordu.
+
+Dosya artık prerender adımında yazılıyor. Yeri bilinçli: kaynak listesi
+(`staticEntries` + `contentEntries`) zaten o SSR paketinde ve
+prerender'ın kendisiyle aynı yerden okunuyor — ikinci bir liste, ikinci
+bir gerçeklik demekti.
+
+**`VITE_SITE_URL` yoksa dosya YAZILMIYOR** ve bu bir kusur değil kural:
+sitemap protokolü `<loc>`un mutlak olmasını şart koşuyor. Göreli yol ya
+da uydurma alan adı yazmak `lib/seo.ts`in kendi kuralının ihlali olurdu
+("yanlış bir alan adı basmak, etiketi hiç basmamaktan zararlıdır").
+Geçersiz bir sitemap, olmayan bir sitemap'ten kötü — arama motoru onu
+okur ve bütün adresleri reddeder. Atlama sessiz değil, uyarıyla.
+
+### İnce şehir sayfası dizine sunulmuyor
+
+Şehir sayfaları on beş ille sınırlıyken on beşi de gerçek içerik
+taşıyordu. **Liste 81'e çıkınca sayfa sayısı 5,4 katına çıktı ama içerik
+çıkmadı** — yani sorunu bu oturum kendi eliyle büyüttü. Etkinliği, kulübü
+ve yakın sahası olmayan bir sayfada geriye yalnızca şablon ve o şehrin
+koordinatından hesaplanan karanlık penceresi kalıyor: sayı olarak
+biricik, YAPI olarak 81 sayfada aynı. Belge bunu adıyla yasaklıyor.
+
+**Eşik BİR kayıt** — üç kümeden (etkinlik, kulüp, yakın saha) herhangi
+birinde tek satır yeterli. Daha yükseği gerçek ama küçük şehirleri
+cezalandırırdı: Bilecik'teki tek kulüp, o sayfayı arayan kişi için
+sayfanın tamamı. Karanlık penceresi bilerek sayılmıyor — her şehirde var,
+ölçüt olsaydı hiçbir sayfayı elemez ve kural kural olmaktan çıkardı.
+
+**`noindex, follow` — sayfa kapanmıyor.** Ziyaretçiye açık ve işe
+yarıyor; değişen tek şey arama motoruna "bunu dizine ekle" dememek.
+`nofollow` değil: sayfadaki bağlantılar (yakın sahalar, etkinlikler)
+izlenmeye devam etsin, ince olan sayfa — işaret ettiği içerik değil.
+
+**Kural TEK yerde** (`city/substance.ts`), iki çağıranı var: sayfanın
+`<meta robots>` kararı ve sitemap listesi. `noindex` bir sayfayı
+sitemap'te listelemek arama motoruna iki zıt sinyal göndermek olurdu.
+
+**Prerender listesi sitemap'ten GENİŞ ve fark bilinçli.** İlk yazımda
+süzgeci `contentEntries`e koydum ve ince sayfalar prerender'dan da
+düştü — statik HTML'siz kalırlardı, yani adrese giden kullanıcı SPA
+kabuğu görürdü. (Kendi testim yakaladı.) Süzgeç `sitemapEntries`e
+taşındı; 81 şehrin hepsi HTML alıyor, 75'i sitemap'e giriyor.
+
+**Canlı derlemede ölçüldü:** sitemap 484 adres, prerender 490/490 rota.
+Aradaki 6 sayfa (Çanakkale, Edirne, Hakkâri, Kırklareli, Ordu, Samsun)
+sitemap'te yok ve HTML'lerinde `noindex, follow` var — iki taraf birebir
+aynı altı sayfada anlaşıyor. Ankara/İstanbul/İzmir'de `noindex` yok.
+
+### Kalanlar
+
+Challenge/tema altyapısı, aylık seçki, haftalık kişiselleştirilmiş özet,
+davet ve referral altyapısı, watermark tercihi ve kullanıcı portfolyo
+URL'si açık. Hiçbiri dış kaynağa bağlı değil; her biri kendi turunu hak
+ediyor.
+
+---
+
 ## Sonraki oturum için devam notu
 
 **Bittiği yer:** Faz 2, Faz 5 ve Faz 6 kapandı. Faz 3'ün 3.1'i
@@ -2227,8 +2316,14 @@ kaydı bu maddeyi "dış veri kaynağı gerekiyor" diye yazmıştı ve bu
 yanlıştı — yağmur bir katalog, tarih λ☉'den hesaplanıyor. Tutulma ve
 ISS gerçekten dış kaynak istiyor, onlar duruyor.
 
-**Sıradaki iş:** Faz 11'in kalan `PARTIAL` satırları (yukarıdaki liste),
-ardından Faz 12 (organik kullanıcı kazanımı, belge 1350–1419) — tablodaki
+**Faz 12'nin §15.3'ü kapandı** (bkz. Faz 12 bölümü). İki bulgu: sitemap
+hiç üretilmiyordu (üretici yazılmış, çağrılmamış, testleri geçiyordu ve
+`robots.txt` onu ilan ediyordu) ve 81 şehir sayfasının hepsi koşulsuz
+indekslenebilirdi.
+
+**Sıradaki iş:** Faz 12'nin kalan maddeleri (challenge/tema, aylık seçki,
+haftalık özet, davet altyapısı, watermark, portfolyo URL'si), ardından
+Faz 13 (fotoğraf/storage/medya mimarisi, belge 1420–1462) — tablodaki
 ilk `NOT_STARTED` faz.
 
 **Çalışma yöntemi** (bu oturumda işe yaradı):

@@ -4,7 +4,15 @@ import { events } from '../features/events/data';
 import { sites } from '../features/observing-sites/data';
 import { equipment, equipmentPath } from '../features/equipment/data';
 import { listings } from '../features/marketplace/data';
-import { cityRoutePaths } from '../features/city/routes';
+import { cityRouteSlug } from '../features/city/routes';
+import { cities } from '../features/location/cities';
+import { haversineKm } from '../domain/geography/distance';
+import {
+  cityPageIsIndexable,
+  clubBelongsToCity,
+  eventBelongsToCity,
+  siteIsNearCity,
+} from '../features/city/substance';
 import { clubs } from '../features/clubs/data';
 import { articles } from '../features/articles/data';
 import { news } from '../features/news/data';
@@ -119,8 +127,16 @@ export function contentEntries(): SitemapEntry[] {
       priority: 0.5,
       changefreq: 'monthly' as const,
     })),
-    ...cityRoutePaths.map((path) => ({
-      path: `/${path}`,
+    /*
+     * ŞEHİR SAYFALARININ HEPSİ BURADA — 81'i de PRERENDER ediliyor.
+     *
+     * Bu liste iki işi birden besliyor: prerender yolları ve sitemap.
+     * İkisi AYNI ŞEY DEĞİL: ince bir şehir sayfası dizine sunulmuyor
+     * ama ziyaretçiye açık kalıyor, dolayısıyla statik HTML'i ve gerçek
+     * meta'sı olmak zorunda. Süzgeç `sitemapEntries`te, burada değil.
+     */
+    ...cities.map((city) => ({
+      path: `/${cityRouteSlug(city.id)}`,
       priority: 0.7,
       changefreq: 'weekly' as const,
     })),
@@ -183,6 +199,60 @@ export async function fetchDbSitemapEntries(
  * kazanır: panelden düzenlenen içerik tohumun üstüne geçmişti (mergeWithSeed
  * kuralı); sitemap'te de aynı kayıt iki kez görünmemeli.
  */
+/**
+ * SITEMAP'E GİRECEK YOLLAR — prerender listesinden DAR.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * İNCE ŞEHİR SAYFASI DİZİNE SUNULMUYOR (§15.3)
+ *
+ * Şehir sayfaları on beş ille sınırlıyken on beşi de gerçek içerik
+ * taşıyordu. Liste 81'e çıkınca sayfa sayısı 5,4 katına çıktı ama
+ * içerik çıkmadı; etkinliği, kulübü ve yakın sahası olmayan bir sayfada
+ * geriye yalnızca şablon kalıyor ve toplu hâlde arama motorunun
+ * "doorway page" dediği görüntü oluşuyor.
+ *
+ * Kural `city/substance.ts`te ve sayfanın `<meta robots>` kararıyla
+ * AYNI kaynaktan geliyor. `noindex` bir sayfayı sitemap'te listelemek
+ * arama motoruna iki zıt sinyal göndermek olurdu.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * PRERENDER LİSTESİNDEN AYRI TUTULUYOR — VE BU FARK BİLİNÇLİ
+ *
+ * `contentEntries` 81 şehri de veriyor çünkü hepsinin statik HTML'i ve
+ * gerçek meta'sı olmalı: sayfa dizine sunulmuyor olabilir ama adrese
+ * giden kullanıcıya doğru içerik göstermek zorunda. Dizine sunmamak,
+ * sayfayı kapatmak değil.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * DERLEME ZAMANI TOHUM VERİYİ ÖLÇÜYOR
+ *
+ * Sayfa canlı katalogları okuyor, bu liste derleme anındaki modülleri.
+ * Veritabanı doluyken ikisi ayrışabilir; sitemap bir sonraki derlemede
+ * hizalanıyor. Eksik yön güvenli: sitemap'te olmayan bir sayfa yine de
+ * taranabilir, `noindex` ise sayfanın kendisinde anında geçerli.
+ */
+export function sitemapEntries(): SitemapEntry[] {
+  const ince = new Set(
+    cities
+      .filter(
+        (city) =>
+          !cityPageIsIndexable({
+            events: events.filter((e) =>
+              eventBelongsToCity(city, e, haversineKm)
+            ).length,
+            clubs: clubs.filter((c) => clubBelongsToCity(city, c)).length,
+            sites: sites.filter((s) => siteIsNearCity(city, s, haversineKm))
+              .length,
+          })
+      )
+      .map((city) => `/${cityRouteSlug(city.id)}`)
+  );
+
+  return [...staticEntries, ...contentEntries()].filter(
+    (entry) => !ince.has(entry.path)
+  );
+}
+
 export function buildSitemapXml(
   siteUrl: string,
   lastmod: string,
@@ -190,8 +260,10 @@ export function buildSitemapXml(
 ): string {
   const base = siteUrl.replace(/\/$/, '');
 
+  /* `sitemapEntries` ince şehir sayfalarını ELEDİ; burada tekrar
+     `contentEntries` okunsaydı süzgeç boşa çıkardı. */
   const byPath = new Map<string, SitemapEntry>();
-  for (const entry of [...staticEntries, ...contentEntries(), ...extra]) {
+  for (const entry of [...sitemapEntries(), ...extra]) {
     byPath.set(entry.path, entry);
   }
 

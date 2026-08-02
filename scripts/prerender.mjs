@@ -63,7 +63,7 @@ globalThis.matchMedia = window.matchMedia;
 
 /* ── Render ──────────────────────────────────────────────────────── */
 
-const { renderRoute, prerenderPaths } = await import(
+const { renderRoute, prerenderPaths, sitemapXml } = await import(
   path.join(root, 'dist-ssr', 'entry-prerender.js')
 );
 
@@ -127,6 +127,35 @@ try {
   console.log('404.html yazıldı (prerender edilmiş NotFound sayfası)');
 } catch (error) {
   console.warn(`404.html üretilemedi: ${String(error).slice(0, 160)}`);
+}
+
+/*
+ * ══════════════════════════════════════════════════════════════════════
+ * SITEMAP.XML — BULUNAN HATA: HİÇ ÜRETİLMİYORDU
+ *
+ * `buildSitemapXml` yazılmış, dışa aktarılmış ve beş testle ölçülüyordu
+ * ama hiçbir yerden çağrılmıyordu. `public/robots.txt` ise
+ * `Sitemap: .../sitemap.xml` diye ilan ediyordu — arama motoruna var
+ * olmayan bir adres veriliyordu.
+ *
+ * Testlerin geçmesi durumu gizliyordu: üretici doğru XML üretiyordu,
+ * yalnızca kimse üretmesini istemiyordu.
+ *
+ * Burada üretiliyor çünkü kaynak listesi (`staticEntries` +
+ * `contentEntries`) zaten bu SSR paketinde ve prerender'ın kendisiyle
+ * aynı yerden okunuyor — iki ayrı liste, iki ayrı gerçeklik demekti.
+ */
+const sitemapGovde = sitemapXml();
+if (sitemapGovde) {
+  writeFileSync(path.join(distDir, 'sitemap.xml'), sitemapGovde);
+  const urlSayisi = (sitemapGovde.match(/<url>/g) ?? []).length;
+  console.log(`sitemap.xml yazıldı · ${urlSayisi} adres`);
+} else {
+  /* `VITE_SITE_URL` yok: mutlak adres üretilemiyor. Geçersiz bir
+     sitemap yazmaktansa hiç yazmamak — ama sessizce değil. */
+  console.warn(
+    'sitemap.xml ATLANDI: VITE_SITE_URL tanımsız, mutlak adres üretilemiyor'
+  );
 }
 
 if (failures.length > 0) {

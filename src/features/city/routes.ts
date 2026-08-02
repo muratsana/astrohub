@@ -8,10 +8,15 @@ import { cities } from '../location/cities';
  * (`:param`) kullanılamaz — dinamik segment yalnızca tam bir parçayı
  * karşılar, `/:city-astronomi-etkinlikleri` diye bir desen yoktur.
  *
- * Bu yüzden rotalar şehir listesinden **üretilir**: on beş şehir, on beş
- * açık rota. Yan faydası, tanımsız bir şehir adının 404 vermesi — kök
- * seviyede yakalayıcı bir rota koysaydık `/rastgele-astronomi-etkinlikleri`
- * boş bir sayfa üretirdi ve arama motoru bunu indeksleyebilirdi.
+ * Bu yüzden rotalar şehir listesinden **üretilir**: 81 il, 81 açık rota.
+ * Yan faydası, tanımsız bir şehir adının 404 vermesi — kök seviyede
+ * yakalayıcı bir rota koysaydık `/rastgele-astronomi-etkinlikleri` boş
+ * bir sayfa üretirdi ve arama motoru bunu indeksleyebilirdi.
+ *
+ * ROTA VARLIĞI İLE İNDEKSLENEBİLİRLİK AYRI ŞEYLER. Bu liste 81 rotanın
+ * hepsini açıyor çünkü sayfa ziyaretçiye açık olmalı; hangilerinin
+ * dizine sunulacağına `substance.ts` karar veriyor ve sitemap onu
+ * okuyor. Rota kapatmak, adrese giden kullanıcıyı 404'e düşürürdü.
  */
 
 const SUFFIX = 'astronomi-etkinlikleri';

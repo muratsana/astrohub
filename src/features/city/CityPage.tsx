@@ -20,6 +20,13 @@ import { haversineKm, formatDistance } from '@/domain/geography/distance';
 import { nightEntry } from '@/domain/astronomy/nightCalendar';
 import { formatClock, formatDuration } from '@/domain/astronomy/ephemeris';
 import { cityRouteSlug, cityIdFromPath } from './routes';
+import {
+  cityPageIsIndexable,
+  clubBelongsToCity,
+  eventBelongsToCity,
+  siteIsNearCity,
+  NEARBY_KM,
+} from './substance';
 
 /**
  * ŞEHİR SAYFASI — "ankara astronomi etkinlikleri" (§20).
@@ -37,7 +44,6 @@ import { cityRouteSlug, cityIdFromPath } from './routes';
  */
 
 /** Yakın sayılacak azami mesafe — bir gecelik gidiş-dönüş sınırı. */
-const NEARBY_KM = 200;
 
 export function CityPage() {
   const { pathname } = useLocation();
@@ -60,18 +66,14 @@ export function CityPage() {
    * (yola çıkılır), kurumda değil.
    */
   const cityClubs = useMemo(
-    () => (city ? clubs.filter((c) => c.city === city.name) : []),
+    () => (city ? clubs.filter((c) => clubBelongsToCity(city, c)) : []),
     [clubs, city]
   );
 
   const cityEvents = useMemo(() => {
     if (!city) return [];
     return eventCatalog.items
-      .filter((event) => {
-        if (event.city === city.name) return true;
-        if (!event.coords) return false;
-        return haversineKm(city, event.coords) <= NEARBY_KM;
-      })
+      .filter((event) => eventBelongsToCity(city, event, haversineKm))
       .map((event) => ({
         event,
         distanceKm: event.coords ? haversineKm(city, event.coords) : 0,
@@ -83,7 +85,7 @@ export function CityPage() {
     if (!city) return [];
     return siteCatalog.items
       .map((site) => ({ site, distanceKm: haversineKm(city, site.coords) }))
-      .filter((entry) => entry.distanceKm <= NEARBY_KM * 1.5)
+      .filter((entry) => siteIsNearCity(city, entry.site, haversineKm))
       .sort((a, b) => a.distanceKm - b.distanceKm);
   }, [city, siteCatalog.items]);
 
@@ -96,6 +98,21 @@ export function CityPage() {
         : null,
     [city]
   );
+
+  /*
+   * İNCE SAYFA DİZİNE SUNULMUYOR (§15.3).
+   *
+   * Etkinliği, kulübü ve yakın sahası olmayan bir şehir sayfasında
+   * geriye yalnızca şablon ve karanlık penceresi kalıyor — 81 sayfada
+   * aynı yapı. Kural `substance.ts`te ve sitemap de AYNI kuralı
+   * kullanıyor; iki yerde iki kopya, bu deponun defalarca yakaladığı
+   * "bir taraf yazıyor öteki okumuyor" hatasının yeni bir örneği olurdu.
+   */
+  const indexable = cityPageIsIndexable({
+    events: cityEvents.length,
+    clubs: cityClubs.length,
+    sites: nearbySites.length,
+  });
 
   if (!city) return <NotFoundPage />;
 
@@ -127,6 +144,7 @@ export function CityPage() {
         title={title}
         description={`${city.name} ve çevresindeki astronomi etkinlikleri, gözlem şenlikleri ve atölyeler; yakındaki karanlık gökyüzü noktaları ve bu gecenin karanlık penceresi.`}
         canonicalPath={path}
+        noIndex={!indexable}
         jsonLd={[
           breadcrumbJsonLd([
             { name: 'Ana Sayfa', path: '/' },
