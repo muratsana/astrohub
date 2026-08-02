@@ -54,6 +54,11 @@ export const staticEntries: SitemapEntry[] = [
   { path: '/etkinlikler/harita', priority: 0.6, changefreq: 'daily' },
   { path: '/cerezler', priority: 0.2, changefreq: 'yearly' },
   { path: '/yazilar', priority: 0.8, changefreq: 'weekly' },
+  /* Sözlük ve SSS indekslenmeli: ikisi de arama motorundan gelen
+     "X ne demek" / "kota nedir" sorularının doğal karşılığı. Gözlem
+     günlüğü (`/gunluk`) BİLEREK LİSTEDE YOK — kişisel ve `noIndex`. */
+  { path: '/sozluk', priority: 0.6, changefreq: 'monthly' },
+  { path: '/sss', priority: 0.5, changefreq: 'monthly' },
   { path: '/ilanlar', priority: 0.7, changefreq: 'daily' },
   { path: '/topluluklar', priority: 0.6, changefreq: 'monthly' },
   { path: '/tesisler', priority: 0.6, changefreq: 'monthly' },

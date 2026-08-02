@@ -140,6 +140,18 @@ export const siteMap: NavGroup[] = [
         description: 'Rehberler, eğitim yazıları, işleme dersleri',
         keywords: ['makale', 'eğitim', 'rehber', 'ders', 'işleme'],
       },
+      {
+        label: 'Terimler Sözlüğü',
+        to: '/sozluk',
+        description: 'Bortle, seeing, pixel scale — kısa tanımlar',
+        keywords: ['sözlük', 'terim', 'tanım', 'glossary', 'ne demek'],
+      },
+      {
+        label: 'Sık Sorulan Sorular',
+        to: '/sss',
+        description: 'Kota, gizlilik, telif ve ilan güvenliği',
+        keywords: ['sss', 'sık sorulan', 'faq', 'soru', 'yardım'],
+      },
     ],
   },
   {

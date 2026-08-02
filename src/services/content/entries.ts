@@ -23,7 +23,11 @@ import { safeUrl } from '@/lib/url';
  * çiziyor.
  */
 
-export type EntryKind = 'haber' | 'yazi';
+/**
+ * İçerik türleri. `sozluk` ve `sss` 0065'te eklendi (§14.9) — ayrı tablo
+ * açmak yerine bu listeyi genişletmenin gerekçesi o göçün başlığında.
+ */
+export type EntryKind = 'haber' | 'yazi' | 'sozluk' | 'sss';
 export type EntryStatus = 'taslak' | 'yayinda';
 
 export interface ContentEntry {

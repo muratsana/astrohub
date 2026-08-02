@@ -321,6 +321,14 @@
       "destination": "/app.html"
     },
     {
+      "source": "/sozluk",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/sss",
+      "destination": "/app.html"
+    },
+    {
       "source": "/tesisler",
       "destination": "/app.html"
     },

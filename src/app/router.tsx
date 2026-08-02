@@ -299,6 +299,23 @@ export const appRoutes = [
         ),
       },
 
+      /* Bilgi merkezi (§14.9) — sözlük ve SSS. */
+      {
+        path: 'sozluk',
+        element: route(
+          named(
+            () => import('@/features/knowledge/GlossaryPage'),
+            'GlossaryPage'
+          )
+        ),
+      },
+      {
+        path: 'sss',
+        element: route(
+          named(() => import('@/features/knowledge/FaqPage'), 'FaqPage')
+        ),
+      },
+
       /* Gözlem günlüğü (§14.6) — kişisel kayıt, oturum gerekli. */
       {
         path: 'gunluk',

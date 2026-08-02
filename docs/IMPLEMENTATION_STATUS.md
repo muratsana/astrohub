@@ -46,8 +46,8 @@ tabloda `DONE` ile birleştirilmez:
 yüzden ilk iş kod yazmak değil KARŞILAŞTIRMAK oldu: dokuz alt bölümün
 yedisi mevcut modüllerle büyük ölçüde karşılanıyor (ayrıntı: Faz 11
 bölümü). Gerçek boşluk ikiydi — gözlem günlüğü (§14.6) ve bilgi
-merkezinin sözlük/SSS ayağı (§14.9). Birincisi bu turda yazıldı
-(`0064`), ikincisi açık.
+merkezinin sözlük/SSS ayağı (§14.9). İkisi de kapandı (`0064`, `0065`).
+Kalanlar envanter tablosundaki `PARTIAL` satırları.
 
 ⁷ **Faz 10 kapandı.** Beş tablo (`home_modules`, `hero_slides`,
 `nav_links`, `feature_flags`, `site_settings`), değişiklik geçmişi +
@@ -1353,7 +1353,7 @@ karşılaştırma yapılmadan yazılan her şey ikinci bir kopya olurdu.
 | **§14.6 Gözlem günlüğü** | **`/gunluk`, `observation_logs` (`0064`)** | **DONE — bu turda yazıldı** |
 | §14.7 Kulüpler ve dizin | `/topluluklar`, `clubs` | PARTIAL — dizin var; **kulüp yöneticisi doğrulama** ve **yerel SEO sayfaları** yok |
 | §14.8 İlanlar | `/ilanlar`, `listings` | DONE — §14.8'in on yedi maddesi karşılanıyor |
-| §14.9 Bilgi merkezi | `/yazilar`, `/haberler` | PARTIAL — **terimler sözlüğü** ve **SSS** hiç yok |
+| §14.9 Bilgi merkezi | `/yazilar`, `/haberler`, **`/sozluk`, `/sss`** | DONE'a yakın — sözlük ve SSS bu turda eklendi (`0065`); kalan tek madde "video/radyo/podcast ilişkileri" |
 
 ### §14.6 neden yeni bir tablo — birleştirme denendi, olmadı
 
@@ -1390,6 +1390,49 @@ talep hiç yok. Talep de temizlenince ölçüm geçti.
 Bu, "politika doğru görünüyor" ile "politika doğru davranıyor"
 arasındaki farkın somut örneği: ölçüm olmasaydı yanlış olan test değil
 varsayımımız olurdu ve bunu hiç öğrenemezdik.
+
+### §14.9 için YENİ TABLO AÇILMADI — fazın kendi kuralı
+
+Sözlük ve SSS için ayrı tablo açmadan önce `content_entries` incelendi ve
+§14.9'un istediği her alanın zaten orada olduğu görüldü:
+
+    §14.9 maddesi          content_entries karşılığı
+    ─────────────────      ─────────────────────────
+    içerik seviyesi        level
+    okuma süresi           duration
+    editoryal doğrulama    status ('taslak' / 'yayinda')
+    kaynak                 source_name, source_url
+    güncelleme tarihi      updated_at
+
+`0065` yalnızca `kind` kısıtına iki değer ekliyor. Ayrı tablo; ikinci bir
+RLS politikası, ikinci bir panel yüzeyi, ikinci bir okuma katmanı ve
+zamanla ayrışan iki "yayınla" akışı demekti. Göçün ölçümü üç şeyi birden
+kontrol ediyor: yeni türler kabul ediliyor mu, eski türler bozuldu mu,
+UYDURMA bir tür hâlâ reddediliyor mu (kısıt gevşetilirken yanlışlıkla
+kaldırılsaydı panelden her şey yazılabilirdi).
+
+### Türkçe'de arama ile sıralama aynı şey değil
+
+Sözlük araması ilk yazımda `toLocaleLowerCase('tr')` kullanıyordu ve test
+yakaladı: Türkçe yerelde `'SEEING'` küçültülünce `'seeıng'` oluyor
+(noktasız ı), yani caps lock açık arayan kullanıcı HİÇBİR ŞEY bulamıyordu.
+
+Ayrım şu: Türkçe harf dönüşümü GÖSTERİM ve SIRALAMA için doğru,
+EŞLEŞTİRME için yanlış — kullanıcının yazdığı biçimle metindeki biçim
+aynı olmak zorunda değil. Arama `lib/text`teki `normalizeTr`e geçti (ı/i,
+ş/s, ğ/g, ü/u, ö/o, ç/c katlanıyor); sıralama ve harf dizini Türkçe
+kalmaya devam ediyor, çünkü orada "Ö" gerçekten "O"dan sonra gelmeli.
+
+### SSS akordeonu `<details>` — üç şeyi bedava veriyor
+
+Durum tutan bir bileşen yazmadık. `<details>/<summary>` klavyeyle
+çalışıyor, ekran okuyucu açık/kapalı durumunu kendisi duyuruyor ve JS
+gelmeden önce de açılıyor. Kendi yazdığımız akordeon bu üçünü elle
+kurmak zorunda kalırdı; genellikle üçüncüsü unutulur.
+
+Ölçüldü: prerender çıktısında on `<details>` var, hepsi KAPALI ve
+cevap metinleri ham HTML'de duruyor — yani arama motoru cevapları
+görüyor. JS ile açılan bir akordeonda o metin ilk HTML'de hiç olmazdı.
 
 ### Sorgu niyeti RLS'e bırakılmıyor
 
@@ -1479,27 +1522,25 @@ Faz 3'ün "Faz 10'a bağlı" kalemlerinden hero slaytlarının admin
 yönetimi de bu turda açıldı. Kalan iki kalem (hava sağlayıcı seçimi,
 "boşsa gizle" anahtarı) Faz 3'ün kendi bölümünde duruyor.
 
-**Faz 11'in envanteri çıkarıldı ve §14.6 kapandı** (bkz. Faz 11
-bölümü). Dokuz alt bölümün ikisi gerçek boşluktu; biri yazıldı.
+**Faz 11'in envanteri çıkarıldı; §14.6 ve §14.9 kapandı** (bkz. Faz 11
+bölümü). Dokuz alt bölümün ikisi gerçek boşluktu; ikisi de yazıldı.
 
-**Sıradaki iş: Faz 11'in kalan boşlukları.** Envanter tablosundaki
-`PARTIAL` satırları sırayla kapatılacak; öncelik sırası şu, çünkü ilk
-ikisi dış veri kaynağı GEREKTİRMİYOR:
-  1. **§14.9 sözlük + SSS** — sitede hiç yok. `content_entries` şeması
-     hazır (haber/yazı oradan geliyor); yeni tabloya gerek olmayabilir,
-     önce tür alanı kontrol edilmeli. Editoryal doğrulama ve "kaynak +
-     güncelleme tarihi" alanları §14.9'un açık şartı.
-  2. **§14.1 favori hedef / gözlem listesi** — `collections` ve
+**Sıradaki iş: Faz 11'in kalan `PARTIAL` satırları.** Öncelik sırası,
+ilk ikisi dış veri kaynağı GEREKTİRMEDİĞİ için:
+  1. **§14.1 favori hedef / gözlem listesi** — `collections` ve
      `collection_items` tabloları ZATEN VAR (fotoğraf koleksiyonu için).
-     Hedefler için ikinci bir tablo açmadan önce oranın genişletilip
-     genişletilemeyeceğine bakılmalı; fazın kuralı bunu emrediyor.
-  3. **§14.2 poz/entegrasyon planı ve depolama hesabı** — saf hesap,
-     dış veri yok, test edilebilir. §14.2 "hesapların formüllerini
-     testlerle doğrula" diyor.
-  4. **§14.3 meteor/tutulma/ISS** — bunlar dış veri lisansı ya da
-     servis gerektiriyor; fazın kuralına göre adapter + feature flag ile
-     hazırlanacak, placeholder GÖSTERİLMEYECEK. Bayrak altyapısı Faz
-     10'da kuruldu ve ziyaretçi tarafında çalışıyor.
+     Hedefler için ikinci tablo açmadan önce oranın genişletilip
+     genişletilemeyeceğine bakılmalı; §14.9'da `content_entries` için
+     yaptığımızın aynısı.
+  2. **§14.2 poz/entegrasyon planı + depolama ihtiyacı hesabı** — saf
+     matematik, dış veri yok. §14.2 "hesapların formüllerini testlerle
+     doğrula" ve "bilimsel sonucu belirsiz alanlarda kesinlik iddiası
+     kullanma" diyor; ikisi de bağlayıcı.
+  3. **§14.7 kulüp yöneticisi doğrulama + yerel SEO sayfaları.**
+  4. **§14.3 meteor/tutulma/ISS** — dış veri lisansı gerektiriyor;
+     adapter + feature flag ile hazırlanacak, placeholder
+     GÖSTERİLMEYECEK. Bayrak altyapısı Faz 10'da kuruldu ve ziyaretçi
+     tarafında çalışıyor.
 
 **Kanal bağlı değilken sahte içerik gösterilmemeli** (§11.2 son madde).
 Adaptör ve panel bu kurala uyuyor; kullanıcı sayfaları yazılırken de
