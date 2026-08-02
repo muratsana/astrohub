@@ -21,8 +21,7 @@ import { cn } from '@/lib/cn';
  * radyo sayfasına götürüyoruz — orada yayının neden başlamadığı yazılı.
  */
 export function RadioToggle({ className }: { className?: string }) {
-  const { current, spotifyTrack, playing, toggle, showDock } = useRadio();
-  const hasBroadcast = Boolean(current || spotifyTrack);
+  const { hasBroadcast, playing, toggle, showDock } = useRadio();
 
   const shared =
     'inline-flex h-8 shrink-0 items-center gap-1.5 rounded-card border px-2 text-meta font-medium tracking-[0.02em] transition-colors sm:px-2.5';
@@ -31,7 +30,7 @@ export function RadioToggle({ className }: { className?: string }) {
     return (
       <Link
         to="/radyo"
-        aria-label="Radyo — yayın henüz başlamadı"
+        aria-label="Radyo — canlı yayın henüz başlamadı"
         title="Yayın henüz başlamadı"
         className={cn(
           shared,
@@ -57,8 +56,8 @@ export function RadioToggle({ className }: { className?: string }) {
         toggle();
       }}
       aria-pressed={playing}
-      aria-label={playing ? 'Radyo yayınını duraklat' : 'Radyo yayınını başlat'}
-      title={playing ? 'Yayını duraklat' : 'Yayını başlat'}
+      aria-label={playing ? 'Canlı yayını duraklat' : 'Canlı yayını başlat'}
+      title={playing ? 'Canlı yayını duraklat' : 'Canlı yayını başlat'}
       className={cn(
         shared,
         playing

@@ -167,7 +167,11 @@ takvime ekleme; yönetici tarafının **yedi maddesinin hepsi**.
 yoklaması, dağıtım paketi (`deploy/radyo/`), program takvimi, kullanıcı
 sayfaları (program/yayıncı/podcast/bölüm), dinleme ilerlemesi, panel
 Radyo sekmesi, admin mp3 kasası. **Bu turda:** podcast RSS feed'i
-(`podcast-rss` edge fonksiyonu, canlıda uçtan uca ölçüldü).
+(`podcast-rss` edge fonksiyonu, canlıda uçtan uca ölçüldü) ve public
+radyo yüzeyi gerçek radyo modeline çekildi: dinleyicide parça adı,
+sanatçı, Spotify embed'i ve ileri/parça seçme kontrolleri yok; yalnızca
+`Canlı yayın` başlat/duraklat görünür. Resume, canlı stream'de yeniden
+bağlanır; MP3 kasası fallback'inde yayın saatine göre pozisyon alır.
 
 **Kaldı ve neden:**
 
@@ -478,6 +482,8 @@ gerçek koda göre hâlâ açıktı.
 - `src/features/forum/ForumPage.tsx`, `src/features/marketplace/MarketplacePage.tsx`, `src/features/articles/ArticlesPage.tsx` — kategori/yoğunluk/görünüm yüzeyleri ortak bileşenlere taşındı.
 - `src/features/articles/articlesSpec.ts` — yazı seviye facet'i ürün arayüzünden çıkarıldı.
 - `scripts/e2e.mjs` — tablo başlığı sıralama senaryosu DOM `querySelector` yerine Playwright locator auto-wait kullanır; CI'daki geç render yarışını kapatır.
+- `src/features/radio/RadioContext.tsx`, `src/features/radio/RadioDock.tsx`, `src/features/radio/RadioToggle.tsx`, `src/features/radio/RadioPage.tsx` — public radyo playlist görünümü kaldırıldı; kullanıcı tarafında yalnızca canlı yayın başlat/duraklat kaldı, resume akışı güncel yayına eşlenir.
+- `src/features/radio/handover.ts`, `src/features/radio/handover.test.ts`, `src/features/radio/RadioPage.test.tsx` — yayın saatine göre kasa pozisyonu ve public radyo kontrol sınırı testlendi.
 
 ### Doğrulama
 
@@ -501,11 +507,12 @@ npm run test:e2e
 Sonuçlar:
 
 - TypeScript ve lint geçti.
-- Unit/integration test: **162 dosya / 2039 test geçti.**
+- Unit/integration test: **163 dosya / 2043 test geçti.**
 - Production build geçti; prerender **490/490 rota** üretti.
-- Budget geçti: ilk rota JS **197.7 kB gzip** / bütçe 200 kB, CSS **14.4 kB gzip** / bütçe 25 kB.
+- Budget geçti: ilk rota JS **197.2 kB gzip** / bütçe 200 kB, CSS **14.4 kB gzip** / bütçe 25 kB.
 - Preview, CSP, erişilebilirlik ve viewport kapıları geçti.
 - E2E: **28 senaryo geçti**, sayfa hatası yok; ekran görüntüleri `dist-preview/screens/` altında üretildi.
+- Radyo public yüzey testi eklendi: kullanıcı tarafında `Sonraki parça` ve Spotify yüzeyi görünmüyor, tek kontrol `Canlı yayın` başlat/duraklat.
 - `check:rewrites` geçti: `vercel.json` **159 rewrite** ile güncel.
 - Canlı Supabase migration uygulandı ve `nav_links` doğrulandı.
 - İlk deploy commit'i `e4d658e` Vercel'de başarıyla deploy edildi; GitHub E2E'de görülen tablo başlığı yarış durumu ikinci patch'te düzeltildi.

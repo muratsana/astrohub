@@ -12,7 +12,12 @@ import { radioTracks } from './data';
 import type { RadioTrack } from './types';
 import { fetchRadioTracks } from '@/services/content/radio';
 import { useStation } from '@/services/content/radioStation';
-import { decideSource, onTrackEnd, type RadioSource } from './handover';
+import {
+  broadcastPosition,
+  decideSource,
+  onTrackEnd,
+  type RadioSource,
+} from './handover';
 
 /**
  * RADYO BAĞLAMI — kalıcı oynatıcının beyni.
@@ -27,31 +32,21 @@ import { decideSource, onTrackEnd, type RadioSource } from './handover';
  */
 
 interface RadioState {
-  tracks: RadioTrack[];
-  /** Sırada çalan MP3'ün indeksi; liste boşsa -1. */
-  index: number;
-  current: RadioTrack | null;
   playing: boolean;
   volume: number;
+  hasBroadcast: boolean;
   /** Kullanıcı oynatıcıyı gizlediyse dock görünmez. */
   dockVisible: boolean;
-  /** Gömülü oynatıcıda açılan Spotify parçası. */
-  spotifyTrack: RadioTrack | null;
 
   toggle: () => void;
-  play: (trackId?: string) => void;
   pause: () => void;
-  next: () => void;
   /** Şu an hangi kaynak çalıyor: kayıtlı kasa mı, canlı yayın mı. */
   source: RadioSource;
   /** Canlı yayın başladı, çalan parça bitince devredilecek. */
   pendingLive: boolean;
-  previous: () => void;
   setVolume: (v: number) => void;
   hideDock: () => void;
   showDock: () => void;
-  openSpotify: (track: RadioTrack) => void;
-  closeSpotify: () => void;
 }
 
 const RadioContext = createContext<RadioState | undefined>(undefined);
@@ -110,10 +105,10 @@ export function RadioProvider({ children }: { children: ReactNode }) {
      taşıyor: dinleyiciyi her değişimde yeniden kurmak, çalan sesi
      kesme riski taşırdı. */
   const pendingLiveRef = useRef(false);
+  const pendingSeekRef = useRef<number | null>(null);
   useEffect(() => {
     pendingLiveRef.current = pendingLive;
   }, [pendingLive]);
-  const [spotifyTrack, setSpotifyTrack] = useState<RadioTrack | null>(null);
   const [dockVisible, setDockVisible] = useState(true);
 
   const [volume, setVolumeState] = useState(() => {
@@ -123,6 +118,8 @@ export function RadioProvider({ children }: { children: ReactNode }) {
   });
 
   const current = index >= 0 ? (mp3Tracks[index] ?? null) : null;
+  const hasBroadcast =
+    (source === 'canli' && Boolean(station?.streamUrl)) || mp3Tracks.length > 0;
 
   useEffect(() => {
     const karar = decideSource({
@@ -157,14 +154,6 @@ export function RadioProvider({ children }: { children: ReactNode }) {
 
   const next = useCallback(() => {
     setIndex((i) => (mp3Tracks.length === 0 ? -1 : (i + 1) % mp3Tracks.length));
-  }, [mp3Tracks.length]);
-
-  const previous = useCallback(() => {
-    setIndex((i) =>
-      mp3Tracks.length === 0
-        ? -1
-        : (i - 1 + mp3Tracks.length) % mp3Tracks.length
-    );
   }, [mp3Tracks.length]);
 
   // Parça bitince sıradakine geç — sonsuz döngü. "Radyo" olmasının şartı.
@@ -206,10 +195,31 @@ export function RadioProvider({ children }: { children: ReactNode }) {
        "bitişi" yok; `ended` olayı da gelmiyor ve gerekmiyor. */
     const hedef = source === 'canli' ? station?.streamUrl : current?.url;
     if (!hedef) return;
+    let removeSeekListener: (() => void) | undefined;
 
     if (audio.src !== hedef) {
       audio.src = hedef;
       audio.load();
+    }
+
+    const seek = pendingSeekRef.current;
+    if (source === 'kasa' && seek !== null) {
+      const uygula = () => {
+        pendingSeekRef.current = null;
+        try {
+          audio.currentTime = seek;
+        } catch {
+          // Bazı bozuk/eksik meta veriler seek'i reddeder; yayın yine çalar.
+        }
+      };
+
+      if (audio.readyState >= 1) {
+        uygula();
+      } else {
+        audio.addEventListener('loadedmetadata', uygula, { once: true });
+        removeSeekListener = () =>
+          audio.removeEventListener('loadedmetadata', uygula);
+      }
     }
 
     if (playing) {
@@ -220,28 +230,53 @@ export function RadioProvider({ children }: { children: ReactNode }) {
     } else {
       audio.pause();
     }
+
+    return removeSeekListener;
   }, [current, playing, source, station?.streamUrl]);
 
-  const play = useCallback(
-    (trackId?: string) => {
-      if (trackId) {
-        const i = mp3Tracks.findIndex((t) => t.id === trackId);
-        if (i >= 0) setIndex(i);
-      }
+  const reconnectLive = useCallback(() => {
+    const audio = audioRef.current;
+    const streamUrl = station?.streamUrl;
+    if (!audio || !streamUrl) return;
+    audio.pause();
+    audio.removeAttribute('src');
+    audio.load();
+    audio.src = streamUrl;
+    audio.load();
+  }, [station?.streamUrl]);
+
+  const syncKasaToBroadcastClock = useCallback(() => {
+    const position = broadcastPosition(mp3Tracks, Date.now());
+    if (!position) return;
+    pendingSeekRef.current = position.offsetSec;
+    setIndex(position.index);
+  }, [mp3Tracks]);
+
+  const play = useCallback(() => {
+    if (source === 'canli') {
+      if (!station?.streamUrl) return;
+      reconnectLive();
+    } else {
       if (mp3Tracks.length === 0) return;
-      // MP3 çalmaya başlayınca Spotify oynatıcısı kapanır — iki ses
-      // kaynağının üst üste binmesi kabul edilemez.
-      setSpotifyTrack(null);
-      setPlaying(true);
-    },
-    [mp3Tracks]
-  );
+      syncKasaToBroadcastClock();
+    }
+    setPlaying(true);
+  }, [
+    mp3Tracks.length,
+    reconnectLive,
+    source,
+    station?.streamUrl,
+    syncKasaToBroadcastClock,
+  ]);
 
   const pause = useCallback(() => setPlaying(false), []);
   const toggle = useCallback(() => {
-    if (mp3Tracks.length === 0) return;
-    setPlaying((p) => !p);
-  }, [mp3Tracks.length]);
+    if (playing) {
+      pause();
+    } else {
+      play();
+    }
+  }, [pause, play, playing]);
 
   const setVolume = useCallback((v: number) => {
     const clamped = Math.min(1, Math.max(0, v));
@@ -253,54 +288,30 @@ export function RadioProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const openSpotify = useCallback((track: RadioTrack) => {
-    // Spotify gömülü oynatıcısı açılırken MP3 yayını susar.
-    setPlaying(false);
-    setSpotifyTrack(track);
-  }, []);
-
-  const closeSpotify = useCallback(() => setSpotifyTrack(null), []);
-
   const value = useMemo<RadioState>(
     () => ({
-      tracks,
-      index,
-      current,
       playing,
       volume,
+      hasBroadcast,
       dockVisible,
-      spotifyTrack,
       toggle,
-      play,
       pause,
-      next,
-      previous,
       source,
       pendingLive,
       setVolume,
       hideDock: () => setDockVisible(false),
       showDock: () => setDockVisible(true),
-      openSpotify,
-      closeSpotify,
     }),
     [
       source,
       pendingLive,
-      tracks,
-      index,
-      current,
       playing,
       volume,
+      hasBroadcast,
       dockVisible,
-      spotifyTrack,
       toggle,
-      play,
       pause,
-      next,
-      previous,
       setVolume,
-      openSpotify,
-      closeSpotify,
     ]
   );
 

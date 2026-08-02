@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { decideSource, onTrackEnd, sourceLabels } from './handover';
+import {
+  broadcastPosition,
+  decideSource,
+  onTrackEnd,
+  sourceLabels,
+} from './handover';
 
 /**
  * DEVİR TESLİM.
@@ -111,5 +116,30 @@ describe('sourceLabels', () => {
   it('iki kaynağın da adı var', () => {
     expect(sourceLabels.kasa).toBe('Kayıtlı yayın');
     expect(sourceLabels.canli).toBe('Canlı yayın');
+  });
+});
+
+describe('broadcastPosition', () => {
+  const tracks = [{ durationSec: 60 }, { durationSec: 120 }, { durationSec: 30 }];
+  const origin = Date.UTC(2026, 0, 1);
+
+  it('duraklatılmış kasayı yayın saatine eşler', () => {
+    expect(broadcastPosition(tracks, origin + 75_000, origin)).toEqual({
+      index: 1,
+      offsetSec: 15,
+    });
+  });
+
+  it('döngü sonunda başa sarar', () => {
+    expect(broadcastPosition(tracks, origin + 215_000, origin)).toEqual({
+      index: 0,
+      offsetSec: 5,
+    });
+  });
+
+  it('süre bilgisi eksikse sahte eşleşme üretmez', () => {
+    expect(
+      broadcastPosition([{ durationSec: 60 }, { durationSec: undefined }], origin, origin)
+    ).toBeNull();
   });
 });

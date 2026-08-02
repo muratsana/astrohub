@@ -34,6 +34,10 @@
 
 export type RadioSource = 'kasa' | 'canli';
 
+interface TimedTrack {
+  durationSec?: number;
+}
+
 export interface HandoverInput {
   /** Yayın sunucusu ölçülmüş biçimde ayakta mı (`station_is_live`). */
   live: boolean;
@@ -97,6 +101,42 @@ export function decideSource(input: HandoverInput): HandoverDecision {
  */
 export function onTrackEnd(pending: boolean): RadioSource {
   return pending ? 'canli' : 'kasa';
+}
+
+export interface BroadcastPosition {
+  index: number;
+  offsetSec: number;
+}
+
+/*
+ * Kasa da dinleyici için bir playlist değil, otomasyonlu yayın akışıdır.
+ * Duraklatıp yeniden başlatan kişi kaldığı saniyeye değil, arkada akmaya
+ * devam eden yayın saatine bağlanır. Süre bilgisi eksikse gerçek çizelge
+ * kurulamaz; o durumda oynatıcı mevcut parçayı yeniden yüklemekle yetinir.
+ */
+export function broadcastPosition(
+  tracks: TimedTrack[],
+  nowMs: number,
+  originMs = Date.UTC(2026, 0, 1)
+): BroadcastPosition | null {
+  if (tracks.length === 0) return null;
+
+  const durations = tracks.map((track) => track.durationSec ?? NaN);
+  if (durations.some((duration) => !Number.isFinite(duration) || duration <= 0)) {
+    return null;
+  }
+
+  const total = durations.reduce((sum, duration) => sum + duration, 0);
+  if (total <= 0) return null;
+
+  let cursor = Math.floor(Math.max(0, nowMs - originMs) / 1000) % total;
+  for (let index = 0; index < durations.length; index++) {
+    const duration = durations[index];
+    if (cursor < duration) return { index, offsetSec: cursor };
+    cursor -= duration;
+  }
+
+  return { index: 0, offsetSec: 0 };
 }
 
 export const sourceLabels: Record<RadioSource, string> = {
