@@ -4,31 +4,31 @@ import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
 import { ContentCardSkeletonGrid } from '@/components/ui/ContentCard';
 import { SectionHeader } from '@/components/ui/SectionHeader';
-import { PhotoTile } from '@/components/media/PhotoTile';
+import { PhotoCard } from '@/features/photos/PhotoCard';
 import { usePhotoCatalog } from '@/services/content/photos';
-import {
-  formatIntegration,
-  totalIntegrationSeconds,
-} from '@/domain/photography/integration';
-import { tintFor } from '@/components/media/tints';
-import { Badge } from '@/components/ui/Badge';
-import { familyOf, photoFamilies } from '@/features/photos/families';
-import { targets } from '@/features/targets/data';
 
 /**
  * GALERİDEN SON YÜKLENENLER.
  *
  * Topluluğun ürettiği kayıtlar öne alınır: site kendini anlatmadan önce
  * çalışırken gösterir. Künye her karoda görünür (yön kararı).
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * KAROYU `PhotoCard` ÇİZİYOR — BURADA İKİNCİ BİR EŞLEME YOK
+ *
+ * BULUNAN HATA: bu bölüm `PhotoTile`ı DOĞRUDAN çağırıyor ve `AstroPhoto`
+ * alanlarını elle eşliyordu. `PhotoTile` bilinçli olarak "aptal" bir
+ * bileşen — veri modelini tanımaz, ne verilirse onu çizer — ve elle
+ * yapılan o eşlemede `imageUrl` YOKTU. Görsel adresi verilmeyince karo
+ * yer tutucu yıldız alanına düşüyor; yani ana sayfa, gerçek fotoğraflar
+ * yüklenmiş olmasına rağmen herkese üretilmiş desenler gösteriyordu.
+ * Kullanıcı fotoğrafının kaybolduğunu sanıyordu, oysa hiç istenmemişti.
+ *
+ * `PhotoCard`ın dosya başlığı bu tuzağı zaten yazıyor: "AstroPhoto
+ * kaydını PhotoTile'a bağlayan TEK YER". Eşlemenin ikinci bir kopyası
+ * olduğu anda biri eksik kalıyor — nitekim kaldı. Puan rozeti de aynı
+ * sebeple burada hiç görünmüyordu.
  */
-
-/** Fotoğrafın hedef türünü katalogdan bulup yıldız alanı tonunu seçer. */
-function tintForPhoto(catalog: string): string {
-  const target = targets.find(
-    (t) => t.catalog === catalog || t.aliases.includes(catalog)
-  );
-  return tintFor(target?.kind);
-}
 
 /*
  * IZGARA TEK YERDE TANIMLI — iskelet ve gerçek liste aynı sınıfı
@@ -149,30 +149,7 @@ export function RecentRecords({
         <ul className={IZGARA}>
           {recent.map((photo) => (
             <li key={photo.slug}>
-              <PhotoTile
-                to={`/fotograf/${photo.slug}`}
-                seed={photo.slug}
-                tint={tintForPhoto(photo.target.catalog)}
-                target={photo.target.catalog}
-                title={photo.title}
-                palette={photo.palette}
-                integration={formatIntegration(
-                  totalIntegrationSeconds(photo.exposures)
-                )}
-                bortle={photo.location.bortle}
-                username={photo.user.username}
-                family={{
-                  label: photoFamilies[familyOf(photo.type)].label,
-                  className: photoFamilies[familyOf(photo.type)].className,
-                }}
-                flag={
-                  photo.editorsPick ? (
-                    <Badge tone="primary" className="bg-background/85">
-                      Editör
-                    </Badge>
-                  ) : undefined
-                }
-              />
+              <PhotoCard photo={photo} />
             </li>
           ))}
         </ul>

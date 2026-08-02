@@ -202,85 +202,138 @@ export function TonightPanel() {
           <span aria-hidden className="mx-1 h-4 w-px bg-border" />
 
           {/*
+            ══════════════════════════════════════════════════════════════
+            GEZİNME ÜÇ KÜMEYE AYRILDI — DÜĞMELER YERİNDE DURSUN
+
+            BULUNAN HATA: bütün satır tek bir `flex-wrap` listesiydi ve
+            "önceki/sonraki gece" düğmeleri kullanıcının altından kayıyordu.
+            Üç ayrı sebepten:
+
+              1. "Bu geceye dön" yalnızca `offsetDays > 0` iken çiziliyor
+                 ve tam da SONRAKİ GECE'nin soluna giriyordu. Kullanıcı
+                 "Sonraki gece"ye basıyor, düğme beliriyor ve bastığı
+                 düğme sağa kayıyordu — ikinci tık boşa gidiyordu.
+              2. Ortadaki etiket "Bu gece" (7 karakter) ile "2 Ağustos
+                 Cumartesi" (19 karakter) arasında gidip geliyor; aradaki
+                 ~90px'i sağındaki her şey yiyordu.
+              3. Sarma noktası konum seçicinin genişliğine bağlıydı. İlçe
+                 adı eklenince ("Ankara / Çankaya") satır uzuyor ve oklar
+                 alt satıra tek tek dökülüyordu — kullanıcının "yer
+                 değiştiriyor" dediği şey.
+
+            ÇÖZÜM: geri kümesi, tarih kümesi ve ileri kümesi kendi
+            içlerinde SARMIYOR. Satır dar geldiğinde küme BÜTÜN olarak alt
+            satıra iniyor; ok etiketinden hiçbir zaman kopmuyor. Etiketin
+            genişliği sabitlendi ve "Bu geceye dön" en sona alındı — artık
+            belirdiğinde yalnızca kendinden sonrasını itiyor.
+
             ÇİFT OK BİR HAFTA (§6.4). Tek ok bir gece; 16 günlük ufkun
             sonuna tek okla gitmek 15 tıklama demekti.
 
             Etiketler `aria-label` ile ayrıca yazılıyor: «`, », ‹ ve ›
             işaretleri ekran okuyucuda "sol tırnak" diye okunur.
           */}
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => setOffsetDays((d) => d - 7)}
-            disabled={offsetDays === 0}
-            aria-label="Bir hafta geri"
-            title="Bir hafta geri"
-          >
-            «
-          </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => setOffsetDays((d) => d - 1)}
-            disabled={offsetDays === 0}
-          >
-            ← Önceki gece
-          </Button>
-
-          {/*
-            MANUEL TARİH SEÇİCİ. `min`/`max` ufkun kendisinden geliyor,
-            yani tarayıcı takviminde ulaşılamayacak günler zaten kapalı.
-
-            Yerel `<input type="date">` bilinçli: kendi takvimini yazmak
-            klavye gezinmesini, ekran okuyucu desteğini ve mobil yerel
-            tekerlek arayüzünü sıfırdan üretmek demekti.
-          */}
-          <label className="flex items-center gap-1.5">
-            <span className="sr-only">Gece tarihi seç</span>
-            <input
-              type="date"
-              value={toISODate(offsetToDate(offsetDays, bugun))}
-              min={dateBounds(bugun).min}
-              max={dateBounds(bugun).max}
-              onChange={(e) => {
-                const secilen = fromISODate(e.target.value);
-                if (!secilen) return;
-                const hedef = dateToOffset(secilen, bugun);
-                /* Aralık dışı sessizce kırpılmıyor: tarayıcı `min`/`max`
-                   dışına izin verirse (bazıları elle yazmaya izin verir)
-                   seçim yok sayılıyor, uydurma bir geceye atlanmıyor. */
-                if (hedef !== null) setOffsetDays(hedef);
-              }}
-              className="min-h-9 rounded-card border border-border bg-surface-1 px-2 text-meta text-foreground hover:border-border-strong"
-            />
-          </label>
-
-          <span className="num text-body-sm font-medium text-foreground">
-            {offsetDays === 0 ? 'Bu gece' : tonight.dateLabel}
+          <span className="flex shrink-0 items-center gap-2">
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setOffsetDays((d) => d - 7)}
+              disabled={offsetDays === 0}
+              aria-label="Bir hafta geri"
+              title="Bir hafta geri"
+            >
+              «
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setOffsetDays((d) => d - 1)}
+              disabled={offsetDays === 0}
+            >
+              ← Önceki gece
+            </Button>
           </span>
+
+          <span className="flex shrink-0 items-center gap-2">
+            {/*
+              MANUEL TARİH SEÇİCİ. `min`/`max` ufkun kendisinden geliyor,
+              yani tarayıcı takviminde ulaşılamayacak günler zaten kapalı.
+
+              Yerel `<input type="date">` bilinçli: kendi takvimini yazmak
+              klavye gezinmesini, ekran okuyucu desteğini ve mobil yerel
+              tekerlek arayüzünü sıfırdan üretmek demekti.
+
+              `font-sans` AÇIKÇA yazılı: form denetimleri yazı ailesini
+              kendiliğinden miras almaz, tarayıcının kendi arayüz fontuna
+              düşerler. Yanındaki etiket Inter, kutunun içi sistem fontu
+              olunca aynı satır iki aileli görünüyordu.
+            */}
+            <label className="flex items-center gap-1.5">
+              <span className="sr-only">Gece tarihi seç</span>
+              <input
+                type="date"
+                value={toISODate(offsetToDate(offsetDays, bugun))}
+                min={dateBounds(bugun).min}
+                max={dateBounds(bugun).max}
+                onChange={(e) => {
+                  const secilen = fromISODate(e.target.value);
+                  if (!secilen) return;
+                  const hedef = dateToOffset(secilen, bugun);
+                  /* Aralık dışı sessizce kırpılmıyor: tarayıcı `min`/`max`
+                     dışına izin verirse (bazıları elle yazmaya izin verir)
+                     seçim yok sayılıyor, uydurma bir geceye atlanmıyor. */
+                  if (hedef !== null) setOffsetDays(hedef);
+                }}
+                className="min-h-9 rounded-card border border-border bg-surface-1 px-2 font-sans text-meta text-foreground hover:border-border-strong"
+              />
+            </label>
+
+            {/*
+              `.num` KALDIRILDI — burada bir OKUMA DEĞERİ yok, cümle var.
+
+              Sınıfın kendi tanımı bunu yasaklıyor (`index.css`): mono
+              ailenin `latin-ext` alt kümesi bilerek indirilmiyor, yani
+              "2 Ağustos Cumartesi" içindeki ğ, ı ve ş Inter'e düşüyor ve
+              tek etiket iki aileyle çiziliyordu. Sayı hizası için doğru
+              sınıf `.tabular`: gövde fontunda kalıp yalnızca rakamları
+              sabit genişliğe alıyor.
+
+              Genişlik sabit: etiket "Bu gece" ile uzun tarih arasında
+              gidip gelirken sağındaki düğmeleri sürüklemesin.
+            */}
+            <span className="tabular inline-block min-w-[18ch] text-center text-body-sm font-medium text-foreground">
+              {offsetDays === 0 ? 'Bu gece' : tonight.dateLabel}
+            </span>
+          </span>
+
+          <span className="flex shrink-0 items-center gap-2">
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setOffsetDays((d) => d + 1)}
+              disabled={offsetDays >= MAX_OFFSET}
+            >
+              Sonraki gece →
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setOffsetDays((d) => d + 7)}
+              disabled={offsetDays >= MAX_OFFSET}
+              aria-label="Bir hafta ileri"
+              title="Bir hafta ileri"
+            >
+              »
+            </Button>
+          </span>
+
+          {/* Belirip kaybolan tek öge EN SONDA: kendinden öncesini —
+              yani bütün gezinme kümesini — artık hiç itmiyor. */}
           {offsetDays > 0 && (
             <Button size="sm" variant="ghost" onClick={() => setOffsetDays(0)}>
               Bu geceye dön
             </Button>
           )}
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => setOffsetDays((d) => d + 1)}
-            disabled={offsetDays >= MAX_OFFSET}
-          >
-            Sonraki gece →
-          </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => setOffsetDays((d) => d + 7)}
-            disabled={offsetDays >= MAX_OFFSET}
-            aria-label="Bir hafta ileri"
-            title="Bir hafta ileri"
-          >
-            »
-          </Button>
           {offsetDays >= FORECAST_DAYS - 1 && (
             <span className="text-meta text-faint">
               Hava tahmini {FORECAST_DAYS} gün ileriye kadar veriliyor.

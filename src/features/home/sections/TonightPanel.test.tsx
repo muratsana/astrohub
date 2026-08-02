@@ -207,3 +207,73 @@ describe('TonightPanel · ileri tarihli gece', () => {
     expect(screen.queryByText('ŞU AN')).not.toBeInTheDocument();
   });
 });
+
+/**
+ * GEZİNME DÜĞMELERİ YERİNDE DURUYOR MU.
+ *
+ * BULUNAN HATA: "Bu geceye dön" yalnızca ileri gidilince çiziliyor ve
+ * SONRAKİ GECE'nin SOLUNA giriyordu. Kullanıcı düğmeye basıyor, yeni
+ * düğme beliriyor ve bastığı düğme sağa kayıyordu — ikinci tık artık
+ * başka bir yere gidiyordu. Ortadaki etiketin "Bu gece" ile uzun bir
+ * tarih arasında gidip gelmesi aynı kaymayı her seferinde tekrarlıyordu.
+ *
+ * Ölçülen şey piksel değil SIRA: belirip kaybolan öge, gezinme
+ * kümesinin ARKASINDA olmak zorunda. Böylece göründüğünde yalnızca
+ * kendinden sonrasını iter.
+ */
+describe('TonightPanel · gezinme düğmeleri sabit', () => {
+  /** Belge sırasına göre a'dan b'ye ilerleniyor mu. */
+  function oncedir(a: Element, b: Element): boolean {
+    return Boolean(
+      a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING
+    );
+  }
+
+  it('"Bu geceye dön" gezinme düğmelerinin ARKASINDA çiziliyor', () => {
+    renderPanel();
+    fireEvent.click(screen.getByRole('button', { name: /sonraki gece/i }));
+
+    const donus = screen.getByRole('button', { name: /bu geceye dön/i });
+    for (const ad of [/önceki gece/i, /sonraki gece/i, /bir hafta ileri/i]) {
+      expect(oncedir(screen.getByRole('button', { name: ad }), donus)).toBe(
+        true
+      );
+    }
+  });
+
+  /*
+   * Etiket "Bu gece" (7 karakter) ile "2 Ağustos Cumartesi" (19) arasında
+   * gidip geliyor. Genişliği sabitlenmezse aradaki fark sağındaki her
+   * düğmeyi sürükler.
+   */
+  it('tarih etiketinin genişliği sabit', () => {
+    const { container } = renderPanel();
+    const etiket = container.querySelector('[class*="min-w-[18ch]"]');
+    expect(etiket).not.toBeNull();
+    expect(etiket?.textContent).toBe('Bu gece');
+  });
+
+  /*
+   * `.num` mono aile ve `latin-ext` alt kümesi bilerek indirilmiyor
+   * (`index.css`). "2 Ağustos Cumartesi" içindeki ğ/ı/ş Inter'e düşüyor
+   * ve tek etiket iki aileyle çiziliyordu. Sayı hizası için doğru sınıf
+   * `.tabular`: gövde fontunda kalıyor.
+   */
+  it('tarih etiketi mono aileye düşmüyor', () => {
+    const { container } = renderPanel();
+    const etiket = container.querySelector('[class*="min-w-[18ch]"]');
+    expect(etiket?.className).not.toMatch(/\bnum\b/);
+    expect(etiket?.className).toMatch(/\btabular\b/);
+  });
+
+  /*
+   * Form denetimleri yazı ailesini kendiliğinden miras almaz; tarih
+   * kutusu tarayıcının arayüz fontuna düşüyor ve satır iki aileli
+   * görünüyordu.
+   */
+  it('tarih kutusu site fontunu kullanıyor', () => {
+    renderPanel();
+    const kutu = screen.getByLabelText(/gece tarihi seç/i);
+    expect(kutu.className).toMatch(/font-sans/);
+  });
+});

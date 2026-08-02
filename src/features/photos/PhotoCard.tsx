@@ -4,7 +4,7 @@ import { formatIntegration } from '@/domain/photography/integration';
 import { photoIntegrationSeconds } from './filtering';
 import { tintForPhoto } from './tint';
 import { familyOf, photoFamilies } from './families';
-import { RatingBadge } from './RatingControl';
+import { RatingBadge } from './RatingBadge';
 import type { AstroPhoto } from './types';
 
 /**

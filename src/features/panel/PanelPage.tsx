@@ -1,7 +1,8 @@
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Link, useParams } from 'react-router';
 import { Container } from '@/components/ui/Container';
-import { ButtonLink } from '@/components/ui/Button';
+import { Button, ButtonLink } from '@/components/ui/Button';
+import { deletePhoto } from '@/services/photos/remove';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Panel } from '@/components/ui/Panel';
 import { Readout } from '@/components/ui/Readout';
@@ -69,6 +70,8 @@ function PanelRow({
   badge,
   note,
   thumb,
+  action,
+  children,
 }: {
   /** Kaydın herkese açık sayfası; yoksa satır bağlantı olmaz. */
   to?: string;
@@ -79,6 +82,17 @@ function PanelRow({
   note?: string;
   /** Küçük önizleme; fotoğraf listesinde var, ilan listesinde yok. */
   thumb?: ReactNode;
+  /**
+   * Satır eylemi (sil…) — BAĞLANTININ DIŞINDA çiziliyor.
+   *
+   * İçine konsaydı `<a>` içinde `<button>` olurdu: geçersiz HTML, ve
+   * tıklama iki işi birden tetikler — kullanıcı silmeye basar, aynı anda
+   * fotoğraf sayfasına gider. Eylem kardeş öge; satırın tamamı hâlâ
+   * bağlantı, düğme değil.
+   */
+  action?: ReactNode;
+  /** Satırın altında açılan alan — onay kutusu gibi. */
+  children?: ReactNode;
 }) {
   const body = (
     <>
@@ -106,13 +120,17 @@ function PanelRow({
 
   return (
     <li className="border-b border-border last:border-0">
-      {to ? (
-        <Link to={to} className={`group ${shared}`}>
-          {body}
-        </Link>
-      ) : (
-        <div className={shared}>{body}</div>
-      )}
+      <div className="flex items-center gap-2">
+        {to ? (
+          <Link to={to} className={`group min-w-0 flex-1 ${shared}`}>
+            {body}
+          </Link>
+        ) : (
+          <div className={`min-w-0 flex-1 ${shared}`}>{body}</div>
+        )}
+        {action && <span className="shrink-0">{action}</span>}
+      </div>
+      {children}
     </li>
   );
 }
@@ -154,6 +172,38 @@ export function PanelPage() {
    * kullanıcının bakmadığı bir liste için istek harcamak olurdu.
    */
   const saved = useSavedPhotos();
+
+  /*
+   * SİLME İKİ ADIM — açık olan satırın kimliği `silinecek`te.
+   *
+   * `confirm()` KULLANILMADI, yönetici listelerindeki gerekçenin aynısı:
+   * tarayıcı diyaloğu odağı çalıyor, mobilde kırpılıyor ve neyin
+   * silineceğini satırdan kopuk gösteriyor. Onay satırın kendi altında
+   * açılıyor; hangi kaydın gideceği gözden kaybolmuyor.
+   */
+  const [silinecek, setSilinecek] = useState<string | null>(null);
+  const [siliniyor, setSiliniyor] = useState(false);
+  const [silmeHatasi, setSilmeHatasi] = useState<string | null>(null);
+
+  async function sil(photoId: string) {
+    if (!user) return;
+    setSiliniyor(true);
+    setSilmeHatasi(null);
+    try {
+      await deletePhoto({ userId: user.id, photoId });
+      setSilinecek(null);
+      /* Liste yeniden okunuyor: yerel diziden çıkarmak kotayı da elle
+         güncellemek demekti ve iki sayaç ayrışabilirdi. */
+      myPhotos.refresh();
+    } catch (e: unknown) {
+      /* Hata satırda kalıyor ve onay AÇIK kalıyor: kullanıcı ne olduğunu
+         okuyup tekrar deneyebilsin. Sessizce kapanan bir onay, silme
+         olmuş gibi görünürdü. */
+      setSilmeHatasi(e instanceof Error ? e.message : 'Fotoğraf silinemedi');
+    } finally {
+      setSiliniyor(false);
+    }
+  }
 
   /*
    * Kademe STANDART varsayılıyor: üyelik sistemi yokken (T-504 kararı
@@ -371,13 +421,60 @@ export function PanelPage() {
                         {photoStatusLabels[photo.status]}
                       </Badge>
                     }
-                  />
+                    action={
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        disabled={siliniyor}
+                        onClick={() => {
+                          setSilmeHatasi(null);
+                          setSilinecek(
+                            silinecek === photo.id ? null : photo.id
+                          );
+                        }}
+                      >
+                        Sil
+                      </Button>
+                    }
+                  >
+                    {silinecek === photo.id && (
+                      <div className="mb-2.5 flex flex-wrap items-center gap-2 rounded-card border border-warm/40 bg-warm/8 px-3 py-2">
+                        <span className="flex-1 text-meta leading-relaxed text-warm">
+                          <strong>{photo.title}</strong> kalıcı olarak
+                          silinecek: görsel dosyaları, işleme sürümleri ve
+                          kayda gelmiş beğeni, yorum, puan da gider. Geri
+                          alınamaz.
+                        </span>
+                        <Button
+                          size="sm"
+                          disabled={siliniyor}
+                          onClick={() => void sil(photo.id)}
+                        >
+                          {siliniyor ? 'Siliniyor…' : 'Kalıcı sil'}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          disabled={siliniyor}
+                          onClick={() => setSilinecek(null)}
+                        >
+                          Vazgeç
+                        </Button>
+                        {silmeHatasi && (
+                          <p className="w-full text-meta leading-relaxed text-danger">
+                            Silinemedi: {silmeHatasi}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </PanelRow>
                 ))}
               </ul>
             )}
             <p className="mt-2 text-meta leading-snug text-faint">
               Kotayı yalnızca YAYINDAKİ kayıtlar tüketir; arşivlediğiniz
               fotoğraf silinmez, galeriden çıkar ve hakkı serbest bırakır.
+              Kalıcı silme geri alınamaz.
             </p>
           </Panel>
         )}

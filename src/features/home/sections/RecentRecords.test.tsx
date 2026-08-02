@@ -38,6 +38,59 @@ beforeEach(() => {
   catalog.status = 'ready';
 });
 
+/**
+ * ANA SAYFA GERÇEK GÖRSELİ ÇİZİYOR MU.
+ *
+ * BULUNAN HATA: bu bölüm `PhotoTile`ı doğrudan çağırıp `AstroPhoto`
+ * alanlarını elle eşliyordu ve o eşlemede `imageUrl` YOKTU. `PhotoTile`
+ * adres verilmeyince yer tutucu yıldız alanına düşüyor — yani gerçek
+ * fotoğraflar yüklenmiş olmasına rağmen ana sayfa herkese üretilmiş
+ * desenler gösteriyordu. Kullanıcı karesinin kaybolduğunu sanıyordu.
+ *
+ * Test adresin ÇİZİLDİĞİNİ ölçüyor, hangi bileşenin çizdiğini değil:
+ * karo `PhotoCard`a taşındı ama beklenti taşımadan önce de sonra da
+ * aynı cümle.
+ */
+describe('RecentRecords — gerçek görsel', () => {
+  const FOTO = {
+    slug: 'ic434-at-basi',
+    title: 'At Başı Bulutsusu',
+    type: 'deep-sky',
+    palette: 'HOO',
+    editorsPick: false,
+    image: { url: 'https://ornek.test/ic434.jpg', credit: 'Ali', licence: '—' },
+    target: { name: 'IC 434', catalog: 'IC 434', constellation: 'Orion' },
+    user: { username: 'ali', displayName: 'Ali' },
+    location: { label: 'Antalya', visibility: 'sehir', bortle: 4 },
+    exposures: [],
+    rating: { toplam: 0, sayi: 0 },
+  };
+
+  it('kaydın görselini karoya veriyor', () => {
+    catalog.items = [FOTO];
+    renderSection();
+
+    expect(screen.getByAltText('IC 434')).toHaveAttribute(
+      'src',
+      'https://ornek.test/ic434.jpg'
+    );
+  });
+
+  /*
+   * Görselsiz kayıt (yükleme yarım kalmış, dosya silinmiş) yer tutucuya
+   * düşmeye DEVAM etmeli: `src` boş bir `img` kırık ikon çizerdi.
+   */
+  it('görseli olmayan kayıt yer tutucuya düşüyor', () => {
+    catalog.items = [{ ...FOTO, image: undefined }];
+    const { container } = renderSection();
+
+    /* `RemoteImage` adres yoksa `<img>` ÇİZMİYOR, yıldız alanına
+       düşüyor: boş `src` taşıyan bir `img` tarayıcıda kırık ikon olurdu. */
+    expect(container.querySelector('img')).toBeNull();
+    expect(screen.getByRole('link', { name: /IC 434/ })).toBeInTheDocument();
+  });
+});
+
 describe('RecentRecords — galeri boşken', () => {
   it('sessiz boşluk yerine açıklama gösterir', () => {
     renderSection();

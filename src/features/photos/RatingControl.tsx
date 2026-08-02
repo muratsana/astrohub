@@ -133,33 +133,7 @@ export function RatingControl({ photo }: { photo: AstroPhoto }) {
   );
 }
 
-/**
- * Kart/liste için sıkıştırılmış rozet.
- *
- * Oy yokken HİÇ ÇİZİLMİYOR: "0.0" ya da "—" gösteren bir rozet, kartta
- * yer kaplayıp hiçbir şey söylemez ve yeni yüklenmiş bir kareyi kötü
- * puanlanmış gibi gösterir.
- */
-export function RatingBadge({
-  rating,
-  className,
-}: {
-  rating: AstroPhoto['rating'];
-  className?: string;
-}) {
-  if (rating.sayi === 0) return null;
-  const average = rating.toplam / rating.sayi;
-
-  return (
-    <span
-      className={cn(
-        'tabular inline-flex items-center gap-1 rounded-full border border-border bg-surface-1 px-2 py-0.5 text-meta',
-        className
-      )}
-      title={`${rating.sayi} oyun ortalaması`}
-    >
-      <span className="font-semibold text-primary">{average.toFixed(1)}</span>
-      <span className="text-faint">/10</span>
-    </span>
-  );
-}
+/* Rozet ayrı modülde (bkz. `RatingBadge.tsx`): kart onu içe aktarınca
+   buradaki oy yazma yolu da ilk pakete giriyordu. Yeniden dışa aktarım
+   mevcut çağıranları koruyor. */
+export { RatingBadge } from './RatingBadge';
