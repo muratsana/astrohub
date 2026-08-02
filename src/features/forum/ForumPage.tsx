@@ -5,6 +5,10 @@ import { ButtonLink } from '@/components/ui/Button';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ToolBar, ResultCount } from '@/components/ui/ToolBar';
+import {
+  SegmentedControl,
+  type SegmentOption,
+} from '@/components/ui/SegmentedControl';
 import { CatalogSourceNote } from '@/components/ui/CatalogSourceNote';
 import { useStoredChoice } from '@/components/ui/useViewMode';
 import {
@@ -97,48 +101,14 @@ export function ForumPage() {
           }
         />
 
-        {/* Kategori filtresi — galerideki aile rozetleriyle aynı desen */}
-        <div
-          role="tablist"
-          aria-label="Kategori"
-          className="mb-4 flex flex-wrap items-center gap-1.5"
-        >
-          <button
-            role="tab"
-            aria-selected={category === 'hepsi'}
-            onClick={() => setCategory('hepsi')}
-            className={cn(
-              'rounded-card border px-2.5 py-1 text-meta tracking-[0.03em] transition-colors',
-              category === 'hepsi'
-                ? 'border-foreground/40 bg-surface-2 text-foreground'
-                : 'border-border text-muted-foreground hover:border-border-strong hover:text-foreground'
-            )}
-          >
-            Tümü
-          </button>
-
-          {forumCategoryOrder.map((id) => {
-            const info = forumCategories[id];
-            const active = category === id;
-            return (
-              <button
-                key={id}
-                role="tab"
-                aria-selected={active}
-                title={info.description}
-                onClick={() => setCategory(id)}
-                className={cn(
-                  'rounded-card border px-2.5 py-1 text-meta tracking-[0.03em] transition-colors',
-                  active
-                    ? info.className
-                    : 'border-border text-muted-foreground hover:border-border-strong hover:text-foreground'
-                )}
-              >
-                {info.name}
-              </button>
-            );
-          })}
-        </div>
+        {/* Kategori filtresi — seçili/inaktif durum ortak segmentten gelir. */}
+        <SegmentedControl
+          ariaLabel="Kategori"
+          value={category}
+          onChange={setCategory}
+          options={forumCategoryOptions}
+          className="mb-4"
+        />
 
         <FilterBar activeCount={ex.chips.length} columns={3}>
           <FilterCell label="Ara" htmlFor="forum-search">
@@ -243,6 +213,16 @@ const densityOptions: { value: ForumDensity; label: string; title: string }[] = 
   },
 ];
 
+const forumCategoryOptions: SegmentOption<string>[] = [
+  { value: 'hepsi', label: 'Tümü' },
+  ...forumCategoryOrder.map((id) => ({
+    value: id,
+    label: forumCategories[id].name,
+    tooltip: forumCategories[id].description,
+    selectedClassName: forumCategories[id].className,
+  })),
+];
+
 function DensityToggle({
   density,
   onChange,
@@ -251,29 +231,19 @@ function DensityToggle({
   onChange: (next: ForumDensity) => void;
 }) {
   return (
-    <div
+    <SegmentedControl
       role="group"
-      aria-label="Görünüm"
-      className="inline-flex shrink-0 overflow-hidden rounded-card border border-border"
-    >
-      {densityOptions.map(({ value, label, title }) => (
-        <button
-          key={value}
-          type="button"
-          onClick={() => onChange(value)}
-          aria-pressed={density === value}
-          title={title}
-          className={cn(
-            'flex h-8 items-center border-l border-border px-2.5 text-meta tracking-[0.03em] transition-colors first:border-l-0',
-            density === value
-              ? 'bg-primary text-primary-foreground'
-              : 'text-muted-foreground hover:bg-surface-2 hover:text-foreground'
-          )}
-        >
-          {label}
-        </button>
-      ))}
-    </div>
+      size="xs"
+      ariaLabel="Görünüm"
+      value={density}
+      onChange={onChange}
+      options={densityOptions.map((o) => ({
+        value: o.value,
+        label: o.label,
+        tooltip: o.title,
+      }))}
+      className="shrink-0"
+    />
   );
 }
 

@@ -653,21 +653,11 @@ await scenario('"içeriğe atla" bağlantısı ilk odaklanabilir öğedir', asyn
  */
 await scenario('tablo başlığı sıralamayı URL\'ye yazıyor', async () => {
   await goto('/ilanlar');
-  await page.evaluate(() => {
-    document.querySelector('button[aria-label="Tablo görünümü"]').click();
-  });
-  await page.waitForTimeout(400);
+  await page.getByRole('button', { name: 'Tablo görünümü' }).click();
 
-  assert(
-    await page.evaluate(() => !!document.querySelector('table')),
-    'tablo görünümü çizilmedi'
-  );
+  await page.waitForSelector('table', { timeout: 10_000 });
 
-  await page.evaluate(() => {
-    [...document.querySelectorAll('th button')]
-      .find((b) => b.textContent.includes('Fiyat'))
-      .click();
-  });
+  await page.getByRole('button', { name: 'Fiyat' }).click();
   await page.waitForTimeout(400);
 
   const durum = await page.evaluate(() => ({

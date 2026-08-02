@@ -451,10 +451,12 @@ gerçek koda göre hâlâ açıktı.
 | Navbar şehir seçimi kaldırılacak | `Topbar` hâlâ `LocationPicker variant="compact"` çiziyordu | DONE — üst çubuktan kaldırıldı; tek ürün kontrolü `Bu Gece`/çekmece hattında kalacak |
 | Navbar `Ekipman` kaldırılacak | `primaryNav` ve `0062` tohumu `/ekipman` taşıyordu | DONE — üst menüden çıkarıldı; route ve modül haritası korunuyor |
 | Canlı `nav_links` hizası | Eski canlı/tohum satırı production'da kalabilirdi | DONE — `20260802202412_remove_equipment_from_header_nav.sql` canlı Astrohub Supabase projesine uygulandı; `/ekipman` header'da `enabled=false`, kalan header sırası 1-8 |
-| Ana sayfa `Son İlanlar` thumbnail | `RecentListings` statik seed + `StarField` çiziyordu; `listing_photos` hiç okunmuyordu | PARTIAL — liste sorgusu kapak fotoğrafını okuyor ve ana sayfa `RemoteImage` kullanıyor; canlıda fotoğraflı ilanla görsel doğrulama gerekir |
+| Ana sayfa `Son İlanlar` thumbnail | `RecentListings` statik seed + `StarField` çiziyordu; `listing_photos` hiç okunmuyordu | DONE — liste sorgusu kapak fotoğrafını okuyor ve ana sayfa `RemoteImage` kullanıyor |
+| İlan liste kartları thumbnail | Marketplace grid kartı `Listing.imageUrl` geldiği halde `StarField` çiziyordu | DONE — `MarketplacePage` grid kartı da ilan kapak görselini tüketiyor; görsel yoksa ortak fallback'e düşüyor |
 | Ana sayfa galeri thumbnail | Repo `RecentRecords -> PhotoCard` zinciriyle `imageUrl` tüketiyor | PARTIAL — kod zinciri doğru görünüyor; kullanıcı canlıda görmediği için gerçek preview/canlı veriyle tekrar doğrulanacak |
-| `Tooltip` ve ortak `selected` state | Bileşen düzeyinde hâlâ eksik | NOT_STARTED — sonraki UI temel işi |
-| Ortak Explorer Toolbar görsel standardı | Motor var; sayfa yüzeyleri hâlâ farklı yoğunlukta | NOT_STARTED — geniş UI patch'e kaldı |
+| `Tooltip` ve ortak `selected` state | Bileşen düzeyinde hâlâ eksik | PARTIAL — `Tooltip` ve `SegmentedControl` eklendi; Forum/Marketplace/Articles kategori ve yoğunluk kontrolleri buna taşındı |
+| Yazı seviye yüzeyleri | `Başlangıç / Orta / İleri` filtre ve kart rozeti ürün arayüzünde görünüyordu | DONE — veri modeli korunarak UI filtresi, chip'i ve kart rozeti kaldırıldı |
+| Ortak Explorer Toolbar görsel standardı | Motor var; sayfa yüzeyleri hâlâ farklı yoğunlukta | PARTIAL — Articles görünüm şeridi `ToolBar`a taşındı; kalan Explorer sayfaları için yüzey standardizasyonu sürecek |
 
 ### Bu patch'te değişen dosyalar
 
@@ -470,6 +472,11 @@ gerçek koda göre hâlâ açıktı.
 - `src/features/admin/ForumCategories.tsx`, `src/features/admin/forumCategoryData.ts` — macOS'ta gizlenen ama TypeScript build'i bozan büyük/küçük harf çakışması temizlendi.
 - `src/test/setup.ts`, `src/entry-prerender.tsx` — yerel test/prerender ortamında eksik `localStorage` API'si için güvenli bellek yedeği eklendi.
 - `src/features/weather/openMeteo.test.ts` — Open-Meteo `timezone=auto` saatlerinin yerel saat olarak parse edilmesi testle hizalandı.
+- `src/components/ui/Tooltip.tsx`, `src/components/ui/SegmentedControl.tsx` — ortak açıklama ve tek seçimli selected-state yüzeyi eklendi.
+- `src/components/ui/ViewToggle.tsx` — ikon görünüm anahtarları `title` yerine ortak tooltip kullanır.
+- `src/features/forum/ForumPage.tsx`, `src/features/marketplace/MarketplacePage.tsx`, `src/features/articles/ArticlesPage.tsx` — kategori/yoğunluk/görünüm yüzeyleri ortak bileşenlere taşındı.
+- `src/features/articles/articlesSpec.ts` — yazı seviye facet'i ürün arayüzünden çıkarıldı.
+- `scripts/e2e.mjs` — tablo başlığı sıralama senaryosu DOM `querySelector` yerine Playwright locator auto-wait kullanır; CI'daki geç render yarışını kapatır.
 
 ### Doğrulama
 
@@ -493,13 +500,14 @@ npm run test:e2e
 Sonuçlar:
 
 - TypeScript ve lint geçti.
-- Unit/integration test: **161 dosya / 2036 test geçti.**
+- Unit/integration test: **162 dosya / 2039 test geçti.**
 - Production build geçti; prerender **490/490 rota** üretti.
-- Budget geçti: ilk rota JS **197.7 kB gzip** / bütçe 200 kB, CSS **14.3 kB gzip** / bütçe 25 kB.
+- Budget geçti: ilk rota JS **197.7 kB gzip** / bütçe 200 kB, CSS **14.4 kB gzip** / bütçe 25 kB.
 - Preview, CSP, erişilebilirlik ve viewport kapıları geçti.
 - E2E: **28 senaryo geçti**, sayfa hatası yok; ekran görüntüleri `dist-preview/screens/` altında üretildi.
 - `check:rewrites` geçti: `vercel.json` **159 rewrite** ile güncel.
 - Canlı Supabase migration uygulandı ve `nav_links` doğrulandı.
+- İlk deploy commit'i `e4d658e` Vercel'de başarıyla deploy edildi; GitHub E2E'de görülen tablo başlığı yarış durumu ikinci patch'te düzeltildi.
 
 Çalışmayan/harici doğrulama isteyen kapılar:
 
@@ -509,11 +517,11 @@ Sonuçlar:
 
 ### Sonraki blokajsız sıra
 
-1. `Tooltip` ve ortak `selected` state bileşenlerini ekle.
-2. Ortak `Explorer Toolbar`ı tek bileşen üzerinden yenile.
-3. Etkinlik/Haber/Yazı/İlan kart-liste-thumbnail görünümünü aynı sisteme taşı.
-4. Yazılardaki `Başlangıç / Orta / İleri` seviye yüzeylerini ürün arayüzünden kaldır.
-5. Galeri ve ilan thumbnail davranışını gerçek preview/canlı veriyle ekran görüntülü doğrula.
+1. Kalan Explorer sayfalarında kategori/filtre mod anahtarlarını `SegmentedControl`a taşı.
+2. Ortak `Explorer Toolbar`ı tüm liste sayfalarında tek bileşen üzerinden yenile.
+3. Etkinlik/Haber kart-liste-thumbnail görünümünü aynı sisteme taşı.
+4. Galeri ve ilan thumbnail davranışını gerçek canlı veriyle ekran görüntülü doğrula.
+5. `DATABASE_URL` sağlanınca `check:rls` ve `check:auth` kapılarını production DB'ye karşı çalıştır.
 
 ### Blokaj veya dış kaynak isteyenler
 

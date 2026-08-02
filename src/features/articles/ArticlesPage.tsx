@@ -3,18 +3,13 @@ import { Container } from '@/components/ui/Container';
 import { FilterBar, FilterCell, filterControlClass } from '@/components/ui/FilterBar';
 import { ActiveFilters } from '@/components/ui/ActiveFilters';
 import { Input } from '@/components/ui/Input';
-import { Badge } from '@/components/ui/Badge';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
-import { ViewToggle } from '@/components/ui/ViewToggle';
+import { ToolBar, ResultCount } from '@/components/ui/ToolBar';
+import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { EditorialList, type EditorialItem } from '@/components/ui/EditorialList';
 import { useViewMode } from '@/components/ui/useViewMode';
-import { cn } from '@/lib/cn';
-import {
-  articleCategoryLabels,
-  type ArticleCategory,
-  type ArticleLevel,
-} from './data';
+import { articleCategoryLabels, type ArticleCategory } from './data';
 import { useArticles } from './useArticles';
 import { useExplorer } from '@/features/explorer/useExplorer';
 import { articlesSpec } from './articlesSpec';
@@ -27,15 +22,9 @@ import { articlesSpec } from './articlesSpec';
  * galeri ve haber kartları görselliyken yazılar sönük bir metin bloğu
  * gibi duruyor, tıklanmıyordu. Görsel dekorasyon değil: kutup yıldızı
  * izleri polar alignment yazısını, Hubble paleti narrowband yazısını
- * bir bakışta anlatıyor. Seviye ve kategori filtreleri bağımsız çalışır.
+ * bir bakışta anlatıyor. Ürün yüzeyinde seviye rozeti yok; konu ve arama
+ * okurun ihtiyacını daha doğrudan karşılıyor.
  */
-const levels: (ArticleLevel | 'hepsi')[] = [
-  'hepsi',
-  'Başlangıç',
-  'Orta',
-  'İleri',
-];
-
 const categories: (ArticleCategory | 'hepsi')[] = [
   'hepsi',
   'rehber',
@@ -45,13 +34,10 @@ const categories: (ArticleCategory | 'hepsi')[] = [
   'inceleme',
 ];
 
-function levelTone(level: ArticleLevel) {
-  return level === 'Başlangıç'
-    ? 'success'
-    : level === 'Orta'
-      ? 'primary'
-      : 'danger';
-}
+const categoryOptions = categories.map((c) => ({
+  value: c,
+  label: c === 'hepsi' ? 'Tümü' : articleCategoryLabels[c],
+}));
 
 export function ArticlesPage() {
   const [view, setView] = useViewMode('yazilar');
@@ -60,13 +46,12 @@ export function ArticlesPage() {
   const { items: allArticles } = useArticles();
 
   /*
-   * ORTAK DATA EXPLORER (Faz 4). Sayfada arama HİÇ yoktu; seviye ve
-   * kategori `useState`teydi, yani "başlangıç seviyesi işleme yazıları"
-   * gibi bir seçim paylaşılamıyordu.
+   * ORTAK DATA EXPLORER (Faz 4). Sayfada arama HİÇ yoktu; kategori
+   * `useState`teydi, yani "işleme yazıları" gibi bir seçim
+   * paylaşılamıyordu.
    */
   const ex = useExplorer(allArticles, articlesSpec);
   const result = ex.items;
-  const level = ex.query.facets.seviye?.[0] ?? 'hepsi';
   const category = ex.query.facets.kategori?.[0] ?? 'hepsi';
 
   /** Sekme şeritleri tek seçim. */
@@ -74,7 +59,6 @@ export function ArticlesPage() {
     if (mevcut !== 'hepsi') ex.toggleFacet(param, mevcut);
     if (next !== 'hepsi' && next !== mevcut) ex.toggleFacet(param, next);
   };
-  const setLevel = (next: string) => tekSec('seviye', level, next);
   const setCategory = (next: string) => tekSec('kategori', category, next);
 
   /*
@@ -94,12 +78,7 @@ export function ArticlesPage() {
         tint: article.tint,
         imageUrl: article.image?.url,
         footer: (
-          <div className="flex items-center gap-2">
-            <Badge tone={levelTone(article.level)}>{article.level}</Badge>
-            <span className="tabular text-meta text-faint">
-              {article.author}
-            </span>
-          </div>
+          <span className="tabular text-meta text-faint">{article.author}</span>
         ),
       })),
     [result]
@@ -120,9 +99,9 @@ export function ArticlesPage() {
         <header className="mb-5 border-b border-border pb-5">
           <h1 className="type-page text-foreground">Yazılar</h1>
           <p className="mt-2 max-w-[70ch] text-meta leading-relaxed text-muted-foreground">
-            Başlangıçtan ileri seviyeye rehberler, işleme dersleri ve saha
-            notları. Her yazı bir prosedür gibi kurulur: ne yapılır, neden
-            yapılır, ne zaman işe yaramaz.
+            Rehberler, işleme dersleri, teknik incelemeler ve saha notları.
+            Her yazı bir prosedür gibi kurulur: ne yapılır, neden yapılır,
+            ne zaman işe yaramaz.
           </p>
         </header>
 
@@ -151,58 +130,29 @@ export function ArticlesPage() {
           onClearAll={ex.clearAll}
         />
 
-        <div className="mb-4 grid gap-px border border-border bg-border sm:grid-cols-2">
-          <div className="bg-surface-1 px-3 py-2">
-            <p className="label mb-2">Seviye</p>
-            <div role="tablist" aria-label="Seviye" className="flex flex-wrap gap-1.5">
-              {levels.map((l) => (
-                <button
-                  key={l}
-                  role="tab"
-                  aria-selected={level === l}
-                  onClick={() => setLevel(l)}
-                  className={cn(
-                    'rounded-card border px-2.5 py-1 text-meta tracking-[0.03em] transition-colors',
-                    level === l
-                      ? 'border-primary text-primary'
-                      : 'border-border text-muted-foreground hover:border-border-strong hover:text-foreground'
-                  )}
-                >
-                  {l === 'hepsi' ? 'Tümü' : l}
-                </button>
-              ))}
-            </div>
-          </div>
-
+        <div className="mb-4 grid gap-px border border-border bg-border">
           <div className="bg-surface-1 px-3 py-2">
             <p className="label mb-2">Kategori</p>
-            <div role="tablist" aria-label="Kategori" className="flex flex-wrap gap-1.5">
-              {categories.map((c) => (
-                <button
-                  key={c}
-                  role="tab"
-                  aria-selected={category === c}
-                  onClick={() => setCategory(c)}
-                  className={cn(
-                    'rounded-card border px-2.5 py-1 text-meta tracking-[0.03em] transition-colors',
-                    category === c
-                      ? 'border-primary text-primary'
-                      : 'border-border text-muted-foreground hover:border-border-strong hover:text-foreground'
-                  )}
-                >
-                  {c === 'hepsi' ? 'Tümü' : articleCategoryLabels[c]}
-                </button>
-              ))}
-            </div>
+            <SegmentedControl
+              ariaLabel="Kategori"
+              value={category}
+              onChange={setCategory}
+              options={categoryOptions}
+              size="xs"
+            />
           </div>
         </div>
 
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <p className="tabular label" role="status" aria-live="polite">
-            {result.length} / {allArticles.length} yazı
-          </p>
-          <ViewToggle mode={view} onChange={setView} />
-        </div>
+        <ToolBar
+          left={
+            <ResultCount
+              current={result.length}
+              total={allArticles.length}
+              noun="yazı"
+            />
+          }
+          view={{ mode: view, onChange: setView }}
+        />
 
         <EditorialList
           view={view}

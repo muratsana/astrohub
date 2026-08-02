@@ -4,15 +4,13 @@ import { articleCategoryLabels, type Article } from './data';
 /**
  * YAZILARIN DATA EXPLORER TANIMI (Faz 4).
  *
- * Sayfada ARAMA HİÇ YOKTU; seviye ve kategori sekmeleri `useState`
- * içindeydi, yani "başlangıç seviyesi işleme yazıları" gibi bir seçim
- * paylaşılamıyordu.
+ * Sayfada ARAMA HİÇ YOKTU; kategori sekmesi `useState` içindeydi, yani
+ * "işleme yazıları" gibi bir seçim paylaşılamıyordu.
  */
 export const articlesSpec: ExplorerSpec<Article> = {
   searchFields: (a) => [a.title, a.summary, a.author],
 
   facets: [
-    { param: 'seviye', label: 'Seviye', valueOf: (a) => a.level },
     {
       param: 'kategori',
       label: 'Kategori',

@@ -6,6 +6,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { CardGrid } from '@/components/ui/CardGrid';
 import { ButtonLink } from '@/components/ui/Button';
 import { ToolBar, ResultCount } from '@/components/ui/ToolBar';
+import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { CatalogSourceNote } from '@/components/ui/CatalogSourceNote';
 import {
   useStoredChoice,
@@ -27,7 +28,7 @@ import {
   ContentCardMeta,
   ContentCardTitle,
 } from '@/components/ui/ContentCard';
-import { StarField } from '@/components/media/StarField';
+import { RemoteImage } from '@/components/media/RemoteImage';
 import { tintFromSeed } from '@/components/media/tints';
 import {
   equipmentCategoryLabels,
@@ -37,7 +38,6 @@ import { useListings } from '@/services/content/listings';
 import { useExplorer } from '@/features/explorer/useExplorer';
 import { listingsSpec } from './listingsSpec';
 import type { Listing } from './data';
-import { cn } from '@/lib/cn';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
 
@@ -51,6 +51,11 @@ const categories: (EquipmentCategory | 'hepsi')[] = [
   'guide',
   'aksesuar',
 ];
+
+const categoryOptions = categories.map((c) => ({
+  value: c,
+  label: c === 'hepsi' ? 'Tümü' : equipmentCategoryLabels[c],
+}));
 
 /**
  * İKİNCİ EL PAZARYERİ (§7.13).
@@ -114,28 +119,13 @@ export function MarketplacePage() {
           actions={<ButtonLink to="/ilan/yeni" size="sm">İlan ver</ButtonLink>}
         />
 
-        <div
-          role="tablist"
-          aria-label="İlan kategorileri"
-          className="mb-4 flex flex-wrap items-center gap-1.5"
-        >
-          {categories.map((c) => (
-            <button
-              key={c}
-              role="tab"
-              aria-selected={category === c}
-              onClick={() => setCategory(c)}
-              className={cn(
-                'rounded-card border px-2.5 py-1 text-meta tracking-[0.03em] transition-colors',
-                category === c
-                  ? 'border-foreground/40 bg-surface-2 text-foreground'
-                  : 'border-border text-muted-foreground hover:border-border-strong hover:text-foreground'
-              )}
-            >
-              {c === 'hepsi' ? 'Tümü' : equipmentCategoryLabels[c]}
-            </button>
-          ))}
-        </div>
+        <SegmentedControl
+          ariaLabel="İlan kategorileri"
+          value={category}
+          onChange={setCategory}
+          options={categoryOptions}
+          className="mb-4"
+        />
 
         <FilterBar activeCount={ex.chips.length}>
           <FilterCell label="Ara" htmlFor="listing-search" className="lg:col-span-2">
@@ -331,7 +321,13 @@ function ListingCard({
           </Badge>
         }
       >
-        <StarField seed={listing.slug} tint={tintFromSeed(listing.slug)} />
+        <RemoteImage
+          src={listing.imageUrl}
+          alt={`${listing.title} fotoğrafı`}
+          seed={listing.slug}
+          tint={tintFromSeed(listing.slug)}
+          sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
+        />
       </ContentCardMedia>
 
       <ContentCardBody>
