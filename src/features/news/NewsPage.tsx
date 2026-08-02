@@ -6,9 +6,9 @@ import { Input } from '@/components/ui/Input';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
 import { ViewToggle } from '@/components/ui/ViewToggle';
+import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { EditorialList, type EditorialItem } from '@/components/ui/EditorialList';
 import { useViewMode } from '@/components/ui/useViewMode';
-import { cn } from '@/lib/cn';
 import { newsCategoryLabels, type NewsCategory } from './data';
 import { useNewsItems } from './useNews';
 import { useExplorer } from '@/features/explorer/useExplorer';
@@ -123,29 +123,17 @@ export function NewsPage() {
         />
 
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div
-          role="tablist"
-          aria-label="Haber kategorileri"
-          className="flex flex-wrap gap-1.5"
-        >
-          {categories.map((c) => (
-            <button
-              key={c}
-              role="tab"
-              aria-selected={category === c}
-              onClick={() => setCategory(c)}
-              className={cn(
-                'rounded-card border px-3 py-1.5 text-meta tracking-[0.03em] transition-colors',
-                category === c
-                  ? 'border-primary text-primary'
-                  : 'border-border text-muted-foreground hover:border-border-strong hover:text-foreground'
-              )}
-            >
-              {c === 'hepsi' ? 'Tümü' : newsCategoryLabels[c]}
-            </button>
-          ))}
-        </div>
-        <ViewToggle mode={view} onChange={setView} />
+          <SegmentedControl
+            value={category}
+            options={categories.map((c) => ({
+              value: c,
+              label: c === 'hepsi' ? 'Tümü' : newsCategoryLabels[c],
+              selectedClassName: 'border-primary bg-primary/10 text-primary',
+            }))}
+            onChange={setCategory}
+            ariaLabel="Haber kategorileri"
+          />
+          <ViewToggle mode={view} onChange={setView} />
         </div>
 
         <EditorialList

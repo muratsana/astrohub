@@ -14,6 +14,7 @@ import { ActiveFilters } from '@/components/ui/ActiveFilters';
 import { RangeFilter } from '@/components/ui/RangeFilter';
 import { EditorialList, type EditorialItem } from '@/components/ui/EditorialList';
 import { ToolBar, ResultCount } from '@/components/ui/ToolBar';
+import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { useViewMode } from '@/components/ui/useViewMode';
 import { useEventCatalog } from '@/services/content/events';
 import { useExplorer } from '@/features/explorer/useExplorer';
@@ -24,7 +25,6 @@ import { eventTypeLabels } from './types';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
 import { EventCalendar } from './EventCalendar';
-import { cn } from '@/lib/cn';
 
 /**
  * Etkinlikler sayfası (§7.5).
@@ -196,33 +196,18 @@ export function EventsPage() {
           }
           view={layout === 'kart' ? { mode: view, onChange: setView } : undefined}
           extra={
-            <div
+            <SegmentedControl
+              value={layout}
+              options={[
+                { value: 'kart', label: 'Kart' },
+                { value: 'takvim', label: 'Takvim' },
+              ]}
+              onChange={setLayout}
+              ariaLabel="Görünüm biçimi"
               role="group"
-              aria-label="Görünüm biçimi"
-              className="inline-flex shrink-0 overflow-hidden rounded-card border border-border"
-            >
-              {(
-                [
-                  { value: 'kart', label: 'Kart' },
-                  { value: 'takvim', label: 'Takvim' },
-                ] as const
-              ).map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => setLayout(option.value)}
-                  aria-pressed={layout === option.value}
-                  className={cn(
-                    'h-8 border-l border-border px-2.5 text-meta tracking-[0.03em] transition-colors first:border-l-0',
-                    layout === option.value
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-muted-foreground hover:bg-surface-2 hover:text-foreground'
-                  )}
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
+              size="xs"
+              className="shrink-0"
+            />
           }
         />
 

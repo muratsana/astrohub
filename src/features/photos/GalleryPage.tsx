@@ -13,6 +13,7 @@ import {
 import { ActiveFilters } from '@/components/ui/ActiveFilters';
 import { CardGrid } from '@/components/ui/CardGrid';
 import { ToolBar, ResultCount } from '@/components/ui/ToolBar';
+import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { CatalogSourceNote } from '@/components/ui/CatalogSourceNote';
 import { useViewMode } from '@/components/ui/useViewMode';
 import { PhotoCard } from './PhotoCard';
@@ -29,7 +30,6 @@ import { type AstroPhoto, type ProcessingPalette } from './types';
 import { photoFamilies, familyOrder } from './families';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
-import { cn } from '@/lib/cn';
 
 const paletteOptions: (ProcessingPalette | 'hepsi')[] = [
   'hepsi',
@@ -156,54 +156,27 @@ export function GalleryPage() {
         />
 
         {/* Tür aileleri — renkli rozetlerle filtre */}
-        <div
-          role="tablist"
-          aria-label="Çekim türü"
-          className="mb-4 flex flex-wrap items-center gap-1.5"
-        >
-          <button
-            role="tab"
-            aria-selected={family === 'hepsi'}
-            onClick={() => {
-              /* Tek seçim davranışı korunuyor: aile sekmeleri bir sekme
-                 şeridi, çoklu seçim listesi değil. */
-              if (family !== 'hepsi') ex.toggleFacet('aile', family);
-            }}
-            className={cn(
-              'rounded-card border px-2.5 py-1 text-meta tracking-[0.03em] transition-colors',
-              family === 'hepsi'
-                ? 'border-foreground/40 bg-surface-2 text-foreground'
-                : 'border-border text-muted-foreground hover:border-border-strong hover:text-foreground'
-            )}
-          >
-            Tümü
-          </button>
-
-          {familyOrder.map((key) => {
-            const info = photoFamilies[key];
-            const active = family === key;
-            return (
-              <button
-                key={key}
-                role="tab"
-                aria-selected={active}
-                title={info.description}
-                onClick={() => {
-                  if (family !== 'hepsi') ex.toggleFacet('aile', family);
-                  if (family !== key) ex.toggleFacet('aile', key);
-                }}
-                className={cn(
-                  'rounded-card border px-2.5 py-1 text-meta tracking-[0.03em] transition-colors',
-                  active
-                    ? info.className
-                    : 'border-border text-muted-foreground hover:border-border-strong hover:text-foreground'
-                )}
-              >
-                {info.label}
-              </button>
-            );
-          })}
-        </div>
+        <SegmentedControl
+          value={family}
+          options={[
+            { value: 'hepsi', label: 'Tümü' },
+            ...familyOrder.map((key) => ({
+              value: key,
+              label: photoFamilies[key].label,
+              tooltip: photoFamilies[key].description,
+              selectedClassName: photoFamilies[key].className,
+            })),
+          ]}
+          onChange={(next) => {
+            /* Tek seçim davranışı korunuyor: aile sekmeleri bir sekme
+               şeridi, çoklu seçim listesi değil. */
+            if (family !== 'hepsi') ex.toggleFacet('aile', family);
+            if (next !== 'hepsi' && next !== family) ex.toggleFacet('aile', next);
+          }}
+          ariaLabel="Çekim türü"
+          size="xs"
+          className="mb-4"
+        />
 
         {/* Filtre paneli */}
         <FilterBar activeCount={ex.chips.length}>

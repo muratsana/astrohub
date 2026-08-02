@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Link, useParams } from 'react-router';
+import { useNavigate, useParams } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
@@ -14,6 +14,7 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { CardGrid } from '@/components/ui/CardGrid';
 import { ToolBar, ResultCount } from '@/components/ui/ToolBar';
+import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { useViewMode } from '@/components/ui/useViewMode';
 import {
   FilterBar,
@@ -63,6 +64,7 @@ function isCategory(value: string | undefined): value is EquipmentCategory {
  */
 export function EquipmentPage() {
   const { category: categoryParam } = useParams<{ category?: string }>();
+  const navigate = useNavigate();
   const category: EquipmentCategory | 'hepsi' = isCategory(categoryParam)
     ? categoryParam
     : 'hepsi';
@@ -136,31 +138,19 @@ export function EquipmentPage() {
         />
 
         {/* Kategori sekmeleri — seçim URL'de taşınır */}
-        <div
-          role="tablist"
-          aria-label="Ekipman kategorileri"
-          className="mb-4 flex flex-wrap items-center gap-1.5"
-        >
-          {categories.map((c) => {
-            const active = category === c;
-            return (
-              <Link
-                key={c}
-                role="tab"
-                aria-selected={active}
-                to={c === 'hepsi' ? '/ekipman' : `/ekipman/${c}`}
-                className={cn(
-                  'rounded-card border px-2.5 py-1 text-meta tracking-[0.03em] transition-colors',
-                  active
-                    ? 'border-foreground/40 bg-surface-2 text-foreground'
-                    : 'border-border text-muted-foreground hover:border-border-strong hover:text-foreground'
-                )}
-              >
-                {c === 'hepsi' ? 'Tümü' : equipmentCategoryLabels[c]}
-              </Link>
-            );
-          })}
-        </div>
+        <SegmentedControl
+          value={category}
+          options={categories.map((c) => ({
+            value: c,
+            label: c === 'hepsi' ? 'Tümü' : equipmentCategoryLabels[c],
+          }))}
+          onChange={(next) =>
+            navigate(next === 'hepsi' ? '/ekipman' : `/ekipman/${next}`)
+          }
+          ariaLabel="Ekipman kategorileri"
+          size="xs"
+          className="mb-4"
+        />
 
         <FilterBar activeCount={ex.chips.length} columns={2}>
           <FilterCell label="Ara" htmlFor="eq-search">

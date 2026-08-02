@@ -4,7 +4,7 @@
 > bugünkü karşılığını, kalan işi ve **kalma sebebini** tek yerde toplar.
 > Kaynak: `docs/IMPLEMENTATION_STATUS.md` (devam noktası) + canlı ölçümler.
 >
-> **Tarih:** 2 Ağustos 2026 · **Dal:** `claude/astrohub-project-review-xgtcbr`
+> **Tarih:** 3 Ağustos 2026 · **Dal:** `main`
 
 ---
 
@@ -33,10 +33,10 @@ kalan iş ağırlıklı olarak **kanıtlama** ve **cilalama**.
 | Canlı tablo | 84 · RLS açık: **83/84** (istisna: PostGIS `spatial_ref_sys`) |
 | RLS politikası | 176 |
 | Edge fonksiyonu | 6 (meteoblue, plate-solve, plate-solve-poll, radyo-durum, youtube, podcast-rss) |
-| Test | **2.034 test / 161 dosya** — hepsi geçiyor |
+| Test | **2.043 test / 163 dosya** — hepsi geçiyor |
 | Rota | 80 tanım · 490 prerender edilmiş statik HTML · 159 Vercel rewrite |
 | Sitemap | 484 adres (ince şehir sayfaları bilerek hariç) |
-| İlk rota JS | **198.8 kB gzip** (bütçe 200) · CSS 14.4 kB (bütçe 25) |
+| İlk rota JS | **197.2 kB gzip** (bütçe 200) · CSS 14.4 kB (bütçe 25) |
 
 **Kalite kapıları (hepsi CI'da):** `lint`, `typecheck`, `test`,
 `check:budgets`, `check:a11y`, `check:viewports`, `check:csp`,
@@ -79,12 +79,12 @@ ikon, form, buton/badge varyantları), birleşik `ContentCard` ailesi
 temizliği. Serbest punto/radius kaçağı **sıfır** ve `designSystem.test.ts`
 kapıyı tutuyor.
 
-**İki madde `PARTIAL` ve UI yeniden tasarımını doğrudan ilgilendiriyor:**
+**Sonradan kapanan iki açık madde:**
 
 | Madde | Durum |
 |---|---|
-| Modal/drawer/popover/**tooltip** kuralları | Katman sırası ve yükselti token'landı ama **`Tooltip` bileşeni YOK** |
-| Focus/hover/active/disabled/**selected** | Focus halkası global, hover/disabled `Button`da; **`selected` durumu için ortak kural yok** |
+| Modal/drawer/popover/**tooltip** kuralları | DONE — ortak `Tooltip` eklendi ve ikon/segment kontrollerinde kullanılmaya başlandı |
+| Focus/hover/active/disabled/**selected** | DONE — ortak `SegmentedControl` selected-state yüzeyi eklendi; Forum, Marketplace, Articles, News, Gallery, Equipment ve Events sayfalarındaki tek seçimli kontroller buna taşındı |
 
 ---
 
@@ -114,8 +114,10 @@ arama, debounce, faceted filtre + sayım, çoklu seçim, aktif filtre
 chip'leri, URL/geri-ileri, Türkçe sıralama, null konumu. Tablo görünümü,
 mobil filtre çekmecesi, kaydedilmiş görünümler, kullanıcı varsayılanı,
 admin paylaşılan görünümü, CSV dışa aktarma (formül enjeksiyonu
-korumalı), görünüm tercihinin hesapta saklanması. **Bu turda:** sayısal
-aralık, tarih aralığı, "boş değerleri dahil etme".
+korumalı), görünüm tercihinin hesapta saklanması. Sayısal aralık, tarih
+aralığı, "boş değerleri dahil etme". **Bu turda:** News/Gallery/Equipment
+kategori şeritleri ve Events kart/takvim anahtarı ortak `SegmentedControl`
+yüzeyine taşındı.
 
 **Kaldı ve neden:**
 
@@ -458,9 +460,9 @@ gerçek koda göre hâlâ açıktı.
 | Ana sayfa `Son İlanlar` thumbnail | `RecentListings` statik seed + `StarField` çiziyordu; `listing_photos` hiç okunmuyordu | DONE — liste sorgusu kapak fotoğrafını okuyor ve ana sayfa `RemoteImage` kullanıyor |
 | İlan liste kartları thumbnail | Marketplace grid kartı `Listing.imageUrl` geldiği halde `StarField` çiziyordu | DONE — `MarketplacePage` grid kartı da ilan kapak görselini tüketiyor; görsel yoksa ortak fallback'e düşüyor |
 | Ana sayfa galeri thumbnail | Repo `RecentRecords -> PhotoCard` zinciriyle `imageUrl` tüketiyor | PARTIAL — kod zinciri doğru görünüyor; kullanıcı canlıda görmediği için gerçek preview/canlı veriyle tekrar doğrulanacak |
-| `Tooltip` ve ortak `selected` state | Bileşen düzeyinde hâlâ eksik | PARTIAL — `Tooltip` ve `SegmentedControl` eklendi; Forum/Marketplace/Articles kategori ve yoğunluk kontrolleri buna taşındı |
+| `Tooltip` ve ortak `selected` state | Bileşen düzeyinde hâlâ eksik | DONE — `Tooltip` ve `SegmentedControl` eklendi; Forum/Marketplace/Articles/News/Gallery/Equipment/Events kategori, yoğunluk ve görünüm kontrolleri buna taşındı |
 | Yazı seviye yüzeyleri | `Başlangıç / Orta / İleri` filtre ve kart rozeti ürün arayüzünde görünüyordu | DONE — veri modeli korunarak UI filtresi, chip'i ve kart rozeti kaldırıldı |
-| Ortak Explorer Toolbar görsel standardı | Motor var; sayfa yüzeyleri hâlâ farklı yoğunlukta | PARTIAL — Articles görünüm şeridi `ToolBar`a taşındı; kalan Explorer sayfaları için yüzey standardizasyonu sürecek |
+| Ortak Explorer Toolbar görsel standardı | Motor var; sayfa yüzeyleri hâlâ farklı yoğunlukta | PARTIAL — Articles görünüm şeridi `ToolBar`a taşındı; Events mode switch ve News/Gallery/Equipment kategori segmentleri ortak yüzeye geçti; select-heavy Explorer sayfalarında kalan toolbar yoğunluğu ayrıca sadeleşecek |
 
 ### Bu patch'te değişen dosyalar
 
@@ -484,6 +486,7 @@ gerçek koda göre hâlâ açıktı.
 - `scripts/e2e.mjs` — tablo başlığı sıralama senaryosu DOM `querySelector` yerine Playwright locator auto-wait kullanır; CI'daki geç render yarışını kapatır.
 - `src/features/radio/RadioContext.tsx`, `src/features/radio/RadioDock.tsx`, `src/features/radio/RadioToggle.tsx`, `src/features/radio/RadioPage.tsx` — public radyo playlist görünümü kaldırıldı; kullanıcı tarafında yalnızca canlı yayın başlat/duraklat kaldı, resume akışı güncel yayına eşlenir.
 - `src/features/radio/handover.ts`, `src/features/radio/handover.test.ts`, `src/features/radio/RadioPage.test.tsx` — yayın saatine göre kasa pozisyonu ve public radyo kontrol sınırı testlendi.
+- `src/features/news/NewsPage.tsx`, `src/features/photos/GalleryPage.tsx`, `src/features/equipment/EquipmentPage.tsx`, `src/features/events/EventsPage.tsx` — kalan Explorer kategori/görünüm segmentleri ortak `SegmentedControl` bileşenine taşındı.
 
 ### Doğrulama
 
@@ -511,6 +514,7 @@ Sonuçlar:
 - Production build geçti; prerender **490/490 rota** üretti.
 - Budget geçti: ilk rota JS **197.2 kB gzip** / bütçe 200 kB, CSS **14.4 kB gzip** / bütçe 25 kB.
 - Preview, CSP, erişilebilirlik ve viewport kapıları geçti.
+- Viewport kontrolü ilk paralel koşuda `dist-preview` yeniden yazılırken `main` bekleme timeout'u aldı; tek başına yeniden çalıştırıldı ve geçti.
 - E2E: **28 senaryo geçti**, sayfa hatası yok; ekran görüntüleri `dist-preview/screens/` altında üretildi.
 - Radyo public yüzey testi eklendi: kullanıcı tarafında `Sonraki parça` ve Spotify yüzeyi görünmüyor, tek kontrol `Canlı yayın` başlat/duraklat.
 - `check:rewrites` geçti: `vercel.json` **159 rewrite** ile güncel.
@@ -525,11 +529,10 @@ Sonuçlar:
 
 ### Sonraki blokajsız sıra
 
-1. Kalan Explorer sayfalarında kategori/filtre mod anahtarlarını `SegmentedControl`a taşı.
-2. Ortak `Explorer Toolbar`ı tüm liste sayfalarında tek bileşen üzerinden yenile.
-3. Etkinlik/Haber kart-liste-thumbnail görünümünü aynı sisteme taşı.
-4. Galeri ve ilan thumbnail davranışını gerçek canlı veriyle ekran görüntülü doğrula.
-5. `DATABASE_URL` sağlanınca `check:rls` ve `check:auth` kapılarını production DB'ye karşı çalıştır.
+1. Select-heavy Explorer filtrelerini ve toolbar yoğunluğunu sayfa sayfa sadeleştir.
+2. Etkinlik/Haber kart-liste-thumbnail görünümünü aynı sisteme taşı.
+3. Galeri ve ilan thumbnail davranışını gerçek canlı veriyle ekran görüntülü doğrula.
+4. `DATABASE_URL` sağlanınca `check:rls` ve `check:auth` kapılarını production DB'ye karşı çalıştır.
 
 ### Blokaj veya dış kaynak isteyenler
 
