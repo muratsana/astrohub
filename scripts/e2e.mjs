@@ -504,28 +504,22 @@ await scenario('sürüm karşılaştırma sürgüsü klavyeyle sürülür', asyn
   assert(before !== after, `sürgü klavyeyle hareket etmedi (${before})`);
 });
 
-/* ══════════════════════ Radyo (kalıcı oynatıcı) ══════════════════════ */
+/* ══════════════════════ Radyo (üst bar kontrolü) ══════════════════════ */
 
-await scenario('radyo rıhtımı rota değişiminde ayakta kalır', async () => {
+await scenario('radyo kontrolü rota değişiminde üst barda kalır', async () => {
   await goto('/radyo');
 
-  const playButton = await page.$(
-    'button[aria-label*="Çal"], button[aria-label*="çal"]'
+  const controlBefore = await page.$(
+    '[aria-label^="Radyo"], [aria-label^="Canlı yayını"]'
   );
-  if (playButton) {
-    await playButton.click();
-    await page.waitForTimeout(400);
-  }
+  assert(controlBefore, 'radyo kontrolü üst barda bulunamadı');
 
-  // Rıhtım varsa gezinmeden sonra da DOM'da kalmalı (provider router dışında).
-  const dockBefore = await page.$$eval('audio', (els) => els.length);
   await goto('/galeri');
-  const dockAfter = await page.$$eval('audio', (els) => els.length);
-
-  assert(
-    dockAfter >= dockBefore,
-    `gezinme <audio> öğesini söktü (${dockBefore} → ${dockAfter})`
+  const controlAfter = await page.$(
+    '[aria-label^="Radyo"], [aria-label^="Canlı yayını"]'
   );
+
+  assert(controlAfter, 'gezinme radyo kontrolünü üst bardan kaldırdı');
 });
 
 /* ══════════════════════ Tema ══════════════════════ */

@@ -496,9 +496,19 @@ gerçek koda göre hâlâ açıktı.
 - `src/features/home/sections/tonight/DecisionColumn.tsx`, `src/features/home/sections/tonight/useTonight.ts` — tekrar eden astrofotoğraf skoru ve kullanıcıya görünen hava servisi künyesi kaldırıldı.
 - `src/features/home/sections/tonight/TimelineColumn.tsx`, `src/features/home/sections/tonight/NightTimelineChart.tsx` — koşul kartlarındaki ikinci satırlar kaldırıldı; bulunulan an çizelgede sade dikey imleç oldu.
 - `src/features/home/sections/tonight/TargetsColumn.tsx` — `Zirve` ve `Yükseklik` başlıkları hizalı, tıklanabilir sıralama kontrollerine çevrildi.
+- `src/domain/astronomy/nightScore.ts`, `src/features/home/sections/tonight/DecisionColumn.tsx` — skor kırılımı bulut örtüsü ve ay aydınlığını da görünür kılar; çubuklar gerçek hesap yönüne göre çizilir.
+- `src/features/home/sections/tonight/TimelineColumn.tsx` — ay kartı faz adını gösterir; grafik kolonunun altında tek satırlık ay evresi özeti eklendi.
+- `src/features/location/LocationContext.tsx`, `src/features/home/sections/TonightPanel.tsx` — paneldeki ikinci `Konumumu kullan` düğmesi kaldırıldı; Chrome/macOS izin değişimi ve konum alma retry akışı düzeltildi.
+- `src/components/shell/AppShell.tsx`, `scripts/e2e.mjs` — alt radyo barı kaldırıldı; e2e artık üst bar radyo kontrolünün rota değişiminde kaldığını doğrular.
+- `src/features/static/ContactPage.tsx`, `src/components/shell/Footer.tsx`, `src/app/router.tsx`, `src/app/sitemap.ts` — footer'a iletişim bağlantısı ve doğrudan e-posta akışı olan `/iletisim` sayfası eklendi.
+- `src/features/home/sections/NewsStrip.tsx`, `src/features/home/sections/UpcomingEvents.tsx`, `src/features/home/sections/RecentListings.tsx` — haber hover rengi beyaz yapıldı, etkinlik tarih bloğu takvim ikonuyla güçlendirildi, son ilan açıklaması kaldırıldı.
+- `src/components/shell/Logo.tsx` — üst bardaki Astrohub markasının yanına gri tonlu `(Beta test yayını)` etiketi eklendi.
+- `src/features/targets/TargetDetailPage.tsx`, `src/domain/targets/derive.ts`, `src/features/targets/TargetsPage.tsx`, `src/lib/commons.ts` — hedef detaylarında gerçek fotoğraf URL'leri ve hedef görseli fallback'i kullanılır, RA/DEC kopyalanabilir astronomik gösterime alındı, görünür zorluk rozeti/filtresi kaldırıldı ve önerilen odak açıklaması eklendi.
 - `src/features/home/sections/TonightPanel.test.tsx`, `src/features/home/sections/tonight/DecisionColumn.test.tsx`, `src/features/home/sections/tonight/TimelineColumn.test.tsx` — yeni gece seçici, servis künyesi temizliği, hedef sıralama ve koşul kartı yoğunluğu testlendi.
 - `src/index.css` — hero başlığındaki geniş harf aralığı kaldırıldı.
 - `src/components/shell/Footer.tsx`, `src/app/navigation.ts`, `src/app/navigation.test.ts`, `src/features/site/navLinks.ts` — footer tekrar eden modül nav yerine kurumsal bağlantıları gösteriyor.
+- `src/features/home/sections/tonight/TimelineColumn.tsx`, `src/features/home/sections/tonight/NightTimelineChart.tsx`, `src/features/home/sections/tonight/TargetsColumn.tsx`, `src/features/home/sections/tonight/DecisionColumn.tsx` — Bu Gece modülünde formül metni kaldırıldı, `Aysız Pencere` etiketi eklendi, zaman metrikleri aynı stile çekildi, grafik yükseltildi ve hedef listesi 9 objeye çıkarıldı.
+- `src/components/shell/Logo.tsx`, `src/components/shell/Footer.tsx` — üst bar ve footer logosuna gri `(Beta test yayını)` etiketi eklendi; footer altındaki tekrar eden veri notu kaldırıldı ve telif satırı ana footer satırına taşındı.
 
 ### Doğrulama
 

@@ -40,6 +40,7 @@ interface Props {
 export function TimelineColumn({
   timeline,
   moon,
+  moonTimes,
   conditions,
   nowAt,
   markAt,
@@ -56,48 +57,44 @@ export function TimelineColumn({
 
   return (
     <div className="flex flex-col gap-5 p-5">
-      <div className="flex flex-wrap items-end gap-x-6 gap-y-3">
-        <div>
-          <h3 className="label caps text-muted-foreground">
-            Karanlık penceresi
-          </h3>
-          <p className="num mt-1 text-readout-xl font-semibold leading-none text-foreground sm:text-readout-xl">
-            {dark ? (
-              <>
-                {clock(dark.from)}
-                <span className="mx-1.5 text-faint">→</span>
-                {clock(dark.to)}
-              </>
-            ) : (
-              <span className="text-readout-lg font-normal text-faint">
-                bu enlemde oluşmuyor
-              </span>
-            )}
-          </p>
-        </div>
-
-        <dl className="flex items-end gap-6 border-border xl:border-l xl:pl-6">
+      <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-end">
+        <dl className="grid gap-3 sm:grid-cols-3">
           <div>
-            <dt className="text-meta text-faint">süre</dt>
-            <dd className="num text-readout font-semibold leading-tight text-primary">
+            <dt className="label caps text-muted-foreground">
+              Karanlık penceresi
+            </dt>
+            <dd className="mt-1 text-readout-xl font-semibold leading-none text-foreground">
+              {dark ? (
+                <>
+                  {clock(dark.from)}
+                  <span className="mx-1.5 text-faint">→</span>
+                  {clock(dark.to)}
+                </>
+              ) : (
+                <span className="text-readout-lg font-normal text-faint">
+                  bu enlemde oluşmuyor
+                </span>
+              )}
+            </dd>
+          </div>
+
+          <div>
+            <dt className="label caps text-muted-foreground">Toplam Süre</dt>
+            <dd className="mt-1 text-readout-xl font-semibold leading-none text-primary">
               {dark ? formatDuration(darkMinutes) : '—'}
             </dd>
           </div>
-          {/*
-            AYSIZ PENCERE panelin asıl sayısı. Sıfır bir CEVAP, veri
-            yokluğu değil: "ay bütün gece yukarıda" bilinen bir sonuç ve
-            sönük bir tire onu "bilmiyoruz" gibi gösteriyordu.
-          */}
+
           <div>
-            <dt className="text-meta text-faint">aysız</dt>
+            <dt className="label caps text-muted-foreground">Aysız Pencere</dt>
             <dd
               className={cn(
-                'text-readout font-semibold leading-tight',
+                'mt-1 text-readout-xl font-semibold leading-none',
                 !dark
                   ? 'text-faint'
                   : timeline.moonlessMinutes === 0
                     ? 'text-warning'
-                    : 'num text-success'
+                    : 'text-success'
               )}
             >
               {!dark
@@ -109,9 +106,9 @@ export function TimelineColumn({
           </div>
         </dl>
 
-        <dl className="ml-auto text-right">
+        <dl className="text-left xl:text-right">
           <dt className="text-meta text-faint">gece</dt>
-          <dd className="num text-body-sm font-medium leading-tight text-muted-foreground">
+          <dd className="text-body-sm font-medium leading-tight text-muted-foreground">
             {clock(timeline.from)}
             <span className="mx-1 text-faint">→</span>
             {clock(timeline.to)}
@@ -184,12 +181,14 @@ export function TimelineColumn({
         />
 
         <ConditionCard
-          label="Ay"
-          value={`%${Math.round(moon.illumination * 100)}`}
+          label="Ay Evresi"
+          value={moon.name}
           meter={1 - moon.illumination}
           visual={<MoonDisc illumination={moon.illumination} />}
         />
       </div>
+
+      <MoonPhaseStrip moon={moon} moonTimes={moonTimes} timeZone={timeZone} />
     </div>
   );
 }
@@ -252,9 +251,7 @@ function ConditionCard({
         <span
           className={cn(
             'shrink-0 text-body-sm font-semibold',
-            empty ? 'num text-faint' : 'text-foreground',
-            // Sayısal değerler mono; "Mükemmel"/"Kuru" gibi kelimeler değil.
-            /^[%\d]/.test(value) && 'num'
+            empty ? 'text-faint' : 'text-foreground'
           )}
         >
           {value}
@@ -292,5 +289,45 @@ function MoonDisc({ illumination }: { illumination: number }) {
         fill="#e3b341"
       />
     </svg>
+  );
+}
+
+function MoonPhaseStrip({
+  moon,
+  moonTimes,
+  timeZone,
+}: {
+  moon: MoonPhase;
+  moonTimes: RiseSet;
+  timeZone: string;
+}) {
+  const clock = (date: Date | null) => (date ? formatClock(date, timeZone) : null);
+  const movement = moonTimes.alwaysUp
+    ? 'gece boyu ufkun üstünde'
+    : moonTimes.alwaysDown
+      ? 'ufkun altında'
+      : [
+          moonTimes.rise ? `doğuş ${clock(moonTimes.rise)}` : null,
+          moonTimes.set ? `batış ${clock(moonTimes.set)}` : null,
+        ]
+          .filter(Boolean)
+          .join(' · ');
+
+  return (
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-card border border-border bg-surface-2 px-3.5 py-2.5 text-meta text-muted-foreground">
+      <span className="inline-flex items-center gap-2 text-foreground">
+        <MoonDisc illumination={moon.illumination} />
+        <span className="font-medium">Ay Evresi</span>
+      </span>
+      <span>{moon.name}</span>
+      <span className="text-faint">·</span>
+      <span>%{Math.round(moon.illumination * 100)} aydınlık</span>
+      {movement && (
+        <>
+          <span className="text-faint">·</span>
+          <span>{movement}</span>
+        </>
+      )}
+    </div>
   );
 }

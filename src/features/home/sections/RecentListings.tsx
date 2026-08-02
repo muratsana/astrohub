@@ -48,8 +48,6 @@ export function RecentListings({
       <SectionHeader
         title={title}
         meta={`${listings.length} ilan`}
-        /* Kısaltıldı: satıcı puanı kartın künyesinde görünüyor. */
-        description="Topluluğun ikinci el ekipman ilanları."
         linkTo="/ilanlar"
         linkLabel="Tüm ilanlar"
       />

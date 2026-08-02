@@ -5,21 +5,16 @@ import { Topbar } from './Topbar';
 import { Footer } from './Footer';
 import { MobileNav } from './MobileNav';
 import { NavDrawer } from './NavDrawer';
-import { RadioDock } from '@/features/radio/RadioDock';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { isPreviewEditorEnabled } from '@/features/preview-editor/PreviewEditorContext';
 import { AnnouncementBar } from '@/features/site/AnnouncementBar';
 import { MaintenanceGate } from '@/features/site/MaintenanceGate';
-import { useFlag } from '@/features/site/SiteConfigContext';
 
 /**
  * UYGULAMA KABUĞU — Rasathane Terminali.
  *
  * Yapışkan başlık iki katmandır: gökyüzü durum çubuğu + navigasyon. Sağ
  * enstrüman rayı yoktur (o karar geri alındı) — içerik tam genişlikte akar.
- *
- * Radyo rıhtımı da kabuk seviyesindedir; `Outlet`'in dışında olduğu için
- * sayfa değişimi yayını kesmez.
  *
  * Komut paleti tüm modüllerin verisini indeksler; ilk yüklemede indirilmesi
  * gereksiz ağırlık olur (§16.4), bu yüzden yalnızca açıldığında yüklenir.
@@ -46,11 +41,6 @@ const PreviewEditorPanel = lazy(() =>
 export function AppShell() {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
-  /* Rıhtım `radyo_acik` bayrağına bağlı (§13.2): kapatıldığında oynatıcı
-     kabuktan tamamen kalkıyor — gizlenmiyor, hiç kurulmuyor. Gizlemek
-     `<audio>` öğesini ayakta bırakır ve kapalı radyo çalmaya devam
-     ederdi. */
-  const radyoAcik = useFlag('radyo_acik');
 
   const openPalette = useCallback(() => setPaletteOpen(true), []);
   const closePalette = useCallback(() => setPaletteOpen(false), []);
@@ -115,16 +105,6 @@ export function AppShell() {
 
         <Footer />
 
-        {/*
-          Rıhtım router'ın dışında yaşıyor; oradaki bir hatayı rota hata
-          sınırı yakalayamaz ve köke çıkıp tüm uygulamayı beyaz ekrana
-          düşürür. Yerel sınır, hatayı yalnızca rıhtıma mal eder.
-        */}
-        {radyoAcik && (
-          <ErrorBoundary label="RadioDock">
-            <RadioDock />
-          </ErrorBoundary>
-        )}
         <MobileNav onOpenNav={openNav} />
 
         <NavDrawer

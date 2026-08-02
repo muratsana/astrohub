@@ -128,6 +128,30 @@ function useMinuteTick(): Date {
   return now;
 }
 
+export function timelineClockPosition(
+  timeline: Pick<NightTimeline, 'from' | 'to'>,
+  now: Date
+): number | null {
+  if (!timeline.from || !timeline.to) return null;
+
+  const from = timeline.from.getTime();
+  const to = timeline.to.getTime();
+
+  for (const edge of [timeline.from, timeline.to]) {
+    const candidate = new Date(edge);
+    candidate.setHours(
+      now.getHours(),
+      now.getMinutes(),
+      now.getSeconds(),
+      now.getMilliseconds()
+    );
+    const value = candidate.getTime();
+    if (value >= from && value <= to) return (value - from) / (to - from);
+  }
+
+  return null;
+}
+
 export function useTonight(offsetDays = 0): TonightData {
   const { location } = useLocationContext();
   const now = useMinuteTick();
@@ -236,13 +260,8 @@ export function useTonight(offsetDays = 0): TonightData {
    * ile birlikte hareket etmesi gereken tek şey bu bölme.
    */
   const nowAt = useMemo(() => {
-    if (!timeline.from || !timeline.to) return null;
-    const from = timeline.from.getTime();
-    const to = timeline.to.getTime();
-    const value = now.getTime();
-    if (value < from || value > to) return null;
-    return (value - from) / (to - from);
-  }, [timeline.from, timeline.to, now]);
+    return timelineClockPosition(timeline, now);
+  }, [timeline, now]);
 
   const dateLabel = useMemo(
     () =>

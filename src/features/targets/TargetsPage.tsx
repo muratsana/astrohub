@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { Container } from '@/components/ui/Container';
 import { Input } from '@/components/ui/Input';
-import { Badge } from '@/components/ui/Badge';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { FilterBar, FilterCell, filterControlClass } from '@/components/ui/FilterBar';
@@ -24,13 +23,6 @@ import { targets, targetKindLabels } from './data';
 import { isMovingKind, type TargetKind } from '@/domain/targets/derive';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
-
-/** Zorluk derecesinin rozet tonu — kolay yeşil, zor kırmızı. */
-function difficultyTone(difficulty: string) {
-  if (difficulty === 'Kolay') return 'success' as const;
-  if (difficulty === 'Orta') return 'primary' as const;
-  return 'danger' as const;
-}
 
 /**
  * Astronomik hedefler kataloğu (§8.2).
@@ -88,7 +80,7 @@ export function TargetsPage() {
           description={`Messier kataloğunun tamamı, popüler NGC/IC/Sharpless hedefleri ve güneş sistemi — ${targets.length} kayıt. Görünürlük penceresi, önerilen odak ve filtre önerisi ölçülen koordinat ve parlaklıktan hesaplanır.`}
         />
 
-        <FilterBar activeCount={ex.chips.length} columns={4}>
+        <FilterBar activeCount={ex.chips.length} columns={3}>
           <FilterCell label="Ara" htmlFor="target-search" className="sm:col-span-2">
             <Input
               id="target-search"
@@ -115,21 +107,6 @@ export function TargetsPage() {
               ))}
             </select>
           </FilterCell>
-          <FilterCell label="Zorluk" htmlFor="target-difficulty">
-            <select
-              id="target-difficulty"
-              value={ex.query.facets.zorluk?.[0] ?? 'hepsi'}
-              onChange={(e) =>
-                tekSec('zorluk', e.target.value)
-              }
-              className={filterControlClass}
-            >
-              <option value="hepsi">Hepsi</option>
-              <option value="Kolay">Kolay</option>
-              <option value="Orta">Orta</option>
-              <option value="Zor">Zor</option>
-            </select>
-          </FilterCell>
         </FilterBar>
 
         <ActiveFilters
@@ -152,7 +129,7 @@ export function TargetsPage() {
         {result.length === 0 ? (
           <EmptyState
             message="Eşleşen hedef yok"
-            hint="Katalog kodu (M 31), alias (NGC 224), Türkçe ad (Rozet) veya takımyıldız adıyla deneyin. Tür ve zorluk filtrelerini gevşetmeyi de deneyebilirsiniz."
+            hint="Katalog kodu (M 31), alias (NGC 224), Türkçe ad (Rozet) veya takımyıldız adıyla deneyin. Tür filtresini gevşetmeyi de deneyebilirsiniz."
           />
         ) : (
           <CardGrid view={view}>
@@ -182,12 +159,6 @@ function TargetCard({
   target: (typeof targets)[number];
   variant: 'grid' | 'list';
 }) {
-  const difficulty = (
-    <Badge tone={difficultyTone(t.difficulty)} className="bg-background/85">
-      {t.difficulty}
-    </Badge>
-  );
-
   if (variant === 'list') {
     return (
       <ContentCard to={`/hedef/${t.slug}`} variant="list">
@@ -200,7 +171,6 @@ function TargetCard({
             <span className="truncate font-display text-body-sm font-bold text-foreground transition-colors group-hover:text-primary">
               {t.catalog}
             </span>
-            {difficulty}
           </div>
           <p className="mt-0.5 truncate text-meta text-muted-foreground">
             {t.name}
@@ -219,7 +189,7 @@ function TargetCard({
 
   return (
     <ContentCard to={`/hedef/${t.slug}`}>
-      <ContentCardMedia flag={difficulty} fieldOfView={t.bestMonths}>
+      <ContentCardMedia fieldOfView={t.bestMonths}>
         <StarField seed={t.slug} tint={tintFor(t.kind)} />
       </ContentCardMedia>
 

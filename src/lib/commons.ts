@@ -73,6 +73,11 @@ export const deepSkyImages: Record<string, CommonsCredit> = {
     credit: 'Wikimedia Commons — NGC 7000 (Hubble paleti)',
     licence: 'CC BY-SA 4.0',
   },
+  ngc6888: {
+    url: commonsImage('NGC 6888.png'),
+    credit: 'Wikimedia Commons — NGC 6888',
+    licence: 'CC0 1.0',
+  },
   'ngc2237-rozet': {
     url: commonsImage('Rosette Nebula NGC 2237 - C49.png'),
     credit: 'Wikimedia Commons — Rozet Bulutsusu',

@@ -56,8 +56,8 @@ describe('TonightPanel · zaman kolonu', () => {
   it('karanlık penceresini ve gece aralığını gösteriyor', () => {
     renderPanel();
     expect(screen.getByText(/karanlık penceresi/i)).toBeInTheDocument();
-    expect(screen.getByText(/^süre$/i)).toBeInTheDocument();
-    expect(screen.getByText(/^aysız$/i)).toBeInTheDocument();
+    expect(screen.getByText(/^Toplam Süre$/i)).toBeInTheDocument();
+    expect(screen.getByText(/^Aysız Pencere$/i)).toBeInTheDocument();
   });
 
   /*
@@ -84,10 +84,14 @@ describe('TonightPanel · zaman kolonu', () => {
    * dolu olmalı; "—" çıkması, havadan bağımsız bir değerin havaya
    * bağlanmış olması demektir.
    */
-  it('ay değeri hava servisinden bağımsız hesaplanıyor', () => {
+  it('ay evresi hava servisinden bağımsız hesaplanıyor', () => {
     renderPanel();
-    const card = screen.getByText(/^ay$/i).closest('div');
-    expect(within(card!).getByText(/^%\d+$/)).toBeInTheDocument();
+    const card = screen.getAllByText(/^Ay Evresi$/i)[0].closest('div');
+    expect(
+      within(card!).getByText(
+        /Yeni Ay|İlk Hilal|İlk Dördün|Şişkin Ay|Dolunay|Son Şişkin|Son Dördün|Son Hilal/i
+      )
+    ).toBeInTheDocument();
   });
 });
 

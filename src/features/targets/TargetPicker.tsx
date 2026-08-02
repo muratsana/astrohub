@@ -217,11 +217,10 @@ export function TargetPicker({
           <p className="text-body-sm leading-relaxed text-muted-foreground">
             {selected.description}
           </p>
-          <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 sm:grid-cols-4">
+          <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 sm:grid-cols-3">
             <Fact label="Takımyıldız" value={selected.constellation} />
             <Fact label="Açısal boyut" value={selected.angularSize} />
             <Fact label="Önerilen odak" value={selected.recommendedFocal} />
-            <Fact label="Zorluk" value={selected.difficulty} />
           </dl>
         </div>
       )}

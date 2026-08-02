@@ -72,6 +72,7 @@ export const staticEntries: SitemapEntry[] = [
   { path: '/topluluklar', priority: 0.6, changefreq: 'monthly' },
   { path: '/tesisler', priority: 0.6, changefreq: 'monthly' },
   { path: '/hakkinda', priority: 0.4, changefreq: 'yearly' },
+  { path: '/iletisim', priority: 0.3, changefreq: 'yearly' },
   { path: '/kvkk', priority: 0.3, changefreq: 'yearly' },
   { path: '/kullanim-kosullari', priority: 0.3, changefreq: 'yearly' },
 ];

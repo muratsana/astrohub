@@ -80,6 +80,15 @@ export function ImageIcon(props: IconProps) {
   );
 }
 
+export function CopyIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <rect x="8" y="8" width="11" height="11" rx="1.5" />
+      <path d="M5 15.5V6.5A1.5 1.5 0 0 1 6.5 5h9" />
+    </svg>
+  );
+}
+
 export function MapIcon(props: IconProps) {
   return (
     <svg {...base(props)}>

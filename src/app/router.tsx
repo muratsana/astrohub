@@ -584,6 +584,12 @@ export const appRoutes = [
           named(() => import('@/features/static/AboutPage'), 'AboutPage')
         ),
       },
+      {
+        path: 'iletisim',
+        element: route(
+          named(() => import('@/features/static/ContactPage'), 'ContactPage')
+        ),
+      },
 
       /* ═════════════ ESKİ ADRESLER ═════════════
        * Modül adları değişti; eski yollar kalıcı olarak yönlendirilir.

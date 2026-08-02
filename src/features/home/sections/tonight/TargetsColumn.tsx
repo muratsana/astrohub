@@ -33,7 +33,7 @@ import type { TonightTarget } from './useTonight';
  */
 
 /** Kolonun gösterdiği satır sayısı. */
-const ROWS = 6;
+const ROWS = 9;
 type SortKey = 'peak' | 'altitude';
 type SortDir = 'asc' | 'desc';
 
@@ -91,7 +91,7 @@ export function TargetsColumn({ ranked, timeZone, onMark }: Props) {
     <div className="flex h-full flex-col gap-3.5 p-5">
       <div className="grid grid-cols-[1.5rem_minmax(0,1fr)_4.75rem_6rem] items-end gap-x-2.5">
         <h3 className="col-span-2 text-body-sm font-semibold text-foreground">
-          Bu gece yüksek
+          Bu Gece Yüksek Objeler
         </h3>
         <SortButton
           active={sort.key === 'peak'}
@@ -243,7 +243,7 @@ function TargetRow({
         to={`/hedef/${target.slug}`}
         {...mark}
         className={cn(
-          'grid grid-cols-[1.5rem_minmax(0,1fr)_4.75rem_6rem] items-center gap-x-2.5 rounded-card border px-2 py-2 transition-colors',
+          'grid grid-cols-[1.5rem_minmax(0,1fr)_4.75rem_6rem] items-center gap-x-2.5 rounded-card border px-2 py-1.5 transition-colors',
           index === 0
             ? 'border-cold/25 bg-cold/8 hover:bg-cold/12'
             : 'border-transparent hover:bg-surface-2'

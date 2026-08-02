@@ -260,7 +260,7 @@ export function NightTimelineChart({
       <div
         role="img"
         aria-label={summary}
-        className="relative h-[46px] overflow-hidden rounded-card border border-border-strong lg:h-[58px]"
+        className="relative h-[64px] overflow-hidden rounded-card border border-border-strong lg:h-[82px]"
         style={{
           background:
             'linear-gradient(90deg, #4f6eb9 0%, #1f2f59 23%, #070a13 48%, #070a13 58%, #1f2f59 78%, #4f6eb9 100%)',
@@ -443,18 +443,16 @@ export function NightTimelineChart({
 
       {/* Lejant: renkleri isimlendirmeden çubuk okunamaz. */}
       <ul className="mt-2 flex flex-wrap items-center gap-x-3.5 gap-y-1 text-meta text-faint">
-        {(['civil', 'nautical', 'astronomical', 'dark'] as SegmentKind[]).map(
-          (kind) => (
-            <li key={kind} className="inline-flex items-center gap-1.5">
-              <span
-                aria-hidden
-                className="h-[9px] w-[9px] rounded-card border border-border"
-                style={{ background: SEGMENT_FILL[kind] }}
-              />
-              {SEGMENT_LABEL[kind]}
-            </li>
-          )
-        )}
+        {(['civil', 'astronomical', 'dark'] as SegmentKind[]).map((kind) => (
+          <li key={kind} className="inline-flex items-center gap-1.5">
+            <span
+              aria-hidden
+              className="h-[9px] w-[9px] rounded-card border border-border"
+              style={{ background: SEGMENT_FILL[kind] }}
+            />
+            {SEGMENT_LABEL[kind]}
+          </li>
+        ))}
         <li className="inline-flex items-center gap-1.5">
           <span
             aria-hidden

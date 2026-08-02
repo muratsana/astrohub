@@ -2,6 +2,7 @@ import { Link } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { Badge } from '@/components/ui/Badge';
+import { CalendarIcon } from '@/components/ui/icons';
 import { useEventCatalog } from '@/services/content/events';
 import { eventTypeLabels, type AstroEvent } from '@/features/events/types';
 
@@ -68,11 +69,15 @@ function EventRow({ event }: { event: AstroEvent }) {
       className="group flex items-center gap-3 px-3 py-3 transition-colors hover:bg-surface-2 sm:gap-4 sm:px-4"
     >
       {/* Tarih bloğu — sabit genişlik, satırlar arası dikey hizayı tutar. */}
-      <span className="tabular flex w-11 shrink-0 flex-col items-center leading-none">
-        <span className="font-display type-panel font-bold text-foreground">
+      <span className="relative flex h-12 w-12 shrink-0 flex-col items-center justify-center overflow-hidden rounded-card border border-border bg-background leading-none">
+        <CalendarIcon
+          aria-hidden
+          className="absolute inset-0 m-auto h-9 w-9 text-white/10"
+        />
+        <span className="relative font-display type-panel font-bold text-foreground">
           {date.toLocaleDateString('tr-TR', { day: '2-digit' })}
         </span>
-        <span className="mt-1 text-meta text-muted-foreground">
+        <span className="relative mt-1 text-meta text-muted-foreground">
           {date.toLocaleDateString('tr-TR', { month: 'short' })}
         </span>
       </span>

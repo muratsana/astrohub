@@ -1,7 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { Container } from '@/components/ui/Container';
-import { Button } from '@/components/ui/Button';
 import { useLocationContext } from '@/features/location/LocationContext';
 import { LocationPicker } from '@/features/location/LocationPicker';
 import { useTheme } from '@/features/theme/ThemeContext';
@@ -50,11 +49,7 @@ const GECE_PARAM = 'gece';
  * kolonların arasında bir saç teli çizgi çıkıyor, fazlası çıkmıyor.
  */
 export function TonightPanel() {
-  const {
-    permission,
-    shouldOfferGeolocation,
-    requestDeviceLocation,
-  } = useLocationContext();
+  const { permission } = useLocationContext();
   const { theme } = useTheme();
 
   /*
@@ -181,24 +176,17 @@ export function TonightPanel() {
         <div className="overflow-hidden rounded-card border border-border-strong bg-border">
           <div className="bg-background p-3 sm:p-4">
             <div className="grid gap-3 xl:grid-cols-[minmax(220px,280px)_minmax(0,1fr)] xl:items-center">
-              <div className="min-w-0">
+              <div
+                className="min-w-0"
+                title={
+                  permission === 'denied'
+                    ? 'Konum izni kapalı; seçili şehir kullanılıyor.'
+                    : undefined
+                }
+              >
                 <div className="flex flex-wrap items-center gap-2">
                   <LocationPicker variant="panel" />
-                  {shouldOfferGeolocation && (
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      onClick={requestDeviceLocation}
-                    >
-                      Konumumu kullan
-                    </Button>
-                  )}
                 </div>
-                {permission === 'denied' && (
-                  <p className="mt-2 text-meta leading-relaxed text-warning">
-                    Konum izni kapalı; seçili şehir kullanılıyor.
-                  </p>
-                )}
               </div>
 
               <div className="min-w-0">
@@ -266,8 +254,7 @@ export function TonightPanel() {
                 moon={tonight.moon}
                 moonTimes={tonight.moonTimes}
                 conditions={tonight.conditions}
-                /* Gelecekteki bir gecede "şu an" diye bir nokta yok. */
-                nowAt={offsetDays === 0 ? tonight.nowAt : null}
+                nowAt={tonight.nowAt}
                 markAt={markAt}
                 timeZone={tonight.timeZone}
               />

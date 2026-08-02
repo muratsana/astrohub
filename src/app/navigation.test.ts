@@ -56,7 +56,7 @@ describe('navigasyon bağlantıları', () => {
   });
 
   it('footer hukuki bağlantıları route edilmiştir', () => {
-    for (const path of ['/kvkk', '/kullanim-kosullari', '/hakkinda']) {
+    for (const path of ['/kvkk', '/kullanim-kosullari', '/hakkinda', '/iletisim']) {
       expect(isRouted(path)).toBe(true);
     }
   });

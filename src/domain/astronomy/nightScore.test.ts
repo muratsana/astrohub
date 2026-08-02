@@ -136,16 +136,31 @@ describe('nightScore — kırılım ile toplam tutarlı', () => {
    * Toplamı ve çubukları ayrı yerlerde hesaplamak, arayüzde "92" yazarken
    * altındaki dört çubuğun başka bir şey söylemesi demekti.
    */
-  it('her satır 0–100 aralığında ve beş satır var', () => {
+  it('her satır 0–100 aralığında ve hesap girdileri görünür', () => {
     const score = nightScore(IDEAL);
-    /* Açıklık ve şeffaflık AYRI satırlar: biri bulut, diğeri aerosol. */
-    expect(score.rows).toHaveLength(5);
+    expect(score.rows.map((row) => row.key)).toEqual([
+      'cloudCover',
+      'clarity',
+      'transparency',
+      'seeing',
+      'darkness',
+      'moon',
+      'comfort',
+    ]);
     for (const row of score.rows) {
       if (row.value !== null) {
         expect(row.value).toBeGreaterThanOrEqual(0);
         expect(row.value).toBeLessThanOrEqual(100);
       }
     }
+  });
+
+  it('bulut örtüsü gerçek yüzdeyi, çubuk ise açıklığı gösteriyor', () => {
+    const row = nightScore(at({ cloudCover: 64 })).rows.find(
+      (r) => r.key === 'cloudCover'
+    );
+    expect(row?.value).toBe(64);
+    expect(row?.barValue).toBe(36);
   });
 
   it('toplam hiçbir koşulda 0–100 dışına çıkmıyor', () => {

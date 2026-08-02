@@ -154,13 +154,13 @@ export function bestMonthsFromRa(raHours: number): string {
   return start === end ? MONTHS[start] : `${MONTHS[start]} – ${MONTHS[end]}`;
 }
 
-/** "12.345" saat → "12sa 20dk 42sn". */
+/** "12.345" saat → "12ʰ 20ᵐ 42ˢ". */
 export function formatRa(raHours: number): string {
   const total = Math.round(raHours * 3600);
   const h = Math.floor(total / 3600);
   const m = Math.floor((total % 3600) / 60);
   const s = total % 60;
-  return `${String(h).padStart(2, '0')}sa ${String(m).padStart(2, '0')}dk ${String(s).padStart(2, '0')}sn`;
+  return `${String(h).padStart(2, '0')}ʰ ${String(m).padStart(2, '0')}ᵐ ${String(s).padStart(2, '0')}ˢ`;
 }
 
 /** "+41.269" derece → "+41° 16′". */

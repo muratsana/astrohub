@@ -19,12 +19,18 @@ export function Footer() {
     `navigation.ts`e taşındı ve tabloya tohumlandı — yedek olarak orada duruyor.
   */
   const legal = useMenu('footer');
+  const hasContact = legal.some((item) => item.path === '/iletisim');
 
   return (
     <footer className="mt-12 border-t border-border bg-surface-1">
       <Container className="py-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <Logo />
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <Logo />
+            <p className="text-meta tracking-[0.03em] text-faint">
+              © {new Date().getFullYear()} Astrohub
+            </p>
+          </div>
 
           <nav
             aria-label="Kurumsal"
@@ -44,15 +50,15 @@ export function Footer() {
                 {item.label}
               </Link>
             ))}
+            {!hasContact && (
+              <Link
+                to="/iletisim"
+                className="inline-block rounded-card border border-border px-2.5 py-1 text-muted-foreground transition-colors hover:border-primary hover:text-foreground"
+              >
+                İletişim
+              </Link>
+            )}
           </nav>
-        </div>
-
-        <div className="mt-5 flex flex-col gap-2 border-t border-border pt-4 text-meta tracking-[0.03em] text-faint sm:flex-row sm:items-center sm:justify-between">
-          <p className="tabular">© {new Date().getFullYear()} Astrohub</p>
-
-          <p className="hidden lg:block">
-            Gökyüzü verisi istemcide hesaplanır
-          </p>
         </div>
       </Container>
     </footer>

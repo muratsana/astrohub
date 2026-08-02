@@ -52,6 +52,9 @@ export function Logo() {
         <span className="font-bold">Astro</span>
         <span className="font-normal text-primary">hub</span>
       </span>
+      <span className="hidden whitespace-nowrap rounded border border-border px-1.5 py-0.5 text-meta font-medium uppercase leading-none tracking-[0.08em] text-muted-foreground min-[760px]:inline">
+        (Beta test yayını)
+      </span>
     </Link>
   );
 }

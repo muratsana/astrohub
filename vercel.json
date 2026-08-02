@@ -345,6 +345,10 @@
       "destination": "/app.html"
     },
     {
+      "source": "/iletisim",
+      "destination": "/app.html"
+    },
+    {
       "source": "/isparta-astronomi-etkinlikleri",
       "destination": "/app.html"
     },

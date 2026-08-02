@@ -195,7 +195,7 @@ function ScoreBlock({
                       ? 'bg-warning'
                       : 'bg-success'
                 )}
-                style={{ width: `${row.value ?? 0}%` }}
+                style={{ width: `${row.barValue ?? row.value ?? 0}%` }}
               />
             </dd>
             <dd

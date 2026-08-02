@@ -43,10 +43,19 @@
 
 /** Skor kırılımının tek satırı. */
 export interface ScoreRow {
-  key: 'clarity' | 'transparency' | 'seeing' | 'darkness' | 'comfort';
+  key:
+    | 'cloudCover'
+    | 'clarity'
+    | 'transparency'
+    | 'seeing'
+    | 'darkness'
+    | 'moon'
+    | 'comfort';
   label: string;
   /** 0–100; ölçülemeyen bileşende `null`. */
   value: number | null;
+  /** Görsel çubuğun iyiye giden değeri; verilmezse `value` kullanılır. */
+  barValue?: number | null;
   /** Çubuğun rengi — uyarı eşiğinin altındakiler turuncu. */
   tone: 'good' | 'warn';
 }
@@ -304,6 +313,13 @@ export function nightScore(
 
   const rows: ScoreRow[] = [
     {
+      key: 'cloudCover',
+      label: 'Bulut örtüsü',
+      value: Math.round(inputs.cloudCover),
+      barValue: Math.round(clarity),
+      tone: toneFor(clarity),
+    },
+    {
       key: 'clarity',
       label: 'Açıklık',
       value: Math.round(clarity),
@@ -328,8 +344,15 @@ export function nightScore(
       tone: toneFor(darkness),
     },
     {
+      key: 'moon',
+      label: 'Ay aydınlığı',
+      value: Math.round(inputs.moonIllumination * 100),
+      barValue: Math.round(100 - inputs.moonIllumination * 100),
+      tone: toneFor(100 - inputs.moonIllumination * 100),
+    },
+    {
       key: 'comfort',
-      label: 'Rüzgâr & nem',
+      label: 'Rüzgâr & çiy',
       value: Math.round(comfort),
       tone: toneFor(comfort),
     },

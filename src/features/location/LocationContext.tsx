@@ -368,9 +368,9 @@ export function LocationProvider({ children }: { children: ReactNode }) {
 
     setModeState((s) => reduceLocationMode(s, { type: 'REQUEST_AUTO' }));
     setPermission('pending');
-    navigator.geolocation.getCurrentPosition(
-      ({ coords }) => {
-        const { latitude, longitude } = coords;
+
+    const onSuccess = ({ coords }: GeolocationPosition) => {
+      const { latitude, longitude } = coords;
         /*
          * KONUM ÖNCE, ETİKET SONRA. Hesaplar koordinatı hemen kullanmalı;
          * il adını beklemek "bu gece"yi bir tur boyunca varsayılan şehirde
@@ -382,24 +382,24 @@ export function LocationProvider({ children }: { children: ReactNode }) {
           longitude,
           timeZone: TURKEY_TIME_ZONE,
           source: 'device',
-        };
-        setLocation(next);
-        setModeState((s) =>
-          reduceLocationMode(s, {
-            type: 'GPS_OK',
-            fix: { label: DEVICE_LABEL, latitude, longitude },
-          })
-        );
-        setPermission('granted');
-        writeStored({
-          source: 'device',
-          latitude,
-          longitude,
-          label: DEVICE_LABEL,
-          permission: 'granted',
-        });
+      };
+      setLocation(next);
+      setModeState((s) =>
+        reduceLocationMode(s, {
+          type: 'GPS_OK',
+          fix: { label: DEVICE_LABEL, latitude, longitude },
+        })
+      );
+      setPermission('granted');
+      writeStored({
+        source: 'device',
+        latitude,
+        longitude,
+        label: DEVICE_LABEL,
+        permission: 'granted',
+      });
 
-        void geocoder.resolve(latitude, longitude).then(async (match) => {
+      void geocoder.resolve(latitude, longitude).then(async (match) => {
           /* Eşleşme yoksa etiket "Cihaz konumu" kalıyor — sınır ötesinde
              ya da liste okunamadığında il adı uydurulmuyor. */
           if (!match) return;
@@ -453,34 +453,54 @@ export function LocationProvider({ children }: { children: ReactNode }) {
            * dışarıya bir şey söylemez.
            */
           if (ilce) yaz(`${match.label} / ${ilce}`, ilce);
-        });
-      },
-      (err) => {
+      });
+    };
+
+    const onFailure = (err: GeolocationPositionError) => {
         /*
          * ÜÇ HATA AYRI. Eski kod hepsini 'denied' sayıyordu; zaman aşımı
          * yaşayan kullanıcıya "izni açın" demek onu olmayan bir ayarı
          * aramaya gönderirdi.
          */
-        setModeState((s) =>
-          reduceLocationMode(
-            s,
-            err.code === err.PERMISSION_DENIED
-              ? { type: 'GPS_DENIED' }
-              : err.code === err.POSITION_UNAVAILABLE
-                ? { type: 'GPS_ERROR', message: 'Konum servisi yanıt vermedi.' }
-                : { type: 'GPS_ERROR', message: 'Konum alınamadı, tekrar deneyin.' }
-          )
-        );
-        setPermission(err.code === err.PERMISSION_DENIED ? 'denied' : 'unasked');
+      setModeState((s) =>
+        reduceLocationMode(
+          s,
+          err.code === err.PERMISSION_DENIED
+            ? { type: 'GPS_DENIED' }
+            : err.code === err.POSITION_UNAVAILABLE
+              ? { type: 'GPS_ERROR', message: 'Konum servisi yanıt vermedi.' }
+              : { type: 'GPS_ERROR', message: 'Konum alınamadı, tekrar deneyin.' }
+        )
+      );
+      setPermission(err.code === err.PERMISSION_DENIED ? 'denied' : 'unasked');
+      if (err.code === err.PERMISSION_DENIED) {
         writeStored({
-          source: 'city',
-          cityId: DEFAULT_CITY_ID,
-          permission: err.code === err.PERMISSION_DENIED ? 'denied' : 'unasked',
+          ...(readStored() ?? {
+            source: 'city',
+            cityId: location.cityId ?? DEFAULT_CITY_ID,
+          }),
+          permission: 'denied',
+        });
+      }
+    };
+
+    const geo = navigator.geolocation;
+    geo.getCurrentPosition(
+      onSuccess,
+      (err) => {
+        if (err.code === err.PERMISSION_DENIED) {
+          onFailure(err);
+          return;
+        }
+        geo.getCurrentPosition(onSuccess, onFailure, {
+          enableHighAccuracy: true,
+          timeout: 20_000,
+          maximumAge: 0,
         });
       },
-      { enableHighAccuracy: false, timeout: 10_000, maximumAge: 600_000 }
+      { enableHighAccuracy: false, timeout: 12_000, maximumAge: 600_000 }
     );
-  }, []);
+  }, [location.cityId]);
 
   /**
    * İZİN ZATEN VERİLMİŞSE KONUMU KENDİLİĞİNDEN AL.
@@ -505,19 +525,36 @@ export function LocationProvider({ children }: { children: ReactNode }) {
     if (!navigator.permissions?.query) return;
     let active = true;
 
+    const applyStatus = (state: PermissionStatus['state']) => {
+      if (state === 'denied') {
+        setPermission((current) =>
+          current === 'unasked' || current === 'dismissed' ? 'denied' : current
+        );
+        return;
+      }
+      if (state === 'prompt') {
+        setPermission((current) =>
+          current === 'pending' ? current : 'unasked'
+        );
+        return;
+      }
+      setPermission('granted');
+      if (
+        location.source === 'default' ||
+        (location.source === 'city' && location.cityId === DEFAULT_CITY_ID)
+      ) {
+        requestDeviceLocation();
+      }
+    };
+
     navigator.permissions
       .query({ name: 'geolocation' })
       .then((status) => {
         if (!active) return;
-        if (status.state === 'denied') {
-          setPermission((current) =>
-            current === 'unasked' ? 'denied' : current
-          );
-          return;
-        }
-        if (status.state === 'granted' && location.source === 'default') {
-          requestDeviceLocation();
-        }
+        applyStatus(status.state);
+        status.onchange = () => {
+          if (active) applyStatus(status.state);
+        };
       })
       .catch(() => {
         // Bazı tarayıcılar geolocation sorgusunu desteklemez — sessiz geç.
@@ -526,7 +563,7 @@ export function LocationProvider({ children }: { children: ReactNode }) {
     return () => {
       active = false;
     };
-  }, [location.source, requestDeviceLocation]);
+  }, [location.cityId, location.source, requestDeviceLocation]);
 
   const dismissGeolocationOffer = useCallback(() => {
     setPermission('dismissed');

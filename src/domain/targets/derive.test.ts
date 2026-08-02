@@ -60,7 +60,10 @@ describe('formatRa / formatDec', () => {
     // Biçimlendirilen metnin geri okunabilmesi şart: planlayıcı ve
     // "bu gece" sayfası hedefin yerini bu metinden hesaplıyor.
     const raHours = 5.588;
-    const parsedDegrees = parseRa(formatRa(raHours));
+    const formatted = formatRa(raHours);
+    const parsedDegrees = parseRa(formatted);
+    expect(formatted).toMatch(/ʰ .*ᵐ .*ˢ/);
+    expect(formatted).not.toMatch(/sa|dk|sn/);
     expect(parsedDegrees / 15).toBeCloseTo(raHours, 3);
   });
 

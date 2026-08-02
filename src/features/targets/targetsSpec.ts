@@ -28,7 +28,6 @@ export const targetsSpec: ExplorerSpec<CelestialTarget> = {
       valueOf: (t) => t.kind,
       labelOf: (v) => targetKindLabels[v as keyof typeof targetKindLabels] ?? v,
     },
-    { param: 'zorluk', label: 'Zorluk', valueOf: (t) => t.difficulty },
     { param: 'takimyildiz', label: 'Takımyıldız', valueOf: (t) => t.constellation },
   ],
 
