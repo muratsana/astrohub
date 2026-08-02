@@ -40,7 +40,6 @@ interface Props {
 export function TimelineColumn({
   timeline,
   moon,
-  moonTimes,
   conditions,
   nowAt,
   markAt,
@@ -54,14 +53,6 @@ export function TimelineColumn({
 
   const weather = conditions.data;
   const dew = weather ? dewRisk(weather.temperature, weather.dewPoint) : null;
-
-  /** Servise ulaşılamadığında kartların ortak alt metni. */
-  const hint =
-    conditions.status === 'loading' || conditions.status === 'idle'
-      ? 'alınıyor…'
-      : conditions.status === 'offline'
-        ? 'önizlemede dış servis kapalı'
-        : 'servise ulaşılamadı';
 
   return (
     <div className="flex flex-col gap-5 p-5">
@@ -139,31 +130,18 @@ export function TimelineColumn({
         <ConditionCard
           label="Bulut örtüsü"
           value={weather ? `%${Math.round(weather.cloudCover)}` : '—'}
-          hint={weather ? cloudHint(weather) : hint}
           meter={weather ? 1 - weather.cloudCover / 100 : null}
         />
 
         <ConditionCard
           label="Seeing"
           value={weather?.seeing ? seeingLabel(weather.seeing.index) : '—'}
-          hint={
-            weather
-              ? weather.seeing
-                ? `tahmin · ${weather.seeing.driver}`
-                : 'üst atmosfer verisi yok'
-              : hint
-          }
           meter={weather?.seeing ? 1 - (weather.seeing.index - 1) / 4 : null}
         />
 
         <ConditionCard
           label="Çiylenme"
           value={dew ? dew.label : '—'}
-          hint={
-            weather
-              ? `çiy ${Math.round(weather.dewPoint)}°C · nem %${Math.round(weather.humidity)}`
-              : hint
-          }
           meter={
             weather
               ? Math.min(
@@ -191,13 +169,6 @@ export function TimelineColumn({
         <ConditionCard
           label="Rüzgâr"
           value={weather ? `${Math.round(weather.windSpeed)} km/sa` : '—'}
-          hint={
-            weather
-              ? weather.windGust !== null
-                ? `hamle ${Math.round(weather.windGust)} km/sa`
-                : 'hamle verisi yok'
-              : hint
-          }
           /* 30 km/sa üstü pratikte gözlem dışı; ölçek oraya göre. */
           meter={
             weather ? Math.min(1, Math.max(0, 1 - weather.windSpeed / 30)) : null
@@ -207,15 +178,6 @@ export function TimelineColumn({
         <ConditionCard
           label="Sıcaklık"
           value={weather ? `${Math.round(weather.temperature)}°C` : '—'}
-          hint={
-            weather
-              ? weather.apparentTemperature !== null
-                ? /* Gece boyunca sabit duran gözlemcinin dayanma süresini
-                     belirleyen şey yer sıcaklığı değil bu. */
-                  `hissedilen ${Math.round(weather.apparentTemperature)}°C`
-                : 'hissedilen sıcaklık verisi yok'
-              : hint
-          }
           /* Ölçek YOK: sıcaklık "iyi/kötü" değil, giyinme kararı. Uydurma
              bir eşik (kaç derece iyi?) coğrafyaya göre değişir. */
           meter={null}
@@ -224,37 +186,12 @@ export function TimelineColumn({
         <ConditionCard
           label="Ay"
           value={`%${Math.round(moon.illumination * 100)}`}
-          hint={
-            moonTimes.set
-              ? `batar ${clock(moonTimes.set)}`
-              : moonTimes.rise
-                ? `doğar ${clock(moonTimes.rise)}`
-                : moonTimes.alwaysUp
-                  ? 'gece boyunca yukarıda'
-                  : moon.name.toLocaleLowerCase('tr-TR')
-          }
           meter={1 - moon.illumination}
           visual={<MoonDisc illumination={moon.illumination} />}
         />
       </div>
     </div>
   );
-}
-
-function cloudHint(weather: NonNullable<SkyState['data']>): string {
-  if (!weather.layers) return `toplam %${Math.round(weather.cloudCover)}`;
-
-  const parts = [
-    `alçak %${Math.round(weather.layers.low)}`,
-    `orta %${Math.round(weather.layers.mid)}`,
-    `yüksek %${Math.round(weather.layers.high)}`,
-  ];
-
-  if (weather.precipitationProbability !== null) {
-    parts.push(`yağış %${Math.round(weather.precipitationProbability)}`);
-  }
-
-  return parts.join(' · ');
 }
 
 /**
@@ -266,14 +203,12 @@ function cloudHint(weather: NonNullable<SkyState['data']>): string {
 function ConditionCard({
   label,
   value,
-  hint,
   meter,
   visual,
   tone = 'good',
 }: {
   label: string;
   value: string;
-  hint: string;
   meter: number | null;
   visual?: React.ReactNode;
   tone?: 'good' | 'warn';
@@ -292,7 +227,7 @@ function ConditionCard({
         {label}
       </p>
 
-      <span className="row-span-2 flex items-center gap-3">
+      <span className="flex items-center gap-3">
         {meter !== null && (
           <span
             aria-hidden
@@ -326,7 +261,6 @@ function ConditionCard({
         </span>
       </span>
 
-      <p className="mt-0.5 truncate text-meta text-faint">{hint}</p>
     </div>
   );
 }

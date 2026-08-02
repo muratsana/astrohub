@@ -68,8 +68,8 @@ const conditions: SkyState = {
   },
 };
 
-describe('TimelineColumn · bulut katmanları', () => {
-  it('toplam bulutla birlikte orta katmanı da gösteriyor', () => {
+describe('TimelineColumn · koşul kartları', () => {
+  it('yalnızca ana veri satırlarını gösteriyor', () => {
     render(
       <TimelineColumn
         timeline={timeline}
@@ -83,8 +83,9 @@ describe('TimelineColumn · bulut katmanları', () => {
     );
 
     expect(screen.getByText('%42')).toBeInTheDocument();
-    expect(
-      screen.getByText(/alçak %0 · orta %42 · yüksek %0 · yağış %5/i)
-    ).toBeInTheDocument();
+    expect(screen.queryByText(/alçak %0 · orta %42/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/tahmin · jet/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/çiy 12°C · nem %70/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/hissedilen 18°C/i)).not.toBeInTheDocument();
   });
 });

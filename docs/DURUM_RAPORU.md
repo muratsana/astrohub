@@ -465,7 +465,7 @@ gerçek koda göre hâlâ açıktı.
 | Ortak Explorer Toolbar görsel standardı | Motor var; sayfa yüzeyleri hâlâ farklı yoğunlukta | PARTIAL — Articles görünüm şeridi `ToolBar`a taşındı; Events mode switch ve News/Gallery/Equipment kategori segmentleri ortak yüzeye geçti; select-heavy Explorer sayfalarında kalan toolbar yoğunluğu ayrıca sadeleşecek |
 | `Bu Gece` konum/tarih kontrolü | Konum seçici, ileri/geri okları ve tarih kutusu modül üstünde dağınık görünüyordu | DONE — konum ve 7 günlük gece seçimi panel içine alındı; hafta çizgisi tıklanabilir, eski ok/date input yüzeyi kaldırıldı |
 | `Bu Gece` veri/tekrar metni | Open-Meteo/efemeris künyesi ve `Astrofotoğraf: 34 · zayıf gece` satırı karar metnini tekrarlıyordu | DONE — public UI'dan kaldırıldı; konum + tarih bağlamı karar altında kaldı |
-| Bulut ve hedef tablo tutarlılığı | Orta bulut katmanı gizlendiği için toplam yüzde detayla çelişiyor gibi görünüyordu; hedef başlıkları sıralanamıyordu | DONE — alçak/orta/yüksek/yağış birlikte gösteriliyor; `Zirve` ve `Yükseklik` başlıkları hizalı ve tıklanabilir sıralama kontrolü |
+| Koşul kartı yoğunluğu ve hedef tablo tutarlılığı | Bulut/seeing/çiylenme gibi kartların ikinci satırları paneli kalabalıklaştırıyordu; hedef başlıkları sıralanamıyordu | DONE — koşul kartlarında yalnızca ana veri satırı kaldı; `Zirve` ve `Yükseklik` başlıkları hizalı ve tıklanabilir sıralama kontrolü |
 | Hero ve footer görsel geri bildirimi | Hero büyük harf aralığı fazla genişti; footer üst menüyü tekrar ediyordu | DONE — hero letter-spacing sıfırlandı; footer’da modül tekrarı kaldırıldı, aynı alana `Hakkında/KVKK/Kullanım Koşulları` taşındı |
 | Karanlık grafiği | Segmentler sert bloklar gibi görünüyordu | DONE — segment geçişleri maskeli bindirme ve üst ışık katmanı ile yumuşatıldı |
 
@@ -494,9 +494,9 @@ gerçek koda göre hâlâ açıktı.
 - `src/features/news/NewsPage.tsx`, `src/features/photos/GalleryPage.tsx`, `src/features/equipment/EquipmentPage.tsx`, `src/features/events/EventsPage.tsx` — kalan Explorer kategori/görünüm segmentleri ortak `SegmentedControl` bileşenine taşındı.
 - `src/features/home/sections/TonightPanel.tsx`, `src/features/home/sections/tonight/nightOffset.ts` — `Bu Gece` konum ve gece seçimi panel içi 7 günlük timeline kontrolüne taşındı.
 - `src/features/home/sections/tonight/DecisionColumn.tsx`, `src/features/home/sections/tonight/useTonight.ts` — tekrar eden astrofotoğraf skoru ve kullanıcıya görünen hava servisi künyesi kaldırıldı.
-- `src/features/home/sections/tonight/TimelineColumn.tsx`, `src/features/home/sections/tonight/NightTimelineChart.tsx` — bulut katman detayı toplamla uyumlu hale getirildi; bulunulan an çizelgede sade dikey imleç oldu.
+- `src/features/home/sections/tonight/TimelineColumn.tsx`, `src/features/home/sections/tonight/NightTimelineChart.tsx` — koşul kartlarındaki ikinci satırlar kaldırıldı; bulunulan an çizelgede sade dikey imleç oldu.
 - `src/features/home/sections/tonight/TargetsColumn.tsx` — `Zirve` ve `Yükseklik` başlıkları hizalı, tıklanabilir sıralama kontrollerine çevrildi.
-- `src/features/home/sections/TonightPanel.test.tsx`, `src/features/home/sections/tonight/DecisionColumn.test.tsx`, `src/features/home/sections/tonight/TimelineColumn.test.tsx` — yeni gece seçici, servis künyesi temizliği, hedef sıralama ve bulut katmanı davranışı testlendi.
+- `src/features/home/sections/TonightPanel.test.tsx`, `src/features/home/sections/tonight/DecisionColumn.test.tsx`, `src/features/home/sections/tonight/TimelineColumn.test.tsx` — yeni gece seçici, servis künyesi temizliği, hedef sıralama ve koşul kartı yoğunluğu testlendi.
 - `src/index.css` — hero başlığındaki geniş harf aralığı kaldırıldı.
 - `src/components/shell/Footer.tsx`, `src/app/navigation.ts`, `src/app/navigation.test.ts`, `src/features/site/navLinks.ts` — footer tekrar eden modül nav yerine kurumsal bağlantıları gösteriyor.
 
