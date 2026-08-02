@@ -127,8 +127,19 @@ export function equatorialToHorizontal(
 
 /* ══════════════════════ Güneş ══════════════════════ */
 
-/** Güneşin görünen ekvatoral konumu (düşük hassasiyet, ±0.01°). */
-export function sunPosition(date: Date): EquatorialCoords {
+/**
+ * Güneşin görünen EKLİPTİK BOYLAMI (λ☉), derece.
+ *
+ * Gökyüzü takviminin çapa noktası: meteor yağmurlarının maksimumu
+ * takvim gününe değil bu açıya bağlı tanımlanır (Perseidler λ☉ = 140.0°).
+ * Sebep artık yıl: aynı λ☉ her yıl birkaç saat kayan bir tarihe denk
+ * gelir, o yüzden "12 Ağustos" yazmak yıllar içinde yanlışa döner.
+ *
+ * `sunPosition` bunu zaten hesaplıyordu ama içeride tutuyordu; ikinci
+ * bir seri yazmak yerine ortak parçaya çıkarıldı — iki kopya arasındaki
+ * en küçük fark, takvimi güneşin kendisinden ayırırdı.
+ */
+export function sunEclipticLongitude(date: Date): number {
   const t = julianCenturies(date);
 
   // Ortalama boylam ve ortalama anomali
@@ -141,7 +152,13 @@ export function sunPosition(date: Date): EquatorialCoords {
     (0.019993 - 0.000101 * t) * Math.sin(2 * m) +
     0.000289 * Math.sin(3 * m);
 
-  const trueLong = (l0 + c) * RAD;
+  return norm360(l0 + c);
+}
+
+/** Güneşin görünen ekvatoral konumu (düşük hassasiyet, ±0.01°). */
+export function sunPosition(date: Date): EquatorialCoords {
+  const t = julianCenturies(date);
+  const trueLong = sunEclipticLongitude(date) * RAD;
   const obliquity = (23.439291 - 0.0130042 * t) * RAD;
 
   const ra = Math.atan2(

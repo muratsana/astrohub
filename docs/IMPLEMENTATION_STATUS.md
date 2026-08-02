@@ -1676,7 +1676,7 @@ karşılaştırma yapılmadan yazılan her şey ikinci bir kopya olurdu.
 |---|---|---|
 | §14.1 Gözlem ve gökyüzü planlama | `/planlayici`, `/bu-gece`, `/hedefler`, `features/sky` | DONE'a yakın — hedef arama, yükseklik grafiği, alacakaranlık, ay ayrımı, favori/gözlem listesi (`0066`), **paylaşılabilir plan** ve **takvime ekleme** (`planShare.ts`) var; kalan tek madde **interaktif gökyüzü haritası** (dış veri/lisans gerektiriyor) |
 | **§14.2 Astrofotoğraf hesaplama** | `/araclar/*` — FOV, pixel scale, mozaik, setup uyumluluk, **poz-plani** | **DONE — bu turda kapandı**: filtre–hedef uyumu, ay/ışık kirliliğine göre çekim planı ve kalibrasyon rehberi `poz-plani` sayfasına eklendi (`filterPlan.ts`, `calibration.ts`; 37 test) |
-| §14.3 Gökyüzü olayları takvimi | `/araclar/takvim`, `events` | PARTIAL — ay fazı ve karanlık takvimi var; **meteor yağmuru**, **tutulma**, **ISS geçişi** yok (dış veri kaynağı gerekiyor) |
+| §14.3 Gökyüzü olayları takvimi | `/araclar/takvim`, `events` | PARTIAL — ay fazı, karanlık takvimi ve **meteor yağmurları** var (`meteorShowers.ts`, 17 test); **tutulma** ve **ISS geçişi** yok. İkisi gerçekten dış kaynak istiyor, meteor İSTEMİYORDU — aşağıda |
 | §14.4 Karanlık gökyüzü haritası | `/saha`, `observing_sites`, ışık kirliliği katmanı | DONE'a yakın — koordinat gizliliği `photo_exact_locations` deseniyle çözülmüş |
 | §14.5 Ekipman envanteri | `/ekipman`, `user_equipment`, `user_setups` | DONE |
 | **§14.6 Gözlem günlüğü** | **`/gunluk`, `observation_logs` (`0064`)** | **DONE — bu turda yazıldı** |
@@ -1820,6 +1820,50 @@ için "50 yerine 200" dört katı emek, iki katı iyileşme demek ve ekran
 bu oranı yazıyor. Formülün yalnızca ilişkisiz gürültü için geçerli
 olduğu da yazılı: sabit desen, amp glow ve ışık sızıntısı yığınlamayla
 gitmez.
+
+### §14.3: "dış veri kaynağı gerekiyor" iki maddede doğru, birinde değildi
+
+Durum kaydı meteor yağmurlarını, tutulmaları ve ISS geçişlerini aynı
+kutuya koymuştu. Üçü aynı şey değil:
+
+· **ISS** — her gün değişen yörünge verisi (TLE). Gerçekten dışarıdan
+  gelmek zorunda.
+· **Tutulma** — Besselian elemanları ya da bir kanon tablosu gerekiyor;
+  düşük hassasiyetli efemerisle güvenilir tutulma zamanı üretilemez ve
+  yanlış dakika, insanları yanlış yere götürür.
+· **Meteor yağmuru** — bir KATALOG. Messier listesi gibi, yıldan yıla
+  değişmeyen referans bilgisi. Dış servis gerekmiyordu.
+
+**Tarih sabit yazılmıyor, HESAPLANIYOR.** "Perseidler 12 Ağustos'ta
+zirve yapar" yaklaşık bir cümle ve yıllar içinde kayıyor. Maksimum bir
+takvim gününe değil Dünya'nın yörüngesindeki bir NOKTAYA bağlı: güneşin
+ekliptik boylamı (λ☉ = 140.0°). Tabloda tarih değil AÇI duruyor; tarih
+her yıl `sunEclipticLongitude`den ikili aramayla geri çözülüyor.
+
+`sunPosition` bu boylamı zaten hesaplıyordu ama içeride tutuyordu.
+İkinci bir seri yazmak yerine ortak parçaya çıkarıldı — iki kopya
+arasındaki en küçük fark, takvimi güneşin kendisinden ayırırdı.
+Efemerisin 31 testi refaktörden sonra da geçiyor.
+
+**Ölçüm gerçek zirvelerle yapıldı** ve hepsi ±1 gün içinde: QUA 3 Ocak,
+LYR 22 Nisan, ETA 6 Mayıs, PER 12 Ağustos, DRA 8 Ekim, ORI 21 Ekim,
+LEO 17 Kasım, GEM 14 Aralık, URS 22 Aralık. Aynı ölçüm ÜÇ farklı yılda
+tekrarlanıyor: sabit tarih yazan bir uygulama tek yılda bu testi
+geçerdi, artık yıl döngüsü üç yılda kaymayı ele veriyor. İki bağımsız
+çapa daha var — ekinoks (λ☉ = 0°) 20 Mart, gündönümü (λ☉ = 90°)
+21 Haziran.
+
+**Asıl soru "ne zaman" değil "bu yıl değer mi".** ZHR 100 olan bir
+yağmur dolunayda pratikte ZHR 10 gibi izleniyor. Takvim satırı üç şeyi
+birden söylüyor: zirve tarihi, o gecenin ay aydınlanması ve radyantın
+kullanıcının konumundan ulaştığı yükseklik. Radyant 10°'nin altında
+kalıyorsa satır bunu yazıyor — güney yarımküre yağmurları Türkiye'den
+zayıf görünüyor ve takvim bunu gizlememeli.
+
+Liste bilinçli KISA (12 kayıt). IMO'nun tam listesi yüzden fazla akım
+içeriyor ve çoğunun ZHR'si 2–3; hepsini göstermek gerçekten fark
+yaratan beş yağmuru gürültüye gömerdi. Eşik ZHR ≥ 5 ya da tarihsel
+fırtına (Drakonidler bu yüzden listede).
 
 ### §14.7: dizin VARDI ama tablosu YOKTU
 
@@ -2177,6 +2221,11 @@ Faz 4'ün "il/ilçe filtresi" satırının ikinci yarısı.
 Edge fonksiyonu canlıya alındı ve uçtan uca ölçüldü; ölçüm iki hata
 buldu ki ikisini de birim test göremezdi (şemada olmayan kolon,
 `rel="self"` iç adresi).
+
+**Faz 11 §14.3'ün meteor ayağı kapandı** (bkz. Faz 11 bölümü): durum
+kaydı bu maddeyi "dış veri kaynağı gerekiyor" diye yazmıştı ve bu
+yanlıştı — yağmur bir katalog, tarih λ☉'den hesaplanıyor. Tutulma ve
+ISS gerçekten dış kaynak istiyor, onlar duruyor.
 
 **Sıradaki iş:** Faz 11'in kalan `PARTIAL` satırları (yukarıdaki liste),
 ardından Faz 12 (organik kullanıcı kazanımı, belge 1350–1419) — tablodaki

@@ -6,6 +6,10 @@ import { Button } from '@/components/ui/Button';
 import { Readout } from '@/components/ui/Readout';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
+import {
+  radiantMaxAltitude,
+  upcomingShowers,
+} from '@/domain/astronomy/meteorShowers';
 import { useLocationContext } from '@/features/location/LocationContext';
 import {
   monthNights,
@@ -65,6 +69,16 @@ export function DarkCalendarPage() {
 
   const weeks = useMemo(() => calendarWeeks(entries), [entries]);
   const best = useMemo(() => bestNights(entries, 3), [entries]);
+
+  /*
+   * METEOR YAĞMURLARI (§14.3) — ay ızgarasından BAĞIMSIZ.
+   *
+   * Kullanıcının gördüğü ay değil BUGÜN çapa: takvimde mart ayına
+   * bakarken de "sıradaki yağmur ne zaman" sorusunun cevabı değişmiyor.
+   * Ayla birlikte kaydırsaydık liste bir gezinme aracına dönüşür, oysa
+   * burada bir HATIRLATMA.
+   */
+  const showers = useMemo(() => upcomingShowers(today, 4), [today]);
 
   const monthlyMoonless = entries.reduce((s, e) => s + e.moonlessMinutes, 0);
   const detail = selected ?? best[0] ?? null;
@@ -212,6 +226,63 @@ export function DarkCalendarPage() {
                   </li>
                 ))}
               </ul>
+            </Panel>
+
+            {/*
+              YAĞMUR SATIRI ÜÇ ŞEYİ BİRDEN SÖYLÜYOR: ne zaman, ay ne
+              kadar dolu, radyant buradan yükseliyor mu. Yalnızca tarih
+              yazmak yarım cevap olurdu — ZHR 100'lük bir yağmur
+              dolunayda onda biri kadar meteor gösteriyor.
+            */}
+            <Panel title="Meteor yağmurları" status="yaklaşan">
+              <ul className="space-y-px">
+                {showers.map((s) => {
+                  const yukseklik = radiantMaxAltitude(
+                    s,
+                    location.latitude,
+                    location.longitude
+                  );
+                  return (
+                    <li
+                      key={`${s.shower.code}-${s.peak.toISOString()}`}
+                      className="flex items-baseline justify-between gap-3 border-b border-border py-2 last:border-0"
+                    >
+                      <span className="min-w-0">
+                        <span className="block truncate text-body-sm text-foreground">
+                          {s.shower.name}
+                        </span>
+                        <span className="text-meta text-muted-foreground">
+                          {s.peak.toLocaleDateString('tr-TR', {
+                            day: 'numeric',
+                            month: 'long',
+                            timeZone: location.timeZone,
+                          })}
+                          {s.shower.zhr !== null && ` · ZHR ${s.shower.zhr}`}
+                          {/* Radyant ufkun altındaysa bu konumdan
+                              İZLENEMEZ ve bunu söylemek zorundayız. */}
+                          {yukseklik < 10 && ' · radyant alçak'}
+                        </span>
+                      </span>
+                      <span
+                        className={`shrink-0 text-meta ${
+                          s.moonVerdict === 'temiz'
+                            ? 'text-primary'
+                            : s.moonVerdict === 'kısmi'
+                              ? 'text-cold'
+                              : 'text-faint'
+                        }`}
+                        title={`Zirve gecesi ay %${Math.round(s.moonIllumination * 100)} dolu`}
+                      >
+                        ay %{Math.round(s.moonIllumination * 100)}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+              <p className="mt-2 text-meta leading-snug text-faint">
+                Zirve tarihi güneşin ekliptik boylamından hesaplanıyor;
+                sabit takvim günü değil, o yüzden her yıl doğru.
+              </p>
             </Panel>
 
             {detail && (
