@@ -41,6 +41,10 @@
       "destination": "/app.html"
     },
     {
+      "source": "/araclar/poz-plani",
+      "destination": "/app.html"
+    },
+    {
       "source": "/araclar/setup-uyumluluk",
       "destination": "/app.html"
     },

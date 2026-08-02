@@ -240,6 +240,12 @@ export const siteMap: NavGroup[] = [
         keywords: ['plan', 'gece planı'],
       },
       {
+        label: 'Poz ve Entegrasyon Planlayıcı',
+        to: '/araclar/poz-plani',
+        description: 'Hedef süreyi kare sayısına, geceye ve depolamaya çevirir',
+        keywords: ['poz', 'entegrasyon', 'kare', 'depolama', 'dither', 'plan'],
+      },
+      {
         label: 'Mozaik Planlayıcı',
         to: '/araclar/mosaic',
         description: 'Çok panelli kadraj planı ve örtüşme hesabı',

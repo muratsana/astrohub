@@ -1346,7 +1346,7 @@ karşılaştırma yapılmadan yazılan her şey ikinci bir kopya olurdu.
 | Bölüm | Karşılık | Durum |
 |---|---|---|
 | §14.1 Gözlem ve gökyüzü planlama | `/planlayici`, `/bu-gece`, `/hedefler`, `features/sky` | PARTIAL — hedef arama, yükseklik grafiği, alacakaranlık, ay ayrımı ve **favori hedef / gözlem listesi** (`0066`) var; **paylaşılabilir plan** ve **takvime ekleme** yok |
-| §14.2 Astrofotoğraf hesaplama | `/araclar/*` — FOV, pixel scale, mozaik, setup uyumluluk | PARTIAL — çekirdek hesaplar test edilmiş durumda; **poz/entegrasyon planı**, **depolama ihtiyacı**, **dither aralığı** yok |
+| §14.2 Astrofotoğraf hesaplama | `/araclar/*` — FOV, pixel scale, mozaik, setup uyumluluk, **poz-plani** | DONE'a yakın — poz/entegrasyon planı, depolama ihtiyacı ve dither aralığı eklendi (`capturePlan.ts`, 17 formül testi); kalan: **filtre–hedef uyumu** ve **kalibrasyon rehberi** (ikisi de içerik işi, hesap değil) |
 | §14.3 Gökyüzü olayları takvimi | `/araclar/takvim`, `events` | PARTIAL — ay fazı ve karanlık takvimi var; **meteor yağmuru**, **tutulma**, **ISS geçişi** yok (dış veri kaynağı gerekiyor) |
 | §14.4 Karanlık gökyüzü haritası | `/saha`, `observing_sites`, ışık kirliliği katmanı | DONE'a yakın — koordinat gizliliği `photo_exact_locations` deseniyle çözülmüş |
 | §14.5 Ekipman envanteri | `/ekipman`, `user_equipment`, `user_setups` | DONE |
@@ -1390,6 +1390,55 @@ talep hiç yok. Talep de temizlenince ölçüm geçti.
 Bu, "politika doğru görünüyor" ile "politika doğru davranıyor"
 arasındaki farkın somut örneği: ölçüm olmasaydı yanlış olan test değil
 varsayımımız olurdu ve bunu hiç öğrenemezdik.
+
+### §14.2: neyin hesaplanacağına da fazın kuralı karar verdi
+
+§14.2 iki şey emrediyor: *"hesapların formüllerini testlerle doğrula"* ve
+*"bilimsel sonucu belirsiz alanlarda kesinlik iddiası kullanma"*. İkisi
+birlikte, neyin hesaplanıp neyin hesaplanmayacağını da belirliyor.
+
+HESAPLANIYOR (aritmetik, tek doğrusu var):
+  · Hedef entegrasyona ulaşmak için filtre başına kare sayısı
+  · Gece başına kullanılabilir süreye göre kaç gece gerektiği
+  · Ham (sıkıştırılmamış) depolama ihtiyacı
+
+HESAPLANMIYOR (tek doğrusu YOK) — ve bu ekranda da yazıyor:
+  · **"Optimum" alt poz süresi.** Gökyüzü parlaklığına, okuma
+    gürültüsüne, f oranına ve montaj takibine bağlı. Kullanıcı kendi
+    süresini giriyor; araç bir sayı ÖNERMİYOR ve önermediğini söylüyor.
+  · **Dither aralığı.** Türetilebileceği bir denklem yok; yerleşik
+    pratik bir ARALIK döndürülüyor (2–5 kare gibi), tek sayı değil.
+  · **Sıkıştırılmış dosya boyutu.** Kazanç hedefin gürültüsüne bağlı;
+    sabit çarpan (%30 gibi) yazmak uydurma olurdu. Ham boyut veriliyor
+    ve bunun ÜST SINIR olduğu söyleniyor.
+
+Aracın ne YAPMADIĞINI söylemek, yaptığını söylemek kadar önemli:
+kullanıcı poz süresini girerken "acaba doğru mu" diye düşünüyor ve
+aracın ona bir sayı önermediğini bilmesi gerekiyor.
+
+### Hesap `integration.ts`e eklenmedi — paket sebebiyle
+
+Mevcut `domain/photography/integration.ts` ÇEKİLMİŞ olanı topluyor ve
+`PhotoCard` üzerinden ANA SAYFA paketine giriyor. Plan hesapları oraya
+eklenseydi, hiç planlayıcı açmayan ziyaretçiye de inerdi. Ayrı modül
+(`capturePlan.ts`) `formatIntegration`ı ondan alıyor — biçimlendirme
+yine tek yerde. Yön de farklı: biri "ne çektim", öteki "ne çekmem
+gerek".
+
+### Testler elle hesaplanmış sayılarla
+
+§14.2'nin "formülleri testlerle doğrula" maddesi, fonksiyonun kendi
+çıktısını beklenen değer olarak almakla karşılanmaz — o yalnızca
+değişmezliği ölçer. Testler elle hesaplanabilir sayılar kullanıyor:
+10 saat LRGB 4:1:1:1 ve 300 sn alt poz → L için 69, RGB için 18'er kare;
+6248×4176×2 bayt × 100 kare → 5 218 329 600 bayt.
+
+Yuvarlama yönü de ölçülüyor: kare sayısı YUKARI yuvarlanıyor, çünkü
+aşağı yuvarlamak hedefin ALTINDA kalmak demek. Plan hedefi biraz aşıyor
+ve ekranda "istediğin" değil "çıkan" gösteriliyor.
+
+`formatBytes` 1024 tabanı kullanıyor: kullanıcı sonucu diskiyle
+karşılaştıracak ve 1000 tabanı "40 GB" derken disk 37,2 GB gösterirdi.
 
 ### §14.1'de "birleştir" kuralı SORULDU ve cevabı HAYIR çıktı
 
@@ -1565,23 +1614,24 @@ Faz 3'ün "Faz 10'a bağlı" kalemlerinden hero slaytlarının admin
 yönetimi de bu turda açıldı. Kalan iki kalem (hava sağlayıcı seçimi,
 "boşsa gizle" anahtarı) Faz 3'ün kendi bölümünde duruyor.
 
-**Faz 11'de §14.6, §14.9 ve §14.1'in favori/gözlem listesi kapandı**
-(bkz. Faz 11 bölümü). Üç turda üç göç: `0064`, `0065`, `0066`.
+**Faz 11'de §14.6, §14.9, §14.1'in favori/gözlem listesi ve §14.2'nin
+hesap boşlukları kapandı** (bkz. Faz 11 bölümü). Dört turda üç göç
+(`0064`, `0065`, `0066`) ve bir domain modülü (`capturePlan.ts`).
 
 **Sıradaki iş: Faz 11'in kalan `PARTIAL` satırları.**
-  1. **§14.2 poz/entegrasyon planı + depolama ihtiyacı hesabı** — saf
-     matematik, dış veri yok. §14.2 iki şeyi birden emrediyor:
-     "hesapların formüllerini testlerle doğrula" ve "bilimsel sonucu
-     belirsiz alanlarda kesinlik iddiası kullanma". İkincisi özellikle
-     poz süresi önerisinde bağlayıcı — optimum poz, gökyüzü parlaklığına
-     ve kamera okuma gürültüsüne bağlı ve tek bir doğru sayı yok.
-  2. **§14.1 paylaşılabilir plan + takvime ekleme** — `.ics` üretimi
-     `features/events/reminders.ts`te ZATEN VAR; planlayıcı için
-     yeniden yazmadan önce oraya bakılmalı (fazın birleştirme kuralı).
-  3. **§14.7 kulüp yöneticisi doğrulama + yerel SEO sayfaları.**
-  4. **§14.3 meteor/tutulma/ISS** — dış veri lisansı gerektiriyor;
+  1. **§14.1 paylaşılabilir plan + takvime ekleme** — `.ics` üretimi
+     `features/events/reminders.ts`te ZATEN VAR. Fazın birleştirme
+     kuralı gereği önce oraya bakılmalı: planlayıcı için ikinci bir
+     `.ics` yazıcısı değil, oradakinin genelleştirilmesi gerekir.
+     Paylaşılabilir plan için URL'ye kodlama (query string) yeterli
+     olabilir — tablo açmadan önce ölçülmeli.
+  2. **§14.7 kulüp yöneticisi doğrulama + yerel SEO sayfaları.**
+  3. **§14.3 meteor/tutulma/ISS** — dış veri lisansı gerektiriyor;
      adapter + feature flag ile hazırlanacak, placeholder
-     GÖSTERİLMEYECEK.
+     GÖSTERİLMEYECEK. Bayrak altyapısı Faz 10'da kuruldu ve ziyaretçi
+     tarafında çalışıyor.
+  4. **§14.2 kalanı** — filtre–hedef uyumu ve kalibrasyon rehberi; ikisi
+     de hesap değil İÇERİK işi, `content_entries` üzerinden gidebilir.
 
 **Kanal bağlı değilken sahte içerik gösterilmemeli** (§11.2 son madde).
 Adaptör ve panel bu kurala uyuyor; kullanıcı sayfaları yazılırken de

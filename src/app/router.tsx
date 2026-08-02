@@ -299,6 +299,16 @@ export const appRoutes = [
         ),
       },
 
+      {
+        path: 'araclar/poz-plani',
+        element: route(
+          named(
+            () => import('@/features/calculators/CapturePlannerPage'),
+            'CapturePlannerPage'
+          )
+        ),
+      },
+
       /* Bilgi merkezi (§14.9) — sözlük ve SSS. */
       {
         path: 'sozluk',

@@ -49,6 +49,7 @@ export const staticEntries: SitemapEntry[] = [
   { path: '/araclar/fov', priority: 0.7, changefreq: 'monthly' },
   { path: '/araclar/pixel-scale', priority: 0.6, changefreq: 'monthly' },
   { path: '/araclar/mosaic', priority: 0.6, changefreq: 'monthly' },
+  { path: '/araclar/poz-plani', priority: 0.6, changefreq: 'monthly' },
   { path: '/araclar/setup-uyumluluk', priority: 0.6, changefreq: 'monthly' },
   { path: '/araclar/takvim', priority: 0.6, changefreq: 'daily' },
   { path: '/etkinlikler/harita', priority: 0.6, changefreq: 'daily' },
