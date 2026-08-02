@@ -30,7 +30,7 @@ ilgilendiriyor.
 | # | İş | Durum | Not |
 |---|---|---|---|
 | 1.1 | İl + ilçe seçimi | **BİTTİ** | 974 ilçe, koordinatlı; seçici iki kademeli |
-| 1.2 | **Cihaz konumunun ilçe adıyla etiketlenmesi** | SIRADA | `nearestDistrict` ve 40 km sınırı yazıldı ve test edildi ama `LocationContext`in cihaz konumu dalına HENÜZ BAĞLANMADI. Bugün cihaz konumu il adıyla etiketleniyor. İlk hamle: `geocoder` çözümünden sonra o ilin ilçelerini çekip `nearestDistrict` uygulamak |
+| 1.2 | Cihaz konumunun ilçe adıyla etiketlenmesi | **BİTTİ** | `geocoder` ili çözdükten sonra o ilin ilçeleri çekilip `nearestDistrict` uygulanıyor. Etiket İKİ HAMLEDE yazılıyor: il adı ilçe isteğini beklemiyor. 40 km sınırının ötesinde ilçe adı yazılmıyor; liste okunamazsa il adı yerinde kalıyor. `cityId`/`districtId` bilerek boş — cihaz konumunun paylaşılabilir karşılığı olmamalı (§14.4) |
 | 1.3 | **İlçe explorer facet'i** | SIRADA | Liste sayfalarında (ilanlar, etkinlikler, saha) süzgeç hâlâ il düzeyinde. `personalFacet` deseni hazır; ilçe facet'i `districts` okumasıyla kurulabilir |
 | 1.4 | Mahalle kademesi | **YAPILMAYACAK** | Elli bine yakın satır, astronomik hiçbir fark üretmiyor (birkaç yüz metre). Daha ince nokta gerektiğinde doğru cevap cihaz konumu, daha ince bir idari liste değil |
 

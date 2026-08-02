@@ -21,6 +21,11 @@ import {
   fetchProvinces,
   type Province,
 } from '@/services/content/provinces';
+import {
+  fetchDistricts,
+  nearestDistrict,
+  NEAREST_DISTRICT_LIMIT_KM,
+} from '@/services/content/districts';
 import { createLocalReverseGeocoder } from '@/domain/location/geocode';
 import {
   reduce as reduceLocationMode,
@@ -71,6 +76,50 @@ const geocoder = createLocalReverseGeocoder(async () =>
     ref: p.slug,
   }))
 );
+
+/**
+ * CİHAZ KONUMUNUN İLÇE ADI (§4.1).
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * NEDEN İKİNCİ BİR ADIM, NEDEN ÇÖZÜCÜNÜN İÇİNDE DEĞİL
+ *
+ * Ters kodlayıcı 81 il merkezine bakıyor ve ADAY LİSTESİ paket içinde;
+ * 974 ilçeyi oraya koymak listeyi ilk yüklenen JS'e sokardı. İlçe
+ * yalnızca cihaz konumu ALINDIKTAN sonra, o da yalnızca eşleşen ilin
+ * satırları için isteniyor — yani ~40 satır, bir kez, önbellekli.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * SESSİZ BAŞARISIZLIK BİLEREK
+ *
+ * Her dönüş yolu `null`: il eşleşmediyse, plaka kodu bulunamadıysa,
+ * tablo okunamadıysa ya da en yakın merkez `NEAREST_DISTRICT_LIMIT_KM`
+ * ötesindeyse. `null` "ilçe yazma" demek — etiket il adında kalıyor.
+ * İlçe bir SÜS; onun için il adını geciktirmek ya da hata göstermek
+ * kullanıcıya hiçbir şey kazandırmaz.
+ */
+async function nearestDistrictName(
+  provinceSlug: string | undefined,
+  latitude: number,
+  longitude: number
+): Promise<string | null> {
+  if (!provinceSlug) return null;
+  try {
+    const code = (await fetchProvinces()).items.find(
+      (p) => p.slug === provinceSlug
+    )?.code;
+    if (!code) return null;
+    const near = nearestDistrict(
+      await fetchDistricts(code),
+      latitude,
+      longitude
+    );
+    return near && near.distanceKm <= NEAREST_DISTRICT_LIMIT_KM
+      ? near.district.name
+      : null;
+  } catch {
+    return null;
+  }
+}
 
 interface LocationContextValue {
   location: ObservingLocation;
@@ -168,6 +217,7 @@ export function LocationProvider({ children }: { children: ReactNode }) {
         longitude: stored.longitude,
         timeZone: TURKEY_TIME_ZONE,
         source: 'device',
+        districtName: stored.districtName,
       };
     }
 
@@ -345,30 +395,59 @@ export function LocationProvider({ children }: { children: ReactNode }) {
           permission: 'granted',
         });
 
-        void geocoder.resolve(latitude, longitude).then((match) => {
+        void geocoder.resolve(latitude, longitude).then(async (match) => {
           /* Eşleşme yoksa etiket "Cihaz konumu" kalıyor — sınır ötesinde
              ya da liste okunamadığında il adı uydurulmuyor. */
           if (!match) return;
-          setLocation((current) =>
-            current.source === 'device' &&
-            current.latitude === latitude &&
-            current.longitude === longitude
-              ? { ...current, label: match.label }
-              : current
-          );
-          setModeState((s) =>
-            reduceLocationMode(s, {
-              type: 'GPS_OK',
-              fix: { label: match.label, latitude, longitude, ref: match.ref },
-            })
-          );
-          writeStored({
-            source: 'device',
-            latitude,
-            longitude,
-            label: match.label,
-            permission: 'granted',
-          });
+
+          /*
+           * ETİKET İKİ HAMLEDE YAZILIYOR: önce il, sonra ilçe.
+           *
+           * İkisini tek zincire dizmek il adını da ilçe isteği kadar
+           * geciktirirdi — elde olan bilgiyi ağ turu boyunca saklamak
+           * olurdu. İl adı çözülür çözülmez yazılıyor; ilçe gelirse
+           * yanına ekleniyor, gelmezse il adı öylece kalıyor.
+           *
+           * KOŞUL HER İKİ YAZIMDA DA AYNI: kullanıcı bu arada elle
+           * şehir seçtiyse ya da konum yenilendiyse geç gelen etiket
+           * onu EZMİYOR.
+           */
+          const yaz = (label: string, districtName?: string) => {
+            setLocation((current) =>
+              current.source === 'device' &&
+              current.latitude === latitude &&
+              current.longitude === longitude
+                ? { ...current, label, districtName }
+                : current
+            );
+            setModeState((s) =>
+              reduceLocationMode(s, {
+                type: 'GPS_OK',
+                fix: { label, latitude, longitude, ref: match.ref },
+              })
+            );
+            writeStored({
+              source: 'device',
+              latitude,
+              longitude,
+              label,
+              districtName,
+              permission: 'granted',
+            });
+          };
+
+          yaz(match.label);
+
+          const ilce = await nearestDistrictName(match.ref, latitude, longitude);
+          /*
+           * `cityId` VE `districtId` BİLEREK YAZILMIYOR. İkisi de bir
+           * KAYDA işaret ediyor ve paylaşılabilir bağlantı (`?sehir=`)
+           * o kayıttan kuruluyor; cihaz konumunun paylaşılacak bir
+           * karşılığı olmamalı (§14.4). Buradaki ilçe bir ETİKET —
+           * kullanıcının kendi ekranında "yaklaşık neredeyim"i söyler,
+           * dışarıya bir şey söylemez.
+           */
+          if (ilce) yaz(`${match.label} / ${ilce}`, ilce);
         });
       },
       (err) => {

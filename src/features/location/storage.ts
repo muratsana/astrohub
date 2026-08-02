@@ -24,6 +24,15 @@ export interface StoredLocation {
   latitude?: number;
   longitude?: number;
   label?: string;
+  /**
+   * Cihaz konumu bir ilçeye yeterince yakınsa o ilçenin adı.
+   *
+   * Etiketin içinde zaten var ("Ankara / Çankaya"); ayrı alan, yenilemeden
+   * sonra durumun etiketle TUTARLI dönmesi için. Yalnız etiketi saklasaydık
+   * `districtName` yenilemede boşalır, aynı ekran iki farklı duruma
+   * karşılık gelirdi.
+   */
+  districtName?: string;
   permission?: PermissionState;
 }
 
