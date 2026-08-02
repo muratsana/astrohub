@@ -25,7 +25,7 @@ tabloda `DONE` ile birleştirilmez:
 | 1 | Veri modeli, Supabase güvenliği, merkezi yapılandırma | 136–257 | PARTIAL¹ |
 | 2 | Tek tasarım sistemi ve bütüncül arayüz | 258–355 | DONE |
 | 3 | Ana sayfa, navbar, hero, hava durumu | 356–461 | PARTIAL⁹ |
-| 4 | Ortak arama, filtreleme, sıralama, görünüm | 462–548 | PARTIAL |
+| 4 | Ortak arama, filtreleme, sıralama, görünüm | 462–548 | PARTIAL¹⁰ |
 | 5 | Bildirim, mesajlaşma, sosyal aktivite | 549–632 | PARTIAL² |
 | 6 | Etkinlik takip ve hatırlatma | 633–682 | PARTIAL³ |
 | 7 | Çalışan AstroHub Radyo | 683–832 | PARTIAL⁴ |
@@ -40,6 +40,23 @@ tabloda `DONE` ile birleştirilmez:
 | 16 | Performans, SEO, analitik, gözlemlenebilirlik | 1607–1690 | NOT_STARTED |
 | 17 | Test stratejisi ve kabul kriterleri | 1691–… | NOT_STARTED |
 | 18 | (belgenin sonu) | …–1956 | NOT_STARTED |
+
+¹⁰ **Faz 4'ün motor tarafı kapandı; kalanların hiçbiri süzgeç işi
+değil.** 2 Ağustos turunda §7.1'in üç maddesi geldi: sayısal aralık,
+tarih aralığı ve "boş değerleri dahil etme". Aralık motorda birinci
+sınıf bir kavram (`RangeSpec`), facet'in yanında duruyor ve pazaryeri
+(fiyat) ile etkinliklerde (tarih) bağlı.
+
+Kalan dört madde ve gerçek sebepleri:
+· **İlçe facet'i** — süzgeç değil ŞEMA işi: hiçbir kayıtta ilçe alanı
+  yok (ölçüldü). Göç + üç form + geri doldurma kararı gerekiyor.
+· **Sayfa boyutu seçimi** — hiçbir sayfa sayfalamıyor; sayfalanmayan
+  listede boyut seçtirmek çalışmayan bir kontrol olurdu. Yazılmıştı,
+  geri alındı.
+· **Sunucu tarafı arama/sayfalama** — veri hacmi gerektirmiyor
+  (bilinçli, önceki turlardan).
+· **Sütun sırası (sürükle-bırak)** ve **harita/takvimin explorer
+  görünümü olması** — ikisi de kendi turunu hak eden etkileşim işleri.
 
 ⁹ **Faz 3'te kodla kapatılabilecek iş kalmadı.** Son iki `NOT_STARTED`
 madde bu turda kapandı: hava sağlayıcısı seçimi artık panelden
@@ -550,6 +567,9 @@ hiçbirinde yok.
 | Arama terimini temizleme | DONE | |
 | Faceted filtreler + her facet için sayı | DONE | Sayım o facet'in kendi seçimi hariç — yoksa kullanıcı seçimini değiştiremez |
 | Çoklu seçim | DONE | Facetler arası VE, değerler arası VEYA |
+| **Sayısal aralık** | DONE | `RangeSpec` + `matchesRanges`; pazaryerinde fiyat aralığı. Sınırlar DAHİL, tek uç açık bırakılabiliyor |
+| **Tarih aralığı** | DONE | Aynı kavram, `kind: 'date'`; etkinliklerde tarih penceresi. Üst sınır GÜN SONUNA yuvarlanıyor — "2 Ağustos'a kadar" o günü kapsıyor |
+| **Boş değerleri dahil etme** | DONE | Aralık başına onay kutusu. VARSAYILAN HARİÇ: değeri bilinmeyen kaydın 0–5000 arasında olduğunu söyleyemeyiz |
 | Aktif filtre chip'leri | DONE | Motor üretiyordu, HİÇBİR SAYFA ÇİZMİYORDU — tek tüketici testlerdi. `ActiveFilters` yazıldı ve on sayfaya bağlandı; arama terimi de chip |
 | Tek tek / tümünü temizleme | DONE | "Tümünü temizle" sıralamayı KORUYOR |
 | Filtrelerin URL'ye yazılması | DONE | Varsayılanlar yazılmıyor, yabancı parametre korunuyor |
@@ -595,7 +615,8 @@ Motora geçiş sırasında eklenen iki yetenek:
 | Madde | Durum | Sebep |
 |---|---|---|
 | **Server-side arama/filtre/sayfalama** | NOT_STARTED | Kataloglar bugün tamamı belleğe inen listeler (tohum dizisi ya da birkaç yüz satır); sunucu tarafı sayfalama veri hacmi onu gerektirdiğinde açılır. `ExplorerQuery` sayfa ve sayfa boyutu taşıdığı için ŞEKLİ hazır, ama bugün çalışan şey istemci tarafı ve rapor bunu böyle söylüyor |
-| İl/ilçe filtresi | DONE'a yakın | 974 ilçe koordinatlarıyla `districts` tablosunda (`0071`, GeoNames ADM2 / CC BY 4.0); konum seçici iki kademeli. Kalan: explorer facet'i olarak ilçe süzgeci ve cihaz konumunun ilçe adıyla etiketlenmesi |
+| İl/ilçe filtresi | PARTIAL | 974 ilçe koordinatlarıyla `districts` tablosunda (`0071`); konum seçici iki kademeli ve cihaz konumu **artık ilçe adıyla etiketleniyor**. Kalan tek şey explorer facet'i ve o bir SÜZGEÇ işi değil ŞEMA işi: `listings`, `events`, `clubs` yalnızca serbest metin `city` taşıyor, `observing_sites` onu bile taşımıyor (`region` + koordinat). İlçe süzgeci için önce kayıtlara ilçe alanı, sonra formlara seçici gerekiyor — ölçüldü, aşağıda |
+| **Sayfa boyutu seçimi** | NOT_STARTED | Motor `spec.pageSize` destekliyor ama **hiçbir spec kurmuyor ve hiçbir sayfada sayfalama arayüzü yok**. Sayfalanmayan bir listede boyut seçtirmek, hiçbir şey yapmayan bir kontrol olurdu; madde sunucu tarafı sayfalamayla birlikte açılır |
 | Takip edilenler | DONE | `useFollowingIds` + `personalFacet`; galeride "Takip ettiklerim" süzgeci. Oturumsuzda ve küme yüklenirken facet HİÇ çizilmiyor |
 | Favoriler | DONE | `useSavedPhotoIds` + `personalFacet`; galeride "Kaydettiklerim" süzgeci. Sınıra dayanırsa `truncated` ile SÖYLENİYOR — sessiz kırpma yok |
 | Onay/yayın durumu, premium görünürlük | NOT_STARTED | Faz 9/10 |
@@ -700,6 +721,84 @@ kendi varsayılanına ışınlanması olurdu. Hiyerarşi `?sehir=` ve
 `exception` dalı bütün bloğu geri alıyordu — ikinci blok, birincinin
 kurduğu kullanıcıları bulamıyordu. Beklenen hatalar artık iç
 `begin … exception` alt bloklarında yakalanıyor.
+
+### Aralık süzgeci — facet'in yapamadığı soru (2 Ağustos turu)
+
+Motor baştan beri EŞİTLİK üzerine kuruluydu: facet bir değeri listeler,
+sayar, seçilenle karşılaştırır. §7.1'in üç maddesinin karşılığı bu yüzden
+hiç yoktu — "tarih aralığı", "sayısal aralık", "boş değerleri dahil etme".
+
+**Fiyat facet olarak kurulamıyor.** İkinci elde iki ilanın aynı fiyatta
+olması nadir, yani facet listesi kayıt sayısı kadar uzardı: "48.500 ₺ (1)",
+"52.000 ₺ (1)"… Alıcı zaten değeri değil BÜTÇESİNİ biliyor. Aralık,
+değeri değil SINIRI soruyor.
+
+**Tarih ayrı bir süzgeç değil, aynı kavram.** `valueOf` epoch ms
+döndürüyor; `kind: 'date'` yalnızca URL yazımını (`?tarih_min=2026-08-14`)
+ve girdi tipini belirliyor. İki ayrı mantık yazmak, aralığı iki kez
+uygulamak olurdu.
+
+Üç karar test altında:
+
+1. **Sınırlar DAHİL.** "0–5000 ₺" diyen kullanıcı 5000 ₺'lik ilanı
+   görmeyi bekler; dışlayıcı üst sınır, yazılan sayının kendisini eleyen
+   bir süzgeç olurdu.
+2. **Bilinmeyen değer varsayılan olarak ELENİR.** Fiyatı girilmemiş bir
+   ilanın 0–5000 arasında olduğunu söyleyemeyiz. Varsayılan dahil etmek
+   olsaydı süzgeç sessizce yalan söylerdi. Ama bu sessiz bir kayıp da
+   olmamalı: onay kutusu hem kaybı görünür yapıyor hem geri alma yolu
+   veriyor (§7.1 "boş değerleri dahil etme").
+3. **Tarihte üst sınır GÜN SONU.** `?tarih_max=2026-08-02` "2 Ağustos
+   dahil" demek. Gün başını sınır alsaydık o günün bütün kayıtları
+   dışarıda kalır, süzgeç bir gün eksik çalışırdı. Adrese geri yazarken
+   yine GÜN olarak yazılıyor — paylaşılan bağlantı okunabilir kalsın.
+
+**Sıfır alt sınırı ile "sınır yok" aynı şey değil.** `Number('')` sıfır
+verir; ikisini karıştıran bir ayrıştırma "en az 0 ₺" seçimini sessizce
+seçimsizliğe çevirirdi. Boş kutu `null`, yazılan sıfır sıfır.
+
+**Aralık TEK chip.** İki uç iki chip olsaydı kullanıcı alt sınırı
+kaldırıp üst sınırı unutabilirdi. Bir bütün olarak kuruluyor, bir bütün
+olarak kalkıyor.
+
+**Facet sayımı aralığı da uyguluyor.** Dışarıda bırakılsaydı "0–5000 ₺"
+seçili bir listede "Ankara (34)" yazar, tıklanınca 6 kayıt çıkardı —
+sayının tek işi o tıklamanın sonucunu önceden söylemek.
+
+**Yazarken değil, bırakınca uygulanıyor.** "1500" yazan kullanıcı aksi
+hâlde sırasıyla 1, 15, 150 ve 1500 aralıklarını görürdü. Arama
+kutusunun 250 ms'lik gecikmesi burada yetmiyor, çünkü ara değerler
+ANLAMLI görünüyor: 1 ₺ alt sınırı geçerli bir aralık, yalnızca
+kullanıcının istediği değil. `blur` ve `Enter` uyguluyor.
+
+### İlçe explorer facet'i bir SÜZGEÇ işi değil, ŞEMA işi
+
+Kalan madde ölçüldü ve göründüğünden büyük. `listings`, `events` ve
+`clubs` yalnızca serbest metin `city` taşıyor; `observing_sites` onu bile
+taşımıyor (`region` metni + koordinat). **Hiçbir kayıtta ilçe alanı yok.**
+
+Yani "ilçe süzgeci ekle" demek sırasıyla şu demek: göç (üç tabloya ilçe
+alanı + FK), ilan/etkinlik/kulüp formlarına ilçe seçicisi, mevcut
+satırlar için geri doldurma kararı (koordinattan türetmek TAHMİN olur,
+sınır bölgesinde yanlış ilçe yazar) ve ancak ondan sonra facet.
+
+Koordinattan çıkarmak da çözüm değil: `nearestDistrict` istemcide 974
+satır ister, o da tam olarak `districts.ts` başlığında reddedilen ~60 kB.
+
+Bu yüzden madde `PARTIAL` bırakıldı ve tek satırlık bir facet gibi
+gösterilmedi.
+
+### Sayfa boyutu seçimi neden yazılmadı
+
+Motorda `spec.pageSize` var ve `applyQuery` sayfalıyor. Ama **hiçbir
+spec `pageSize` kurmuyor ve hiçbir sayfa sayfalama arayüzü çizmiyor** —
+ölçüldü. Kullanıcıya boyut seçtiren bir kontrol, sayfalanmayan bir
+listede hiçbir şey yapmazdı.
+
+Yazılmış hâli vardı ve GERİ ALINDI: `?boyut=` parametresi, `pageSizes`
+listesi ve `setPageSize`. Fazın kendi kuralı ("çalışmayan placeholder
+gösterme") burada da geçerli; madde sunucu tarafı sayfalamayla birlikte
+açılacak.
 
 ### Kişisel facet'ler — "veri var, arayüz okumuyor"un dördüncü örneği
 
@@ -2005,6 +2104,31 @@ Sırada bekleyen iki bağımsız iş:
   kancasında var. Diğer ana sayfa şeritleri (`RecentListings`,
   `UpcomingEvents`, `DarkSkyStrip`) hâlâ bu ayrımı yapmıyor — aynı
   desenle bağlanabilirler.
+
+**2 Ağustos turu — Faz 4 motoru + üç arayüz hatası.**
+
+Faz 4'te §7.1'in üç maddesi kapandı (aralık süzgeci; bkz. Faz 4 bölümü).
+Kalan dört madde şema, veri hacmi ya da ayrı bir etkileşim turu
+bekliyor — hiçbiri "motorda eksik" değil.
+
+Aynı turda kullanıcının bildirdiği üç hata düzeltildi ve üçü de aynı
+aileden ("veri var, arayüz okumuyor"un yeni yüzleri):
+· **Ana sayfa galeri şeridi** `PhotoTile`ı doğrudan çağırıp alanları elle
+  eşliyordu ve `imageUrl` eksikti — gerçek fotoğraflar yüklüyken herkese
+  üretilmiş desen gösteriliyordu. `PhotoCard`a taşındı.
+· **Kullanıcı kendi fotoğrafını silemiyordu.** RLS (`astro_photos_delete_own`)
+  baştan beri izin veriyordu, arayüzde çağıran yoktu.
+  `services/photos/remove.ts` + panelde iki adımlı onay.
+· **"Bu Gece" gezinme satırı** düğmeleri kaydırıyordu ve tarih etiketi
+  `.num` (mono) taşıdığı için Türkçe harflerde iki aileli çiziliyordu.
+
+Bu turda ayrıca `0071` tohumu canlıya uygulandı (974 ilçe, hepsinde
+koordinat, 81 il) ve cihaz konumu ilçe adıyla etiketlenmeye başladı —
+Faz 4'ün "il/ilçe filtresi" satırının ikinci yarısı.
+
+**Sıradaki iş:** Faz 11'in kalan `PARTIAL` satırları (yukarıdaki liste),
+ardından Faz 12 (organik kullanıcı kazanımı, belge 1350–1419) — tablodaki
+ilk `NOT_STARTED` faz.
 
 **Çalışma yöntemi** (bu oturumda işe yaradı):
 - Master belgeyi TAMAMEN okuma; yalnızca faz satır aralığını oku

@@ -11,6 +11,7 @@ import {
   filterControlClass,
 } from '@/components/ui/FilterBar';
 import { ActiveFilters } from '@/components/ui/ActiveFilters';
+import { RangeFilter } from '@/components/ui/RangeFilter';
 import { EditorialList, type EditorialItem } from '@/components/ui/EditorialList';
 import { ToolBar, ResultCount } from '@/components/ui/ToolBar';
 import { useViewMode } from '@/components/ui/useViewMode';
@@ -167,6 +168,13 @@ export function EventsPage() {
             label="Kamp imkânı"
             checked={(ex.query.facets.kamp?.length ?? 0) > 0}
             onChange={() => ex.toggleFacet('kamp', 'evet')}
+          />
+          {/* Tarih PENCERESİ — `zaman` facet'i (geçmiş/gelecek) bir YÖN
+              soruyor, bu bir aralık. İkisi yan yana duruyor. */}
+          <RangeFilter
+            spec={eventsSpec.ranges![0]}
+            value={ex.query.ranges.tarih}
+            onChange={(next) => ex.setRange('tarih', next)}
           />
         </FilterBar>
 

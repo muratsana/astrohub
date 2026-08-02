@@ -51,6 +51,34 @@ export const eventsSpec: ExplorerSpec<AstroEvent> = {
     },
   ],
 
+  /*
+   * TARİH ARALIĞI (§7.1) — `zaman` facet'inin YERİNE GEÇMİYOR, YANINDA.
+   *
+   * İkisi ayrı soruya cevap veriyor: "geçmiş mi gelecek mi" bir yön,
+   * "14–21 Ağustos arası" bir pencere. Yön facet'ini kaldırıp yerine
+   * aralık koymak, en sık sorulan soruyu ("yaklaşan neler var")
+   * kullanıcıya iki tarih yazdırarak sordurmak olurdu.
+   *
+   * `valueOf` epoch ms veriyor; `kind: 'date'` yalnızca URL yazımını
+   * (`?tarih_min=2026-08-14`) ve girdi tipini belirliyor.
+   */
+  ranges: [
+    {
+      param: 'tarih',
+      label: 'Tarih',
+      kind: 'date',
+      valueOf: (e) => {
+        const t = new Date(e.startsAt).getTime();
+        return Number.isFinite(t) ? t : null;
+      },
+      format: (n) =>
+        new Date(n).toLocaleDateString('tr-TR', {
+          day: 'numeric',
+          month: 'long',
+        }),
+    },
+  ],
+
   sorts: [
     {
       value: 'yaklasan',

@@ -56,6 +56,48 @@ export interface FacetSpec<T> {
   labelOf?: (value: string) => string;
 }
 
+/**
+ * ARALIK SÜZGECİ — tarih ve sayı (§7.1).
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * NEDEN FACET DEĞİL, AYRI BİR KAVRAM
+ *
+ * Facet EŞİTLİK üzerine kurulu: değeri listeler, sayar, seçilenle
+ * karşılaştırır. Fiyat ya da tarih için bu çalışmıyor — 340 ayrı fiyatın
+ * her biri kendi kutucuğu olurdu ve "48.500 ₺ (1)" diye bir süzgeç hiç
+ * kimsenin işine yaramazdı. Aralık, DEĞERİ değil SINIRI soruyor.
+ *
+ * Tarih de aynı kavram: `valueOf` epoch milisaniye döndürüyor, `kind`
+ * yalnızca URL yazımını ve girdi tipini belirliyor. İki ayrı süzgeç
+ * yazmak, "aralık" mantığını iki kez uygulamak olurdu.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * TEK UÇ AÇIK BIRAKILABİLİR
+ *
+ * "5000 ₺ altı" bir aralık ve üst sınırı yok. `min`/`max` ayrı
+ * parametreler olduğu için bu bedava geliyor; tek parametreye
+ * (`?fiyat=1000-5000`) sıkıştırsaydık açık uç için ayrı bir yazım
+ * uydurmak gerekirdi.
+ */
+export interface RangeSpec<T> {
+  /** URL parametre KÖKÜ — `fiyat` → `fiyat_min` / `fiyat_max`. */
+  param: string;
+  label: string;
+  /** Kayıttan sayı; tarih alanlarında epoch ms. Bilinmiyorsa `null`. */
+  valueOf: (item: T) => number | null | undefined;
+  /**
+   * `date` ise URL'de `YYYY-MM-DD` yazılıyor ve girdi `<input type="date">`.
+   * Varsayılan `number`.
+   */
+  kind?: 'number' | 'date';
+  /** Sınırın chip'te görünen hâli; verilmezse sayının kendisi. */
+  format?: (value: number) => string;
+  /** Sayı girdisinin adım değeri. */
+  step?: number;
+  /** Girdi kutusunun yanında görünen birim (`₺`, `km`). */
+  unit?: string;
+}
+
 /** Bir sıralama seçeneği. */
 export interface SortSpec<T> {
   /** URL değeri (`yeni`, `eski`, `ad`…). */
@@ -68,6 +110,8 @@ export interface ExplorerSpec<T> {
   /** Tam metin aramanın tarayacağı alanlar. */
   searchFields: (item: T) => (string | null | undefined)[];
   facets: FacetSpec<T>[];
+  /** Tarih/sayı aralıkları; boş bırakılabilir. */
+  ranges?: RangeSpec<T>[];
   sorts: SortSpec<T>[];
   /** Varsayılan sıralama — `sorts` içinde bir `value`. */
   defaultSort: string;
@@ -87,10 +131,27 @@ export interface ExplorerSpec<T> {
   relevance?: boolean;
 }
 
+/**
+ * Bir aralığın seçili hâli. `null` = o uç açık.
+ *
+ * `includeEmpty` §7.1'in "boş değerleri dahil etme" maddesi ve
+ * VARSAYILANI `false`. Sebebi bir iddia meselesi: değeri bilinmeyen bir
+ * kaydın 1000–5000 aralığında olduğunu SÖYLEYEMEYİZ. Varsayılan dahil
+ * etmek olsaydı, fiyatı girilmemiş ilanlar her aralıkta görünür ve
+ * süzgeç sessizce yalan söylerdi. Kullanıcı isterse açıyor.
+ */
+export interface RangeValue {
+  min: number | null;
+  max: number | null;
+  includeEmpty: boolean;
+}
+
 export interface ExplorerQuery {
   q: string;
   /** param → seçili değerler. Çoklu seçim. */
   facets: Record<string, string[]>;
+  /** aralık kökü → seçili sınırlar. Seçim yoksa anahtar HİÇ yok. */
+  ranges: Record<string, RangeValue>;
   sort: string;
   page: number;
 }
@@ -99,6 +160,49 @@ export interface ExplorerQuery {
 export const PARAM_Q = 'ara';
 export const PARAM_SORT = 'sirala';
 export const PARAM_PAGE = 'sayfa';
+
+/* Aralık parametrelerinin son ekleri. */
+export const RANGE_MIN = '_min';
+export const RANGE_MAX = '_max';
+export const RANGE_EMPTY = '_bos';
+
+/** Bir aralığın URL'de kapladığı üç parametre. */
+function rangeParams(param: string): string[] {
+  return [param + RANGE_MIN, param + RANGE_MAX, param + RANGE_EMPTY];
+}
+
+/**
+ * Aralık sınırını metne / metinden çevirir.
+ *
+ * TARİH GÜN BAŞINA DEĞİL, GÜN SONUNA yuvarlanıyor — üst sınırda.
+ * `?tarih_max=2026-08-02` yazan kullanıcı "2 Ağustos DAHİL" demek
+ * istiyor; günün 00:00'ını sınır alsaydık o günün bütün kayıtları
+ * dışarıda kalır ve süzgeç bir gün eksik çalışırdı.
+ */
+function parseBound(
+  raw: string | null,
+  kind: RangeSpec<unknown>['kind'],
+  uc: 'min' | 'max'
+): number | null {
+  if (!raw) return null;
+  if (kind === 'date') {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(raw.trim());
+    if (!m) return null;
+    const gun = Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+    if (!Number.isFinite(gun)) return null;
+    return uc === 'max' ? gun + 86_399_999 : gun;
+  }
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : null;
+}
+
+function formatBound(
+  value: number,
+  kind: RangeSpec<unknown>['kind']
+): string {
+  if (kind !== 'date') return String(value);
+  return new Date(value).toISOString().slice(0, 10);
+}
 
 /**
  * URL parametrelerinden sorgu durumu okur.
@@ -126,10 +230,28 @@ export function parseQuery<T>(
     ? (sortParam as string)
     : spec.defaultSort;
 
+  /*
+   * ARALIKLAR: iki ucu da boş olan bir aralık HİÇ YAZILMIYOR. Boş bir
+   * kayıt bırakmak `hasActiveFilters`ı yanıltır ve "filtreler aktif"
+   * rozeti hiçbir filtre yokken yanardı.
+   *
+   * `includeEmpty` tek başına da tutuluyor: kullanıcı önce kutuyu
+   * işaretleyip sonra sınır yazabilir; işaret sınır gelene kadar
+   * kaybolmamalı.
+   */
+  const ranges: Record<string, RangeValue> = {};
+  for (const r of spec.ranges ?? []) {
+    const min = parseBound(params.get(r.param + RANGE_MIN), r.kind, 'min');
+    const max = parseBound(params.get(r.param + RANGE_MAX), r.kind, 'max');
+    const includeEmpty = params.get(r.param + RANGE_EMPTY) === '1';
+    if (min === null && max === null && !includeEmpty) continue;
+    ranges[r.param] = { min, max, includeEmpty };
+  }
+
   const pageRaw = Number(params.get(PARAM_PAGE));
   const page = Number.isFinite(pageRaw) && pageRaw > 1 ? Math.trunc(pageRaw) : 1;
 
-  return { q: params.get(PARAM_Q)?.trim() ?? '', facets, sort, page };
+  return { q: params.get(PARAM_Q)?.trim() ?? '', facets, ranges, sort, page };
 }
 
 /**
@@ -153,6 +275,9 @@ export function toParams<T>(
   p.delete(PARAM_SORT);
   p.delete(PARAM_PAGE);
   for (const f of spec.facets) p.delete(f.param);
+  for (const r of spec.ranges ?? []) {
+    for (const ad of rangeParams(r.param)) p.delete(ad);
+  }
 
   if (query.q.trim()) p.set(PARAM_Q, query.q.trim());
   if (query.sort !== spec.defaultSort) p.set(PARAM_SORT, query.sort);
@@ -161,16 +286,33 @@ export function toParams<T>(
     const v = query.facets[f.param];
     if (v?.length) p.set(f.param, v.join(','));
   }
+  for (const r of spec.ranges ?? []) {
+    const v = query.ranges[r.param];
+    if (!v) continue;
+    /* Üst sınır gün SONUNA yuvarlanmıştı; adrese gün olarak geri
+       yazılıyor ki paylaşılan bağlantı okunabilir kalsın ve tekrar
+       ayrıştırıldığında aynı aralığı versin. */
+    if (v.min !== null) p.set(r.param + RANGE_MIN, formatBound(v.min, r.kind));
+    if (v.max !== null) p.set(r.param + RANGE_MAX, formatBound(v.max, r.kind));
+    if (v.includeEmpty) p.set(r.param + RANGE_EMPTY, '1');
+  }
   return p;
 }
 
-export const EMPTY_QUERY: ExplorerQuery = { q: '', facets: {}, sort: '', page: 1 };
+export const EMPTY_QUERY: ExplorerQuery = {
+  q: '',
+  facets: {},
+  ranges: {},
+  sort: '',
+  page: 1,
+};
 
 /** Kullanıcı herhangi bir seçim yaptı mı? */
 export function hasActiveFilters(query: ExplorerQuery): boolean {
   return (
     query.q.trim() !== '' ||
-    Object.values(query.facets).some((v) => v.length > 0)
+    Object.values(query.facets).some((v) => v.length > 0) ||
+    Object.keys(query.ranges).length > 0
   );
 }
 
@@ -204,17 +346,78 @@ export function activeChips<T>(
       });
     }
   }
+  /*
+   * ARALIK TEK CHIP. İki uç iki ayrı chip olsaydı kullanıcı alt sınırı
+   * kaldırıp üst sınırı unutabilirdi; aralık bir bütün olarak kuruluyor,
+   * bir bütün olarak kalkıyor.
+   */
+  for (const r of spec.ranges ?? []) {
+    const v = query.ranges[r.param];
+    if (!v) continue;
+    const yaz = (n: number) => r.format?.(n) ?? String(n);
+    const aralik =
+      v.min !== null && v.max !== null
+        ? `${yaz(v.min)} – ${yaz(v.max)}`
+        : v.min !== null
+          ? `${yaz(v.min)} ve üzeri`
+          : v.max !== null
+            ? `${yaz(v.max)} ve altı`
+            : 'boş olanlar dahil';
+    chips.push({
+      param: r.param,
+      value: RANGE_CHIP,
+      label: `${r.label}: ${aralik}${
+        v.includeEmpty && (v.min !== null || v.max !== null)
+          ? ' (boşlar dahil)'
+          : ''
+      }`,
+    });
+  }
   return chips;
 }
+
+/** Aralık chip'lerinin `value` alanı — tek uç değil, aralığın tamamı. */
+export const RANGE_CHIP = ' aralik';
 
 /** Tek bir chip'i kaldırır. */
 export function removeChip(query: ExplorerQuery, chip: Chip): ExplorerQuery {
   if (chip.param === PARAM_Q) return { ...query, q: '', page: 1 };
+  if (chip.value === RANGE_CHIP) {
+    const ranges = { ...query.ranges };
+    delete ranges[chip.param];
+    return { ...query, ranges, page: 1 };
+  }
   const kalan = (query.facets[chip.param] ?? []).filter((v) => v !== chip.value);
   const facets = { ...query.facets };
   if (kalan.length) facets[chip.param] = kalan;
   else delete facets[chip.param];
   return { ...query, facets, page: 1 };
+}
+
+/**
+ * Bir aralığı ayarlar; iki ucu da boş ve işaretsizse aralığı SİLER.
+ *
+ * Silme şart: boş bir kayıt bırakmak `hasActiveFilters`ı yanıltır ve
+ * mobil çekmecenin "filtre var" rozeti hiçbir filtre yokken yanardı.
+ */
+export function setRange(
+  query: ExplorerQuery,
+  param: string,
+  value: Partial<RangeValue>
+): ExplorerQuery {
+  const mevcut = query.ranges[param] ?? {
+    min: null,
+    max: null,
+    includeEmpty: false,
+  };
+  const next: RangeValue = { ...mevcut, ...value };
+  const ranges = { ...query.ranges };
+  if (next.min === null && next.max === null && !next.includeEmpty) {
+    delete ranges[param];
+  } else {
+    ranges[param] = next;
+  }
+  return { ...query, ranges, page: 1 };
 }
 
 /** Bir facet değerini açar/kapatır (çoklu seçim). */
@@ -323,6 +526,37 @@ export function matchesFacets<T>(
   return true;
 }
 
+/**
+ * Kayıt aralık seçimlerine uyuyor mu — sınırlar DAHİL.
+ *
+ * Kapsayıcılık bilinçli: "0–5000 ₺" diyen kullanıcı 5000 ₺'lik ilanı
+ * görmeyi bekler. Dışlayıcı üst sınır, kullanıcının yazdığı sayının
+ * kendisini eleyen bir süzgeç olurdu.
+ */
+export function matchesRanges<T>(
+  item: T,
+  query: ExplorerQuery,
+  spec: ExplorerSpec<T>
+): boolean {
+  for (const r of spec.ranges ?? []) {
+    const secim = query.ranges[r.param];
+    if (!secim) continue;
+    const ham = r.valueOf(item);
+    const yok = ham === null || ham === undefined || Number.isNaN(ham);
+
+    if (yok) {
+      /* Değer bilinmiyor: kullanıcı açıkça istemediyse eleniyor. Sınır
+         yokken (yalnızca "boşları da göster" işaretliyken) hiçbir şey
+         elenmiyor — o durumda seçim bir daraltma değil. */
+      if (!secim.includeEmpty) return false;
+      continue;
+    }
+    if (secim.min !== null && ham < secim.min) return false;
+    if (secim.max !== null && ham > secim.max) return false;
+  }
+  return true;
+}
+
 export interface ExplorerResult<T> {
   /** Sayfalanmış sonuç. */
   items: T[];
@@ -339,7 +573,10 @@ export function applyQuery<T>(
   spec: ExplorerSpec<T>
 ): ExplorerResult<T> {
   const suzulmus = source.filter(
-    (item) => matchesSearch(item, query.q, spec) && matchesFacets(item, query, spec)
+    (item) =>
+      matchesSearch(item, query.q, spec) &&
+      matchesFacets(item, query, spec) &&
+      matchesRanges(item, query, spec)
   );
 
   const sirala = spec.sorts.find((s) => s.value === query.sort);
@@ -407,6 +644,11 @@ export function facetCounts<T>(
   for (const item of source) {
     if (!matchesSearch(item, query.q, spec)) continue;
     if (!matchesFacets(item, digerleri, spec)) continue;
+    /* ARALIKLAR SAYIMDA DA GEÇERLİ. Dışarıda bırakılsaydı "0–5000 ₺"
+       seçili bir listede "Ankara (34)" yazardı ama tıklayınca 6 kayıt
+       çıkardı — sayının tek işi bu tıklamanın sonucunu önceden
+       söylemek. */
+    if (!matchesRanges(item, digerleri, spec)) continue;
     const ham = f.valueOf(item);
     for (const v of Array.isArray(ham) ? ham : [ham]) {
       if (typeof v !== 'string' || v === '') continue;

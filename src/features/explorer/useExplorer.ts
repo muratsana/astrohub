@@ -7,6 +7,7 @@ import {
   removeChip as removeChipPure,
   toParams,
   toggleFacet as toggleFacetPure,
+  setRange as setRangePure,
   activeChips,
   hasActiveFilters,
   PARAM_Q,
@@ -14,6 +15,7 @@ import {
   type ExplorerQuery,
   type ExplorerResult,
   type ExplorerSpec,
+  type RangeValue,
 } from './query';
 
 /**
@@ -60,6 +62,8 @@ export interface Explorer<T> extends ExplorerResult<T> {
   setSort: (value: string) => void;
   setPage: (value: number) => void;
   toggleFacet: (param: string, value: string) => void;
+  /** Aralık sınırını ya da "boşlar dahil" işaretini değiştirir. */
+  setRange: (param: string, value: Partial<RangeValue>) => void;
   removeChip: (chip: Chip) => void;
   clearAll: () => void;
   chips: Chip[];
@@ -138,6 +142,11 @@ export function useExplorer<T>(
       (param: string, value: string) => yaz(toggleFacetPure(query, param, value)),
       [query, yaz]
     ),
+    setRange: useCallback(
+      (param: string, value: Partial<RangeValue>) =>
+        yaz(setRangePure(query, param, value)),
+      [query, yaz]
+    ),
     removeChip: useCallback(
       (chip: Chip) => {
         if (chip.param === PARAM_Q) setSearchInput('');
@@ -150,7 +159,7 @@ export function useExplorer<T>(
       sonYazilan.current = '';
       /* Sıralama KORUNUYOR: "hepsini temizle" filtreleri temizler,
          kullanıcının sıralama tercihini değil. */
-      yaz({ q: '', facets: {}, sort: query.sort, page: 1 });
+      yaz({ q: '', facets: {}, ranges: {}, sort: query.sort, page: 1 });
     }, [query.sort, yaz]),
     chips: useMemo(() => activeChips(query, spec), [query, spec]),
     hasFilters: hasActiveFilters(query),

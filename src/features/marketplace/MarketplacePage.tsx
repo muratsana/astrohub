@@ -19,6 +19,7 @@ import {
   filterControlClass,
 } from '@/components/ui/FilterBar';
 import { ActiveFilters } from '@/components/ui/ActiveFilters';
+import { RangeFilter } from '@/components/ui/RangeFilter';
 import {
   ContentCard,
   ContentCardBody,
@@ -147,6 +148,13 @@ export function MarketplacePage() {
               className={filterControlClass}
             />
           </FilterCell>
+          {/* Fiyat ARALIK, facet değil: her ilan kendi fiyatının
+              kutucuğunu açsaydı süzgeç kayıt sayısı kadar uzardı. */}
+          <RangeFilter
+            spec={listingsSpec.ranges![0]}
+            value={ex.query.ranges.fiyat}
+            onChange={(next) => ex.setRange('fiyat', next)}
+          />
           <FilterToggle
             id="listing-invoice"
             label="Yalnızca faturalı"

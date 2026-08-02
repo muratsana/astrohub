@@ -34,6 +34,25 @@ export const listingsSpec: ExplorerSpec<Listing> = {
     { param: 'durum', label: 'Durum', valueOf: (l) => l.condition },
   ],
 
+  /*
+   * FİYAT ARALIĞI FACET DEĞİL (§7.1 "sayısal aralık").
+   *
+   * Facet olarak kurulsaydı her ilan kendi fiyatının kutucuğunu açardı:
+   * "48.500 ₺ (1)", "52.000 ₺ (1)"… İkinci elde iki ilanın aynı fiyatta
+   * olması nadir, yani liste kayıt sayısı kadar uzun ve hiçbiri işe
+   * yaramaz olurdu. Alıcı zaten değeri değil BÜTÇESİNİ biliyor.
+   */
+  ranges: [
+    {
+      param: 'fiyat',
+      label: 'Fiyat',
+      valueOf: (l) => l.price,
+      step: 500,
+      unit: '₺',
+      format: (n) => `${n.toLocaleString('tr-TR')} ₺`,
+    },
+  ],
+
   sorts: [
     {
       value: 'yeni',
