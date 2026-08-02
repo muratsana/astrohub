@@ -61,6 +61,7 @@ function Prob() {
       <button onClick={() => setCity('ankara')}>il seç</button>
       <p data-testid="etiket">{location.label}</p>
       <p data-testid="ilce">{location.districtName ?? '—'}</p>
+      <p data-testid="il">{location.provinceName ?? '—'}</p>
     </>
   );
 }
@@ -106,6 +107,32 @@ describe('cihaz konumu — ilçe etiketi', () => {
       expect(screen.getByTestId('etiket')).toHaveTextContent('Ankara / Çankaya')
     );
     expect(screen.getByTestId('ilce')).toHaveTextContent('Çankaya');
+    /* `provinceName` ETİKETTEN AYRI: etiket ilçeyi taşısa da bu alan
+       yalnızca il adı. Formlar (ilan şehri) bunu okuyor — etiketi
+       ayrıştırmak zorunda kalmasınlar diye. */
+    expect(screen.getByTestId('il')).toHaveTextContent('Ankara');
+  });
+
+  it('il eşleşmediyse provinceName de boş kalıyor', async () => {
+    vi.mocked(fetchDistricts).mockResolvedValue([]);
+    /* Sofya: en yakın il merkezi 250 km'nin ötesinde, eşleşme yok. */
+    vi.stubGlobal('navigator', {
+      ...navigator,
+      geolocation: {
+        getCurrentPosition: (ok: PositionCallback) =>
+          ok({
+            coords: { latitude: 42.6977, longitude: 23.3219 },
+          } as unknown as GeolocationPosition),
+      },
+      permissions: undefined,
+    });
+
+    await calistir();
+
+    await waitFor(() =>
+      expect(screen.getByTestId('etiket')).toHaveTextContent('Cihaz konumu')
+    );
+    expect(screen.getByTestId('il')).toHaveTextContent('—');
   });
 
   it('il adını ilçe isteğini beklemeden yazıyor', async () => {

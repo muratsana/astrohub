@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -86,7 +86,22 @@ export function NewListingPage() {
   const [category, setCategory] = useState<EquipmentCategory>('optik-tup');
   const [equipmentSlug, setEquipmentSlug] = useState('');
   const [price, setPrice] = useState('');
-  const [city, setCity] = useState(location.label);
+  /*
+   * ŞEHİR ALANI `label` İLE DEĞİL `provinceName` İLE DOLUYOR.
+   *
+   * `label` GÖSTERİM metni ve her zaman bir il adı değil: cihaz konumu
+   * kullanan biri "Cihaz konumu" ya da "Ankara / Çankaya" görüyor. İkisi
+   * de `ProvinceSelect`in listesinde yok; seçici o değeri "(listede yok)"
+   * seçeneğiyle koruyor — o kaçış yolu SERBEST METİN DÖNEMİNDEN kalma
+   * kayıtlar için var, yeni ilana ön değer olsun diye değil. Sonuç,
+   * kullanıcının fark etmeden il olmayan bir değerle ilan vermesi ve
+   * pazaryeri süzgecinde "Cihaz konumu" diye bir şehir çıkmasıydı.
+   *
+   * `provinceName` doluysa 81 ilden biri olduğu garanti; boşsa il
+   * bilinmiyor demek ve alan BOŞ açılıyor — yanlış bir ili hazır
+   * seçmektense kullanıcıya sordurmak.
+   */
+  const [city, setCity] = useState(location.provinceName ?? '');
   const [condition, setCondition] = useState<ListingCondition>('İyi');
   const [description, setDescription] = useState('');
   const [includes, setIncludes] = useState('');
@@ -96,6 +111,17 @@ export function NewListingPage() {
 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  /*
+   * Cihaz konumu form AÇIKKEN çözülebiliyor (ilk izin, ya da yeniden
+   * alma). Alan hâlâ boşsa dolduruluyor; kullanıcı bir il seçtiyse
+   * DOKUNULMUYOR — seçimin üstüne yazmak, formu kullanıcının elinden
+   * almak olurdu.
+   */
+  const { provinceName } = location;
+  useEffect(() => {
+    if (provinceName) setCity((current) => current || provinceName);
+  }, [provinceName]);
 
   /* Seçilen kategoriye ait modeller — bütün katalogda gezinmek yerine
      kullanıcı zaten seçtiği kategorinin içinde arıyor. */

@@ -32,6 +32,7 @@ ilgilendiriyor.
 | 1.1 | İl + ilçe seçimi | **BİTTİ** | 974 ilçe, koordinatlı; seçici iki kademeli |
 | 1.2 | Cihaz konumunun ilçe adıyla etiketlenmesi | **BİTTİ** | `geocoder` ili çözdükten sonra o ilin ilçeleri çekilip `nearestDistrict` uygulanıyor. Etiket İKİ HAMLEDE yazılıyor: il adı ilçe isteğini beklemiyor. 40 km sınırının ötesinde ilçe adı yazılmıyor; liste okunamazsa il adı yerinde kalıyor. `cityId`/`districtId` bilerek boş — cihaz konumunun paylaşılabilir karşılığı olmamalı (§14.4) |
 | 1.3 | **İlçe explorer facet'i** | SIRADA | Liste sayfalarında (ilanlar, etkinlikler, saha) süzgeç hâlâ il düzeyinde. `personalFacet` deseni hazır; ilçe facet'i `districts` okumasıyla kurulabilir |
+| 1.5 | Form alanlarının `label` yerine `provinceName` okuması | **BİTTİ** | 1.2 sırasında bulundu: ilan formu şehir alanını `location.label` ile dolduruyordu. `label` bir gösterim metni ve her zaman il adı değil ("Cihaz konumu", "Ankara / Çankaya"); `ProvinceSelect` bilinmeyen değeri "(listede yok)" diye koruduğu için kullanıcı fark etmeden il olmayan bir değerle ilan verebiliyordu. `ObservingLocation.provinceName` eklendi — doluysa 81 ilden biri olduğu garanti |
 | 1.4 | Mahalle kademesi | **YAPILMAYACAK** | Elli bine yakın satır, astronomik hiçbir fark üretmiyor (birkaç yüz metre). Daha ince nokta gerektiğinde doğru cevap cihaz konumu, daha ince bir idari liste değil |
 
 ### "81 il" durumu — dürüst tablo

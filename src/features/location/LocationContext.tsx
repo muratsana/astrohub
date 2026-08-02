@@ -175,6 +175,7 @@ function cityLocation(city: City, source: LocationSource): ObservingLocation {
     timeZone: TURKEY_TIME_ZONE,
     source,
     cityId: city.id,
+    provinceName: city.name,
     bortle: city.bortle,
   };
 }
@@ -199,6 +200,7 @@ function provinceLocation(
     timeZone: TURKEY_TIME_ZONE,
     source,
     cityId: province.slug,
+    provinceName: province.name,
     bortle: findCity(province.slug)?.bortle,
   };
 }
@@ -217,6 +219,7 @@ export function LocationProvider({ children }: { children: ReactNode }) {
         longitude: stored.longitude,
         timeZone: TURKEY_TIME_ZONE,
         source: 'device',
+        provinceName: stored.provinceName,
         districtName: stored.districtName,
       };
     }
@@ -330,6 +333,7 @@ export function LocationProvider({ children }: { children: ReactNode }) {
         timeZone: TURKEY_TIME_ZONE,
         source: 'city',
         cityId: input.provinceSlug,
+        provinceName: input.provinceName,
         districtId: input.districtId,
         districtName: input.districtName,
         bortle: findCity(input.provinceSlug)?.bortle,
@@ -417,7 +421,7 @@ export function LocationProvider({ children }: { children: ReactNode }) {
               current.source === 'device' &&
               current.latitude === latitude &&
               current.longitude === longitude
-                ? { ...current, label, districtName }
+                ? { ...current, label, provinceName: match.label, districtName }
                 : current
             );
             setModeState((s) =>
@@ -431,6 +435,7 @@ export function LocationProvider({ children }: { children: ReactNode }) {
               latitude,
               longitude,
               label,
+              provinceName: match.label,
               districtName,
               permission: 'granted',
             });
