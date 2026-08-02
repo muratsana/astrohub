@@ -157,16 +157,41 @@ export interface CommandGroup {
  * Sorguyu çalıştırır. Boş sorguda varsayılan kısayollar döner; doluysa
  * gezinme + eylem komutları ile içerik sonuçları birlikte gruplanır.
  */
-export function runCommandSearch(query: string): CommandGroup[] {
+/**
+ * Kapalı bölümlerin adres önekleri (§13.2).
+ *
+ * Palet kapalı bir bölüme götürmemeli: `radyo_acik` kapalıyken "radyo"
+ * yazan kullanıcıyı, girer girmez "bu bölüm kapalı" diyen bir sayfaya
+ * göndermek, hiç sonuç göstermemekten kötü.
+ *
+ * Süzme PUANLAMADAN SONRA: haystack modül yüklenirken bir kez kuruluyor
+ * ve bayraklar ondan sonra geliyor. Sonradan süzmek birkaç komutu boşuna
+ * puanlamak demek — ölçülemeyecek kadar küçük bir maliyet, karşılığında
+ * indeksin bayraktan bağımsız kalması.
+ */
+function gizliMi(command: Command, prefixes: readonly string[]): boolean {
+  const yol = command.to;
+  if (!yol) return false;
+  return prefixes.some((ön) => yol === ön || yol.startsWith(`${ön}/`));
+}
+
+export function runCommandSearch(
+  query: string,
+  hiddenPrefixes: readonly string[] = []
+): CommandGroup[] {
   const terms = normalize(query).split(' ').filter(Boolean);
+  const gorunur = (liste: Command[]) =>
+    hiddenPrefixes.length === 0
+      ? liste
+      : liste.filter((c) => !gizliMi(c, hiddenPrefixes));
 
   if (terms.length === 0) {
     return [
-      { kind: 'git', label: 'Sık kullanılan', items: defaultCommands },
+      { kind: 'git', label: 'Sık kullanılan', items: gorunur(defaultCommands) },
     ];
   }
 
-  const matched = staticCommands
+  const matched = gorunur(staticCommands)
     .map((c) => ({ command: c, score: commandScore(c, terms) }))
     .filter((r) => r.score > 0)
     .sort((a, b) => b.score - a.score)

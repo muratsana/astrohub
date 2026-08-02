@@ -9,6 +9,7 @@ import { PlaceholderPage } from '@/components/PlaceholderPage';
 import { RedirectTo, RedirectParam } from './Redirect';
 import { lazyWithRetry } from '@/lib/lazyWithRetry';
 import { cityRoutePaths } from '@/features/city/routes';
+import { FlagRoute } from '@/features/site/FlagRoute';
 
 /**
  * Sunucusuz önizleme (tek dosya HTML) için hash tabanlı router kullanılır;
@@ -38,6 +39,29 @@ function route(loader: () => Promise<{ default: ComponentType }>): ReactNode {
     <Suspense fallback={<RouteFallback />}>
       <Component />
     </Suspense>
+  );
+}
+
+/**
+ * Bayrağa bağlı rota sarmalayıcıları (§13.2).
+ *
+ * `radyo_acik` / `tv_acik` kapalıyken bu rotalar sayfayı değil "kapalı"
+ * ekranını çiziyor. Sarmalayıcı `route()`nun DIŞINDA: içeride olsaydı
+ * bayrak kapalıyken bile sayfanın chunk'ı indirilirdi.
+ */
+function radyoRoute(loader: () => Promise<{ default: ComponentType }>): ReactNode {
+  return (
+    <FlagRoute flag="radyo_acik" title="Astrohub Radyo">
+      {route(loader)}
+    </FlagRoute>
+  );
+}
+
+function tvRoute(loader: () => Promise<{ default: ComponentType }>): ReactNode {
+  return (
+    <FlagRoute flag="tv_acik" title="Astrohub.tv">
+      {route(loader)}
+    </FlagRoute>
   );
 }
 
@@ -224,53 +248,53 @@ export const appRoutes = [
       /* ═════════════ YAYIN (TV + RADYO) ═════════════ */
       {
         path: 'tv',
-        element: route(named(() => import('@/features/tv/TvPage'), 'TvPage')),
+        element: tvRoute(named(() => import('@/features/tv/TvPage'), 'TvPage')),
       },
       {
         path: 'tv/arsiv',
-        element: route(
+        element: tvRoute(
           named(() => import('@/features/tv/TvArchivePage'), 'TvArchivePage')
         ),
       },
       {
         path: 'tv/arsiv/:slug',
-        element: route(
+        element: tvRoute(
           named(() => import('@/features/tv/TvArchivePage'), 'TvArchivePage')
         ),
       },
       {
         path: 'radyo',
-        element: route(
+        element: radyoRoute(
           named(() => import('@/features/radio/RadioPage'), 'RadioPage')
         ),
       },
       {
         path: 'radyo/program/:slug',
-        element: route(
+        element: radyoRoute(
           named(() => import('@/features/radio/ProgramPage'), 'ProgramPage')
         ),
       },
       {
         path: 'radyo/yayinci/:slug',
-        element: route(
+        element: radyoRoute(
           named(() => import('@/features/radio/HostPage'), 'HostPage')
         ),
       },
       {
         path: 'radyo/podcast',
-        element: route(
+        element: radyoRoute(
           named(() => import('@/features/radio/PodcastPage'), 'PodcastPage')
         ),
       },
       {
         path: 'radyo/podcast/:slug',
-        element: route(
+        element: radyoRoute(
           named(() => import('@/features/radio/PodcastPage'), 'PodcastPage')
         ),
       },
       {
         path: 'radyo/podcast/:slug/:bolum',
-        element: route(
+        element: radyoRoute(
           named(() => import('@/features/radio/EpisodePage'), 'EpisodePage')
         ),
       },

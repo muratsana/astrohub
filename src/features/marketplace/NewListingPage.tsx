@@ -23,6 +23,8 @@ import {
 } from '@/services/content/listings';
 import type { ListingCondition } from './data';
 import { sanitizeText } from '@/lib/sanitize';
+import { useFlag } from '@/features/site/SiteConfigContext';
+import { FlagClosedNote } from '@/features/site/FlagClosedNote';
 import { cn } from '@/lib/cn';
 
 /**
@@ -78,6 +80,7 @@ export function NewListingPage() {
   const { user } = useAuth();
   const { location } = useLocationContext();
   const equipment = useEquipmentCatalog();
+  const ilanlarAcik = useFlag('ilanlar_acik');
 
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<EquipmentCategory>('optik-tup');
@@ -166,6 +169,28 @@ export function NewListingPage() {
           description="Astrohub ödemeye aracılık etmez ve emanet (escrow) hizmeti sunmaz; iletişim ve teslim taraflar arasındadır."
         />
 
+        {/*
+          İLAN KAPALIYSA FORM HİÇ ÇİZİLMİYOR.
+          Yorumlarda formu bırakıp notu yanına koymak yeterliydi: orada
+          kapalı olan tek bir kutu. Burada kapalı olan bütün bir iş —
+          otuz alan doldurup "ilanlar kapalı" cevabı almak, en pahalı
+          hayal kırıklığı. Ziyaretçi listeye dönebilsin diye bağlantı
+          duruyor.
+        */}
+        {!ilanlarAcik ? (
+          <div className="grid gap-3">
+            <FlagClosedNote>
+              Yeni ilan yayımlama şu an kapalı; mevcut ilanlar durmaya
+              devam ediyor.
+            </FlagClosedNote>
+            <div>
+              <ButtonLink to="/ilanlar" variant="secondary" size="sm">
+                İlanlara dön
+              </ButtonLink>
+            </div>
+          </div>
+        ) : (
+        <>
         {!user && (
           <p className="mb-4 rounded-card border border-cold/40 bg-surface-1 px-3 py-2.5 text-body-sm leading-relaxed text-muted-foreground">
             İlan yayımlamak için giriş yapmanız gerekiyor. Formu şimdi
@@ -399,6 +424,8 @@ export function NewListingPage() {
             </div>
           </div>
         </div>
+        </>
+        )}
       </Container>
     </>
   );

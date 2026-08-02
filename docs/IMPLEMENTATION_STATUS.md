@@ -31,7 +31,7 @@ tabloda `DONE` ile birleştirilmez:
 | 7 | Çalışan AstroHub Radyo | 683–832 | PARTIAL⁴ |
 | 8 | AstroHub TV ve YouTube'a hazır altyapı | 833–922 | PARTIAL⁵ |
 | 9 | Standart/Premium üyelik altyapısı | 923–1005 | IMPLEMENTED_DISABLED⁶ |
-| 10 | Admin panelinden kodsuz site yönetimi | 1006–1164 | NOT_STARTED |
+| 10 | Admin panelinden kodsuz site yönetimi | 1006–1164 | PARTIAL⁷ |
 | 11 | Zorunlu ürün modülleri | 1165–1349 | NOT_STARTED |
 | 12 | Organik kullanıcı kazanımı | 1350–1419 | NOT_STARTED |
 | 13 | Fotoğraf, Storage, medya mimarisi | 1420–1462 | NOT_STARTED |
@@ -40,6 +40,16 @@ tabloda `DONE` ile birleştirilmez:
 | 16 | Performans, SEO, analitik, gözlemlenebilirlik | 1607–1690 | NOT_STARTED |
 | 17 | Test stratejisi ve kabul kriterleri | 1691–… | NOT_STARTED |
 | 18 | (belgenin sonu) | …–1956 | NOT_STARTED |
+
+⁷ **Faz 10'un yönetim yüzeyi ve ziyaretçi bağlantısı kuruldu.** Dört
+tablo (`home_modules`, `nav_links`, `feature_flags`, `site_settings`),
+değişiklik geçmişi + geri alma, taslak/önizleme/yayın akışı ve panelin
+**Site** sekmesi çalışıyor. Ana sayfa düzeni ve yedi bayrak artık
+ziyaretçi tarafından da OKUNUYOR — panelin en büyük riski buydu ve
+kapandı. Kalan iki bağlanmamış yüzey `nav_links` (menü/footer hâlâ
+koddaki `siteMap`ten geliyor) ve hero banner yönetimi. §13.4'ün çoklu
+admin rolleri **kurulmayacak** — ürün kararı, tek admin (bkz. görev #73).
+Ayrıntı: Faz 10 bölümü.
 
 ⁶ **Faz 9 tamam — ödeme kapalı olduğu için `IMPLEMENTED_DISABLED`.**
 §12.2 bu etiketi açıkça öneriyor: "bu faz kod ve test açısından
@@ -1131,6 +1141,117 @@ Yazarken `interval` ve `status` enum değerlerini tahmin etmiştim
 
 ---
 
+## Faz 10 — ayrıntı
+
+| Madde | Durum | Not |
+|---|---|---|
+| `home_modules` / `nav_links` / `feature_flags` / `site_settings` şeması | DONE | `0058` |
+| Değişiklik geçmişi, gerekçe, geri alma (§13.3) | DONE | `setting_history`, tetikleyiciyle |
+| Taslak → önizleme → yayın + zamanlanmış yayın | DONE | `0058`, `0059`, `0060` |
+| Panel **Site** sekmesi | DONE | `SiteControl` |
+| **Ana sayfanın düzeni okuması** | DONE | `homeLayout.ts`, `0061` |
+| **Bayrakların ziyaretçi tarafında çalışması** | DONE | `siteConfig.ts` — yedi bayrak |
+| Bakım modu + site duyurusu | DONE | `MaintenanceGate`, `AnnouncementBar` |
+| `nav_links` → gerçek menü/footer | NOT_STARTED | menü hâlâ koddaki `siteMap` |
+| Hero banner yönetimi | NOT_STARTED | tablo yok |
+| Modül `layout` (ızgara/liste) ve `subtitle` | NOT_STARTED | gerekçe `HomePage.tsx`te |
+| §13.4 çoklu admin rolleri | — | ürün kararı: kurulmayacak |
+| §13.5 dashboard | PARTIAL | panel sekmeleri var, tek ekran özet yok |
+
+### Faz 10'un tek hatası aynı hataydı, üç kez
+
+Bu fazın kodu iki turda yazıldı ve ikisinde de aynı boşluk çıktı: **panel
+yazıyor, ziyaretçi okumuyor.** Sırasıyla `home_modules`, sonra
+`feature_flags`. Üçüncüsü (`nav_links`) hâlâ açık ve yukarıdaki tabloda
+`NOT_STARTED` olarak duruyor — kapatılmadan "Faz 10 bitti" denemez.
+
+Boşluk sinsiydi çünkü panel tarafı KUSURSUZ çalışıyordu: yönetici
+anahtarı çeviriyor, `set_feature_flag` yazıyor, `setting_history`ye kayıt
+düşüyor, geri alma düğmesi bile doğru davranıyordu. Ölçülebilen her şey
+yeşildi. Ölçülmeyen tek şey, ziyaretçinin ne gördüğüydü.
+
+0058 bunu kendi başlığına yazmıştı: *"karşılığı olmayan bayrak
+yanıltır."* Cümle doğruydu; yazıldığı gün yedi bayrağın yedisi için de
+tutmuyordu.
+
+### Yedek yönü rastgele seçilmez
+
+Bayraklar okunamadığında ne varsayılacağı, bayrak başına ayrı bir karar
+gibi görünüyor. Değil — tek kural var: **yedek, sitenin olağan hâli.**
+
+İçerik bayrakları (`radyo_acik`, `tv_acik`, `yorumlar_acik`,
+`ilanlar_acik`, `kayit_acik`) AÇIK varsayılıyor; `bakim_modu` ve
+`duyuru_acik` KAPALI. Ters yön düşünülünce gerekçe netleşiyor: bakım
+modu okunamadığında `true` sayılsaydı tek bir başarısız istek bütün
+siteyi "bakımdayız" ekranına düşürürdü. Radyo `false` sayılsaydı aynı
+istek çalışan radyoyu yok ederdi. İki hata da aynı kaynaktan (ağ) çıkıp
+ürünü kapatırdı.
+
+Aynı kural ana sayfa düzeninde de geçerli: `DEFAULT_HOME_LAYOUT` boş
+liste değil, bugün canlıda ne varsa o.
+
+### Bakım modunda kilitlenme tuzağı
+
+Bakım modunu yalnızca yönetici kapatabilir → yönetici olduğunu anlamak
+için oturum gerekir → oturum için giriş sayfası gerekir. Giriş sayfası da
+kapatılsaydı, oturumu kapalıyken bakım modunu açan yönetici siteyi kendi
+kilitlerdi ve geri dönüşü yalnızca veritabanından elle `UPDATE` olurdu.
+
+`MAINTENANCE_ALLOWED_PATHS` bu yüzden var ve içinde yalnızca `/giris`
+duruyor. `/kayit` listede yok: bakım sırasında yeni hesap açmak yapılacak
+iş değil ve kilidi açmıyor.
+
+İkinci tuzak roller tarafında: roller yüklenirken kapı BEKLİYOR, ama
+yalnızca oturumu olanlar için. Beklemenin yönü de bilinçli — bilinmezken
+site açık kalıyor, çünkü ters yön roller hiç gelmediğinde (ağ hatası)
+yöneticiyi kendi sitesinden kilitlerdi.
+
+### Bakım modu bir güvenlik sınırı değil
+
+Kapı istemcide. Veriyi koruyan şey RLS; bakım modu bir SUNUM kararı
+("şu an girmeyin"), erişim kararı değil. Sorguları da kesip "güvenlik"
+gibi yazmak yanlış bir güven duygusu verirdi: adresi doğrudan yazan biri
+zaten aynı veriyi görürdü, çünkü veriyi veren yer veritabanı.
+
+### Bağlantıyı gizlemek sayfayı kapatmaz
+
+`radyo_acik` / `tv_acik` bayraklarının açıklaması "sayfaları gizlenir"
+diyor. Yalnızca menü bağlantılarını kaldırmak bu cümleyi yalanlardı:
+adres kaydedilmiş, paylaşılmış ya da arama motoruna düşmüş olabilir.
+Kapı üç katmanda birden: modül haritası (`withoutPrefixes`), komut
+paleti (`runCommandSearch`in `hiddenPrefixes` parametresi) ve rotanın
+kendisi (`FlagRoute`).
+
+`FlagRoute` 404 DÖNDÜRMÜYOR: sayfa yok değil, kapalı. Geri gelecek bir
+bölüm için 404 hem ziyaretçiyi hem botu yanıltır. Kapalıyken `noIndex`
+basılıyor — o gün taranan sayfa kapalı hâliyle kaydedilmemeli.
+
+### Tohum, kod okunarak yazılmamıştı
+
+0058 `home_modules` tohumunu doldururken makul tahminler kullandı; o
+sırada tabloyu okuyan kimse olmadığı için tutmadığı görünmüyordu.
+Bağlanınca çıktı: `records` 6 (kod 10), `listings` 4 (kod 5) ve üç
+başlıkta büyük/küçük harf farkı (`'Son ilanlar'` ↔ `'Son İlanlar'`).
+
+Düzeltilmeseydi bağlama commit'i, kimsenin istemediği bir ürün
+değişikliği yapardı — üstelik düzen kodunda bir hata gibi görünürdü.
+**Kural: bir yapılandırma katmanı devreye girdiği gün DAVRANIŞI
+KORUMALIDIR.**
+
+`0061` bu yüzden yalnızca tohum değerine dokunuyor (`where item_limit =
+6`, `where (key, title) in (...)`): yönetici bir değeri değiştirmişse
+satır olduğu gibi kalıyor. Ölçüm bloğu da `updated_by is not null` olan
+satırları atlıyor — atlamasaydı göç, tam da doğru davrandığı için
+patlardı.
+
+Başlıklar string kopyalanmak yerine `null`a çekildi: sütun zaten
+nullable ve panelin yer tutucusu "Varsayılan başlık" diyor, yani
+sözleşme hazırdı. Kopyalasaydık aynı cümle iki yerde yaşar ve kodda
+başlığı değiştiren biri veritabanının sessizce eskisini dayattığını fark
+etmezdi.
+
+---
+
 ## Sonraki oturum için devam notu
 
 **Bittiği yer:** Faz 2, Faz 5 ve Faz 6 kapandı. Faz 3'ün 3.1'i
@@ -1190,12 +1311,23 @@ ediyor.
 adaptörü (35 test) ve panelde onuncu sekme. Migration numaraları
 `0057`den devam ediyor.
 
-**Sıradaki iş: Faz 8'in kullanıcı sayfaları.**
-  1. Video arşivi sayfası (`/tv/arsiv`) — `tv_videos` hazır, onay
-     kapaklı `youtube-nocookie` gömme `TvPage`de zaten var.
-  2. Seri/playlist sayfası (`tv_playlists`, `tv_playlist_items`).
-  3. Yayın takip düğmesi (`tv_follows`) — şema ve
-     `announce_tv_live` hazır, düğmesi yok.
+**Faz 8'in kullanıcı sayfaları da kapandı** (video arşivi, seriler,
+yayın takip düğmesi). Faz 8'de kodla kapatılabilecek iş kalmadı.
+
+**Faz 10'un iki turu bitti** (bkz. Faz 10 bölümü): ana sayfa düzeni ve
+yedi feature flag ziyaretçi tarafından okunuyor; bakım modu ve site
+duyurusu çalışıyor.
+
+**Sıradaki iş: Faz 10'un üçüncü turu — `nav_links`.**
+  1. Menü ve footer hâlâ koddaki `siteMap`ten geliyor; `nav_links`
+     tablosu yalnızca panel tarafından yazılıp okunuyor. Bu, fazın iki
+     kez düzelttiğimiz hatasının kalan üçüncü örneği.
+  2. Sıra, `enabled`, `new_tab`, `auth_only` ve `group_label` alanları
+     tabloda hazır — okuma katmanı yok.
+  3. `withoutPrefixes` / `useSiteMap` zaten süzme noktası; `nav_links`
+     bağlanınca kaynağın kendisi değişecek, süzme mantığı değil.
+  4. Bağlarken §13.2'nin geri kalanı da açık: hero banner yönetimi ve
+     modül `layout`/`subtitle` alanları.
 
 **Kanal bağlı değilken sahte içerik gösterilmemeli** (§11.2 son madde).
 Adaptör ve panel bu kurala uyuyor; kullanıcı sayfaları yazılırken de

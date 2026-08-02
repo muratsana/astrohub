@@ -8,6 +8,7 @@ import { ThemeProvider } from '@/features/theme/ThemeContext';
 import { LocationProvider } from '@/features/location/LocationContext';
 import { PreviewEditorProvider } from '@/features/preview-editor/PreviewEditorContext';
 import { RadioProvider } from '@/features/radio/RadioContext';
+import { SiteConfigProvider } from '@/features/site/SiteConfigContext';
 import { registerServiceWorker } from '@/pwa/register';
 import './index.css';
 
@@ -35,9 +36,16 @@ createRoot(rootEl).render(
               gezinme yayını sıfırlardı.
             */}
             <RadioProvider>
-              <PreviewEditorProvider>
-                <RouterProvider router={router} />
-              </PreviewEditorProvider>
+              {/*
+                Site ayarları router'ın DIŞINDA: bakım kapısı ve duyuru
+                bandı kabuk seviyesinde yaşıyor, her rota değişiminde
+                yeniden okumaları gereksiz bir istek olurdu.
+              */}
+              <SiteConfigProvider>
+                <PreviewEditorProvider>
+                  <RouterProvider router={router} />
+                </PreviewEditorProvider>
+              </SiteConfigProvider>
             </RadioProvider>
           </AuthProvider>
         </LocationProvider>

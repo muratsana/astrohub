@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/Button';
 import { usePhotoComments } from '@/services/content/engagement';
 import type { AstroPhoto } from './types';
 import { Alert } from '@/components/ui/Alert';
+import { useFlag } from '@/features/site/SiteConfigContext';
+import { FlagClosedNote } from '@/features/site/FlagClosedNote';
 
 /**
  * FOTOĞRAF YORUMLARI.
@@ -21,6 +23,10 @@ import { Alert } from '@/components/ui/Alert';
 export function PhotoComments({ photo }: { photo: AstroPhoto }) {
   const thread = usePhotoComments(photo.id);
   const [draft, setDraft] = useState('');
+  /* `yorumlar_acik` yalnızca YENİ yorumu kapatıyor; bayrağın kendi
+     açıklaması da bunu söylüyor ("mevcutlar durur"). Listeyi de
+     gizleseydik kapatma işlemi geriye dönük bir silme gibi görünürdü. */
+  const yorumlarAcik = useFlag('yorumlar_acik');
 
   async function send() {
     await thread.send(draft);
@@ -77,7 +83,11 @@ export function PhotoComments({ photo }: { photo: AstroPhoto }) {
         </Alert>
       )}
 
-      {thread.canWrite ? (
+      {!yorumlarAcik ? (
+        <FlagClosedNote className="mt-3">
+          Yorumlar şu an kapalı; yeni yorum yazılamıyor.
+        </FlagClosedNote>
+      ) : thread.canWrite ? (
         <div className="mt-3 border-t border-border pt-3">
           <textarea
             rows={3}

@@ -367,6 +367,45 @@ export function allNavItems(): NavItem[] {
 }
 
 /**
+ * BAYRAĞA BAĞLI BÖLÜMLERİN ADRES ÖNEKLERİ (§13.2).
+ *
+ * `radyo_acik` ve `tv_acik` kapatıldığında bu öneklerle başlayan her
+ * bağlantı menüden, footer'dan ve komut paletinden düşüyor. Tek yerde
+ * durması bilinçli: bağlantı listesi dört yerden okunuyor ve "radyoyu
+ * kapattık ama footer'da kaldı" hatası tam olarak böyle doğar.
+ *
+ * Rotanın kendisi ayrıca `FlagRoute` ile kapalı — bağlantıyı gizlemek
+ * sayfayı kapatmaz, adresi bilen yine girerdi.
+ */
+export const flaggedNavPrefixes = {
+  radyo_acik: '/radyo',
+  tv_acik: '/tv',
+} as const;
+
+/**
+ * Verilen öneklerle başlayan bağlantıları eler.
+ *
+ * BOŞALAN GRUP DA DÜŞÜYOR: "Yayın" başlığı altında hiç giriş kalmadığında
+ * başlığın kendisi de kalkmalı, yoksa footer'da boş bir sütun başlığı
+ * kalırdı.
+ */
+export function withoutPrefixes(
+  groups: NavGroup[],
+  prefixes: readonly string[]
+): NavGroup[] {
+  if (prefixes.length === 0) return groups;
+  const gizli = (yol: string) =>
+    prefixes.some((ön) => yol === ön || yol.startsWith(`${ön}/`));
+
+  return groups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => !gizli(item.to)),
+    }))
+    .filter((group) => group.items.length > 0);
+}
+
+/**
  * Mobil alt navigasyon. Çubukta dört giriş + ortada "+" + "Daha Fazla";
  * Üye Paneli çekmecenin en üstünde birincil satır olarak durur (yedi hücre
  * dar ekranda etiketleri kırpıyordu).

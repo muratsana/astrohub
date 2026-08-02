@@ -13,6 +13,7 @@ import { ThemeProvider } from '@/features/theme/ThemeContext';
 import { LocationProvider } from '@/features/location/LocationContext';
 import { AuthProvider } from '@/features/auth/AuthContext';
 import { RadioProvider } from '@/features/radio/RadioContext';
+import { SiteConfigProvider } from '@/features/site/SiteConfigContext';
 import { PreviewEditorProvider } from '@/features/preview-editor/PreviewEditorContext';
 import { appRoutes } from '@/app/router';
 import { staticEntries, contentEntries } from '@/app/sitemap';
@@ -45,7 +46,9 @@ function Providers({ children }: { children: ReactNode }) {
         <LocationProvider>
           <AuthProvider>
             <RadioProvider>
-              <PreviewEditorProvider>{children}</PreviewEditorProvider>
+              <SiteConfigProvider>
+                <PreviewEditorProvider>{children}</PreviewEditorProvider>
+              </SiteConfigProvider>
             </RadioProvider>
           </AuthProvider>
         </LocationProvider>

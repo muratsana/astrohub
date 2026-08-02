@@ -12,6 +12,8 @@ import { Captcha, type CaptchaHandle } from './Captcha';
 import { captchaEnabled } from './captchaConfig';
 import { SocialAuth } from './GoogleButton';
 import { Alert } from '@/components/ui/Alert';
+import { useFlag } from '@/features/site/SiteConfigContext';
+import { FlagClosedNote } from '@/features/site/FlagClosedNote';
 
 export function RegisterPage() {
   const { signUp } = useAuth();
@@ -20,6 +22,10 @@ export function RegisterPage() {
   const [done, setDone] = useState(false);
   const [captchaToken, setCaptchaToken] = useState('');
   const captchaRef = useRef<CaptchaHandle>(null);
+  /* `kayit_acik` KAPI DEĞİL TABELA: kaydı gerçekten durduran şey
+     Supabase'in kendi ayarı. Buradaki kontrol, kapalıyken kullanıcıyı
+     dolduramayacağı bir formla uğraştırmamak için. */
+  const kayitAcik = useFlag('kayit_acik');
 
   const {
     register,
@@ -71,7 +77,18 @@ export function RegisterPage() {
         </>
       }
     >
-      {done ? (
+      {!kayitAcik ? (
+        /*
+          GOOGLE DÜĞMESİ DE KALKIYOR. Yalnızca e-posta formunu kapatıp
+          "Google ile üye ol"u bırakmak, kaydı kapatmış olmazdı — aynı
+          kapıdan girilmeye devam ederdi. Bayrak kaydın kendisini
+          kapatıyor, bir yöntemini değil.
+        */
+        <FlagClosedNote>
+          Yeni üyelik başvuruları şu an kapalı. Mevcut hesabınla giriş
+          yapmaya devam edebilirsin.
+        </FlagClosedNote>
+      ) : done ? (
         <p role="status" className="text-sm text-success">
           Kaydın alındı! E-postanı doğruladıktan sonra giriş yapabilirsin.
         </p>

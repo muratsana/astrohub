@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router';
-import { siteMap, mobileDrawerPrimary } from '@/app/navigation';
+import { mobileDrawerPrimary } from '@/app/navigation';
+import { useSiteMap } from '@/features/site/useSiteMap';
 import { CloseIcon, UserIcon, SearchIcon } from '@/components/ui/icons';
 import { ThemeToggleRow } from '@/features/theme/ThemeToggle';
 import { LocationPicker } from '@/features/location/LocationPicker';
@@ -23,6 +24,8 @@ export function NavDrawer({
   onOpenPalette: () => void;
 }) {
   const { pathname } = useLocation();
+  /* Kapalı bölümler (radyo/TV) haritadan düşüyor — §13.2. */
+  const siteMap = useSiteMap();
 
   // Gezinince kendiliğinden kapanır.
   useEffect(() => {

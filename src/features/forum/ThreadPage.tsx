@@ -18,6 +18,8 @@ import {
 import { LabelChip } from './LabelChip';
 import { useAuth } from '@/features/auth/AuthContext';
 import { createReply, useForumThreads } from '@/services/content/forum';
+import { useFlag } from '@/features/site/SiteConfigContext';
+import { FlagClosedNote } from '@/features/site/FlagClosedNote';
 import { cn } from '@/lib/cn';
 import { Alert } from '@/components/ui/Alert';
 
@@ -25,6 +27,8 @@ import { Alert } from '@/components/ui/Alert';
 export function ThreadPage() {
   const { slug } = useParams<{ slug: string }>();
   const catalog = useForumThreads();
+  /* Erken `return`dan ÖNCE: kanca çağrıları koşulsuz olmalı. */
+  const yorumlarAcik = useFlag('yorumlar_acik');
   const thread = catalog.items.find((t) => t.slug === slug);
 
   if (!thread) return <NotFoundPage />;
@@ -100,6 +104,13 @@ export function ThreadPage() {
                 <LockIcon className="h-3.5 w-3.5 shrink-0 text-faint" />
                 Bu konu kilitli; yeni yanıt yazılamaz.
               </p>
+            ) : !yorumlarAcik ? (
+              /* Konu kilidi ÖNCE geliyor: kilit bu konuya ait bir karar,
+                 bayrak site geneline ait. Kilitli bir konuda "yorumlar
+                 kapalı" demek, kapatınca açılacakmış izlenimi verirdi. */
+              <FlagClosedNote>
+                Yorumlar şu an kapalı; yeni yanıt yazılamıyor.
+              </FlagClosedNote>
             ) : (
               <ReplyBox thread={thread} onSent={catalog.refresh} />
             )}

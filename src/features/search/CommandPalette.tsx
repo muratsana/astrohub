@@ -1,6 +1,7 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useTheme } from '@/features/theme/ThemeContext';
+import { useHiddenPrefixes } from '@/features/site/useSiteMap';
 import type { Theme } from '@/features/theme/themes';
 import { cn } from '@/lib/cn';
 import {
@@ -45,8 +46,13 @@ export function CommandPalette({
   const listboxId = useId();
   const navigate = useNavigate();
   const { setTheme } = useTheme();
+  /* Kapalı bölümler palette de görünmüyor (§13.2). */
+  const hiddenPrefixes = useHiddenPrefixes();
 
-  const groups = useMemo(() => runCommandSearch(query), [query]);
+  const groups = useMemo(
+    () => runCommandSearch(query, hiddenPrefixes),
+    [query, hiddenPrefixes]
+  );
   const flat = useMemo(() => flattenCommands(groups), [groups]);
 
   useEffect(() => {
