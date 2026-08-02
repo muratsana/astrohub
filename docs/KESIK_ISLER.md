@@ -12,12 +12,16 @@ Ayrım önemli: burada iki tür madde var.
 
 ---
 
-## 0. Önce yapılması gerekenler (başka her şeyi kilitliyor)
+## 0. Önce yapılması gerekenler — İKİSİ DE KAPANDI
 
-| # | İş | Neden şimdi | İlk hamle |
+Bu bölüm iki maddeyle açılmıştı ve ikisi de aşağıdaki her şeyi kilitliyordu.
+Kapanma kayıtları duruyor, çünkü nasıl kapandıkları bir sonraki turu
+ilgilendiriyor.
+
+| # | İş | Durum | Nasıl kapandı |
 |---|---|---|---|
-| 0.1 | **JS bütçesi 199.9/200 kB** | Tavana 0.1 kB kaldı. Bir sonraki arayüz eklemesi kapıyı düşürür; yani bu madde açılmadan aşağıdakilerin çoğu yazılamaz | `npm run check:budgets` çıktısındaki ilk rota parçalarına bak; `cities.ts` ve `navigation.ts` gibi kök modülleri lazy sınırın arkasına al. Tavanı yükseltmek son çare — gerekçesi belgelenmeli |
-| 0.2 | **`0071` tohumu uzak projeye uygulanmadı** | Şema canlıda var (`districts`, `0040`'tan) ama 974 satır yalnızca depoda. Canlıda ilçe seçici boş açılır | `supabase db push` (ya da `psql -f supabase/migrations/0071_ilceler.sql`). Dosya yerel PostgreSQL'de üç kez çalıştırılıp doğrulandı; tohum idempotent ve yönetici düzeltmesini korumaktadır |
+| 0.1 | JS bütçesi 199.9/200 kB | **KAPANDI — 198.3 kB** | Tavan yükseltilmedi, yük azaltıldı. `services/content/photos.ts`, beş satırlık `publicPhotoUrl` için `services/photos/upload.ts`i çağırıyor; import zinciri yeniden boyutlama, EXIF ve plate solve boru hattını ilk rotaya taşıyordu. URL kurucu `publicUrl.ts`e ayrıldı (`upload.ts` yeniden dışa aktarıyor): −3.2 kB. 81 ilin eklediği ~1 kB bu payın içine sığdı |
+| 0.2 | `0071` tohumu uzak projeye uygulanmadı | **KAPANDI — canlıda** | Göç `20260802171241_0071_ilceler` olarak uygulandı. Canlı doğrulama: 974 ilçe, **974'ünde de koordinat**, 81 ilin tamamı temsil ediliyor (min 3 — Bayburt, maks 39 — İstanbul). `search_name` katlaması canlıda da doğru: `beytussebap`, `gumushacikoy`, `yuregir` aranabiliyor |
 
 ---
 
@@ -32,17 +36,21 @@ Ayrım önemli: burada iki tür madde var.
 
 ### "81 il" durumu — dürüst tablo
 
-Veri kaynaklı her yer **zaten 81 il**: `provinces` tablosu (`0040`), konum
-seçici, formlar, filtreler, ters kodlama. İki istisna var ve ikisi de
-0.1 (bütçe) maddesine bağlı:
+Veri kaynaklı her yer **zaten 81 il**ydi: `provinces` tablosu (`0040`),
+konum seçici, formlar, filtreler, ters kodlama. Koda gömülü olmak
+ZORUNDA olan iki yer 15 ilde kalmıştı; bütçe açıldıktan sonra biri
+tamamlandı, diğeri bilerek eksik:
 
-| Yer | Bugün | Neden 81 değil |
+| Yer | Bugün | Not |
 |---|---|---|
-| Şehir SEO sayfaları (`/{sehir}-astronomi-etkinlikleri`) | **15 il** | Rotalar derleme zamanında üretiliyor, yani liste koda gömülü olmak zorunda. 81 il ~2,5 kB gzip ekler; bütçede 0,1 kB var |
-| Bortle ipuçları | **15 il** | Kalan 66 il için ÖLÇÜM YOK. Nüfusa bakıp tahmin etmek gökyüzü beklentisini yanlış kurardı; alan bilerek boş |
+| Şehir SEO sayfaları (`/{sehir}-astronomi-etkinlikleri`) | **81 il** | Rotalar derleme zamanında üretiliyor, liste koda gömülü. Nesne literalleri demet satırlarına çevrildi (dört alan adı 81 kez tekrarlanmıyor): ~1 kB gzip. Prerender 424 → 490 rota, `vercel.json` 159 rewrite |
+| Bortle ipuçları | **15 il** | Kalan 66 il için ÖLÇÜM YOK. Nüfusa bakıp tahmin etmek gökyüzü beklentisini yanlış kurardı. Alan isteğe bağlı; arayüz o illerde "—" ve "ölçüm yok" gösteriyor. Bu bir eksik değil, KARAR |
 
 `cities.ts` artık "şehir listesi" değil, yapılandırma yokken çalışan bir
-yedek — bu ayrım `provinces.ts` başlığında yazılı.
+yedek — bu ayrım `provinces.ts` başlığında yazılı. Yedek artık **gerçek
+plaka kodu** taşıyor: eskiden uydurma negatif kodlar üretiliyordu ve
+ilçeler `province_code` ile sorgulandığı için, veritabanı yokken ilçe
+seçici sessizce boş kalıyordu.
 
 ---
 
@@ -97,9 +105,6 @@ Bunlar tek turda kapatılabilecek işler değil; her biri kendi fazı.
 
 - **`districts` için ikinci tablo açılmadı.** Uzak projede tablo zaten
   vardı (`0040`); yeni şema aynı veriyi iki yerde tutmak olurdu.
-- **974 satır MCP üzerinden canlıya yazılmadı.** 60 kB'lık bir seed'i
-  araç çağrısına gömmek bağlamın büyük kısmını yerdi; dosya depoda ve
-  `db push` ile gidiyor (madde 0.2).
 - **Mahalle verisi çekilmedi** (madde 1.4).
 - **Bortle tahmini üretilmedi** — 66 il için ölçüm yok, uydurmak
   kullanıcının gökyüzü beklentisini yanlış kurardı.
