@@ -4,7 +4,7 @@ import { LocationPicker } from '@/features/location/LocationPicker';
 import { ButtonLink } from '@/components/ui/Button';
 import { Container } from '@/components/ui/Container';
 import { MenuIcon, UserIcon } from '@/components/ui/icons';
-import { primaryNav } from '@/app/navigation';
+import { useMenu } from '@/features/site/SiteConfigContext';
 import { useAuth } from '@/features/auth/AuthContext';
 import { ThemeToggle } from '@/features/theme/ThemeToggle';
 import { RadioToggle } from '@/features/radio/RadioToggle';
@@ -28,6 +28,10 @@ import { cn } from '@/lib/cn';
  * gezinme girişi olmadan kalmaz.
  */
 export function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
+  /* Üst menü artık `nav_links`ten geliyor (§13.2); tablo boşsa ya da
+     okunamazsa koddaki `primaryNav` yedeği çiziliyor. */
+  const menu = useMenu('header');
+
   /*
     OTURUM DURUMU ÜST ÇUBUKTA GÖRÜNÜR OLMAK ZORUNDA. Bugüne kadar giriş
     yapmış kullanıcı da "Giriş / Kaydol" görüyordu: hem oturumunun açık
@@ -88,10 +92,12 @@ export function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
             */
             className="ml-2 hidden items-stretch self-stretch min-[1400px]:flex"
           >
-            {primaryNav.map((item) => (
+            {menu.map((item) => (
               <NavLink
-                key={item.to}
-                to={item.to}
+                key={item.path}
+                to={item.path}
+                target={item.new_tab ? '_blank' : undefined}
+                rel={item.new_tab ? 'noopener noreferrer' : undefined}
                 className={({ isActive }) =>
                   cn(
                     'relative flex items-center px-3 text-body-sm font-medium transition-colors',

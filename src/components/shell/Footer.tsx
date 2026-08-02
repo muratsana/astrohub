@@ -1,7 +1,7 @@
 import { Link } from 'react-router';
 import { Logo } from './Logo';
 import { Container } from '@/components/ui/Container';
-import { primaryNav } from '@/app/navigation';
+import { useMenu } from '@/features/site/SiteConfigContext';
 
 /**
  * FOOTER — kompakt.
@@ -13,13 +13,15 @@ import { primaryNav } from '@/app/navigation';
  * Alt sayfalara erişim kaybolmuyor: ⌘K komut paleti tüm modül haritasını
  * indeksliyor ve mobil çekmece tam listeyi göstermeye devam ediyor.
  */
-const legal = [
-  { label: 'Hakkında', to: '/hakkinda' },
-  { label: 'KVKK', to: '/kvkk' },
-  { label: 'Kullanım Koşulları', to: '/kullanim-kosullari' },
-];
-
 export function Footer() {
+  /*
+    İKİ MENÜ DE `nav_links`ten (§13.2). Kurumsal satır buraya gömülü bir
+    dizideydi; panelden yönetilebilmesi için `navigation.ts`e taşındı ve
+    tabloya tohumlandı — yedek olarak orada duruyor.
+  */
+  const modules = useMenu('header');
+  const legal = useMenu('footer');
+
   return (
     <footer className="mt-12 border-t border-border bg-surface-1">
       <Container className="py-6">
@@ -27,10 +29,12 @@ export function Footer() {
           <Logo />
 
           <nav aria-label="Modüller" className="flex flex-wrap gap-x-5 gap-y-2">
-            {primaryNav.map((item) => (
+            {modules.map((item) => (
               <Link
-                key={item.to}
-                to={item.to}
+                key={item.path}
+                to={item.path}
+                target={item.new_tab ? '_blank' : undefined}
+                rel={item.new_tab ? 'noopener noreferrer' : undefined}
                 /* inline-block + py-1: dokunma hedefi 24px'e çıkar
                    (WCAG 2.2 AA, 2.5.8). Satır yüksekliği tek başına 17px
                    veriyordu. */
@@ -48,8 +52,10 @@ export function Footer() {
           <nav aria-label="Kurumsal" className="flex flex-wrap gap-x-4 gap-y-1">
             {legal.map((item) => (
               <Link
-                key={item.to}
-                to={item.to}
+                key={item.path}
+                to={item.path}
+                target={item.new_tab ? '_blank' : undefined}
+                rel={item.new_tab ? 'noopener noreferrer' : undefined}
                 className="inline-block py-1 transition-colors hover:text-muted-foreground"
               >
                 {item.label}

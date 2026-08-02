@@ -55,6 +55,20 @@ export const primaryNav: NavItem[] = [
 ];
 
 /**
+ * Footer'ın kurumsal satırı.
+ *
+ * `Footer.tsx`in içinde yerel bir dizi olarak duruyordu; buraya taşındı
+ * çünkü §13.2 "footer linkleri"ni yönetilebilir sayıyor ve `nav_links`
+ * tohumunun kodla eşleştiğini ölçebilmek için ikisinin de tek yerden
+ * okunması gerekiyor.
+ */
+export const legalNav: NavItem[] = [
+  { label: 'Hakkında', to: '/hakkinda' },
+  { label: 'KVKK', to: '/kvkk' },
+  { label: 'Kullanım Koşulları', to: '/kullanim-kosullari' },
+];
+
+/**
  * Tam modül haritası. Footer ve komut paletinin "GİT" bölümü bunu kullanır.
  * Üst menüde görünmeyen her sayfa burada görünür olmalıdır — aksi hâlde
  * erişilemez hâle gelir.

@@ -19,6 +19,14 @@ import {
   type Maintenance,
   type SiteFlags,
 } from './siteConfig';
+import {
+  DEFAULT_NAV_LINKS,
+  selectMenu,
+  toNavLinks,
+  type NavLinkView,
+} from './navLinks';
+import { flaggedNavPrefixes } from '@/app/navigation';
+import { useAuth } from '@/features/auth/AuthContext';
 
 /**
  * SİTE AYARLARI SAĞLAYICISI (§13.2).
@@ -26,13 +34,13 @@ import {
  * ══════════════════════════════════════════════════════════════════════
  * NEDEN SAĞLAYICI, HER YERDE AYRI KANCA DEĞİL
  *
- * Bayrakları okuyan yerler dağınık: rıhtım, üst menü, kayıt formu, yorum
- * kutusu, ilan formu, bakım kapısı. Her biri kendi sorgusunu atsaydı tek
- * bir sayfa açılışında aynı iki tablo altı kez istenirdi. Bir kez
- * okunuyor, bağlamla dağıtılıyor.
+ * Bayrakları ve menüyü okuyan yerler dağınık: rıhtım, üst çubuk, footer,
+ * kayıt formu, yorum kutusu, ilan formu, bakım kapısı. Her biri kendi
+ * sorgusunu atsaydı tek bir sayfa açılışında aynı üç tablo yedi kez
+ * istenirdi. Bir kez okunuyor, bağlamla dağıtılıyor.
  *
- * İki tablo TEK GİDİŞTE değil, tek `Promise.all`de isteniyor: PostgREST
- * ayrı uç noktalar, birleştirmenin yolu bir RPC yazmak olurdu. İki
+ * Üç tablo TEK GİDİŞTE değil, tek `Promise.all`de isteniyor: PostgREST
+ * ayrı uç noktalar, birleştirmenin yolu bir RPC yazmak olurdu. Üç
  * paralel istek, bir RPC'nin bakım maliyetinden ucuz.
  *
  * ══════════════════════════════════════════════════════════════════════
@@ -59,6 +67,8 @@ interface SiteConfigValue {
   flags: SiteFlags;
   announcement: Announcement;
   maintenance: Maintenance;
+  /** Üst menü + footer bağlantıları (§13.2). Kapalı olanlar süzülmüş. */
+  navLinks: NavLinkView[];
   status: 'loading' | 'ready' | 'unconfigured';
 }
 
@@ -66,6 +76,7 @@ const VARSAYILAN: SiteConfigValue = {
   flags: DEFAULT_FLAGS,
   announcement: DEFAULT_ANNOUNCEMENT,
   maintenance: DEFAULT_MAINTENANCE,
+  navLinks: DEFAULT_NAV_LINKS,
   status: 'loading',
 };
 
@@ -86,12 +97,15 @@ export function SiteConfigProvider({ children }: { children: ReactNode }) {
         const supabase = await getSupabase();
         if (!supabase) return;
 
-        const [bayraklar, ayarlar] = await Promise.all([
+        const [bayraklar, ayarlar, menuler] = await Promise.all([
           supabase.from('feature_flags').select('key, enabled'),
           supabase
             .from('app_settings')
             .select('key, value')
             .in('key', ['announcement', 'maintenance']),
+          supabase
+            .from('nav_links')
+            .select('menu, group_label, label, path, position, enabled, new_tab, auth_only'),
         ]);
         if (!active) return;
 
@@ -106,6 +120,12 @@ export function SiteConfigProvider({ children }: { children: ReactNode }) {
           return;
         }
 
+        /* MENÜ HATASI TEK BAŞINA HER ŞEYİ DÜŞÜRMÜYOR: bayraklar
+           okunduysa onlar uygulanmalı, menü koddaki yedeğine düşer.
+           Üç sorguyu tek bir "hep ya da hiç"e bağlamak, menüdeki bir
+           izin hatasını bakım moduna da bulaştırırdı. */
+        const menuSatirlari = menuler.error ? null : menuler.data;
+
         const satirlar = (ayarlar.data ?? []) as {
           key: string;
           value: unknown;
@@ -117,6 +137,7 @@ export function SiteConfigProvider({ children }: { children: ReactNode }) {
           flags: toFlags(bayraklar.data),
           announcement: toAnnouncement(bul('announcement')),
           maintenance: toMaintenance(bul('maintenance')),
+          navLinks: toNavLinks(menuSatirlari),
           status: 'ready',
         });
       } catch {
@@ -156,4 +177,31 @@ export function useSiteConfig(): SiteConfigValue {
 // eslint-disable-next-line react-refresh/only-export-components
 export function useFlag(key: FlagKey): boolean {
   return useContext(SiteConfigContext).flags[key];
+}
+
+/**
+ * Bir menünün çizilecek bağlantıları (§13.2).
+ *
+ * Oturum durumu ve kapalı bölüm önekleri burada uygulanıyor: çağıran
+ * yerler (üst çubuk, footer) yalnızca "bana header menüsünü ver" diyor.
+ * Her biri kendi süzmesini yapsaydı `auth_only` bir yerde uygulanır,
+ * ötekinde unutulurdu.
+ */
+// eslint-disable-next-line react-refresh/only-export-components
+export function useMenu(menu: 'header' | 'footer'): NavLinkView[] {
+  const { navLinks, flags } = useContext(SiteConfigContext);
+  const { user } = useAuth();
+
+  return useMemo(() => {
+    const gizli = (
+      Object.keys(flaggedNavPrefixes) as (keyof typeof flaggedNavPrefixes)[]
+    )
+      .filter((anahtar) => !flags[anahtar])
+      .map((anahtar) => flaggedNavPrefixes[anahtar]);
+
+    return selectMenu(navLinks, menu, {
+      signedIn: Boolean(user),
+      hiddenPrefixes: gizli,
+    });
+  }, [navLinks, flags, menu, user]);
 }

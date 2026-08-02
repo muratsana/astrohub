@@ -9,6 +9,10 @@ import {
   saveHomeDraft,
   publishHomeDraft,
   discardHomeDraft,
+  fetchNavLinks,
+  upsertNavLink,
+  deleteNavLink,
+  describePathProblem,
   fetchFeatureFlags,
   setFeatureFlag,
   fetchHistory,
@@ -18,6 +22,7 @@ import {
   moduleLabels,
   type HomeModule,
   type HomeDraftPatch,
+  type NavLink,
   type FeatureFlag,
   type HistoryEntry,
 } from './siteSettings';
@@ -58,6 +63,7 @@ export function SiteControl({ canWrite }: { canWrite: boolean }) {
   return (
     <div className="space-y-4">
       <HomeModulesSection canWrite={canWrite} onChange={yenile} />
+      <NavLinksSection canWrite={canWrite} onChange={yenile} />
       <FeatureFlagsSection canWrite={canWrite} onChange={yenile} />
       <HistorySection canWrite={canWrite} tazele={tazele} onChange={yenile} />
     </div>
@@ -721,5 +727,327 @@ function HistorySection({
         </ul>
       )}
     </Panel>
+  );
+}
+
+/* ── Menü ve footer bağlantıları ─────────────────────────────────────── */
+
+/**
+ * MENÜ YÖNETİMİ (§13.2 "Navigasyon menüsü ve sırası", "Footer linkleri").
+ *
+ * 0058 tabloyu ve `siteSettings.ts` veri katmanını yazmıştı; bu yüzey
+ * hiç yazılmamıştı. Yani `upsertNavLink`/`deleteNavLink` aylarca
+ * çağıranı olmayan fonksiyonlar olarak durdu.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * TAM MODÜL HARİTASI BURADA YÖNETİLMİYOR
+ *
+ * Yalnızca üst menü ve footer'ın kurumsal satırı düzenlenebiliyor.
+ * Çekmecedeki ve komut paletindeki 58 bağlantılık harita (`siteMap`)
+ * kodda kalıyor — o bir menü değil, her sayfaya bir yol olduğunun
+ * garantisi. Panelden silinebilir olsaydı bir sayfaya giden tek yol yok
+ * edilebilirdi ve hata sessiz olurdu: rota çalışır, sayfa durur, kimse
+ * bulamaz. Gerekçenin tamamı `features/site/navLinks.ts` başlığında.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * SIRA TAKASI İKİ YAZMA, TEK İŞLEM DEĞİL
+ *
+ * `nav_links.position` üzerinde benzersizlik kısıtı YOK (ana sayfa
+ * modüllerinin aksine), bu yüzden iki satırın `position`ını takas etmek
+ * için ertelenmiş kısıt hilesine gerek kalmıyor. İlk yazma başarılı olup
+ * ikincisi düşerse iki bağlantı aynı sırayı paylaşır — görünürde bir
+ * karışıklık, veri kaybı değil; sonraki takas düzeltir.
+ */
+function NavLinksSection({
+  canWrite,
+  onChange,
+}: {
+  canWrite: boolean;
+  onChange: () => void;
+}) {
+  const [links, setLinks] = useState<NavLink[] | null>(null);
+  const [hata, setHata] = useState<string | null>(null);
+  const [mesgul, setMesgul] = useState(false);
+
+  const yukle = useCallback(async () => {
+    setHata(null);
+    try {
+      setLinks(await fetchNavLinks());
+    } catch (e) {
+      setHata(e instanceof Error ? e.message : 'Bağlantılar okunamadı');
+    }
+  }, []);
+
+  useEffect(() => {
+    void yukle();
+  }, [yukle]);
+
+  async function calistir(is: () => Promise<void>) {
+    setMesgul(true);
+    setHata(null);
+    try {
+      await is();
+      await yukle();
+      onChange();
+    } catch (e) {
+      setHata(e instanceof Error ? e.message : 'İşlem uygulanamadı');
+    } finally {
+      setMesgul(false);
+    }
+  }
+
+  return (
+    <Panel title="Menü ve footer">
+      {hata && (
+        <Alert tone="danger" className="mb-3">
+          {hata}
+        </Alert>
+      )}
+
+      {links === null ? (
+        <p className="text-body-sm text-muted-foreground">Yükleniyor…</p>
+      ) : (
+        <div className="space-y-4">
+          {(['header', 'footer'] as const).map((menu) => (
+            <MenuList
+              key={menu}
+              menu={menu}
+              links={links.filter((l) => l.menu === menu)}
+              canWrite={canWrite && !mesgul}
+              calistir={calistir}
+            />
+          ))}
+
+          {/* Modül haritasının neden burada olmadığını yöneticiye de
+              söylüyoruz: panelde göremediği bir liste olduğunu bilmezse
+              "menüye ekledim ama çekmecede yok" diye arar. */}
+          <p className="border-t border-border pt-3 text-meta text-faint">
+            Çekmecedeki ve ⌘K paletindeki tam modül haritası buradan
+            yönetilmiyor: her sayfaya bir yol kalmasını garanti ettiği için
+            kodda tutuluyor.
+          </p>
+        </div>
+      )}
+    </Panel>
+  );
+}
+
+const menuBasliklari: Record<'header' | 'footer', string> = {
+  header: 'Üst menü',
+  footer: 'Footer — kurumsal satır',
+};
+
+function MenuList({
+  menu,
+  links,
+  canWrite,
+  calistir,
+}: {
+  menu: 'header' | 'footer';
+  links: NavLink[];
+  canWrite: boolean;
+  calistir: (is: () => Promise<void>) => Promise<void>;
+}) {
+  const sirali = [...links].sort((a, b) => a.position - b.position);
+
+  function tasi(index: number, yon: -1 | 1) {
+    const a = sirali[index];
+    const b = sirali[index + yon];
+    if (!a || !b) return;
+    void calistir(async () => {
+      await upsertNavLink({ ...a, group_label: a.group_label ?? '', position: b.position });
+      await upsertNavLink({ ...b, group_label: b.group_label ?? '', position: a.position });
+    });
+  }
+
+  function ekle() {
+    const sonSira = sirali.length > 0 ? (sirali[sirali.length - 1]?.position ?? 0) : 0;
+    void calistir(() =>
+      upsertNavLink({
+        menu,
+        group_label: '',
+        label: 'Yeni bağlantı',
+        path: '/',
+        position: sonSira + 1,
+        enabled: false,
+        new_tab: false,
+        auth_only: false,
+      })
+    );
+  }
+
+  return (
+    <div>
+      <div className="mb-2 flex items-center gap-2">
+        <h3 className="text-body-sm font-medium text-foreground">
+          {menuBasliklari[menu]}
+        </h3>
+        <span className="text-meta text-faint">{sirali.length} bağlantı</span>
+        <Button
+          size="sm"
+          variant="secondary"
+          className="ml-auto"
+          disabled={!canWrite}
+          onClick={ekle}
+        >
+          Ekle
+        </Button>
+      </div>
+
+      {sirali.length === 0 ? (
+        <p className="text-body-sm text-muted-foreground">
+          Bu menüde bağlantı yok — ziyaretçi koddaki varsayılan listeyi
+          görüyor.
+        </p>
+      ) : (
+        <ul className="space-y-2">
+          {sirali.map((link, i) => (
+            <NavLinkRow
+              key={link.id}
+              link={link}
+              canWrite={canWrite}
+              ilk={i === 0}
+              son={i === sirali.length - 1}
+              onTasi={(yon) => tasi(i, yon)}
+              calistir={calistir}
+            />
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function NavLinkRow({
+  link,
+  canWrite,
+  ilk,
+  son,
+  onTasi,
+  calistir,
+}: {
+  link: NavLink;
+  canWrite: boolean;
+  ilk: boolean;
+  son: boolean;
+  onTasi: (yon: -1 | 1) => void;
+  calistir: (is: () => Promise<void>) => Promise<void>;
+}) {
+  /* Adres sorunu YAZARKEN gösteriliyor: kaydedip veritabanı hatası almak
+     yerine kutunun altında ne beklendiği yazıyor. */
+  const [adres, setAdres] = useState(link.path);
+  const sorun = describePathProblem(adres);
+
+  /* `group_label` bilerek yamalanamıyor: bu iki menüde grup başlığı yok
+     (grup kavramı yalnızca modül haritasında var, o da kodda). Tipten
+     çıkarmak, ileride yanlışlıkla `null` yazılmasını da engelliyor. */
+  function yaz(patch: Partial<Omit<NavLink, 'id' | 'menu' | 'group_label'>>) {
+    void calistir(() =>
+      upsertNavLink({
+        id: link.id,
+        menu: link.menu,
+        group_label: link.group_label ?? '',
+        label: link.label,
+        path: link.path,
+        position: link.position,
+        enabled: link.enabled,
+        new_tab: link.new_tab,
+        auth_only: link.auth_only,
+        ...patch,
+      })
+    );
+  }
+
+  return (
+    <li className="rounded-card border border-border bg-surface-2 px-3 py-2.5">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="tabular text-meta text-muted-foreground">
+          {link.position}
+        </span>
+        {!link.enabled && <Badge tone="muted">kapalı</Badge>}
+        {link.auth_only && <Badge tone="cold">üyeye özel</Badge>}
+
+        <div className="ml-auto flex items-center gap-1">
+          <Button
+            size="sm"
+            variant="ghost"
+            aria-label="Yukarı taşı"
+            disabled={!canWrite || ilk}
+            onClick={() => onTasi(-1)}
+          >
+            ↑
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            aria-label="Aşağı taşı"
+            disabled={!canWrite || son}
+            onClick={() => onTasi(1)}
+          >
+            ↓
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            aria-label={`${link.label} bağlantısını sil`}
+            disabled={!canWrite}
+            onClick={() => void calistir(() => deleteNavLink(link.id))}
+          >
+            Sil
+          </Button>
+        </div>
+      </div>
+
+      <div className="mt-2 grid gap-2 sm:grid-cols-2">
+        <Alan etiket="Etiket">
+          <Input
+            defaultValue={link.label}
+            maxLength={40}
+            disabled={!canWrite}
+            onBlur={(e) => {
+              const v = e.target.value.trim();
+              if (v && v !== link.label) yaz({ label: v });
+            }}
+          />
+        </Alan>
+        <Alan etiket="Adres">
+          <Input
+            value={adres}
+            disabled={!canWrite}
+            onChange={(e) => setAdres(e.target.value)}
+            onBlur={() => {
+              if (!sorun && adres.trim() !== link.path) yaz({ path: adres.trim() });
+            }}
+          />
+        </Alan>
+      </div>
+
+      {sorun && (
+        <Alert tone="warning" variant="text" className="mt-1">
+          {sorun}
+        </Alert>
+      )}
+
+      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1.5">
+        <Kutu
+          etiket="Açık"
+          isaretli={link.enabled}
+          disabled={!canWrite}
+          onChange={(v) => yaz({ enabled: v })}
+        />
+        <Kutu
+          etiket="Yeni sekmede"
+          isaretli={link.new_tab}
+          disabled={!canWrite}
+          onChange={(v) => yaz({ new_tab: v })}
+        />
+        <Kutu
+          etiket="Yalnızca üyeye"
+          isaretli={link.auth_only}
+          disabled={!canWrite}
+          onChange={(v) => yaz({ auth_only: v })}
+        />
+      </div>
+    </li>
   );
 }

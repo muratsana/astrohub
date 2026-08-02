@@ -44,12 +44,11 @@ tabloda `DONE` ile birleştirilmez:
 ⁷ **Faz 10'un yönetim yüzeyi ve ziyaretçi bağlantısı kuruldu.** Dört
 tablo (`home_modules`, `nav_links`, `feature_flags`, `site_settings`),
 değişiklik geçmişi + geri alma, taslak/önizleme/yayın akışı ve panelin
-**Site** sekmesi çalışıyor. Ana sayfa düzeni ve yedi bayrak artık
-ziyaretçi tarafından da OKUNUYOR — panelin en büyük riski buydu ve
-kapandı. Kalan iki bağlanmamış yüzey `nav_links` (menü/footer hâlâ
-koddaki `siteMap`ten geliyor) ve hero banner yönetimi. §13.4'ün çoklu
-admin rolleri **kurulmayacak** — ürün kararı, tek admin (bkz. görev #73).
-Ayrıntı: Faz 10 bölümü.
+**Site** sekmesi çalışıyor. Ana sayfa düzeni, yedi bayrak ve menü artık
+ziyaretçi tarafından da OKUNUYOR — panelin en büyük riski buydu ve üç
+turda kapandı. Kalan tek bağlanmamış yüzey hero banner yönetimi (tablo
+yok). §13.4'ün çoklu admin rolleri **kurulmayacak** — ürün kararı, tek
+admin (bkz. görev #73). Ayrıntı: Faz 10 bölümü.
 
 ⁶ **Faz 9 tamam — ödeme kapalı olduğu için `IMPLEMENTED_DISABLED`.**
 §12.2 bu etiketi açıkça öneriyor: "bu faz kod ve test açısından
@@ -1152,18 +1151,24 @@ Yazarken `interval` ve `status` enum değerlerini tahmin etmiştim
 | **Ana sayfanın düzeni okuması** | DONE | `homeLayout.ts`, `0061` |
 | **Bayrakların ziyaretçi tarafında çalışması** | DONE | `siteConfig.ts` — yedi bayrak |
 | Bakım modu + site duyurusu | DONE | `MaintenanceGate`, `AnnouncementBar` |
-| `nav_links` → gerçek menü/footer | NOT_STARTED | menü hâlâ koddaki `siteMap` |
+| **`nav_links` → gerçek menü/footer** | DONE | `navLinks.ts`, `0062`, panel bölümü |
 | Hero banner yönetimi | NOT_STARTED | tablo yok |
 | Modül `layout` (ızgara/liste) ve `subtitle` | NOT_STARTED | gerekçe `HomePage.tsx`te |
 | §13.4 çoklu admin rolleri | — | ürün kararı: kurulmayacak |
 | §13.5 dashboard | PARTIAL | panel sekmeleri var, tek ekran özet yok |
 
+Menü işi üç parçalıydı ve üçü de eksikti: tohum yok, panel yüzeyi yok,
+okuma yok. Üçü birden bu turda yazıldı.
+
 ### Faz 10'un tek hatası aynı hataydı, üç kez
 
-Bu fazın kodu iki turda yazıldı ve ikisinde de aynı boşluk çıktı: **panel
-yazıyor, ziyaretçi okumuyor.** Sırasıyla `home_modules`, sonra
-`feature_flags`. Üçüncüsü (`nav_links`) hâlâ açık ve yukarıdaki tabloda
-`NOT_STARTED` olarak duruyor — kapatılmadan "Faz 10 bitti" denemez.
+Bu fazın kodu üç turda yazıldı ve üçünde de aynı boşluk çıktı: **panel
+yazıyor, ziyaretçi okumuyor.** Sırasıyla `home_modules`, `feature_flags`
+ve `nav_links`. Üçüncüsü en kötüsüydü — orada panel tarafı da yoktu:
+tablo 0058'de kuruldu, `siteSettings.ts`e `fetchNavLinks`/`upsertNavLink`
+yazıldı, sonra hiçbir şey. Tohum yok, panel yüzeyi yok, okuma yok;
+borunun üç ucu da açık. `upsertNavLink` aylarca çağıranı olmayan bir
+fonksiyon olarak durdu.
 
 Boşluk sinsiydi çünkü panel tarafı KUSURSUZ çalışıyordu: yönetici
 anahtarı çeviriyor, `set_feature_flag` yazıyor, `setting_history`ye kayıt
@@ -1225,6 +1230,33 @@ kendisi (`FlagRoute`).
 `FlagRoute` 404 DÖNDÜRMÜYOR: sayfa yok değil, kapalı. Geri gelecek bir
 bölüm için 404 hem ziyaretçiyi hem botu yanıltır. Kapalıyken `noIndex`
 basılıyor — o gün taranan sayfa kapalı hâliyle kaydedilmemeli.
+
+### `siteMap` bilerek yönetilebilir yapılmadı
+
+`nav_links` bağlanırken en kolay yol, sitedeki ÜÇ bağlantı listesini de
+tabloya taşımaktı. Yapılmadı; sınır şurada:
+
+    `primaryNav` → üst menü + footer modül satırı  → yönetiliyor
+    `legalNav`   → footer kurumsal satırı          → yönetiliyor
+    `siteMap`    → tam modül haritası (58 bağlantı) → KODDA
+
+`siteMap` bir menü değil, sitenin ERİŞİLEBİLİRLİK GARANTİSİ.
+`navigation.ts` bunu kendi başlığında söylüyor: "üst menüde görünmeyen
+her sayfa burada görünür olmalıdır — aksi hâlde erişilemez hâle gelir."
+Panelden silinebilir olsaydı yönetici bir sayfaya giden TEK yolu yok
+edebilirdi ve hata sessiz olurdu: rota çalışır, sayfa durur, yalnızca
+kimse bulamaz. "Kodsuz yönetim" hedefi, siteyi bozabilme hakkını
+kapsamıyor.
+
+Panelde bu sınır yöneticiye de yazılı olarak söyleniyor — göremediği bir
+liste olduğunu bilmezse "menüye ekledim ama çekmecede yok" diye arar.
+
+### İki yapılandırma birbirini görmek zorunda
+
+Yönetici üst menüye `/radyo` bağlantısı ekleyip `radyo_acik` bayrağını
+kapatabilir. İki yapılandırma birbirinden habersiz olsaydı panel kendi
+kendisiyle çelişirdi: bir yerde kapattığın bölüm başka bir yerde
+duruyor olurdu. `selectMenu` bayrak öneklerini de süzüyor.
 
 ### Tohum, kod okunarak yazılmamıştı
 
@@ -1318,16 +1350,20 @@ yayın takip düğmesi). Faz 8'de kodla kapatılabilecek iş kalmadı.
 yedi feature flag ziyaretçi tarafından okunuyor; bakım modu ve site
 duyurusu çalışıyor.
 
-**Sıradaki iş: Faz 10'un üçüncü turu — `nav_links`.**
-  1. Menü ve footer hâlâ koddaki `siteMap`ten geliyor; `nav_links`
-     tablosu yalnızca panel tarafından yazılıp okunuyor. Bu, fazın iki
-     kez düzelttiğimiz hatasının kalan üçüncü örneği.
-  2. Sıra, `enabled`, `new_tab`, `auth_only` ve `group_label` alanları
-     tabloda hazır — okuma katmanı yok.
-  3. `withoutPrefixes` / `useSiteMap` zaten süzme noktası; `nav_links`
-     bağlanınca kaynağın kendisi değişecek, süzme mantığı değil.
-  4. Bağlarken §13.2'nin geri kalanı da açık: hero banner yönetimi ve
-     modül `layout`/`subtitle` alanları.
+**Faz 10'un üçüncü turu da bitti**: `nav_links` tohumlandı (`0062`),
+panelde "Menü ve footer" bölümü açıldı, üst çubuk ve footer tabloyu
+okuyor. Fazın üç kopuk zincirinin üçü de kapandı.
+
+**Sıradaki iş: Faz 10'un son maddesi — hero banner yönetimi.**
+  1. §13.2 "Hero banner yönetimi", "görsel odak noktası", "CTA ve link"
+     istiyor. Tablo YOK — bu turda şema da yazılacak.
+  2. Faz 3'ün "Faz 10'a bağlı" kalemleri de burada açılıyor: hero
+     slaytlarının admin yönetimi ve hava sağlayıcı seçimi.
+  3. Kalıp hazır: `home_modules` → `homeLayout.ts` zinciri aynen
+     tekrarlanacak — tohum koddan türetilmeli, yedek "bugünkü sayfa"
+     olmalı, panel yüzeyi ile okuma AYNI commit'te gitmeli.
+  4. Faz 10 kapandığında sırada Faz 11 (zorunlu ürün modülleri,
+     belge satırı 1165–1349) var.
 
 **Kanal bağlı değilken sahte içerik gösterilmemeli** (§11.2 son madde).
 Adaptör ve panel bu kurala uyuyor; kullanıcı sayfaları yazılırken de
