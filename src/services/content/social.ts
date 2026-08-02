@@ -342,3 +342,76 @@ export function useIsBlocked(targetUserId: string | undefined): {
 
   return { blocked, loading, refresh };
 }
+
+/* ── Takip edilen kimlikler — explorer facet'i için ─────────────────── */
+
+/**
+ * Kullanıcının TAKİP ETTİĞİ kimlikler.
+ *
+ * `useFollow` tek bir profilin durumunu veriyor; süzgeç için kümenin
+ * tamamı gerekiyor ve tek tek sormak liste uzunluğu kadar istek demekti.
+ *
+ * SINIR VAR VE SÖYLENİYOR. Sınırsız bir sorgu, binlerce kişiyi takip
+ * eden bir hesapta sayfayı bekletirdi; sessizce kırpmak ise "takip
+ * ediyorum ama fotoğrafı çıkmıyor" derdi. Aşıldığında `truncated`
+ * dönüyor.
+ */
+const TAKIP_SINIRI = 1000;
+
+export interface FollowingIdSet {
+  ids: ReadonlySet<string>;
+  /** Küme gerçekten okundu mu — oturumsuzda ve yüklenirken `false`. */
+  ready: boolean;
+  truncated: boolean;
+}
+
+const BOS_TAKIP: FollowingIdSet = {
+  ids: new Set(),
+  ready: false,
+  truncated: false,
+};
+
+export function useFollowingIds(): FollowingIdSet {
+  const { user } = useAuth();
+  const [state, setState] = useState<FollowingIdSet>(BOS_TAKIP);
+
+  useEffect(() => {
+    if (!user || !isSupabaseConfigured) {
+      setState(BOS_TAKIP);
+      return;
+    }
+
+    let active = true;
+    void (async () => {
+      try {
+        const supabase = await client();
+        const { data, error } = await supabase
+          .from('follows')
+          .select('followee_id')
+          .eq('follower_id', user.id)
+          .limit(TAKIP_SINIRI);
+        if (error) throw new Error(error.message);
+        if (!active) return;
+
+        /* Sütun `followee_id` — `following_id` DEĞİL. İlk yazımda
+           yanlış yazılmıştı ve TypeScript yakalayamazdı: PostgREST
+           kolon adını çalışma anında çözüyor, hata ancak sorgu gidince
+           çıkardı. Canlı şemadan okunarak düzeltildi. */
+        const rows = (data ?? []) as { followee_id: string }[];
+        setState({
+          ids: new Set(rows.map((r) => r.followee_id)),
+          ready: true,
+          truncated: rows.length >= TAKIP_SINIRI,
+        });
+      } catch {
+        if (active) setState(BOS_TAKIP);
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [user]);
+
+  return state;
+}

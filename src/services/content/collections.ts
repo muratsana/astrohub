@@ -219,3 +219,87 @@ export function useSavedPhotos(): SavedListState {
 
   return { items, loading, error, refresh };
 }
+
+/* ── Kimlik kümeleri — explorer facet'leri için ─────────────────────── */
+
+/**
+ * Sayfada süzmek için gereken KİMLİK KÜMESİ.
+ *
+ * `ready`: küme gerçekten okundu mu. Oturumsuz kullanıcıda ve yükleme
+ * sürerken `false` — çağıran taraf facet'i o zaman ÇİZMİYOR
+ * (`personalFacets.ts` başlığındaki gerekçe).
+ */
+export interface IdSet {
+  ids: ReadonlySet<string>;
+  ready: boolean;
+}
+
+const BOS: IdSet = { ids: new Set(), ready: false };
+
+/**
+ * Kaydedilen fotoğrafların KİMLİKLERİ — satırların kendisi değil.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * NEDEN `useSavedPhotos` KULLANILMIYOR
+ *
+ * O kanca panel bölümü için yazıldı: fotoğraf satırını gömülü
+ * getiriyor (başlık, küçük görsel yolu) ve 50 kayıtla sınırlı. Süzgeç
+ * için ikisi de yanlış — çizilecek bir şey yok, ama 51'inci kayıttan
+ * sonrası SESSİZCE süzgecin dışında kalırdı ve kullanıcı "kaydetmiştim
+ * ama görünmüyor" derdi.
+ *
+ * Bu kanca yalnızca `photo_id` seçiyor ve sınırı yükseltiyor. Sınır
+ * hâlâ var (`LIMIT`) çünkü sınırsız bir sorgu bir gün birinin 20 bin
+ * kaydında sayfayı kilitler; ama artık gerçekçi bir tavanın üstünde ve
+ * aşıldığında `truncated` ile SÖYLENİYOR — sessiz kırpma, yanlış
+ * cevabın en sinsi biçimi.
+ */
+const KIMLIK_SINIRI = 1000;
+
+export interface SavedIdSet extends IdSet {
+  /** Sınıra dayanıldı mı — arayüz uyarabilsin diye. */
+  truncated: boolean;
+}
+
+export function useSavedPhotoIds(): SavedIdSet {
+  const { user } = useAuth();
+  const [state, setState] = useState<SavedIdSet>({ ...BOS, truncated: false });
+
+  useEffect(() => {
+    if (!user || !isSupabaseConfigured) {
+      setState({ ...BOS, truncated: false });
+      return;
+    }
+
+    let active = true;
+    void (async () => {
+      try {
+        const supabase = await client();
+        const { data, error } = await supabase
+          .from('collection_items')
+          .select('photo_id, collections!inner(slug)')
+          .eq('collections.slug', 'kaydedilenler')
+          .limit(KIMLIK_SINIRI);
+        if (error) throw new Error(error.message);
+        if (!active) return;
+
+        const rows = (data ?? []) as { photo_id: string }[];
+        setState({
+          ids: new Set(rows.map((r) => r.photo_id)),
+          ready: true,
+          truncated: rows.length >= KIMLIK_SINIRI,
+        });
+      } catch {
+        /* Okunamadıysa facet çizilmiyor: yarım bir küme, "bunu
+           kaydetmemişim" diye yanlış cevap üretirdi. */
+        if (active) setState({ ...BOS, truncated: false });
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [user]);
+
+  return state;
+}

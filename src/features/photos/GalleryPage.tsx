@@ -7,6 +7,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import {
   FilterBar,
   FilterCell,
+  FilterToggle,
   filterControlClass,
 } from '@/components/ui/FilterBar';
 import { ActiveFilters } from '@/components/ui/ActiveFilters';
@@ -19,6 +20,9 @@ import { usePhotoCatalog } from '@/services/content/photos';
 import { availableCities } from './filtering';
 import { useExplorer } from '@/features/explorer/useExplorer';
 import { gallerySpec } from './gallerySpec';
+import { personalFacet, withFacets } from '@/features/explorer/personalFacets';
+import { useSavedPhotoIds } from '@/services/content/collections';
+import { useFollowingIds } from '@/services/content/social';
 import { type ProcessingPalette } from './types';
 import { photoFamilies, familyOrder } from './families';
 import { PageMeta } from '@/components/seo/PageMeta';
@@ -59,8 +63,48 @@ export function GalleryPage() {
    * harfe çeviriyordu, yani "cankiri" yazan kullanıcı "Çankırı"yı
    * bulamıyordu. Ortak motor ASCII de katlıyor.
    */
-  const ex = useExplorer(photos, gallerySpec);
+  /*
+   * KİŞİSEL FACET'LER (Faz 4). `collections` ve `follows` tabloları
+   * Faz 5'te gelmişti ama explorer onları OKUMUYORDU: kullanıcı
+   * fotoğrafı kaydediyor, sonra galeride "kaydettiklerim" diye
+   * süzemiyordu.
+   *
+   * İkisi de yalnızca KÜME HAZIRSA ekleniyor. Oturumsuz ziyaretçide ya
+   * da yükleme sürerken facet HİÇ ÇİZİLMİYOR — çizilseydi kullanıcı
+   * kutuyu işaretler, liste boşalır ve "hiç kaydetmemişim" diye
+   * düşünürdü. Gerekçenin tamamı `personalFacets.ts` başlığında.
+   */
+  const kaydedilen = useSavedPhotoIds();
+  const takipEdilen = useFollowingIds();
+
+  const spec = useMemo(
+    () =>
+      withFacets(gallerySpec, [
+        kaydedilen.ready
+          ? personalFacet({
+              param: 'kaydettiklerim',
+              label: 'Kaydettiklerim',
+              /* Tohum kayıtlarda `id` YOK (bkz. `AstroPhoto.id`); onlar
+                 hiçbir zaman kaydedilmiş sayılmıyor ve bu doğru —
+                 kaydedilebilir de değiller. */
+              has: (p) => Boolean(p.id && kaydedilen.ids.has(p.id)),
+            })
+          : null,
+        takipEdilen.ready
+          ? personalFacet({
+              param: 'takip',
+              label: 'Takip ettiklerim',
+              has: (p) => Boolean(p.ownerId && takipEdilen.ids.has(p.ownerId)),
+            })
+          : null,
+      ]),
+    [kaydedilen.ready, kaydedilen.ids, takipEdilen.ready, takipEdilen.ids]
+  );
+
+  const ex = useExplorer(photos, spec);
   const cities = useMemo(() => availableCities(photos), [photos]);
+  const kisiselAcik = (param: string) =>
+    (ex.query.facets[param]?.length ?? 0) > 0;
   const family = ex.query.facets.aile?.[0] ?? 'hepsi';
   const result = ex.items;
 
@@ -191,7 +235,34 @@ export function GalleryPage() {
               ))}
             </Select>
           </FilterCell>
+
+          {kaydedilen.ready && (
+            <FilterToggle
+              id="f-saved"
+              label="Kaydettiklerim"
+              checked={kisiselAcik('kaydettiklerim')}
+              onChange={() => ex.toggleFacet('kaydettiklerim', 'evet')}
+            />
+          )}
+          {takipEdilen.ready && (
+            <FilterToggle
+              id="f-following"
+              label="Takip ettiklerim"
+              checked={kisiselAcik('takip')}
+              onChange={() => ex.toggleFacet('takip', 'evet')}
+            />
+          )}
         </FilterBar>
+
+        {/* SESSİZ KIRPMA YOK. Küme sınıra dayandıysa süzgeç eksik
+            cevap veriyor ve bunu söylemek zorunda — "kaydetmiştim ama
+            görünmüyor" en sinsi hata biçimi. */}
+        {(kaydedilen.truncated || takipEdilen.truncated) && (
+          <p className="mt-2 text-meta leading-relaxed text-warning">
+            Kişisel süzgeç listenizin tamamını okuyamadı; çok sayıda kayıt
+            var. Sonuç eksik olabilir.
+          </p>
+        )}
 
         <ActiveFilters
           chips={ex.chips}

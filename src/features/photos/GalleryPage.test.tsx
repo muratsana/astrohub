@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { AuthProvider } from '@/features/auth/AuthContext';
 import { GalleryPage } from './GalleryPage';
 import { photos } from './data';
 
@@ -11,6 +12,12 @@ import { photos } from './data';
  * yapılandırması yok, dolayısıyla sorgu hiç kurulmuyor ve sayfa tohum
  * veriyle boyanıyor — beklentiler `photos` dizisi üzerinden geçerli
  * kalıyor.
+ *
+ * `AuthProvider` FAZ 4'TE EKLENDİ: sayfa artık kişisel facet'ler
+ * ("Kaydettiklerim", "Takip ettiklerim") için oturuma bakıyor.
+ * Oturumsuz render'da o facet'ler HİÇ ÇİZİLMİYOR, yani buradaki
+ * beklentiler değişmiyor — testin doğruladığı ikinci şey bu:
+ * kişisel süzgeçler oturumsuz ziyaretçinin ekranını değiştirmiyor.
  */
 function renderGallery() {
   const queryClient = new QueryClient({
@@ -19,9 +26,11 @@ function renderGallery() {
 
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>
-        <GalleryPage />
-      </MemoryRouter>
+      <AuthProvider>
+        <MemoryRouter>
+          <GalleryPage />
+        </MemoryRouter>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
@@ -160,5 +169,44 @@ describe('GalleryPage (§7.2)', () => {
       (a) => a.getAttribute('href') === `/fotograf/${withBortle.slug}`
     );
     expect(card).toHaveTextContent(`B${withBortle.location.bortle}`);
+  });
+});
+
+describe('GalleryPage · kişisel süzgeçler (Faz 4)', () => {
+  it('oturumsuz ziyaretçide kişisel süzgeç kutuları ÇİZİLMİYOR', async () => {
+    /*
+     * Fazın yasakladığı şey tam olarak buydu: "Kaydettiklerim" kutusunu
+     * herkese gösterip oturumsuz kullanıcıda her zaman boş sonuç
+     * döndürmek. Kullanıcı kutuyu işaretler, liste boşalır ve sorunu
+     * kendinde arar — oysa sorun oturumun olmaması.
+     */
+    renderGallery();
+    await screen.findByRole('heading', { name: /galeri/i });
+
+    expect(screen.queryByLabelText('Kaydettiklerim')).toBeNull();
+    expect(screen.queryByLabelText('Takip ettiklerim')).toBeNull();
+  });
+
+  it('oturumsuzken adresteki kişisel parametre listeyi BOŞALTMIYOR', async () => {
+    /*
+     * Facet hiç tanımlı olmadığı için `?kaydettiklerim=evet` bağlantısı
+     * süzmüyor. Tersi olsaydı, birinin paylaştığı "kaydettiklerim"
+     * bağlantısını açan ziyaretçi boş bir galeri görürdü.
+     */
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    render(
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <MemoryRouter initialEntries={['/galeri?kaydettiklerim=evet']}>
+            <GalleryPage />
+          </MemoryRouter>
+        </AuthProvider>
+      </QueryClientProvider>
+    );
+
+    await screen.findByRole('heading', { name: /galeri/i });
+    expect(photoLinks().length).toBeGreaterThan(0);
   });
 });

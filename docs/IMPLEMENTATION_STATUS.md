@@ -596,8 +596,8 @@ Motora geçiş sırasında eklenen iki yetenek:
 |---|---|---|
 | **Server-side arama/filtre/sayfalama** | NOT_STARTED | Kataloglar bugün tamamı belleğe inen listeler (tohum dizisi ya da birkaç yüz satır); sunucu tarafı sayfalama veri hacmi onu gerektirdiğinde açılır. `ExplorerQuery` sayfa ve sayfa boyutu taşıdığı için ŞEKLİ hazır, ama bugün çalışan şey istemci tarafı ve rapor bunu böyle söylüyor |
 | İl/ilçe filtresi | PARTIAL | İl facet olarak çalışıyor; ilçe verisi yok (Faz 1.1) |
-| Takip edilenler | PARTIAL | `follows` tablosu Faz 5'te geldi; explorer facet'i olarak henüz bağlanmadı |
-| Favoriler | PARTIAL | `collections` Faz 5'te geldi ve "Kaydet" çalışıyor; explorer facet'i olarak henüz bağlanmadı |
+| Takip edilenler | DONE | `useFollowingIds` + `personalFacet`; galeride "Takip ettiklerim" süzgeci. Oturumsuzda ve küme yüklenirken facet HİÇ çizilmiyor |
+| Favoriler | DONE | `useSavedPhotoIds` + `personalFacet`; galeride "Kaydettiklerim" süzgeci. Sınıra dayanırsa `truncated` ile SÖYLENİYOR — sessiz kırpma yok |
 | Onay/yayın durumu, premium görünürlük | NOT_STARTED | Faz 9/10 |
 | Kaydedilmiş görünümler, kullanıcı varsayılanı, admin paylaşılan görünümü | NOT_STARTED | Tablo gerekiyor — Faz 10 |
 | CSV dışa aktarma (yalnız admin) | NOT_STARTED | |
@@ -606,6 +606,41 @@ Motora geçiş sırasında eklenen iki yetenek:
 | Tablo görünümü (sütun göster/gizle, yoğunluk, sabit başlık, başlıktan sıralama) | DONE | `DataTable` vardı ama HİÇBİR SAYFA KULLANMIYORDU (tek eşleşme kendi dosyası). Sıralama motorun `sort` değerine yazılıyor — tablo kendi durumunu tutsaydı ızgaraya geçen kullanıcı sıralamasını kaybederdi. Sabit başlık + sabit ilk sütun, yoğunluk, sütun göster/gizle (`localStorage`), mobilde etiket-değer kartı. Pazaryerinde üçüncü görünüm olarak bağlı. 12 birim + 1 E2E |
 | Harita / takvim / zaman çizelgesi görünümleri | PARTIAL | `EventMapPage` ve `EventCalendar` ayrı sayfa olarak var; explorer'ın görünüm seçeneği değiller |
 | Görünüm tercihinin hesapta saklanması | PARTIAL | `localStorage`da saklanıyor (görünüm, yoğunluk, gizli sütunlar), hesapta değil — kullanıcı tercihleri tablosu Faz 10 |
+
+### Kişisel facet'ler — "veri var, arayüz okumuyor"un dördüncü örneği
+
+`collections` ve `follows` Faz 5'te gelmişti; kullanıcı fotoğrafı
+kaydediyor, birini takip ediyor ve sonra galeride **onlara göre
+süzemiyordu**. Faz 10'un dört kez çıkan hatasının (panel yazıyor,
+ziyaretçi okumuyor) aynısı, başka bir yüzeyde.
+
+**Kişisel facet olağan facet'ten farklı bir şey.** Olağan facet KAYDIN
+KENDİSİNE bakar (paleti, şehri) ve `valueOf` modül yüklendiğinde
+tanımlıdır. "Bu fotoğrafı kaydettim mi" sorusunun cevabı kayıtta yok —
+kullanıcının satırlarında. Yani facet bir küme geldikten SONRA
+kurulabiliyor ve küme kullanıcıdan kullanıcıya değişiyor.
+
+**Kural: küme hazır değilse facet YOK.** İki durumda hazır değil —
+oturum yoksa ve küme henüz yüklenmediyse. Kutuyu yine de çizseydik
+kullanıcı işaretler, liste boşalır ve "hiç kaydetmemişim" diye
+düşünürdü; oysa sorun oturumun olmaması ya da bir saniye erken
+davranmak. İki test bunu kilitliyor: oturumsuz render'da kutular
+çizilmiyor, ve `?kaydettiklerim=evet` bağlantısı oturumsuz ziyaretçide
+listeyi BOŞALTMIYOR (facet tanımlı olmadığı için parametre süzmüyor).
+
+**Sessiz kırpma yok.** Kümeler `LIMIT` ile okunuyor — sınırsız bir
+sorgu bir gün birinin yirmi bin kaydında sayfayı kilitler. Ama sınıra
+dayanıldığında `truncated` dönüyor ve arayüz söylüyor: "kaydetmiştim
+ama görünmüyor", yanlış cevabın en sinsi biçimi.
+
+Panel bölümü için yazılmış `useSavedPhotos` KULLANILMADI: fotoğraf
+satırını gömülü getiriyor ve 50 kayıtla sınırlı. Süzgeç için ikisi de
+yanlış — çizilecek bir şey yok ve 51'inci kayıttan sonrası sessizce
+dışarıda kalırdı. Ayrı, yalnızca kimlik seçen bir kanca yazıldı.
+
+**Bir hata canlı şemadan yakalandı:** `follows` sütunu `followee_id`,
+`following_id` değil. TypeScript yakalayamazdı — PostgREST kolon adını
+çalışma anında çözüyor, hata ancak sorgu gidince çıkardı.
 
 ---
 
