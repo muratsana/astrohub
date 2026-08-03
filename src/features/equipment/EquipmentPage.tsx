@@ -13,15 +13,13 @@ import { ButtonLink } from '@/components/ui/Button';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { CardGrid } from '@/components/ui/CardGrid';
-import { ToolBar, ResultCount } from '@/components/ui/ToolBar';
+import { ModuleToolbar } from '@/components/ui/ModuleToolbar';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { useViewMode } from '@/components/ui/useViewMode';
 import {
-  FilterBar,
   FilterCell,
   filterControlClass,
 } from '@/components/ui/FilterBar';
-import { ActiveFilters } from '@/components/ui/ActiveFilters';
 import {
   equipmentCategoryLabels,
   equipmentCategoryOrder,
@@ -152,7 +150,20 @@ export function EquipmentPage() {
           className="mb-4"
         />
 
-        <FilterBar activeCount={ex.chips.length} columns={2}>
+        <ModuleToolbar
+          columns={2}
+          activeFilters={{
+            chips: ex.chips,
+            onRemove: ex.removeChip,
+            onClearAll: ex.clearAll,
+          }}
+          result={{
+            current: result.length,
+            total: catalog.items.length,
+            noun: 'model',
+          }}
+          view={{ mode: view, onChange: setView }}
+        >
           <FilterCell label="Ara" htmlFor="eq-search">
             <Input
               id="eq-search"
@@ -163,26 +174,9 @@ export function EquipmentPage() {
               className={filterControlClass}
             />
           </FilterCell>
-        </FilterBar>
-
-        <ActiveFilters
-          chips={ex.chips}
-          onRemove={ex.removeChip}
-          onClearAll={ex.clearAll}
-        />
+        </ModuleToolbar>
 
         <CatalogSourceNote selection={catalog} />
-
-        <ToolBar
-          left={
-            <ResultCount
-              current={result.length}
-              total={catalog.items.length}
-              noun="model"
-            />
-          }
-          view={{ mode: view, onChange: setView }}
-        />
 
         {result.length === 0 ? (
           <EmptyState

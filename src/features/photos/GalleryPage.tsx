@@ -5,15 +5,12 @@ import { Input, Select } from '@/components/ui/Input';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
 import {
-  FilterBar,
   FilterCell,
   FilterToggle,
   filterControlClass,
 } from '@/components/ui/FilterBar';
 import { CardGrid } from '@/components/ui/CardGrid';
-import { ResultCount } from '@/components/ui/ToolBar';
-import { SegmentedControl } from '@/components/ui/SegmentedControl';
-import { ViewToggle } from '@/components/ui/ViewToggle';
+import { ModuleToolbar } from '@/components/ui/ModuleToolbar';
 import { CatalogSourceNote } from '@/components/ui/CatalogSourceNote';
 import { useViewMode } from '@/components/ui/useViewMode';
 import { PhotoCard } from './PhotoCard';
@@ -161,7 +158,34 @@ export function GalleryPage() {
         />
 
         {/* Filtre paneli */}
-        <FilterBar activeCount={ex.chips.length}>
+        <ModuleToolbar
+          activeFilters={{
+            chips: ex.chips,
+            onRemove: ex.removeChip,
+            onClearAll: ex.clearAll,
+          }}
+          result={{ current: ex.total, total: photos.length, noun: 'fotoğraf' }}
+          sort={{
+            id: 'f-sort',
+            value: ex.query.sort,
+            onChange: ex.setSort,
+            options: gallerySpec.sorts.map((s) => ({
+              value: s.value,
+              label: s.label,
+            })),
+          }}
+          view={{ mode: view, onChange: setView }}
+          extra={
+            <>
+              <CsvExportButton
+                module="galeri"
+                rows={result}
+                columns={CSV_SUTUNLARI}
+              />
+              <SavedViewsMenu module="galeri" />
+            </>
+          }
+        >
           <FilterCell
             label="Ara"
             htmlFor="gallery-search"
@@ -179,29 +203,29 @@ export function GalleryPage() {
           </FilterCell>
           <FilterCell
             label="Tür"
+            htmlFor="gallery-family"
             active={family !== 'hepsi'}
-            className="min-w-[25rem] flex-[3_1_25rem]"
+            className="min-w-[12rem]"
           >
-            <SegmentedControl
+            <Select
+              id="gallery-family"
               value={family}
-              options={[
-                { value: 'hepsi', label: 'Tümü' },
-                ...familyOrder.map((key) => ({
-                  value: key,
-                  label: photoFamilies[key].label,
-                  tooltip: photoFamilies[key].description,
-                  selectedClassName: photoFamilies[key].className,
-                })),
-              ]}
-              onChange={(next) => {
+              onChange={(event) => {
+                const next = event.target.value;
                 /* Tek seçim davranışı korunuyor: aile sekmeleri bir sekme
                    şeridi, çoklu seçim listesi değil. */
                 if (family !== 'hepsi') ex.toggleFacet('aile', family);
                 if (next !== 'hepsi' && next !== family) ex.toggleFacet('aile', next);
               }}
-              ariaLabel="Çekim türü"
-              size="xs"
-            />
+              className={filterControlClass}
+            >
+              <option value="hepsi">Tüm türler</option>
+              {familyOrder.map((key) => (
+                <option key={key} value={key}>
+                  {photoFamilies[key].label}
+                </option>
+              ))}
+            </Select>
           </FilterCell>
 
           <FilterCell
@@ -271,33 +295,7 @@ export function GalleryPage() {
               onChange={() => ex.toggleFacet('takip', 'evet')}
             />
           )}
-          <FilterCell label="Sırala" htmlFor="f-sort" className="max-w-[14rem]">
-            <Select
-              id="f-sort"
-              value={ex.query.sort}
-              onChange={(e) => ex.setSort(e.target.value)}
-              className={filterControlClass}
-            >
-              {gallerySpec.sorts.map((s) => (
-                <option key={s.value} value={s.value}>
-                  {s.label}
-                </option>
-              ))}
-            </Select>
-          </FilterCell>
-          <div className="flex min-h-14 items-center gap-2 rounded-card border border-border-strong bg-surface-1 px-3 shadow-overlay">
-            <CsvExportButton
-              module="galeri"
-              rows={result}
-              columns={CSV_SUTUNLARI}
-            />
-            <SavedViewsMenu module="galeri" />
-            <ViewToggle mode={view} onChange={setView} />
-          </div>
-          <div className="flex min-h-14 items-center rounded-card border border-border-strong bg-surface-1 px-4 shadow-overlay">
-            <ResultCount current={ex.total} total={photos.length} noun="fotoğraf" />
-          </div>
-        </FilterBar>
+        </ModuleToolbar>
 
         {/* SESSİZ KIRPMA YOK. Küme sınıra dayandıysa süzgeç eksik
             cevap veriyor ve bunu söylemek zorunda — "kaydetmiştim ama

@@ -16,6 +16,7 @@ import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
 import { UserActions } from '@/features/social/UserActions';
 import { useProfileByUsername } from '@/services/content/profile';
+import { ProfileBadges } from './ProfileBadges';
 
 /**
  * Kullanıcı profili (§7.15). Kamuya açık kısım fotoğraf kayıtlarından
@@ -125,6 +126,7 @@ export function ProfilePage() {
                   <Badge key={city}>{city}</Badge>
                 ))}
               </div>
+              <ProfileBadges userId={ownerId} />
               <div className="flex flex-wrap gap-2">
                 {profile?.websiteUrl && (
                   <a

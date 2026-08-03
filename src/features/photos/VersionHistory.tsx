@@ -12,6 +12,9 @@ import {
 } from '@/domain/photography/integration';
 import { VersionCompare } from './VersionCompare';
 import { cn } from '@/lib/cn';
+import { Button } from '@/components/ui/Button';
+import { Alert } from '@/components/ui/Alert';
+import { deleteVersion } from '@/services/photos/versions';
 
 /**
  * SÜRÜM GEÇMİŞİ VE KARŞILAŞTIRMA (§8.1).
@@ -24,9 +27,36 @@ import { cn } from '@/lib/cn';
  * karşılaştırma yerine tek bir uyarı gösteriliyor — sürgüyü boş boş
  * çalıştırmak, karşılaştırmanın bozuk olduğu izlenimi veriyor.
  */
-export function VersionHistory({ versions }: { versions: PhotoVersion[] }) {
+export function VersionHistory({
+  versions,
+  canManage = false,
+  onDeleted,
+}: {
+  versions: PhotoVersion[];
+  canManage?: boolean;
+  onDeleted?: () => void;
+}) {
   const [leftId, setLeftId] = useState(versions[0].id);
   const [rightId, setRightId] = useState(versions[versions.length - 1].id);
+  const [pendingDelete, setPendingDelete] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  async function remove(version: PhotoVersion) {
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      await deleteVersion(version.id, version.storagePath ?? null);
+      setPendingDelete(null);
+      onDeleted?.();
+    } catch (error) {
+      setDeleteError(
+        error instanceof Error ? error.message : 'Sürüm silinemedi'
+      );
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   const left = versions.find((v) => v.id === leftId) ?? versions[0];
   const right =
@@ -107,7 +137,24 @@ export function VersionHistory({ versions }: { versions: PhotoVersion[] }) {
                   <span className="text-caption font-medium text-foreground">
                     {version.label}
                   </span>
-                  <Badge>{versionKindLabels[version.kind]}</Badge>
+                  <span className="flex items-center gap-1.5">
+                    <Badge>{versionKindLabels[version.kind]}</Badge>
+                    {canManage && versions.length > 1 && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        disabled={deleting}
+                        onClick={() => {
+                          setDeleteError(null);
+                          setPendingDelete(
+                            pendingDelete === version.id ? null : version.id
+                          );
+                        }}
+                      >
+                        Sil
+                      </Button>
+                    )}
+                  </span>
                 </div>
                 <p className="mt-1 text-body-sm leading-relaxed text-muted-foreground">
                   {version.note}
@@ -124,6 +171,33 @@ export function VersionHistory({ versions }: { versions: PhotoVersion[] }) {
                   )}
                   {version.palette && ` · ${version.palette}`}
                 </p>
+                {pendingDelete === version.id && (
+                  <div className="mt-2 flex flex-wrap items-center gap-2 rounded-card border border-warm/40 bg-warm/8 p-2">
+                    <p className="min-w-0 flex-1 text-meta text-warm">
+                      <strong>{version.label}</strong> ve sürüm görseli kalıcı
+                      olarak silinecek.
+                    </p>
+                    <Button
+                      size="sm"
+                      variant="danger"
+                      disabled={deleting}
+                      onClick={() => void remove(version)}
+                    >
+                      {deleting ? 'Siliniyor…' : 'Kalıcı sil'}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={deleting}
+                      onClick={() => setPendingDelete(null)}
+                    >
+                      Vazgeç
+                    </Button>
+                    {deleteError && (
+                      <Alert className="w-full">{deleteError}</Alert>
+                    )}
+                  </div>
+                )}
               </li>
             );
           })}

@@ -1,4 +1,5 @@
 import { commonsImage } from '../../lib/commons';
+import type { ContentBlock } from '@/domain/content/blocks';
 
 /**
  * Haber modülü içeriği.
@@ -60,6 +61,7 @@ export interface NewsItem {
   publishedAt: string;
   summary: string;
   body: string[];
+  bodyBlocks?: ContentBlock[];
   /** Kaynak şeffaflığı: haberin dayandığı yayın. */
   source: { name: string; url?: string };
   /** Öne çıkan haber — ana sayfada ilk sırada gösterilir. */

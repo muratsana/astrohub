@@ -15,6 +15,7 @@ import type {
 import { getSupabase } from '@/services/supabase/client';
 import { useCatalog } from './useCatalog';
 import type { ContentSelection } from './select';
+import { useQuery } from '@tanstack/react-query';
 
 /**
  * EKİPMAN KATALOĞU — veritabanı satırından arayüz modeline.
@@ -339,5 +340,23 @@ export async function fetchCatalogPage(
     page,
     pageSize,
     durable: true,
+  };
+}
+
+/** Katalog ekranının gerçek sunucu sayfası; önceki sayfayı geçişte korur. */
+export function useEquipmentCatalogPage(query: CatalogQuery) {
+  const result = useQuery({
+    queryKey: ['ekipman-sayfa', query],
+    queryFn: () => fetchCatalogPage(query),
+    placeholderData: (previous) => previous ?? paginate(equipmentSeed, query),
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
+  });
+
+  return {
+    page: result.data ?? paginate(equipmentSeed, query),
+    loading: result.isFetching,
+    error: result.error instanceof Error ? result.error.message : null,
+    refresh: () => void result.refetch(),
   };
 }

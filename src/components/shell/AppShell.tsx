@@ -9,6 +9,7 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { isPreviewEditorEnabled } from '@/features/preview-editor/PreviewEditorContext';
 import { AnnouncementBar } from '@/features/site/AnnouncementBar';
 import { MaintenanceGate } from '@/features/site/MaintenanceGate';
+import { RadioDock } from '@/features/radio/RadioDock';
 
 /**
  * UYGULAMA KABUĞU — Rasathane Terminali.
@@ -104,6 +105,8 @@ export function AppShell() {
         </main>
 
         <Footer />
+
+        <RadioDock />
 
         <MobileNav onOpenNav={openNav} />
 

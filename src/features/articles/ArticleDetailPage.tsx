@@ -7,6 +7,8 @@ import { absoluteUrl, breadcrumbJsonLd, SITE_NAME } from '@/lib/seo';
 import { articleCategoryLabels } from './data';
 import { commonsWidthUrl } from '@/lib/commons';
 import { useArticles } from './useArticles';
+import { BlockRenderer } from '@/components/content/BlockRenderer';
+import { paragraphsToBlocks } from '@/domain/content/blocks';
 
 /** Yazı detayı — okuma genişliği ~70 karakter, görselsiz. */
 export function ArticleDetailPage() {
@@ -100,11 +102,10 @@ export function ArticleDetailPage() {
             {article.summary}
           </p>
 
-          <div className="mt-8 space-y-5 text-body-sm leading-[1.85] text-muted-foreground">
-            {article.body.map((paragraph, i) => (
-              <p key={i}>{paragraph}</p>
-            ))}
-          </div>
+          <BlockRenderer
+            className="mt-8"
+            blocks={article.bodyBlocks ?? paragraphsToBlocks(article.body)}
+          />
 
           <p className="mt-10 border-t border-border pt-5 text-meta leading-relaxed text-faint">
             Bu yazı topluluk katkısıyla güncellenir. Eksik ya da hatalı bulduğun

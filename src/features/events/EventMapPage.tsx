@@ -1,24 +1,28 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Panel } from '@/components/ui/Panel';
 import { Badge } from '@/components/ui/Badge';
 import { Select } from '@/components/ui/Input';
-import { ButtonLink } from '@/components/ui/Button';
+import { Button, ButtonLink } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
 import { useLocationContext } from '@/features/location/LocationContext';
 import {
   sortByProximity,
-  projectToBox,
   formatDistance,
 } from '@/domain/geography/distance';
 import { useEventCatalog } from '@/services/content/events';
 import { eventTypeLabels, type EventType } from './types';
 import type { AstroEvent } from './types';
 import { cn } from '@/lib/cn';
+import { TileMap } from '@/features/sky/TileMap';
+import { basemapSource, BASEMAP_CREDIT } from '@/features/sky/lightPollutionEmbed';
+import type { LatLng } from '@/features/sky/tileMath';
+import { useTheme } from '@/features/theme/ThemeContext';
+import { hasNetworkAccess } from '@/lib/runtime';
 
 /**
  * ETKİNLİK HARİTASI (§7.7 kısmi).
@@ -38,13 +42,30 @@ import { cn } from '@/lib/cn';
  * ve `sortByProximity` aynen kalır.
  */
 
-const MAP_RATIO = 19.3 / 6.4; // sınır kutusunun boylam/enlem oranı
+const CONSENT_KEY = 'astrohub:map:tiles';
 
 export function EventMapPage() {
   const { location } = useLocationContext();
+  const { theme } = useTheme();
   const [type, setType] = useState<EventType | 'hepsi'>('hepsi');
   const [active, setActive] = useState<string | null>(null);
   const catalog = useEventCatalog();
+  const [allowed, setAllowed] = useState(() => {
+    try {
+      return localStorage.getItem(CONSENT_KEY) === 'izin';
+    } catch {
+      return false;
+    }
+  });
+  const [center, setCenter] = useState<LatLng>({
+    lat: location.latitude,
+    lng: location.longitude,
+  });
+  const [zoom, setZoom] = useState(5);
+
+  useEffect(() => {
+    setCenter({ lat: location.latitude, lng: location.longitude });
+  }, [location.latitude, location.longitude]);
 
   const filtered = useMemo(
     () =>
@@ -58,8 +79,6 @@ export function EventMapPage() {
     () => sortByProximity(filtered, location, (e: AstroEvent) => e.coords),
     [filtered, location]
   );
-
-  const origin = projectToBox(location);
 
   return (
     <>
@@ -117,63 +136,69 @@ export function EventMapPage() {
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
           {/* ───────── Şematik dağılım ───────── */}
           <Panel
-            title="Konum dağılımı"
-            status="şematik — coğrafi ölçek değil"
-            bodyClassName="p-3"
+            title="Etkinlik haritası"
+            status={`${located.length} işaret`}
+            bodyClassName="p-0"
           >
-            <div
-              className="relative w-full overflow-hidden rounded-card border border-border bg-surface-2"
-              style={{ aspectRatio: String(MAP_RATIO) }}
-            >
-              {/* Izgara çizgileri — konumu okumayı kolaylaştıran referans */}
-              <div
-                aria-hidden
-                className="absolute inset-0 opacity-40"
-                style={{
-                  backgroundImage:
-                    'linear-gradient(to right, var(--color-border) 1px, transparent 1px), linear-gradient(to bottom, var(--color-border) 1px, transparent 1px)',
-                  backgroundSize: '12.5% 25%',
-                }}
-              />
+            <div className="relative h-[58vh] min-h-[420px] overflow-hidden rounded-b-card bg-surface-2">
+              {!hasNetworkAccess ? (
+                <div className="grid h-full place-items-center p-6 text-center text-body-sm text-muted-foreground">
+                  Bu önizleme dış harita isteği yapmıyor.
+                </div>
+              ) : allowed ? (
+                <TileMap
+                  label="Etkinlik haritası — sürükleyerek ve ok tuşlarıyla gezin"
+                  className={cn(
+                    'h-full w-full',
+                    theme === 'field' &&
+                      '[filter:sepia(1)_saturate(5)_hue-rotate(-38deg)_brightness(0.6)]'
+                  )}
+                  center={center}
+                  zoom={zoom}
+                  minZoom={3}
+                  maxZoom={12}
+                  onCenterChange={setCenter}
+                  onZoomChange={setZoom}
+                  base={basemapSource(theme !== 'light')}
+                  marker={{ lat: location.latitude, lng: location.longitude }}
+                  markers={located.map(({ item, distanceKm }) => ({
+                    id: item.slug,
+                    point: {
+                      lat: item.coords!.latitude,
+                      lng: item.coords!.longitude,
+                    },
+                    label: `${item.title}, ${item.city}, ${formatDistance(distanceKm)} uzaklıkta`,
+                    active: active === item.slug,
+                    onSelect: () => setActive(item.slug),
+                  }))}
+                />
+              ) : (
+                <div className="grid h-full place-items-center p-6 text-center">
+                  <div className="max-w-md">
+                    <p className="text-body-sm leading-relaxed text-muted-foreground">
+                      Harita CARTO döşemelerini yükler; IP adresiniz ve baktığınız
+                      bölge sağlayıcıya iletilir.
+                    </p>
+                    <Button
+                      size="sm"
+                      className="mt-3"
+                      onClick={() => {
+                        setAllowed(true);
+                        try {
+                          localStorage.setItem(CONSENT_KEY, 'izin');
+                        } catch {
+                          // Seçim yalnız bu oturumda kalır.
+                        }
+                      }}
+                    >
+                      Haritayı yükle
+                    </Button>
+                  </div>
+                </div>
+              )}
 
-              {/* Kullanıcının konumu */}
-              <span
-                className="absolute z-10 -translate-x-1/2 -translate-y-1/2"
-                style={{ left: `${origin.x * 100}%`, top: `${origin.y * 100}%` }}
-                title={`Konumunuz: ${location.label}`}
-              >
-                <span className="block h-2.5 w-2.5 rounded-full border-2 border-cold bg-background" />
-                <span className="sr-only">Konumunuz: {location.label}</span>
-              </span>
-
-              {located.map(({ item, distanceKm }) => {
-                const pos = projectToBox(item.coords!);
-                const isActive = active === item.slug;
-
-                return (
-                  <button
-                    key={item.slug}
-                    type="button"
-                    onMouseEnter={() => setActive(item.slug)}
-                    onFocus={() => setActive(item.slug)}
-                    onMouseLeave={() => setActive(null)}
-                    onBlur={() => setActive(null)}
-                    onClick={() => setActive(item.slug)}
-                    aria-label={`${item.title}, ${item.city}, ${formatDistance(distanceKm)} uzaklıkta`}
-                    className={cn(
-                      'absolute -translate-x-1/2 -translate-y-1/2 rounded-full transition-all',
-                      isActive
-                        ? 'z-20 h-3.5 w-3.5 bg-primary ring-2 ring-primary/40'
-                        : 'h-2.5 w-2.5 bg-primary/70 hover:bg-primary'
-                    )}
-                    style={{ left: `${pos.x * 100}%`, top: `${pos.y * 100}%` }}
-                  />
-                );
-              })}
-
-              {/* Etkin nokta künyesi */}
-              {active && (
-                <div className="pointer-events-none absolute inset-x-2 bottom-2 rounded-card border border-border bg-surface-1/95 px-2.5 py-1.5">
+              {allowed && active && (
+                <div className="pointer-events-none absolute inset-x-2 bottom-7 rounded-card border border-border bg-surface-1/95 px-2.5 py-1.5">
                   {(() => {
                     const hit = located.find((l) => l.item.slug === active);
                     if (!hit) return null;
@@ -188,13 +213,12 @@ export function EventMapPage() {
                   })()}
                 </div>
               )}
+              {allowed && (
+                <p className="absolute bottom-1 left-2 text-[0.62rem] text-muted-foreground">
+                  {BASEMAP_CREDIT}
+                </p>
+              )}
             </div>
-
-            <p className="mt-2 text-meta leading-snug text-faint">
-              Noktalar enlem/boylamlarına göre yerleştirilmiştir; sınır ve ölçek
-              çizilmez. Etkileşimli harita, tile sağlayıcısı lisansı
-              netleştiğinde bu sayfaya gelecek (§14.4).
-            </p>
           </Panel>
 
           {/* ───────── Yakınlık listesi ───────── */}

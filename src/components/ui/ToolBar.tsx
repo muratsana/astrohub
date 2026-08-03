@@ -4,6 +4,19 @@ import { ViewToggle } from './ViewToggle';
 import type { ViewMode } from './useViewMode';
 import { cn } from '@/lib/cn';
 
+export type ToolBarSort = {
+  value: string;
+  onChange: (value: string) => void;
+  options: { value: string; label: string }[];
+  id?: string;
+};
+
+export type ToolBarView<M extends string = ViewMode> = {
+  mode: M;
+  onChange: (mode: M) => void;
+  modes?: readonly M[];
+};
+
 /**
  * ARAÇ ŞERİDİ — sonuç sayacı, sıralama ve görünüm anahtarı.
  *
@@ -31,23 +44,14 @@ export function ToolBar<M extends string = ViewMode>({
   /** Genelde sonuç sayacı. */
   left?: ReactNode;
   /** Sıralama seçicisi — verilirse kontrol grubunda görünür. */
-  sort?: {
-    value: string;
-    onChange: (value: string) => void;
-    options: { value: string; label: string }[];
-    id?: string;
-  };
+  sort?: ToolBarSort;
   /**
    * Görünüm anahtarı. `modes` verilmezse ızgara/liste; tabloyu
    * destekleyen modül kendi kümesini geçiyor. Şerit görünüm kümesinde
    * GENEL olduğu için tabloyu desteklemeyen sayfalar hiçbir şey
    * değiştirmiyor.
    */
-  view?: {
-    mode: M;
-    onChange: (mode: M) => void;
-    modes?: readonly M[];
-  };
+  view?: ToolBarView<M>;
   /** Gruba eklenecek ekstra kontrol. */
   extra?: ReactNode;
   className?: string;
@@ -57,18 +61,18 @@ export function ToolBar<M extends string = ViewMode>({
   return (
     <div
       className={cn(
-        'mb-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2',
+        'mb-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 md:flex-nowrap',
         className
       )}
     >
       <div className="min-w-0">{left}</div>
 
       {hasControls && (
-        <div className="flex shrink-0 flex-wrap items-center gap-2">
-          {extra}
+        <div className="flex w-full min-w-0 max-w-full flex-wrap items-center justify-start gap-2 sm:w-auto sm:justify-end md:flex-nowrap">
+          {extra && <div className="min-w-0 max-w-full">{extra}</div>}
 
           {sort && (
-            <div className="inline-flex min-h-11 items-center overflow-hidden rounded-card border border-border-strong bg-surface-1 shadow-overlay">
+            <div className="inline-flex min-h-11 min-w-0 max-w-full items-center overflow-hidden rounded-card border border-border-strong bg-surface-1 shadow-overlay">
               <label
                 htmlFor={sort.id ?? 'toolbar-sort'}
                 className="label hidden h-full items-center border-r border-border px-3 text-muted-foreground sm:inline-flex"
@@ -84,7 +88,7 @@ export function ToolBar<M extends string = ViewMode>({
                  * `h-full` hizayı anahtara kilitler; sabit yükseklik vermek
                  * tarayıcılar arasında 1px kaymalara yol açıyordu.
                  */
-                className="min-h-11 w-auto rounded-none border-0 bg-transparent pl-3 pr-8 text-body-sm font-medium focus:bg-surface-2"
+                className="min-h-11 min-w-0 w-auto max-w-full rounded-none border-0 bg-transparent pl-3 pr-8 text-body-sm font-medium focus:bg-surface-2"
               >
                 {sort.options.map((o) => (
                   <option key={o.value} value={o.value}>

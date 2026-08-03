@@ -18,6 +18,7 @@ import {
   onTrackEnd,
   type RadioSource,
 } from './handover';
+import { dailyShuffle } from './dailyShuffle';
 
 /**
  * RADYO BAĞLAMI — kalıcı oynatıcının beyni.
@@ -35,11 +36,17 @@ interface RadioState {
   playing: boolean;
   volume: number;
   hasBroadcast: boolean;
+  currentTrack: RadioTrack | null;
+  canSkip: boolean;
+  shuffle: boolean;
   /** Kullanıcı oynatıcıyı gizlediyse dock görünmez. */
   dockVisible: boolean;
 
   toggle: () => void;
   pause: () => void;
+  next: () => void;
+  previous: () => void;
+  toggleShuffle: () => void;
   /** Şu an hangi kaynak çalıyor: kayıtlı kasa mı, canlı yayın mı. */
   source: RadioSource;
   /** Canlı yayın başladı, çalan parça bitince devredilecek. */
@@ -53,6 +60,7 @@ const RadioContext = createContext<RadioState | undefined>(undefined);
 
 const VOLUME_KEY = 'astrohub:radio:volume';
 const DEFAULT_VOLUME = 0.6;
+const SHUFFLE_KEY = 'astrohub:radio:daily-shuffle';
 
 export function RadioProvider({ children }: { children: ReactNode }) {
   /*
@@ -73,10 +81,16 @@ export function RadioProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const mp3Tracks = useMemo(
-    () => tracks.filter((t) => t.source === 'mp3'),
-    [tracks]
-  );
+  const [shuffle, setShuffle] = useState(() => {
+    if (typeof localStorage === 'undefined') return true;
+    return localStorage.getItem(SHUFFLE_KEY) !== 'false';
+  });
+  const mp3Tracks = useMemo(() => {
+    const rows = tracks.filter((track) => track.source === 'mp3');
+    return shuffle
+      ? dailyShuffle(rows, new Date().toISOString().slice(0, 10))
+      : rows;
+  }, [shuffle, tracks]);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [index, setIndex] = useState(mp3Tracks.length > 0 ? 0 : -1);
@@ -180,6 +194,14 @@ export function RadioProvider({ children }: { children: ReactNode }) {
 
   const next = useCallback(() => {
     setIndex((i) => (mp3Tracks.length === 0 ? -1 : (i + 1) % mp3Tracks.length));
+  }, [mp3Tracks.length]);
+
+  const previous = useCallback(() => {
+    setIndex((i) =>
+      mp3Tracks.length === 0
+        ? -1
+        : (i - 1 + mp3Tracks.length) % mp3Tracks.length
+    );
   }, [mp3Tracks.length]);
 
   // Parça bitince sıradakine geç — sonsuz döngü. "Radyo" olmasının şartı.
@@ -355,14 +377,33 @@ export function RadioProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const toggleShuffle = useCallback(() => {
+    setShuffle((current) => {
+      const nextValue = !current;
+      try {
+        localStorage.setItem(SHUFFLE_KEY, String(nextValue));
+      } catch {
+        // Depolama kapalıysa seçim yalnızca bu oturumda kalır.
+      }
+      return nextValue;
+    });
+    setIndex(0);
+  }, []);
+
   const value = useMemo<RadioState>(
     () => ({
       playing,
       volume,
       hasBroadcast,
+      currentTrack: current,
+      canSkip: source === 'kasa' && mp3Tracks.length > 1,
+      shuffle,
       dockVisible,
       toggle,
       pause,
+      next,
+      previous,
+      toggleShuffle,
       source,
       pendingLive,
       setVolume,
@@ -379,6 +420,12 @@ export function RadioProvider({ children }: { children: ReactNode }) {
       toggle,
       pause,
       setVolume,
+      current,
+      mp3Tracks.length,
+      next,
+      previous,
+      shuffle,
+      toggleShuffle,
     ]
   );
 

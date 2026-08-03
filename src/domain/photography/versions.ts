@@ -49,6 +49,8 @@ export interface PhotoVersion {
    * göstermek olurdu.
    */
   imageUrl?: string;
+  /** Depodaki nesne yolu; yalnızca sahibin sürüm yönetimi için kullanılır. */
+  storagePath?: string;
   /** Bu sürümdeki toplam entegrasyon (değiştiyse). */
   exposures?: FilterExposure[];
   /** Bu sürümde kullanılan palet (değiştiyse). */

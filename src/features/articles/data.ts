@@ -1,4 +1,5 @@
 import { commonsImage } from '../../lib/commons';
+import type { ContentBlock } from '@/domain/content/blocks';
 /**
  * Yazılar modülü — rehberler, eğitim yazıları ve işleme dersleri.
  *
@@ -35,6 +36,7 @@ export interface Article {
   author: string;
   summary: string;
   body: string[];
+  bodyBlocks?: ContentBlock[];
   tint: string;
   /**
    * Kart görseli.

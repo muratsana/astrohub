@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useDeferredValue, useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -10,7 +10,11 @@ import { Input } from '@/components/ui/Input';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
-import { useEquipmentCatalog } from '@/services/content/equipment';
+import {
+  CATALOG_PAGE_SIZE,
+  useEquipmentCatalog,
+  useEquipmentCatalogPage,
+} from '@/services/content/equipment';
 import { useAuth } from '@/features/auth/AuthContext';
 import { SetupBuilder } from './builder/SetupBuilder';
 import { headlineSpec } from './builder/headline';
@@ -186,34 +190,35 @@ function SyncNotice({ store }: { store: SetupStore }) {
  * kaybettiriyordu. Şimdi önce kategori, sonra arama.
  */
 function CatalogTab() {
-  const catalog = useEquipmentCatalog();
   const [category, setCategory] = useState<EquipmentCategory | ''>('');
   const [query, setQuery] = useState('');
+  const [page, setPage] = useState(0);
+  const deferredQuery = useDeferredValue(query.trim());
+  const catalog = useEquipmentCatalogPage({
+    category: category || 'hepsi',
+    search: deferredQuery,
+    page,
+    pageSize: CATALOG_PAGE_SIZE,
+  });
+  const active = Boolean(category || deferredQuery);
+  const pageCount = Math.max(1, Math.ceil(catalog.page.total / catalog.page.pageSize));
 
-  const counts = useMemo(() => {
-    const map = new Map<string, number>();
-    for (const m of catalog.items) map.set(m.category, (map.get(m.category) ?? 0) + 1);
-    return map;
-  }, [catalog.items]);
-
-  const results = useMemo(() => {
-    const q = query.trim().toLocaleLowerCase('tr-TR');
-    if (!category && !q) return [];
-    return catalog.items
-      .filter((m) => (category ? m.category === category : true))
-      .filter((m) =>
-        q ? `${m.brand} ${m.model}`.toLocaleLowerCase('tr-TR').includes(q) : true
-      )
-      .slice(0, 40);
-  }, [catalog.items, category, query]);
+  useEffect(() => setPage(0), [category, deferredQuery]);
 
   return (
     <div className="space-y-3">
-      <Panel title="Kategori seç" status={`${catalog.items.length} model`}>
+      <Panel
+        title="Katalogda ara"
+        status={
+          catalog.loading
+            ? 'aranıyor…'
+            : active
+              ? `${catalog.page.total} model`
+              : 'kategori veya model seçin'
+        }
+      >
         <div className="flex flex-wrap gap-1.5">
-          {equipmentCategoryOrder
-            .filter((c) => (counts.get(c) ?? 0) > 0)
-            .map((c) => (
+          {equipmentCategoryOrder.map((c) => (
               <button
                 key={c}
                 type="button"
@@ -227,21 +232,30 @@ function CatalogTab() {
               >
                 <EquipmentGlyph category={c} className="h-4 w-4" />
                 {equipmentCategoryLabels[c]}
-                <span className="tabular text-faint">{counts.get(c)}</span>
               </button>
             ))}
         </div>
 
         <Input
           type="search"
-          placeholder="Marka ya da model ara"
+          placeholder="Model ara"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           className="mt-3 h-10 text-body-sm"
         />
       </Panel>
 
-      {results.length === 0 ? (
+      {catalog.error && (
+        <Alert>
+          Katalog aranamadı: {catalog.error}. Yeniden denemek için{' '}
+          <button type="button" className="text-primary" onClick={catalog.refresh}>
+            tıklayın
+          </button>
+          .
+        </Alert>
+      )}
+
+      {!active || catalog.page.items.length === 0 ? (
         <EmptyState
           message={category || query ? 'Eşleşen model yok' : 'Bir kategori seçin'}
           hint={
@@ -251,35 +265,63 @@ function CatalogTab() {
           }
         />
       ) : (
-        <ul className="grid gap-2 sm:grid-cols-2">
-          {results.map((m) => (
-            <li key={m.slug}>
-              <ContentCard
-                to={equipmentPath(m)}
-                variant="list"
-                className="gap-2.5"
+        <>
+          <ul className="grid gap-2 sm:grid-cols-2">
+            {catalog.page.items.map((m) => (
+              <li key={m.slug}>
+                <ContentCard
+                  to={equipmentPath(m)}
+                  variant="list"
+                  className="gap-2.5"
+                >
+                  <EquipmentGlyph
+                    category={m.category}
+                    className="h-8 w-8 shrink-0 text-muted-foreground group-hover:text-primary"
+                  />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-body-sm text-foreground transition-colors group-hover:text-primary">
+                      {m.model}
+                    </span>
+                    <span className="tabular block truncate text-meta text-muted-foreground">
+                      {m.brand} · {headlineSpec(m)}
+                    </span>
+                  </span>
+                  {m.productionStatus && m.productionStatus !== 'guncel' && (
+                    <Badge tone="muted">
+                      {productionStatusLabels[m.productionStatus]}
+                    </Badge>
+                  )}
+                </ContentCard>
+              </li>
+            ))}
+          </ul>
+          {pageCount > 1 && (
+            <nav
+              aria-label="Katalog sayfaları"
+              className="flex items-center justify-between gap-3 border-t border-border pt-3"
+            >
+              <Button
+                size="sm"
+                variant="ghost"
+                disabled={page === 0 || catalog.loading}
+                onClick={() => setPage((current) => Math.max(0, current - 1))}
               >
-                <EquipmentGlyph
-                  category={m.category}
-                  className="h-8 w-8 shrink-0 text-muted-foreground group-hover:text-primary"
-                />
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-body-sm text-foreground transition-colors group-hover:text-primary">
-                    {m.model}
-                  </span>
-                  <span className="tabular block truncate text-meta text-muted-foreground">
-                    {m.brand} · {headlineSpec(m)}
-                  </span>
-                </span>
-                {m.productionStatus && m.productionStatus !== 'guncel' && (
-                  <Badge tone="muted">
-                    {productionStatusLabels[m.productionStatus]}
-                  </Badge>
-                )}
-              </ContentCard>
-            </li>
-          ))}
-        </ul>
+                ← Önceki
+              </Button>
+              <span className="tabular text-meta text-muted-foreground">
+                {page + 1} / {pageCount}
+              </span>
+              <Button
+                size="sm"
+                variant="ghost"
+                disabled={page + 1 >= pageCount || catalog.loading}
+                onClick={() => setPage((current) => current + 1)}
+              >
+                Sonraki →
+              </Button>
+            </nav>
+          )}
+        </>
       )}
     </div>
   );

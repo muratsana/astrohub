@@ -3,7 +3,7 @@ import { Badge } from '@/components/ui/Badge';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { CardGrid } from '@/components/ui/CardGrid';
-import { ToolBar, ResultCount } from '@/components/ui/ToolBar';
+import { ModuleToolbar } from '@/components/ui/ModuleToolbar';
 import { useStoredChoice, type ListView } from '@/components/ui/useViewMode';
 import { DataTable, type Column } from '@/components/ui/DataTable';
 import {
@@ -22,11 +22,9 @@ import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
 import { Input, Select } from '@/components/ui/Input';
 import {
-  FilterBar,
   FilterCell,
   filterControlClass,
 } from '@/components/ui/FilterBar';
-import { ActiveFilters } from '@/components/ui/ActiveFilters';
 import { useExplorer } from '@/features/explorer/useExplorer';
 import { sitesSpec } from './sitesSpec';
 import { siteTypeLabels, type ObservingSite, type SiteType } from './data';
@@ -75,7 +73,33 @@ export function SitesPage() {
           description="Türkiye'nin karanlık gökyüzü noktaları — Bortle/SQM ölçümleri, erişim ve tesis bilgileriyle."
         />
 
-        <FilterBar activeCount={ex.chips.length} columns={2}>
+        <ModuleToolbar
+          columns={2}
+          activeFilters={{
+            chips: ex.chips,
+            onRemove: ex.removeChip,
+            onClearAll: ex.clearAll,
+          }}
+          result={{
+            current: ex.total,
+            total: catalog.items.length,
+            noun: 'nokta',
+          }}
+          sort={{
+            id: 'site-sort',
+            value: ex.query.sort,
+            onChange: ex.setSort,
+            options: sitesSpec.sorts.map((s) => ({
+              value: s.value,
+              label: s.label,
+            })),
+          }}
+          view={{
+            mode: view,
+            onChange: setView,
+            modes: ['grid', 'list', 'table'],
+          }}
+        >
           <FilterCell label="Ara" htmlFor="site-search">
             <Input
               id="site-search"
@@ -130,39 +154,9 @@ export function SitesPage() {
                 ))}
             </Select>
           </FilterCell>
-        </FilterBar>
-
-        <ActiveFilters
-          chips={ex.chips}
-          onRemove={ex.removeChip}
-          onClearAll={ex.clearAll}
-        />
+        </ModuleToolbar>
 
         <CatalogSourceNote selection={catalog} />
-
-        <ToolBar
-          left={
-            <ResultCount
-              current={ex.total}
-              total={catalog.items.length}
-              noun="nokta"
-            />
-          }
-          sort={{
-            id: 'site-sort',
-            value: ex.query.sort,
-            onChange: ex.setSort,
-            options: sitesSpec.sorts.map((s) => ({
-              value: s.value,
-              label: s.label,
-            })),
-          }}
-          view={{
-            mode: view,
-            onChange: setView,
-            modes: ['grid', 'list', 'table'],
-          }}
-        />
 
         {ex.items.length === 0 ? (
           <EmptyState

@@ -25,6 +25,11 @@ const RecentListings = lazy(() =>
     default: module.RecentListings,
   }))
 );
+const WeeklyPhoto = lazy(() =>
+  import('./sections/WeeklyPhoto').then((module) => ({
+    default: module.WeeklyPhoto,
+  }))
+);
 
 /**
  * ANA SAYFA — Rasathane Terminali.
@@ -143,6 +148,11 @@ const SECTIONS: Record<string, (m: HomeModuleView) => ReactNode> = {
         subtitle={m.subtitle ?? undefined}
         title={m.title ?? undefined}
       />
+    </LazySection>
+  ),
+  weekly_photo: (m) => (
+    <LazySection>
+      <WeeklyPhoto hideWhenEmpty={m.hide_when_empty} />
     </LazySection>
   ),
 };

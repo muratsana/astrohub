@@ -43,6 +43,7 @@ describe('toHomeLayout', () => {
       news: 4,
       events: 5,
       listings: 5,
+      weekly_photo: 1,
     });
   });
 

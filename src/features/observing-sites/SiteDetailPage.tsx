@@ -146,8 +146,15 @@ export function SiteDetailPage() {
               </p>
             </div>
             <ButtonLink
-              to="/saha"
+              to={`/galeri?sehir=${encodeURIComponent(site.region)}`}
               variant="secondary"
+              className="mt-4 w-full"
+            >
+              Bu bölgeden fotoğraflar
+            </ButtonLink>
+            <ButtonLink
+              to="/saha"
+              variant="ghost"
               className="mt-4 w-full"
             >
               ← Tüm noktalar

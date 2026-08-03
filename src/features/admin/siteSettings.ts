@@ -76,6 +76,7 @@ export const moduleLabels: Record<string, string> = {
   news: 'Haberler ve yazılar',
   events: 'Yaklaşan etkinlikler',
   listings: 'Son ilanlar',
+  weekly_photo: 'Haftanın Fotoğrafı',
 };
 
 /** Panelin okuma yolu — yayın penceresini UYGULAMAZ (yukarıdaki nota bak). */

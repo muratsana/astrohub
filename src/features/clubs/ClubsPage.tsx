@@ -4,15 +4,13 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { Input, Select } from '@/components/ui/Input';
 import { CardGrid } from '@/components/ui/CardGrid';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { ToolBar, ResultCount } from '@/components/ui/ToolBar';
+import { ModuleToolbar } from '@/components/ui/ModuleToolbar';
 import { useViewMode } from '@/components/ui/useViewMode';
 import {
-  FilterBar,
   FilterCell,
   FilterToggle,
   filterControlClass,
 } from '@/components/ui/FilterBar';
-import { ActiveFilters } from '@/components/ui/ActiveFilters';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
 import { Link } from 'react-router';
@@ -71,7 +69,24 @@ export function ClubsPage() {
           description="Dernekler, üniversite kulüpleri ve gözlem grupları. Teleskobunuz yoksa da katılabileceğiniz topluluklar için “ortak ekipman” filtresini açın."
         />
 
-        <FilterBar activeCount={ex.chips.length}>
+        <ModuleToolbar
+          activeFilters={{
+            chips: ex.chips,
+            onRemove: ex.removeChip,
+            onClearAll: ex.clearAll,
+          }}
+          result={{ current: ex.total, total: clubs.length, noun: 'topluluk' }}
+          sort={{
+            id: 'club-sort',
+            value: ex.query.sort,
+            onChange: ex.setSort,
+            options: clubsSpec.sorts.map((s) => ({
+              value: s.value,
+              label: s.label,
+            })),
+          }}
+          view={{ mode: view, onChange: setView }}
+        >
           <FilterCell label="Ara" htmlFor="club-search" className="lg:col-span-2">
             <Input
               id="club-search"
@@ -142,29 +157,7 @@ export function ClubsPage() {
             checked={acik('dogrulanmis')}
             onChange={() => cevir('dogrulanmis')}
           />
-        </FilterBar>
-
-        <ActiveFilters
-          chips={ex.chips}
-          onRemove={ex.removeChip}
-          onClearAll={ex.clearAll}
-        />
-
-        <ToolBar
-          left={
-            <ResultCount current={ex.total} total={clubs.length} noun="topluluk" />
-          }
-          sort={{
-            id: 'club-sort',
-            value: ex.query.sort,
-            onChange: ex.setSort,
-            options: clubsSpec.sorts.map((s) => ({
-              value: s.value,
-              label: s.label,
-            })),
-          }}
-          view={{ mode: view, onChange: setView }}
-        />
+        </ModuleToolbar>
 
         {result.length === 0 ? (
           <EmptyState

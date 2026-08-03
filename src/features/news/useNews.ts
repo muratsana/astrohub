@@ -27,6 +27,7 @@ export function entryToNewsItem(e: ContentEntry): NewsItem {
     tint: e.tint ?? '150,185,235',
     image: e.image ?? undefined,
     body: e.body,
+    bodyBlocks: e.bodyBlocks,
     /* Kaynağı olmayan kayıt panelden yazılmış özgün içeriktir —
        künyesi Astrohub'dır, "—" değil. */
     source: e.source ?? { name: 'Astrohub' },

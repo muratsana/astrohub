@@ -6,13 +6,13 @@ import { breadcrumbJsonLd } from '@/lib/seo';
 import { siteMap } from '@/app/navigation';
 import {
   CalendarIcon,
+  CalculatorIcon,
   ChainIcon,
   FrameIcon,
   GridIcon,
   MapIcon,
   MoonIcon,
   MosaicIcon,
-  PixelIcon,
   RouteIcon,
 } from '@/components/ui/icons';
 
@@ -21,7 +21,10 @@ import {
  * Modül haritasıyla aynı kaynaktan beslenir — yeni bir araç eklendiğinde
  * iki yerde ayrı bakım gerekmez.
  */
-const tools = siteMap.find((group) => group.title === 'Araçlar')?.items ?? [];
+const tools =
+  siteMap
+    .find((group) => group.title === 'Araçlar')
+    ?.items.filter((tool) => tool.to !== '/araclar') ?? [];
 
 /**
  * Araç ikonları — rotaya göre.
@@ -38,10 +41,10 @@ const tools = siteMap.find((group) => group.title === 'Araçlar')?.items ?? [];
 const toolIcons: Record<string, typeof GridIcon> = {
   '/araclar': GridIcon,
   '/araclar/fov': FrameIcon,
-  '/araclar/pixel-scale': PixelIcon,
   '/araclar/isik-kirliligi': MapIcon,
   '/bu-gece': MoonIcon,
   '/planlayici': RouteIcon,
+  '/araclar/poz-plani': CalculatorIcon,
   '/araclar/mosaic': MosaicIcon,
   '/araclar/setup-uyumluluk': ChainIcon,
   '/araclar/takvim': CalendarIcon,

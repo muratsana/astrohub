@@ -3,15 +3,16 @@ import { Container } from '@/components/ui/Container';
 import { Input, Select } from '@/components/ui/Input';
 import { ButtonLink } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { PageHeader } from '@/components/ui/PageHeader';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { CatalogSourceNote } from '@/components/ui/CatalogSourceNote';
 import { useStoredChoice } from '@/components/ui/useViewMode';
 import {
-  FilterBar,
   FilterCell,
   FilterToggle,
   filterControlClass,
 } from '@/components/ui/FilterBar';
+import { ModuleToolbar } from '@/components/ui/ModuleToolbar';
 import { PinIcon, LockIcon, ChatIcon } from '@/components/ui/icons';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
@@ -84,30 +85,38 @@ export function ForumPage() {
       />
 
       <Container className="py-8 sm:py-10">
-        <section className="mb-4 rounded-card border border-border-strong bg-surface-1/80 p-3 shadow-overlay sm:p-4">
-          <div className="flex flex-col gap-3 border-b border-border pb-3 lg:flex-row lg:items-end lg:justify-between">
-            <div className="min-w-0">
-              <p className="label text-primary">Topluluk Forumu</p>
-              <h1 className="type-page mt-1 text-foreground">Forum</h1>
-              <p className="mt-1 max-w-[62ch] text-meta leading-relaxed text-muted-foreground">
-                Soru sor, gözlem raporu paylaş, kurulum tartış. Ekipmanını ve
-                koşullarını yazarsan daha hızlı yanıt alırsın.
-              </p>
-            </div>
-            <div className="flex shrink-0 flex-wrap items-center gap-2">
-              <span className="tabular rounded-card border border-border bg-background/55 px-2.5 py-1.5 text-meta text-muted-foreground">
-                {ex.total} / {threads.length} konu
-              </span>
-              <ButtonLink to="/forum/yeni" size="sm">
-                Yeni Konu
-              </ButtonLink>
-            </div>
-          </div>
+        <PageHeader
+          title="Forum"
+          description="Soru sor, gözlem raporu paylaş, kurulum tartış. Ekipmanını ve koşullarını yazarsan daha hızlı yanıt alırsın."
+          actions={
+            <ButtonLink to="/forum/yeni" size="sm">
+              Yeni Konu
+            </ButtonLink>
+          }
+        />
 
-          <FilterBar
-            activeCount={ex.chips.length}
-            columns={4}
-            className="mb-0 mt-3"
+        <ModuleToolbar
+          columns={4}
+          activeFilters={{
+            chips: ex.chips,
+            onRemove: ex.removeChip,
+            onClearAll: ex.clearAll,
+          }}
+          result={{ current: ex.total, total: threads.length, noun: 'konu' }}
+          sort={{
+            id: 'forum-sort',
+            value: ex.query.sort,
+            onChange: ex.setSort,
+            options: forumSpec.sorts.map((s) => ({
+              value: s.value,
+              label: s.label,
+            })),
+          }}
+          extra={
+            <div className="flex min-h-11 items-center rounded-card border border-border-strong bg-surface-1 px-2 shadow-overlay transition-colors hover:border-foreground/25 hover:bg-surface-2">
+              <DensityToggle density={density} onChange={setDensity} />
+            </div>
+          }
           >
             <FilterCell
               label="Ara"
@@ -162,31 +171,13 @@ export function ForumPage() {
                 ))}
               </Select>
             </FilterCell>
-            <FilterCell label="Sırala" htmlFor="forum-sort" className="max-w-[14rem]">
-              <Select
-                id="forum-sort"
-                value={ex.query.sort}
-                onChange={(e) => ex.setSort(e.target.value)}
-                className={filterControlClass}
-              >
-                {forumSpec.sorts.map((s) => (
-                  <option key={s.value} value={s.value}>
-                    {s.label}
-                  </option>
-                ))}
-              </Select>
-            </FilterCell>
             <FilterToggle
               id="forum-unsolved"
               label="Yanıt bekleyenler"
               checked={(ex.query.facets.cozulmemis?.length ?? 0) > 0}
               onChange={() => ex.toggleFacet('cozulmemis', 'evet')}
             />
-            <div className="flex min-h-14 items-center rounded-card border border-border-strong bg-surface-1 px-3 shadow-overlay transition-colors hover:border-foreground/25 hover:bg-surface-2">
-              <DensityToggle density={density} onChange={setDensity} />
-            </div>
-          </FilterBar>
-        </section>
+        </ModuleToolbar>
 
         <CatalogSourceNote selection={threadCatalog} />
 

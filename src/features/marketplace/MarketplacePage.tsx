@@ -5,14 +5,11 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { CardGrid } from '@/components/ui/CardGrid';
 import { ButtonLink } from '@/components/ui/Button';
-import { ResultCount } from '@/components/ui/ToolBar';
-import { SegmentedControl } from '@/components/ui/SegmentedControl';
-import { ViewToggle } from '@/components/ui/ViewToggle';
+import { ModuleToolbar } from '@/components/ui/ModuleToolbar';
 import { CatalogSourceNote } from '@/components/ui/CatalogSourceNote';
 import { useStoredChoice, type ListView } from '@/components/ui/useViewMode';
 import { DataTable, type Column } from '@/components/ui/DataTable';
 import {
-  FilterBar,
   FilterCell,
   FilterToggle,
   filterControlClass,
@@ -128,19 +125,50 @@ export function MarketplacePage() {
           }
         />
 
-        <FilterBar activeCount={ex.chips.length}>
+        <ModuleToolbar
+          activeFilters={{
+            chips: ex.chips,
+            onRemove: ex.removeChip,
+            onClearAll: ex.clearAll,
+          }}
+          result={{
+            current: ex.total,
+            total: catalog.items.length,
+            noun: 'ilan',
+          }}
+          sort={{
+            id: 'listing-sort',
+            value: ex.query.sort,
+            onChange: ex.setSort,
+            options: listingsSpec.sorts.map((s) => ({
+              value: s.value,
+              label: s.label,
+            })),
+          }}
+          view={{
+            mode: view,
+            onChange: setView,
+            modes: ['grid', 'list', 'table'],
+          }}
+        >
           <FilterCell
             label="Kategori"
+            htmlFor="listing-category"
             active={category !== 'hepsi'}
-            className="min-w-[28rem] flex-[3_1_28rem]"
+            className="min-w-[12rem]"
           >
-            <SegmentedControl
-              ariaLabel="İlan kategorileri"
+            <Select
+              id="listing-category"
               value={category}
-              onChange={setCategory}
-              options={categoryOptions}
-              size="xs"
-            />
+              onChange={(event) => setCategory(event.target.value)}
+              className={filterControlClass}
+            >
+              {categoryOptions.map((item) => (
+                <option key={item.value} value={item.value}>
+                  {item.label}
+                </option>
+              ))}
+            </Select>
           </FilterCell>
           <FilterCell
             label="Ara"
@@ -195,37 +223,9 @@ export function MarketplacePage() {
             checked={(ex.query.facets.faturali?.length ?? 0) > 0}
             onChange={() => ex.toggleFacet('faturali', 'evet')}
           />
-          <FilterCell label="Sırala" htmlFor="listing-sort" className="max-w-[14rem]">
-            <Select
-              id="listing-sort"
-              value={ex.query.sort}
-              onChange={(e) => ex.setSort(e.target.value)}
-              className={filterControlClass}
-            >
-              {listingsSpec.sorts.map((s) => (
-                <option key={s.value} value={s.value}>
-                  {s.label}
-                </option>
-              ))}
-            </Select>
-          </FilterCell>
-          <div className="flex min-h-14 items-center rounded-card border border-border-strong bg-surface-1 px-3 shadow-overlay">
-            <ViewToggle
-              mode={view}
-              onChange={setView}
-              modes={['grid', 'list', 'table']}
-            />
-          </div>
-          <div className="flex min-h-14 items-center rounded-card border border-border-strong bg-surface-1 px-4 shadow-overlay">
-            <ResultCount
-              current={ex.total}
-              total={catalog.items.length}
-              noun="ilan"
-            />
-          </div>
           {/* "Doğrulanmış satıcı" süzgeci kalktı: ilan yalnızca kayıtlı
               kullanıcıdan açılıyor, yani süzgeç herkesi geçiriyordu. */}
-        </FilterBar>
+        </ModuleToolbar>
 
         <CatalogSourceNote selection={catalog} />
 

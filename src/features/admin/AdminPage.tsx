@@ -19,6 +19,7 @@ import { CatalogControl } from './CatalogControl';
 import { SiteControl } from './SiteControl';
 import { FeaturedControl } from './FeaturedControl';
 import { ContentControl } from './ContentControl';
+import { PhotoWeekAdminControl } from './PhotoWeekAdminControl';
 import { ClubControl } from './ClubControl';
 import { EquipmentDataControl } from './EquipmentDataControl';
 import { SpecImportControl } from './SpecImportControl';
@@ -29,15 +30,10 @@ import { ForumCategories } from './ForumCategories';
 import {
   AlertIcon,
   BookIcon,
-  CalendarIcon,
   GridIcon,
   HomeIcon,
-  ImageIcon,
   ListIcon,
-  MapIcon,
   PlayIcon,
-  RadioIcon,
-  SearchIcon,
   TagIcon,
   UserIcon,
 } from '@/components/ui/icons';
@@ -52,6 +48,7 @@ import {
   type QueueResult,
 } from './moderation';
 import { cn } from '@/lib/cn';
+import { useIsNarrow } from '@/components/ui/useIsNarrow';
 
 /**
  * YÖNETİM PANELİ (§13).
@@ -416,6 +413,7 @@ export function AdminPage() {
       {bolum === 'icerik' && (
         <div className="space-y-4">
           <ContentControl canWrite={roles.isAdmin} />
+          <PhotoWeekAdminControl canWrite={roles.isAdmin} />
           <RecordsControl kinds={['photo', 'listing', 'event', 'site']} />
           {/* Kulüp dizini burada, "kayıtlar"ın içinde değil: dizin
               EDİTORYAL bir kaynak — sahibi, durumu ve moderasyon kuyruğu
@@ -469,44 +467,6 @@ export function AdminPage() {
       {/* ANA SAYFA — bugün ne görünsün. */}
       {bolum === 'anasayfa' && <FeaturedControl canWrite={roles.isAdmin} />}
 
-      {bolum === 'galeri' && (
-        <div className="space-y-4">
-          <RecordsControl kinds={['photo']} title="Galeri fotoğrafları" />
-          <CommentsControl kinds={['photoComment']} />
-        </div>
-      )}
-
-      {bolum === 'haberler' && (
-        <ContentControl key="haberler" canWrite={roles.isAdmin} initialKind="haber" />
-      )}
-
-      {bolum === 'yazilar' && (
-        <ContentControl key="yazilar" canWrite={roles.isAdmin} initialKind="yazi" />
-      )}
-
-      {bolum === 'etkinlikler' && (
-        <RecordsControl kinds={['event']} title="Etkinlikler" />
-      )}
-
-      {bolum === 'ilanlar' && (
-        <RecordsControl kinds={['listing']} title="İlanlar" />
-      )}
-
-      {bolum === 'saha' && (
-        <div className="space-y-4">
-          <RecordsControl kinds={['site']} title="Saha kayıtları" />
-          <CommentsControl kinds={['siteReview']} />
-        </div>
-      )}
-
-      {bolum === 'araclar' && (
-        <div className="space-y-4">
-          <CatalogControl canWrite={roles.isAdmin} />
-          <EquipmentDataControl canWrite={roles.isAdmin} />
-          <SpecImportControl canWrite={roles.isAdmin} />
-        </div>
-      )}
-
       {/* "Ana sayfa" ile "Site yönetimi" AYRI sekmeler ve ayrı işler:
           ilki hangi İÇERİĞİN öne çıkacağını seçiyor (öne çıkan fotoğraf,
           haber), ikincisi ana sayfanın YAPISINI yönetiyor (modül açık mı,
@@ -515,29 +475,16 @@ export function AdminPage() {
           dururdu ve ikincisi birincisini görünmez kılardı. */}
       {bolum === 'site' && <SiteControl canWrite={roles.isAdmin} />}
 
-      {bolum === 'kurumsal' && <SiteControl canWrite={roles.isAdmin} />}
-
-      {/* YAYIN — TV ve radyo programı. */}
-      {bolum === 'yayin' && <BroadcastControl />}
-
-      {/*
-        RADYO — §10.5'in AstroHub'a düşen kısmı.
-
-        AzuraCast panelinin yerine geçmiyor: program takvimi, yayıncı
-        künyesi ve canlı duyurusu burada; playlist rotasyonu, mount ve
-        bitrate orada. Aynı ayarı iki yerde tutmak, ikisi ayrıştığında
-        hangisinin geçerli olduğunu belirsiz bırakırdı.
-      */}
-      {bolum === 'radyo' && <RadioControl canWrite={roles.isAdmin} />}
-
-      {/*
-        TV — §11.3'ün AstroHub'a düşen kısmı.
-
-        Kanal bağlantısı yokken sahte içerik göstermiyor (§11.2 son
-        madde) ve senkronizasyon düğmesi hiç görünmüyor: basılınca
-        "bağlı değil" diyecek bir düğme, çalışmayan bir kontroldür.
-      */}
-      {bolum === 'tv' && <TvControl canWrite={roles.isAdmin} />}
+      {/* Yayın kayıtları ile istasyon/kanal ayarları aynı görev merkezinde. */}
+      {bolum === 'yayin' && (
+        <div className="space-y-4">
+          <BroadcastControl />
+          <div className="grid gap-4 xl:grid-cols-2">
+            <RadioControl canWrite={roles.isAdmin} />
+            <TvControl canWrite={roles.isAdmin} />
+          </div>
+        </div>
+      )}
 
       {/*
         HATIRLATMA — sitenin kullanıcılara ne gönderdiği.
@@ -548,39 +495,7 @@ export function AdminPage() {
       */}
       {bolum === 'hatirlatma' && <ReminderControl canWrite={roles.isAdmin} />}
 
-      {bolum === 'medya' && (
-        <Panel title="Medya kütüphanesi" status="PARTIAL">
-          <p className="text-body-sm leading-relaxed text-muted-foreground">
-            Fotoğraf, içerik ve yayın medya yüzeyleri mevcut modüllerde
-            yönetiliyor. Ortak dosya kasası ve orphan raporu için storage
-            migration ve servis rolü bağlantısı gerekiyor.
-          </p>
-        </Panel>
-      )}
-
-      {bolum === 'import' && <SpecImportControl canWrite={roles.isAdmin} />}
-
-      {bolum === 'entegrasyonlar' && (
-        <Panel title="Entegrasyonlar" status="BLOCKED_EXTERNAL">
-          <p className="text-body-sm leading-relaxed text-muted-foreground">
-            YouTube OAuth, AzuraCast, CKEditor Import from Word, Apryse ve
-            canlı Bortle katmanı için lisans, secret veya harici servis
-            bağlantısı olmadan çalışan kontrol eklenmedi.
-          </p>
-        </Panel>
-      )}
-
       {bolum === 'audit' && <AuditControl />}
-
-      {bolum === 'ayarlar' && (
-        <Panel title="Sistem ve ayarlar" status="PARTIAL">
-          <p className="text-body-sm leading-relaxed text-muted-foreground">
-            Site modül sırası, yayın bayrakları ve içerik ayarları ilgili
-            yüzeylerde tutuluyor. Merkezi ayar sayfası için Supabase ayar
-            tablosu ve audit migration'ı gerekir.
-          </p>
-        </Panel>
-      )}
 
       {/*
         KATALOG — sürüm başına bir kez yapılan işler.
@@ -603,39 +518,34 @@ export function AdminPage() {
 
 const ADMIN_NAV = [
   {
-    label: 'İçerik',
+    label: 'İş Akışı',
     items: [
       { id: 'ozet', label: 'Genel Bakış', path: '/admin', icon: HomeIcon },
+      { id: 'moderasyon', label: 'Moderasyon', path: '/admin/moderation', icon: AlertIcon },
+    ],
+  },
+  {
+    label: 'İçerik',
+    items: [
+      { id: 'icerik', label: 'İçerik ve Kayıtlar', path: '/admin/content', icon: BookIcon },
       { id: 'anasayfa', label: 'Anasayfa', path: '/admin/home', icon: GridIcon },
-      { id: 'galeri', label: 'Galeri', path: '/admin/gallery', icon: ImageIcon },
-      { id: 'haberler', label: 'Haberler', path: '/admin/news', icon: SearchIcon },
-      { id: 'yazilar', label: 'Yazılar', path: '/admin/articles', icon: BookIcon },
       { id: 'forum', label: 'Forum', path: '/admin/forum', icon: ListIcon },
-      { id: 'etkinlikler', label: 'Etkinlikler', path: '/admin/events', icon: CalendarIcon },
-      { id: 'araclar', label: 'Araçlar', path: '/admin/tools', icon: TagIcon },
-      { id: 'ilanlar', label: 'İlanlar', path: '/admin/listings', icon: TagIcon },
-      { id: 'saha', label: 'Saha', path: '/admin/sites', icon: MapIcon },
     ],
   },
   {
     label: 'Operasyon',
     items: [
-      { id: 'moderasyon', label: 'Moderasyon', path: '/admin/moderation', icon: AlertIcon },
       { id: 'kullanicilar', label: 'Kullanıcılar', path: '/admin/users', icon: UserIcon },
-      { id: 'radyo', label: 'Radyo', path: '/admin/radio', icon: RadioIcon },
-      { id: 'tv', label: 'TV', path: '/admin/tv', icon: PlayIcon },
-      { id: 'kurumsal', label: 'Kurumsal', path: '/admin/corporate', icon: BookIcon },
+      { id: 'yayin', label: 'Yayın Merkezi', path: '/admin/broadcast', icon: PlayIcon },
+      { id: 'hatirlatma', label: 'Bildirim Merkezi', path: '/admin/notifications', icon: AlertIcon },
     ],
   },
   {
-    label: 'Sistem',
+    label: 'Platform',
     items: [
-      { id: 'medya', label: 'Medya Kütüphanesi', path: '/admin/media', icon: ImageIcon },
-      { id: 'hatirlatma', label: 'Bildirim Merkezi', path: '/admin/notifications', icon: AlertIcon },
-      { id: 'import', label: 'İçe Aktarma İşleri', path: '/admin/import-jobs', icon: BookIcon },
-      { id: 'entegrasyonlar', label: 'Entegrasyonlar', path: '/admin/integrations', icon: GridIcon },
-      { id: 'audit', label: 'Audit Log', path: '/admin/audit', icon: ListIcon },
-      { id: 'ayarlar', label: 'Sistem ve Ayarlar', path: '/admin/settings', icon: GridIcon },
+      { id: 'site', label: 'Site Yapısı', path: '/admin/site-settings', icon: GridIcon },
+      { id: 'katalog', label: 'Katalog ve Araçlar', path: '/admin/catalog', icon: TagIcon },
+      { id: 'audit', label: 'Denetim Kaydı', path: '/admin/audit', icon: ListIcon },
     ],
   },
 ] as const;
@@ -646,31 +556,38 @@ const BOLUMLER: readonly AdminNavItem[] = ADMIN_NAV.flatMap(
   (group): readonly AdminNavItem[] => group.items
 );
 
-const LEGACY_IDS = ['icerik', 'site', 'yayin', 'katalog'] as const;
-type LegacyBolumId = (typeof LEGACY_IDS)[number];
-type BolumId = (typeof BOLUMLER)[number]['id'] | LegacyBolumId;
+type BolumId = (typeof BOLUMLER)[number]['id'];
 
-const LEGACY_BOLUM_PATHS: Record<LegacyBolumId, string> = {
-  icerik: '/admin/content',
-  site: '/admin/site-settings',
-  yayin: '/admin/broadcast',
-  katalog: '/admin/catalog',
+const BOLUM_PATHS = Object.fromEntries(
+  BOLUMLER.map((b) => [b.id, b.path])
+) as Record<BolumId, string>;
+
+/** Eski derin bağlantılar görünür menüyü çoğaltmadan görev merkezlerine düşer. */
+const ROUTE_ALIASES: Record<string, BolumId> = {
+  '/admin/gallery': 'icerik',
+  '/admin/news': 'icerik',
+  '/admin/articles': 'icerik',
+  '/admin/events': 'icerik',
+  '/admin/listings': 'icerik',
+  '/admin/sites': 'icerik',
+  '/admin/media': 'icerik',
+  '/admin/radio': 'yayin',
+  '/admin/tv': 'yayin',
+  '/admin/corporate': 'site',
+  '/admin/integrations': 'site',
+  '/admin/settings': 'site',
+  '/admin/tools': 'katalog',
+  '/admin/import-jobs': 'katalog',
 };
 
-const BOLUM_PATHS = {
-  ...Object.fromEntries(BOLUMLER.map((b) => [b.id, b.path])),
-  ...LEGACY_BOLUM_PATHS,
-} as Record<BolumId, string>;
-
 function isBolum(value: string | null): value is BolumId {
-  return (
-    BOLUMLER.some((b) => b.id === value) ||
-    LEGACY_IDS.some((id) => id === value)
-  );
+  return BOLUMLER.some((b) => b.id === value);
 }
 
 function getBolum(pathname: string, queryBolum: string | null): BolumId {
   const normalized = pathname.replace(/\/+$/, '');
+  const alias = ROUTE_ALIASES[normalized];
+  if (alias) return alias;
   const fromPath = Object.entries(BOLUM_PATHS).find(
     ([, path]) => normalized === path
   )?.[0];
@@ -685,6 +602,37 @@ function AdminSidebar({
   active: BolumId;
   onChange: (id: BolumId) => void;
 }) {
+  const narrow = useIsNarrow('(max-width: 1023px)');
+
+  if (narrow) {
+    return (
+      <aside className="rounded-card border border-border-strong bg-surface-1/85 p-3 shadow-overlay">
+        <label
+          htmlFor="admin-section"
+          className="label mb-1.5 block text-primary"
+        >
+          Yönetim bölümü
+        </label>
+        <Select
+          id="admin-section"
+          value={active}
+          onChange={(event) => onChange(event.target.value as BolumId)}
+          className="h-11 w-full bg-background text-body-sm font-medium"
+        >
+          {ADMIN_NAV.map((group) => (
+            <optgroup key={group.label} label={group.label}>
+              {group.items.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.label}
+                </option>
+              ))}
+            </optgroup>
+          ))}
+        </Select>
+      </aside>
+    );
+  }
+
   return (
     <aside className="rounded-card border border-border-strong bg-surface-1/85 p-2 shadow-overlay lg:sticky lg:top-20 lg:max-h-[calc(100dvh-6rem)] lg:overflow-y-auto">
       <div className="px-2 py-2">
@@ -757,24 +705,34 @@ function AdminOverview({
           <Readout label="Reddedilen" value={rejected} tone="muted" />
         </div>
 
-        <div className="mt-4 grid gap-2 sm:grid-cols-2">
+        <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
           <OverviewButton
             label="Moderasyon kuyruğu"
             detail="Raporlar ve otomatik kontroller"
             onClick={() => onChange('moderasyon')}
           />
           <OverviewButton
-            label="Site yönetimi"
+            label="İçerik ve kayıtlar"
+            detail="Haber, yazı ve topluluk kayıtları"
+            onClick={() => onChange('icerik')}
+          />
+          <OverviewButton
+            label="Ana sayfa"
+            detail="Öne çıkan içerik seçimi"
+            onClick={() => onChange('anasayfa')}
+          />
+          <OverviewButton
+            label="Site yapısı"
             detail="Menü, hero, modüller ve ayarlar"
             onClick={() => onChange('site')}
           />
           <OverviewButton
-            label="Yayın"
+            label="Yayın merkezi"
             detail="Radyo ve TV yayın akışı"
             onClick={() => onChange('yayin')}
           />
           <OverviewButton
-            label="Katalog"
+            label="Katalog ve araçlar"
             detail="Hedef ve ekipman verisi"
             onClick={() => onChange('katalog')}
           />

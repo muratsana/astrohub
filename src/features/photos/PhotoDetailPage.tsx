@@ -27,6 +27,8 @@ import type { AstroPhoto } from './types';
 import { cn } from '@/lib/cn';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd, photoJsonLd } from '@/lib/seo';
+import { useAuth } from '@/features/auth/AuthContext';
+import { targets } from '@/features/targets/data';
 
 type TabId = 'cekim' | 'ekipman' | 'pozlama' | 'islem' | 'konum';
 
@@ -71,8 +73,14 @@ function PhotoDetail({
   all: AstroPhoto[];
   onRefresh: () => void;
 }) {
+  const { user } = useAuth();
   const [tab, setTab] = useState<TabId>('cekim');
   const integration = totalIntegrationSeconds(photo.exposures);
+  const targetSlug = targets.find(
+    (target) =>
+      target.catalog === photo.target.catalog ||
+      target.aliases.includes(photo.target.catalog)
+  )?.slug;
 
   const related = useMemo(
     () =>
@@ -119,7 +127,14 @@ function PhotoDetail({
         <div className="mt-6 flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0">
             <p className="text-sm font-medium text-primary">
-              {photo.target.catalog} · {photoTypeLabels[photo.type]}
+              {targetSlug ? (
+                <Link to={`/hedef/${targetSlug}`} className="hover:underline">
+                  {photo.target.catalog}
+                </Link>
+              ) : (
+                photo.target.catalog
+              )}{' '}
+              · {photoTypeLabels[photo.type]}
             </p>
             <h1 className="mt-1 type-page text-foreground">
               {photo.title}
@@ -211,7 +226,11 @@ function PhotoDetail({
           />
 
           {photo.versions && photo.versions.length > 1 ? (
-            <VersionHistory versions={photo.versions} />
+            <VersionHistory
+              versions={photo.versions}
+              canManage={Boolean(user && photo.ownerId === user.id)}
+              onDeleted={onRefresh}
+            />
           ) : (
             <p className="mb-4 text-body-sm text-muted-foreground">
               Bu kaydın tek bir işlemesi var. İkinci bir sürüm eklendiğinde
