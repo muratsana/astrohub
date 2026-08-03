@@ -210,7 +210,10 @@ yerinde duruyor.
 `feature_flags`, `site_settings`), değişiklik geçmişi + geri alma,
 taslak/önizleme/yayın akışı, panelin **Site** sekmesi. Ana sayfa düzeni,
 hero slaytları, menü/footer, yedi bayrak, bakım modu, site duyurusu —
-hepsi hem panelden yazılıyor hem ziyaretçi tarafında okunuyor.
+hepsi hem panelden yazılıyor hem ziyaretçi tarafında okunuyor. Modül
+`layout` ve `subtitle` alanları da artık ziyaretçi tarafına bağlı:
+galeri/haber/etkinlik/ilan bölümleri panelden gelen alt metni ve
+kart/liste tercihini uygular.
 
 > Fazın tekrar eden hatası dört turda kapatıldı: **panel yazıyor,
 > ziyaretçi okumuyor** (`home_modules`, `feature_flags`, `nav_links`,
@@ -478,6 +481,7 @@ gerçek koda göre hâlâ açıktı.
 | Karanlık grafiği | Segmentler sert bloklar gibi görünüyordu | DONE — segment geçişleri maskeli bindirme ve üst ışık katmanı ile yumuşatıldı |
 | Admin tek ekran özeti | Sekmeler vardı ama birleşik dashboard yoktu | DONE — `/admin` varsayılanı `Özet`; kuyruk sayımları, yetki durumu ve hızlı geçişler tek ekranda |
 | Etkinlik tarih kartı kontrastı | Takvim simgesi koyu/açık temada arka planda kayboluyordu | DONE — tarih bloğu daha kontrast zemin, net üst şerit ve okunur takvim iziyle yenilendi |
+| Ana sayfa modül `layout/subtitle` | Panel alanları ve RPC çıktısı vardı ama `HomePage` bunları tüketmiyordu | DONE — `records/news/events/listings` modülleri alt metin ve kart/liste tercihini ziyaretçi tarafında uygular |
 
 ### Bu patch'te değişen dosyalar
 
@@ -519,7 +523,7 @@ gerçek koda göre hâlâ açıktı.
 - `src/features/home/sections/TonightPanel.test.tsx`, `src/features/home/sections/tonight/DecisionColumn.test.tsx`, `src/features/home/sections/tonight/TimelineColumn.test.tsx` — yeni gece seçici, servis künyesi temizliği, hedef sıralama ve koşul kartı yoğunluğu testlendi.
 - `src/index.css` — hero başlığındaki geniş harf aralığı kaldırıldı.
 - `src/components/shell/Footer.tsx`, `src/app/navigation.ts`, `src/app/navigation.test.ts`, `src/features/site/navLinks.ts` — footer tekrar eden modül nav yerine kurumsal bağlantıları gösteriyor.
-- `src/features/home/sections/tonight/TimelineColumn.tsx`, `src/features/home/sections/tonight/NightTimelineChart.tsx`, `src/features/home/sections/tonight/TargetsColumn.tsx`, `src/features/home/sections/tonight/DecisionColumn.tsx` — Bu Gece modülünde formül metni kaldırıldı, `Aysız Pencere` etiketi eklendi, zaman metrikleri çakışmayacak grid'e alındı, grafik yükseltildi, hedef türü filtresi kaldırıldı ve hedef listesi 10 objeye çıkarıldı.
+- `src/features/home/sections/tonight/TimelineColumn.tsx`, `src/features/home/sections/tonight/NightTimelineChart.tsx`, `src/features/home/sections/tonight/TargetsColumn.tsx`, `src/features/home/sections/tonight/DecisionColumn.tsx` — Bu Gece modülünde formül metni kaldırıldı, `Aysız Pencere` etiketi eklendi, zaman metrikleri çakışmayacak grid'e alındı, grafik yükseltildi, hedef türü filtresi kaldırıldı ve hedef listesi 8 objeye indirildi.
 - `src/domain/astronomy/nightScore.ts` — gece skoru 4 denetlenebilir girdiye sadeleştirildi: `Bulut örtüsü`, `Seeing`, `Karanlık/Ay`, `Rüzgâr/Çiy`; ayrı `Açıklık`, `Şeffaflık` ve `Ay aydınlığı` satırları kaldırıldı.
 - `src/domain/astronomy/nightScore.ts` — karar gerekçesindeki ay satırı `Aysız pencere` metriğine çevrildi; astronomik karanlığın yarısından fazlaysa artı, azsa eksi olarak gösteriliyor.
 - `src/components/shell/Logo.tsx`, `src/components/shell/Footer.tsx` — üst bar ve footer logosuna gri `(Beta test yayını)` etiketi eklendi; footer altındaki tekrar eden veri notu kaldırıldı ve telif satırı ana footer satırına taşındı.
@@ -527,6 +531,7 @@ gerçek koda göre hâlâ açıktı.
 - `src/services/content/activity.ts`, `src/features/activity/ActivityPage.tsx`, `src/app/router.tsx`, `src/features/discover/DiscoverPage.tsx` — takip edilen kullanıcıların fotoğraf/ilan/forum hareketlerinden oluşan `/akis` kişisel aktivite sayfası eklendi; Keşfet'ten erişilir.
 - `src/features/profile/ProfilePage.tsx`, `src/features/profile/ProfilePage.test.tsx` — public profil sayfası gerçek `profiles` kaydını okur; fotoğrafı olmayan kullanıcı için profil ve portfolyo bağlantısı görünür.
 - `scripts/photo-lifecycle-cleanup.mjs`, `scripts/lib/photo-lifecycle.mjs`, `scripts/photo-lifecycle-cleanup.test.mjs`, `package.json` — fotoğraf storage lifecycle bakımı eklendi; varsayılan dry-run, `--apply` ile eski yarım taslak ve orphan nesne temizliği.
+- `src/features/home/HomePage.tsx`, `src/features/home/sections/RecentRecords.tsx`, `src/features/home/sections/NewsStrip.tsx`, `src/features/home/sections/UpcomingEvents.tsx`, `src/features/home/sections/RecentListings.tsx` — `home_modules.layout` ve `subtitle` artık ana sayfa modüllerinde gerçek arayüz davranışına bağlı.
 
 ### Doğrulama
 

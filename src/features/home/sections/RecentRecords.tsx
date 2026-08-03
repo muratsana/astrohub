@@ -35,7 +35,9 @@ import { usePhotoCatalog } from '@/services/content/photos';
  * kullanmazsa yükleme bitince kartlar yerinden oynar (CLS).
  */
 const IZGARA = 'grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5';
+const LISTE = 'grid gap-2.5';
 const KAC_KART = 10;
+type HomeSectionLayout = 'grid' | 'list';
 
 /**
  * `limit` ve `title` artık `home_modules`tan geliyor (§13.2); verilmezse
@@ -46,11 +48,20 @@ const KAC_KART = 10;
 export function RecentRecords({
   hideWhenEmpty = false,
   limit = KAC_KART,
+  layout = 'grid',
+  subtitle,
   title = 'Galeriden Son Yüklenenler',
-}: { hideWhenEmpty?: boolean; limit?: number; title?: string } = {}) {
+}: {
+  hideWhenEmpty?: boolean;
+  limit?: number;
+  layout?: HomeSectionLayout;
+  subtitle?: string;
+  title?: string;
+} = {}) {
   const catalog = usePhotoCatalog();
   const photos = catalog.items;
   const recent = photos.slice(0, limit);
+  const list = layout === 'list';
 
   /*
    * "BOŞSA GİZLE" BİR AYAR, MUTLAK KURAL DEĞİL (§6.2).
@@ -77,6 +88,7 @@ export function RecentRecords({
     <Container className="py-9 sm:py-11">
       <SectionHeader
         title={title}
+        description={subtitle}
         meta={`${photos.length} fotoğraf`}
         linkTo="/galeri"
         linkLabel="Galeri"
@@ -92,11 +104,15 @@ export function RecentRecords({
          * bitiriyor hem de ızgarayı aynı sınıfla çizdiği için liste
          * gelince hiçbir şey yerinden oynamıyor.
          */
-        <ul className={IZGARA} aria-busy="true">
+        <ul className={list ? LISTE : IZGARA} aria-busy="true">
           {/* İskelet sayısı da `limit` — sabit kalsaydı yönetici sayıyı
               değiştirdiğinde yükleme ile sonuç farklı sayıda kart çizer,
               liste gelince ızgara zıplardı. */}
-          <ContentCardSkeletonGrid count={limit} ratio="square" />
+          <ContentCardSkeletonGrid
+            count={limit}
+            ratio="square"
+            variant={list ? 'list' : 'grid'}
+          />
         </ul>
       ) : catalog.status === 'error' ? (
         /*
@@ -146,10 +162,10 @@ export function RecentRecords({
           </Link>
         </p>
       ) : (
-        <ul className={IZGARA}>
+        <ul className={list ? LISTE : IZGARA}>
           {recent.map((photo) => (
             <li key={photo.slug}>
-              <PhotoCard photo={photo} />
+              <PhotoCard photo={photo} variant={list ? 'list' : 'grid'} />
             </li>
           ))}
         </ul>

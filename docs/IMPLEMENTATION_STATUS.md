@@ -1513,7 +1513,7 @@ Yazarken `interval` ve `status` enum değerlerini tahmin etmiştim
 | Bakım modu + site duyurusu | DONE | `MaintenanceGate`, `AnnouncementBar` |
 | **`nav_links` → gerçek menü/footer** | DONE | `navLinks.ts`, `0062`, panel bölümü |
 | **Hero banner yönetimi** | DONE | `0063`, `heroSlides.ts`, panel bölümü |
-| Modül `layout` (ızgara/liste) ve `subtitle` | NOT_STARTED | gerekçe `HomePage.tsx`te |
+| Modül `layout` (ızgara/liste) ve `subtitle` | DONE | `HomePage` modül ayarlarını `records/news/events/listings` bölümlerine geçirir; liste/kart varyantları ve alt metinler ziyaretçi tarafında görünür |
 | §13.4 çoklu admin rolleri | — | ürün kararı: kurulmayacak |
 | §13.5 dashboard | DONE | `AdminPage` varsayılan `Özet` sekmesi: kuyruk sayımları, yetki durumu, hızlı geçişler |
 

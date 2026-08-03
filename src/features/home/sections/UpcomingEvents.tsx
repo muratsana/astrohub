@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/Badge';
 import { CalendarIcon } from '@/components/ui/icons';
 import { useEventCatalog } from '@/services/content/events';
 import { eventTypeLabels, type AstroEvent } from '@/features/events/types';
+import { cn } from '@/lib/cn';
 
 /**
  * YAKLAŞAN ETKİNLİKLER.
@@ -20,10 +21,19 @@ import { eventTypeLabels, type AstroEvent } from '@/features/events/types';
  * "ne zaman"a bakar, sonra "ne"ye; okuma sırası düzenle aynı olmalı.
  */
 /** Sayı ve başlık `home_modules`tan gelir; verilmezse bugünkü davranış. */
+type HomeSectionLayout = 'grid' | 'list';
+
 export function UpcomingEvents({
   limit = 5,
+  layout = 'list',
+  subtitle = 'Gözlem şenlikleri, kamplar ve atölyeler.',
   title = 'Yaklaşan Etkinlikler',
-}: { limit?: number; title?: string } = {}) {
+}: {
+  limit?: number;
+  layout?: HomeSectionLayout;
+  subtitle?: string;
+  title?: string;
+} = {}) {
   const catalog = useEventCatalog();
   const upcoming = [...catalog.items]
     .sort(
@@ -36,9 +46,7 @@ export function UpcomingEvents({
       <SectionHeader
         title={title}
         meta={`${catalog.items.length} kayıt`}
-        /* Kısaltıldı (§5.4): kaynak ve doğrulama tarihi etkinlik
-           detayında duruyor; listenin başında yer kaplaması gerekmiyor. */
-        description="Gözlem şenlikleri, kamplar ve atölyeler."
+        description={subtitle}
         linkTo="/etkinlikler"
         linkLabel="Takvim"
       />
@@ -48,10 +56,19 @@ export function UpcomingEvents({
           Yaklaşan etkinlik yok.
         </p>
       ) : (
-        <ul className="overflow-hidden rounded-card border border-border bg-surface-1">
+        <ul
+          className={cn(
+            layout === 'grid'
+              ? 'grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3'
+              : 'overflow-hidden rounded-card border border-border bg-surface-1'
+          )}
+        >
           {upcoming.map((event) => (
-            <li key={event.slug} className="border-b border-border last:border-0">
-              <EventRow event={event} />
+            <li
+              key={event.slug}
+              className={layout === 'list' ? 'border-b border-border last:border-0' : undefined}
+            >
+              <EventRow event={event} layout={layout} />
             </li>
           ))}
         </ul>
@@ -60,13 +77,25 @@ export function UpcomingEvents({
   );
 }
 
-function EventRow({ event }: { event: AstroEvent }) {
+function EventRow({
+  event,
+  layout,
+}: {
+  event: AstroEvent;
+  layout: HomeSectionLayout;
+}) {
   const date = new Date(event.startsAt);
+  const grid = layout === 'grid';
 
   return (
     <Link
       to={`/etkinlik/${event.slug}`}
-      className="group flex items-center gap-3 px-3 py-3 transition-colors hover:bg-surface-2 sm:gap-4 sm:px-4"
+      className={cn(
+        'group flex gap-3 transition-colors hover:bg-surface-2',
+        grid
+          ? 'h-full flex-col rounded-card border border-border bg-surface-1 p-3'
+          : 'items-center px-3 py-3 sm:gap-4 sm:px-4'
+      )}
     >
       {/* Tarih bloğu — sabit genişlik, satırlar arası dikey hizayı tutar. */}
       <span className="relative flex h-12 w-12 shrink-0 flex-col items-center justify-center overflow-hidden rounded-card border border-border-strong bg-background leading-none ring-1 ring-white/10">
@@ -84,7 +113,7 @@ function EventRow({ event }: { event: AstroEvent }) {
         </span>
       </span>
 
-      <span aria-hidden className="h-9 w-px shrink-0 bg-border" />
+      {!grid && <span aria-hidden className="h-9 w-px shrink-0 bg-border" />}
 
       <span className="min-w-0 flex-1">
         <span className="block truncate text-body-sm font-medium leading-snug text-foreground transition-colors group-hover:text-primary">
@@ -107,7 +136,7 @@ function EventRow({ event }: { event: AstroEvent }) {
         </span>
       </span>
 
-      <span className="hidden shrink-0 items-center gap-1 sm:flex">
+      <span className={cn('shrink-0 items-center gap-1', grid ? 'flex' : 'hidden sm:flex')}>
         <Badge tone={event.free ? 'success' : 'muted'}>
           {event.free ? 'Ücretsiz' : 'Ücretli'}
         </Badge>

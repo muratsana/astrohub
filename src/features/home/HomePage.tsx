@@ -48,16 +48,9 @@ import {
  * çizilmiyor, çünkü döngü TABLOYU geziyor.
  *
  * ══════════════════════════════════════════════════════════════════════
- * NELER BAĞLANMADI
- *
- * `layout` (ızgara/liste) bağlanmadı: her bölümün kendi tasarımı var ve
- * ızgarayı listeye çevirmek altı ayrı tasarım kararı demek — tek satırlık
- * bir prop değil. Panelde duruyor ama ana sayfada karşılığı yok; bunu
- * bilerek ve yazılı bırakıyoruz, çünkü sessizce hiçbir şey yapmayan bir
- * kontrol, olmayan kontrolden kötüdür.
- *
- * `subtitle` de bağlanmadı: bölümlerin `description` alanları elle
- * yazılmış ve §5.4'te bilerek kısaltılmıştı.
+ * `layout` ve `subtitle` de bağlı. Varsayılanlar bileşenlerin kendi
+ * ritmini korur; panelden gelen değer yalnızca ilgili modülün başlık
+ * metnini ve kart/list davranışını değiştirir.
  *
  * Karanlık gökyüzü şeridi ana sayfadan çıkarıldı — modül `/saha`da
  * duruyor ve üst menüde girişi var.
@@ -104,15 +97,34 @@ const SECTIONS: Record<string, (m: HomeModuleView) => ReactNode> = {
     <RecentRecords
       hideWhenEmpty={m.hide_when_empty}
       limit={m.item_limit}
+      layout={m.layout}
+      subtitle={m.subtitle ?? undefined}
       title={m.title ?? undefined}
     />
   ),
-  news: (m) => <NewsStrip limit={m.item_limit} />,
+  news: (m) => (
+    <NewsStrip
+      limit={m.item_limit}
+      layout={m.layout}
+      subtitle={m.subtitle ?? undefined}
+      title={m.title ?? undefined}
+    />
+  ),
   events: (m) => (
-    <UpcomingEvents limit={m.item_limit} title={m.title ?? undefined} />
+    <UpcomingEvents
+      limit={m.item_limit}
+      layout={m.layout}
+      subtitle={m.subtitle ?? undefined}
+      title={m.title ?? undefined}
+    />
   ),
   listings: (m) => (
-    <RecentListings limit={m.item_limit} title={m.title ?? undefined} />
+    <RecentListings
+      limit={m.item_limit}
+      layout={m.layout}
+      subtitle={m.subtitle ?? undefined}
+      title={m.title ?? undefined}
+    />
   ),
 };
 

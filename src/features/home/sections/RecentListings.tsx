@@ -12,6 +12,7 @@ import { RemoteImage } from '@/components/media/RemoteImage';
 import { tintFromSeed } from '@/components/media/tints';
 import { equipmentCategoryLabels } from '@/features/equipment/taxonomy';
 import { useRecentListings } from '@/services/content/recentListings';
+import { cn } from '@/lib/cn';
 
 /**
  * SON İLANLAR — ana sayfanın son bölümü.
@@ -33,20 +34,31 @@ import { useRecentListings } from '@/services/content/recentListings';
  * kırık görsel ikonu gösterilmez.
  */
 /** Sayı ve başlık `home_modules`tan gelir; verilmezse bugünkü davranış. */
+type HomeSectionLayout = 'grid' | 'list';
+
 export function RecentListings({
   limit = 5,
+  layout = 'grid',
+  subtitle,
   title = 'Son İlanlar',
-}: { limit?: number; title?: string } = {}) {
+}: {
+  limit?: number;
+  layout?: HomeSectionLayout;
+  subtitle?: string;
+  title?: string;
+} = {}) {
   const catalog = useRecentListings();
   const listings = catalog.items;
   const recent = [...listings]
     .sort((a, b) => new Date(b.postedAt).getTime() - new Date(a.postedAt).getTime())
     .slice(0, limit);
+  const list = layout === 'list';
 
   return (
     <Container className="py-9 sm:py-11">
       <SectionHeader
         title={title}
+        description={subtitle}
         meta={`${listings.length} ilan`}
         linkTo="/ilanlar"
         linkLabel="Tüm ilanlar"
@@ -57,11 +69,20 @@ export function RecentListings({
           Yayında ilan yok.
         </p>
       ) : (
-        <ul className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5">
+        <ul
+          className={cn(
+            'grid gap-2.5',
+            list ? 'grid-cols-1' : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5'
+          )}
+        >
           {recent.map((listing) => (
             <li key={listing.slug}>
-              <ContentCard to={`/ilan/${listing.slug}`}>
+              <ContentCard
+                to={`/ilan/${listing.slug}`}
+                variant={list ? 'list' : 'grid'}
+              >
                 <ContentCardMedia
+                  variant={list ? 'list' : 'grid'}
                   badge={
                     <Badge tone="muted" className="bg-background/85">
                       {equipmentCategoryLabels[listing.category]}

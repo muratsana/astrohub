@@ -1,3 +1,4 @@
+import type { ComponentProps } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
@@ -25,10 +26,10 @@ vi.mock('@/services/content/photos', () => ({
 
 import { RecentRecords } from './RecentRecords';
 
-function renderSection() {
+function renderSection(props?: ComponentProps<typeof RecentRecords>) {
   return render(
     <MemoryRouter>
-      <RecentRecords />
+      <RecentRecords {...props} />
     </MemoryRouter>
   );
 }
@@ -88,6 +89,17 @@ describe('RecentRecords — gerçek görsel', () => {
        düşüyor: boş `src` taşıyan bir `img` tarayıcıda kırık ikon olurdu. */
     expect(container.querySelector('img')).toBeNull();
     expect(screen.getByRole('link', { name: /IC 434/ })).toBeInTheDocument();
+  });
+
+  it('home_modules alt metnini ve liste düzenini kullanır', () => {
+    catalog.items = [FOTO];
+    const { container } = renderSection({
+      layout: 'list',
+      subtitle: 'Editörün seçtiği son kareler.',
+    });
+
+    expect(screen.getByText('Editörün seçtiği son kareler.')).toBeInTheDocument();
+    expect(container.querySelector('ul')?.className).not.toContain('grid-cols-2');
   });
 });
 

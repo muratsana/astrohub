@@ -43,6 +43,7 @@ function Thumb({ children }: { children: React.ReactNode }) {
 
 /** Şerit başına satır sayısı — ana sayfa iki şeridi de dörtle sınırlar. */
 const ROWS = 4;
+type HomeSectionLayout = 'grid' | 'list';
 
 /**
  * TEK SATIR — iki şerit de bunu kullanır.
@@ -144,15 +145,21 @@ function StripRow({
 /**
  * `limit` `home_modules`tan gelir; verilmezse `ROWS`.
  *
- * BAŞLIK BAĞLANMADI — bilerek. Bu bölümün TEK başlığı yok; içinde
- * "Haberler" ve "Yazılar" diye iki ayrı sütun başlığı var. Modülün tek
- * `title` alanını ikisinden hangisine yazacağımızın doğru cevabı yok;
- * birine yazmak diğerini sessizce yanlış yapardı. Panelde `news` için
- * girilen başlığın ekranda karşılığı olmadığı `moduleLabels` notunda
- * yazıyor. Sayı ise ikisine de aynı uygulanıyor — sütunlar eşit uzunlukta
- * olmalı, aksi hâlde ızgara tek tarafa sarkıyor.
+ * `title/subtitle` opsiyoneldir: panelden tek modül başlığı girilirse iki
+ * sütunun üstünde ortak bir giriş olur. Girilmezse eski "Haberler" ve
+ * "Yazılar" başlıkları doğrudan kalır.
  */
-export function NewsStrip({ limit = ROWS }: { limit?: number } = {}) {
+export function NewsStrip({
+  limit = ROWS,
+  layout = 'grid',
+  subtitle,
+  title,
+}: {
+  limit?: number;
+  layout?: HomeSectionLayout;
+  subtitle?: string;
+  title?: string;
+} = {}) {
   /*
     SIRAYI YÖNETİCİ BELİRLER, TARİH DEĞİL.
     Önce ikisi de "en yeni dört" idi. Bu, editoryal bir kararı tarih
@@ -187,6 +194,10 @@ export function NewsStrip({ limit = ROWS }: { limit?: number } = {}) {
 
   return (
     <Container className="py-9 sm:py-11">
+      {(title || subtitle) && (
+        <SectionHeader title={title ?? 'Haberler ve Yazılar'} description={subtitle} />
+      )}
+
       {/*
         `min-w-0` ŞART. Izgara öğesinin varsayılan `min-width` değeri `auto`,
         yani içeriğinin min-content genişliğinin altına inemiyor. Kredi
@@ -197,7 +208,13 @@ export function NewsStrip({ limit = ROWS }: { limit?: number } = {}) {
         `truncate`in işe yaraması için kabın küçülebiliyor olması gerekiyor;
         ikisi birlikte anlamlı, tek başına `truncate` taşmayı çözmüyor.
       */}
-      <div className="grid gap-10 lg:grid-cols-2 lg:gap-12">
+      <div
+        className={
+          layout === 'list'
+            ? 'grid gap-8'
+            : 'grid gap-10 lg:grid-cols-2 lg:gap-12'
+        }
+      >
         <section className="min-w-0">
           <SectionHeader title="Haberler" linkTo="/haberler" linkLabel="Tümü" />
           <ul>
