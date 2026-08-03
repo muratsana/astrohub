@@ -20,7 +20,7 @@ import type { TonightTarget } from './useTonight';
  */
 
 /** Kolonun gösterdiği satır sayısı. */
-const ROWS = 10;
+const ROWS = 8;
 type SortKey = 'peak' | 'altitude';
 type SortDir = 'asc' | 'desc';
 

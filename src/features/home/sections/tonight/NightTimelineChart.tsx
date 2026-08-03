@@ -260,7 +260,7 @@ export function NightTimelineChart({
       <div
         role="img"
         aria-label={summary}
-        className="relative h-[64px] overflow-hidden rounded-card border border-border-strong lg:h-[82px]"
+        className="relative h-[78px] overflow-hidden rounded-card border border-border-strong lg:h-[116px]"
         style={{
           background:
             'linear-gradient(90deg, #4f6eb9 0%, #1f2f59 23%, #070a13 48%, #070a13 58%, #1f2f59 78%, #4f6eb9 100%)',

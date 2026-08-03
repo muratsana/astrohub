@@ -111,7 +111,7 @@ describe('TonightPanel · hedef kolonu', () => {
     const links = screen
       .getAllByRole('link')
       .filter((a) => a.getAttribute('href')?.startsWith('/hedef/'));
-    expect(links).toHaveLength(10);
+    expect(links).toHaveLength(8);
   });
 
   it('tüm katalog bağlantısı nesne sayısını taşıyor', () => {

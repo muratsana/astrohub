@@ -69,15 +69,16 @@ function EventRow({ event }: { event: AstroEvent }) {
       className="group flex items-center gap-3 px-3 py-3 transition-colors hover:bg-surface-2 sm:gap-4 sm:px-4"
     >
       {/* Tarih bloğu — sabit genişlik, satırlar arası dikey hizayı tutar. */}
-      <span className="relative flex h-12 w-12 shrink-0 flex-col items-center justify-center overflow-hidden rounded-card border border-border bg-background leading-none">
+      <span className="relative flex h-12 w-12 shrink-0 flex-col items-center justify-center overflow-hidden rounded-card border border-border-strong bg-surface-2 leading-none">
+        <span aria-hidden className="absolute inset-x-1 top-1 h-1 rounded-full bg-primary/70" />
         <CalendarIcon
           aria-hidden
-          className="absolute inset-0 m-auto h-9 w-9 text-white/10"
+          className="absolute inset-0 m-auto h-9 w-9 text-muted-foreground/25"
         />
         <span className="relative font-display type-panel font-bold text-foreground">
           {date.toLocaleDateString('tr-TR', { day: '2-digit' })}
         </span>
-        <span className="relative mt-1 text-meta text-muted-foreground">
+        <span className="relative mt-1 text-meta font-medium text-muted-foreground">
           {date.toLocaleDateString('tr-TR', { month: 'short' })}
         </span>
       </span>

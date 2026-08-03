@@ -1,9 +1,14 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { Container } from '@/components/ui/Container';
+import { moonPhase } from '@/domain/astronomy/ephemeris';
+import { nightScore, type NightScore } from '@/domain/astronomy/nightScore';
+import { nightTimeline } from '@/domain/astronomy/nightTimeline';
+import { zonedMidnight } from '@/domain/time/zonedDay';
 import { useLocationContext } from '@/features/location/LocationContext';
 import { LocationPicker } from '@/features/location/LocationPicker';
 import { useTheme } from '@/features/theme/ThemeContext';
+import { useSkyConditions } from '@/features/weather/useSkyConditions';
 import { DecisionColumn } from './tonight/DecisionColumn';
 import { TargetsColumn } from './tonight/TargetsColumn';
 import { TimelineColumn } from './tonight/TimelineColumn';
@@ -197,32 +202,16 @@ export function TonightPanel() {
                 >
                   <div className="min-w-[560px]">
                     <div className="grid grid-cols-7 gap-1.5">
-                      {nightSteps.map((step) => {
-                        const selected = step.offset === offsetDays;
-                        return (
-                          <button
-                            key={step.iso}
-                            type="button"
-                            role="tab"
-                            aria-selected={selected}
-                            aria-label={`${step.long} gecesine git`}
-                            onClick={() => setOffsetDays(step.offset)}
-                            className={cn(
-                              'flex min-h-10 items-center justify-center gap-1.5 rounded-card border px-2 text-center text-meta font-medium transition-colors hover:border-border-strong hover:bg-surface-2',
-                              selected
-                                ? 'border-primary bg-primary/12 text-foreground'
-                                : step.offset < offsetDays
-                                  ? 'border-primary/40 text-muted-foreground'
-                                  : 'border-border text-muted-foreground'
-                            )}
-                          >
-                            <span>{step.label}</span>
-                            <span className="tabular text-faint">
-                              {step.detail}
-                            </span>
-                          </button>
-                        );
-                      })}
+                      {nightSteps.map((step) => (
+                        <NightStepButton
+                          key={step.iso}
+                          step={step}
+                          baseDate={bugun}
+                          selected={step.offset === offsetDays}
+                          past={step.offset < offsetDays}
+                          onSelect={() => setOffsetDays(step.offset)}
+                        />
+                      ))}
                     </div>
                   </div>
                 </div>
@@ -272,6 +261,166 @@ export function TonightPanel() {
       </Container>
     </section>
   );
+}
+
+interface NightStep {
+  offset: number;
+  iso: string;
+  label: string;
+  detail: string;
+  long: string;
+}
+
+function NightStepButton({
+  step,
+  baseDate,
+  selected,
+  past,
+  onSelect,
+}: {
+  step: NightStep;
+  baseDate: Date;
+  selected: boolean;
+  past: boolean;
+  onSelect: () => void;
+}) {
+  const preview = useNightStepScore(step.offset, baseDate);
+
+  return (
+    <button
+      type="button"
+      role="tab"
+      aria-selected={selected}
+      aria-label={`${step.long} gecesine git`}
+      title={
+        preview
+          ? `${step.long} · ${preview.verdictLabel} · ${preview.total}`
+          : step.long
+      }
+      onClick={onSelect}
+      className={cn(
+        'relative flex min-h-10 items-center justify-center gap-1.5 overflow-hidden rounded-card border px-2 pb-2 text-center text-meta font-medium transition-colors',
+        nightStepTone(preview?.total ?? null, selected, past)
+      )}
+    >
+      <span>{step.label}</span>
+      <span className="tabular text-faint">{step.detail}</span>
+      {preview && (
+        <span
+          aria-hidden
+          className="absolute inset-x-2 bottom-1 h-[2px] overflow-hidden rounded-full bg-surface-3"
+        >
+          <span
+            className="block h-full rounded-full"
+            style={{
+              width: `${preview.total}%`,
+              backgroundColor: scoreColor(preview.total),
+            }}
+          />
+        </span>
+      )}
+    </button>
+  );
+}
+
+function useNightStepScore(offsetDays: number, baseDate: Date): NightScore | null {
+  const { location } = useLocationContext();
+  const dayStartMs = useMemo(
+    () =>
+      zonedMidnight(baseDate, location.timeZone).getTime() +
+      offsetDays * 86_400_000,
+    [baseDate, location.timeZone, offsetDays]
+  );
+  const weatherAt = useMemo(
+    () =>
+      offsetDays === 0
+        ? undefined
+        : new Date(dayStartMs + 25 * 3_600_000),
+    [offsetDays, dayStartMs]
+  );
+  const conditions = useSkyConditions(weatherAt);
+
+  return useMemo(() => {
+    const weather = conditions.data;
+    if (!weather) return null;
+
+    const date = new Date(dayStartMs);
+    const timeline = nightTimeline(
+      date,
+      location.latitude,
+      location.longitude,
+      date,
+      location.timeZone
+    );
+    const moon = moonPhase(date);
+    const darkMinutes = timeline.dark
+      ? Math.round(
+          (timeline.dark.to.getTime() - timeline.dark.from.getTime()) / 60_000
+        )
+      : 0;
+
+    return nightScore(
+      {
+        cloudCover: weather.cloudCover,
+        seeingIndex: weather.seeing?.index ?? null,
+        humidity: weather.humidity,
+        windSpeed: weather.windSpeed,
+        windGust: weather.windGust,
+        transparencyIndex: weather.transparency?.index ?? null,
+        temperature: weather.temperature,
+        dewPoint: weather.dewPoint,
+        darkMinutes,
+        moonlessMinutes: timeline.moonlessMinutes,
+        moonIllumination: moon.illumination,
+      },
+      'gozlem'
+    );
+  }, [
+    conditions.data,
+    dayStartMs,
+    location.latitude,
+    location.longitude,
+    location.timeZone,
+  ]);
+}
+
+function nightStepTone(score: number | null, selected: boolean, past: boolean) {
+  if (score === null) {
+    return selected
+      ? 'border-primary bg-primary/12 text-foreground hover:bg-primary/15'
+      : 'border-border text-muted-foreground hover:border-border-strong hover:bg-surface-2 hover:text-foreground';
+  }
+
+  if (score >= 70) {
+    return selected
+      ? 'border-success/60 bg-success/14 text-foreground'
+      : cn(
+          'border-success/25 bg-success/8 text-muted-foreground hover:border-success/45 hover:bg-success/12 hover:text-foreground',
+          past && 'opacity-80'
+        );
+  }
+
+  if (score >= 50) {
+    return selected
+      ? 'border-warning/60 bg-warning/14 text-foreground'
+      : cn(
+          'border-warning/25 bg-warning/8 text-muted-foreground hover:border-warning/45 hover:bg-warning/12 hover:text-foreground',
+          past && 'opacity-80'
+        );
+  }
+
+  return selected
+    ? 'border-danger/55 bg-danger/12 text-foreground'
+    : cn(
+        'border-danger/20 bg-danger/8 text-muted-foreground hover:border-danger/40 hover:bg-danger/10 hover:text-foreground',
+        past && 'opacity-80'
+      );
+}
+
+function scoreColor(score: number) {
+  if (score >= 70) return 'var(--color-success)';
+  if (score >= 50) return 'var(--color-warning)';
+  return 'var(--color-danger)';
 }
 
 /**
