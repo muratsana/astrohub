@@ -71,9 +71,9 @@ const rateStore = new Map<string, number[]>();
  * Kalıcı oran limiti: sayaç veritabanında, artış atomik.
  *
  * Bellek içi sayaç üretimde ölçüldü ve HİÇ tetiklenmedi (her istek ayrı
- * isolate). Karar artık `consume_rate_limit()` RPC'sinde; service_role
- * anahtarıyla çağrılıyor çünkü tablo ve fonksiyon istemciye tamamen
- * kapalı.
+ * isolate). Karar artık `consume_rate_limit()` RPC'sinde; public endpoint
+ * yalnızca service_role uyumluluk sarmalayıcısı, ayrıcalıklı sayaç gövdesi
+ * `app` şemasında.
  *
  * RPC'ye ULAŞILAMAZSA KAPALI TARAFA DÜŞÜLÜYOR (`false`). Açık tarafa
  * düşmek, veritabanı sarsıldığında kota korumasını tamamen kaldırırdı —

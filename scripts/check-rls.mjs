@@ -362,6 +362,59 @@ await expectCount(
   0
 );
 
+{
+  const publicDefiner = await sql(`
+    select count(*)
+    from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public'
+      and p.proname = 'consume_rate_limit'
+      and p.prosecdef;
+  `);
+  record(
+    'public consume_rate_limit ayrıcalıklı değil',
+    publicDefiner.trim() === '0',
+    publicDefiner.trim() === '0'
+      ? ''
+      : 'public.consume_rate_limit hâlâ SECURITY DEFINER'
+  );
+
+  const appDefiner = await sql(`
+    select count(*)
+    from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'app'
+      and p.proname = 'consume_rate_limit'
+      and p.prosecdef;
+  `);
+  record(
+    'rate-limit ayrıcalıklı gövdesi app şemasında',
+    appDefiner.trim() === '1',
+    appDefiner.trim() === '1'
+      ? ''
+      : 'app.consume_rate_limit SECURITY DEFINER olarak bulunamadı'
+  );
+
+  const grants = await sql(`
+    select concat_ws(',',
+      has_schema_privilege('service_role', 'app', 'usage'),
+      has_function_privilege('anon', 'public.consume_rate_limit(text, integer, integer)', 'execute'),
+      has_function_privilege('authenticated', 'public.consume_rate_limit(text, integer, integer)', 'execute'),
+      has_function_privilege('service_role', 'public.consume_rate_limit(text, integer, integer)', 'execute'),
+      has_function_privilege('anon', 'app.consume_rate_limit(text, integer, integer)', 'execute'),
+      has_function_privilege('authenticated', 'app.consume_rate_limit(text, integer, integer)', 'execute'),
+      has_function_privilege('service_role', 'app.consume_rate_limit(text, integer, integer)', 'execute')
+    );
+  `);
+  record(
+    'consume_rate_limit sadece service_role ile çağrılabiliyor',
+    grants.trim() === 't,f,f,t,f,f,t',
+    grants.trim() === 't,f,f,t,f,f,t'
+      ? ''
+      : `beklenen t,f,f,t,f,f,t; gelen ${grants.trim()}`
+  );
+}
+
 /* ── Politika yardımcıları çağrılabiliyor mu ──────────────────────── */
 
 /*

@@ -99,24 +99,27 @@ tabloyu açık bırakabilirdi.
 
 ## `SECURITY DEFINER` fonksiyonlar
 
-`public` şemasında dört tane görünüyor; üçü PostGIS'in `st_estimatedextent`
-aşırı yüklemeleri (bizim değil, sahibi `supabase_admin`).
+`public` şemasındaki bizim rate-limit RPC'si artık `SECURITY DEFINER`
+değil. Public yüzeyde yalnızca PostGIS'in `st_estimatedextent` aşırı
+yüklemeleri `SECURITY DEFINER` görünüyor; onlar bizim kodumuz değil,
+sahibi `supabase_admin`.
 
-Kalan bir tane bizim: `public.consume_rate_limit(text, integer, integer)`.
+Bizim ayrıcalıklı gövde: `app.consume_rate_limit(text, integer, integer)`.
 
 | Ölçüm | Değer |
 |---|---|
-| `prosecdef` | `true` |
+| `app.consume_rate_limit prosecdef` | `true` |
+| `public.consume_rate_limit prosecdef` | `false` |
 | ACL | `postgres=X/postgres, service_role=X/postgres` |
 | `anon` execute | **false** |
 | `authenticated` execute | **false** |
-| `search_path` | `public` (sabitlenmiş) |
+| `search_path` | `""` (sabitlenmiş) |
+| `service_role` app schema usage | **true** |
 
-Yani `SECURITY DEFINER` ama istemci rollerine **açık değil** — yetki
-yükseltme yolu yok. Kalan tek eksik yerleşim: ana görev belgesi
-"privileged fonksiyonlar kontrollü şemada tutulmalı" diyor, bu fonksiyon
-ise `public` içinde. `app` şemasına taşınması gereken bir düzen işi;
-açık bir güvenlik boşluğu değil. Faz 15'te taşınacak.
+Yani ayrıcalıklı fonksiyon kontrollü `app` şemasında ve istemci rollerine
+**açık değil**. `public.consume_rate_limit` yalnızca PostgREST
+uyumluluğunu koruyan `SECURITY INVOKER` sarmalayıcı; execute yine sadece
+`service_role`.
 
 ## Şema boşluğu — belgedeki alan modeliyle karşılaştırma
 

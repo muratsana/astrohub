@@ -151,8 +151,10 @@ bölümü.
 kaynak ya da bilinçli erteleme: ilçe tohum verisi (resmî TÜİK/NVİ
 kaynağı gerekiyor — 973 ilçe adını çevrimdışı üretmek uydurma olurdu),
 gerçek cihaz/tarayıcı matrisi (kum havuzunda tek Chromium) ve
-`consume_rate_limit`in `app` şemasına taşınması + 129 permissive policy
-birleştirmesi (ikisi de Faz 15'e atandı, açık boşluk değil düzen işi).
+129 permissive policy birleştirmesi (Faz 15'e atandı, açık boşluk değil
+düzen işi). `consume_rate_limit`in `app` şemasına taşınması canlı
+migration `20260803094927` ve service_role şema izni `20260803095601`
+ile kapandı.
 Otomatik devam turu buradan **Faz 3'e** geçmeli.
 
 ## Ürün kararları — belgeden sapılan yerler
@@ -314,8 +316,8 @@ Tam ölçüm dökümü: **`docs/DATABASE_AND_RLS.md`**. Özet:
 | `UPDATE`/`ALL` politikalarında `WITH CHECK` | DONE | Canlı sorgu **0 satır** eksik |
 | `anon`'a yazma veren politika | DONE | **0 politika** |
 | RLS açık ama politikasız tablo | DONE | Yalnızca `edge_rate_limits`; bilinçli "herkese kapalı" — `anon`/`authenticated` `select` yetkisi de ölçüldü: false |
-| `SECURITY DEFINER` fonksiyon denetimi | DONE | Bizim tek fonksiyon `consume_rate_limit`; ACL ölçüldü, istemci rollerinde execute **yok**, `search_path` sabit |
-| Privileged fonksiyonun kontrollü şemada olması | NOT_STARTED | `consume_rate_limit` hâlâ `public` içinde; `app`'e taşınacak (Faz 15) — açık boşluk değil, düzen işi |
+| `SECURITY DEFINER` fonksiyon denetimi | DONE | Bizim rate-limit gövdesi artık `app.consume_rate_limit`; `public.consume_rate_limit` yalnızca `SECURITY INVOKER` uyumluluk sarmalayıcısı |
+| Privileged fonksiyonun kontrollü şemada olması | DONE | Canlı migration `20260803094927` + `20260803095601`: ayrıcalıklı gövde `app` şemasında, iki fonksiyon da yalnızca `service_role` execute alıyor |
 | Belgedeki alan modeliyle karşılaştırma | DONE | 18 tablo mevcut, **20 tablo eksik**; her biri kendi fazına atandı (DATABASE_AND_RLS §Şema boşluğu) |
 | `spatial_ref_sys` yazma yetkisi | IMPLEMENTED_BLOCKED_EXTERNAL | `revoke` `postgres` ile sessiz no-op (4→4 ayrıcalık ölçüldü); `supabase_admin` gerekiyor |
 | `multiple_permissive_policies` (129) | PARTIAL | Performans uyarısı, güvenlik açığı değil; `OR` birleştirme kapsam genişletme riski taşıdığı için tablo tablo yapılacak (Faz 15) |

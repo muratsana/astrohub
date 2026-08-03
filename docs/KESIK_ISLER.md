@@ -82,7 +82,7 @@ Bunlar tek turda kapatılabilecek işler değil; her biri kendi fazı.
 | 12 | Organik kullanıcı kazanımı | 1350–1419 | Fazın maddelerini mevcut modüllerle karşılaştır (Faz 11'de yapılan envanter yöntemi). Davet, paylaşım ve içerik döngüsü büyük ölçüde var; boşluk muhtemelen ölçüm tarafında |
 | 13 | Fotoğraf, Storage, medya mimarisi | 1420–1462 | Yükleme, kırpma, revizyon, EXIF, plate solve ve kota ÇALIŞIYOR. Faz muhtemelen büyük ölçüde DONE çıkacak — önce envanter, sonra kod |
 | 14 | macOS, tarayıcı, responsive, erişilebilirlik | 1463–1528 | `check:a11y` ve `check:viewports` kapıları zaten var. Gerçek cihaz/tarayıcı matrisi **BLOKE** (kum havuzunda tek Chromium) |
-| 15 | Güvenlik, KVKK, telif, kötüye kullanım | 1529–1606 | CSP, RLS, kota, KVKK onayları ve denetim kaydı var. `consume_rate_limit`in `app` şemasına taşınması ve 129 permissive policy birleştirmesi bu faza atanmıştı |
+| 15 | Güvenlik, KVKK, telif, kötüye kullanım | 1529–1606 | CSP, RLS, kota, KVKK onayları ve denetim kaydı var. `consume_rate_limit`in `app` şemasına taşınması canlıda kapandı (`20260803094927` + `20260803095601`); kalan teknik borç 129 permissive policy birleştirmesi |
 | 16 | Performans, SEO, analitik, gözlemlenebilirlik | 1607–1690 | Bütçe kapısı, prerender, sitemap, JSON-LD var. Analitik ve hata izleme sağlayıcısı **kullanıcı kararı** |
 | 17 | Test stratejisi ve kabul kriterleri | 1691–… | 1924 test, 28 E2E senaryosu ve 12 kapı var. Faz muhtemelen belgeleme işi: kabul kriterlerini yazıp mevcut kapılarla eşlemek |
 | 18 | Belgenin sonu | …–1956 | Okunmadı |

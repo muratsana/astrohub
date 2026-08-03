@@ -23,7 +23,8 @@
  *      TETİKLENMİYOR — 30 ardışık istek tek bir 429 üretmedi, çünkü her
  *      istek yeni bir isolate'e düşüyor. Çalışmayan bir korumayı
  *      çalışıyormuş gibi bırakmak, hiç koymamaktan kötü: yanlış güven
- *      verir. Sayaç artık `consume_rate_limit()` ile atomik ve kalıcı.
+ *      verir. Sayaç artık `consume_rate_limit()` RPC'siyle atomik ve
+ *      kalıcı; ayrıcalıklı gövde public şemada değil, `app` şemasında.
  *
  * Bu katmanların hiçbiri sağlayıcı tarafındaki HARCAMA LİMİTİNİN yerine
  * geçmez; o hesap ayarıdır ve koda yazılamaz (plan T-506).
@@ -109,7 +110,8 @@ export function snapCoordinate(
  *
  * Veritabanı sayacına ulaşılamadığında son çare olarak kullanılır. Tek
  * başına güvenilmez (isolate başına ayrı bellek); asıl karar
- * `consume_rate_limit()` RPC'sinde.
+ * `consume_rate_limit()` RPC'sinde; public RPC yalnızca service_role
+ * uyumluluk sarmalayıcısıdır.
  */
 export function hitRateLimit(
   store: Map<string, number[]>,

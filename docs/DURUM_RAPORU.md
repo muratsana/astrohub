@@ -65,7 +65,7 @@ koşulsuz politika **0**, `WITH CHECK` eksiği **0**, `anon`'a yazma **0**.
 | Madde | Sebep |
 |---|---|
 | Gerçek cihaz/tarayıcı matrisi (Safari/iOS/Android/Edge) | **Ortam** — kum havuzunda tek Chromium var. `IMPLEMENTED_BLOCKED_EXTERNAL` |
-| `consume_rate_limit`'in `app` şemasına taşınması | **Düzen işi, açık boşluk değil** — Faz 15'e atandı |
+| `consume_rate_limit`'in `app` şemasına taşınması | **DONE** — canlı migration `20260803094927` + `20260803095601`; public RPC artık yalnızca service_role-only sarmalayıcı |
 | 129 permissive policy birleştirme | **Performans uyarısı, güvenlik açığı değil.** `OR` birleştirme kapsam genişletme riski taşıdığı için tablo tablo yapılacak (Faz 15) |
 | `spatial_ref_sys` yazma yetkisi | **Yetki** — `revoke` `postgres` ile sessiz no-op; `supabase_admin` gerekiyor |
 
@@ -306,12 +306,12 @@ satırının referans vermediği eski storage nesnelerini temizler.
 
 ---
 
-### Faz 15 — Güvenlik, KVKK, telif · **NOT_STARTED**
+### Faz 15 — Güvenlik, KVKK, telif · **PARTIAL**
 
 > **Not:** RLS matrisi, CSP enforce, auth sertleştirme, KVKK onay
-> kutuları ve `audit_logs` zaten yapıldı. Bu faza atanmış iki teknik
-> borç var: `consume_rate_limit`'in şema taşınması ve 129 permissive
-> policy birleştirmesi.
+> kutuları ve `audit_logs` zaten yapıldı. `consume_rate_limit` canlıda
+> `app` şemasına taşındı (`20260803094927` + `20260803095601`). Bu fazdaki
+> kalan teknik borç 129 permissive policy birleştirmesi.
 
 ---
 

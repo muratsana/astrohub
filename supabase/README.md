@@ -131,3 +131,7 @@ Listenin tamamı bu üç fonksiyon; başkası yok.
 | `postgis`, `citext`, `pg_trgm` `public` şemasında | `0001`'de kurulmuş ve `profiles.username citext` gibi sütun tipleri bunlara bağlı. Taşımak tip referanslarını kırar; kazanç düşük. |
 | `st_estimatedextent` çağrılabilir | PostGIS'in kendi fonksiyonu, bizim kodumuz değil. `0016`'daki `revoke … from anon, authenticated` satırları **etkisiz** — yetki role değil `PUBLIC`'e verilmiş ve veren `supabase_admin`. ACL bunu açıkça gösteriyor: `=X/supabase_admin`. `postgres` başkasının verdiği izni geri alamaz, o yüzden komut hata vermeden hiçbir şey yapmıyor. Fonksiyon yalnızca geometri sütunlarının istatistiksel sınırlarını döndürüyor; bizim şemamızda geometri yalnızca etkinlik/gözlem alanı koordinatlarında ve zaten `approx_*` olarak yuvarlanmış halde. |
 | `edge_rate_limits` üzerinde RLS açık ama **hiç politika yok** | Kasıtlı: politikasız RLS "kimse okuyamaz/yazamaz" demektir ve bu tablo yalnızca `service_role` tarafından kullanılıyor. RLS matrisi (`0204`) bunu ayrıca ölçüyor. Denetçi bunu INFO seviyesinde bildiriyor, hata olarak değil. |
+
+Rate-limit RPC notu: ayrıcalıklı gövde `app.consume_rate_limit` içinde;
+`public.consume_rate_limit` yalnızca PostgREST uyumluluğu için bırakılmış
+`SECURITY INVOKER` ve service_role-only sarmalayıcıdır.
