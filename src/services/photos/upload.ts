@@ -47,6 +47,8 @@ export interface UploadInput {
   locationLabel?: string;
   locationVisibility?: 'exact' | 'approximate' | 'region' | 'hidden';
   license?: string;
+  allowDownload?: boolean;
+  watermarkRequired?: boolean;
   aiDeclared?: boolean;
   /**
    * Telif beyanı (§15.4) — kullanıcının "bu eserin sahibiyim" onayı.
@@ -239,6 +241,8 @@ export async function uploadPhoto(
         location_label: input.locationLabel || null,
         location_visibility: input.locationVisibility ?? 'approximate',
         license: input.license ?? 'Tüm hakları saklıdır',
+        allow_download: input.allowDownload ?? false,
+        watermark_required: input.watermarkRequired ?? true,
         ai_declared: input.aiDeclared ?? false,
         /*
          * Onay TASLAKTA yazılıyor, yayın adımında değil. Beyan

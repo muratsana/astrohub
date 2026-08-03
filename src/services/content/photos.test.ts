@@ -176,6 +176,21 @@ describe('mapPhotoRow', () => {
     const photo = mapPhotoRow(row({ display_path: null, thumb_path: null }));
     expect(photo.image).toBeUndefined();
   });
+
+  it('indirme ve watermark tercihlerini güvenli varsayılanla taşır', () => {
+    expect(mapPhotoRow(row()).access).toEqual({
+      allowDownload: false,
+      watermarkRequired: true,
+    });
+
+    expect(
+      mapPhotoRow(row({ allow_download: true, watermark_required: false }))
+        .access
+    ).toEqual({
+      allowDownload: true,
+      watermarkRequired: false,
+    });
+  });
 });
 
 /**

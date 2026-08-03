@@ -289,3 +289,23 @@ describe('uploadPhoto — telif beyanı satıra yazılıyor', () => {
     expect(state.photoInsert?.copyright_confirmed).toBe(false);
   });
 });
+
+describe('uploadPhoto — indirme tercihleri', () => {
+  it('varsayılan olarak indirmeyi kapatır, watermark şartını açık bırakır', async () => {
+    await uploadPhoto(input);
+
+    expect(state.photoInsert?.allow_download).toBe(false);
+    expect(state.photoInsert?.watermark_required).toBe(true);
+  });
+
+  it('kullanıcının indirme ve watermark tercihini satıra yazar', async () => {
+    await uploadPhoto({
+      ...input,
+      allowDownload: true,
+      watermarkRequired: false,
+    });
+
+    expect(state.photoInsert?.allow_download).toBe(true);
+    expect(state.photoInsert?.watermark_required).toBe(false);
+  });
+});

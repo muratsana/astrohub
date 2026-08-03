@@ -82,6 +82,8 @@ interface PhotoRow {
   bortle: number | null;
   sqm: number | string | null;
   license: string | null;
+  allow_download?: boolean | null;
+  watermark_required?: boolean | null;
   ai_declared: boolean | null;
   like_count: number | null;
   comment_count: number | null;
@@ -241,6 +243,10 @@ export function mapPhotoRow(row: PhotoRow): AstroPhoto {
           licence: row.license ?? 'Tüm hakları saklıdır',
         }
       : undefined,
+    access: {
+      allowDownload: row.allow_download ?? false,
+      watermarkRequired: row.watermark_required ?? true,
+    },
     capturedAt,
     location: {
       label: row.location_label ?? 'Belirtilmemiş',
@@ -326,6 +332,7 @@ export function mapPhotoRow(row: PhotoRow): AstroPhoto {
 const SELECT =
   'id, user_id, slug, title, description, photo_type, palette, captured_at, published_at, ' +
   'target_label, location_label, location_visibility, bortle, sqm, license, ' +
+  'allow_download, watermark_required, ' +
   'ai_declared, like_count, comment_count, rating_sum, rating_count, ' +
   'display_path, thumb_path, setup_text, ' +
   'width, height, exif_camera, exif_lens, exif_iso, exif_focal_mm, ' +

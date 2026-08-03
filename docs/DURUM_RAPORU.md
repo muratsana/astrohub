@@ -255,7 +255,11 @@ ve sitemap dışında.
 
 Fazın §15.1/§15.2 maddelerinin çoğu önceki fazlarda kapanmış: takip
 sistemi, favori/koleksiyon, editörün seçimi, teknik künye, OG görseli,
-canonical, paylaşılabilir gözlem planı, atıf ve telif.
+canonical, paylaşılabilir gözlem planı, atıf ve telif. Fotoğraf yükleme
+akışında watermark tercihi ve public gösterim kopyası için indirme izni
+de artık saklanıyor; fotoğraf detayındaki lisans sekmesi bu tercihi
+gösteriyor, izin varsa indirme bağlantısı açıyor. Orijinal dosya private
+bucket'ta kalmaya devam ediyor.
 
 **Kaldı ve neden — hiçbiri engelli değil, hepsi kendi turunu hak ediyor:**
 
@@ -265,7 +269,7 @@ canonical, paylaşılabilir gözlem planı, atıf ve telif.
 | Aylık astrofotoğraf seçkisi | Editör akışı gerekiyor |
 | Haftalık kişiselleştirilmiş özet | E-posta kararına bağlı (Faz 6 ile aynı blokaj) |
 | Davet ve referral altyapısı | Kötüye kullanım önleme tasarımı gerekiyor |
-| Watermark tercihi, indirme izinleri | Fotoğraf boru hattına dokunuyor (Faz 13 ile birlikte mantıklı) |
+| Watermark tercihi, indirme izinleri | DONE — `astro_photos` tercihi, yükleme formu, katalog mapper'ı ve detay sayfası bağlı |
 | Kullanıcı portfolyo URL'si | DONE — `/profil/:username` artık gerçek `profiles` kaydını okur; fotoğraf yoksa da profil ve portfolyo bağlantısı görünür |
 
 ---
@@ -361,7 +365,6 @@ Kalan bütün maddeler **dört sebepten birine** giriyor:
 - Challenge altyapısı, aylık seçki
 - Sütun sırası sürükle-bırak
 - Harita/takvimin explorer görünümü olması
-- Watermark
 - Faz 14/15/16/17 envanterleri
 
 ---

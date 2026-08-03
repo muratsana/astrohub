@@ -97,6 +97,8 @@ interface WizardState {
   software: string;
   aiDeclared: boolean;
   license: string;
+  allowDownload: boolean;
+  watermarkRequired: boolean;
   copyrightConfirmed: boolean;
 }
 
@@ -121,6 +123,8 @@ const initialState: WizardState = {
    * gösteriliyor; değeri tek yerden geliyor.
    */
   license: PHOTO_LICENSE,
+  allowDownload: false,
+  watermarkRequired: true,
   copyrightConfirmed: false,
 };
 
@@ -218,6 +222,8 @@ export function UploadWizardPage() {
           locationLabel: state.locationLabel || undefined,
           locationVisibility: state.locationVisibility,
           license: state.license,
+          allowDownload: state.allowDownload,
+          watermarkRequired: state.watermarkRequired,
           aiDeclared: state.aiDeclared,
           copyrightConfirmed: state.copyrightConfirmed,
           objectId: await resolveTargetId(state.targetSlug),
@@ -919,6 +925,26 @@ export function UploadWizardPage() {
                 <input
                   type="checkbox"
                   className="mt-0.5 h-4 w-4 rounded border-border accent-primary"
+                  checked={state.allowDownload}
+                  onChange={(e) => patch({ allowDownload: e.target.checked })}
+                />
+                Public gösterim kopyasının indirilmesine izin veriyorum.
+              </label>
+              <label className="flex items-start gap-2.5 text-sm text-muted-foreground">
+                <input
+                  type="checkbox"
+                  className="mt-0.5 h-4 w-4 rounded border-border accent-primary"
+                  checked={state.watermarkRequired}
+                  onChange={(e) =>
+                    patch({ watermarkRequired: e.target.checked })
+                  }
+                />
+                Yeniden kullanımda kaynak/filigran şartı görünsün.
+              </label>
+              <label className="flex items-start gap-2.5 text-sm text-muted-foreground">
+                <input
+                  type="checkbox"
+                  className="mt-0.5 h-4 w-4 rounded border-border accent-primary"
                   checked={state.copyrightConfirmed}
                   onChange={(e) =>
                     patch({ copyrightConfirmed: e.target.checked })
@@ -953,6 +979,10 @@ export function UploadWizardPage() {
                   {state.capturedAt && <Badge>{state.capturedAt}</Badge>}
                   <Badge tone="cold">{formatIntegration(total)}</Badge>
                   <Badge>{state.license}</Badge>
+                  <Badge tone={state.allowDownload ? 'cold' : 'muted'}>
+                    {state.allowDownload ? 'İndirme açık' : 'İndirme kapalı'}
+                  </Badge>
+                  {state.watermarkRequired && <Badge>Kaynak/filigran şartı</Badge>}
                   {state.aiDeclared && <Badge tone="cold">AI beyanlı</Badge>}
                   {file && <Badge tone="muted">{formatBytes(file.size)}</Badge>}
                 </div>

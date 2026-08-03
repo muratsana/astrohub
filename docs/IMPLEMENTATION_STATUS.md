@@ -2160,9 +2160,10 @@ aynı altı sayfada anlaşıyor. Ankara/İstanbul/İzmir'de `noindex` yok.
 ### Kalanlar
 
 Challenge/tema altyapısı, aylık seçki, haftalık kişiselleştirilmiş özet,
-davet ve referral altyapısı, watermark tercihi ve kullanıcı portfolyo
-URL'si açık. Hiçbiri dış kaynağa bağlı değil; her biri kendi turunu hak
-ediyor.
+davet ve referral altyapısı açık. Kullanıcı portfolyo URL'si ile
+watermark/indirme tercihleri kapandı: yükleme akışı `astro_photos`
+tercihlerini yazar, katalog okur, detay sayfası lisans sekmesinde gösterir
+ve izinliyse yalnızca public gösterim kopyası için indirme bağlantısı açar.
 
 ---
 
@@ -2333,7 +2334,7 @@ hiç üretilmiyordu (üretici yazılmış, çağrılmamış, testleri geçiyordu
 indekslenebilirdi.
 
 **Sıradaki iş:** Faz 12'nin kalan maddeleri (challenge/tema, aylık seçki,
-haftalık özet, davet altyapısı, watermark) ve Faz 13'ün operasyon
+haftalık özet, davet altyapısı) ve Faz 13'ün operasyon
 kararları; ardından Faz 14 — tablodaki ilk `NOT_STARTED` faz.
 
 **Çalışma yöntemi** (bu oturumda işe yaradı):

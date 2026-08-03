@@ -145,6 +145,7 @@ function PhotoDetail({
             <ActionChip>💬 {photo.comments}</ActionChip>
             <SaveChip photo={photo} />
             <ShareChip photo={photo} />
+            <DownloadChip photo={photo} />
             <ReportButton
               targetType="photo"
               targetId={photo.slug}
@@ -465,6 +466,16 @@ function ProcessingTab({ photo }: { photo: AstroPhoto }) {
           ['Yazılımlar', photo.processing.software.join(', ')],
           ['İşleme adımları', photo.processing.steps ?? '—'],
           ['Lisans', photo.license],
+          [
+            'İndirme izni',
+            photo.access?.allowDownload
+              ? 'Gösterim kopyası indirilebilir'
+              : 'Kapalı',
+          ],
+          [
+            'Watermark tercihi',
+            photo.access?.watermarkRequired ? 'Kaynak/filigran şartı var' : 'Zorunlu değil',
+          ],
         ]}
       />
       <PlateSolvePanel solve={photo.solve} />
@@ -723,6 +734,20 @@ function ShareChip({ photo }: { photo: AstroPhoto }) {
           ? 'Paylaşılamadı'
           : 'Paylaş'}
     </button>
+  );
+}
+
+function DownloadChip({ photo }: { photo: AstroPhoto }) {
+  if (!photo.access?.allowDownload || !photo.image?.url) return null;
+
+  return (
+    <a
+      href={photo.image.url}
+      download
+      className="rounded-full border border-border bg-surface-1 px-3 py-1.5 text-muted-foreground transition-colors hover:border-border-strong hover:text-foreground"
+    >
+      İndir
+    </a>
   );
 }
 

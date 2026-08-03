@@ -187,6 +187,11 @@ export interface AstroPhoto {
    * yüklenemezse kart kendi yıldız alanını çizer.
    */
   image?: { url: string; credit: string; licence: string };
+  /** Paylaşım/indirme tercihleri. Orijinal dosya private bucket'ta kalır. */
+  access?: {
+    allowDownload: boolean;
+    watermarkRequired: boolean;
+  };
   capturedAt: string; // ISO tarih
   location: {
     label: string; // "Saklıkent, Antalya" | "Antalya (bölge)"
