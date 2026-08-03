@@ -43,7 +43,7 @@ export function ViewToggle<M extends string = ViewMode>({
       role="group"
       aria-label="Görünüm"
       className={cn(
-        'inline-flex shrink-0 overflow-hidden rounded-card border border-border',
+        'inline-flex shrink-0 overflow-hidden rounded-card border border-border-strong bg-surface-1 shadow-overlay',
         className
       )}
     >

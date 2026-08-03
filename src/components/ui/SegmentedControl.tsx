@@ -39,7 +39,7 @@ export function SegmentedControl<T extends string>({
     <div
       role={role}
       aria-label={ariaLabel}
-      className={cn('flex flex-wrap items-center gap-1.5', className)}
+      className={cn('flex flex-wrap items-center gap-2', className)}
     >
       {options.map((option) => {
         const active = option.value === value;
@@ -52,14 +52,14 @@ export function SegmentedControl<T extends string>({
             aria-pressed={role === 'group' ? active : undefined}
             onClick={() => onChange(option.value)}
             className={cn(
-              'rounded-card border tracking-[0.03em] transition-colors',
+              'rounded-card border font-medium tracking-[0.02em] transition-colors',
               size === 'xs'
-                ? 'min-h-8 px-2.5 py-1 text-meta'
-                : 'min-h-11 px-3 py-1.5 text-meta',
+                ? 'min-h-9 px-3 py-1 text-meta'
+                : 'min-h-11 px-4 py-1.5 text-body-sm',
               active
                 ? (option.selectedClassName ??
-                    'border-foreground/40 bg-surface-2 text-foreground')
-                : 'border-border text-muted-foreground hover:border-border-strong hover:text-foreground',
+                    'border-primary bg-primary text-primary-foreground')
+                : 'border-border-strong bg-surface-1 text-muted-foreground hover:border-foreground/25 hover:bg-surface-2 hover:text-foreground',
               option.className
             )}
           >

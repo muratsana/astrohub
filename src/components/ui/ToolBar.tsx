@@ -64,14 +64,14 @@ export function ToolBar<M extends string = ViewMode>({
       <div className="min-w-0">{left}</div>
 
       {hasControls && (
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
           {extra}
 
           {sort && (
-            <div className="inline-flex h-8 items-center overflow-hidden rounded-card border border-border">
+            <div className="inline-flex min-h-11 items-center overflow-hidden rounded-card border border-border-strong bg-surface-1 shadow-overlay">
               <label
                 htmlFor={sort.id ?? 'toolbar-sort'}
-                className="label hidden h-full items-center border-r border-border bg-surface-2 px-2.5 sm:inline-flex"
+                className="label hidden h-full items-center border-r border-border px-3 text-muted-foreground sm:inline-flex"
               >
                 Sırala
               </label>
@@ -84,7 +84,7 @@ export function ToolBar<M extends string = ViewMode>({
                  * `h-full` hizayı anahtara kilitler; sabit yükseklik vermek
                  * tarayıcılar arasında 1px kaymalara yol açıyordu.
                  */
-                className="h-full w-auto rounded-none border-0 bg-transparent pl-2.5 pr-7 text-meta focus:bg-surface-2"
+                className="min-h-11 w-auto rounded-none border-0 bg-transparent pl-3 pr-8 text-body-sm font-medium focus:bg-surface-2"
               >
                 {sort.options.map((o) => (
                   <option key={o.value} value={o.value}>
@@ -124,7 +124,11 @@ export function ResultCount({
   const filtered = current !== total;
 
   return (
-    <p className="tabular label" role="status" aria-live="polite">
+    <p
+      className="tabular text-body-sm font-medium text-muted-foreground"
+      role="status"
+      aria-live="polite"
+    >
       {filtered ? `${current} / ${total}` : total} {noun}
     </p>
   );

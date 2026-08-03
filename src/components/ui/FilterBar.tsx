@@ -4,11 +4,7 @@ import { CloseIcon } from './icons';
 import { useIsNarrow } from './useIsNarrow';
 
 /**
- * FİLTRE ŞERİDİ — hücrelere bölünmüş kontrol paneli.
- *
- * Her kontrol yuvarlak köşeli ayrı bir kutu olmak yerine, tek bir ızgaranın
- * hücresi. Hücreler arasındaki ayrım `gap-px` + arka plan çizgi rengiyle
- * kurulur: gerçek bir hairline elde edilir, kenarlıklar üst üste binmez.
+ * FİLTRE ŞERİDİ — arama, seçiciler ve hızlı anahtarlar.
  *
  * Galeri sayfasında yerinde yazılmıştı; etkinlikler, ilanlar, ekipman ve saha
  * sayfaları da aynı şeridi kullandığı için buraya çıkarıldı.
@@ -110,7 +106,7 @@ export function FilterBar({
   const grid = (
     <div
       className={cn(
-        'grid gap-2 rounded-card border border-border-strong bg-surface-1/80 p-2 shadow-overlay sm:grid-cols-2',
+        'grid gap-2 sm:grid-cols-2',
         !narrow && 'mb-4',
         lg,
         className
@@ -129,7 +125,7 @@ export function FilterBar({
         type="button"
         onClick={() => setOpen(true)}
         aria-expanded={open}
-        className="mb-4 flex min-h-11 w-full items-center justify-between rounded-card border border-border-strong bg-surface-1 px-3.5 text-body-sm font-medium text-foreground"
+        className="mb-4 flex min-h-12 w-full items-center justify-between rounded-card border border-border-strong bg-surface-1 px-4 text-body-sm font-medium text-foreground shadow-overlay"
       >
         Filtreler
         {activeCount > 0 && (
@@ -197,13 +193,7 @@ export function FilterBar({
 }
 
 /**
- * Filtre şeridi hücresi: üstte etiket, altta kontrol.
- *
- * ODAK HALKASI HÜCREYE AİT, KONTROLE DEĞİL. Kontrolün kendi halkası,
- * hücrenin içinde yüzen yuvarlak köşeli ikinci bir kutu üretiyordu —
- * şerit "hücrelere bölünmüş tek panel" olmaktan çıkıp iç içe kutulara
- * dönüşüyordu. Halka kaldırılmadı, yeri değiştirildi: `inset` gölge
- * hücrenin tam sınırına oturur ve odak §6.7'deki gibi her zaman görünür.
+ * Filtre şeridi hücresi: üstte kısa etiket, altta kontrol.
  */
 export function FilterCell({
   label,
@@ -219,13 +209,13 @@ export function FilterCell({
   return (
     <div
       className={cn(
-        'rounded-card border border-border bg-background/55 px-3 pb-2 pt-2',
-        'transition-colors hover:border-border-strong hover:bg-surface-2/80',
-        'has-[:focus-visible]:border-primary has-[:focus-visible]:bg-surface-2',
+        'flex min-h-14 flex-col justify-center rounded-card border border-border-strong bg-surface-1 px-4 py-2 shadow-overlay',
+        'transition-colors hover:border-foreground/25 hover:bg-surface-2',
+        'has-[:focus-visible]:border-primary has-[:focus-visible]:bg-surface-2 has-[:focus-visible]:shadow-[0_0_0_1px_var(--color-primary)]',
         className
       )}
     >
-      <label htmlFor={htmlFor} className="label block text-faint">
+      <label htmlFor={htmlFor} className="label block text-muted-foreground">
         {label}
       </label>
       {children}
@@ -238,7 +228,7 @@ export function FilterCell({
  * çerçeveyi hücre çizer; alan yalnızca içine yazılan değerdir.
  */
 export const filterControlClass =
-  'h-8 w-full rounded-none border-0 bg-transparent px-0 text-body-sm text-foreground ' +
+  'h-8 w-full rounded-none border-0 bg-transparent px-0 text-body-sm font-medium text-foreground ' +
   'focus:bg-transparent focus-visible:outline-none';
 
 /**
@@ -261,9 +251,9 @@ export function FilterToggle({
   return (
     <div
       className={cn(
-        'flex items-center rounded-card border border-border bg-background/55 px-3 py-2.5',
-        'transition-colors hover:border-border-strong hover:bg-surface-2/80',
-        'has-[:focus-visible]:border-primary has-[:focus-visible]:bg-surface-2',
+        'flex min-h-14 items-center rounded-card border border-border-strong bg-surface-1 px-4 py-2 shadow-overlay',
+        'transition-colors hover:border-foreground/25 hover:bg-surface-2',
+        'has-[:focus-visible]:border-primary has-[:focus-visible]:bg-surface-2 has-[:focus-visible]:shadow-[0_0_0_1px_var(--color-primary)]',
         className
       )}
     >
