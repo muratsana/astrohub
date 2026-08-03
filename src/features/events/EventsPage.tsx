@@ -10,14 +10,14 @@ import {
   FilterToggle,
   filterControlClass,
 } from '@/components/ui/FilterBar';
-import { ActiveFilters } from '@/components/ui/ActiveFilters';
 import { RangeFilter } from '@/components/ui/RangeFilter';
 import {
   EditorialList,
   type EditorialItem,
 } from '@/components/ui/EditorialList';
-import { ToolBar, ResultCount } from '@/components/ui/ToolBar';
+import { ResultCount } from '@/components/ui/ToolBar';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
+import { ViewToggle } from '@/components/ui/ViewToggle';
 import { useViewMode } from '@/components/ui/useViewMode';
 import { useEventCatalog } from '@/services/content/events';
 import { useExplorer } from '@/features/explorer/useExplorer';
@@ -120,7 +120,8 @@ export function EventsPage() {
           <FilterCell
             label="Ara"
             htmlFor="event-search"
-            className="lg:col-span-2"
+            active={ex.searchInput.trim().length > 0}
+            className="min-w-[21rem] flex-[2_1_21rem]"
           >
             <Input
               id="event-search"
@@ -132,7 +133,11 @@ export function EventsPage() {
             />
           </FilterCell>
 
-          <FilterCell label="Şehir" htmlFor="e-city">
+          <FilterCell
+            label="Şehir"
+            htmlFor="e-city"
+            active={(ex.query.facets.sehir?.[0] ?? 'hepsi') !== 'hepsi'}
+          >
             <Select
               id="e-city"
               value={ex.query.facets.sehir?.[0] ?? 'hepsi'}
@@ -148,7 +153,11 @@ export function EventsPage() {
             </Select>
           </FilterCell>
 
-          <FilterCell label="Tür" htmlFor="e-type">
+          <FilterCell
+            label="Tür"
+            htmlFor="e-type"
+            active={(ex.query.facets.tur?.[0] ?? 'hepsi') !== 'hepsi'}
+          >
             <Select
               id="e-type"
               value={ex.query.facets.tur?.[0] ?? 'hepsi'}
@@ -189,37 +198,21 @@ export function EventsPage() {
             value={ex.query.ranges.tarih}
             onChange={(next) => ex.setRange('tarih', next)}
           />
-        </FilterBar>
-
-        <ActiveFilters
-          chips={ex.chips}
-          onRemove={ex.removeChip}
-          onClearAll={ex.clearAll}
-        />
-
-        <CatalogSourceNote selection={catalog} />
-
-        <ToolBar
-          left={
-            <ResultCount
-              current={ex.total}
-              total={catalog.items.length}
-              noun="etkinlik"
-            />
-          }
-          sort={{
-            id: 'event-sort',
-            value: ex.query.sort,
-            onChange: ex.setSort,
-            options: eventsSpec.sorts.map((s) => ({
-              value: s.value,
-              label: s.label,
-            })),
-          }}
-          view={
-            layout === 'kart' ? { mode: view, onChange: setView } : undefined
-          }
-          extra={
+          <FilterCell label="Sırala" htmlFor="event-sort" className="max-w-[14rem]">
+            <Select
+              id="event-sort"
+              value={ex.query.sort}
+              onChange={(e) => ex.setSort(e.target.value)}
+              className={filterControlClass}
+            >
+              {eventsSpec.sorts.map((s) => (
+                <option key={s.value} value={s.value}>
+                  {s.label}
+                </option>
+              ))}
+            </Select>
+          </FilterCell>
+          <div className="flex min-h-14 items-center gap-2 rounded-card border border-border-strong bg-surface-1 px-3 shadow-overlay">
             <SegmentedControl
               value={layout}
               options={[
@@ -232,8 +225,18 @@ export function EventsPage() {
               size="xs"
               className="shrink-0"
             />
-          }
-        />
+            {layout === 'kart' && <ViewToggle mode={view} onChange={setView} />}
+          </div>
+          <div className="flex min-h-14 items-center rounded-card border border-border-strong bg-surface-1 px-4 shadow-overlay">
+            <ResultCount
+              current={ex.total}
+              total={catalog.items.length}
+              noun="etkinlik"
+            />
+          </div>
+        </FilterBar>
+
+        <CatalogSourceNote selection={catalog} />
 
         {layout === 'takvim' ? (
           result.length === 0 ? (

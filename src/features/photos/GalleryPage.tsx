@@ -10,10 +10,10 @@ import {
   FilterToggle,
   filterControlClass,
 } from '@/components/ui/FilterBar';
-import { ActiveFilters } from '@/components/ui/ActiveFilters';
 import { CardGrid } from '@/components/ui/CardGrid';
-import { ToolBar, ResultCount } from '@/components/ui/ToolBar';
+import { ResultCount } from '@/components/ui/ToolBar';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
+import { ViewToggle } from '@/components/ui/ViewToggle';
 import { CatalogSourceNote } from '@/components/ui/CatalogSourceNote';
 import { useViewMode } from '@/components/ui/useViewMode';
 import { PhotoCard } from './PhotoCard';
@@ -160,32 +160,14 @@ export function GalleryPage() {
           }
         />
 
-        {/* Tür aileleri — renkli rozetlerle filtre */}
-        <SegmentedControl
-          value={family}
-          options={[
-            { value: 'hepsi', label: 'Tümü' },
-            ...familyOrder.map((key) => ({
-              value: key,
-              label: photoFamilies[key].label,
-              tooltip: photoFamilies[key].description,
-              selectedClassName: photoFamilies[key].className,
-            })),
-          ]}
-          onChange={(next) => {
-            /* Tek seçim davranışı korunuyor: aile sekmeleri bir sekme
-               şeridi, çoklu seçim listesi değil. */
-            if (family !== 'hepsi') ex.toggleFacet('aile', family);
-            if (next !== 'hepsi' && next !== family) ex.toggleFacet('aile', next);
-          }}
-          ariaLabel="Çekim türü"
-          size="xs"
-          className="mb-4"
-        />
-
         {/* Filtre paneli */}
         <FilterBar activeCount={ex.chips.length}>
-          <FilterCell label="Ara" htmlFor="gallery-search" className="lg:col-span-2">
+          <FilterCell
+            label="Ara"
+            htmlFor="gallery-search"
+            active={ex.searchInput.trim().length > 0}
+            className="min-w-[22rem] flex-[2_1_22rem]"
+          >
             <Input
               id="gallery-search"
               type="search"
@@ -195,8 +177,38 @@ export function GalleryPage() {
               className={filterControlClass}
             />
           </FilterCell>
+          <FilterCell
+            label="Tür"
+            active={family !== 'hepsi'}
+            className="min-w-[25rem] flex-[3_1_25rem]"
+          >
+            <SegmentedControl
+              value={family}
+              options={[
+                { value: 'hepsi', label: 'Tümü' },
+                ...familyOrder.map((key) => ({
+                  value: key,
+                  label: photoFamilies[key].label,
+                  tooltip: photoFamilies[key].description,
+                  selectedClassName: photoFamilies[key].className,
+                })),
+              ]}
+              onChange={(next) => {
+                /* Tek seçim davranışı korunuyor: aile sekmeleri bir sekme
+                   şeridi, çoklu seçim listesi değil. */
+                if (family !== 'hepsi') ex.toggleFacet('aile', family);
+                if (next !== 'hepsi' && next !== family) ex.toggleFacet('aile', next);
+              }}
+              ariaLabel="Çekim türü"
+              size="xs"
+            />
+          </FilterCell>
 
-          <FilterCell label="Palet" htmlFor="f-palette">
+          <FilterCell
+            label="Palet"
+            htmlFor="f-palette"
+            active={(ex.query.facets.palet?.[0] ?? 'hepsi') !== 'hepsi'}
+          >
             <Select
               id="f-palette"
               value={ex.query.facets.palet?.[0] ?? 'hepsi'}
@@ -217,7 +229,11 @@ export function GalleryPage() {
             </Select>
           </FilterCell>
 
-          <FilterCell label="Şehir" htmlFor="f-city">
+          <FilterCell
+            label="Şehir"
+            htmlFor="f-city"
+            active={(ex.query.facets.sehir?.[0] ?? 'hepsi') !== 'hepsi'}
+          >
             <Select
               id="f-city"
               value={ex.query.facets.sehir?.[0] ?? 'hepsi'}
@@ -255,6 +271,32 @@ export function GalleryPage() {
               onChange={() => ex.toggleFacet('takip', 'evet')}
             />
           )}
+          <FilterCell label="Sırala" htmlFor="f-sort" className="max-w-[14rem]">
+            <Select
+              id="f-sort"
+              value={ex.query.sort}
+              onChange={(e) => ex.setSort(e.target.value)}
+              className={filterControlClass}
+            >
+              {gallerySpec.sorts.map((s) => (
+                <option key={s.value} value={s.value}>
+                  {s.label}
+                </option>
+              ))}
+            </Select>
+          </FilterCell>
+          <div className="flex min-h-14 items-center gap-2 rounded-card border border-border-strong bg-surface-1 px-3 shadow-overlay">
+            <CsvExportButton
+              module="galeri"
+              rows={result}
+              columns={CSV_SUTUNLARI}
+            />
+            <SavedViewsMenu module="galeri" />
+            <ViewToggle mode={view} onChange={setView} />
+          </div>
+          <div className="flex min-h-14 items-center rounded-card border border-border-strong bg-surface-1 px-4 shadow-overlay">
+            <ResultCount current={ex.total} total={photos.length} noun="fotoğraf" />
+          </div>
         </FilterBar>
 
         {/* SESSİZ KIRPMA YOK. Küme sınıra dayandıysa süzgeç eksik
@@ -267,47 +309,7 @@ export function GalleryPage() {
           </p>
         )}
 
-        <ActiveFilters
-          chips={ex.chips}
-          onRemove={ex.removeChip}
-          onClearAll={ex.clearAll}
-        />
-
         <CatalogSourceNote selection={catalog} />
-
-        <ToolBar
-          left={
-            <ResultCount current={ex.total} total={photos.length} noun="fotoğraf" />
-          }
-          sort={{
-            id: 'f-sort',
-            value: ex.query.sort,
-            onChange: ex.setSort,
-            /* Seçenekler tanımdan geliyor: burada elle sayılsaydı yeni
-               bir sıralama eklenince listede görünmezdi. */
-            options: gallerySpec.sorts.map((s) => ({
-              value: s.value,
-              label: s.label,
-            })),
-          }}
-          view={{ mode: view, onChange: setView }}
-          /* Kaydedilmiş görünümler ortak kontrol: `extra` yuvası
-             sayesinde her liste sayfası aynı bileşeni takabiliyor.
-             Oturumsuz ziyaretçide bileşen `null` dönüyor, yani şerit
-             bugünkü hâlinde kalıyor. */
-          extra={
-            <>
-              {/* CSV yalnızca yöneticide ve SÜZÜLMÜŞ listeyi indiriyor
-                  — ekranda ne görünüyorsa o. */}
-              <CsvExportButton
-                module="galeri"
-                rows={result}
-                columns={CSV_SUTUNLARI}
-              />
-              <SavedViewsMenu module="galeri" />
-            </>
-          }
-        />
 
         {result.length === 0 ? (
           <EmptyState

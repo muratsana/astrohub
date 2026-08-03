@@ -5,8 +5,9 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { CardGrid } from '@/components/ui/CardGrid';
 import { ButtonLink } from '@/components/ui/Button';
-import { ToolBar, ResultCount } from '@/components/ui/ToolBar';
+import { ResultCount } from '@/components/ui/ToolBar';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
+import { ViewToggle } from '@/components/ui/ViewToggle';
 import { CatalogSourceNote } from '@/components/ui/CatalogSourceNote';
 import { useStoredChoice, type ListView } from '@/components/ui/useViewMode';
 import { DataTable, type Column } from '@/components/ui/DataTable';
@@ -16,7 +17,6 @@ import {
   FilterToggle,
   filterControlClass,
 } from '@/components/ui/FilterBar';
-import { ActiveFilters } from '@/components/ui/ActiveFilters';
 import { RangeFilter } from '@/components/ui/RangeFilter';
 import {
   ContentCard,
@@ -128,19 +128,25 @@ export function MarketplacePage() {
           }
         />
 
-        <SegmentedControl
-          ariaLabel="İlan kategorileri"
-          value={category}
-          onChange={setCategory}
-          options={categoryOptions}
-          className="mb-4"
-        />
-
         <FilterBar activeCount={ex.chips.length}>
+          <FilterCell
+            label="Kategori"
+            active={category !== 'hepsi'}
+            className="min-w-[28rem] flex-[3_1_28rem]"
+          >
+            <SegmentedControl
+              ariaLabel="İlan kategorileri"
+              value={category}
+              onChange={setCategory}
+              options={categoryOptions}
+              size="xs"
+            />
+          </FilterCell>
           <FilterCell
             label="Ara"
             htmlFor="listing-search"
-            className="lg:col-span-2"
+            active={ex.searchInput.trim().length > 0}
+            className="min-w-[21rem] flex-[2_1_21rem]"
           >
             <Input
               id="listing-search"
@@ -158,7 +164,11 @@ export function MarketplacePage() {
             value={ex.query.ranges.fiyat}
             onChange={(next) => ex.setRange('fiyat', next)}
           />
-          <FilterCell label="Şehir" htmlFor="listing-city">
+          <FilterCell
+            label="Şehir"
+            htmlFor="listing-city"
+            active={(ex.query.facets.sehir?.[0] ?? 'hepsi') !== 'hepsi'}
+          >
             <Select
               id="listing-city"
               value={ex.query.facets.sehir?.[0] ?? 'hepsi'}
@@ -185,41 +195,39 @@ export function MarketplacePage() {
             checked={(ex.query.facets.faturali?.length ?? 0) > 0}
             onChange={() => ex.toggleFacet('faturali', 'evet')}
           />
-          {/* "Doğrulanmış satıcı" süzgeci kalktı: ilan yalnızca kayıtlı
-              kullanıcıdan açılıyor, yani süzgeç herkesi geçiriyordu. */}
-        </FilterBar>
-
-        <ActiveFilters
-          chips={ex.chips}
-          onRemove={ex.removeChip}
-          onClearAll={ex.clearAll}
-        />
-
-        <CatalogSourceNote selection={catalog} />
-
-        <ToolBar
-          left={
+          <FilterCell label="Sırala" htmlFor="listing-sort" className="max-w-[14rem]">
+            <Select
+              id="listing-sort"
+              value={ex.query.sort}
+              onChange={(e) => ex.setSort(e.target.value)}
+              className={filterControlClass}
+            >
+              {listingsSpec.sorts.map((s) => (
+                <option key={s.value} value={s.value}>
+                  {s.label}
+                </option>
+              ))}
+            </Select>
+          </FilterCell>
+          <div className="flex min-h-14 items-center rounded-card border border-border-strong bg-surface-1 px-3 shadow-overlay">
+            <ViewToggle
+              mode={view}
+              onChange={setView}
+              modes={['grid', 'list', 'table']}
+            />
+          </div>
+          <div className="flex min-h-14 items-center rounded-card border border-border-strong bg-surface-1 px-4 shadow-overlay">
             <ResultCount
               current={ex.total}
               total={catalog.items.length}
               noun="ilan"
             />
-          }
-          sort={{
-            id: 'listing-sort',
-            value: ex.query.sort,
-            onChange: ex.setSort,
-            options: listingsSpec.sorts.map((s) => ({
-              value: s.value,
-              label: s.label,
-            })),
-          }}
-          view={{
-            mode: view,
-            onChange: setView,
-            modes: ['grid', 'list', 'table'],
-          }}
-        />
+          </div>
+          {/* "Doğrulanmış satıcı" süzgeci kalktı: ilan yalnızca kayıtlı
+              kullanıcıdan açılıyor, yani süzgeç herkesi geçiriyordu. */}
+        </FilterBar>
+
+        <CatalogSourceNote selection={catalog} />
 
         {result.length === 0 ? (
           <EmptyState

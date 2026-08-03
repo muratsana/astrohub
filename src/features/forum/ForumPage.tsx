@@ -12,7 +12,6 @@ import {
   FilterToggle,
   filterControlClass,
 } from '@/components/ui/FilterBar';
-import { ActiveFilters } from '@/components/ui/ActiveFilters';
 import { PinIcon, LockIcon, ChatIcon } from '@/components/ui/icons';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
@@ -113,7 +112,8 @@ export function ForumPage() {
             <FilterCell
               label="Ara"
               htmlFor="forum-search"
-              className="lg:col-span-2"
+              active={ex.searchInput.trim().length > 0}
+              className="min-w-[20rem] flex-[2_1_20rem]"
             >
               <Input
                 id="forum-search"
@@ -124,7 +124,11 @@ export function ForumPage() {
                 className={filterControlClass}
               />
             </FilterCell>
-            <FilterCell label="Kategori" htmlFor="forum-category">
+            <FilterCell
+              label="Kategori"
+              htmlFor="forum-category"
+              active={category !== 'hepsi'}
+            >
               <Select
                 id="forum-category"
                 value={category}
@@ -139,7 +143,11 @@ export function ForumPage() {
                 ))}
               </Select>
             </FilterCell>
-            <FilterCell label="Rozet" htmlFor="forum-label">
+            <FilterCell
+              label="Rozet"
+              htmlFor="forum-label"
+              active={(ex.query.facets.rozet?.[0] ?? 'hepsi') !== 'hepsi'}
+            >
               <Select
                 id="forum-label"
                 value={ex.query.facets.rozet?.[0] ?? 'hepsi'}
@@ -154,7 +162,7 @@ export function ForumPage() {
                 ))}
               </Select>
             </FilterCell>
-            <FilterCell label="Sırala" htmlFor="forum-sort">
+            <FilterCell label="Sırala" htmlFor="forum-sort" className="max-w-[14rem]">
               <Select
                 id="forum-sort"
                 value={ex.query.sort}
@@ -174,17 +182,11 @@ export function ForumPage() {
               checked={(ex.query.facets.cozulmemis?.length ?? 0) > 0}
               onChange={() => ex.toggleFacet('cozulmemis', 'evet')}
             />
-            <div className="flex items-center rounded-card border border-border bg-background/55 px-3 py-2.5 transition-colors hover:border-border-strong hover:bg-surface-2/80">
+            <div className="flex min-h-14 items-center rounded-card border border-border-strong bg-surface-1 px-3 shadow-overlay transition-colors hover:border-foreground/25 hover:bg-surface-2">
               <DensityToggle density={density} onChange={setDensity} />
             </div>
           </FilterBar>
         </section>
-
-        <ActiveFilters
-          chips={ex.chips}
-          onRemove={ex.removeChip}
-          onClearAll={ex.clearAll}
-        />
 
         <CatalogSourceNote selection={threadCatalog} />
 

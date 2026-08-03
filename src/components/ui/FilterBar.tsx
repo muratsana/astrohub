@@ -30,7 +30,6 @@ import { useIsNarrow } from './useIsNarrow';
  */
 export function FilterBar({
   children,
-  columns = 4,
   className,
   /**
    * Çekmece düğmesinde gösterilecek aktif filtre sayısı.
@@ -47,9 +46,6 @@ export function FilterBar({
   className?: string;
   activeCount?: number;
 }) {
-  const lg = { 2: 'lg:grid-cols-2', 3: 'lg:grid-cols-3', 4: 'lg:grid-cols-4' }[
-    columns
-  ];
   const narrow = useIsNarrow();
   const [open, setOpen] = useState(false);
   const titleId = useId();
@@ -106,9 +102,8 @@ export function FilterBar({
   const grid = (
     <div
       className={cn(
-        'grid gap-2 sm:grid-cols-2',
+        'flex flex-wrap items-stretch gap-2',
         !narrow && 'mb-4',
-        lg,
         className
       )}
     >
@@ -200,24 +195,35 @@ export function FilterCell({
   htmlFor,
   children,
   className,
+  active = false,
 }: {
   label: string;
-  htmlFor: string;
+  htmlFor?: string;
   children: ReactNode;
   className?: string;
+  active?: boolean;
 }) {
+  const labelClass = 'label block text-muted-foreground';
+
   return (
     <div
       className={cn(
-        'flex min-h-14 flex-col justify-center rounded-card border border-border-strong bg-surface-1 px-4 py-2 shadow-overlay',
+        'flex min-h-14 min-w-[10rem] flex-1 flex-col justify-center rounded-card border px-4 py-2 shadow-overlay',
         'transition-colors hover:border-foreground/25 hover:bg-surface-2',
         'has-[:focus-visible]:border-primary has-[:focus-visible]:bg-surface-2 has-[:focus-visible]:shadow-[0_0_0_1px_var(--color-primary)]',
+        active
+          ? 'border-primary/60 bg-primary/10'
+          : 'border-border-strong bg-surface-1',
         className
       )}
     >
-      <label htmlFor={htmlFor} className="label block text-muted-foreground">
-        {label}
-      </label>
+      {htmlFor ? (
+        <label htmlFor={htmlFor} className={labelClass}>
+          {label}
+        </label>
+      ) : (
+        <p className={labelClass}>{label}</p>
+      )}
       {children}
     </div>
   );
@@ -251,9 +257,12 @@ export function FilterToggle({
   return (
     <div
       className={cn(
-        'flex min-h-14 items-center rounded-card border border-border-strong bg-surface-1 px-4 py-2 shadow-overlay',
+        'flex min-h-14 min-w-[10rem] flex-1 items-center rounded-card border px-4 py-2 shadow-overlay',
         'transition-colors hover:border-foreground/25 hover:bg-surface-2',
         'has-[:focus-visible]:border-primary has-[:focus-visible]:bg-surface-2 has-[:focus-visible]:shadow-[0_0_0_1px_var(--color-primary)]',
+        checked
+          ? 'border-primary/60 bg-primary/10'
+          : 'border-border-strong bg-surface-1',
         className
       )}
     >

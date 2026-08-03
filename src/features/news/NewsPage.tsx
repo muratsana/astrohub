@@ -5,12 +5,12 @@ import {
   FilterCell,
   filterControlClass,
 } from '@/components/ui/FilterBar';
-import { ActiveFilters } from '@/components/ui/ActiveFilters';
-import { Input } from '@/components/ui/Input';
+import { Input, Select } from '@/components/ui/Input';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
-import { ToolBar, ResultCount } from '@/components/ui/ToolBar';
+import { ResultCount } from '@/components/ui/ToolBar';
+import { ViewToggle } from '@/components/ui/ViewToggle';
 import {
   EditorialList,
   type EditorialItem,
@@ -110,8 +110,13 @@ export function NewsPage() {
           yoktu. Kategori sekmesi az sayıda kategoriyi iyi gösteriyor ama
           "perseid" arayan kullanıcı sekmelerde gezinmek zorunda kalıyordu.
         */}
-        <FilterBar activeCount={ex.chips.length} columns={2}>
-          <FilterCell label="Ara" htmlFor="news-search">
+        <FilterBar activeCount={ex.chips.length}>
+          <FilterCell
+            label="Ara"
+            htmlFor="news-search"
+            active={ex.searchInput.trim().length > 0}
+            className="min-w-[20rem] flex-[2_1_20rem]"
+          >
             <Input
               id="news-search"
               type="search"
@@ -121,17 +126,11 @@ export function NewsPage() {
               className={filterControlClass}
             />
           </FilterCell>
-        </FilterBar>
-
-        <ActiveFilters
-          chips={ex.chips}
-          onRemove={ex.removeChip}
-          onClearAll={ex.clearAll}
-        />
-
-        <div className="mb-4 grid gap-px border border-border bg-border">
-          <div className="bg-surface-1 px-3 py-2">
-            <p className="label mb-2">Kategori</p>
+          <FilterCell
+            label="Kategori"
+            active={category !== 'hepsi'}
+            className="min-w-[30rem] flex-[3_1_30rem]"
+          >
             <SegmentedControl
               value={category}
               options={categories.map((c) => ({
@@ -142,24 +141,28 @@ export function NewsPage() {
               onChange={setCategory}
               ariaLabel="Haber kategorileri"
             />
+          </FilterCell>
+          <FilterCell label="Sırala" htmlFor="news-sort" className="max-w-[14rem]">
+            <Select
+              id="news-sort"
+              value={ex.query.sort}
+              onChange={(e) => ex.setSort(e.target.value)}
+              className={filterControlClass}
+            >
+              {newsSpec.sorts.map((s) => (
+                <option key={s.value} value={s.value}>
+                  {s.label}
+                </option>
+              ))}
+            </Select>
+          </FilterCell>
+          <div className="flex min-h-14 items-center rounded-card border border-border-strong bg-surface-1 px-3 shadow-overlay">
+            <ViewToggle mode={view} onChange={setView} />
           </div>
-        </div>
-
-        <ToolBar
-          left={
+          <div className="flex min-h-14 items-center rounded-card border border-border-strong bg-surface-1 px-4 shadow-overlay">
             <ResultCount current={ex.total} total={all.length} noun="haber" />
-          }
-          sort={{
-            id: 'news-sort',
-            value: ex.query.sort,
-            onChange: ex.setSort,
-            options: newsSpec.sorts.map((s) => ({
-              value: s.value,
-              label: s.label,
-            })),
-          }}
-          view={{ mode: view, onChange: setView }}
-        />
+          </div>
+        </FilterBar>
 
         <EditorialList
           view={view}
