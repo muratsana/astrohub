@@ -1,10 +1,7 @@
-import type { ReactNode } from 'react';
+import { lazy, Suspense, type ReactNode } from 'react';
 import { HeroSection } from './sections/HeroSection';
 import { TonightPanel } from './sections/TonightPanel';
 import { RecentRecords } from './sections/RecentRecords';
-import { NewsStrip } from './sections/NewsStrip';
-import { UpcomingEvents } from './sections/UpcomingEvents';
-import { RecentListings } from './sections/RecentListings';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { organizationJsonLd } from '@/lib/seo';
 import {
@@ -12,6 +9,22 @@ import {
   visibilityClass,
   type HomeModuleView,
 } from './homeLayout';
+
+const NewsStrip = lazy(() =>
+  import('./sections/NewsStrip').then((module) => ({
+    default: module.NewsStrip,
+  }))
+);
+const UpcomingEvents = lazy(() =>
+  import('./sections/UpcomingEvents').then((module) => ({
+    default: module.UpcomingEvents,
+  }))
+);
+const RecentListings = lazy(() =>
+  import('./sections/RecentListings').then((module) => ({
+    default: module.RecentListings,
+  }))
+);
 
 /**
  * ANA SAYFA — Rasathane Terminali.
@@ -103,30 +116,40 @@ const SECTIONS: Record<string, (m: HomeModuleView) => ReactNode> = {
     />
   ),
   news: (m) => (
-    <NewsStrip
-      limit={m.item_limit}
-      layout={m.layout}
-      subtitle={m.subtitle ?? undefined}
-      title={m.title ?? undefined}
-    />
+    <LazySection>
+      <NewsStrip
+        limit={m.item_limit}
+        layout={m.layout}
+        subtitle={m.subtitle ?? undefined}
+        title={m.title ?? undefined}
+      />
+    </LazySection>
   ),
   events: (m) => (
-    <UpcomingEvents
-      limit={m.item_limit}
-      layout={m.layout}
-      subtitle={m.subtitle ?? undefined}
-      title={m.title ?? undefined}
-    />
+    <LazySection>
+      <UpcomingEvents
+        limit={m.item_limit}
+        layout={m.layout}
+        subtitle={m.subtitle ?? undefined}
+        title={m.title ?? undefined}
+      />
+    </LazySection>
   ),
   listings: (m) => (
-    <RecentListings
-      limit={m.item_limit}
-      layout={m.layout}
-      subtitle={m.subtitle ?? undefined}
-      title={m.title ?? undefined}
-    />
+    <LazySection>
+      <RecentListings
+        limit={m.item_limit}
+        layout={m.layout}
+        subtitle={m.subtitle ?? undefined}
+        title={m.title ?? undefined}
+      />
+    </LazySection>
   ),
 };
+
+function LazySection({ children }: { children: ReactNode }) {
+  return <Suspense fallback={null}>{children}</Suspense>;
+}
 
 /**
  * Mobil/masaüstü görünürlüğü.

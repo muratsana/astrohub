@@ -148,8 +148,9 @@ describe('HomePage · bölümler', () => {
    */
   it('hava verisi yokken gece skoru göstermez', () => {
     renderHome();
-    expect(screen.queryByText(/çok iyi gece|i̇yi gece|orta gece|zayıf gece/i))
-      .not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/çok iyi gece|i̇yi gece|orta gece|zayıf gece/i)
+    ).not.toBeInTheDocument();
   });
 
   it('hedef süzgeci göstermiyor', () => {
@@ -167,10 +168,10 @@ describe('HomePage · bölümler', () => {
     expect(screen.getAllByText(/IC 434/).length).toBeGreaterThan(0);
   });
 
-  it('etkinlikleri tablo olarak listeler', () => {
+  it('etkinlikleri tablo olarak listeler', async () => {
     renderHome();
     expect(
-      screen.getByRole('heading', { name: /yaklaşan etkinlikler/i })
+      await screen.findByRole('heading', { name: /yaklaşan etkinlikler/i })
     ).toBeInTheDocument();
     // Ajanda satırı: etkinlik adı tam kontrastta bir bağlantı olarak
     // okunmalı. Tablo düzeninde ad diğer hücrelerle aynı ağırlıktaydı.
@@ -183,17 +184,17 @@ describe('HomePage · bölümler', () => {
     expect(links.length).toBeGreaterThan(0);
   });
 
-  it('haberler ve yazılar bölümlerini içerir', () => {
+  it('haberler ve yazılar bölümlerini içerir', async () => {
     renderHome();
     for (const name of [/^haberler$/i, /^yazılar$/i]) {
-      expect(screen.getByRole('heading', { name })).toBeInTheDocument();
+      expect(await screen.findByRole('heading', { name })).toBeInTheDocument();
     }
   });
 
-  it('son ilanları fiyatıyla gösterir', () => {
+  it('son ilanları fiyatıyla gösterir', async () => {
     renderHome();
     expect(
-      screen.getByRole('heading', { name: /Son İlanlar/ })
+      await screen.findByRole('heading', { name: /Son İlanlar/ })
     ).toBeInTheDocument();
     const links = screen
       .getAllByRole('link')
@@ -211,17 +212,21 @@ describe('HomePage · bölümler', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('bölümler istenen sırada dizilir', () => {
+  it('bölümler istenen sırada dizilir', async () => {
     // Sıra bir öncelik beyanı (bkz. HomePage doc): gökyüzü → topluluk →
     // okunacaklar → takvim → pazaryeri. Kayması sessizce olmasın.
     renderHome();
-    const order = [
+    const names = [
       /^bu gece$/i,
       /galeriden son yüklenenler/i,
       /^haberler$/i,
       /yaklaşan etkinlikler/i,
       /Son İlanlar/,
-    ].map((name) => screen.getByRole('heading', { name }));
+    ];
+    const order: HTMLElement[] = [];
+    for (const name of names) {
+      order.push(await screen.findByRole('heading', { name }));
+    }
 
     for (let i = 1; i < order.length; i++) {
       const relation = order[i - 1].compareDocumentPosition(order[i]);

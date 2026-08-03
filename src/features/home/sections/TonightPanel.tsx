@@ -55,7 +55,7 @@ const GECE_PARAM = 'gece';
  * kolonların arasında bir saç teli çizgi çıkıyor, fazlası çıkmıyor.
  */
 export function TonightPanel() {
-  const { permission, setObservingSite } = useLocationContext();
+  const { permission, location, setObservingSite } = useLocationContext();
   const { theme } = useTheme();
 
   /*
@@ -151,7 +151,7 @@ export function TonightPanel() {
     (place: BestPlace) => {
       setObservingSite({
         label: place.site.name,
-        provinceSlug: place.provinceSlug,
+        provinceSlug: place.site.provinceSlug,
         provinceName: place.site.region,
         latitude: place.site.coords.latitude,
         longitude: place.site.coords.longitude,
@@ -251,8 +251,9 @@ export function TonightPanel() {
               score={tonight.score}
               deepSpaceScore={tonight.deepSpaceScore}
               solarSystemScore={tonight.solarSystemScore}
-              bestPlaces={tonight.bestPlaces}
+              bestPlacesDate={tonight.nightDate}
               onUseBestPlace={handleUseBestPlace}
+              bortle={location.bortle ?? null}
               conditions={tonight.conditions}
               locationLabel={tonight.locationLabel}
               dateLabel={tonight.dateLabel}
@@ -395,6 +396,8 @@ function useNightStepScore(
         darkMinutes,
         moonlessMinutes: timeline.moonlessMinutes,
         moonIllumination: moon.illumination,
+        altitude: location.altitude ?? null,
+        bortle: location.bortle ?? null,
       },
       'derinUzay'
     );
@@ -404,6 +407,8 @@ function useNightStepScore(
     location.latitude,
     location.longitude,
     location.timeZone,
+    location.altitude,
+    location.bortle,
   ]);
 }
 
@@ -454,11 +459,30 @@ function scoreColor(score: number) {
  * oynatır ve bu, göz ucuyla bakıldığında bir arıza gibi görünür.
  */
 const BACKDROP_STARS = [
-  [4, 18, 1.4], [11, 62, 1], [17, 31, 1.8], [23, 78, 1.1], [29, 12, 1.3],
-  [34, 51, 1], [39, 84, 1.6], [45, 26, 1.1], [52, 66, 1.4], [57, 8, 1],
-  [61, 44, 1.7], [66, 88, 1.2], [72, 21, 1.3], [77, 58, 1], [82, 35, 1.5],
-  [88, 72, 1.1], [93, 15, 1.4], [97, 49, 1], [8, 41, 1.1], [26, 55, 1.2],
-  [48, 92, 1], [69, 68, 1.1], [85, 5, 1.2], [14, 88, 1.3],
+  [4, 18, 1.4],
+  [11, 62, 1],
+  [17, 31, 1.8],
+  [23, 78, 1.1],
+  [29, 12, 1.3],
+  [34, 51, 1],
+  [39, 84, 1.6],
+  [45, 26, 1.1],
+  [52, 66, 1.4],
+  [57, 8, 1],
+  [61, 44, 1.7],
+  [66, 88, 1.2],
+  [72, 21, 1.3],
+  [77, 58, 1],
+  [82, 35, 1.5],
+  [88, 72, 1.1],
+  [93, 15, 1.4],
+  [97, 49, 1],
+  [8, 41, 1.1],
+  [26, 55, 1.2],
+  [48, 92, 1],
+  [69, 68, 1.1],
+  [85, 5, 1.2],
+  [14, 88, 1.3],
 ] as const;
 
 function BackdropStars() {

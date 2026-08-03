@@ -252,6 +252,7 @@ export function LocationProvider({ children }: { children: ReactNode }) {
         source: 'site',
         cityId: stored.cityId,
         provinceName: stored.provinceName,
+        bortle: stored.bortle,
         altitude: stored.altitude,
       };
     }
@@ -444,6 +445,7 @@ export function LocationProvider({ children }: { children: ReactNode }) {
           longitude: input.longitude,
           label: input.label,
           provinceName: input.provinceName,
+          bortle: input.bortle,
           altitude: input.altitude,
           permission: current,
         });
@@ -684,6 +686,7 @@ export function LocationProvider({ children }: { children: ReactNode }) {
           : undefined,
       label: location.source === 'site' ? location.label : undefined,
       provinceName: location.provinceName,
+      bortle: location.bortle,
       altitude: location.altitude,
       permission: 'dismissed',
     });

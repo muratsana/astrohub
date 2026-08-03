@@ -103,8 +103,10 @@ export interface NightScoreInputs {
   windGust?: number | null;
   /** Eski API uyumluluğu; skor artık şeffaflığı ayrı bileşen yapmıyor. */
   transparencyIndex?: number | null;
-  /** Gözlem noktasının rakımı; özellikle gezegen/Ay gözleminde avantaj sağlar. */
+  /** Gözlem noktasının rakımı; DSO ve gezegen/Ay gözleminde atmosfer yolunu kısaltır. */
   altitude?: number | null;
+  /** Bortle sınıfı; yalnızca derin uzay skorunda ışık kirliliği girdisidir. */
+  bortle?: number | null;
 }
 
 const clamp = (value: number, min = 0, max = 100) =>
@@ -234,6 +236,20 @@ function darknessScore(darkMinutes: number, moonlessMinutes: number): number {
   return clamp((moonlessMinutes / darkMinutes) * 100);
 }
 
+function darkDurationScore(darkMinutes: number): number {
+  return clamp((darkMinutes / 240) * 100);
+}
+
+function altitudeScore(altitude: number | null | undefined): number {
+  if (altitude == null) return 0;
+  return clamp((altitude / 2500) * 100);
+}
+
+function bortleScore(bortle: number | null | undefined): number {
+  if (bortle == null) return 0;
+  return clamp(((9 - bortle) / 8) * 100);
+}
+
 function verdictFor(total: number, limited: boolean): NightVerdict {
   if (total >= 85 && !limited) return 'cok-iyi';
   if (total >= 70) return 'iyi';
@@ -263,11 +279,22 @@ export function nightScore(
     profile,
     inputs.windGust
   );
-  const darkness = darknessScore(inputs.darkMinutes, inputs.moonlessMinutes);
+  const moonDarkness = darknessScore(
+    inputs.darkMinutes,
+    inputs.moonlessMinutes
+  );
+  const darkness =
+    profile === 'gunesSistemi'
+      ? darkDurationScore(inputs.darkMinutes)
+      : moonDarkness;
   const altitudeBonus =
-    profile === 'gunesSistemi' && inputs.altitude != null
-      ? clamp((inputs.altitude / 2500) * 100) * 0.08
-      : 0;
+    profile === 'gunesSistemi'
+      ? altitudeScore(inputs.altitude) * 0.08
+      : profile === 'derinUzay'
+        ? altitudeScore(inputs.altitude) * 0.04
+        : 0;
+  const bortleBonus =
+    profile === 'derinUzay' ? bortleScore(inputs.bortle) * 0.08 : 0;
 
   /*
    * Seeing yoksa ağırlığı kalan ikisine oranlarını koruyarak dağıtılıyor.
@@ -282,7 +309,9 @@ export function nightScore(
         comfort * weights.comfort +
         darkness * weights.darkness;
 
-  const total = Math.round((cloudClear / 100) * clamp(base + altitudeBonus));
+  const total = Math.round(
+    (cloudClear / 100) * clamp(base + altitudeBonus + bortleBonus)
+  );
   const limitedBySeeing = seeing === null;
 
   const rows: ScoreRow[] = [
@@ -301,7 +330,7 @@ export function nightScore(
     },
     {
       key: 'darkness',
-      label: 'Karanlık/Ay',
+      label: profile === 'gunesSistemi' ? 'Karanlık' : 'Karanlık/Ay',
       value: Math.round(darkness),
       tone: toneFor(darkness),
     },
@@ -313,12 +342,16 @@ export function nightScore(
     },
   ];
 
-  const { pros, cons } = reasons(inputs, {
-    cloudClear,
-    seeing,
-    darkness,
-    comfort,
-  });
+  const { pros, cons } = reasons(
+    inputs,
+    {
+      cloudClear,
+      seeing,
+      darkness,
+      comfort,
+    },
+    profile
+  );
 
   return {
     total,
@@ -347,7 +380,8 @@ function reasons(
     seeing: number | null;
     darkness: number;
     comfort: number;
-  }
+  },
+  profile: NightProfile
 ): { pros: string[]; cons: string[] } {
   const pros: string[] = [];
   const cons: string[] = [];
@@ -371,9 +405,29 @@ function reasons(
     cons.push('Üst atmosfer verisi yok — seeing tahmin edilemiyor');
   }
 
+  if (profile === 'derinUzay' && inputs.bortle != null) {
+    if (inputs.bortle <= 3) {
+      pros.push(`Bortle ${inputs.bortle} — derin uzay için karanlık saha`);
+    } else if (inputs.bortle >= 6) {
+      cons.push(`Bortle ${inputs.bortle} — sönük galaksiler zorlaşır`);
+    }
+  }
+
+  if (
+    (profile === 'derinUzay' || profile === 'gunesSistemi') &&
+    inputs.altitude != null &&
+    inputs.altitude >= 1500
+  ) {
+    pros.push(`Rakım ${Math.round(inputs.altitude)} m — atmosfer yolu kısa`);
+  }
+
   if (inputs.darkMinutes <= 0) {
     cons.push(
       'Tam karanlık oluşmuyor — astronomik alacakaranlık gece boyu sürüyor'
+    );
+  } else if (profile === 'gunesSistemi') {
+    pros.push(
+      `Karanlık süre ${durationText(inputs.darkMinutes)} — zaman yeterli`
     );
   } else if (scores.darkness > 50) {
     pros.push(

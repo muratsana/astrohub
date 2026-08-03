@@ -288,15 +288,46 @@ describe('nightScore — iki profil', () => {
     expect(solar.recommendation).toContain('Ay parlak olsa bile');
   });
 
-  it('rakım güneş sistemi skorunu yükseltir, derin uzayı oynatmaz', () => {
-    const alcak = at({ altitude: 0 });
-    const yuksek = at({ altitude: 2400 });
+  it('rakım hem derin uzay hem güneş sistemi skorunu yükseltir', () => {
+    const gece = {
+      cloudCover: 15,
+      seeingIndex: 2.5,
+      moonlessMinutes: 180,
+      moonIllumination: 0.45,
+    };
+    const alcak = at({ ...gece, altitude: 0 });
+    const yuksek = at({ ...gece, altitude: 2400 });
 
     expect(nightScore(yuksek, 'gunesSistemi').total).toBeGreaterThan(
       nightScore(alcak, 'gunesSistemi').total
     );
-    expect(nightScore(yuksek, 'derinUzay').total).toBe(
+    expect(nightScore(yuksek, 'derinUzay').total).toBeGreaterThan(
       nightScore(alcak, 'derinUzay').total
+    );
+  });
+
+  it('Bortle yalnızca derin uzay skorunu etkiler', () => {
+    const gece = { cloudCover: 15, seeingIndex: 2.5, moonlessMinutes: 180 };
+    const koyu = at({ ...gece, bortle: 2 });
+    const parlak = at({ ...gece, bortle: 8 });
+
+    expect(nightScore(koyu, 'derinUzay').total).toBeGreaterThan(
+      nightScore(parlak, 'derinUzay').total
+    );
+    expect(nightScore(koyu, 'gunesSistemi').total).toBe(
+      nightScore(parlak, 'gunesSistemi').total
+    );
+  });
+
+  it('ay parlaklığı güneş sistemi skorunu değiştirmez', () => {
+    const aysiz = at({ moonlessMinutes: 360, moonIllumination: 0 });
+    const dolunay = at({ moonlessMinutes: 0, moonIllumination: 1 });
+
+    expect(nightScore(aysiz, 'gunesSistemi').total).toBe(
+      nightScore(dolunay, 'gunesSistemi').total
+    );
+    expect(nightScore(aysiz, 'derinUzay').total).toBeGreaterThan(
+      nightScore(dolunay, 'derinUzay').total
     );
   });
 });

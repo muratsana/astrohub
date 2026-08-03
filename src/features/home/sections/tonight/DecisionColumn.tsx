@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Button } from '@/components/ui/Button';
 import { formatClock } from '@/domain/astronomy/ephemeris';
 import type { NightScore, NightVerdict } from '@/domain/astronomy/nightScore';
@@ -29,8 +29,9 @@ interface Props {
   score: NightScore | null;
   deepSpaceScore?: NightScore | null;
   solarSystemScore?: NightScore | null;
-  bestPlaces?: BestPlace[];
+  bestPlacesDate: Date;
   onUseBestPlace?: (place: BestPlace) => void;
+  bortle?: number | null;
   conditions: SkyState;
   locationLabel: string;
   dateLabel: string;
@@ -64,15 +65,29 @@ export function DecisionColumn({
   score,
   deepSpaceScore = score,
   solarSystemScore = score,
-  bestPlaces = [],
+  bestPlacesDate,
   onUseBestPlace,
+  bortle = null,
   conditions,
   locationLabel,
   dateLabel,
   timeZone,
 }: Props) {
   const [tab, setTab] = useState<'dso' | 'solar' | 'places'>('dso');
+  const [bestPlaces, setBestPlaces] = useState<BestPlace[] | null>(null);
   const activeScore = tab === 'solar' ? solarSystemScore : deepSpaceScore;
+
+  useEffect(() => {
+    if (tab !== 'places') return;
+    let alive = true;
+    setBestPlaces(null);
+    void import('./bestPlaces').then(({ bestPlacesForNight }) => {
+      if (alive) setBestPlaces(bestPlacesForNight(bestPlacesDate, 10));
+    });
+    return () => {
+      alive = false;
+    };
+  }, [tab, bestPlacesDate]);
   /*
    * Kolonun üstündeki ışıma HÜKMÜN RENGİ, sabit yeşil değil. Tasarım
    * referansı yeşil bir gradyan gösteriyor ama o örnek "çok iyi" bir
@@ -139,6 +154,7 @@ export function DecisionColumn({
 
       {tab !== 'places' && activeScore && (
         <>
+          <BortleIndicator value={bortle} />
           <div aria-hidden className="h-px bg-border" />
           <ReasonList pros={activeScore.pros} cons={activeScore.cons} />
           <p className="mt-auto rounded-card border border-warning/25 bg-warning/8 px-3.5 py-2.5 text-meta leading-relaxed text-warning">
@@ -181,15 +197,15 @@ function BestPlacesBlock({
   places,
   onUseBestPlace,
 }: {
-  places: BestPlace[];
+  places: BestPlace[] | null;
   onUseBestPlace?: (place: BestPlace) => void;
 }) {
-  const best = places[0];
+  const best = places?.[0];
 
   if (!best) {
     return (
       <p className="rounded-card border border-border bg-surface-2 px-3.5 py-3 text-meta leading-relaxed text-muted-foreground">
-        Gözlem noktası kataloğu boş; en iyi yer sıralaması üretilemedi.
+        En iyi yerler hesaplanıyor.
       </p>
     );
   }
@@ -226,31 +242,47 @@ function BestPlacesBlock({
         )}
       </div>
 
-      <ol className="max-h-[360px] min-h-0 overflow-y-auto pr-1">
+      <ol className="max-h-[330px] min-h-0 overflow-y-auto pr-1">
         {places.map((place, index) => (
           <li
             key={place.site.name}
-            className="grid grid-cols-[1.5rem_minmax(0,1fr)_3.5rem_3.5rem] items-center gap-2 border-b border-border py-2 last:border-b-0"
+            className="border-b border-border last:border-b-0"
           >
-            <span className="num text-meta text-faint">
-              {String(index + 1).padStart(2, '0')}
-            </span>
-            <span className="min-w-0">
-              <span className="block truncate text-meta font-semibold text-foreground">
-                {place.site.name}
+            <button
+              type="button"
+              disabled={!onUseBestPlace}
+              aria-label={`${place.site.name} gözlem yerini kullan`}
+              onClick={() => onUseBestPlace?.(place)}
+              className={cn(
+                'grid w-full grid-cols-[1.5rem_minmax(0,1fr)_3.5rem_3.5rem] items-center gap-2 rounded-card px-2 py-2 text-left transition-colors',
+                onUseBestPlace
+                  ? 'hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60'
+                  : 'cursor-default'
+              )}
+            >
+              <span className="num text-meta text-faint">
+                {String(index + 1).padStart(2, '0')}
               </span>
-              <span className="block truncate text-[0.68rem] text-faint">
-                {place.site.region} · aysız{' '}
-                {durationText(place.moonlessMinutes)}
+              <span className="min-w-0">
+                <span className="block truncate text-meta font-semibold text-foreground">
+                  {place.site.name}
+                </span>
+                <span className="block truncate text-[0.68rem] text-faint">
+                  Bortle {place.site.bortle} ·{' '}
+                  <span className="num">{place.site.altitude}</span> m · aysız{' '}
+                  {durationText(place.moonlessMinutes)}
+                </span>
               </span>
-            </span>
-            <span className="text-right text-[0.68rem] text-muted-foreground">
-              DSO <span className="num text-primary">{place.dsoScore}</span>
-            </span>
-            <span className="text-right text-[0.68rem] text-muted-foreground">
-              GS{' '}
-              <span className="num text-success">{place.solarSystemScore}</span>
-            </span>
+              <span className="text-right text-[0.68rem] text-muted-foreground">
+                DSO <span className="num text-primary">{place.dsoScore}</span>
+              </span>
+              <span className="text-right text-[0.68rem] text-muted-foreground">
+                GS{' '}
+                <span className="num text-success">
+                  {place.solarSystemScore}
+                </span>
+              </span>
+            </button>
           </li>
         ))}
       </ol>
@@ -367,6 +399,47 @@ function ScoreBlock({
         ))}
       </dl>
     </>
+  );
+}
+
+function BortleIndicator({ value }: { value: number | null }) {
+  if (value == null) return null;
+
+  const level = Math.min(9, Math.max(1, Math.round(value)));
+  const filled = 10 - level;
+  const tone =
+    level <= 3 ? 'bg-success' : level <= 5 ? 'bg-warning' : 'bg-danger';
+
+  return (
+    <div className="rounded-card border border-border bg-surface-1 px-3 py-2.5">
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <span className="text-meta font-semibold text-muted-foreground">
+          Bortle Skalası
+        </span>
+        <span className="num text-body-sm font-bold text-foreground">
+          {level}/9
+        </span>
+      </div>
+      <div
+        aria-label={`Bortle ${level}`}
+        className="flex h-5 items-center gap-1 rounded-card border border-border-strong bg-background p-1"
+      >
+        {Array.from({ length: 9 }, (_, index) => (
+          <span
+            key={index}
+            aria-hidden
+            className={cn(
+              'min-w-0 flex-1 rounded-sm',
+              index < filled ? cn('h-3.5', tone) : 'h-2 bg-surface-3'
+            )}
+          />
+        ))}
+        <span
+          aria-hidden
+          className="ml-0.5 h-2.5 w-1 shrink-0 rounded-sm bg-border-strong"
+        />
+      </div>
+    </div>
   );
 }
 

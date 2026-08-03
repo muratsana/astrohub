@@ -23,7 +23,6 @@ import {
 } from '@/domain/astronomy/ephemeris';
 import { nightScore, type NightScore } from '@/domain/astronomy/nightScore';
 import { zonedMidnight } from '@/domain/time/zonedDay';
-import { bestPlacesForNight, type BestPlace } from './bestPlaces';
 
 /**
  * "BU GECE" MODÜLÜNÜN VERİ KATMANI.
@@ -72,7 +71,7 @@ export interface TonightData {
   score: NightScore | null;
   deepSpaceScore: NightScore | null;
   solarSystemScore: NightScore | null;
-  bestPlaces: BestPlace[];
+  nightDate: Date;
   /** Dakikada bir güncellenen an. */
   now: Date;
   /** Eksen üzerinde "şu an" (0–1); gece dışındaysa null. */
@@ -169,6 +168,7 @@ export function useTonight(offsetDays = 0): TonightData {
    */
   const dayStartMs =
     zonedMidnight(now, location.timeZone).getTime() + offsetDays * 86_400_000;
+  const nightDate = useMemo(() => new Date(dayStartMs), [dayStartMs]);
 
   /*
    * HAVA SORGUSU GECENİN ORTASINA GÖRE.
@@ -255,8 +255,15 @@ export function useTonight(offsetDays = 0): TonightData {
       moonlessMinutes: timeline.moonlessMinutes,
       moonIllumination: sky.moon.illumination,
       altitude: location.altitude ?? null,
+      bortle: location.bortle ?? null,
     };
-  }, [weather, timeline, sky.moon.illumination, location.altitude]);
+  }, [
+    weather,
+    timeline,
+    sky.moon.illumination,
+    location.altitude,
+    location.bortle,
+  ]);
 
   const deepSpaceScore = useMemo(
     () => (scoreInputs ? nightScore(scoreInputs, 'derinUzay') : null),
@@ -266,11 +273,6 @@ export function useTonight(offsetDays = 0): TonightData {
     () => (scoreInputs ? nightScore(scoreInputs, 'gunesSistemi') : null),
     [scoreInputs]
   );
-  const bestPlaces = useMemo(
-    () => bestPlacesForNight(new Date(dayStartMs), 10),
-    [dayStartMs]
-  );
-
   /*
    * İmleç oranı burada, `timeline.now` ile değil. Çizelge güne göre
    * hesaplanıyor ve o alan hesap anındaki değeri taşıyor; dakikalık ibre
@@ -297,7 +299,7 @@ export function useTonight(offsetDays = 0): TonightData {
     score: deepSpaceScore,
     deepSpaceScore,
     solarSystemScore,
-    bestPlaces,
+    nightDate,
     now,
     nowAt,
     dateLabel,

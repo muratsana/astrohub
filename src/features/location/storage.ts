@@ -37,6 +37,8 @@ export interface StoredLocation {
   provinceName?: string;
   /** Gözlem noktası seçildiyse rakım. */
   altitude?: number;
+  /** Gözlem noktası seçildiyse Bortle sınıfı. */
+  bortle?: number;
   permission?: PermissionState;
 }
 

@@ -60,6 +60,8 @@ function renderColumn(
   return render(
     <DecisionColumn
       score={score}
+      bestPlacesDate={new Date('2026-08-09T00:00:00+03:00')}
+      bortle={3}
       conditions={conditions}
       locationLabel="Ankara"
       dateLabel="31 Temmuz Cuma"
@@ -108,10 +110,43 @@ describe('DecisionColumn · skor dolu', () => {
     expect(screen.getByText(SCORE.recommendation)).toBeInTheDocument();
   });
 
+  it('seçili konumun Bortle göstergesini basıyor', () => {
+    renderColumn();
+    expect(screen.getByText('Bortle Skalası')).toBeInTheDocument();
+    expect(screen.getByLabelText('Bortle 3')).toBeInTheDocument();
+  });
+
+  it('en iyi yerler listesindeki satırlar seçilebilir', async () => {
+    let selected = '';
+    render(
+      <DecisionColumn
+        score={SCORE}
+        bestPlacesDate={new Date('2026-08-09T00:00:00+03:00')}
+        onUseBestPlace={(place) => {
+          selected = place.site.name;
+        }}
+        conditions={READY}
+        locationLabel="Ankara"
+        dateLabel="31 Temmuz Cuma"
+        timeZone="Europe/Istanbul"
+      />
+    );
+
+    screen.getByRole('tab', { name: 'En İyi Yerler' }).click();
+    const choices = await screen.findAllByRole('button', {
+      name: /gözlem yerini kullan/i,
+    });
+
+    choices[1].click();
+    expect(selected).toBeTruthy();
+  });
+
   it('güncelleme saatini gösteriyor, servis künyesini arayüzde göstermiyor', () => {
     renderColumn();
     expect(screen.getByText('18:40')).toBeInTheDocument();
-    expect(screen.queryByText(/Open-Meteo|efemeris yerel hesap/)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/Open-Meteo|efemeris yerel hesap/)
+    ).not.toBeInTheDocument();
   });
 
   /*
@@ -149,7 +184,9 @@ describe('DecisionColumn · seeing ölçülemediğinde', () => {
     });
 
     expect(limited.limitedBySeeing).toBe(true);
-    expect(screen.getByText(/hüküm bir kademe sınırlandı/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/hüküm bir kademe sınırlandı/i)
+    ).toBeInTheDocument();
     expect(screen.queryByText('Çok iyi gece')).not.toBeInTheDocument();
   });
 });
