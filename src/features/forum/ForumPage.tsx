@@ -2,13 +2,8 @@ import { Link } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { Input, Select } from '@/components/ui/Input';
 import { ButtonLink } from '@/components/ui/Button';
-import { PageHeader } from '@/components/ui/PageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { ToolBar, ResultCount } from '@/components/ui/ToolBar';
-import {
-  SegmentedControl,
-  type SegmentOption,
-} from '@/components/ui/SegmentedControl';
+import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { CatalogSourceNote } from '@/components/ui/CatalogSourceNote';
 import { useStoredChoice } from '@/components/ui/useViewMode';
 import {
@@ -50,7 +45,6 @@ import { cn } from '@/lib/cn';
  * her ziyarette yeniden yaptırmak, iki kullanımdan birini hep cezalandırır.
  */
 export function ForumPage() {
-
   const [density, setDensity] = useStoredChoice<ForumDensity>(
     'forum',
     forumDensities,
@@ -91,58 +85,100 @@ export function ForumPage() {
       />
 
       <Container className="py-8 sm:py-10">
-        <PageHeader
-          title="Forum"
-          description="Soru sor, gözlem raporu paylaş, kurulum tartış. Yanıt alma ihtimalini en çok artıran şey ekipmanını ve koşullarını yazmak."
-          actions={
-            <ButtonLink to="/forum/yeni" size="sm">
-              Yeni Konu
-            </ButtonLink>
-          }
-        />
+        <section className="mb-4 rounded-card border border-border-strong bg-surface-1/80 p-3 shadow-overlay sm:p-4">
+          <div className="flex flex-col gap-3 border-b border-border pb-3 lg:flex-row lg:items-end lg:justify-between">
+            <div className="min-w-0">
+              <p className="label text-primary">Topluluk Forumu</p>
+              <h1 className="type-page mt-1 text-foreground">Forum</h1>
+              <p className="mt-1 max-w-[62ch] text-meta leading-relaxed text-muted-foreground">
+                Soru sor, gözlem raporu paylaş, kurulum tartış. Ekipmanını ve
+                koşullarını yazarsan daha hızlı yanıt alırsın.
+              </p>
+            </div>
+            <div className="flex shrink-0 flex-wrap items-center gap-2">
+              <span className="tabular rounded-card border border-border bg-background/55 px-2.5 py-1.5 text-meta text-muted-foreground">
+                {ex.total} / {threads.length} konu
+              </span>
+              <ButtonLink to="/forum/yeni" size="sm">
+                Yeni Konu
+              </ButtonLink>
+            </div>
+          </div>
 
-        {/* Kategori filtresi — seçili/inaktif durum ortak segmentten gelir. */}
-        <SegmentedControl
-          ariaLabel="Kategori"
-          value={category}
-          onChange={setCategory}
-          options={forumCategoryOptions}
-          className="mb-4"
-        />
-
-        <FilterBar activeCount={ex.chips.length} columns={3}>
-          <FilterCell label="Ara" htmlFor="forum-search">
-            <Input
-              id="forum-search"
-              type="search"
-              placeholder="Konu başlığı, rozet veya kullanıcı"
-              value={ex.searchInput}
-              onChange={(e) => ex.setSearch(e.target.value)}
-              className={filterControlClass}
-            />
-          </FilterCell>
-          <FilterCell label="Rozet" htmlFor="forum-label">
-            <Select
-              id="forum-label"
-              value={ex.query.facets.rozet?.[0] ?? 'hepsi'}
-              onChange={(e) => tekSec('rozet', e.target.value)}
-              className={filterControlClass}
+          <FilterBar
+            activeCount={ex.chips.length}
+            columns={4}
+            className="mb-0 mt-3"
+          >
+            <FilterCell
+              label="Ara"
+              htmlFor="forum-search"
+              className="lg:col-span-2"
             >
-              <option value="hepsi">Tümü</option>
-              {forumLabelOrder.map((id) => (
-                <option key={id} value={id}>
-                  {forumLabels[id].name}
-                </option>
-              ))}
-            </Select>
-          </FilterCell>
-          <FilterToggle
-            id="forum-unsolved"
-            label="Yalnızca yanıt bekleyenler"
-            checked={(ex.query.facets.cozulmemis?.length ?? 0) > 0}
-            onChange={() => ex.toggleFacet('cozulmemis', 'evet')}
-          />
-        </FilterBar>
+              <Input
+                id="forum-search"
+                type="search"
+                placeholder="Konu, rozet veya kullanıcı"
+                value={ex.searchInput}
+                onChange={(e) => ex.setSearch(e.target.value)}
+                className={filterControlClass}
+              />
+            </FilterCell>
+            <FilterCell label="Kategori" htmlFor="forum-category">
+              <Select
+                id="forum-category"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className={filterControlClass}
+              >
+                <option value="hepsi">Tüm kategoriler</option>
+                {forumCategoryOrder.map((id) => (
+                  <option key={id} value={id}>
+                    {forumCategories[id].name}
+                  </option>
+                ))}
+              </Select>
+            </FilterCell>
+            <FilterCell label="Rozet" htmlFor="forum-label">
+              <Select
+                id="forum-label"
+                value={ex.query.facets.rozet?.[0] ?? 'hepsi'}
+                onChange={(e) => tekSec('rozet', e.target.value)}
+                className={filterControlClass}
+              >
+                <option value="hepsi">Tüm rozetler</option>
+                {forumLabelOrder.map((id) => (
+                  <option key={id} value={id}>
+                    {forumLabels[id].name}
+                  </option>
+                ))}
+              </Select>
+            </FilterCell>
+            <FilterCell label="Sırala" htmlFor="forum-sort">
+              <Select
+                id="forum-sort"
+                value={ex.query.sort}
+                onChange={(e) => ex.setSort(e.target.value)}
+                className={filterControlClass}
+              >
+                {forumSpec.sorts.map((s) => (
+                  <option key={s.value} value={s.value}>
+                    {s.label}
+                  </option>
+                ))}
+              </Select>
+            </FilterCell>
+            <FilterToggle
+              id="forum-unsolved"
+              label="Yanıt bekleyenler"
+              checked={(ex.query.facets.cozulmemis?.length ?? 0) > 0}
+              onChange={() => ex.toggleFacet('cozulmemis', 'evet')}
+            />
+            <div className="flex items-center rounded-card border border-border bg-background/55 px-3 py-2.5 transition-colors hover:border-border-strong hover:bg-surface-2/80">
+              <DensityToggle density={density} onChange={setDensity} />
+            </div>
+          </FilterBar>
+        </section>
 
         <ActiveFilters
           chips={ex.chips}
@@ -151,26 +187,6 @@ export function ForumPage() {
         />
 
         <CatalogSourceNote selection={threadCatalog} />
-
-        <ToolBar
-          left={
-            <ResultCount
-              current={ex.total}
-              total={threads.length}
-              noun="konu"
-            />
-          }
-          sort={{
-            id: 'forum-sort',
-            value: ex.query.sort,
-            onChange: ex.setSort,
-            options: forumSpec.sorts.map((s) => ({
-              value: s.value,
-              label: s.label,
-            })),
-          }}
-          extra={<DensityToggle density={density} onChange={setDensity} />}
-        />
 
         {result.length === 0 ? (
           <EmptyState
@@ -185,7 +201,10 @@ export function ForumPage() {
         ) : (
           <ul className="rounded-card border border-border bg-surface-1">
             {result.map((thread) => (
-              <li key={thread.id} className="border-b border-border last:border-0">
+              <li
+                key={thread.id}
+                className="border-b border-border last:border-0"
+              >
                 <ThreadRow thread={thread} density={density} />
               </li>
             ))}
@@ -204,24 +223,15 @@ export function ForumPage() {
  * yerleşik bir simge yok. Öğrenilmesi gereken iki simge, okunması
  * gereken iki kelimeden pahalı.
  */
-const densityOptions: { value: ForumDensity; label: string; title: string }[] = [
-  { value: 'baslik', label: 'Başlık', title: 'Yalnızca başlıkları göster' },
-  {
-    value: 'detayli',
-    label: 'Başlık + metin',
-    title: 'Başlık ve mesajın ilk satırını göster',
-  },
-];
-
-const forumCategoryOptions: SegmentOption<string>[] = [
-  { value: 'hepsi', label: 'Tümü' },
-  ...forumCategoryOrder.map((id) => ({
-    value: id,
-    label: forumCategories[id].name,
-    tooltip: forumCategories[id].description,
-    selectedClassName: forumCategories[id].className,
-  })),
-];
+const densityOptions: { value: ForumDensity; label: string; title: string }[] =
+  [
+    { value: 'baslik', label: 'Başlık', title: 'Yalnızca başlıkları göster' },
+    {
+      value: 'detayli',
+      label: 'Başlık + metin',
+      title: 'Başlık ve mesajın ilk satırını göster',
+    },
+  ];
 
 function DensityToggle({
   density,
