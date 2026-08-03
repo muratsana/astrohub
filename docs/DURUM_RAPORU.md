@@ -33,8 +33,8 @@ kalan iş ağırlıklı olarak **kanıtlama** ve **cilalama**.
 | Canlı tablo | 84 · RLS açık: **83/84** (istisna: PostGIS `spatial_ref_sys`) |
 | RLS politikası | 176 |
 | Edge fonksiyonu | 6 (meteoblue, plate-solve, plate-solve-poll, radyo-durum, youtube, podcast-rss) |
-| Test | **2.041 test / 164 dosya** — hepsi geçiyor |
-| Rota | 80 tanım · 490 prerender edilmiş statik HTML · 159 Vercel rewrite |
+| Test | **2.042 test / 165 dosya** — hepsi geçiyor |
+| Rota | 80 tanım · 491 prerender edilmiş statik HTML · 160 Vercel rewrite |
 | Sitemap | 484 adres (ince şehir sayfaları bilerek hariç) |
 | İlk rota JS | **197.2 kB gzip** (bütçe 200) · CSS 14.5 kB (bütçe 25) |
 
@@ -305,7 +305,7 @@ canonical, paylaşılabilir gözlem planı, atıf ve telif.
 
 ### Faz 17 — Test stratejisi ve kabul kriterleri · **NOT_STARTED**
 
-> **Not:** 2.034 test ve 12 kapı mevcut. Bu faz **kabul kriterlerinin
+> **Not:** 2.042 test ve 12 kapı mevcut. Bu faz **kabul kriterlerinin
 > tek tek doğrulanması** demek; yeni test yazmaktan çok var olanı
 > belgenin listesiyle eşleştirme işi.
 
@@ -509,6 +509,7 @@ gerçek koda göre hâlâ açıktı.
 - `src/components/shell/Footer.tsx`, `src/app/navigation.ts`, `src/app/navigation.test.ts`, `src/features/site/navLinks.ts` — footer tekrar eden modül nav yerine kurumsal bağlantıları gösteriyor.
 - `src/features/home/sections/tonight/TimelineColumn.tsx`, `src/features/home/sections/tonight/NightTimelineChart.tsx`, `src/features/home/sections/tonight/TargetsColumn.tsx`, `src/features/home/sections/tonight/DecisionColumn.tsx` — Bu Gece modülünde formül metni kaldırıldı, `Aysız Pencere` etiketi eklendi, zaman metrikleri çakışmayacak grid'e alındı, grafik yükseltildi, hedef türü filtresi kaldırıldı ve hedef listesi 10 objeye çıkarıldı.
 - `src/domain/astronomy/nightScore.ts` — gece skoru 4 denetlenebilir girdiye sadeleştirildi: `Bulut örtüsü`, `Seeing`, `Karanlık/Ay`, `Rüzgâr/Çiy`; ayrı `Açıklık`, `Şeffaflık` ve `Ay aydınlığı` satırları kaldırıldı.
+- `src/domain/astronomy/nightScore.ts` — karar gerekçesindeki ay satırı `Aysız pencere` metriğine çevrildi; astronomik karanlığın yarısından fazlaysa artı, azsa eksi olarak gösteriliyor.
 - `src/components/shell/Logo.tsx`, `src/components/shell/Footer.tsx` — üst bar ve footer logosuna gri `(Beta test yayını)` etiketi eklendi; footer altındaki tekrar eden veri notu kaldırıldı ve telif satırı ana footer satırına taşındı.
 - `src/components/shell/Topbar.tsx`, `src/components/ui/EditorialList.tsx` — üst bar yüksekliği yaklaşık %15 artırıldı; haber/yazı liste başlıklarının hover rengi beyaza eşitlendi.
 

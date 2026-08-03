@@ -91,6 +91,20 @@ describe('nightScore — karanlık', () => {
     expect(dolunay.verdict).not.toBe('cok-iyi');
   });
 
+  it('aysız pencere yarıdan fazlaysa artı gerekçe oluyor', () => {
+    const score = nightScore(at({ darkMinutes: 360, moonlessMinutes: 210 }));
+    expect(score.pros.join(' ')).toContain('Aysız pencere 3sa 30dk');
+    expect(score.pros.join(' ')).toContain('yarısından fazla');
+    expect(score.cons.join(' ')).not.toContain('Aysız pencere');
+  });
+
+  it('aysız pencere yarıdan azsa eksi gerekçe oluyor', () => {
+    const score = nightScore(at({ darkMinutes: 360, moonlessMinutes: 38 }));
+    expect(score.cons.join(' ')).toContain('Aysız pencere 38 dk');
+    expect(score.cons.join(' ')).toContain('yarısından az');
+    expect(score.pros.join(' ')).not.toContain('Aysız pencere');
+  });
+
   /*
    * Tasarım paketindeki örnek gece: açık, sakin, ama %98 ay tüm gece
    * yukarıda. Referans buna 92 ve "Çok iyi gece" diyor; kendi eksi
@@ -119,7 +133,7 @@ describe('nightScore — karanlık', () => {
     expect(referans.total).toBe(53);
     expect(referans.verdict).toBe('orta');
     expect(referans.recommendation).toContain('dar bant');
-    expect(referans.cons.join(' ')).toContain('ay');
+    expect(referans.cons.join(' ')).toContain('Aysız pencere');
   });
 });
 

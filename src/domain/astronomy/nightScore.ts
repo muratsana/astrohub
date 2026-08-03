@@ -112,6 +112,15 @@ export interface NightScoreInputs {
 const clamp = (value: number, min = 0, max = 100) =>
   Math.min(max, Math.max(min, value));
 
+function durationText(minutes: number): string {
+  const total = Math.max(0, Math.round(minutes));
+  const hours = Math.floor(total / 60);
+  const mins = total % 60;
+  if (hours === 0) return `${mins} dk`;
+  if (mins === 0) return `${hours}sa`;
+  return `${hours}sa ${String(mins).padStart(2, '0')}dk`;
+}
+
 /**
  * Ağırlıklar. Bulut burada YOK — o çarpan.
  *
@@ -356,18 +365,15 @@ function reasons(
     cons.push('Üst atmosfer verisi yok — seeing tahmin edilemiyor');
   }
 
-  const illum = Math.round(inputs.moonIllumination * 100);
-  if (scores.darkness >= 85) {
+  if (inputs.darkMinutes <= 0) {
+    cons.push('Tam karanlık oluşmuyor — astronomik alacakaranlık gece boyu sürüyor');
+  } else if (scores.darkness > 50) {
     pros.push(
-      illum <= 15
-        ? `Ay %${illum} — gece boyunca karanlık`
-        : 'Ay karanlık pencerenin dışında'
+      `Aysız pencere ${durationText(inputs.moonlessMinutes)} — astronomik karanlığın yarısından fazla`
     );
-  } else if (scores.darkness < 30) {
+  } else {
     cons.push(
-      inputs.darkMinutes <= 0
-        ? 'Tam karanlık oluşmuyor — astronomik alacakaranlık gece boyu sürüyor'
-        : `%${illum} ay karanlığın çoğunda yukarıda — aysız pencere ${inputs.moonlessMinutes} dk`
+      `Aysız pencere ${durationText(inputs.moonlessMinutes)} — astronomik karanlığın yarısından az`
     );
   }
 
