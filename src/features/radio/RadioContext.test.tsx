@@ -20,6 +20,7 @@ vi.mock('@/services/content/radioStation', () => ({
 }));
 
 const playContexts: boolean[] = [];
+const audioInstances: FakeAudio[] = [];
 let insideClick = false;
 
 class FakeAudio extends EventTarget {
@@ -28,6 +29,11 @@ class FakeAudio extends EventTarget {
   readyState = 1;
   src = '';
   volume = 1;
+
+  constructor() {
+    super();
+    audioInstances.push(this);
+  }
 
   load = vi.fn();
   pause = vi.fn();
@@ -60,7 +66,9 @@ function Trigger() {
 describe('RadioProvider', () => {
   beforeEach(() => {
     playContexts.length = 0;
+    audioInstances.length = 0;
     insideClick = false;
+    localStorage.clear();
     vi.stubGlobal('Audio', FakeAudio);
   });
 
@@ -77,5 +85,23 @@ describe('RadioProvider', () => {
     fireEvent.click(button);
 
     expect(playContexts[0]).toBe(true);
+  });
+
+  it('kaldırılan ses kontrolünden kalan sessiz ayarı oynatırken düzeltir', async () => {
+    localStorage.setItem('astrohub:radio:volume', '0');
+
+    render(
+      <RadioProvider>
+        <Trigger />
+      </RadioProvider>
+    );
+
+    const button = screen.getByRole('button', { name: 'Dinle' });
+    await waitFor(() => expect(button).not.toBeDisabled());
+
+    fireEvent.click(button);
+
+    expect(audioInstances[0]?.volume).toBe(0.6);
+    expect(localStorage.getItem('astrohub:radio:volume')).toBe('0.6');
   });
 });

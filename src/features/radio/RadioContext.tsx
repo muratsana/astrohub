@@ -52,6 +52,7 @@ interface RadioState {
 const RadioContext = createContext<RadioState | undefined>(undefined);
 
 const VOLUME_KEY = 'astrohub:radio:volume';
+const DEFAULT_VOLUME = 0.6;
 
 export function RadioProvider({ children }: { children: ReactNode }) {
   /*
@@ -112,9 +113,20 @@ export function RadioProvider({ children }: { children: ReactNode }) {
   const [dockVisible, setDockVisible] = useState(true);
 
   const [volume, setVolumeState] = useState(() => {
-    if (typeof localStorage === 'undefined') return 0.6;
+    if (typeof localStorage === 'undefined') return DEFAULT_VOLUME;
     const stored = Number(localStorage.getItem(VOLUME_KEY));
-    return Number.isFinite(stored) && stored >= 0 && stored <= 1 ? stored : 0.6;
+    if (!Number.isFinite(stored) || stored < 0 || stored > 1) {
+      return DEFAULT_VOLUME;
+    }
+    if (stored <= 0.05) {
+      try {
+        localStorage.setItem(VOLUME_KEY, String(DEFAULT_VOLUME));
+      } catch {
+        // Depolama kapalıysa varsayılan ses yalnızca oturum boyu uygulanır.
+      }
+      return DEFAULT_VOLUME;
+    }
+    return stored;
   });
 
   const current = index >= 0 ? (mp3Tracks[index] ?? null) : null;
@@ -153,9 +165,18 @@ export function RadioProvider({ children }: { children: ReactNode }) {
   }, [volume]);
 
   const requestPlayback = useCallback((audio: HTMLAudioElement) => {
+    if (volume <= 0.05) {
+      setVolumeState(DEFAULT_VOLUME);
+      audio.volume = DEFAULT_VOLUME;
+      try {
+        localStorage.setItem(VOLUME_KEY, String(DEFAULT_VOLUME));
+      } catch {
+        // Depolama kapalıysa varsayılan ses yalnızca oturum boyu uygulanır.
+      }
+    }
     setPlaying(true);
     void audio.play().catch(() => setPlaying(false));
-  }, []);
+  }, [volume]);
 
   const next = useCallback(() => {
     setIndex((i) => (mp3Tracks.length === 0 ? -1 : (i + 1) % mp3Tracks.length));
