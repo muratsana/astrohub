@@ -959,8 +959,10 @@ yazılmamıştı.
 | Adlandırılmış koleksiyonlar (birden çok liste) | Şema hazır (`0048`); liste yönetimi arayüzü ayrı bir tur |
 | Explorer "favoriler" facet'i | `collection_items` hazır; explorer sorgusuna bağlanması ayrı iş |
 | `clubs` (kulüp/topluluk) | §8.11 kurumsal profil — kendi turu |
-| Aktivite akışı ("takip ettiklerin ne yaptı") | `follows` hazır; akış sorgusu ve sayfası ayrı bir iş |
 | E-posta/push teslimatı | Sağlayıcı kararı **Sen** (TOPARLAMA §11) |
+
+**Kapanan not:** Aktivite akışı artık `/akis` sayfası, Keşfet girişi ve modül
+haritası/komut paleti bağlantısıyla erişilebilir durumda.
 
 ### Ölçüm
 
