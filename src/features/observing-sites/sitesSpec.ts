@@ -1,5 +1,5 @@
 import { byNumber, byText, type ExplorerSpec } from '@/features/explorer/query';
-import type { ObservingSite } from './data';
+import { siteTypeLabels, type ObservingSite } from './data';
 
 /**
  * GÖZLEM NOKTALARININ DATA EXPLORER TANIMI (Faz 4).
@@ -12,7 +12,12 @@ import type { ObservingSite } from './data';
  * Sayısal aralık süzgeci burada seçim listesinden daha kullanışlı olmazdı.
  */
 export const sitesSpec: ExplorerSpec<ObservingSite> = {
-  searchFields: (s) => [s.name, s.region, s.roadAccess],
+  searchFields: (s) => [
+    s.name,
+    s.region,
+    s.roadAccess,
+    siteTypeLabels[s.siteType],
+  ],
 
   facets: [
     {
@@ -20,6 +25,12 @@ export const sitesSpec: ExplorerSpec<ObservingSite> = {
       label: 'Bortle',
       valueOf: (s) => String(s.bortle),
       labelOf: (v) => `sınıf ${v}`,
+    },
+    {
+      param: 'tur',
+      label: 'Tür',
+      valueOf: (s) => s.siteType,
+      labelOf: (v) => siteTypeLabels[v as keyof typeof siteTypeLabels] ?? v,
     },
     { param: 'bolge', label: 'Bölge', valueOf: (s) => s.region },
     { param: 'yol', label: 'Yol', valueOf: (s) => s.roadAccess },
@@ -46,8 +57,21 @@ export const sitesSpec: ExplorerSpec<ObservingSite> = {
          çünkü sayfaya gelen soru "en karanlık yer neresi". */
       compare: byNumber((s) => s.bortle, 'asc'),
     },
-    { value: 'puan', label: 'En yüksek puan', compare: byNumber((s) => s.rating) },
-    { value: 'rakim', label: 'En yüksek rakım', compare: byNumber((s) => s.altitude) },
+    {
+      value: 'puan',
+      label: 'En yüksek puan',
+      compare: byNumber((s) => s.rating),
+    },
+    {
+      value: 'rakim',
+      label: 'En yüksek rakım',
+      compare: byNumber((s) => s.altitude),
+    },
+    {
+      value: 'bortle-yuksek',
+      label: 'Bortle yüksekten düşüğe',
+      compare: byNumber((s) => s.bortle),
+    },
     { value: 'ad', label: 'Ad (A–Z)', compare: byText((s) => s.name) },
   ],
 

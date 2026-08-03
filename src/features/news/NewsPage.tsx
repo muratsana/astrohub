@@ -1,13 +1,20 @@
 import { useMemo } from 'react';
 import { Container } from '@/components/ui/Container';
-import { FilterBar, FilterCell, filterControlClass } from '@/components/ui/FilterBar';
+import {
+  FilterBar,
+  FilterCell,
+  filterControlClass,
+} from '@/components/ui/FilterBar';
 import { ActiveFilters } from '@/components/ui/ActiveFilters';
 import { Input } from '@/components/ui/Input';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
-import { ViewToggle } from '@/components/ui/ViewToggle';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
-import { EditorialList, type EditorialItem } from '@/components/ui/EditorialList';
+import { ToolBar, ResultCount } from '@/components/ui/ToolBar';
+import {
+  EditorialList,
+  type EditorialItem,
+} from '@/components/ui/EditorialList';
 import { useViewMode } from '@/components/ui/useViewMode';
 import { newsCategoryLabels, type NewsCategory } from './data';
 import { useNewsItems } from './useNews';
@@ -122,19 +129,37 @@ export function NewsPage() {
           onClearAll={ex.clearAll}
         />
 
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <SegmentedControl
-            value={category}
-            options={categories.map((c) => ({
-              value: c,
-              label: c === 'hepsi' ? 'Tümü' : newsCategoryLabels[c],
-              selectedClassName: 'border-primary bg-primary/10 text-primary',
-            }))}
-            onChange={setCategory}
-            ariaLabel="Haber kategorileri"
-          />
-          <ViewToggle mode={view} onChange={setView} />
+        <div className="mb-4 grid gap-px border border-border bg-border">
+          <div className="bg-surface-1 px-3 py-2">
+            <p className="label mb-2">Kategori</p>
+            <SegmentedControl
+              value={category}
+              options={categories.map((c) => ({
+                value: c,
+                label: c === 'hepsi' ? 'Tümü' : newsCategoryLabels[c],
+                selectedClassName: 'border-primary bg-primary/10 text-primary',
+              }))}
+              onChange={setCategory}
+              ariaLabel="Haber kategorileri"
+            />
+          </div>
         </div>
+
+        <ToolBar
+          left={
+            <ResultCount current={ex.total} total={all.length} noun="haber" />
+          }
+          sort={{
+            id: 'news-sort',
+            value: ex.query.sort,
+            onChange: ex.setSort,
+            options: newsSpec.sorts.map((s) => ({
+              value: s.value,
+              label: s.label,
+            })),
+          }}
+          view={{ mode: view, onChange: setView }}
+        />
 
         <EditorialList
           view={view}

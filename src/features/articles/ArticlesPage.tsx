@@ -146,11 +146,20 @@ export function ArticlesPage() {
         <ToolBar
           left={
             <ResultCount
-              current={result.length}
+              current={ex.total}
               total={allArticles.length}
               noun="yazı"
             />
           }
+          sort={{
+            id: 'article-sort',
+            value: ex.query.sort,
+            onChange: ex.setSort,
+            options: articlesSpec.sorts.map((s) => ({
+              value: s.value,
+              label: s.label,
+            })),
+          }}
           view={{ mode: view, onChange: setView }}
         />
 

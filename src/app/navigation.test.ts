@@ -38,12 +38,7 @@ function isRouted(path: string): boolean {
 }
 
 function allItems(): NavItem[] {
-  return [
-    ...primaryNav,
-    ...mobileNav,
-    mobileDrawerPrimary,
-    ...allNavItems(),
-  ];
+  return [...primaryNav, ...mobileNav, mobileDrawerPrimary, ...allNavItems()];
 }
 
 describe('navigasyon bağlantıları', () => {
@@ -56,7 +51,12 @@ describe('navigasyon bağlantıları', () => {
   });
 
   it('footer hukuki bağlantıları route edilmiştir', () => {
-    for (const path of ['/kvkk', '/kullanim-kosullari', '/hakkinda', '/iletisim']) {
+    for (const path of [
+      '/kvkk',
+      '/kullanim-kosullari',
+      '/hakkinda',
+      '/iletisim',
+    ]) {
       expect(isRouted(path)).toBe(true);
     }
   });
@@ -65,6 +65,25 @@ describe('navigasyon bağlantıları', () => {
     expect(primaryNav).toHaveLength(8);
     expect(primaryNav.map((i) => i.to)).toContain('/forum');
     expect(primaryNav.map((i) => i.to)).not.toContain('/ekipman');
+  });
+
+  it('üst menü patch planındaki sırayı izler', () => {
+    expect(primaryNav.map((i) => i.label)).toEqual([
+      'Galeri',
+      'Etkinlikler',
+      'Haberler',
+      'Yazılar',
+      'İlanlar',
+      'Araçlar',
+      'Forum',
+      'Saha',
+    ]);
+  });
+
+  it('mobil kısa çubuk üst menü sırasından sapmaz', () => {
+    expect(mobileNav.map((i) => i.to)).toEqual(
+      primaryNav.slice(0, mobileNav.length).map((i) => i.to)
+    );
   });
 
   it('yayın modülleri menüde metin girişi değil, üst çubukta ikon', () => {
@@ -84,7 +103,9 @@ describe('navigasyon bağlantıları', () => {
   it('üst menüdeki her giriş modül haritasında da yer alır', () => {
     const mapped = new Set(allNavItems().map((i) => i.to));
     for (const item of primaryNav) {
-      expect(mapped, `${item.label} footer haritasında eksik`).toContain(item.to);
+      expect(mapped, `${item.label} footer haritasında eksik`).toContain(
+        item.to
+      );
     }
   });
 

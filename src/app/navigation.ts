@@ -37,7 +37,7 @@ export interface NavGroup {
  *
  * Sekiz giriş `xl` kırılımının altında sığmıyor; nav orada çekmeceye
  * katlanıyor ve dar pencerede hamburger düğmesi görünüyor — bu tasarlanan
-   * davranış, taşma değil. Dokuzuncu giriş `xl`'de de taşırır; eklemeden önce
+ * davranış, taşma değil. Dokuzuncu giriş `xl`'de de taşırır; eklemeden önce
  * `scripts/check-preview.mjs` ile 390/1024/1440 px'te ölçün.
  */
 export const primaryNav: NavItem[] = [
@@ -45,9 +45,9 @@ export const primaryNav: NavItem[] = [
   { label: 'Etkinlikler', to: '/etkinlikler' },
   { label: 'Haberler', to: '/haberler' },
   { label: 'Yazılar', to: '/yazilar' },
-  { label: 'Forum', to: '/forum' },
-  { label: 'Araçlar', to: '/araclar' },
   { label: 'İlanlar', to: '/ilanlar' },
+  { label: 'Araçlar', to: '/araclar' },
+  { label: 'Forum', to: '/forum' },
   { label: 'Saha', to: '/saha' },
 ];
 
@@ -95,7 +95,8 @@ export const siteMap: NavGroup[] = [
       {
         label: 'Takip Akışı',
         to: '/akis',
-        description: 'Takip ettiğin kişilerin fotoğraf, ilan ve forum hareketleri',
+        description:
+          'Takip ettiğin kişilerin fotoğraf, ilan ve forum hareketleri',
         keywords: ['akış', 'aktivite', 'takip', 'feed', 'sosyal'],
       },
     ],
@@ -345,7 +346,11 @@ export const siteMap: NavGroup[] = [
   {
     title: 'Hesap',
     items: [
-      { label: 'Üye Paneli', to: '/panel', description: 'Fotoğraflar, kota, üyelik' },
+      {
+        label: 'Üye Paneli',
+        to: '/panel',
+        description: 'Fotoğraflar, kota, üyelik',
+      },
       {
         label: 'Gözlem Günlüğü',
         to: '/gunluk',
@@ -390,7 +395,11 @@ export const siteMap: NavGroup[] = [
     title: 'Kurumsal',
     items: [
       { label: 'Hakkında', to: '/hakkinda' },
-      { label: 'KVKK ve Gizlilik', to: '/kvkk', keywords: ['gizlilik', 'veri'] },
+      {
+        label: 'KVKK ve Gizlilik',
+        to: '/kvkk',
+        keywords: ['gizlilik', 'veri'],
+      },
       {
         label: 'Çerez Tercihleri',
         to: '/cerezler',
@@ -451,10 +460,10 @@ export function withoutPrefixes(
  * dar ekranda etiketleri kırpıyordu).
  */
 export const mobileNav: NavItem[] = [
-  { label: 'Ana', to: '/' },
   { label: 'Galeri', to: '/galeri' },
-  { label: 'Etkinlik', to: '/etkinlikler' },
-  { label: 'Saha', to: '/saha' },
+  { label: 'Etkinlikler', to: '/etkinlikler' },
+  { label: 'Haberler', to: '/haberler' },
+  { label: 'Yazılar', to: '/yazilar' },
 ];
 
 /** Çekmecenin en üstünde sabit duran birincil giriş. */

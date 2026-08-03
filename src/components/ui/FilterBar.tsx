@@ -110,7 +110,7 @@ export function FilterBar({
   const grid = (
     <div
       className={cn(
-        'grid gap-px border border-border bg-border sm:grid-cols-2',
+        'grid gap-2 rounded-card border border-border-strong bg-surface-1/80 p-2 shadow-overlay sm:grid-cols-2',
         !narrow && 'mb-4',
         lg,
         className
@@ -158,7 +158,10 @@ export function FilterBar({
             className="relative max-h-[85vh] overflow-y-auto rounded-t-card border-t border-border-strong bg-background p-4 shadow-overlay"
           >
             <div className="mb-3 flex items-center justify-between gap-3">
-              <h2 id={titleId} className="text-caption font-semibold text-foreground">
+              <h2
+                id={titleId}
+                className="text-caption font-semibold text-foreground"
+              >
                 Filtreler
               </h2>
               <button
@@ -216,12 +219,13 @@ export function FilterCell({
   return (
     <div
       className={cn(
-        'bg-surface-1 px-3 pb-1.5 pt-1.5',
-        'has-[:focus-visible]:shadow-[inset_0_0_0_2px_var(--color-primary)]',
+        'rounded-card border border-border bg-background/55 px-3 pb-2 pt-2',
+        'transition-colors hover:border-border-strong hover:bg-surface-2/80',
+        'has-[:focus-visible]:border-primary has-[:focus-visible]:bg-surface-2',
         className
       )}
     >
-      <label htmlFor={htmlFor} className="label block">
+      <label htmlFor={htmlFor} className="label block text-faint">
         {label}
       </label>
       {children}
@@ -234,7 +238,7 @@ export function FilterCell({
  * çerçeveyi hücre çizer; alan yalnızca içine yazılan değerdir.
  */
 export const filterControlClass =
-  'h-8 w-full rounded-none border-0 bg-transparent px-0 text-meta ' +
+  'h-8 w-full rounded-none border-0 bg-transparent px-0 text-body-sm text-foreground ' +
   'focus:bg-transparent focus-visible:outline-none';
 
 /**
@@ -257,8 +261,9 @@ export function FilterToggle({
   return (
     <div
       className={cn(
-        'flex items-center bg-surface-1 px-3 py-2.5',
-        'has-[:focus-visible]:shadow-[inset_0_0_0_2px_var(--color-primary)]',
+        'flex items-center rounded-card border border-border bg-background/55 px-3 py-2.5',
+        'transition-colors hover:border-border-strong hover:bg-surface-2/80',
+        'has-[:focus-visible]:border-primary has-[:focus-visible]:bg-surface-2',
         className
       )}
     >

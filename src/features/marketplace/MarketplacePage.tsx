@@ -1,5 +1,5 @@
 import { Container } from '@/components/ui/Container';
-import { Input } from '@/components/ui/Input';
+import { Input, Select } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -8,10 +8,7 @@ import { ButtonLink } from '@/components/ui/Button';
 import { ToolBar, ResultCount } from '@/components/ui/ToolBar';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { CatalogSourceNote } from '@/components/ui/CatalogSourceNote';
-import {
-  useStoredChoice,
-  type ListView,
-} from '@/components/ui/useViewMode';
+import { useStoredChoice, type ListView } from '@/components/ui/useViewMode';
 import { DataTable, type Column } from '@/components/ui/DataTable';
 import {
   FilterBar,
@@ -40,6 +37,7 @@ import { listingsSpec } from './listingsSpec';
 import type { Listing } from './data';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
+import { useMemo } from 'react';
 
 const categories: (EquipmentCategory | 'hepsi')[] = [
   'hepsi',
@@ -94,6 +92,13 @@ export function MarketplacePage() {
   const ex = useExplorer(catalog.items, listingsSpec);
   const result = ex.items;
   const category = ex.query.facets.kategori?.[0] ?? 'hepsi';
+  const cities = useMemo(
+    () =>
+      [...new Set(catalog.items.map((l) => l.city))].sort((a, b) =>
+        a.localeCompare(b, 'tr')
+      ),
+    [catalog.items]
+  );
 
   /** Kategori sekmeleri tek seçim: bir sekme şeridi, çoklu liste değil. */
   const setCategory = (next: string) => {
@@ -116,7 +121,11 @@ export function MarketplacePage() {
         <PageHeader
           title="İkinci El İlanlar"
           description="Ekipman veritabanına bağlı astronomi pazaryeri. İletişim platform içinden yürür; Astrohub ödemeye aracılık etmez, emanet (escrow) hizmeti sunmaz."
-          actions={<ButtonLink to="/ilan/yeni" size="sm">İlan ver</ButtonLink>}
+          actions={
+            <ButtonLink to="/ilan/yeni" size="sm">
+              İlan ver
+            </ButtonLink>
+          }
         />
 
         <SegmentedControl
@@ -128,7 +137,11 @@ export function MarketplacePage() {
         />
 
         <FilterBar activeCount={ex.chips.length}>
-          <FilterCell label="Ara" htmlFor="listing-search" className="lg:col-span-2">
+          <FilterCell
+            label="Ara"
+            htmlFor="listing-search"
+            className="lg:col-span-2"
+          >
             <Input
               id="listing-search"
               type="search"
@@ -145,6 +158,27 @@ export function MarketplacePage() {
             value={ex.query.ranges.fiyat}
             onChange={(next) => ex.setRange('fiyat', next)}
           />
+          <FilterCell label="Şehir" htmlFor="listing-city">
+            <Select
+              id="listing-city"
+              value={ex.query.facets.sehir?.[0] ?? 'hepsi'}
+              onChange={(e) => {
+                const mevcut = ex.query.facets.sehir?.[0];
+                if (mevcut) ex.toggleFacet('sehir', mevcut);
+                if (e.target.value !== 'hepsi') {
+                  ex.toggleFacet('sehir', e.target.value);
+                }
+              }}
+              className={filterControlClass}
+            >
+              <option value="hepsi">Tüm şehirler</option>
+              {cities.map((city) => (
+                <option key={city} value={city}>
+                  {city}
+                </option>
+              ))}
+            </Select>
+          </FilterCell>
           <FilterToggle
             id="listing-invoice"
             label="Yalnızca faturalı"

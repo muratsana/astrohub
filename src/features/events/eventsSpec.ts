@@ -44,6 +44,12 @@ export const eventsSpec: ExplorerSpec<AstroEvent> = {
       labelOf: () => 'evet',
     },
     {
+      param: 'ucretli',
+      label: 'Ücretli',
+      valueOf: (e) => (!e.free ? 'evet' : null),
+      labelOf: () => 'evet',
+    },
+    {
       param: 'kamp',
       label: 'Kamp',
       valueOf: (e) => (e.camping ? 'evet' : null),

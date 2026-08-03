@@ -25,7 +25,12 @@ export const Select = forwardRef<
 >(({ className, ...props }, ref) => (
   <select
     ref={ref}
-    className={cn(fieldClasses, 'appearance-none pr-8', className)}
+    className={cn(
+      fieldClasses,
+      'appearance-none pr-8',
+      '[&>option]:bg-[var(--color-surface-1)] [&>option]:text-[var(--color-foreground)]',
+      className
+    )}
     {...props}
   />
 ));

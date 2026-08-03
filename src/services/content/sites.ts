@@ -1,6 +1,8 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import {
+  siteTypeLabels,
   sites as sitesSeed,
+  type SiteType,
   type ObservingSite,
 } from '@/features/observing-sites/data';
 import { gradientFromSeed } from '@/components/media/tints';
@@ -46,6 +48,13 @@ interface SiteRow {
   review_count: number;
 }
 
+function deriveSiteType(row: SiteRow): SiteType {
+  const raw = (row as { site_type?: unknown }).site_type;
+  if (typeof raw === 'string' && raw in siteTypeLabels) return raw as SiteType;
+  if (row.has_tent_area || row.caravan_ok) return 'camping';
+  return 'arazi';
+}
+
 function num(value: number | string | null): number | null {
   if (value === null) return null;
   const parsed = typeof value === 'number' ? value : Number(value);
@@ -61,6 +70,7 @@ export function mapSiteRow(row: SiteRow): ObservingSite {
       latitude: num(row.approx_latitude) ?? 0,
       longitude: num(row.approx_longitude) ?? 0,
     },
+    siteType: deriveSiteType(row),
     bortle: row.bortle ?? 0,
     sqm: num(row.sqm) ?? undefined,
     altitude: row.altitude_m ?? 0,

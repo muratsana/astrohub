@@ -13,6 +13,7 @@ export interface ObservingSite {
    * hesabı için birkaç yüz metrelik hata önemsizdir.
    */
   coords: { latitude: number; longitude: number };
+  siteType: SiteType;
   bortle: number;
   sqm?: number;
   altitude: number; // metre
@@ -34,12 +35,24 @@ export interface ObservingSite {
   reviewCount: number;
 }
 
+export type SiteType =
+  'camping' | 'otel-pansiyon' | 'arazi' | 'milli-park' | 'ozel-mulk';
+
+export const siteTypeLabels: Record<SiteType, string> = {
+  camping: 'Camping',
+  'otel-pansiyon': 'Otel/Pansiyon',
+  arazi: 'Arazi',
+  'milli-park': 'Milli Park',
+  'ozel-mulk': 'Özel Mülk',
+};
+
 export const sites: ObservingSite[] = [
   {
     slug: 'saklikent-antalya',
     name: 'Saklıkent Gözlem Alanı',
     region: 'Antalya',
     coords: { latitude: 36.8247, longitude: 30.3353 },
+    siteType: 'camping',
     bortle: 3,
     sqm: 21.6,
     altitude: 1850,
@@ -55,7 +68,7 @@ export const sites: ObservingSite[] = [
     southHorizon: 'Açık',
     bestMonths: 'Mayıs – Ekim',
     description:
-      'TÜBİTAK Ulusal Gözlemevi yakınındaki plato; asfalt erişim ve tesis olanaklarıyla Türkiye\'nin en erişilebilir karanlık gökyüzü noktalarından. Yaz gecelerinde bile serin olur.',
+      "TÜBİTAK Ulusal Gözlemevi yakınındaki plato; asfalt erişim ve tesis olanaklarıyla Türkiye'nin en erişilebilir karanlık gökyüzü noktalarından. Yaz gecelerinde bile serin olur.",
     warnings: ['Yaz hafta sonları kalabalık olabilir; erken yer tutun.'],
     gradient: 'linear-gradient(160deg, #0f172a 0%, #1e3a5f 50%, #4c1d95 100%)',
     rating: 4.7,
@@ -66,6 +79,7 @@ export const sites: ObservingSite[] = [
     name: 'Palandöken Yaylası',
     region: 'Erzurum',
     coords: { latitude: 39.8508, longitude: 41.2417 },
+    siteType: 'arazi',
     bortle: 2,
     sqm: 21.9,
     altitude: 2400,
@@ -81,7 +95,7 @@ export const sites: ObservingSite[] = [
     southHorizon: 'Açık',
     bestMonths: 'Haziran – Eylül',
     description:
-      'Doğu Anadolu\'nun en karanlık gökyüzülerinden; SQM 21.9 ölçümleriyle narrowband gerektirmeyen doğal kontrast. Tesis yok — tam donanımlı gelin.',
+      "Doğu Anadolu'nun en karanlık gökyüzülerinden; SQM 21.9 ölçümleriyle narrowband gerektirmeyen doğal kontrast. Tesis yok — tam donanımlı gelin.",
     warnings: [
       'Gece sıcaklığı yazın bile 5°C altına düşebilir.',
       'Son 3 km stabilize yol; yağışta zorlaşır.',
@@ -95,6 +109,7 @@ export const sites: ObservingSite[] = [
     name: 'Çamlıdere Gözlem Noktası',
     region: 'Ankara',
     coords: { latitude: 40.4886, longitude: 32.4728 },
+    siteType: 'camping',
     bortle: 4,
     sqm: 21.2,
     altitude: 1250,
@@ -110,7 +125,7 @@ export const sites: ObservingSite[] = [
     southHorizon: 'Kısmen açık',
     bestMonths: 'Nisan – Kasım',
     description:
-      'Ankara\'ya 1 saat mesafede hafta sonu kaçamağı; başkentin ışık kubbesi kuzey ufkunu etkiler ama güney hedefleri için yeterli karanlık sunar.',
+      "Ankara'ya 1 saat mesafede hafta sonu kaçamağı; başkentin ışık kubbesi kuzey ufkunu etkiler ama güney hedefleri için yeterli karanlık sunar.",
     gradient: 'linear-gradient(160deg, #0c1220 0%, #1e293b 55%, #475569 100%)',
     rating: 4.2,
     reviewCount: 96,
@@ -120,6 +135,7 @@ export const sites: ObservingSite[] = [
     name: 'Göreme Kırsalı',
     region: 'Nevşehir',
     coords: { latitude: 38.6431, longitude: 34.8289 },
+    siteType: 'milli-park',
     bortle: 3,
     sqm: 21.4,
     altitude: 1100,
@@ -135,7 +151,7 @@ export const sites: ObservingSite[] = [
     southHorizon: 'Açık',
     bestMonths: 'Nisan – Ekim',
     description:
-      'Peribacaları silüetiyle gece manzarası fotoğrafçılığının Türkiye\'deki başkenti. Turistik bölgeden 10-15 dk uzaklaşınca Bortle 3 gökyüzü.',
+      "Peribacaları silüetiyle gece manzarası fotoğrafçılığının Türkiye'deki başkenti. Turistik bölgeden 10-15 dk uzaklaşınca Bortle 3 gökyüzü.",
     warnings: ['Balon uçuş sabahları erken saatte araç trafiği başlar.'],
     gradient: 'linear-gradient(160deg, #1c1917 0%, #78350f 55%, #b45309 100%)',
     rating: 4.6,

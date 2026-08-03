@@ -12,7 +12,10 @@ import {
 } from '@/components/ui/FilterBar';
 import { ActiveFilters } from '@/components/ui/ActiveFilters';
 import { RangeFilter } from '@/components/ui/RangeFilter';
-import { EditorialList, type EditorialItem } from '@/components/ui/EditorialList';
+import {
+  EditorialList,
+  type EditorialItem,
+} from '@/components/ui/EditorialList';
 import { ToolBar, ResultCount } from '@/components/ui/ToolBar';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { useViewMode } from '@/components/ui/useViewMode';
@@ -114,7 +117,11 @@ export function EventsPage() {
         />
 
         <FilterBar activeCount={ex.chips.length}>
-          <FilterCell label="Ara" htmlFor="event-search" className="lg:col-span-2">
+          <FilterCell
+            label="Ara"
+            htmlFor="event-search"
+            className="lg:col-span-2"
+          >
             <Input
               id="event-search"
               type="search"
@@ -164,6 +171,12 @@ export function EventsPage() {
             onChange={() => ex.toggleFacet('ucretsiz', 'evet')}
           />
           <FilterToggle
+            id="e-paid"
+            label="Ücretli"
+            checked={(ex.query.facets.ucretli?.length ?? 0) > 0}
+            onChange={() => ex.toggleFacet('ucretli', 'evet')}
+          />
+          <FilterToggle
             id="e-camping"
             label="Kamp imkânı"
             checked={(ex.query.facets.kamp?.length ?? 0) > 0}
@@ -194,7 +207,18 @@ export function EventsPage() {
               noun="etkinlik"
             />
           }
-          view={layout === 'kart' ? { mode: view, onChange: setView } : undefined}
+          sort={{
+            id: 'event-sort',
+            value: ex.query.sort,
+            onChange: ex.setSort,
+            options: eventsSpec.sorts.map((s) => ({
+              value: s.value,
+              label: s.label,
+            })),
+          }}
+          view={
+            layout === 'kart' ? { mode: view, onChange: setView } : undefined
+          }
           extra={
             <SegmentedControl
               value={layout}
