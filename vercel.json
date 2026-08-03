@@ -13,7 +13,7 @@
       "destination": "/app.html"
     },
     {
-      "source": "/admin",
+      "source": "/admin/*",
       "destination": "/app.html"
     },
     {

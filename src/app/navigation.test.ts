@@ -28,6 +28,13 @@ const patterns = (router.routes[0].children ?? [])
 function matches(pattern: string, path: string): boolean {
   const p = pattern.split('/').filter(Boolean);
   const t = path.split('/').filter(Boolean);
+  if (p.at(-1) === '*') {
+    const prefix = p.slice(0, -1);
+    if (t.length < prefix.length) return false;
+    return prefix.every(
+      (segment, i) => segment.startsWith(':') || segment === t[i]
+    );
+  }
   if (p.length !== t.length) return false;
   return p.every((segment, i) => segment.startsWith(':') || segment === t[i]);
 }

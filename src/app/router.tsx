@@ -547,7 +547,7 @@ export const appRoutes = [
       { path: 'panel', element: panelPage() },
       { path: 'panel/:section', element: panelPage() },
       {
-        path: 'admin',
+        path: 'admin/*',
         element: route(
           named(() => import('@/features/admin/AdminPage'), 'AdminPage')
         ),

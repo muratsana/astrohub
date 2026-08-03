@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Panel, SpecList, SpecRow } from '@/components/ui/Panel';
@@ -26,6 +26,21 @@ import { UserControl } from './UserControl';
 import { RecordsControl, AuditControl } from './RecordsControl';
 import { CommentsControl } from './CommentsControl';
 import { ForumCategories } from './ForumCategories';
+import {
+  AlertIcon,
+  BookIcon,
+  CalendarIcon,
+  GridIcon,
+  HomeIcon,
+  ImageIcon,
+  ListIcon,
+  MapIcon,
+  PlayIcon,
+  RadioIcon,
+  SearchIcon,
+  TagIcon,
+  UserIcon,
+} from '@/components/ui/icons';
 import {
   fetchQueue,
   resolveItem,
@@ -65,13 +80,18 @@ export function AdminPage() {
   const roles = useRoles();
 
   const [params, setParams] = useSearchParams();
-  const bolumParam = params.get('bolum');
-  const bolum: BolumId = isBolum(bolumParam) ? bolumParam : 'ozet';
+  const location = useLocation();
+  const navigate = useNavigate();
+  const bolum = getBolum(location.pathname, params.get('bolum'));
 
-  /* `replace`: sekme gezinmesi geri yığınını doldurmamalı — geri tuşu
-     panelden çıkmalı, önceki sekmeye değil. */
-  const setBolum = (id: BolumId) =>
+  const setBolum = (id: BolumId) => {
+    const path = BOLUM_PATHS[id];
+    if (path) {
+      navigate(path, { replace: true });
+      return;
+    }
     setParams(id === 'ozet' ? {} : { bolum: id }, { replace: true });
+  };
 
   const [filter, setFilter] = useState<ModerationStatus | 'hepsi'>('pending');
   const [queue, setQueue] = useState<QueueResult | null>(null);
@@ -127,7 +147,7 @@ export function AdminPage() {
   /* ── Durum 1: Supabase kurulu değil ── */
   if (!configured || roles.status === 'unconfigured') {
     return (
-      <Shell header={header}>
+      <Shell header={header} active={bolum} onChange={setBolum}>
         <EmptyState
           message="Veritabanı bağlantısı yapılandırılmamış"
           hint="Yönetim paneli Supabase'e bağlanır. VITE_SUPABASE_URL ve VITE_SUPABASE_ANON_KEY tanımlandığında kuyruk buradan okunacak."
@@ -139,7 +159,7 @@ export function AdminPage() {
   /* ── Durum 2: oturum yok ── */
   if (loading || roles.status === 'loading') {
     return (
-      <Shell header={header}>
+      <Shell header={header} active={bolum} onChange={setBolum}>
         <p className="py-10 text-center text-meta text-muted-foreground" role="status">
           Yetkiler kontrol ediliyor…
         </p>
@@ -149,7 +169,7 @@ export function AdminPage() {
 
   if (!user) {
     return (
-      <Shell header={header}>
+      <Shell header={header} active={bolum} onChange={setBolum}>
         <EmptyState
           message="Bu sayfa için giriş gerekli"
           hint="Yönetim paneli yalnızca moderatör ve yönetici rolüne sahip hesaplara açıktır."
@@ -166,7 +186,7 @@ export function AdminPage() {
   /* ── Durum 3: yetki yok ── */
   if (!roles.canAccessAdmin) {
     return (
-      <Shell header={header}>
+      <Shell header={header} active={bolum} onChange={setBolum}>
         <EmptyState
           message="Bu hesapta yönetim yetkisi yok"
           hint="Moderasyon kuyruğuna yalnızca moderatör ve yönetici rolleri erişebilir. Yetki talebi için topluluk yönetimiyle iletişime geçin."
@@ -187,9 +207,7 @@ export function AdminPage() {
   const counts = queue?.counts;
 
   return (
-    <Shell header={header}>
-      <BolumSekmeleri aktif={bolum} onChange={setBolum} />
-
+    <Shell header={header} active={bolum} onChange={setBolum}>
       {bolum === 'ozet' && (
         <AdminOverview
           counts={counts}
@@ -451,6 +469,44 @@ export function AdminPage() {
       {/* ANA SAYFA — bugün ne görünsün. */}
       {bolum === 'anasayfa' && <FeaturedControl canWrite={roles.isAdmin} />}
 
+      {bolum === 'galeri' && (
+        <div className="space-y-4">
+          <RecordsControl kinds={['photo']} title="Galeri fotoğrafları" />
+          <CommentsControl kinds={['photoComment']} />
+        </div>
+      )}
+
+      {bolum === 'haberler' && (
+        <ContentControl key="haberler" canWrite={roles.isAdmin} initialKind="haber" />
+      )}
+
+      {bolum === 'yazilar' && (
+        <ContentControl key="yazilar" canWrite={roles.isAdmin} initialKind="yazi" />
+      )}
+
+      {bolum === 'etkinlikler' && (
+        <RecordsControl kinds={['event']} title="Etkinlikler" />
+      )}
+
+      {bolum === 'ilanlar' && (
+        <RecordsControl kinds={['listing']} title="İlanlar" />
+      )}
+
+      {bolum === 'saha' && (
+        <div className="space-y-4">
+          <RecordsControl kinds={['site']} title="Saha kayıtları" />
+          <CommentsControl kinds={['siteReview']} />
+        </div>
+      )}
+
+      {bolum === 'araclar' && (
+        <div className="space-y-4">
+          <CatalogControl canWrite={roles.isAdmin} />
+          <EquipmentDataControl canWrite={roles.isAdmin} />
+          <SpecImportControl canWrite={roles.isAdmin} />
+        </div>
+      )}
+
       {/* "Ana sayfa" ile "Site yönetimi" AYRI sekmeler ve ayrı işler:
           ilki hangi İÇERİĞİN öne çıkacağını seçiyor (öne çıkan fotoğraf,
           haber), ikincisi ana sayfanın YAPISINI yönetiyor (modül açık mı,
@@ -458,6 +514,8 @@ export function AdminPage() {
           fotoğrafı öne çıkar" ile "galeri modülünü kapat" yan yana
           dururdu ve ikincisi birincisini görünmez kılardı. */}
       {bolum === 'site' && <SiteControl canWrite={roles.isAdmin} />}
+
+      {bolum === 'kurumsal' && <SiteControl canWrite={roles.isAdmin} />}
 
       {/* YAYIN — TV ve radyo programı. */}
       {bolum === 'yayin' && <BroadcastControl />}
@@ -490,6 +548,40 @@ export function AdminPage() {
       */}
       {bolum === 'hatirlatma' && <ReminderControl canWrite={roles.isAdmin} />}
 
+      {bolum === 'medya' && (
+        <Panel title="Medya kütüphanesi" status="PARTIAL">
+          <p className="text-body-sm leading-relaxed text-muted-foreground">
+            Fotoğraf, içerik ve yayın medya yüzeyleri mevcut modüllerde
+            yönetiliyor. Ortak dosya kasası ve orphan raporu için storage
+            migration ve servis rolü bağlantısı gerekiyor.
+          </p>
+        </Panel>
+      )}
+
+      {bolum === 'import' && <SpecImportControl canWrite={roles.isAdmin} />}
+
+      {bolum === 'entegrasyonlar' && (
+        <Panel title="Entegrasyonlar" status="BLOCKED_EXTERNAL">
+          <p className="text-body-sm leading-relaxed text-muted-foreground">
+            YouTube OAuth, AzuraCast, CKEditor Import from Word, Apryse ve
+            canlı Bortle katmanı için lisans, secret veya harici servis
+            bağlantısı olmadan çalışan kontrol eklenmedi.
+          </p>
+        </Panel>
+      )}
+
+      {bolum === 'audit' && <AuditControl />}
+
+      {bolum === 'ayarlar' && (
+        <Panel title="Sistem ve ayarlar" status="PARTIAL">
+          <p className="text-body-sm leading-relaxed text-muted-foreground">
+            Site modül sırası, yayın bayrakları ve içerik ayarları ilgili
+            yüzeylerde tutuluyor. Merkezi ayar sayfası için Supabase ayar
+            tablosu ve audit migration'ı gerekir.
+          </p>
+        </Panel>
+      )}
+
       {/*
         KATALOG — sürüm başına bir kez yapılan işler.
 
@@ -509,84 +601,133 @@ export function AdminPage() {
   );
 }
 
-/**
- * SEKMELER — panel konularına göre bölündü.
- *
- * ══════════════════════════════════════════════════════════════════════
- * NEDEN SEKME
- *
- * Panel tek bir uzun yığındı ve on bir bölüme çıkmıştı. Bir yöneticinin
- * radyo listesine ulaşması için moderasyon kuyruğunu, içerik kayıtlarını
- * ve kullanıcı listesini geçmesi gerekiyordu — hepsi de o an ilgisiz.
- * Uzun bir sayfada "aşağıda bir yerde" olan şey, pratikte yok gibidir.
- *
- * Gruplama İŞE göre yapıldı, tabloya göre değil: "Forum" sekmesi hem
- * konuyu hem gönderiyi taşıyor çünkü foruma bakan biri ikisini birlikte
- * düşünüyor. Tabloya göre bölseydik aynı iş iki sekmeye dağılırdı.
- *
- * ══════════════════════════════════════════════════════════════════════
- * SEKME ADRESTE TAŞINIYOR
- *
- * `?bolum=forum` — üç sebeple:
- *   1. Yenileme sekmeyi kaybetmiyor (moderasyon uzun bir iş, sayfa
- *      yenilenebiliyor),
- *   2. Bağlantı paylaşılabiliyor ("şu kullanıcıya bak" derken),
- *   3. Geri tuşu beklendiği gibi çalışıyor.
- *
- * Bilinmeyen bir değer varsayılana düşüyor; adres çubuğuna elle yazılan
- * bir şey paneli boş bırakmamalı.
- */
-const BOLUMLER = [
-  { id: 'ozet', label: 'Özet' },
-  { id: 'moderasyon', label: 'Moderasyon' },
-  { id: 'icerik', label: 'İçerik' },
-  { id: 'kullanicilar', label: 'Kullanıcılar' },
-  { id: 'forum', label: 'Forum' },
-  { id: 'anasayfa', label: 'Ana sayfa' },
-  { id: 'site', label: 'Site yönetimi' },
-  { id: 'yayin', label: 'Yayın' },
-  { id: 'radyo', label: 'Radyo' },
-  { id: 'tv', label: 'TV' },
-  { id: 'hatirlatma', label: 'Hatırlatma' },
-  { id: 'katalog', label: 'Katalog' },
+const ADMIN_NAV = [
+  {
+    label: 'İçerik',
+    items: [
+      { id: 'ozet', label: 'Genel Bakış', path: '/admin', icon: HomeIcon },
+      { id: 'anasayfa', label: 'Anasayfa', path: '/admin/home', icon: GridIcon },
+      { id: 'galeri', label: 'Galeri', path: '/admin/gallery', icon: ImageIcon },
+      { id: 'haberler', label: 'Haberler', path: '/admin/news', icon: SearchIcon },
+      { id: 'yazilar', label: 'Yazılar', path: '/admin/articles', icon: BookIcon },
+      { id: 'forum', label: 'Forum', path: '/admin/forum', icon: ListIcon },
+      { id: 'etkinlikler', label: 'Etkinlikler', path: '/admin/events', icon: CalendarIcon },
+      { id: 'araclar', label: 'Araçlar', path: '/admin/tools', icon: TagIcon },
+      { id: 'ilanlar', label: 'İlanlar', path: '/admin/listings', icon: TagIcon },
+      { id: 'saha', label: 'Saha', path: '/admin/sites', icon: MapIcon },
+    ],
+  },
+  {
+    label: 'Operasyon',
+    items: [
+      { id: 'moderasyon', label: 'Moderasyon', path: '/admin/moderation', icon: AlertIcon },
+      { id: 'kullanicilar', label: 'Kullanıcılar', path: '/admin/users', icon: UserIcon },
+      { id: 'radyo', label: 'Radyo', path: '/admin/radio', icon: RadioIcon },
+      { id: 'tv', label: 'TV', path: '/admin/tv', icon: PlayIcon },
+      { id: 'kurumsal', label: 'Kurumsal', path: '/admin/corporate', icon: BookIcon },
+    ],
+  },
+  {
+    label: 'Sistem',
+    items: [
+      { id: 'medya', label: 'Medya Kütüphanesi', path: '/admin/media', icon: ImageIcon },
+      { id: 'hatirlatma', label: 'Bildirim Merkezi', path: '/admin/notifications', icon: AlertIcon },
+      { id: 'import', label: 'İçe Aktarma İşleri', path: '/admin/import-jobs', icon: BookIcon },
+      { id: 'entegrasyonlar', label: 'Entegrasyonlar', path: '/admin/integrations', icon: GridIcon },
+      { id: 'audit', label: 'Audit Log', path: '/admin/audit', icon: ListIcon },
+      { id: 'ayarlar', label: 'Sistem ve Ayarlar', path: '/admin/settings', icon: GridIcon },
+    ],
+  },
 ] as const;
 
-type BolumId = (typeof BOLUMLER)[number]['id'];
+type AdminNavItem = (typeof ADMIN_NAV)[number]['items'][number];
+
+const BOLUMLER: readonly AdminNavItem[] = ADMIN_NAV.flatMap(
+  (group): readonly AdminNavItem[] => group.items
+);
+
+const LEGACY_IDS = ['icerik', 'site', 'yayin', 'katalog'] as const;
+type LegacyBolumId = (typeof LEGACY_IDS)[number];
+type BolumId = (typeof BOLUMLER)[number]['id'] | LegacyBolumId;
+
+const LEGACY_BOLUM_PATHS: Record<LegacyBolumId, string> = {
+  icerik: '/admin/content',
+  site: '/admin/site-settings',
+  yayin: '/admin/broadcast',
+  katalog: '/admin/catalog',
+};
+
+const BOLUM_PATHS = {
+  ...Object.fromEntries(BOLUMLER.map((b) => [b.id, b.path])),
+  ...LEGACY_BOLUM_PATHS,
+} as Record<BolumId, string>;
 
 function isBolum(value: string | null): value is BolumId {
-  return BOLUMLER.some((b) => b.id === value);
+  return (
+    BOLUMLER.some((b) => b.id === value) ||
+    LEGACY_IDS.some((id) => id === value)
+  );
 }
 
-function BolumSekmeleri({
-  aktif,
+function getBolum(pathname: string, queryBolum: string | null): BolumId {
+  const normalized = pathname.replace(/\/+$/, '');
+  const fromPath = Object.entries(BOLUM_PATHS).find(
+    ([, path]) => normalized === path
+  )?.[0];
+  if (fromPath && isBolum(fromPath)) return fromPath;
+  return isBolum(queryBolum) ? queryBolum : 'ozet';
+}
+
+function AdminSidebar({
+  active,
   onChange,
 }: {
-  aktif: BolumId;
+  active: BolumId;
   onChange: (id: BolumId) => void;
 }) {
   return (
-    <div
-      role="tablist"
-      aria-label="Yönetim bölümleri"
-      className="mb-4 flex flex-wrap gap-1 border-b border-border"
-    >
-      {BOLUMLER.map((b) => (
-        <button
-          key={b.id}
-          role="tab"
-          aria-selected={aktif === b.id}
-          onClick={() => onChange(b.id)}
-          className={cn(
-            '-mb-px rounded-t-lg border-b-2 px-3.5 py-2.5 text-body-sm font-medium transition-colors',
-            aktif === b.id
-              ? 'border-primary text-primary'
-              : 'border-transparent text-muted-foreground hover:text-foreground'
-          )}
-        >
-          {b.label}
-        </button>
-      ))}
-    </div>
+    <aside className="rounded-card border border-border-strong bg-surface-1/85 p-2 shadow-overlay lg:sticky lg:top-20 lg:max-h-[calc(100dvh-6rem)] lg:overflow-y-auto">
+      <div className="px-2 py-2">
+        <p className="text-caption font-semibold text-foreground">
+          AstroHub Yönetim
+        </p>
+        <p className="mt-0.5 text-meta text-muted-foreground">
+          İçerik, yayın ve sistem yüzeyleri
+        </p>
+      </div>
+      <nav aria-label="Yönetim bölümleri" className="mt-1 space-y-3">
+        {ADMIN_NAV.map((group) => (
+          <div key={group.label}>
+            <p className="px-2 pb-1 text-[0.64rem] font-semibold uppercase tracking-[0.08em] text-faint">
+              {group.label}
+            </p>
+            <div className="grid gap-1">
+              {group.items.map((item) => {
+                const Icon = item.icon;
+                const selected = active === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    aria-current={selected ? 'page' : undefined}
+                    onClick={() => onChange(item.id)}
+                    className={cn(
+                      'flex min-h-9 w-full items-center gap-2 rounded-card border px-2.5 text-left text-body-sm font-medium transition-colors',
+                      selected
+                        ? 'border-primary/55 bg-primary/10 text-primary'
+                        : 'border-transparent text-muted-foreground hover:border-border hover:bg-surface-2 hover:text-foreground'
+                    )}
+                  >
+                    <Icon className="h-4 w-4 shrink-0" />
+                    <span className="truncate">{item.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </nav>
+    </aside>
   );
 }
 
@@ -695,9 +836,13 @@ function OverviewButton({
 function Shell({
   header,
   children,
+  active,
+  onChange,
 }: {
   header: React.ReactNode;
   children: React.ReactNode;
+  active: BolumId;
+  onChange: (id: BolumId) => void;
 }) {
   return (
     <>
@@ -706,9 +851,16 @@ function Shell({
         description="Moderasyon kuyruğu ve içerik yönetimi."
         noIndex
       />
-      <Container className={cn('py-8 sm:py-10')}>
-        {header}
-        {children}
+      <Container className={cn('max-w-none py-6 sm:py-8')}>
+        <div className="grid gap-4 lg:grid-cols-[16rem_minmax(0,1fr)] xl:grid-cols-[17rem_minmax(0,1fr)]">
+          <AdminSidebar active={active} onChange={onChange} />
+          <main className="min-w-0">
+            <div className="mb-4 rounded-card border border-border bg-background/70 p-3 shadow-overlay">
+              {header}
+            </div>
+            {children}
+          </main>
+        </div>
       </Container>
     </>
   );

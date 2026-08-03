@@ -36,8 +36,14 @@ import { cn } from '@/lib/cn';
  * SİLME ONAY İSTİYOR ve geri alınamayacağını yazıyor — tek tıkla
  * silinebilen bir içerik, er geç silinir.
  */
-export function ContentControl({ canWrite }: { canWrite: boolean }) {
-  const [kind, setKind] = useState<EntryKind>('haber');
+export function ContentControl({
+  canWrite,
+  initialKind = 'haber',
+}: {
+  canWrite: boolean;
+  initialKind?: EntryKind;
+}) {
+  const [kind, setKind] = useState<EntryKind>(initialKind);
 
   return (
     <Panel

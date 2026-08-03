@@ -4,14 +4,14 @@ import { MemoryRouter } from 'react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 /**
- * YÖNETİCİ OTURUMUYLA PANEL — sekmelerin gerçekten ne açtığı.
+ * YÖNETİCİ OTURUMUYLA PANEL — sidebar'ın gerçekten ne açtığı.
  *
  * ══════════════════════════════════════════════════════════════════════
  * NEDEN OTURUM TAKLİT EDİLİYOR
  *
  * Panelin asıl gövdesi yalnızca yetkili bir oturumda çiziliyor; diğer
- * testler "kurulum yok" durumunu ölçüyor ve o durumda sekme çubuğu hiç
- * çizilmiyor. Yani panelin ASIL yüzeyi — yedi bölüm ve içlerindeki
+ * testler "kurulum yok" durumunu ölçüyor. Yani panelin ASIL yüzeyi
+ * — yönetim bölümleri ve içlerindeki
  * paneller — hiçbir test tarafından görülmüyordu.
  *
  * Gerçek bir hesap açmak üretim veritabanına dokunmak demekti. `useAuth`
@@ -20,7 +20,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
  *
  * YETKİ SINIRI BU TESTLE ÖLÇÜLMÜYOR ve ölçülemez — o sınır veritabanında
  * ve RLS matrisinde ölçülüyor. Burada ölçülen tek şey ARAYÜZ YAPISI:
- * hangi sekme hangi paneli açıyor.
+ * hangi yönetim bölümü hangi paneli açıyor.
  */
 
 vi.mock('@/features/auth/AuthContext', async () => {
@@ -82,37 +82,46 @@ function panelBasliklari(): string[] {
 }
 
 const BOLUMLER = [
-  'Özet',
-  'Moderasyon',
-  'İçerik',
-  'Kullanıcılar',
+  'Genel Bakış',
+  'Anasayfa',
+  'Galeri',
+  'Haberler',
+  'Yazılar',
   'Forum',
-  'Ana sayfa',
-  'Site yönetimi',
-  'Yayın',
+  'Etkinlikler',
+  'Araçlar',
+  'İlanlar',
+  'Saha',
+  'Moderasyon',
+  'Kullanıcılar',
   'Radyo',
   'TV',
-  'Hatırlatma',
-  'Katalog',
+  'Kurumsal',
+  'Medya Kütüphanesi',
+  'Bildirim Merkezi',
+  'İçe Aktarma İşleri',
+  'Entegrasyonlar',
+  'Audit Log',
+  'Sistem ve Ayarlar',
 ];
 
-describe('sekme çubuğu', () => {
-  it('on iki bölümü de veriyor ve sırası özetten işe doğru', () => {
+describe('admin sidebar', () => {
+  it('yönetim bölümlerini sol navigasyonda veriyor', () => {
     renderPanel();
     const adlar = screen
-      .getAllByRole('tab')
-      .map((t) => t.textContent?.trim())
+      .getByRole('navigation', { name: 'Yönetim bölümleri' })
+      .querySelectorAll('button');
+    const labels = Array.from(adlar)
+      .map((button) => button.textContent?.trim())
       .filter((t): t is string => Boolean(t));
-    /* Sekme çubuğu ilk on bir sekmedir; panellerin kendi iç sekmeleri
-       sonra geliyor. */
-    expect(adlar.slice(0, BOLUMLER.length)).toEqual(BOLUMLER);
+    expect(labels).toEqual(BOLUMLER);
   });
 
   it('varsayılan bölüm özet — tek ekran başlangıç orada', () => {
     renderPanel();
-    expect(screen.getByRole('tab', { name: 'Özet' })).toHaveAttribute(
-      'aria-selected',
-      'true'
+    expect(screen.getByRole('button', { name: 'Genel Bakış' })).toHaveAttribute(
+      'aria-current',
+      'page'
     );
     expect(screen.getByText('Yönetim özeti')).toBeInTheDocument();
   });
@@ -123,45 +132,42 @@ describe('sekme çubuğu', () => {
    * de buna bağlı.
    */
   it('adresteki bölüm açılıyor', () => {
-    renderPanel('/admin?bolum=forum');
-    expect(screen.getByRole('tab', { name: 'Forum' })).toHaveAttribute(
-      'aria-selected',
-      'true'
+    renderPanel('/admin/forum');
+    expect(screen.getByRole('button', { name: 'Forum' })).toHaveAttribute(
+      'aria-current',
+      'page'
     );
   });
 
   it('bilinmeyen bölüm varsayılana düşüyor, paneli boşaltmıyor', () => {
-    renderPanel('/admin?bolum=olmayan-bir-sey');
-    expect(screen.getByRole('tab', { name: 'Özet' })).toHaveAttribute(
-      'aria-selected',
-      'true'
+    renderPanel('/admin/olmayan-bir-sey');
+    expect(screen.getByRole('button', { name: 'Genel Bakış' })).toHaveAttribute(
+      'aria-current',
+      'page'
     );
   });
 });
 
 describe('bölümler ne açıyor', () => {
   const beklenen: Record<string, string[]> = {
-    İçerik: ['İçerik yönetimi', 'İçerik kayıtları', 'Kullanıcı metinleri'],
+    Galeri: ['Galeri fotoğrafları', 'Kullanıcı metinleri'],
+    Haberler: ['İçerik yönetimi'],
+    Yazılar: ['İçerik yönetimi'],
     Kullanıcılar: ['Kullanıcılar', 'Denetim kaydı'],
     Forum: ['Forum kategorileri', 'Forum konuları', 'Kullanıcı metinleri'],
-    /* İki ayrı sekme, iki ayrı iş: "Ana sayfa" hangi İÇERİĞİN öne
-       çıkacağını, "Site yönetimi" ana sayfanın YAPISINI yönetiyor. */
-    'Ana sayfa': ['Ana sayfada öne çıkanlar'],
-    'Site yönetimi': [
-      'Ana sayfa modülleri',
-      'Özellik anahtarları',
-      'Değişiklik geçmişi',
-    ],
-    Yayın: ['TV Kontrolü', 'Radyo Kontrolü'],
+    Anasayfa: ['Ana sayfada öne çıkanlar'],
+    Saha: ['Saha kayıtları', 'Kullanıcı metinleri'],
+    Radyo: ['İstasyon', 'Programlar'],
+    TV: ['YouTube bağlantısı', 'Video arşivi'],
   };
 
-  for (const [sekme, paneller] of Object.entries(beklenen)) {
-    it(`${sekme} → ${paneller.join(', ')}`, () => {
+  for (const [bolum, paneller] of Object.entries(beklenen)) {
+    it(`${bolum} → ${paneller.join(', ')}`, () => {
       renderPanel();
-      fireEvent.click(screen.getByRole('tab', { name: sekme }));
+      fireEvent.click(screen.getByRole('button', { name: bolum }));
       const basliklar = panelBasliklari();
       for (const panel of paneller) {
-        expect(basliklar, `${sekme} · ${panel}`).toContain(panel);
+        expect(basliklar, `${bolum} · ${panel}`).toContain(panel);
       }
     });
   }
@@ -175,7 +181,7 @@ describe('bölümler ne açıyor', () => {
   it('Katalog bölümü QueryClient ile çiziliyor', () => {
     renderPanel();
     expect(() =>
-      fireEvent.click(screen.getByRole('tab', { name: 'Katalog' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Araçlar' }))
     ).not.toThrow();
   });
 });
@@ -187,26 +193,26 @@ describe('bölüm ayrımı', () => {
    */
   it('forum konuları İçerik sekmesinde görünmüyor', () => {
     renderPanel();
-    fireEvent.click(screen.getByRole('tab', { name: 'İçerik' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Haberler' }));
     const icSekmeler = screen
-      .getAllByRole('tab')
+      .queryAllByRole('tab')
       .map((t) => t.textContent?.trim());
     expect(icSekmeler).not.toContain('Forum konuları');
-    expect(icSekmeler).toContain('Fotoğraflar');
+    expect(screen.getByText('İçerik yönetimi')).toBeInTheDocument();
   });
 
   it('forum gönderileri İçerik sekmesinde görünmüyor', () => {
     renderPanel();
-    fireEvent.click(screen.getByRole('tab', { name: 'İçerik' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Haberler' }));
     const icSekmeler = screen
-      .getAllByRole('tab')
+      .queryAllByRole('tab')
       .map((t) => t.textContent?.trim());
     expect(icSekmeler).not.toContain('Forum gönderileri');
   });
 
   it('moderasyon sekmesi kuyruğu gösteriyor', () => {
     renderPanel();
-    fireEvent.click(screen.getByRole('tab', { name: 'Moderasyon' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Moderasyon' }));
     expect(panelBasliklari()).toContain('Kuyruk');
   });
 });
