@@ -34,7 +34,7 @@ tabloda `DONE` ile birleştirilmez:
 | 10 | Admin panelinden kodsuz site yönetimi | 1006–1164 | DONE⁷ |
 | 11 | Zorunlu ürün modülleri | 1165–1349 | PARTIAL⁸ |
 | 12 | Organik kullanıcı kazanımı | 1350–1419 | PARTIAL¹¹ |
-| 13 | Fotoğraf, Storage, medya mimarisi | 1420–1462 | NOT_STARTED |
+| 13 | Fotoğraf, Storage, medya mimarisi | 1420–1462 | PARTIAL¹² |
 | 14 | macOS, tarayıcı, responsive, erişilebilirlik | 1463–1528 | NOT_STARTED |
 | 15 | Güvenlik, KVKK, telif, kötüye kullanım | 1529–1606 | NOT_STARTED |
 | 16 | Performans, SEO, analitik, gözlemlenebilirlik | 1607–1690 | NOT_STARTED |
@@ -48,6 +48,16 @@ beş testi var, hiçbir yerden çağrılmıyordu ve `robots.txt` onu ilan
 ediyordu; (2) 81 şehir sayfasının hepsi koşulsuz indekslenebilirdi.
 Kalan maddeler (challenge/tema, haftalık özet, davet altyapısı, watermark)
 kendi turlarını hak ediyor. Ayrıntı: Faz 12 bölümü.
+
+¹² **Faz 13 envanteri açıldı; sıfırdan medya boru hattı yazılmadı.**
+Fotoğraf yükleme, küçültme, EXIF, private original/public derived bucket,
+kota, sürümler, plate solve ve silme yüzeyi zaten repoda vardı. Bu turda
+§10.8 lifecycle için `storage:photo-cleanup` komutu eklendi: varsayılan
+dry-run, `--apply` ile 24 saatten eski görselsiz yarım taslakları ve
+fotoğraf/sürüm satırlarının referans vermediği eski storage nesnelerini
+temizler. Kalanlar ürün/operasyon kararıdır: production cron için secret
+key taşıyan güvenli zamanlayıcı, 30 günlük soft-delete geri alma modeli ve
+ham FITS/TIFF veri setleri.
 
 ¹⁰ **Faz 4'ün motor tarafı kapandı; kalanların hiçbiri süzgeç işi
 değil.** 2 Ağustos turunda §7.1'in üç maddesi geldi: sayısal aralık,
@@ -2322,9 +2332,8 @@ hiç üretilmiyordu (üretici yazılmış, çağrılmamış, testleri geçiyordu
 indekslenebilirdi.
 
 **Sıradaki iş:** Faz 12'nin kalan maddeleri (challenge/tema, aylık seçki,
-haftalık özet, davet altyapısı, watermark, portfolyo URL'si), ardından
-Faz 13 (fotoğraf/storage/medya mimarisi, belge 1420–1462) — tablodaki
-ilk `NOT_STARTED` faz.
+haftalık özet, davet altyapısı, watermark) ve Faz 13'ün operasyon
+kararları; ardından Faz 14 — tablodaki ilk `NOT_STARTED` faz.
 
 **Çalışma yöntemi** (bu oturumda işe yaradı):
 - Master belgeyi TAMAMEN okuma; yalnızca faz satır aralığını oku

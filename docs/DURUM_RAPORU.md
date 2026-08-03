@@ -14,10 +14,10 @@
 |---|---|
 | **Tamamlanan faz** | 3 (Faz 0, 2, 10) + Faz 9 `IMPLEMENTED_DISABLED` |
 | **Kodla kapatılabilecek iş kalmayan faz** | Faz 1, 3, 6, 7, 8 — kalanlar dış kaynak/karar bekliyor |
-| **Kısmen açık faz** | Faz 4, 5, 11, 12 |
-| **Hiç başlanmayan faz** | Faz 13, 14, 15, 16, 17, 18 |
+| **Kısmen açık faz** | Faz 4, 5, 11, 12, 13 |
+| **Hiç başlanmayan faz** | Faz 14, 15, 16, 17, 18 |
 
-**Kritik nokta:** 18 fazın 12'si işlenmiş durumda ve kalan altısının
+**Kritik nokta:** 18 fazın 13'ü işlenmiş durumda ve kalan beşinin
 çoğu *doğrulama/sertleştirme* fazı (test stratejisi, güvenlik denetimi,
 performans, erişilebilirlik). Yani ürün yüzeyi büyük ölçüde ayakta;
 kalan iş ağırlıklı olarak **kanıtlama** ve **cilalama**.
@@ -266,12 +266,27 @@ canonical, paylaşılabilir gözlem planı, atıf ve telif.
 
 ---
 
-### Faz 13 — Fotoğraf, Storage, medya mimarisi · **NOT_STARTED**
+### Faz 13 — Fotoğraf, Storage, medya mimarisi · **PARTIAL**
 
-> **Not:** Bu fazın birçok maddesi Faz 1.2'de fiilen yapıldı — yeniden
-> boyutlama merdiveni, EXIF ayrıştırma (GPS hariç), kota, imzalı
-> orijinal bucket, plate solve, işleme sürümleri. Faz açıldığında ilk iş
-> **envanter** olmalı; sıfırdan bir boru hattı yazmak tekrar olurdu.
+**Yapıldı:** Fazın büyük kısmı daha önce kapatılmıştı: iki bucket
+(`photos`, `photo-originals`), orijinalin private kalması, public
+küçültülmüş kopyalar, yeniden boyutlama merdiveni, EXIF ayrıştırma
+(GPS yayımlanmıyor), kota, fotoğraf silme yüzeyi, plate solve alanları,
+işleme sürümleri ve kullanıcıya ait dosyaların geri alınması.
+
+**Bu turda:** §10.8 lifecycle boşluğu kapatıldı. `storage:photo-cleanup`
+komutu service/secret key ile dry-run çalışır; `--apply` verilirse
+24 saatten eski görselsiz yarım taslakları ve hiçbir fotoğraf/sürüm
+satırının referans vermediği eski storage nesnelerini temizler.
+
+**Kaldı ve neden:**
+
+| Madde | Sebep |
+|---|---|
+| Yayımlanmamış taslak için kullanıcıya uyarı/hatırlatma | Bildirim/e-posta teslim kanalı Faz 6 kararına bağlı |
+| 30 günlük geri alma alanı | Ürün kararı: bugünkü silme kalıcı; soft-delete modeli ve görünür geri alma arayüzü ayrı tur |
+| Storage lifecycle'ın production cron'a bağlanması | `SUPABASE_SECRET_KEY` taşıyan güvenli zamanlayıcı gerekir; komut hazır, sır kimliği repo içine konulmayacak |
+| FITS/TIFF ham veri setleri | MVP kapsamı dışında; eğitim/ham veri modülü ve depolama maliyeti kararı gerekir |
 
 ---
 
@@ -343,7 +358,7 @@ Kalan bütün maddeler **dört sebepten birine** giriyor:
 - Sütun sırası sürükle-bırak
 - Harita/takvimin explorer görünümü olması
 - Watermark
-- Faz 13/14/15/16/17 envanterleri
+- Faz 14/15/16/17 envanterleri
 
 ---
 
@@ -506,6 +521,7 @@ gerçek koda göre hâlâ açıktı.
 - `src/components/shell/Topbar.tsx`, `src/components/ui/EditorialList.tsx` — üst bar yüksekliği yaklaşık %15 artırıldı; haber/yazı liste başlıklarının hover rengi beyaza eşitlendi.
 - `src/services/content/activity.ts`, `src/features/activity/ActivityPage.tsx`, `src/app/router.tsx`, `src/features/discover/DiscoverPage.tsx` — takip edilen kullanıcıların fotoğraf/ilan/forum hareketlerinden oluşan `/akis` kişisel aktivite sayfası eklendi; Keşfet'ten erişilir.
 - `src/features/profile/ProfilePage.tsx`, `src/features/profile/ProfilePage.test.tsx` — public profil sayfası gerçek `profiles` kaydını okur; fotoğrafı olmayan kullanıcı için profil ve portfolyo bağlantısı görünür.
+- `scripts/photo-lifecycle-cleanup.mjs`, `scripts/lib/photo-lifecycle.mjs`, `scripts/photo-lifecycle-cleanup.test.mjs`, `package.json` — fotoğraf storage lifecycle bakımı eklendi; varsayılan dry-run, `--apply` ile eski yarım taslak ve orphan nesne temizliği.
 
 ### Doğrulama
 
