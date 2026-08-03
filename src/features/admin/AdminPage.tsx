@@ -66,12 +66,12 @@ export function AdminPage() {
 
   const [params, setParams] = useSearchParams();
   const bolumParam = params.get('bolum');
-  const bolum: BolumId = isBolum(bolumParam) ? bolumParam : 'moderasyon';
+  const bolum: BolumId = isBolum(bolumParam) ? bolumParam : 'ozet';
 
   /* `replace`: sekme gezinmesi geri yığınını doldurmamalı — geri tuşu
      panelden çıkmalı, önceki sekmeye değil. */
   const setBolum = (id: BolumId) =>
-    setParams(id === 'moderasyon' ? {} : { bolum: id }, { replace: true });
+    setParams(id === 'ozet' ? {} : { bolum: id }, { replace: true });
 
   const [filter, setFilter] = useState<ModerationStatus | 'hepsi'>('pending');
   const [queue, setQueue] = useState<QueueResult | null>(null);
@@ -189,6 +189,15 @@ export function AdminPage() {
   return (
     <Shell header={header}>
       <BolumSekmeleri aktif={bolum} onChange={setBolum} />
+
+      {bolum === 'ozet' && (
+        <AdminOverview
+          counts={counts}
+          roleNames={roles.roles.map((r) => roleLabels[r])}
+          isAdmin={roles.isAdmin}
+          onChange={setBolum}
+        />
+      )}
 
       {bolum === 'moderasyon' && (
         <>
@@ -528,6 +537,7 @@ export function AdminPage() {
  * bir şey paneli boş bırakmamalı.
  */
 const BOLUMLER = [
+  { id: 'ozet', label: 'Özet' },
   { id: 'moderasyon', label: 'Moderasyon' },
   { id: 'icerik', label: 'İçerik' },
   { id: 'kullanicilar', label: 'Kullanıcılar' },
@@ -577,6 +587,108 @@ function BolumSekmeleri({
         </button>
       ))}
     </div>
+  );
+}
+
+function AdminOverview({
+  counts,
+  roleNames,
+  isAdmin,
+  onChange,
+}: {
+  counts: QueueResult['counts'] | undefined;
+  roleNames: string[];
+  isAdmin: boolean;
+  onChange: (id: BolumId) => void;
+}) {
+  const pending = counts?.pending ?? '—';
+  const escalated = counts?.escalated ?? '—';
+  const approved = counts?.approved ?? '—';
+  const rejected = counts?.rejected ?? '—';
+
+  return (
+    <div className="grid gap-4 lg:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.75fr)]">
+      <Panel title="Yönetim özeti" status={counts ? 'canlı' : 'yükleniyor…'}>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <Readout label="Bekleyen" value={pending} tone="primary" />
+          <Readout label="Yükseltilen" value={escalated} tone="cold" />
+          <Readout label="Onaylanan" value={approved} tone="muted" />
+          <Readout label="Reddedilen" value={rejected} tone="muted" />
+        </div>
+
+        <div className="mt-4 grid gap-2 sm:grid-cols-2">
+          <OverviewButton
+            label="Moderasyon kuyruğu"
+            detail="Raporlar ve otomatik kontroller"
+            onClick={() => onChange('moderasyon')}
+          />
+          <OverviewButton
+            label="Site yönetimi"
+            detail="Menü, hero, modüller ve ayarlar"
+            onClick={() => onChange('site')}
+          />
+          <OverviewButton
+            label="Yayın"
+            detail="Radyo ve TV yayın akışı"
+            onClick={() => onChange('yayin')}
+          />
+          <OverviewButton
+            label="Katalog"
+            detail="Hedef ve ekipman verisi"
+            onClick={() => onChange('katalog')}
+          />
+        </div>
+      </Panel>
+
+      <Panel title="Yetki durumu">
+        <SpecList>
+          <SpecRow
+            label="Rol"
+            value={roleNames.length > 0 ? roleNames.join(', ') : 'yok'}
+            tone="primary"
+          />
+          <SpecRow
+            label="Yazma yetkisi"
+            value={isAdmin ? 'açık' : 'moderasyonla sınırlı'}
+            tone={isAdmin ? 'primary' : 'muted'}
+          />
+          <SpecRow
+            label="Kullanıcı yönetimi"
+            value={isAdmin ? 'açık' : 'kapalı'}
+            tone="muted"
+          />
+        </SpecList>
+        <p className="mt-3 text-meta leading-relaxed text-muted-foreground">
+          Özet ekranı yalnızca var olan panel yüzeylerine kısa yol verir; yetki
+          sınırı her işlemde yine veritabanı politikalarıyla uygulanır.
+        </p>
+      </Panel>
+    </div>
+  );
+}
+
+function OverviewButton({
+  label,
+  detail,
+  onClick,
+}: {
+  label: string;
+  detail: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="rounded-card border border-border bg-surface-1 px-3.5 py-3 text-left transition-colors hover:border-border-strong hover:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+    >
+      <span className="block text-body-sm font-semibold text-foreground">
+        {label}
+      </span>
+      <span className="mt-0.5 block text-meta text-muted-foreground">
+        {detail}
+      </span>
+    </button>
   );
 }
 

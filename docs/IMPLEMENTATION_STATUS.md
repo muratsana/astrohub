@@ -102,10 +102,11 @@ slaytları, menü/footer, yedi bayrak, bakım modu, site duyurusu— hem
 panelden yazılıyor hem ziyaretçi tarafından OKUNUYOR. Fazın tekrar eden
 hatası ("panel yazıyor, ziyaretçi okumuyor") dört turda kapatıldı.
 
-İKİ MADDE BİLEREK YAPILMADI ve ikisi de kapsam dışı sayıldı:
 §13.4'ün çoklu admin rolleri **kurulmayacak** (ürün kararı, tek admin —
-bkz. görev #73) ve §13.5'in tek ekran dashboard'u PARTIAL kalıyor
-(panel sekmeleri var, birleşik özet ekranı yok). Ayrıntı: Faz 10.
+bkz. görev #73). §13.5'in tek ekran dashboard'u bu turda kapandı:
+`/admin` varsayılan `Özet` sekmesiyle kuyruk sayımlarını, yetki durumunu
+ve ana yönetim yüzeylerine kısa yolları birlikte gösteriyor. Ayrıntı:
+Faz 10.
 
 ⁶ **Faz 9 tamam — ödeme kapalı olduğu için `IMPLEMENTED_DISABLED`.**
 §12.2 bu etiketi açıkça öneriyor: "bu faz kod ve test açısından
@@ -1514,7 +1515,7 @@ Yazarken `interval` ve `status` enum değerlerini tahmin etmiştim
 | **Hero banner yönetimi** | DONE | `0063`, `heroSlides.ts`, panel bölümü |
 | Modül `layout` (ızgara/liste) ve `subtitle` | NOT_STARTED | gerekçe `HomePage.tsx`te |
 | §13.4 çoklu admin rolleri | — | ürün kararı: kurulmayacak |
-| §13.5 dashboard | PARTIAL | panel sekmeleri var, tek ekran özet yok |
+| §13.5 dashboard | DONE | `AdminPage` varsayılan `Özet` sekmesi: kuyruk sayımları, yetki durumu, hızlı geçişler |
 
 Menü işi üç parçalıydı ve üçü de eksikti: tohum yok, panel yüzeyi yok,
 okuma yok. Üçü birden bu turda yazıldı.

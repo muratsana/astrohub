@@ -82,6 +82,7 @@ function panelBasliklari(): string[] {
 }
 
 const BOLUMLER = [
+  'Özet',
   'Moderasyon',
   'İçerik',
   'Kullanıcılar',
@@ -96,7 +97,7 @@ const BOLUMLER = [
 ];
 
 describe('sekme çubuğu', () => {
-  it('on bir bölümü de veriyor ve sırası konudan işe doğru', () => {
+  it('on iki bölümü de veriyor ve sırası özetten işe doğru', () => {
     renderPanel();
     const adlar = screen
       .getAllByRole('tab')
@@ -107,12 +108,13 @@ describe('sekme çubuğu', () => {
     expect(adlar.slice(0, BOLUMLER.length)).toEqual(BOLUMLER);
   });
 
-  it('varsayılan bölüm moderasyon — günlük iş orada', () => {
+  it('varsayılan bölüm özet — tek ekran başlangıç orada', () => {
     renderPanel();
-    expect(screen.getByRole('tab', { name: 'Moderasyon' })).toHaveAttribute(
+    expect(screen.getByRole('tab', { name: 'Özet' })).toHaveAttribute(
       'aria-selected',
       'true'
     );
+    expect(screen.getByText('Yönetim özeti')).toBeInTheDocument();
   });
 
   /*
@@ -130,7 +132,7 @@ describe('sekme çubuğu', () => {
 
   it('bilinmeyen bölüm varsayılana düşüyor, paneli boşaltmıyor', () => {
     renderPanel('/admin?bolum=olmayan-bir-sey');
-    expect(screen.getByRole('tab', { name: 'Moderasyon' })).toHaveAttribute(
+    expect(screen.getByRole('tab', { name: 'Özet' })).toHaveAttribute(
       'aria-selected',
       'true'
     );
@@ -204,6 +206,7 @@ describe('bölüm ayrımı', () => {
 
   it('moderasyon sekmesi kuyruğu gösteriyor', () => {
     renderPanel();
+    fireEvent.click(screen.getByRole('tab', { name: 'Moderasyon' }));
     expect(panelBasliklari()).toContain('Kuyruk');
   });
 });

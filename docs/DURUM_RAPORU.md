@@ -216,9 +216,10 @@ hepsi hem panelden yazılıyor hem ziyaretçi tarafında okunuyor.
 > ziyaretçi okumuyor** (`home_modules`, `feature_flags`, `nav_links`,
 > `hero_slides` — dördü de).
 
-**İki madde bilerek kapsam dışı:** çoklu admin rolü **kurulmayacak**
-(ürün kararı), tek ekran dashboard `PARTIAL` (sekmeler var, birleşik
-özet ekranı yok).
+**Kapsam dışı kalan tek madde:** çoklu admin rolü **kurulmayacak**
+(ürün kararı). Tek ekran dashboard bu turda kapandı: yönetim paneli artık
+varsayılan **Özet** sekmesinde kuyruk sayımlarını, yetki durumunu ve ana
+panel bölümlerine kısa yolları birlikte gösteriyor.
 
 ---
 
@@ -475,6 +476,8 @@ gerçek koda göre hâlâ açıktı.
 | Koşul kartı yoğunluğu ve hedef tablo tutarlılığı | Bulut/seeing/çiylenme gibi kartların ikinci satırları paneli kalabalıklaştırıyordu; hedef başlıkları sıralanamıyordu | DONE — koşul kartlarında yalnızca ana veri satırı kaldı; `Zirve` ve `Yükseklik` başlıkları hizalı ve tıklanabilir sıralama kontrolü |
 | Hero ve footer görsel geri bildirimi | Hero büyük harf aralığı fazla genişti; footer üst menüyü tekrar ediyordu | DONE — hero letter-spacing sıfırlandı; footer’da modül tekrarı kaldırıldı, aynı alana `Hakkında/KVKK/Kullanım Koşulları` taşındı |
 | Karanlık grafiği | Segmentler sert bloklar gibi görünüyordu | DONE — segment geçişleri maskeli bindirme ve üst ışık katmanı ile yumuşatıldı |
+| Admin tek ekran özeti | Sekmeler vardı ama birleşik dashboard yoktu | DONE — `/admin` varsayılanı `Özet`; kuyruk sayımları, yetki durumu ve hızlı geçişler tek ekranda |
+| Etkinlik tarih kartı kontrastı | Takvim simgesi koyu/açık temada arka planda kayboluyordu | DONE — tarih bloğu daha kontrast zemin, net üst şerit ve okunur takvim iziyle yenilendi |
 
 ### Bu patch'te değişen dosyalar
 
@@ -508,6 +511,8 @@ gerçek koda göre hâlâ açıktı.
 - `src/features/location/LocationContext.tsx`, `src/features/home/sections/TonightPanel.tsx` — paneldeki ikinci `Konumumu kullan` düğmesi kaldırıldı; Chrome/macOS izin değişimi ve konum alma retry akışı düzeltildi.
 - `src/components/shell/AppShell.tsx`, `scripts/e2e.mjs` — alt radyo barı kaldırıldı; e2e artık üst bar radyo kontrolünün rota değişiminde kaldığını doğrular.
 - `src/features/static/ContactPage.tsx`, `src/components/shell/Footer.tsx`, `src/app/router.tsx`, `src/app/sitemap.ts` — footer'a iletişim bağlantısı ve doğrudan e-posta akışı olan `/iletisim` sayfası eklendi.
+- `src/features/admin/AdminPage.tsx`, `src/features/admin/AdminSections.test.tsx` — tek ekran admin özeti eklendi; `/admin` varsayılan sekmesi artık `Özet`.
+- `src/features/home/sections/UpcomingEvents.tsx` — etkinlik tarih kartı koyu/açık temada daha okunur takvim bloğuna çevrildi.
 - `src/features/home/sections/NewsStrip.tsx`, `src/features/home/sections/UpcomingEvents.tsx`, `src/features/home/sections/RecentListings.tsx` — haber hover rengi beyaz yapıldı, etkinlik tarih bloğu takvim ikonuyla güçlendirildi, son ilan açıklaması kaldırıldı.
 - `src/components/shell/Logo.tsx` — üst bardaki Astrohub markasının yanına gri tonlu `(Beta test yayını)` etiketi eklendi.
 - `src/features/targets/TargetDetailPage.tsx`, `src/domain/targets/derive.ts`, `src/features/targets/TargetsPage.tsx`, `src/lib/commons.ts` — hedef detaylarında gerçek fotoğraf URL'leri ve hedef görseli fallback'i kullanılır, RA/DEC kopyalanabilir astronomik gösterime alındı, görünür zorluk rozeti/filtresi kaldırıldı ve önerilen odak açıklaması eklendi.
