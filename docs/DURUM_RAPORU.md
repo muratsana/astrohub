@@ -33,10 +33,10 @@ kalan iş ağırlıklı olarak **kanıtlama** ve **cilalama**.
 | Canlı tablo | 84 · RLS açık: **83/84** (istisna: PostGIS `spatial_ref_sys`) |
 | RLS politikası | 176 |
 | Edge fonksiyonu | 6 (meteoblue, plate-solve, plate-solve-poll, radyo-durum, youtube, podcast-rss) |
-| Test | **2.042 test / 165 dosya** — hepsi geçiyor |
-| Rota | 80 tanım · 491 prerender edilmiş statik HTML · 160 Vercel rewrite |
+| Test | **2.044 test / 166 dosya** — hepsi geçiyor |
+| Rota | 81 tanım · 491 prerender edilmiş statik HTML · 161 Vercel rewrite |
 | Sitemap | 484 adres (ince şehir sayfaları bilerek hariç) |
-| İlk rota JS | **197.2 kB gzip** (bütçe 200) · CSS 14.5 kB (bütçe 25) |
+| İlk rota JS | **197.1 kB gzip** (bütçe 200) · CSS 14.7 kB (bütçe 25) |
 
 **Kalite kapıları (hepsi CI'da):** `lint`, `typecheck`, `test`,
 `check:budgets`, `check:a11y`, `check:viewports`, `check:csp`,
@@ -136,13 +136,14 @@ yüzeyine taşındı.
 **Yapıldı:** Sosyal graf (`follows`, `user_blocks`), bildirim şeması ve
 üretim tetikleyicileri, mesajlaşma (`conversations`/`participants`/
 `messages`), bildirim merkezi arayüzü, sohbet arayüzü, takip/engelleme
-arayüzü, raporlama. Sekiz göç (`0041`–`0048`).
+arayüzü, raporlama. **Bu turda:** `/akis` kişisel aktivite akışı eklendi;
+takip edilen kullanıcıların yeni fotoğraf, ilan ve forum konu hareketleri
+tek listede gösteriliyor. Sekiz göç (`0041`–`0048`).
 
 **Kaldı ve neden:**
 
 | Madde | Sebep |
 |---|---|
-| Aktivite akışı ("takip ettiklerin ne yaptı") | **Sırada, engelsiz.** `follows` hazır |
 | Kişiselleştirilmiş akış | Faz 12 §15.1 ile birlikte ele alınmalı |
 
 ---
@@ -342,7 +343,6 @@ Kalan bütün maddeler **dört sebepten birine** giriyor:
 
 ### D) Engelsiz, sırada bekleyen kod işi
 - İlçe explorer facet'i (**önce göç + form**)
-- Aktivite akışı
 - Challenge altyapısı, aylık seçki
 - Sütun sırası sürükle-bırak
 - Harita/takvimin explorer görünümü olması
@@ -378,13 +378,9 @@ Kalan bütün maddeler **dört sebepten birine** giriyor:
 | Prerender | 490 rota | Sayfa yapısı SSR'da çalışmak zorunda |
 
 ### Eksik olan — yeni tasarımın doldurması gerekenler
-- **`Tooltip` bileşeni YOK.** Faz 2'de `PARTIAL` bırakıldı; §5.4'ün
-  "tooltip'e taşınmalı" sınıfı bu yüzden uygulanamıyor.
-- **`selected` durumu için ortak kural yok.** Focus/hover/disabled var,
-  seçili durum her yerde ayrı çözülüyor.
 - **Tek ekran admin dashboard yok** (sekmeler var, birleşik özet yok).
-- **Aktivite akışı / kişiselleştirilmiş akış ekranı yok** — Faz 5 ve 12
-  bunu istiyor, tasarımı hiç yapılmadı.
+- **Kişiselleştirilmiş özet/öneri akışı yok** — `/akis` takip hareketlerini
+  gösteriyor; haftalık özet ve öneri mantığı Faz 12'de ayrı tasarlanacak.
 - **Challenge/yarışma yüzeyi yok.**
 
 ### Bu oturumda düzeltilen UI hataları (tekrarlamamak için)
@@ -512,6 +508,7 @@ gerçek koda göre hâlâ açıktı.
 - `src/domain/astronomy/nightScore.ts` — karar gerekçesindeki ay satırı `Aysız pencere` metriğine çevrildi; astronomik karanlığın yarısından fazlaysa artı, azsa eksi olarak gösteriliyor.
 - `src/components/shell/Logo.tsx`, `src/components/shell/Footer.tsx` — üst bar ve footer logosuna gri `(Beta test yayını)` etiketi eklendi; footer altındaki tekrar eden veri notu kaldırıldı ve telif satırı ana footer satırına taşındı.
 - `src/components/shell/Topbar.tsx`, `src/components/ui/EditorialList.tsx` — üst bar yüksekliği yaklaşık %15 artırıldı; haber/yazı liste başlıklarının hover rengi beyaza eşitlendi.
+- `src/services/content/activity.ts`, `src/features/activity/ActivityPage.tsx`, `src/app/router.tsx`, `src/features/discover/DiscoverPage.tsx` — takip edilen kullanıcıların fotoğraf/ilan/forum hareketlerinden oluşan `/akis` kişisel aktivite sayfası eklendi; Keşfet'ten erişilir.
 
 ### Doğrulama
 

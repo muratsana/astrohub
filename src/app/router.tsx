@@ -155,6 +155,12 @@ export const appRoutes = [
           named(() => import('@/features/discover/DiscoverPage'), 'DiscoverPage')
         ),
       },
+      {
+        path: 'akis',
+        element: route(
+          named(() => import('@/features/activity/ActivityPage'), 'ActivityPage')
+        ),
+      },
       { path: 'profil/:username', element: route(
           named(() => import('@/features/profile/ProfilePage'), 'ProfilePage')
         ) },

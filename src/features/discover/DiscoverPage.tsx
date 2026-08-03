@@ -75,6 +75,11 @@ export function DiscoverPage() {
           title="Keşfet"
           description="Türkiye'nin astrofotoğrafçıları, bu sezon en çok çalışılan hedefler ve topluluğun yeni içerikleri."
           meta={`${photographers.length} üretici`}
+          actions={
+            <ButtonLink to="/akis" size="sm" variant="secondary">
+              Takip akışı
+            </ButtonLink>
+          }
         />
 
         {/* Astrofotoğrafçılar */}

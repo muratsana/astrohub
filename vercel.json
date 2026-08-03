@@ -25,6 +25,10 @@
       "destination": "/app.html"
     },
     {
+      "source": "/akis",
+      "destination": "/app.html"
+    },
+    {
       "source": "/aksaray-astronomi-etkinlikleri",
       "destination": "/app.html"
     },
