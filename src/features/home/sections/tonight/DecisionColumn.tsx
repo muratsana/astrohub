@@ -1,8 +1,10 @@
+import { useState, type ReactNode } from 'react';
 import { Button } from '@/components/ui/Button';
 import { formatClock } from '@/domain/astronomy/ephemeris';
 import type { NightScore, NightVerdict } from '@/domain/astronomy/nightScore';
 import type { SkyState } from '@/features/weather/useSkyConditions';
 import { cn } from '@/lib/cn';
+import type { BestPlace } from './bestPlaces';
 
 /**
  * KARAR KOLONU — "bu gece gözlem yapmaya değer mi?"
@@ -25,6 +27,10 @@ import { cn } from '@/lib/cn';
 
 interface Props {
   score: NightScore | null;
+  deepSpaceScore?: NightScore | null;
+  solarSystemScore?: NightScore | null;
+  bestPlaces?: BestPlace[];
+  onUseBestPlace?: (place: BestPlace) => void;
   conditions: SkyState;
   locationLabel: string;
   dateLabel: string;
@@ -41,7 +47,11 @@ const VERDICT_TONE: Record<
     ring: 'var(--color-success)',
     dot: 'bg-success',
   },
-  iyi: { text: 'text-success', ring: 'var(--color-success)', dot: 'bg-success' },
+  iyi: {
+    text: 'text-success',
+    ring: 'var(--color-success)',
+    dot: 'bg-success',
+  },
   orta: {
     text: 'text-warning',
     ring: 'var(--color-warning)',
@@ -52,18 +62,26 @@ const VERDICT_TONE: Record<
 
 export function DecisionColumn({
   score,
+  deepSpaceScore = score,
+  solarSystemScore = score,
+  bestPlaces = [],
+  onUseBestPlace,
   conditions,
   locationLabel,
   dateLabel,
   timeZone,
 }: Props) {
+  const [tab, setTab] = useState<'dso' | 'solar' | 'places'>('dso');
+  const activeScore = tab === 'solar' ? solarSystemScore : deepSpaceScore;
   /*
    * Kolonun üstündeki ışıma HÜKMÜN RENGİ, sabit yeşil değil. Tasarım
    * referansı yeşil bir gradyan gösteriyor ama o örnek "çok iyi" bir
    * gece; aynı yeşili kapalı bir gecede çizmek, ekranın rengiyle
    * yazısının birbirini yalanlaması olurdu.
    */
-  const glow = score ? VERDICT_TONE[score.verdict].ring : 'var(--color-cold)';
+  const glow = activeScore
+    ? VERDICT_TONE[activeScore.verdict].ring
+    : 'var(--color-cold)';
 
   return (
     <div
@@ -88,9 +106,30 @@ export function DecisionColumn({
         )}
       </div>
 
-      {score ? (
+      <div
+        role="tablist"
+        aria-label="Gözlem skoru türü"
+        className="grid grid-cols-3 gap-1 rounded-card border border-border bg-surface-1 p-1"
+      >
+        <DecisionTab selected={tab === 'dso'} onClick={() => setTab('dso')}>
+          Derin Uzay
+        </DecisionTab>
+        <DecisionTab selected={tab === 'solar'} onClick={() => setTab('solar')}>
+          Güneş Sistemi
+        </DecisionTab>
+        <DecisionTab
+          selected={tab === 'places'}
+          onClick={() => setTab('places')}
+        >
+          En İyi Yerler
+        </DecisionTab>
+      </div>
+
+      {tab === 'places' ? (
+        <BestPlacesBlock places={bestPlaces} onUseBestPlace={onUseBestPlace} />
+      ) : activeScore ? (
         <ScoreBlock
-          score={score}
+          score={activeScore}
           locationLabel={locationLabel}
           dateLabel={dateLabel}
         />
@@ -98,18 +137,134 @@ export function DecisionColumn({
         <ScoreUnavailable conditions={conditions} />
       )}
 
-      {score && (
+      {tab !== 'places' && activeScore && (
         <>
           <div aria-hidden className="h-px bg-border" />
-          <ReasonList pros={score.pros} cons={score.cons} />
+          <ReasonList pros={activeScore.pros} cons={activeScore.cons} />
           <p className="mt-auto rounded-card border border-warning/25 bg-warning/8 px-3.5 py-2.5 text-meta leading-relaxed text-warning">
-            {score.recommendation}
+            {activeScore.recommendation}
           </p>
         </>
       )}
-
     </div>
   );
+}
+
+function DecisionTab({
+  selected,
+  onClick,
+  children,
+}: {
+  selected: boolean;
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      role="tab"
+      aria-selected={selected}
+      onClick={onClick}
+      className={cn(
+        'min-h-8 rounded-card px-2 text-center text-[0.68rem] font-semibold leading-tight transition-colors',
+        selected
+          ? 'bg-primary text-primary-foreground'
+          : 'text-muted-foreground hover:bg-surface-2 hover:text-foreground'
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
+function BestPlacesBlock({
+  places,
+  onUseBestPlace,
+}: {
+  places: BestPlace[];
+  onUseBestPlace?: (place: BestPlace) => void;
+}) {
+  const best = places[0];
+
+  if (!best) {
+    return (
+      <p className="rounded-card border border-border bg-surface-2 px-3.5 py-3 text-meta leading-relaxed text-muted-foreground">
+        Gözlem noktası kataloğu boş; en iyi yer sıralaması üretilemedi.
+      </p>
+    );
+  }
+
+  return (
+    <div className="flex min-h-0 flex-col gap-3">
+      <div className="rounded-card border border-primary/35 bg-primary/10 p-3">
+        <p className="text-meta font-semibold text-primary">En iyi aday</p>
+        <p className="mt-1 text-body-sm font-bold text-foreground">
+          {best.site.name}
+        </p>
+        <p className="mt-0.5 text-meta text-muted-foreground">
+          {best.site.region} · Bortle {best.site.bortle} ·{' '}
+          <span className="num">{best.site.altitude}</span> m
+        </p>
+        <div className="mt-2 grid grid-cols-2 gap-2 text-meta">
+          <span className="rounded-card bg-background px-2 py-1 text-muted-foreground">
+            DSO <span className="num text-foreground">{best.dsoScore}</span>
+          </span>
+          <span className="rounded-card bg-background px-2 py-1 text-muted-foreground">
+            Güneş Sistemi{' '}
+            <span className="num text-foreground">{best.solarSystemScore}</span>
+          </span>
+        </div>
+        {onUseBestPlace && (
+          <Button
+            type="button"
+            size="sm"
+            className="mt-3 w-full"
+            onClick={() => onUseBestPlace(best)}
+          >
+            En iyi yeri kullan
+          </Button>
+        )}
+      </div>
+
+      <ol className="max-h-[360px] min-h-0 overflow-y-auto pr-1">
+        {places.map((place, index) => (
+          <li
+            key={place.site.name}
+            className="grid grid-cols-[1.5rem_minmax(0,1fr)_3.5rem_3.5rem] items-center gap-2 border-b border-border py-2 last:border-b-0"
+          >
+            <span className="num text-meta text-faint">
+              {String(index + 1).padStart(2, '0')}
+            </span>
+            <span className="min-w-0">
+              <span className="block truncate text-meta font-semibold text-foreground">
+                {place.site.name}
+              </span>
+              <span className="block truncate text-[0.68rem] text-faint">
+                {place.site.region} · aysız{' '}
+                {durationText(place.moonlessMinutes)}
+              </span>
+            </span>
+            <span className="text-right text-[0.68rem] text-muted-foreground">
+              DSO <span className="num text-primary">{place.dsoScore}</span>
+            </span>
+            <span className="text-right text-[0.68rem] text-muted-foreground">
+              GS{' '}
+              <span className="num text-success">{place.solarSystemScore}</span>
+            </span>
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
+
+function durationText(minutes: number): string {
+  const total = Math.max(0, Math.round(minutes));
+  const hours = Math.floor(total / 60);
+  const mins = total % 60;
+  if (hours === 0) return `${mins} dk`;
+  if (mins === 0) return `${hours}sa`;
+  return `${hours}sa ${String(mins).padStart(2, '0')}dk`;
 }
 
 function ScoreBlock({
@@ -144,7 +299,10 @@ function ScoreBlock({
         >
           <div className="grid h-[62px] w-[62px] place-items-center rounded-full bg-background">
             <span
-              className={cn('num text-readout-lg font-semibold leading-none', tone.text)}
+              className={cn(
+                'num text-readout-lg font-semibold leading-none',
+                tone.text
+              )}
             >
               {score.total}
             </span>
@@ -168,7 +326,6 @@ function ScoreBlock({
               Seeing ölçülemedi — hüküm bir kademe sınırlandı.
             </p>
           )}
-
         </div>
       </div>
 

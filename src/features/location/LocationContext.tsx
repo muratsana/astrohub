@@ -7,7 +7,12 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { findCity, DEFAULT_CITY_ID, TURKEY_TIME_ZONE, type City } from './cities';
+import {
+  findCity,
+  DEFAULT_CITY_ID,
+  TURKEY_TIME_ZONE,
+  type City,
+} from './cities';
 import {
   readStoredLocation as readStored,
   writeStoredLocation as writeStored,
@@ -17,10 +22,7 @@ import type {
   ObservingLocation,
   PermissionState,
 } from './types';
-import {
-  fetchProvinces,
-  type Province,
-} from '@/services/content/provinces';
+import { fetchProvinces, type Province } from '@/services/content/provinces';
 import {
   fetchDistricts,
   nearestDistrict,
@@ -159,6 +161,15 @@ interface LocationContextValue {
     latitude: number;
     longitude: number;
   }) => void;
+  setObservingSite: (input: {
+    label: string;
+    provinceSlug?: string;
+    provinceName: string;
+    latitude: number;
+    longitude: number;
+    bortle?: number;
+    altitude?: number;
+  }) => void;
   requestDeviceLocation: () => void;
   dismissGeolocationOffer: () => void;
 }
@@ -209,7 +220,11 @@ export function LocationProvider({ children }: { children: ReactNode }) {
   const [location, setLocation] = useState<ObservingLocation>(() => {
     const stored = readStored();
 
-    if (stored?.source === 'device' && stored.latitude != null && stored.longitude != null) {
+    if (
+      stored?.source === 'device' &&
+      stored.latitude != null &&
+      stored.longitude != null
+    ) {
       return {
         /* Saklanan etiket yoksa iddiasız başlanıyor; il listesi geldiğinde
            aşağıdaki etki onu çözüyor. Eskiden burada 15 şehirlik listeden
@@ -224,8 +239,28 @@ export function LocationProvider({ children }: { children: ReactNode }) {
       };
     }
 
+    if (
+      stored?.source === 'site' &&
+      stored.latitude != null &&
+      stored.longitude != null
+    ) {
+      return {
+        label: stored.label ?? DEVICE_LABEL,
+        latitude: stored.latitude,
+        longitude: stored.longitude,
+        timeZone: TURKEY_TIME_ZONE,
+        source: 'site',
+        cityId: stored.cityId,
+        provinceName: stored.provinceName,
+        altitude: stored.altitude,
+      };
+    }
+
     const city = findCity(stored?.cityId ?? DEFAULT_CITY_ID);
-    return cityLocation(city ?? findCity(DEFAULT_CITY_ID)!, stored?.cityId ? 'city' : 'default');
+    return cityLocation(
+      city ?? findCity(DEFAULT_CITY_ID)!,
+      stored?.cityId ? 'city' : 'default'
+    );
   });
 
   const [permission, setPermission] = useState<PermissionState>(
@@ -283,36 +318,44 @@ export function LocationProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const setCity = useCallback((id: string) => {
-    /*
-     * ÖNCE İL LİSTESİ, SONRA TOHUM. Sıra önemli: aynı slug ikisinde de
-     * varsa kazanan veritabanı kaydı olmalı — koordinatı orada güncellenir.
-     */
-    const province = provinces.find((p) => p.slug === id);
-    const city = findCity(id);
-    if (!province && !city) return;
-    setLocation(
-      province ? provinceLocation(province, 'city') : cityLocation(city!, 'city')
-    );
-    const fix = {
-      label: province?.name ?? city!.name,
-      latitude: province?.latitude ?? city!.latitude,
-      longitude: province?.longitude ?? city!.longitude,
-    };
-    /*
-     * ASIL DÜZELTME: burada eskiden `permission` 'dismissed' yapılıyordu.
-     * Yani şehir seçmek, izni hiç reddetmemiş bir kullanıcıda bile GPS
-     * önerisini kalıcı kapatıyor ve "otomatik konuma dön" yolu
-     * kalmıyordu. Manuel seçim artık YALNIZCA modu değiştiriyor.
-     */
-    setModeState((s) =>
-      reduceLocationMode(s, { type: 'SELECT_MANUAL', fix: { ...fix, ref: id } })
-    );
-    setPermission((current) => {
-      writeStored({ source: 'city', cityId: id, permission: current });
-      return current;
-    });
-  }, [provinces]);
+  const setCity = useCallback(
+    (id: string) => {
+      /*
+       * ÖNCE İL LİSTESİ, SONRA TOHUM. Sıra önemli: aynı slug ikisinde de
+       * varsa kazanan veritabanı kaydı olmalı — koordinatı orada güncellenir.
+       */
+      const province = provinces.find((p) => p.slug === id);
+      const city = findCity(id);
+      if (!province && !city) return;
+      setLocation(
+        province
+          ? provinceLocation(province, 'city')
+          : cityLocation(city!, 'city')
+      );
+      const fix = {
+        label: province?.name ?? city!.name,
+        latitude: province?.latitude ?? city!.latitude,
+        longitude: province?.longitude ?? city!.longitude,
+      };
+      /*
+       * ASIL DÜZELTME: burada eskiden `permission` 'dismissed' yapılıyordu.
+       * Yani şehir seçmek, izni hiç reddetmemiş bir kullanıcıda bile GPS
+       * önerisini kalıcı kapatıyor ve "otomatik konuma dön" yolu
+       * kalmıyordu. Manuel seçim artık YALNIZCA modu değiştiriyor.
+       */
+      setModeState((s) =>
+        reduceLocationMode(s, {
+          type: 'SELECT_MANUAL',
+          fix: { ...fix, ref: id },
+        })
+      );
+      setPermission((current) => {
+        writeStored({ source: 'city', cityId: id, permission: current });
+        return current;
+      });
+    },
+    [provinces]
+  );
 
   const setDistrict = useCallback(
     (input: {
@@ -350,7 +393,60 @@ export function LocationProvider({ children }: { children: ReactNode }) {
         })
       );
       setPermission((current) => {
-        writeStored({ source: 'city', cityId: input.provinceSlug, permission: current });
+        writeStored({
+          source: 'city',
+          cityId: input.provinceSlug,
+          permission: current,
+        });
+        return current;
+      });
+    },
+    []
+  );
+
+  const setObservingSite = useCallback(
+    (input: {
+      label: string;
+      provinceSlug?: string;
+      provinceName: string;
+      latitude: number;
+      longitude: number;
+      bortle?: number;
+      altitude?: number;
+    }) => {
+      setLocation({
+        label: input.label,
+        latitude: input.latitude,
+        longitude: input.longitude,
+        timeZone: TURKEY_TIME_ZONE,
+        source: 'site',
+        cityId: input.provinceSlug,
+        provinceName: input.provinceName,
+        bortle: input.bortle,
+        altitude: input.altitude,
+      });
+      setModeState((s) =>
+        reduceLocationMode(s, {
+          type: 'SELECT_MANUAL',
+          fix: {
+            label: input.label,
+            latitude: input.latitude,
+            longitude: input.longitude,
+            ref: input.provinceSlug,
+          },
+        })
+      );
+      setPermission((current) => {
+        writeStored({
+          source: 'site',
+          cityId: input.provinceSlug,
+          latitude: input.latitude,
+          longitude: input.longitude,
+          label: input.label,
+          provinceName: input.provinceName,
+          altitude: input.altitude,
+          permission: current,
+        });
         return current;
       });
     },
@@ -371,17 +467,17 @@ export function LocationProvider({ children }: { children: ReactNode }) {
 
     const onSuccess = ({ coords }: GeolocationPosition) => {
       const { latitude, longitude } = coords;
-        /*
-         * KONUM ÖNCE, ETİKET SONRA. Hesaplar koordinatı hemen kullanmalı;
-         * il adını beklemek "bu gece"yi bir tur boyunca varsayılan şehirde
-         * bırakırdı. Etiket çözülene kadar iddiasız duruyor.
-         */
-        const next: ObservingLocation = {
-          label: DEVICE_LABEL,
-          latitude,
-          longitude,
-          timeZone: TURKEY_TIME_ZONE,
-          source: 'device',
+      /*
+       * KONUM ÖNCE, ETİKET SONRA. Hesaplar koordinatı hemen kullanmalı;
+       * il adını beklemek "bu gece"yi bir tur boyunca varsayılan şehirde
+       * bırakırdı. Etiket çözülene kadar iddiasız duruyor.
+       */
+      const next: ObservingLocation = {
+        label: DEVICE_LABEL,
+        latitude,
+        longitude,
+        timeZone: TURKEY_TIME_ZONE,
+        source: 'device',
       };
       setLocation(next);
       setModeState((s) =>
@@ -400,68 +496,68 @@ export function LocationProvider({ children }: { children: ReactNode }) {
       });
 
       void geocoder.resolve(latitude, longitude).then(async (match) => {
-          /* Eşleşme yoksa etiket "Cihaz konumu" kalıyor — sınır ötesinde
+        /* Eşleşme yoksa etiket "Cihaz konumu" kalıyor — sınır ötesinde
              ya da liste okunamadığında il adı uydurulmuyor. */
-          if (!match) return;
+        if (!match) return;
 
-          /*
-           * ETİKET İKİ HAMLEDE YAZILIYOR: önce il, sonra ilçe.
-           *
-           * İkisini tek zincire dizmek il adını da ilçe isteği kadar
-           * geciktirirdi — elde olan bilgiyi ağ turu boyunca saklamak
-           * olurdu. İl adı çözülür çözülmez yazılıyor; ilçe gelirse
-           * yanına ekleniyor, gelmezse il adı öylece kalıyor.
-           *
-           * KOŞUL HER İKİ YAZIMDA DA AYNI: kullanıcı bu arada elle
-           * şehir seçtiyse ya da konum yenilendiyse geç gelen etiket
-           * onu EZMİYOR.
-           */
-          const yaz = (label: string, districtName?: string) => {
-            setLocation((current) =>
-              current.source === 'device' &&
-              current.latitude === latitude &&
-              current.longitude === longitude
-                ? { ...current, label, provinceName: match.label, districtName }
-                : current
-            );
-            setModeState((s) =>
-              reduceLocationMode(s, {
-                type: 'GPS_OK',
-                fix: { label, latitude, longitude, ref: match.ref },
-              })
-            );
-            writeStored({
-              source: 'device',
-              latitude,
-              longitude,
-              label,
-              provinceName: match.label,
-              districtName,
-              permission: 'granted',
-            });
-          };
+        /*
+         * ETİKET İKİ HAMLEDE YAZILIYOR: önce il, sonra ilçe.
+         *
+         * İkisini tek zincire dizmek il adını da ilçe isteği kadar
+         * geciktirirdi — elde olan bilgiyi ağ turu boyunca saklamak
+         * olurdu. İl adı çözülür çözülmez yazılıyor; ilçe gelirse
+         * yanına ekleniyor, gelmezse il adı öylece kalıyor.
+         *
+         * KOŞUL HER İKİ YAZIMDA DA AYNI: kullanıcı bu arada elle
+         * şehir seçtiyse ya da konum yenilendiyse geç gelen etiket
+         * onu EZMİYOR.
+         */
+        const yaz = (label: string, districtName?: string) => {
+          setLocation((current) =>
+            current.source === 'device' &&
+            current.latitude === latitude &&
+            current.longitude === longitude
+              ? { ...current, label, provinceName: match.label, districtName }
+              : current
+          );
+          setModeState((s) =>
+            reduceLocationMode(s, {
+              type: 'GPS_OK',
+              fix: { label, latitude, longitude, ref: match.ref },
+            })
+          );
+          writeStored({
+            source: 'device',
+            latitude,
+            longitude,
+            label,
+            provinceName: match.label,
+            districtName,
+            permission: 'granted',
+          });
+        };
 
-          yaz(match.label);
+        yaz(match.label);
 
-          const ilce = await nearestDistrictName(match.ref, latitude, longitude);
-          /*
-           * `cityId` VE `districtId` BİLEREK YAZILMIYOR. İkisi de bir
-           * KAYDA işaret ediyor ve paylaşılabilir bağlantı (`?sehir=`)
-           * o kayıttan kuruluyor; cihaz konumunun paylaşılacak bir
-           * karşılığı olmamalı (§14.4). Buradaki ilçe bir ETİKET —
-           * kullanıcının kendi ekranında "yaklaşık neredeyim"i söyler,
-           * dışarıya bir şey söylemez.
-           */
-          if (ilce) yaz(`${match.label} / ${ilce}`, ilce);
+        const ilce = await nearestDistrictName(match.ref, latitude, longitude);
+        /*
+         * `cityId` VE `districtId` BİLEREK YAZILMIYOR. İkisi de bir
+         * KAYDA işaret ediyor ve paylaşılabilir bağlantı (`?sehir=`)
+         * o kayıttan kuruluyor; cihaz konumunun paylaşılacak bir
+         * karşılığı olmamalı (§14.4). Buradaki ilçe bir ETİKET —
+         * kullanıcının kendi ekranında "yaklaşık neredeyim"i söyler,
+         * dışarıya bir şey söylemez.
+         */
+        if (ilce) yaz(`${match.label} / ${ilce}`, ilce);
       });
     };
 
     const onFailure = (err: GeolocationPositionError) => {
-        /*
-         * ÜÇ HATA AYRI. Eski kod hepsini 'denied' sayıyordu; zaman aşımı
-         * yaşayan kullanıcıya "izni açın" demek onu olmayan bir ayarı
-         * aramaya gönderirdi.
-         */
+      /*
+       * ÜÇ HATA AYRI. Eski kod hepsini 'denied' sayıyordu; zaman aşımı
+       * yaşayan kullanıcıya "izni açın" demek onu olmayan bir ayarı
+       * aramaya gönderirdi.
+       */
       setModeState((s) =>
         reduceLocationMode(
           s,
@@ -469,7 +565,10 @@ export function LocationProvider({ children }: { children: ReactNode }) {
             ? { type: 'GPS_DENIED' }
             : err.code === err.POSITION_UNAVAILABLE
               ? { type: 'GPS_ERROR', message: 'Konum servisi yanıt vermedi.' }
-              : { type: 'GPS_ERROR', message: 'Konum alınamadı, tekrar deneyin.' }
+              : {
+                  type: 'GPS_ERROR',
+                  message: 'Konum alınamadı, tekrar deneyin.',
+                }
         )
       );
       setPermission(err.code === err.PERMISSION_DENIED ? 'denied' : 'unasked');
@@ -568,11 +667,27 @@ export function LocationProvider({ children }: { children: ReactNode }) {
   const dismissGeolocationOffer = useCallback(() => {
     setPermission('dismissed');
     writeStored({
-      source: location.source === 'device' ? 'device' : 'city',
-      cityId: findCity(DEFAULT_CITY_ID)!.id,
+      source:
+        location.source === 'device'
+          ? 'device'
+          : location.source === 'site'
+            ? 'site'
+            : 'city',
+      cityId: location.cityId ?? findCity(DEFAULT_CITY_ID)!.id,
+      latitude:
+        location.source === 'device' || location.source === 'site'
+          ? location.latitude
+          : undefined,
+      longitude:
+        location.source === 'device' || location.source === 'site'
+          ? location.longitude
+          : undefined,
+      label: location.source === 'site' ? location.label : undefined,
+      provinceName: location.provinceName,
+      altitude: location.altitude,
       permission: 'dismissed',
     });
-  }, [location.source]);
+  }, [location]);
 
   const value = useMemo<LocationContextValue>(
     () => ({
@@ -586,6 +701,7 @@ export function LocationProvider({ children }: { children: ReactNode }) {
       shouldOfferGeolocation: permission === 'unasked',
       setCity,
       setDistrict,
+      setObservingSite,
       requestDeviceLocation,
       dismissGeolocationOffer,
     }),
@@ -596,13 +712,16 @@ export function LocationProvider({ children }: { children: ReactNode }) {
       modeState,
       setCity,
       setDistrict,
+      setObservingSite,
       requestDeviceLocation,
       dismissGeolocationOffer,
     ]
   );
 
   return (
-    <LocationContext.Provider value={value}>{children}</LocationContext.Provider>
+    <LocationContext.Provider value={value}>
+      {children}
+    </LocationContext.Provider>
   );
 }
 
@@ -610,6 +729,8 @@ export function LocationProvider({ children }: { children: ReactNode }) {
 export function useLocationContext(): LocationContextValue {
   const ctx = useContext(LocationContext);
   if (!ctx)
-    throw new Error('useLocationContext, LocationProvider içinde kullanılmalıdır.');
+    throw new Error(
+      'useLocationContext, LocationProvider içinde kullanılmalıdır.'
+    );
   return ctx;
 }

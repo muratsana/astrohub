@@ -35,6 +35,8 @@ export interface StoredLocation {
   districtName?: string;
   /** Cihaz konumunda çözülen il adı — `cityId` orada bilerek boş. */
   provinceName?: string;
+  /** Gözlem noktası seçildiyse rakım. */
+  altitude?: number;
   permission?: PermissionState;
 }
 

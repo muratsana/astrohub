@@ -48,7 +48,24 @@ describe('TonightPanel · karar kolonu', () => {
 
   it('servis künyesini kullanıcı arayüzünde göstermiyor', () => {
     renderPanel();
-    expect(screen.queryByText(/Open-Meteo|efemeris yerel hesap/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/Open-Meteo|efemeris yerel hesap/i)
+    ).not.toBeInTheDocument();
+  });
+
+  it('derin uzay, güneş sistemi ve en iyi yerler sekmelerini gösteriyor', () => {
+    renderPanel();
+    const group = screen.getByRole('tablist', { name: /gözlem skoru türü/i });
+
+    expect(
+      within(group).getByRole('tab', { name: /derin uzay/i })
+    ).toBeInTheDocument();
+    expect(
+      within(group).getByRole('tab', { name: /güneş sistemi/i })
+    ).toBeInTheDocument();
+    expect(
+      within(group).getByRole('tab', { name: 'En İyi Yerler' })
+    ).toBeInTheDocument();
   });
 });
 
@@ -68,7 +85,10 @@ describe('TonightPanel · zaman kolonu', () => {
   it('çizelgenin erişilebilir bir özeti var', () => {
     renderPanel();
     const chart = screen.getByRole('img', { name: /gece/i });
-    expect(chart).toHaveAttribute('aria-label', expect.stringMatching(/\d{2}:\d{2}/));
+    expect(chart).toHaveAttribute(
+      'aria-label',
+      expect.stringMatching(/\d{2}:\d{2}/)
+    );
   });
 
   it('hava servisi yokken koşul kartları tire gösteriyor, panel çökmüyor', () => {
@@ -123,7 +143,9 @@ describe('TonightPanel · hedef kolonu', () => {
 
   it('zirve ve yükseklik başlıkları sıralama kontrolü', () => {
     renderPanel();
-    const zirve = screen.getByRole('button', { name: /zirve sütununu artan sırala/i });
+    const zirve = screen.getByRole('button', {
+      name: /zirve sütununu artan sırala/i,
+    });
     const yukseklik = screen.getByRole('button', {
       name: /yükseklik sütununu artan sırala/i,
     });
@@ -150,7 +172,9 @@ describe('TonightPanel · ileri tarihli gece', () => {
 
   it('ileri güne tıklayınca seçim değişiyor ve ilk sekme geri döndürüyor', () => {
     renderPanel();
-    const tabs = screen.getAllByRole('tab');
+    const tabs = within(
+      screen.getByRole('tablist', { name: /gece tarihi seç/i })
+    ).getAllByRole('tab');
     fireEvent.click(tabs[1]);
 
     expect(tabs[1]).toHaveAttribute('aria-selected', 'true');
@@ -166,7 +190,9 @@ describe('TonightPanel · ileri tarihli gece', () => {
    */
   it('haftanın son günü seçilebiliyor, daha ileri kontrol çizilmiyor', () => {
     renderPanel();
-    const tabs = screen.getAllByRole('tab');
+    const tabs = within(
+      screen.getByRole('tablist', { name: /gece tarihi seç/i })
+    ).getAllByRole('tab');
     fireEvent.click(tabs[MAX_OFFSET]);
 
     expect(tabs[MAX_OFFSET]).toHaveAttribute('aria-selected', 'true');
@@ -179,7 +205,10 @@ describe('TonightPanel · ileri tarihli gece', () => {
    */
   it('ileri gecede "şu an" imleci çizilmiyor', () => {
     renderPanel();
-    fireEvent.click(screen.getAllByRole('tab')[1]);
+    const tabs = within(
+      screen.getByRole('tablist', { name: /gece tarihi seç/i })
+    ).getAllByRole('tab');
+    fireEvent.click(tabs[1]);
     expect(screen.queryByText('ŞU AN')).not.toBeInTheDocument();
   });
 });
@@ -193,8 +222,14 @@ describe('TonightPanel · ileri tarihli gece', () => {
 describe('TonightPanel · eski gezinme yüzeyi kapalı', () => {
   it('önceki/sonraki okları ve date input çizilmiyor', () => {
     renderPanel();
-    expect(screen.queryByRole('button', { name: /önceki gece/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /sonraki gece/i })).not.toBeInTheDocument();
-    expect(screen.queryByLabelText(/gece tarihi seç/i, { selector: 'input' })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /önceki gece/i })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /sonraki gece/i })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByLabelText(/gece tarihi seç/i, { selector: 'input' })
+    ).not.toBeInTheDocument();
   });
 });

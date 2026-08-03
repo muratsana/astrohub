@@ -272,6 +272,33 @@ describe('nightScore — iki profil', () => {
     /* Varsayılan gözlem: çağıranların çoğu "bu gece bakılır mı" soruyor. */
     expect(nightScore(IDEAL).profile).toBe('gozlem');
   });
+
+  it('derin uzay dolunaydan güneş sistemine göre daha çok etkileniyor', () => {
+    const dolunay = at({
+      cloudCover: 0,
+      seeingIndex: 1.5,
+      moonlessMinutes: 0,
+      moonIllumination: 1,
+    });
+    const dso = nightScore(dolunay, 'derinUzay');
+    const solar = nightScore(dolunay, 'gunesSistemi');
+
+    expect(dso.total).toBeLessThan(solar.total);
+    expect(solar.verdict).not.toBe('zayif');
+    expect(solar.recommendation).toContain('Ay parlak olsa bile');
+  });
+
+  it('rakım güneş sistemi skorunu yükseltir, derin uzayı oynatmaz', () => {
+    const alcak = at({ altitude: 0 });
+    const yuksek = at({ altitude: 2400 });
+
+    expect(nightScore(yuksek, 'gunesSistemi').total).toBeGreaterThan(
+      nightScore(alcak, 'gunesSistemi').total
+    );
+    expect(nightScore(yuksek, 'derinUzay').total).toBe(
+      nightScore(alcak, 'derinUzay').total
+    );
+  });
 });
 
 describe('nightScore — şeffaflık sadeleştirildi', () => {

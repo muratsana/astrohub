@@ -6,7 +6,7 @@
  * duruyor ve kimse kimseyi ağaca sürüklemiyor.
  */
 
-export type LocationSource = 'default' | 'city' | 'device';
+export type LocationSource = 'default' | 'city' | 'device' | 'site';
 
 /** Konum izni akışının hangi aşamada olduğu. */
 export type PermissionState =
@@ -63,4 +63,6 @@ export interface ObservingLocation {
   provinceName?: string;
   /** Şehir ön ayarından geliyorsa tipik Bortle sınıfı. */
   bortle?: number;
+  /** Gözlem noktası rakımı; şehir merkezlerinde bilinmiyorsa boş kalır. */
+  altitude?: number;
 }

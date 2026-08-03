@@ -13,6 +13,7 @@ import { DecisionColumn } from './tonight/DecisionColumn';
 import { TargetsColumn } from './tonight/TargetsColumn';
 import { TimelineColumn } from './tonight/TimelineColumn';
 import { useTonight } from './tonight/useTonight';
+import type { BestPlace } from './tonight/bestPlaces';
 import { cn } from '@/lib/cn';
 import {
   NIGHT_PICKER_DAYS,
@@ -54,7 +55,7 @@ const GECE_PARAM = 'gece';
  * kolonların arasında bir saç teli çizgi çıkıyor, fazlası çıkmıyor.
  */
 export function TonightPanel() {
-  const { permission } = useLocationContext();
+  const { permission, setObservingSite } = useLocationContext();
   const { theme } = useTheme();
 
   /*
@@ -139,9 +140,26 @@ export function TonightPanel() {
       const from = timeline.from.getTime();
       const to = timeline.to.getTime();
       const value = peakAt.getTime();
-      setMarkAt(value < from || value > to ? null : (value - from) / (to - from));
+      setMarkAt(
+        value < from || value > to ? null : (value - from) / (to - from)
+      );
     },
     [timeline.from, timeline.to]
+  );
+
+  const handleUseBestPlace = useCallback(
+    (place: BestPlace) => {
+      setObservingSite({
+        label: place.site.name,
+        provinceSlug: place.provinceSlug,
+        provinceName: place.site.region,
+        latitude: place.site.coords.latitude,
+        longitude: place.site.coords.longitude,
+        bortle: place.site.bortle,
+        altitude: place.site.altitude,
+      });
+    },
+    [setObservingSite]
   );
 
   return (
@@ -231,6 +249,10 @@ export function TonightPanel() {
           <div className="grid gap-px bg-border lg:grid-cols-2 xl:grid-cols-[308px_minmax(0,1fr)_412px]">
             <DecisionColumn
               score={tonight.score}
+              deepSpaceScore={tonight.deepSpaceScore}
+              solarSystemScore={tonight.solarSystemScore}
+              bestPlaces={tonight.bestPlaces}
+              onUseBestPlace={handleUseBestPlace}
               conditions={tonight.conditions}
               locationLabel={tonight.locationLabel}
               dateLabel={tonight.dateLabel}
@@ -323,7 +345,10 @@ function NightStepButton({
   );
 }
 
-function useNightStepScore(offsetDays: number, baseDate: Date): NightScore | null {
+function useNightStepScore(
+  offsetDays: number,
+  baseDate: Date
+): NightScore | null {
   const { location } = useLocationContext();
   const dayStartMs = useMemo(
     () =>
@@ -333,9 +358,7 @@ function useNightStepScore(offsetDays: number, baseDate: Date): NightScore | nul
   );
   const weatherAt = useMemo(
     () =>
-      offsetDays === 0
-        ? undefined
-        : new Date(dayStartMs + 25 * 3_600_000),
+      offsetDays === 0 ? undefined : new Date(dayStartMs + 25 * 3_600_000),
     [offsetDays, dayStartMs]
   );
   const conditions = useSkyConditions(weatherAt);
@@ -373,7 +396,7 @@ function useNightStepScore(offsetDays: number, baseDate: Date): NightScore | nul
         moonlessMinutes: timeline.moonlessMinutes,
         moonIllumination: moon.illumination,
       },
-      'gozlem'
+      'derinUzay'
     );
   }, [
     conditions.data,

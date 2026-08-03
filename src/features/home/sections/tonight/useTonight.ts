@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocationContext } from '@/features/location/LocationContext';
-import { useSkyConditions, type SkyState } from '@/features/weather/useSkyConditions';
+import {
+  useSkyConditions,
+  type SkyState,
+} from '@/features/weather/useSkyConditions';
 import { FORECAST_DAYS } from '@/features/weather/openMeteo';
 import { targets } from '@/features/targets/data';
 import type { CelestialTarget } from '@/features/targets/data';
@@ -20,6 +23,7 @@ import {
 } from '@/domain/astronomy/ephemeris';
 import { nightScore, type NightScore } from '@/domain/astronomy/nightScore';
 import { zonedMidnight } from '@/domain/time/zonedDay';
+import { bestPlacesForNight, type BestPlace } from './bestPlaces';
 
 /**
  * "BU GECE" MODÜLÜNÜN VERİ KATMANI.
@@ -66,6 +70,9 @@ export interface TonightData {
   conditions: SkyState;
   /** Hava verisi yokken null — skor uydurulmuyor. */
   score: NightScore | null;
+  deepSpaceScore: NightScore | null;
+  solarSystemScore: NightScore | null;
+  bestPlaces: BestPlace[];
   /** Dakikada bir güncellenen an. */
   now: Date;
   /** Eksen üzerinde "şu an" (0–1); gece dışındaysa null. */
@@ -177,9 +184,7 @@ export function useTonight(offsetDays = 0): TonightData {
    */
   const weatherAt = useMemo(
     () =>
-      offsetDays === 0
-        ? undefined
-        : new Date(dayStartMs + 25 * 3_600_000),
+      offsetDays === 0 ? undefined : new Date(dayStartMs + 25 * 3_600_000),
     [offsetDays, dayStartMs]
   );
 
@@ -205,8 +210,12 @@ export function useTonight(offsetDays = 0): TonightData {
     const ranked: TonightTarget[] = timeline.dark
       ? targets
           .map((target) => {
-            const coords = { ra: parseRa(target.ra), dec: parseDec(target.dec) };
-            if (Number.isNaN(coords.ra) || Number.isNaN(coords.dec)) return null;
+            const coords = {
+              ra: parseRa(target.ra),
+              dec: parseDec(target.dec),
+            };
+            if (Number.isNaN(coords.ra) || Number.isNaN(coords.dec))
+              return null;
             const peak = targetNightPeak(
               coords,
               { start: timeline.dark!.from, end: timeline.dark!.to },
@@ -245,13 +254,21 @@ export function useTonight(offsetDays = 0): TonightData {
       darkMinutes,
       moonlessMinutes: timeline.moonlessMinutes,
       moonIllumination: sky.moon.illumination,
+      altitude: location.altitude ?? null,
     };
-  }, [weather, timeline, sky.moon.illumination]);
+  }, [weather, timeline, sky.moon.illumination, location.altitude]);
 
-  /** Gözle gözlem skoru — panelin ana sayısı. */
-  const score = useMemo(
-    () => (scoreInputs ? nightScore(scoreInputs, 'gozlem') : null),
+  const deepSpaceScore = useMemo(
+    () => (scoreInputs ? nightScore(scoreInputs, 'derinUzay') : null),
     [scoreInputs]
+  );
+  const solarSystemScore = useMemo(
+    () => (scoreInputs ? nightScore(scoreInputs, 'gunesSistemi') : null),
+    [scoreInputs]
+  );
+  const bestPlaces = useMemo(
+    () => bestPlacesForNight(new Date(dayStartMs), 10),
+    [dayStartMs]
   );
 
   /*
@@ -277,7 +294,10 @@ export function useTonight(offsetDays = 0): TonightData {
   return {
     ...sky,
     conditions,
-    score,
+    score: deepSpaceScore,
+    deepSpaceScore,
+    solarSystemScore,
+    bestPlaces,
     now,
     nowAt,
     dateLabel,

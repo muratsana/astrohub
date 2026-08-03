@@ -43,11 +43,7 @@
 
 /** Skor kırılımının tek satırı. */
 export interface ScoreRow {
-  key:
-    | 'cloudCover'
-    | 'seeing'
-    | 'darkness'
-    | 'comfort';
+  key: 'cloudCover' | 'seeing' | 'darkness' | 'comfort';
   label: string;
   /** 0–100; ölçülemeyen bileşende `null`. */
   value: number | null;
@@ -107,6 +103,8 @@ export interface NightScoreInputs {
   windGust?: number | null;
   /** Eski API uyumluluğu; skor artık şeffaflığı ayrı bileşen yapmıyor. */
   transparencyIndex?: number | null;
+  /** Gözlem noktasının rakımı; özellikle gezegen/Ay gözleminde avantaj sağlar. */
+  altitude?: number | null;
 }
 
 const clamp = (value: number, min = 0, max = 100) =>
@@ -153,7 +151,8 @@ function durationText(minutes: number): string {
  * seeing'i kısmen tolere eder (yıldız şişer ama kare kullanılabilir),
  * oysa hamle ya da çiy kareyi TAMAMEN alır.
  */
-export type NightProfile = 'gozlem' | 'astrofoto';
+export type NightProfile =
+  'gozlem' | 'astrofoto' | 'derinUzay' | 'gunesSistemi';
 
 const PROFILE_WEIGHTS: Record<
   NightProfile,
@@ -161,13 +160,16 @@ const PROFILE_WEIGHTS: Record<
 > = {
   gozlem: { seeing: 0.45, comfort: 0.15, darkness: 0.4 },
   astrofoto: { seeing: 0.35, comfort: 0.4, darkness: 0.25 },
+  derinUzay: { seeing: 0.3, comfort: 0.1, darkness: 0.6 },
+  gunesSistemi: { seeing: 0.68, comfort: 0.22, darkness: 0.1 },
 };
 
 export const PROFILE_LABELS: Record<NightProfile, string> = {
   gozlem: 'Gözle gözlem',
   astrofoto: 'Astrofotoğraf',
+  derinUzay: 'Derin Uzay',
+  gunesSistemi: 'Güneş Sistemi',
 };
-
 
 /** Kırılım çubuğunun turuncuya döndüğü eşik. */
 const WARN_BELOW = 55;
@@ -208,7 +210,7 @@ function comfortScore(
    * orada ortalama daha temsili.
    */
   const effectiveWind =
-    profile === 'astrofoto' && windGust != null
+    (profile === 'astrofoto' || profile === 'derinUzay') && windGust != null
       ? Math.max(windSpeed, windGust)
       : windSpeed;
 
@@ -262,6 +264,10 @@ export function nightScore(
     inputs.windGust
   );
   const darkness = darknessScore(inputs.darkMinutes, inputs.moonlessMinutes);
+  const altitudeBonus =
+    profile === 'gunesSistemi' && inputs.altitude != null
+      ? clamp((inputs.altitude / 2500) * 100) * 0.08
+      : 0;
 
   /*
    * Seeing yoksa ağırlığı kalan ikisine oranlarını koruyarak dağıtılıyor.
@@ -276,7 +282,7 @@ export function nightScore(
         comfort * weights.comfort +
         darkness * weights.darkness;
 
-  const total = Math.round((cloudClear / 100) * base);
+  const total = Math.round((cloudClear / 100) * clamp(base + altitudeBonus));
   const limitedBySeeing = seeing === null;
 
   const rows: ScoreRow[] = [
@@ -366,7 +372,9 @@ function reasons(
   }
 
   if (inputs.darkMinutes <= 0) {
-    cons.push('Tam karanlık oluşmuyor — astronomik alacakaranlık gece boyu sürüyor');
+    cons.push(
+      'Tam karanlık oluşmuyor — astronomik alacakaranlık gece boyu sürüyor'
+    );
   } else if (scores.darkness > 50) {
     pros.push(
       `Aysız pencere ${durationText(inputs.moonlessMinutes)} — astronomik karanlığın yarısından fazla`
@@ -404,7 +412,11 @@ function recommend(
    * eşiği yoktur. İki kullanıcıya aynı cümleyi kurmak, birinin
    * gecesini boşa harcatmak demekti.
    */
-  if (profile === 'gozlem' && darkness < 40 && inputs.cloudCover < 70) {
+  if (
+    (profile === 'gozlem' || profile === 'derinUzay') &&
+    darkness < 40 &&
+    inputs.cloudCover < 70
+  ) {
     return 'Ay parlak: sönük galaksi yerine küme, çift yıldız ve gezegen; dar bant filtre gözle işe yaramaz.';
   }
   if (
@@ -417,6 +429,15 @@ function recommend(
   }
   if (inputs.cloudCover >= 70) {
     return 'Bulut yoğun — ekipmanı kurmadan önce saatlik tahmini kontrol edin.';
+  }
+  if (profile === 'gunesSistemi') {
+    if (seeing !== null && seeing < 50) {
+      return 'Seeing zayıf: gezegen için görüntü kaynayacak; kısa video ve düşük büyütme deneyin.';
+    }
+    if (inputs.temperature - inputs.dewPoint <= 2) {
+      return 'Çiylenme riski yüksek — ısıtıcı bant takın, optiği ara ara kontrol edin.';
+    }
+    return 'Ay parlak olsa bile gezegen, Ay ve çift yıldız için kullanılabilir bir gece.';
   }
   if (darkness < 40) {
     return 'Ay parlak: dar bant (Ha/OIII) filtre ile bulutsu, aksi halde küme ve gezegen.';
