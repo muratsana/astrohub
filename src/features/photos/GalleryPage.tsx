@@ -149,9 +149,14 @@ export function GalleryPage() {
           title="Fotoğraf Galerisi"
           description="Topluluğun astrofotoğraf arşivi. Her kayıt hedefi, setup'ı, filtresi ve gökyüzü koşullarıyla birlikte saklanır."
           actions={
-            <ButtonLink to="/galeri/yukle" size="sm">
-              Fotoğraf Yükle
-            </ButtonLink>
+            <>
+              <ButtonLink to="/secki" size="sm" variant="secondary">
+                Aylık Seçki
+              </ButtonLink>
+              <ButtonLink to="/galeri/yukle" size="sm">
+                Fotoğraf Yükle
+              </ButtonLink>
+            </>
           }
         />
 

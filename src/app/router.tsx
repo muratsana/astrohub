@@ -141,6 +141,15 @@ export const appRoutes = [
         ),
       },
       {
+        path: 'secki',
+        element: route(
+          named(
+            () => import('@/features/photos/MonthlySelectionPage'),
+            'MonthlySelectionPage'
+          )
+        ),
+      },
+      {
         path: 'fotograf/:slug',
         element: route(
           named(

@@ -2335,9 +2335,15 @@ hiç üretilmiyordu (üretici yazılmış, çağrılmamış, testleri geçiyordu
 `robots.txt` onu ilan ediyordu) ve 81 şehir sayfasının hepsi koşulsuz
 indekslenebilirdi.
 
-**Sıradaki iş:** Faz 12'nin kalan maddeleri (challenge/tema, aylık seçki,
-haftalık özet, davet altyapısı) ve Faz 13'ün operasyon
-kararları; ardından Faz 14 — tablodaki ilk `NOT_STARTED` faz.
+**Faz 12'nin aylık seçki yüzeyi açıldı:** `/secki`, yayındaki fotoğrafları
+aylık aday listesine çeviriyor. Puan, gerçek `rating_sum/rating_count`
+geldiğinde oy ortalaması ve güvenini; oy yokken de beğeni/yorum/editör
+işaretini kullanıyor. Bu bir yarışma kazananı değil; challenge/jüri akışı
+ayrı şema ve moderasyon kararı bekliyor.
+
+**Sıradaki iş:** Faz 12'nin kalan maddeleri (challenge/tema, haftalık özet,
+davet altyapısı) ve Faz 13'ün operasyon kararları; ardından Faz 14 —
+tablodaki ilk `NOT_STARTED` faz.
 
 **Çalışma yöntemi** (bu oturumda işe yaradı):
 - Master belgeyi TAMAMEN okuma; yalnızca faz satır aralığını oku

@@ -549,6 +549,10 @@
       "destination": "/app.html"
     },
     {
+      "source": "/secki",
+      "destination": "/app.html"
+    },
+    {
       "source": "/setup/:id",
       "destination": "/app.html"
     },

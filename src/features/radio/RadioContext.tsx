@@ -152,6 +152,11 @@ export function RadioProvider({ children }: { children: ReactNode }) {
     if (audioRef.current) audioRef.current.volume = volume;
   }, [volume]);
 
+  const requestPlayback = useCallback((audio: HTMLAudioElement) => {
+    setPlaying(true);
+    void audio.play().catch(() => setPlaying(false));
+  }, []);
+
   const next = useCallback(() => {
     setIndex((i) => (mp3Tracks.length === 0 ? -1 : (i + 1) % mp3Tracks.length));
   }, [mp3Tracks.length]);
@@ -226,13 +231,13 @@ export function RadioProvider({ children }: { children: ReactNode }) {
       // play() bir söz döner ve otomatik oynatma politikası yüzünden
       // reddedilebilir; sessizce yutmak yerine durumu geri alıyoruz ki
       // düğme gerçeği göstersin.
-      void audio.play().catch(() => setPlaying(false));
+      requestPlayback(audio);
     } else {
       audio.pause();
     }
 
     return removeSeekListener;
-  }, [current, playing, source, station?.streamUrl]);
+  }, [current, playing, requestPlayback, source, station?.streamUrl]);
 
   const reconnectLive = useCallback(() => {
     const audio = audioRef.current;
@@ -253,17 +258,58 @@ export function RadioProvider({ children }: { children: ReactNode }) {
   }, [mp3Tracks]);
 
   const play = useCallback(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
     if (source === 'canli') {
       if (!station?.streamUrl) return;
       reconnectLive();
+      requestPlayback(audio);
+      return;
     } else {
       if (mp3Tracks.length === 0) return;
-      syncKasaToBroadcastClock();
+      const position = broadcastPosition(mp3Tracks, Date.now());
+      const targetIndex = position?.index ?? (index >= 0 ? index : 0);
+      const target = mp3Tracks[targetIndex];
+      if (!target) return;
+
+      if (position) {
+        pendingSeekRef.current = position.offsetSec;
+        setIndex(position.index);
+      } else {
+        syncKasaToBroadcastClock();
+      }
+
+      if (audio.src !== target.url) {
+        audio.src = target.url;
+        audio.load();
+      }
+
+      const seek = pendingSeekRef.current;
+      if (seek !== null) {
+        const uygula = () => {
+          pendingSeekRef.current = null;
+          try {
+            audio.currentTime = seek;
+          } catch {
+            // Bazı bozuk/eksik meta veriler seek'i reddeder; yayın yine çalar.
+          }
+        };
+
+        if (audio.readyState >= 1) {
+          uygula();
+        } else {
+          audio.addEventListener('loadedmetadata', uygula, { once: true });
+        }
+      }
+
+      requestPlayback(audio);
     }
-    setPlaying(true);
   }, [
-    mp3Tracks.length,
+    index,
+    mp3Tracks,
     reconnectLive,
+    requestPlayback,
     source,
     station?.streamUrl,
     syncKasaToBroadcastClock,

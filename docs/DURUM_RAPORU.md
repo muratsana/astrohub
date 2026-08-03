@@ -248,10 +248,12 @@ veritabanına taşındı (§14.7, `0067`), astrofotoğraf hesaplayıcıları
 
 ### Faz 12 — Organik kullanıcı kazanımı · **PARTIAL**
 
-**Yapıldı (bu turda §15.3):** `sitemap.xml` gerçekten üretiliyor (**hiç
+**Yapıldı (bu turda §15.3 + seçki yüzeyi):** `sitemap.xml` gerçekten üretiliyor (**hiç
 üretilmiyordu**; üretici yazılmış, beş testi var, çağıran yoktu ve
 `robots.txt` onu ilan ediyordu) + ince şehir sayfaları `noindex, follow`
-ve sitemap dışında.
+ve sitemap dışında. `/secki` yayındaki fotoğraflardan aylık seçki
+adaylarını üretir; oy ortalaması, oy güveni, beğeni, yorum ve editör
+işaretini tek puanda toplar.
 
 Fazın §15.1/§15.2 maddelerinin çoğu önceki fazlarda kapanmış: takip
 sistemi, favori/koleksiyon, editörün seçimi, teknik künye, OG görseli,
@@ -266,7 +268,7 @@ bucket'ta kalmaya devam ediyor.
 | Madde | Not |
 |---|---|
 | Challenge/tema altyapısı ve katılım | Şema + moderasyon + değerlendirme kriterleri |
-| Aylık astrofotoğraf seçkisi | Editör akışı gerekiyor |
+| Aylık astrofotoğraf seçkisi | DONE — kullanıcıya açık aday yüzeyi var; gerçek jüri/challenge akışı ayrı ürün kararı |
 | Haftalık kişiselleştirilmiş özet | E-posta kararına bağlı (Faz 6 ile aynı blokaj) |
 | Davet ve referral altyapısı | Kötüye kullanım önleme tasarımı gerekiyor |
 | Watermark tercihi, indirme izinleri | DONE — `astro_photos` tercihi, yükleme formu, katalog mapper'ı ve detay sayfası bağlı |

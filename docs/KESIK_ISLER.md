@@ -73,13 +73,13 @@ seçici sessizce boş kalıyordu.
 | 3 | Hero kontrast ölçümü, "slider gerekli mi" | SIRADA | İkisi de ÖLÇÜM işi, kod işi değil: fotoğraf değişken olduğu için örnekleme, slider için etkileşim verisi gerekiyor |
 | 3 | Boş modül durumlarının E2E'si | SIRADA | Ağ kesintisi taklidi gerekiyor; durum ayrımı 10 birim testiyle ölçülüyor |
 
-### Faz 12–18 — hiç başlanmadı
+### Faz 12–18 — Faz 12 kısmen başladı, diğerleri sırada
 
 Bunlar tek turda kapatılabilecek işler değil; her biri kendi fazı.
 
 | Faz | Konu | Belgedeki satır | İlk hamle |
 |---|---|---|---|
-| 12 | Organik kullanıcı kazanımı | 1350–1419 | Fazın maddelerini mevcut modüllerle karşılaştır (Faz 11'de yapılan envanter yöntemi). Davet, paylaşım ve içerik döngüsü büyük ölçüde var; boşluk muhtemelen ölçüm tarafında |
+| 12 | Organik kullanıcı kazanımı | 1350–1419 | `/secki` ile aylık seçki aday yüzeyi açıldı; gerçek challenge/jüri akışı, haftalık özet ve referral hâlâ ayrı ürün/veri kararı bekliyor |
 | 13 | Fotoğraf, Storage, medya mimarisi | 1420–1462 | Yükleme, kırpma, revizyon, EXIF, plate solve ve kota ÇALIŞIYOR. Faz muhtemelen büyük ölçüde DONE çıkacak — önce envanter, sonra kod |
 | 14 | macOS, tarayıcı, responsive, erişilebilirlik | 1463–1528 | `check:a11y` ve `check:viewports` kapıları zaten var. Gerçek cihaz/tarayıcı matrisi **BLOKE** (kum havuzunda tek Chromium) |
 | 15 | Güvenlik, KVKK, telif, kötüye kullanım | 1529–1606 | CSP, RLS, kota, KVKK onayları ve denetim kaydı var. `consume_rate_limit`in `app` şemasına taşınması canlıda kapandı (`20260803094927` + `20260803095601`); kalan teknik borç 129 permissive policy birleştirmesi |
@@ -109,7 +109,6 @@ Bunlar tek turda kapatılabilecek işler değil; her biri kendi fazı.
 - **Mahalle verisi çekilmedi** (madde 1.4).
 - **Bortle tahmini üretilmedi** — 66 il için ölçüm yok, uydurmak
   kullanıcının gökyüzü beklentisini yanlış kurardı.
-- **Fazlar 12–18 için kod yazılmadı.** Faz 11'de öğrenilen ders şuydu:
-  önce ENVANTER, sonra kod. Karşılaştırma yapılmadan yazılan her şey
-  ikinci bir kopya oluyor. Bu fazların envanteri çıkarılmadı, dolayısıyla
-  yazılacak kodun ne olduğu da bilinmiyor.
+- **Faz 12'nin challenge/referral/e-posta kısımları yazılmadı.** Seçki
+  yüzeyi mevcut fotoğraf verisiyle açıldı; başvuru, jüri ve davet
+  akışları ürün kararı olmadan yazılırsa sahte iş akışı olur.

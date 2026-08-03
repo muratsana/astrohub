@@ -45,6 +45,7 @@ export const staticEntries: SitemapEntry[] = [
   { path: '/', priority: 1.0, changefreq: 'daily' },
   { path: '/kesfet', priority: 0.8, changefreq: 'daily' },
   { path: '/galeri', priority: 0.9, changefreq: 'daily' },
+  { path: '/secki', priority: 0.7, changefreq: 'monthly' },
   { path: '/hedefler', priority: 0.8, changefreq: 'weekly' },
   { path: '/etkinlikler', priority: 0.9, changefreq: 'daily' },
   { path: '/saha', priority: 0.8, changefreq: 'weekly' },
