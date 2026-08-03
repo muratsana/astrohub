@@ -15,6 +15,7 @@ import { usePhotoCatalog } from '@/services/content/photos';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
 import { UserActions } from '@/features/social/UserActions';
+import { useProfileByUsername } from '@/services/content/profile';
 
 /**
  * Kullanıcı profili (§7.15). Kamuya açık kısım fotoğraf kayıtlarından
@@ -32,13 +33,14 @@ import { UserActions } from '@/features/social/UserActions';
 export function ProfilePage() {
   const { username } = useParams<{ username: string }>();
   const photos = usePhotoCatalog().items;
+  const { profile, loading, error } = useProfileByUsername(username);
 
   const userPhotos = useMemo(
     () => photos.filter((p) => p.user.username === username),
     [photos, username]
   );
 
-  if (!username || userPhotos.length === 0) {
+  if (!username) {
     return (
       <PlaceholderPage
         title="Profil bulunamadı"
@@ -47,15 +49,43 @@ export function ProfilePage() {
     );
   }
 
-  const displayName = userPhotos[0].user.displayName;
+  const seedUser = userPhotos[0]?.user;
+  if (loading && !seedUser) {
+    return (
+      <Container className="py-10">
+        <PageHeader title="Profil yükleniyor" />
+      </Container>
+    );
+  }
+
+  if (!profile && !seedUser) {
+    return (
+      <PlaceholderPage
+        title="Profil bulunamadı"
+        description={
+          error
+            ? 'Profil okunamadı; daha sonra tekrar deneyin.'
+            : 'Bu kullanıcı mevcut değil ya da henüz profilini yayımlamamış.'
+        }
+      />
+    );
+  }
+
+  const displayName = profile?.displayName ?? seedUser?.displayName ?? username;
   /* Tohum kayıtlarda `ownerId` yok; eylem şeridi o durumda kendini
      gizliyor (bkz. UserActions). */
-  const ownerId = userPhotos.find((p) => p.ownerId)?.ownerId;
+  const ownerId = profile?.id ?? userPhotos.find((p) => p.ownerId)?.ownerId;
   const totalSeconds = userPhotos.reduce(
     (sum, p) => sum + totalIntegrationSeconds(p.exposures),
     0
   );
-  const cities = [...new Set(userPhotos.map((p) => p.city))];
+  const cities = [
+    ...new Set(
+      [profile?.city, ...userPhotos.map((p) => p.city)].filter(
+        (city): city is string => Boolean(city)
+      )
+    ),
+  ];
   // Bortle bilgisi olmayan kayıtlar hesaba girmemeli; `Math.min` boş dizide
   // Infinity döner ve ekranda anlamsız bir değer belirir.
   const bortleValues = userPhotos
@@ -82,7 +112,12 @@ export function ProfilePage() {
           ]}
           title={displayName}
           meta={`@${username}`}
-          description={`${cities.join(', ')} çevresinden ${userPhotos.length} kayıt.`}
+          description={
+            profile?.bio ??
+            (cities.length > 0
+              ? `${cities.join(', ')} çevresinden ${userPhotos.length} kayıt.`
+              : 'Henüz yayınlanmış fotoğraf yok.')
+          }
           actions={
             <div className="flex flex-col items-start gap-2 sm:items-end">
               <div className="flex flex-wrap gap-1.5">
@@ -90,7 +125,19 @@ export function ProfilePage() {
                   <Badge key={city}>{city}</Badge>
                 ))}
               </div>
-              <UserActions targetUserId={ownerId} displayName={displayName} />
+              <div className="flex flex-wrap gap-2">
+                {profile?.websiteUrl && (
+                  <a
+                    href={profile.websiteUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex h-8 shrink-0 items-center justify-center rounded-card border border-border-strong px-3.5 text-meta font-medium leading-none text-foreground transition-colors hover:border-primary hover:text-primary"
+                  >
+                    Portfolyo
+                  </a>
+                )}
+                <UserActions targetUserId={ownerId} displayName={displayName} />
+              </div>
             </div>
           }
         />
@@ -118,13 +165,19 @@ export function ProfilePage() {
         </div>
 
         <h2 className="label mb-2">Fotoğraflar</h2>
-        <CardGrid view="grid" className="mb-6">
-          {userPhotos.map((photo) => (
-            <li key={photo.slug}>
-              <PhotoCard photo={photo} />
-            </li>
-          ))}
-        </CardGrid>
+        {userPhotos.length > 0 ? (
+          <CardGrid view="grid" className="mb-6">
+            {userPhotos.map((photo) => (
+              <li key={photo.slug}>
+                <PhotoCard photo={photo} />
+              </li>
+            ))}
+          </CardGrid>
+        ) : (
+          <p className="mb-6 rounded-card border border-border bg-surface-1 px-3 py-4 text-body-sm text-muted-foreground">
+            Henüz yayınlanmış fotoğraf yok.
+          </p>
+        )}
 
         {/*
           "Takip etme, mesaj gönderme ve koleksiyonlar hesap sistemiyle

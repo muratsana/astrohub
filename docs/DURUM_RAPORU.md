@@ -33,7 +33,7 @@ kalan iş ağırlıklı olarak **kanıtlama** ve **cilalama**.
 | Canlı tablo | 84 · RLS açık: **83/84** (istisna: PostGIS `spatial_ref_sys`) |
 | RLS politikası | 176 |
 | Edge fonksiyonu | 6 (meteoblue, plate-solve, plate-solve-poll, radyo-durum, youtube, podcast-rss) |
-| Test | **2.044 test / 166 dosya** — hepsi geçiyor |
+| Test | **2.045 test / 167 dosya** — hepsi geçiyor |
 | Rota | 81 tanım · 491 prerender edilmiş statik HTML · 161 Vercel rewrite |
 | Sitemap | 484 adres (ince şehir sayfaları bilerek hariç) |
 | İlk rota JS | **197.1 kB gzip** (bütçe 200) · CSS 14.7 kB (bütçe 25) |
@@ -136,15 +136,11 @@ yüzeyine taşındı.
 **Yapıldı:** Sosyal graf (`follows`, `user_blocks`), bildirim şeması ve
 üretim tetikleyicileri, mesajlaşma (`conversations`/`participants`/
 `messages`), bildirim merkezi arayüzü, sohbet arayüzü, takip/engelleme
-arayüzü, raporlama. **Bu turda:** `/akis` kişisel aktivite akışı eklendi;
-takip edilen kullanıcıların yeni fotoğraf, ilan ve forum konu hareketleri
-tek listede gösteriliyor. Sekiz göç (`0041`–`0048`).
+arayüzü, raporlama. `/akis` kişisel aktivite akışı eklendi; takip edilen
+kullanıcıların yeni fotoğraf, ilan ve forum konu hareketleri tek listede
+gösteriliyor. Sekiz göç (`0041`–`0048`).
 
-**Kaldı ve neden:**
-
-| Madde | Sebep |
-|---|---|
-| Kişiselleştirilmiş akış | Faz 12 §15.1 ile birlikte ele alınmalı |
+**Kaldı:** Kod işi yok; e-posta/web push gibi teslimat kanalları Faz 6 kararına bağlı.
 
 ---
 
@@ -266,7 +262,7 @@ canonical, paylaşılabilir gözlem planı, atıf ve telif.
 | Haftalık kişiselleştirilmiş özet | E-posta kararına bağlı (Faz 6 ile aynı blokaj) |
 | Davet ve referral altyapısı | Kötüye kullanım önleme tasarımı gerekiyor |
 | Watermark tercihi, indirme izinleri | Fotoğraf boru hattına dokunuyor (Faz 13 ile birlikte mantıklı) |
-| Kullanıcı portfolyo URL'si | Profil sayfası genişletmesi |
+| Kullanıcı portfolyo URL'si | DONE — `/profil/:username` artık gerçek `profiles` kaydını okur; fotoğraf yoksa da profil ve portfolyo bağlantısı görünür |
 
 ---
 
@@ -346,7 +342,7 @@ Kalan bütün maddeler **dört sebepten birine** giriyor:
 - Challenge altyapısı, aylık seçki
 - Sütun sırası sürükle-bırak
 - Harita/takvimin explorer görünümü olması
-- Watermark, portfolyo URL'si
+- Watermark
 - Faz 13/14/15/16/17 envanterleri
 
 ---
@@ -379,8 +375,8 @@ Kalan bütün maddeler **dört sebepten birine** giriyor:
 
 ### Eksik olan — yeni tasarımın doldurması gerekenler
 - **Tek ekran admin dashboard yok** (sekmeler var, birleşik özet yok).
-- **Kişiselleştirilmiş özet/öneri akışı yok** — `/akis` takip hareketlerini
-  gösteriyor; haftalık özet ve öneri mantığı Faz 12'de ayrı tasarlanacak.
+- **Haftalık kişiselleştirilmiş özet/öneri yok** — `/akis` takip hareketlerini
+  gösteriyor; e-posta özeti ve öneri mantığı Faz 12'de ayrı tasarlanacak.
 - **Challenge/yarışma yüzeyi yok.**
 
 ### Bu oturumda düzeltilen UI hataları (tekrarlamamak için)
@@ -509,6 +505,7 @@ gerçek koda göre hâlâ açıktı.
 - `src/components/shell/Logo.tsx`, `src/components/shell/Footer.tsx` — üst bar ve footer logosuna gri `(Beta test yayını)` etiketi eklendi; footer altındaki tekrar eden veri notu kaldırıldı ve telif satırı ana footer satırına taşındı.
 - `src/components/shell/Topbar.tsx`, `src/components/ui/EditorialList.tsx` — üst bar yüksekliği yaklaşık %15 artırıldı; haber/yazı liste başlıklarının hover rengi beyaza eşitlendi.
 - `src/services/content/activity.ts`, `src/features/activity/ActivityPage.tsx`, `src/app/router.tsx`, `src/features/discover/DiscoverPage.tsx` — takip edilen kullanıcıların fotoğraf/ilan/forum hareketlerinden oluşan `/akis` kişisel aktivite sayfası eklendi; Keşfet'ten erişilir.
+- `src/features/profile/ProfilePage.tsx`, `src/features/profile/ProfilePage.test.tsx` — public profil sayfası gerçek `profiles` kaydını okur; fotoğrafı olmayan kullanıcı için profil ve portfolyo bağlantısı görünür.
 
 ### Doğrulama
 
