@@ -12,7 +12,7 @@ Applied the implementable local UI/admin part of the GUI/Admin markdown plan wit
 |---|---|---|---|---|---|---|
 | Public module filter/control consolidation | DONE | `src/components/ui/FilterBar.tsx`, gallery/events/news/articles/marketplace/forum pages | No | Local test/build/e2e in prior commit | Pending Vercel deploy | Active filters are shown by control color per latest product feedback, not a separate chip row. |
 | Admin sidebar shell | DONE | `src/features/admin/AdminPage.tsx`, `src/app/router.tsx` | No | Typecheck, lint, build, admin tests | Not checked live in this edit pass | `/admin/*` now routes into one admin app with left navigation. |
-| Admin route aliases | DONE | `src/app/router.tsx`, `src/features/admin/AdminPage.tsx` | No | Typecheck, lint, build, admin tests | Not checked live in this edit pass | Supports paths such as `/admin/home`, `/admin/gallery`, `/admin/news`, `/admin/forum`, `/admin/users`, `/admin/settings`. |
+| Admin route aliases | DONE | `src/app/router.tsx`, `src/features/admin/AdminPage.tsx`, `scripts/vercel-rewrites.mjs`, `vercel.json` | No | Typecheck, lint, build, admin/router tests | Not checked live in this edit pass | Supports paths such as `/admin/home`, `/admin/gallery`, `/admin/news`, `/admin/forum`, `/admin/users`, `/admin/settings`; Vercel gets `/admin` and `/admin/:path*`. |
 | Forum redesign | PARTIAL | `src/features/forum/ForumPage.tsx` | No | Covered by existing forum/service tests in earlier pass | Pending Vercel deploy | Main forum list is compact and not a content card grid; detail/new-topic full redesign still open. |
 | Admin CRUD surfaces | PARTIAL | Existing admin controls | No | Full unit suite passed | Not checked live in this edit pass | Existing controls are exposed under the sidebar; full data table/bulk drawer standard still open. |
 | Document import | BLOCKED_EXTERNAL | Existing `SpecImportControl` only | No | Not run as live import | None | CKEditor Import from Word / Apryse require license/service choices. |
@@ -28,7 +28,7 @@ Applied the implementable local UI/admin part of the GUI/Admin markdown plan wit
 - `npm test -- --reporter=dot` passed: `174` files, `2079` tests.
 - `npm run build` passed and prerendered `492/492` routes.
 - Build warning only: `VITE_SITE_URL` is not set, so `sitemap.xml` generation was skipped.
-- `npm run check:rewrites` passed: `162` rewrites current.
+- `npm run check:rewrites` passed: `163` rewrites current.
 - `npm run check:csp` passed: `7` routes, zero violations.
 - `npm run check:budgets` passed: first-route JS `182.3 kB` gzip, CSS `15.5 kB` gzip.
 - `npm run build:preview` passed.

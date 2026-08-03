@@ -114,10 +114,17 @@ export function rewriteSources() {
 
   const all = [...literals, ...cityPaths()]
     .map((p) => (p.startsWith('/') ? p : `/${p}`))
+    .flatMap(toVercelSources)
     .filter((p, index, list) => list.indexOf(p) === index)
     .sort();
 
   return all;
+}
+
+function toVercelSources(source) {
+  if (!source.endsWith('/*')) return [source];
+  const base = source.slice(0, -2);
+  return [base, `${base}/:path*`];
 }
 
 const sources = rewriteSources();

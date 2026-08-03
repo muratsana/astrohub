@@ -53,7 +53,15 @@ function routePatterns(nodes: RouteNode[], prefix = ''): string[] {
   return out;
 }
 
-const patterns = [...new Set(routePatterns(appRoutes as RouteNode[]))].sort();
+function toVercelSources(pattern: string): string[] {
+  if (!pattern.endsWith('/*')) return [pattern];
+  const base = pattern.slice(0, -2);
+  return [base, `${base}/:path*`];
+}
+
+const patterns = [
+  ...new Set(routePatterns(appRoutes as RouteNode[]).flatMap(toVercelSources)),
+].sort();
 const sources = config.rewrites.map((r) => r.source).sort();
 
 describe('vercel.json rewrite listesi', () => {
