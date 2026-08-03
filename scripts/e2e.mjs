@@ -682,6 +682,8 @@ await scenario('tablo başlığı sıralamayı URL\'ye yazıyor', async () => {
  *
  * · Dar ekranda kontroller DOM'da HİÇ YOK (gizli değil) — gizli bir
  *   kopya, `id` çakışması ve yanlış etiket bağlaması demekti.
+ * · Aktif filtre ayrı chip satırı açmaz; sayı çekmece düğmesinde kalır,
+ *   seçili durum kontrolün kendi rengiyle görünür.
  * · Geniş ekranda çekmece düğmesi yok, kontroller doğrudan görünür.
  */
 await scenario('filtreler mobilde çekmeceye giriyor', async () => {
@@ -698,7 +700,7 @@ await scenario('filtreler mobilde çekmeceye giriyor', async () => {
       /* Rozet: gizlenen filtrenin sayısı düğmede yazmalı. */
       sayi: btn ? btn.textContent.replace(/[^0-9]/g, '') : '',
       kontrolSayisi: document.querySelectorAll('#gallery-search').length,
-      chip: [...document.querySelectorAll('button')].some((b) =>
+      chipVar: [...document.querySelectorAll('button')].some((b) =>
         (b.getAttribute('aria-label') || '').includes('filtresini kaldır')
       ),
     };
@@ -710,7 +712,7 @@ await scenario('filtreler mobilde çekmeceye giriyor', async () => {
     dar.kontrolSayisi === 0,
     'çekmece kapalıyken kontrol DOM\'da duruyor — id çakışması riski'
   );
-  assert(dar.chip, 'aktif filtre chip\'i çizilmiyor');
+  assert(!dar.chipVar, 'aktif filtre ayrı chip satırı çiziyor');
 
   await page.evaluate(() => {
     [...document.querySelectorAll('button')]
