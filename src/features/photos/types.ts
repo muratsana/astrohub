@@ -254,6 +254,8 @@ export interface AstroPhoto {
    */
   rating: { toplam: number; sayi: number };
   editorsPick?: boolean;
+  /** Kazandığı haftalar, `2026-32` biçiminde. */
+  photoOfWeekWins?: string[];
   year: number;
   city: string;
 }

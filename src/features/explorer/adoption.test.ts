@@ -71,6 +71,15 @@ describe('geçiş takibi', () => {
     }
   });
 
+  it('geçen sayfalar ortak komut şeridini kullanmayı sürdürüyor', () => {
+    for (const p of GECEN) {
+      expect(oku(p), p).toContain('ModuleToolbar');
+      expect(oku(p), `${p} kendi ResultCount satırını çizmemeli`).not.toMatch(
+        /import[^;]*ResultCount[^;]*from/
+      );
+    }
+  });
+
   /*
    * Bir sayfa geçtiğinde BEKLEYEN listesinden çıkarılmalı. Çıkarılmazsa
    * borç listesi gerçeği yansıtmamaya başlar ve sayaç anlamını yitirir.

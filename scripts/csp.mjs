@@ -77,7 +77,7 @@ const DIRECTIVES = {
 
   /* `data:` — ikonlar ve yer tutucular.
      `blob:` — canvas ile üretilen küçültme önizlemesi.
-     cartocdn/djlorenz — ışık kirliliği haritasının karo katmanları.
+     cartocdn/NASA GIBS — ışık kirliliği haritasının karo katmanları.
      wikimedia/esahubble — tohum içeriğin görselleri. */
   'img-src': [
     "'self'",
@@ -85,7 +85,7 @@ const DIRECTIVES = {
     'blob:',
     'https://*.supabase.co',
     'https://*.basemaps.cartocdn.com',
-    'https://djlorenz.github.io',
+    'https://gibs.earthdata.nasa.gov',
     'https://commons.wikimedia.org',
     'https://upload.wikimedia.org',
     'https://cdn.esahubble.org',

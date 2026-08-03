@@ -3,10 +3,9 @@ import { Container } from '@/components/ui/Container';
 import { Input } from '@/components/ui/Input';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { FilterBar, FilterCell, filterControlClass } from '@/components/ui/FilterBar';
-import { ActiveFilters } from '@/components/ui/ActiveFilters';
+import { FilterCell, filterControlClass } from '@/components/ui/FilterBar';
 import { CardGrid } from '@/components/ui/CardGrid';
-import { ToolBar, ResultCount } from '@/components/ui/ToolBar';
+import { ModuleToolbar } from '@/components/ui/ModuleToolbar';
 import { useViewMode } from '@/components/ui/useViewMode';
 import {
   ContentCard,
@@ -80,7 +79,16 @@ export function TargetsPage() {
           description={`Messier kataloğunun tamamı, popüler NGC/IC/Sharpless hedefleri ve güneş sistemi — ${targets.length} kayıt. Görünürlük penceresi, önerilen odak ve filtre önerisi ölçülen koordinat ve parlaklıktan hesaplanır.`}
         />
 
-        <FilterBar activeCount={ex.chips.length} columns={3}>
+        <ModuleToolbar
+          columns={3}
+          activeFilters={{
+            chips: ex.chips,
+            onRemove: ex.removeChip,
+            onClearAll: ex.clearAll,
+          }}
+          result={{ current: ex.total, total: targets.length, noun: 'hedef' }}
+          view={{ mode: view, onChange: setView }}
+        >
           <FilterCell label="Ara" htmlFor="target-search" className="sm:col-span-2">
             <Input
               id="target-search"
@@ -107,24 +115,7 @@ export function TargetsPage() {
               ))}
             </select>
           </FilterCell>
-        </FilterBar>
-
-        <ActiveFilters
-          chips={ex.chips}
-          onRemove={ex.removeChip}
-          onClearAll={ex.clearAll}
-        />
-
-        <ToolBar
-          left={
-            <ResultCount
-              current={ex.total}
-              total={targets.length}
-              noun="hedef"
-            />
-          }
-          view={{ mode: view, onChange: setView }}
-        />
+        </ModuleToolbar>
 
         {result.length === 0 ? (
           <EmptyState

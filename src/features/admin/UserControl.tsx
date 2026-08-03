@@ -3,7 +3,10 @@ import { Panel } from '@/components/ui/Panel';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Input, Select } from '@/components/ui/Input';
-import { grantTestPremium } from '@/services/content/membership';
+import {
+  grantTestPremium,
+  revokeTestPremium,
+} from '@/services/content/membership';
 import { Alert } from '@/components/ui/Alert';
 import { useAuth } from '@/features/auth/AuthContext';
 import {
@@ -285,6 +288,15 @@ export function UserControl() {
                       }
                     >
                       Test premium (30 gün)
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="danger"
+                      disabled={busy}
+                      onClick={() => void run(() => revokeTestPremium(u.id))}
+                    >
+                      Test premiumi geri al
                     </Button>
                   </div>
 

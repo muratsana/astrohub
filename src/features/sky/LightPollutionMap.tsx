@@ -30,17 +30,12 @@ import {
  * bölge o sunuculara gider. Sayfanın kendi metni "koordinat sunucumuza
  * gönderilmez" diyor — bunu sormadan yapmak o sözü bozmak olurdu.
  *
- * KATMAN SEÇİMİ KULLANICIDA, ÇÜNKÜ TAHMİN TUTMADI. Sağlayıcı adresleri
- * bu geliştirme ortamından doğrulanamıyor (dış ağ kapalı) ve otomatik
- * denenen ilk aday listesi canlıda boşa çıktı. Katmanı sessizce
- * "yüklenemedi"ye bırakmak yerine seçici açıldı: her adayın durumu
- * (geldi / ulaşılamadı) görünüyor ve başarısız olanın denenen adresi
- * tıklanabilir duruyor. Böylece sorunun nerede olduğu tek bakışta
- * anlaşılıyor — kör bir yeniden tahmin turu gerekmiyor.
+ * Katman tek ve doğrulanmış NASA GIBS kaynağıdır. Bozuk adaylar ile
+ * gereksiz kaynak seçicisi kaldırıldı; arayüz yalnızca katmanın gerçek
+ * yüklenme durumunu gösterir.
  */
 
 const CONSENT_KEY = 'astrohub:map:tiles';
-const LAYER_KEY = 'astrohub:map:layer';
 
 function readStored(key: string): string | null {
   try {
@@ -75,30 +70,19 @@ export function LightPollutionMap() {
   const [opacity, setOpacity] = useState(50);
   const [pick, setPick] = useState<LatLng | null>(null);
 
-  /* Katman seçimi: 'oto' sırayla dener, açık seçim tek kaynakta kalır. */
-  const [choice, setChoice] = useState(() => readStored(LAYER_KEY) ?? 'oto');
-  const [failed, setFailed] = useState<string[]>([]);
-  const [loadedId, setLoadedId] = useState<string | null>(null);
-
-  const overlay = useMemo(() => {
-    if (choice !== 'oto') {
-      return OVERLAY_SOURCES.find((s) => s.id === choice);
-    }
-    return OVERLAY_SOURCES.find((s) => !failed.includes(s.id));
-  }, [choice, failed]);
-
-  const autoExhausted = choice === 'oto' && !overlay;
-  const pickedFailed = choice !== 'oto' && !!overlay && failed.includes(overlay.id);
+  const overlay = OVERLAY_SOURCES[0];
+  const [failed, setFailed] = useState(false);
+  const [loaded, setLoaded] = useState(false);
 
   const onOverlayFailure = useCallback(() => {
-    const id = overlay?.id;
-    if (!id) return;
-    setFailed((list) => (list.includes(id) ? list : [...list, id]));
-  }, [overlay]);
+    setFailed(true);
+    setLoaded(false);
+  }, []);
 
   const onOverlayLoad = useCallback(() => {
-    setLoadedId(overlay?.id ?? null);
-  }, [overlay]);
+    setFailed(false);
+    setLoaded(true);
+  }, []);
 
   /* Üstteki şehir seçici değişince harita da oraya gitsin: iki ayrı
      konum kavramı taşımak, kullanıcıya "hangisi geçerli" diye
@@ -117,8 +101,8 @@ export function LightPollutionMap() {
      her yeri beyaza boyar. O katman etkinse altlık koyuya zorlanıyor —
      temaya uymamak, katmanı okunmaz kılmaktan iyi. */
   const base = useMemo(
-    () => basemapSource(theme !== 'light' || !!overlay?.needsDarkBasemap),
-    [theme, overlay]
+    () => basemapSource(theme !== 'light' || !!overlay.needsDarkBasemap),
+    [theme, overlay.needsDarkBasemap]
   );
 
   const view = { lat: center.lat, lng: center.lng, zoom, opacity };
@@ -218,7 +202,7 @@ export function LightPollutionMap() {
             ) : (
               <Notice
                 title="Harita üçüncü taraf sunucularından yükleniyor"
-                body="Haritayı açtığınızda IP adresiniz ve baktığınız bölge döşeme sağlayıcılarına (CARTO, NASA GIBS / djlorenz.github.io) gider. Bir kez onaylarsanız tercihiniz saklanır; çerez sayfasından geri alabilirsiniz."
+                body="Haritayı açtığınızda IP adresiniz ve baktığınız bölge döşeme sağlayıcılarına (CARTO ve NASA GIBS) gider. Bir kez onaylarsanız tercihiniz saklanır; çerez sayfasından geri alabilirsiniz."
                 action={
                   <Button size="sm" onClick={allow}>
                     Haritayı yükle
@@ -245,7 +229,7 @@ export function LightPollutionMap() {
                 />
               </div>
 
-              {overlay && loadedId === overlay.id && (
+              {loaded && (
                 <Legend kind={overlay.legend} />
               )}
 
@@ -269,7 +253,7 @@ export function LightPollutionMap() {
         </div>
 
         {/* ── Kontroller ── */}
-        <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.15fr)_auto]">
+        <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
           <Slider
             id="lp-zoom"
             label="Yakınlaştırma"
@@ -291,53 +275,6 @@ export function LightPollutionMap() {
             onChange={setOpacity}
           />
 
-          {/* Katman seçici — durumu da gösteriyor. */}
-          <div className="rounded-card border border-border bg-surface-2 px-2.5 py-1.5">
-            <div className="flex items-baseline justify-between gap-2">
-              <label htmlFor="lp-layer" className="label">
-                Katman
-              </label>
-              <span
-                className={cn(
-                  'text-meta',
-                  overlay && loadedId === overlay.id
-                    ? 'text-success'
-                    : autoExhausted || pickedFailed
-                      ? 'text-warning'
-                      : 'text-faint'
-                )}
-              >
-                {overlay && loadedId === overlay.id
-                  ? 'geldi'
-                  : autoExhausted || pickedFailed
-                    ? 'ulaşılamadı'
-                    : 'deneniyor…'}
-              </span>
-            </div>
-            <select
-              id="lp-layer"
-              value={choice}
-              onChange={(e) => {
-                setChoice(e.target.value);
-                store(LAYER_KEY, e.target.value);
-                setLoadedId(null);
-                /* Seçim yenilenince o kaynağa bir şans daha: sunucu
-                   geçici olarak düşmüş olabilir ve kullanıcı elle
-                   seçtiyse tekrar denemek istiyordur. */
-                setFailed((list) => list.filter((id) => id !== e.target.value));
-              }}
-              className="mt-1 w-full bg-transparent text-body-sm text-foreground outline-none"
-            >
-              <option value="oto">Otomatik (sırayla dener)</option>
-              {OVERLAY_SOURCES.map((source) => (
-                <option key={source.id} value={source.id}>
-                  {source.label}
-                  {failed.includes(source.id) ? ' — ulaşılamadı' : ''}
-                </option>
-              ))}
-            </select>
-          </div>
-
           <div className="flex items-end gap-1.5">
             <Button size="sm" variant="secondary" onClick={reset}>
               Sıfırla
@@ -354,15 +291,13 @@ export function LightPollutionMap() {
           görülebilir hâle getiriyor. "Yüklenemedi" tek başına kimseye
           bir şey söylemiyordu.
         */}
-        {(autoExhausted || pickedFailed) && (
+        {failed && (
           <p className="mt-1.5 rounded-card border border-warning/40 bg-surface-1 px-2.5 py-1.5 text-meta leading-snug text-warning">
-            {autoExhausted
-              ? 'Listedeki ışık kirliliği kaynaklarının hiçbirine ulaşılamadı'
-              : 'Seçilen katmana ulaşılamadı'}
-            ; altta yalnızca temel harita var. Aşağıdaki karşılaştırma kendi
+            NASA gece ışıkları katmanına ulaşılamadı; altta yalnızca temel
+            harita var. Aşağıdaki karşılaştırma kendi
             ölçümlerimizden geldiği için etkilenmiyor.{' '}
             <a
-              href={(overlay ?? OVERLAY_SOURCES[0]).url({ x: 37, y: 22, z: 6 })}
+              href={overlay.url({ x: 37, y: 22, z: 6 })}
               target="_blank"
               rel="noreferrer noopener"
               className="underline underline-offset-2"
@@ -374,7 +309,7 @@ export function LightPollutionMap() {
 
         <p className="mt-1.5 text-meta leading-snug text-faint">
           {BASEMAP_CREDIT}
-          {overlay && loadedId === overlay.id ? ` · ${overlay.credit}` : ''}.
+          {loaded ? ` · ${overlay.credit}` : ''}.
           Katman uydu kestirimidir. Aşağıdaki karşılaştırma ise kendi gözlem
           noktası ölçümlerimizden hesaplanır — ikisi ayrı kaynaklardır ve
           birbirini doğrulamaz.

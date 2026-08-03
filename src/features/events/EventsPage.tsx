@@ -5,7 +5,6 @@ import { Badge } from '@/components/ui/Badge';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
 import {
-  FilterBar,
   FilterCell,
   FilterToggle,
   filterControlClass,
@@ -15,7 +14,7 @@ import {
   EditorialList,
   type EditorialItem,
 } from '@/components/ui/EditorialList';
-import { ResultCount } from '@/components/ui/ToolBar';
+import { ModuleToolbar } from '@/components/ui/ModuleToolbar';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { ViewToggle } from '@/components/ui/ViewToggle';
 import { useViewMode } from '@/components/ui/useViewMode';
@@ -116,7 +115,44 @@ export function EventsPage() {
           description="Türkiye'deki astronomi etkinlikleri — gözlem şenlikleri, kamplar, atölyeler ve halk gözlemleri tek takvimde."
         />
 
-        <FilterBar activeCount={ex.chips.length}>
+        <ModuleToolbar
+          activeFilters={{
+            chips: ex.chips,
+            onRemove: ex.removeChip,
+            onClearAll: ex.clearAll,
+          }}
+          result={{
+            current: ex.total,
+            total: catalog.items.length,
+            noun: 'etkinlik',
+          }}
+          sort={{
+            id: 'event-sort',
+            value: ex.query.sort,
+            onChange: ex.setSort,
+            options: eventsSpec.sorts.map((s) => ({
+              value: s.value,
+              label: s.label,
+            })),
+          }}
+          extra={
+            <div className="flex min-h-11 items-center gap-2 rounded-card border border-border-strong bg-surface-1 px-2 shadow-overlay">
+              <SegmentedControl
+                value={layout}
+                options={[
+                  { value: 'kart', label: 'Kart' },
+                  { value: 'takvim', label: 'Takvim' },
+                ]}
+                onChange={setLayout}
+                ariaLabel="Görünüm biçimi"
+                role="group"
+                size="xs"
+                className="shrink-0"
+              />
+              {layout === 'kart' && <ViewToggle mode={view} onChange={setView} />}
+            </div>
+          }
+        >
           <FilterCell
             label="Ara"
             htmlFor="event-search"
@@ -198,43 +234,7 @@ export function EventsPage() {
             value={ex.query.ranges.tarih}
             onChange={(next) => ex.setRange('tarih', next)}
           />
-          <FilterCell label="Sırala" htmlFor="event-sort" className="max-w-[14rem]">
-            <Select
-              id="event-sort"
-              value={ex.query.sort}
-              onChange={(e) => ex.setSort(e.target.value)}
-              className={filterControlClass}
-            >
-              {eventsSpec.sorts.map((s) => (
-                <option key={s.value} value={s.value}>
-                  {s.label}
-                </option>
-              ))}
-            </Select>
-          </FilterCell>
-          <div className="flex min-h-14 items-center gap-2 rounded-card border border-border-strong bg-surface-1 px-3 shadow-overlay">
-            <SegmentedControl
-              value={layout}
-              options={[
-                { value: 'kart', label: 'Kart' },
-                { value: 'takvim', label: 'Takvim' },
-              ]}
-              onChange={setLayout}
-              ariaLabel="Görünüm biçimi"
-              role="group"
-              size="xs"
-              className="shrink-0"
-            />
-            {layout === 'kart' && <ViewToggle mode={view} onChange={setView} />}
-          </div>
-          <div className="flex min-h-14 items-center rounded-card border border-border-strong bg-surface-1 px-4 shadow-overlay">
-            <ResultCount
-              current={ex.total}
-              total={catalog.items.length}
-              noun="etkinlik"
-            />
-          </div>
-        </FilterBar>
+        </ModuleToolbar>
 
         <CatalogSourceNote selection={catalog} />
 

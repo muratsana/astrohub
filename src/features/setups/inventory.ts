@@ -51,10 +51,6 @@ export function toggleOwned(slug: string): boolean {
   return true;
 }
 
-export function removeOwned(slug: string): void {
-  write(read().filter((s) => s !== slug));
-}
-
 /** Listeyi olduğu gibi değiştirir — senkronizasyon katmanı için. */
 export function replaceOwned(slugs: string[]): void {
   write(slugs);

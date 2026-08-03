@@ -20,6 +20,7 @@ import { listSetups } from '@/features/setups/storage';
 import { useSavedPhotos } from '@/services/content/collections';
 import {
   isListingPubliclyVisible,
+  markListingSold,
   useMyListings,
 } from '@/services/content/listings';
 import { isPhotoPubliclyVisible, useMyPhotos } from '@/services/content/photos';
@@ -31,6 +32,8 @@ import {
   photoStatusLabels,
   type PhotoStatus,
 } from '@/features/photos/types';
+import { useJuryBallot } from '@/services/content/photoOfWeek';
+import { JuryPanel } from './JuryPanel';
 
 /** Durum rengi: yayındaki yeşil, biten sönük, taslak uyarı sarısı. */
 function listingStatusTone(status: ListingStatus): BadgeTone {
@@ -172,6 +175,7 @@ export function PanelPage() {
    * kullanıcının bakmadığı bir liste için istek harcamak olurdu.
    */
   const saved = useSavedPhotos();
+  const jury = useJuryBallot(user?.id);
 
   /*
    * SİLME İKİ ADIM — açık olan satırın kimliği `silinecek`te.
@@ -184,6 +188,9 @@ export function PanelPage() {
   const [silinecek, setSilinecek] = useState<string | null>(null);
   const [siliniyor, setSiliniyor] = useState(false);
   const [silmeHatasi, setSilmeHatasi] = useState<string | null>(null);
+  const [satilacak, setSatilacak] = useState<string | null>(null);
+  const [satiliyor, setSatiliyor] = useState(false);
+  const [satisHatasi, setSatisHatasi] = useState<string | null>(null);
 
   async function sil(photoId: string) {
     if (!user) return;
@@ -202,6 +209,22 @@ export function PanelPage() {
       setSilmeHatasi(e instanceof Error ? e.message : 'Fotoğraf silinemedi');
     } finally {
       setSiliniyor(false);
+    }
+  }
+
+  async function satildiIsaretle(slug: string) {
+    setSatiliyor(true);
+    setSatisHatasi(null);
+    try {
+      await markListingSold(slug);
+      setSatilacak(null);
+      myListings.refresh();
+    } catch (error) {
+      setSatisHatasi(
+        error instanceof Error ? error.message : 'İlan güncellenemedi'
+      );
+    } finally {
+      setSatiliyor(false);
     }
   }
 
@@ -246,6 +269,9 @@ export function PanelPage() {
     { label: 'Kaydedilenler', to: '/panel/kaydedilenler' },
     { label: 'Kayıtlı Noktalar', to: '/saha' },
     { label: 'İlanlarım', to: '/panel/ilanlar' },
+    ...(jury.active || section === 'juri'
+      ? [{ label: 'Jüri Oylaması', to: '/panel/juri', note: jury.round ? 'açık tur var' : undefined }]
+      : []),
     /*
      * "ÜYELİK VE ÖDEME" KALDIRILDI, GİZLENMEDİ.
      *
@@ -355,6 +381,12 @@ export function PanelPage() {
             fotoğraf kaç sürüme sahip olursa olsun tek hak tüketir (§4.2).
           </p>
         </Panel>
+
+        {section === 'juri' && user && (
+          <div className="mb-4">
+            <JuryPanel userId={user.id} />
+          </div>
+        )}
 
         {section === 'fotograflar' && (
           <Panel
@@ -609,7 +641,55 @@ export function PanelPage() {
                         </Badge>
                       )
                     }
-                  />
+                    action={
+                      (listing.status === 'active' ||
+                        listing.status === 'reserved') && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          disabled={satiliyor}
+                          onClick={() => {
+                            setSatisHatasi(null);
+                            setSatilacak(
+                              satilacak === listing.slug ? null : listing.slug
+                            );
+                          }}
+                        >
+                          Satıldı
+                        </Button>
+                      )
+                    }
+                  >
+                    {satilacak === listing.slug && (
+                      <div className="mb-2.5 flex flex-wrap items-center gap-2 rounded-card border border-warm/40 bg-warm/8 px-3 py-2">
+                        <span className="min-w-0 flex-1 text-meta leading-relaxed text-warm">
+                          <strong>{listing.title}</strong> satıldı olarak
+                          işaretlenecek ve pazaryerinden kaldırılacak. Kayıt,
+                          fiyat geçmişi için panelinizde kalır.
+                        </span>
+                        <Button
+                          size="sm"
+                          disabled={satiliyor}
+                          onClick={() => void satildiIsaretle(listing.slug)}
+                        >
+                          {satiliyor ? 'Kaydediliyor…' : 'Onayla'}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          disabled={satiliyor}
+                          onClick={() => setSatilacak(null)}
+                        >
+                          Vazgeç
+                        </Button>
+                        {satisHatasi && (
+                          <p className="w-full text-meta leading-relaxed text-danger">
+                            Güncellenemedi: {satisHatasi}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </PanelRow>
                 ))}
               </ul>
             )}

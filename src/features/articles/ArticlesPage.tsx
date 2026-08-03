@@ -1,12 +1,10 @@
 import { useMemo } from 'react';
 import { Container } from '@/components/ui/Container';
-import { FilterBar, FilterCell, filterControlClass } from '@/components/ui/FilterBar';
+import { FilterCell, filterControlClass } from '@/components/ui/FilterBar';
 import { Input, Select } from '@/components/ui/Input';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
-import { ResultCount } from '@/components/ui/ToolBar';
-import { SegmentedControl } from '@/components/ui/SegmentedControl';
-import { ViewToggle } from '@/components/ui/ViewToggle';
+import { ModuleToolbar } from '@/components/ui/ModuleToolbar';
 import { EditorialList, type EditorialItem } from '@/components/ui/EditorialList';
 import { useViewMode } from '@/components/ui/useViewMode';
 import { articleCategoryLabels, type ArticleCategory } from './data';
@@ -111,7 +109,28 @@ export function ArticlesPage() {
           yoktu. Kategori sekmesi az sayıda kategoriyi iyi gösteriyor ama
           "perseid" arayan kullanıcı sekmelerde gezinmek zorunda kalıyordu.
         */}
-        <FilterBar activeCount={ex.chips.length}>
+        <ModuleToolbar
+          activeFilters={{
+            chips: ex.chips,
+            onRemove: ex.removeChip,
+            onClearAll: ex.clearAll,
+          }}
+          result={{
+            current: ex.total,
+            total: allArticles.length,
+            noun: 'yazı',
+          }}
+          sort={{
+            id: 'article-sort',
+            value: ex.query.sort,
+            onChange: ex.setSort,
+            options: articlesSpec.sorts.map((s) => ({
+              value: s.value,
+              label: s.label,
+            })),
+          }}
+          view={{ mode: view, onChange: setView }}
+        >
           <FilterCell
             label="Ara"
             htmlFor="articles-search"
@@ -129,42 +148,24 @@ export function ArticlesPage() {
           </FilterCell>
           <FilterCell
             label="Kategori"
+            htmlFor="article-category"
             active={category !== 'hepsi'}
-            className="min-w-[26rem] flex-[3_1_26rem]"
+            className="min-w-[12rem]"
           >
-            <SegmentedControl
-              ariaLabel="Kategori"
-              value={category}
-              onChange={setCategory}
-              options={categoryOptions}
-              size="xs"
-            />
-          </FilterCell>
-          <FilterCell label="Sırala" htmlFor="article-sort" className="max-w-[14rem]">
             <Select
-              id="article-sort"
-              value={ex.query.sort}
-              onChange={(e) => ex.setSort(e.target.value)}
+              id="article-category"
+              value={category}
+              onChange={(event) => setCategory(event.target.value)}
               className={filterControlClass}
             >
-              {articlesSpec.sorts.map((s) => (
-                <option key={s.value} value={s.value}>
-                  {s.label}
+              {categoryOptions.map((item) => (
+                <option key={item.value} value={item.value}>
+                  {item.label}
                 </option>
               ))}
             </Select>
           </FilterCell>
-          <div className="flex min-h-14 items-center rounded-card border border-border-strong bg-surface-1 px-3 shadow-overlay">
-            <ViewToggle mode={view} onChange={setView} />
-          </div>
-          <div className="flex min-h-14 items-center rounded-card border border-border-strong bg-surface-1 px-4 shadow-overlay">
-            <ResultCount
-              current={ex.total}
-              total={allArticles.length}
-              noun="yazı"
-            />
-          </div>
-        </FilterBar>
+        </ModuleToolbar>
 
         <EditorialList
           view={view}

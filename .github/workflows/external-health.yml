@@ -1,0 +1,19 @@
+name: Dış servis sağlığı
+
+on:
+  schedule:
+    - cron: '20 5 * * 1'
+  workflow_dispatch:
+
+jobs:
+  external-health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Dış harita ve hava kaynaklarını doğrula
+        run: npm run check:external

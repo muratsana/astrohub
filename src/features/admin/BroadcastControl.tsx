@@ -17,6 +17,7 @@ import {
   validateTrack,
   setTrackPublished,
   deleteRadioTrackWithFile,
+  saveTrackOrder,
   type AdminBroadcast,
   type AdminTrack,
 } from './broadcastAdmin';
@@ -304,6 +305,7 @@ function RadioControl() {
   const [artist, setArtist] = useState('');
   const [source, setSource] = useState<'mp3' | 'spotify'>('mp3');
   const [path, setPath] = useState('');
+  const [dragging, setDragging] = useState<string | null>(null);
 
   const load = useCallback(() => {
     setError(null);
@@ -346,6 +348,36 @@ function RadioControl() {
     });
   }
 
+  async function reorder(fromId: string, toId: string) {
+    if (!items || fromId === toId || busy) return;
+    const from = items.findIndex((item) => item.id === fromId);
+    const to = items.findIndex((item) => item.id === toId);
+    if (from < 0 || to < 0) return;
+    const previous = items;
+    const next = [...items];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    setItems(next);
+    setBusy(true);
+    setError(null);
+    try {
+      await saveTrackOrder(next.map((item) => item.id));
+    } catch (reason) {
+      setItems(previous);
+      setError(reason instanceof Error ? reason.message : 'Sıra kaydedilemedi');
+    } finally {
+      setBusy(false);
+      setDragging(null);
+    }
+  }
+
+  function moveBy(trackId: string, delta: -1 | 1) {
+    if (!items) return;
+    const index = items.findIndex((item) => item.id === trackId);
+    const target = items[index + delta];
+    if (target) void reorder(trackId, target.id);
+  }
+
   return (
     <Panel
       title="Radyo Kontrolü"
@@ -372,8 +404,35 @@ function RadioControl() {
           {items.map((track) => (
             <li
               key={track.id}
+              draggable={!busy}
+              onDragStart={() => setDragging(track.id)}
+              onDragEnd={() => setDragging(null)}
+              onDragOver={(event) => event.preventDefault()}
+              onDrop={() => dragging && void reorder(dragging, track.id)}
+              onKeyDown={(event) => {
+                if (!event.altKey) return;
+                if (event.key === 'ArrowUp') {
+                  event.preventDefault();
+                  moveBy(track.id, -1);
+                }
+                if (event.key === 'ArrowDown') {
+                  event.preventDefault();
+                  moveBy(track.id, 1);
+                }
+              }}
+              tabIndex={0}
               className="flex flex-wrap items-center gap-2 border-b border-border py-2 last:border-0"
             >
+              <span
+                aria-label="Sürükleyerek sırala; klavyede Alt ve ok tuşlarını kullan"
+                title="Sürükle veya Alt+↑/↓"
+                className="cursor-grab select-none text-muted-foreground"
+              >
+                ⠿
+              </span>
+              <span className="tabular w-5 text-center text-meta text-faint">
+                {(items?.findIndex((item) => item.id === track.id) ?? 0) + 1}
+              </span>
               <Badge tone={track.source === 'spotify' ? 'cold' : 'muted'}>
                 {track.source === 'spotify' ? 'Spotify' : 'MP3'}
               </Badge>
@@ -386,6 +445,26 @@ function RadioControl() {
                 )}
               </span>
 
+              <Button
+                aria-label={`${track.title} parçasını yukarı taşı`}
+                title="Yukarı taşı"
+                size="sm"
+                variant="ghost"
+                disabled={busy || items[0]?.id === track.id}
+                onClick={() => moveBy(track.id, -1)}
+              >
+                ↑
+              </Button>
+              <Button
+                aria-label={`${track.title} parçasını aşağı taşı`}
+                title="Aşağı taşı"
+                size="sm"
+                variant="ghost"
+                disabled={busy || items[items.length - 1]?.id === track.id}
+                onClick={() => moveBy(track.id, 1)}
+              >
+                ↓
+              </Button>
               <Button
                 size="sm"
                 variant="ghost"

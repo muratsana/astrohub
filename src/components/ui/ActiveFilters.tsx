@@ -1,4 +1,5 @@
 import { CloseIcon } from './icons';
+import { useIsNarrow } from './useIsNarrow';
 import type { Chip } from '@/features/explorer/query';
 
 /**
@@ -31,7 +32,11 @@ export function ActiveFilters({
   onRemove: (chip: Chip) => void;
   onClearAll: () => void;
 }) {
-  if (chips.length === 0) return null;
+  const narrow = useIsNarrow();
+
+  // Dar ekranda aynı bilgi FilterBar düğmesindeki sayaçta görünür. Chip'leri
+  // ayrıca DOM'a koymak kapalı çekmecenin kontrollerini ikinci kez üretir.
+  if (chips.length === 0 || narrow) return null;
 
   return (
     <div className="mb-4 flex flex-wrap items-center gap-1.5">

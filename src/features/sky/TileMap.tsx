@@ -55,6 +55,14 @@ export interface TileMapProps {
   onPick?: (point: LatLng) => void;
   /** Harita üzerine çizilen işaret (seçili şehir). */
   marker?: LatLng;
+  /** Birden çok kayıt işareti; liste/etkinlik haritaları için. */
+  markers?: Array<{
+    id: string;
+    point: LatLng;
+    label: string;
+    active?: boolean;
+    onSelect?: () => void;
+  }>;
   className?: string;
   /** Erişilebilir ad — harita klavyeyle gezilebilir bir bölge. */
   label: string;
@@ -79,6 +87,7 @@ export function TileMap({
   onOverlayLoad,
   onPick,
   marker,
+  markers = [],
   className,
   label,
 }: TileMapProps) {
@@ -284,6 +293,28 @@ export function TileMap({
           style={{ left: markerPoint.x, top: markerPoint.y }}
         />
       ) : null}
+
+      {markers.map((item) => {
+        const point = projectPoint(item.point, center, zoom, size);
+        if (!point) return null;
+        return (
+          <button
+            key={item.id}
+            type="button"
+            aria-label={item.label}
+            title={item.label}
+            onPointerDown={(event) => event.stopPropagation()}
+            onClick={item.onSelect}
+            className={cn(
+              'absolute z-20 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-background transition-[width,height,background-color]',
+              item.active
+                ? 'h-4 w-4 bg-primary ring-2 ring-primary/40'
+                : 'h-3 w-3 bg-cold hover:h-4 hover:w-4 hover:bg-primary'
+            )}
+            style={{ left: point.x, top: point.y }}
+          />
+        );
+      })}
     </div>
   );
 }

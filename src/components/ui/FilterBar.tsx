@@ -31,6 +31,7 @@ import { useIsNarrow } from './useIsNarrow';
 export function FilterBar({
   children,
   className,
+  columns,
   /**
    * Çekmece düğmesinde gösterilecek aktif filtre sayısı.
    *
@@ -102,7 +103,11 @@ export function FilterBar({
   const grid = (
     <div
       className={cn(
-        'flex flex-wrap items-stretch gap-2',
+        columns ? 'grid items-stretch gap-2' : 'flex flex-wrap items-stretch gap-2',
+        columns === 2 && 'sm:grid-cols-2',
+        columns === 3 && 'sm:grid-cols-2 xl:grid-cols-3',
+        columns === 4 && 'sm:grid-cols-2 xl:grid-cols-4',
+        narrow && '[&>*]:!w-full [&>*]:!min-w-0 [&>*]:!max-w-none',
         !narrow && 'mb-4',
         className
       )}

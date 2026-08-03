@@ -87,6 +87,12 @@ export const siteMap: NavGroup[] = [
         keywords: ['yükle', 'upload', 'ekle', 'paylaş'],
       },
       {
+        label: 'Haftanın Fotoğrafı',
+        to: '/haftanin-fotografi',
+        description: 'Jürinin haftalık kazananı ve seçki arşivi',
+        keywords: ['hafta', 'jüri', 'kazanan', 'seçki'],
+      },
+      {
         label: 'Astrofotoğrafçılar',
         to: '/kesfet',
         description: 'Topluluğun üreticileri',
@@ -214,16 +220,10 @@ export const siteMap: NavGroup[] = [
         keywords: ['araç', 'hesaplayıcı', 'tools'],
       },
       {
-        label: 'FOV Hesaplayıcı',
+        label: 'FOV ve Pixel Scale',
         to: '/araclar/fov',
-        description: 'Görüş alanı ve kadraj kontrolü',
-        keywords: ['fov', 'görüş alanı', 'kadraj'],
-      },
-      {
-        label: 'Pixel Scale Hesaplayıcı',
-        to: '/araclar/pixel-scale',
-        description: 'Örnekleme ve seeing uyumu',
-        keywords: ['pixel scale', 'örnekleme', 'sampling'],
+        description: 'Görüş alanı, kadraj ve örnekleme uyumu',
+        keywords: ['fov', 'görüş alanı', 'kadraj', 'pixel scale', 'örnekleme', 'sampling'],
       },
       {
         label: 'Işık Kirliliği Haritası',
@@ -304,13 +304,6 @@ export const siteMap: NavGroup[] = [
         to: '/saha',
         description: 'Karanlık gökyüzü noktaları ve haritası',
         keywords: ['kamp', 'astrocamping', 'nokta', 'saha', 'harita'],
-      },
-      {
-        label: 'Canlı SQM / All-Sky',
-        to: '/saha/istasyonlar',
-        description: 'Karanlık gökyüzü ölçüm ağı',
-        soon: true,
-        keywords: ['istasyon', 'allsky'],
       },
       {
         label: 'Rasathane ve Planetaryumlar',

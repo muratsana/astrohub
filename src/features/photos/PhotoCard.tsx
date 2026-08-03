@@ -46,8 +46,13 @@ export function PhotoCard({
        * yüzden yeni yüklenmiş bir kart boş bir rozetle kalabalıklaşmıyor.
        */
       flag={
-        photo.editorsPick || photo.rating.sayi > 0 ? (
+        photo.editorsPick || photo.rating.sayi > 0 || (photo.photoOfWeekWins?.length ?? 0) > 0 ? (
           <>
+            {(photo.photoOfWeekWins?.length ?? 0) > 0 && (
+              <Badge tone="success" className="bg-background/85">
+                Haftanın Fotoğrafı · {photo.photoOfWeekWins?.at(-1)}
+              </Badge>
+            )}
             {photo.editorsPick && (
               <Badge tone="primary" className="bg-background/85">
                 Editör

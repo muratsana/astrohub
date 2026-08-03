@@ -89,6 +89,7 @@ interface PhotoRow {
   comment_count: number | null;
   rating_sum?: number | null;
   rating_count?: number | null;
+  editors_pick?: boolean | null;
   display_path: string | null;
   thumb_path: string | null;
   width: number | null;
@@ -109,6 +110,11 @@ interface PhotoRow {
   } | null;
   photo_exposures: ExposureRow[] | null;
   photo_versions: VersionRow[] | null;
+  photo_of_week_rounds?: Array<{
+    iso_year: number;
+    iso_week: number;
+    status: string;
+  }> | null;
 }
 
 const PHOTO_TYPES: PhotoType[] = [
@@ -184,6 +190,7 @@ function mapVersions(rows: VersionRow[] | null): PhotoVersion[] | undefined {
        * sürgü yer tutucuya düşüp bunu söylüyor.
        */
       imageUrl: publicPhotoUrl(row.storage_path) ?? undefined,
+      storagePath: row.storage_path ?? undefined,
       palette: row.palette ?? undefined,
     }));
 }
@@ -324,6 +331,10 @@ export function mapPhotoRow(row: PhotoRow): AstroPhoto {
       toplam: row.rating_sum ?? 0,
       sayi: row.rating_count ?? 0,
     },
+    editorsPick: row.editors_pick ?? false,
+    photoOfWeekWins: (row.photo_of_week_rounds ?? [])
+      .filter((round) => ['sonuclandi', 'yayinda'].includes(round.status))
+      .map((round) => `${round.iso_year}-${String(round.iso_week).padStart(2, '0')}`),
     year: capturedAt ? new Date(capturedAt).getFullYear() : 0,
     city: cityFromLabel(row.location_label),
   };
@@ -333,7 +344,7 @@ const SELECT =
   'id, user_id, slug, title, description, photo_type, palette, captured_at, published_at, ' +
   'target_label, location_label, location_visibility, bortle, sqm, license, ' +
   'allow_download, watermark_required, ' +
-  'ai_declared, like_count, comment_count, rating_sum, rating_count, ' +
+  'ai_declared, like_count, comment_count, rating_sum, rating_count, editors_pick, ' +
   'display_path, thumb_path, setup_text, ' +
   'width, height, exif_camera, exif_lens, exif_iso, exif_focal_mm, ' +
   'exif_aperture_f, exif_exposure_seconds, exif_gps_present, ' +
@@ -347,6 +358,7 @@ const SELECT =
   'profiles!astro_photos_user_id_profiles_fkey(username, display_name), ' +
   'celestial_objects(name, catalog, constellation), ' +
   'photo_exposures(filter, frames, exposure_seconds, position), ' +
+  'photo_of_week_rounds!photo_of_week_rounds_winner_photo_id_fkey(iso_year, iso_week, status), ' +
   'photo_versions(id, label, kind, note, palette, published_at, position, storage_path)';
 
 /**

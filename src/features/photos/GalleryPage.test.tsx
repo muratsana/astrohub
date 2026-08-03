@@ -144,7 +144,9 @@ describe('GalleryPage (§7.2)', () => {
   it('aile filtresi sonuçları daraltır', () => {
     renderGallery();
     const before = photoLinks().length;
-    fireEvent.click(screen.getByRole('tab', { name: 'Güneş Sistemi' }));
+    fireEvent.change(screen.getByRole('combobox', { name: 'Tür' }), {
+      target: { value: 'gunes-sistemi' },
+    });
     const after = photoLinks().length;
     expect(after).toBeLessThan(before);
     expect(after).toBeGreaterThan(0);

@@ -67,6 +67,19 @@ describe('cityFromLabel', () => {
 });
 
 describe('mapPhotoRow', () => {
+  it('editör seçkisi ve haftalık kazanan rozetlerini taşır', () => {
+    const photo = mapPhotoRow(
+      row({
+        editors_pick: true,
+        photo_of_week_rounds: [
+          { iso_year: 2026, iso_week: 32, status: 'yayinda' },
+        ],
+      })
+    );
+    expect(photo.editorsPick).toBe(true);
+    expect(photo.photoOfWeekWins).toEqual(['2026-32']);
+  });
+
   it('katalog nesnesinden kanonik hedefi alır', () => {
     const photo = mapPhotoRow(row());
     expect(photo.target).toEqual({

@@ -203,6 +203,15 @@ export async function fetchTracks(): Promise<AdminTrack[]> {
   return data as unknown as AdminTrack[];
 }
 
+/** Tüm sıra tek RPC ile yazılır; yarım kalmış sıra oluşmaz. */
+export async function saveTrackOrder(trackIds: string[]): Promise<void> {
+  const supabase = await client();
+  const { error } = await supabase.rpc('reorder_radio_tracks', {
+    track_ids: trackIds,
+  });
+  if (error) throw new Error(error.message);
+}
+
 export interface NewTrack {
   title: string;
   artist: string;
@@ -477,7 +486,7 @@ export async function setTrackPublished(
   if (error) throw new Error(error.message);
 }
 
-export async function deleteTrack(id: string): Promise<void> {
+async function deleteTrack(id: string): Promise<void> {
   const supabase = await client();
   const { error } = await supabase.from('radio_tracks').delete().eq('id', id);
   if (error) throw new Error(error.message);

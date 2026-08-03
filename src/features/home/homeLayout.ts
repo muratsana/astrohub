@@ -82,6 +82,7 @@ export const DEFAULT_HOME_LAYOUT: HomeModuleView[] = [
   m('news', 4, 4),
   m('events', 5, 5, 'list'),
   m('listings', 6, 5),
+  m('weekly_photo', 7, 1),
 ];
 
 function m(

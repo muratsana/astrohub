@@ -2,6 +2,14 @@ import { useCallback, useEffect, useState } from 'react';
 import { getSupabase, isSupabaseConfigured } from '@/services/supabase/client';
 import { sanitizeText } from '@/lib/sanitize';
 import { safeUrl } from '@/lib/url';
+import {
+  ContentBlocksSchema,
+  blocksToParagraphs,
+  blocksToText,
+  parseContentBlocks,
+  textToBlocks,
+  type ContentBlock,
+} from '@/domain/content/blocks';
 
 /**
  * İÇERİK KAYITLARI — haber ve yazıların veritabanı katmanı.
@@ -37,6 +45,7 @@ export interface ContentEntry {
   title: string;
   summary: string;
   body: string[];
+  bodyBlocks: ContentBlock[];
   category: string;
   publishedAt: string;
   status: EntryStatus;
@@ -55,6 +64,7 @@ interface EntryRow {
   title: string;
   summary: string;
   body: string[] | null;
+  body_blocks?: unknown;
   category: string;
   published_at: string;
   status: EntryStatus;
@@ -70,13 +80,15 @@ interface EntryRow {
 }
 
 export function mapEntryRow(row: EntryRow): ContentEntry {
+  const body = row.body ?? [];
   return {
     id: row.id,
     kind: row.kind,
     slug: row.slug,
     title: row.title,
     summary: row.summary ?? '',
-    body: row.body ?? [],
+    body,
+    bodyBlocks: parseContentBlocks(row.body_blocks, body),
     category: row.category,
     publishedAt: row.published_at,
     status: row.status,
@@ -100,7 +112,7 @@ export function mapEntryRow(row: EntryRow): ContentEntry {
 }
 
 const SELECT =
-  'id, kind, slug, title, summary, body, category, published_at, status, ' +
+  'id, kind, slug, title, summary, body, body_blocks, category, published_at, status, ' +
   'author, duration, level, tint, image_url, image_credit, image_licence, ' +
   'source_name, source_url';
 
@@ -201,6 +213,7 @@ export interface EntryDraft {
   summary: string;
   /** Paragraflar tek metin olarak; boş satırla ayrılır. */
   bodyText: string;
+  bodyBlocks: ContentBlock[];
   category: string;
   publishedAt: string;
   status: EntryStatus;
@@ -220,6 +233,7 @@ export const EMPTY_DRAFT: EntryDraft = {
   title: '',
   summary: '',
   bodyText: '',
+  bodyBlocks: [],
   category: 'kesif',
   publishedAt: new Date().toISOString().slice(0, 10),
   status: 'taslak',
@@ -269,8 +283,14 @@ export function validateEntry(draft: EntryDraft): string | null {
   if (sanitizeText(draft.summary, { multiline: true }).length < 20) {
     return 'Özet en az 20 karakter olmalı — kartlarda bu metin görünüyor.';
   }
-  if (bodyParagraphs(draft.bodyText).length === 0) {
+  if (draft.bodyBlocks.length === 0 && bodyParagraphs(draft.bodyText).length === 0) {
     return 'Gövde boş. En az bir paragraf yazın.';
+  }
+  if (
+    draft.bodyBlocks.length > 0 &&
+    !ContentBlocksSchema.safeParse(draft.bodyBlocks).success
+  ) {
+    return 'İçerik bloklarında boş ya da geçersiz alan var.';
   }
   if (!/^\d{4}-\d{2}-\d{2}$/.test(draft.publishedAt)) {
     return 'Tarih YYYY-AA-GG biçiminde olmalı.';
@@ -294,12 +314,15 @@ export function validateEntry(draft: EntryDraft): string | null {
 }
 
 function toRow(draft: EntryDraft) {
+  const bodyBlocks =
+    draft.bodyBlocks.length > 0 ? draft.bodyBlocks : textToBlocks(draft.bodyText);
   return {
     kind: draft.kind,
     slug: draft.slug,
     title: sanitizeText(draft.title, { maxLength: 200 }),
     summary: sanitizeText(draft.summary, { multiline: true }),
-    body: bodyParagraphs(draft.bodyText),
+    body: blocksToParagraphs(bodyBlocks),
+    body_blocks: bodyBlocks,
     category: draft.category,
     published_at: draft.publishedAt,
     status: draft.status,
@@ -371,7 +394,8 @@ export function draftFromEntry(entry: ContentEntry): EntryDraft {
     slug: entry.slug,
     title: entry.title,
     summary: entry.summary,
-    bodyText: entry.body.join('\n\n'),
+    bodyText: blocksToText(entry.bodyBlocks),
+    bodyBlocks: entry.bodyBlocks,
     category: entry.category,
     publishedAt: entry.publishedAt,
     status: entry.status,

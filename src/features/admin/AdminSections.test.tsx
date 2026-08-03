@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -56,6 +56,8 @@ vi.mock('./useRoles', async () => {
 
 import { AdminPage } from './AdminPage';
 
+afterEach(() => vi.unstubAllGlobals());
+
 function renderPanel(path = '/admin') {
   /*
    * `retry: false`: katalog panelleri react-query kullanıyor ve
@@ -83,26 +85,16 @@ function panelBasliklari(): string[] {
 
 const BOLUMLER = [
   'Genel Bakış',
-  'Anasayfa',
-  'Galeri',
-  'Haberler',
-  'Yazılar',
-  'Forum',
-  'Etkinlikler',
-  'Araçlar',
-  'İlanlar',
-  'Saha',
   'Moderasyon',
+  'İçerik ve Kayıtlar',
+  'Anasayfa',
+  'Forum',
   'Kullanıcılar',
-  'Radyo',
-  'TV',
-  'Kurumsal',
-  'Medya Kütüphanesi',
+  'Yayın Merkezi',
   'Bildirim Merkezi',
-  'İçe Aktarma İşleri',
-  'Entegrasyonlar',
-  'Audit Log',
-  'Sistem ve Ayarlar',
+  'Site Yapısı',
+  'Katalog ve Araçlar',
+  'Denetim Kaydı',
 ];
 
 describe('admin sidebar', () => {
@@ -139,6 +131,30 @@ describe('admin sidebar', () => {
     );
   });
 
+  it('eski modül adresi yeni görev merkezine düşüyor', () => {
+    renderPanel('/admin/gallery');
+    expect(
+      screen.getByRole('button', { name: 'İçerik ve Kayıtlar' })
+    ).toHaveAttribute('aria-current', 'page');
+  });
+
+  it('dar ekranda uzun sidebar yerine tek bölüm seçici var', async () => {
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn(() => ({
+        matches: true,
+        media: '(max-width: 1023px)',
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      }))
+    );
+    renderPanel();
+    expect(await screen.findByLabelText('Yönetim bölümü')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('navigation', { name: 'Yönetim bölümleri' })
+    ).not.toBeInTheDocument();
+  });
+
   it('bilinmeyen bölüm varsayılana düşüyor, paneli boşaltmıyor', () => {
     renderPanel('/admin/olmayan-bir-sey');
     expect(screen.getByRole('button', { name: 'Genel Bakış' })).toHaveAttribute(
@@ -150,15 +166,21 @@ describe('admin sidebar', () => {
 
 describe('bölümler ne açıyor', () => {
   const beklenen: Record<string, string[]> = {
-    Galeri: ['Galeri fotoğrafları', 'Kullanıcı metinleri'],
-    Haberler: ['İçerik yönetimi'],
-    Yazılar: ['İçerik yönetimi'],
+    'İçerik ve Kayıtlar': [
+      'İçerik yönetimi',
+      'İçerik kayıtları',
+      'Kulüp dizini',
+      'Kullanıcı metinleri',
+    ],
     Kullanıcılar: ['Kullanıcılar', 'Denetim kaydı'],
     Forum: ['Forum kategorileri', 'Forum konuları', 'Kullanıcı metinleri'],
     Anasayfa: ['Ana sayfada öne çıkanlar'],
-    Saha: ['Saha kayıtları', 'Kullanıcı metinleri'],
-    Radyo: ['İstasyon', 'Programlar'],
-    TV: ['YouTube bağlantısı', 'Video arşivi'],
+    'Site Yapısı': ['Ana sayfa modülleri', 'Özellik anahtarları'],
+    'Katalog ve Araçlar': [
+      'Katalog senkronizasyonu',
+      'Ekipman veritabanı',
+      'Teknik veri içe aktarma',
+    ],
   };
 
   for (const [bolum, paneller] of Object.entries(beklenen)) {
@@ -181,7 +203,7 @@ describe('bölümler ne açıyor', () => {
   it('Katalog bölümü QueryClient ile çiziliyor', () => {
     renderPanel();
     expect(() =>
-      fireEvent.click(screen.getByRole('button', { name: 'Araçlar' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Katalog ve Araçlar' }))
     ).not.toThrow();
   });
 });
@@ -193,7 +215,7 @@ describe('bölüm ayrımı', () => {
    */
   it('forum konuları İçerik sekmesinde görünmüyor', () => {
     renderPanel();
-    fireEvent.click(screen.getByRole('button', { name: 'Haberler' }));
+    fireEvent.click(screen.getByRole('button', { name: 'İçerik ve Kayıtlar' }));
     const icSekmeler = screen
       .queryAllByRole('tab')
       .map((t) => t.textContent?.trim());
@@ -203,7 +225,7 @@ describe('bölüm ayrımı', () => {
 
   it('forum gönderileri İçerik sekmesinde görünmüyor', () => {
     renderPanel();
-    fireEvent.click(screen.getByRole('button', { name: 'Haberler' }));
+    fireEvent.click(screen.getByRole('button', { name: 'İçerik ve Kayıtlar' }));
     const icSekmeler = screen
       .queryAllByRole('tab')
       .map((t) => t.textContent?.trim());

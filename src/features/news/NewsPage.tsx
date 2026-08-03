@@ -1,16 +1,13 @@
 import { useMemo } from 'react';
 import { Container } from '@/components/ui/Container';
 import {
-  FilterBar,
   FilterCell,
   filterControlClass,
 } from '@/components/ui/FilterBar';
 import { Input, Select } from '@/components/ui/Input';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
-import { SegmentedControl } from '@/components/ui/SegmentedControl';
-import { ResultCount } from '@/components/ui/ToolBar';
-import { ViewToggle } from '@/components/ui/ViewToggle';
+import { ModuleToolbar } from '@/components/ui/ModuleToolbar';
 import {
   EditorialList,
   type EditorialItem,
@@ -110,7 +107,24 @@ export function NewsPage() {
           yoktu. Kategori sekmesi az sayıda kategoriyi iyi gösteriyor ama
           "perseid" arayan kullanıcı sekmelerde gezinmek zorunda kalıyordu.
         */}
-        <FilterBar activeCount={ex.chips.length}>
+        <ModuleToolbar
+          activeFilters={{
+            chips: ex.chips,
+            onRemove: ex.removeChip,
+            onClearAll: ex.clearAll,
+          }}
+          result={{ current: ex.total, total: all.length, noun: 'haber' }}
+          sort={{
+            id: 'news-sort',
+            value: ex.query.sort,
+            onChange: ex.setSort,
+            options: newsSpec.sorts.map((s) => ({
+              value: s.value,
+              label: s.label,
+            })),
+          }}
+          view={{ mode: view, onChange: setView }}
+        >
           <FilterCell
             label="Ara"
             htmlFor="news-search"
@@ -128,41 +142,24 @@ export function NewsPage() {
           </FilterCell>
           <FilterCell
             label="Kategori"
+            htmlFor="news-category"
             active={category !== 'hepsi'}
-            className="min-w-[30rem] flex-[3_1_30rem]"
+            className="min-w-[12rem]"
           >
-            <SegmentedControl
-              value={category}
-              options={categories.map((c) => ({
-                value: c,
-                label: c === 'hepsi' ? 'Tümü' : newsCategoryLabels[c],
-                selectedClassName: 'border-primary bg-primary/10 text-primary',
-              }))}
-              onChange={setCategory}
-              ariaLabel="Haber kategorileri"
-            />
-          </FilterCell>
-          <FilterCell label="Sırala" htmlFor="news-sort" className="max-w-[14rem]">
             <Select
-              id="news-sort"
-              value={ex.query.sort}
-              onChange={(e) => ex.setSort(e.target.value)}
+              id="news-category"
+              value={category}
+              onChange={(event) => setCategory(event.target.value)}
               className={filterControlClass}
             >
-              {newsSpec.sorts.map((s) => (
-                <option key={s.value} value={s.value}>
-                  {s.label}
+              {categories.map((item) => (
+                <option key={item} value={item}>
+                  {item === 'hepsi' ? 'Tüm kategoriler' : newsCategoryLabels[item]}
                 </option>
               ))}
             </Select>
           </FilterCell>
-          <div className="flex min-h-14 items-center rounded-card border border-border-strong bg-surface-1 px-3 shadow-overlay">
-            <ViewToggle mode={view} onChange={setView} />
-          </div>
-          <div className="flex min-h-14 items-center rounded-card border border-border-strong bg-surface-1 px-4 shadow-overlay">
-            <ResultCount current={ex.total} total={all.length} noun="haber" />
-          </div>
-        </FilterBar>
+        </ModuleToolbar>
 
         <EditorialList
           view={view}

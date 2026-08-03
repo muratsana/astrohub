@@ -38,6 +38,7 @@ const MOVED: [string, string][] = [
   ['/harita/gozlem-noktalari', '/saha'],
   ['/harita/isik-kirliligi', '/araclar/isik-kirliligi'],
   ['/gozlem-noktasi/:slug', '/saha/:slug'],
+  ['/araclar/pixel-scale', '/araclar/fov'],
 ];
 
 describe('taşınan adresler', () => {

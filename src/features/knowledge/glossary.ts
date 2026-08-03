@@ -64,7 +64,7 @@ export const categoryTool: Partial<
   Record<GlossaryCategory, { label: string; to: string }>
 > = {
   optik: { label: 'FOV Hesaplayıcı', to: '/araclar/fov' },
-  kamera: { label: 'Pixel Scale Hesaplayıcı', to: '/araclar/pixel-scale' },
+  kamera: { label: 'FOV ve Pixel Scale', to: '/araclar/fov' },
   kosullar: { label: 'Işık Kirliliği Haritası', to: '/araclar/isik-kirliligi' },
   gokyuzu: { label: 'Bu Gece Gökyüzünde', to: '/bu-gece' },
 };

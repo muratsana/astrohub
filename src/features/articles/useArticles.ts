@@ -22,6 +22,7 @@ export function entryToArticle(e: ContentEntry): Article {
     publishedAt: e.publishedAt,
     author: e.author ?? 'Astrohub',
     body: e.body,
+    bodyBlocks: e.bodyBlocks,
     tint: e.tint ?? '150,185,235',
     image: e.image ?? undefined,
   };

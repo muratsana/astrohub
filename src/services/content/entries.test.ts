@@ -147,6 +147,7 @@ describe('mergeWithSeed', () => {
     title: slug,
     summary: '',
     body: [],
+    bodyBlocks: [],
     category: 'kesif',
     publishedAt: '2026-07-28',
     status: 'yayinda',

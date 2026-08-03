@@ -69,24 +69,17 @@ describe('döşeme kaynakları', () => {
     );
   });
 
-  it('kaynak kimlikleri benzersiz — hata sayacı buna göre sıfırlanıyor', () => {
-    const ids = OVERLAY_SOURCES.map((s) => s.id);
-    expect(new Set(ids).size).toBe(ids.length);
-  });
-
   it('katman verisinin çözünürlüğünün ötesine döşeme istemez', () => {
     for (const source of OVERLAY_SOURCES) {
       expect(source.maxZoom).toBe(8);
     }
   });
 
-  it('önce Bortle atlası denenir, gece ışıkları son çare', () => {
-    // Sıra önemli: atlas ölçekli veri, Black Marble ham parlaklık.
-    // Ham parlaklık öne geçerse kullanıcı Bortle sanıp yanlış okur.
+  it('yalnızca doğrulanmış NASA gece ışıkları kaynağını kullanır', () => {
+    expect(OVERLAY_SOURCES).toHaveLength(1);
     expect(OVERLAY_SOURCES[0].url({ x: 4, y: 5, z: 3 })).toBe(
-      'https://djlorenz.github.io/astronomy/lp2024/overlay/tiles/tile_3_4_5.png'
+      'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_CityLights_2012/default/default/GoogleMapsCompatible_Level8/3/5/4.jpg'
     );
-    expect(OVERLAY_SOURCES.at(-1)!.id).toContain('gibs');
   });
 
   it('her kaynak neye bakıldığını yazar', () => {
@@ -95,7 +88,7 @@ describe('döşeme kaynakları', () => {
     for (const source of OVERLAY_SOURCES) {
       expect(source.credit.length).toBeGreaterThan(10);
     }
-    expect(OVERLAY_SOURCES.at(-1)!.credit).toContain('ham parlaklık');
+    expect(OVERLAY_SOURCES[0].credit).toContain('ham parlaklık');
   });
 
   it('GIBS adresi WMTS satır/sütun sırasını korur', () => {

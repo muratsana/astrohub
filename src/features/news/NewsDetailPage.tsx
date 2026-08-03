@@ -10,6 +10,8 @@ import { newsCategoryLabels } from './data';
 import { useNewsItems } from './useNews';
 import { commonsWidthUrl } from '@/lib/commons';
 import { ExternalLink } from '@/components/ExternalLink';
+import { BlockRenderer } from '@/components/content/BlockRenderer';
+import { paragraphsToBlocks } from '@/domain/content/blocks';
 
 /** Haber detayı — okuma genişliği sınırlı, kaynak künyesi görünür. */
 export function NewsDetailPage() {
@@ -94,11 +96,10 @@ export function NewsDetailPage() {
             <StarField seed={item.slug} tint={item.tint} density={1.2} />
           </PlateFrame>
 
-          <div className="mt-8 space-y-5 text-body-sm leading-[1.85] text-muted-foreground">
-            {item.body.map((paragraph, i) => (
-              <p key={i}>{paragraph}</p>
-            ))}
-          </div>
+          <BlockRenderer
+            className="mt-8"
+            blocks={item.bodyBlocks ?? paragraphsToBlocks(item.body)}
+          />
 
           <footer className="mt-10 border-t border-border pt-5">
             <p className="label mb-1">Kaynak</p>

@@ -130,21 +130,14 @@ export interface OverlaySource {
 }
 
 /**
- * IŞIK KİRLİLİĞİ KATMANI — sırayla denenen kaynaklar.
+ * IŞIK KİRLİLİĞİ KATMANI.
  *
- * ÖNCE David J. Lorenz'in dünya atlası: VIIRS ölçümlerinden türetilmiş,
- * Bortle ölçeğine boyanmış, yıllık yayımlanan açık veri. Aradığımız şey
- * tam olarak bu — lightpollutionmap.info dahil pek çok site aynı kaynağı
- * kullanır. Hangi yılın yayında olduğunu bu ortamdan doğrulayamadım (dış
- * ağ kapalı), bu yüzden yıllar yeniden eskiye doğru deneniyor.
- *
- * SONDA NASA GIBS'in "Black Marble" gece ışıkları görüntüsü var ve orada
- * olmasının sebebi şu: katmansız bir harita işe yaramaz. Atlas
- * adreslerinin hiçbiri yanıt vermezse kullanıcıya boş bir yol haritası
- * bırakmak yerine, gece ışıklarının kendisi gösteriliyor — Bortle
- * sınıfına boyanmış değil, ham parlaklık; bu yüzden altındaki kaynak
- * yazısı da değişiyor. Farklı bir veriye bakıldığını saklamak, ölçekli
- * bir atlasa bakıldığı izlenimi verirdi.
+ * Eski Lorenz atlas adresleri 404, tarihli Black Marble adresleri 400
+ * dönüyordu. Kullanıcıya çalışan bir kaynak seçiyormuş izlenimi veren
+ * dokuz maddelik yedek listesi bu nedenle kaldırıldı. NASA GIBS'in
+ * yayımladığı VIIRS City Lights 2012 WMTS döşemesi 2026-08-03'te gerçek
+ * bir döşeme isteğiyle doğrulandı (HTTP 200). Bu görüntü Bortle sınıfı
+ * değil, ham gece parlaklığıdır; arayüz bunu açıkça söyler.
  *
  * `maxZoom` 8: iki veri de kabaca 750 m çözünürlüklü, daha ileri
  * yakınlaştırma yeni bilgi taşımaz. Üstünde döşeme büyütülerek çizilir.
@@ -172,35 +165,10 @@ function gibs(
 }
 
 export const OVERLAY_SOURCES: OverlaySource[] = [
-  ...['lp2024', 'lp2023', 'lp2022', 'lp2021', 'lp2020'].map((year) => {
-    const y = year.replace('lp', '');
-    return {
-      id: year,
-      label: `Işık kirliliği atlası ${y}`,
-      credit: `Işık kirliliği atlası: D. J. Lorenz, VIIRS ${y}`,
-      legend: 'atlas' as const,
-      maxZoom: 8,
-      url: (tile: Tile) =>
-        `https://djlorenz.github.io/astronomy/${year}/overlay/tiles/` +
-        `tile_${tile.z}_${tile.x}_${tile.y}.png`,
-    };
-  }),
-  gibs(
-    'gibs:black-marble',
-    'VIIRS_Black_Marble',
-    '2016-01-01',
-    'NASA gece ışıkları (2016)'
-  ),
   gibs(
     'gibs:city-lights',
     'VIIRS_CityLights_2012',
     'default',
-    'NASA şehir ışıkları (2012)'
-  ),
-  gibs(
-    'gibs:earth-at-night',
-    'VIIRS_Black_Marble',
-    'default',
-    'NASA gece ışıkları (varsayılan tarih)'
+    'NASA Earth at Night (2012)'
   ),
 ];

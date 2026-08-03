@@ -150,6 +150,15 @@ export const appRoutes = [
         ),
       },
       {
+        path: 'haftanin-fotografi',
+        element: route(
+          named(
+            () => import('@/features/photos/PhotoOfWeekPage'),
+            'PhotoOfWeekPage'
+          )
+        ),
+      },
+      {
         path: 'fotograf/:slug',
         element: route(
           named(
@@ -363,8 +372,11 @@ export const appRoutes = [
         ),
       },
       { path: 'araclar/fov', element: fovPage() },
-      // Pixel scale hesabı FOV hesaplayıcının içinde sunulur.
-      { path: 'araclar/pixel-scale', element: fovPage() },
+      // Tek kanonik sayfa: pixel scale zaten FOV hesaplayıcının içinde.
+      {
+        path: 'araclar/pixel-scale',
+        element: <RedirectTo to="/araclar/fov" />,
+      },
       {
         path: 'araclar/isik-kirliligi',
         element: route(

@@ -20,6 +20,9 @@ import {
   type EntryKind,
 } from '@/services/content/entries';
 import { cn } from '@/lib/cn';
+import { BlockRenderer } from '@/components/content/BlockRenderer';
+import { blocksToText, type ContentBlock } from '@/domain/content/blocks';
+import { importContentFile } from './contentImport';
 
 /**
  * İÇERİK YÖNETİMİ — haber ve yazıları panelden yazma.
@@ -89,6 +92,8 @@ function KindEditor({
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [importing, setImporting] = useState(false);
+  const [importWarnings, setImportWarnings] = useState<string[]>([]);
 
   const categories =
     kind === 'haber' ? newsCategoryLabels : articleCategoryLabels;
@@ -97,12 +102,14 @@ function KindEditor({
     setEditing(null);
     setDraft({ ...EMPTY_DRAFT, kind, category: Object.keys(categories)[0] });
     setMessage(null);
+    setImportWarnings([]);
   }
 
   function startEdit(entry: ContentEntry) {
     setEditing(entry);
     setDraft(draftFromEntry(entry));
     setMessage(null);
+    setImportWarnings([]);
   }
 
   async function save() {
@@ -364,21 +371,68 @@ function KindEditor({
               />
             </Field>
 
-            <Field
-              label="Gövde"
-              htmlFor="c-body"
-              hint="Paragrafları boş satırla ayırın. HTML etiketleri temizlenir."
-            >
-              <textarea
-                id="c-body"
-                value={draft.bodyText}
-                rows={12}
-                onChange={(e) =>
-                  setDraft((d) => (d ? { ...d, bodyText: e.target.value } : d))
-                }
-                className="w-full resize-y rounded-card border border-border bg-surface-2 px-2.5 py-2 text-meta leading-relaxed text-foreground outline-none focus:border-primary"
-              />
-            </Field>
+            <div className="grid gap-2.5 xl:grid-cols-2">
+              <div>
+                <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <p className="label">İçerik blokları</p>
+                    <p className="text-meta text-faint">Başlık, paragraf, alıntı ve listeleri sırayla düzenleyin.</p>
+                  </div>
+                  <label className="cursor-pointer rounded-card border border-border px-2 py-1 text-meta text-cold hover:border-primary hover:text-primary">
+                    {importing ? 'İçe aktarılıyor…' : 'Word / PDF içe aktar'}
+                    <input
+                      type="file"
+                      accept=".docx,.pdf,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                      disabled={!canWrite || importing}
+                      className="sr-only"
+                      onChange={async (event) => {
+                        const file = event.target.files?.[0];
+                        event.target.value = '';
+                        if (!file) return;
+                        setImporting(true);
+                        setImportWarnings([]);
+                        try {
+                          const result = await importContentFile(file);
+                          if (result.blocks.length === 0) throw new Error('Belgede aktarılabilir metin bulunamadı.');
+                          setDraft((current) => current ? {
+                            ...current,
+                            bodyBlocks: result.blocks,
+                            bodyText: blocksToText(result.blocks),
+                          } : current);
+                          setImportWarnings(result.warnings);
+                        } catch (error) {
+                          setMessage(error instanceof Error ? error.message : 'Belge içe aktarılamadı.');
+                        } finally {
+                          setImporting(false);
+                        }
+                      }}
+                    />
+                  </label>
+                </div>
+                <ContentBlockEditor
+                  blocks={draft.bodyBlocks}
+                  onChange={(blocks) => setDraft((current) => current ? {
+                    ...current,
+                    bodyBlocks: blocks,
+                    bodyText: blocksToText(blocks),
+                  } : current)}
+                />
+                {importWarnings.length > 0 && (
+                  <ul className="mt-2 rounded-card border border-warning/40 bg-warning/5 px-3 py-2 text-meta leading-relaxed text-warning">
+                    {importWarnings.map((warning, index) => <li key={`${warning}-${index}`}>• {warning}</li>)}
+                  </ul>
+                )}
+              </div>
+
+              <div className="rounded-card border border-border bg-background p-3">
+                <p className="label mb-3">Canlı site önizlemesi</p>
+                {draft.bodyBlocks.length > 0 ? (
+                  <BlockRenderer blocks={draft.bodyBlocks} />
+                ) : (
+                  <p className="py-8 text-center text-meta text-faint">Önizleme için bir blok ekleyin.</p>
+                )}
+              </div>
+            </div>
 
             <div className="grid gap-2.5 sm:grid-cols-3">
               <Field label="Yayın tarihi" htmlFor="c-date">
@@ -503,6 +557,117 @@ function KindEditor({
         {message && (
           <p className="mt-2 text-meta text-muted-foreground">{message}</p>
         )}
+      </div>
+    </div>
+  );
+}
+
+const BLOCK_LABELS: Record<ContentBlock['type'], string> = {
+  paragraph: 'Paragraf',
+  heading: 'Başlık',
+  quote: 'Alıntı',
+  list: 'Liste',
+  callout: 'Bilgi kutusu',
+};
+
+function blankBlock(type: ContentBlock['type']): ContentBlock {
+  if (type === 'heading') return { type, level: 2, text: '' };
+  if (type === 'list') return { type, style: 'bullet', items: [''] };
+  if (type === 'callout') return { type, tone: 'info', text: '' };
+  return { type, text: '' };
+}
+
+function blockText(block: ContentBlock): string {
+  return block.type === 'list' ? block.items.join('\n') : block.text;
+}
+
+function withBlockText(block: ContentBlock, value: string): ContentBlock {
+  if (block.type === 'list') {
+    return { ...block, items: value.split('\n') };
+  }
+  return { ...block, text: value };
+}
+
+function ContentBlockEditor({
+  blocks,
+  onChange,
+}: {
+  blocks: ContentBlock[];
+  onChange: (blocks: ContentBlock[]) => void;
+}) {
+  function replace(index: number, block: ContentBlock) {
+    onChange(blocks.map((current, currentIndex) => currentIndex === index ? block : current));
+  }
+
+  function move(index: number, direction: -1 | 1) {
+    const target = index + direction;
+    if (target < 0 || target >= blocks.length) return;
+    const next = [...blocks];
+    [next[index], next[target]] = [next[target], next[index]];
+    onChange(next);
+  }
+
+  return (
+    <div className="space-y-2">
+      {blocks.map((block, index) => (
+        <div key={index} className="rounded-card border border-border bg-surface-2 p-2">
+          <div className="mb-1.5 flex flex-wrap items-center gap-1.5">
+            <Select
+              aria-label={`${index + 1}. blok türü`}
+              value={block.type}
+              onChange={(event) => replace(index, blankBlock(event.target.value as ContentBlock['type']))}
+              className="h-8 w-auto py-0 text-meta"
+            >
+              {Object.entries(BLOCK_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+            </Select>
+            {block.type === 'heading' && (
+              <Select
+                aria-label={`${index + 1}. başlık seviyesi`}
+                value={String(block.level)}
+                onChange={(event) => replace(index, { ...block, level: Number(event.target.value) as 2 | 3 })}
+                className="h-8 w-auto py-0 text-meta"
+              >
+                <option value="2">H2</option>
+                <option value="3">H3</option>
+              </Select>
+            )}
+            {block.type === 'list' && (
+              <Select
+                aria-label={`${index + 1}. liste biçimi`}
+                value={block.style}
+                onChange={(event) => replace(index, { ...block, style: event.target.value as 'bullet' | 'ordered' })}
+                className="h-8 w-auto py-0 text-meta"
+              >
+                <option value="bullet">Madde</option>
+                <option value="ordered">Numaralı</option>
+              </Select>
+            )}
+            <span className="ml-auto text-meta text-faint">{index + 1}</span>
+            <button type="button" aria-label="Bloğu yukarı taşı" disabled={index === 0} onClick={() => move(index, -1)} className="px-1 text-meta text-muted-foreground disabled:opacity-30">↑</button>
+            <button type="button" aria-label="Bloğu aşağı taşı" disabled={index === blocks.length - 1} onClick={() => move(index, 1)} className="px-1 text-meta text-muted-foreground disabled:opacity-30">↓</button>
+            <button type="button" aria-label="Bloğu sil" onClick={() => onChange(blocks.filter((_, currentIndex) => currentIndex !== index))} className="px-1 text-meta text-danger">Sil</button>
+          </div>
+          <textarea
+            aria-label={`${index + 1}. blok metni`}
+            value={blockText(block)}
+            rows={block.type === 'list' ? 4 : 3}
+            placeholder={block.type === 'list' ? 'Her satıra bir madde' : 'Metin'}
+            onChange={(event) => replace(index, withBlockText(block, event.target.value))}
+            className="w-full resize-y rounded-card border border-border bg-background px-2.5 py-2 text-meta leading-relaxed text-foreground outline-none focus:border-primary"
+          />
+        </div>
+      ))}
+      <div className="flex flex-wrap gap-1.5">
+        {(Object.keys(BLOCK_LABELS) as ContentBlock['type'][]).map((type) => (
+          <button
+            key={type}
+            type="button"
+            onClick={() => onChange([...blocks, blankBlock(type)])}
+            className="rounded-card border border-border px-2 py-1 text-meta text-muted-foreground hover:border-primary hover:text-primary"
+          >
+            + {BLOCK_LABELS[type]}
+          </button>
+        ))}
       </div>
     </div>
   );
