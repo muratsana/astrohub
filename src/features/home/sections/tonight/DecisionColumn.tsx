@@ -79,13 +79,29 @@ export function DecisionColumn({
 
   useEffect(() => {
     if (tab !== 'places') return;
-    let alive = true;
+    const controller = new AbortController();
     setBestPlaces(null);
-    void import('./bestPlaces').then(({ bestPlacesForNight }) => {
-      if (alive) setBestPlaces(bestPlacesForNight(bestPlacesDate, 10));
-    });
+    const weatherAt = new Date(bestPlacesDate.getTime() + 25 * 60 * 60_000);
+    void import('./bestPlaces').then(
+      ({ bestPlacesForNight, bestPlacesForNightWithWeather }) => {
+        bestPlacesForNightWithWeather(
+          bestPlacesDate,
+          weatherAt,
+          10,
+          controller.signal
+        )
+          .then((places) => {
+            if (!controller.signal.aborted) setBestPlaces(places);
+          })
+          .catch(() => {
+            if (!controller.signal.aborted) {
+              setBestPlaces(bestPlacesForNight(bestPlacesDate, 10));
+            }
+          });
+      }
+    );
     return () => {
-      alive = false;
+      controller.abort();
     };
   }, [tab, bestPlacesDate]);
   /*
@@ -230,6 +246,10 @@ function BestPlacesBlock({
             <span className="num text-foreground">{best.solarSystemScore}</span>
           </span>
         </div>
+        <p className="mt-2 text-meta text-muted-foreground">
+          Öne çıkan: {best.bestProfile === 'dso' ? 'Derin Uzay' : 'Güneş Sistemi'} ·{' '}
+          {best.weatherBased ? 'saatlik tahminle' : 'yer profiliyle'}
+        </p>
         {onUseBestPlace && (
           <Button
             type="button"

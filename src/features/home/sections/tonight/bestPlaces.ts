@@ -1,5 +1,7 @@
 import { moonPhase } from '@/domain/astronomy/ephemeris';
+import { nightScore } from '@/domain/astronomy/nightScore';
 import { nightTimeline } from '@/domain/astronomy/nightTimeline';
+import { fetchOpenMeteo, type SkyConditions } from '@/features/weather/openMeteo';
 
 const TURKEY_TIME_ZONE = 'Europe/Istanbul';
 
@@ -16,6 +18,9 @@ export interface BestPlace {
   site: CandidateSite;
   dsoScore: number;
   solarSystemScore: number;
+  bestScore: number;
+  bestProfile: 'dso' | 'solar';
+  weatherBased: boolean;
   moonlessMinutes: number;
   darkMinutes: number;
 }
@@ -78,7 +83,79 @@ function solarQuality(altitudeMeters: number, horizon: number): number {
   return altitude * 0.7 + horizon * 0.3;
 }
 
-export function bestPlacesForNight(date: Date, limit = 10): BestPlace[] {
+function heuristicScores({
+  bortle,
+  altitude,
+  horizon,
+  moonlessMinutes,
+  darkMinutes,
+  moonIllumination,
+}: {
+  bortle: number;
+  altitude: number;
+  horizon: number;
+  moonlessMinutes: number;
+  darkMinutes: number;
+  moonIllumination: number;
+}) {
+  const usableDark = clamp((moonlessMinutes / 360) * 100);
+  const moonPenalty = clamp((1 - moonIllumination) * 100);
+  const dsoScore = Math.round(
+    siteQuality(bortle, altitude, horizon) * 0.35 +
+      usableDark * 0.45 +
+      moonPenalty * 0.2
+  );
+  const solarSystemScore = Math.round(
+    solarQuality(altitude, horizon) * 0.75 +
+      clamp((darkMinutes / 240) * 100) * 0.25
+  );
+
+  return {
+    dsoScore: clamp(dsoScore),
+    solarSystemScore: clamp(solarSystemScore),
+  };
+}
+
+function weatherScores({
+  site,
+  weather,
+  moonIllumination,
+  moonlessMinutes,
+  darkMinutes,
+}: {
+  site: CandidateSite;
+  weather: SkyConditions;
+  moonIllumination: number;
+  moonlessMinutes: number;
+  darkMinutes: number;
+}) {
+  const inputs = {
+    cloudCover: weather.cloudCover,
+    seeingIndex: weather.seeing?.index ?? null,
+    humidity: weather.humidity,
+    windSpeed: weather.windSpeed,
+    windGust: weather.windGust,
+    transparencyIndex: weather.transparency?.index ?? null,
+    temperature: weather.temperature,
+    dewPoint: weather.dewPoint,
+    darkMinutes,
+    moonlessMinutes,
+    moonIllumination,
+    altitude: site.altitude,
+    bortle: site.bortle,
+  };
+
+  return {
+    dsoScore: nightScore(inputs, 'derinUzay').total,
+    solarSystemScore: nightScore(inputs, 'gunesSistemi').total,
+  };
+}
+
+export function bestPlacesForNight(
+  date: Date,
+  limit = 10,
+  weatherBySite = new Map<string, SkyConditions | null>()
+): BestPlace[] {
   const moon = moonPhase(date);
 
   return CANDIDATES.map(
@@ -113,22 +190,36 @@ export function bestPlacesForNight(date: Date, limit = 10): BestPlace[] {
           )
         : 0;
       const moonlessMinutes = timeline.moonlessMinutes;
-      const usableDark = clamp((moonlessMinutes / 360) * 100);
-      const moonPenalty = clamp((1 - moon.illumination) * 100);
-      const dsoScore = Math.round(
-        siteQuality(bortle, altitude, horizon) * 0.35 +
-          usableDark * 0.45 +
-          moonPenalty * 0.2
-      );
-      const solarSystemScore = Math.round(
-        solarQuality(altitude, horizon) * 0.75 +
-          clamp((darkMinutes / 240) * 100) * 0.25
-      );
+      const weather = weatherBySite.get(name) ?? null;
+      const scores = weather
+        ? weatherScores({
+            site,
+            weather,
+            moonIllumination: moon.illumination,
+            moonlessMinutes,
+            darkMinutes,
+          })
+        : heuristicScores({
+            bortle,
+            altitude,
+            horizon,
+            moonlessMinutes,
+            darkMinutes,
+            moonIllumination: moon.illumination,
+          });
+      const dsoScore = clamp(scores.dsoScore);
+      const solarSystemScore = clamp(scores.solarSystemScore);
+      const bestProfile: BestPlace['bestProfile'] =
+        dsoScore >= solarSystemScore ? 'dso' : 'solar';
+      const bestScore = Math.max(dsoScore, solarSystemScore);
 
       return {
         site,
-        dsoScore: clamp(dsoScore),
-        solarSystemScore: clamp(solarSystemScore),
+        dsoScore,
+        solarSystemScore,
+        bestScore,
+        bestProfile,
+        weatherBased: Boolean(weather),
         moonlessMinutes,
         darkMinutes,
       };
@@ -136,9 +227,31 @@ export function bestPlacesForNight(date: Date, limit = 10): BestPlace[] {
   )
     .sort(
       (a, b) =>
+        b.bestScore - a.bestScore ||
         b.dsoScore - a.dsoScore ||
         b.solarSystemScore - a.solarSystemScore ||
         a.site.bortle - b.site.bortle
     )
     .slice(0, limit);
+}
+
+export async function bestPlacesForNightWithWeather(
+  date: Date,
+  weatherAt: Date,
+  limit = 10,
+  signal?: AbortSignal
+): Promise<BestPlace[]> {
+  const entries = await Promise.all(
+    CANDIDATES.map(async ([name, , , latitude, longitude]) => {
+      const result = await fetchOpenMeteo(
+        latitude,
+        longitude,
+        signal,
+        weatherAt
+      ).catch(() => ({ conditions: null }));
+      return [name, result.conditions] as const;
+    })
+  );
+
+  return bestPlacesForNight(date, limit, new Map(entries));
 }

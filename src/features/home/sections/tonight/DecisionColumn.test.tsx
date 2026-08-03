@@ -1,9 +1,22 @@
-import { describe, expect, it } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { DecisionColumn } from './DecisionColumn';
 import { nightScore, type NightScore } from '@/domain/astronomy/nightScore';
 import type { SkyState } from '@/features/weather/useSkyConditions';
 import type { SkyConditions } from '@/features/weather/openMeteo';
+
+vi.mock('./bestPlaces', async () => {
+  const actual = await vi.importActual<typeof import('./bestPlaces')>(
+    './bestPlaces'
+  );
+  return {
+    ...actual,
+    bestPlacesForNightWithWeather: vi.fn(
+      async (date: Date, _weatherAt: Date, limit = 10) =>
+        actual.bestPlacesForNight(date, limit)
+    ),
+  };
+});
 
 /**
  * KARAR KOLONUNUN DOLU HÂLİ.
@@ -132,12 +145,12 @@ describe('DecisionColumn · skor dolu', () => {
       />
     );
 
-    screen.getByRole('tab', { name: 'En İyi Yerler' }).click();
+    fireEvent.click(screen.getByRole('tab', { name: 'En İyi Yerler' }));
     const choices = await screen.findAllByRole('button', {
       name: /gözlem yerini kullan/i,
     });
 
-    choices[1].click();
+    fireEvent.click(choices[1]);
     expect(selected).toBeTruthy();
   });
 
