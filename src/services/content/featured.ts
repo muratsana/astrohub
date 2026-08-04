@@ -19,7 +19,7 @@ import { getSupabase, isSupabaseConfigured } from '@/services/supabase/client';
  * varsayılan sırasında kalır — ana sayfa hiçbir koşulda boşalmaz.
  */
 
-export type FeaturedKind = 'haber' | 'yazi';
+export type FeaturedKind = 'haber' | 'yazi' | 'etkinlik';
 
 export interface FeaturedRow {
   slug: string;

@@ -18,7 +18,7 @@
 
 create table if not exists public.featured_content (
   id uuid primary key default gen_random_uuid(),
-  kind text not null check (kind in ('haber', 'yazi')),
+  kind text not null check (kind in ('haber', 'yazi', 'etkinlik')),
   slug text not null,
   -- Küçük olan önce. Aralık bırakmak yerine yeniden numaralandırıyoruz;
   -- liste dört-beş öğelik, karmaşık bir sıra yönetimi gereksiz.

@@ -3,6 +3,7 @@ import { Panel } from '@/components/ui/Panel';
 import { Button } from '@/components/ui/Button';
 import { sortedNews } from '@/features/news/data';
 import { articles } from '@/features/articles/data';
+import { events } from '@/features/events/data';
 import {
   saveFeatured,
   useFeatured,
@@ -11,7 +12,7 @@ import {
 import { cn } from '@/lib/cn';
 
 /**
- * ÖNE ÇIKAN İÇERİK KONTROLÜ — ana sayfa şeritlerinin sırası.
+ * ÖNE ÇIKAN İÇERİK KONTROLÜ.
  *
  * Ana sayfa haber ve yazı şeritlerinde dörder satır gösteriyor. Hangi
  * dördü sorusunun cevabı "en yenisi" idi; artık editör seçiyor.
@@ -38,7 +39,7 @@ interface Entry {
 export function FeaturedControl({ canWrite }: { canWrite: boolean }) {
   return (
     <Panel
-      title="Ana sayfada öne çıkanlar"
+      title="Öne çıkan içerikler"
       status={
         <span className="text-meta text-faint">
           ilk {HOME_ROWS} satır görünür
@@ -46,13 +47,12 @@ export function FeaturedControl({ canWrite }: { canWrite: boolean }) {
       }
     >
       <p className="mb-3 text-body-sm leading-relaxed text-muted-foreground">
-        Ana sayfadaki haber ve yazı şeritleri dörder satır gösterir. Buradan
-        seçilenler verilen sırayla en üste gelir; seçim yapılmazsa şerit en
-        yeniden eskiye dizilir. Dörtten fazla seçmek zararsız — fazlası
-        yedekte bekler.
+        Haber ve yazı şeritleri ilk {HOME_ROWS} kaydı, etkinlik sayfası ilk
+        seçili etkinliği gösterir. Seçim yapılmazsa modül kendi varsayılan
+        sırasına döner. Fazladan seçim yedekte bekler.
       </p>
 
-      <div className="grid gap-3 lg:grid-cols-2">
+      <div className="grid gap-3 lg:grid-cols-3">
         <KindEditor
           kind="haber"
           label="Haberler"
@@ -64,6 +64,12 @@ export function FeaturedControl({ canWrite }: { canWrite: boolean }) {
           label="Yazılar"
           canWrite={canWrite}
           entries={articles.map((a) => ({ slug: a.slug, title: a.title }))}
+        />
+        <KindEditor
+          kind="etkinlik"
+          label="Etkinlikler"
+          canWrite={canWrite}
+          entries={events.map((e) => ({ slug: e.slug, title: e.title }))}
         />
       </div>
     </Panel>

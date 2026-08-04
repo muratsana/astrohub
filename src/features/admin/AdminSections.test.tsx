@@ -174,7 +174,7 @@ describe('bölümler ne açıyor', () => {
     ],
     Kullanıcılar: ['Kullanıcılar', 'Denetim kaydı'],
     Forum: ['Forum kategorileri', 'Forum konuları', 'Kullanıcı metinleri'],
-    Anasayfa: ['Ana sayfada öne çıkanlar'],
+    Anasayfa: ['Öne çıkan içerikler'],
     'Site Yapısı': ['Ana sayfa modülleri', 'Özellik anahtarları'],
     'Katalog ve Araçlar': [
       'Katalog senkronizasyonu',

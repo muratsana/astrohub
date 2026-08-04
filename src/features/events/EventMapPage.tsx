@@ -16,6 +16,7 @@ import { useLocationContext } from '@/features/location/LocationContext';
 import { LocationPicker } from '@/features/location/LocationPicker';
 import { sortByProximity, formatDistance } from '@/domain/geography/distance';
 import { useEventCatalog } from '@/services/content/events';
+import { applyFeatured, useFeatured } from '@/services/content/featured';
 import { eventTypeLabels } from './types';
 import type { AstroEvent } from './types';
 import { cn } from '@/lib/cn';
@@ -111,6 +112,7 @@ export function EventMapPage() {
   }>({ key: 'distance', direction: 'asc' });
   const [center, setCenter] = useState<LatLng>(TURKEY_CENTER);
   const [zoom, setZoom] = useState(TURKEY_ZOOM);
+  const featuredEvents = useFeatured('etkinlik');
 
   useEffect(() => {
     if (!followDevice) return;
@@ -136,7 +138,16 @@ export function EventMapPage() {
     });
   }, [located]);
 
-  const featured = located[0];
+  const featuredItem =
+    applyFeatured(
+      catalog.items,
+      featuredEvents.slugs,
+      (event) => event.slug,
+      1
+    )[0] ?? null;
+  const featuredDistance = featuredItem
+    ? located.find(({ item }) => item.slug === featuredItem.slug)?.distanceKm
+    : undefined;
   const selected =
     located.find(({ item }) => item.slug === active) ?? located[0];
   const mapItems = showAll ? located : selected ? [selected] : [];
@@ -222,35 +233,35 @@ export function EventMapPage() {
             { label: 'Etkinlikler' },
           ]}
           title="Etkinlikler"
-          description="Etkinlikler konumlarına göre dağıtıldı ve size olan kuş uçuşu mesafeye göre sıralandı. Referans noktası üst çubuktaki konumunuz."
           meta={location.label}
         />
 
-        {featured && (
+        {featuredItem && (
           <Link
-            to={`/etkinlik/${featured.item.slug}`}
+            to={`/etkinlik/${featuredItem.slug}`}
             className="group mb-4 grid overflow-hidden rounded-card border border-primary/50 bg-surface-1 transition-colors hover:border-primary md:h-[525px] md:grid-cols-[minmax(0,58%)_minmax(0,1fr)]"
           >
             <PhotoPlaceholder
-              gradient={featured.item.gradient}
-              alt={`${featured.item.title} etkinlik görseli`}
+              gradient={featuredItem.gradient}
+              alt={`${featuredItem.title} etkinlik görseli`}
               className="min-h-[17.5rem] md:h-full md:min-h-0"
               rounded="rounded-none"
             />
             <div className="flex min-h-[17.5rem] flex-col justify-center p-4 md:min-h-0 md:p-5">
               <div className="min-w-0 flex-1">
-                <Badge tone="primary">Otomatik öne çıkan</Badge>
+                <Badge tone="primary">Öne çıkan</Badge>
                 <h2 className="mt-3 type-section text-foreground transition-colors group-hover:text-white">
-                  {featured.item.title}
+                  {featuredItem.title}
                 </h2>
                 <p className="mt-2.5 line-clamp-5 text-body-sm leading-relaxed text-muted-foreground">
-                  Konumunuza göre en yakın etkinlik. {featured.item.city} ·{' '}
-                  {formatEventDate(featured.item.startsAt)}
+                  {featuredItem.city} · {formatEventDate(featuredItem.startsAt)}
                 </p>
               </div>
-              <span className="tabular mt-auto w-fit rounded-card border border-border bg-background px-2.5 py-1.5 text-body-sm text-cold">
-                {formatDistance(featured.distanceKm)}
-              </span>
+              {featuredDistance !== undefined && (
+                <span className="tabular mt-auto w-fit rounded-card border border-border bg-background px-2.5 py-1.5 text-body-sm text-cold">
+                  {formatDistance(featuredDistance)}
+                </span>
+              )}
             </div>
           </Link>
         )}
