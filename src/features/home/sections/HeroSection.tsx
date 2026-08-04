@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { Container } from '@/components/ui/Container';
-import { Badge } from '@/components/ui/Badge';
 import { HeroBackdrop } from '@/components/media/HeroBackdrop';
 import { ChevronDownIcon } from '@/components/ui/icons';
 import { usePreviewEditor } from '@/features/preview-editor/PreviewEditorContext';
@@ -58,7 +57,7 @@ export function HeroSection() {
     ki bileşen tek bir tip görsün; iki ayrı şekli render'da ayırmak, her
     alan okumasına bir koşul eklemek demekti.
   */
-  const slides = useMemo<HeroSlideView[]>(
+  const baseSlides = useMemo<HeroSlideView[]>(
     () =>
       enabled
         ? editorSlides.map((s) => ({
@@ -70,6 +69,31 @@ export function HeroSection() {
         : yayindaki,
     [enabled, editorSlides, yayindaki]
   );
+  const weeklyPick = useMemo(
+    () => selectWeeklyPhoto(photoCatalog.items, photoWeekRounds.rounds),
+    [photoCatalog.items, photoWeekRounds.rounds]
+  );
+  const slides = useMemo<HeroSlideView[]>(() => {
+    if (enabled || !weeklyPick) return baseSlides;
+    const { photo, label } = weeklyPick;
+    return [
+      ...baseSlides,
+      {
+        id: `haftanin-fotografi-${photo.slug}`,
+        badge: label,
+        title: `Haftanın Fotoğrafı: ${photo.title}`,
+        subtitle: `${photo.target.name} · @${photo.user.username}`,
+        ctaLabel: 'Fotoğrafı aç',
+        ctaTo: `/fotograf/${photo.slug}`,
+        scene: 'nebula',
+        tint: '96,165,250',
+        image: photo.image,
+        focalX: 50,
+        focalY: 50,
+        textAlign: 'left',
+      },
+    ];
+  }, [baseSlides, enabled, weeklyPick]);
   const [index, setIndex] = useState(0);
   /** Fare/odak kaynaklı geçici duraklama. */
   const [hovered, setHovered] = useState(false);
@@ -87,10 +111,6 @@ export function HeroSection() {
   const touchX = useRef<number | null>(null);
 
   const count = slides.length;
-  const weeklyPick = useMemo(
-    () => selectWeeklyPhoto(photoCatalog.items, photoWeekRounds.rounds),
-    [photoCatalog.items, photoWeekRounds.rounds]
-  );
   const go = useCallback(
     (next: number) => setIndex(((next % count) + count) % count),
     [count]
@@ -140,8 +160,7 @@ export function HeroSection() {
   */
   const first = slides[0];
   const firstPreload =
-    first?.image &&
-    (commonsWidthUrl(first.image.url, 960) ?? first.image.url);
+    first?.image && (commonsWidthUrl(first.image.url, 960) ?? first.image.url);
 
   return (
     <section
@@ -187,7 +206,9 @@ export function HeroSection() {
           rel="preload"
           as="image"
           href={firstPreload}
-          imageSrcSet={commonsSrcSet(first.image!.url, HERO_WIDTHS) ?? undefined}
+          imageSrcSet={
+            commonsSrcSet(first.image!.url, HERO_WIDTHS) ?? undefined
+          }
           imageSizes={HERO_SIZES}
           fetchPriority="high"
         />
@@ -350,7 +371,11 @@ export function HeroSection() {
                 </p>
               </Editable>
 
-              <Editable slide={slide} field="ctaLabel" className="mt-5 block w-fit">
+              <Editable
+                slide={slide}
+                field="ctaLabel"
+                className="mt-5 block w-fit"
+              >
                 <Link
                   to={slide.ctaTo}
                   // Editör açıkken bağlantı gezinmez; tıklama alanı seçer.
@@ -363,33 +388,6 @@ export function HeroSection() {
               </Editable>
             </div>
           </div>
-
-          {weeklyPick && (
-            <Link
-              to={`/fotograf/${weeklyPick.photo.slug}`}
-              className="absolute right-6 top-1/2 hidden w-72 -translate-y-1/2 overflow-hidden rounded-card border border-border-strong bg-background/80 backdrop-blur-sm transition-colors hover:border-primary xl:block"
-            >
-              <div
-                className="h-28 bg-surface-2"
-                style={{
-                  backgroundImage: weeklyPick.photo.image
-                    ? `linear-gradient(0deg, color-mix(in_srgb, var(--color-background) 22%, transparent), transparent), url(${weeklyPick.photo.image.url})`
-                    : weeklyPick.photo.gradient,
-                  backgroundPosition: 'center',
-                  backgroundSize: 'cover',
-                }}
-              />
-              <div className="p-3">
-                <Badge tone="success">{weeklyPick.label}</Badge>
-                <p className="mt-2 line-clamp-2 text-caption font-medium text-foreground">
-                  Haftanın Fotoğrafı: {weeklyPick.photo.title}
-                </p>
-                <p className="mt-1 truncate text-meta text-muted-foreground">
-                  {weeklyPick.photo.target.name} · @{weeklyPick.photo.user.username}
-                </p>
-              </div>
-            </Link>
-          )}
 
           {/* Oklar */}
           <NavArrow side="left" onClick={() => go(index - 1)} />
@@ -438,14 +436,14 @@ export function HeroSection() {
               aria-label="Slayt seçimi"
               className="flex items-center gap-1.5"
             >
-            {slides.map((s, i) => (
-              <button
-                key={s.id}
-                role="tab"
-                aria-selected={i === index}
-                aria-label={`${i + 1}. slayt: ${s.badge}`}
-                onClick={() => go(i)}
-                /*
+              {slides.map((s, i) => (
+                <button
+                  key={s.id}
+                  role="tab"
+                  aria-selected={i === index}
+                  aria-label={`${i + 1}. slayt: ${s.badge}`}
+                  onClick={() => go(i)}
+                  /*
                   DOKUNMA HEDEFİ 44×44 (WCAG 2.5.8 / QA GUI-10).
                   Gösterge ÇİZGİSİ ince kalıyor — tasarım kararı o — ama
                   parmakla basılan alan değil. Önceki hâli ~24×19px'ti ve
@@ -453,18 +451,18 @@ export function HeroSection() {
                   değil `flex` + sabit ölçüyle veriliyor; çizgi ortada
                   duruyor, kutu görünmez.
                 */
-                className="group flex h-11 w-11 items-center justify-center"
-              >
-                <span
-                  className={cn(
-                    'block h-[3px] transition-all',
-                    i === index
-                      ? 'w-8 bg-primary'
-                      : 'w-4 bg-border-strong group-hover:bg-muted-foreground'
-                  )}
-                />
-              </button>
-            ))}
+                  className="group flex h-11 w-11 items-center justify-center"
+                >
+                  <span
+                    className={cn(
+                      'block h-[3px] transition-all',
+                      i === index
+                        ? 'w-8 bg-primary'
+                        : 'w-4 bg-border-strong group-hover:bg-muted-foreground'
+                    )}
+                  />
+                </button>
+              ))}
             </div>
           </div>
 
@@ -479,7 +477,6 @@ export function HeroSection() {
               Düzenleme modu
             </span>
           )}
-
         </div>
       </Container>
     </section>
@@ -622,7 +619,11 @@ function Editable({
   const { enabled, select, selection } = usePreviewEditor();
 
   if (!enabled) {
-    return className ? <div className={className}>{children}</div> : <>{children}</>;
+    return className ? (
+      <div className={className}>{children}</div>
+    ) : (
+      <>{children}</>
+    );
   }
 
   const active = selection?.slideId === slide.id && selection.field === field;

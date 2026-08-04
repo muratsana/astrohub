@@ -66,7 +66,7 @@ describe('HomePage · hero', () => {
   it('her modül için bir gösterge sunar', () => {
     renderHome();
     const tabs = within(carousel()).getAllByRole('tab');
-    expect(tabs).toHaveLength(defaultHeroSlides.length);
+    expect(tabs).toHaveLength(defaultHeroSlides.length + 1);
   });
 
   it('ileri okuyla sonraki slayda geçer', () => {
@@ -87,9 +87,11 @@ describe('HomePage · hero', () => {
     fireEvent.click(
       within(carousel()).getByRole('button', { name: /önceki slayt/i })
     );
-    const last = defaultHeroSlides[defaultHeroSlides.length - 1];
     expect(
-      screen.getByRole('heading', { level: 1, name: heroName(last.title) })
+      screen.getByRole('heading', {
+        level: 1,
+        name: /HAFTANIN FOTOĞRAFI:/i,
+      })
     ).toBeInTheDocument();
   });
 

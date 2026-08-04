@@ -4,6 +4,7 @@ import { MemoryRouter } from 'react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { HeroSection } from './HeroSection';
 import { PreviewEditorProvider } from '@/features/preview-editor/PreviewEditorContext';
+import { defaultHeroSlides } from '@/features/home/hero/slides';
 
 /**
  * HERO CAROUSEL DAVRANIŞI (Faz 3.3 / §6.3).
@@ -19,21 +20,22 @@ import { PreviewEditorProvider } from '@/features/preview-editor/PreviewEditorCo
 
 /* Slaytlar `PreviewEditorContext`ten geliyor; sağlayıcısız render
    hemen fırlatıyor. Üretimde sağlayıcı uygulama kökünde. */
-const wrap = () =>
-  {
-    const queryClient = new QueryClient({
-      defaultOptions: { queries: { retry: false } },
-    });
-    return render(
-      <QueryClientProvider client={queryClient}>
-        <MemoryRouter>
-          <PreviewEditorProvider>
-            <HeroSection />
-          </PreviewEditorProvider>
-        </MemoryRouter>
-      </QueryClientProvider>
-    );
-  };
+const wrap = () => {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter>
+        <PreviewEditorProvider>
+          <HeroSection />
+        </PreviewEditorProvider>
+      </MemoryRouter>
+    </QueryClientProvider>
+  );
+};
+
+const TOTAL = defaultHeroSlides.length + 1;
 
 /** Belirli bir slaydın göründüğünü sayaçtan okur ("01 / 05"). */
 function slaytNo(container: HTMLElement): string {
@@ -65,10 +67,10 @@ describe('dokunma kaydırması', () => {
   it('sola kaydırınca sonraki slayta geçiyor', () => {
     const { container } = wrap();
     const bolge = container.querySelector('section')!;
-    expect(slaytNo(container)).toBe('01/05');
+    expect(slaytNo(container)).toBe(`01/${String(TOTAL).padStart(2, '0')}`);
 
     kaydir(bolge, 300, 200);
-    expect(slaytNo(container)).toBe('02/05');
+    expect(slaytNo(container)).toBe(`02/${String(TOTAL).padStart(2, '0')}`);
   });
 
   it('sağa kaydırınca önceki slayta geçiyor ve başa sarıyor', () => {
@@ -78,7 +80,9 @@ describe('dokunma kaydırması', () => {
     /* İlk slayttan geriye gitmek son slayta sarmalı; sarmasaydı
        kullanıcı ilk slaytta kilitli kalırdı. */
     kaydir(bolge, 200, 300);
-    expect(slaytNo(container)).toBe('05/05');
+    expect(slaytNo(container)).toBe(
+      `${String(TOTAL).padStart(2, '0')}/${String(TOTAL).padStart(2, '0')}`
+    );
   });
 
   /*
@@ -91,7 +95,7 @@ describe('dokunma kaydırması', () => {
     const bolge = container.querySelector('section')!;
 
     kaydir(bolge, 300, 270);
-    expect(slaytNo(container)).toBe('01/05');
+    expect(slaytNo(container)).toBe(`01/${String(TOTAL).padStart(2, '0')}`);
   });
 });
 
@@ -99,17 +103,15 @@ describe('otomatik geçişi durdurma', () => {
   it('düğmeye basmadan otomatik geçiyor', () => {
     const { container } = wrap();
     act(() => void vi.advanceTimersByTime(7000));
-    expect(slaytNo(container)).toBe('02/05');
+    expect(slaytNo(container)).toBe(`02/${String(TOTAL).padStart(2, '0')}`);
   });
 
   it('durdurma düğmesi otomatik geçişi kesiyor', () => {
     const { container } = wrap();
-    fireEvent.click(
-      screen.getByRole('button', { name: /geçişini durdur/i })
-    );
+    fireEvent.click(screen.getByRole('button', { name: /geçişini durdur/i }));
 
     act(() => void vi.advanceTimersByTime(21000));
-    expect(slaytNo(container)).toBe('01/05');
+    expect(slaytNo(container)).toBe(`01/${String(TOTAL).padStart(2, '0')}`);
   });
 
   it('durdurulduğunda düğme durumu duyuruluyor ve geri açılabiliyor', () => {
@@ -133,13 +135,11 @@ describe('otomatik geçişi durdurma', () => {
     const bolge = container.querySelector('section')!;
 
     fireEvent.mouseEnter(bolge);
-    fireEvent.click(
-      screen.getByRole('button', { name: /geçişini durdur/i })
-    );
+    fireEvent.click(screen.getByRole('button', { name: /geçişini durdur/i }));
     fireEvent.mouseLeave(bolge);
 
     act(() => void vi.advanceTimersByTime(21000));
-    expect(slaytNo(container)).toBe('01/05');
+    expect(slaytNo(container)).toBe(`01/${String(TOTAL).padStart(2, '0')}`);
   });
 
   it('durdurma düğmesi slayt sekmelerinin dışında', () => {
@@ -147,9 +147,11 @@ describe('otomatik geçişi durdurma', () => {
     const sekmeler = screen.queryAllByRole('tab');
     expect(sekmeler).toHaveLength(0);
     wrap();
-    expect(screen.getAllByRole('tab')).toHaveLength(5);
+    expect(screen.getAllByRole('tab')).toHaveLength(TOTAL);
     expect(
-      screen.getByRole('button', { name: /geçişini durdur/i }).closest('[role="tablist"]')
+      screen
+        .getByRole('button', { name: /geçişini durdur/i })
+        .closest('[role="tablist"]')
     ).toBeNull();
   });
 });
@@ -162,6 +164,6 @@ describe('hareket azaltma tercihi', () => {
     );
     const { container } = wrap();
     act(() => void vi.advanceTimersByTime(21000));
-    expect(slaytNo(container)).toBe('01/05');
+    expect(slaytNo(container)).toBe(`01/${String(TOTAL).padStart(2, '0')}`);
   });
 });
