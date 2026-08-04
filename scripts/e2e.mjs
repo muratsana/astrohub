@@ -123,7 +123,8 @@ async function waitForText(needle, label = needle) {
   try {
     await page.waitForFunction(
       // `includesTr` ile aynı kural: Türkçe duyarlı küçük harfe indirip ara.
-      (t) => (document.body.innerText || '').toLocaleLowerCase('tr-TR').includes(t),
+      (t) =>
+        (document.body.innerText || '').toLocaleLowerCase('tr-TR').includes(t),
       needle,
       { timeout: 10_000 }
     );
@@ -210,28 +211,31 @@ await scenario('FOV hesaplayıcı girdi değişince sonucu günceller', async ()
   assert(after.includes('″/px'), 'piksel ölçeği sonucu görünmüyor');
 });
 
-await scenario('mozaik planlayıcı örtüşme artınca panel sayısını artırır', async () => {
-  await goto('/araclar/mosaic');
+await scenario(
+  'mozaik planlayıcı örtüşme artınca panel sayısını artırır',
+  async () => {
+    await goto('/araclar/mosaic');
 
-  // 250mm ön ayarında kadraj 5°'yi aşıyor ve çoğu hedef tek kareye sığıyor;
-  // panel bölünmesini görmek için uzun odak seçiliyor.
-  await page.fill('#mosaic-fl', '1600');
-  await page.fill('#mosaic-tw', '300');
-  await page.fill('#mosaic-th', '200');
-  await page.fill('#mosaic-overlap', '0');
-  await page.waitForTimeout(300);
-  const low = await page.$eval('[aria-label*="mozaik düzeni"]', (el) =>
-    el.getAttribute('aria-label')
-  );
+    // 250mm ön ayarında kadraj 5°'yi aşıyor ve çoğu hedef tek kareye sığıyor;
+    // panel bölünmesini görmek için uzun odak seçiliyor.
+    await page.fill('#mosaic-fl', '1600');
+    await page.fill('#mosaic-tw', '300');
+    await page.fill('#mosaic-th', '200');
+    await page.fill('#mosaic-overlap', '0');
+    await page.waitForTimeout(300);
+    const low = await page.$eval('[aria-label*="mozaik düzeni"]', (el) =>
+      el.getAttribute('aria-label')
+    );
 
-  await page.fill('#mosaic-overlap', '40');
-  await page.waitForTimeout(300);
-  const high = await page.$eval('[aria-label*="mozaik düzeni"]', (el) =>
-    el.getAttribute('aria-label')
-  );
+    await page.fill('#mosaic-overlap', '40');
+    await page.waitForTimeout(300);
+    const high = await page.$eval('[aria-label*="mozaik düzeni"]', (el) =>
+      el.getAttribute('aria-label')
+    );
 
-  assert(low !== high, `örtüşme panel düzenini değiştirmedi (${low})`);
-});
+    assert(low !== high, `örtüşme panel düzenini değiştirmedi (${low})`);
+  }
+);
 
 await scenario('setup uyumluluk yanlış backfocus’ta hata verir', async () => {
   await goto('/araclar/setup-uyumluluk');
@@ -246,82 +250,86 @@ await scenario('setup uyumluluk yanlış backfocus’ta hata verir', async () =>
   );
 });
 
-await scenario('karanlık takvimi ay değiştirince yeniden hesaplar', async () => {
-  await goto('/araclar/takvim');
+await scenario(
+  'karanlık takvimi ay değiştirince yeniden hesaplar',
+  async () => {
+    await goto('/araclar/takvim');
 
-  /*
-   * Gövde metninin tamamını karşılaştırmak kırılgan: sayfanın üst kısmı
-   * (durum çubuğu, başlık) ay değişince aynı kalıyor ve fark ilk 400
-   * karakterde görünmüyordu. Ay etiketi doğrudan okunuyor.
-   */
-  const monthLabel = () =>
-    page.$eval('button[aria-label="Önceki ay"] + span', (el) =>
-      (el.textContent ?? '').trim()
-    );
+    /*
+     * Gövde metninin tamamını karşılaştırmak kırılgan: sayfanın üst kısmı
+     * (durum çubuğu, başlık) ay değişince aynı kalıyor ve fark ilk 400
+     * karakterde görünmüyordu. Ay etiketi doğrudan okunuyor.
+     */
+    const monthLabel = () =>
+      page.$eval('button[aria-label="Önceki ay"] + span', (el) =>
+        (el.textContent ?? '').trim()
+      );
 
-  const before = await monthLabel();
-  const grid = await page.evaluate(() => document.body.innerText.length);
+    const before = await monthLabel();
+    const grid = await page.evaluate(() => document.body.innerText.length);
 
-  await page.click('button[aria-label="Sonraki ay"]');
-  await page.waitForTimeout(800);
+    await page.click('button[aria-label="Sonraki ay"]');
+    await page.waitForTimeout(800);
 
-  const after = await monthLabel();
-  assert(before !== after, `ay etiketi değişmedi (${before})`);
-  assert(grid > 0, 'takvim boş');
+    const after = await monthLabel();
+    assert(before !== after, `ay etiketi değişmedi (${before})`);
+    assert(grid > 0, 'takvim boş');
 
-  // Geri gelince başlangıç ayına dönmeli — durum tutarlı ilerlemeli.
-  await page.click('button[aria-label="Önceki ay"]');
-  await page.waitForTimeout(800);
-  assert((await monthLabel()) === before, 'geri gidince aynı aya dönmedi');
-});
+    // Geri gelince başlangıç ayına dönmeli — durum tutarlı ilerlemeli.
+    await page.click('button[aria-label="Önceki ay"]');
+    await page.waitForTimeout(800);
+    assert((await monthLabel()) === before, 'geri gidince aynı aya dönmedi');
+  }
+);
 
 /* ══════════════════ Işık kirliliği haritası ══════════════════ */
 
-await scenario('ışık kirliliği haritası kontrolleri adresi değiştirir', async () => {
-  await goto('/araclar/isik-kirliligi');
+await scenario(
+  'ışık kirliliği haritası ağsız önizlemede doğru açıklanır',
+  async () => {
+    await goto('/araclar/isik-kirliligi');
 
-  const text = await page.evaluate(() => document.body.innerText);
-  assert(includesTr(text, 'ışık kirliliği haritası'), 'harita bölümü yok');
+    const text = await page.evaluate(() => document.body.innerText);
+    assert(includesTr(text, 'ışık kirliliği haritası'), 'harita bölümü yok');
 
-  /*
-   * Tek dosya önizleme dış istek yapamaz, dolayısıyla çerçeve hiç
-   * yüklenmiyor ve yerine dürüst bir açıklama çıkıyor. Testin koruduğu
-   * şey tam olarak bu: kırık bir çerçeve ya da sessiz boşluk değil,
-   * sebebini söyleyen bir metin.
-   */
-  assert(
-    includesTr(text, 'bu derlemede harita yüklenmiyor'),
-    'ağsız derlemede açıklama gösterilmedi'
-  );
-
-  /* Kontroller çerçeveden bağımsız: harita yüklenmese de sürgüler
-     çalışmalı, çünkü ürettikleri adres "yeni sekmede aç" bağlantısını da
-     besliyor. */
-  const linkHref = () =>
-    page.$eval('a[href*="lightpollutionmap.app"]', (el) =>
-      el.getAttribute('href')
+    /*
+     * Tek dosya önizleme dış istek yapamaz, dolayısıyla çerçeve hiç
+     * yüklenmiyor ve yerine dürüst bir açıklama çıkıyor. Testin koruduğu
+     * şey tam olarak bu: kırık bir çerçeve ya da sessiz boşluk değil,
+     * sebebini söyleyen bir metin.
+     */
+    assert(
+      includesTr(text, 'bu derlemede harita yüklenmiyor'),
+      'ağsız derlemede açıklama gösterilmedi'
     );
 
-  const before = await linkHref();
-  assert(before.includes('zoom=6'), `başlangıç yakınlaştırması yanlış: ${before}`);
+    /*
+     * Eski görünür yakınlaştırma sürgüsü tasarımdan kaldırıldı. Tek dosya
+     * önizlemede harita döşemeleri de yüklenmediği için canlı harita
+     * kontrolleri çizilmiyor; burada korunması gereken davranış, kullanıcının
+     * bozuk/boş bir harita yerine sağlayıcı bağlantısı ve dürüst açıklama
+     * görmesi.
+     */
+    const linkHref = () =>
+      page.$eval('a[href*="lightpollutionmap.app"]', (el) =>
+        el.getAttribute('href')
+      );
 
-  await page.$eval('#lp-zoom', (el) => {
-    const setter = Object.getOwnPropertyDescriptor(
-      window.HTMLInputElement.prototype,
-      'value'
-    ).set;
-    setter.call(el, '9');
-    el.dispatchEvent(new Event('input', { bubbles: true }));
-  });
-  await page.waitForTimeout(300);
-
-  const after = await linkHref();
-  assert(after.includes('zoom=9'), `sürgü adresi güncellemedi: ${after}`);
-  assert(
-    after.startsWith('https://lightpollutionmap.app/'),
-    `adres sağlayıcı dışına çıktı: ${after}`
-  );
-});
+    const before = await linkHref();
+    assert(
+      before.includes('zoom=6'),
+      `başlangıç yakınlaştırması yanlış: ${before}`
+    );
+    assert(
+      before.startsWith('https://lightpollutionmap.app/'),
+      `adres sağlayıcı dışına çıktı: ${before}`
+    );
+    assert(
+      (await page.$('#lp-zoom')) === null,
+      'kaldırılan yakınlaştırma sürgüsü hâlâ görünüyor'
+    );
+  }
+);
 
 /* ══════════════════════ Forum ══════════════════════ */
 
@@ -334,87 +342,99 @@ await scenario('forum konusundan detaya gidilir', async () => {
   assert((await heading()).length > 5, 'konu başlığı gelmedi');
 });
 
-await scenario('yeni konu formu HTML etiketlerini önizlemede temizler', async () => {
-  await goto('/forum/yeni');
-  await page.fill('#thread-title', '<b>Guide hatası</b> meridyen sonrası');
-  await page.waitForTimeout(300);
+await scenario(
+  'yeni konu formu HTML etiketlerini önizlemede temizler',
+  async () => {
+    await goto('/forum/yeni');
+    await page.fill('#thread-title', '<b>Guide hatası</b> meridyen sonrası');
+    await page.waitForTimeout(300);
 
-  const text = await page.evaluate(() => document.body.innerText);
-  assert(!text.includes('<b>'), 'etiket önizlemede temizlenmedi');
-  assert(text.includes('Guide hatası'), 'önizleme metni görünmüyor');
-});
+    const text = await page.evaluate(() => document.body.innerText);
+    assert(!text.includes('<b>'), 'etiket önizlemede temizlenmedi');
+    assert(text.includes('Guide hatası'), 'önizleme metni görünmüyor');
+  }
+);
 
 /* ══════════════════════ İlan ver ══════════════════════ */
 
-await scenario('ilan formu eksikleri yazarken bildirir, tamamlanınca açılır', async () => {
-  /*
-   * Bu akışın kilitlenmesi gerekiyor çünkü servis katmanı (createListing)
-   * arayüzünden aylarca önce yazılmıştı ve "hazır" sanılıyordu. Test
-   * doğrulamanın yayımlamadan ÖNCE görünür olmasını koruyor: kullanıcı
-   * düğmeye basıp hata almak yerine neyin eksik olduğunu yazarken görmeli.
-   */
-  await goto('/ilan/yeni');
+await scenario(
+  'ilan formu eksikleri yazarken bildirir, tamamlanınca açılır',
+  async () => {
+    /*
+     * Bu akışın kilitlenmesi gerekiyor çünkü servis katmanı (createListing)
+     * arayüzünden aylarca önce yazılmıştı ve "hazır" sanılıyordu. Test
+     * doğrulamanın yayımlamadan ÖNCE görünür olmasını koruyor: kullanıcı
+     * düğmeye basıp hata almak yerine neyin eksik olduğunu yazarken görmeli.
+     */
+    await goto('/ilan/yeni');
 
-  let text = await page.evaluate(() => document.body.innerText);
-  assert(includesTr(text, 'ilan ver'), 'ilan formu açılmadı');
-  assert(
-    includesTr(text, 'başlık en az'),
-    `boş formda başlık uyarısı yok: ${text.slice(0, 200)}`
-  );
+    let text = await page.evaluate(() => document.body.innerText);
+    assert(includesTr(text, 'ilan ver'), 'ilan formu açılmadı');
+    assert(
+      includesTr(text, 'başlık en az'),
+      `boş formda başlık uyarısı yok: ${text.slice(0, 200)}`
+    );
 
-  await page.fill('#l-title', 'Sky-Watcher Esprit 100ED apokromatik refraktör');
-  await page.fill('#l-price', '48500');
-  /*
-   * ŞEHİR ARTIK SERBEST METİN DEĞİL (§4.1). Alan `provinces` listesinden
-   * beslenen bir `select`; liste asenkron geldiği için seçenek DOM'a
-   * girene kadar bekleniyor. Önizleme derlemesinde veritabanı yok,
-   * dolayısıyla burada görünen tohum yedeği — ölçülen şey listenin
-   * dolduğu ve seçimin form durumuna geçtiği.
-   */
-  await page.waitForFunction(
-    () =>
-      Array.from(document.querySelectorAll('#l-city option')).some(
-        (o) => o.value === 'Ankara'
-      ),
-    null,
-    { timeout: 5000 }
-  );
-  await page.selectOption('#l-city', 'Ankara');
-  await page.fill(
-    '#l-desc',
-    '2023 yılında alındı, yaklaşık 40 gece kullanıldı. Optikte çizik yok, kutusu ve faturası duruyor.'
-  );
-  await page.waitForTimeout(300);
+    await page.fill(
+      '#l-title',
+      'Sky-Watcher Esprit 100ED apokromatik refraktör'
+    );
+    await page.fill('#l-price', '48500');
+    /*
+     * ŞEHİR ARTIK SERBEST METİN DEĞİL (§4.1). Alan `provinces` listesinden
+     * beslenen bir `select`; liste asenkron geldiği için seçenek DOM'a
+     * girene kadar bekleniyor. Önizleme derlemesinde veritabanı yok,
+     * dolayısıyla burada görünen tohum yedeği — ölçülen şey listenin
+     * dolduğu ve seçimin form durumuna geçtiği.
+     */
+    await page.waitForFunction(
+      () =>
+        Array.from(document.querySelectorAll('#l-city option')).some(
+          (o) => o.value === 'Ankara'
+        ),
+      null,
+      { timeout: 5000 }
+    );
+    await page.selectOption('#l-city', 'Ankara');
+    await page.fill(
+      '#l-desc',
+      '2023 yılında alındı, yaklaşık 40 gece kullanıldı. Optikte çizik yok, kutusu ve faturası duruyor.'
+    );
+    await page.waitForTimeout(300);
 
-  text = await page.evaluate(() => document.body.innerText);
-  assert(
-    includesTr(text, 'yayımlanmaya hazır'),
-    'form tamamlanınca hazır durumu görünmedi'
-  );
+    text = await page.evaluate(() => document.body.innerText);
+    assert(
+      includesTr(text, 'yayımlanmaya hazır'),
+      'form tamamlanınca hazır durumu görünmedi'
+    );
 
-  // Önizleme yayımlanacak künyenin aynısını göstermeli.
-  assert(text.includes('48.500'), 'önizlemede fiyat biçimlenmedi');
+    // Önizleme yayımlanacak künyenin aynısını göstermeli.
+    assert(text.includes('48.500'), 'önizlemede fiyat biçimlenmedi');
 
-  // Oturum yokken düğme kaybolmuyor, girişe yönlendiriyor: yazdığını
-  // kaybetmemek için form temizlenmiyor.
-  const buttons = await page.$$eval('button', (list) =>
-    list.map((b) => b.textContent?.trim() ?? '')
-  );
-  assert(
-    buttons.some((b) => b === 'Giriş yap' || b === 'İlanı yayımla'),
-    `yayımla düğmesi yok: ${buttons.join(' | ')}`
-  );
-});
+    // Oturum yokken düğme kaybolmuyor, girişe yönlendiriyor: yazdığını
+    // kaybetmemek için form temizlenmiyor.
+    const buttons = await page.$$eval('button', (list) =>
+      list.map((b) => b.textContent?.trim() ?? '')
+    );
+    assert(
+      buttons.some((b) => b === 'Giriş yap' || b === 'İlanı yayımla'),
+      `yayımla düğmesi yok: ${buttons.join(' | ')}`
+    );
+  }
+);
 
 /* ══════════════════════ Etkinlikler ══════════════════════ */
 
-await scenario('etkinlikler ana sayfası harita ve yakınlık listesi üretir', async () => {
-  await goto('/etkinlikler');
-  const text = await page.evaluate(() => document.body.innerText);
-  assert(includesTr(text, 'etkinlik haritası'), 'harita modülü yok');
-  assert(includesTr(text, 'size en yakın'), 'yakınlık listesi yok');
-  assert(/\d+\s*km/.test(text), 'mesafe değeri basılmadı');
-});
+await scenario(
+  'etkinlikler ana sayfası harita ve yakınlık listesi üretir',
+  async () => {
+    await goto('/etkinlikler');
+    const text = await page.evaluate(() => document.body.innerText);
+    assert(includesTr(text, 'etkinlik haritası'), 'harita modülü yok');
+    assert(includesTr(text, 'size en yakın'), 'yakınlık listesi yok');
+    assert(/\d+\s*km/.test(text), 'mesafe değeri basılmadı');
+  }
+);
 
 /* ══════════════════════ Setup planlayıcı ══════════════════════ */
 
@@ -447,26 +467,29 @@ await scenario('katalog sekmesi listeyi tek seferde dökmez', async () => {
 
 /* ══════════════════════ Ekipman karşılaştırma ══════════════════════ */
 
-await scenario('ekipman karşılaştırma seçimi adres çubuğunda taşınır', async () => {
-  // Karşılaştırma seçimi URL'de duruyor; forumda bağlantı paylaşınca aynı
-  // tablo açılmalı. Bu, birim testinin göremeyeceği bir yönlendirme davranışı.
-  await goto('/ekipman/karsilastir?m=zwo-asi2600mm,zwo-asi533mc');
+await scenario(
+  'ekipman karşılaştırma seçimi adres çubuğunda taşınır',
+  async () => {
+    // Karşılaştırma seçimi URL'de duruyor; forumda bağlantı paylaşınca aynı
+    // tablo açılmalı. Bu, birim testinin göremeyeceği bir yönlendirme davranışı.
+    await goto('/ekipman/karsilastir?m=zwo-asi2600mm,zwo-asi533mc');
 
-  const text = await page.evaluate(() => document.body.innerText);
-  // `includesTr` yalnızca samanlığı küçültüyor; aranan metin zaten küçük
-  // harf verilmeli. "ASI" gibi parçalar Türkçe küçültmede noktasız ı'ya
-  // dönüştüğü için harfsiz parçalarla eşleştiriyoruz.
-  assert(includesTr(text, '2600mm pro'), 'ilk model tabloda yok');
-  assert(includesTr(text, '533mc pro'), 'ikinci model tabloda yok');
+    const text = await page.evaluate(() => document.body.innerText);
+    // `includesTr` yalnızca samanlığı küçültüyor; aranan metin zaten küçük
+    // harf verilmeli. "ASI" gibi parçalar Türkçe küçültmede noktasız ı'ya
+    // dönüştüğü için harfsiz parçalarla eşleştiriyoruz.
+    assert(includesTr(text, '2600mm pro'), 'ilk model tabloda yok');
+    assert(includesTr(text, '533mc pro'), 'ikinci model tabloda yok');
 
-  const columns = await page.evaluate(
-    () => document.querySelectorAll('table thead th').length
-  );
-  assert(columns === 3, `beklenen 3 sütun, gelen ${columns}`);
+    const columns = await page.evaluate(
+      () => document.querySelectorAll('table thead th').length
+    );
+    assert(columns === 3, `beklenen 3 sütun, gelen ${columns}`);
 
-  // Farklı olan satırların işaretlenmesi tablonun asıl işi.
-  assert(includesTr(text, 'fark'), 'farklı satır işaretlenmemiş');
-});
+    // Farklı olan satırların işaretlenmesi tablonun asıl işi.
+    assert(includesTr(text, 'fark'), 'farklı satır işaretlenmemiş');
+  }
+);
 
 await scenario('bilinmeyen model karşılaştırmayı boşaltmıyor', async () => {
   await goto('/ekipman/karsilastir?m=zwo-asi2600mm,olmayan-model');
@@ -571,47 +594,53 @@ await scenario('çerez sayfası saklanan veriyi listeler ve siler', async () => 
   await target[0].click();
   await page.waitForTimeout(300);
 
-  const remaining = await page.evaluate(() =>
-    Object.keys(localStorage).filter((k) => k.startsWith('astrohub:')).length
+  const remaining = await page.evaluate(
+    () =>
+      Object.keys(localStorage).filter((k) => k.startsWith('astrohub:')).length
   );
   assert(remaining === 0, `silme sonrası ${remaining} anahtar kaldı`);
 });
 
 /* ══════════════════════ Erişilebilirlik: içeriğe atla ══════════════════════ */
 
-await scenario('"içeriğe atla" bağlantısı ilk odaklanabilir öğedir', async () => {
-  await goto('/');
+await scenario(
+  '"içeriğe atla" bağlantısı ilk odaklanabilir öğedir',
+  async () => {
+    await goto('/');
 
-  /*
-   * `Tab` tuşuyla test etmek, o anda odağın nerede olduğuna bağlı ve
-   * senaryolar arası sızıntıya açık. Onun yerine belgedeki odaklanabilir
-   * öğelerin SIRASI kontrol ediliyor: atlama bağlantısı ilk sırada
-   * olmazsa klavye kullanıcısı tüm menüyü geçmek zorunda kalır (§6.7).
-   */
-  const first = await page.evaluate(() => {
-    const focusable = document.querySelectorAll(
-      'a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    /*
+     * `Tab` tuşuyla test etmek, o anda odağın nerede olduğuna bağlı ve
+     * senaryolar arası sızıntıya açık. Onun yerine belgedeki odaklanabilir
+     * öğelerin SIRASI kontrol ediliyor: atlama bağlantısı ilk sırada
+     * olmazsa klavye kullanıcısı tüm menüyü geçmek zorunda kalır (§6.7).
+     */
+    const first = await page.evaluate(() => {
+      const focusable = document.querySelectorAll(
+        'a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      const el = focusable[0];
+      return el
+        ? { text: el.textContent?.trim() ?? '', href: el.getAttribute('href') }
+        : null;
+    });
+
+    assert(first !== null, 'odaklanabilir öğe bulunamadı');
+    assert(
+      first.href === '#icerik' || includesTr(first.text, 'içeriğe atla'),
+      `ilk odaklanabilir öğe beklenmedik: "${first.text}"`
     );
-    const el = focusable[0];
-    return el ? { text: el.textContent?.trim() ?? '', href: el.getAttribute('href') } : null;
-  });
 
-  assert(first !== null, 'odaklanabilir öğe bulunamadı');
-  assert(
-    first.href === '#icerik' || includesTr(first.text, 'içeriğe atla'),
-    `ilk odaklanabilir öğe beklenmedik: "${first.text}"`
-  );
-
-  // Odaklandığında gerçekten görünür olmalı (sr-only + focus:not-sr-only).
-  const visible = await page.evaluate(() => {
-    const link = document.querySelector('a[href="#icerik"]');
-    if (!link) return false;
-    link.focus();
-    const rect = link.getBoundingClientRect();
-    return rect.width > 20 && rect.height > 10;
-  });
-  assert(visible, 'atlama bağlantısı odakta görünür olmuyor');
-});
+    // Odaklandığında gerçekten görünür olmalı (sr-only + focus:not-sr-only).
+    const visible = await page.evaluate(() => {
+      const link = document.querySelector('a[href="#icerik"]');
+      if (!link) return false;
+      link.focus();
+      const rect = link.getBoundingClientRect();
+      return rect.width > 20 && rect.height > 10;
+    });
+    assert(visible, 'atlama bağlantısı odakta görünür olmuyor');
+  }
+);
 
 /* ══════════════════════ Navigasyon her genişlikte ══════════════════════ */
 
@@ -633,7 +662,7 @@ await scenario('"içeriğe atla" bağlantısı ilk odaklanabilir öğedir', asyn
  * iç sıralamasını tutsaydı ızgaraya geçen kullanıcı sıralamasını
  * kaybeder ve `?sirala=` ile başlıktaki ok farklı şeyler söylerdi.
  */
-await scenario('tablo başlığı sıralamayı URL\'ye yazıyor', async () => {
+await scenario("tablo başlığı sıralamayı URL'ye yazıyor", async () => {
   await goto('/ilanlar');
   await page.getByRole('button', { name: 'Tablo görünümü' }).click();
 
@@ -698,7 +727,7 @@ await scenario('filtreler mobilde çekmeceye giriyor', async () => {
   assert(dar.sayi === '1', `aktif filtre sayısı yazmıyor: "${dar.sayi}"`);
   assert(
     dar.kontrolSayisi === 0,
-    'çekmece kapalıyken kontrol DOM\'da duruyor — id çakışması riski'
+    "çekmece kapalıyken kontrol DOM'da duruyor — id çakışması riski"
   );
   assert(!dar.chipVar, 'aktif filtre ayrı chip satırı çiziyor');
 
@@ -790,7 +819,13 @@ await scenario('üst çubukta her genişlikte gezinme girişi var', async () => 
 const SHOTS = path.resolve('dist-preview/screens');
 mkdirSync(SHOTS, { recursive: true });
 
-const shotRoutes = ['/', '/galeri', '/etkinlikler', '/araclar/mosaic', '/forum'];
+const shotRoutes = [
+  '/',
+  '/galeri',
+  '/etkinlikler',
+  '/araclar/mosaic',
+  '/forum',
+];
 const shotWidths = [390, 1024, 1440];
 let shots = 0;
 
