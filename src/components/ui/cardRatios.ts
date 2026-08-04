@@ -15,9 +15,8 @@
  *                   galerisinde asıl içerik fotoğrafın kendisidir; kare
  *                   oran ona en çok yeri verir ve ızgara mutlak hizalı
  *                   kalır.
- *   wide      16:9  YALNIZCA manşet kartı — sayfa başına bir tane, tam
- *                   genişlik bir sütun kaplar, ızgara satır hizasını
- *                   etkilemez.
+ *   wide      16:9  Manşet ve editöryel liste kartları. Haber/yazı gibi
+ *                   metin yoğun gridlerde daha kompakt satır yüksekliği verir.
  *
  * 16/10, 16/7 ve 21/9 kaldırıldı; hiçbiri ayrı bir işe yaramıyordu.
  *

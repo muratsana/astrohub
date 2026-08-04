@@ -57,11 +57,11 @@ export function ModuleToolbar<M extends string = ViewMode>({
     <section
       aria-label={label}
       className={cn(
-        'mb-5 rounded-card border border-border-strong bg-surface-1/70 p-2 shadow-overlay sm:p-3',
+        'mb-4 rounded-card border border-border-strong bg-surface-1/70 p-1.5 shadow-overlay sm:p-2',
         className
       )}
     >
-      <div className="flex flex-col gap-2 md:flex-row md:items-center">
+      <div className="flex flex-col gap-1.5 md:flex-row md:items-center">
         <div className="min-w-0 flex-1">
           <FilterBar
             activeCount={activeFilters.chips.length}
@@ -69,7 +69,7 @@ export function ModuleToolbar<M extends string = ViewMode>({
             primaryCount={primaryFilters}
             collapseQuery="(max-width: 1099px)"
             className={cn(
-              '!mb-0 [&>*]:!min-w-[8rem] [&>*]:!flex-none [&>*:first-child]:!min-w-[15rem] [&>*:first-child]:flex-1 [&_[role=tablist]]:!flex-nowrap [&_[role=tab]]:!whitespace-nowrap',
+              '!mb-0 [&>*]:!min-w-[8rem] [&>*]:!flex-none [&>*:first-child]:!min-w-[14rem] [&>*:first-child]:flex-1 [&_[role=tablist]]:!flex-nowrap [&_[role=tab]]:!whitespace-nowrap',
               filterClassName
             )}
           >
@@ -84,7 +84,7 @@ export function ModuleToolbar<M extends string = ViewMode>({
             className="!mb-0 min-w-0 w-full md:ml-auto md:w-auto md:shrink-0"
           />
         )}
-        <div className="shrink-0 rounded-card border border-border bg-background/55 px-3 py-2">
+        <div className="shrink-0 rounded-card border border-border bg-background/55 px-2.5 py-1.5">
           <ResultCount {...result} />
         </div>
       </div>

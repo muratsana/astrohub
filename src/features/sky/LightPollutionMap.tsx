@@ -229,6 +229,34 @@ export function LightPollutionMap() {
                 />
               </div>
 
+              <div className="absolute bottom-2 right-2 w-[min(260px,calc(100%-1rem))] rounded-card border border-border-strong bg-background/88 px-2.5 py-2 shadow-overlay backdrop-blur-sm">
+                <div className="flex items-baseline justify-between gap-2">
+                  <label htmlFor="lp-opacity" className="label">
+                    Katman
+                  </label>
+                  <span className="tabular text-meta text-cold">%{opacity}</span>
+                </div>
+                <input
+                  id="lp-opacity"
+                  type="range"
+                  min={OPACITY_RANGE.min}
+                  max={OPACITY_RANGE.max}
+                  step={5}
+                  value={opacity}
+                  onChange={(e) => setOpacity(Number(e.target.value))}
+                  className={cn(
+                    'mt-1.5 h-4 w-full cursor-pointer appearance-none bg-transparent',
+                    '[&::-webkit-slider-runnable-track]:h-[3px] [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-border',
+                    '[&::-webkit-slider-thumb]:mt-[-5px] [&::-webkit-slider-thumb]:h-[13px] [&::-webkit-slider-thumb]:w-[13px]',
+                    '[&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full',
+                    '[&::-webkit-slider-thumb]:bg-primary',
+                    '[&::-moz-range-track]:h-[3px] [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-border',
+                    '[&::-moz-range-thumb]:h-[13px] [&::-moz-range-thumb]:w-[13px]',
+                    '[&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:bg-primary'
+                  )}
+                />
+              </div>
+
               {loaded && (
                 <Legend kind={overlay.legend} />
               )}
@@ -252,37 +280,13 @@ export function LightPollutionMap() {
           )}
         </div>
 
-        {/* ── Kontroller ── */}
-        <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
-          <Slider
-            id="lp-zoom"
-            label="Yakınlaştırma"
-            value={zoom}
-            min={ZOOM_RANGE.min}
-            max={ZOOM_RANGE.max}
-            step={1}
-            display={`z${zoom}`}
-            onChange={setZoom}
-          />
-          <Slider
-            id="lp-opacity"
-            label="Katman saydamlığı"
-            value={opacity}
-            min={OPACITY_RANGE.min}
-            max={OPACITY_RANGE.max}
-            step={5}
-            display={`%${opacity}`}
-            onChange={setOpacity}
-          />
-
-          <div className="flex items-end gap-1.5">
+        <div className="mt-2 flex flex-wrap justify-end gap-1.5">
             <Button size="sm" variant="secondary" onClick={reset}>
               Sıfırla
             </Button>
             <Button size="sm" variant="ghost" onClick={fullscreen}>
               Tam ekran
             </Button>
-          </div>
         </div>
 
         {/*
@@ -481,56 +485,6 @@ function Notice({
         {body}
       </p>
       <div className="mt-1 text-body-sm">{action}</div>
-    </div>
-  );
-}
-
-function Slider({
-  id,
-  label,
-  value,
-  min,
-  max,
-  step,
-  display,
-  onChange,
-}: {
-  id: string;
-  label: string;
-  value: number;
-  min: number;
-  max: number;
-  step: number;
-  display: string;
-  onChange: (value: number) => void;
-}) {
-  return (
-    <div className="rounded-card border border-border bg-surface-2 px-2.5 py-1.5">
-      <div className="flex items-baseline justify-between gap-2">
-        <label htmlFor={id} className="label">
-          {label}
-        </label>
-        <span className="tabular text-meta text-cold">{display}</span>
-      </div>
-      <input
-        id={id}
-        type="range"
-        min={min}
-        max={max}
-        step={step}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className={cn(
-          'mt-1 h-4 w-full cursor-pointer appearance-none bg-transparent',
-          '[&::-webkit-slider-runnable-track]:h-[3px] [&::-webkit-slider-runnable-track]:bg-border',
-          '[&::-webkit-slider-thumb]:mt-[-5px] [&::-webkit-slider-thumb]:h-[13px] [&::-webkit-slider-thumb]:w-[13px]',
-          '[&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full',
-          '[&::-webkit-slider-thumb]:bg-primary',
-          '[&::-moz-range-track]:h-[3px] [&::-moz-range-track]:bg-border',
-          '[&::-moz-range-thumb]:h-[13px] [&::-moz-range-thumb]:w-[13px]',
-          '[&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:bg-primary'
-        )}
-      />
     </div>
   );
 }

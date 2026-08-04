@@ -286,9 +286,9 @@ export function FilterCell({
     <div
       className={cn(
         'flex min-w-[10rem] flex-1 flex-col justify-center border',
-        toolbarCompact && 'min-h-11 rounded-card px-3 py-1 shadow-overlay',
+        toolbarCompact && 'min-h-10 rounded-card px-2.5 py-0.5 shadow-overlay',
         popoverCompact && 'min-h-10 min-w-0 rounded-md px-3 py-2 shadow-none',
-        density === 'default' && 'min-h-14 rounded-card px-4 py-2 shadow-overlay',
+        density === 'default' && 'min-h-12 rounded-card px-3 py-1.5 shadow-overlay',
         'transition-colors hover:border-foreground/25 hover:bg-surface-2',
         'has-[:focus-visible]:border-primary has-[:focus-visible]:bg-surface-2 has-[:focus-visible]:shadow-[0_0_0_1px_var(--color-primary)]',
         active
@@ -345,7 +345,7 @@ export function FilterToggle({
         'flex min-w-[10rem] flex-1 items-center border',
         popoverCompact
           ? 'min-h-10 min-w-0 rounded-md px-3 py-2 shadow-none'
-          : 'min-h-14 rounded-card px-4 py-2 shadow-overlay',
+          : 'min-h-12 rounded-card px-3 py-1.5 shadow-overlay',
         'transition-colors hover:border-foreground/25 hover:bg-surface-2',
         'has-[:focus-visible]:border-primary has-[:focus-visible]:bg-surface-2 has-[:focus-visible]:shadow-[0_0_0_1px_var(--color-primary)]',
         checked

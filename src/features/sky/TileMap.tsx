@@ -197,12 +197,7 @@ export function TileMap({
   );
 
   /*
-    Tekerlek yalnızca Ctrl/⌘ ile yakınlaştırır.
-
-    Harita sayfanın tam genişliğinde ve ekranın üçte ikisi kadar yüksek;
-    tekerleği koşulsuz yakalamak, üstünden geçen kullanıcıyı sayfada
-    hapsederdi. Kısayolu bilmeyen için +/− düğmeleri ve sürgü duruyor.
-
+    Tekerlek haritayı imlecin altındaki noktaya göre yakınlaştırır.
     `passive: false` gerektiği için React'in `onWheel`'i değil doğrudan
     dinleyici kullanılıyor — React wheel olayını edilgen bağlar ve orada
     `preventDefault` sessizce yok sayılır.
@@ -211,7 +206,6 @@ export function TileMap({
     const el = boxRef.current;
     if (!el) return;
     const handler = (event: WheelEvent) => {
-      if (!event.ctrlKey && !event.metaKey) return;
       event.preventDefault();
       const rect = el.getBoundingClientRect();
       zoomAt(

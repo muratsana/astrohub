@@ -115,14 +115,14 @@ function LeadCard({ item, label }: { item: EditorialItem; label: string }) {
   return (
     <ContentCard
       to={item.to}
-      className="mb-2.5 grid gap-3.5 p-2.5 md:grid-cols-[minmax(0,340px)_minmax(0,1fr)]"
+      className="mb-3 grid gap-3 p-2 md:h-[525px] md:grid-cols-[minmax(0,58%)_minmax(0,1fr)]"
     >
       {/* `wide` (16:9) kart ailesindeki üçüncü orandır ve YALNIZCA
           manşete aittir: sayfa başına bir tane, tam genişlik bir sütun
           kaplar, ızgara satır hizasını etkilemez. */}
       <ContentCardMedia
         ratio="wide"
-        className="border border-border"
+        className="border border-border md:h-full md:aspect-auto"
         badge={
           <span className="rounded-card border border-primary/50 bg-primary/15 px-1.5 py-0.5 text-meta tracking-[0.02em] text-primary backdrop-blur-sm">
             {label}
@@ -132,13 +132,13 @@ function LeadCard({ item, label }: { item: EditorialItem; label: string }) {
         <RemoteImage
           src={item.imageUrl}
           alt={item.title}
-          sizes="(min-width: 768px) 340px, 100vw"
+          sizes="(min-width: 768px) 58vw, 100vw"
           seed={item.slug}
           tint={seedTint(item)}
         />
       </ContentCardMedia>
 
-      <div className="flex flex-col py-1 pr-1">
+      <div className="flex flex-col py-2 pr-2">
         <div className="mb-2 flex flex-wrap items-center gap-2">
           <Badge tone="primary">{item.category}</Badge>
           {item.meta && (
@@ -149,7 +149,7 @@ function LeadCard({ item, label }: { item: EditorialItem; label: string }) {
         <h2 className="type-section text-foreground transition-colors group-hover:text-white">
           {item.title}
         </h2>
-        <p className="mt-2.5 text-meta leading-relaxed text-muted-foreground">
+        <p className="mt-2.5 line-clamp-5 text-body-sm leading-relaxed text-muted-foreground">
           {item.summary}
         </p>
 
@@ -176,12 +176,7 @@ function LeadCard({ item, label }: { item: EditorialItem; label: string }) {
 function EditorialCard({ item }: { item: EditorialItem }) {
   return (
     <ContentCard to={item.to} className="overflow-hidden">
-      {/* Oran galeri karosuyla aynı (4:3, PlateFrame varsayılanı):
-          site genelinde ızgara kartlarının tek bir ölçüsü var. Bir
-          modülün 16:9 kalması, aynı sayfada iki farklı kart yüksekliği
-          demekti. Üstteki geniş "öne çıkan" kart bunun dışında —
-          o bir ızgara karosu değil, tam genişlik bir manşet. */}
-      <ContentCardMedia className="rounded-none">
+      <ContentCardMedia ratio="wide" className="rounded-none">
         <RemoteImage
           src={item.imageUrl}
           alt={item.title}
@@ -191,8 +186,8 @@ function EditorialCard({ item }: { item: EditorialItem }) {
         />
       </ContentCardMedia>
 
-      <div className="flex flex-1 flex-col p-3">
-        <div className="mb-2 flex flex-wrap items-center gap-2">
+      <div className="flex flex-1 flex-col p-2.5">
+        <div className="mb-1.5 flex flex-wrap items-center gap-1.5">
           <Badge>{item.category}</Badge>
           {item.meta && (
             <span className="tabular text-meta text-faint">{item.meta}</span>
@@ -217,7 +212,7 @@ function EditorialCard({ item }: { item: EditorialItem }) {
         <h2 className="line-clamp-2 min-h-[2lh] text-body-sm leading-snug text-foreground transition-colors group-hover:text-white">
           {item.title}
         </h2>
-        <p className="mt-1.5 line-clamp-3 min-h-[3lh] text-meta leading-relaxed text-muted-foreground">
+        <p className="mt-1 line-clamp-2 min-h-[2lh] text-meta leading-relaxed text-muted-foreground">
           {item.summary}
         </p>
 
@@ -239,7 +234,7 @@ function EditorialCard({ item }: { item: EditorialItem }) {
           haberler 423px'te kaldı).
         */}
         {item.footer && (
-          <div className="mt-auto pt-3">
+          <div className="mt-auto pt-2">
             <div className="flex min-h-[21px] items-center">{item.footer}</div>
           </div>
         )}
