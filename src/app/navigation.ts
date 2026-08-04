@@ -61,6 +61,7 @@ export const primaryNav: NavItem[] = [
  */
 export const legalNav: NavItem[] = [
   { label: 'Hakkında', to: '/hakkinda' },
+  { label: 'Sık Sorulan Sorular', to: '/sss' },
   { label: 'KVKK', to: '/kvkk' },
   { label: 'Kullanım Koşulları', to: '/kullanim-kosullari' },
 ];

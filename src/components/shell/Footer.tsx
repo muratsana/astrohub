@@ -20,6 +20,7 @@ export function Footer() {
   */
   const legal = useMenu('footer');
   const hasContact = legal.some((item) => item.path === '/iletisim');
+  const hasFaq = legal.some((item) => item.path === '/sss');
 
   return (
     <footer className="mt-12 border-t border-border bg-surface-1">
@@ -50,6 +51,14 @@ export function Footer() {
                 {item.label}
               </Link>
             ))}
+            {!hasFaq && (
+              <Link
+                to="/sss"
+                className="inline-block py-1 text-muted-foreground transition-colors hover:text-primary"
+              >
+                Sık Sorulan Sorular
+              </Link>
+            )}
             {!hasContact && (
               <Link
                 to="/iletisim"

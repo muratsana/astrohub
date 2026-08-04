@@ -57,10 +57,11 @@ describe('navigasyon bağlantıları', () => {
     expect([...new Set(broken)]).toEqual([]);
   });
 
-  it('footer hukuki bağlantıları route edilmiştir', () => {
+  it('footer kurumsal bağlantıları route edilmiştir', () => {
     for (const path of [
       '/kvkk',
       '/kullanim-kosullari',
+      '/sss',
       '/hakkinda',
       '/iletisim',
     ]) {
