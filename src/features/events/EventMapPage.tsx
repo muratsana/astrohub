@@ -10,11 +10,12 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { SortableHeader } from '@/components/ui/SortableHeader';
 import { AdminEditLink } from '@/components/admin/AdminEditLink';
 import { PageMeta } from '@/components/seo/PageMeta';
+import { PhotoPlaceholder } from '@/components/media/PhotoPlaceholder';
 import { breadcrumbJsonLd } from '@/lib/seo';
 import { useLocationContext } from '@/features/location/LocationContext';
 import { sortByProximity, formatDistance } from '@/domain/geography/distance';
 import { useEventCatalog } from '@/services/content/events';
-import { eventTypeLabels, type EventType } from './types';
+import { eventTypeLabels } from './types';
 import type { AstroEvent } from './types';
 import { cn } from '@/lib/cn';
 import { TileMap } from '@/features/sky/TileMap';
@@ -86,7 +87,6 @@ function sortLocatedEvents(
 export function EventMapPage() {
   const { location, permission, requestDeviceLocation } = useLocationContext();
   const { theme } = useTheme();
-  const [type, setType] = useState<EventType | 'hepsi'>('hepsi');
   const [active, setActive] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
   const catalog = useEventCatalog();
@@ -114,17 +114,9 @@ export function EventMapPage() {
     setCenter({ lat: location.latitude, lng: location.longitude });
   }, [location.latitude, location.longitude]);
 
-  const filtered = useMemo(
-    () =>
-      type === 'hepsi'
-        ? catalog.items
-        : catalog.items.filter((e) => e.type === type),
-    [catalog.items, type]
-  );
-
   const { located, unlocated } = useMemo(
-    () => sortByProximity(filtered, location, (e: AstroEvent) => e.coords),
-    [filtered, location]
+    () => sortByProximity(catalog.items, location, (e: AstroEvent) => e.coords),
+    [catalog.items, location]
   );
   const sortedLocated = useMemo(
     () => sortLocatedEvents(located, sort.key, sort.direction),
@@ -210,54 +202,21 @@ export function EventMapPage() {
           title="Etkinlikler"
           description="Etkinlikler konumlarına göre dağıtıldı ve size olan kuş uçuşu mesafeye göre sıralandı. Referans noktası üst çubuktaki konumunuz."
           meta={location.label}
-          actions={
-            <>
-              <ButtonLink to="/etkinlik/yeni" size="sm">
-                Etkinlik ekle
-              </ButtonLink>
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={requestDeviceLocation}
-                disabled={permission === 'pending'}
-              >
-                {permission === 'pending' ? 'Konum alınıyor' : 'Konumumu bul'}
-              </Button>
-            </>
-          }
         />
-
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-          <p className="tabular label" role="status">
-            {located.length} konumlu · {unlocated.length} çevrimiçi
-          </p>
-          <div className="flex items-center gap-2">
-            <label htmlFor="map-type" className="sr-only">
-              Tür
-            </label>
-            <Select
-              id="map-type"
-              value={type}
-              onChange={(e) => setType(e.target.value as EventType | 'hepsi')}
-              className="h-8 w-auto text-meta"
-            >
-              <option value="hepsi">Tüm türler</option>
-              {Object.entries(eventTypeLabels).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </Select>
-          </div>
-        </div>
 
         {featured && (
           <Link
             to={`/etkinlik/${featured.item.slug}`}
-            className="mb-4 block rounded-card border border-primary/50 bg-surface-1 p-3 transition-colors hover:border-primary"
+            className="mb-4 grid overflow-hidden rounded-card border border-primary/50 bg-surface-1 transition-colors hover:border-primary sm:grid-cols-[180px_minmax(0,1fr)]"
           >
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div className="min-w-0">
+            <PhotoPlaceholder
+              gradient={featured.item.gradient}
+              alt={`${featured.item.title} etkinlik görseli`}
+              className="h-28 sm:h-full"
+              rounded="rounded-none"
+            />
+            <div className="flex min-h-28 flex-wrap items-center justify-between gap-3 p-3">
+              <div className="min-w-0 flex-1">
                 <Badge tone="primary">Otomatik öne çıkan</Badge>
                 <h2 className="mt-2 text-title-sm font-medium text-foreground">
                   {featured.item.title}
@@ -282,6 +241,15 @@ export function EventMapPage() {
             bodyClassName="p-0"
           >
             <div className="relative h-[70vh] min-h-[520px] overflow-hidden rounded-b-card bg-surface-2">
+              <Button
+                size="sm"
+                variant="secondary"
+                className="absolute left-2 top-2 z-10 bg-background/90 backdrop-blur-sm"
+                onClick={requestDeviceLocation}
+                disabled={permission === 'pending'}
+              >
+                {permission === 'pending' ? 'Konum alınıyor' : 'Konumumu bul'}
+              </Button>
               {!hasNetworkAccess ? (
                 <div className="grid h-full place-items-center p-6 text-center text-body-sm text-muted-foreground">
                   Bu önizleme dış harita isteği yapmıyor.
@@ -409,11 +377,21 @@ export function EventMapPage() {
 
           {/* ───────── Yakınlık listesi ───────── */}
           <div className="space-y-4">
-            <Panel title="Size en yakın" status={location.label}>
+            <Panel
+              title="Size en yakın"
+              status={
+                <span className="flex items-center gap-3">
+                  <span>{location.label}</span>
+                  <ButtonLink to="/etkinlik/yeni" size="sm">
+                    Etkinlik ekle
+                  </ButtonLink>
+                </span>
+              }
+            >
               {located.length === 0 ? (
                 <EmptyState
                   message="Bu türde konumlu etkinlik yok"
-                  hint="Tür filtresini genişletin ya da çevrimiçi etkinliklere bakın."
+                  hint="Konumlu etkinlik ekleyebilir ya da çevrimiçi etkinliklere bakabilirsiniz."
                   className="border-0 py-8"
                 />
               ) : (
