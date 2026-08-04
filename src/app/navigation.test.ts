@@ -71,7 +71,7 @@ describe('navigasyon bağlantıları', () => {
   });
 
   it('üst menü ana girişleri taşır; ekipman profil/araç akışındadır', () => {
-    expect(primaryNav).toHaveLength(9);
+    expect(primaryNav).toHaveLength(10);
     expect(primaryNav.map((i) => i.to)).toContain('/forum');
     expect(primaryNav.map((i) => i.to)).not.toContain('/ekipman');
   });
@@ -85,6 +85,7 @@ describe('navigasyon bağlantıları', () => {
       'Yazılar',
       'İlanlar',
       'Araçlar',
+      'Simülatör',
       'Forum',
       'Saha',
     ]);

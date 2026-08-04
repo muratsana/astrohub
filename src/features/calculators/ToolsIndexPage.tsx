@@ -41,6 +41,7 @@ const tools =
 const toolIcons: Record<string, typeof GridIcon> = {
   '/araclar': GridIcon,
   '/araclar/fov': FrameIcon,
+  '/simulator': FrameIcon,
   '/araclar/isik-kirliligi': MapIcon,
   '/bu-gece': MoonIcon,
   '/planlayici': RouteIcon,

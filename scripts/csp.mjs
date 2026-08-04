@@ -108,6 +108,8 @@ const DIRECTIVES = {
    */
   'connect-src': [
     "'self'",
+    'http://127.0.0.1:4765',
+    'http://localhost:4765',
     'https://*.supabase.co',
     'https://api.open-meteo.com',
     'https://air-quality-api.open-meteo.com',

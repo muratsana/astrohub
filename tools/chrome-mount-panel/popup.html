@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Astrohub Mount Panel</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <main>
+      <header>
+        <strong>ASTROHUB</strong>
+        <span id="state">Bridge bekleniyor</span>
+      </header>
+      <dl>
+        <dt>Model</dt>
+        <dd id="model">—</dd>
+        <dt>RA</dt>
+        <dd id="ra">—</dd>
+        <dt>DEC</dt>
+        <dd id="dec">—</dd>
+        <dt>Konum</dt>
+        <dd id="site">—</dd>
+      </dl>
+      <button id="refresh" type="button">Tara</button>
+      <button id="open" type="button">Simülatörü aç</button>
+      <p id="error"></p>
+    </main>
+    <script src="popup.js"></script>
+  </body>
+</html>

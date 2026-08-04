@@ -379,6 +379,21 @@ export const appRoutes = [
           )
         ),
       },
+      {
+        path: 'arsivim',
+        element: route(
+          named(() => import('@/features/simulator/ArchivePage'), 'ArchivePage')
+        ),
+      },
+      {
+        path: 'simulator',
+        element: route(
+          named(
+            () => import('@/features/simulator/SimulatorPage'),
+            'SimulatorPage'
+          )
+        ),
+      },
 
       /* ═════════════ ARAÇLAR ═════════════ */
       {
@@ -391,6 +406,7 @@ export const appRoutes = [
         ),
       },
       { path: 'araclar/fov', element: fovPage() },
+      { path: 'araclar/simulator', element: <RedirectTo to="/simulator" /> },
       // Tek kanonik sayfa: pixel scale zaten FOV hesaplayıcının içinde.
       {
         path: 'araclar/pixel-scale',

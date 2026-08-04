@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "Astrohub Mount Panel",
+  "version": "0.1.0",
+  "description": "Astrohub Mount Bridge durumunu Chrome içinde gösterir.",
+  "action": {
+    "default_title": "Astrohub Mount Panel",
+    "default_popup": "popup.html"
+  },
+  "host_permissions": [
+    "http://127.0.0.1:4765/*",
+    "http://localhost:4765/*",
+    "https://astrohub.com.tr/*"
+  ],
+  "permissions": ["storage", "tabs"]
+}

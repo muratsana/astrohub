@@ -73,11 +73,19 @@
       "destination": "/app.html"
     },
     {
+      "source": "/araclar/simulator",
+      "destination": "/app.html"
+    },
+    {
       "source": "/araclar/takvim",
       "destination": "/app.html"
     },
     {
       "source": "/ardahan-astronomi-etkinlikleri",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/arsivim",
       "destination": "/app.html"
     },
     {
@@ -577,6 +585,10 @@
       "destination": "/app.html"
     },
     {
+      "source": "/simulator",
+      "destination": "/app.html"
+    },
+    {
       "source": "/sinop-astronomi-etkinlikleri",
       "destination": "/app.html"
     },
@@ -713,7 +725,7 @@
         },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.supabase.co https://*.basemaps.cartocdn.com https://gibs.earthdata.nasa.gov https://server.arcgisonline.com https://commons.wikimedia.org https://upload.wikimedia.org https://cdn.esahubble.org; font-src 'self'; media-src 'self' blob: https://*.supabase.co; connect-src 'self' https://*.supabase.co https://api.open-meteo.com https://air-quality-api.open-meteo.com; frame-src https://www.youtube-nocookie.com https://open.spotify.com; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; upgrade-insecure-requests"
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.supabase.co https://*.basemaps.cartocdn.com https://gibs.earthdata.nasa.gov https://server.arcgisonline.com https://commons.wikimedia.org https://upload.wikimedia.org https://cdn.esahubble.org; font-src 'self'; media-src 'self' blob: https://*.supabase.co; connect-src 'self' http://127.0.0.1:4765 http://localhost:4765 https://*.supabase.co https://api.open-meteo.com https://air-quality-api.open-meteo.com; frame-src https://www.youtube-nocookie.com https://open.spotify.com; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; upgrade-insecure-requests"
         }
       ]
     }

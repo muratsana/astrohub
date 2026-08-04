@@ -117,22 +117,30 @@ function tamamlaEskiHeaderTohumu(links: NavLinkView[]): NavLinkView[] {
     paths.has('/haberler') &&
     paths.has('/saha');
 
-  if (!eskiTohum || paths.has('/topluluklar')) return links;
+  if (!eskiTohum) return links;
 
+  let tamam = links;
+  if (!paths.has('/topluluklar')) {
+    tamam = headerSatiriEkle(tamam, { label: 'Topluluklar', to: '/topluluklar' }, 3);
+  }
+  if (!new Set(tamam.filter((link) => link.menu === 'header').map((link) => link.path)).has('/simulator')) {
+    tamam = headerSatiriEkle(tamam, { label: 'Simülatör', to: '/simulator' }, 8);
+  }
+  return tamam.sort((a, b) => a.position - b.position);
+}
+
+function headerSatiriEkle(
+  links: NavLinkView[],
+  item: NavItem,
+  position: number
+): NavLinkView[] {
   return links
     .map((link) =>
-      link.menu === 'header' && link.position >= 3
+      link.menu === 'header' && link.position >= position
         ? { ...link, position: link.position + 1 }
         : link
     )
-    .concat(
-      satir(
-        'header',
-        { label: 'Topluluklar', to: '/topluluklar' },
-        3
-      )
-    )
-    .sort((a, b) => a.position - b.position);
+    .concat(satir('header', item, position));
 }
 
 function normalize(row: Record<string, unknown>): NavLinkView | null {

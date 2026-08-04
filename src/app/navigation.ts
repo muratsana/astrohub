@@ -46,6 +46,7 @@ export const primaryNav: NavItem[] = [
   { label: 'Yazılar', to: '/yazilar' },
   { label: 'İlanlar', to: '/ilanlar' },
   { label: 'Araçlar', to: '/araclar' },
+  { label: 'Simülatör', to: '/simulator' },
   { label: 'Forum', to: '/forum' },
   { label: 'Saha', to: '/saha' },
 ];
@@ -214,6 +215,12 @@ export const siteMap: NavGroup[] = [
         keywords: ['fov', 'görüş alanı', 'kadraj', 'pixel scale', 'örnekleme', 'sampling'],
       },
       {
+        label: 'Simülatör',
+        to: '/simulator',
+        description: 'ASCOM bridge, canlı montür konumu, FOV ve hedef planı',
+        keywords: ['simulator', 'simülatör', 'ascom', 'montür', 'fov', 'ra', 'dec'],
+      },
+      {
         label: 'Işık Kirliliği Haritası',
         to: '/araclar/isik-kirliligi',
         description: 'Şehir ile saha arasındaki SQM/Bortle farkı',
@@ -337,6 +344,12 @@ export const siteMap: NavGroup[] = [
         to: '/gunluk',
         description: 'Baktığın geceleri kaydet — varsayılan olarak özel',
         keywords: ['günlük', 'gözlem', 'defter', 'log', 'kayıt', 'seeing'],
+      },
+      {
+        label: 'Arşivim',
+        to: '/arsivim',
+        description: 'Kişisel hedef planları ve entegrasyon ilerlemesi',
+        keywords: ['arşivim', 'hedef planı', 'entegrasyon', 'capture', 'sequence'],
       },
       {
         label: 'Üyelik ve Premium',

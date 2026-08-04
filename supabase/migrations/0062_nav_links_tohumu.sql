@@ -55,8 +55,9 @@ select v.menu, v.label, v.path, v.position
     ('header', 'Yazılar',     '/yazilar',     5),
     ('header', 'İlanlar',     '/ilanlar',     6),
     ('header', 'Araçlar',     '/araclar',     7),
-    ('header', 'Forum',       '/forum',       8),
-    ('header', 'Saha',        '/saha',        9)
+    ('header', 'Simülatör',   '/simulator',   8),
+    ('header', 'Forum',       '/forum',       9),
+    ('header', 'Saha',        '/saha',        10)
   ) as v(menu, label, path, position)
  where not exists (
    select 1 from public.nav_links where menu = 'header'
@@ -90,7 +91,7 @@ do $$
 declare
   beklenen_header text[] := array[
     '/galeri','/etkinlikler','/topluluklar','/haberler','/yazilar','/ilanlar',
-    '/araclar','/forum','/saha'
+    '/araclar','/simulator','/forum','/saha'
   ];
   beklenen_footer text[] := array['/hakkinda','/sozluk','/sss','/kvkk','/kullanim-kosullari'];
   olculen text[];
