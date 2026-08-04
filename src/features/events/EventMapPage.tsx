@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Panel } from '@/components/ui/Panel';
@@ -46,6 +46,8 @@ type LayerMode = 'yok' | 'isik';
 type EventSortKey = 'distance' | 'city' | 'startsAt' | 'endsAt';
 type SortDirection = 'asc' | 'desc';
 type LocatedEvent = { item: AstroEvent; distanceKm: number };
+const TURKEY_CENTER: LatLng = { lat: 39, lng: 35 };
+const TURKEY_ZOOM = 5;
 
 const shortDateFormatter = new Intl.DateTimeFormat('tr-TR', {
   day: '2-digit',
@@ -85,10 +87,12 @@ function sortLocatedEvents(
 }
 
 export function EventMapPage() {
+  const navigate = useNavigate();
   const { location, permission, requestDeviceLocation } = useLocationContext();
   const { theme } = useTheme();
   const [active, setActive] = useState<string | null>(null);
-  const [showAll, setShowAll] = useState(false);
+  const [showAll, setShowAll] = useState(true);
+  const [followDevice, setFollowDevice] = useState(false);
   const catalog = useEventCatalog();
   const [allowed, setAllowed] = useState(() => {
     try {
@@ -104,15 +108,14 @@ export function EventMapPage() {
     key: EventSortKey;
     direction: SortDirection;
   }>({ key: 'distance', direction: 'asc' });
-  const [center, setCenter] = useState<LatLng>({
-    lat: location.latitude,
-    lng: location.longitude,
-  });
-  const [zoom, setZoom] = useState(5);
+  const [center, setCenter] = useState<LatLng>(TURKEY_CENTER);
+  const [zoom, setZoom] = useState(TURKEY_ZOOM);
 
   useEffect(() => {
+    if (!followDevice) return;
     setCenter({ lat: location.latitude, lng: location.longitude });
-  }, [location.latitude, location.longitude]);
+    setZoom((current) => Math.max(current, 7));
+  }, [followDevice, location.latitude, location.longitude]);
 
   const { located, unlocated } = useMemo(
     () => sortByProximity(catalog.items, location, (e: AstroEvent) => e.coords),
@@ -151,10 +154,28 @@ export function EventMapPage() {
 
   function focusEvent(item: AstroEvent) {
     if (!item.coords) return;
+    setFollowDevice(false);
     setActive(item.slug);
     setShowAll(false);
     setCenter({ lat: item.coords.latitude, lng: item.coords.longitude });
     setZoom((current) => Math.max(current, 7));
+  }
+
+  function locateOnMap() {
+    setFollowDevice(true);
+    setShowAll(false);
+    requestDeviceLocation();
+  }
+
+  function toggleMapScope() {
+    setFollowDevice(false);
+    if (showAll) {
+      if (selected) focusEvent(selected.item);
+      return;
+    }
+    setShowAll(true);
+    setCenter(TURKEY_CENTER);
+    setZoom(TURKEY_ZOOM);
   }
 
   function changeSort(key: EventSortKey) {
@@ -207,26 +228,26 @@ export function EventMapPage() {
         {featured && (
           <Link
             to={`/etkinlik/${featured.item.slug}`}
-            className="mb-4 grid overflow-hidden rounded-card border border-primary/50 bg-surface-1 transition-colors hover:border-primary sm:grid-cols-[180px_minmax(0,1fr)]"
+            className="group mb-4 grid overflow-hidden rounded-card border border-primary/50 bg-surface-1 transition-colors hover:border-primary md:h-[525px] md:grid-cols-[minmax(0,58%)_minmax(0,1fr)]"
           >
             <PhotoPlaceholder
               gradient={featured.item.gradient}
               alt={`${featured.item.title} etkinlik görseli`}
-              className="h-28 sm:h-full"
+              className="min-h-[17.5rem] md:h-full md:min-h-0"
               rounded="rounded-none"
             />
-            <div className="flex min-h-28 flex-wrap items-center justify-between gap-3 p-3">
+            <div className="flex min-h-[17.5rem] flex-col justify-center p-4 md:min-h-0 md:p-5">
               <div className="min-w-0 flex-1">
                 <Badge tone="primary">Otomatik öne çıkan</Badge>
-                <h2 className="mt-2 text-title-sm font-medium text-foreground">
+                <h2 className="mt-3 type-section text-foreground transition-colors group-hover:text-white">
                   {featured.item.title}
                 </h2>
-                <p className="mt-1 text-body-sm leading-relaxed text-muted-foreground">
+                <p className="mt-2.5 line-clamp-5 text-body-sm leading-relaxed text-muted-foreground">
                   Konumunuza göre en yakın etkinlik. {featured.item.city} ·{' '}
                   {formatEventDate(featured.item.startsAt)}
                 </p>
               </div>
-              <span className="tabular shrink-0 rounded-card border border-border bg-background px-2.5 py-1.5 text-body-sm text-cold">
+              <span className="tabular mt-auto w-fit rounded-card border border-border bg-background px-2.5 py-1.5 text-body-sm text-cold">
                 {formatDistance(featured.distanceKm)}
               </span>
             </div>
@@ -245,7 +266,7 @@ export function EventMapPage() {
                 size="sm"
                 variant="secondary"
                 className="absolute left-2 top-2 z-10 bg-background/90 backdrop-blur-sm"
-                onClick={requestDeviceLocation}
+                onClick={locateOnMap}
                 disabled={permission === 'pending'}
               >
                 {permission === 'pending' ? 'Konum alınıyor' : 'Konumumu bul'}
@@ -279,8 +300,21 @@ export function EventMapPage() {
                       lng: item.coords!.longitude,
                     },
                     label: `${item.title}, ${item.city}, ${formatDistance(distanceKm)} uzaklıkta`,
+                    popup: (
+                      <>
+                        <span className="block truncate text-body-sm font-medium text-foreground">
+                          {item.title}
+                        </span>
+                        <span className="mt-1 block truncate text-meta text-muted-foreground">
+                          {item.city} · {formatEventDate(item.startsAt)}
+                        </span>
+                        <span className="mt-1 block text-meta text-cold">
+                          {formatDistance(distanceKm)}
+                        </span>
+                      </>
+                    ),
                     active: active === item.slug,
-                    onSelect: () => focusEvent(item),
+                    onSelect: () => navigate(`/etkinlik/${item.slug}`),
                   }))}
                 />
               ) : (
@@ -362,7 +396,7 @@ export function EventMapPage() {
                     <Button
                       size="sm"
                       variant="secondary"
-                      onClick={() => setShowAll((current) => !current)}
+                      onClick={toggleMapScope}
                     >
                       {showAll ? 'Tek pini göster' : 'Tümünü göster'}
                     </Button>

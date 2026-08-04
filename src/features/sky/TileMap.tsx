@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
 import { cn } from '@/lib/cn';
 import {
   TILE_SIZE,
@@ -61,6 +62,7 @@ export interface TileMapProps {
     id: string;
     point: LatLng;
     label: string;
+    popup?: ReactNode;
     active?: boolean;
     color?: string;
     onSelect?: () => void;
@@ -302,13 +304,19 @@ export function TileMap({
             onPointerDown={(event) => event.stopPropagation()}
             onClick={item.onSelect}
             className={cn(
-              'absolute z-20 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-background transition-[width,height,background-color]',
+              'group absolute z-20 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-background transition-[width,height,background-color]',
               item.active
                 ? 'h-4 w-4 bg-primary ring-2 ring-primary/40'
                 : 'h-3 w-3 bg-cold hover:h-4 hover:w-4 hover:bg-primary'
             )}
             style={{ left: point.x, top: point.y, backgroundColor: item.color }}
-          />
+          >
+            {item.popup ? (
+              <span className="pointer-events-none absolute bottom-5 left-1/2 hidden w-64 -translate-x-1/2 rounded-card border border-border bg-background/95 px-3 py-2 text-left shadow-card backdrop-blur-sm group-hover:block group-focus-visible:block">
+                {item.popup}
+              </span>
+            ) : null}
+          </button>
         );
       })}
     </div>
