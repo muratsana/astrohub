@@ -13,13 +13,11 @@ import {
 } from '@/components/ui/FilterBar';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
-import { Link } from 'react-router';
 import { clubKindLabels } from './data';
 import { citiesOf, useClubs } from './clubsSource';
 import { ClubCard } from './ClubCard';
 import { useExplorer } from '@/features/explorer/useExplorer';
 import { clubsSpec } from './clubsSpec';
-import { cityPathForName } from '@/features/city/routes';
 import { cities as turkeyCities } from '@/features/location/cities';
 
 /**
@@ -177,41 +175,6 @@ export function ClubsPage() {
               </li>
             ))}
           </CardGrid>
-        )}
-
-        {/*
-          ŞEHİR BAZLI KEŞİF (§14.7).
-
-          AYRI BİR `/topluluklar/{sehir}` AİLESİ AÇILMADI. Sitede zaten
-          `/{sehir}-astronomi-etkinlikleri` sayfaları var (§20) ve aranan
-          sorgu ("ankara astronomi") ikisini de hedefliyor. İkinci bir
-          şehir sayfası ailesi, aynı niyet için birbiriyle yarışan iki
-          adres üretirdi; fazın açılış kuralı çakışan modülleri
-          BİRLEŞTİRMEK. Kulüpler o sayfalara bir bölüm olarak eklendi.
-
-          Sayfası olmayan şehir (ör. Nevşehir) süzgece gidiyor — olmayan
-          bir adrese bağlantı vermektense filtrelenmiş dizin doğru cevap.
-        */}
-        {countedCities.length > 1 && (
-          <nav aria-label="Şehre göre topluluklar" className="mt-8">
-            <h2 className="type-section">Şehre göre</h2>
-            <ul className="mt-3 flex flex-wrap gap-2">
-              {countedCities.map(({ city, count }) => (
-                <li key={city}>
-                  <Link
-                    to={
-                      cityPathForName(city) ??
-                      `/topluluklar?sehir=${encodeURIComponent(city)}`
-                    }
-                    className="inline-flex items-baseline gap-1.5 rounded-md border border-border px-2.5 py-1 text-meta text-muted-foreground transition-colors hover:border-primary hover:text-primary"
-                  >
-                    {city}
-                    <span className="tabular text-faint">{count}</span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </nav>
         )}
 
         <p className="mt-6 text-center text-meta leading-relaxed text-faint">
