@@ -7,7 +7,6 @@ import { PlayIcon, PauseIcon } from '@/components/ui/icons';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
 import { useRadio } from './RadioContext';
-import { radioGuidelines } from './data';
 import { RadioSchedule } from './RadioSchedule';
 import { cn } from '@/lib/cn';
 
@@ -69,53 +68,36 @@ export function RadioPage() {
             </Panel>
           </div>
         ) : (
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,340px)]">
-            <Panel title="Canlı yayın" status={playing ? 'açık' : 'duraklatıldı'}>
-              <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={toggle}
-                  aria-label={
-                    playing ? 'Canlı yayını duraklat' : 'Canlı yayını başlat'
-                  }
-                  className={cn(
-                    'flex h-11 w-11 shrink-0 items-center justify-center rounded-card border transition-colors',
-                    playing
-                      ? 'border-primary bg-primary/10 text-primary'
-                      : 'border-border text-foreground hover:border-primary hover:text-primary'
-                  )}
-                >
-                  {playing ? (
-                    <PauseIcon className="h-4 w-4" />
-                  ) : (
-                    <PlayIcon className="h-4 w-4" />
-                  )}
-                </button>
+          <Panel title="Canlı yayın" status={playing ? 'açık' : 'duraklatıldı'}>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={toggle}
+                aria-label={
+                  playing ? 'Canlı yayını duraklat' : 'Canlı yayını başlat'
+                }
+                className={cn(
+                  'flex h-11 w-11 shrink-0 items-center justify-center rounded-card border transition-colors',
+                  playing
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'border-border text-foreground hover:border-primary hover:text-primary'
+                )}
+              >
+                {playing ? (
+                  <PauseIcon className="h-4 w-4" />
+                ) : (
+                  <PlayIcon className="h-4 w-4" />
+                )}
+              </button>
 
-                <div className="min-w-0">
-                  <p className="text-body font-medium text-foreground">
-                    Astrohub Radyo
-                  </p>
-                  <p className="text-meta text-success">Canlı yayın</p>
-                </div>
+              <div className="min-w-0">
+                <p className="text-body font-medium text-foreground">
+                  Astrohub Radyo
+                </p>
+                <p className="text-meta text-success">Canlı yayın</p>
               </div>
-            </Panel>
-
-            <div className="space-y-4">
-              <Panel title="Yayın ölçütleri">
-                <ul className="space-y-2 text-body-sm leading-relaxed text-muted-foreground">
-                  {radioGuidelines.map((rule) => (
-                    <li key={rule} className="flex gap-2">
-                      <span aria-hidden className="text-primary">
-                        ·
-                      </span>
-                      {rule}
-                    </li>
-                  ))}
-                </ul>
-              </Panel>
             </div>
-          </div>
+          </Panel>
         )}
 
         {/* Takvim listenin İÇİNDE değil, yanında: canlı yayın ile yerel
