@@ -5,7 +5,7 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { Panel } from '@/components/ui/Panel';
 import { Badge } from '@/components/ui/Badge';
 import { Select } from '@/components/ui/Input';
-import { Button, ButtonLink } from '@/components/ui/Button';
+import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
@@ -25,7 +25,7 @@ import { useTheme } from '@/features/theme/ThemeContext';
 import { hasNetworkAccess } from '@/lib/runtime';
 
 /**
- * ETKİNLİK HARİTASI (§7.7 kısmi).
+ * ETKİNLİKLER ANA MODÜLÜ.
  *
  * NEDEN GERÇEK HARİTA DEĞİL
  * Tam ekran etkileşimli harita bir tile sağlayıcısı ister ve tile lisansı
@@ -45,7 +45,7 @@ import { hasNetworkAccess } from '@/lib/runtime';
 const CONSENT_KEY = 'astrohub:map:tiles';
 
 export function EventMapPage() {
-  const { location } = useLocationContext();
+  const { location, permission, requestDeviceLocation } = useLocationContext();
   const { theme } = useTheme();
   const [type, setType] = useState<EventType | 'hepsi'>('hepsi');
   const [active, setActive] = useState<string | null>(null);
@@ -79,16 +79,16 @@ export function EventMapPage() {
     () => sortByProximity(filtered, location, (e: AstroEvent) => e.coords),
     [filtered, location]
   );
+  const featured = located[0];
 
   return (
     <>
       <PageMeta
-        title="Etkinlik Haritası"
+        title="Etkinlikler"
         description="Türkiye'deki astronomi etkinliklerinin konum dağılımı ve size en yakın etkinlikler — mesafeye göre sıralı."
         jsonLd={breadcrumbJsonLd([
           { name: 'Ana Sayfa', path: '/' },
           { name: 'Etkinlikler', path: '/etkinlikler' },
-          { name: 'Harita', path: '/etkinlikler/harita' },
         ])}
       />
 
@@ -96,16 +96,20 @@ export function EventMapPage() {
         <PageHeader
           breadcrumb={[
             { label: 'Ana Sayfa', to: '/' },
-            { label: 'Etkinlikler', to: '/etkinlikler' },
-            { label: 'Harita' },
+            { label: 'Etkinlikler' },
           ]}
-          title="Etkinlik Haritası"
+          title="Etkinlikler"
           description="Etkinlikler konumlarına göre dağıtıldı ve size olan kuş uçuşu mesafeye göre sıralandı. Referans noktası üst çubuktaki konumunuz."
           meta={location.label}
           actions={
-            <ButtonLink to="/etkinlikler" size="sm" variant="secondary">
-              Takvim Görünümü
-            </ButtonLink>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={requestDeviceLocation}
+              disabled={permission === 'pending'}
+            >
+              {permission === 'pending' ? 'Konum alınıyor' : 'Konumumu bul'}
+            </Button>
           }
         />
 
@@ -132,6 +136,32 @@ export function EventMapPage() {
             </Select>
           </div>
         </div>
+
+        {featured && (
+          <Link
+            to={`/etkinlik/${featured.item.slug}`}
+            className="mb-4 block rounded-card border border-primary/50 bg-surface-1 p-3 transition-colors hover:border-primary"
+          >
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="min-w-0">
+                <Badge tone="primary">Otomatik öne çıkan</Badge>
+                <h2 className="mt-2 text-title-sm font-medium text-foreground">
+                  {featured.item.title}
+                </h2>
+                <p className="mt-1 text-body-sm leading-relaxed text-muted-foreground">
+                  Konumunuza göre en yakın etkinlik. {featured.item.city} ·{' '}
+                  {new Date(featured.item.startsAt).toLocaleDateString('tr-TR', {
+                    day: 'numeric',
+                    month: 'long',
+                  })}
+                </p>
+              </div>
+              <span className="tabular shrink-0 rounded-card border border-border bg-background px-2.5 py-1.5 text-body-sm text-cold">
+                {formatDistance(featured.distanceKm)}
+              </span>
+            </div>
+          </Link>
+        )}
 
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
           {/* ───────── Şematik dağılım ───────── */}

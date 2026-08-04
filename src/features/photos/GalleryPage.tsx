@@ -1,6 +1,8 @@
 import { useMemo } from 'react';
+import { Link } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { ButtonLink } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/Badge';
 import { Input, Select } from '@/components/ui/Input';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -15,6 +17,7 @@ import { CatalogSourceNote } from '@/components/ui/CatalogSourceNote';
 import { useViewMode } from '@/components/ui/useViewMode';
 import { PhotoCard } from './PhotoCard';
 import { usePhotoCatalog } from '@/services/content/photos';
+import { usePhotoWeekRounds } from '@/services/content/photoOfWeek';
 import { cities as turkeyCities } from '@/features/location/cities';
 import { useExplorer } from '@/features/explorer/useExplorer';
 import { gallerySpec } from './gallerySpec';
@@ -27,6 +30,7 @@ import { type AstroPhoto, type ProcessingPalette } from './types';
 import { photoFamilies, familyOrder } from './families';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
+import { selectWeeklyPhoto } from './weeklyPick';
 
 const paletteOptions: (ProcessingPalette | 'hepsi')[] = [
   'hepsi',
@@ -71,8 +75,13 @@ export function GalleryPage() {
   const [view, setView] = useViewMode('galeri');
 
   const catalog = usePhotoCatalog();
+  const rounds = usePhotoWeekRounds();
   const photos = catalog.items;
   const cities = turkeyCities.map((city) => city.name);
+  const weeklyPick = useMemo(
+    () => selectWeeklyPhoto(photos, rounds.rounds),
+    [photos, rounds.rounds]
+  );
 
   /*
    * ORTAK DATA EXPLORER (Faz 4).
@@ -156,6 +165,48 @@ export function GalleryPage() {
             </>
           }
         />
+
+        {weeklyPick && (
+          <section className="mb-5 overflow-hidden rounded-card border border-border bg-surface-1">
+            <div className="grid gap-0 lg:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
+              <Link
+                to={`/fotograf/${weeklyPick.photo.slug}`}
+                aria-label={`Haftanın Fotoğrafı: ${weeklyPick.photo.title}`}
+                className="min-h-56 bg-surface-2"
+                style={{
+                  backgroundImage: weeklyPick.photo.image
+                    ? `linear-gradient(90deg, transparent, color-mix(in_srgb, var(--color-background) 24%, transparent)), url(${weeklyPick.photo.image.url})`
+                    : weeklyPick.photo.gradient,
+                  backgroundPosition: 'center',
+                  backgroundSize: 'cover',
+                }}
+              />
+              <div className="flex flex-col justify-center p-4 sm:p-5">
+                <Badge tone="success" className="w-fit">
+                  Haftanın Fotoğrafı · {weeklyPick.label}
+                </Badge>
+                <h2 className="type-section mt-3 text-foreground">
+                  {weeklyPick.photo.title}
+                </h2>
+                <p className="mt-1 text-body-sm text-muted-foreground">
+                  {weeklyPick.photo.target.name} · @{weeklyPick.photo.user.username}
+                </p>
+                <p className="mt-4 text-body-sm leading-relaxed text-muted-foreground">
+                  Galerinin öne çıkan karesi. Künyesi, setup bilgisi ve
+                  işleme notlarıyla birlikte inceleyebilirsiniz.
+                </p>
+                <div className="mt-5 flex flex-wrap gap-2">
+                  <ButtonLink to={`/fotograf/${weeklyPick.photo.slug}`} size="sm">
+                    Fotoğrafı aç
+                  </ButtonLink>
+                  <ButtonLink to="/haftanin-fotografi" size="sm" variant="secondary">
+                    Arşiv
+                  </ButtonLink>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* Filtre paneli */}
         <ModuleToolbar

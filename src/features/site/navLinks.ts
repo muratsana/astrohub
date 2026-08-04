@@ -99,12 +99,40 @@ export function toNavLinks(rows: unknown): NavLinkView[] {
     .map(normalize)
     .filter((l): l is NavLinkView => l !== null)
     .sort((a, b) => a.position - b.position);
+  const tamamlanmis = tamamlaEskiHeaderTohumu(gecerli);
 
   /* AÇIK SATIR VARDI AMA HİÇBİRİ GEÇERLİ DEĞİLSE veri bozuk → yedek.
      Bu kontrol olmasaydı bozuk bir tablo menüyü sessizce boşaltırdı ve
      sonuç "yönetici hepsini kapattı" durumundan ayırt edilemezdi. */
-  if (acik.length > 0 && gecerli.length === 0) return DEFAULT_NAV_LINKS;
-  return gecerli;
+  if (acik.length > 0 && tamamlanmis.length === 0) return DEFAULT_NAV_LINKS;
+  return tamamlanmis;
+}
+
+function tamamlaEskiHeaderTohumu(links: NavLinkView[]): NavLinkView[] {
+  const header = links.filter((link) => link.menu === 'header');
+  const paths = new Set(header.map((link) => link.path));
+  const eskiTohum =
+    paths.has('/galeri') &&
+    paths.has('/etkinlikler') &&
+    paths.has('/haberler') &&
+    paths.has('/saha');
+
+  if (!eskiTohum || paths.has('/topluluklar')) return links;
+
+  return links
+    .map((link) =>
+      link.menu === 'header' && link.position >= 3
+        ? { ...link, position: link.position + 1 }
+        : link
+    )
+    .concat(
+      satir(
+        'header',
+        { label: 'Topluluklar', to: '/topluluklar' },
+        3
+      )
+    )
+    .sort((a, b) => a.position - b.position);
 }
 
 function normalize(row: Record<string, unknown>): NavLinkView | null {

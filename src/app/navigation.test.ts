@@ -70,8 +70,8 @@ describe('navigasyon bağlantıları', () => {
     }
   });
 
-  it('üst menü sekiz ana giriş taşır; ekipman profil/araç akışındadır', () => {
-    expect(primaryNav).toHaveLength(8);
+  it('üst menü ana girişleri taşır; ekipman profil/araç akışındadır', () => {
+    expect(primaryNav).toHaveLength(9);
     expect(primaryNav.map((i) => i.to)).toContain('/forum');
     expect(primaryNav.map((i) => i.to)).not.toContain('/ekipman');
   });
@@ -80,6 +80,7 @@ describe('navigasyon bağlantıları', () => {
     expect(primaryNav.map((i) => i.label)).toEqual([
       'Galeri',
       'Etkinlikler',
+      'Topluluklar',
       'Haberler',
       'Yazılar',
       'İlanlar',

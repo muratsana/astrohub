@@ -408,22 +408,10 @@ await scenario('ilan formu eksikleri yazarken bildirir, tamamlanınca açılır'
 
 /* ══════════════════════ Etkinlikler ══════════════════════ */
 
-await scenario('etkinliklerde takvim görünümüne geçilir', async () => {
+await scenario('etkinlikler ana sayfası harita ve yakınlık listesi üretir', async () => {
   await goto('/etkinlikler');
-  const [, calendarButton] = await page.$$(
-    '[aria-label="Görünüm biçimi"] button'
-  );
-  assert(calendarButton !== undefined, 'takvim düğmesi yok');
-
-  await calendarButton.click();
-  await page.waitForTimeout(500);
   const text = await page.evaluate(() => document.body.innerText);
-  assert(includesTr(text, 'etkinlik başlıyor'), 'takvim ızgarası gelmedi');
-});
-
-await scenario('etkinlik haritası yakınlık listesi üretir', async () => {
-  await goto('/etkinlikler/harita');
-  const text = await page.evaluate(() => document.body.innerText);
+  assert(includesTr(text, 'etkinlik haritası'), 'harita modülü yok');
   assert(includesTr(text, 'size en yakın'), 'yakınlık listesi yok');
   assert(/\d+\s*km/.test(text), 'mesafe değeri basılmadı');
 });

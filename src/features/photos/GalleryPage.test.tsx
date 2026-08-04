@@ -55,7 +55,11 @@ async function ara(terim: string) {
 function photoLinks() {
   return screen
     .getAllByRole('link')
-    .filter((a) => a.getAttribute('href')?.startsWith('/fotograf/'));
+    .filter(
+      (a) =>
+        a.getAttribute('href')?.startsWith('/fotograf/') &&
+        a.className.includes('group')
+    );
 }
 
 describe('GalleryPage (§7.2)', () => {

@@ -50,12 +50,13 @@ select v.menu, v.label, v.path, v.position
   from (values
     ('header', 'Galeri',      '/galeri',      1),
     ('header', 'Etkinlikler', '/etkinlikler', 2),
-    ('header', 'Haberler',    '/haberler',    3),
-    ('header', 'Yazılar',     '/yazilar',     4),
-    ('header', 'İlanlar',     '/ilanlar',     5),
-    ('header', 'Araçlar',     '/araclar',     6),
-    ('header', 'Forum',       '/forum',       7),
-    ('header', 'Saha',        '/saha',        8)
+    ('header', 'Topluluklar', '/topluluklar', 3),
+    ('header', 'Haberler',    '/haberler',    4),
+    ('header', 'Yazılar',     '/yazilar',     5),
+    ('header', 'İlanlar',     '/ilanlar',     6),
+    ('header', 'Araçlar',     '/araclar',     7),
+    ('header', 'Forum',       '/forum',       8),
+    ('header', 'Saha',        '/saha',        9)
   ) as v(menu, label, path, position)
  where not exists (
    select 1 from public.nav_links where menu = 'header'
@@ -88,7 +89,7 @@ select v.menu, v.label, v.path, v.position
 do $$
 declare
   beklenen_header text[] := array[
-    '/galeri','/etkinlikler','/haberler','/yazilar','/ilanlar',
+    '/galeri','/etkinlikler','/topluluklar','/haberler','/yazilar','/ilanlar',
     '/araclar','/forum','/saha'
   ];
   beklenen_footer text[] := array['/hakkinda','/sozluk','/sss','/kvkk','/kullanim-kosullari'];
@@ -118,5 +119,5 @@ begin
       beklenen_footer, olculen;
   end if;
 
-  raise notice '0062 ölçümü geçti: 8 üst menü + 5 footer bağlantısı kodla aynı.';
+  raise notice '0062 ölçümü geçti: 9 üst menü + 5 footer bağlantısı kodla aynı.';
 end $$;

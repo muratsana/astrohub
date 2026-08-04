@@ -61,7 +61,6 @@ export const staticEntries: SitemapEntry[] = [
   { path: '/araclar/poz-plani', priority: 0.6, changefreq: 'monthly' },
   { path: '/araclar/setup-uyumluluk', priority: 0.6, changefreq: 'monthly' },
   { path: '/araclar/takvim', priority: 0.6, changefreq: 'daily' },
-  { path: '/etkinlikler/harita', priority: 0.6, changefreq: 'daily' },
   { path: '/cerezler', priority: 0.2, changefreq: 'yearly' },
   { path: '/yazilar', priority: 0.8, changefreq: 'weekly' },
   /* Sözlük ve SSS indekslenmeli: ikisi de arama motorundan gelen

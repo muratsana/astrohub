@@ -61,6 +61,7 @@ export interface TileMapProps {
     point: LatLng;
     label: string;
     active?: boolean;
+    color?: string;
     onSelect?: () => void;
   }>;
   className?: string;
@@ -311,7 +312,7 @@ export function TileMap({
                 ? 'h-4 w-4 bg-primary ring-2 ring-primary/40'
                 : 'h-3 w-3 bg-cold hover:h-4 hover:w-4 hover:bg-primary'
             )}
-            style={{ left: point.x, top: point.y }}
+            style={{ left: point.x, top: point.y, backgroundColor: item.color }}
           />
         );
       })}

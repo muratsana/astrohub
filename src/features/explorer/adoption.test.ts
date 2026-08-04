@@ -37,7 +37,6 @@ const BEKLEYEN: string[] = [];
 const GECEN = [
   'features/photos/GalleryPage.tsx',
   'features/clubs/ClubsPage.tsx',
-  'features/observing-sites/SitesPage.tsx',
   'features/marketplace/MarketplacePage.tsx',
   'features/news/NewsPage.tsx',
   'features/articles/ArticlesPage.tsx',
@@ -48,7 +47,10 @@ const GECEN = [
    * üstleniyor, kategori süzmesi sayfada kalıyor.
    */
   'features/equipment/EquipmentPage.tsx',
-  'features/events/EventsPage.tsx',
+  /*
+   * Saha ve etkinlikler artık kart/list/table explorer sayfası değil;
+   * ana modülleri harita + yakınlık listesi.
+   */
   /*
    * Hedefler ve Forum EN SON taşındı; ikisi de genel motorun yapmadığı
    * bir şey yapıyordu ve naif taşıma sessizce kaybettirirdi:

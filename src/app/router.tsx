@@ -181,7 +181,7 @@ export const appRoutes = [
       {
         path: 'etkinlikler',
         element: route(
-          named(() => import('@/features/events/EventsPage'), 'EventsPage')
+          named(() => import('@/features/events/EventMapPage'), 'EventMapPage')
         ),
       },
       {
@@ -195,9 +195,7 @@ export const appRoutes = [
       },
       {
         path: 'etkinlikler/harita',
-        element: route(
-          named(() => import('@/features/events/EventMapPage'), 'EventMapPage')
-        ),
+        element: <RedirectTo to="/etkinlikler" />,
       },
       {
         path: 'topluluklar',
@@ -628,7 +626,7 @@ export const appRoutes = [
       },
       {
         path: 'harita/etkinlikler',
-        element: <RedirectTo to="/etkinlikler/harita" />,
+        element: <RedirectTo to="/etkinlikler" />,
       },
       {
         path: 'harita/istasyonlar',

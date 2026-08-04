@@ -1,11 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { Container } from '@/components/ui/Container';
+import { Badge } from '@/components/ui/Badge';
 import { HeroBackdrop } from '@/components/media/HeroBackdrop';
 import { ChevronDownIcon } from '@/components/ui/icons';
 import { usePreviewEditor } from '@/features/preview-editor/PreviewEditorContext';
 import type { EditableField, HeroSlide } from '../hero/slides';
 import { useHeroSlides } from '@/features/site/SiteConfigContext';
+import { usePhotoCatalog } from '@/services/content/photos';
+import { usePhotoWeekRounds } from '@/services/content/photoOfWeek';
+import { selectWeeklyPhoto } from '@/features/photos/weeklyPick';
 import { focalPosition, type HeroSlideView } from '@/features/site/heroSlides';
 import { commonsSrcSet, commonsWidthUrl } from '@/lib/commons';
 import { cn } from '@/lib/cn';
@@ -46,6 +50,8 @@ export function HeroSection() {
     editör hiç yüklenmiyor, dolayısıyla kaynak her zaman tablo.
   */
   const yayindaki = useHeroSlides();
+  const photoCatalog = usePhotoCatalog();
+  const photoWeekRounds = usePhotoWeekRounds();
   /*
     Editörün slaytlarında odak noktası ve metin hizası YOK — o alanlar
     panelin konusu, tasarım aracının değil. Varsayılanlarla tamamlanıyor
@@ -81,6 +87,10 @@ export function HeroSection() {
   const touchX = useRef<number | null>(null);
 
   const count = slides.length;
+  const weeklyPick = useMemo(
+    () => selectWeeklyPhoto(photoCatalog.items, photoWeekRounds.rounds),
+    [photoCatalog.items, photoWeekRounds.rounds]
+  );
   const go = useCallback(
     (next: number) => setIndex(((next % count) + count) % count),
     [count]
@@ -353,6 +363,33 @@ export function HeroSection() {
               </Editable>
             </div>
           </div>
+
+          {weeklyPick && (
+            <Link
+              to={`/fotograf/${weeklyPick.photo.slug}`}
+              className="absolute right-6 top-1/2 hidden w-72 -translate-y-1/2 overflow-hidden rounded-card border border-border-strong bg-background/80 backdrop-blur-sm transition-colors hover:border-primary xl:block"
+            >
+              <div
+                className="h-28 bg-surface-2"
+                style={{
+                  backgroundImage: weeklyPick.photo.image
+                    ? `linear-gradient(0deg, color-mix(in_srgb, var(--color-background) 22%, transparent), transparent), url(${weeklyPick.photo.image.url})`
+                    : weeklyPick.photo.gradient,
+                  backgroundPosition: 'center',
+                  backgroundSize: 'cover',
+                }}
+              />
+              <div className="p-3">
+                <Badge tone="success">{weeklyPick.label}</Badge>
+                <p className="mt-2 line-clamp-2 text-caption font-medium text-foreground">
+                  Haftanın Fotoğrafı: {weeklyPick.photo.title}
+                </p>
+                <p className="mt-1 truncate text-meta text-muted-foreground">
+                  {weeklyPick.photo.target.name} · @{weeklyPick.photo.user.username}
+                </p>
+              </div>
+            </Link>
+          )}
 
           {/* Oklar */}
           <NavArrow side="left" onClick={() => go(index - 1)} />

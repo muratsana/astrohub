@@ -35,14 +35,13 @@ export interface NavGroup {
  * yazışmak için. TV ve Radyo metin girişi değil, üst çubukta durum
  * düğmesi — açılıp kapatılan bir yayın, gidilecek bir sayfa değil.
  *
- * Sekiz giriş `xl` kırılımının altında sığmıyor; nav orada çekmeceye
- * katlanıyor ve dar pencerede hamburger düğmesi görünüyor — bu tasarlanan
- * davranış, taşma değil. Dokuzuncu giriş `xl`'de de taşırır; eklemeden önce
- * `scripts/check-preview.mjs` ile 390/1024/1440 px'te ölçün.
+ * Dar pencerede nav çekmeceye katlanır; üst menü, kullanıcının istediği ana
+ * modül girişlerini taşır.
  */
 export const primaryNav: NavItem[] = [
   { label: 'Galeri', to: '/galeri' },
   { label: 'Etkinlikler', to: '/etkinlikler' },
+  { label: 'Topluluklar', to: '/topluluklar' },
   { label: 'Haberler', to: '/haberler' },
   { label: 'Yazılar', to: '/yazilar' },
   { label: 'İlanlar', to: '/ilanlar' },
@@ -106,16 +105,10 @@ export const siteMap: NavGroup[] = [
     title: 'Etkinlikler',
     items: [
       {
-        label: 'Etkinlik Takvimi',
-        to: '/etkinlikler',
-        description: 'Türkiye astronomi etkinlikleri',
-        keywords: ['şenlik', 'kamp', 'atölye', 'takvim'],
-      },
-      {
         label: 'Etkinlik Haritası',
-        to: '/etkinlikler/harita',
+        to: '/etkinlikler',
         description: 'Konum dağılımı ve size en yakın etkinlikler',
-        keywords: ['harita', 'yakınımda', 'konum'],
+        keywords: ['şenlik', 'kamp', 'atölye', 'harita', 'yakınımda', 'konum'],
       },
       {
         label: 'Kulüpler ve Topluluklar',
@@ -450,8 +443,8 @@ export function withoutPrefixes(
 export const mobileNav: NavItem[] = [
   { label: 'Galeri', to: '/galeri' },
   { label: 'Etkinlikler', to: '/etkinlikler' },
+  { label: 'Topluluklar', to: '/topluluklar' },
   { label: 'Haberler', to: '/haberler' },
-  { label: 'Yazılar', to: '/yazilar' },
 ];
 
 /** Çekmecenin en üstünde sabit duran birincil giriş. */

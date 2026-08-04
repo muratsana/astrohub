@@ -1,6 +1,7 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { HeroSection } from './HeroSection';
 import { PreviewEditorProvider } from '@/features/preview-editor/PreviewEditorContext';
 
@@ -19,13 +20,20 @@ import { PreviewEditorProvider } from '@/features/preview-editor/PreviewEditorCo
 /* Slaytlar `PreviewEditorContext`ten geliyor; sağlayıcısız render
    hemen fırlatıyor. Üretimde sağlayıcı uygulama kökünde. */
 const wrap = () =>
-  render(
-    <MemoryRouter>
-      <PreviewEditorProvider>
-        <HeroSection />
-      </PreviewEditorProvider>
-    </MemoryRouter>
-  );
+  {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    return render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <PreviewEditorProvider>
+            <HeroSection />
+          </PreviewEditorProvider>
+        </MemoryRouter>
+      </QueryClientProvider>
+    );
+  };
 
 /** Belirli bir slaydın göründüğünü sayaçtan okur ("01 / 05"). */
 function slaytNo(container: HTMLElement): string {
