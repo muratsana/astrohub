@@ -207,7 +207,7 @@ export function SitesPage() {
 
       <Container className="py-8 sm:py-10">
         <PageHeader
-          title="Saha"
+          title="Gözlem Sahaları"
           description="Kamp ve gözlem noktaları artık harita üstünde: Bortle/SQM kayıtları, ışık kirliliği katmanı ve size en yakın sahalar."
           meta={location.label}
           actions={
