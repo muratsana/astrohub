@@ -39,6 +39,17 @@ export interface MountBridgeStatus {
   error?: string;
 }
 
+export interface MountBridgeDriver {
+  id: string;
+  name: string;
+}
+
+export interface MountBridgeDriversResponse {
+  ok: boolean;
+  drivers: MountBridgeDriver[];
+  error?: string;
+}
+
 export interface ArchivePlan {
   id: string;
   targetSlug: string;
@@ -82,6 +93,35 @@ export async function disconnectMountBridge(
   timeoutMs = 2500
 ): Promise<MountBridgeStatus> {
   return bridgeRequest(baseUrl, '/disconnect', { method: 'POST' }, timeoutMs);
+}
+
+export async function fetchMountBridgeDrivers(
+  baseUrl = DEFAULT_BRIDGE_URL,
+  timeoutMs = 1800
+): Promise<MountBridgeDriversResponse> {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(`${baseUrl.replace(/\/$/, '')}/drivers`, {
+      signal: controller.signal,
+      headers: { Accept: 'application/json' },
+    });
+    if (!response.ok) {
+      return { ok: false, drivers: [], error: `Bridge yanıtı başarısız: ${response.status}` };
+    }
+    return normalizeBridgeDrivers(await response.json());
+  } catch (error) {
+    return {
+      ok: false,
+      drivers: [],
+      error:
+        error instanceof Error
+          ? error.message
+          : 'ASCOM sürücü listesi okunamadı',
+    };
+  } finally {
+    window.clearTimeout(timeout);
+  }
 }
 
 async function bridgeRequest(
@@ -148,6 +188,25 @@ export function normalizeBridgeStatus(value: unknown): MountBridgeStatus {
     capture: normalizeCapture(row.capture),
     error: text(row.error),
   };
+}
+
+export function normalizeBridgeDrivers(value: unknown): MountBridgeDriversResponse {
+  if (!value || typeof value !== 'object') {
+    return { ok: false, drivers: [], error: 'Geçersiz bridge yanıtı' };
+  }
+  const row = value as Record<string, unknown>;
+  const drivers = Array.isArray(row.drivers)
+    ? row.drivers
+        .map((driver) => {
+          if (!driver || typeof driver !== 'object') return null;
+          const item = driver as Record<string, unknown>;
+          const id = text(item.id);
+          if (!id) return null;
+          return { id, name: text(item.name) ?? id };
+        })
+        .filter((driver): driver is MountBridgeDriver => driver !== null)
+    : [];
+  return { ok: row.ok === true, drivers, error: text(row.error) };
 }
 
 export function loadArchivePlans(): ArchivePlan[] {

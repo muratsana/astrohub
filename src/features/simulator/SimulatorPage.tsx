@@ -19,6 +19,7 @@ import {
   DEFAULT_BRIDGE_URL,
   connectMountBridge,
   disconnectMountBridge,
+  fetchMountBridgeDrivers,
   fetchMountBridgeStatus,
   loadArchivePlans,
   saveArchivePlans,
@@ -39,6 +40,8 @@ export function SimulatorPage() {
   const presets = useCalculatorPresets();
   const [bridgeUrl, setBridgeUrl] = useState(DEFAULT_BRIDGE_URL);
   const [driverId, setDriverId] = useState('ASCOM.Simulator.Telescope');
+  const [drivers, setDrivers] = useState<{ id: string; name: string }[]>([]);
+  const [driversError, setDriversError] = useState('');
   const [status, setStatus] = useState<MountBridgeStatus | null>(null);
   const [bridgeBusy, setBridgeBusy] = useState(false);
   const [polling, setPolling] = useState(false);
@@ -75,6 +78,24 @@ export function SimulatorPage() {
 
   const refreshBridge = useCallback(async () => {
     setStatus(await fetchMountBridgeStatus(bridgeUrl));
+  }, [bridgeUrl]);
+
+  const loadDrivers = useCallback(async () => {
+    setBridgeBusy(true);
+    try {
+      const result = await fetchMountBridgeDrivers(bridgeUrl);
+      setDrivers(result.drivers);
+      setDriversError(result.error ?? '');
+      if (!result.error && result.drivers.length > 0) {
+        setDriverId((current) =>
+          result.drivers.some((driver) => driver.id === current)
+            ? current
+            : result.drivers[0].id
+        );
+      }
+    } finally {
+      setBridgeBusy(false);
+    }
   }, [bridgeUrl]);
 
   async function connectBridge() {
@@ -349,6 +370,21 @@ export function SimulatorPage() {
                     spellCheck={false}
                   />
                 </Field>
+                {drivers.length > 0 && (
+                  <Field label="Bulunan ASCOM sürücüleri" htmlFor="bridge-driver-select">
+                    <Select
+                      id="bridge-driver-select"
+                      value={driverId}
+                      onChange={(event) => setDriverId(event.target.value)}
+                    >
+                      {drivers.map((driver) => (
+                        <option key={driver.id} value={driver.id}>
+                          {driver.name} · {driver.id}
+                        </option>
+                      ))}
+                    </Select>
+                  </Field>
+                )}
                 <div className="flex flex-wrap gap-2">
                   <Button
                     type="button"
@@ -373,12 +409,26 @@ export function SimulatorPage() {
                   <Button
                     type="button"
                     size="sm"
+                    variant="secondary"
+                    onClick={loadDrivers}
+                    disabled={bridgeBusy}
+                  >
+                    Sürücüleri tara
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
                     variant={polling ? 'secondary' : 'primary'}
                     onClick={() => setPolling((value) => !value)}
                   >
                     {polling ? 'Durdur' : 'Canlı izle'}
                   </Button>
                 </div>
+                {driversError && (
+                  <p className="text-meta leading-relaxed text-warning">
+                    {driversError}. Windows’ta ASCOM Platform ve bridge çalışıyor olmalı.
+                  </p>
+                )}
                 {status?.error && (
                   <p className="text-meta leading-relaxed text-warning">
                     {status.error}. Windows’ta bridge’i başlatın: tools/mount-bridge.

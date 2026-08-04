@@ -41,6 +41,30 @@ function Read-Com($object, $name) {
   try { return $object.$name } catch { return $null }
 }
 
+function Get-AscomDrivers {
+  $drivers = @()
+  try {
+    $profile = New-Object -ComObject "ASCOM.Utilities.Profile"
+    $registered = $profile.RegisteredDevices("Telescope")
+    foreach ($driver in $registered) {
+      $id = Read-Com $driver "ProgID"
+      $name = Read-Com $driver "Name"
+      if (-not $id) { $id = Read-Com $driver "Key" }
+      if (-not $name) { $name = Read-Com $driver "Value" }
+      if ($id) {
+        $nameText = "$id"
+        if ($name) { $nameText = "$name" }
+        $drivers += @{ id = "$id"; name = $nameText }
+      }
+    }
+  } catch {}
+
+  if ($drivers.Count -eq 0) {
+    $drivers += @{ id = "ASCOM.Simulator.Telescope"; name = "ASCOM Telescope Simulator" }
+  }
+  return $drivers
+}
+
 function Invoke-Phd2($method) {
   $client = $null
   try {
@@ -150,7 +174,10 @@ try {
     try {
       switch ($path) {
         "/health" {
-          Send-Json $context 200 @{ ok = $true; app = "Astrohub Mount Bridge"; version = "0.1.0" }
+          Send-Json $context 200 @{ ok = $true; app = "Astrohub Mount Bridge"; version = "0.2.0" }
+        }
+        "/drivers" {
+          Send-Json $context 200 @{ ok = $true; drivers = (Get-AscomDrivers) }
         }
         "/status" {
           Send-Json $context 200 (Mount-Status)

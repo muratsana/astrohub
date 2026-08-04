@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { normalizeBridgeStatus } from './bridge';
+import { normalizeBridgeDrivers, normalizeBridgeStatus } from './bridge';
 
 describe('normalizeBridgeStatus', () => {
   it('bridge yanıtını güvenli montür durumuna indirger', () => {
@@ -42,6 +42,26 @@ describe('normalizeBridgeStatus', () => {
       ok: false,
       connected: false,
       error: 'Geçersiz bridge yanıtı',
+    });
+  });
+
+  it('ASCOM sürücü listesini güvenli şekilde normalize eder', () => {
+    expect(
+      normalizeBridgeDrivers({
+        ok: true,
+        drivers: [
+          { id: 'ASCOM.Simulator.Telescope', name: 'Simulator' },
+          { id: 'ASCOM.RealMount.Telescope' },
+          { name: 'bozuk' },
+        ],
+      })
+    ).toEqual({
+      ok: true,
+      drivers: [
+        { id: 'ASCOM.Simulator.Telescope', name: 'Simulator' },
+        { id: 'ASCOM.RealMount.Telescope', name: 'ASCOM.RealMount.Telescope' },
+      ],
+      error: undefined,
     });
   });
 });
