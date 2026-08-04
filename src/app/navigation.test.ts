@@ -61,6 +61,7 @@ describe('navigasyon bağlantıları', () => {
     for (const path of [
       '/kvkk',
       '/kullanim-kosullari',
+      '/sozluk',
       '/sss',
       '/hakkinda',
       '/iletisim',

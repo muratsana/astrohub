@@ -68,9 +68,10 @@ insert into public.nav_links (menu, label, path, position)
 select v.menu, v.label, v.path, v.position
   from (values
     ('footer', 'Hakkında',            '/hakkinda',            1),
-    ('footer', 'Sık Sorulan Sorular', '/sss',                 2),
-    ('footer', 'KVKK',                '/kvkk',                3),
-    ('footer', 'Kullanım Koşulları',  '/kullanim-kosullari',  4)
+    ('footer', 'Terimler Sözlüğü',    '/sozluk',              2),
+    ('footer', 'Sık Sorulan Sorular', '/sss',                 3),
+    ('footer', 'KVKK',                '/kvkk',                4),
+    ('footer', 'Kullanım Koşulları',  '/kullanim-kosullari',  5)
   ) as v(menu, label, path, position)
  where not exists (
    select 1 from public.nav_links where menu = 'footer'
@@ -90,7 +91,7 @@ declare
     '/galeri','/etkinlikler','/haberler','/yazilar','/ilanlar',
     '/araclar','/forum','/saha'
   ];
-  beklenen_footer text[] := array['/hakkinda','/sss','/kvkk','/kullanim-kosullari'];
+  beklenen_footer text[] := array['/hakkinda','/sozluk','/sss','/kvkk','/kullanim-kosullari'];
   olculen text[];
   dokunulmus integer;
 begin
@@ -117,5 +118,5 @@ begin
       beklenen_footer, olculen;
   end if;
 
-  raise notice '0062 ölçümü geçti: 8 üst menü + 4 footer bağlantısı kodla aynı.';
+  raise notice '0062 ölçümü geçti: 8 üst menü + 5 footer bağlantısı kodla aynı.';
 end $$;

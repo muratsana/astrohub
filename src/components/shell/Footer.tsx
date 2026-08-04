@@ -21,6 +21,7 @@ export function Footer() {
   const legal = useMenu('footer');
   const hasContact = legal.some((item) => item.path === '/iletisim');
   const hasFaq = legal.some((item) => item.path === '/sss');
+  const hasGlossary = legal.some((item) => item.path === '/sozluk');
 
   return (
     <footer className="mt-12 border-t border-border bg-surface-1">
@@ -51,6 +52,14 @@ export function Footer() {
                 {item.label}
               </Link>
             ))}
+            {!hasGlossary && (
+              <Link
+                to="/sozluk"
+                className="inline-block py-1 text-muted-foreground transition-colors hover:text-primary"
+              >
+                Terimler Sözlüğü
+              </Link>
+            )}
             {!hasFaq && (
               <Link
                 to="/sss"
