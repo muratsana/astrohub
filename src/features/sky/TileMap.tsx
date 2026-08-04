@@ -99,6 +99,7 @@ export function TileMap({
   const [size, setSize] = useState<Size>({ width: 0, height: 0 });
   const dragRef = useRef<{ id: number; x: number; y: number } | null>(null);
   const [dragging, setDragging] = useState(false);
+  const [wheelEnabled, setWheelEnabled] = useState(false);
   /* Tıklama ile sürükleme aynı olay çiftinden çıkıyor; toplam hareket
      eşiğin altındaysa kullanıcı bir yeri işaretlemek istemiştir. Eşik
      yoksa harita her kaydırmadan sonra rastgele bir nokta seçer. */
@@ -122,6 +123,7 @@ export function TileMap({
 
   const onPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
     if (event.pointerType === 'mouse' && event.button !== 0) return;
+    if (event.pointerType === 'mouse') setWheelEnabled(true);
     dragRef.current = {
       id: event.pointerId,
       x: event.clientX,
@@ -209,6 +211,7 @@ export function TileMap({
     const el = boxRef.current;
     if (!el) return;
     const handler = (event: WheelEvent) => {
+      if (!wheelEnabled) return;
       event.preventDefault();
       const rect = el.getBoundingClientRect();
       zoomAt(
@@ -219,7 +222,16 @@ export function TileMap({
     };
     el.addEventListener('wheel', handler, { passive: false });
     return () => el.removeEventListener('wheel', handler);
-  }, [zoomAt]);
+  }, [wheelEnabled, zoomAt]);
+
+  useEffect(() => {
+    const handler = (event: PointerEvent) => {
+      const el = boxRef.current;
+      if (el && !el.contains(event.target as Node)) setWheelEnabled(false);
+    };
+    document.addEventListener('pointerdown', handler);
+    return () => document.removeEventListener('pointerdown', handler);
+  }, []);
 
   const onKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     const step = event.shiftKey ? 200 : 80;
@@ -256,11 +268,16 @@ export function TileMap({
       onPointerMove={onPointerMove}
       onPointerUp={endDrag}
       onPointerCancel={endDrag}
+      onPointerLeave={() => {
+        if (!dragRef.current) setWheelEnabled(false);
+      }}
+      onClick={() => setWheelEnabled(true)}
       onDoubleClick={(event) => {
         const rect = event.currentTarget.getBoundingClientRect();
         zoomAt(1, event.clientX - rect.left, event.clientY - rect.top);
       }}
       onKeyDown={onKeyDown}
+      data-wheel-zoom={wheelEnabled ? 'active' : 'idle'}
       className={cn(
         'relative select-none overflow-hidden bg-surface-2 outline-none',
         'focus-visible:ring-1 focus-visible:ring-primary',
