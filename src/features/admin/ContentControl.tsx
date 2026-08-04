@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Panel } from '@/components/ui/Panel';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -42,11 +42,17 @@ import { importContentFile } from './contentImport';
 export function ContentControl({
   canWrite,
   initialKind = 'haber',
+  initialSlug,
 }: {
   canWrite: boolean;
   initialKind?: EntryKind;
+  initialSlug?: string | null;
 }) {
   const [kind, setKind] = useState<EntryKind>(initialKind);
+
+  useEffect(() => {
+    setKind(initialKind);
+  }, [initialKind]);
 
   return (
     <Panel
@@ -71,7 +77,7 @@ export function ContentControl({
         </div>
       }
     >
-      <KindEditor kind={kind} canWrite={canWrite} />
+      <KindEditor kind={kind} canWrite={canWrite} initialSlug={initialSlug} />
     </Panel>
   );
 }
@@ -79,9 +85,11 @@ export function ContentControl({
 function KindEditor({
   kind,
   canWrite,
+  initialSlug,
 }: {
   kind: EntryKind;
   canWrite: boolean;
+  initialSlug?: string | null;
 }) {
   const { entries, loading, error, refresh } = useEntries(kind, {
     includeDrafts: true,
@@ -94,6 +102,7 @@ function KindEditor({
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
   const [importWarnings, setImportWarnings] = useState<string[]>([]);
+  const [openedSlug, setOpenedSlug] = useState<string | null>(null);
 
   const categories =
     kind === 'haber' ? newsCategoryLabels : articleCategoryLabels;
@@ -111,6 +120,25 @@ function KindEditor({
     setMessage(null);
     setImportWarnings([]);
   }
+
+  useEffect(() => {
+    setOpenedSlug(null);
+  }, [kind, initialSlug]);
+
+  useEffect(() => {
+    if (!initialSlug || loading || openedSlug === initialSlug) return;
+    const entry = entries.find((item) => item.slug === initialSlug);
+    if (entry) {
+      setEditing(entry);
+      setDraft(draftFromEntry(entry));
+      setMessage(null);
+    } else {
+      setMessage(
+        'Bu adres panel kaydı olarak bulunamadı. Tohum içerikse aynı slug ile yeni kayıt açıp üzerine yazabilirsiniz.'
+      );
+    }
+    setOpenedSlug(initialSlug);
+  }, [entries, initialSlug, loading, openedSlug]);
 
   async function save() {
     if (!draft) return;
@@ -184,9 +212,9 @@ function KindEditor({
 
         {entries.length === 0 && !loading ? (
           <p className="rounded-card border border-border bg-surface-2 px-2.5 py-3 text-center text-meta text-muted-foreground">
-            Henüz kayıt yok. "Yeni" ile ilk içeriği oluşturun — mevcut
-            haber ve yazılar uygulama içindeki veri dosyalarından geliyor
-            ve burada görünmüyor.
+            Henüz kayıt yok. "Yeni" ile ilk içeriği oluşturun — mevcut haber ve
+            yazılar uygulama içindeki veri dosyalarından geliyor ve burada
+            görünmüyor.
           </p>
         ) : (
           <ul className="max-h-[420px] space-y-1 overflow-y-auto">
@@ -273,8 +301,7 @@ function KindEditor({
             Soldan bir kayıt seçin ya da "Yeni" ile içerik oluşturun.
             <br />
             <span className="text-faint">
-              Yeni kayıtlar taslak olarak açılır; yayına almak ayrı bir
-              adımdır.
+              Yeni kayıtlar taslak olarak açılır; yayına almak ayrı bir adımdır.
             </span>
           </p>
         ) : (
@@ -343,7 +370,9 @@ function KindEditor({
                   id="c-cat"
                   value={draft.category}
                   onChange={(e) =>
-                    setDraft((d) => (d ? { ...d, category: e.target.value } : d))
+                    setDraft((d) =>
+                      d ? { ...d, category: e.target.value } : d
+                    )
                   }
                 >
                   {Object.entries(categories).map(([value, label]) => (
@@ -376,7 +405,9 @@ function KindEditor({
                 <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
                   <div>
                     <p className="label">İçerik blokları</p>
-                    <p className="text-meta text-faint">Başlık, paragraf, alıntı ve listeleri sırayla düzenleyin.</p>
+                    <p className="text-meta text-faint">
+                      Başlık, paragraf, alıntı ve listeleri sırayla düzenleyin.
+                    </p>
                   </div>
                   <label className="cursor-pointer rounded-card border border-border px-2 py-1 text-meta text-cold hover:border-primary hover:text-primary">
                     {importing ? 'İçe aktarılıyor…' : 'Word / PDF içe aktar'}
@@ -393,15 +424,26 @@ function KindEditor({
                         setImportWarnings([]);
                         try {
                           const result = await importContentFile(file);
-                          if (result.blocks.length === 0) throw new Error('Belgede aktarılabilir metin bulunamadı.');
-                          setDraft((current) => current ? {
-                            ...current,
-                            bodyBlocks: result.blocks,
-                            bodyText: blocksToText(result.blocks),
-                          } : current);
+                          if (result.blocks.length === 0)
+                            throw new Error(
+                              'Belgede aktarılabilir metin bulunamadı.'
+                            );
+                          setDraft((current) =>
+                            current
+                              ? {
+                                  ...current,
+                                  bodyBlocks: result.blocks,
+                                  bodyText: blocksToText(result.blocks),
+                                }
+                              : current
+                          );
                           setImportWarnings(result.warnings);
                         } catch (error) {
-                          setMessage(error instanceof Error ? error.message : 'Belge içe aktarılamadı.');
+                          setMessage(
+                            error instanceof Error
+                              ? error.message
+                              : 'Belge içe aktarılamadı.'
+                          );
                         } finally {
                           setImporting(false);
                         }
@@ -411,15 +453,23 @@ function KindEditor({
                 </div>
                 <ContentBlockEditor
                   blocks={draft.bodyBlocks}
-                  onChange={(blocks) => setDraft((current) => current ? {
-                    ...current,
-                    bodyBlocks: blocks,
-                    bodyText: blocksToText(blocks),
-                  } : current)}
+                  onChange={(blocks) =>
+                    setDraft((current) =>
+                      current
+                        ? {
+                            ...current,
+                            bodyBlocks: blocks,
+                            bodyText: blocksToText(blocks),
+                          }
+                        : current
+                    )
+                  }
                 />
                 {importWarnings.length > 0 && (
                   <ul className="mt-2 rounded-card border border-warning/40 bg-warning/5 px-3 py-2 text-meta leading-relaxed text-warning">
-                    {importWarnings.map((warning, index) => <li key={`${warning}-${index}`}>• {warning}</li>)}
+                    {importWarnings.map((warning, index) => (
+                      <li key={`${warning}-${index}`}>• {warning}</li>
+                    ))}
                   </ul>
                 )}
               </div>
@@ -429,7 +479,9 @@ function KindEditor({
                 {draft.bodyBlocks.length > 0 ? (
                   <BlockRenderer blocks={draft.bodyBlocks} />
                 ) : (
-                  <p className="py-8 text-center text-meta text-faint">Önizleme için bir blok ekleyin.</p>
+                  <p className="py-8 text-center text-meta text-faint">
+                    Önizleme için bir blok ekleyin.
+                  </p>
                 )}
               </div>
             </div>
@@ -447,7 +499,10 @@ function KindEditor({
                   }
                 />
               </Field>
-              <Field label={kind === 'haber' ? 'Kaynak adı' : 'Yazar'} htmlFor="c-author">
+              <Field
+                label={kind === 'haber' ? 'Kaynak adı' : 'Yazar'}
+                htmlFor="c-author"
+              >
                 <Input
                   id="c-author"
                   value={kind === 'haber' ? draft.sourceName : draft.author}
@@ -491,7 +546,9 @@ function KindEditor({
                   value={draft.imageUrl}
                   placeholder="https://"
                   onChange={(e) =>
-                    setDraft((d) => (d ? { ...d, imageUrl: e.target.value } : d))
+                    setDraft((d) =>
+                      d ? { ...d, imageUrl: e.target.value } : d
+                    )
                   }
                 />
               </Field>
@@ -542,7 +599,10 @@ function KindEditor({
                   onChange={(e) =>
                     setDraft((d) =>
                       d
-                        ? { ...d, status: e.target.checked ? 'yayinda' : 'taslak' }
+                        ? {
+                            ...d,
+                            status: e.target.checked ? 'yayinda' : 'taslak',
+                          }
                         : d
                     )
                   }
@@ -596,7 +656,11 @@ function ContentBlockEditor({
   onChange: (blocks: ContentBlock[]) => void;
 }) {
   function replace(index: number, block: ContentBlock) {
-    onChange(blocks.map((current, currentIndex) => currentIndex === index ? block : current));
+    onChange(
+      blocks.map((current, currentIndex) =>
+        currentIndex === index ? block : current
+      )
+    );
   }
 
   function move(index: number, direction: -1 | 1) {
@@ -610,21 +674,38 @@ function ContentBlockEditor({
   return (
     <div className="space-y-2">
       {blocks.map((block, index) => (
-        <div key={index} className="rounded-card border border-border bg-surface-2 p-2">
+        <div
+          key={index}
+          className="rounded-card border border-border bg-surface-2 p-2"
+        >
           <div className="mb-1.5 flex flex-wrap items-center gap-1.5">
             <Select
               aria-label={`${index + 1}. blok türü`}
               value={block.type}
-              onChange={(event) => replace(index, blankBlock(event.target.value as ContentBlock['type']))}
+              onChange={(event) =>
+                replace(
+                  index,
+                  blankBlock(event.target.value as ContentBlock['type'])
+                )
+              }
               className="h-8 w-auto py-0 text-meta"
             >
-              {Object.entries(BLOCK_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+              {Object.entries(BLOCK_LABELS).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
             </Select>
             {block.type === 'heading' && (
               <Select
                 aria-label={`${index + 1}. başlık seviyesi`}
                 value={String(block.level)}
-                onChange={(event) => replace(index, { ...block, level: Number(event.target.value) as 2 | 3 })}
+                onChange={(event) =>
+                  replace(index, {
+                    ...block,
+                    level: Number(event.target.value) as 2 | 3,
+                  })
+                }
                 className="h-8 w-auto py-0 text-meta"
               >
                 <option value="2">H2</option>
@@ -635,7 +716,12 @@ function ContentBlockEditor({
               <Select
                 aria-label={`${index + 1}. liste biçimi`}
                 value={block.style}
-                onChange={(event) => replace(index, { ...block, style: event.target.value as 'bullet' | 'ordered' })}
+                onChange={(event) =>
+                  replace(index, {
+                    ...block,
+                    style: event.target.value as 'bullet' | 'ordered',
+                  })
+                }
                 className="h-8 w-auto py-0 text-meta"
               >
                 <option value="bullet">Madde</option>
@@ -643,16 +729,47 @@ function ContentBlockEditor({
               </Select>
             )}
             <span className="ml-auto text-meta text-faint">{index + 1}</span>
-            <button type="button" aria-label="Bloğu yukarı taşı" disabled={index === 0} onClick={() => move(index, -1)} className="px-1 text-meta text-muted-foreground disabled:opacity-30">↑</button>
-            <button type="button" aria-label="Bloğu aşağı taşı" disabled={index === blocks.length - 1} onClick={() => move(index, 1)} className="px-1 text-meta text-muted-foreground disabled:opacity-30">↓</button>
-            <button type="button" aria-label="Bloğu sil" onClick={() => onChange(blocks.filter((_, currentIndex) => currentIndex !== index))} className="px-1 text-meta text-danger">Sil</button>
+            <button
+              type="button"
+              aria-label="Bloğu yukarı taşı"
+              disabled={index === 0}
+              onClick={() => move(index, -1)}
+              className="px-1 text-meta text-muted-foreground disabled:opacity-30"
+            >
+              ↑
+            </button>
+            <button
+              type="button"
+              aria-label="Bloğu aşağı taşı"
+              disabled={index === blocks.length - 1}
+              onClick={() => move(index, 1)}
+              className="px-1 text-meta text-muted-foreground disabled:opacity-30"
+            >
+              ↓
+            </button>
+            <button
+              type="button"
+              aria-label="Bloğu sil"
+              onClick={() =>
+                onChange(
+                  blocks.filter((_, currentIndex) => currentIndex !== index)
+                )
+              }
+              className="px-1 text-meta text-danger"
+            >
+              Sil
+            </button>
           </div>
           <textarea
             aria-label={`${index + 1}. blok metni`}
             value={blockText(block)}
             rows={block.type === 'list' ? 4 : 3}
-            placeholder={block.type === 'list' ? 'Her satıra bir madde' : 'Metin'}
-            onChange={(event) => replace(index, withBlockText(block, event.target.value))}
+            placeholder={
+              block.type === 'list' ? 'Her satıra bir madde' : 'Metin'
+            }
+            onChange={(event) =>
+              replace(index, withBlockText(block, event.target.value))
+            }
             className="w-full resize-y rounded-card border border-border bg-background px-2.5 py-2 text-meta leading-relaxed text-foreground outline-none focus:border-primary"
           />
         </div>

@@ -12,6 +12,7 @@ import { commonsWidthUrl } from '@/lib/commons';
 import { ExternalLink } from '@/components/ExternalLink';
 import { BlockRenderer } from '@/components/content/BlockRenderer';
 import { paragraphsToBlocks } from '@/domain/content/blocks';
+import { AdminEditLink } from '@/components/admin/AdminEditLink';
 
 /** Haber detayı — okuma genişliği sınırlı, kaynak künyesi görünür. */
 export function NewsDetailPage() {
@@ -77,11 +78,14 @@ export function NewsDetailPage() {
             </Link>
           </nav>
 
-          <div className="mb-4 flex flex-wrap items-center gap-2">
-            <Badge tone="primary">{newsCategoryLabels[item.category]}</Badge>
-            <span className="tabular text-meta text-faint">
-              {publishedLabel}
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+            <span className="flex flex-wrap items-center gap-2">
+              <Badge tone="primary">{newsCategoryLabels[item.category]}</Badge>
+              <span className="tabular text-meta text-faint">
+                {publishedLabel}
+              </span>
             </span>
+            <AdminEditLink to={`/admin/content?kind=haber&slug=${item.slug}`} />
           </div>
 
           <h1 className="type-page-lg text-foreground">

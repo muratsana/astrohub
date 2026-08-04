@@ -7,13 +7,11 @@ import { Badge } from '@/components/ui/Badge';
 import { Select } from '@/components/ui/Input';
 import { Button, ButtonLink } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { SortableHeader } from '@/components/ui/SortableHeader';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
 import { useLocationContext } from '@/features/location/LocationContext';
-import {
-  sortByProximity,
-  formatDistance,
-} from '@/domain/geography/distance';
+import { sortByProximity, formatDistance } from '@/domain/geography/distance';
 import { useEventCatalog } from '@/services/content/events';
 import { eventTypeLabels, type EventType } from './types';
 import type { AstroEvent } from './types';
@@ -43,6 +41,46 @@ import { hasNetworkAccess } from '@/lib/runtime';
 const CONSENT_KEY = 'astrohub:map:tiles';
 type BaseMode = 'harita' | 'uydu';
 type LayerMode = 'yok' | 'isik';
+type EventSortKey = 'distance' | 'city' | 'startsAt' | 'endsAt';
+type SortDirection = 'asc' | 'desc';
+type LocatedEvent = { item: AstroEvent; distanceKm: number };
+
+const shortDateFormatter = new Intl.DateTimeFormat('tr-TR', {
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
+});
+
+function formatEventDate(value: string | undefined): string {
+  if (!value) return '—';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '—';
+  return shortDateFormatter.format(date);
+}
+
+function sortLocatedEvents(
+  items: LocatedEvent[],
+  key: EventSortKey,
+  direction: SortDirection
+): LocatedEvent[] {
+  const sign = direction === 'asc' ? 1 : -1;
+  const time = (value: string | undefined) => new Date(value ?? '').getTime();
+
+  return [...items].sort((a, b) => {
+    if (key === 'distance') return (a.distanceKm - b.distanceKm) * sign;
+    if (key === 'city') {
+      return a.item.city.localeCompare(b.item.city, 'tr-TR') * sign;
+    }
+
+    const aTime = time(key === 'startsAt' ? a.item.startsAt : a.item.endsAt);
+    const bTime = time(key === 'startsAt' ? b.item.startsAt : b.item.endsAt);
+    return (
+      ((Number.isFinite(aTime) ? aTime : 0) -
+        (Number.isFinite(bTime) ? bTime : 0)) *
+      sign
+    );
+  });
+}
 
 export function EventMapPage() {
   const { location, permission, requestDeviceLocation } = useLocationContext();
@@ -61,6 +99,10 @@ export function EventMapPage() {
   const [opacity, setOpacity] = useState(55);
   const [baseMode, setBaseMode] = useState<BaseMode>('harita');
   const [layerMode, setLayerMode] = useState<LayerMode>('isik');
+  const [sort, setSort] = useState<{
+    key: EventSortKey;
+    direction: SortDirection;
+  }>({ key: 'distance', direction: 'asc' });
   const [center, setCenter] = useState<LatLng>({
     lat: location.latitude,
     lng: location.longitude,
@@ -83,6 +125,10 @@ export function EventMapPage() {
     () => sortByProximity(filtered, location, (e: AstroEvent) => e.coords),
     [filtered, location]
   );
+  const sortedLocated = useMemo(
+    () => sortLocatedEvents(located, sort.key, sort.direction),
+    [located, sort]
+  );
 
   useEffect(() => {
     setActive((current) => {
@@ -94,7 +140,8 @@ export function EventMapPage() {
   }, [located]);
 
   const featured = located[0];
-  const selected = located.find(({ item }) => item.slug === active) ?? located[0];
+  const selected =
+    located.find(({ item }) => item.slug === active) ?? located[0];
   const mapItems = showAll ? located : selected ? [selected] : [];
   const overlay = layerMode === 'isik' ? OVERLAY_SOURCES[0] : undefined;
   const base =
@@ -115,6 +162,22 @@ export function EventMapPage() {
     setShowAll(false);
     setCenter({ lat: item.coords.latitude, lng: item.coords.longitude });
     setZoom((current) => Math.max(current, 7));
+  }
+
+  function changeSort(key: EventSortKey) {
+    setSort((current) =>
+      current.key === key
+        ? {
+            key,
+            direction: current.direction === 'asc' ? 'desc' : 'asc',
+          }
+        : { key, direction: 'asc' }
+    );
+  }
+
+  function sortLabel(key: EventSortKey, label: string) {
+    if (sort.key !== key) return label;
+    return `${label} ${sort.direction === 'asc' ? '↑' : '↓'}`;
   }
 
   function allow() {
@@ -147,14 +210,19 @@ export function EventMapPage() {
           description="Etkinlikler konumlarına göre dağıtıldı ve size olan kuş uçuşu mesafeye göre sıralandı. Referans noktası üst çubuktaki konumunuz."
           meta={location.label}
           actions={
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={requestDeviceLocation}
-              disabled={permission === 'pending'}
-            >
-              {permission === 'pending' ? 'Konum alınıyor' : 'Konumumu bul'}
-            </Button>
+            <>
+              <ButtonLink to="/etkinlik/yeni" size="sm">
+                Etkinlik ekle
+              </ButtonLink>
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={requestDeviceLocation}
+                disabled={permission === 'pending'}
+              >
+                {permission === 'pending' ? 'Konum alınıyor' : 'Konumumu bul'}
+              </Button>
+            </>
           }
         />
 
@@ -195,10 +263,7 @@ export function EventMapPage() {
                 </h2>
                 <p className="mt-1 text-body-sm leading-relaxed text-muted-foreground">
                   Konumunuza göre en yakın etkinlik. {featured.item.city} ·{' '}
-                  {new Date(featured.item.startsAt).toLocaleDateString('tr-TR', {
-                    day: 'numeric',
-                    month: 'long',
-                  })}
+                  {formatEventDate(featured.item.startsAt)}
                 </p>
               </div>
               <span className="tabular shrink-0 rounded-card border border-border bg-background px-2.5 py-1.5 text-body-sm text-cold">
@@ -253,14 +318,10 @@ export function EventMapPage() {
                 <div className="grid h-full place-items-center p-6 text-center">
                   <div className="max-w-md">
                     <p className="text-body-sm leading-relaxed text-muted-foreground">
-                      Harita CARTO döşemelerini yükler; IP adresiniz ve baktığınız
-                      bölge sağlayıcıya iletilir.
+                      Harita CARTO döşemelerini yükler; IP adresiniz ve
+                      baktığınız bölge sağlayıcıya iletilir.
                     </p>
-                    <Button
-                      size="sm"
-                      className="mt-3"
-                      onClick={allow}
-                    >
+                    <Button size="sm" className="mt-3" onClick={allow}>
                       Haritayı yükle
                     </Button>
                   </div>
@@ -290,7 +351,9 @@ export function EventMapPage() {
                       <span className="label">Altlık</span>
                       <Select
                         value={baseMode}
-                        onChange={(event) => setBaseMode(event.target.value as BaseMode)}
+                        onChange={(event) =>
+                          setBaseMode(event.target.value as BaseMode)
+                        }
                         className="h-8 w-28 text-meta"
                       >
                         <option value="harita">Harita</option>
@@ -301,7 +364,9 @@ export function EventMapPage() {
                       <span className="label">Katman</span>
                       <Select
                         value={layerMode}
-                        onChange={(event) => setLayerMode(event.target.value as LayerMode)}
+                        onChange={(event) =>
+                          setLayerMode(event.target.value as LayerMode)
+                        }
                         className="h-8 w-28 text-meta"
                       >
                         <option value="isik">Işık</option>
@@ -318,7 +383,9 @@ export function EventMapPage() {
                           max={OPACITY_RANGE.max}
                           step={5}
                           value={opacity}
-                          onChange={(event) => setOpacity(Number(event.target.value))}
+                          onChange={(event) =>
+                            setOpacity(Number(event.target.value))
+                          }
                           className="block w-24 accent-primary"
                         />
                       </label>
@@ -349,58 +416,95 @@ export function EventMapPage() {
                   className="border-0 py-8"
                 />
               ) : (
-                <ul>
-                  {located.map(({ item, distanceKm }) => (
-                    <li key={item.slug} className="border-b border-border last:border-0">
-                      <div
-                        className={cn(
-                          'flex flex-wrap items-start justify-between gap-3 py-3 transition-colors',
-                          active === item.slug && 'text-primary'
-                        )}
-                      >
-                        <div className="min-w-0 flex-1">
-                          <span className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                            <span className="truncate text-caption text-foreground">
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[860px] border-collapse text-left">
+                    <thead className="border-b border-border text-meta text-muted-foreground">
+                      <tr>
+                        <th scope="col" className="px-0 py-2 pr-4 font-medium">
+                          Etkinlik
+                        </th>
+                        <SortableHeader onClick={() => changeSort('city')}>
+                          {sortLabel('city', 'İl')}
+                        </SortableHeader>
+                        <SortableHeader onClick={() => changeSort('startsAt')}>
+                          {sortLabel('startsAt', 'Başlangıç')}
+                        </SortableHeader>
+                        <SortableHeader onClick={() => changeSort('endsAt')}>
+                          {sortLabel('endsAt', 'Bitiş')}
+                        </SortableHeader>
+                        <SortableHeader onClick={() => changeSort('distance')}>
+                          {sortLabel('distance', 'Mesafe')}
+                        </SortableHeader>
+                        <th
+                          scope="col"
+                          className="py-2 pl-4 text-right font-medium"
+                        >
+                          İşlem
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sortedLocated.map(({ item, distanceKm }) => (
+                        <tr
+                          key={item.slug}
+                          className={cn(
+                            'border-b border-border transition-colors last:border-0',
+                            active === item.slug && 'text-primary'
+                          )}
+                        >
+                          <td className="max-w-[320px] py-2.5 pr-4 align-top">
+                            <Link
+                              to={`/etkinlik/${item.slug}`}
+                              className="block truncate text-caption text-foreground transition-colors hover:text-primary"
+                            >
                               {item.title}
+                            </Link>
+                            <span className="mt-1 flex flex-wrap gap-1.5">
+                              <Badge tone="primary">
+                                {eventTypeLabels[item.type]}
+                              </Badge>
+                              <Badge tone={item.free ? 'success' : 'muted'}>
+                                {item.free ? 'Ücretsiz' : 'Ücretli'}
+                              </Badge>
                             </span>
-                            <span className="tabular text-body-sm text-cold">
-                              {formatDistance(distanceKm)}
-                            </span>
-                          </span>
-                          <span className="tabular mt-0.5 block text-meta text-muted-foreground">
-                            {item.city} ·{' '}
-                            {new Date(item.startsAt).toLocaleDateString('tr-TR', {
-                              day: 'numeric',
-                              month: 'long',
-                            })}
-                          </span>
-                          <span className="mt-1 flex flex-wrap gap-1.5">
-                            <Badge tone="primary">{eventTypeLabels[item.type]}</Badge>
-                            <Badge tone={item.free ? 'success' : 'muted'}>
-                              {item.free ? 'Ücretsiz' : 'Ücretli'}
-                            </Badge>
-                          </span>
-                        </div>
-                        <div className="flex shrink-0 flex-wrap gap-2">
-                          <Button
-                            size="sm"
-                            variant={active === item.slug ? 'primary' : 'secondary'}
-                            onClick={() => focusEvent(item)}
-                          >
-                            Haritada göster
-                          </Button>
-                          <ButtonLink
-                            to={`/etkinlik/${item.slug}`}
-                            size="sm"
-                            variant="ghost"
-                          >
-                            Görüntüle
-                          </ButtonLink>
-                        </div>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
+                          </td>
+                          <td className="py-2.5 pr-4 align-top text-body-sm text-muted-foreground">
+                            {item.city}
+                          </td>
+                          <td className="tabular py-2.5 pr-4 align-top text-body-sm text-muted-foreground">
+                            {formatEventDate(item.startsAt)}
+                          </td>
+                          <td className="tabular py-2.5 pr-4 align-top text-body-sm text-muted-foreground">
+                            {formatEventDate(item.endsAt ?? item.startsAt)}
+                          </td>
+                          <td className="tabular py-2.5 pr-4 align-top text-body-sm text-cold">
+                            {formatDistance(distanceKm)}
+                          </td>
+                          <td className="py-2.5 pl-4 align-top">
+                            <div className="flex justify-end gap-2">
+                              <Button
+                                size="sm"
+                                variant={
+                                  active === item.slug ? 'primary' : 'secondary'
+                                }
+                                onClick={() => focusEvent(item)}
+                              >
+                                Haritada göster
+                              </Button>
+                              <ButtonLink
+                                to={`/etkinlik/${item.slug}`}
+                                size="sm"
+                                variant="ghost"
+                              >
+                                Görüntüle
+                              </ButtonLink>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </Panel>
 
@@ -408,7 +512,10 @@ export function EventMapPage() {
               <Panel title="Çevrimiçi" status={`${unlocated.length}`}>
                 <ul>
                   {unlocated.map((item) => (
-                    <li key={item.slug} className="border-b border-border last:border-0">
+                    <li
+                      key={item.slug}
+                      className="border-b border-border last:border-0"
+                    >
                       <Link
                         to={`/etkinlik/${item.slug}`}
                         className="flex items-baseline justify-between gap-3 py-2 transition-colors hover:text-primary"

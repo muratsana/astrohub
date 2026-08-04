@@ -18,6 +18,7 @@ import {
 import { ReportButton } from '@/features/admin/ReportButton';
 import { MessageButton } from '@/features/social/MessageButton';
 import { getListingBySlug, relatedListings, priceRange } from './data';
+import { AdminEditLink } from '@/components/admin/AdminEditLink';
 
 /**
  * İLAN DETAYI (§7.13).
@@ -94,6 +95,7 @@ export function ListingDetailPage() {
           meta={`${listing.city} · ${postedAt}`}
           actions={
             <>
+              <AdminEditLink to={`/admin/listings?slug=${listing.slug}`} />
               <Badge tone={conditionTone[listing.condition]}>
                 {listing.condition}
               </Badge>
@@ -145,14 +147,20 @@ export function ListingDetailPage() {
             <Panel title="Alım-satım güvenliği" className="border-warning/35">
               <ul className="space-y-2 text-meta leading-relaxed text-muted-foreground">
                 <li>
-                  Astrohub bir <strong className="text-foreground">emanet
-                  (escrow) hizmeti sunmaz</strong>. Ödeme ve teslimat tamamen
-                  taraflar arasındadır; platform ödemeye aracılık etmez.
+                  Astrohub bir{' '}
+                  <strong className="text-foreground">
+                    emanet (escrow) hizmeti sunmaz
+                  </strong>
+                  . Ödeme ve teslimat tamamen taraflar arasındadır; platform
+                  ödemeye aracılık etmez.
                 </li>
                 <li>
-                  Mümkünse <strong className="text-foreground">elden teslim ve
-                  yerinde deneme</strong> yapın. Optik ve montürde asıl kusurlar
-                  fotoğrafta görünmez: kolimasyon, dişli boşluğu, sensör tozu.
+                  Mümkünse{' '}
+                  <strong className="text-foreground">
+                    elden teslim ve yerinde deneme
+                  </strong>{' '}
+                  yapın. Optik ve montürde asıl kusurlar fotoğrafta görünmez:
+                  kolimasyon, dişli boşluğu, sensör tozu.
                 </li>
                 <li>
                   Kapora isteyen, iletişimi platform dışına taşımak için ısrar
@@ -184,9 +192,7 @@ export function ListingDetailPage() {
                 />
                 <Readout
                   label="Kategori medyanı"
-                  value={
-                    range ? range.median.toLocaleString('tr-TR') : '—'
-                  }
+                  value={range ? range.median.toLocaleString('tr-TR') : '—'}
                   unit={range ? '₺' : undefined}
                   hint={
                     range
@@ -221,8 +227,8 @@ export function ListingDetailPage() {
                 />
                 <p className="text-meta leading-snug text-faint">
                   İletişimin platform içinde kalması, anlaşmazlıkta kaydın
-                  moderasyona açık olmasını sağlar — bu yüzden ilanlarda
-                  telefon ve e-posta yayımlanmaz.
+                  moderasyona açık olmasını sağlar — bu yüzden ilanlarda telefon
+                  ve e-posta yayımlanmaz.
                 </p>
               </div>
             </Panel>
@@ -235,7 +241,9 @@ export function ListingDetailPage() {
                 >
                   @{listing.seller.username}
                 </Link>
-                {listing.seller.verified && <Badge tone="cold">Doğrulanmış</Badge>}
+                {listing.seller.verified && (
+                  <Badge tone="cold">Doğrulanmış</Badge>
+                )}
               </div>
 
               <SpecList className="mt-2">
@@ -292,7 +300,10 @@ export function ListingDetailPage() {
               >
                 <ul>
                   {related.map((item) => (
-                    <li key={item.slug} className="border-b border-border last:border-0">
+                    <li
+                      key={item.slug}
+                      className="border-b border-border last:border-0"
+                    >
                       <Link
                         to={`/ilan/${item.slug}`}
                         className="flex items-baseline justify-between gap-3 py-2 transition-colors hover:text-primary"

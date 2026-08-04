@@ -56,23 +56,20 @@ export function UserControl() {
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState<string | null>(null);
 
-  const load = useCallback(
-    (term: string) => {
-      setError(null);
-      fetchUsers(term)
-        .then(setUsers)
-        .catch((e: unknown) =>
-          setError(e instanceof Error ? e.message : 'Kullanıcılar okunamadı')
-        );
-      fetchDeletionRequests()
-        .then(setRequests)
-        .catch(() => {
-          /* Silme talepleri okunamazsa kullanıcı listesi yine çalışsın —
+  const load = useCallback((term: string) => {
+    setError(null);
+    fetchUsers(term)
+      .then(setUsers)
+      .catch((e: unknown) =>
+        setError(e instanceof Error ? e.message : 'Kullanıcılar okunamadı')
+      );
+    fetchDeletionRequests()
+      .then(setRequests)
+      .catch(() => {
+        /* Silme talepleri okunamazsa kullanıcı listesi yine çalışsın —
              ikisi ayrı yetki ve ayrı tablo. */
-        });
-    },
-    []
-  );
+      });
+  }, []);
 
   useEffect(() => load(''), [load]);
 
@@ -89,6 +86,23 @@ export function UserControl() {
     }
   }
 
+  async function setPrimaryStatus(
+    userId: string,
+    status: 'standard' | 'moderator' | 'admin'
+  ) {
+    if (status === 'standard') {
+      await revokeRole(userId, 'moderator');
+      await revokeRole(userId, 'admin');
+      return;
+    }
+    if (status === 'moderator') {
+      await revokeRole(userId, 'admin');
+      await grantRole(userId, 'moderator');
+      return;
+    }
+    await grantRole(userId, 'admin');
+  }
+
   return (
     <Panel
       title="Kullanıcılar"
@@ -97,8 +111,10 @@ export function UserControl() {
       <p className="mb-3 text-meta leading-relaxed text-muted-foreground">
         Yetki veritabanında zorlanıyor: bu ekrandaki düğmeler yalnızca
         yöneticinin çağırabildiği işlemleri gösteriyor.{' '}
-        <strong className="text-foreground">E-posta adresleri panelde
-        görünmez</strong> — kimlik tablosu API'ye hiç açılmadı.
+        <strong className="text-foreground">
+          E-posta adresleri panelde görünmez
+        </strong>{' '}
+        — kimlik tablosu API'ye hiç açılmadı.
       </p>
 
       {error && <Alert className="mb-3">{error}</Alert>}
@@ -147,7 +163,10 @@ export function UserControl() {
           const isSelf = user?.id === u.id;
           const expanded = open === u.id;
           return (
-            <li key={u.id} className="border-b border-border py-2 last:border-0">
+            <li
+              key={u.id}
+              className="border-b border-border py-2 last:border-0"
+            >
               <div className="flex flex-wrap items-center gap-2">
                 <button
                   type="button"
@@ -164,9 +183,7 @@ export function UserControl() {
                       </span>
                     )}
                     {isSelf && (
-                      <span className="ml-2 text-meta text-primary">
-                        (sen)
-                      </span>
+                      <span className="ml-2 text-meta text-primary">(sen)</span>
                     )}
                   </span>
                   <span className="tabular mt-0.5 block text-meta text-faint">
@@ -181,7 +198,13 @@ export function UserControl() {
                   {u.roles.map((r) => (
                     <Badge
                       key={r}
-                      tone={r === 'admin' ? 'danger' : r === 'moderator' ? 'warning' : 'muted'}
+                      tone={
+                        r === 'admin'
+                          ? 'danger'
+                          : r === 'moderator'
+                            ? 'warning'
+                            : 'muted'
+                      }
                     >
                       {roleLabels[r]}
                     </Badge>
@@ -194,6 +217,54 @@ export function UserControl() {
 
               {expanded && (
                 <div className="mt-2 space-y-3 rounded-card border border-border bg-surface-2 p-3">
+                  <div>
+                    <p className="label mb-1.5">Ana statü</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {[
+                        ['standard', 'Standart kullanıcı'],
+                        ['moderator', 'Moderatör'],
+                        ['admin', 'Admin'],
+                      ].map(([status, label]) => {
+                        const active =
+                          status === 'admin'
+                            ? u.roles.includes('admin')
+                            : status === 'moderator'
+                              ? !u.roles.includes('admin') &&
+                                u.roles.includes('moderator')
+                              : !u.roles.includes('admin') &&
+                                !u.roles.includes('moderator');
+                        return (
+                          <button
+                            key={status}
+                            type="button"
+                            disabled={busy || active}
+                            onClick={() =>
+                              void run(() =>
+                                setPrimaryStatus(
+                                  u.id,
+                                  status as 'standard' | 'moderator' | 'admin'
+                                )
+                              )
+                            }
+                            className={cn(
+                              'h-8 rounded-card border px-2.5 text-meta font-medium transition-colors disabled:opacity-50',
+                              active
+                                ? 'border-primary bg-primary/10 text-primary'
+                                : 'border-border text-muted-foreground hover:border-border-strong hover:text-foreground'
+                            )}
+                          >
+                            {active ? '✓ ' : ''}
+                            {label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <p className="mt-1.5 text-meta text-faint">
+                      Ana statü standart/moderatör/admin ayrımını yönetir;
+                      aşağıdaki roller özel yetkiler için korunur.
+                    </p>
+                  </div>
+
                   <div>
                     <p className="label mb-1.5">Roller</p>
                     <div className="flex flex-wrap gap-1.5">
@@ -332,8 +403,8 @@ export function UserControl() {
                   {r.username ? `@${r.username}` : r.userId.slice(0, 8)}
                 </span>
                 <span className="text-muted-foreground">
-                  {new Date(r.requestedAt).toLocaleDateString('tr-TR')} tarihinde
-                  talep etti
+                  {new Date(r.requestedAt).toLocaleDateString('tr-TR')}{' '}
+                  tarihinde talep etti
                 </span>
                 <Badge tone="warning">{r.status}</Badge>
                 {r.scheduledFor && (

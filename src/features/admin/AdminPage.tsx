@@ -27,6 +27,8 @@ import { UserControl } from './UserControl';
 import { RecordsControl, AuditControl } from './RecordsControl';
 import { CommentsControl } from './CommentsControl';
 import { ForumCategories } from './ForumCategories';
+import type { EntryKind } from '@/services/content/entries';
+import type { RecordKind } from './records';
 import {
   AlertIcon,
   BookIcon,
@@ -64,7 +66,10 @@ import { useIsNarrow } from '@/components/ui/useIsNarrow';
  * gitti" demek, dördünü tek kutuya tıkıp kullanıcıyı çıkmazda bırakmaktır.
  */
 
-const statusTone: Record<ModerationStatus, 'muted' | 'primary' | 'success' | 'danger' | 'warning'> = {
+const statusTone: Record<
+  ModerationStatus,
+  'muted' | 'primary' | 'success' | 'danger' | 'warning'
+> = {
   pending: 'primary',
   in_review: 'warning',
   approved: 'success',
@@ -80,6 +85,9 @@ export function AdminPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const bolum = getBolum(location.pathname, params.get('bolum'));
+  const contentKind = getContentKind(params.get('kind'));
+  const recordKind = getRecordKind(location.pathname, params.get('record'));
+  const targetSlug = params.get('slug');
 
   const setBolum = (id: BolumId) => {
     const path = BOLUM_PATHS[id];
@@ -101,7 +109,9 @@ export function AdminPage() {
     fetchQueue(filter === 'hepsi' ? undefined : filter)
       .then(setQueue)
       .catch((error: unknown) =>
-        setQueueError(error instanceof Error ? error.message : 'Kuyruk okunamadı')
+        setQueueError(
+          error instanceof Error ? error.message : 'Kuyruk okunamadı'
+        )
       );
   }, [filter, roles.canAccessAdmin]);
 
@@ -157,7 +167,10 @@ export function AdminPage() {
   if (loading || roles.status === 'loading') {
     return (
       <Shell header={header} active={bolum} onChange={setBolum}>
-        <p className="py-10 text-center text-meta text-muted-foreground" role="status">
+        <p
+          className="py-10 text-center text-meta text-muted-foreground"
+          role="status"
+        >
           Yetkiler kontrol ediliyor…
         </p>
       </Shell>
@@ -194,7 +207,9 @@ export function AdminPage() {
           }
         />
         {roles.error && (
-          <p className="mt-3 text-center text-meta text-danger">{roles.error}</p>
+          <p className="mt-3 text-center text-meta text-danger">
+            {roles.error}
+          </p>
         )}
       </Shell>
     );
@@ -216,189 +231,197 @@ export function AdminPage() {
 
       {bolum === 'moderasyon' && (
         <>
-      <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-5">
-        {(
-          [
-            'pending',
-            'in_review',
-            'escalated',
-            'approved',
-            'rejected',
-          ] as ModerationStatus[]
-        ).map((status) => (
-          <Readout
-            key={status}
-            label={statusLabels[status]}
-            value={counts ? counts[status] : '—'}
-            tone={status === 'pending' ? 'primary' : 'muted'}
-          />
-        ))}
-      </div>
-
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <p className="tabular label" role="status">
-          {queue ? `${queue.items.length} kayıt` : 'yükleniyor…'}
-        </p>
-        <div className="flex items-center gap-2">
-          <label htmlFor="queue-filter" className="sr-only">
-            Durum filtresi
-          </label>
-          <Select
-            id="queue-filter"
-            value={filter}
-            onChange={(e) =>
-              setFilter(e.target.value as ModerationStatus | 'hepsi')
-            }
-            className="h-8 w-auto text-meta"
-          >
-            <option value="hepsi">Tüm durumlar</option>
-            {Object.entries(statusLabels).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
+          <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-5">
+            {(
+              [
+                'pending',
+                'in_review',
+                'escalated',
+                'approved',
+                'rejected',
+              ] as ModerationStatus[]
+            ).map((status) => (
+              <Readout
+                key={status}
+                label={statusLabels[status]}
+                value={counts ? counts[status] : '—'}
+                tone={status === 'pending' ? 'primary' : 'muted'}
+              />
             ))}
-          </Select>
-          <Button size="sm" variant="secondary" onClick={load} disabled={busy}>
-            Yenile
-          </Button>
-        </div>
-      </div>
+          </div>
 
-      {queueError && (
-        <p className="mb-3 rounded-card border border-danger/40 bg-surface-1 px-3 py-2 text-body-sm text-danger">
-          {queueError}
-        </p>
-      )}
-
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
-        <Panel title="Kuyruk" status={filter === 'hepsi' ? 'tümü' : statusLabels[filter]}>
-          {!queue ? (
-            <p className="py-6 text-center text-meta text-muted-foreground">
-              Kuyruk okunuyor…
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <p className="tabular label" role="status">
+              {queue ? `${queue.items.length} kayıt` : 'yükleniyor…'}
             </p>
-          ) : queue.items.length === 0 ? (
-            <p className="py-6 text-center text-meta leading-relaxed text-muted-foreground">
-              Bu filtrede kayıt yok. Kuyruk boşsa moderasyon bekleyen içerik
-              yok demektir; yetkiniz eksikse de aynı görünür — RLS yetkisiz
-              sorguya boş sonuç döndürür.
-            </p>
-          ) : (
-            <ul>
-              {queue.items.map((item) => (
-                <li
-                  key={item.id}
-                  className="border-b border-border py-3 first:pt-0 last:border-0 last:pb-0"
-                >
-                  <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-                    <span className="flex flex-wrap items-center gap-2">
-                      <Badge tone={statusTone[item.status]}>
-                        {statusLabels[item.status]}
-                      </Badge>
-                      <span className="text-caption font-medium text-foreground">
-                        {targetLabels[item.target_type]}
-                      </span>
-                      <span className="text-meta text-muted-foreground">
-                        {reasonLabels[item.reason]}
-                      </span>
-                    </span>
-                    <span className="tabular text-meta text-faint">
-                      {new Date(item.created_at).toLocaleString('tr-TR')}
-                    </span>
-                  </div>
-
-                  {item.note && (
-                    <p className="mt-1 text-body-sm leading-relaxed text-muted-foreground">
-                      {item.note}
-                    </p>
-                  )}
-
-                  <div className="mt-2 flex flex-wrap items-center gap-2">
-                    {item.target_path && (
-                      <Link
-                        to={item.target_path}
-                        className="text-meta text-primary hover:underline"
-                      >
-                        İçeriğe git →
-                      </Link>
-                    )}
-                    {item.status !== 'approved' && item.status !== 'rejected' && (
-                      <>
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          disabled={busy}
-                          onClick={() => void act(item, 'in_review')}
-                        >
-                          Üzerime al
-                        </Button>
-                        <Button
-                          size="sm"
-                          disabled={busy}
-                          onClick={() => void act(item, 'approved')}
-                        >
-                          İçerik kalsın
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="danger"
-                          disabled={busy}
-                          onClick={() => void act(item, 'rejected')}
-                        >
-                          Kaldır
-                        </Button>
-                      </>
-                    )}
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Panel>
-
-        <div className="space-y-4">
-          <Panel title="Yetki ve sınırlar">
-            <SpecList>
-              <SpecRow
-                label="Rolleriniz"
-                value={
-                  roles.roles.map((r) => roleLabels[r]).join(', ') || 'yok'
+            <div className="flex items-center gap-2">
+              <label htmlFor="queue-filter" className="sr-only">
+                Durum filtresi
+              </label>
+              <Select
+                id="queue-filter"
+                value={filter}
+                onChange={(e) =>
+                  setFilter(e.target.value as ModerationStatus | 'hepsi')
                 }
-                tone="primary"
-              />
-              <SpecRow
-                label="Kuyruk okuma"
-                value={roles.canAccessAdmin ? 'açık' : 'kapalı'}
-              />
-              <SpecRow
-                label="Kayıt silme"
-                value={roles.isAdmin ? 'açık (yönetici)' : 'kapalı'}
-                tone="muted"
-              />
-              <SpecRow
-                label="Denetim günlüğü"
-                value={roles.isAdmin ? 'okunabilir' : 'yalnızca yönetici'}
-                tone="muted"
-              />
-            </SpecList>
-            <p className="mt-3 text-meta leading-snug text-faint">
-              Bu satırlar RLS politikalarının aynasıdır. Arayüz bir düğmeyi
-              gizlese bile asıl engel veritabanındadır; tersi de doğru —
-              gizlenmiş bir düğme yetki vermez.
-            </p>
-          </Panel>
+                className="h-8 w-auto text-meta"
+              >
+                <option value="hepsi">Tüm durumlar</option>
+                {Object.entries(statusLabels).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </Select>
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={load}
+                disabled={busy}
+              >
+                Yenile
+              </Button>
+            </div>
+          </div>
 
-          <Panel title="Kuyruk nasıl doluyor?">
-            <p className="text-body-sm leading-relaxed text-muted-foreground">
-              Kayıtlar kullanıcı raporlarından ve otomatik kontrollerden gelir.
-              Rapor eden kullanıcı kendi raporunu kuyrukta göremez: raporlayanın
-              kuyruğu izleyebilmesi, hedef kullanıcının kimin şikâyet ettiğini
-              çıkarmasına ve misilleme zincirine kapı açar. Sonuç, bildirim
-              kanalından iletilir.
+          {queueError && (
+            <p className="mb-3 rounded-card border border-danger/40 bg-surface-1 px-3 py-2 text-body-sm text-danger">
+              {queueError}
             </p>
-          </Panel>
-        </div>
-      </div>
+          )}
 
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
+            <Panel
+              title="Kuyruk"
+              status={filter === 'hepsi' ? 'tümü' : statusLabels[filter]}
+            >
+              {!queue ? (
+                <p className="py-6 text-center text-meta text-muted-foreground">
+                  Kuyruk okunuyor…
+                </p>
+              ) : queue.items.length === 0 ? (
+                <p className="py-6 text-center text-meta leading-relaxed text-muted-foreground">
+                  Bu filtrede kayıt yok. Kuyruk boşsa moderasyon bekleyen içerik
+                  yok demektir; yetkiniz eksikse de aynı görünür — RLS yetkisiz
+                  sorguya boş sonuç döndürür.
+                </p>
+              ) : (
+                <ul>
+                  {queue.items.map((item) => (
+                    <li
+                      key={item.id}
+                      className="border-b border-border py-3 first:pt-0 last:border-0 last:pb-0"
+                    >
+                      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                        <span className="flex flex-wrap items-center gap-2">
+                          <Badge tone={statusTone[item.status]}>
+                            {statusLabels[item.status]}
+                          </Badge>
+                          <span className="text-caption font-medium text-foreground">
+                            {targetLabels[item.target_type]}
+                          </span>
+                          <span className="text-meta text-muted-foreground">
+                            {reasonLabels[item.reason]}
+                          </span>
+                        </span>
+                        <span className="tabular text-meta text-faint">
+                          {new Date(item.created_at).toLocaleString('tr-TR')}
+                        </span>
+                      </div>
+
+                      {item.note && (
+                        <p className="mt-1 text-body-sm leading-relaxed text-muted-foreground">
+                          {item.note}
+                        </p>
+                      )}
+
+                      <div className="mt-2 flex flex-wrap items-center gap-2">
+                        {item.target_path && (
+                          <Link
+                            to={item.target_path}
+                            className="text-meta text-primary hover:underline"
+                          >
+                            İçeriğe git →
+                          </Link>
+                        )}
+                        {item.status !== 'approved' &&
+                          item.status !== 'rejected' && (
+                            <>
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                disabled={busy}
+                                onClick={() => void act(item, 'in_review')}
+                              >
+                                Üzerime al
+                              </Button>
+                              <Button
+                                size="sm"
+                                disabled={busy}
+                                onClick={() => void act(item, 'approved')}
+                              >
+                                İçerik kalsın
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="danger"
+                                disabled={busy}
+                                onClick={() => void act(item, 'rejected')}
+                              >
+                                Kaldır
+                              </Button>
+                            </>
+                          )}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Panel>
+
+            <div className="space-y-4">
+              <Panel title="Yetki ve sınırlar">
+                <SpecList>
+                  <SpecRow
+                    label="Rolleriniz"
+                    value={
+                      roles.roles.map((r) => roleLabels[r]).join(', ') || 'yok'
+                    }
+                    tone="primary"
+                  />
+                  <SpecRow
+                    label="Kuyruk okuma"
+                    value={roles.canAccessAdmin ? 'açık' : 'kapalı'}
+                  />
+                  <SpecRow
+                    label="Kayıt silme"
+                    value={roles.isAdmin ? 'açık (yönetici)' : 'kapalı'}
+                    tone="muted"
+                  />
+                  <SpecRow
+                    label="Denetim günlüğü"
+                    value={roles.isAdmin ? 'okunabilir' : 'yalnızca yönetici'}
+                    tone="muted"
+                  />
+                </SpecList>
+                <p className="mt-3 text-meta leading-snug text-faint">
+                  Bu satırlar RLS politikalarının aynasıdır. Arayüz bir düğmeyi
+                  gizlese bile asıl engel veritabanındadır; tersi de doğru —
+                  gizlenmiş bir düğme yetki vermez.
+                </p>
+              </Panel>
+
+              <Panel title="Kuyruk nasıl doluyor?">
+                <p className="text-body-sm leading-relaxed text-muted-foreground">
+                  Kayıtlar kullanıcı raporlarından ve otomatik kontrollerden
+                  gelir. Rapor eden kullanıcı kendi raporunu kuyrukta göremez:
+                  raporlayanın kuyruğu izleyebilmesi, hedef kullanıcının kimin
+                  şikâyet ettiğini çıkarmasına ve misilleme zincirine kapı açar.
+                  Sonuç, bildirim kanalından iletilir.
+                </p>
+              </Panel>
+            </div>
+          </div>
         </>
       )}
 
@@ -412,9 +435,17 @@ export function AdminPage() {
       */}
       {bolum === 'icerik' && (
         <div className="space-y-4">
-          <ContentControl canWrite={roles.isAdmin} />
+          <ContentControl
+            canWrite={roles.isAdmin}
+            initialKind={contentKind}
+            initialSlug={targetSlug}
+          />
           <PhotoWeekAdminControl canWrite={roles.isAdmin} />
-          <RecordsControl kinds={['photo', 'listing', 'event', 'site']} />
+          <RecordsControl
+            kinds={['photo', 'listing', 'event', 'site']}
+            initialKind={recordKind}
+            targetSlug={targetSlug}
+          />
           {/* Kulüp dizini burada, "kayıtlar"ın içinde değil: dizin
               EDİTORYAL bir kaynak — sahibi, durumu ve moderasyon kuyruğu
               olan kullanıcı kayıtlarıyla aynı ekrana sıkıştırmak, orada
@@ -441,8 +472,8 @@ export function AdminPage() {
       {bolum === 'kullanicilar' && !roles.isAdmin && (
         <Panel title="Kullanıcılar">
           <p className="py-4 text-center text-body-sm text-muted-foreground">
-            Kullanıcı yönetimi yalnızca yöneticilere açık. Moderatör
-            rolüyle içerik ve forum bölümlerini kullanabilirsiniz.
+            Kullanıcı yönetimi yalnızca yöneticilere açık. Moderatör rolüyle
+            içerik ve forum bölümlerini kullanabilirsiniz.
           </p>
         </Panel>
       )}
@@ -511,7 +542,6 @@ export function AdminPage() {
           <SpecImportControl canWrite={roles.isAdmin} />
         </div>
       )}
-
     </Shell>
   );
 }
@@ -521,31 +551,76 @@ const ADMIN_NAV = [
     label: 'İş Akışı',
     items: [
       { id: 'ozet', label: 'Genel Bakış', path: '/admin', icon: HomeIcon },
-      { id: 'moderasyon', label: 'Moderasyon', path: '/admin/moderation', icon: AlertIcon },
+      {
+        id: 'moderasyon',
+        label: 'Moderasyon',
+        path: '/admin/moderation',
+        icon: AlertIcon,
+      },
     ],
   },
   {
     label: 'İçerik',
     items: [
-      { id: 'icerik', label: 'İçerik ve Kayıtlar', path: '/admin/content', icon: BookIcon },
-      { id: 'anasayfa', label: 'Anasayfa', path: '/admin/home', icon: GridIcon },
+      {
+        id: 'icerik',
+        label: 'İçerik ve Kayıtlar',
+        path: '/admin/content',
+        icon: BookIcon,
+      },
+      {
+        id: 'anasayfa',
+        label: 'Anasayfa',
+        path: '/admin/home',
+        icon: GridIcon,
+      },
       { id: 'forum', label: 'Forum', path: '/admin/forum', icon: ListIcon },
     ],
   },
   {
     label: 'Operasyon',
     items: [
-      { id: 'kullanicilar', label: 'Kullanıcılar', path: '/admin/users', icon: UserIcon },
-      { id: 'yayin', label: 'Yayın Merkezi', path: '/admin/broadcast', icon: PlayIcon },
-      { id: 'hatirlatma', label: 'Bildirim Merkezi', path: '/admin/notifications', icon: AlertIcon },
+      {
+        id: 'kullanicilar',
+        label: 'Kullanıcılar',
+        path: '/admin/users',
+        icon: UserIcon,
+      },
+      {
+        id: 'yayin',
+        label: 'Yayın Merkezi',
+        path: '/admin/broadcast',
+        icon: PlayIcon,
+      },
+      {
+        id: 'hatirlatma',
+        label: 'Bildirim Merkezi',
+        path: '/admin/notifications',
+        icon: AlertIcon,
+      },
     ],
   },
   {
     label: 'Platform',
     items: [
-      { id: 'site', label: 'Site Yapısı', path: '/admin/site-settings', icon: GridIcon },
-      { id: 'katalog', label: 'Katalog ve Araçlar', path: '/admin/catalog', icon: TagIcon },
-      { id: 'audit', label: 'Denetim Kaydı', path: '/admin/audit', icon: ListIcon },
+      {
+        id: 'site',
+        label: 'Site Yapısı',
+        path: '/admin/site-settings',
+        icon: GridIcon,
+      },
+      {
+        id: 'katalog',
+        label: 'Katalog ve Araçlar',
+        path: '/admin/catalog',
+        icon: TagIcon,
+      },
+      {
+        id: 'audit',
+        label: 'Denetim Kaydı',
+        path: '/admin/audit',
+        icon: ListIcon,
+      },
     ],
   },
 ] as const;
@@ -593,6 +668,29 @@ function getBolum(pathname: string, queryBolum: string | null): BolumId {
   )?.[0];
   if (fromPath && isBolum(fromPath)) return fromPath;
   return isBolum(queryBolum) ? queryBolum : 'ozet';
+}
+
+function getContentKind(value: string | null): EntryKind {
+  return value === 'yazi' ? 'yazi' : 'haber';
+}
+
+function getRecordKind(
+  pathname: string,
+  value: string | null
+): RecordKind | undefined {
+  if (
+    value === 'photo' ||
+    value === 'listing' ||
+    value === 'event' ||
+    value === 'site'
+  ) {
+    return value;
+  }
+  const normalized = pathname.replace(/\/+$/, '');
+  if (normalized === '/admin/events') return 'event';
+  if (normalized === '/admin/listings') return 'listing';
+  if (normalized === '/admin/sites') return 'site';
+  return undefined;
 }
 
 function AdminSidebar({

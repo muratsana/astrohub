@@ -42,7 +42,9 @@ import { cn } from '@/lib/cn';
  * sırada duruyor, silme en sağda ve sönük — sıralama bir tercih beyanı.
  */
 
-const statusTone = (s: string): 'muted' | 'primary' | 'success' | 'danger' | 'warning' => {
+const statusTone = (
+  s: string
+): 'muted' | 'primary' | 'success' | 'danger' | 'warning' => {
   if (s === 'published' || s === 'active') return 'success';
   if (s === 'draft' || s === 'pending') return 'warning';
   if (s === 'rejected' || s === 'cancelled' || s === 'kilitli') return 'danger';
@@ -50,11 +52,19 @@ const statusTone = (s: string): 'muted' | 'primary' | 'success' | 'danger' | 'wa
   return 'primary';
 };
 
-const KIND_ORDER: RecordKind[] = ['photo', 'listing', 'thread', 'event', 'site'];
+const KIND_ORDER: RecordKind[] = [
+  'photo',
+  'listing',
+  'thread',
+  'event',
+  'site',
+];
 
 export function RecordsControl({
   kinds = KIND_ORDER,
   title = 'İçerik kayıtları',
+  initialKind,
+  targetSlug,
 }: {
   /**
    * Hangi türler gösterilsin.
@@ -65,26 +75,38 @@ export function RecordsControl({
    */
   kinds?: RecordKind[];
   title?: string;
+  initialKind?: RecordKind;
+  targetSlug?: string | null;
 }) {
-  const [kind, setKind] = useState<RecordKind>(kinds[0]);
+  const initialAllowedKind =
+    initialKind && kinds.includes(initialKind) ? initialKind : undefined;
+  const [kind, setKind] = useState<RecordKind>(initialAllowedKind ?? kinds[0]);
   const [rows, setRows] = useState<RecordRow[] | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState<string | null>(null);
 
-  const load = useCallback((k: RecordKind) => {
-    setRows(null);
-    setError(null);
-    setConfirming(null);
-    fetchRecords(k)
-      .then(setRows)
-      .catch((e: unknown) => {
-        setRows([]);
-        setError(e instanceof Error ? e.message : 'Kayıtlar okunamadı');
-      });
-  }, []);
+  const load = useCallback(
+    (k: RecordKind) => {
+      setRows(null);
+      setError(null);
+      setConfirming(null);
+      const slug = k === initialKind ? targetSlug : null;
+      fetchRecords(k, slug ? 1 : 40, slug)
+        .then(setRows)
+        .catch((e: unknown) => {
+          setRows([]);
+          setError(e instanceof Error ? e.message : 'Kayıtlar okunamadı');
+        });
+    },
+    [initialKind, targetSlug]
+  );
 
   useEffect(() => load(kind), [load, kind]);
+
+  useEffect(() => {
+    if (initialAllowedKind) setKind(initialAllowedKind);
+  }, [initialAllowedKind]);
 
   async function run(action: () => Promise<void>) {
     setBusy(true);
@@ -104,35 +126,37 @@ export function RecordsControl({
   return (
     <Panel title={title} status={rows ? `${rows.length} kayıt` : 'okunuyor…'}>
       {kinds.length > 1 && (
-      <div
-        role="tablist"
-        aria-label="İçerik türü"
-        className="mb-3 flex flex-wrap gap-1.5"
-      >
-        {kinds.map((k) => (
-          <button
-            key={k}
-            role="tab"
-            aria-selected={k === kind}
-            onClick={() => setKind(k)}
-            className={cn(
-              'h-8 rounded-card border px-2.5 text-meta font-medium transition-colors',
-              k === kind
-                ? 'border-primary bg-primary/10 text-primary'
-                : 'border-border text-muted-foreground hover:border-border-strong hover:text-foreground'
-            )}
-          >
-            {RECORD_KINDS[k].label}
-          </button>
-        ))}
-      </div>
+        <div
+          role="tablist"
+          aria-label="İçerik türü"
+          className="mb-3 flex flex-wrap gap-1.5"
+        >
+          {kinds.map((k) => (
+            <button
+              key={k}
+              role="tab"
+              aria-selected={k === kind}
+              onClick={() => setKind(k)}
+              className={cn(
+                'h-8 rounded-card border px-2.5 text-meta font-medium transition-colors',
+                k === kind
+                  ? 'border-primary bg-primary/10 text-primary'
+                  : 'border-border text-muted-foreground hover:border-border-strong hover:text-foreground'
+              )}
+            >
+              {RECORD_KINDS[k].label}
+            </button>
+          ))}
+        </div>
       )}
 
       {error && <Alert className="mb-3">{error}</Alert>}
 
       {rows && rows.length === 0 && !error && (
         <p className="py-4 text-center text-body-sm text-muted-foreground">
-          {spec.label} listesi boş.
+          {targetSlug && kind === initialKind
+            ? 'Bu adreste kayıt bulunamadı.'
+            : `${spec.label} listesi boş.`}
         </p>
       )}
 
@@ -154,7 +178,10 @@ export function RecordsControl({
                   row.title
                 )}
                 {row.subtitle && (
-                  <span className="text-muted-foreground"> · {row.subtitle}</span>
+                  <span className="text-muted-foreground">
+                    {' '}
+                    · {row.subtitle}
+                  </span>
                 )}
               </span>
 

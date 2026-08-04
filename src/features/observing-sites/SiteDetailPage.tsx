@@ -7,6 +7,7 @@ import { PlaceholderPage } from '@/components/PlaceholderPage';
 import { useSiteCatalog } from '@/services/content/sites';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd, placeJsonLd } from '@/lib/seo';
+import { AdminEditLink } from '@/components/admin/AdminEditLink';
 
 /** Kamp/gözlem noktası detayı (§7.8): gökyüzü + kamp + erişim kriterleri. */
 export function SiteDetailPage() {
@@ -64,9 +65,7 @@ export function SiteDetailPage() {
 
         <div className="mt-6 flex flex-col gap-8 lg:flex-row">
           <div className="min-w-0 flex-1">
-            <h1 className="type-page text-foreground">
-              {site.name}
-            </h1>
+            <h1 className="type-page text-foreground">{site.name}</h1>
             <p className="tabular mt-1 text-sm text-muted-foreground">
               {site.region} · {site.altitude} m rakım · ★{' '}
               {site.rating.toFixed(1)} ({site.reviewCount} değerlendirme)
@@ -79,6 +78,7 @@ export function SiteDetailPage() {
               )}
               <Badge>Güney ufku: {site.southHorizon}</Badge>
               <Badge>{site.bestMonths}</Badge>
+              <AdminEditLink to={`/admin/sites?slug=${site.slug}`} />
             </div>
 
             <p className="mt-4 max-w-2xl leading-relaxed text-muted-foreground">
@@ -87,7 +87,9 @@ export function SiteDetailPage() {
 
             {site.warnings && site.warnings.length > 0 && (
               <div className="mt-6 rounded-card border border-warning/30 bg-warning/10 p-4">
-                <h2 className="text-body-sm font-semibold text-warning">Uyarılar</h2>
+                <h2 className="text-body-sm font-semibold text-warning">
+                  Uyarılar
+                </h2>
                 <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-muted-foreground">
                   {site.warnings.map((w) => (
                     <li key={w}>{w}</li>
@@ -152,11 +154,7 @@ export function SiteDetailPage() {
             >
               Bu bölgeden fotoğraflar
             </ButtonLink>
-            <ButtonLink
-              to="/saha"
-              variant="ghost"
-              className="mt-4 w-full"
-            >
+            <ButtonLink to="/saha" variant="ghost" className="mt-4 w-full">
               ← Tüm noktalar
             </ButtonLink>
           </aside>

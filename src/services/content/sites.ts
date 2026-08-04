@@ -8,6 +8,9 @@ import {
 import { gradientFromSeed } from '@/components/media/tints';
 import { useCatalog } from './useCatalog';
 import type { ContentSelection } from './select';
+import { sanitizeText } from '@/lib/sanitize';
+import { threadSlug, slugSuffix } from './forum';
+import { getSupabase } from '@/services/supabase/client';
 
 /**
  * GÖZLEM NOKTASI KATALOĞU.
@@ -114,4 +117,83 @@ async function fetchSites(client: SupabaseClient): Promise<ObservingSite[]> {
 /** Gözlem noktaları: veritabanı varsa oradan, yoksa tohum diziden. */
 export function useSiteCatalog(): ContentSelection<ObservingSite> {
   return useCatalog('gozlem-noktasi', sitesSeed, fetchSites);
+}
+
+export interface NewSiteInput {
+  userId: string;
+  name: string;
+  region: string;
+  latitude: number;
+  longitude: number;
+  bortle: number;
+  sqm?: number;
+  altitude?: number;
+  description: string;
+  tentArea: boolean;
+  caravanOk: boolean;
+}
+
+export function validateSiteContribution(input: NewSiteInput): string | null {
+  if (sanitizeText(input.name).length < 5) return 'Saha adı gerekli.';
+  if (sanitizeText(input.region).length < 2) return 'İl/konum gerekli.';
+  if (
+    !Number.isFinite(input.latitude) ||
+    input.latitude < -90 ||
+    input.latitude > 90
+  ) {
+    return 'Enlem -90 ile 90 arasında olmalı.';
+  }
+  if (
+    !Number.isFinite(input.longitude) ||
+    input.longitude < -180 ||
+    input.longitude > 180
+  ) {
+    return 'Boylam -180 ile 180 arasında olmalı.';
+  }
+  if (!Number.isInteger(input.bortle) || input.bortle < 1 || input.bortle > 9) {
+    return 'Bortle 1–9 arasında olmalı.';
+  }
+  if (input.sqm !== undefined && (input.sqm < 15 || input.sqm > 23)) {
+    return 'SQM 15–23 arasında olmalı.';
+  }
+  if (sanitizeText(input.description, { multiline: true }).length < 20) {
+    return 'Açıklama en az 20 karakter olmalı.';
+  }
+  return null;
+}
+
+/** Saha katkısı onay bekleyen kayıt olarak açılır. */
+export async function createSiteContribution(
+  input: NewSiteInput
+): Promise<string> {
+  const problem = validateSiteContribution(input);
+  if (problem) throw new Error(problem);
+
+  const name = sanitizeText(input.name, { maxLength: 160 });
+  const slug = threadSlug(name, slugSuffix());
+  const promise = getSupabase();
+  if (!promise) throw new Error('Veritabanı bağlantısı yapılandırılmamış');
+  const supabase = await promise;
+
+  const { error } = await supabase.from('observing_sites').insert({
+    slug,
+    name,
+    region: sanitizeText(input.region, { maxLength: 80 }),
+    status: 'pending',
+    approx_latitude: Number(input.latitude.toFixed(4)),
+    approx_longitude: Number(input.longitude.toFixed(4)),
+    altitude_m: input.altitude ?? null,
+    bortle: input.bortle,
+    sqm: input.sqm ?? null,
+    has_tent_area: input.tentArea,
+    caravan_ok: input.caravanOk,
+    description: sanitizeText(input.description, {
+      multiline: true,
+      maxLength: 4000,
+    }),
+    submitted_by: input.userId,
+  });
+
+  if (error) throw new Error(error.message);
+  return slug;
 }

@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Container } from '@/components/ui/Container';
-import { Badge } from '@/components/ui/Badge';
 import { Button, ButtonLink } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Panel } from '@/components/ui/Panel';
 import { Select } from '@/components/ui/Input';
+import { SortableHeader } from '@/components/ui/SortableHeader';
 import { CatalogSourceNote } from '@/components/ui/CatalogSourceNote';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
@@ -30,9 +30,11 @@ import { siteTypeLabels, type ObservingSite, type SiteType } from './data';
 
 const CONSENT_KEY = 'astrohub:map:tiles';
 
-type SortMode = 'yakin' | 'karanlik' | 'puan';
 type BaseMode = 'harita' | 'uydu';
 type LayerMode = 'yok' | 'isik';
+type SiteSortKey = 'distance' | 'region' | 'bortle' | 'rating';
+type SortDirection = 'asc' | 'desc';
+type LocatedSite = { item: ObservingSite; distanceKm: number };
 
 const BORTLE_COLORS = [
   '#38bdf8',
@@ -58,6 +60,35 @@ function storedConsent(): boolean {
   }
 }
 
+function defaultDirection(key: SiteSortKey): SortDirection {
+  return key === 'rating' ? 'desc' : 'asc';
+}
+
+function formatBortle(value: number): string {
+  return value > 0 ? `Bortle ${value}` : '—';
+}
+
+function sortLocatedSites(
+  items: LocatedSite[],
+  key: SiteSortKey,
+  direction: SortDirection
+): LocatedSite[] {
+  const sign = direction === 'asc' ? 1 : -1;
+  const knownBortle = (value: number) =>
+    value > 0 ? value : Number.POSITIVE_INFINITY;
+
+  return [...items].sort((a, b) => {
+    if (key === 'distance') return (a.distanceKm - b.distanceKm) * sign;
+    if (key === 'region') {
+      return a.item.region.localeCompare(b.item.region, 'tr-TR') * sign;
+    }
+    if (key === 'bortle') {
+      return (knownBortle(a.item.bortle) - knownBortle(b.item.bortle)) * sign;
+    }
+    return (a.item.rating - b.item.rating) * sign;
+  });
+}
+
 /** Kamp/gözlem noktaları artık ana harita modülü. */
 export function SitesPage() {
   const { location, permission, requestDeviceLocation } = useLocationContext();
@@ -65,7 +96,10 @@ export function SitesPage() {
   const catalog = useSiteCatalog();
   const [type, setType] = useState<SiteType | 'hepsi'>('hepsi');
   const [bortle, setBortle] = useState<number | 'hepsi'>('hepsi');
-  const [sort, setSort] = useState<SortMode>('yakin');
+  const [sort, setSort] = useState<{
+    key: SiteSortKey;
+    direction: SortDirection;
+  }>({ key: 'distance', direction: 'asc' });
   const [active, setActive] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
   const [allowed, setAllowed] = useState(storedConsent);
@@ -92,36 +126,29 @@ export function SitesPage() {
     [bortle, catalog.items, type]
   );
 
-  const nearest = useMemo(() => {
-    const rows = sortByProximity(
-      filtered,
-      location,
-      (site: ObservingSite) => site.coords
-    );
-    if (sort === 'karanlik') {
-      return [...rows.located].sort(
-        (a, b) => a.item.bortle - b.item.bortle || a.distanceKm - b.distanceKm
-      );
-    }
-    if (sort === 'puan') {
-      return [...rows.located].sort(
-        (a, b) => b.item.rating - a.item.rating || a.distanceKm - b.distanceKm
-      );
-    }
-    return rows.located;
-  }, [filtered, location, sort]);
+  const nearest = useMemo(
+    () =>
+      sortByProximity(filtered, location, (site: ObservingSite) => site.coords)
+        .located,
+    [filtered, location]
+  );
+  const sortedSites = useMemo(
+    () => sortLocatedSites(nearest, sort.key, sort.direction),
+    [nearest, sort]
+  );
 
   useEffect(() => {
     setActive((current) => {
-      if (current && nearest.some(({ item }) => item.slug === current)) {
+      if (current && sortedSites.some(({ item }) => item.slug === current)) {
         return current;
       }
-      return nearest[0]?.item.slug ?? null;
+      return sortedSites[0]?.item.slug ?? null;
     });
-  }, [nearest]);
+  }, [sortedSites]);
 
-  const selected = nearest.find(({ item }) => item.slug === active) ?? nearest[0];
-  const mapItems = showAll ? nearest : selected ? [selected] : [];
+  const selected =
+    sortedSites.find(({ item }) => item.slug === active) ?? sortedSites[0];
+  const mapItems = showAll ? sortedSites : selected ? [selected] : [];
   const overlay = layerMode === 'isik' ? OVERLAY_SOURCES[0] : undefined;
   const base =
     baseMode === 'uydu'
@@ -151,6 +178,22 @@ export function SitesPage() {
     }
   }
 
+  function changeSort(key: SiteSortKey) {
+    setSort((current) =>
+      current.key === key
+        ? {
+            key,
+            direction: current.direction === 'asc' ? 'desc' : 'asc',
+          }
+        : { key, direction: defaultDirection(key) }
+    );
+  }
+
+  function sortLabel(key: SiteSortKey, label: string) {
+    if (sort.key !== key) return label;
+    return `${label} ${sort.direction === 'asc' ? '↑' : '↓'}`;
+  }
+
   return (
     <>
       <PageMeta
@@ -168,14 +211,19 @@ export function SitesPage() {
           description="Kamp ve gözlem noktaları artık harita üstünde: Bortle/SQM kayıtları, ışık kirliliği katmanı ve size en yakın sahalar."
           meta={location.label}
           actions={
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={requestDeviceLocation}
-              disabled={permission === 'pending'}
-            >
-              {permission === 'pending' ? 'Konum alınıyor' : 'Konumumu bul'}
-            </Button>
+            <>
+              <ButtonLink to="/saha/yeni" size="sm">
+                Saha ekle
+              </ButtonLink>
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={requestDeviceLocation}
+                disabled={permission === 'pending'}
+              >
+                {permission === 'pending' ? 'Konum alınıyor' : 'Konumumu bul'}
+              </Button>
+            </>
           }
         />
 
@@ -190,7 +238,9 @@ export function SitesPage() {
             <Select
               id="site-type"
               value={type}
-              onChange={(event) => setType(event.target.value as SiteType | 'hepsi')}
+              onChange={(event) =>
+                setType(event.target.value as SiteType | 'hepsi')
+              }
               className="h-8 w-auto text-meta"
             >
               <option value="hepsi">Tüm türler</option>
@@ -209,7 +259,9 @@ export function SitesPage() {
               value={bortle}
               onChange={(event) =>
                 setBortle(
-                  event.target.value === 'hepsi' ? 'hepsi' : Number(event.target.value)
+                  event.target.value === 'hepsi'
+                    ? 'hepsi'
+                    : Number(event.target.value)
                 )
               }
               className="h-8 w-auto text-meta"
@@ -220,20 +272,6 @@ export function SitesPage() {
                   Bortle {value}
                 </option>
               ))}
-            </Select>
-
-            <label htmlFor="site-sort" className="sr-only">
-              Sırala
-            </label>
-            <Select
-              id="site-sort"
-              value={sort}
-              onChange={(event) => setSort(event.target.value as SortMode)}
-              className="h-8 w-auto text-meta"
-            >
-              <option value="yakin">Yakınımdaki</option>
-              <option value="karanlik">En karanlık</option>
-              <option value="puan">En yüksek puan</option>
             </Select>
           </div>
         </div>
@@ -301,7 +339,9 @@ export function SitesPage() {
                       <span className="label">Altlık</span>
                       <Select
                         value={baseMode}
-                        onChange={(event) => setBaseMode(event.target.value as BaseMode)}
+                        onChange={(event) =>
+                          setBaseMode(event.target.value as BaseMode)
+                        }
                         className="h-8 w-28 text-meta"
                       >
                         <option value="harita">Harita</option>
@@ -312,7 +352,9 @@ export function SitesPage() {
                       <span className="label">Katman</span>
                       <Select
                         value={layerMode}
-                        onChange={(event) => setLayerMode(event.target.value as LayerMode)}
+                        onChange={(event) =>
+                          setLayerMode(event.target.value as LayerMode)
+                        }
                         className="h-8 w-28 text-meta"
                       >
                         <option value="isik">Işık</option>
@@ -329,7 +371,9 @@ export function SitesPage() {
                           max={OPACITY_RANGE.max}
                           step={5}
                           value={opacity}
-                          onChange={(event) => setOpacity(Number(event.target.value))}
+                          onChange={(event) =>
+                            setOpacity(Number(event.target.value))
+                          }
                           className="block w-24 accent-primary"
                         />
                       </label>
@@ -350,7 +394,7 @@ export function SitesPage() {
             </div>
           </Panel>
 
-          <Panel title="Size en yakın sahalar" status={location.label}>
+          <Panel title="Saha listesi" status={location.label}>
             {nearest.length === 0 ? (
               <EmptyState
                 message="Eşleşen saha yok"
@@ -358,54 +402,103 @@ export function SitesPage() {
                 className="border-0 py-8"
               />
             ) : (
-              <ul>
-                {nearest.map(({ item, distanceKm }) => (
-                  <li key={item.slug} className="border-b border-border last:border-0">
-                    <div
-                      className={cn(
-                        'flex flex-wrap items-start justify-between gap-3 py-3 transition-colors',
-                        active === item.slug && 'text-primary'
-                      )}
-                    >
-                      <div className="min-w-0 flex-1">
-                        <span className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                          <span className="truncate text-caption text-foreground">
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[820px] border-collapse text-left">
+                  <thead className="border-b border-border text-meta text-muted-foreground">
+                    <tr>
+                      <th scope="col" className="px-0 py-2 pr-4 font-medium">
+                        Saha
+                      </th>
+                      <SortableHeader onClick={() => changeSort('region')}>
+                        {sortLabel('region', 'Konum')}
+                      </SortableHeader>
+                      <th scope="col" className="py-2 pr-4 font-medium">
+                        Tür
+                      </th>
+                      <SortableHeader onClick={() => changeSort('bortle')}>
+                        {sortLabel('bortle', 'Bortle')}
+                      </SortableHeader>
+                      <SortableHeader onClick={() => changeSort('rating')}>
+                        {sortLabel('rating', 'Puan')}
+                      </SortableHeader>
+                      <SortableHeader onClick={() => changeSort('distance')}>
+                        {sortLabel('distance', 'Mesafe')}
+                      </SortableHeader>
+                      <th
+                        scope="col"
+                        className="py-2 pl-4 text-right font-medium"
+                      >
+                        İşlem
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sortedSites.map(({ item, distanceKm }) => (
+                      <tr
+                        key={item.slug}
+                        className={cn(
+                          'border-b border-border transition-colors last:border-0',
+                          active === item.slug && 'text-primary'
+                        )}
+                      >
+                        <td className="max-w-[300px] py-2.5 pr-4 align-top">
+                          <ButtonLink
+                            to={`/saha/${item.slug}`}
+                            size="sm"
+                            variant="ghost"
+                            className="max-w-full truncate px-0"
+                          >
                             {item.name}
-                          </span>
-                          <span className="tabular text-body-sm text-cold">
-                            {formatDistance(distanceKm)}
-                          </span>
-                        </span>
-                        <p className="mt-0.5 text-meta text-muted-foreground">
-                          {item.region} · {siteTypeLabels[item.siteType]} · {item.altitude}{' '}
-                          m
-                        </p>
-                        <span className="mt-1 flex flex-wrap gap-1.5">
-                          <Badge tone="primary">Bortle {item.bortle}</Badge>
-                          {item.sqm !== undefined && <Badge>SQM {item.sqm}</Badge>}
-                          <Badge tone="cold">★ {item.rating.toFixed(1)}</Badge>
-                        </span>
-                      </div>
-                      <div className="flex shrink-0 flex-wrap gap-2">
-                        <Button
-                          size="sm"
-                          variant={active === item.slug ? 'primary' : 'secondary'}
-                          onClick={() => focusSite(item)}
-                        >
-                          Haritada göster
-                        </Button>
-                        <ButtonLink
-                          to={`/saha/${item.slug}`}
-                          size="sm"
-                          variant="ghost"
-                        >
-                          Görüntüle
-                        </ButtonLink>
-                      </div>
-                    </div>
-                  </li>
-                ))}
-              </ul>
+                          </ButtonLink>
+                          <p className="mt-1 text-meta text-muted-foreground">
+                            {item.altitude} m · {item.roadAccess}
+                          </p>
+                        </td>
+                        <td className="py-2.5 pr-4 align-top text-body-sm text-muted-foreground">
+                          {item.region}
+                        </td>
+                        <td className="py-2.5 pr-4 align-top text-body-sm text-muted-foreground">
+                          {siteTypeLabels[item.siteType]}
+                        </td>
+                        <td className="tabular py-2.5 pr-4 align-top text-body-sm text-muted-foreground">
+                          {formatBortle(item.bortle)}
+                          {item.sqm !== undefined && (
+                            <span className="ml-2 text-meta text-muted-foreground">
+                              SQM {item.sqm}
+                            </span>
+                          )}
+                        </td>
+                        <td className="tabular py-2.5 pr-4 align-top text-body-sm text-cold">
+                          ★ {item.rating.toFixed(1)}
+                        </td>
+                        <td className="tabular py-2.5 pr-4 align-top text-body-sm text-cold">
+                          {formatDistance(distanceKm)}
+                        </td>
+                        <td className="py-2.5 pl-4 align-top">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              size="sm"
+                              variant={
+                                active === item.slug ? 'primary' : 'secondary'
+                              }
+                              onClick={() => focusSite(item)}
+                            >
+                              Haritada göster
+                            </Button>
+                            <ButtonLink
+                              to={`/saha/${item.slug}`}
+                              size="sm"
+                              variant="ghost"
+                            >
+                              Görüntüle
+                            </ButtonLink>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </Panel>
         </div>

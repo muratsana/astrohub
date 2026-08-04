@@ -9,6 +9,7 @@ import { commonsWidthUrl } from '@/lib/commons';
 import { useArticles } from './useArticles';
 import { BlockRenderer } from '@/components/content/BlockRenderer';
 import { paragraphsToBlocks } from '@/domain/content/blocks';
+import { AdminEditLink } from '@/components/admin/AdminEditLink';
 
 /** Yazı detayı — okuma genişliği ~70 karakter, görselsiz. */
 export function ArticleDetailPage() {
@@ -67,22 +68,25 @@ export function ArticleDetailPage() {
             </Link>
           </nav>
 
-          <div className="mb-4 flex flex-wrap items-center gap-2">
-            <Badge tone="cold">{articleCategoryLabels[article.category]}</Badge>
-            <Badge
-              tone={
-                article.level === 'Başlangıç'
-                  ? 'success'
-                  : article.level === 'Orta'
-                    ? 'primary'
-                    : 'danger'
-              }
-            >
-              {article.level}
-            </Badge>
-            <span className="tabular text-meta text-faint">
-              {article.duration}
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+            <span className="flex flex-wrap items-center gap-2">
+              <Badge tone="cold">{articleCategoryLabels[article.category]}</Badge>
+              <Badge
+                tone={
+                  article.level === 'Başlangıç'
+                    ? 'success'
+                    : article.level === 'Orta'
+                      ? 'primary'
+                      : 'danger'
+                }
+              >
+                {article.level}
+              </Badge>
+              <span className="tabular text-meta text-faint">
+                {article.duration}
+              </span>
             </span>
+            <AdminEditLink to={`/admin/content?kind=yazi&slug=${article.slug}`} />
           </div>
 
           <h1 className="type-page-lg text-foreground">

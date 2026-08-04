@@ -49,7 +49,9 @@ function route(loader: () => Promise<{ default: ComponentType }>): ReactNode {
  * ekranını çiziyor. Sarmalayıcı `route()`nun DIŞINDA: içeride olsaydı
  * bayrak kapalıyken bile sayfanın chunk'ı indirilirdi.
  */
-function radyoRoute(loader: () => Promise<{ default: ComponentType }>): ReactNode {
+function radyoRoute(
+  loader: () => Promise<{ default: ComponentType }>
+): ReactNode {
   return (
     <FlagRoute flag="radyo_acik" title="Astrohub Radyo">
       {route(loader)}
@@ -170,12 +172,18 @@ export const appRoutes = [
       {
         path: 'kesfet',
         element: route(
-          named(() => import('@/features/discover/DiscoverPage'), 'DiscoverPage')
+          named(
+            () => import('@/features/discover/DiscoverPage'),
+            'DiscoverPage'
+          )
         ),
       },
-      { path: 'profil/:username', element: route(
+      {
+        path: 'profil/:username',
+        element: route(
           named(() => import('@/features/profile/ProfilePage'), 'ProfilePage')
-        ) },
+        ),
+      },
 
       /* ═════════════ ETKİNLİKLER ═════════════ */
       {
@@ -183,6 +191,16 @@ export const appRoutes = [
         element: route(
           named(() => import('@/features/events/EventMapPage'), 'EventMapPage')
         ),
+      },
+      {
+        path: 'etkinlik/yeni',
+        element: route(
+          named(() => import('@/features/events/NewEventPage'), 'NewEventPage')
+        ),
+      },
+      {
+        path: 'etkinlikler/yeni',
+        element: <RedirectTo to="/etkinlik/yeni" />,
       },
       {
         path: 'etkinlik/:slug',
@@ -206,7 +224,10 @@ export const appRoutes = [
       {
         path: 'topluluk/:slug',
         element: route(
-          named(() => import('@/features/clubs/ClubDetailPage'), 'ClubDetailPage')
+          named(
+            () => import('@/features/clubs/ClubDetailPage'),
+            'ClubDetailPage'
+          )
         ),
       },
 
@@ -220,7 +241,10 @@ export const appRoutes = [
       {
         path: 'haber/:slug',
         element: route(
-          named(() => import('@/features/news/NewsDetailPage'), 'NewsDetailPage')
+          named(
+            () => import('@/features/news/NewsDetailPage'),
+            'NewsDetailPage'
+          )
         ),
       },
 
@@ -228,7 +252,10 @@ export const appRoutes = [
       {
         path: 'yazilar',
         element: route(
-          named(() => import('@/features/articles/ArticlesPage'), 'ArticlesPage')
+          named(
+            () => import('@/features/articles/ArticlesPage'),
+            'ArticlesPage'
+          )
         ),
       },
       {
@@ -452,6 +479,15 @@ export const appRoutes = [
       /* ═════════════ SAHA ═════════════ */
       { path: 'saha', element: sitesPage() },
       {
+        path: 'saha/yeni',
+        element: route(
+          named(
+            () => import('@/features/observing-sites/NewSitePage'),
+            'NewSitePage'
+          )
+        ),
+      },
+      {
         path: 'saha/:slug',
         element: route(
           named(
@@ -472,7 +508,10 @@ export const appRoutes = [
       {
         path: 'tesisler',
         element: route(
-          named(() => import('@/features/clubs/FacilitiesPage'), 'FacilitiesPage')
+          named(
+            () => import('@/features/clubs/FacilitiesPage'),
+            'FacilitiesPage'
+          )
         ),
       },
 
@@ -579,7 +618,10 @@ export const appRoutes = [
       {
         path: 'uyelik',
         element: route(
-          named(() => import('@/features/membership/PremiumPage'), 'PremiumPage')
+          named(
+            () => import('@/features/membership/PremiumPage'),
+            'PremiumPage'
+          )
         ),
       },
       {

@@ -4,6 +4,9 @@ import type { AstroEvent, EventType } from '@/features/events/types';
 import { gradientFromSeed } from '@/components/media/tints';
 import { useCatalog } from './useCatalog';
 import type { ContentSelection } from './select';
+import { sanitizeText } from '@/lib/sanitize';
+import { threadSlug, slugSuffix } from './forum';
+import { getSupabase } from '@/services/supabase/client';
 
 /**
  * ETKİNLİK KATALOĞU — satırdan arayüz kaydına.
@@ -126,4 +129,78 @@ async function fetchEvents(client: SupabaseClient): Promise<AstroEvent[]> {
 /** Etkinlik kataloğu: veritabanı varsa oradan, yoksa tohum diziden. */
 export function useEventCatalog(): ContentSelection<AstroEvent> {
   return useCatalog('etkinlik', eventsSeed, fetchEvents);
+}
+
+export interface NewEventInput {
+  userId: string;
+  title: string;
+  type: EventType;
+  city: string;
+  venue: string;
+  startsAt: string;
+  endsAt?: string;
+  description: string;
+  free: boolean;
+  camping: boolean;
+  latitude?: number;
+  longitude?: number;
+}
+
+export function validateEventContribution(input: NewEventInput): string | null {
+  if (sanitizeText(input.title).length < 5) return 'Etkinlik adı gerekli.';
+  if (sanitizeText(input.city).length < 2) return 'İl gerekli.';
+  if (sanitizeText(input.venue).length < 3) return 'Mekan gerekli.';
+  if (!input.startsAt) return 'Başlangıç tarihi gerekli.';
+  if (input.endsAt && new Date(input.endsAt) <= new Date(input.startsAt)) {
+    return 'Bitiş tarihi başlangıçtan sonra olmalı.';
+  }
+  if (sanitizeText(input.description, { multiline: true }).length < 20) {
+    return 'Açıklama en az 20 karakter olmalı.';
+  }
+  const hasLat = input.latitude !== undefined;
+  const hasLon = input.longitude !== undefined;
+  if (hasLat !== hasLon)
+    return 'Koordinat için enlem ve boylam birlikte girilmeli.';
+  return null;
+}
+
+/** Standart kullanıcı etkinliği taslak açar; yayın admin onayından geçer. */
+export async function createEventContribution(
+  input: NewEventInput
+): Promise<string> {
+  const problem = validateEventContribution(input);
+  if (problem) throw new Error(problem);
+
+  const title = sanitizeText(input.title, { maxLength: 180 });
+  const slug = threadSlug(title, slugSuffix());
+  const promise = getSupabase();
+  if (!promise) throw new Error('Veritabanı bağlantısı yapılandırılmamış');
+  const supabase = await promise;
+
+  const { error } = await supabase.from('events').insert({
+    slug,
+    title,
+    event_type: input.type,
+    status: 'draft',
+    city: sanitizeText(input.city, { maxLength: 60 }),
+    venue: sanitizeText(input.venue, { maxLength: 160 }),
+    latitude: input.latitude ?? null,
+    longitude: input.longitude ?? null,
+    starts_at: new Date(input.startsAt).toISOString(),
+    ends_at: input.endsAt ? new Date(input.endsAt).toISOString() : null,
+    free: input.free,
+    camping: input.camping,
+    organizer_id: input.userId,
+    organizer_name: 'Topluluk katkısı',
+    organizer_verified: false,
+    description: sanitizeText(input.description, {
+      multiline: true,
+      maxLength: 4000,
+    }),
+    source_name: 'Astrohub kullanıcı katkısı',
+    source_last_verified_at: new Date().toISOString().slice(0, 10),
+  });
+
+  if (error) throw new Error(error.message);
+  return slug;
 }

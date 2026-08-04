@@ -213,11 +213,19 @@
       "destination": "/app.html"
     },
     {
+      "source": "/etkinlik/yeni",
+      "destination": "/app.html"
+    },
+    {
       "source": "/etkinlikler",
       "destination": "/app.html"
     },
     {
       "source": "/etkinlikler/harita",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/etkinlikler/yeni",
       "destination": "/app.html"
     },
     {
@@ -538,6 +546,10 @@
     },
     {
       "source": "/saha/istasyonlar",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/saha/yeni",
       "destination": "/app.html"
     },
     {

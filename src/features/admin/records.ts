@@ -68,7 +68,8 @@ export const RECORD_KINDS: Record<RecordKind, KindSpec> = {
   photo: {
     label: 'Fotoğraflar',
     table: 'astro_photos',
-    select: 'id, slug, title, status, created_at, profiles!astro_photos_user_id_profiles_fkey(username)',
+    select:
+      'id, slug, title, status, created_at, profiles!astro_photos_user_id_profiles_fkey(username)',
     statusColumn: 'status',
     statuses: ['draft', 'published', 'archived'],
     orderColumn: 'created_at',
@@ -160,17 +161,21 @@ async function client() {
 
 export async function fetchRecords(
   kind: RecordKind,
-  limit = 40
+  limit = 40,
+  slug?: string | null
 ): Promise<RecordRow[]> {
   const spec = RECORD_KINDS[kind];
   const supabase = await client();
 
-  const { data, error } = await supabase
+  let query = supabase
     .from(spec.table)
     .select(spec.select)
     .order(spec.orderColumn, { ascending: false })
     .limit(limit);
 
+  if (slug) query = query.eq('slug', slug);
+
+  const { data, error } = await query;
   if (error) throw new Error(error.message);
   return ((data ?? []) as unknown as Record<string, unknown>[]).map(spec.map);
 }
@@ -254,14 +259,16 @@ export async function fetchAuditLog(limit = 30): Promise<AuditRow[]> {
 
   if (error) throw new Error(error.message);
 
-  return ((data ?? []) as {
-    id: string;
-    action: string;
-    target_type: string | null;
-    target_id: string | null;
-    actor_id: string | null;
-    created_at: string;
-  }[]).map((r) => ({
+  return (
+    (data ?? []) as {
+      id: string;
+      action: string;
+      target_type: string | null;
+      target_id: string | null;
+      actor_id: string | null;
+      created_at: string;
+    }[]
+  ).map((r) => ({
     id: r.id,
     action: r.action,
     targetType: r.target_type,

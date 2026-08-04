@@ -11,6 +11,7 @@ import { eventTypeLabels } from './types';
 import { capacityLabel } from './filtering';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd, eventJsonLd } from '@/lib/seo';
+import { AdminEditLink } from '@/components/admin/AdminEditLink';
 
 /**
  * Etkinlik detay sayfası (§7.6): kapak, temel bilgi, program zaman çizelgesi,
@@ -80,17 +81,20 @@ export function EventDetailPage() {
         <div className="mt-6 flex flex-col gap-8 lg:flex-row">
           {/* Sol: içerik */}
           <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge tone="primary">{eventTypeLabels[event.type]}</Badge>
-              <Badge tone={event.free ? 'success' : 'muted'}>
-                {event.free ? 'Ücretsiz' : 'Ücretli'}
-              </Badge>
-              {event.camping && <Badge tone="cold">Kamp yapılabilir</Badge>}
-              {event.kidsFriendly && <Badge>Çocuklara uygun</Badge>}
-              {event.telescopesProvided && <Badge>Teleskop sağlanıyor</Badge>}
-              {event.astrophotoFocused && (
-                <Badge tone="cold">Astrofoto odaklı</Badge>
-              )}
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="flex flex-wrap items-center gap-2">
+                <Badge tone="primary">{eventTypeLabels[event.type]}</Badge>
+                <Badge tone={event.free ? 'success' : 'muted'}>
+                  {event.free ? 'Ücretsiz' : 'Ücretli'}
+                </Badge>
+                {event.camping && <Badge tone="cold">Kamp yapılabilir</Badge>}
+                {event.kidsFriendly && <Badge>Çocuklara uygun</Badge>}
+                {event.telescopesProvided && <Badge>Teleskop sağlanıyor</Badge>}
+                {event.astrophotoFocused && (
+                  <Badge tone="cold">Astrofoto odaklı</Badge>
+                )}
+              </span>
+              <AdminEditLink to={`/admin/events?slug=${event.slug}`} />
             </div>
 
             <h1 className="mt-3 type-page text-foreground">
