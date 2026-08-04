@@ -17,7 +17,7 @@ export function SortableHeader({
       <button
         type="button"
         onClick={onClick}
-        className="text-meta font-medium text-muted-foreground transition-colors hover:text-foreground"
+        className="inline-flex min-h-6 min-w-6 items-center text-meta font-medium text-muted-foreground transition-colors hover:text-foreground"
       >
         {children}
       </button>

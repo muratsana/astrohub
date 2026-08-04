@@ -455,7 +455,7 @@ export function EventMapPage() {
                           <td className="max-w-[320px] py-2.5 pr-4 align-top">
                             <Link
                               to={`/etkinlik/${item.slug}`}
-                              className="block truncate text-caption text-foreground transition-colors hover:text-primary"
+                              className="flex min-h-6 items-center truncate text-caption text-foreground transition-colors hover:text-primary"
                             >
                               {item.title}
                             </Link>
