@@ -52,11 +52,13 @@ export function EditorialList({
   items,
   view,
   leadLabel = 'Manşet',
+  afterLead,
   emptyMessage,
 }: {
   items: EditorialItem[];
   view: ViewMode;
   leadLabel?: string;
+  afterLead?: ReactNode;
   emptyMessage: string;
 }) {
   if (items.length === 0) {
@@ -69,13 +71,16 @@ export function EditorialList({
 
   if (view === 'list') {
     return (
-      <ul className="grid gap-px overflow-hidden rounded-card border border-border bg-border">
-        {items.map((item) => (
-          <li key={item.slug}>
-            <EditorialRow item={item} />
-          </li>
-        ))}
-      </ul>
+      <>
+        {afterLead}
+        <ul className="grid gap-px overflow-hidden rounded-card border border-border bg-border">
+          {items.map((item) => (
+            <li key={item.slug}>
+              <EditorialRow item={item} />
+            </li>
+          ))}
+        </ul>
+      </>
     );
   }
 
@@ -84,6 +89,7 @@ export function EditorialList({
   return (
     <>
       <LeadCard item={lead} label={leadLabel} />
+      {afterLead}
 
       {/*
         Izgara `CardGrid`'den geliyor, burada elle kurulmuyor. Önceden aynı

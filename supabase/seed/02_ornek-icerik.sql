@@ -66,6 +66,12 @@ on conflict (id) do update set
       source_name = excluded.source_name,
       source_last_verified_at = excluded.source_last_verified_at;
 
+insert into public.featured_content (kind, slug, position) values
+  ('etkinlik', 'halk-gozlemi', 0)
+on conflict (kind, slug) do update set
+  position = excluded.position,
+  updated_at = now();
+
 -- ── Etkinlik oturumları ──
 
 insert into public.event_sessions (id, event_id, starts_at, title, speaker, position) values

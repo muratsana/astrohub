@@ -110,74 +110,69 @@ export function ArticlesPage() {
           </p>
         </header>
 
-        {/*
-          ARAMA KUTUSU BURAYA GEÇ GELDİ. Motor (`useExplorer`) tam metin
-          aramayı en baştan destekliyordu; bu iki sayfada yalnızca ARAYÜZ
-          yoktu. Kategori sekmesi az sayıda kategoriyi iyi gösteriyor ama
-          "perseid" arayan kullanıcı sekmelerde gezinmek zorunda kalıyordu.
-        */}
-        <ModuleToolbar
-          activeFilters={{
-            chips: ex.chips,
-            onRemove: ex.removeChip,
-            onClearAll: ex.clearAll,
-          }}
-          result={{
-            current: ex.total,
-            total: allArticles.length,
-            noun: 'yazı',
-          }}
-          sort={{
-            id: 'article-sort',
-            value: ex.query.sort,
-            onChange: ex.setSort,
-            options: articlesSpec.sorts.map((s) => ({
-              value: s.value,
-              label: s.label,
-            })),
-          }}
-          view={{ mode: view, onChange: setView }}
-        >
-          <FilterCell
-            label="Ara"
-            htmlFor="articles-search"
-            active={ex.searchInput.trim().length > 0}
-            className="min-w-[20rem] flex-[2_1_20rem]"
-          >
-            <Input
-              id="articles-search"
-              type="search"
-              placeholder="Yazı başlığı veya konu"
-              value={ex.searchInput}
-              onChange={(e) => ex.setSearch(e.target.value)}
-              className={filterControlClass}
-            />
-          </FilterCell>
-          <FilterCell
-            label="Kategori"
-            htmlFor="article-category"
-            active={category !== 'hepsi'}
-            className="min-w-[12rem]"
-          >
-            <Select
-              id="article-category"
-              value={category}
-              onChange={(event) => setCategory(event.target.value)}
-              className={filterControlClass}
-            >
-              {categoryOptions.map((item) => (
-                <option key={item.value} value={item.value}>
-                  {item.label}
-                </option>
-              ))}
-            </Select>
-          </FilterCell>
-        </ModuleToolbar>
-
         <EditorialList
           view={view}
           items={items}
           leadLabel="Öne çıkan"
+          afterLead={
+            <ModuleToolbar
+              activeFilters={{
+                chips: ex.chips,
+                onRemove: ex.removeChip,
+                onClearAll: ex.clearAll,
+              }}
+              result={{
+                current: ex.total,
+                total: allArticles.length,
+                noun: 'yazı',
+              }}
+              sort={{
+                id: 'article-sort',
+                value: ex.query.sort,
+                onChange: ex.setSort,
+                options: articlesSpec.sorts.map((s) => ({
+                  value: s.value,
+                  label: s.label,
+                })),
+              }}
+              view={{ mode: view, onChange: setView }}
+            >
+              <FilterCell
+                label="Ara"
+                htmlFor="articles-search"
+                active={ex.searchInput.trim().length > 0}
+                className="min-w-[20rem] flex-[2_1_20rem]"
+              >
+                <Input
+                  id="articles-search"
+                  type="search"
+                  placeholder="Yazı başlığı veya konu"
+                  value={ex.searchInput}
+                  onChange={(e) => ex.setSearch(e.target.value)}
+                  className={filterControlClass}
+                />
+              </FilterCell>
+              <FilterCell
+                label="Kategori"
+                htmlFor="article-category"
+                active={category !== 'hepsi'}
+                className="min-w-[12rem]"
+              >
+                <Select
+                  id="article-category"
+                  value={category}
+                  onChange={(event) => setCategory(event.target.value)}
+                  className={filterControlClass}
+                >
+                  {categoryOptions.map((item) => (
+                    <option key={item.value} value={item.value}>
+                      {item.label}
+                    </option>
+                  ))}
+                </Select>
+              </FilterCell>
+            </ModuleToolbar>
+          }
           emptyMessage="Bu filtrelerle eşleşen yazı yok."
         />
       </Container>

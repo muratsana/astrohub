@@ -102,71 +102,66 @@ export function NewsPage() {
           </p>
         </header>
 
-        {/*
-          ARAMA KUTUSU BURAYA GEÇ GELDİ. Motor (`useExplorer`) tam metin
-          aramayı en baştan destekliyordu; bu iki sayfada yalnızca ARAYÜZ
-          yoktu. Kategori sekmesi az sayıda kategoriyi iyi gösteriyor ama
-          "perseid" arayan kullanıcı sekmelerde gezinmek zorunda kalıyordu.
-        */}
-        <ModuleToolbar
-          activeFilters={{
-            chips: ex.chips,
-            onRemove: ex.removeChip,
-            onClearAll: ex.clearAll,
-          }}
-          result={{ current: ex.total, total: all.length, noun: 'haber' }}
-          sort={{
-            id: 'news-sort',
-            value: ex.query.sort,
-            onChange: ex.setSort,
-            options: newsSpec.sorts.map((s) => ({
-              value: s.value,
-              label: s.label,
-            })),
-          }}
-          view={{ mode: view, onChange: setView }}
-        >
-          <FilterCell
-            label="Ara"
-            htmlFor="news-search"
-            active={ex.searchInput.trim().length > 0}
-            className="min-w-[20rem] flex-[2_1_20rem]"
-          >
-            <Input
-              id="news-search"
-              type="search"
-              placeholder="Haber başlığı veya kaynak"
-              value={ex.searchInput}
-              onChange={(e) => ex.setSearch(e.target.value)}
-              className={filterControlClass}
-            />
-          </FilterCell>
-          <FilterCell
-            label="Kategori"
-            htmlFor="news-category"
-            active={category !== 'hepsi'}
-            className="min-w-[12rem]"
-          >
-            <Select
-              id="news-category"
-              value={category}
-              onChange={(event) => setCategory(event.target.value)}
-              className={filterControlClass}
-            >
-              {categories.map((item) => (
-                <option key={item} value={item}>
-                  {item === 'hepsi'
-                    ? 'Tüm kategoriler'
-                    : newsCategoryLabels[item]}
-                </option>
-              ))}
-            </Select>
-          </FilterCell>
-        </ModuleToolbar>
-
         <EditorialList
           view={view}
           items={items}
+          afterLead={
+            <ModuleToolbar
+              activeFilters={{
+                chips: ex.chips,
+                onRemove: ex.removeChip,
+                onClearAll: ex.clearAll,
+              }}
+              result={{ current: ex.total, total: all.length, noun: 'haber' }}
+              sort={{
+                id: 'news-sort',
+                value: ex.query.sort,
+                onChange: ex.setSort,
+                options: newsSpec.sorts.map((s) => ({
+                  value: s.value,
+                  label: s.label,
+                })),
+              }}
+              view={{ mode: view, onChange: setView }}
+            >
+              <FilterCell
+                label="Ara"
+                htmlFor="news-search"
+                active={ex.searchInput.trim().length > 0}
+                className="min-w-[20rem] flex-[2_1_20rem]"
+              >
+                <Input
+                  id="news-search"
+                  type="search"
+                  placeholder="Haber başlığı veya kaynak"
+                  value={ex.searchInput}
+                  onChange={(e) => ex.setSearch(e.target.value)}
+                  className={filterControlClass}
+                />
+              </FilterCell>
+              <FilterCell
+                label="Kategori"
+                htmlFor="news-category"
+                active={category !== 'hepsi'}
+                className="min-w-[12rem]"
+              >
+                <Select
+                  id="news-category"
+                  value={category}
+                  onChange={(event) => setCategory(event.target.value)}
+                  className={filterControlClass}
+                >
+                  {categories.map((item) => (
+                    <option key={item} value={item}>
+                      {item === 'hepsi'
+                        ? 'Tüm kategoriler'
+                        : newsCategoryLabels[item]}
+                    </option>
+                  ))}
+                </Select>
+              </FilterCell>
+            </ModuleToolbar>
+          }
           emptyMessage="Bu kategoride haber yok."
         />
       </Container>

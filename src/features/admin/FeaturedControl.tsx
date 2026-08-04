@@ -3,7 +3,7 @@ import { Panel } from '@/components/ui/Panel';
 import { Button } from '@/components/ui/Button';
 import { sortedNews } from '@/features/news/data';
 import { articles } from '@/features/articles/data';
-import { events } from '@/features/events/data';
+import { useEventCatalog } from '@/services/content/events';
 import {
   saveFeatured,
   useFeatured,
@@ -37,6 +37,8 @@ interface Entry {
 }
 
 export function FeaturedControl({ canWrite }: { canWrite: boolean }) {
+  const eventCatalog = useEventCatalog();
+
   return (
     <Panel
       title="Öne çıkan içerikler"
@@ -48,8 +50,8 @@ export function FeaturedControl({ canWrite }: { canWrite: boolean }) {
     >
       <p className="mb-3 text-body-sm leading-relaxed text-muted-foreground">
         Haber ve yazı şeritleri ilk {HOME_ROWS} kaydı, etkinlik sayfası ilk
-        seçili etkinliği gösterir. Seçim yapılmazsa modül kendi varsayılan
-        sırasına döner. Fazladan seçim yedekte bekler.
+        seçili etkinliği gösterir. Etkinlik seçimi boşsa harita sayfasında
+        öne çıkan kart çizilmez. Fazladan seçim yedekte bekler.
       </p>
 
       <div className="grid gap-3 lg:grid-cols-3">
@@ -69,7 +71,10 @@ export function FeaturedControl({ canWrite }: { canWrite: boolean }) {
           kind="etkinlik"
           label="Etkinlikler"
           canWrite={canWrite}
-          entries={events.map((e) => ({ slug: e.slug, title: e.title }))}
+          entries={eventCatalog.items.map((e) => ({
+            slug: e.slug,
+            title: e.title,
+          }))}
         />
       </div>
     </Panel>
