@@ -13,6 +13,7 @@ import { PageMeta } from '@/components/seo/PageMeta';
 import { PhotoPlaceholder } from '@/components/media/PhotoPlaceholder';
 import { breadcrumbJsonLd } from '@/lib/seo';
 import { useLocationContext } from '@/features/location/LocationContext';
+import { LocationPicker } from '@/features/location/LocationPicker';
 import { sortByProximity, formatDistance } from '@/domain/geography/distance';
 import { useEventCatalog } from '@/services/content/events';
 import { eventTypeLabels } from './types';
@@ -414,8 +415,8 @@ export function EventMapPage() {
             <Panel
               title="Size en yakın"
               status={
-                <span className="flex items-center gap-3">
-                  <span>{location.label}</span>
+                <span className="flex flex-wrap items-center justify-end gap-2">
+                  <LocationPicker variant="panel" />
                   <ButtonLink to="/etkinlik/yeni" size="sm">
                     Etkinlik ekle
                   </ButtonLink>
