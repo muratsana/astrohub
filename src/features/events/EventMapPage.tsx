@@ -5,7 +5,7 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { Panel } from '@/components/ui/Panel';
 import { Badge } from '@/components/ui/Badge';
 import { Select } from '@/components/ui/Input';
-import { Button } from '@/components/ui/Button';
+import { Button, ButtonLink } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
@@ -19,7 +19,15 @@ import { eventTypeLabels, type EventType } from './types';
 import type { AstroEvent } from './types';
 import { cn } from '@/lib/cn';
 import { TileMap } from '@/features/sky/TileMap';
-import { basemapSource, BASEMAP_CREDIT } from '@/features/sky/lightPollutionEmbed';
+import {
+  BASEMAP_CREDIT,
+  OPACITY_RANGE,
+  OVERLAY_SOURCES,
+  SATELLITE_CREDIT,
+  ZOOM_RANGE,
+  basemapSource,
+  satelliteSource,
+} from '@/features/sky/lightPollutionEmbed';
 import type { LatLng } from '@/features/sky/tileMath';
 import { useTheme } from '@/features/theme/ThemeContext';
 import { hasNetworkAccess } from '@/lib/runtime';
@@ -27,28 +35,21 @@ import { hasNetworkAccess } from '@/lib/runtime';
 /**
  * ETKİNLİKLER ANA MODÜLÜ.
  *
- * NEDEN GERÇEK HARİTA DEĞİL
- * Tam ekran etkileşimli harita bir tile sağlayıcısı ister ve tile lisansı
- * (atıf, önbellek hakkı, istek limiti) kod yazmadan çözülmesi gereken bir
- * konudur (§14.4). Bu sayfa o gelene kadar boş bir "yakında" ekranı olarak
- * durmak yerine sorunun asıl cevabını veriyor: **yakınımda ne var.**
- *
- * Buradaki görsel bilinçli olarak *şematik*: coğrafi sınır çizilmez, ölçek
- * verilmez, "harita" denmez. Noktalar Türkiye'yi kapsayan bir kutuya
- * eşdikdörtgen izdüşümle yerleşir ve yalnızca dağılımı gösterir. Gerçek
- * mesafe her satırda km olarak yazılıdır — göz kararı ölçmeye gerek yok.
- *
- * Tile sağlayıcısı bağlandığında bu sayfa Leaflet'e geçer; yakınlık listesi
- * ve `sortByProximity` aynen kalır.
+ * Harita ana görünüm; liste ise altta yakınlık sırasıyla çalışır. Varsayılan
+ * olarak yalnız seçili/en yakın etkinliğin pini çizilir. Kullanıcı bilinçli
+ * olarak "Tümünü göster" derse tüm konumlu etkinlikler haritaya basılır.
  */
 
 const CONSENT_KEY = 'astrohub:map:tiles';
+type BaseMode = 'harita' | 'uydu';
+type LayerMode = 'yok' | 'isik';
 
 export function EventMapPage() {
   const { location, permission, requestDeviceLocation } = useLocationContext();
   const { theme } = useTheme();
   const [type, setType] = useState<EventType | 'hepsi'>('hepsi');
   const [active, setActive] = useState<string | null>(null);
+  const [showAll, setShowAll] = useState(false);
   const catalog = useEventCatalog();
   const [allowed, setAllowed] = useState(() => {
     try {
@@ -57,6 +58,9 @@ export function EventMapPage() {
       return false;
     }
   });
+  const [opacity, setOpacity] = useState(55);
+  const [baseMode, setBaseMode] = useState<BaseMode>('harita');
+  const [layerMode, setLayerMode] = useState<LayerMode>('isik');
   const [center, setCenter] = useState<LatLng>({
     lat: location.latitude,
     lng: location.longitude,
@@ -79,7 +83,48 @@ export function EventMapPage() {
     () => sortByProximity(filtered, location, (e: AstroEvent) => e.coords),
     [filtered, location]
   );
+
+  useEffect(() => {
+    setActive((current) => {
+      if (current && located.some(({ item }) => item.slug === current)) {
+        return current;
+      }
+      return located[0]?.item.slug ?? null;
+    });
+  }, [located]);
+
   const featured = located[0];
+  const selected = located.find(({ item }) => item.slug === active) ?? located[0];
+  const mapItems = showAll ? located : selected ? [selected] : [];
+  const overlay = layerMode === 'isik' ? OVERLAY_SOURCES[0] : undefined;
+  const base =
+    baseMode === 'uydu'
+      ? satelliteSource()
+      : basemapSource(theme !== 'light' || Boolean(overlay?.needsDarkBasemap));
+  const credit = [
+    baseMode === 'uydu' ? SATELLITE_CREDIT : BASEMAP_CREDIT,
+    overlay?.credit,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+  const live = hasNetworkAccess && allowed;
+
+  function focusEvent(item: AstroEvent) {
+    if (!item.coords) return;
+    setActive(item.slug);
+    setShowAll(false);
+    setCenter({ lat: item.coords.latitude, lng: item.coords.longitude });
+    setZoom((current) => Math.max(current, 7));
+  }
+
+  function allow() {
+    setAllowed(true);
+    try {
+      localStorage.setItem(CONSENT_KEY, 'izin');
+    } catch {
+      // Seçim yalnız bu oturumda kalır.
+    }
+  }
 
   return (
     <>
@@ -163,19 +208,19 @@ export function EventMapPage() {
           </Link>
         )}
 
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
-          {/* ───────── Şematik dağılım ───────── */}
+        <div className="space-y-4">
+          {/* ───────── Harita ───────── */}
           <Panel
             title="Etkinlik haritası"
-            status={`${located.length} işaret`}
+            status={`${mapItems.length} işaret`}
             bodyClassName="p-0"
           >
-            <div className="relative h-[58vh] min-h-[420px] overflow-hidden rounded-b-card bg-surface-2">
+            <div className="relative h-[70vh] min-h-[520px] overflow-hidden rounded-b-card bg-surface-2">
               {!hasNetworkAccess ? (
                 <div className="grid h-full place-items-center p-6 text-center text-body-sm text-muted-foreground">
                   Bu önizleme dış harita isteği yapmıyor.
                 </div>
-              ) : allowed ? (
+              ) : live ? (
                 <TileMap
                   label="Etkinlik haritası — sürükleyerek ve ok tuşlarıyla gezin"
                   className={cn(
@@ -185,13 +230,15 @@ export function EventMapPage() {
                   )}
                   center={center}
                   zoom={zoom}
-                  minZoom={3}
-                  maxZoom={12}
+                  minZoom={ZOOM_RANGE.min}
+                  maxZoom={ZOOM_RANGE.max}
                   onCenterChange={setCenter}
                   onZoomChange={setZoom}
-                  base={basemapSource(theme !== 'light')}
+                  base={base}
+                  overlay={overlay}
+                  overlayOpacity={opacity / 100}
                   marker={{ lat: location.latitude, lng: location.longitude }}
-                  markers={located.map(({ item, distanceKm }) => ({
+                  markers={mapItems.map(({ item, distanceKm }) => ({
                     id: item.slug,
                     point: {
                       lat: item.coords!.latitude,
@@ -199,7 +246,7 @@ export function EventMapPage() {
                     },
                     label: `${item.title}, ${item.city}, ${formatDistance(distanceKm)} uzaklıkta`,
                     active: active === item.slug,
-                    onSelect: () => setActive(item.slug),
+                    onSelect: () => focusEvent(item),
                   }))}
                 />
               ) : (
@@ -212,14 +259,7 @@ export function EventMapPage() {
                     <Button
                       size="sm"
                       className="mt-3"
-                      onClick={() => {
-                        setAllowed(true);
-                        try {
-                          localStorage.setItem(CONSENT_KEY, 'izin');
-                        } catch {
-                          // Seçim yalnız bu oturumda kalır.
-                        }
-                      }}
+                      onClick={allow}
                     >
                       Haritayı yükle
                     </Button>
@@ -227,7 +267,7 @@ export function EventMapPage() {
                 </div>
               )}
 
-              {allowed && active && (
+              {live && active && (
                 <div className="pointer-events-none absolute inset-x-2 bottom-7 rounded-card border border-border bg-surface-1/95 px-2.5 py-1.5">
                   {(() => {
                     const hit = located.find((l) => l.item.slug === active);
@@ -243,10 +283,58 @@ export function EventMapPage() {
                   })()}
                 </div>
               )}
-              {allowed && (
-                <p className="absolute bottom-1 left-2 text-[0.62rem] text-muted-foreground">
-                  {BASEMAP_CREDIT}
-                </p>
+              {live && (
+                <>
+                  <div className="absolute right-2 top-2 flex max-w-[calc(100%-1rem)] flex-wrap items-end gap-2 rounded-card border border-border-strong bg-background/90 px-2 py-1.5 shadow-card backdrop-blur-sm">
+                    <label className="grid gap-1">
+                      <span className="label">Altlık</span>
+                      <Select
+                        value={baseMode}
+                        onChange={(event) => setBaseMode(event.target.value as BaseMode)}
+                        className="h-8 w-28 text-meta"
+                      >
+                        <option value="harita">Harita</option>
+                        <option value="uydu">Uydu</option>
+                      </Select>
+                    </label>
+                    <label className="grid gap-1">
+                      <span className="label">Katman</span>
+                      <Select
+                        value={layerMode}
+                        onChange={(event) => setLayerMode(event.target.value as LayerMode)}
+                        className="h-8 w-28 text-meta"
+                      >
+                        <option value="isik">Işık</option>
+                        <option value="yok">Yok</option>
+                      </Select>
+                    </label>
+                    {overlay && (
+                      <label htmlFor="event-opacity" className="grid gap-1">
+                        <span className="label">Saydamlık</span>
+                        <input
+                          id="event-opacity"
+                          type="range"
+                          min={OPACITY_RANGE.min}
+                          max={OPACITY_RANGE.max}
+                          step={5}
+                          value={opacity}
+                          onChange={(event) => setOpacity(Number(event.target.value))}
+                          className="block w-24 accent-primary"
+                        />
+                      </label>
+                    )}
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => setShowAll((current) => !current)}
+                    >
+                      {showAll ? 'Tek pini göster' : 'Tümünü göster'}
+                    </Button>
+                  </div>
+                  <p className="absolute bottom-1 left-2 text-[0.62rem] text-muted-foreground">
+                    {credit}
+                  </p>
+                </>
               )}
             </div>
           </Panel>
@@ -264,18 +352,20 @@ export function EventMapPage() {
                 <ul>
                   {located.map(({ item, distanceKm }) => (
                     <li key={item.slug} className="border-b border-border last:border-0">
-                      <Link
-                        to={`/etkinlik/${item.slug}`}
-                        onMouseEnter={() => setActive(item.slug)}
-                        onMouseLeave={() => setActive(null)}
+                      <div
                         className={cn(
-                          'flex items-baseline justify-between gap-3 py-2 transition-colors',
-                          active === item.slug ? 'text-primary' : 'hover:text-primary'
+                          'flex flex-wrap items-start justify-between gap-3 py-3 transition-colors',
+                          active === item.slug && 'text-primary'
                         )}
                       >
-                        <span className="min-w-0">
-                          <span className="block truncate text-caption text-foreground">
-                            {item.title}
+                        <div className="min-w-0 flex-1">
+                          <span className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                            <span className="truncate text-caption text-foreground">
+                              {item.title}
+                            </span>
+                            <span className="tabular text-body-sm text-cold">
+                              {formatDistance(distanceKm)}
+                            </span>
                           </span>
                           <span className="tabular mt-0.5 block text-meta text-muted-foreground">
                             {item.city} ·{' '}
@@ -284,11 +374,30 @@ export function EventMapPage() {
                               month: 'long',
                             })}
                           </span>
-                        </span>
-                        <span className="tabular shrink-0 text-body-sm text-cold">
-                          {formatDistance(distanceKm)}
-                        </span>
-                      </Link>
+                          <span className="mt-1 flex flex-wrap gap-1.5">
+                            <Badge tone="primary">{eventTypeLabels[item.type]}</Badge>
+                            <Badge tone={item.free ? 'success' : 'muted'}>
+                              {item.free ? 'Ücretsiz' : 'Ücretli'}
+                            </Badge>
+                          </span>
+                        </div>
+                        <div className="flex shrink-0 flex-wrap gap-2">
+                          <Button
+                            size="sm"
+                            variant={active === item.slug ? 'primary' : 'secondary'}
+                            onClick={() => focusEvent(item)}
+                          >
+                            Haritada göster
+                          </Button>
+                          <ButtonLink
+                            to={`/etkinlik/${item.slug}`}
+                            size="sm"
+                            variant="ghost"
+                          >
+                            Görüntüle
+                          </ButtonLink>
+                        </div>
+                      </div>
                     </li>
                   ))}
                 </ul>

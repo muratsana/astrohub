@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Link } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
+import { Button, ButtonLink } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Panel } from '@/components/ui/Panel';
@@ -19,8 +18,10 @@ import {
   BASEMAP_CREDIT,
   OPACITY_RANGE,
   OVERLAY_SOURCES,
+  SATELLITE_CREDIT,
   ZOOM_RANGE,
   basemapSource,
+  satelliteSource,
 } from '@/features/sky/lightPollutionEmbed';
 import { hasNetworkAccess } from '@/lib/runtime';
 import { cn } from '@/lib/cn';
@@ -30,6 +31,8 @@ import { siteTypeLabels, type ObservingSite, type SiteType } from './data';
 const CONSENT_KEY = 'astrohub:map:tiles';
 
 type SortMode = 'yakin' | 'karanlik' | 'puan';
+type BaseMode = 'harita' | 'uydu';
+type LayerMode = 'yok' | 'isik';
 
 const BORTLE_COLORS = [
   '#38bdf8',
@@ -64,8 +67,11 @@ export function SitesPage() {
   const [bortle, setBortle] = useState<number | 'hepsi'>('hepsi');
   const [sort, setSort] = useState<SortMode>('yakin');
   const [active, setActive] = useState<string | null>(null);
+  const [showAll, setShowAll] = useState(false);
   const [allowed, setAllowed] = useState(storedConsent);
   const [opacity, setOpacity] = useState(55);
+  const [baseMode, setBaseMode] = useState<BaseMode>('harita');
+  const [layerMode, setLayerMode] = useState<LayerMode>('isik');
   const [center, setCenter] = useState<LatLng>({
     lat: location.latitude,
     lng: location.longitude,
@@ -105,8 +111,36 @@ export function SitesPage() {
     return rows.located;
   }, [filtered, location, sort]);
 
-  const overlay = OVERLAY_SOURCES[0];
+  useEffect(() => {
+    setActive((current) => {
+      if (current && nearest.some(({ item }) => item.slug === current)) {
+        return current;
+      }
+      return nearest[0]?.item.slug ?? null;
+    });
+  }, [nearest]);
+
+  const selected = nearest.find(({ item }) => item.slug === active) ?? nearest[0];
+  const mapItems = showAll ? nearest : selected ? [selected] : [];
+  const overlay = layerMode === 'isik' ? OVERLAY_SOURCES[0] : undefined;
+  const base =
+    baseMode === 'uydu'
+      ? satelliteSource()
+      : basemapSource(theme !== 'light' || Boolean(overlay?.needsDarkBasemap));
+  const credit = [
+    baseMode === 'uydu' ? SATELLITE_CREDIT : BASEMAP_CREDIT,
+    overlay?.credit,
+  ]
+    .filter(Boolean)
+    .join(' · ');
   const live = hasNetworkAccess && allowed;
+
+  function focusSite(item: ObservingSite) {
+    setActive(item.slug);
+    setShowAll(false);
+    setCenter({ lat: item.coords.latitude, lng: item.coords.longitude });
+    setZoom((current) => Math.max(current, 7));
+  }
 
   function allow() {
     setAllowed(true);
@@ -206,13 +240,13 @@ export function SitesPage() {
 
         <CatalogSourceNote selection={catalog} />
 
-        <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
+        <div className="mt-4 space-y-4">
           <Panel
             title="Bortle saha haritası"
-            status={`${nearest.length} işaret`}
+            status={`${mapItems.length} işaret`}
             bodyClassName="p-0"
           >
-            <div className="relative h-[62vh] min-h-[440px] overflow-hidden rounded-b-card bg-surface-2">
+            <div className="relative h-[70vh] min-h-[520px] overflow-hidden rounded-b-card bg-surface-2">
               {!hasNetworkAccess ? (
                 <MapNotice
                   title="Bu önizleme dış harita isteği yapmıyor"
@@ -232,11 +266,11 @@ export function SitesPage() {
                   maxZoom={ZOOM_RANGE.max}
                   onCenterChange={setCenter}
                   onZoomChange={setZoom}
-                  base={basemapSource(theme !== 'light' || !!overlay.needsDarkBasemap)}
+                  base={base}
                   overlay={overlay}
                   overlayOpacity={opacity / 100}
                   marker={{ lat: location.latitude, lng: location.longitude }}
-                  markers={nearest.map(({ item, distanceKm }) => ({
+                  markers={mapItems.map(({ item, distanceKm }) => ({
                     id: item.slug,
                     point: {
                       lat: item.coords.latitude,
@@ -245,7 +279,7 @@ export function SitesPage() {
                     label: `${item.name}, ${item.region}, Bortle ${item.bortle}, ${formatDistance(distanceKm)} uzaklıkta`,
                     active: active === item.slug,
                     color: markerColor(item.bortle),
-                    onSelect: () => setActive(item.slug),
+                    onSelect: () => focusSite(item),
                   }))}
                 />
               ) : (
@@ -262,24 +296,54 @@ export function SitesPage() {
 
               {live && (
                 <>
-                  <BortleLegend />
-                  <div className="absolute right-2 top-2 rounded-card border border-border-strong bg-background/85 px-2 py-1.5 backdrop-blur-sm">
-                    <label htmlFor="site-opacity" className="label">
-                      Katman
+                  <div className="absolute right-2 top-2 flex max-w-[calc(100%-1rem)] flex-wrap items-end gap-2 rounded-card border border-border-strong bg-background/90 px-2 py-1.5 shadow-card backdrop-blur-sm">
+                    <label className="grid gap-1">
+                      <span className="label">Altlık</span>
+                      <Select
+                        value={baseMode}
+                        onChange={(event) => setBaseMode(event.target.value as BaseMode)}
+                        className="h-8 w-28 text-meta"
+                      >
+                        <option value="harita">Harita</option>
+                        <option value="uydu">Uydu</option>
+                      </Select>
                     </label>
-                    <input
-                      id="site-opacity"
-                      type="range"
-                      min={OPACITY_RANGE.min}
-                      max={OPACITY_RANGE.max}
-                      step={5}
-                      value={opacity}
-                      onChange={(event) => setOpacity(Number(event.target.value))}
-                      className="mt-1 block w-28 accent-primary"
-                    />
+                    <label className="grid gap-1">
+                      <span className="label">Katman</span>
+                      <Select
+                        value={layerMode}
+                        onChange={(event) => setLayerMode(event.target.value as LayerMode)}
+                        className="h-8 w-28 text-meta"
+                      >
+                        <option value="isik">Işık</option>
+                        <option value="yok">Yok</option>
+                      </Select>
+                    </label>
+                    {overlay && (
+                      <label htmlFor="site-opacity" className="grid gap-1">
+                        <span className="label">Saydamlık</span>
+                        <input
+                          id="site-opacity"
+                          type="range"
+                          min={OPACITY_RANGE.min}
+                          max={OPACITY_RANGE.max}
+                          step={5}
+                          value={opacity}
+                          onChange={(event) => setOpacity(Number(event.target.value))}
+                          className="block w-24 accent-primary"
+                        />
+                      </label>
+                    )}
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => setShowAll((current) => !current)}
+                    >
+                      {showAll ? 'Tek pini göster' : 'Tümünü göster'}
+                    </Button>
                   </div>
                   <p className="absolute bottom-1 left-2 text-[0.62rem] text-muted-foreground">
-                    {BASEMAP_CREDIT} · {overlay.credit}
+                    {credit}
                   </p>
                 </>
               )}
@@ -297,35 +361,48 @@ export function SitesPage() {
               <ul>
                 {nearest.map(({ item, distanceKm }) => (
                   <li key={item.slug} className="border-b border-border last:border-0">
-                    <Link
-                      to={`/saha/${item.slug}`}
-                      onMouseEnter={() => setActive(item.slug)}
-                      onMouseLeave={() => setActive(null)}
+                    <div
                       className={cn(
-                        'block py-2 transition-colors hover:text-primary',
+                        'flex flex-wrap items-start justify-between gap-3 py-3 transition-colors',
                         active === item.slug && 'text-primary'
                       )}
                     >
-                      <span className="flex items-start justify-between gap-3">
-                        <span className="min-w-0">
-                          <span className="block truncate text-caption text-foreground">
+                      <div className="min-w-0 flex-1">
+                        <span className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                          <span className="truncate text-caption text-foreground">
                             {item.name}
                           </span>
-                          <span className="mt-0.5 block text-meta text-muted-foreground">
-                            {item.region} · {siteTypeLabels[item.siteType]} ·{' '}
-                            {item.altitude} m
+                          <span className="tabular text-body-sm text-cold">
+                            {formatDistance(distanceKm)}
                           </span>
                         </span>
-                        <span className="tabular shrink-0 text-body-sm text-cold">
-                          {formatDistance(distanceKm)}
+                        <p className="mt-0.5 text-meta text-muted-foreground">
+                          {item.region} · {siteTypeLabels[item.siteType]} · {item.altitude}{' '}
+                          m
+                        </p>
+                        <span className="mt-1 flex flex-wrap gap-1.5">
+                          <Badge tone="primary">Bortle {item.bortle}</Badge>
+                          {item.sqm !== undefined && <Badge>SQM {item.sqm}</Badge>}
+                          <Badge tone="cold">★ {item.rating.toFixed(1)}</Badge>
                         </span>
-                      </span>
-                      <span className="mt-1 flex flex-wrap gap-1.5">
-                        <Badge tone="primary">Bortle {item.bortle}</Badge>
-                        {item.sqm !== undefined && <Badge>SQM {item.sqm}</Badge>}
-                        <Badge tone="cold">★ {item.rating.toFixed(1)}</Badge>
-                      </span>
-                    </Link>
+                      </div>
+                      <div className="flex shrink-0 flex-wrap gap-2">
+                        <Button
+                          size="sm"
+                          variant={active === item.slug ? 'primary' : 'secondary'}
+                          onClick={() => focusSite(item)}
+                        >
+                          Haritada göster
+                        </Button>
+                        <ButtonLink
+                          to={`/saha/${item.slug}`}
+                          size="sm"
+                          variant="ghost"
+                        >
+                          Görüntüle
+                        </ButtonLink>
+                      </div>
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -334,28 +411,6 @@ export function SitesPage() {
         </div>
       </Container>
     </>
-  );
-}
-
-function BortleLegend() {
-  return (
-    <div className="absolute bottom-5 left-2 rounded-card border border-border-strong bg-background/85 px-2 py-1.5 backdrop-blur-sm">
-      <p className="label mb-1">Bortle ölçeği</p>
-      <div className="flex h-2 w-44 overflow-hidden rounded-card">
-        {BORTLE_COLORS.map((color, index) => (
-          <span
-            key={color}
-            title={`Bortle ${index + 1}`}
-            className="flex-1"
-            style={{ backgroundColor: color }}
-          />
-        ))}
-      </div>
-      <div className="mt-1 flex justify-between text-meta text-faint">
-        <span>B1 karanlık</span>
-        <span>B9 şehir</span>
-      </div>
-    </div>
   );
 }
 

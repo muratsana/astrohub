@@ -102,6 +102,19 @@ export function basemapSource(dark: boolean) {
 
 export const BASEMAP_CREDIT = '© OpenStreetMap katkıcıları · © CARTO';
 
+/** Uydu altlığı — saha/etkinlik haritalarında araziyi okumak için. */
+export function satelliteSource() {
+  return {
+    id: 'esri:world-imagery',
+    maxZoom: 19,
+    url: (tile: Tile) =>
+      `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/` +
+      `MapServer/tile/${tile.z}/${tile.y}/${tile.x}`,
+  };
+}
+
+export const SATELLITE_CREDIT = 'Uydu: Esri World Imagery';
+
 export interface OverlaySource {
   id: string;
   /** Seçicide görünen ad. */
