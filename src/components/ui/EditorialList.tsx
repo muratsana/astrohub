@@ -2,10 +2,7 @@ import type { ReactNode } from 'react';
 import { Link } from 'react-router';
 import { Badge } from './Badge';
 import { CardGrid } from './CardGrid';
-import {
-  ContentCard,
-  ContentCardMedia,
-} from '@/components/ui/ContentCard';
+import { ContentCard, ContentCardMedia } from '@/components/ui/ContentCard';
 import { RemoteImage } from '@/components/media/RemoteImage';
 import { tintFromSeed } from '@/components/media/tints';
 import type { ViewMode } from './useViewMode';
@@ -38,6 +35,8 @@ export interface EditorialItem {
   meta?: string;
   /** Kartın altına sabitlenen künye satırı. */
   footer?: ReactNode;
+  /** Kart/satır üstünde gösterilen yönetim aksiyonu. */
+  action?: ReactNode;
   /** StarField tonu ("r,g,b"). Verilmezse slug'dan türetilir. */
   tint?: string;
   /**
@@ -113,55 +112,60 @@ function seedTint(item: EditorialItem): string {
 
 function LeadCard({ item, label }: { item: EditorialItem; label: string }) {
   return (
-    <ContentCard
-      to={item.to}
-      className="mb-3 grid gap-3 p-2 md:h-[525px] md:grid-cols-[minmax(0,58%)_minmax(0,1fr)]"
-    >
-      {/* `wide` (16:9) kart ailesindeki üçüncü orandır ve YALNIZCA
+    <div className="relative mb-3">
+      <ContentCard
+        to={item.to}
+        className="grid gap-3 p-2 md:h-[525px] md:grid-cols-[minmax(0,58%)_minmax(0,1fr)]"
+      >
+        {/* `wide` (16:9) kart ailesindeki üçüncü orandır ve YALNIZCA
           manşete aittir: sayfa başına bir tane, tam genişlik bir sütun
           kaplar, ızgara satır hizasını etkilemez. */}
-      <ContentCardMedia
-        ratio="wide"
-        className="border border-border md:h-full md:aspect-auto"
-        badge={
-          <span className="rounded-card border border-primary/50 bg-primary/15 px-1.5 py-0.5 text-meta tracking-[0.02em] text-primary backdrop-blur-sm">
-            {label}
-          </span>
-        }
-      >
-        <RemoteImage
-          src={item.imageUrl}
-          alt={item.title}
-          sizes="(min-width: 768px) 58vw, 100vw"
-          seed={item.slug}
-          tint={seedTint(item)}
-        />
-      </ContentCardMedia>
+        <ContentCardMedia
+          ratio="wide"
+          className="border border-border md:h-full md:aspect-auto"
+          badge={
+            <span className="rounded-card border border-primary/50 bg-primary/15 px-1.5 py-0.5 text-meta tracking-[0.02em] text-primary backdrop-blur-sm">
+              {label}
+            </span>
+          }
+        >
+          <RemoteImage
+            src={item.imageUrl}
+            alt={item.title}
+            sizes="(min-width: 768px) 58vw, 100vw"
+            seed={item.slug}
+            tint={seedTint(item)}
+          />
+        </ContentCardMedia>
 
-      <div className="flex flex-col py-2 pr-2">
-        <div className="mb-2 flex flex-wrap items-center gap-2">
-          <Badge tone="primary">{item.category}</Badge>
-          {item.meta && (
-            <span className="tabular text-meta text-faint">{item.meta}</span>
-          )}
-        </div>
+        <div className="flex flex-col py-2 pr-2">
+          <div className="mb-2 flex flex-wrap items-center gap-2">
+            <Badge tone="primary">{item.category}</Badge>
+            {item.meta && (
+              <span className="tabular text-meta text-faint">{item.meta}</span>
+            )}
+          </div>
 
-        <h2 className="type-section text-foreground transition-colors group-hover:text-white">
-          {item.title}
-        </h2>
-        <p className="mt-2.5 line-clamp-5 text-body-sm leading-relaxed text-muted-foreground">
-          {item.summary}
-        </p>
-
-        {item.imageCredit && (
-          <p className="mt-2 text-meta text-faint">
-            Görsel: {item.imageCredit}
+          <h2 className="type-section text-foreground transition-colors group-hover:text-white">
+            {item.title}
+          </h2>
+          <p className="mt-2.5 line-clamp-5 text-body-sm leading-relaxed text-muted-foreground">
+            {item.summary}
           </p>
-        )}
 
-        {item.footer && <div className="mt-auto pt-3">{item.footer}</div>}
-      </div>
-    </ContentCard>
+          {item.imageCredit && (
+            <p className="mt-2 text-meta text-faint">
+              Görsel: {item.imageCredit}
+            </p>
+          )}
+
+          {item.footer && <div className="mt-auto pt-3">{item.footer}</div>}
+        </div>
+      </ContentCard>
+      {item.action && (
+        <div className="absolute right-3 top-3 z-10">{item.action}</div>
+      )}
+    </div>
   );
 }
 
@@ -175,26 +179,27 @@ function LeadCard({ item, label }: { item: EditorialItem; label: string }) {
  */
 function EditorialCard({ item }: { item: EditorialItem }) {
   return (
-    <ContentCard to={item.to} className="overflow-hidden">
-      <ContentCardMedia ratio="wide" className="rounded-none">
-        <RemoteImage
-          src={item.imageUrl}
-          alt={item.title}
-          sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-          seed={item.slug}
-          tint={seedTint(item)}
-        />
-      </ContentCardMedia>
+    <div className="relative h-full">
+      <ContentCard to={item.to} className="overflow-hidden">
+        <ContentCardMedia ratio="wide" className="rounded-none">
+          <RemoteImage
+            src={item.imageUrl}
+            alt={item.title}
+            sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+            seed={item.slug}
+            tint={seedTint(item)}
+          />
+        </ContentCardMedia>
 
-      <div className="flex flex-1 flex-col p-2.5">
-        <div className="mb-1.5 flex flex-wrap items-center gap-1.5">
-          <Badge>{item.category}</Badge>
-          {item.meta && (
-            <span className="tabular text-meta text-faint">{item.meta}</span>
-          )}
-        </div>
+        <div className="flex flex-1 flex-col p-2.5">
+          <div className="mb-1.5 flex flex-wrap items-center gap-1.5">
+            <Badge>{item.category}</Badge>
+            {item.meta && (
+              <span className="tabular text-meta text-faint">{item.meta}</span>
+            )}
+          </div>
 
-        {/*
+          {/*
           BAŞLIK SABİT İKİ SATIR. Önce hiç kısıtı yoktu: başlık uzunluğuna
           göre bir, iki ya da üç satıra taşıyordu ve kartın yüksekliğini
           içerik belirliyordu. Sonuç, aynı ızgarada aynı bileşenin üç sayfada
@@ -209,14 +214,14 @@ function EditorialCard({ item }: { item: EditorialItem }) {
           `lh` birimi satır yüksekliğinin kendisi — 13px ve `leading-snug`
           değişse de ayrılan yer başlığın gerçek iki satırı kadar kalır.
         */}
-        <h2 className="line-clamp-2 min-h-[2lh] text-body-sm leading-snug text-foreground transition-colors group-hover:text-white">
-          {item.title}
-        </h2>
-        <p className="mt-1 line-clamp-2 min-h-[2lh] text-meta leading-relaxed text-muted-foreground">
-          {item.summary}
-        </p>
+          <h2 className="line-clamp-2 min-h-[2lh] text-body-sm leading-snug text-foreground transition-colors group-hover:text-white">
+            {item.title}
+          </h2>
+          <p className="mt-1 line-clamp-2 min-h-[2lh] text-meta leading-relaxed text-muted-foreground">
+            {item.summary}
+          </p>
 
-        {/*
+          {/*
           FOOTER YUVASI SABİT YÜKSEKLİKTE. İçine ne konduğu kartın boyunu
           değiştirmemeli: haberler künyeye düz bir metin satırı koyuyor,
           etkinlik ve yazılar `Badge` koyuyor. Badge kendi dolgusu ve
@@ -233,40 +238,49 @@ function EditorialCard({ item }: { item: EditorialItem }) {
           oraya konan `min-h` hiç devreye girmiyordu (ilk denemem buydu —
           haberler 423px'te kaldı).
         */}
-        {item.footer && (
-          <div className="mt-auto pt-2">
-            <div className="flex min-h-[21px] items-center">{item.footer}</div>
-          </div>
-        )}
-      </div>
-    </ContentCard>
+          {item.footer && (
+            <div className="mt-auto pt-2">
+              <div className="flex min-h-[21px] items-center">
+                {item.footer}
+              </div>
+            </div>
+          )}
+        </div>
+      </ContentCard>
+      {item.action && (
+        <div className="absolute right-2 top-2 z-10">{item.action}</div>
+      )}
+    </div>
   );
 }
 
 /** Liste görünümü: görselsiz, tek satır — tarama için. */
 function EditorialRow({ item }: { item: EditorialItem }) {
   return (
-    <Link
-      to={item.to}
-      className="group flex h-full items-baseline gap-3 bg-surface-1 px-3 py-2.5 transition-colors hover:bg-surface-2"
-    >
-      <span className="min-w-0 flex-1">
-        <span className="block truncate text-body-sm text-foreground transition-colors group-hover:text-white">
-          {item.title}
-        </span>
-        <span className="mt-0.5 block truncate text-meta text-muted-foreground">
-          {item.summary}
-        </span>
-      </span>
-
-      <span className="hidden shrink-0 items-center gap-2 sm:flex">
-        <Badge>{item.category}</Badge>
-        {item.meta && (
-          <span className="tabular w-[92px] shrink-0 text-right text-meta text-faint">
-            {item.meta}
+    <div className="flex h-full items-center gap-3 bg-surface-1 px-3 py-2.5 transition-colors hover:bg-surface-2">
+      <Link
+        to={item.to}
+        className="group flex min-w-0 flex-1 items-baseline gap-3"
+      >
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-body-sm text-foreground transition-colors group-hover:text-white">
+            {item.title}
           </span>
-        )}
-      </span>
-    </Link>
+          <span className="mt-0.5 block truncate text-meta text-muted-foreground">
+            {item.summary}
+          </span>
+        </span>
+
+        <span className="hidden shrink-0 items-center gap-2 sm:flex">
+          <Badge>{item.category}</Badge>
+          {item.meta && (
+            <span className="tabular w-[92px] shrink-0 text-right text-meta text-faint">
+              {item.meta}
+            </span>
+          )}
+        </span>
+      </Link>
+      {item.action}
+    </div>
   );
 }

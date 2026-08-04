@@ -1,9 +1,6 @@
 import { useMemo } from 'react';
 import { Container } from '@/components/ui/Container';
-import {
-  FilterCell,
-  filterControlClass,
-} from '@/components/ui/FilterBar';
+import { FilterCell, filterControlClass } from '@/components/ui/FilterBar';
 import { Input, Select } from '@/components/ui/Input';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
@@ -12,6 +9,7 @@ import {
   EditorialList,
   type EditorialItem,
 } from '@/components/ui/EditorialList';
+import { AdminEditLink } from '@/components/admin/AdminEditLink';
 import { useViewMode } from '@/components/ui/useViewMode';
 import { newsCategoryLabels, type NewsCategory } from './data';
 import { useNewsItems } from './useNews';
@@ -76,6 +74,9 @@ export function NewsPage() {
         tint: item.tint,
         imageUrl: item.image?.url,
         imageCredit: item.image?.credit,
+        action: (
+          <AdminEditLink to={`/admin/content?kind=haber&slug=${item.slug}`} />
+        ),
         footer: <p className="label">Kaynak · {item.source.name}</p>,
       })),
     [result]
@@ -154,7 +155,9 @@ export function NewsPage() {
             >
               {categories.map((item) => (
                 <option key={item} value={item}>
-                  {item === 'hepsi' ? 'Tüm kategoriler' : newsCategoryLabels[item]}
+                  {item === 'hepsi'
+                    ? 'Tüm kategoriler'
+                    : newsCategoryLabels[item]}
                 </option>
               ))}
             </Select>

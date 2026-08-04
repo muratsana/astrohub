@@ -8,6 +8,7 @@ import { Select } from '@/components/ui/Input';
 import { Button, ButtonLink } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SortableHeader } from '@/components/ui/SortableHeader';
+import { AdminEditLink } from '@/components/admin/AdminEditLink';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
 import { useLocationContext } from '@/features/location/LocationContext';
@@ -498,6 +499,9 @@ export function EventMapPage() {
                               >
                                 Görüntüle
                               </ButtonLink>
+                              <AdminEditLink
+                                to={`/admin/events?slug=${item.slug}`}
+                              />
                             </div>
                           </td>
                         </tr>
@@ -514,17 +518,18 @@ export function EventMapPage() {
                   {unlocated.map((item) => (
                     <li
                       key={item.slug}
-                      className="border-b border-border last:border-0"
+                      className="flex items-center gap-3 border-b border-border last:border-0"
                     >
                       <Link
                         to={`/etkinlik/${item.slug}`}
-                        className="flex items-baseline justify-between gap-3 py-2 transition-colors hover:text-primary"
+                        className="flex min-w-0 flex-1 items-baseline justify-between gap-3 py-2 transition-colors hover:text-primary"
                       >
                         <span className="min-w-0 truncate text-caption text-foreground">
                           {item.title}
                         </span>
                         <Badge tone="cold">Çevrimiçi</Badge>
                       </Link>
+                      <AdminEditLink to={`/admin/events?slug=${item.slug}`} />
                     </li>
                   ))}
                 </ul>

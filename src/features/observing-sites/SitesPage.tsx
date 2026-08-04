@@ -6,6 +6,7 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { Panel } from '@/components/ui/Panel';
 import { Select } from '@/components/ui/Input';
 import { SortableHeader } from '@/components/ui/SortableHeader';
+import { AdminEditLink } from '@/components/admin/AdminEditLink';
 import { CatalogSourceNote } from '@/components/ui/CatalogSourceNote';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
@@ -492,6 +493,9 @@ export function SitesPage() {
                             >
                               Görüntüle
                             </ButtonLink>
+                            <AdminEditLink
+                              to={`/admin/sites?slug=${item.slug}`}
+                            />
                           </div>
                         </td>
                       </tr>

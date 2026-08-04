@@ -5,8 +5,12 @@ import { Input, Select } from '@/components/ui/Input';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
 import { ModuleToolbar } from '@/components/ui/ModuleToolbar';
-import { EditorialList, type EditorialItem } from '@/components/ui/EditorialList';
+import {
+  EditorialList,
+  type EditorialItem,
+} from '@/components/ui/EditorialList';
 import { useViewMode } from '@/components/ui/useViewMode';
+import { AdminEditLink } from '@/components/admin/AdminEditLink';
 import { articleCategoryLabels, type ArticleCategory } from './data';
 import { useArticles } from './useArticles';
 import { useExplorer } from '@/features/explorer/useExplorer';
@@ -75,6 +79,9 @@ export function ArticlesPage() {
         meta: article.duration,
         tint: article.tint,
         imageUrl: article.image?.url,
+        action: (
+          <AdminEditLink to={`/admin/content?kind=yazi&slug=${article.slug}`} />
+        ),
         footer: (
           <span className="tabular text-meta text-faint">{article.author}</span>
         ),
@@ -97,9 +104,9 @@ export function ArticlesPage() {
         <header className="mb-5 border-b border-border pb-5">
           <h1 className="type-page text-foreground">Yazılar</h1>
           <p className="mt-2 max-w-[70ch] text-meta leading-relaxed text-muted-foreground">
-            Rehberler, işleme dersleri, teknik incelemeler ve saha notları.
-            Her yazı bir prosedür gibi kurulur: ne yapılır, neden yapılır,
-            ne zaman işe yaramaz.
+            Rehberler, işleme dersleri, teknik incelemeler ve saha notları. Her
+            yazı bir prosedür gibi kurulur: ne yapılır, neden yapılır, ne zaman
+            işe yaramaz.
           </p>
         </header>
 
