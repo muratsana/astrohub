@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { mapThreadRow, threadSlug } from './forum';
 import {
+  forumCategories,
+  forumCategoryOrder,
   filterThreads,
   sortThreads,
   type ForumThread,
@@ -13,7 +15,7 @@ function row(over: Record<string, unknown> = {}): any {
     slug: 'phd2-guide-hatasi-a1b2c',
     title: 'PHD2 guide hatası meridyen sonrası ikiye katlanıyor',
     body: 'EQ6-R Pro, 8" Newton, OAG…',
-    category_id: 'monturler',
+    category_id: 'ekipmanlar',
     created_at: '2026-07-20T18:00:00Z',
     last_activity_at: '2026-07-21T09:00:00Z',
     reply_count: 2,
@@ -53,6 +55,21 @@ describe('threadSlug', () => {
     // Doğrulama başlığı zaten reddediyor ama slug üreticisi kendi
     // başına da bozuk bir değer döndürmemeli.
     expect(threadSlug('!!!', 'q1w2e')).toBe('konu-q1w2e');
+  });
+});
+
+describe('forum kategorileri', () => {
+  it('sekiz ana başlıkla sınırlı kalır', () => {
+    expect(forumCategoryOrder.map((id) => forumCategories[id].name)).toEqual([
+      'Ekipmanlar',
+      'Yazılımlar',
+      'Görüntü İşleme',
+      'Etkinlikler',
+      'Topluluklar',
+      'Bilimsel Çalışmalar',
+      'Radyo Astronomi',
+      'Astro Kampçılık',
+    ]);
   });
 });
 
@@ -97,7 +114,7 @@ describe('mapThreadRow', () => {
   it('bilinmeyen kategoriyi ilk kategoriye çeker', () => {
     // Konuyu listeden tamamen düşürmek, yanlış rozet göstermekten kötü.
     expect(mapThreadRow(row({ category_id: 'uydurma' })).category).toBe(
-      'baslangic'
+      'ekipmanlar'
     );
   });
 
@@ -152,7 +169,7 @@ function thread(over: Partial<ForumThread> = {}): ForumThread {
     id: 'x',
     slug: 'x',
     title: 'Başlık',
-    category: 'monturler',
+    category: 'ekipmanlar',
     author: { username: 'a', displayName: 'A' },
     createdAt: '2026-01-01T00:00:00Z',
     lastActivityAt: '2026-01-01T00:00:00Z',
@@ -232,16 +249,21 @@ describe('filterThreads', () => {
     // görünürken aramada karşılıksız kalması şaşırtıcıydı.
     expect(filterThreads([soru, rehber], { search: 'Rehber' })).toHaveLength(1);
     expect(
-      filterThreads([soru], { search: 'montür' }).map((t) => t.id)
+      filterThreads([soru], { search: 'Ekipmanlar' }).map((t) => t.id)
     ).toEqual(['soru']);
   });
 
   it('kategori ve rozeti birlikte uygular', () => {
-    const baska = thread({ id: 'baska', category: 'filtreler', labels: ['soru'] });
+    const baska = thread({
+      id: 'baska',
+      category: 'goruntu-isleme',
+      labels: ['soru'],
+    });
     expect(
-      filterThreads([soru, baska], { category: 'filtreler', label: 'soru' }).map(
-        (t) => t.id
-      )
+      filterThreads([soru, baska], {
+        category: 'goruntu-isleme',
+        label: 'soru',
+      }).map((t) => t.id)
     ).toEqual(['baska']);
   });
 });

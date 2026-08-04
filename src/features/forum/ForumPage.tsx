@@ -65,6 +65,12 @@ export function ForumPage() {
   const ex = useExplorer(threads, forumSpec);
   const result = ex.items;
   const category = ex.query.facets.kategori?.[0] ?? 'hepsi';
+  const sections = forumCategoryOrder
+    .map((id) => ({
+      id,
+      threads: result.filter((thread) => thread.category === id),
+    }))
+    .filter((section) => category === 'hepsi' || section.id === category);
 
   const tekSec = (param: string, next: string) => {
     const mevcut = ex.query.facets[param]?.[0];
@@ -77,7 +83,7 @@ export function ForumPage() {
     <>
       <PageMeta
         title="Forum"
-        description="Astrofotoğraf ve gözlem forumu: optik tüpler, montürler, filtreler, kameralar, görüntü işleme, yazılım ve astro kampçılık."
+        description="Astrofotoğraf ve gözlem forumu: ekipmanlar, yazılımlar, görüntü işleme, etkinlikler, topluluklar, bilimsel çalışmalar, radyo astronomi ve astro kampçılık."
         jsonLd={breadcrumbJsonLd([
           { name: 'Ana Sayfa', path: '/' },
           { name: 'Forum', path: '/forum' },
@@ -192,16 +198,57 @@ export function ForumPage() {
             }
           />
         ) : (
-          <ul className="rounded-card border border-border bg-surface-1">
-            {result.map((thread) => (
-              <li
-                key={thread.id}
-                className="border-b border-border last:border-0"
-              >
-                <ThreadRow thread={thread} density={density} />
-              </li>
-            ))}
-          </ul>
+          <div className="space-y-4">
+            {sections.map(({ id, threads: sectionThreads }) => {
+              const info = forumCategories[id];
+              return (
+                <section
+                  key={id}
+                  aria-labelledby={`forum-category-${id}`}
+                  className="rounded-card border border-border bg-surface-1"
+                >
+                  <header className="flex items-start justify-between gap-3 border-b border-border px-3 py-2.5">
+                    <div className="min-w-0">
+                      <h2
+                        id={`forum-category-${id}`}
+                        className="text-caption font-semibold text-foreground"
+                      >
+                        {info.name}
+                      </h2>
+                      <p className="mt-0.5 text-meta leading-snug text-muted-foreground">
+                        {info.description}
+                      </p>
+                    </div>
+                    <span
+                      className={cn(
+                        'shrink-0 rounded-card border px-2 py-1 text-meta font-medium tabular',
+                        info.className
+                      )}
+                    >
+                      {sectionThreads.length} konu
+                    </span>
+                  </header>
+
+                  {sectionThreads.length === 0 ? (
+                    <p className="px-3 py-3 text-body-sm text-faint">
+                      Bu başlıkta henüz konu yok.
+                    </p>
+                  ) : (
+                    <ul>
+                      {sectionThreads.map((thread) => (
+                        <li
+                          key={thread.id}
+                          className="border-b border-border last:border-0"
+                        >
+                          <ThreadRow thread={thread} density={density} />
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </section>
+              );
+            })}
+          </div>
         )}
       </Container>
     </>

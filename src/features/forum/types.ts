@@ -16,17 +16,14 @@
  */
 
 export type ForumCategoryId =
-  | 'baslangic'
-  | 'optik-tupler'
-  | 'monturler'
-  | 'filtreler'
-  | 'kameralar'
-  | 'isleme'
-  | 'yazilim'
-  | 'astro-kampcilik'
+  | 'ekipmanlar'
+  | 'yazilimlar'
+  | 'goruntu-isleme'
   | 'etkinlikler'
-  | 'diger-ekipmanlar'
-  | 'gozlem-raporlari';
+  | 'topluluklar'
+  | 'bilimsel-calismalar'
+  | 'radyo-astronomi'
+  | 'astro-kampcilik';
 
 export interface ForumCategory {
   id: ForumCategoryId;
@@ -93,53 +90,23 @@ export interface ForumThread {
 }
 
 export const forumCategories: Record<ForumCategoryId, ForumCategory> = {
-  baslangic: {
-    id: 'baslangic',
-    name: 'Başlangıç',
-    description: 'İlk teleskop, ilk kayıt, temel sorular',
-    className: 'border-[#34d399]/50 bg-[#34d399]/12 text-[#5fe0b0]',
-  },
-  'optik-tupler': {
-    id: 'optik-tupler',
-    name: 'Optik Tüpler',
-    description: 'Refraktör, newton, SCT, RC; odaklayıcı ve kolimasyon',
+  ekipmanlar: {
+    id: 'ekipmanlar',
+    name: 'Ekipmanlar',
+    description: 'Teleskop, montür, kamera, filtre ve aksesuarlar',
     className: 'border-primary/50 bg-primary/12 text-primary',
   },
-  monturler: {
-    id: 'monturler',
-    name: 'Montürler',
-    description: 'Ekvatoryal ve alt-azimut montürler, guiding, kutup ayarı',
-    className: 'border-[#f97316]/50 bg-[#f97316]/12 text-[#fb923c]',
-  },
-  filtreler: {
-    id: 'filtreler',
-    name: 'Filtreler',
-    description: 'Dar bant, geniş bant, ışık kirliliği ve güneş filtreleri',
-    className: 'border-[#ec4899]/50 bg-[#ec4899]/12 text-[#f472b6]',
-  },
-  kameralar: {
-    id: 'kameralar',
-    name: 'Kameralar',
-    description: 'CMOS ve CCD kameralar, DSLR, sensör ve soğutma',
-    className: 'border-[#14b8a6]/50 bg-[#14b8a6]/12 text-[#2dd4bf]',
-  },
-  isleme: {
-    id: 'isleme',
-    name: 'Görüntü İşleme',
-    description: 'Yığınlama, kalibrasyon, streç, gürültü',
-    className: 'border-[#a78bfa]/50 bg-[#a78bfa]/12 text-[#c4b1fd]',
-  },
-  yazilim: {
-    id: 'yazilim',
+  yazilimlar: {
+    id: 'yazilimlar',
     name: 'Yazılımlar',
     description: 'NINA, PHD2, PixInsight, Siril, ASCOM/INDI',
     className: 'border-[#38bdf8]/50 bg-[#38bdf8]/12 text-[#7dd3fc]',
   },
-  'astro-kampcilik': {
-    id: 'astro-kampcilik',
-    name: 'Astro Kampçılık',
-    description: 'Karanlık gökyüzü noktaları, kamp, yol ve lojistik',
-    className: 'border-[#f59e0b]/50 bg-[#f59e0b]/12 text-[#fbbf24]',
+  'goruntu-isleme': {
+    id: 'goruntu-isleme',
+    name: 'Görüntü İşleme',
+    description: 'Yığınlama, kalibrasyon, streç, gürültü',
+    className: 'border-[#a78bfa]/50 bg-[#a78bfa]/12 text-[#c4b1fd]',
   },
   etkinlikler: {
     id: 'etkinlikler',
@@ -147,37 +114,45 @@ export const forumCategories: Record<ForumCategoryId, ForumCategory> = {
     description: 'Buluşmalar, gözlem geceleri, atölyeler ve duyurular',
     className: 'border-[#e11d48]/50 bg-[#e11d48]/12 text-[#fb7185]',
   },
-  'diger-ekipmanlar': {
-    id: 'diger-ekipmanlar',
-    name: 'Diğer Ekipmanlar',
-    description: 'Oküler, düzleştirici, odaklayıcı, güç ve kablo düzeni',
-    className: 'border-[#94a3b8]/50 bg-[#94a3b8]/12 text-[#cbd5e1]',
+  topluluklar: {
+    id: 'topluluklar',
+    name: 'Topluluklar',
+    description: 'Kulüpler, dernekler, forum kuralları ve ortak duyurular',
+    className: 'border-[#34d399]/50 bg-[#34d399]/12 text-[#5fe0b0]',
   },
-  'gozlem-raporlari': {
-    id: 'gozlem-raporlari',
-    name: 'Gözlem Raporları',
-    description: 'Gece notları, seeing koşulları, gözlem günlükleri',
+  'bilimsel-calismalar': {
+    id: 'bilimsel-calismalar',
+    name: 'Bilimsel Çalışmalar',
+    description: 'Gözlem raporları, ölçümler ve araştırma notları',
     className: 'border-cold/50 bg-cold/12 text-cold',
+  },
+  'radyo-astronomi': {
+    id: 'radyo-astronomi',
+    name: 'Radyo Astronomi',
+    description: 'Radyo gözlemleri, antenler, meteor scatter ve veri toplama',
+    className: 'border-[#14b8a6]/50 bg-[#14b8a6]/12 text-[#2dd4bf]',
+  },
+  'astro-kampcilik': {
+    id: 'astro-kampcilik',
+    name: 'Astro Kampçılık',
+    description: 'Karanlık gökyüzü noktaları, kamp, yol ve lojistik',
+    className: 'border-[#f59e0b]/50 bg-[#f59e0b]/12 text-[#fbbf24]',
   },
 };
 
 /*
- * Sıra ekrandaki sıradır. Başlangıç başta duruyor çünkü foruma ilk gelen
- * kullanıcının aradığı yer orası; ekipman grupları kendi aralarında
- * bitişik, Gözlem Raporları en sonda — akış değil arşiv niteliğinde.
+ * Sıra ekrandaki ana başlık sırasıdır. Ekipman en kalabalık destek alanı
+ * olduğu için başta; kampçılık ise saha/lojistik niyetiyle listenin sonunda.
  */
 export const forumCategoryOrder: ForumCategoryId[] = [
-  'baslangic',
-  'optik-tupler',
-  'monturler',
-  'filtreler',
-  'kameralar',
-  'diger-ekipmanlar',
-  'isleme',
-  'yazilim',
-  'astro-kampcilik',
+  'ekipmanlar',
+  'yazilimlar',
+  'goruntu-isleme',
   'etkinlikler',
-  'gozlem-raporlari',
+  'topluluklar',
+  'bilimsel-calismalar',
+  'radyo-astronomi',
+  'astro-kampcilik',
 ];
 
 export const forumLabels: Record<ForumLabelId, ForumLabel> = {
