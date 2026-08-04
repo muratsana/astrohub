@@ -77,7 +77,7 @@ const DIRECTIVES = {
 
   /* `data:` — ikonlar ve yer tutucular.
      `blob:` — canvas ile üretilen küçültme önizlemesi.
-     cartocdn/NASA GIBS — ışık kirliliği haritasının karo katmanları.
+     cartocdn/NASA GIBS/ArcGIS — harita karo katmanları.
      wikimedia/esahubble — tohum içeriğin görselleri. */
   'img-src': [
     "'self'",
@@ -86,6 +86,7 @@ const DIRECTIVES = {
     'https://*.supabase.co',
     'https://*.basemaps.cartocdn.com',
     'https://gibs.earthdata.nasa.gov',
+    'https://server.arcgisonline.com',
     'https://commons.wikimedia.org',
     'https://upload.wikimedia.org',
     'https://cdn.esahubble.org',

@@ -7,6 +7,7 @@ import {
   basemapSource,
   fullUrl,
   normalizeView,
+  satelliteSource,
 } from './lightPollutionEmbed';
 
 const ANKARA = { lat: 39.9199, lng: 32.8543, zoom: 6, opacity: 50 };
@@ -66,6 +67,12 @@ describe('döşeme kaynakları', () => {
     expect(source.url(tile)).toBe(source.url(tile));
     expect(source.url(tile)).toMatch(
       /^https:\/\/[abc]\.basemaps\.cartocdn\.com\/dark_all\/6\/37\/22\.png$/
+    );
+  });
+
+  it('uydu altlığı ArcGIS döşemesi ister', () => {
+    expect(satelliteSource().url({ x: 37, y: 22, z: 6 })).toBe(
+      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/6/22/37'
     );
   });
 

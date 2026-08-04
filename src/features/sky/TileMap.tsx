@@ -370,12 +370,13 @@ function Layer({
     >
       {tiles.map((tile) => (
         <img
-          key={tile.key}
+          key={`${source.id}:${tile.key}`}
           src={source.url(tile)}
           alt=""
           draggable={false}
           decoding="async"
-          onLoad={() => {
+          onLoad={(event) => {
+            event.currentTarget.style.visibility = 'visible';
             stats.current.ok += 1;
             if (stats.current.ok === 1) onFirstLoad?.();
           }}
