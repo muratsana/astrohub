@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { Link } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { Button, ButtonLink } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -33,7 +34,14 @@ const CONSENT_KEY = 'astrohub:map:tiles';
 
 type BaseMode = 'harita' | 'uydu';
 type LayerMode = 'yok' | 'isik';
-type SiteSortKey = 'distance' | 'region' | 'bortle' | 'rating';
+type SiteSortKey =
+  | 'distance'
+  | 'region'
+  | 'type'
+  | 'altitude'
+  | 'road'
+  | 'bortle'
+  | 'rating';
 type SortDirection = 'asc' | 'desc';
 type LocatedSite = { item: ObservingSite; distanceKm: number };
 
@@ -62,7 +70,7 @@ function storedConsent(): boolean {
 }
 
 function defaultDirection(key: SiteSortKey): SortDirection {
-  return key === 'rating' ? 'desc' : 'asc';
+  return key === 'rating' || key === 'altitude' ? 'desc' : 'asc';
 }
 
 function formatBortle(value: number): string {
@@ -82,6 +90,20 @@ function sortLocatedSites(
     if (key === 'distance') return (a.distanceKm - b.distanceKm) * sign;
     if (key === 'region') {
       return a.item.region.localeCompare(b.item.region, 'tr-TR') * sign;
+    }
+    if (key === 'type') {
+      return (
+        siteTypeLabels[a.item.siteType].localeCompare(
+          siteTypeLabels[b.item.siteType],
+          'tr-TR'
+        ) * sign
+      );
+    }
+    if (key === 'altitude') {
+      return (a.item.altitude - b.item.altitude) * sign;
+    }
+    if (key === 'road') {
+      return a.item.roadAccess.localeCompare(b.item.roadAccess, 'tr-TR') * sign;
     }
     if (key === 'bortle') {
       return (knownBortle(a.item.bortle) - knownBortle(b.item.bortle)) * sign;
@@ -404,7 +426,7 @@ export function SitesPage() {
               />
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[820px] border-collapse text-left">
+                <table className="w-full min-w-[1040px] border-collapse text-left">
                   <thead className="border-b border-border text-meta text-muted-foreground">
                     <tr>
                       <th scope="col" className="px-0 py-2 pr-4 font-medium">
@@ -413,9 +435,15 @@ export function SitesPage() {
                       <SortableHeader onClick={() => changeSort('region')}>
                         {sortLabel('region', 'Konum')}
                       </SortableHeader>
-                      <th scope="col" className="py-2 pr-4 font-medium">
-                        Tür
-                      </th>
+                      <SortableHeader onClick={() => changeSort('type')}>
+                        {sortLabel('type', 'Tür')}
+                      </SortableHeader>
+                      <SortableHeader onClick={() => changeSort('altitude')}>
+                        {sortLabel('altitude', 'Rakım')}
+                      </SortableHeader>
+                      <SortableHeader onClick={() => changeSort('road')}>
+                        {sortLabel('road', 'Yol')}
+                      </SortableHeader>
                       <SortableHeader onClick={() => changeSort('bortle')}>
                         {sortLabel('bortle', 'Bortle')}
                       </SortableHeader>
@@ -442,24 +470,25 @@ export function SitesPage() {
                           active === item.slug && 'text-primary'
                         )}
                       >
-                        <td className="max-w-[300px] py-2.5 pr-4 align-top">
-                          <ButtonLink
+                        <td className="max-w-[280px] py-2.5 pr-4 align-top">
+                          <Link
                             to={`/saha/${item.slug}`}
-                            size="sm"
-                            variant="ghost"
-                            className="max-w-full truncate px-0"
+                            className="block truncate text-body-sm font-medium text-foreground transition-colors hover:text-primary"
                           >
                             {item.name}
-                          </ButtonLink>
-                          <p className="mt-1 text-meta text-muted-foreground">
-                            {item.altitude} m · {item.roadAccess}
-                          </p>
+                          </Link>
                         </td>
                         <td className="py-2.5 pr-4 align-top text-body-sm text-muted-foreground">
                           {item.region}
                         </td>
                         <td className="py-2.5 pr-4 align-top text-body-sm text-muted-foreground">
                           {siteTypeLabels[item.siteType]}
+                        </td>
+                        <td className="tabular py-2.5 pr-4 align-top text-body-sm text-muted-foreground">
+                          {item.altitude} m
+                        </td>
+                        <td className="py-2.5 pr-4 align-top text-body-sm text-muted-foreground">
+                          {item.roadAccess}
                         </td>
                         <td className="tabular py-2.5 pr-4 align-top text-body-sm text-muted-foreground">
                           {formatBortle(item.bortle)}

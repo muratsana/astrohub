@@ -2,8 +2,10 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import {
   siteTypeLabels,
   sites as sitesSeed,
+  roadAccessOptions,
   type SiteType,
   type ObservingSite,
+  type RoadAccess,
 } from '@/features/observing-sites/data';
 import { gradientFromSeed } from '@/components/media/tints';
 import { useCatalog } from './useCatalog';
@@ -128,6 +130,7 @@ export interface NewSiteInput {
   bortle: number;
   sqm?: number;
   altitude?: number;
+  roadAccess: RoadAccess;
   description: string;
   tentArea: boolean;
   caravanOk: boolean;
@@ -159,6 +162,9 @@ export function validateSiteContribution(input: NewSiteInput): string | null {
   if (sanitizeText(input.description, { multiline: true }).length < 20) {
     return 'Açıklama en az 20 karakter olmalı.';
   }
+  if (!roadAccessOptions.includes(input.roadAccess)) {
+    return 'Yol tipi geçersiz.';
+  }
   return null;
 }
 
@@ -183,6 +189,7 @@ export async function createSiteContribution(
     approx_latitude: Number(input.latitude.toFixed(4)),
     approx_longitude: Number(input.longitude.toFixed(4)),
     altitude_m: input.altitude ?? null,
+    road_access: input.roadAccess,
     bortle: input.bortle,
     sqm: input.sqm ?? null,
     has_tent_area: input.tentArea,

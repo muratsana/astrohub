@@ -4,7 +4,7 @@ import { Container } from '@/components/ui/Container';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Panel } from '@/components/ui/Panel';
 import { Field } from '@/components/ui/Field';
-import { Input } from '@/components/ui/Input';
+import { Input, Select } from '@/components/ui/Input';
 import { Button, ButtonLink } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
 import { PageMeta } from '@/components/seo/PageMeta';
@@ -15,6 +15,7 @@ import {
   validateSiteContribution,
   type NewSiteInput,
 } from '@/services/content/sites';
+import { roadAccessOptions, type RoadAccess } from './data';
 
 export function NewSitePage() {
   const navigate = useNavigate();
@@ -27,6 +28,7 @@ export function NewSitePage() {
   const [bortle, setBortle] = useState('4');
   const [sqm, setSqm] = useState('');
   const [altitude, setAltitude] = useState('');
+  const [roadAccess, setRoadAccess] = useState<RoadAccess>('Kısmen asfalt');
   const [description, setDescription] = useState('');
   const [tentArea, setTentArea] = useState(false);
   const [caravanOk, setCaravanOk] = useState(false);
@@ -42,6 +44,7 @@ export function NewSitePage() {
     bortle: Number(bortle),
     sqm: sqm ? Number(sqm) : undefined,
     altitude: altitude ? Number(altitude) : undefined,
+    roadAccess,
     description,
     tentArea,
     caravanOk,
@@ -125,7 +128,7 @@ export function NewSitePage() {
                 />
               </Field>
             </div>
-            <div className="grid gap-3 sm:grid-cols-3">
+            <div className="grid gap-3 sm:grid-cols-4">
               <Field label="Bortle" htmlFor="site-bortle">
                 <Input
                   id="site-bortle"
@@ -152,6 +155,19 @@ export function NewSitePage() {
                   value={altitude}
                   onChange={(e) => setAltitude(e.target.value)}
                 />
+              </Field>
+              <Field label="Yol" htmlFor="site-road">
+                <Select
+                  id="site-road"
+                  value={roadAccess}
+                  onChange={(e) => setRoadAccess(e.target.value as RoadAccess)}
+                >
+                  {roadAccessOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </Select>
               </Field>
             </div>
             <Field label="Açıklama" htmlFor="site-description">

@@ -17,7 +17,7 @@ export interface ObservingSite {
   bortle: number;
   sqm?: number;
   altitude: number; // metre
-  roadAccess: 'Asfalt' | 'Stabilize' | '4x4 gerekir';
+  roadAccess: RoadAccess;
   facilities: {
     water: boolean;
     toilet: boolean;
@@ -35,8 +35,21 @@ export interface ObservingSite {
   reviewCount: number;
 }
 
+export type RoadAccess =
+  | 'Asfalt'
+  | 'Kısmen asfalt'
+  | 'Stabilize'
+  | '4x4 gerekir';
+
 export type SiteType =
   'camping' | 'otel-pansiyon' | 'arazi' | 'milli-park' | 'ozel-mulk';
+
+export const roadAccessOptions: RoadAccess[] = [
+  'Asfalt',
+  'Kısmen asfalt',
+  'Stabilize',
+  '4x4 gerekir',
+];
 
 export const siteTypeLabels: Record<SiteType, string> = {
   camping: 'Camping',
@@ -56,7 +69,7 @@ export const sites: ObservingSite[] = [
     bortle: 3,
     sqm: 21.6,
     altitude: 1850,
-    roadAccess: 'Asfalt',
+    roadAccess: 'Kısmen asfalt',
     facilities: {
       water: true,
       toilet: true,
