@@ -12,7 +12,9 @@ import { cn } from '@/lib/cn';
 import { CloseIcon } from './icons';
 import { useIsNarrow } from './useIsNarrow';
 
-const CompactFilterContext = createContext(false);
+type FilterDensity = 'default' | 'toolbar' | 'popover';
+
+const FilterDensityContext = createContext<FilterDensity>('default');
 
 /**
  * FİLTRE ŞERİDİ — arama, seçiciler ve hızlı anahtarlar.
@@ -140,7 +142,7 @@ export function FilterBar({
 
     return (
       <div className="flex min-w-0 items-stretch gap-2">
-        <CompactFilterContext.Provider value>
+        <FilterDensityContext.Provider value="toolbar">
           <div
             className={cn(
               'flex min-w-0 flex-1 items-stretch gap-2',
@@ -149,7 +151,7 @@ export function FilterBar({
           >
             {primary}
           </div>
-        </CompactFilterContext.Provider>
+        </FilterDensityContext.Provider>
 
         {secondary.length > 0 && (
           <details className="group relative shrink-0">
@@ -161,17 +163,19 @@ export function FilterBar({
                 </span>
               )}
             </summary>
-            <div className="absolute right-0 z-30 mt-2 w-[min(34rem,calc(100vw-2rem))] rounded-card border border-border-strong bg-background p-3 shadow-overlay">
+            <div className="absolute right-0 z-30 mt-2 w-[min(28rem,calc(100vw-2rem))] rounded-card border border-border-strong bg-surface-1 p-2 shadow-overlay">
               <div
                 className={cn(
-                  'grid items-stretch gap-2',
+                  'grid items-stretch gap-1.5',
                   columns === 2 && 'sm:grid-cols-2',
                   columns === 3 && 'sm:grid-cols-2 xl:grid-cols-3',
                   columns === 4 && 'sm:grid-cols-2 xl:grid-cols-4',
                   !columns && 'sm:grid-cols-2'
                 )}
               >
-                {secondary}
+                <FilterDensityContext.Provider value="popover">
+                  {secondary}
+                </FilterDensityContext.Provider>
               </div>
             </div>
           </details>
@@ -270,28 +274,37 @@ export function FilterCell({
   className?: string;
   active?: boolean;
 }) {
-  const compact = useContext(CompactFilterContext);
-  const labelClass = 'label block text-muted-foreground';
+  const density = useContext(FilterDensityContext);
+  const toolbarCompact = density === 'toolbar';
+  const popoverCompact = density === 'popover';
+  const labelClass = cn(
+    'label block text-muted-foreground',
+    popoverCompact && 'mb-0.5 text-meta'
+  );
 
   return (
     <div
       className={cn(
-        'flex min-w-[10rem] flex-1 flex-col justify-center rounded-card border shadow-overlay',
-        compact ? 'min-h-11 px-3 py-1' : 'min-h-14 px-4 py-2',
+        'flex min-w-[10rem] flex-1 flex-col justify-center border',
+        toolbarCompact && 'min-h-11 rounded-card px-3 py-1 shadow-overlay',
+        popoverCompact && 'min-h-10 min-w-0 rounded-md px-3 py-2 shadow-none',
+        density === 'default' && 'min-h-14 rounded-card px-4 py-2 shadow-overlay',
         'transition-colors hover:border-foreground/25 hover:bg-surface-2',
         'has-[:focus-visible]:border-primary has-[:focus-visible]:bg-surface-2 has-[:focus-visible]:shadow-[0_0_0_1px_var(--color-primary)]',
         active
           ? 'border-primary/60 bg-primary/10'
-          : 'border-border-strong bg-surface-1',
+          : cn(
+              popoverCompact ? 'border-border bg-background/65' : 'border-border-strong bg-surface-1'
+            ),
         className
       )}
     >
       {htmlFor ? (
-        <label htmlFor={htmlFor} className={cn(labelClass, compact && 'sr-only')}>
+        <label htmlFor={htmlFor} className={cn(labelClass, toolbarCompact && 'sr-only')}>
           {label}
         </label>
       ) : (
-        <p className={cn(labelClass, compact && 'sr-only')}>{label}</p>
+        <p className={cn(labelClass, toolbarCompact && 'sr-only')}>{label}</p>
       )}
       {children}
     </div>
@@ -323,15 +336,23 @@ export function FilterToggle({
   id: string;
   className?: string;
 }) {
+  const density = useContext(FilterDensityContext);
+  const popoverCompact = density === 'popover';
+
   return (
     <div
       className={cn(
-        'flex min-h-14 min-w-[10rem] flex-1 items-center rounded-card border px-4 py-2 shadow-overlay',
+        'flex min-w-[10rem] flex-1 items-center border',
+        popoverCompact
+          ? 'min-h-10 min-w-0 rounded-md px-3 py-2 shadow-none'
+          : 'min-h-14 rounded-card px-4 py-2 shadow-overlay',
         'transition-colors hover:border-foreground/25 hover:bg-surface-2',
         'has-[:focus-visible]:border-primary has-[:focus-visible]:bg-surface-2 has-[:focus-visible]:shadow-[0_0_0_1px_var(--color-primary)]',
         checked
           ? 'border-primary/60 bg-primary/10'
-          : 'border-border-strong bg-surface-1',
+          : cn(
+              popoverCompact ? 'border-border bg-background/65' : 'border-border-strong bg-surface-1'
+            ),
         className
       )}
     >
@@ -346,7 +367,10 @@ export function FilterToggle({
           onChange={(e) => onChange(e.target.checked)}
           /* 24px: WCAG 2.2 AA dokunma hedefi (2.5.8). 14px'lik kutu
              mobilde parmakla vurulamıyordu. */
-          className="h-6 w-6 rounded-card border-border accent-primary"
+          className={cn(
+            'rounded-card border-border accent-primary',
+            popoverCompact ? 'h-4 w-4' : 'h-6 w-6'
+          )}
         />
         {label}
       </label>

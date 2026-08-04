@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, within } from '@testing-library/react';
-import { FilterBar, FilterCell } from './FilterBar';
+import { FilterBar, FilterCell, FilterToggle } from './FilterBar';
 import { ActiveFilters } from './ActiveFilters';
 
 /**
@@ -82,6 +82,36 @@ describe('FilterBar — geniş ekran', () => {
 
     fireEvent.click(screen.getByText('Filtreler', { selector: 'summary' }));
     expect(details).toHaveAttribute('open');
+  });
+
+  it('açılır paneldeki filtre kutularını kompakt çizer', () => {
+    render(
+      <FilterBar primaryCount={1}>
+        <FilterCell label="Ara" htmlFor="compact-search">
+          <input id="compact-search" />
+        </FilterCell>
+        <FilterToggle
+          id="compact-free"
+          label="Ücretsiz"
+          checked={false}
+          onChange={vi.fn()}
+        />
+        <FilterCell label="Tarih" htmlFor="compact-date">
+          <input id="compact-date" type="date" />
+        </FilterCell>
+      </FilterBar>
+    );
+
+    fireEvent.click(screen.getByText('Filtreler', { selector: 'summary' }));
+
+    expect(screen.getByLabelText('Ücretsiz').closest('div')).toHaveClass(
+      'min-h-10',
+      'shadow-none'
+    );
+    expect(screen.getByLabelText('Tarih').closest('div')).toHaveClass(
+      'min-h-10',
+      'shadow-none'
+    );
   });
 });
 
