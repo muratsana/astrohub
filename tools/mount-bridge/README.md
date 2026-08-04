@@ -11,6 +11,18 @@ servisi olarak sunar.
 
 ## Çalıştırma
 
+Hazır `.exe` ile:
+
+```bat
+dist\win-x64\AstrohubMountBridge.exe
+```
+
+Gerçek sürücü seçerek:
+
+```bat
+dist\win-x64\AstrohubMountBridge.exe --driver ASCOM.MarkaModel.Telescope
+```
+
 Kolay başlatma:
 
 ```bat
@@ -32,9 +44,24 @@ powershell -ExecutionPolicy Bypass -File .\AstrohubMountBridge.ps1 -DriverId ASC
 Sonra Astrohub’da `/simulator` sayfasını açın ve bridge adresini
 `http://127.0.0.1:4765` olarak bırakın.
 
+## EXE üretme
+
+Windows veya .NET SDK kurulu bir makinede:
+
+```bat
+Build-WindowsExe.cmd
+```
+
+Çıktı:
+
+```text
+dist\win-x64\AstrohubMountBridge.exe
+```
+
 ## Endpointler
 
 - `GET /health`
+- `GET /diagnostics`
 - `GET /drivers`
 - `GET /status`
 - `POST /connect` body: `{ "driverId": "ASCOM.Simulator.Telescope" }`

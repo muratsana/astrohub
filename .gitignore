@@ -8,6 +8,10 @@ dist/
 dist-ssr/
 dist-preview/
 build/
+tools/mount-bridge/dist/
+tools/mount-bridge/release/
+tools/mount-bridge/exe/bin/
+tools/mount-bridge/exe/obj/
 *.local
 *.tsbuildinfo
 
