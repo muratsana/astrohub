@@ -1,7 +1,18 @@
-import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import {
+  Children,
+  createContext,
+  useContext,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import { cn } from '@/lib/cn';
 import { CloseIcon } from './icons';
 import { useIsNarrow } from './useIsNarrow';
+
+const CompactFilterContext = createContext(false);
 
 /**
  * FİLTRE ŞERİDİ — arama, seçiciler ve hızlı anahtarlar.
@@ -32,6 +43,8 @@ export function FilterBar({
   children,
   className,
   columns,
+  primaryCount,
+  collapseQuery = '(max-width: 639px)',
   /**
    * Çekmece düğmesinde gösterilecek aktif filtre sayısı.
    *
@@ -46,8 +59,10 @@ export function FilterBar({
   columns?: 2 | 3 | 4;
   className?: string;
   activeCount?: number;
+  primaryCount?: number;
+  collapseQuery?: string;
 }) {
-  const narrow = useIsNarrow();
+  const narrow = useIsNarrow(collapseQuery);
   const [open, setOpen] = useState(false);
   const titleId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
@@ -116,7 +131,54 @@ export function FilterBar({
     </div>
   );
 
-  if (!narrow) return grid;
+  if (!narrow) {
+    if (primaryCount === undefined) return grid;
+
+    const items = Children.toArray(children);
+    const primary = items.slice(0, primaryCount);
+    const secondary = items.slice(primaryCount);
+
+    return (
+      <div className="flex min-w-0 items-stretch gap-2">
+        <CompactFilterContext.Provider value>
+          <div
+            className={cn(
+              'flex min-w-0 flex-1 items-stretch gap-2',
+              className
+            )}
+          >
+            {primary}
+          </div>
+        </CompactFilterContext.Provider>
+
+        {secondary.length > 0 && (
+          <details className="group relative shrink-0">
+            <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 rounded-card border border-border-strong bg-surface-1 px-3 text-body-sm font-medium text-foreground shadow-overlay transition-colors hover:bg-surface-2 [&::-webkit-details-marker]:hidden">
+              Filtreler
+              {activeCount > 0 && (
+                <span className="num rounded-card bg-primary px-2 py-0.5 text-meta text-primary-foreground">
+                  {activeCount}
+                </span>
+              )}
+            </summary>
+            <div className="absolute right-0 z-30 mt-2 w-[min(34rem,calc(100vw-2rem))] rounded-card border border-border-strong bg-background p-3 shadow-overlay">
+              <div
+                className={cn(
+                  'grid items-stretch gap-2',
+                  columns === 2 && 'sm:grid-cols-2',
+                  columns === 3 && 'sm:grid-cols-2 xl:grid-cols-3',
+                  columns === 4 && 'sm:grid-cols-2 xl:grid-cols-4',
+                  !columns && 'sm:grid-cols-2'
+                )}
+              >
+                {secondary}
+              </div>
+            </div>
+          </details>
+        )}
+      </div>
+    );
+  }
 
   return (
     <>
@@ -208,12 +270,14 @@ export function FilterCell({
   className?: string;
   active?: boolean;
 }) {
+  const compact = useContext(CompactFilterContext);
   const labelClass = 'label block text-muted-foreground';
 
   return (
     <div
       className={cn(
-        'flex min-h-14 min-w-[10rem] flex-1 flex-col justify-center rounded-card border px-4 py-2 shadow-overlay',
+        'flex min-w-[10rem] flex-1 flex-col justify-center rounded-card border shadow-overlay',
+        compact ? 'min-h-11 px-3 py-1' : 'min-h-14 px-4 py-2',
         'transition-colors hover:border-foreground/25 hover:bg-surface-2',
         'has-[:focus-visible]:border-primary has-[:focus-visible]:bg-surface-2 has-[:focus-visible]:shadow-[0_0_0_1px_var(--color-primary)]',
         active
@@ -223,11 +287,11 @@ export function FilterCell({
       )}
     >
       {htmlFor ? (
-        <label htmlFor={htmlFor} className={labelClass}>
+        <label htmlFor={htmlFor} className={cn(labelClass, compact && 'sr-only')}>
           {label}
         </label>
       ) : (
-        <p className={labelClass}>{label}</p>
+        <p className={cn(labelClass, compact && 'sr-only')}>{label}</p>
       )}
       {children}
     </div>

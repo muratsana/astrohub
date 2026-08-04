@@ -150,7 +150,23 @@ export function MarketplacePage() {
             onChange: setView,
             modes: ['grid', 'list', 'table'],
           }}
+          primaryFilters={2}
         >
+          <FilterCell
+            label="Ara"
+            htmlFor="listing-search"
+            active={ex.searchInput.trim().length > 0}
+            className="min-w-[21rem] flex-[2_1_21rem]"
+          >
+            <Input
+              id="listing-search"
+              type="search"
+              placeholder="İlan başlığı, şehir veya satıcı"
+              value={ex.searchInput}
+              onChange={(e) => ex.setSearch(e.target.value)}
+              className={filterControlClass}
+            />
+          </FilterCell>
           <FilterCell
             label="Kategori"
             htmlFor="listing-category"
@@ -169,21 +185,6 @@ export function MarketplacePage() {
                 </option>
               ))}
             </Select>
-          </FilterCell>
-          <FilterCell
-            label="Ara"
-            htmlFor="listing-search"
-            active={ex.searchInput.trim().length > 0}
-            className="min-w-[21rem] flex-[2_1_21rem]"
-          >
-            <Input
-              id="listing-search"
-              type="search"
-              placeholder="İlan başlığı, şehir veya satıcı"
-              value={ex.searchInput}
-              onChange={(e) => ex.setSearch(e.target.value)}
-              className={filterControlClass}
-            />
           </FilterCell>
           {/* Fiyat ARALIK, facet değil: her ilan kendi fiyatının
               kutucuğunu açsaydı süzgeç kayıt sayısı kadar uzardı. */}

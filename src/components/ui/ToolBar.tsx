@@ -69,8 +69,6 @@ export function ToolBar<M extends string = ViewMode>({
 
       {hasControls && (
         <div className="flex w-full min-w-0 max-w-full flex-wrap items-center justify-start gap-2 sm:w-auto sm:justify-end md:flex-nowrap">
-          {extra && <div className="min-w-0 max-w-full">{extra}</div>}
-
           {sort && (
             <div className="inline-flex min-h-11 min-w-0 max-w-full items-center overflow-hidden rounded-card border border-border-strong bg-surface-1 shadow-overlay">
               <label
@@ -106,6 +104,8 @@ export function ToolBar<M extends string = ViewMode>({
               modes={view.modes}
             />
           )}
+
+          {extra && <div className="min-w-0 max-w-full">{extra}</div>}
         </div>
       )}
     </div>
