@@ -100,13 +100,6 @@ export const siteMap: NavGroup[] = [
         description: 'Topluluğun üreticileri',
         keywords: ['keşfet', 'kullanıcı', 'fotoğrafçı'],
       },
-      {
-        label: 'Takip Akışı',
-        to: '/akis',
-        description:
-          'Takip ettiğin kişilerin fotoğraf, ilan ve forum hareketleri',
-        keywords: ['akış', 'aktivite', 'takip', 'feed', 'sosyal'],
-      },
     ],
   },
   {
