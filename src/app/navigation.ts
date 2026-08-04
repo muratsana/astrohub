@@ -46,7 +46,6 @@ export const primaryNav: NavItem[] = [
   { label: 'Yazılar', to: '/yazilar' },
   { label: 'İlanlar', to: '/ilanlar' },
   { label: 'Araçlar', to: '/araclar' },
-  { label: 'Simülatör', to: '/simulator' },
   { label: 'Forum', to: '/forum' },
   { label: 'Saha', to: '/saha' },
 ];
