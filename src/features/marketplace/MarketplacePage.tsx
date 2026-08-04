@@ -34,7 +34,7 @@ import { listingsSpec } from './listingsSpec';
 import type { Listing } from './data';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
-import { useMemo } from 'react';
+import { cities as turkeyCities } from '@/features/location/cities';
 
 const categories: (EquipmentCategory | 'hepsi')[] = [
   'hepsi',
@@ -89,13 +89,7 @@ export function MarketplacePage() {
   const ex = useExplorer(catalog.items, listingsSpec);
   const result = ex.items;
   const category = ex.query.facets.kategori?.[0] ?? 'hepsi';
-  const cities = useMemo(
-    () =>
-      [...new Set(catalog.items.map((l) => l.city))].sort((a, b) =>
-        a.localeCompare(b, 'tr')
-      ),
-    [catalog.items]
-  );
+  const cities = turkeyCities.map((city) => city.name);
 
   /** Kategori sekmeleri tek seçim: bir sekme şeridi, çoklu liste değil. */
   const setCategory = (next: string) => {

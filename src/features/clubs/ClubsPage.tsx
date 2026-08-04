@@ -20,6 +20,7 @@ import { ClubCard } from './ClubCard';
 import { useExplorer } from '@/features/explorer/useExplorer';
 import { clubsSpec } from './clubsSpec';
 import { cityPathForName } from '@/features/city/routes';
+import { cities as turkeyCities } from '@/features/location/cities';
 
 /**
  * KULÜPLER VE TOPLULUKLAR (§8.11, §14.7).
@@ -46,7 +47,11 @@ export function ClubsPage() {
    */
   const ex = useExplorer(clubs, clubsSpec);
   const result = ex.items;
-  const cities = useMemo(() => citiesOf(clubs), [clubs]);
+  const countedCities = useMemo(() => citiesOf(clubs), [clubs]);
+  const cityCounts = useMemo(
+    () => new Map(countedCities.map(({ city, count }) => [city, count])),
+    [countedCities]
+  );
 
   /** Evet/hayır filtresi tek değerli bir facet. */
   const acik = (param: string) => (ex.query.facets[param]?.length ?? 0) > 0;
@@ -132,9 +137,9 @@ export function ClubsPage() {
               className={filterControlClass}
             >
               <option value="hepsi">Tüm şehirler</option>
-              {cities.map(({ city, count }) => (
-                <option key={city} value={city}>
-                  {city} ({count})
+              {turkeyCities.map((city) => (
+                <option key={city.id} value={city.name}>
+                  {city.name} ({cityCounts.get(city.name) ?? 0})
                 </option>
               ))}
             </Select>
@@ -187,11 +192,11 @@ export function ClubsPage() {
           Sayfası olmayan şehir (ör. Nevşehir) süzgece gidiyor — olmayan
           bir adrese bağlantı vermektense filtrelenmiş dizin doğru cevap.
         */}
-        {cities.length > 1 && (
+        {countedCities.length > 1 && (
           <nav aria-label="Şehre göre topluluklar" className="mt-8">
             <h2 className="type-section">Şehre göre</h2>
             <ul className="mt-3 flex flex-wrap gap-2">
-              {cities.map(({ city, count }) => (
+              {countedCities.map(({ city, count }) => (
                 <li key={city}>
                   <Link
                     to={

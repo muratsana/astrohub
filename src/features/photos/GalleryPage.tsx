@@ -15,7 +15,7 @@ import { CatalogSourceNote } from '@/components/ui/CatalogSourceNote';
 import { useViewMode } from '@/components/ui/useViewMode';
 import { PhotoCard } from './PhotoCard';
 import { usePhotoCatalog } from '@/services/content/photos';
-import { availableCities } from './filtering';
+import { cities as turkeyCities } from '@/features/location/cities';
 import { useExplorer } from '@/features/explorer/useExplorer';
 import { gallerySpec } from './gallerySpec';
 import { personalFacet, withFacets } from '@/features/explorer/personalFacets';
@@ -72,6 +72,7 @@ export function GalleryPage() {
 
   const catalog = usePhotoCatalog();
   const photos = catalog.items;
+  const cities = turkeyCities.map((city) => city.name);
 
   /*
    * ORTAK DATA EXPLORER (Faz 4).
@@ -124,7 +125,6 @@ export function GalleryPage() {
   );
 
   const ex = useExplorer(photos, spec);
-  const cities = useMemo(() => availableCities(photos), [photos]);
   const kisiselAcik = (param: string) =>
     (ex.query.facets[param]?.length ?? 0) > 0;
   const family = ex.query.facets.aile?.[0] ?? 'hepsi';

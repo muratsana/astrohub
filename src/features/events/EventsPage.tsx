@@ -22,7 +22,8 @@ import { useEventCatalog } from '@/services/content/events';
 import { useExplorer } from '@/features/explorer/useExplorer';
 import { eventsSpec } from './eventsSpec';
 import { CatalogSourceNote } from '@/components/ui/CatalogSourceNote';
-import { availableEventCities, capacityLabel } from './filtering';
+import { cities as turkeyCities } from '@/features/location/cities';
+import { capacityLabel } from './filtering';
 import { eventTypeLabels } from './types';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
@@ -46,10 +47,7 @@ export function EventsPage() {
    */
   const [layout, setLayout] = useState<'kart' | 'takvim'>('kart');
   const catalog = useEventCatalog();
-  const cities = useMemo(
-    () => availableEventCities(catalog.items),
-    [catalog.items]
-  );
+  const cities = turkeyCities.map((city) => city.name);
   /*
    * ORTAK DATA EXPLORER (Faz 4). Ayrıca belgenin §7.1'de adıyla istediği
    * "gelecek/geçmiş etkinlikler" süzgeci geldi — sayfada hiç yoktu.
