@@ -139,12 +139,14 @@ export function EventMapPage() {
   }, [located]);
 
   const featuredItem =
-    applyFeatured(
-      catalog.items,
-      featuredEvents.slugs,
-      (event) => event.slug,
-      1
-    )[0] ?? null;
+    featuredEvents.slugs.length > 0
+      ? (applyFeatured(
+          catalog.items,
+          featuredEvents.slugs,
+          (event) => event.slug,
+          1
+        )[0] ?? null)
+      : null;
   const featuredDistance = featuredItem
     ? located.find(({ item }) => item.slug === featuredItem.slug)?.distanceKm
     : undefined;
@@ -270,7 +272,7 @@ export function EventMapPage() {
           {/* ───────── Harita ───────── */}
           <Panel
             title="Etkinlik haritası"
-            status={`${mapItems.length} işaret`}
+            status={`${mapItems.length} etkinlik`}
             bodyClassName="p-0"
           >
             <div className="relative h-[70vh] min-h-[520px] overflow-hidden rounded-b-card bg-surface-2">
