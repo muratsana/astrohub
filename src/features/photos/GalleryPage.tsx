@@ -14,6 +14,7 @@ import {
 import { CardGrid } from '@/components/ui/CardGrid';
 import { ModuleToolbar } from '@/components/ui/ModuleToolbar';
 import { CatalogSourceNote } from '@/components/ui/CatalogSourceNote';
+import { RemoteImage } from '@/components/media/RemoteImage';
 import { useViewMode } from '@/components/ui/useViewMode';
 import { PhotoCard } from './PhotoCard';
 import { usePhotoCatalog } from '@/services/content/photos';
@@ -176,15 +177,21 @@ export function GalleryPage() {
               <Link
                 to={`/fotograf/${weeklyPick.photo.slug}`}
                 aria-label={`Haftanın Fotoğrafı: ${weeklyPick.photo.title}`}
-                className="relative min-h-56 bg-surface-2"
-                style={{
-                  backgroundImage: weeklyPick.photo.image
-                    ? `linear-gradient(90deg, transparent, color-mix(in_srgb, var(--color-background) 24%, transparent)), url(${weeklyPick.photo.image.url})`
-                    : weeklyPick.photo.gradient,
-                  backgroundPosition: 'center',
-                  backgroundSize: 'cover',
-                }}
+                className="relative min-h-[17.5rem] overflow-hidden bg-surface-2"
               >
+                <RemoteImage
+                  src={weeklyPick.photo.image?.url}
+                  alt={weeklyPick.photo.target.name}
+                  seed={weeklyPick.photo.slug}
+                  tint={weeklyPick.photo.gradient}
+                  sizes="(min-width: 1024px) 760px, 100vw"
+                  widths={[640, 960, 1200]}
+                  priority
+                />
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,transparent,color-mix(in_srgb,var(--color-background)_24%,transparent))]"
+                />
                 <Badge
                   tone="success"
                   className="absolute left-3 top-3 bg-background/85 backdrop-blur-sm"
