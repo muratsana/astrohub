@@ -33,6 +33,7 @@ Sonra Astrohub’da `/simulator` sayfasını açın ve bridge adresini
 - `POST /connect` body: `{ "driverId": "ASCOM.Simulator.Telescope" }`
 - `POST /disconnect`
 
-İlk sürüm yalnızca TelescopeV3 uyumlu temel alanları okur: RA, DEC, Alt/Az,
-site konumu, takip ve slew durumu. Capture yazılımları için `capture` alanı
-ayrıldı; PHD2/SGP/TheSkyX/ZWO AIR adaptörleri buraya yazacak şekilde eklenir.
+Bridge TelescopeV3 uyumlu temel alanları okur: RA, DEC, Alt/Az, site konumu,
+takip ve slew durumu. PHD2 açıksa `127.0.0.1:4400` JSON-RPC üzerinden guiding
+durumu ve RMS değerlerini `capture` alanına ekler. SGP/TheSkyX/ZWO AIR
+adaptörleri aynı `capture` alanına yazacak şekilde eklenir.

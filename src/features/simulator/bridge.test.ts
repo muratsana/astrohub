@@ -16,6 +16,7 @@ describe('normalizeBridgeStatus', () => {
           app: 'SGP',
           totalFrames: 120,
           completedFrames: 48,
+          rmsArcsec: 0.84,
           ignored: 'x',
         },
       })
@@ -31,6 +32,7 @@ describe('normalizeBridgeStatus', () => {
         app: 'SGP',
         totalFrames: 120,
         completedFrames: 48,
+        rmsArcsec: 0.84,
       },
     });
   });

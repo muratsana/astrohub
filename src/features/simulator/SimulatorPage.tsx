@@ -17,6 +17,8 @@ import { PresetSelect } from '@/features/calculators/PresetSelect';
 import { useCalculatorPresets } from '@/features/calculators/presets';
 import {
   DEFAULT_BRIDGE_URL,
+  connectMountBridge,
+  disconnectMountBridge,
   fetchMountBridgeStatus,
   loadArchivePlans,
   saveArchivePlans,
@@ -36,7 +38,9 @@ const framedTargets = fixedTargets
 export function SimulatorPage() {
   const presets = useCalculatorPresets();
   const [bridgeUrl, setBridgeUrl] = useState(DEFAULT_BRIDGE_URL);
+  const [driverId, setDriverId] = useState('ASCOM.Simulator.Telescope');
   const [status, setStatus] = useState<MountBridgeStatus | null>(null);
+  const [bridgeBusy, setBridgeBusy] = useState(false);
   const [polling, setPolling] = useState(false);
   const [opticSlug, setOpticSlug] = useState('');
   const [cameraSlug, setCameraSlug] = useState('');
@@ -72,6 +76,26 @@ export function SimulatorPage() {
   const refreshBridge = useCallback(async () => {
     setStatus(await fetchMountBridgeStatus(bridgeUrl));
   }, [bridgeUrl]);
+
+  async function connectBridge() {
+    setBridgeBusy(true);
+    try {
+      setStatus(await connectMountBridge(bridgeUrl, driverId.trim()));
+      setPolling(true);
+    } finally {
+      setBridgeBusy(false);
+    }
+  }
+
+  async function disconnectBridge() {
+    setBridgeBusy(true);
+    try {
+      setStatus(await disconnectMountBridge(bridgeUrl));
+      setPolling(false);
+    } finally {
+      setBridgeBusy(false);
+    }
+  }
 
   useEffect(() => {
     if (!polling) return;
@@ -317,7 +341,32 @@ export function SimulatorPage() {
                     spellCheck={false}
                   />
                 </Field>
-                <div className="flex gap-2">
+                <Field label="ASCOM DriverId" htmlFor="bridge-driver">
+                  <Input
+                    id="bridge-driver"
+                    value={driverId}
+                    onChange={(event) => setDriverId(event.target.value)}
+                    spellCheck={false}
+                  />
+                </Field>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={connectBridge}
+                    disabled={bridgeBusy || !driverId.trim()}
+                  >
+                    Bağlan
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    onClick={disconnectBridge}
+                    disabled={bridgeBusy}
+                  >
+                    Kes
+                  </Button>
                   <Button type="button" size="sm" onClick={refreshBridge}>
                     Tara
                   </Button>
@@ -382,11 +431,20 @@ export function SimulatorPage() {
               {status?.capture ? (
                 <SpecList>
                   <SpecRow label="Uygulama" value={status.capture.app ?? '—'} />
+                  <SpecRow label="Durum" value={status.capture.state ?? '—'} />
                   <SpecRow label="Sequence" value={status.capture.sequenceName ?? '—'} />
                   <SpecRow label="Hedef" value={status.capture.target ?? '—'} />
                   <SpecRow
                     label="İlerleme"
                     value={`${status.capture.completedFrames ?? 0}/${status.capture.totalFrames ?? 0}`}
+                  />
+                  <SpecRow
+                    label="Guiding RMS"
+                    value={
+                      status.capture.rmsArcsec === undefined
+                        ? '—'
+                        : `${status.capture.rmsArcsec.toFixed(2)}″`
+                    }
                   />
                 </SpecList>
               ) : (

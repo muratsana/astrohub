@@ -10,6 +10,9 @@ export interface CaptureSummary {
   exposureSeconds?: number;
   filter?: string;
   state?: string;
+  rmsArcsec?: number;
+  raRmsArcsec?: number;
+  decRmsArcsec?: number;
 }
 
 export interface MountBridgeStatus {
@@ -54,12 +57,46 @@ export async function fetchMountBridgeStatus(
   baseUrl = DEFAULT_BRIDGE_URL,
   timeoutMs = 1600
 ): Promise<MountBridgeStatus> {
+  return bridgeRequest(baseUrl, '/status', { method: 'GET' }, timeoutMs);
+}
+
+export async function connectMountBridge(
+  baseUrl = DEFAULT_BRIDGE_URL,
+  driverId: string,
+  timeoutMs = 3500
+): Promise<MountBridgeStatus> {
+  return bridgeRequest(
+    baseUrl,
+    '/connect',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ driverId }),
+    },
+    timeoutMs
+  );
+}
+
+export async function disconnectMountBridge(
+  baseUrl = DEFAULT_BRIDGE_URL,
+  timeoutMs = 2500
+): Promise<MountBridgeStatus> {
+  return bridgeRequest(baseUrl, '/disconnect', { method: 'POST' }, timeoutMs);
+}
+
+async function bridgeRequest(
+  baseUrl: string,
+  path: string,
+  init: RequestInit,
+  timeoutMs: number
+): Promise<MountBridgeStatus> {
   const controller = new AbortController();
   const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const response = await fetch(`${baseUrl.replace(/\/$/, '')}/status`, {
+    const response = await fetch(`${baseUrl.replace(/\/$/, '')}${path}`, {
+      ...init,
       signal: controller.signal,
-      headers: { Accept: 'application/json' },
+      headers: { Accept: 'application/json', ...init.headers },
     });
     if (!response.ok) {
       return {
@@ -140,6 +177,9 @@ function normalizeCapture(value: unknown): CaptureSummary | null {
     exposureSeconds: number(row.exposureSeconds),
     filter: text(row.filter),
     state: text(row.state),
+    rmsArcsec: number(row.rmsArcsec),
+    raRmsArcsec: number(row.raRmsArcsec),
+    decRmsArcsec: number(row.decRmsArcsec),
   };
 }
 

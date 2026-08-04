@@ -41,6 +41,48 @@ function Read-Com($object, $name) {
   try { return $object.$name } catch { return $null }
 }
 
+function Invoke-Phd2($method) {
+  $client = $null
+  try {
+    $client = [Net.Sockets.TcpClient]::new()
+    $client.ReceiveTimeout = 700
+    $client.SendTimeout = 700
+    $connected = $client.ConnectAsync("127.0.0.1", 4400).Wait(700)
+    if (-not $connected) { return $null }
+
+    $stream = $client.GetStream()
+    $writer = [IO.StreamWriter]::new($stream, [Text.Encoding]::UTF8)
+    $writer.NewLine = "`n"
+    $writer.AutoFlush = $true
+    $reader = [IO.StreamReader]::new($stream, [Text.Encoding]::UTF8)
+    $writer.WriteLine((@{ jsonrpc = "2.0"; method = $method; id = 1 } | ConvertTo-Json -Compress))
+    $line = $reader.ReadLine()
+    if (-not $line) { return $null }
+    return ($line | ConvertFrom-Json).result
+  } catch {
+    return $null
+  } finally {
+    if ($client -ne $null) { $client.Close() }
+  }
+}
+
+function Read-Phd2Capture {
+  $state = Invoke-Phd2 "get_app_state"
+  $stats = Invoke-Phd2 "get_stats"
+  if ($state -eq $null -and $stats -eq $null) { return $null }
+
+  $stateText = "çalışıyor"
+  if ($state -ne $null) { $stateText = "$state" }
+
+  return @{
+    app = "PHD2"
+    state = $stateText
+    rmsArcsec = Read-Com $stats "rms_tot"
+    raRmsArcsec = Read-Com $stats "rms_ra"
+    decRmsArcsec = Read-Com $stats "rms_dec"
+  }
+}
+
 function Connect-Mount($driverId) {
   if (-not $driverId) { throw "DriverId gerekli. Örn: ASCOM.Simulator.Telescope" }
   if ($script:mount -eq $null -or $script:activeDriverId -ne $driverId) {
@@ -80,7 +122,7 @@ function Mount-Status {
     slewing = Read-Com $script:mount "Slewing"
     atPark = Read-Com $script:mount "AtPark"
     sideOfPier = "$(Read-Com $script:mount "SideOfPier")"
-    capture = $null
+    capture = Read-Phd2Capture
     utc = (Get-Date).ToUniversalTime().ToString("o")
   }
 }

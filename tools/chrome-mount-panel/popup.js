@@ -17,6 +17,7 @@ async function refresh() {
     setText('ra', formatRa(data.rightAscensionHours));
     setText('dec', formatDeg(data.declinationDeg));
     setText('site', `${formatDeg(data.siteLatitudeDeg)} / ${formatDeg(data.siteLongitudeDeg)}`);
+    setText('phd2', data.capture?.rmsArcsec ? `${data.capture.rmsArcsec.toFixed(2)}″ RMS` : '—');
   } catch (error) {
     setText('state', 'Kapalı');
     setText('error', 'Mount Bridge çalışmıyor. Önce tools/mount-bridge içindeki bridge’i başlatın.');
