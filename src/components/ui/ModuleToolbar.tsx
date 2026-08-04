@@ -34,6 +34,7 @@ export function ModuleToolbar<M extends string = ViewMode>({
   view,
   extra,
   columns,
+  primaryFilters = 3,
   className,
   filterClassName,
   label = 'Liste araçları',
@@ -45,6 +46,7 @@ export function ModuleToolbar<M extends string = ViewMode>({
   view?: ToolBarView<M>;
   extra?: ReactNode;
   columns?: 2 | 3 | 4;
+  primaryFilters?: number;
   className?: string;
   filterClassName?: string;
   label?: string;
@@ -60,12 +62,14 @@ export function ModuleToolbar<M extends string = ViewMode>({
       )}
     >
       <div className="flex flex-col gap-2 md:flex-row md:items-center">
-        <div className="min-w-0 flex-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="min-w-0 flex-1">
           <FilterBar
             activeCount={activeFilters.chips.length}
             columns={columns}
+            primaryCount={primaryFilters}
+            collapseQuery="(max-width: 1099px)"
             className={cn(
-              '!mb-0 md:!flex md:!flex-nowrap md:[&>*]:min-w-[10rem] md:[&_[role=tablist]]:!flex-nowrap md:[&_[role=tab]]:!whitespace-nowrap',
+              '!mb-0 [&>*]:!min-w-[8rem] [&>*]:!flex-none [&>*:first-child]:!min-w-[15rem] [&>*:first-child]:flex-1 [&_[role=tablist]]:!flex-nowrap [&_[role=tab]]:!whitespace-nowrap',
               filterClassName
             )}
           >

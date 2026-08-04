@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import { FilterBar, FilterCell } from './FilterBar';
 import { ActiveFilters } from './ActiveFilters';
 
@@ -58,6 +58,30 @@ describe('FilterBar — geniş ekran', () => {
     expect(
       screen.queryByRole('button', { name: /Filtreler/ })
     ).not.toBeInTheDocument();
+  });
+
+  it('fazla filtreleri tek açılır panelde topluyor', () => {
+    const { container } = render(
+      <FilterBar activeCount={2} primaryCount={2}>
+        <FilterCell label="Ara" htmlFor="wide-search">
+          <input id="wide-search" />
+        </FilterCell>
+        <FilterCell label="Şehir" htmlFor="wide-city">
+          <select id="wide-city"><option>Ankara</option></select>
+        </FilterCell>
+        <FilterCell label="Tür" htmlFor="wide-type">
+          <select id="wide-type"><option>Webinar</option></select>
+        </FilterCell>
+      </FilterBar>
+    );
+
+    const details = container.querySelector('details');
+    expect(details).not.toBeNull();
+    expect(within(details!).getByLabelText('Tür')).toBeInTheDocument();
+    expect(details).not.toHaveAttribute('open');
+
+    fireEvent.click(screen.getByText('Filtreler', { selector: 'summary' }));
+    expect(details).toHaveAttribute('open');
   });
 });
 
