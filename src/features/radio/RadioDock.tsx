@@ -1,4 +1,5 @@
 import { Link } from 'react-router';
+import { useRoles } from '@/features/admin/useRoles';
 import { useRadio } from './RadioContext';
 import {
   CloseIcon,
@@ -21,6 +22,7 @@ import { cn } from '@/lib/cn';
  * içeriğin önüne geçmemeli.
  */
 export function RadioDock() {
+  const { isAdmin } = useRoles();
   const {
     playing,
     hasBroadcast,
@@ -65,23 +67,20 @@ export function RadioDock() {
           )}
         </button>
 
-        <Link
-          to="/radyo"
-          className="min-w-0 flex-1 transition-colors hover:text-primary"
-        >
-          <span className="block truncate text-meta font-medium text-success">
-            {source === 'canli'
-              ? 'Canlı yayın'
-              : currentTrack?.title ?? 'Astrohub Radyo'}
-          </span>
-          {source === 'kasa' && currentTrack?.artist && (
-            <span className="hidden truncate text-[0.66rem] text-muted-foreground sm:block">
-              {currentTrack.artist}
-            </span>
-          )}
-        </Link>
+        {isAdmin ? (
+          <Link
+            to="/radyo"
+            className="min-w-0 flex-1 transition-colors hover:text-primary"
+          >
+            <TrackLabel source={source} currentTrack={currentTrack} />
+          </Link>
+        ) : (
+          <div className="min-w-0 flex-1">
+            <TrackLabel source={source} currentTrack={currentTrack} />
+          </div>
+        )}
 
-        {canSkip && (
+        {isAdmin && canSkip && (
           <div className="hidden items-center gap-1 sm:flex">
             <button
               type="button"
@@ -102,7 +101,7 @@ export function RadioDock() {
           </div>
         )}
 
-        {source === 'kasa' && (
+        {isAdmin && source === 'kasa' && (
           <button
             type="button"
             onClick={toggleShuffle}
@@ -124,30 +123,57 @@ export function RadioDock() {
           </button>
         )}
 
-        <label className="hidden items-center gap-2 lg:flex">
-          <VolumeIcon className="h-4 w-4 text-muted-foreground" />
-          <span className="sr-only">Radyo ses seviyesi</span>
-          <input
-            type="range"
-            min="0"
-            max="1"
-            step="0.05"
-            value={volume}
-            onChange={(event) => setVolume(Number(event.target.value))}
-            aria-label="Radyo ses seviyesi"
-            className="w-24 accent-primary"
-          />
-        </label>
+        {isAdmin && (
+          <label className="hidden items-center gap-2 lg:flex">
+            <VolumeIcon className="h-4 w-4 text-muted-foreground" />
+            <span className="sr-only">Radyo ses seviyesi</span>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.05"
+              value={volume}
+              onChange={(event) => setVolume(Number(event.target.value))}
+              aria-label="Radyo ses seviyesi"
+              className="w-24 accent-primary"
+            />
+          </label>
+        )}
 
-        <button
-          type="button"
-          onClick={hideDock}
-          aria-label="Radyo oynatıcısını gizle"
-          className="grid h-9 w-9 shrink-0 place-items-center rounded-card text-muted-foreground transition-colors hover:bg-surface-2 hover:text-foreground"
-        >
-          <CloseIcon className="h-3.5 w-3.5" />
-        </button>
+        {isAdmin && (
+          <button
+            type="button"
+            onClick={hideDock}
+            aria-label="Radyo oynatıcısını gizle"
+            className="grid h-9 w-9 shrink-0 place-items-center rounded-card text-muted-foreground transition-colors hover:bg-surface-2 hover:text-foreground"
+          >
+            <CloseIcon className="h-3.5 w-3.5" />
+          </button>
+        )}
       </div>
     </div>
+  );
+}
+
+function TrackLabel({
+  source,
+  currentTrack,
+}: {
+  source: 'canli' | 'kasa';
+  currentTrack: { title: string; artist?: string } | null;
+}) {
+  return (
+    <>
+      <span className="block truncate text-meta font-medium text-success">
+        {source === 'canli'
+          ? 'Canlı yayın'
+          : currentTrack?.title ?? 'Astrohub Radyo'}
+      </span>
+      {source === 'kasa' && currentTrack?.artist && (
+        <span className="hidden truncate text-[0.66rem] text-muted-foreground sm:block">
+          {currentTrack.artist}
+        </span>
+      )}
+    </>
   );
 }
