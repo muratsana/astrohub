@@ -6,6 +6,7 @@ import { tintForPhoto } from './tint';
 import { familyOf, photoFamilies } from './families';
 import { RatingBadge } from './RatingBadge';
 import type { AstroPhoto } from './types';
+import { formatPhotoWeekLabel } from './weeklyPick';
 
 /**
  * FOTOĞRAF KARTI — `AstroPhoto` kaydını `PhotoTile`a bağlayan tek yer.
@@ -50,7 +51,7 @@ export function PhotoCard({
           <>
             {(photo.photoOfWeekWins?.length ?? 0) > 0 && (
               <Badge tone="success" className="bg-background/85">
-                Haftanın Fotoğrafı · {photo.photoOfWeekWins?.at(-1)}
+                {formatPhotoWeekLabel(photo.photoOfWeekWins!.at(-1)!).weekLabel}
               </Badge>
             )}
             {photo.editorsPick && (

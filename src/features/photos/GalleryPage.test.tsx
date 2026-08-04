@@ -75,6 +75,16 @@ describe('GalleryPage (§7.2)', () => {
     expect(photoLinks()).toHaveLength(photos.length);
   });
 
+  it('haftanın fotoğrafları arşivini hafta rozetiyle gösterir', () => {
+    renderGallery();
+    expect(
+      screen.getByRole('heading', {
+        name: /haftanın fotoğrafları arşivi/i,
+      })
+    ).toBeInTheDocument();
+    expect(screen.getAllByText('32. Hafta').length).toBeGreaterThan(0);
+  });
+
   it('filtre yokken yalnızca toplamı bildirir', () => {
     // "48 / 48" hiçbir bilgi taşımıyordu; filtre uygulanmadan kesir
     // gösterilmez (bkz. ToolBar → ResultCount).

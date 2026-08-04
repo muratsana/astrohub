@@ -75,12 +75,13 @@ export function HeroSection() {
   );
   const slides = useMemo<HeroSlideView[]>(() => {
     if (enabled || !weeklyPick) return baseSlides;
-    const { photo, label } = weeklyPick;
+    const { photo, weekLabel } = weeklyPick;
     return [
       ...baseSlides,
       {
         id: `haftanin-fotografi-${photo.slug}`,
-        badge: label,
+        badge: 'Haftanın Fotoğrafı',
+        mediaBadge: weekLabel,
         title: `Haftanın Fotoğrafı: ${photo.title}`,
         subtitle: `${photo.target.name} · @${photo.user.username}`,
         ctaLabel: 'Fotoğrafı aç',
@@ -388,6 +389,12 @@ export function HeroSection() {
               </Editable>
             </div>
           </div>
+
+          {slide.mediaBadge && (
+            <span className="absolute left-4 top-4 z-20 rounded-card border border-success/50 bg-background/85 px-2 py-1 text-meta font-medium tracking-[0.03em] text-success backdrop-blur-sm">
+              {slide.mediaBadge}
+            </span>
+          )}
 
           {/* Oklar */}
           <NavArrow side="left" onClick={() => go(index - 1)} />

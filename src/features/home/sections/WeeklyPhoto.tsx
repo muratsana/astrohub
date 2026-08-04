@@ -4,12 +4,18 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { PhotoCard } from '@/features/photos/PhotoCard';
 import { usePhotoCatalog } from '@/services/content/photos';
 import { usePhotoWeekRounds } from '@/services/content/photoOfWeek';
+import { formatPhotoWeekLabel } from '@/features/photos/weeklyPick';
 
 export function WeeklyPhoto({ hideWhenEmpty = true }: { hideWhenEmpty?: boolean }) {
   const catalog = usePhotoCatalog();
   const rounds = usePhotoWeekRounds();
   const round = rounds.rounds.find((item) => item.winnerPhotoId && ['sonuclandi', 'yayinda'].includes(item.status));
   const photo = round ? catalog.items.find((item) => item.id === round.winnerPhotoId) : undefined;
+  const label = round
+    ? formatPhotoWeekLabel(
+        `${round.isoYear}-${String(round.isoWeek).padStart(2, '0')}`
+      ).weekLabel
+    : undefined;
 
   if (!photo && hideWhenEmpty && !rounds.loading) return null;
 
@@ -18,7 +24,7 @@ export function WeeklyPhoto({ hideWhenEmpty = true }: { hideWhenEmpty?: boolean 
       <Container>
         <SectionHeader
           title="Haftanın Fotoğrafı"
-          meta={round ? `${round.isoYear}-${String(round.isoWeek).padStart(2, '0')}` : undefined}
+          meta={label}
           linkTo="/haftanin-fotografi"
           linkLabel="Arşiv"
         />

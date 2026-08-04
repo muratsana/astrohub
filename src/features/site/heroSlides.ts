@@ -38,6 +38,8 @@ export interface HeroSlideView extends HeroSlide {
   focalX: number;
   focalY: number;
   textAlign: 'left' | 'center';
+  /** Görselin üstüne basılan ek rozet; haftanın fotoğrafı gibi editoryal işaretler. */
+  mediaBadge?: string;
 }
 
 /** Koddaki slaytlar, görünüm alanları varsayılanlarıyla. */

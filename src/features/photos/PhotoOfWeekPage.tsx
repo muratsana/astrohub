@@ -8,17 +8,12 @@ import { breadcrumbJsonLd } from '@/lib/seo';
 import { usePhotoCatalog } from '@/services/content/photos';
 import { usePhotoWeekRounds } from '@/services/content/photoOfWeek';
 import { PhotoCard } from './PhotoCard';
+import { photoWeekArchive } from './weeklyPick';
 
 export function PhotoOfWeekPage() {
   const catalog = usePhotoCatalog();
   const rounds = usePhotoWeekRounds();
-  const completed = rounds.rounds.filter(
-    (round) => round.winnerPhotoId && ['sonuclandi', 'yayinda'].includes(round.status)
-  );
-  const winners = completed.flatMap((round) => {
-    const photo = catalog.items.find((item) => item.id === round.winnerPhotoId);
-    return photo ? [{ round, photo }] : [];
-  });
+  const winners = photoWeekArchive(catalog.items, rounds.rounds);
   const current = winners[0];
 
   return (
@@ -49,9 +44,16 @@ export function PhotoOfWeekPage() {
         ) : (
           <>
             <section className="mb-10 grid gap-4 lg:grid-cols-[minmax(0,0.72fr)_minmax(280px,0.28fr)]">
-              <PhotoCard photo={current.photo} />
+              <div>
+                <PhotoCard photo={current.photo} />
+              </div>
               <div className="rounded-card border border-border bg-surface-1 p-4">
-                <Badge tone="success">{current.round.isoYear}-{String(current.round.isoWeek).padStart(2, '0')}</Badge>
+                <Badge tone="success">Haftanın Fotoğrafı</Badge>
+                {current.yearLabel && (
+                  <p className="mt-2 text-meta tabular text-faint">
+                    {current.yearLabel}
+                  </p>
+                )}
                 <h2 className="type-section mt-3 text-foreground">{current.photo.title}</h2>
                 <p className="mt-2 text-body-sm text-muted-foreground">{current.photo.target.name} · @{current.photo.user.username}</p>
                 <p className="mt-5 text-meta leading-relaxed text-faint">Kazanan; toplam jüri puanı, eşitlikte oy veren jüri sayısı ve ardından daha erken yayın tarihi sırasıyla belirlenir.</p>
@@ -60,10 +62,16 @@ export function PhotoOfWeekPage() {
 
             {winners.length > 1 && (
               <section>
-                <h2 className="type-section mb-3 text-foreground">Kazanan arşivi</h2>
+                <h2 className="type-section mb-3 text-foreground">
+                  Geçmiş haftaların arşivi
+                </h2>
                 <CardGrid view="grid">
-                  {winners.slice(1).map(({ round, photo }) => (
-                    <li key={round.id}><PhotoCard photo={photo} /></li>
+                  {winners.slice(1).map(({ id, photo }) => (
+                    <li key={id}>
+                      <div>
+                        <PhotoCard photo={photo} />
+                      </div>
+                    </li>
                   ))}
                 </CardGrid>
               </section>

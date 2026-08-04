@@ -30,7 +30,7 @@ import { type AstroPhoto, type ProcessingPalette } from './types';
 import { photoFamilies, familyOrder } from './families';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
-import { selectWeeklyPhoto } from './weeklyPick';
+import { photoWeekArchive, selectWeeklyPhoto } from './weeklyPick';
 
 const paletteOptions: (ProcessingPalette | 'hepsi')[] = [
   'hepsi',
@@ -80,6 +80,10 @@ export function GalleryPage() {
   const cities = turkeyCities.map((city) => city.name);
   const weeklyPick = useMemo(
     () => selectWeeklyPhoto(photos, rounds.rounds),
+    [photos, rounds.rounds]
+  );
+  const weeklyArchive = useMemo(
+    () => photoWeekArchive(photos, rounds.rounds).slice(0, 8),
     [photos, rounds.rounds]
   );
 
@@ -172,7 +176,7 @@ export function GalleryPage() {
               <Link
                 to={`/fotograf/${weeklyPick.photo.slug}`}
                 aria-label={`Haftanın Fotoğrafı: ${weeklyPick.photo.title}`}
-                className="min-h-56 bg-surface-2"
+                className="relative min-h-56 bg-surface-2"
                 style={{
                   backgroundImage: weeklyPick.photo.image
                     ? `linear-gradient(90deg, transparent, color-mix(in_srgb, var(--color-background) 24%, transparent)), url(${weeklyPick.photo.image.url})`
@@ -180,11 +184,23 @@ export function GalleryPage() {
                   backgroundPosition: 'center',
                   backgroundSize: 'cover',
                 }}
-              />
+              >
+                <Badge
+                  tone="success"
+                  className="absolute left-3 top-3 bg-background/85 backdrop-blur-sm"
+                >
+                  {weeklyPick.weekLabel}
+                </Badge>
+              </Link>
               <div className="flex flex-col justify-center p-4 sm:p-5">
                 <Badge tone="success" className="w-fit">
-                  Haftanın Fotoğrafı · {weeklyPick.label}
+                  Haftanın Fotoğrafı
                 </Badge>
+                {weeklyPick.yearLabel && (
+                  <span className="mt-2 text-meta tabular text-faint">
+                    {weeklyPick.yearLabel}
+                  </span>
+                )}
                 <h2 className="type-section mt-3 text-foreground">
                   {weeklyPick.photo.title}
                 </h2>
@@ -204,6 +220,57 @@ export function GalleryPage() {
                   </ButtonLink>
                 </div>
               </div>
+            </div>
+          </section>
+        )}
+
+        {weeklyArchive.length > 0 && (
+          <section className="mb-5 rounded-card border border-border bg-surface-1">
+            <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-border px-3 py-2.5">
+              <div>
+                <h2 className="text-body-sm font-semibold text-foreground">
+                  Haftanın Fotoğrafları Arşivi
+                </h2>
+                <p className="mt-0.5 text-meta text-muted-foreground">
+                  Geçmiş haftaların kazananlarını hafta numarasıyla takip edin.
+                </p>
+              </div>
+              <ButtonLink to="/haftanin-fotografi" size="sm" variant="ghost">
+                Tüm arşiv
+              </ButtonLink>
+            </div>
+            <div className="grid gap-0 sm:grid-cols-2 lg:grid-cols-4">
+              {weeklyArchive.map((item) => (
+                <Link
+                  key={item.id}
+                  to={`/fotograf/${item.photo.slug}`}
+                  className="flex min-w-0 gap-3 border-b border-border px-3 py-3 transition-colors hover:bg-surface-2 sm:border-r lg:[&:nth-child(4n)]:border-r-0"
+                >
+                  <span
+                    className="relative h-16 w-20 shrink-0 rounded-card border border-border bg-cover bg-center"
+                    style={{
+                      backgroundImage: item.photo.image
+                        ? `url(${item.photo.image.url})`
+                        : item.photo.gradient,
+                    }}
+                    aria-hidden
+                  >
+                    <span className="absolute left-1 top-1 rounded-card border border-success/50 bg-background/85 px-1.5 py-0.5 text-[0.62rem] font-medium leading-none tracking-[0.03em] text-success">
+                      {item.weekLabel}
+                    </span>
+                  </span>
+                  <span className="min-w-0">
+                    <Badge tone="success">Haftanın Fotoğrafı</Badge>
+                    <span className="mt-1 block truncate text-body-sm font-medium text-foreground">
+                      {item.photo.title}
+                    </span>
+                    <span className="block truncate text-meta text-muted-foreground">
+                      {item.yearLabel ? `${item.yearLabel} · ` : ''}
+                      @{item.photo.user.username}
+                    </span>
+                  </span>
+                </Link>
+              ))}
             </div>
           </section>
         )}
