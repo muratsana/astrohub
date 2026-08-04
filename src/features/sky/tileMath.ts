@@ -26,6 +26,16 @@
 
 /** Standart döşeme kenarı (piksel). */
 export const TILE_SIZE = 256;
+const RETINA_DPR = 1.5;
+
+export function tileRenderZoom(
+  zoom: number,
+  sourceMaxZoom: number,
+  devicePixelRatio = 1
+): number {
+  const boost = devicePixelRatio >= RETINA_DPR ? 1 : 0;
+  return Math.min(sourceMaxZoom, zoom + boost);
+}
 
 /**
  * Mercator izdüşümü kutupları sonsuza taşır; tüm dünya haritaları enlemi

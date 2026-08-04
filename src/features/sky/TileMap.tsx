@@ -6,6 +6,7 @@ import {
   lngToTileX,
   panBy,
   pointToLatLng,
+  tileRenderZoom,
   visibleTiles,
   type LatLng,
   type TilePlacement,
@@ -350,7 +351,8 @@ function Layer({
     stats.current = { id: source.id, ok: 0, failed: 0, reported: false };
   }
 
-  const z = Math.min(zoom, source.maxZoom);
+  const dpr = typeof window === 'undefined' ? 1 : window.devicePixelRatio || 1;
+  const z = tileRenderZoom(zoom, source.maxZoom, dpr);
   const tiles: TilePlacement[] = visibleTiles({
     center,
     zoom: z,
