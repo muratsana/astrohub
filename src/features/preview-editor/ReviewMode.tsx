@@ -60,7 +60,10 @@ interface Selected {
 export function ReviewMode() {
   const { pathname } = useLocation();
   const [active, setActive] = useState(false);
-  const [open, setOpen] = useState(true);
+  /* VARSAYILAN KAPALI: panel açık başlarsa önizlemenin sağ üçte birini
+     kaplıyor ve gözden geçirilecek şeyin üstüne biniyor. Sekme kenarda
+     duruyor, isteyen açıyor. */
+  const [open, setOpen] = useState(false);
   const [notes, setNotes] = useState<ReviewNote[]>(() => readNotes());
   const [selected, setSelected] = useState<Selected | null>(null);
   const [draft, setDraft] = useState('');

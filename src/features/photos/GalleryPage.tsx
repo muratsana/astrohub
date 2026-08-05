@@ -14,6 +14,8 @@ import {
 import { CardGrid } from '@/components/ui/CardGrid';
 import { ModuleToolbar } from '@/components/ui/ModuleToolbar';
 import { CatalogSourceNote } from '@/components/ui/CatalogSourceNote';
+import { CARD_RATIO } from '@/components/ui/cardRatios';
+import { cn } from '@/lib/cn';
 import { RemoteImage } from '@/components/media/RemoteImage';
 import { useViewMode } from '@/components/ui/useViewMode';
 import { PhotoCard } from './PhotoCard';
@@ -151,13 +153,35 @@ export function GalleryPage() {
           }
         />
 
+        {/*
+          HAFTANIN FOTOĞRAFI — YÜKSEKLİĞİ GÖRSEL BELİRLİYOR, METİN DEĞİL.
+
+          Ölçülen eski durum (1440×900): şerit 611px, alt kenarı 838px ve
+          galeri ızgarası 1120px'de başlıyordu — yani fold üstünde HİÇ
+          fotoğraf yoktu. 1366×768'de şeridin kendisi bile fold'un altına
+          taşıyordu; 390×844'te 932px ile ekranın tamamından uzundu.
+
+          Sebep şuydu: görsel `min-h` ile duruyor, gerçek yüksekliği
+          KOMŞU SÜTUN dayatıyordu — dokuz satırlık EXIF tablosu ne kadar
+          uzarsa görsel de o kadar uzuyordu. Yani bir fotoğraf şeridinin
+          boyunu tablo satır sayısı belirliyordu.
+
+          Şimdi görsel sabit `wide` (16:9) oranında ve sütun genişliği o
+          oranın ~305px yüksekliğe denk düşeceği şekilde ayarlı — eski
+          boyun yarısı. Metin sütunu bu yüksekliğe sığmak zorunda, tersi
+          değil; künye bu yüzden dört değere indi ve tamamı "Fotoğrafı aç"
+          ile bir tık ötede duruyor.
+        */}
         {weeklyPick && (
           <section className="mb-5 overflow-hidden rounded-card border border-border bg-surface-1">
-            <div className="grid gap-0 lg:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
+            <div className="grid gap-0 lg:grid-cols-[minmax(0,0.62fr)_minmax(300px,1fr)]">
               <Link
                 to={`/fotograf/${weeklyPick.photo.slug}`}
                 aria-label={`Haftanın Fotoğrafı: ${weeklyPick.photo.title}`}
-                className="relative min-h-[17.5rem] overflow-hidden bg-surface-2"
+                className={cn(
+                  'relative overflow-hidden bg-surface-2',
+                  CARD_RATIO.wide
+                )}
               >
                 <RemoteImage
                   src={weeklyPick.photo.image?.url}
@@ -173,7 +197,7 @@ export function GalleryPage() {
                   className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,transparent,color-mix(in_srgb,var(--color-background)_24%,transparent))]"
                 />
               </Link>
-              <div className="flex flex-col justify-start p-4 sm:p-5">
+              <div className="flex min-w-0 flex-col justify-center p-4 sm:p-5">
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge tone="success" className="w-fit">
                     Haftanın Fotoğrafı
@@ -187,7 +211,7 @@ export function GalleryPage() {
                     </span>
                   )}
                 </div>
-                <h2 className="type-section mt-4 text-foreground">
+                <h2 className="type-section mt-3 text-foreground">
                   {weeklyPick.photo.title}
                 </h2>
                 <p className="mt-1 text-body-sm text-muted-foreground">
@@ -199,12 +223,8 @@ export function GalleryPage() {
                     @{weeklyPick.photo.user.username}
                   </Link>
                 </p>
-                <p className="mt-4 text-body-sm leading-relaxed text-muted-foreground">
-                  Galerinin öne çıkan karesi. Künyesi, setup bilgisi ve işleme
-                  notlarıyla birlikte inceleyebilirsiniz.
-                </p>
-                <WeeklyPhotoExifTable photo={weeklyPick.photo} />
-                <div className="mt-5 flex flex-wrap gap-2">
+                <WeeklyPhotoKunye photo={weeklyPick.photo} />
+                <div className="mt-4 flex flex-wrap gap-2">
                   <ButtonLink
                     to={`/fotograf/${weeklyPick.photo.slug}`}
                     size="sm"
@@ -446,31 +466,37 @@ export function GalleryPage() {
   );
 }
 
-function WeeklyPhotoExifTable({ photo }: { photo: AstroPhoto }) {
-  const rows = weeklyPhotoExifRows(photo);
+/**
+ * ŞERİTTEKİ KISA KÜNYE.
+ *
+ * Eskiden burada dokuz satırlık tam EXIF tablosu vardı ve şeridin
+ * yüksekliğini O belirliyordu — bir fotoğraf şeridinin boyu, tablonun
+ * satır sayısına bağlıydı. Görsel sabit orana alınınca tablo artık
+ * sığmıyor.
+ *
+ * DÖRT DEĞER, ÇÜNKÜ TAMAMI BİR TIK ÖTEDE. Fotoğraf detay sayfası zaten
+ * künyenin tamamını taşıyor ve "Fotoğrafı aç" hemen altında duruyor.
+ * Şeridin işi kaydı tüketmek değil, açmaya değer olduğunu göstermek.
+ *
+ * Sıra `weeklyPhotoExifRows`ün sırası: poz süresi, çekim yeri, tarih,
+ * toplam entegrasyon. Boş alan zaten listeye girmiyor, yani dört değerden
+ * azı varsa satır kısalıyor — "—" ile doldurulmuyor.
+ */
+function WeeklyPhotoKunye({ photo }: { photo: AstroPhoto }) {
+  const rows = weeklyPhotoExifRows(photo).slice(0, 4);
   if (rows.length === 0) return null;
 
   return (
-    <div className="mt-5 overflow-hidden rounded-card border border-border bg-background/35">
-      <div className="border-b border-border px-3 py-2">
-        <p className="label caps text-muted-foreground">EXIF / çekim künyesi</p>
-      </div>
-      <table className="w-full border-collapse text-left text-meta">
-        <tbody>
-          {rows.map(([label, value]) => (
-            <tr key={label} className="border-b border-border last:border-0">
-              <th
-                scope="row"
-                className="w-[38%] px-3 py-2 font-medium text-muted-foreground"
-              >
-                {label}
-              </th>
-              <td className="px-3 py-2 text-foreground">{value}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1.5 border-t border-border pt-3">
+      {rows.map(([label, value]) => (
+        <div key={label} className="min-w-0">
+          <dt className="text-meta text-faint">{label}</dt>
+          <dd className="truncate text-meta text-foreground" title={value}>
+            {value}
+          </dd>
+        </div>
+      ))}
+    </dl>
   );
 }
 

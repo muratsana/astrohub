@@ -90,10 +90,20 @@ describe('GalleryPage (§7.2)', () => {
       })
     ).toBeInTheDocument();
     expect(screen.getAllByText('32. Hafta').length).toBeGreaterThan(0);
-    expect(screen.getByText(/exif \/ çekim künyesi/i)).toBeInTheDocument();
+    /*
+      KÜNYE DÖRT DEĞERE İNDİ. Şerit eskiden dokuz satırlık tam EXIF
+      tablosunu taşıyordu ve şeridin YÜKSEKLİĞİNİ o tablo belirliyordu
+      (ölçüm: 1440×900'de 611px, galeri ızgarası fold'un 220px altında
+      başlıyordu). Görsel sabit 16:9 oranına alınınca tablo sığmıyor;
+      künyenin tamamı fotoğraf detay sayfasında ve "Fotoğrafı aç"
+      hemen yanında duruyor.
+    */
     expect(screen.getByText('Poz süresi')).toBeInTheDocument();
     expect(screen.getByText('Çekim yeri')).toBeInTheDocument();
     expect(screen.getByText('Saklıkent, Antalya')).toBeInTheDocument();
+    expect(
+      screen.queryByText(/exif \/ çekim künyesi/i)
+    ).not.toBeInTheDocument();
     const weeklyHero = screen
       .getByRole('link', { name: `Haftanın Fotoğrafı: ${photos[0].title}` })
       .closest('section');
@@ -101,12 +111,15 @@ describe('GalleryPage (§7.2)', () => {
       name: `Haftanın Fotoğrafı: ${photos[0].title}`,
     });
     expect(weeklyHero).not.toBeNull();
-    expect(within(weeklyHero!).getByText('Filtreler')).toBeInTheDocument();
+    /* Filtre, poz planı ve setup satırları künyeden çıktı — dördün
+       dışında kalan her şey detay sayfasında. */
+    expect(within(weeklyHero!).getByText('Çekim tarihi')).toBeInTheDocument();
     expect(
-      within(weeklyHero!).getByText('Antlia 3nm SHO seti')
+      within(weeklyHero!).getByText('Toplam entegrasyon')
     ).toBeInTheDocument();
-    expect(within(weeklyHero!).getByText('Poz planı')).toBeInTheDocument();
-    expect(within(weeklyHero!).getByText(/Ha: 36×5 dk/)).toBeInTheDocument();
+    expect(
+      within(weeklyHero!).queryByText('Poz planı')
+    ).not.toBeInTheDocument();
     expect(
       screen.getByRole('link', { name: `@${photos[0].user.username}` })
     ).toHaveAttribute('href', `/profil/${photos[0].user.username}`);
