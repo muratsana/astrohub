@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router';
-import { Badge, type BadgeTone } from '@/components/ui/Badge';
+import { Badge } from '@/components/ui/Badge';
 import { Button, ButtonLink } from '@/components/ui/Button';
 import { Container } from '@/components/ui/Container';
 import { Field } from '@/components/ui/Field';
@@ -13,7 +13,6 @@ import { ActiveSetupBar } from '@/features/setups/ActiveSetupBar';
 import { useSetupPrefill } from '@/features/setups/useSetupPrefill';
 import { computeOptics } from '@/domain/astronomy/optics';
 import { parseAngularSizeArcmin } from '@/domain/astronomy/mosaic';
-import { checkSetup, type CheckSeverity } from '@/domain/equipment/compatibility';
 import { fixedTargets, targets } from '@/features/targets/data';
 import { breadcrumbJsonLd } from '@/lib/seo';
 import { PresetSelect } from '@/features/calculators/PresetSelect';
@@ -45,14 +44,6 @@ export function SimulatorPage() {
   const [pixelSize, setPixelSize] = useState(3.76);
   const [sensorWidth, setSensorWidth] = useState(23.5);
   const [sensorHeight, setSensorHeight] = useState(15.7);
-  const [payloadCapacity, setPayloadCapacity] = useState(13);
-  const [opticWeight, setOpticWeight] = useState(2.8);
-  const [cameraWeight, setCameraWeight] = useState(0.7);
-  const [accessoriesKg, setAccessoriesKg] = useState(1.2);
-  const [requiredBackfocus, setRequiredBackfocus] = useState(55);
-  const [cameraBackfocus, setCameraBackfocus] = useState(17.5);
-  const [spacerMm, setSpacerMm] = useState(37.5);
-  const [filterThickness, setFilterThickness] = useState(2);
   const [seeingArcsec, setSeeingArcsec] = useState(3);
   const [guideFocalLength, setGuideFocalLength] = useState(120);
   const [guidePixelSize, setGuidePixelSize] = useState(3.75);
@@ -83,7 +74,6 @@ export function SimulatorPage() {
     pixelSize > 0 &&
     sensorWidth > 0 &&
     sensorHeight > 0 &&
-    payloadCapacity > 0 &&
     seeingArcsec > 0;
   const result = useMemo(
     () =>
@@ -96,70 +86,11 @@ export function SimulatorPage() {
         : null,
     [aperture, focalLength, pixelSize, reducer, sensorHeight, sensorWidth, valid]
   );
-  const compatibility = useMemo(
-    () =>
-      valid
-        ? checkSetup({
-            mount: {
-              name: selectedPresetLabel(mountSlug, presets.mount, 'Montür'),
-              payloadCapacityKg: payloadCapacity,
-            },
-            optic: {
-              name: selectedPresetLabel(opticSlug, presets.optic, 'Optik'),
-              focalLength,
-              aperture,
-              weightKg: opticWeight,
-              requiredBackfocusMm: requiredBackfocus,
-            },
-            camera: {
-              name: selectedPresetLabel(cameraSlug, presets.camera, 'Kamera'),
-              pixelSize,
-              sensorWidth,
-              sensorHeight,
-              weightKg: cameraWeight,
-              backfocusMm: cameraBackfocus,
-            },
-            spacerMm,
-            filterThicknessMm: filterThickness,
-            guide:
-              guideFocalLength > 0 && guidePixelSize > 0
-                ? {
-                    name: selectedPresetLabel(guideSlug, presets.guide, 'Guide'),
-                    focalLength: guideFocalLength,
-                    pixelSize: guidePixelSize,
-                  }
-                : undefined,
-            accessoriesKg,
-            reducerFactor: reducer,
-            seeingArcsec,
-          })
-        : null,
-    [
-      accessoriesKg,
-      aperture,
-      cameraBackfocus,
-      cameraSlug,
-      cameraWeight,
-      filterThickness,
-      focalLength,
-      guideFocalLength,
-      guidePixelSize,
-      guideSlug,
-      mountSlug,
-      opticSlug,
-      opticWeight,
-      payloadCapacity,
-      pixelSize,
-      presets,
-      reducer,
-      requiredBackfocus,
-      seeingArcsec,
-      sensorHeight,
-      sensorWidth,
-      spacerMm,
-      valid,
-    ]
-  );
+  /*
+    UYUMLULUK HESABI BURADAN KALKTI — Ekipman modülünde yaşıyor.
+    Kadraj sayfası artık yalnızca optik hesabı yapıyor: görüş alanı,
+    pixel scale, örnekleme ve hedefin kadraja sığıp sığmadığı.
+  */
 
 
 
@@ -229,9 +160,6 @@ export function SimulatorPage() {
         <ActiveSetupBar className="mb-4" />
 
         <div className="mb-4 flex flex-wrap gap-2">
-          <Badge tone={severityTone(compatibility?.verdict)}>
-            Setup {severityLabel(compatibility?.verdict)}
-          </Badge>
           {result && <Badge tone="cold">{result.pixelScale.toFixed(2)}″/px</Badge>}
         </div>
 
@@ -245,7 +173,6 @@ export function SimulatorPage() {
                   value={mountSlug}
                   onSelect={(p) => {
                     setMountSlug(p?.slug ?? '');
-                    if (p) setPayloadCapacity(p.payloadCapacityKg);
                   }}
                 />
                 <PresetSelect
@@ -257,11 +184,6 @@ export function SimulatorPage() {
                     if (!p) return;
                     setFocalLength(p.focalLength);
                     setAperture(p.aperture);
-                    const mechanical = presets.opticMechanical.find((m) => m.slug === p.slug);
-                    if (mechanical) {
-                      setOpticWeight(mechanical.weightKg);
-                      setRequiredBackfocus(mechanical.requiredBackfocusMm);
-                    }
                   }}
                 />
                 <PresetSelect
@@ -274,11 +196,6 @@ export function SimulatorPage() {
                     setPixelSize(p.pixelSize);
                     setSensorWidth(p.sensorWidth);
                     setSensorHeight(p.sensorHeight);
-                    const mechanical = presets.cameraMechanical.find((m) => m.slug === p.slug);
-                    if (mechanical) {
-                      setCameraWeight(mechanical.weightKg);
-                      setCameraBackfocus(mechanical.backfocusMm);
-                    }
                   }}
                 />
                 <Field label="Katalog hedefi" htmlFor="sim-target">
@@ -335,18 +252,21 @@ export function SimulatorPage() {
               </div>
             </Panel>
 
-            <Panel title="Mekanik uyumluluk">
-              <div className="grid grid-cols-2 gap-3">
-                <NumberField id="payload" label="Montür" value={payloadCapacity} unit="kg" step={0.1} onChange={setPayloadCapacity} />
-                <NumberField id="optic-weight" label="Optik" value={opticWeight} unit="kg" step={0.1} onChange={setOpticWeight} />
-                <NumberField id="camera-weight" label="Kamera" value={cameraWeight} unit="kg" step={0.1} onChange={setCameraWeight} />
-                <NumberField id="accessories" label="Aksesuar" value={accessoriesKg} unit="kg" step={0.1} onChange={setAccessoriesKg} />
-                <NumberField id="required-backfocus" label="Gerekli BF" value={requiredBackfocus} unit="mm" step={0.1} onChange={setRequiredBackfocus} />
-                <NumberField id="camera-backfocus" label="Kamera BF" value={cameraBackfocus} unit="mm" step={0.1} onChange={setCameraBackfocus} />
-                <NumberField id="spacer" label="Ara halka" value={spacerMm} unit="mm" step={0.1} onChange={setSpacerMm} />
-                <NumberField id="filter" label="Filtre" value={filterThickness} unit="mm" step={0.1} onChange={setFilterThickness} />
-              </div>
-            </Panel>
+            {/*
+              MEKANİK UYUMLULUK PANELİ BURADAN KALKTI.
+
+              Montür kapasitesi, parça ağırlıkları, backfocus zinciri ve
+              ara halka — hiçbiri kadrajla ilgili değil; hepsi "elimdekiler
+              birlikte çalışır mı" sorusunun parçası ve o soru Ekipman
+              modülünde cevaplanıyor. Burada durmaları, aynı hesabın iki
+              yerde yaşaması demekti: ikisi ayrıştığında hangisinin doğru
+              olduğu bilinemezdi.
+
+              Girdiler kaldırılırken PANELİN KENDİSİ de gitti — daha
+              kötüsü olurdu: bir süre girdiler durup sonuçları
+              gösterilmiyordu, yani kullanıcı backfocus'u bozup hiçbir
+              uyarı görmüyordu (CI bunu yakaladı).
+            */}
           </aside>
 
           <main className="space-y-4">
@@ -382,7 +302,7 @@ export function SimulatorPage() {
                   </div>
                   <div className="mt-3 space-y-2">
                     <InlineCheck label="Hedef / FoV" ok={targetFits} value={targetFits ? 'uygun' : 'dar'} />
-                    <InlineCheck label="Sampling" ok={compatibility?.checks.find((c) => c.id === 'sampling')?.severity === 'ok'} value={result?.sampling.label ?? '—'} />
+                    <InlineCheck label="Sampling" ok={result?.sampling.category === 'optimal'} value={result?.sampling.label ?? '—'} />
                   </div>
                 </div>
                 <div className="absolute bottom-4 left-4 right-4 flex flex-wrap items-end justify-between gap-3 border border-border bg-background/85 p-3 backdrop-blur">
@@ -561,27 +481,8 @@ function ProgressBar({ value, className }: { value: number; className?: string }
   );
 }
 
-function severityTone(severity?: CheckSeverity): BadgeTone {
-  if (severity === 'error') return 'danger';
-  if (severity === 'warning') return 'warning';
-  if (severity === 'ok') return 'success';
-  return 'muted';
-}
 
-function severityLabel(severity?: CheckSeverity): string {
-  if (severity === 'error') return 'kritik';
-  if (severity === 'warning') return 'uyarı';
-  if (severity === 'ok') return 'uygun';
-  return 'bekliyor';
-}
 
-function selectedPresetLabel(
-  slug: string,
-  options: { slug: string; label: string }[],
-  fallback: string
-): string {
-  return options.find((option) => option.slug === slug)?.label ?? fallback;
-}
 
 
 

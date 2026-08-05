@@ -237,16 +237,34 @@ await scenario(
   }
 );
 
-await scenario('setup uyumluluk yanlış backfocus’ta hata verir', async () => {
-  await goto('/araclar/kadraj');
+/*
+ * UYUMLULUK ARTIK EKİPMAN MODÜLÜNDE.
+ *
+ * Bu senaryo `/araclar/kadraj` (eski `/simulator`) üzerinde koşuyordu.
+ * Modül ayrımından sonra kadraj sayfası yalnızca optik hesabı yapıyor;
+ * backfocus zinciri, ağırlık ve uyumluluk verdict'i Ekipman modülünde.
+ * Senaryo hesabın gerçekten yaşadığı yere taşındı — kadrajda koşmaya
+ * devam etseydi, kaldırılmış bir paneli arıyor olurdu.
+ */
+await scenario('ekipman modülü backfocus zincirini raporlar', async () => {
+  await goto('/ekipman');
 
-  await page.fill('#spacer', '30');
-  await page.waitForTimeout(300);
+  /* Ara halka alanı builder'ın "Kullanıcı değerleri" panelinde; zincir
+     bileşen seçilmeden de girdiyi kabul ediyor ve eksik veriyi söylüyor. */
+  await page.fill('#sb-spacer', '30');
+  await page.waitForTimeout(400);
   const text = await page.evaluate(() => document.body.innerText);
 
   assert(
-    includesTr(text, 'kurulamaz') || includesTr(text, 'ara halka ekleyin'),
-    'backfocus hatası raporlanmadı'
+    includesTr(text, 'backfocus'),
+    'backfocus zinciri hiç raporlanmadı'
+  );
+  /* Bileşen seçilmemişken motor TAHMİN ÜRETMEMELİ: "veri yetersiz"
+     demeli. Sessizce bir sayı göstermek, ölçülmemiş bir zinciri
+     ölçülmüş gibi sunmak olurdu. */
+  assert(
+    includesTr(text, 'veri yok') || includesTr(text, 'veri yetersiz'),
+    'eksik bileşende veri yetersiz denmedi'
   );
 });
 
