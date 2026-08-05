@@ -45,7 +45,7 @@ const GROUPS: { title: string; hint: string; paths: string[] }[] = [
   {
     title: 'Gece',
     hint: 'Ne zaman, hangi hedef, ne kadar karanlık',
-    paths: ['/bu-gece', '/planlayici', '/araclar/takvim'],
+    paths: ['/bu-gece', '/bu-gece/plan', '/bu-gece/takvim'],
   },
   {
     title: 'Kadraj',
@@ -110,10 +110,10 @@ const toolIcons: Record<string, typeof GridIcon> = {
   '/araclar/kadraj': FrameIcon,
   '/araclar/isik-kirliligi': MapIcon,
   '/bu-gece': MoonIcon,
-  '/planlayici': RouteIcon,
+  '/bu-gece/plan': RouteIcon,
   '/araclar/poz-plani': CalculatorIcon,
   '/araclar/mosaic': MosaicIcon,
-  '/araclar/takvim': CalendarIcon,
+  '/bu-gece/takvim': CalendarIcon,
 };
 
 export function ToolsIndexPage() {

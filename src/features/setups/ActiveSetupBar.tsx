@@ -65,7 +65,7 @@ export function ActiveSetupBar({ className }: { className?: string }) {
         <Select
           value={setup?.id ?? ''}
           onChange={(event) => setActiveId(event.target.value || null)}
-          style={{ width: 'auto' }}
+          width="auto"
           className="h-8 min-w-[12rem] text-meta"
           aria-label="Araçlarda kullanılacak setup"
         >

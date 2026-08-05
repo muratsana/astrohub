@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { NightViews } from './NightViews';
 import { Panel } from '@/components/ui/Panel';
 import { Readout } from '@/components/ui/Readout';
 import { Button, ButtonLink } from '@/components/ui/Button';
@@ -92,7 +93,7 @@ export function PlannerPage() {
 
     `window` PRERENDER'DA DA VAR: `scripts/prerender.mjs` jsdom kuruyor ve
     `globalThis.window`a atıyor. Statik çıktıda arama parçası boş olduğu
-    için katalog varsayılanı yazılıyor — ölçüldü, `/planlayici` ham
+    için katalog varsayılanı yazılıyor — ölçüldü, `/bu-gece/plan` ham
     HTML'de tam içerikle çıkıyor. Bu bağımlılık yazılı olsun ki prerender
     ortamı değişirse burasının da gözden geçirilmesi gerektiği bilinsin.
   */
@@ -241,13 +242,18 @@ export function PlannerPage() {
         description="Hedeflerinizi gecenin karanlık penceresine göre sıraya dizin: kullanılabilir pencere, zirve saati ve çakışmasız çekim programı."
         jsonLd={breadcrumbJsonLd([
           { name: 'Ana Sayfa', path: '/' },
-          { name: 'Planlayıcı', path: '/planlayici' },
+          { name: 'Bu Gece', path: '/bu-gece' },
+          { name: 'Gece Planı', path: '/bu-gece/plan' },
         ])}
       />
 
       <Container className="py-8 sm:py-10">
         <PageHeader
-          breadcrumb={[{ label: 'Ana Sayfa', to: '/' }, { label: 'Planlayıcı' }]}
+          breadcrumb={[
+            { label: 'Ana Sayfa', to: '/' },
+            { label: 'Bu Gece', to: '/bu-gece' },
+            { label: 'Gece Planı' },
+          ]}
           title="Gece Planı"
           description="Hedefleri seçin, her birine ayırmak istediğiniz süreyi girin. Plan, batmak üzere olan hedefi öne alır — kaybedilecek olanı kurtarmak ilk kuraldır."
           meta={location.label}
@@ -264,19 +270,18 @@ export function PlannerPage() {
               >
                 Takvime ekle
               </Button>
-              <ButtonLink to="/bu-gece" size="sm" variant="secondary">
-                Bu Gece
-              </ButtonLink>
             </>
           }
         />
+
+        <NightViews />
 
         {!night.window ? (
           <EmptyState
             message="Bu gece astronomik karanlık oluşmuyor"
             hint="Bu enlemde yılın bu döneminde güneş −18°'nin altına inmiyor; plan hesaplanamıyor."
             action={
-              <ButtonLink to="/araclar/takvim" size="sm" variant="secondary">
+              <ButtonLink to="/bu-gece/takvim" size="sm" variant="secondary">
                 Karanlık Takvimi
               </ButtonLink>
             }
@@ -395,20 +400,9 @@ export function PlannerPage() {
                                 )
                               )
                             }
-                            /*
-                              GENİŞLİK `style` İLE, SINIFLA DEĞİL.
-
-                              `Input` taban sınıflarında `w-full` taşıyor ve
-                              `cn()` bir tailwind-merge DEĞİL — iki genişlik
-                              sınıfı da nitelikte kalıyor, kazananı derlenmiş
-                              CSS'teki sıra belirliyor. Burada `w-full`
-                              kazanıyordu: `shrink-0` ile birlikte alan
-                              80px yerine 497px oluyor, yanındaki hedef adı
-                              sıfır genişliğe çöküyor ve uyarı metni
-                              girdinin üstüne biniyordu (ölçüldü:
-                              `divWidth: 0`). Satır içi stil çakışmıyor.
-                            */
-                            style={{ width: '5rem' }}
+                            /* Genişlik `width` prop'uyla — `className="w-20"`
+                               sessizce yok sayılır, gerekçe `ui/Input.tsx`. */
+                            width="5rem"
                             className="h-8 shrink-0 text-meta"
                           />
                           <Button

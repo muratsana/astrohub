@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Container } from '@/components/ui/Container';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { NightViews } from './NightViews';
 import { Panel } from '@/components/ui/Panel';
 import { Button } from '@/components/ui/Button';
 import { Readout } from '@/components/ui/Readout';
@@ -93,8 +94,8 @@ export function DarkCalendarPage() {
         description="Aylık karanlık pencere takvimi: her gece için astronomik karanlık süresi, ay fazı ve aysız karanlık saatler. Çekim gecenizi veriyle seçin."
         jsonLd={breadcrumbJsonLd([
           { name: 'Ana Sayfa', path: '/' },
-          { name: 'Araçlar', path: '/araclar' },
-          { name: 'Karanlık Takvimi', path: '/araclar/takvim' },
+          { name: 'Bu Gece', path: '/bu-gece' },
+          { name: 'Karanlık Takvimi', path: '/bu-gece/takvim' },
         ])}
       />
 
@@ -102,13 +103,15 @@ export function DarkCalendarPage() {
         <PageHeader
           breadcrumb={[
             { label: 'Ana Sayfa', to: '/' },
-            { label: 'Araçlar', to: '/araclar' },
+            { label: 'Bu Gece', to: '/bu-gece' },
             { label: 'Karanlık Takvimi' },
           ]}
           title="Ay ve Karanlık Takvimi"
           description="Her gece için astronomik karanlık penceresi ve ayın o pencereyi ne kadar paylaştığı. Renk yoğunluğu aysız karanlık süreyi gösterir — koyu hücre iyi gecedir."
           meta={location.label}
         />
+
+        <NightViews />
 
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">

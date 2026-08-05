@@ -350,7 +350,7 @@ export function CityPage() {
                   <ButtonLink to="/bu-gece" size="sm" variant="secondary">
                     Bu Gece
                   </ButtonLink>
-                  <ButtonLink to="/araclar/takvim" size="sm" variant="ghost">
+                  <ButtonLink to="/bu-gece/takvim" size="sm" variant="ghost">
                     Karanlık Takvimi
                   </ButtonLink>
                 </div>

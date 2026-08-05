@@ -15,7 +15,7 @@ import type { ScheduledSlot } from '@/domain/astronomy/sessionPlan';
  *
  * Adres çubuğu bu veriyi zaten taşıyabiliyor:
  *
- *     /planlayici?h=m31-andromeda:90,m42-orion:120&y=30
+ *     /bu-gece/plan?h=m31-andromeda:90,m42-orion:120&y=30
  *
  * Sonuç: bağlantı kopyalanabiliyor, forumda paylaşılabiliyor, yer imine
  * eklenebiliyor ve SUNUCUDA HİÇBİR ŞEY SAKLANMIYOR — silinecek bir şey

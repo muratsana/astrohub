@@ -141,6 +141,14 @@
       "destination": "/app.html"
     },
     {
+      "source": "/bu-gece/plan",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/bu-gece/takvim",
+      "destination": "/app.html"
+    },
+    {
       "source": "/burdur-astronomi-etkinlikleri",
       "destination": "/app.html"
     },

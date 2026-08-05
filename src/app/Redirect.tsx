@@ -1,4 +1,4 @@
-import { Navigate, useParams } from 'react-router';
+import { Navigate, useLocation, useParams } from 'react-router';
 
 /**
  * Kalıcı yönlendirme yardımcıları.
@@ -15,6 +15,19 @@ import { Navigate, useParams } from 'react-router';
 /** Sabit bir adrese yönlendirir. */
 export function RedirectTo({ to }: { to: string }) {
   return <Navigate to={to} replace />;
+}
+
+/**
+ * Sorgu dizesini KORUYARAK yönlendirir.
+ *
+ * `RedirectTo` yalnızca yolu taşır; paylaşılan bir plan bağlantısında
+ * (`/planlayici?h=m31-andromeda:90&y=30`) bu, planın kendisini silmek
+ * demekti — kullanıcı boş bir planlayıcıya düşerdi. Adres değişen ama
+ * durumu sorguda taşıyan rotalarda bu sürüm kullanılmalı.
+ */
+export function RedirectKeepQuery({ to }: { to: string }) {
+  const { search, hash } = useLocation();
+  return <Navigate to={`${to}${search}${hash}`} replace />;
 }
 
 /**

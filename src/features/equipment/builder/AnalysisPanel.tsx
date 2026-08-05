@@ -319,6 +319,28 @@ export function AnalysisPanel({
 }) {
   const m = report.metrics;
 
+  /*
+    HİÇBİR ÖLÇÜ HESAPLANAMIYORSA IZGARA ÇİZİLMİYOR.
+
+    Boş setupta dokuz kutunun dokuzu da "veri yok" yazıyordu. Her biri tek
+    tek doğruydu — sistem eksik girdiden tahmin üretmiyor, bu bilinçli bir
+    karar — ama toplamı "sayfa bozuk" gibi okunuyordu (denetim §5.2).
+    Tahmin üretmek yerine ızgarayı geciktiriyoruz: ilk bileşen seçilir
+    seçilmez en az bir ölçü doluyor ve ızgara olduğu gibi geri geliyor.
+  */
+  const olculer = [
+    m.totalWeightKg,
+    m.usablePayloadKg,
+    m.effectiveFocalLengthMm,
+    m.effectiveFRatio,
+    m.pixelScaleArcsec,
+    m.sensorDiagonalMm,
+    m.achievedBackfocusMm,
+    m.guideRatio,
+    m.fovWidthArcmin,
+  ];
+  const hicOlcuYok = olculer.every((olcu) => olcu.value === null);
+
   return (
     <div className="space-y-3">
       <Panel
@@ -334,17 +356,25 @@ export function AnalysisPanel({
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
-          <Metric label="Toplam ağırlık" computation={m.totalWeightKg} digits={1} />
-          <Metric label="Güvenli kapasite" computation={m.usablePayloadKg} digits={1} />
-          <Metric label="Etkin odak" computation={m.effectiveFocalLengthMm} digits={0} />
-          <Metric label="Etkin f/" computation={m.effectiveFRatio} digits={1} />
-          <Metric label="Piksel ölçeği" computation={m.pixelScaleArcsec} />
-          <Metric label="Sensör diyagonali" computation={m.sensorDiagonalMm} digits={1} />
-          <Metric label="Backfocus" computation={m.achievedBackfocusMm} digits={1} />
-          <Metric label="Guide oranı" computation={m.guideRatio} digits={1} />
-          <Metric label="Kadraj genişliği" computation={m.fovWidthArcmin} digits={0} />
-        </div>
+        {hicOlcuYok ? (
+          <p className="text-body-sm leading-snug text-muted-foreground">
+            Henüz hesaplanabilecek bir ölçü yok. Soldan bir teleskop ve
+            kamera seçin; ağırlık, etkin odak, piksel ölçeği ve kadraj
+            burada belirir.
+          </p>
+        ) : (
+          <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
+            <Metric label="Toplam ağırlık" computation={m.totalWeightKg} digits={1} />
+            <Metric label="Güvenli kapasite" computation={m.usablePayloadKg} digits={1} />
+            <Metric label="Etkin odak" computation={m.effectiveFocalLengthMm} digits={0} />
+            <Metric label="Etkin f/" computation={m.effectiveFRatio} digits={1} />
+            <Metric label="Piksel ölçeği" computation={m.pixelScaleArcsec} />
+            <Metric label="Sensör diyagonali" computation={m.sensorDiagonalMm} digits={1} />
+            <Metric label="Backfocus" computation={m.achievedBackfocusMm} digits={1} />
+            <Metric label="Guide oranı" computation={m.guideRatio} digits={1} />
+            <Metric label="Kadraj genişliği" computation={m.fovWidthArcmin} digits={0} />
+          </div>
+        )}
       </Panel>
 
       <Panel title="Kadraj önizlemesi">

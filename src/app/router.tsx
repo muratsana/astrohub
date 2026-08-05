@@ -6,7 +6,7 @@ import { NotFoundPage } from '@/components/NotFoundPage';
 import { RouteError } from '@/components/RouteError';
 import { RouteFallback } from '@/components/RouteFallback';
 import { PlaceholderPage } from '@/components/PlaceholderPage';
-import { RedirectTo, RedirectParam } from './Redirect';
+import { RedirectTo, RedirectParam, RedirectKeepQuery } from './Redirect';
 import { lazyWithRetry } from '@/lib/lazyWithRetry';
 import { cityRoutePaths } from '@/features/city/routes';
 import { FlagRoute } from '@/features/site/FlagRoute';
@@ -450,15 +450,16 @@ export const appRoutes = [
         path: 'araclar/setup-uyumluluk',
         element: <RedirectTo to="/ekipman" />,
       },
-      {
-        path: 'araclar/takvim',
-        element: route(
-          named(
-            () => import('@/features/sky/DarkCalendarPage'),
-            'DarkCalendarPage'
-          )
-        ),
-      },
+      /*
+        GECE MODÜLÜ — üç görünüm tek önek altında (denetim §3.6).
+
+        Sayfalar tek bir bileşende BİRLEŞTİRİLMEDİ: üçü toplam 1370 satır
+        ve her biri kendi ağır hesabını (yükseklik eğrisi, ay fazı ızgarası,
+        plan sıralaması) taşıyor. Tek rotaya toplamak, "bu gece ne var"
+        sorusuna gelen kullanıcıya üçünün paketini birden indirtirdi.
+        Ayrı rota + ortak görünüm şeridi hem tembel yüklemeyi hem de tek
+        modül hissini koruyor.
+      */
       {
         path: 'bu-gece',
         element: route(
@@ -466,10 +467,29 @@ export const appRoutes = [
         ),
       },
       {
-        path: 'planlayici',
+        path: 'bu-gece/plan',
         element: route(
           named(() => import('@/features/sky/PlannerPage'), 'PlannerPage')
         ),
+      },
+      {
+        path: 'bu-gece/takvim',
+        element: route(
+          named(
+            () => import('@/features/sky/DarkCalendarPage'),
+            'DarkCalendarPage'
+          )
+        ),
+      },
+      /* Eski adresler: paylaşılan plan bağlantısı sorguda yaşıyor,
+         bu yüzden sorguyu koruyan yönlendirme. */
+      {
+        path: 'planlayici',
+        element: <RedirectKeepQuery to="/bu-gece/plan" />,
+      },
+      {
+        path: 'araclar/takvim',
+        element: <RedirectKeepQuery to="/bu-gece/takvim" />,
       },
 
       /* ═════════════ İLANLAR ═════════════ */

@@ -271,7 +271,7 @@ await scenario('ekipman modülü backfocus zincirini raporlar', async () => {
 await scenario(
   'karanlık takvimi ay değiştirince yeniden hesaplar',
   async () => {
-    await goto('/araclar/takvim');
+    await goto('/bu-gece/takvim');
 
     /*
      * Gövde metninin tamamını karşılaştırmak kırılgan: sayfanın üst kısmı

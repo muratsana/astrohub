@@ -22,10 +22,39 @@ import { cn } from '@/lib/cn';
  * paletin kendisi keşif değil hızlandırma aracı — düğmesi olmadan da
  * bilenler kullanır.
  *
- * Kırılım `xl`: dokuz giriş 1024px'te sığmıyor. Altındaki her genişlikte
- * modül haritasını açan bir düğme gösterilir — üst çubuk hiçbir zaman
- * gezinme girişi olmadan kalmaz.
+ * Şerit 1024'ten itibaren görünür ve kademeli dolar: dokuz giriş yalnızca
+ * 1400 ve üstünde birden sığar, altındaki her genişlikte sığdığı kadarı
+ * çizilir. Görünmeyenler modül haritasını açan düğmede kalır; o düğme
+ * 1400 altında her zaman çizili — üst çubuk hiçbir zaman gezinme girişi
+ * olmadan kalmaz.
  */
+/**
+ * Kaçıncı girişin hangi genişlikte görüneceği.
+ *
+ * Sınıflar SABİT METİN olmak zorunda: Tailwind kaynak dosyayı tarayarak
+ * üretim yapıyor, `min-[${x}px]:flex` gibi kurulan bir dize hiç
+ * derlenmez. Bu yüzden eşikler bir dizi hâlinde yazılı duruyor.
+ *
+ * Dizinin sonundaki girişler (dokuzdan fazlası) en dar kademeye düşer;
+ * `nav_links` tablosuna yeni bir modül eklenirse üst çubuk taşmaz,
+ * yalnızca o giriş 1400 altında "Modüller" çekmecesinde kalır.
+ */
+const NAV_KADEME = [
+  'hidden min-[1120px]:flex',
+  'hidden min-[1120px]:flex',
+  'hidden min-[1120px]:flex',
+  'hidden min-[1300px]:flex',
+  'hidden min-[1300px]:flex',
+  'hidden min-[1400px]:flex',
+  'hidden min-[1400px]:flex',
+  'hidden min-[1400px]:flex',
+  'hidden min-[1400px]:flex',
+];
+
+function navGorunurluk(index: number): string {
+  return NAV_KADEME[index] ?? 'hidden min-[1400px]:flex';
+}
+
 export function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
   /* Üst menü artık `nav_links`ten geliyor (§13.2); tablo boşsa ya da
      okunamazsa koddaki `primaryNav` yedeği çiziliyor. */
@@ -75,7 +104,7 @@ export function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
           <nav
             aria-label="Ana navigasyon"
             /*
-              KIRILMA NOKTASI xl (1280) → 1400 (Faz 3.1).
+              KIRILMA NOKTASI: xl (1280) → 1400 → lg (1024, kademeli).
 
               Konum seçici bu satıra katılınca 1280px'te yer kalmadı ve
               ölçüm bunu açıkça gösterdi: künye 155 + nav 640 + seçici ~100
@@ -84,33 +113,62 @@ export function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
               düğmesi nav'ın üstüne taşıyordu — ekran görüntüsünde
               yakalandı.
 
-              1400 ölçülen sayıdan geliyor: 96 (kapsayıcı dolgusu) + 155 +
-              20 + 640 + 12 + 100 + 335 = 1358, üstüne pay. Altındaki
-              genişliklerde düz menü zaten tasarlanmış yedeğine —
-              "Modüller" çekmecesine — düşüyor.
+              O ölçüm hâlâ geçerli; yanlış olan ondan çıkarılan sonuçtu.
+              "Dokuzu birden sığmıyorsa hiçbiri görünmesin" denince en
+              yaygın dizüstü çözünürlüğünde (1366) site dokuz modülünü de
+              bir çekmecenin arkasına saklıyordu (denetim §4.3). Şerit artık
+              1024'ten itibaren duruyor ve KADEMELİ doluyor: her genişlikte
+              sığdığı kadar giriş görünür, kalanı "Modüller" düğmesinde
+              kalır. Düğme 1400 altında zaten her zaman çizili, yani gizlenen
+              hiçbir giriş erişilemez hâle gelmiyor.
+
+              Eşikler tahminle değil ÖLÇÜMLE kondu. İlk deneme "1024'te üç
+              giriş" idi ve `check:preview` bunu 45px taşmayla reddetti —
+              yani şerit dışındaki her şey (künye + aksiyonlar + "Modüller"
+              düğmesi) 733px yiyor, ilk üç giriş ~272px daha istiyor, toplam
+              1005px içerik gerekiyor. `lg` dolgusuyla (64px) bu 1069px
+              görüntü demek; güvenlik payıyla 1120.
+
+              Sonrakiler aynı hesapla: 5 giriş ~1161px içerik → 1300.
+              7 giriş 1400 ALTINDA sığmıyor, çünkü "Modüller" düğmesi hâlâ
+              yerde duruyor; o düğme 1400'de kalkınca 638px'e düşen taban
+              dokuz girişi birden kaldırıyor. Bu yüzden üç kademe var,
+              dört değil.
             */
-            className="ml-2 hidden items-stretch self-stretch min-[1400px]:flex"
+            className="ml-2 hidden items-stretch self-stretch lg:flex"
           >
-            {menu.map((item) => (
-              <NavLink
+            {menu.map((item, index) => (
+              /*
+                GÖRÜNÜRLÜK SARMALAYICI `span` ÜZERİNDE, BAĞLANTININ KENDİSİNDE
+                DEĞİL. Bağlantı taban sınıfında `flex` taşıyor; aynı elemana
+                `hidden` eklemek iki `display` kuralını çakıştırır ve `cn()`
+                bir tailwind-merge olmadığı için kazananı derlenmiş CSS
+                sırası belirler (aynı gerekçe aşağıda hesap düğmesinde de
+                var). Sarmalayıcı bu belirsizliği tamamen ortadan kaldırıyor.
+              */
+              <span
                 key={item.path}
-                to={item.path}
-                target={item.new_tab ? '_blank' : undefined}
-                rel={item.new_tab ? 'noopener noreferrer' : undefined}
-                className={({ isActive }) =>
-                  cn(
-                    'relative flex items-center px-3 text-body-sm font-medium transition-colors',
-                    /* Aktif alt çizgi `inset` gölge ile veriliyor: gerçek
-                       bir `border-bottom` hücreyi 2px yükseltip diğer
-                       girişlerin dikey hizasını bozuyor. */
-                    isActive
-                      ? 'text-primary shadow-[inset_0_-2px_0_var(--color-primary)]'
-                      : 'text-muted-foreground hover:text-foreground'
-                  )
-                }
+                className={cn('items-stretch', navGorunurluk(index))}
               >
-                {item.label}
-              </NavLink>
+                <NavLink
+                  to={item.path}
+                  target={item.new_tab ? '_blank' : undefined}
+                  rel={item.new_tab ? 'noopener noreferrer' : undefined}
+                  className={({ isActive }) =>
+                    cn(
+                      'relative flex items-center px-3 text-body-sm font-medium transition-colors',
+                      /* Aktif alt çizgi `inset` gölge ile veriliyor: gerçek
+                         bir `border-bottom` hücreyi 2px yükseltip diğer
+                         girişlerin dikey hizasını bozuyor. */
+                      isActive
+                        ? 'text-primary shadow-[inset_0_-2px_0_var(--color-primary)]'
+                        : 'text-muted-foreground hover:text-foreground'
+                    )
+                  }
+                >
+                  {item.label}
+                </NavLink>
+              </span>
             ))}
           </nav>
 
@@ -121,8 +179,8 @@ export function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
           */}
           <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
             {/*
-              `xl` altında düz menü gizlendiği için burası navigasyonun ÜST
-              çubuktaki tek girişi. Önceden yalnızca lg–xl aralığında
+              1400 altında şeridin son girişleri gizlendiği için burası
+              onlara giden tek yol. Önceden yalnızca lg–xl aralığında
               gösteriliyordu; gerekçe mobil alt çubuğun aynı çekmeceyi
               açmasıydı. Ama alt çubuk `fixed` ve gömülü/dar bir görünüm
               alanında (yan panel, küçültülmüş pencere) görüş dışında

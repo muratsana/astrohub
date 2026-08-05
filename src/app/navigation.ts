@@ -273,7 +273,7 @@ export const siteMap: NavGroup[] = [
       },
       {
         label: 'Gözlem ve Çekim Planlayıcı',
-        to: '/planlayici',
+        to: '/bu-gece/plan',
         description: 'Gece planı ve hedef sırası',
         keywords: ['plan', 'gece planı'],
       },
@@ -291,7 +291,7 @@ export const siteMap: NavGroup[] = [
       },
       {
         label: 'Ay ve Karanlık Takvimi',
-        to: '/araclar/takvim',
+        to: '/bu-gece/takvim',
         description: 'Aylık karanlık pencere takvimi',
         keywords: ['takvim', 'ay fazı'],
       },

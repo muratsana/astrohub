@@ -264,7 +264,7 @@ export function PanelPage() {
      * ayrı bir iş (gece oturumu günlüğü, Faz 7 MUST-03) — o gelene
      * kadar bağlantı ne olduğunu söylüyor.
      */
-    { label: 'Planlayıcı', to: '/planlayici' },
+    { label: 'Planlayıcı', to: '/bu-gece/plan' },
     { label: 'Etkinliklerim', to: '/etkinlikler' },
     { label: 'Kaydedilenler', to: '/panel/kaydedilenler' },
     { label: 'Kayıtlı Noktalar', to: '/saha' },
