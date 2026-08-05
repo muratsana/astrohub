@@ -35,6 +35,7 @@ export function ModuleToolbar<M extends string = ViewMode>({
   extra,
   columns,
   primaryFilters = 3,
+  showResultCount = true,
   className,
   filterClassName,
   label = 'Liste araçları',
@@ -47,6 +48,7 @@ export function ModuleToolbar<M extends string = ViewMode>({
   extra?: ReactNode;
   columns?: 2 | 3 | 4;
   primaryFilters?: number;
+  showResultCount?: boolean;
   className?: string;
   filterClassName?: string;
   label?: string;
@@ -84,9 +86,11 @@ export function ModuleToolbar<M extends string = ViewMode>({
             className="!mb-0 min-w-0 w-full md:ml-auto md:w-auto md:shrink-0"
           />
         )}
-        <div className="shrink-0 rounded-card border border-border bg-background/55 px-2.5 py-1.5">
-          <ResultCount {...result} />
-        </div>
+        {showResultCount && (
+          <div className="shrink-0 rounded-card border border-border bg-background/55 px-2.5 py-1.5">
+            <ResultCount {...result} />
+          </div>
+        )}
       </div>
 
       <div className="hidden md:block md:[&>*]:mb-0 md:[&>*]:mt-2">

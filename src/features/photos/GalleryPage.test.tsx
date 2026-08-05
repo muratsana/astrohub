@@ -106,24 +106,17 @@ describe('GalleryPage (§7.2)', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('filtre yokken yalnızca toplamı bildirir', () => {
-    // "48 / 48" hiçbir bilgi taşımıyordu; filtre uygulanmadan kesir
-    // gösterilmez (bkz. ToolBar → ResultCount).
+  it('galeri liste araçlarında dışa aktarım, kayıtlı görünüm ve sayaç göstermez', () => {
     renderGallery();
-    expect(screen.getByRole('status')).toHaveTextContent(
-      `${photos.length} fotoğraf`
-    );
-    expect(screen.getByRole('status').textContent).not.toContain('/');
-  });
-
-  it('filtre uygulanınca sayacı kesirli gösterir', async () => {
-    renderGallery();
-    await ara('rozet');
-    await waitFor(() =>
-      expect(screen.getByRole('status')).toHaveTextContent(
-        `1 / ${photos.length} fotoğraf`
-      )
-    );
+    expect(
+      screen.queryByRole('button', { name: /csv indir/i })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /görünümler/i })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(`${photos.length} fotoğraf`)
+    ).not.toBeInTheDocument();
   });
 
   it('arama kutusu sonuçları daraltır', async () => {

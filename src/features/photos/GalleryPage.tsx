@@ -23,8 +23,6 @@ import { cities as turkeyCities } from '@/features/location/cities';
 import { useExplorer } from '@/features/explorer/useExplorer';
 import { gallerySpec } from './gallerySpec';
 import { personalFacet, withFacets } from '@/features/explorer/personalFacets';
-import { SavedViewsMenu } from '@/features/explorer/SavedViewsMenu';
-import { CsvExportButton } from '@/features/explorer/CsvExportButton';
 import { useSavedPhotoIds } from '@/services/content/collections';
 import { useFollowingIds } from '@/services/content/social';
 import { type AstroPhoto, type ProcessingPalette } from './types';
@@ -54,29 +52,6 @@ const paletteOptions: (ProcessingPalette | 'hepsi')[] = [
  * Gece Manzarası) — yedi ince türü gözle taramak yerine dört renkli rozet.
  * Izgara ve liste görünümü arasında geçiş yapılabilir; seçim saklanır.
  */
-/**
- * CSV sütunları (Faz 4, yalnız admin).
- *
- * KART ÜZERİNDE GÖRÜNENLER değil, KAYDIN KÜNYESİ dışa aktarılıyor:
- * dosyayı açan kişi listeyi gözle taramak için değil, üzerinde işlem
- * yapmak için indiriyor. Gradyan, görsel yolu gibi çizim alanları
- * dışarıda — elektronik tabloda karşılığı yok.
- */
-const CSV_SUTUNLARI = [
-  { label: 'Başlık', value: (p: AstroPhoto) => p.title },
-  { label: 'Hedef', value: (p: AstroPhoto) => p.target.name },
-  { label: 'Katalog', value: (p: AstroPhoto) => p.target.catalog },
-  { label: 'Takımyıldız', value: (p: AstroPhoto) => p.target.constellation },
-  { label: 'Tür', value: (p: AstroPhoto) => p.type },
-  { label: 'Palet', value: (p: AstroPhoto) => p.palette },
-  { label: 'Kullanıcı', value: (p: AstroPhoto) => p.user.username },
-  { label: 'Şehir', value: (p: AstroPhoto) => p.city },
-  { label: 'Çekim', value: (p: AstroPhoto) => p.capturedAt },
-  { label: 'Beğeni', value: (p: AstroPhoto) => p.likes },
-  { label: 'Yorum', value: (p: AstroPhoto) => p.comments },
-  { label: 'Adres', value: (p: AstroPhoto) => `/fotograf/${p.slug}` },
-];
-
 export function GalleryPage() {
   const [view, setView] = useViewMode('galeri');
 
@@ -314,6 +289,7 @@ export function GalleryPage() {
             onClearAll: ex.clearAll,
           }}
           result={{ current: ex.total, total: photos.length, noun: 'fotoğraf' }}
+          showResultCount={false}
           sort={{
             id: 'f-sort',
             value: ex.query.sort,
@@ -324,16 +300,6 @@ export function GalleryPage() {
             })),
           }}
           view={{ mode: view, onChange: setView }}
-          extra={
-            <>
-              <CsvExportButton
-                module="galeri"
-                rows={result}
-                columns={CSV_SUTUNLARI}
-              />
-              <SavedViewsMenu module="galeri" />
-            </>
-          }
         >
           <FilterCell
             label="Ara"
