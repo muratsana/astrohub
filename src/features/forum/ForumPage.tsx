@@ -4,14 +4,8 @@ import { Input, Select } from '@/components/ui/Input';
 import { ButtonLink } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { CatalogSourceNote } from '@/components/ui/CatalogSourceNote';
-import { useStoredChoice } from '@/components/ui/useViewMode';
-import {
-  FilterCell,
-  FilterToggle,
-  filterControlClass,
-} from '@/components/ui/FilterBar';
+import { FilterCell, filterControlClass } from '@/components/ui/FilterBar';
 import { ModuleToolbar } from '@/components/ui/ModuleToolbar';
 import { PinIcon, LockIcon, ChatIcon } from '@/components/ui/icons';
 import { PageMeta } from '@/components/seo/PageMeta';
@@ -22,14 +16,9 @@ import { forumSpec } from './forumSpec';
 import {
   forumCategories,
   forumCategoryOrder,
-  forumLabels,
-  forumLabelOrder,
-  forumDensities,
   relativeTime,
-  type ForumDensity,
   type ForumThread,
 } from './types';
-import { LabelChip } from './LabelChip';
 import { cn } from '@/lib/cn';
 
 /**
@@ -45,12 +34,6 @@ import { cn } from '@/lib/cn';
  * her ziyarette yeniden yaptırmak, iki kullanımdan birini hep cezalandırır.
  */
 export function ForumPage() {
-  const [density, setDensity] = useStoredChoice<ForumDensity>(
-    'forum',
-    forumDensities,
-    'detayli'
-  );
-
   const threadCatalog = useForumThreads();
   const threads = threadCatalog.items;
 
@@ -65,6 +48,8 @@ export function ForumPage() {
   const ex = useExplorer(threads, forumSpec);
   const result = ex.items;
   const category = ex.query.facets.kategori?.[0] ?? 'hepsi';
+  const searching = ex.searchInput.trim().length > 0;
+  const showThreads = category !== 'hepsi' || searching;
   const sections = forumCategoryOrder
     .map((id) => ({
       id,
@@ -118,76 +103,48 @@ export function ForumPage() {
               label: s.label,
             })),
           }}
-          extra={
-            <div className="flex min-h-11 items-center rounded-card border border-border-strong bg-surface-1 px-2 shadow-overlay transition-colors hover:border-foreground/25 hover:bg-surface-2">
-              <DensityToggle density={density} onChange={setDensity} />
-            </div>
-          }
+        >
+          <FilterCell
+            label="Ara"
+            htmlFor="forum-search"
+            active={ex.searchInput.trim().length > 0}
+            className="min-w-[20rem] flex-[2_1_20rem]"
           >
-            <FilterCell
-              label="Ara"
-              htmlFor="forum-search"
-              active={ex.searchInput.trim().length > 0}
-              className="min-w-[20rem] flex-[2_1_20rem]"
-            >
-              <Input
-                id="forum-search"
-                type="search"
-                placeholder="Konu, rozet veya kullanıcı"
-                value={ex.searchInput}
-                onChange={(e) => ex.setSearch(e.target.value)}
-                className={filterControlClass}
-              />
-            </FilterCell>
-            <FilterCell
-              label="Kategori"
-              htmlFor="forum-category"
-              active={category !== 'hepsi'}
-            >
-              <Select
-                id="forum-category"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className={filterControlClass}
-              >
-                <option value="hepsi">Tüm kategoriler</option>
-                {forumCategoryOrder.map((id) => (
-                  <option key={id} value={id}>
-                    {forumCategories[id].name}
-                  </option>
-                ))}
-              </Select>
-            </FilterCell>
-            <FilterCell
-              label="Rozet"
-              htmlFor="forum-label"
-              active={(ex.query.facets.rozet?.[0] ?? 'hepsi') !== 'hepsi'}
-            >
-              <Select
-                id="forum-label"
-                value={ex.query.facets.rozet?.[0] ?? 'hepsi'}
-                onChange={(e) => tekSec('rozet', e.target.value)}
-                className={filterControlClass}
-              >
-                <option value="hepsi">Tüm rozetler</option>
-                {forumLabelOrder.map((id) => (
-                  <option key={id} value={id}>
-                    {forumLabels[id].name}
-                  </option>
-                ))}
-              </Select>
-            </FilterCell>
-            <FilterToggle
-              id="forum-unsolved"
-              label="Yanıt bekleyenler"
-              checked={(ex.query.facets.cozulmemis?.length ?? 0) > 0}
-              onChange={() => ex.toggleFacet('cozulmemis', 'evet')}
+            <Input
+              id="forum-search"
+              type="search"
+              placeholder="Konu veya kullanıcı"
+              value={ex.searchInput}
+              onChange={(e) => ex.setSearch(e.target.value)}
+              className={filterControlClass}
             />
+          </FilterCell>
+          <FilterCell
+            label="Kategori"
+            htmlFor="forum-category"
+            active={category !== 'hepsi'}
+          >
+            <Select
+              id="forum-category"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className={filterControlClass}
+            >
+              <option value="hepsi">Tüm kategoriler</option>
+              {forumCategoryOrder.map((id) => (
+                <option key={id} value={id}>
+                  {forumCategories[id].name}
+                </option>
+              ))}
+            </Select>
+          </FilterCell>
         </ModuleToolbar>
 
         <CatalogSourceNote selection={threadCatalog} />
 
-        {result.length === 0 ? (
+        {!showThreads ? (
+          <ForumCategoryGrid threads={threads} />
+        ) : result.length === 0 ? (
           <EmptyState
             message="Eşleşen konu yok"
             hint="Farklı bir kategori seçmeyi ya da aramayı kısaltmayı deneyin."
@@ -240,7 +197,7 @@ export function ForumPage() {
                           key={thread.id}
                           className="border-b border-border last:border-0"
                         >
-                          <ThreadRow thread={thread} density={density} />
+                          <ThreadRow thread={thread} />
                         </li>
                       ))}
                     </ul>
@@ -255,65 +212,57 @@ export function ForumPage() {
   );
 }
 
-/**
- * YOĞUNLUK ANAHTARI.
- *
- * Simge yerine metin: ızgara/liste ikilisinde simge tanıdıktır ama
- * "yalnızca başlık" ile "başlık ve metin" arasındaki farkı anlatan
- * yerleşik bir simge yok. Öğrenilmesi gereken iki simge, okunması
- * gereken iki kelimeden pahalı.
- */
-const densityOptions: { value: ForumDensity; label: string; title: string }[] =
-  [
-    { value: 'baslik', label: 'Başlık', title: 'Yalnızca başlıkları göster' },
-    {
-      value: 'detayli',
-      label: 'Başlık + metin',
-      title: 'Başlık ve mesajın ilk satırını göster',
-    },
-  ];
-
-function DensityToggle({
-  density,
-  onChange,
-}: {
-  density: ForumDensity;
-  onChange: (next: ForumDensity) => void;
-}) {
+function ForumCategoryGrid({ threads }: { threads: ForumThread[] }) {
   return (
-    <SegmentedControl
-      role="group"
-      size="xs"
-      ariaLabel="Görünüm"
-      value={density}
-      onChange={onChange}
-      options={densityOptions.map((o) => ({
-        value: o.value,
-        label: o.label,
-        tooltip: o.title,
-      }))}
-      className="shrink-0"
-    />
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      {forumCategoryOrder.map((id) => {
+        const info = forumCategories[id];
+        const categoryThreads = threads.filter(
+          (thread) => thread.category === id
+        );
+        const latest = categoryThreads[0];
+
+        return (
+          <Link
+            key={id}
+            to={`/forum?kategori=${id}`}
+            className="group flex min-h-44 flex-col rounded-card border border-border bg-surface-1 p-4 transition-colors hover:border-primary/60 hover:bg-surface-2"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <h2 className="text-caption font-semibold text-foreground group-hover:text-primary">
+                {info.name}
+              </h2>
+              <span className="tabular text-meta text-muted-foreground">
+                {categoryThreads.length} konu
+              </span>
+            </div>
+            <p className="mt-2 line-clamp-3 text-body-sm leading-relaxed text-muted-foreground">
+              {info.description}
+            </p>
+            {latest ? (
+              <p className="mt-auto pt-4 text-meta leading-snug text-faint">
+                Son konu:{' '}
+                <span className="text-muted-foreground">{latest.title}</span>
+              </p>
+            ) : (
+              <p className="mt-auto pt-4 text-meta text-faint">
+                İlk konuyu açmak için girin.
+              </p>
+            )}
+          </Link>
+        );
+      })}
+    </div>
   );
 }
 
-function ThreadRow({
-  thread,
-  density,
-}: {
-  thread: ForumThread;
-  density: ForumDensity;
-}) {
+function ThreadRow({ thread }: { thread: ForumThread }) {
   const info = forumCategories[thread.category];
-  const labels = thread.labels ?? [];
 
   return (
     <Link
       to={`/forum/${thread.slug}`}
-      className={cn(
-        'group flex items-start gap-3 px-3 transition-colors hover:bg-surface-2',
-        density === 'baslik' ? 'py-2' : 'py-3'
-      )}
+      className="group flex items-start gap-3 px-3 py-2.5 transition-colors hover:bg-surface-2"
     >
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-1.5">
@@ -332,77 +281,29 @@ function ThreadRow({
           <h2 className="text-body-sm font-medium leading-snug text-foreground group-hover:text-primary">
             {thread.title}
           </h2>
-          {labels.map((id) => (
-            <LabelChip key={id} id={id} />
-          ))}
-          {thread.solved && (
-            <span className="shrink-0 rounded-card border border-success/45 px-1.5 py-0.5 text-meta font-medium tracking-[0.02em] text-success">
-              Çözüldü
-            </span>
-          )}
         </div>
 
-        {/* Yalnızca başlık görünümünde açılış mesajı ve künye satırı düşer;
-            kategori rozeti başlığın yanına taşınır ki filtre bağlamı
-            kaybolmasın. */}
-        {density === 'detayli' ? (
-          <>
-            <p className="mt-1 line-clamp-1 text-meta leading-relaxed text-muted-foreground">
-              {thread.body}
-            </p>
-
-            <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
-              <span
-                className={cn(
-                  'rounded-card border px-1.5 py-0.5 text-meta font-medium tracking-[0.02em]',
-                  info.className
-                )}
-              >
-                {info.name}
-              </span>
-              <span className="tabular text-meta text-muted-foreground">
-                @{thread.author.username}
-              </span>
-              <span aria-hidden className="text-meta text-faint">
-                ·
-              </span>
-              <span className="tabular text-meta text-faint">
-                {relativeTime(thread.lastActivityAt)}
-              </span>
-            </div>
-          </>
-        ) : (
-          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
-            <span
-              className={cn(
-                'rounded-card border px-1.5 py-0.5 text-meta font-medium tracking-[0.02em]',
-                info.className
-              )}
-            >
-              {info.name}
-            </span>
-            <span className="tabular text-meta text-faint">
-              {relativeTime(thread.lastActivityAt)}
-            </span>
-          </div>
-        )}
+        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+          <span className="text-meta text-muted-foreground">{info.name}</span>
+          <span className="tabular text-meta text-muted-foreground">
+            @{thread.author.username}
+          </span>
+          <span aria-hidden className="text-meta text-faint">
+            ·
+          </span>
+          <span className="tabular text-meta text-faint">
+            {relativeTime(thread.lastActivityAt)}
+          </span>
+        </div>
       </div>
 
-      <div
-        className={cn(
-          'flex shrink-0 pt-0.5',
-          density === 'detayli'
-            ? 'flex-col items-end gap-1'
-            : 'items-center gap-2'
-        )}
-      >
+      <div className="flex shrink-0 items-center gap-2 pt-0.5">
         <span className="tabular inline-flex items-center gap-1 text-meta text-cold">
           <ChatIcon className="h-3 w-3" />
           {thread.replyCount}
         </span>
         <span className="tabular text-meta text-faint">
           {thread.viewCount.toLocaleString('tr-TR')}
-          {density === 'detayli' ? ' görüntülenme' : ''}
         </span>
       </div>
     </Link>

@@ -10,13 +10,8 @@ import { PageMeta } from '@/components/seo/PageMeta';
 import {
   forumCategories,
   forumCategoryOrder,
-  forumLabels,
-  forumLabelOrder,
-  forumLabelLimit,
   type ForumCategoryId,
-  type ForumLabelId,
 } from './types';
-import { cn } from '@/lib/cn';
 import { sanitizeText } from '@/lib/sanitize';
 import { useAuth } from '@/features/auth/AuthContext';
 import { createThread } from '@/services/content/forum';
@@ -38,7 +33,6 @@ export function NewThreadPage() {
   const { user } = useAuth();
 
   const [category, setCategory] = useState<string>(forumCategoryOrder[0]);
-  const [labels, setLabels] = useState<ForumLabelId[]>([]);
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [busy, setBusy] = useState(false);
@@ -56,7 +50,7 @@ export function NewThreadPage() {
         title,
         body,
         category: category as ForumCategoryId,
-        labels,
+        labels: [],
         authorId: user.id,
       });
       navigate(`/forum/${slug}`);
@@ -89,7 +83,10 @@ export function NewThreadPage() {
 
       <Container className="py-8 sm:py-10">
         <PageHeader
-          breadcrumb={[{ label: 'Forum', to: '/forum' }, { label: 'Yeni Konu' }]}
+          breadcrumb={[
+            { label: 'Forum', to: '/forum' },
+            { label: 'Yeni Konu' },
+          ]}
           title="Yeni Konu Aç"
           description="Yanıt alma ihtimalini en çok artıran şey, sorunu üretebileceğimiz kadar bilgi vermek."
         />
@@ -118,64 +115,6 @@ export function NewThreadPage() {
             {info && (
               <p className="-mt-2 text-meta text-faint">{info.description}</p>
             )}
-
-            {/*
-              Rozet seçimi çoklu ama sınırlı. Serbest metin etiket yerine
-              sabit set kullanılmasının sebebi filtrelemenin işe yaraması;
-              sınır koyulmasının sebebi ise her konuya altı rozetin de
-              takılması hâlinde rozetin hiçbir şey ayırt etmemesi.
-            */}
-            <div className="space-y-1.5">
-              {/* `Field` kullanılmadı: o bileşen `<label htmlFor>` üretiyor
-                  ve tek bir kontrolü işaret ediyor. Burada işaret edilecek
-                  tek kontrol yok — altı düğmeden oluşan bir grup var, ve
-                  ekran okuyucuya bunu söyleyen şey `role="group"`. */}
-              <span id="thread-labels-label" className="label block">
-                Rozetler
-              </span>
-              <div
-                role="group"
-                aria-labelledby="thread-labels-label"
-                className="flex flex-wrap gap-1.5"
-              >
-                {forumLabelOrder.map((id) => {
-                  const badge = forumLabels[id];
-                  const active = labels.includes(id);
-                  const full = labels.length >= forumLabelLimit;
-                  return (
-                    <button
-                      key={id}
-                      type="button"
-                      aria-pressed={active}
-                      title={badge.description}
-                      disabled={!active && full}
-                      onClick={() =>
-                        setLabels((current) =>
-                          current.includes(id)
-                            ? current.filter((x) => x !== id)
-                            : current.length < forumLabelLimit
-                              ? [...current, id]
-                              : current
-                        )
-                      }
-                      className={cn(
-                        'rounded-card border px-2.5 py-1 text-meta tracking-[0.03em] transition-colors',
-                        active
-                          ? badge.className
-                          : 'border-border text-muted-foreground hover:border-border-strong hover:text-foreground',
-                        !active && full && 'cursor-not-allowed opacity-40'
-                      )}
-                    >
-                      {badge.name}
-                    </button>
-                  );
-                })}
-              </div>
-              <p className="text-meta leading-snug text-faint">
-                Konunun türünü seçin — en çok {forumLabelLimit} tane. İsteğe
-                bağlı.
-              </p>
-            </div>
 
             <Field
               label="Başlık"
@@ -206,11 +145,7 @@ export function NewThreadPage() {
               />
             </Field>
 
-            {error && (
-              <Alert variant="text">
-                {error}
-              </Alert>
-            )}
+            {error && <Alert variant="text">{error}</Alert>}
 
             <div className="flex items-center justify-between gap-3 border-t border-border pt-4">
               <p className="text-meta leading-snug text-faint">
@@ -266,7 +201,9 @@ export function NewThreadPage() {
                   Bortle sınıfı, ay fazı, seeing, sıcaklık ve nem.
                 </li>
                 <li>
-                  <span className="text-foreground">Ne denediğinizi yazın.</span>{' '}
+                  <span className="text-foreground">
+                    Ne denediğinizi yazın.
+                  </span>{' '}
                   Denenmiş ve işe yaramamış şeyleri bilmek, aynı önerilerin
                   tekrar gelmesini engeller.
                 </li>

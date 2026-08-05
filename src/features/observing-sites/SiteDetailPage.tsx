@@ -8,6 +8,7 @@ import { useSiteCatalog } from '@/services/content/sites';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd, placeJsonLd } from '@/lib/seo';
 import { AdminEditLink } from '@/components/admin/AdminEditLink';
+import { commonsWidthUrl } from '@/lib/commons';
 
 /** Kamp/gözlem noktası detayı (§7.8): gökyüzü + kamp + erişim kriterleri. */
 export function SiteDetailPage() {
@@ -41,6 +42,11 @@ export function SiteDetailPage() {
       <PageMeta
         title={`${site.name} — ${site.region}`}
         description={`Bortle ${site.bortle}, ${site.altitude} m rakım, ${site.roadAccess.toLocaleLowerCase('tr-TR')} yol. ${site.description.slice(0, 140)}`}
+        image={
+          site.image
+            ? { url: site.image.url, alt: `${site.name} gözlem sahası` }
+            : undefined
+        }
         jsonLd={[
           placeJsonLd({
             name: site.name,
@@ -57,11 +63,28 @@ export function SiteDetailPage() {
         ]}
       />
       <Container className="py-8 sm:py-10">
-        <PhotoPlaceholder
-          gradient={site.gradient}
-          alt={site.name}
-          className="aspect-[3/1] w-full border border-border"
-        />
+        <div className="relative overflow-hidden rounded-card border border-border bg-surface-2">
+          {site.image ? (
+            <img
+              src={commonsWidthUrl(site.image.url, 1400) ?? site.image.url}
+              alt={`${site.name} gözlem sahası`}
+              className="aspect-[3/1] w-full object-cover"
+              loading="eager"
+            />
+          ) : (
+            <PhotoPlaceholder
+              gradient={site.gradient}
+              alt={site.name}
+              className="aspect-[3/1] w-full"
+              rounded="rounded-none"
+            />
+          )}
+          {site.image && (
+            <p className="absolute bottom-2 right-2 rounded-card bg-background/85 px-2 py-1 text-[0.62rem] text-muted-foreground backdrop-blur-sm">
+              {site.image.credit} · {site.image.licence}
+            </p>
+          )}
+        </div>
 
         <div className="mt-6 flex flex-col gap-8 lg:flex-row">
           <div className="min-w-0 flex-1">
@@ -146,6 +169,26 @@ export function SiteDetailPage() {
               <p className="text-xs">
                 Canlı saha raporları (yol/gökyüzü/kalabalık) Faz 2'de açılacak.
               </p>
+              {site.sourceUrls && site.sourceUrls.length > 0 && (
+                <>
+                  <hr className="my-4 border-border" />
+                  <p className="font-medium text-foreground">Kaynaklar</p>
+                  <ul className="mt-2 space-y-1">
+                    {site.sourceUrls.map((source) => (
+                      <li key={source.url}>
+                        <a
+                          href={source.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-cold hover:text-primary"
+                        >
+                          {source.label}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
             </div>
             <ButtonLink
               to={`/galeri?sehir=${encodeURIComponent(site.region)}`}

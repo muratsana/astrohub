@@ -104,6 +104,10 @@ const siteRow = {
   caravan_ok: true,
   description: 'Açıklama',
   warnings: ['Kalabalık olabilir.'],
+  image_url: 'https://example.com/saha.jpg',
+  image_credit: 'Kaynak',
+  image_licence: 'CC BY-SA',
+  source_urls: [{ label: 'Kaynak', url: 'https://example.com' }],
   rating: '0.00',
   review_count: 0,
 };
@@ -134,5 +138,17 @@ describe('mapSiteRow', () => {
 
   it('boş uyarı dizisini undefined yapar', () => {
     expect(mapSiteRow({ ...siteRow, warnings: [] }).warnings).toBeUndefined();
+  });
+
+  it('görsel ve kaynakları geçirir', () => {
+    const site = mapSiteRow(siteRow);
+    expect(site.image).toEqual({
+      url: 'https://example.com/saha.jpg',
+      credit: 'Kaynak',
+      licence: 'CC BY-SA',
+    });
+    expect(site.sourceUrls).toEqual([
+      { label: 'Kaynak', url: 'https://example.com' },
+    ]);
   });
 });

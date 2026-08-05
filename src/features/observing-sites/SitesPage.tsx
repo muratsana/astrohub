@@ -27,6 +27,7 @@ import {
 } from '@/features/sky/lightPollutionEmbed';
 import { hasNetworkAccess } from '@/lib/runtime';
 import { cn } from '@/lib/cn';
+import { commonsWidthUrl } from '@/lib/commons';
 import { useSiteCatalog } from '@/services/content/sites';
 import { siteTypeLabels, type ObservingSite, type SiteType } from './data';
 
@@ -35,13 +36,7 @@ const CONSENT_KEY = 'astrohub:map:tiles';
 type BaseMode = 'harita' | 'uydu';
 type LayerMode = 'yok' | 'isik';
 type SiteSortKey =
-  | 'distance'
-  | 'region'
-  | 'type'
-  | 'altitude'
-  | 'road'
-  | 'bortle'
-  | 'rating';
+  'distance' | 'region' | 'type' | 'altitude' | 'road' | 'bortle' | 'rating';
 type SortDirection = 'asc' | 'desc';
 type LocatedSite = { item: ObservingSite; distanceKm: number };
 
@@ -471,12 +466,31 @@ export function SitesPage() {
                         )}
                       >
                         <td className="max-w-[280px] py-2.5 pr-4 align-top">
-                          <Link
-                            to={`/saha/${item.slug}`}
-                            className="block truncate text-body-sm font-medium text-foreground transition-colors hover:text-primary"
-                          >
-                            {item.name}
-                          </Link>
+                          <div className="flex min-w-0 items-center gap-2">
+                            {item.image ? (
+                              <img
+                                src={
+                                  commonsWidthUrl(item.image.url, 160) ??
+                                  item.image.url
+                                }
+                                alt=""
+                                loading="lazy"
+                                className="h-10 w-14 shrink-0 rounded-card border border-border object-cover"
+                              />
+                            ) : (
+                              <span
+                                aria-hidden
+                                className="h-10 w-14 shrink-0 rounded-card border border-border bg-surface-2"
+                                style={{ backgroundImage: item.gradient }}
+                              />
+                            )}
+                            <Link
+                              to={`/saha/${item.slug}`}
+                              className="block truncate text-body-sm font-medium text-foreground transition-colors hover:text-primary"
+                            >
+                              {item.name}
+                            </Link>
+                          </div>
                         </td>
                         <td className="py-2.5 pr-4 align-top text-body-sm text-muted-foreground">
                           {item.region}

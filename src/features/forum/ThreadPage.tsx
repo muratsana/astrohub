@@ -3,7 +3,6 @@ import { Link, useParams } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Panel } from '@/components/ui/Panel';
-import { Badge } from '@/components/ui/Badge';
 import { Button, ButtonLink } from '@/components/ui/Button';
 import { LockIcon, PinIcon } from '@/components/ui/icons';
 import { PageMeta } from '@/components/seo/PageMeta';
@@ -15,7 +14,6 @@ import {
   type ForumPost,
   type ForumThread,
 } from './types';
-import { LabelChip } from './LabelChip';
 import { useAuth } from '@/features/auth/AuthContext';
 import { createReply, useForumThreads } from '@/services/content/forum';
 import { useFlag } from '@/features/site/SiteConfigContext';
@@ -55,15 +53,15 @@ export function ThreadPage() {
 
       <Container className="py-8 sm:py-10">
         <PageHeader
-          breadcrumb={[
-            { label: 'Forum', to: '/forum' },
-            { label: info.name },
-          ]}
+          breadcrumb={[{ label: 'Forum', to: '/forum' }, { label: info.name }]}
           title={thread.title}
           meta={
             <span className="inline-flex items-center gap-2">
               {thread.pinned && (
-                <PinIcon className="h-3 w-3 text-primary" aria-label="Sabitlenmiş" />
+                <PinIcon
+                  className="h-3 w-3 text-primary"
+                  aria-label="Sabitlenmiş"
+                />
               )}
               {thread.locked && (
                 <LockIcon className="h-3 w-3 text-faint" aria-label="Kilitli" />
@@ -73,14 +71,7 @@ export function ThreadPage() {
             </span>
           }
           actions={
-            <span
-              className={cn(
-                'rounded-card border px-2.5 py-1 text-meta tracking-[0.03em]',
-                info.className
-              )}
-            >
-              {info.name}
-            </span>
+            <span className="text-meta text-muted-foreground">{info.name}</span>
           }
         />
 
@@ -125,22 +116,15 @@ export function ThreadPage() {
                   label="Son etkinlik"
                   value={relativeTime(thread.lastActivityAt)}
                 />
-                <Row
-                  label="Durum"
-                  value={thread.solved ? 'Çözüldü' : 'Yanıt bekliyor'}
-                />
               </dl>
-
-              {thread.labels && thread.labels.length > 0 && (
-                <div className="mt-3 flex flex-wrap gap-1 border-t border-border pt-3">
-                  {thread.labels.map((id) => (
-                    <LabelChip key={id} id={id} />
-                  ))}
-                </div>
-              )}
             </Panel>
 
-            <ButtonLink to="/forum" variant="secondary" size="sm" className="w-full">
+            <ButtonLink
+              to="/forum"
+              variant="secondary"
+              size="sm"
+              className="w-full"
+            >
               Foruma Dön
             </ButtonLink>
           </aside>
@@ -174,9 +158,7 @@ function PostCard({ post, opening }: { post: ForumPost; opening?: boolean }) {
         <span className="tabular text-meta text-muted-foreground">
           @{post.author.username}
         </span>
-        {post.author.badge && <Badge tone="cold">{post.author.badge}</Badge>}
-        {opening && <Badge tone="primary">Konuyu açan</Badge>}
-        {post.solution && <Badge tone="success">Çözüm</Badge>}
+        {opening && <span className="text-meta text-faint">konuyu açan</span>}
         <span className="tabular ml-auto text-meta text-faint">
           {relativeTime(post.createdAt)}
         </span>

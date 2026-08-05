@@ -49,6 +49,10 @@ interface SiteRow {
   caravan_ok: boolean;
   description: string;
   warnings: string[] | null;
+  image_url: string | null;
+  image_credit: string | null;
+  image_licence: string | null;
+  source_urls: { label?: unknown; url?: unknown }[] | null;
   rating: number | string;
   review_count: number;
 }
@@ -64,6 +68,17 @@ function num(value: number | string | null): number | null {
   if (value === null) return null;
   const parsed = typeof value === 'number' ? value : Number(value);
   return Number.isFinite(parsed) ? parsed : null;
+}
+
+function sourceUrls(row: SiteRow): ObservingSite['sourceUrls'] {
+  if (!Array.isArray(row.source_urls)) return undefined;
+  const sources = row.source_urls
+    .map((source) => ({
+      label: typeof source.label === 'string' ? source.label : '',
+      url: typeof source.url === 'string' ? source.url : '',
+    }))
+    .filter((source) => source.label && source.url);
+  return sources.length > 0 ? sources : undefined;
 }
 
 export function mapSiteRow(row: SiteRow): ObservingSite {
@@ -97,6 +112,15 @@ export function mapSiteRow(row: SiteRow): ObservingSite {
     gradient: gradientFromSeed(row.slug),
     rating: num(row.rating) ?? 0,
     reviewCount: row.review_count,
+    image:
+      row.image_url && row.image_credit
+        ? {
+            url: row.image_url,
+            credit: row.image_credit,
+            licence: row.image_licence ?? '',
+          }
+        : undefined,
+    sourceUrls: sourceUrls(row),
   };
 }
 
@@ -107,7 +131,8 @@ async function fetchSites(client: SupabaseClient): Promise<ObservingSite[]> {
       'slug, name, region, approx_latitude, approx_longitude, altitude_m, ' +
         'bortle, sqm, road_access, south_horizon, best_months, has_water, ' +
         'has_toilet, has_electricity, has_cell_signal, has_tent_area, ' +
-        'caravan_ok, description, warnings, rating, review_count'
+        'caravan_ok, description, warnings, image_url, image_credit, ' +
+        'image_licence, source_urls, rating, review_count'
     )
     .eq('status', 'published')
     .order('name');
