@@ -38,6 +38,12 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Vercel rewrite listesi
+        run: npm run check:rewrites
+
+      - name: CSP denetimi
+        run: npm run check:csp
+
       # Performans bütçesi kalite kapısıdır: burada, merge'den ÖNCE
       # denetlenir. Bilerek `npm run build` zincirinde DEĞİL — bir boyut
       # gerilemesi üretim dağıtımını bloke etmemeli; kapının işi kötü
@@ -81,6 +87,9 @@ jobs:
       # yanıltıcıydı — son ölçü padding ve kabın yüksekliğinden çıkıyor.
       - name: Erişilebilirlik denetimi
         run: npm run check:a11y
+
+      - name: Viewport denetimi
+        run: npm run check:viewports
 
       - name: E2E senaryoları
         run: node scripts/e2e.mjs
