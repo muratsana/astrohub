@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from '@/features/auth/AuthContext';
@@ -88,6 +94,16 @@ describe('GalleryPage (§7.2)', () => {
     expect(screen.getByText('Poz süresi')).toBeInTheDocument();
     expect(screen.getByText('Çekim yeri')).toBeInTheDocument();
     expect(screen.getByText('Saklıkent, Antalya')).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: `@${photos[0].user.username}` })
+    ).toHaveAttribute('href', `/profil/${photos[0].user.username}`);
+    const weeklyHero = screen
+      .getByRole('link', { name: `Haftanın Fotoğrafı: ${photos[0].title}` })
+      .closest('section');
+    expect(weeklyHero).not.toBeNull();
+    expect(
+      within(weeklyHero!).queryByText('Editör seçimi')
+    ).not.toBeInTheDocument();
   });
 
   it('filtre yokken yalnızca toplamı bildirir', () => {

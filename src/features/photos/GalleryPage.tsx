@@ -222,8 +222,13 @@ export function GalleryPage() {
                   {weeklyPick.photo.title}
                 </h2>
                 <p className="mt-1 text-body-sm text-muted-foreground">
-                  {weeklyPick.photo.target.name} · @
-                  {weeklyPick.photo.user.username}
+                  {weeklyPick.photo.target.name} ·{' '}
+                  <Link
+                    to={`/profil/${weeklyPick.photo.user.username}`}
+                    className="text-muted-foreground transition-colors hover:text-primary"
+                  >
+                    @{weeklyPick.photo.user.username}
+                  </Link>
                 </p>
                 <p className="mt-4 text-body-sm leading-relaxed text-muted-foreground">
                   Galerinin öne çıkan karesi. Künyesi, setup bilgisi ve işleme
