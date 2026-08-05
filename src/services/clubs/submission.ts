@@ -67,8 +67,6 @@ export function validateClubDraft(
     return 'Kuruluş tarihi gerekli.';
   }
   if (draft.foundedOn > today()) return 'Kuruluş tarihi gelecekte olamaz.';
-  if (sanitizeText(draft.place).length < 2)
-    return 'Kuruluş / merkez yeri gerekli.';
   if (uniqueTopics(draft.topics).length === 0) return 'En az bir konu seçin.';
   if (!email(draft.contactEmail.trim()))
     return 'Geçerli iletişim e-postası gerekli.';
@@ -160,7 +158,7 @@ export async function createClubRecord(
     city: sanitizeText(input.city, { maxLength: 80 }),
     founded_on: input.foundedOn,
     founded_year: Number(input.foundedOn.slice(0, 4)),
-    place: sanitizeText(input.place, { maxLength: 160 }),
+    place: sanitizeText(input.place || input.city, { maxLength: 160 }),
     topics,
     activities,
     summary: sanitizeText(input.summary, { multiline: true, maxLength: 4000 }),
