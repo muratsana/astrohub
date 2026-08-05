@@ -157,6 +157,12 @@ function ClubPhotoPicker({
     );
   }
 
+  function promote(id: string) {
+    const selected = items.find((item) => item.id === id);
+    if (!selected) return;
+    onChange([selected, ...items.filter((item) => item.id !== id)]);
+  }
+
   async function applyCrop(item: PhotoItem) {
     try {
       const file = await cropPhoto(item.file, item.crop);
@@ -207,7 +213,7 @@ function ClubPhotoPicker({
               <PhotoFrame item={item} />
               <div className="mt-2 min-w-0">
                 <p className="truncate text-body-sm text-foreground">
-                  {index === 0 ? 'Kapak · ' : ''}
+                  {index === 0 ? 'Tanıtım fotoğrafı · ' : ''}
                   {item.file.name}
                 </p>
                 <p className="text-meta text-faint">
@@ -215,10 +221,20 @@ function ClubPhotoPicker({
                 </p>
               </div>
               <div className="mt-2 flex gap-2">
+                {index > 0 && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => promote(item.id)}
+                  >
+                    Tanıtım yap
+                  </Button>
+                )}
                 <Button
                   type="button"
                   size="sm"
-                  variant="secondary"
+                  variant={index > 0 ? 'ghost' : 'secondary'}
                   onClick={() =>
                     setEditingId(editingId === item.id ? null : item.id)
                   }
