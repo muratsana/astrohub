@@ -41,9 +41,9 @@ export const SPECTRAL_LINES: Record<SpectralLineCode, SpectralLine> = {
   hb: { code: 'hb', shortName: 'Hβ', wavelengthNm: 486.1 },
   oiii: { code: 'oiii', shortName: 'OIII', wavelengthNm: 500.7 },
   heii: { code: 'heii', shortName: 'HeII', wavelengthNm: 468.6 },
-  nii: { code: 'nii', shortName: 'NII', wavelengthNm: 658.4 },
+  nii: { code: 'nii', shortName: 'NII', wavelengthNm: 658.3 },
   ha: { code: 'ha', shortName: 'Hα', wavelengthNm: 656.3 },
-  sii: { code: 'sii', shortName: 'SII', wavelengthNm: 671.6 },
+  sii: { code: 'sii', shortName: 'SII', wavelengthNm: 672.4 },
 };
 
 export type MarketBandLabel =
