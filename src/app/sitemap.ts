@@ -62,6 +62,12 @@ export const staticEntries: SitemapEntry[] = [
   { path: '/araclar/takvim', priority: 0.6, changefreq: 'daily' },
   { path: '/cerezler', priority: 0.2, changefreq: 'yearly' },
   { path: '/yazilar', priority: 0.8, changefreq: 'weekly' },
+  {
+    path: '/yazilar/drizzle-rehberi',
+    priority: 0.7,
+    changefreq: 'yearly',
+    lastmod: '2026-08-05',
+  },
   /* Sözlük ve SSS indekslenmeli: ikisi de arama motorundan gelen
      "X ne demek" / "kota nedir" sorularının doğal karşılığı. Gözlem
      günlüğü (`/gunluk`) BİLEREK LİSTEDE YOK — kişisel ve `noIndex`. */

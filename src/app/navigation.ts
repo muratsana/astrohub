@@ -139,6 +139,23 @@ export const siteMap: NavGroup[] = [
         keywords: ['makale', 'eğitim', 'rehber', 'ders', 'işleme'],
       },
       {
+        label: 'Drizzle Rehberi',
+        to: '/yazilar/drizzle-rehberi',
+        description:
+          'Örnekleme, pixfrac ve PHD2 dithering — hesaplayıcılı uzun rehber',
+        keywords: [
+          'drizzle',
+          'dither',
+          'dithering',
+          'phd2',
+          'pixfrac',
+          'örnekleme',
+          'sampling',
+          'fwhm',
+          'undersampling',
+        ],
+      },
+      {
         label: 'Terimler Sözlüğü',
         to: '/sozluk',
         description: 'Bortle, seeing, pixel scale — kısa tanımlar',

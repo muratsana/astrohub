@@ -420,3 +420,30 @@ export function BellIcon(props: IconProps) {
     </svg>
   );
 }
+
+/**
+ * Topluluk / kulüp — mobil alt çubukta `/topluluklar` girişi.
+ * Eklendi çünkü eşleme tablosunda karşılığı yoktu ve hücre `HomeIcon`
+ * yedeğine düşüyordu (yan yana iki özdeş ev simgesi).
+ */
+export function UsersIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M9.5 11.5a3.25 3.25 0 1 0 0-6.5 3.25 3.25 0 0 0 0 6.5z" />
+      <path d="M3 19.5v-.8c0-2.2 2.9-4 6.5-4s6.5 1.8 6.5 4v.8" />
+      <path d="M16.5 5.6a3 3 0 0 1 0 5.8" />
+      <path d="M18.2 14.6c1.8.6 2.8 1.7 2.8 3.1v.9" />
+    </svg>
+  );
+}
+
+/** Haber / gündem — mobil alt çubukta `/haberler` girişi. */
+export function NewsIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M4 5.5h12.5v13H6a2 2 0 0 1-2-2v-11z" />
+      <path d="M16.5 8.5H20v8a2 2 0 0 1-2 2h-1.5" />
+      <path d="M7 9h6.5M7 12h6.5M7 15h4" />
+    </svg>
+  );
+}

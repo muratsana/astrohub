@@ -258,6 +258,18 @@ export const appRoutes = [
         ),
       },
       {
+        /* Statik parça `yazi/:slug`ten AYRI bir dal: rehber, blok tabanlı
+           yazı modeline sığmayan (16 tablo, 11 infografik, 4 hesaplayıcı)
+           kendi sayfası. Ayrıntı `DrizzleGuidePage` başlığında. */
+        path: 'yazilar/drizzle-rehberi',
+        element: route(
+          named(
+            () => import('@/features/knowledge/DrizzleGuidePage'),
+            'DrizzleGuidePage'
+          )
+        ),
+      },
+      {
         path: 'yazi/:slug',
         element: route(
           named(

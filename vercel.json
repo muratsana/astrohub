@@ -677,6 +677,10 @@
       "destination": "/app.html"
     },
     {
+      "source": "/yazilar/drizzle-rehberi",
+      "destination": "/app.html"
+    },
+    {
       "source": "/yozgat-astronomi-etkinlikleri",
       "destination": "/app.html"
     },

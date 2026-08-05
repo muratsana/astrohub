@@ -395,7 +395,21 @@ export function PlannerPage() {
                                 )
                               )
                             }
-                            className="h-8 w-20 shrink-0 text-meta"
+                            /*
+                              GENİŞLİK `style` İLE, SINIFLA DEĞİL.
+
+                              `Input` taban sınıflarında `w-full` taşıyor ve
+                              `cn()` bir tailwind-merge DEĞİL — iki genişlik
+                              sınıfı da nitelikte kalıyor, kazananı derlenmiş
+                              CSS'teki sıra belirliyor. Burada `w-full`
+                              kazanıyordu: `shrink-0` ile birlikte alan
+                              80px yerine 497px oluyor, yanındaki hedef adı
+                              sıfır genişliğe çöküyor ve uyarı metni
+                              girdinin üstüne biniyordu (ölçüldü:
+                              `divWidth: 0`). Satır içi stil çakışmıyor.
+                            */
+                            style={{ width: '5rem' }}
+                            className="h-8 shrink-0 text-meta"
                           />
                           <Button
                             size="sm"
