@@ -21,6 +21,20 @@ export function formatPhotoWeekLabel(label: string): {
   return { weekLabel: `${Number(match[2])}. Hafta`, yearLabel: match[1] };
 }
 
+export function isoWeekLabelFromDate(date: Date): string {
+  const dayMs = 24 * 60 * 60 * 1000;
+  const value = new Date(
+    Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())
+  );
+  const weekday = value.getUTCDay() || 7;
+  value.setUTCDate(value.getUTCDate() + 4 - weekday);
+  const yearStart = new Date(Date.UTC(value.getUTCFullYear(), 0, 1));
+  const week = Math.ceil(
+    ((value.getTime() - yearStart.getTime()) / dayMs + 1) / 7
+  );
+  return `${value.getUTCFullYear()}-${String(week).padStart(2, '0')}`;
+}
+
 function withWeekWin(photo: AstroPhoto, label: string): AstroPhoto {
   return (photo.photoOfWeekWins ?? []).includes(label)
     ? photo
@@ -29,12 +43,12 @@ function withWeekWin(photo: AstroPhoto, label: string): AstroPhoto {
 
 export function selectWeeklyPhoto(
   photos: AstroPhoto[],
-  rounds: PhotoWeekRound[]
+  rounds: PhotoWeekRound[],
+  now = new Date()
 ): WeeklyPick | null {
   const completed = rounds.filter(
     (round) =>
-      round.winnerPhotoId &&
-      ['sonuclandi', 'yayinda'].includes(round.status)
+      round.winnerPhotoId && ['sonuclandi', 'yayinda'].includes(round.status)
   );
 
   for (const round of completed) {
@@ -49,7 +63,9 @@ export function selectWeeklyPhoto(
     }
   }
 
-  const previous = photos.find((photo) => (photo.photoOfWeekWins?.length ?? 0) > 0);
+  const previous = photos.find(
+    (photo) => (photo.photoOfWeekWins?.length ?? 0) > 0
+  );
   if (previous) {
     const label = previous.photoOfWeekWins!.at(-1)!;
     return {
@@ -60,8 +76,13 @@ export function selectWeeklyPhoto(
   }
 
   const editor = photos.find((photo) => photo.editorsPick) ?? photos[0];
+  const fallbackLabel = isoWeekLabelFromDate(now);
   return editor
-    ? { photo: editor, label: 'Editör seçimi', weekLabel: 'Editör seçimi', yearLabel: null }
+    ? {
+        photo: withWeekWin(editor, fallbackLabel),
+        label: fallbackLabel,
+        ...formatPhotoWeekLabel(fallbackLabel),
+      }
     : null;
 }
 
@@ -70,7 +91,10 @@ export function photoWeekArchive(
   rounds: PhotoWeekRound[]
 ): WeeklyArchiveItem[] {
   const archive = rounds.flatMap((round) => {
-    if (!round.winnerPhotoId || !['sonuclandi', 'yayinda'].includes(round.status)) {
+    if (
+      !round.winnerPhotoId ||
+      !['sonuclandi', 'yayinda'].includes(round.status)
+    ) {
       return [];
     }
     const photo = photos.find((item) => item.id === round.winnerPhotoId);
