@@ -7,7 +7,6 @@ import { siteMap } from '@/app/navigation';
 import {
   CalendarIcon,
   CalculatorIcon,
-  ChainIcon,
   FrameIcon,
   GridIcon,
   MapIcon,
@@ -40,14 +39,12 @@ const tools =
  */
 const toolIcons: Record<string, typeof GridIcon> = {
   '/araclar': GridIcon,
-  '/araclar/fov': FrameIcon,
   '/simulator': FrameIcon,
   '/araclar/isik-kirliligi': MapIcon,
   '/bu-gece': MoonIcon,
   '/planlayici': RouteIcon,
   '/araclar/poz-plani': CalculatorIcon,
   '/araclar/mosaic': MosaicIcon,
-  '/araclar/setup-uyumluluk': ChainIcon,
   '/araclar/takvim': CalendarIcon,
 };
 
@@ -56,7 +53,7 @@ export function ToolsIndexPage() {
     <>
       <PageMeta
         title="Astrofotoğrafçılık Araçları"
-        description="FOV ve pixel scale hesaplayıcı, mosaic planlayıcı, setup uyumluluk kontrolü — ekipmanınıza göre çalışan astrofotoğrafçılık araçları."
+        description="FoV, pixel scale, setup simülatörü, mosaic planlayıcı ve gökyüzü araçları — ekipmanınıza göre çalışan astrofotoğrafçılık araçları."
         jsonLd={breadcrumbJsonLd([
           { name: 'Ana Sayfa', path: '/' },
           { name: 'Araçlar', path: '/araclar' },
@@ -67,9 +64,8 @@ export function ToolsIndexPage() {
         <header className="mb-8 border-b border-border pb-6">
           <h1 className="type-page text-foreground">Araçlar</h1>
           <p className="mt-3 max-w-[70ch] text-caption leading-relaxed text-muted-foreground">
-            Çekim öncesi kararları sayıya dayandıran hesaplayıcılar. Değerleri
-            elle girebilir ya da ekipman veritabanından hazır ön ayar
-            seçebilirsiniz.
+            Çekim öncesi kararları sayıya dayandıran araçlar. FoV, pixel scale
+            ve setup uyumluluk artık tek Simülatör çalışma alanında birleşir.
           </p>
         </header>
 

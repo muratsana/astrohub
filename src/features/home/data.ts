@@ -191,9 +191,9 @@ export const quickModules: QuickModule[] = [
   },
   {
     id: 'fov',
-    title: 'FOV Hesaplayıcı',
-    subtitle: 'Teleskop görüş alanını hesapla',
-    to: '/araclar/fov',
+    title: 'FoV Setup Simülatörü',
+    subtitle: 'Kadraj, pixel scale ve setup uyumunu tek ekranda gör',
+    to: '/simulator',
     icon: 'calculator',
     accent: 'var(--color-primary)',
   },

@@ -208,16 +208,21 @@ export const siteMap: NavGroup[] = [
         keywords: ['araç', 'hesaplayıcı', 'tools'],
       },
       {
-        label: 'FOV ve Pixel Scale',
-        to: '/araclar/fov',
-        description: 'Görüş alanı, kadraj ve örnekleme uyumu',
-        keywords: ['fov', 'görüş alanı', 'kadraj', 'pixel scale', 'örnekleme', 'sampling'],
-      },
-      {
-        label: 'Simülatör',
+        label: 'FoV · Pixel Scale · Simülatör',
         to: '/simulator',
-        description: 'ASCOM bridge, canlı montür konumu, FOV ve hedef planı',
-        keywords: ['simulator', 'simülatör', 'ascom', 'montür', 'fov', 'ra', 'dec'],
+        description: 'Kadraj, örnekleme, setup uyumluluk, ASCOM bridge ve hedef planı',
+        keywords: [
+          'simulator',
+          'simülatör',
+          'ascom',
+          'montür',
+          'fov',
+          'görüş alanı',
+          'pixel scale',
+          'setup uyumluluk',
+          'ra',
+          'dec',
+        ],
       },
       {
         label: 'Işık Kirliliği Haritası',
@@ -248,11 +253,6 @@ export const siteMap: NavGroup[] = [
         to: '/araclar/mosaic',
         description: 'Çok panelli kadraj planı ve örtüşme hesabı',
         keywords: ['mozaik', 'mosaic', 'panel'],
-      },
-      {
-        label: 'Setup Uyumluluk Kontrolü',
-        to: '/araclar/setup-uyumluluk',
-        description: 'Yük, backfocus, guide uyumu',
       },
       {
         label: 'Ay ve Karanlık Takvimi',

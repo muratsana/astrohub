@@ -153,7 +153,7 @@ describe('komut paleti', () => {
 
   it('sayfa adıyla arayınca gezinme komutu bulur', () => {
     const items = runCommandSearch('fov').flatMap((g) => g.items);
-    expect(items.some((c) => c.to === '/araclar/fov')).toBe(true);
+    expect(items.some((c) => c.to === '/simulator')).toBe(true);
   });
 
   it('katalog koduyla arayınca içerik sonucu bulur', () => {

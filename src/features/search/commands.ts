@@ -85,10 +85,19 @@ const actionCommands: Command[] = [
   {
     id: 'arac:fov',
     kind: 'arac',
-    title: 'FOV hesapla',
-    subtitle: 'Teleskop + kamera için görüş alanı ve pixel scale',
-    to: '/araclar/fov',
-    keywords: ['fov', 'görüş alanı', 'pixel scale', 'hesapla', 'örnekleme'],
+    title: 'FoV ve setup simülatörü',
+    subtitle: 'Görüş alanı, pixel scale, setup uyumu ve canlı montür bilgisi',
+    to: '/simulator',
+    keywords: [
+      'fov',
+      'görüş alanı',
+      'pixel scale',
+      'hesapla',
+      'örnekleme',
+      'setup',
+      'simülatör',
+      'ascom',
+    ],
   },
   {
     id: 'arac:kayit-ac',

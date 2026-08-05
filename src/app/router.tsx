@@ -407,10 +407,10 @@ export const appRoutes = [
       },
       { path: 'araclar/fov', element: fovPage() },
       { path: 'araclar/simulator', element: <RedirectTo to="/simulator" /> },
-      // Tek kanonik sayfa: pixel scale zaten FOV hesaplayıcının içinde.
+      // Tek kanonik çalışma alanı: FoV, pixel scale ve setup uyumluluk Simülatör'de birleşir.
       {
         path: 'araclar/pixel-scale',
-        element: <RedirectTo to="/araclar/fov" />,
+        element: <RedirectTo to="/simulator" />,
       },
       {
         path: 'araclar/isik-kirliligi',
@@ -432,12 +432,7 @@ export const appRoutes = [
       },
       {
         path: 'araclar/setup-uyumluluk',
-        element: route(
-          named(
-            () => import('@/features/calculators/SetupCompatibilityPage'),
-            'SetupCompatibilityPage'
-          )
-        ),
+        element: <RedirectTo to="/simulator" />,
       },
       {
         path: 'araclar/takvim',
