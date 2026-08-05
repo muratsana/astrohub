@@ -111,16 +111,34 @@ function toSpec(row: ProductRow): AstroFilterSpec | null {
   };
 }
 
+/**
+ * KATEGORİ GÖMMESİ FK ADIYLA NİTELENİYOR — ZORUNLU.
+ *
+ * `astro_filter_products` ile `astro_filter_categories` arasında İKİ yol
+ * var: ürün satırındaki `primary_category_id` (birincil kategori) ve
+ * `astro_filter_product_categories` üzerinden çoka-çok bağ (ikincil
+ * kategoriler). Nitelenmemiş `astro_filter_categories(code)` yazıldığında
+ * PostgREST hangisini kastettiğimizi bilemiyor ve sorgunun TAMAMINI
+ * `PGRST201` ile reddediyor.
+ *
+ * Bunun bedeli sessizdi: sorgu düşünce harita boş kalıyor, arayüz de boş
+ * haritada spektral bölümü hiç çizmiyor. Yani özellik hatasız görünüp
+ * hiç çalışmıyordu. Canlı PostgREST'e anon rolüyle sorularak yakalandı;
+ * birim testleri gerçek bir veritabanına bakmadığı için göremezdi.
+ *
+ * `filterSpectrum.test.ts` bu niteleyicinin kaybolmasını engelliyor.
+ */
+export const FILTER_SPECTRUM_SELECT =
+  'slug, market_band_label, emission_line_count, pass_window_count,' +
+  ' bandwidth_min_nm, bandwidth_max_nm, fast_optics_profile,' +
+  ' is_discontinued, notes,' +
+  ' astro_filter_categories!astro_filter_products_primary_category_id_fkey ( code ),' +
+  ' astro_filter_passbands ( bandwidth_nm, astro_spectral_lines ( code ) )';
+
 async function fetchSpecs(client: SupabaseClient): Promise<AstroFilterSpec[]> {
   const { data, error } = await client
     .from('astro_filter_products')
-    .select(
-      'slug, market_band_label, emission_line_count, pass_window_count,' +
-        ' bandwidth_min_nm, bandwidth_max_nm, fast_optics_profile,' +
-        ' is_discontinued, notes,' +
-        ' astro_filter_categories ( code ),' +
-        ' astro_filter_passbands ( bandwidth_nm, astro_spectral_lines ( code ) )'
-    )
+    .select(FILTER_SPECTRUM_SELECT)
     /* Ekipman kaydına bağlanmamış satır listelenmiyor: bağ yoksa kullanıcı
        o filtreye zaten gidemiyor ve künyesiz bir spektrum göstermek,
        tıklanamayan bir kart üretirdi. */
