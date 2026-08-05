@@ -6,6 +6,7 @@ import { Container } from '@/components/ui/Container';
 import { Field } from '@/components/ui/Field';
 import { Input, Select } from '@/components/ui/Input';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { FramingViews } from './FramingViews';
 import { Panel, SpecList, SpecRow } from '@/components/ui/Panel';
 import { Readout } from '@/components/ui/Readout';
 import { PageMeta } from '@/components/seo/PageMeta';
@@ -156,6 +157,8 @@ export function SimulatorPage() {
             </ButtonLink>
           }
         />
+
+        <FramingViews />
 
         <ActiveSetupBar className="mb-4" />
 

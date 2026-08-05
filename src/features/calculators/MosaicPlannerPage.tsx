@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Container } from '@/components/ui/Container';
 import { Input, Select } from '@/components/ui/Input';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { FramingViews } from '@/features/simulator/FramingViews';
 import { Panel, SpecList, SpecRow } from '@/components/ui/Panel';
 import { Readout } from '@/components/ui/Readout';
 import { Badge } from '@/components/ui/Badge';
@@ -131,7 +132,8 @@ export function MosaicPlannerPage() {
         jsonLd={breadcrumbJsonLd([
           { name: 'Ana Sayfa', path: '/' },
           { name: 'Araçlar', path: '/araclar' },
-          { name: 'Mozaik Planlayıcı', path: '/araclar/mosaic' },
+          { name: 'Kadraj', path: '/araclar/kadraj' },
+          { name: 'Mozaik Planlayıcı', path: '/araclar/kadraj/mozaik' },
         ])}
       />
 
@@ -140,11 +142,14 @@ export function MosaicPlannerPage() {
           breadcrumb={[
             { label: 'Ana Sayfa', to: '/' },
             { label: 'Araçlar', to: '/araclar' },
+            { label: 'Kadraj', to: '/araclar/kadraj' },
             { label: 'Mozaik Planlayıcı' },
           ]}
           title="Mozaik Planlayıcı"
           description="Hedef tek kadraja sığmıyorsa kaç panele bölüneceğini, panellerin adım aralığını ve toplam gece sayısını hesaplar. Hesaplar cihazınızda yerel yapılır."
         />
+
+        <FramingViews />
 
         <ActiveSetupBar className="mb-4" />
 

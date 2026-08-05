@@ -437,14 +437,22 @@ export const appRoutes = [
           )
         ),
       },
+      /* Mozaik, kadrajın ikinci görünümü (denetim §3.6): "sığmıyor"
+         cevabını alan kullanıcının bir sonraki sorusu zaten "kaç panele
+         bölerim". Gece modülüyle aynı gerekçeyle ayrı rota kaldı —
+         mozaik kendi hesabını ve panel önizlemesini taşıyor. */
       {
-        path: 'araclar/mosaic',
+        path: 'araclar/kadraj/mozaik',
         element: route(
           named(
             () => import('@/features/calculators/MosaicPlannerPage'),
             'MosaicPlannerPage'
           )
         ),
+      },
+      {
+        path: 'araclar/mosaic',
+        element: <RedirectKeepQuery to="/araclar/kadraj/mozaik" />,
       },
       {
         path: 'araclar/setup-uyumluluk',

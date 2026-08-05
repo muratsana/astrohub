@@ -285,7 +285,7 @@ export const siteMap: NavGroup[] = [
       },
       {
         label: 'Mozaik Planlayıcı',
-        to: '/araclar/mosaic',
+        to: '/araclar/kadraj/mozaik',
         description: 'Çok panelli kadraj planı ve örtüşme hesabı',
         keywords: ['mozaik', 'mosaic', 'panel'],
       },

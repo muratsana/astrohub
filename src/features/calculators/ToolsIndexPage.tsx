@@ -50,7 +50,7 @@ const GROUPS: { title: string; hint: string; paths: string[] }[] = [
   {
     title: 'Kadraj',
     hint: 'Hedef bu setup’a sığıyor mu',
-    paths: ['/araclar/kadraj', '/araclar/mosaic'],
+    paths: ['/araclar/kadraj', '/araclar/kadraj/mozaik'],
   },
   {
     title: 'Poz ve saha',
@@ -112,7 +112,7 @@ const toolIcons: Record<string, typeof GridIcon> = {
   '/bu-gece': MoonIcon,
   '/bu-gece/plan': RouteIcon,
   '/araclar/poz-plani': CalculatorIcon,
-  '/araclar/mosaic': MosaicIcon,
+  '/araclar/kadraj/mozaik': MosaicIcon,
   '/bu-gece/takvim': CalendarIcon,
 };
 

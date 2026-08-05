@@ -360,7 +360,8 @@ export function SitesPage() {
                         onChange={(event) =>
                           setBaseMode(event.target.value as BaseMode)
                         }
-                        className="h-8 w-28 text-meta"
+                        width="7rem"
+                        className="h-8 text-meta"
                       >
                         <option value="harita">Harita</option>
                         <option value="uydu">Uydu</option>
@@ -373,7 +374,8 @@ export function SitesPage() {
                         onChange={(event) =>
                           setLayerMode(event.target.value as LayerMode)
                         }
-                        className="h-8 w-28 text-meta"
+                        width="7rem"
+                        className="h-8 text-meta"
                       >
                         <option value="isik">Işık</option>
                         <option value="yok">Yok</option>

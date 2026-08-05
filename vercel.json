@@ -61,6 +61,10 @@
       "destination": "/app.html"
     },
     {
+      "source": "/araclar/kadraj/mozaik",
+      "destination": "/app.html"
+    },
+    {
       "source": "/araclar/mosaic",
       "destination": "/app.html"
     },

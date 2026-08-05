@@ -214,7 +214,7 @@ await scenario('FOV hesaplayıcı girdi değişince sonucu günceller', async ()
 await scenario(
   'mozaik planlayıcı örtüşme artınca panel sayısını artırır',
   async () => {
-    await goto('/araclar/mosaic');
+    await goto('/araclar/kadraj/mozaik');
 
     // 250mm ön ayarında kadraj 5°'yi aşıyor ve çoğu hedef tek kareye sığıyor;
     // panel bölünmesini görmek için uzun odak seçiliyor.
@@ -846,7 +846,7 @@ const shotRoutes = [
   '/',
   '/galeri',
   '/etkinlikler',
-  '/araclar/mosaic',
+  '/araclar/kadraj/mozaik',
   '/forum',
 ];
 const shotWidths = [390, 1024, 1440];
