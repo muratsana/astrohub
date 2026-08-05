@@ -128,12 +128,14 @@ function normalize(row: Record<string, unknown>): ClubView | null {
   const photoPaths = Array.isArray(row.photo_paths)
     ? row.photo_paths.map(metin).filter(Boolean).slice(0, 3)
     : [];
-  const photos = photoPaths
+  const uploadedPhotos = photoPaths
     .map((path, i) => {
       const url = clubPhotoUrl(path);
       return url ? { url, alt: `${name} fotoğrafı ${i + 1}` } : null;
     })
     .filter((p): p is { url: string; alt: string } => p !== null);
+  const seedPhotos = seedClubs.find((c) => c.slug === slug)?.photos ?? [];
+  const photos = uploadedPhotos.length > 0 ? uploadedPhotos : seedPhotos;
 
   return {
     slug,

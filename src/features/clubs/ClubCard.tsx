@@ -30,12 +30,12 @@ export function ClubCard({
     <ContentCard
       to={`/topluluk/${club.slug}`}
       variant={variant}
-      className={variant === 'grid' ? undefined : 'items-start'}
+      className={variant === 'grid' ? undefined : 'items-stretch'}
     >
       <ContentCardMedia
         variant={variant}
         ratio="standard"
-        className={variant === 'list' ? 'mt-0' : undefined}
+        className={variant === 'list' ? 'mt-0 self-start' : undefined}
       >
         <RemoteImage
           src={club.photos?.[0]?.url}
@@ -51,7 +51,7 @@ export function ClubCard({
       <ContentCardBody
         className={cn(
           'p-0',
-          variant === 'grid' ? 'px-2.5 py-2' : 'min-h-24 py-0'
+          variant === 'grid' ? 'px-2.5 py-2' : 'min-h-28 py-0'
         )}
       >
         <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
@@ -61,11 +61,14 @@ export function ClubCard({
           <span className="label">{club.city}</span>
         </div>
 
-        {variant === 'grid' && (
-          <p className="mt-1.5 line-clamp-3 text-body-sm leading-relaxed text-muted-foreground">
-            {club.summary}
-          </p>
-        )}
+        <p
+          className={cn(
+            'mt-1.5 text-body-sm leading-relaxed text-muted-foreground',
+            variant === 'grid' ? 'line-clamp-3' : 'line-clamp-2'
+          )}
+        >
+          {club.summary}
+        </p>
 
         <ContentCardMeta className="mt-1.5 text-faint">
           {club.foundedOn

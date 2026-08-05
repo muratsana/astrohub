@@ -13,6 +13,8 @@
  * ziyaretçinin boşuna yola çıkması demek.
  */
 
+import { commonsImage } from '../../lib/commons';
+
 export type ClubKind = 'dernek' | 'universite' | 'gozlem-grubu';
 
 export const clubKindLabels: Record<ClubKind, string> = {
@@ -48,6 +50,10 @@ export interface ClubPhoto {
   url: string;
   alt: string;
 }
+
+const cover = (fileName: string, alt: string): ClubPhoto[] => [
+  { url: commonsImage(fileName, 900), alt },
+];
 
 export interface AstronomyClub {
   slug: string;
@@ -94,6 +100,10 @@ export const clubs: AstronomyClub[] = [
     publicEvents: true,
     sharedEquipment: true,
     organizerName: 'Antalya Astronomi Derneği',
+    photos: cover(
+      'TUG_full_site.jpg',
+      'Antalya astronomi topluluğu için gözlemevi ve gece gökyüzü kapak görseli'
+    ),
     source: { name: 'Dernek duyuruları', lastVerifiedAt: '2026-07-10' },
   },
   {
@@ -112,6 +122,10 @@ export const clubs: AstronomyClub[] = [
     publicEvents: true,
     sharedEquipment: true,
     organizerName: 'Ege Üniversitesi Astronomi Kulübü',
+    photos: cover(
+      'North America Nebula (NGC7000) in Hubble Palette.jpg',
+      'Ege Üniversitesi Astronomi Kulübü astrofotoğraf kapak görseli'
+    ),
     source: { name: 'Kulüp duyurusu', lastVerifiedAt: '2026-07-01' },
   },
   {
@@ -129,6 +143,10 @@ export const clubs: AstronomyClub[] = [
     publicEvents: true,
     sharedEquipment: false,
     organizerName: 'Ankara Astrofotoğraf Grubu',
+    photos: cover(
+      'Andromeda galaxy.jpg',
+      'Ankara Astrofotoğraf Grubu derin uzay kapak görseli'
+    ),
     source: { name: 'Topluluk paylaşımı', lastVerifiedAt: '2026-07-15' },
   },
   {
@@ -144,6 +162,10 @@ export const clubs: AstronomyClub[] = [
     publicEvents: true,
     sharedEquipment: true,
     organizerName: 'Bursa Astronomi Derneği',
+    photos: cover(
+      'Rosette Nebula NGC 2237 - C49.png',
+      'Bursa Astronomi Derneği gözlem ve astrofotoğraf kapak görseli'
+    ),
     source: { name: 'Dernek duyurusu', lastVerifiedAt: '2026-07-19' },
   },
   {
@@ -162,6 +184,10 @@ export const clubs: AstronomyClub[] = [
     publicEvents: true,
     sharedEquipment: false,
     organizerName: 'Erciyes Astronomi Kulübü',
+    photos: cover(
+      'NGC 6302 Hubble 2009.full.jpg',
+      'Erciyes Astronomi Kulübü derin uzay kapak görseli'
+    ),
     source: { name: 'Kulüp duyurusu', lastVerifiedAt: '2026-07-18' },
   },
   {
@@ -179,6 +205,10 @@ export const clubs: AstronomyClub[] = [
     publicEvents: true,
     sharedEquipment: true,
     organizerName: 'Kapadokya Gökbilim Topluluğu',
+    photos: cover(
+      'NGC 6888.png',
+      'Kapadokya Gökbilim Topluluğu astrofotoğraf kapak görseli'
+    ),
     source: { name: 'Organizatör bildirimi', lastVerifiedAt: '2026-07-20' },
   },
 ];

@@ -171,6 +171,14 @@ describe('toClubs', () => {
     expect(list[0]!.slug).toBe('antalya-astronomi-dernegi');
   });
 
+  it('veritabanı satırında fotoğraf yoksa kod tohumundaki kapak kullanılıyor', () => {
+    const slug = 'antalya-astronomi-dernegi';
+    const list = toClubs([row({ slug, photo_paths: [] })]);
+    expect(list[0]!.photos).toEqual(
+      seedClubs.find((c) => c.slug === slug)!.photos
+    );
+  });
+
   it('listeden çıkarılan kulüp çizilmiyor', () => {
     const list = toClubs([row(), row({ slug: 'gizli', listed: false })]);
     expect(list.map((c) => c.slug)).toEqual(['ornek-kulup']);
