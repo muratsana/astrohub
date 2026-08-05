@@ -538,7 +538,7 @@ export function EventMapPage() {
                               <div className="min-w-0">
                                 <Link
                                   to={`/etkinlik/${item.slug}`}
-                                  className="block truncate text-caption text-foreground transition-colors hover:text-primary"
+                                  className="flex min-h-8 items-center truncate text-caption text-foreground transition-colors hover:text-primary"
                                 >
                                   {item.title}
                                 </Link>
