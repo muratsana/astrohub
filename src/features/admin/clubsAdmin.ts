@@ -1,58 +1,41 @@
-import { getSupabase } from '@/services/supabase/client';
 import { sanitizeText } from '@/lib/sanitize';
+import { getSupabase } from '@/services/supabase/client';
+import {
+  createClubRecord,
+  validateClubDraft,
+  type ClubDraft,
+} from '@/services/clubs/submission';
+import { clubTopicLabels, type ClubTopic } from '@/features/clubs/data';
 
-/**
- * KULÜP DİZİNİ YÖNETİMİ — veri katmanı (§14.7).
- *
- * ══════════════════════════════════════════════════════════════════════
- * NEDEN `records.ts`E EKLENMEDİ
- *
- * `records.ts` KULLANICININ ürettiği kayıtları yönetiyor: sahibi olan,
- * durumu olan, moderasyondan geçen şeyler. Kulüp kaydı bunların hiçbiri
- * değil — dizin EDİTORYAL bir kaynak, kaydı site ekibi giriyor. Aynı
- * bileşene sıkıştırmak, orada anlamı olmayan bir "sahip" sütunu taşımak
- * ve "yayımla/reddet" gibi bu kayda uymayan bir durum makinesi
- * varsaymak demekti.
- *
- * ══════════════════════════════════════════════════════════════════════
- * İKİ AYRI "DOĞRULAMA" — İKİ AYRI İŞLEM
- *
- *   `verify` / `unverify`  → KULÜBÜN KENDİSİ. Yöneticiyle iletişim
- *                            kuruldu, kulübün gerçek ve aktif olduğu
- *                            teyit edildi. Rozet bunu gösterir.
- *   `saveInfo`             → BİLGİNİN tazeliği (`infoCheckedOn`) ve
- *                            iletişim alanları.
- *
- * Birincisi bir GÜVEN ifadesi, ikincisi bir TAZELİK ölçüsü. Tek bir
- * "kaydet" düğmesine bağlasaydık, bir telefon numarasını düzelten
- * yönetici farkında olmadan kulübü "doğrulanmış" ilan edebilirdi.
- *
- * `verified_by` KULLANICI TARAFINDAN GÖNDERİLMİYOR: `verify` yalnızca
- * damgayı ve doğrulayanın kimliğini yazıyor ve kimlik oturumdan
- * geliyor. İstemcinin yazdığı bir "kim doğruladı" alanı, denetim
- * kaydında güvenilmez bir satır olurdu.
- *
- * ══════════════════════════════════════════════════════════════════════
- * SİLME YOK, LİSTEDEN ÇIKARMA VAR
- *
- * Kapanmış ya da yanlış girilmiş bir kulübü silmek, aynı kulüp tekrar
- * eklendiğinde geçmişini (doğrulama tarihi, kaynak) sıfırlardı.
- * `listed = false` kaydı ziyaretçiden gizliyor, yöneticide bırakıyor —
- * geri açmak tek tıklık iş.
- */
+export type ClubStatus = 'pending' | 'published' | 'rejected';
 
 export interface AdminClub {
   slug: string;
   name: string;
   kind: string;
   city: string;
+  foundedOn: string | null;
+  place: string | null;
+  topics: ClubTopic[];
+  summary: string;
+  publicEvents: boolean;
+  sharedEquipment: boolean;
   website: string | null;
   contactEmail: string | null;
   joinUrl: string | null;
+  socialUrl: string | null;
+  whatsappUrl: string | null;
+  photoPaths: string[];
   sourceName: string | null;
   infoCheckedOn: string | null;
   verifiedAt: string | null;
   listed: boolean;
+  status: ClubStatus;
+  submittedBy: string | null;
+}
+
+export interface ClubInfoDraft extends ClubDraft {
+  joinUrl: string;
 }
 
 async function client() {
@@ -61,23 +44,42 @@ async function client() {
   return promise;
 }
 
-/* TEK PARÇA DİZE — parçalara bölünmüş bir seçim listesi Supabase'in
-   dönüş tipini çıkaramamasına ve satırların `any`ye düşmesine yol açıyor. */
 const SELECT =
-  'slug, name, kind, city, website, contact_email, join_url, source_name, info_checked_on, verified_at, listed';
+  'slug, name, kind, city, founded_on, place, topics, summary, public_events, ' +
+  'shared_equipment, website, contact_email, join_url, social_url, whatsapp_url, ' +
+  'photo_paths, source_name, info_checked_on, verified_at, listed, status, submitted_by';
 
 interface Row {
   slug: string;
   name: string;
   kind: string;
   city: string;
+  founded_on: string | null;
+  place: string | null;
+  topics: string[] | null;
+  summary: string;
+  public_events: boolean;
+  shared_equipment: boolean;
   website: string | null;
   contact_email: string | null;
   join_url: string | null;
+  social_url: string | null;
+  whatsapp_url: string | null;
+  photo_paths: string[] | null;
   source_name: string | null;
   info_checked_on: string | null;
   verified_at: string | null;
   listed: boolean;
+  status: string | null;
+  submitted_by: string | null;
+}
+
+function status(raw: string | null): ClubStatus {
+  return raw === 'pending' || raw === 'rejected' ? raw : 'published';
+}
+
+function topics(raw: string[] | null): ClubTopic[] {
+  return (raw ?? []) as ClubTopic[];
 }
 
 function toAdminClub(r: Row): AdminClub {
@@ -86,68 +88,124 @@ function toAdminClub(r: Row): AdminClub {
     name: r.name,
     kind: r.kind,
     city: r.city,
+    foundedOn: r.founded_on,
+    place: r.place,
+    topics: topics(r.topics),
+    summary: r.summary,
+    publicEvents: r.public_events,
+    sharedEquipment: r.shared_equipment,
     website: r.website,
     contactEmail: r.contact_email,
     joinUrl: r.join_url,
+    socialUrl: r.social_url,
+    whatsappUrl: r.whatsapp_url,
+    photoPaths: r.photo_paths ?? [],
     sourceName: r.source_name,
     infoCheckedOn: r.info_checked_on,
     verifiedAt: r.verified_at,
     listed: r.listed,
+    status: status(r.status),
+    submittedBy: r.submitted_by,
   };
 }
 
-/** Dizinin tamamı — listeden çıkarılanlar dâhil (RLS yöneticiye açıyor). */
-export async function fetchAdminClubs(): Promise<AdminClub[]> {
-  const supabase = await client();
-  const { data, error } = await supabase
-    .from('clubs')
-    .select(SELECT)
-    .order('name');
-  if (error) throw new Error(error.message);
-  return ((data ?? []) as Row[]).map(toAdminClub);
+export function draftFromClub(club: AdminClub): ClubInfoDraft {
+  return {
+    name: club.name,
+    kind: club.kind as ClubInfoDraft['kind'],
+    city: club.city,
+    foundedOn: club.foundedOn ?? '',
+    place: club.place ?? '',
+    topics: club.topics,
+    summary: club.summary,
+    contactEmail: club.contactEmail ?? '',
+    website: club.website ?? '',
+    socialUrl: club.socialUrl ?? '',
+    whatsappUrl: club.whatsappUrl ?? '',
+    joinUrl: club.joinUrl ?? '',
+    publicEvents: club.publicEvents,
+    sharedEquipment: club.sharedEquipment,
+    sourceName: club.sourceName ?? '',
+    infoCheckedOn: club.infoCheckedOn ?? '',
+  };
 }
 
-export interface ClubInfoDraft {
-  website: string;
-  contactEmail: string;
-  joinUrl: string;
-  sourceName: string;
-  infoCheckedOn: string;
+export function emptyClubDraft(): ClubInfoDraft {
+  return {
+    name: '',
+    kind: 'dernek',
+    city: 'İstanbul',
+    foundedOn: '',
+    place: '',
+    topics: [],
+    summary: '',
+    contactEmail: '',
+    website: '',
+    socialUrl: '',
+    whatsappUrl: '',
+    joinUrl: '',
+    publicEvents: true,
+    sharedEquipment: false,
+    sourceName: '',
+    infoCheckedOn: new Date().toISOString().slice(0, 10),
+  };
 }
 
-/**
- * Girdiyi kaydetmeden önceki sorun — boşsa kaydedilebilir.
- *
- * SAF FONKSİYON: ekranı açmadan test edilebiliyor. Veritabanı kısıtları
- * aynı kuralları zaten tutuyor; buradaki kapı, kullanıcının hatasını
- * PostgREST hata metni yerine anlaşılır bir cümleyle söylemek için var.
- */
-export function describeClubInfoProblem(draft: ClubInfoDraft): string | null {
-  const https = (v: string) => !v || /^https:\/\/[A-Za-z0-9.-]+(\/\S*)?$/.test(v);
-  if (!https(draft.website)) return 'Web adresi `https://` ile başlamalı.';
-  if (!https(draft.joinUrl)) return 'Katılım bağlantısı `https://` ile başlamalı.';
+export function describeClubInfoProblem(
+  draft: ClubInfoDraft,
+  photos: { size: number; type: string }[] = []
+): string | null {
+  const problem = validateClubDraft(draft, photos);
+  if (problem) return problem;
   if (
-    draft.contactEmail &&
-    !/^[^@\s]+@[^@\s]+\.[A-Za-z]{2,}$/.test(draft.contactEmail)
+    draft.joinUrl &&
+    !/^https:\/\/[A-Za-z0-9.-]+(\/\S*)?$/.test(draft.joinUrl)
   ) {
-    return 'E-posta adresi geçerli görünmüyor.';
+    return 'Katılım bağlantısı `https://` ile başlamalı.';
   }
   if (draft.infoCheckedOn && !/^\d{4}-\d{2}-\d{2}$/.test(draft.infoCheckedOn)) {
     return 'Kontrol tarihi YYYY-AA-GG biçiminde olmalı.';
   }
-  if (draft.infoCheckedOn && draft.infoCheckedOn > bugun()) {
-    /* İleri tarihli "kontrol edildi", ziyaretçiye olmamış bir işi
-       olmuş gibi gösterirdi. */
+  if (
+    draft.infoCheckedOn &&
+    draft.infoCheckedOn > new Date().toISOString().slice(0, 10)
+  ) {
     return 'Kontrol tarihi gelecekte olamaz.';
   }
   return null;
 }
 
-function bugun(): string {
-  return new Date().toISOString().slice(0, 10);
+export async function fetchAdminClubs(): Promise<AdminClub[]> {
+  const supabase = await client();
+  const { data, error } = await supabase
+    .from('clubs')
+    .select(SELECT)
+    .order('status', { ascending: true })
+    .order('name');
+  if (error) throw new Error(error.message);
+  return ((data ?? []) as unknown as Row[]).map(toAdminClub);
 }
 
-/** İletişim ve güncellik alanlarını yazar — doğrulamaya DOKUNMAZ. */
+export async function createAdminClub(
+  draft: ClubInfoDraft,
+  photos: File[]
+): Promise<void> {
+  const supabase = await client();
+  const { data: auth } = await supabase.auth.getUser();
+  const userId = auth.user?.id;
+  if (!userId) throw new Error('Topluluk eklemek için oturum gerekiyor.');
+
+  await createClubRecord(
+    {
+      ...draft,
+      userId,
+      photos,
+      sourceName: draft.sourceName || 'Admin girişi',
+    },
+    { status: 'published', listed: true }
+  );
+}
+
 export async function saveClubInfo(
   slug: string,
   draft: ClubInfoDraft
@@ -159,9 +217,25 @@ export async function saveClubInfo(
   const { error } = await supabase
     .from('clubs')
     .update({
+      name: sanitizeText(draft.name, { maxLength: 120 }),
+      kind: draft.kind,
+      city: sanitizeText(draft.city, { maxLength: 80 }),
+      founded_on: draft.foundedOn,
+      founded_year: Number(draft.foundedOn.slice(0, 4)),
+      place: sanitizeText(draft.place, { maxLength: 160 }),
+      topics: draft.topics,
+      activities: draft.topics.map((topic) => clubTopicLabels[topic]),
+      summary: sanitizeText(draft.summary, {
+        multiline: true,
+        maxLength: 4000,
+      }),
+      public_events: draft.publicEvents,
+      shared_equipment: draft.sharedEquipment,
       website: draft.website.trim() || null,
       contact_email: draft.contactEmail.trim() || null,
       join_url: draft.joinUrl.trim() || null,
+      social_url: draft.socialUrl.trim() || null,
+      whatsapp_url: draft.whatsappUrl.trim() || null,
       source_name: sanitizeText(draft.sourceName, { maxLength: 120 }) || null,
       info_checked_on: draft.infoCheckedOn || null,
     })
@@ -169,32 +243,43 @@ export async function saveClubInfo(
   if (error) throw new Error(error.message);
 }
 
-/**
- * Kulübü doğrulanmış işaretler.
- *
- * `verified_by` OTURUMDAN geliyor, formdan değil: rozetin arkasındaki
- * "kim onayladı" bilgisi istemcinin yazabileceği bir şey olmamalı.
- */
-export async function verifyClub(slug: string): Promise<void> {
+async function reviewerId(): Promise<string> {
   const supabase = await client();
-  const { data: oturum } = await supabase.auth.getUser();
-  const kimlik = oturum.user?.id;
-  if (!kimlik) throw new Error('Doğrulama için oturum gerekiyor.');
+  const { data } = await supabase.auth.getUser();
+  const id = data.user?.id;
+  if (!id) throw new Error('Bu işlem için oturum gerekiyor.');
+  return id;
+}
 
+export async function setClubStatus(
+  slug: string,
+  next: ClubStatus
+): Promise<void> {
+  const id = await reviewerId();
+  const supabase = await client();
   const { error } = await supabase
     .from('clubs')
-    .update({ verified_at: new Date().toISOString(), verified_by: kimlik })
+    .update({
+      status: next,
+      listed: next === 'published',
+      reviewed_at: new Date().toISOString(),
+      reviewed_by: id,
+      rejection_reason: null,
+    })
     .eq('slug', slug);
   if (error) throw new Error(error.message);
 }
 
-/**
- * Doğrulamayı geri alır.
- *
- * İKİ ALAN BİRLİKTE SIFIRLANIYOR: tabloda `clubs_verified_pair` kısıtı
- * ikisinin birlikte dolu ya da birlikte boş olmasını şart koşuyor.
- * Yalnız `verified_at`i boşaltmak veritabanından hata dönerdi.
- */
+export async function verifyClub(slug: string): Promise<void> {
+  const id = await reviewerId();
+  const supabase = await client();
+  const { error } = await supabase
+    .from('clubs')
+    .update({ verified_at: new Date().toISOString(), verified_by: id })
+    .eq('slug', slug);
+  if (error) throw new Error(error.message);
+}
+
 export async function unverifyClub(slug: string): Promise<void> {
   const supabase = await client();
   const { error } = await supabase
@@ -204,12 +289,14 @@ export async function unverifyClub(slug: string): Promise<void> {
   if (error) throw new Error(error.message);
 }
 
-/** Dizinden çıkarır ya da geri açar (moderasyon). */
 export async function setClubListed(
   slug: string,
   listed: boolean
 ): Promise<void> {
   const supabase = await client();
-  const { error } = await supabase.from('clubs').update({ listed }).eq('slug', slug);
+  const { error } = await supabase
+    .from('clubs')
+    .update({ listed })
+    .eq('slug', slug);
   if (error) throw new Error(error.message);
 }

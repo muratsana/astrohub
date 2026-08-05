@@ -20,14 +20,18 @@ import { citiesOf, DEFAULT_CLUBS, toClubs } from './clubsSource';
  */
 
 const sql = readFileSync(
-  resolve(process.cwd(), 'supabase/migrations/0067_kulup_dizini_ve_dogrulama.sql'),
+  resolve(
+    process.cwd(),
+    'supabase/migrations/0067_kulup_dizini_ve_dogrulama.sql'
+  ),
   'utf8'
 );
 
 /** `insert ... (` ile `)\nvalues` arasındaki sütun listesi. */
 const sutunlar = sql
   .slice(
-    sql.indexOf('insert into public.clubs (') + 'insert into public.clubs ('.length,
+    sql.indexOf('insert into public.clubs (') +
+      'insert into public.clubs ('.length,
     sql.indexOf('\n)\nvalues')
   )
   .replace(/\/\*[\s\S]*?\*\//g, ' ')
@@ -63,7 +67,9 @@ describe('0067 tohumu `data.ts` ile hizalı', () => {
   it('tohumda fazladan kulüp yok', () => {
     /* Ters yön: göç dosyasına kodda karşılığı olmayan bir kulüp
        eklenirse dizinde düzenlenemeyen bir kayıt olurdu. */
-    const slugler = [...tohum.matchAll(/\n {2}\('([a-z0-9-]+)'/g)].map((m) => m[1]);
+    const slugler = [...tohum.matchAll(/\n {2}\('([a-z0-9-]+)'/g)].map(
+      (m) => m[1]
+    );
     expect(slugler.sort()).toEqual(seedClubs.map((c) => c.slug).sort());
   });
 
@@ -83,7 +89,9 @@ describe('0067 tohumu `data.ts` ile hizalı', () => {
     for (const c of seedClubs) {
       const s = satir(c.slug);
       expect(s, `${c.slug} kaynak`).toContain(`'${c.source.name}'`);
-      expect(s, `${c.slug} tarih`).toContain(`'${c.source.lastVerifiedAt}'::date`);
+      expect(s, `${c.slug} tarih`).toContain(
+        `'${c.source.lastVerifiedAt}'::date`
+      );
     }
   });
 
@@ -192,7 +200,8 @@ describe('toClubs', () => {
   it('doğrulama damgası okunuyor, yokluğu `null`', () => {
     expect(toClubs([row()])[0]!.verifiedAt).toBeNull();
     expect(
-      toClubs([row({ verified_at: '2026-08-01T09:00:00+00:00' })])[0]!.verifiedAt
+      toClubs([row({ verified_at: '2026-08-01T09:00:00+00:00' })])[0]!
+        .verifiedAt
     ).toBe('2026-08-01T09:00:00+00:00');
   });
 

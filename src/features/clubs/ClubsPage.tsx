@@ -5,6 +5,7 @@ import { Input, Select } from '@/components/ui/Input';
 import { CardGrid } from '@/components/ui/CardGrid';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ModuleToolbar } from '@/components/ui/ModuleToolbar';
+import { ButtonLink } from '@/components/ui/Button';
 import { useViewMode } from '@/components/ui/useViewMode';
 import {
   FilterCell,
@@ -70,6 +71,9 @@ export function ClubsPage() {
         <PageHeader
           title="Kulüpler ve Topluluklar"
           description="Dernekler, üniversite kulüpleri ve gözlem grupları. Teleskobunuz yoksa da katılabileceğiniz topluluklar için “ortak ekipman” filtresini açın."
+          actions={
+            <ButtonLink to="/topluluklar/ekle">Topluluğunu ekle</ButtonLink>
+          }
         />
 
         <ModuleToolbar
@@ -90,7 +94,11 @@ export function ClubsPage() {
           }}
           view={{ mode: view, onChange: setView }}
         >
-          <FilterCell label="Ara" htmlFor="club-search" className="lg:col-span-2">
+          <FilterCell
+            label="Ara"
+            htmlFor="club-search"
+            className="lg:col-span-2"
+          >
             <Input
               id="club-search"
               type="search"
@@ -165,7 +173,7 @@ export function ClubsPage() {
         {result.length === 0 ? (
           <EmptyState
             message="Eşleşen topluluk yok"
-            hint="Filtreleri gevşetmeyi deneyin. Listede olmayan bir topluluk biliyorsanız etkinlik bildirimi üzerinden iletebilirsiniz."
+            hint="Filtreleri gevşetmeyi deneyin. Listede olmayan bir topluluk biliyorsanız “Topluluğunu ekle” formuyla onaya gönderebilirsiniz."
           />
         ) : (
           <CardGrid view={view}>

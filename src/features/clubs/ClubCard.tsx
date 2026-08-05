@@ -4,8 +4,9 @@ import {
   ContentCardMeta,
   ContentCardTitle,
 } from '@/components/ui/ContentCard';
+import { RemoteImage } from '@/components/media/RemoteImage';
 import { cn } from '@/lib/cn';
-import { clubKindLabels } from './data';
+import { clubKindLabels, clubTopicLabels } from './data';
 import type { ClubView } from './clubsSource';
 
 /**
@@ -31,6 +32,25 @@ export function ClubCard({
         variant === 'list' && 'sm:flex-row sm:items-center sm:gap-3'
       )}
     >
+      {club.photos?.[0] && (
+        <div
+          className={cn(
+            'relative overflow-hidden rounded-card border border-border bg-surface-2',
+            variant === 'list'
+              ? 'aspect-[4/3] w-full sm:w-32'
+              : 'aspect-[16/9] w-full'
+          )}
+        >
+          <RemoteImage
+            src={club.photos[0].url}
+            alt={club.photos[0].alt}
+            seed={club.slug}
+            sizes={
+              variant === 'list' ? '128px' : '(min-width: 1024px) 260px, 100vw'
+            }
+          />
+        </div>
+      )}
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
           <ContentCardTitle lines={2} className="font-medium leading-snug">
@@ -46,7 +66,11 @@ export function ClubCard({
         )}
 
         <ContentCardMeta className="mt-1.5 text-faint">
-          {club.foundedYear ? `${club.foundedYear} kuruluş` : 'kuruluş bilinmiyor'}
+          {club.foundedOn
+            ? `${new Date(club.foundedOn).toLocaleDateString('tr-TR')} kuruluş`
+            : club.foundedYear
+              ? `${club.foundedYear} kuruluş`
+              : 'kuruluş bilinmiyor'}
           {club.memberCount ? ` · ${club.memberCount} üye` : ''}
         </ContentCardMeta>
       </div>
@@ -57,6 +81,11 @@ export function ClubCard({
           {/* Doğrulama rozeti önde: ziyaretçinin kartta aradığı ilk şey
               "bu kayıt teyitli mi". */}
           {club.verifiedAt && <Badge tone="success">Doğrulanmış</Badge>}
+          {club.topics?.slice(0, 2).map((topic) => (
+            <Badge key={topic} tone="cold">
+              {clubTopicLabels[topic]}
+            </Badge>
+          ))}
           {club.publicEvents && <Badge>Halka açık</Badge>}
           {club.sharedEquipment && <Badge tone="cold">Ortak ekipman</Badge>}
         </div>

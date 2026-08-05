@@ -11,26 +11,36 @@ import { describeClubInfoProblem, type ClubInfoDraft } from './clubsAdmin';
  * mesajın çıkıp çıkmadığı, kaydın engellenip engellenmediği değil.
  */
 
-const bos: ClubInfoDraft = {
+const gecerli: ClubInfoDraft = {
+  name: 'Örnek Astronomi Derneği',
+  kind: 'dernek',
+  city: 'Ankara',
+  foundedOn: '2020-01-15',
+  place: 'Ankara',
+  topics: ['amator-astronomi'],
+  summary:
+    'Ankara çevresinde halka açık gözlem etkinlikleri düzenleyen topluluk.',
   website: '',
-  contactEmail: '',
+  contactEmail: 'bilgi@ornek.org.tr',
   joinUrl: '',
   sourceName: '',
   infoCheckedOn: '',
+  socialUrl: '',
+  whatsappUrl: '',
+  publicEvents: true,
+  sharedEquipment: false,
 };
 
 describe('describeClubInfoProblem', () => {
-  it('boş taslak kaydedilebilir', () => {
-    /* Alanların hepsi isteğe bağlı: dizin, iletişim bilgisi olmayan
-       kulüpleri de taşıyor. */
-    expect(describeClubInfoProblem(bos)).toBeNull();
+  it('geçerli taslak kaydedilebilir', () => {
+    expect(describeClubInfoProblem(gecerli)).toBeNull();
   });
 
   it('geçerli değerler kabul ediliyor', () => {
     expect(
       describeClubInfoProblem({
+        ...gecerli,
         website: 'https://ornek.org.tr',
-        contactEmail: 'bilgi@ornek.org.tr',
         joinUrl: 'https://ornek.org.tr/katil',
         sourceName: 'Dernek duyurusu',
         infoCheckedOn: '2026-01-15',
@@ -41,23 +51,23 @@ describe('describeClubInfoProblem', () => {
   it('http adres reddediliyor', () => {
     /* Dizin dışarı bağlantı veriyor; şifresiz bir adrese yönlendirmek
        ziyaretçiyi araya girilebilir bir bağlantıya taşımak olurdu. */
-    expect(describeClubInfoProblem({ ...bos, website: 'http://ornek.org.tr' })).toMatch(
-      /https/
-    );
     expect(
-      describeClubInfoProblem({ ...bos, joinUrl: 'javascript:alert(1)' })
+      describeClubInfoProblem({ ...gecerli, website: 'http://ornek.org.tr' })
+    ).toMatch(/https/);
+    expect(
+      describeClubInfoProblem({ ...gecerli, joinUrl: 'javascript:alert(1)' })
     ).toMatch(/https/);
   });
 
   it('biçimsiz e-posta reddediliyor', () => {
     expect(
-      describeClubInfoProblem({ ...bos, contactEmail: 'bilgi(at)ornek' })
-    ).toMatch(/E-posta/);
+      describeClubInfoProblem({ ...gecerli, contactEmail: 'bilgi(at)ornek' })
+    ).toMatch(/e-postası/);
   });
 
   it('bozuk tarih reddediliyor', () => {
     expect(
-      describeClubInfoProblem({ ...bos, infoCheckedOn: '15.01.2026' })
+      describeClubInfoProblem({ ...gecerli, infoCheckedOn: '15.01.2026' })
     ).toMatch(/YYYY-AA-GG/);
   });
 
@@ -67,13 +77,15 @@ describe('describeClubInfoProblem', () => {
     const gelecek = new Date(Date.now() + 86_400_000 * 3)
       .toISOString()
       .slice(0, 10);
-    expect(describeClubInfoProblem({ ...bos, infoCheckedOn: gelecek })).toMatch(
-      /gelecekte/
-    );
+    expect(
+      describeClubInfoProblem({ ...gecerli, infoCheckedOn: gelecek })
+    ).toMatch(/gelecekte/);
   });
 
   it('bugün kabul ediliyor', () => {
     const bugun = new Date().toISOString().slice(0, 10);
-    expect(describeClubInfoProblem({ ...bos, infoCheckedOn: bugun })).toBeNull();
+    expect(
+      describeClubInfoProblem({ ...gecerli, infoCheckedOn: bugun })
+    ).toBeNull();
   });
 });

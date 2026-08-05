@@ -7,11 +7,12 @@ import { Badge } from '@/components/ui/Badge';
 import { ButtonLink } from '@/components/ui/Button';
 import { NotFoundPage } from '@/components/NotFoundPage';
 import { ExternalLink } from '@/components/ExternalLink';
+import { RemoteImage } from '@/components/media/RemoteImage';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd, absoluteUrl } from '@/lib/seo';
 import { events } from '@/features/events/data';
 import { eventTypeLabels } from '@/features/events/types';
-import { clubKindLabels } from './data';
+import { clubKindLabels, clubTopicLabels } from './data';
 import { useClub } from './clubsSource';
 import { cityPathForName } from '@/features/city/routes';
 
@@ -69,7 +70,11 @@ export function ClubDetailPage() {
     name: club.name,
     description: club.summary,
     url: absoluteUrl(`/topluluk/${club.slug}`),
-    ...(club.foundedYear ? { foundingDate: String(club.foundedYear) } : {}),
+    ...(club.foundedOn
+      ? { foundingDate: club.foundedOn }
+      : club.foundedYear
+        ? { foundingDate: String(club.foundedYear) }
+        : {}),
     address: {
       '@type': 'PostalAddress',
       addressLocality: club.city,
@@ -106,6 +111,11 @@ export function ClubDetailPage() {
             <>
               <Badge tone="primary">{clubKindLabels[club.kind]}</Badge>
               {club.verifiedAt && <Badge tone="success">Doğrulanmış</Badge>}
+              {club.topics?.map((topic) => (
+                <Badge key={topic} tone="cold">
+                  {clubTopicLabels[topic]}
+                </Badge>
+              ))}
               {club.publicEvents && <Badge>Halka açık</Badge>}
               {club.sharedEquipment && <Badge tone="cold">Ortak ekipman</Badge>}
             </>
@@ -114,6 +124,26 @@ export function ClubDetailPage() {
 
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
           <div className="space-y-4">
+            {club.photos && club.photos.length > 0 && (
+              <Panel title="Fotoğraflar" status={`${club.photos.length}`}>
+                <div className="grid gap-2 sm:grid-cols-3">
+                  {club.photos.map((photo, index) => (
+                    <div
+                      key={photo.url}
+                      className="aspect-[4/3] overflow-hidden rounded-card border border-border bg-surface-2"
+                    >
+                      <RemoteImage
+                        src={photo.url}
+                        alt={photo.alt}
+                        seed={`${club.slug}-${index}`}
+                        sizes="(min-width: 1024px) 260px, 100vw"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </Panel>
+            )}
+
             <Panel
               title="Yaklaşan etkinlikler"
               status={`${clubEvents.upcoming.length} kayıt`}
@@ -126,7 +156,10 @@ export function ClubDetailPage() {
               ) : (
                 <ul>
                   {clubEvents.upcoming.map((event) => (
-                    <li key={event.slug} className="border-b border-border last:border-0">
+                    <li
+                      key={event.slug}
+                      className="border-b border-border last:border-0"
+                    >
                       <Link
                         to={`/etkinlik/${event.slug}`}
                         className="group flex items-baseline justify-between gap-3 py-2.5"
@@ -136,11 +169,14 @@ export function ClubDetailPage() {
                             {event.title}
                           </span>
                           <span className="tabular mt-0.5 block text-meta text-muted-foreground">
-                            {new Date(event.startsAt).toLocaleDateString('tr-TR', {
-                              day: 'numeric',
-                              month: 'long',
-                              year: 'numeric',
-                            })}{' '}
+                            {new Date(event.startsAt).toLocaleDateString(
+                              'tr-TR',
+                              {
+                                day: 'numeric',
+                                month: 'long',
+                                year: 'numeric',
+                              }
+                            )}{' '}
                             · {event.venue}
                           </span>
                         </span>
@@ -153,10 +189,16 @@ export function ClubDetailPage() {
             </Panel>
 
             {clubEvents.past.length > 0 && (
-              <Panel title="Geçmiş etkinlikler" status={`${clubEvents.past.length}`}>
+              <Panel
+                title="Geçmiş etkinlikler"
+                status={`${clubEvents.past.length}`}
+              >
                 <ul>
                   {clubEvents.past.map((event) => (
-                    <li key={event.slug} className="border-b border-border last:border-0">
+                    <li
+                      key={event.slug}
+                      className="border-b border-border last:border-0"
+                    >
                       <Link
                         to={`/etkinlik/${event.slug}`}
                         className="flex items-baseline justify-between gap-3 py-2 text-muted-foreground transition-colors hover:text-primary"
@@ -182,12 +224,27 @@ export function ClubDetailPage() {
                 <SpecRow label="Şehir" value={club.city} />
                 <SpecRow
                   label="Kuruluş"
-                  value={club.foundedYear ? String(club.foundedYear) : '—'}
+                  value={
+                    club.foundedOn
+                      ? new Date(club.foundedOn).toLocaleDateString('tr-TR')
+                      : club.foundedYear
+                        ? String(club.foundedYear)
+                        : '—'
+                  }
+                  tone="muted"
+                />
+                <SpecRow
+                  label="Yer"
+                  value={club.place ?? club.city}
                   tone="muted"
                 />
                 <SpecRow
                   label="Üye sayısı"
-                  value={club.memberCount ? String(club.memberCount) : 'bildirilmemiş'}
+                  value={
+                    club.memberCount
+                      ? String(club.memberCount)
+                      : 'bildirilmemiş'
+                  }
                   tone="muted"
                 />
                 <SpecRow
@@ -206,6 +263,16 @@ export function ClubDetailPage() {
                     value={
                       <ExternalLink href={club.website} showHost>
                         Site
+                      </ExternalLink>
+                    }
+                  />
+                )}
+                {club.socialUrl && (
+                  <SpecRow
+                    label="Sosyal"
+                    value={
+                      <ExternalLink href={club.socialUrl} showHost>
+                        Sayfa
                       </ExternalLink>
                     }
                   />
@@ -232,6 +299,16 @@ export function ClubDetailPage() {
                     value={
                       <ExternalLink href={club.joinUrl} showHost>
                         Katılım formu
+                      </ExternalLink>
+                    }
+                  />
+                )}
+                {club.whatsappUrl && (
+                  <SpecRow
+                    label="WhatsApp"
+                    value={
+                      <ExternalLink href={club.whatsappUrl} showHost>
+                        Grup bağlantısı
                       </ExternalLink>
                     }
                   />
@@ -274,15 +351,17 @@ export function ClubDetailPage() {
                     <span className="text-foreground">
                       {new Date(club.verifiedAt).toLocaleDateString('tr-TR')}
                     </span>{' '}
-                    tarihinde <span className="text-foreground">doğrulandı</span>:
-                    kulüp yöneticisiyle iletişim kuruldu ve kaydın gerçek bir
+                    tarihinde{' '}
+                    <span className="text-foreground">doğrulandı</span>: kulüp
+                    yöneticisiyle iletişim kuruldu ve kaydın gerçek bir
                     topluluğa ait olduğu teyit edildi.
                   </>
                 ) : (
                   <>
-                    Bu kayıt <span className="text-foreground">doğrulanmadı</span>:
-                    kulüp yöneticisiyle henüz iletişim kurulmadı. Kaydın yanlış
-                    olduğu anlamına gelmez, teyit edilmediği anlamına gelir.
+                    Bu kayıt{' '}
+                    <span className="text-foreground">doğrulanmadı</span>: kulüp
+                    yöneticisiyle henüz iletişim kurulmadı. Kaydın yanlış olduğu
+                    anlamına gelmez, teyit edilmediği anlamına gelir.
                   </>
                 )}
               </p>

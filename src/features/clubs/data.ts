@@ -21,15 +21,46 @@ export const clubKindLabels: Record<ClubKind, string> = {
   'gozlem-grubu': 'Gözlem Grubu',
 };
 
+export type ClubTopic =
+  | 'amator-astronomi'
+  | 'astrofotografcilik'
+  | 'gozlem-etkinlikleri'
+  | 'egitim-atolye'
+  | 'bilimsel-calisma'
+  | 'radyo-astronomi'
+  | 'astro-kampcilik'
+  | 'gencler-cocuklar';
+
+export const clubTopicLabels: Record<ClubTopic, string> = {
+  'amator-astronomi': 'Amatör astronomi',
+  astrofotografcilik: 'Astrofotoğrafçılık',
+  'gozlem-etkinlikleri': 'Gözlem etkinlikleri',
+  'egitim-atolye': 'Eğitim / atölye',
+  'bilimsel-calisma': 'Bilimsel çalışmalar',
+  'radyo-astronomi': 'Radyo astronomi',
+  'astro-kampcilik': 'Astro kampçılık',
+  'gencler-cocuklar': 'Gençler / çocuklar',
+};
+
+export const clubTopicOrder = Object.keys(clubTopicLabels) as ClubTopic[];
+
+export interface ClubPhoto {
+  url: string;
+  alt: string;
+}
+
 export interface AstronomyClub {
   slug: string;
   name: string;
   kind: ClubKind;
   city: string;
+  foundedOn?: string;
+  place?: string;
   foundedYear?: number;
   /** Üye sayısı bildirilmişse; bildirilmemişse gösterilmez. */
   memberCount?: number;
   summary: string;
+  topics?: ClubTopic[];
   /** Kulübün düzenli olarak yaptığı işler. */
   activities: string[];
   /** Herkese açık etkinlik yapıyor mu? */
@@ -37,6 +68,9 @@ export interface AstronomyClub {
   /** Ekipman ödünç veriyor / ortak teleskobu var mı? */
   sharedEquipment: boolean;
   website?: string;
+  socialUrl?: string;
+  whatsappUrl?: string;
+  photos?: ClubPhoto[];
   /** Etkinlik verisindeki organizatör adı — kayıtlar bununla eşleşir. */
   organizerName?: string;
   source: { name: string; lastVerifiedAt: string };
@@ -120,7 +154,11 @@ export const clubs: AstronomyClub[] = [
     foundedYear: 2011,
     summary:
       'Erciyes yaylasındaki yüksek rakım ve kuru kış havasını kullanan kış gözlem kamplarıyla tanınır.',
-    activities: ['Kış gözlem kampı', 'Meteor sayımı', 'Gökyüzü tanıtım geceleri'],
+    activities: [
+      'Kış gözlem kampı',
+      'Meteor sayımı',
+      'Gökyüzü tanıtım geceleri',
+    ],
     publicEvents: true,
     sharedEquipment: false,
     organizerName: 'Erciyes Astronomi Kulübü',
@@ -133,7 +171,11 @@ export const clubs: AstronomyClub[] = [
     city: 'Nevşehir',
     summary:
       'Peribacaları çevresindeki düşük ışık kirliliğini turizmle birleştiren gözlem geceleri ve astrofoto atölyeleri düzenler.',
-    activities: ['Gözlem gecesi', 'Astrofoto atölyesi', 'Rehberli gökyüzü turu'],
+    activities: [
+      'Gözlem gecesi',
+      'Astrofoto atölyesi',
+      'Rehberli gökyüzü turu',
+    ],
     publicEvents: true,
     sharedEquipment: true,
     organizerName: 'Kapadokya Gökbilim Topluluğu',
@@ -205,7 +247,11 @@ export const facilities: Facility[] = [
     summary:
       'Kubbe gösterimleriyle gökyüzü tanıtımı yapan, okul grupları ve aileler için programlar düzenleyen planetaryum.',
     visiting: 'serbest',
-    highlights: ['Tam kubbe gösterim', 'Okul grupları için program', 'Teras gözlemi'],
+    highlights: [
+      'Tam kubbe gösterim',
+      'Okul grupları için program',
+      'Teras gözlemi',
+    ],
     source: { name: 'Kurum duyurusu', lastVerifiedAt: '2026-07-05' },
   },
   {
@@ -217,7 +263,11 @@ export const facilities: Facility[] = [
     summary:
       'Karadeniz bölgesinde kapalı hava riski yüksek olduğu için kubbe odaklı programlar yürütür; hava açıksa teras gözlemi eklenir.',
     visiting: 'serbest',
-    highlights: ['Kubbe gösterimi', 'Teras teleskop gözlemi', 'Atölye salonları'],
+    highlights: [
+      'Kubbe gösterimi',
+      'Teras teleskop gözlemi',
+      'Atölye salonları',
+    ],
     source: { name: 'Kurum duyurusu', lastVerifiedAt: '2026-07-16' },
   },
   {
@@ -229,7 +279,11 @@ export const facilities: Facility[] = [
     summary:
       'Çocuk ve aile odaklı astronomi atölyeleri, güvenli güneş gözlemi ve interaktif sergiler.',
     visiting: 'serbest',
-    highlights: ['Çocuk atölyeleri', 'Güvenli güneş gözlemi', 'İnteraktif sergi'],
+    highlights: [
+      'Çocuk atölyeleri',
+      'Güvenli güneş gözlemi',
+      'İnteraktif sergi',
+    ],
     source: { name: 'Kurum duyurusu', lastVerifiedAt: '2026-07-12' },
   },
   {

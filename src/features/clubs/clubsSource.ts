@@ -1,6 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { getSupabase, isSupabaseConfigured } from '@/services/supabase/client';
-import { clubs as seedClubs, type AstronomyClub, type ClubKind } from './data';
+import { clubPhotoUrl } from '@/services/clubs/photoUrl';
+import {
+  clubs as seedClubs,
+  clubTopicOrder,
+  type AstronomyClub,
+  type ClubKind,
+  type ClubTopic,
+} from './data';
 
 /**
  * KULÜP DİZİNİ — ZİYARETÇİ TARAFI OKUMASI (§14.7).
@@ -52,6 +59,7 @@ export interface ClubView extends AstronomyClub {
   verifiedAt: string | null;
   contactEmail?: string;
   joinUrl?: string;
+  status?: 'pending' | 'published' | 'rejected';
 }
 
 const KINDS: ClubKind[] = ['dernek', 'universite', 'gozlem-grubu'];
@@ -63,9 +71,10 @@ export const DEFAULT_CLUBS: ClubView[] = seedClubs.map((c) => ({
 }));
 
 const SELECT =
-  'slug, name, kind, city, founded_year, member_count, summary, activities, ' +
-  'public_events, shared_equipment, website, contact_email, join_url, ' +
-  'organizer_name, source_name, info_checked_on, verified_at, listed';
+  'slug, name, kind, city, founded_on, place, founded_year, member_count, summary, ' +
+  'topics, activities, public_events, shared_equipment, website, contact_email, ' +
+  'join_url, social_url, whatsapp_url, photo_paths, organizer_name, source_name, ' +
+  'info_checked_on, verified_at, listed, status';
 
 /**
  * Ham satırları dizin kayıtlarına çevirir.
@@ -78,7 +87,9 @@ const SELECT =
 export function toClubs(rows: unknown): ClubView[] {
   if (!Array.isArray(rows) || rows.length === 0) return DEFAULT_CLUBS;
 
-  const listelenen = rows.filter(isRow).filter((r) => r.listed !== false);
+  const listelenen = rows
+    .filter(isRow)
+    .filter((r) => r.listed !== false && durum(r.status) === 'published');
   /* Gelen satırların hepsi listeden çıkarılmışsa boş liste DOĞRU cevap:
      bu bir yönetici kararı, veri eksikliği değil. Böyle bir cevabı zaten
      yalnızca yönetici alır — ziyaretçiye o satırlar hiç gelmez. */
@@ -111,15 +122,30 @@ function normalize(row: Record<string, unknown>): ClubView | null {
   const uye = sayi(row.member_count);
   const website = metin(row.website);
   const katilim = metin(row.join_url);
+  const sosyal = metin(row.social_url);
+  const whatsapp = metin(row.whatsapp_url);
+  const topics = konuListesi(row.topics);
+  const photoPaths = Array.isArray(row.photo_paths)
+    ? row.photo_paths.map(metin).filter(Boolean).slice(0, 3)
+    : [];
+  const photos = photoPaths
+    .map((path, i) => {
+      const url = clubPhotoUrl(path);
+      return url ? { url, alt: `${name} fotoğrafı ${i + 1}` } : null;
+    })
+    .filter((p): p is { url: string; alt: string } => p !== null);
 
   return {
     slug,
     name,
     kind,
     city: metin(row.city) || 'Bilinmiyor',
+    ...(metin(row.founded_on) ? { foundedOn: metin(row.founded_on) } : {}),
+    ...(metin(row.place) ? { place: metin(row.place) } : {}),
     ...(yil !== null ? { foundedYear: yil } : {}),
     ...(uye !== null ? { memberCount: uye } : {}),
     summary: metin(row.summary),
+    ...(topics.length > 0 ? { topics } : {}),
     activities: Array.isArray(row.activities)
       ? row.activities.map(metin).filter(Boolean)
       : [],
@@ -127,7 +153,12 @@ function normalize(row: Record<string, unknown>): ClubView | null {
     sharedEquipment: row.shared_equipment === true,
     ...(guvenliAdres(website) ? { website } : {}),
     ...(guvenliAdres(katilim) ? { joinUrl: katilim } : {}),
-    ...(metin(row.contact_email) ? { contactEmail: metin(row.contact_email) } : {}),
+    ...(guvenliAdres(sosyal) ? { socialUrl: sosyal } : {}),
+    ...(guvenliWhatsapp(whatsapp) ? { whatsappUrl: whatsapp } : {}),
+    ...(photos.length > 0 ? { photos } : {}),
+    ...(metin(row.contact_email)
+      ? { contactEmail: metin(row.contact_email) }
+      : {}),
     ...(metin(row.organizer_name)
       ? { organizerName: metin(row.organizer_name) }
       : {}),
@@ -136,6 +167,7 @@ function normalize(row: Record<string, unknown>): ClubView | null {
       lastVerifiedAt: metin(row.info_checked_on),
     },
     verifiedAt: metin(row.verified_at) || null,
+    status: durum(row.status),
   };
 }
 
@@ -150,6 +182,18 @@ function sayi(v: unknown): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+function konuListesi(raw: unknown): ClubTopic[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map(metin)
+    .filter((v): v is ClubTopic => clubTopicOrder.includes(v as ClubTopic));
+}
+
+function durum(raw: unknown): 'pending' | 'published' | 'rejected' {
+  const value = metin(raw);
+  return value === 'pending' || value === 'rejected' ? value : 'published';
+}
+
 /**
  * Yalnızca `https` dış adres.
  *
@@ -159,6 +203,10 @@ function sayi(v: unknown): number | null {
  */
 function guvenliAdres(url: string): boolean {
   return /^https:\/\/[A-Za-z0-9.-]+(\/[^\s]*)?$/.test(url);
+}
+
+function guvenliWhatsapp(url: string): boolean {
+  return /^https:\/\/(chat\.whatsapp\.com|wa\.me)\/[^\s]+$/.test(url);
 }
 
 export interface ClubsResult {
@@ -201,7 +249,11 @@ export function useClubs(): ClubsResult {
            koddaki dizin zaten doğru bir cevap. Sayfanın altındaki not
            "veritabanından" demeyi bırakıyor, o kadar. */
         if (error) {
-          setState({ clubs: DEFAULT_CLUBS, loading: false, fromDatabase: false });
+          setState({
+            clubs: DEFAULT_CLUBS,
+            loading: false,
+            fromDatabase: false,
+          });
           return;
         }
 
@@ -212,7 +264,11 @@ export function useClubs(): ClubsResult {
         });
       } catch {
         if (active) {
-          setState({ clubs: DEFAULT_CLUBS, loading: false, fromDatabase: false });
+          setState({
+            clubs: DEFAULT_CLUBS,
+            loading: false,
+            fromDatabase: false,
+          });
         }
       }
     })();

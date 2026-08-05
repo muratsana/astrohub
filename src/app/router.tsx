@@ -215,6 +215,12 @@ export const appRoutes = [
         ),
       },
       {
+        path: 'topluluklar/ekle',
+        element: route(
+          named(() => import('@/features/clubs/NewClubPage'), 'NewClubPage')
+        ),
+      },
+      {
         path: 'topluluk/:slug',
         element: route(
           named(

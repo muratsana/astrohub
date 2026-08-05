@@ -629,6 +629,10 @@
       "destination": "/app.html"
     },
     {
+      "source": "/topluluklar/ekle",
+      "destination": "/app.html"
+    },
+    {
       "source": "/trabzon-astronomi-etkinlikleri",
       "destination": "/app.html"
     },

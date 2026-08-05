@@ -1,60 +1,44 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Panel } from '@/components/ui/Panel';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
+import { Input, Select } from '@/components/ui/Input';
 import { Alert } from '@/components/ui/Alert';
 import { Badge } from '@/components/ui/Badge';
+import { Field } from '@/components/ui/Field';
 import {
+  createAdminClub,
   describeClubInfoProblem,
+  draftFromClub,
+  emptyClubDraft,
   fetchAdminClubs,
   saveClubInfo,
   setClubListed,
+  setClubStatus,
   unverifyClub,
   verifyClub,
   type AdminClub,
   type ClubInfoDraft,
 } from './clubsAdmin';
+import {
+  clubKindLabels,
+  clubTopicLabels,
+  clubTopicOrder,
+  type ClubKind,
+  type ClubTopic,
+} from '@/features/clubs/data';
+import { cities as turkeyCities } from '@/features/location/cities';
+import { CLUB_PHOTO_LIMIT } from '@/services/clubs/submission';
 
-/**
- * KULÜP DİZİNİ — yönetim ekranı (§14.7).
- *
- * ══════════════════════════════════════════════════════════════════════
- * NEDEN BU EKRAN ZORUNLUYDU
- *
- * Faz 10'da aynı hata dört kez çıktı: tablo açıldı, panel yazdı,
- * ZİYARETÇİ OKUMADI. Buradaki hâli tersi olurdu — dizin okunuyor ama
- * yönetilemiyordu: `0067` öncesinde bir kulübün adresini düzeltmek
- * dağıtım almak demekti. Tablo açılıp bu ekran yazılmasaydı, §14.7'nin
- * "moderasyon" ve "güncellik doğrulaması" maddeleri yine kâğıt üstünde
- * kalırdı.
- *
- * ══════════════════════════════════════════════════════════════════════
- * DOĞRULAMA AYRI DÜĞMEDE, "KAYDET"İN İÇİNDE DEĞİL
- *
- * "Doğrula" bir GÜVEN ifadesi: kulüp yöneticisiyle iletişim kurulduğunu
- * ve kaydın gerçek olduğunu söylüyor. Bunu form kaydetmenin yan etkisi
- * yapsaydık, bir telefon numarasını düzelten yönetici farkında olmadan
- * kulübü doğrulanmış ilan ederdi. Ayrı düğme, ayrı karar.
- *
- * Aynı sebeple "son kontrol tarihi" formun içinde: o bir güven ifadesi
- * değil, bakım işi.
- *
- * ══════════════════════════════════════════════════════════════════════
- * YENİ KULÜP EKLEME BU EKRANDA YOK
- *
- * Dizine kulüp eklemek yalnızca bir satır yazmak değil: adın doğrulanması,
- * kaynağın kaydedilmesi ve slug'ın kalıcı seçilmesi gerekiyor — slug
- * adreste görünüyor (`/topluluk/...`) ve sonradan değiştirmek verilmiş
- * bağlantıları kırardı. Bugünkü dizin tohumla geliyor; ekleme akışı
- * yazılana kadar burada YARIM bir form göstermek, çalışmayan bir
- * düğmeden farksız olurdu.
- */
 export function ClubControl({ canWrite }: { canWrite: boolean }) {
   const [items, setItems] = useState<AdminClub[] | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [acik, setAcik] = useState<string | null>(null);
+  const [open, setOpen] = useState<string | null>(null);
   const [draft, setDraft] = useState<ClubInfoDraft | null>(null);
+  const [newDraft, setNewDraft] = useState<ClubInfoDraft>(() =>
+    emptyClubDraft()
+  );
+  const [newPhotos, setNewPhotos] = useState<File[]>([]);
 
   const load = useCallback(() => {
     setError(null);
@@ -81,49 +65,79 @@ export function ClubControl({ canWrite }: { canWrite: boolean }) {
     }
   }
 
-  function duzenle(club: AdminClub) {
-    setAcik(club.slug);
-    setDraft({
-      website: club.website ?? '',
-      contactEmail: club.contactEmail ?? '',
-      joinUrl: club.joinUrl ?? '',
-      sourceName: club.sourceName ?? '',
-      infoCheckedOn: club.infoCheckedOn ?? '',
-    });
+  function edit(club: AdminClub) {
+    setOpen(club.slug);
+    setDraft(draftFromClub(club));
   }
 
-  const dogrulanmis = items?.filter((c) => c.verifiedAt).length ?? 0;
-  /* Kaydetmeden önceki sorun ekranda yazıyor: PostgREST hata metni
-     yerine anlaşılır bir cümle. */
-  const sorun = draft ? describeClubInfoProblem(draft) : null;
+  const verified = items?.filter((c) => c.verifiedAt).length ?? 0;
+  const pending = items?.filter((c) => c.status === 'pending').length ?? 0;
+  const newProblem = describeClubInfoProblem(newDraft, newPhotos);
+  const editProblem = draft ? describeClubInfoProblem(draft) : null;
 
   return (
     <Panel
       title="Kulüp dizini"
       status={
-        items ? `${items.length} kayıt · ${dogrulanmis} doğrulanmış` : 'okunuyor…'
+        items
+          ? `${items.length} kayıt · ${pending} onay bekliyor · ${verified} doğrulanmış`
+          : 'okunuyor…'
       }
     >
       <p className="mb-3 text-meta leading-relaxed text-muted-foreground">
-        <strong className="text-foreground">İki ayrı doğrulama var.</strong>{' '}
-        <em>Doğrula</em> düğmesi KULÜBÜN KENDİSİNİ teyit eder — yöneticisiyle
-        iletişim kuruldu, kulüp gerçek ve aktif; ziyaretçi bunu rozet olarak
-        görür. <em>Son kontrol</em> tarihi ise BİLGİNİN tazeliğidir: adres,
-        iletişim ve etkinlik bilgisi en son ne zaman gözden geçirildi. Dizinden
-        çıkarılan kayıt silinmez, ziyaretçiden gizlenir.
+        Admin doğrudan yayımlanmış topluluk ekler. Kullanıcı gönderimleri
+        <em> onay bekliyor</em> durumunda gelir; onaylanmadan ziyaretçi
+        listesine düşmez.
       </p>
 
       {error && <Alert className="mb-3">{error}</Alert>}
 
+      {canWrite && (
+        <div className="mb-4 rounded-card border border-border p-3">
+          <h3 className="mb-3 text-caption font-medium text-foreground">
+            Yeni topluluk ekle
+          </h3>
+          <ClubForm
+            idPrefix="club-new"
+            draft={newDraft}
+            onChange={setNewDraft}
+            photos={newPhotos}
+            onPhotos={setNewPhotos}
+          />
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <Button
+              size="sm"
+              disabled={busy || Boolean(newProblem)}
+              onClick={() =>
+                run(async () => {
+                  await createAdminClub(newDraft, newPhotos);
+                  setNewDraft(emptyClubDraft());
+                  setNewPhotos([]);
+                })
+              }
+            >
+              Topluluğu yayımla
+            </Button>
+            {newProblem && (
+              <span className="text-meta text-warning">{newProblem}</span>
+            )}
+          </div>
+        </div>
+      )}
+
       {items && items.length === 0 && !error && (
         <p className="py-4 text-center text-body-sm text-muted-foreground">
-          Dizinde kayıt yok. Tohum göçü (<code>0067</code>) uygulanmamış olabilir.
+          Dizinde kayıt yok. Tohum göçü (<code>0067</code>) uygulanmamış
+          olabilir.
         </p>
       )}
 
       <ul>
         {(items ?? []).map((club) => (
-          <li key={club.slug} className="border-b border-border py-2.5 last:border-0">
+          <li
+            key={club.slug}
+            className="border-b border-border py-2.5 last:border-0"
+          >
             <div className="flex flex-wrap items-center gap-2">
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-caption font-medium text-foreground">
@@ -135,6 +149,7 @@ export function ClubControl({ canWrite }: { canWrite: boolean }) {
                 </span>
               </span>
 
+              <StatusBadge status={club.status} />
               {club.verifiedAt ? (
                 <Badge tone="success">Doğrulanmış</Badge>
               ) : (
@@ -149,18 +164,44 @@ export function ClubControl({ canWrite }: { canWrite: boolean }) {
                     variant="ghost"
                     disabled={busy}
                     onClick={() =>
-                      acik === club.slug ? setAcik(null) : duzenle(club)
+                      open === club.slug ? setOpen(null) : edit(club)
                     }
                   >
-                    {acik === club.slug ? 'Kapat' : 'Düzenle'}
+                    {open === club.slug ? 'Kapat' : 'Düzenle'}
                   </Button>
+                  {club.status !== 'published' && (
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      disabled={busy}
+                      onClick={() =>
+                        run(() => setClubStatus(club.slug, 'published'))
+                      }
+                    >
+                      Onayla
+                    </Button>
+                  )}
+                  {club.status !== 'rejected' && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={busy}
+                      onClick={() =>
+                        run(() => setClubStatus(club.slug, 'rejected'))
+                      }
+                    >
+                      Reddet
+                    </Button>
+                  )}
                   <Button
                     size="sm"
                     variant={club.verifiedAt ? 'ghost' : 'secondary'}
                     disabled={busy}
                     onClick={() =>
                       run(() =>
-                        club.verifiedAt ? unverifyClub(club.slug) : verifyClub(club.slug)
+                        club.verifiedAt
+                          ? unverifyClub(club.slug)
+                          : verifyClub(club.slug)
                       )
                     }
                   >
@@ -170,7 +211,9 @@ export function ClubControl({ canWrite }: { canWrite: boolean }) {
                     size="sm"
                     variant="ghost"
                     disabled={busy}
-                    onClick={() => run(() => setClubListed(club.slug, !club.listed))}
+                    onClick={() =>
+                      run(() => setClubListed(club.slug, !club.listed))
+                    }
                   >
                     {club.listed ? 'Dizinden çıkar' : 'Dizine al'}
                   </Button>
@@ -178,59 +221,30 @@ export function ClubControl({ canWrite }: { canWrite: boolean }) {
               )}
             </div>
 
-            {canWrite && acik === club.slug && draft && (
-              <div className="mt-3 grid gap-2 rounded-lg border border-border p-3 sm:grid-cols-2">
-                <Alan
-                  id={`club-web-${club.slug}`}
-                  label="Web adresi"
-                  placeholder="https://..."
-                  value={draft.website}
-                  onChange={(v) => setDraft({ ...draft, website: v })}
+            {canWrite && open === club.slug && draft && (
+              <div className="mt-3 rounded-card border border-border p-3">
+                <ClubForm
+                  idPrefix={`club-${club.slug}`}
+                  draft={draft}
+                  onChange={setDraft}
                 />
-                <Alan
-                  id={`club-mail-${club.slug}`}
-                  label="İletişim e-postası"
-                  placeholder="bilgi@..."
-                  value={draft.contactEmail}
-                  onChange={(v) => setDraft({ ...draft, contactEmail: v })}
-                />
-                <Alan
-                  id={`club-join-${club.slug}`}
-                  label="Katılım bağlantısı"
-                  placeholder="https://..."
-                  value={draft.joinUrl}
-                  onChange={(v) => setDraft({ ...draft, joinUrl: v })}
-                />
-                <Alan
-                  id={`club-source-${club.slug}`}
-                  label="Bilginin kaynağı"
-                  placeholder="Dernek duyurusu"
-                  value={draft.sourceName}
-                  onChange={(v) => setDraft({ ...draft, sourceName: v })}
-                />
-                <Alan
-                  id={`club-checked-${club.slug}`}
-                  label="Son kontrol tarihi"
-                  type="date"
-                  value={draft.infoCheckedOn}
-                  onChange={(v) => setDraft({ ...draft, infoCheckedOn: v })}
-                />
-
-                <div className="flex items-end gap-2 sm:col-span-2">
+                <div className="mt-3 flex items-center gap-2">
                   <Button
                     size="sm"
-                    disabled={busy || Boolean(sorun)}
+                    disabled={busy || Boolean(editProblem)}
                     onClick={() =>
                       run(async () => {
                         await saveClubInfo(club.slug, draft);
-                        setAcik(null);
+                        setOpen(null);
                       })
                     }
                   >
                     Kaydet
                   </Button>
-                  {sorun && (
-                    <span className="text-meta text-warning">{sorun}</span>
+                  {editProblem && (
+                    <span className="text-meta text-warning">
+                      {editProblem}
+                    </span>
                   )}
                 </div>
               </div>
@@ -242,33 +256,226 @@ export function ClubControl({ canWrite }: { canWrite: boolean }) {
   );
 }
 
-function Alan({
-  id,
-  label,
-  value,
+function StatusBadge({ status }: { status: AdminClub['status'] }) {
+  if (status === 'pending') return <Badge tone="warning">Onay bekliyor</Badge>;
+  if (status === 'rejected') return <Badge tone="danger">Reddedildi</Badge>;
+  return <Badge tone="success">Yayında</Badge>;
+}
+
+function ClubForm({
+  idPrefix,
+  draft,
   onChange,
-  placeholder,
-  type,
+  photos,
+  onPhotos,
 }: {
-  id: string;
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
-  type?: string;
+  idPrefix: string;
+  draft: ClubInfoDraft;
+  onChange: (draft: ClubInfoDraft) => void;
+  photos?: File[];
+  onPhotos?: (photos: File[]) => void;
 }) {
+  const set = <K extends keyof ClubInfoDraft>(
+    key: K,
+    value: ClubInfoDraft[K]
+  ) => onChange({ ...draft, [key]: value });
+
+  function toggleTopic(topic: ClubTopic) {
+    set(
+      'topics',
+      draft.topics.includes(topic)
+        ? draft.topics.filter((t) => t !== topic)
+        : [...draft.topics, topic]
+    );
+  }
+
   return (
-    <div>
-      <label htmlFor={id} className="label mb-1 block">
-        {label}
-      </label>
-      <Input
-        id={id}
-        type={type ?? 'text'}
-        value={value}
-        placeholder={placeholder ?? ''}
-        onChange={(e) => onChange(e.target.value)}
-      />
+    <div className="grid gap-3 sm:grid-cols-2">
+      <Field label="Topluluk adı" htmlFor={`${idPrefix}-name`}>
+        <Input
+          id={`${idPrefix}-name`}
+          value={draft.name}
+          onChange={(e) => set('name', e.target.value)}
+        />
+      </Field>
+      <Field label="Tür" htmlFor={`${idPrefix}-kind`}>
+        <Select
+          id={`${idPrefix}-kind`}
+          value={draft.kind}
+          onChange={(e) => set('kind', e.target.value as ClubKind)}
+        >
+          {Object.entries(clubKindLabels).map(([value, label]) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
+          ))}
+        </Select>
+      </Field>
+      <Field label="İl" htmlFor={`${idPrefix}-city`}>
+        <Select
+          id={`${idPrefix}-city`}
+          value={draft.city}
+          onChange={(e) => set('city', e.target.value)}
+        >
+          {turkeyCities.map((city) => (
+            <option key={city.id} value={city.name}>
+              {city.name}
+            </option>
+          ))}
+        </Select>
+      </Field>
+      <Field label="Kuruluş tarihi" htmlFor={`${idPrefix}-founded`}>
+        <Input
+          id={`${idPrefix}-founded`}
+          type="date"
+          value={draft.foundedOn}
+          onChange={(e) => set('foundedOn', e.target.value)}
+        />
+      </Field>
+      <Field label="Kuruluş / merkez yeri" htmlFor={`${idPrefix}-place`}>
+        <Input
+          id={`${idPrefix}-place`}
+          value={draft.place}
+          onChange={(e) => set('place', e.target.value)}
+        />
+      </Field>
+      <Field label="İletişim e-postası" htmlFor={`${idPrefix}-mail`}>
+        <Input
+          id={`${idPrefix}-mail`}
+          type="email"
+          value={draft.contactEmail}
+          onChange={(e) => set('contactEmail', e.target.value)}
+        />
+      </Field>
+      <Field label="Web sayfası" htmlFor={`${idPrefix}-web`} hint="Opsiyonel">
+        <Input
+          id={`${idPrefix}-web`}
+          placeholder="https://..."
+          value={draft.website}
+          onChange={(e) => set('website', e.target.value)}
+        />
+      </Field>
+      <Field
+        label="Sosyal medya"
+        htmlFor={`${idPrefix}-social`}
+        hint="Opsiyonel"
+      >
+        <Input
+          id={`${idPrefix}-social`}
+          placeholder="https://..."
+          value={draft.socialUrl}
+          onChange={(e) => set('socialUrl', e.target.value)}
+        />
+      </Field>
+      <Field
+        label="WhatsApp grubu"
+        htmlFor={`${idPrefix}-whatsapp`}
+        hint="Opsiyonel"
+      >
+        <Input
+          id={`${idPrefix}-whatsapp`}
+          placeholder="https://chat.whatsapp.com/..."
+          value={draft.whatsappUrl}
+          onChange={(e) => set('whatsappUrl', e.target.value)}
+        />
+      </Field>
+      <Field
+        label="Katılım bağlantısı"
+        htmlFor={`${idPrefix}-join`}
+        hint="Opsiyonel"
+      >
+        <Input
+          id={`${idPrefix}-join`}
+          placeholder="https://..."
+          value={draft.joinUrl}
+          onChange={(e) => set('joinUrl', e.target.value)}
+        />
+      </Field>
+      <Field label="Bilginin kaynağı" htmlFor={`${idPrefix}-source`}>
+        <Input
+          id={`${idPrefix}-source`}
+          value={draft.sourceName}
+          onChange={(e) => set('sourceName', e.target.value)}
+        />
+      </Field>
+      <Field label="Son kontrol tarihi" htmlFor={`${idPrefix}-checked`}>
+        <Input
+          id={`${idPrefix}-checked`}
+          type="date"
+          value={draft.infoCheckedOn}
+          onChange={(e) => set('infoCheckedOn', e.target.value)}
+        />
+      </Field>
+      <div className="sm:col-span-2">
+        <span className="label mb-2 block">Konular</span>
+        <div className="grid gap-2 sm:grid-cols-4">
+          {clubTopicOrder.map((topic) => (
+            <label
+              key={topic}
+              className="flex items-center gap-2 rounded-card border border-border px-2 py-2 text-meta text-muted-foreground"
+            >
+              <input
+                type="checkbox"
+                checked={draft.topics.includes(topic)}
+                onChange={() => toggleTopic(topic)}
+              />
+              {clubTopicLabels[topic]}
+            </label>
+          ))}
+        </div>
+      </div>
+      <div className="sm:col-span-2">
+        <Field label="Açıklama" htmlFor={`${idPrefix}-summary`}>
+          <textarea
+            id={`${idPrefix}-summary`}
+            value={draft.summary}
+            onChange={(e) => set('summary', e.target.value)}
+            className="min-h-28 w-full rounded-card border border-border bg-surface-1 px-3 py-2 text-body-sm text-foreground placeholder:text-faint focus:border-primary focus:bg-surface-2"
+          />
+        </Field>
+      </div>
+      {onPhotos && (
+        <Field
+          label="Fotoğraflar"
+          htmlFor={`${idPrefix}-photos`}
+          hint={`En fazla ${CLUB_PHOTO_LIMIT} fotoğraf · JPEG, PNG veya WebP`}
+        >
+          <Input
+            id={`${idPrefix}-photos`}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            multiple
+            onChange={(e) =>
+              onPhotos(
+                Array.from(e.target.files ?? []).slice(0, CLUB_PHOTO_LIMIT)
+              )
+            }
+          />
+          {photos && photos.length > 0 && (
+            <p className="mt-1 text-meta text-faint">
+              {photos.length} fotoğraf seçildi.
+            </p>
+          )}
+        </Field>
+      )}
+      <div className="flex flex-wrap gap-3 text-body-sm text-muted-foreground sm:col-span-2">
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={draft.publicEvents}
+            onChange={(e) => set('publicEvents', e.target.checked)}
+          />
+          Halka açık etkinlik yapıyor
+        </label>
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={draft.sharedEquipment}
+            onChange={(e) => set('sharedEquipment', e.target.checked)}
+          />
+          Ortak ekipman sunuyor
+        </label>
+      </div>
     </div>
   );
 }
