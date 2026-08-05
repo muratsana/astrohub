@@ -60,6 +60,10 @@ export const events: AstroEvent[] = [
       url: 'https://ogbf.kozmikanafor.com/',
       lastVerifiedAt: '2026-07-28',
     },
+    contact: {
+      label: 'Kayıt / iletişim',
+      url: 'https://ogbf.kozmikanafor.com/',
+    },
     image: {
       url: 'https://commons.wikimedia.org/wiki/Special:FilePath/Olimpos%2C%20Antalya.jpg?width=1200',
       credit: 'Wikimedia Commons — Olimpos, Antalya',
@@ -102,6 +106,10 @@ export const events: AstroEvent[] = [
       url: 'https://www.denizlikenthaber.com/haber-topuklu-yaylasinda-yildizlarla-dolu-bes-gun-basliyor-18050.html',
       lastVerifiedAt: '2026-07-28',
     },
+    contact: {
+      label: 'Başvuru / iletişim',
+      url: 'https://apps.denizli.bel.tr/gokyuzugozlemsenligibasvuru/',
+    },
   },
   {
     slug: 'keltepe-gozlem-senligi-2026',
@@ -141,6 +149,10 @@ export const events: AstroEvent[] = [
       url: 'https://www.karabukderinhaber.com/karabukte-keltepe-gozlem-senligi-ve-uzay-girisimciligi-festivali-basliyor',
       lastVerifiedAt: '2026-07-28',
     },
+    contact: {
+      label: 'Duyuru / iletişim',
+      url: 'https://www.karabukderinhaber.com/karabukte-keltepe-gozlem-senligi-ve-uzay-girisimciligi-festivali-basliyor',
+    },
   },
   {
     slug: 'uludag-astrofest-2026',
@@ -171,6 +183,10 @@ export const events: AstroEvent[] = [
       name: 'Uludağ AstroFest',
       url: 'https://uludagastrofest.com/',
       lastVerifiedAt: '2026-07-28',
+    },
+    contact: {
+      label: 'Kayıt / iletişim',
+      url: 'https://uludagastrofest.com/',
     },
     image: {
       url: 'https://commons.wikimedia.org/wiki/Special:FilePath/View%20of%20Bursa%20from%20the%20hills%20of%20Mount%20Uludag.jpg?width=1200',
@@ -210,6 +226,10 @@ export const events: AstroEvent[] = [
       url: 'https://senlik.tug.tubitak.gov.tr/',
       lastVerifiedAt: '2026-07-28',
     },
+    contact: {
+      label: 'Başvuru / iletişim',
+      url: 'https://senlik.tug.tubitak.gov.tr/',
+    },
     image: {
       url: 'https://commons.wikimedia.org/wiki/Special:FilePath/Palandoken%20Erzurum%202009.JPG?width=1200',
       credit: 'Wikimedia Commons — Palandöken, Erzurum',
@@ -243,6 +263,10 @@ export const events: AstroEvent[] = [
       name: 'Gazete Detay',
       url: 'https://gazetedetay.com/zerzevan-kalesinde-gokyuzu-gozlem-etkinligi-ve-bilim-senligi-duzenlenecek',
       lastVerifiedAt: '2026-07-28',
+    },
+    contact: {
+      label: 'Duyuru / iletişim',
+      url: 'https://gazetedetay.com/zerzevan-kalesinde-gokyuzu-gozlem-etkinligi-ve-bilim-senligi-duzenlenecek',
     },
     image: {
       url: 'https://commons.wikimedia.org/wiki/Special:FilePath/Mithraeum%20of%20Zerzevan%20Castle.jpg?width=1200',

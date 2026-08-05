@@ -82,6 +82,17 @@ describe('mapEventRow', () => {
     expect(event.image?.url).toContain('TUG%20full%20site.jpg');
     expect(event.image?.credit).toContain('Wikimedia Commons');
   });
+
+  it('seed etkinliğinin iletişim adresini Supabase satırına taşır', () => {
+    const event = mapEventRow({
+      ...eventRow,
+      slug: 'ethem-hoca-gokyuzu-gozlem-senligi-2026',
+    });
+
+    expect(event.contact?.url).toBe(
+      'https://apps.denizli.bel.tr/gokyuzugozlemsenligibasvuru/'
+    );
+  });
 });
 
 const siteRow = {

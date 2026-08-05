@@ -2,6 +2,7 @@ import { forwardRef } from 'react';
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import { Link } from 'react-router';
 import { cn } from '@/lib/cn';
+import { EXTERNAL_LINK_REL, safeUrl } from '@/lib/url';
 
 /**
  * Buton — terminal dili.
@@ -106,5 +107,45 @@ export function ButtonLink({
     >
       {children}
     </Link>
+  );
+}
+
+/** Button görünümünde güvenli dış bağlantı. */
+export function ExternalButtonLink({
+  href,
+  variant = 'primary',
+  size = 'md',
+  className,
+  children,
+}: {
+  href: string | undefined | null;
+  variant?: Variant;
+  size?: Size;
+  className?: string;
+  children: ReactNode;
+}) {
+  const safe = safeUrl(href);
+
+  if (!safe) {
+    return (
+      <span
+        aria-disabled="true"
+        className={buttonClasses(variant, size, className)}
+      >
+        {children}
+      </span>
+    );
+  }
+
+  return (
+    <a
+      href={safe}
+      target="_blank"
+      rel={EXTERNAL_LINK_REL}
+      className={buttonClasses(variant, size, className)}
+    >
+      {children}
+      <span className="sr-only"> (yeni sekmede açılır)</span>
+    </a>
   );
 }

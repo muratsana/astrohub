@@ -5,7 +5,7 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { Panel } from '@/components/ui/Panel';
 import { Badge } from '@/components/ui/Badge';
 import { Select } from '@/components/ui/Input';
-import { Button, ButtonLink } from '@/components/ui/Button';
+import { Button, ButtonLink, ExternalButtonLink } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SortableHeader } from '@/components/ui/SortableHeader';
 import { AdminEditLink } from '@/components/admin/AdminEditLink';
@@ -586,6 +586,15 @@ export function EventMapPage() {
                               >
                                 Görüntüle
                               </ButtonLink>
+                              {item.contact && (
+                                <ExternalButtonLink
+                                  href={item.contact.url}
+                                  size="sm"
+                                  variant="secondary"
+                                >
+                                  İletişim
+                                </ExternalButtonLink>
+                              )}
                               <AdminEditLink
                                 to={`/admin/events?slug=${item.slug}`}
                               />
@@ -616,6 +625,15 @@ export function EventMapPage() {
                         </span>
                         <Badge tone="cold">Çevrimiçi</Badge>
                       </Link>
+                      {item.contact && (
+                        <ExternalButtonLink
+                          href={item.contact.url}
+                          size="sm"
+                          variant="secondary"
+                        >
+                          İletişim
+                        </ExternalButtonLink>
+                      )}
                       <AdminEditLink to={`/admin/events?slug=${item.slug}`} />
                     </li>
                   ))}

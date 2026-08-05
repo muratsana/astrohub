@@ -36,6 +36,11 @@ export interface EventCoords {
   longitude: number;
 }
 
+export interface EventContact {
+  label: string;
+  url: string;
+}
+
 export interface AstroEvent {
   /**
    * Veritabanı kimliği. Tohum kayıtlarda yok: kayıt olma gerçek bir
@@ -74,6 +79,8 @@ export interface AstroEvent {
   gradient: string;
   /** Kaynak şeffaflığı (§8.4): kaynak adı + son doğrulama */
   source: { name: string; lastVerifiedAt: string; url?: string };
+  /** Etkinliğe ulaşmak/kayıt olmak için doğrulanmış dış adres. */
+  contact?: EventContact;
   /**
    * Etkinlik afişi SİTEYE KOPYALANMAZ.
    *

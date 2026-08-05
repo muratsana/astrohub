@@ -1,7 +1,7 @@
 import { useParams } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { Badge } from '@/components/ui/Badge';
-import { ButtonLink } from '@/components/ui/Button';
+import { ButtonLink, ExternalButtonLink } from '@/components/ui/Button';
 import { EventInterest } from './EventInterest';
 import { EventChanges } from './EventChanges';
 import { PhotoPlaceholder } from '@/components/media/PhotoPlaceholder';
@@ -13,6 +13,7 @@ import { capacityLabel } from './filtering';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd, eventJsonLd } from '@/lib/seo';
 import { AdminEditLink } from '@/components/admin/AdminEditLink';
+import { ExternalLink } from '@/components/ExternalLink';
 
 /**
  * Etkinlik detay sayfası (§7.6): kapak, temel bilgi, program zaman çizelgesi,
@@ -205,6 +206,15 @@ export function EventDetailPage() {
                 </p>
               )}
 
+              {event.contact && (
+                <ExternalButtonLink
+                  href={event.contact.url}
+                  className="mt-4 w-full"
+                >
+                  {event.contact.label}
+                </ExternalButtonLink>
+              )}
+
               {/* Buradaki devre dışı "Katıl (üyelik gerektirir)" düğmesi
                   kaldırıldı: hesap sistemi çalışıyor ve gerçek katılım
                   kontrolü aşağıda. Basılamayan bir düğme, altındaki
@@ -216,7 +226,9 @@ export function EventDetailPage() {
                 <div className="flex justify-between gap-2">
                   <dt>Kaynak</dt>
                   <dd className="text-right text-foreground">
-                    {event.source.name}
+                    <ExternalLink href={event.source.url} showHost>
+                      {event.source.name}
+                    </ExternalLink>
                   </dd>
                 </div>
                 <div className="flex justify-between gap-2">

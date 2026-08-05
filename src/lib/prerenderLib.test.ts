@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
-// @ts-expect-error — derleme betiğinin saf modülü; tip bildirimi yok.
-import { extractHeadTags, composePage, outputFileFor } from '../../scripts/prerender-lib.mjs';
+
+const prerenderLibPath = '../../scripts/prerender-lib.mjs';
+const { extractHeadTags, composePage, outputFileFor } = (await import(
+  prerenderLibPath
+)) as {
+  extractHeadTags(rendered: string): { head: string[]; body: string };
+  composePage(template: string, rendered: string): string;
+  outputFileFor(path: string): string;
+};
 
 const TEMPLATE = `<!doctype html>
 <html lang="tr">

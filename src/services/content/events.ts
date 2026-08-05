@@ -60,6 +60,8 @@ interface EventRow {
   event_sessions: EventSessionRow[] | null;
 }
 
+const seedBySlug = new Map(eventsSeed.map((event) => [event.slug, event]));
+
 function num(value: number | string | null): number | null {
   if (value === null) return null;
   const parsed = typeof value === 'number' ? value : Number(value);
@@ -69,6 +71,7 @@ function num(value: number | string | null): number | null {
 export function mapEventRow(row: EventRow): AstroEvent {
   const latitude = num(row.latitude);
   const longitude = num(row.longitude);
+  const seed = seedBySlug.get(row.slug);
 
   return enrichEvent({
     id: row.id,
@@ -105,7 +108,9 @@ export function mapEventRow(row: EventRow): AstroEvent {
     source: {
       name: row.source_name ?? 'Astrohub kaydı',
       lastVerifiedAt: row.source_last_verified_at ?? '',
+      ...(seed?.source.url ? { url: seed.source.url } : {}),
     },
+    ...(seed?.contact ? { contact: seed.contact } : {}),
   });
 }
 
