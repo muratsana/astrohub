@@ -200,10 +200,10 @@ await scenario('⌘K arama katmanını açar ve M31 sonuç döndürür', async (
 /* ══════════════════════ Hesaplayıcılar ══════════════════════ */
 
 await scenario('FOV hesaplayıcı girdi değişince sonucu günceller', async () => {
-  await goto('/araclar/fov');
+  await goto('/simulator');
 
   const before = await page.evaluate(() => document.body.innerText);
-  await page.fill('#fl', '1000');
+  await page.fill('#sim-focal', '1000');
   await page.waitForTimeout(300);
   const after = await page.evaluate(() => document.body.innerText);
 
@@ -238,9 +238,9 @@ await scenario(
 );
 
 await scenario('setup uyumluluk yanlış backfocus’ta hata verir', async () => {
-  await goto('/araclar/setup-uyumluluk');
+  await goto('/simulator');
 
-  await page.fill('#setup-spacer', '30');
+  await page.fill('#spacer', '30');
   await page.waitForTimeout(300);
   const text = await page.evaluate(() => document.body.innerText);
 

@@ -420,12 +420,12 @@ export function SimulatorPage() {
                 {selected && (
                   <div className="absolute inset-12 flex items-center justify-center">
                     <div
-                      className="rounded-full border border-cold/70 bg-cold/10 shadow-[0_0_40px_rgba(103,201,255,0.18)]"
+                      className="rounded-full border border-cold/70 bg-cold/10 ring-1 ring-cold/20"
                       style={{ width: `${targetWidth}%`, height: `${targetHeight}%` }}
                     />
                   </div>
                 )}
-                <div className="absolute inset-x-[18%] inset-y-[18%] rotate-[-7deg] border-2 border-primary/90 shadow-[0_0_34px_rgba(255,159,36,0.22)]" />
+                <div className="absolute inset-x-[18%] inset-y-[18%] rotate-[-7deg] border-2 border-primary/90 bg-primary/5" />
                 <div className="absolute inset-x-[31%] inset-y-[31%] rotate-[-7deg] border border-dashed border-cold/80" />
                 <div className="absolute right-4 top-4 w-72 max-w-[calc(100%-2rem)] border border-border bg-background/85 p-3 backdrop-blur">
                   <p className="label text-muted-foreground">Anlık kadraj</p>
