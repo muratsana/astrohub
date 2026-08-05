@@ -32,6 +32,11 @@ import { photoFamilies, familyOrder } from './families';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
 import { photoWeekArchive, selectWeeklyPhoto } from './weeklyPick';
+import { formatExposure } from '@/domain/photography/exif';
+import {
+  formatIntegration,
+  totalIntegrationSeconds,
+} from '@/domain/photography/integration';
 
 const paletteOptions: (ProcessingPalette | 'hepsi')[] = [
   'hepsi',
@@ -199,30 +204,44 @@ export function GalleryPage() {
                   {weeklyPick.weekLabel}
                 </Badge>
               </Link>
-              <div className="flex flex-col justify-center p-4 sm:p-5">
-                <Badge tone="success" className="w-fit">
-                  Haftanın Fotoğrafı
-                </Badge>
-                {weeklyPick.yearLabel && (
-                  <span className="mt-2 text-meta tabular text-faint">
-                    {weeklyPick.yearLabel}
-                  </span>
-                )}
-                <h2 className="type-section mt-3 text-foreground">
+              <div className="flex flex-col justify-start p-4 sm:p-5">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge tone="success" className="w-fit">
+                    Haftanın Fotoğrafı
+                  </Badge>
+                  <Badge tone="primary" className="w-fit">
+                    {weeklyPick.weekLabel}
+                  </Badge>
+                  {weeklyPick.yearLabel && (
+                    <span className="text-meta tabular text-faint">
+                      {weeklyPick.yearLabel}
+                    </span>
+                  )}
+                </div>
+                <h2 className="type-section mt-4 text-foreground">
                   {weeklyPick.photo.title}
                 </h2>
                 <p className="mt-1 text-body-sm text-muted-foreground">
-                  {weeklyPick.photo.target.name} · @{weeklyPick.photo.user.username}
+                  {weeklyPick.photo.target.name} · @
+                  {weeklyPick.photo.user.username}
                 </p>
                 <p className="mt-4 text-body-sm leading-relaxed text-muted-foreground">
-                  Galerinin öne çıkan karesi. Künyesi, setup bilgisi ve
-                  işleme notlarıyla birlikte inceleyebilirsiniz.
+                  Galerinin öne çıkan karesi. Künyesi, setup bilgisi ve işleme
+                  notlarıyla birlikte inceleyebilirsiniz.
                 </p>
+                <WeeklyPhotoExifTable photo={weeklyPick.photo} />
                 <div className="mt-5 flex flex-wrap gap-2">
-                  <ButtonLink to={`/fotograf/${weeklyPick.photo.slug}`} size="sm">
+                  <ButtonLink
+                    to={`/fotograf/${weeklyPick.photo.slug}`}
+                    size="sm"
+                  >
                     Fotoğrafı aç
                   </ButtonLink>
-                  <ButtonLink to="/haftanin-fotografi" size="sm" variant="secondary">
+                  <ButtonLink
+                    to="/haftanin-fotografi"
+                    size="sm"
+                    variant="secondary"
+                  >
                     Arşiv
                   </ButtonLink>
                 </div>
@@ -272,8 +291,8 @@ export function GalleryPage() {
                       {item.photo.title}
                     </span>
                     <span className="block truncate text-meta text-muted-foreground">
-                      {item.yearLabel ? `${item.yearLabel} · ` : ''}
-                      @{item.photo.user.username}
+                      {item.yearLabel ? `${item.yearLabel} · ` : ''}@
+                      {item.photo.user.username}
                     </span>
                   </span>
                 </Link>
@@ -340,7 +359,8 @@ export function GalleryPage() {
                 /* Tek seçim davranışı korunuyor: aile sekmeleri bir sekme
                    şeridi, çoklu seçim listesi değil. */
                 if (family !== 'hepsi') ex.toggleFacet('aile', family);
-                if (next !== 'hepsi' && next !== family) ex.toggleFacet('aile', next);
+                if (next !== 'hepsi' && next !== family)
+                  ex.toggleFacet('aile', next);
               }}
               className={filterControlClass}
             >
@@ -427,8 +447,8 @@ export function GalleryPage() {
             görünmüyor" en sinsi hata biçimi. */}
         {(kaydedilen.truncated || takipEdilen.truncated) && (
           <p className="mt-2 text-meta leading-relaxed text-warning">
-            Kişisel süzgeç listenizin tamamını okuyamadı; çok sayıda kayıt
-            var. Sonuç eksik olabilir.
+            Kişisel süzgeç listenizin tamamını okuyamadı; çok sayıda kayıt var.
+            Sonuç eksik olabilir.
           </p>
         )}
 
@@ -459,4 +479,85 @@ export function GalleryPage() {
       </Container>
     </>
   );
+}
+
+function WeeklyPhotoExifTable({ photo }: { photo: AstroPhoto }) {
+  const rows = weeklyPhotoExifRows(photo);
+  if (rows.length === 0) return null;
+
+  return (
+    <div className="mt-5 overflow-hidden rounded-card border border-border bg-background/35">
+      <div className="border-b border-border px-3 py-2">
+        <p className="label caps text-muted-foreground">EXIF / çekim künyesi</p>
+      </div>
+      <table className="w-full border-collapse text-left text-meta">
+        <tbody>
+          {rows.map(([label, value]) => (
+            <tr key={label} className="border-b border-border last:border-0">
+              <th
+                scope="row"
+                className="w-[38%] px-3 py-2 font-medium text-muted-foreground"
+              >
+                {label}
+              </th>
+              <td className="px-3 py-2 text-foreground">{value}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function weeklyPhotoExifRows(photo: AstroPhoto): [string, string][] {
+  const exif = photo.exif;
+  const rows: [string, string][] = [];
+  const primaryExposure = photo.exposures[0]?.exposureSeconds;
+  const uniqueExposureSeconds = [
+    ...new Set(photo.exposures.map((row) => row.exposureSeconds)),
+  ];
+  const exposureLabel =
+    exif?.exposureSeconds !== null && exif?.exposureSeconds !== undefined
+      ? formatExposure(exif.exposureSeconds)
+      : uniqueExposureSeconds.length === 1
+        ? formatExposure(uniqueExposureSeconds[0])
+        : primaryExposure
+          ? photo.exposures
+              .map(
+                (row) => `${row.filter} ${formatExposure(row.exposureSeconds)}`
+              )
+              .join(' · ')
+          : null;
+
+  if (exposureLabel) rows.push(['Poz süresi', exposureLabel]);
+  rows.push(['Çekim yeri', photo.location.label]);
+  rows.push(['Çekim tarihi', formatPhotoDate(photo.capturedAt)]);
+  rows.push([
+    'Toplam entegrasyon',
+    formatIntegration(totalIntegrationSeconds(photo.exposures)),
+  ]);
+
+  const sky = [
+    photo.location.bortle ? `Bortle ${photo.location.bortle}` : null,
+    photo.location.sqm ? `SQM ${photo.location.sqm}` : null,
+  ].filter(Boolean);
+  if (sky.length > 0) rows.push(['Gökyüzü', sky.join(' · ')]);
+
+  rows.push(['Optik', photo.setup.optic]);
+  rows.push(['Kamera', exif?.camera ?? photo.setup.camera]);
+  if (exif?.lens) rows.push(['Lens', exif.lens]);
+  if (exif?.iso !== null && exif?.iso !== undefined)
+    rows.push(['ISO', String(exif.iso)]);
+  if (exif?.focalMm !== null && exif?.focalMm !== undefined)
+    rows.push(['Odak', `${Number(exif.focalMm.toFixed(1))} mm`]);
+  if (exif?.apertureF !== null && exif?.apertureF !== undefined)
+    rows.push(['Diyafram', `f/${Number(exif.apertureF.toFixed(1))}`]);
+
+  return rows;
+}
+
+function formatPhotoDate(value: string): string {
+  const [year, month, day] = value.slice(0, 10).split('-');
+  if (!year || !month || !day) return value;
+  return `${day}.${month}.${year}`;
 }

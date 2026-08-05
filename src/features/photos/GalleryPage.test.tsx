@@ -45,7 +45,9 @@ function renderGallery() {
  * gerek yok.
  */
 async function ara(terim: string) {
-  fireEvent.change(screen.getByLabelText(/^ara$/i), { target: { value: terim } });
+  fireEvent.change(screen.getByLabelText(/^ara$/i), {
+    target: { value: terim },
+  });
   await waitFor(() =>
     expect(screen.getByLabelText(/^ara$/i)).toHaveValue(terim)
   );
@@ -68,10 +70,9 @@ describe('GalleryPage (§7.2)', () => {
     expect(
       screen.getByRole('heading', { level: 1, name: /fotoğraf galerisi/i })
     ).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /fotoğraf yükle/i })).toHaveAttribute(
-      'href',
-      '/galeri/yukle'
-    );
+    expect(
+      screen.getByRole('link', { name: /fotoğraf yükle/i })
+    ).toHaveAttribute('href', '/galeri/yukle');
     expect(photoLinks()).toHaveLength(photos.length);
   });
 
@@ -83,6 +84,10 @@ describe('GalleryPage (§7.2)', () => {
       })
     ).toBeInTheDocument();
     expect(screen.getAllByText('32. Hafta').length).toBeGreaterThan(0);
+    expect(screen.getByText(/exif \/ çekim künyesi/i)).toBeInTheDocument();
+    expect(screen.getByText('Poz süresi')).toBeInTheDocument();
+    expect(screen.getByText('Çekim yeri')).toBeInTheDocument();
+    expect(screen.getByText('Saklıkent, Antalya')).toBeInTheDocument();
   });
 
   it('filtre yokken yalnızca toplamı bildirir', () => {
@@ -133,7 +138,10 @@ describe('GalleryPage (§7.2)', () => {
     await ara(
       turkceli.target.name
         .toLocaleLowerCase('tr-TR')
-        .replace(/[ışğüöç]/g, (c) => ({ ı: 'i', ş: 's', ğ: 'g', ü: 'u', ö: 'o', ç: 'c' })[c] ?? c)
+        .replace(
+          /[ışğüöç]/g,
+          (c) => ({ ı: 'i', ş: 's', ğ: 'g', ü: 'u', ö: 'o', ç: 'c' })[c] ?? c
+        )
     );
     await waitFor(() => expect(photoLinks().length).toBeGreaterThan(0));
   });
@@ -150,7 +158,12 @@ describe('GalleryPage (§7.2)', () => {
   it('her karoda tür ailesi rozeti gösterir', () => {
     renderGallery();
     // Dört aileden en az biri her zaman görünür olmalı.
-    const labels = ['Derin Uzay', 'Güneş Sistemi', 'Takımyıldız', 'Gece Manzarası'];
+    const labels = [
+      'Derin Uzay',
+      'Güneş Sistemi',
+      'Takımyıldız',
+      'Gece Manzarası',
+    ];
     const found = labels.filter((l) => screen.queryAllByText(l).length > 0);
     expect(found.length).toBeGreaterThan(0);
   });
