@@ -172,12 +172,6 @@ export function GalleryPage() {
                   aria-hidden
                   className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,transparent,color-mix(in_srgb,var(--color-background)_24%,transparent))]"
                 />
-                <Badge
-                  tone="success"
-                  className="absolute left-3 top-3 bg-background/85 backdrop-blur-sm"
-                >
-                  {weeklyPick.weekLabel}
-                </Badge>
               </Link>
               <div className="flex flex-col justify-start p-4 sm:p-5">
                 <div className="flex flex-wrap items-center gap-2">
@@ -483,6 +477,9 @@ function WeeklyPhotoExifTable({ photo }: { photo: AstroPhoto }) {
 function weeklyPhotoExifRows(photo: AstroPhoto): [string, string][] {
   const exif = photo.exif;
   const rows: [string, string][] = [];
+  const add = (label: string, value?: string | null) => {
+    if (value && value.trim() !== '') rows.push([label, value]);
+  };
   const primaryExposure = photo.exposures[0]?.exposureSeconds;
   const uniqueExposureSeconds = [
     ...new Set(photo.exposures.map((row) => row.exposureSeconds)),
@@ -499,24 +496,38 @@ function weeklyPhotoExifRows(photo: AstroPhoto): [string, string][] {
               )
               .join(' · ')
           : null;
+  const filterLabel =
+    photo.setup.filters ||
+    [...new Set(photo.exposures.map((row) => row.filter).filter(Boolean))].join(
+      ' · '
+    );
+  const integrationSeconds = totalIntegrationSeconds(photo.exposures);
+  const exposurePlan = photo.exposures
+    .filter((row) => row.filter && row.frames > 0 && row.exposureSeconds > 0)
+    .map(
+      (row) =>
+        `${row.filter}: ${row.frames}×${formatExposure(row.exposureSeconds)}`
+    )
+    .join(' · ');
 
-  if (exposureLabel) rows.push(['Poz süresi', exposureLabel]);
-  rows.push(['Çekim yeri', photo.location.label]);
-  rows.push(['Çekim tarihi', formatPhotoDate(photo.capturedAt)]);
-  rows.push([
-    'Toplam entegrasyon',
-    formatIntegration(totalIntegrationSeconds(photo.exposures)),
-  ]);
+  add('Poz süresi', exposureLabel);
+  add('Çekim yeri', photo.location.label);
+  add('Çekim tarihi', formatPhotoDate(photo.capturedAt));
+  if (integrationSeconds > 0)
+    add('Toplam entegrasyon', formatIntegration(integrationSeconds));
+  add('Filtreler', filterLabel);
+  add('Poz planı', exposurePlan);
 
   const sky = [
     photo.location.bortle ? `Bortle ${photo.location.bortle}` : null,
     photo.location.sqm ? `SQM ${photo.location.sqm}` : null,
   ].filter(Boolean);
-  if (sky.length > 0) rows.push(['Gökyüzü', sky.join(' · ')]);
+  add('Gökyüzü', sky.join(' · '));
 
-  rows.push(['Optik', photo.setup.optic]);
-  rows.push(['Kamera', exif?.camera ?? photo.setup.camera]);
-  if (exif?.lens) rows.push(['Lens', exif.lens]);
+  add('Optik', photo.setup.optic || exif?.lens);
+  add('Kamera', photo.setup.camera || exif?.camera);
+  if (exif?.lens && exif.lens !== photo.setup.optic)
+    rows.push(['Lens', exif.lens]);
   if (exif?.iso !== null && exif?.iso !== undefined)
     rows.push(['ISO', String(exif.iso)]);
   if (exif?.focalMm !== null && exif?.focalMm !== undefined)

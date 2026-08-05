@@ -143,14 +143,25 @@ function num(value: number | string | null | undefined): number | null {
 }
 
 /** `setup_text` içinden metin okur — jsonb serbest biçimli. */
-function text(bag: Record<string, unknown> | null, key: string): string | undefined {
-  const value = bag?.[key];
-  return typeof value === 'string' && value.trim() !== '' ? value : undefined;
+function text(
+  bag: Record<string, unknown> | null,
+  ...keys: string[]
+): string | undefined {
+  for (const key of keys) {
+    const value = bag?.[key];
+    if (typeof value === 'string' && value.trim() !== '') return value;
+  }
+  return undefined;
 }
 
-function count(bag: Record<string, unknown> | null, key: string): number | undefined {
+function count(
+  bag: Record<string, unknown> | null,
+  key: string
+): number | undefined {
   const value = bag?.[key];
-  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+  return typeof value === 'number' && Number.isFinite(value)
+    ? value
+    : undefined;
 }
 
 /**
@@ -162,7 +173,10 @@ function count(bag: Record<string, unknown> | null, key: string): number | undef
  */
 export function cityFromLabel(label: string | null): string {
   if (!label) return 'Bilinmiyor';
-  const parts = label.split(',').map((p) => p.trim()).filter(Boolean);
+  const parts = label
+    .split(',')
+    .map((p) => p.trim())
+    .filter(Boolean);
   return parts.length > 0 ? parts[parts.length - 1] : 'Bilinmiyor';
 }
 
@@ -204,8 +218,7 @@ export function mapPhotoRow(row: PhotoRow): AstroPhoto {
    * ölçüm yapılmış ama sonucu kaybolmuş gibi okunurdu.
    */
   const solve: AstroPhoto['solve'] = {
-    durum:
-      (row.solve_status as AstroPhoto['solve']['durum'] | null) ?? 'yok',
+    durum: (row.solve_status as AstroPhoto['solve']['durum'] | null) ?? 'yok',
     raDeg: row.solve_ra_deg ?? null,
     decDeg: row.solve_dec_deg ?? null,
     rotationDeg: row.solve_rotation_deg ?? null,
@@ -246,7 +259,8 @@ export function mapPhotoRow(row: PhotoRow): AstroPhoto {
       ? {
           url: displayUrl,
           /* Kredi fotoğrafı çekene ait; lisans kullanıcının seçtiği. */
-          credit: owner?.display_name ?? owner?.username ?? 'Astrohub kullanıcısı',
+          credit:
+            owner?.display_name ?? owner?.username ?? 'Astrohub kullanıcısı',
           licence: row.license ?? 'Tüm hakları saklıdır',
         }
       : undefined,
@@ -266,12 +280,12 @@ export function mapPhotoRow(row: PhotoRow): AstroPhoto {
       sqm: num(row.sqm) ?? undefined,
     },
     setup: {
-      optic: text(bag, 'optic') ?? '',
-      camera: text(bag, 'camera') ?? '',
-      mount: text(bag, 'mount') ?? '',
-      guiding: text(bag, 'guide') ?? text(bag, 'guiding'),
-      filters: text(bag, 'filter') ?? text(bag, 'filters'),
-      reducer: text(bag, 'reducer'),
+      optic: text(bag, 'optic', 'Optik') ?? '',
+      camera: text(bag, 'camera', 'Kamera') ?? '',
+      mount: text(bag, 'mount', 'Montür') ?? '',
+      guiding: text(bag, 'guide', 'guiding', 'Guide'),
+      filters: text(bag, 'filter', 'filters', 'Filtre'),
+      reducer: text(bag, 'reducer', 'Reducer'),
     },
     /*
      * EXIF alanları 0035 öncesi satırlarda yok. Hepsi boşsa `exif` hiç
@@ -316,7 +330,7 @@ export function mapPhotoRow(row: PhotoRow): AstroPhoto {
       /* Yazılım listesi serbest metin olarak geliyor; virgülle ayrılmış
          bir dizeyi listeye çeviriyoruz. Yoksa boş liste — "PixInsight"
          varsaymak künyeye yalan yazmak olurdu. */
-      software: (text(bag, 'software') ?? '')
+      software: (text(bag, 'software', 'Yazılım') ?? '')
         .split(',')
         .map((s) => s.trim())
         .filter(Boolean),
@@ -334,7 +348,10 @@ export function mapPhotoRow(row: PhotoRow): AstroPhoto {
     editorsPick: row.editors_pick ?? false,
     photoOfWeekWins: (row.photo_of_week_rounds ?? [])
       .filter((round) => ['sonuclandi', 'yayinda'].includes(round.status))
-      .map((round) => `${round.iso_year}-${String(round.iso_week).padStart(2, '0')}`),
+      .map(
+        (round) =>
+          `${round.iso_year}-${String(round.iso_week).padStart(2, '0')}`
+      ),
     year: capturedAt ? new Date(capturedAt).getFullYear() : 0,
     city: cityFromLabel(row.location_label),
   };

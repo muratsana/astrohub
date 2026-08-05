@@ -115,9 +115,9 @@ describe('mapPhotoRow', () => {
   it('bilinmeyen konum görünürlüğünü gizliye çeker', () => {
     // Tanınmayan bir değeri "exact" saymak konumu ifşa ederdi; şüphede
     // en kapalı seçenek doğru olan (§15.3).
-    expect(mapPhotoRow(row({ location_visibility: 'saçma' })).location.visibility).toBe(
-      'hidden'
-    );
+    expect(
+      mapPhotoRow(row({ location_visibility: 'saçma' })).location.visibility
+    ).toBe('hidden');
   });
 
   it('pozlamaları position sırasına göre dizer', () => {
@@ -137,8 +137,24 @@ describe('mapPhotoRow', () => {
     const photo = mapPhotoRow(
       row({
         photo_versions: [
-          { id: 'b', label: 'v2', kind: 'yeniden-isleme', note: null, palette: null, published_at: null, position: 2 },
-          { id: 'a', label: 'v1', kind: 'ilk', note: 'ilk', palette: 'RGB', published_at: '2026-07-01', position: 1 },
+          {
+            id: 'b',
+            label: 'v2',
+            kind: 'yeniden-isleme',
+            note: null,
+            palette: null,
+            published_at: null,
+            position: 2,
+          },
+          {
+            id: 'a',
+            label: 'v1',
+            kind: 'ilk',
+            note: 'ilk',
+            palette: 'RGB',
+            published_at: '2026-07-01',
+            position: 1,
+          },
         ],
       })
     );
@@ -173,6 +189,27 @@ describe('mapPhotoRow', () => {
     expect(photo.setup.filters).toBe('Antlia 3nm');
     expect(photo.processing.software).toEqual(['PixInsight', 'Photoshop']);
     expect(photo.calibration?.darks).toBe(25);
+  });
+
+  it('yükleme akışının Türkçe setup_text anahtarlarını okur', () => {
+    const photo = mapPhotoRow(
+      row({
+        setup_text: {
+          Optik: 'William Optics GT81',
+          Kamera: 'ASI2600MM Pro',
+          Montür: 'HEQ5 Pro',
+          Filtre: 'Antlia 3nm SHO',
+          Guide: 'OAG + ASI120MM',
+          Yazılım: 'PixInsight, Siril',
+        },
+      })
+    );
+    expect(photo.setup.optic).toBe('William Optics GT81');
+    expect(photo.setup.camera).toBe('ASI2600MM Pro');
+    expect(photo.setup.mount).toBe('HEQ5 Pro');
+    expect(photo.setup.filters).toBe('Antlia 3nm SHO');
+    expect(photo.setup.guiding).toBe('OAG + ASI120MM');
+    expect(photo.processing.software).toEqual(['PixInsight', 'Siril']);
   });
 
   it('profil yoksa kaydı düşürmez', () => {

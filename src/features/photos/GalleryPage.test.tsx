@@ -94,13 +94,25 @@ describe('GalleryPage (§7.2)', () => {
     expect(screen.getByText('Poz süresi')).toBeInTheDocument();
     expect(screen.getByText('Çekim yeri')).toBeInTheDocument();
     expect(screen.getByText('Saklıkent, Antalya')).toBeInTheDocument();
-    expect(
-      screen.getByRole('link', { name: `@${photos[0].user.username}` })
-    ).toHaveAttribute('href', `/profil/${photos[0].user.username}`);
     const weeklyHero = screen
       .getByRole('link', { name: `Haftanın Fotoğrafı: ${photos[0].title}` })
       .closest('section');
+    const weeklyImage = screen.getByRole('link', {
+      name: `Haftanın Fotoğrafı: ${photos[0].title}`,
+    });
     expect(weeklyHero).not.toBeNull();
+    expect(within(weeklyHero!).getByText('Filtreler')).toBeInTheDocument();
+    expect(
+      within(weeklyHero!).getByText('Antlia 3nm SHO seti')
+    ).toBeInTheDocument();
+    expect(within(weeklyHero!).getByText('Poz planı')).toBeInTheDocument();
+    expect(within(weeklyHero!).getByText(/Ha: 36×5 dk/)).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: `@${photos[0].user.username}` })
+    ).toHaveAttribute('href', `/profil/${photos[0].user.username}`);
+    expect(
+      within(weeklyImage).queryByText('32. Hafta')
+    ).not.toBeInTheDocument();
     expect(
       within(weeklyHero!).queryByText('Editör seçimi')
     ).not.toBeInTheDocument();
