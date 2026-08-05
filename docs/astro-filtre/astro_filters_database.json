@@ -1,0 +1,4500 @@
+{
+  "metadata": {
+    "name": "Astrofotografi Filtre Veritabani",
+    "version": "1.0.0",
+    "generated_at": "2026-08-05T16:00:00+03:00",
+    "source_file": "deepseek_text_20260805_1c255f.txt",
+    "source_line_count": 184,
+    "record_counts": {
+      "categories": 5,
+      "filter_types": 21,
+      "spectral_lines": 7,
+      "bandwidth_options": 11,
+      "line_combinations": 6,
+      "brands": 20,
+      "products": 99,
+      "product_category_links": 103,
+      "product_passbands": 92,
+      "retailers": 6,
+      "sources": 21,
+      "aliases": 13
+    }
+  },
+  "categories": [
+    {
+      "code": "broadband",
+      "name_tr": "Geniş bant",
+      "name_en": "Broadband",
+      "sort_order": 10,
+      "description_tr": "Geniş veya orta spektral aralıkları geçiren; renk, luminance, UV/IR kesme ve ışık kirliliği azaltma filtreleri.",
+      "id": "32607392-1757-5987-98b2-0f8caa3fea78"
+    },
+    {
+      "code": "single_line_narrowband",
+      "name_tr": "Tek çizgili dar bant",
+      "name_en": "Single-line narrowband",
+      "sort_order": 20,
+      "description_tr": "Belirli bir emisyon çizgisini dar bant genişliğiyle geçiren filtreler.",
+      "id": "2c3ed833-78b8-5c53-bc65-5cccccdf549c"
+    },
+    {
+      "code": "dual_band",
+      "name_tr": "Dual-band / Çift bant",
+      "name_en": "Dual-band",
+      "sort_order": 30,
+      "description_tr": "İki emisyon bölgesini veya iki ana geçiş penceresini hedefleyen çok bantlı filtreler.",
+      "id": "906e35c2-4fee-524b-8cf0-fee0ae0d3ecc"
+    },
+    {
+      "code": "triple_band",
+      "name_tr": "Triple-band / Tri-band",
+      "name_en": "Triple-band / Tri-band",
+      "sort_order": 40,
+      "description_tr": "Üç çizgi ya da üretici tanımına göre üç spektral bölgeyi hedefleyen filtreler.",
+      "id": "a6d8bda7-7b90-583a-a5b5-f0f21eb9089a"
+    },
+    {
+      "code": "quad_band",
+      "name_tr": "Quad-band / Dört bant",
+      "name_en": "Quad-band",
+      "sort_order": 50,
+      "description_tr": "Dört çizgi ya da üretici tanımına göre dört spektral bölgeyi hedefleyen filtreler.",
+      "id": "992edcd8-a6fc-59a6-9381-f0cabd956375"
+    }
+  ],
+  "filter_types": [
+    {
+      "id": "c8b6c5cb-64a1-5a61-967d-7c79e141f41e",
+      "code": "clear",
+      "name": "Clear / C Filter",
+      "category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "aliases": [
+        "C Filter"
+      ],
+      "notes": null
+    },
+    {
+      "id": "a4bb6569-ea16-576c-88ab-391ed860b139",
+      "code": "luminance",
+      "name": "Luminance / L Filter",
+      "category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "aliases": [
+        "L Filter"
+      ],
+      "notes": null
+    },
+    {
+      "id": "f809b003-9e79-5a56-abd6-55cae9596444",
+      "code": "uv-ir-cut",
+      "name": "UV/IR Cut",
+      "category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "aliases": [
+        "UV-IR Cut",
+        "UV/IR Block",
+        "UV-IR Block"
+      ],
+      "notes": null
+    },
+    {
+      "id": "36694651-49db-5c74-b9a4-8377c99d7c6f",
+      "code": "red",
+      "name": "Red / R",
+      "category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "aliases": [
+        "R Filter"
+      ],
+      "notes": null
+    },
+    {
+      "id": "713122a2-078f-5ed7-ae08-45b301cf32a3",
+      "code": "green",
+      "name": "Green / G",
+      "category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "aliases": [
+        "G Filter"
+      ],
+      "notes": null
+    },
+    {
+      "id": "1d20beba-4418-5653-bd73-2009cdb746c7",
+      "code": "blue",
+      "name": "Blue / B",
+      "category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "aliases": [
+        "B Filter"
+      ],
+      "notes": null
+    },
+    {
+      "id": "a22924ab-525e-57ca-84e3-77b6790919ec",
+      "code": "rgb-set",
+      "name": "RGB filtre seti",
+      "category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "aliases": [
+        "RGB Set"
+      ],
+      "notes": null
+    },
+    {
+      "id": "0f22e242-4ec4-5167-a7d3-03498765604e",
+      "code": "lrgb-set",
+      "name": "LRGB filtre seti",
+      "category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "aliases": [
+        "LRGB Set"
+      ],
+      "notes": null
+    },
+    {
+      "id": "73cd190b-7e1a-599b-aa0a-9525954ec1cb",
+      "code": "cls",
+      "name": "CLS – City Light Suppression",
+      "category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "aliases": [
+        "CLS"
+      ],
+      "notes": null
+    },
+    {
+      "id": "e32be0ad-7854-5c7f-912e-2e4f83c2114c",
+      "code": "cls-ccd",
+      "name": "CLS-CCD",
+      "category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "aliases": [],
+      "notes": null
+    },
+    {
+      "id": "6f3c25a4-c965-59b0-b31f-d33a86ba6272",
+      "code": "uhc",
+      "name": "UHC – Ultra High Contrast",
+      "category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "aliases": [
+        "UHC"
+      ],
+      "notes": null
+    },
+    {
+      "id": "0b292ef5-c3b8-51ca-bc8a-c82962a074a6",
+      "code": "uhc-e",
+      "name": "UHC-E",
+      "category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "aliases": [],
+      "notes": null
+    },
+    {
+      "id": "8565102d-a0c2-5967-9231-b3f33996625c",
+      "code": "uhc-s",
+      "name": "UHC-S",
+      "category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "aliases": [],
+      "notes": null
+    },
+    {
+      "id": "a666a159-407e-55ad-aef8-e42eee25d1ec",
+      "code": "lps",
+      "name": "LPS – Light Pollution Suppression",
+      "category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "aliases": [
+        "LPS"
+      ],
+      "notes": null
+    },
+    {
+      "id": "d4544715-cc1c-5b4f-834f-259a1e12d28b",
+      "code": "neodymium",
+      "name": "Neodymium / Moon & Skyglow",
+      "category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "aliases": [
+        "Moon & Skyglow"
+      ],
+      "notes": null
+    },
+    {
+      "id": "670629c9-8e9c-5b88-be1e-de88d1f00a0b",
+      "code": "ir-pass",
+      "name": "IR Pass",
+      "category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "aliases": [],
+      "notes": null
+    },
+    {
+      "id": "120455ee-db3c-5e35-b647-c2c07e5c5700",
+      "code": "near-ir-pass",
+      "name": "Near-IR Pass",
+      "category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "aliases": [
+        "NIR Pass"
+      ],
+      "notes": null
+    },
+    {
+      "id": "d239ede9-cdb1-5730-a045-cdc53e4973cf",
+      "code": "photometric",
+      "name": "Photometric UBVRI / Sloan filtreleri",
+      "category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "aliases": [
+        "UBVRI",
+        "Sloan"
+      ],
+      "notes": null
+    },
+    {
+      "id": "e3a5d69e-d637-5aef-a266-98e087bd2124",
+      "code": "dark-sky",
+      "name": "Dark Sky",
+      "category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "aliases": [],
+      "notes": null
+    },
+    {
+      "id": "8860a9c8-3ace-59e9-b54f-12ddcf06cb34",
+      "code": "skyglow",
+      "name": "SkyGlow",
+      "category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "aliases": [],
+      "notes": null
+    },
+    {
+      "id": "f187c9d0-7a81-54fa-ad09-ce9d19bf6129",
+      "code": "semi-apo",
+      "name": "Semi-APO",
+      "category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "aliases": [],
+      "notes": null
+    }
+  ],
+  "spectral_lines": [
+    {
+      "code": "ha",
+      "name": "Hydrogen alpha",
+      "short_name": "H-alpha / Ha",
+      "wavelength_nm": 656.3,
+      "element_name": "Hydrogen",
+      "ionization_stage": "I",
+      "aliases": [
+        "Hα",
+        "Ha",
+        "H-a"
+      ],
+      "id": "642ee21e-629f-54f4-aee0-c69d178552d5"
+    },
+    {
+      "code": "oiii",
+      "name": "Oxygen III",
+      "short_name": "OIII",
+      "wavelength_nm": 500.7,
+      "element_name": "Oxygen",
+      "ionization_stage": "III",
+      "aliases": [
+        "O-III",
+        "[O III]"
+      ],
+      "id": "a5d32165-b4bc-5c4c-a5df-c0f8883d4df1"
+    },
+    {
+      "code": "sii",
+      "name": "Sulfur II",
+      "short_name": "SII",
+      "wavelength_nm": 672.4,
+      "element_name": "Sulfur",
+      "ionization_stage": "II",
+      "aliases": [
+        "S-II",
+        "[S II]"
+      ],
+      "id": "7bf1d163-62e9-5432-8eef-3f6701474f6c"
+    },
+    {
+      "code": "hb",
+      "name": "Hydrogen beta",
+      "short_name": "H-beta / Hb",
+      "wavelength_nm": 486.1,
+      "element_name": "Hydrogen",
+      "ionization_stage": "I",
+      "aliases": [
+        "Hβ",
+        "Hb",
+        "H-b"
+      ],
+      "id": "a3bdcb01-3b0f-5899-941c-9fafd74a26a6"
+    },
+    {
+      "code": "nii",
+      "name": "Nitrogen II",
+      "short_name": "NII",
+      "wavelength_nm": 658.3,
+      "element_name": "Nitrogen",
+      "ionization_stage": "II",
+      "aliases": [
+        "N-II",
+        "[N II]"
+      ],
+      "id": "7f073541-6137-5bc2-8fdf-7c18a48a1949"
+    },
+    {
+      "code": "oii",
+      "name": "Oxygen II",
+      "short_name": "OII",
+      "wavelength_nm": 372.7,
+      "element_name": "Oxygen",
+      "ionization_stage": "II",
+      "aliases": [
+        "O-II",
+        "[O II]"
+      ],
+      "id": "6b02adda-6e22-5f50-9812-d451fe700ef7"
+    },
+    {
+      "code": "heii",
+      "name": "Helium II",
+      "short_name": "HeII",
+      "wavelength_nm": 468.6,
+      "element_name": "Helium",
+      "ionization_stage": "II",
+      "aliases": [
+        "He-II",
+        "[He II]"
+      ],
+      "id": "5db439ea-c2a1-5379-96b8-e144365e7766"
+    }
+  ],
+  "bandwidth_options": [
+    {
+      "id": "a740d284-3f91-5fed-a884-71aa3bfd387a",
+      "bandwidth_nm": 2.5,
+      "label": "2.5 nm"
+    },
+    {
+      "id": "39adfb9a-a02a-5aa8-bbf5-0cb228d07993",
+      "bandwidth_nm": 3.0,
+      "label": "3 nm"
+    },
+    {
+      "id": "ae2a5692-9e3f-5b57-8491-cd2f2ee5c714",
+      "bandwidth_nm": 3.5,
+      "label": "3.5 nm"
+    },
+    {
+      "id": "c9d100a7-6909-5a84-addc-df0297281758",
+      "bandwidth_nm": 4.0,
+      "label": "4 nm"
+    },
+    {
+      "id": "f257f02c-53f9-580d-a684-6f128a667fb3",
+      "bandwidth_nm": 4.5,
+      "label": "4.5 nm"
+    },
+    {
+      "id": "d0e9c46a-3034-5ea1-949a-523c05c09218",
+      "bandwidth_nm": 5.0,
+      "label": "5 nm"
+    },
+    {
+      "id": "9cdffe4d-d6a4-5e4d-a2d2-384ca1ec6101",
+      "bandwidth_nm": 6.0,
+      "label": "6 nm"
+    },
+    {
+      "id": "90a08893-9ac8-54d6-9406-1b5209c398bf",
+      "bandwidth_nm": 6.5,
+      "label": "6.5 nm"
+    },
+    {
+      "id": "84a659ef-bd80-54bc-a639-205dc0b97e51",
+      "bandwidth_nm": 7.0,
+      "label": "7 nm"
+    },
+    {
+      "id": "a36ae665-b050-5ef3-baba-45a0c20903e9",
+      "bandwidth_nm": 8.0,
+      "label": "8 nm"
+    },
+    {
+      "id": "2fae30b6-4dd6-5fa4-a4f5-4666a5d65ff6",
+      "bandwidth_nm": 12.0,
+      "label": "12 nm"
+    }
+  ],
+  "line_combinations": [
+    {
+      "id": "aa2c4e92-9fdb-536d-93b5-2356844ea00b",
+      "code": "ha-oiii",
+      "name": "H-alpha + OIII",
+      "band_count": 2,
+      "line_codes": [
+        "ha",
+        "oiii"
+      ]
+    },
+    {
+      "id": "32266d4a-dcd5-507d-bcbe-7f0f1c5cf999",
+      "code": "sii-oiii",
+      "name": "SII + OIII",
+      "band_count": 2,
+      "line_codes": [
+        "sii",
+        "oiii"
+      ]
+    },
+    {
+      "id": "e8539d83-7921-5109-918c-43432f6fa755",
+      "code": "sii-hb",
+      "name": "SII + H-beta",
+      "band_count": 2,
+      "line_codes": [
+        "sii",
+        "hb"
+      ]
+    },
+    {
+      "id": "8c2b97ef-2536-5a97-89fb-a7ba1c9e91d0",
+      "code": "hb-oiii",
+      "name": "H-beta + OIII",
+      "band_count": 2,
+      "line_codes": [
+        "hb",
+        "oiii"
+      ]
+    },
+    {
+      "id": "6b25ba49-63bf-5bac-93e4-de44cfbd5621",
+      "code": "ha-hb-oiii",
+      "name": "H-alpha + H-beta + OIII",
+      "band_count": 3,
+      "line_codes": [
+        "ha",
+        "hb",
+        "oiii"
+      ]
+    },
+    {
+      "id": "82702e8a-b625-5bce-81f1-cfd40640f87b",
+      "code": "ha-hb-oiii-sii",
+      "name": "H-alpha + H-beta + OIII + SII",
+      "band_count": 4,
+      "line_codes": [
+        "ha",
+        "hb",
+        "oiii",
+        "sii"
+      ]
+    }
+  ],
+  "brands": [
+    {
+      "id": "99d1c3b9-859a-5c0a-a905-de0bbf0e544c",
+      "slug": "optolong",
+      "name": "Optolong",
+      "website_url": null
+    },
+    {
+      "id": "53a0b30b-aba2-5920-b94d-e8d1534f746b",
+      "slug": "antlia",
+      "name": "Antlia",
+      "website_url": null
+    },
+    {
+      "id": "b630e70f-1dfa-558b-85b8-f249bafa4dd9",
+      "slug": "astronomik",
+      "name": "Astronomik",
+      "website_url": null
+    },
+    {
+      "id": "dcc94b7a-a512-5fff-a6a9-e6242100b476",
+      "slug": "baader",
+      "name": "Baader",
+      "website_url": null
+    },
+    {
+      "id": "0c2f8b71-ceb8-5723-9d4b-f36587f159ce",
+      "slug": "idas",
+      "name": "IDAS",
+      "website_url": null
+    },
+    {
+      "id": "6cbef754-02e2-50ff-8c2f-ef0d47b20b0e",
+      "slug": "omegon",
+      "name": "Omegon",
+      "website_url": null
+    },
+    {
+      "id": "9be42912-d07e-5598-9207-15d5a47053e4",
+      "slug": "ts-optics",
+      "name": "TS-Optics",
+      "website_url": null
+    },
+    {
+      "id": "a0b690dc-9f06-5fad-9056-6335ff1523fd",
+      "slug": "chroma",
+      "name": "Chroma",
+      "website_url": null
+    },
+    {
+      "id": "77709413-57a6-5878-9044-33f84ff8d0a2",
+      "slug": "astrodon",
+      "name": "Astrodon",
+      "website_url": null
+    },
+    {
+      "id": "1517e85b-a5f8-5524-8ba0-4d7896b7ae01",
+      "slug": "zwo",
+      "name": "ZWO",
+      "website_url": null
+    },
+    {
+      "id": "7f47033d-dbe2-50be-b04b-e849be392474",
+      "slug": "player-one",
+      "name": "Player One",
+      "website_url": null
+    },
+    {
+      "id": "ff656b0e-1a2c-54f2-9313-bf2e8697306d",
+      "slug": "askar",
+      "name": "Askar",
+      "website_url": null
+    },
+    {
+      "id": "67d3d2bd-3691-563a-adeb-5b2189d361cb",
+      "slug": "touptek",
+      "name": "ToupTek",
+      "website_url": null
+    },
+    {
+      "id": "c539ff38-0079-5a63-9621-411660191cd1",
+      "slug": "vaonis",
+      "name": "Vaonis",
+      "website_url": null
+    },
+    {
+      "id": "687fe75a-3f23-54cf-9932-53229a6c4d1f",
+      "slug": "svbony",
+      "name": "SVBONY",
+      "website_url": null
+    },
+    {
+      "id": "72ef571a-1c59-5953-9627-1835d37ece53",
+      "slug": "altair",
+      "name": "Altair",
+      "website_url": null
+    },
+    {
+      "id": "4f851c74-4b54-52b3-8210-47587b07eb2c",
+      "slug": "explore-scientific",
+      "name": "Explore Scientific",
+      "website_url": null
+    },
+    {
+      "id": "6a40de7a-1eec-58ee-8ea8-fcf41790f8fe",
+      "slug": "radian",
+      "name": "Radian",
+      "website_url": null
+    },
+    {
+      "id": "7472dee0-aa4e-5d9a-b07a-346824ecbc9a",
+      "slug": "sightron",
+      "name": "Sightron",
+      "website_url": null
+    },
+    {
+      "id": "552d6174-fcf9-585f-a991-5b76db01d5c1",
+      "slug": "hutech",
+      "name": "Hutech",
+      "website_url": null
+    }
+  ],
+  "products": [
+    {
+      "id": "1b885ff9-0636-5ce9-925a-1846723ef89a",
+      "slug": "antlia-lrgb-dark",
+      "brand_id": "53a0b30b-aba2-5920-b94d-e8d1534f746b",
+      "brand_name": "Antlia",
+      "name": "Antlia LRGB Dark",
+      "display_name": "Antlia LRGB Dark",
+      "primary_category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "primary_category_code": "broadband",
+      "technical_class": "broadband_or_moderate_band",
+      "market_band_label": "broadband",
+      "product_kind": "family_or_set",
+      "pass_window_count": null,
+      "emission_line_count": null,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "18fac725-20cc-5a72-9b15-b8bd824e84d3",
+      "slug": "antlia-lrgb-v-pro",
+      "brand_id": "53a0b30b-aba2-5920-b94d-e8d1534f746b",
+      "brand_name": "Antlia",
+      "name": "Antlia LRGB-V Pro",
+      "display_name": "Antlia LRGB-V Pro",
+      "primary_category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "primary_category_code": "broadband",
+      "technical_class": "broadband_or_moderate_band",
+      "market_band_label": "broadband",
+      "product_kind": "family_or_set",
+      "pass_window_count": null,
+      "emission_line_count": null,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "category_verified",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "75e34271-f0f2-5769-ac0f-acb99b065f9f",
+      "slug": "antlia-quad-band-anti-light-pollution",
+      "brand_id": "53a0b30b-aba2-5920-b94d-e8d1534f746b",
+      "brand_name": "Antlia",
+      "name": "Antlia Quad Band Anti-Light Pollution",
+      "display_name": "Antlia Quad Band Anti-Light Pollution",
+      "primary_category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "primary_category_code": "broadband",
+      "technical_class": "hybrid_multiband_broadband",
+      "market_band_label": "broadband",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": null,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "retailer_verified",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "2af937e8-02ed-5cba-ba06-a2bc77a3efd3",
+      "slug": "antlia-triband-rgb-ultra",
+      "brand_id": "53a0b30b-aba2-5920-b94d-e8d1534f746b",
+      "brand_name": "Antlia",
+      "name": "Antlia Triband RGB Ultra",
+      "display_name": "Antlia Triband RGB Ultra",
+      "primary_category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "primary_category_code": "broadband",
+      "technical_class": "hybrid_multiband_broadband",
+      "market_band_label": "broadband",
+      "product_kind": "family_or_set",
+      "pass_window_count": null,
+      "emission_line_count": null,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "738908a3-c0c8-56c6-93b1-6d689e8ec732",
+      "slug": "antlia-triband-rgb-ultra-ii",
+      "brand_id": "53a0b30b-aba2-5920-b94d-e8d1534f746b",
+      "brand_name": "Antlia",
+      "name": "Antlia Triband RGB Ultra II",
+      "display_name": "Antlia Triband RGB Ultra II",
+      "primary_category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "primary_category_code": "broadband",
+      "technical_class": "hybrid_multiband_broadband",
+      "market_band_label": "broadband",
+      "product_kind": "family_or_set",
+      "pass_window_count": null,
+      "emission_line_count": null,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "category_verified",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "b06cdc5e-625a-5898-b604-d20cc7485b01",
+      "slug": "astronomik-cls",
+      "brand_id": "b630e70f-1dfa-558b-85b8-f249bafa4dd9",
+      "brand_name": "Astronomik",
+      "name": "Astronomik CLS",
+      "display_name": "Astronomik CLS",
+      "primary_category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "primary_category_code": "broadband",
+      "technical_class": "broadband_or_moderate_band",
+      "market_band_label": "broadband",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": null,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "6002c46d-2524-51ae-bdd3-ae05f94d5797",
+      "slug": "astronomik-cls-ccd",
+      "brand_id": "b630e70f-1dfa-558b-85b8-f249bafa4dd9",
+      "brand_name": "Astronomik",
+      "name": "Astronomik CLS-CCD",
+      "display_name": "Astronomik CLS-CCD",
+      "primary_category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "primary_category_code": "broadband",
+      "technical_class": "broadband_or_moderate_band",
+      "market_band_label": "broadband",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": null,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "1ae74ae1-d8ac-5ff4-8fa3-260437444786",
+      "slug": "astronomik-deep-sky",
+      "brand_id": "b630e70f-1dfa-558b-85b8-f249bafa4dd9",
+      "brand_name": "Astronomik",
+      "name": "Astronomik Deep-Sky",
+      "display_name": "Astronomik Deep-Sky",
+      "primary_category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "primary_category_code": "broadband",
+      "technical_class": "broadband_or_moderate_band",
+      "market_band_label": "broadband",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": null,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "c3ce57c5-0fcd-55a1-8337-a94227bb5afb",
+      "slug": "astronomik-l-1-uv-ir-block",
+      "brand_id": "b630e70f-1dfa-558b-85b8-f249bafa4dd9",
+      "brand_name": "Astronomik",
+      "name": "Astronomik L-1 UV-IR Block",
+      "display_name": "Astronomik L-1 UV-IR Block",
+      "primary_category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "primary_category_code": "broadband",
+      "technical_class": "broadband_or_moderate_band",
+      "market_band_label": "broadband",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": null,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "91c0bae7-9dfe-5ff5-9325-d402c116c597",
+      "slug": "astronomik-l-2-uv-ir-block",
+      "brand_id": "b630e70f-1dfa-558b-85b8-f249bafa4dd9",
+      "brand_name": "Astronomik",
+      "name": "Astronomik L-2 UV-IR Block",
+      "display_name": "Astronomik L-2 UV-IR Block",
+      "primary_category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "primary_category_code": "broadband",
+      "technical_class": "broadband_or_moderate_band",
+      "market_band_label": "broadband",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": null,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "a35c6b73-d00e-5284-9415-b3a0e992a7a7",
+      "slug": "astronomik-l-3-uv-ir-block",
+      "brand_id": "b630e70f-1dfa-558b-85b8-f249bafa4dd9",
+      "brand_name": "Astronomik",
+      "name": "Astronomik L-3 UV-IR Block",
+      "display_name": "Astronomik L-3 UV-IR Block",
+      "primary_category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "primary_category_code": "broadband",
+      "technical_class": "broadband_or_moderate_band",
+      "market_band_label": "broadband",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": null,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "265dab9c-8857-5c48-8355-b57530f07e87",
+      "slug": "astronomik-proplanet-642-bp",
+      "brand_id": "b630e70f-1dfa-558b-85b8-f249bafa4dd9",
+      "brand_name": "Astronomik",
+      "name": "Astronomik ProPlanet 642 BP",
+      "display_name": "Astronomik ProPlanet 642 BP",
+      "primary_category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "primary_category_code": "broadband",
+      "technical_class": "broadband_or_moderate_band",
+      "market_band_label": "broadband",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": null,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "b3c0f8b3-c07f-5e6f-95b2-bc274ccf0183",
+      "slug": "astronomik-proplanet-742",
+      "brand_id": "b630e70f-1dfa-558b-85b8-f249bafa4dd9",
+      "brand_name": "Astronomik",
+      "name": "Astronomik ProPlanet 742",
+      "display_name": "Astronomik ProPlanet 742",
+      "primary_category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "primary_category_code": "broadband",
+      "technical_class": "broadband_or_moderate_band",
+      "market_band_label": "broadband",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": null,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "21c22c7d-0cec-5f81-bbcf-6d6475b66f58",
+      "slug": "astronomik-proplanet-807",
+      "brand_id": "b630e70f-1dfa-558b-85b8-f249bafa4dd9",
+      "brand_name": "Astronomik",
+      "name": "Astronomik ProPlanet 807",
+      "display_name": "Astronomik ProPlanet 807",
+      "primary_category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "primary_category_code": "broadband",
+      "technical_class": "broadband_or_moderate_band",
+      "market_band_label": "broadband",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": null,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "675d55a6-cc47-5e0c-a839-db9eaaf2076d",
+      "slug": "astronomik-skyglow",
+      "brand_id": "b630e70f-1dfa-558b-85b8-f249bafa4dd9",
+      "brand_name": "Astronomik",
+      "name": "Astronomik SkyGlow",
+      "display_name": "Astronomik SkyGlow",
+      "primary_category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "primary_category_code": "broadband",
+      "technical_class": "broadband_or_moderate_band",
+      "market_band_label": "broadband",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": null,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "b31f7d7c-b61a-56b7-84d6-30cd575587fb",
+      "slug": "astronomik-uhc",
+      "brand_id": "b630e70f-1dfa-558b-85b8-f249bafa4dd9",
+      "brand_name": "Astronomik",
+      "name": "Astronomik UHC",
+      "display_name": "Astronomik UHC",
+      "primary_category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "primary_category_code": "broadband",
+      "technical_class": "broadband_or_moderate_band",
+      "market_band_label": "broadband",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": null,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "97d3f7d5-0f61-5a37-a004-d4e5920e0c71",
+      "slug": "astronomik-uhc-e",
+      "brand_id": "b630e70f-1dfa-558b-85b8-f249bafa4dd9",
+      "brand_name": "Astronomik",
+      "name": "Astronomik UHC-E",
+      "display_name": "Astronomik UHC-E",
+      "primary_category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "primary_category_code": "broadband",
+      "technical_class": "broadband_or_moderate_band",
+      "market_band_label": "broadband",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": null,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "93e38fbb-475e-5b21-854f-416af18dbe2d",
+      "slug": "baader-neodymium-moon-skyglow",
+      "brand_id": "dcc94b7a-a512-5fff-a6a9-e6242100b476",
+      "brand_name": "Baader",
+      "name": "Baader Neodymium Moon & Skyglow",
+      "display_name": "Baader Neodymium Moon & Skyglow",
+      "primary_category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "primary_category_code": "broadband",
+      "technical_class": "broadband_or_moderate_band",
+      "market_band_label": "broadband",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": null,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "c2e8dff1-3626-5bc5-ab0b-1239080992a2",
+      "slug": "baader-semi-apo",
+      "brand_id": "dcc94b7a-a512-5fff-a6a9-e6242100b476",
+      "brand_name": "Baader",
+      "name": "Baader Semi-APO",
+      "display_name": "Baader Semi-APO",
+      "primary_category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "primary_category_code": "broadband",
+      "technical_class": "broadband_or_moderate_band",
+      "market_band_label": "broadband",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": null,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "351b7683-785a-5bcd-a63b-f19e2b20265a",
+      "slug": "baader-uhc-l",
+      "brand_id": "dcc94b7a-a512-5fff-a6a9-e6242100b476",
+      "brand_name": "Baader",
+      "name": "Baader UHC-L",
+      "display_name": "Baader UHC-L",
+      "primary_category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "primary_category_code": "broadband",
+      "technical_class": "broadband_or_moderate_band",
+      "market_band_label": "broadband",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": null,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "11632a79-1ab1-50a6-8d99-b9beea8ad151",
+      "slug": "idas-heuib-ii",
+      "brand_id": "0c2f8b71-ceb8-5723-9d4b-f36587f159ce",
+      "brand_name": "IDAS",
+      "name": "IDAS HEUIB-II",
+      "display_name": "IDAS HEUIB-II",
+      "primary_category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "primary_category_code": "broadband",
+      "technical_class": "broadband_or_moderate_band",
+      "market_band_label": "broadband",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": null,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "70970037-88de-5f61-b024-c02b7d2b5b21",
+      "slug": "idas-lps-d1",
+      "brand_id": "0c2f8b71-ceb8-5723-9d4b-f36587f159ce",
+      "brand_name": "IDAS",
+      "name": "IDAS LPS-D1",
+      "display_name": "IDAS LPS-D1",
+      "primary_category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "primary_category_code": "broadband",
+      "technical_class": "broadband_or_moderate_band",
+      "market_band_label": "broadband",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": null,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "48ec9e5c-f8f0-5ed5-a409-cd7d99718462",
+      "slug": "idas-lps-d2",
+      "brand_id": "0c2f8b71-ceb8-5723-9d4b-f36587f159ce",
+      "brand_name": "IDAS",
+      "name": "IDAS LPS-D2",
+      "display_name": "IDAS LPS-D2",
+      "primary_category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "primary_category_code": "broadband",
+      "technical_class": "broadband_or_moderate_band",
+      "market_band_label": "broadband",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": null,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "b3b4e54c-0b1e-5cea-a672-7d2e3de39948",
+      "slug": "idas-lps-d3",
+      "brand_id": "0c2f8b71-ceb8-5723-9d4b-f36587f159ce",
+      "brand_name": "IDAS",
+      "name": "IDAS LPS-D3",
+      "display_name": "IDAS LPS-D3",
+      "primary_category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "primary_category_code": "broadband",
+      "technical_class": "broadband_or_moderate_band",
+      "market_band_label": "broadband",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": null,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "1a70aa6c-97ff-5049-8e4e-6dc690d42c40",
+      "slug": "idas-lps-p2",
+      "brand_id": "0c2f8b71-ceb8-5723-9d4b-f36587f159ce",
+      "brand_name": "IDAS",
+      "name": "IDAS LPS-P2",
+      "display_name": "IDAS LPS-P2",
+      "primary_category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "primary_category_code": "broadband",
+      "technical_class": "broadband_or_moderate_band",
+      "market_band_label": "broadband",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": null,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "54db751d-e281-563a-89ef-0624e4b6dc98",
+      "slug": "omegon-pro-cls",
+      "brand_id": "6cbef754-02e2-50ff-8c2f-ef0d47b20b0e",
+      "brand_name": "Omegon",
+      "name": "Omegon Pro CLS",
+      "display_name": "Omegon Pro CLS",
+      "primary_category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "primary_category_code": "broadband",
+      "technical_class": "broadband_or_moderate_band",
+      "market_band_label": "broadband",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": null,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "506ab115-bf32-5ac5-b398-be4414deb14e",
+      "slug": "omegon-pro-uhc",
+      "brand_id": "6cbef754-02e2-50ff-8c2f-ef0d47b20b0e",
+      "brand_name": "Omegon",
+      "name": "Omegon Pro UHC",
+      "display_name": "Omegon Pro UHC",
+      "primary_category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "primary_category_code": "broadband",
+      "technical_class": "broadband_or_moderate_band",
+      "market_band_label": "broadband",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": null,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "d2cbb4c3-f1c0-58c3-bf26-9c46a7a215c1",
+      "slug": "optolong-l-pro",
+      "brand_id": "99d1c3b9-859a-5c0a-a905-de0bbf0e544c",
+      "brand_name": "Optolong",
+      "name": "Optolong L-Pro",
+      "display_name": "Optolong L-Pro",
+      "primary_category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "primary_category_code": "broadband",
+      "technical_class": "broadband_or_moderate_band",
+      "market_band_label": "broadband",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": null,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "2ab88de4-e9e2-5742-8c27-b38aea722365",
+      "slug": "optolong-l-quad-enhance-l-qef",
+      "brand_id": "99d1c3b9-859a-5c0a-a905-de0bbf0e544c",
+      "brand_name": "Optolong",
+      "name": "Optolong L-Quad Enhance / L-QEF",
+      "display_name": "Optolong L-Quad Enhance / L-QEF",
+      "primary_category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "primary_category_code": "broadband",
+      "technical_class": "hybrid_multiband_broadband",
+      "market_band_label": "broadband",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": null,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "54ddd04c-c56d-5dc0-861c-c2ac5d9c4d7d",
+      "slug": "optolong-lrgb",
+      "brand_id": "99d1c3b9-859a-5c0a-a905-de0bbf0e544c",
+      "brand_name": "Optolong",
+      "name": "Optolong LRGB",
+      "display_name": "Optolong LRGB",
+      "primary_category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "primary_category_code": "broadband",
+      "technical_class": "broadband_or_moderate_band",
+      "market_band_label": "broadband",
+      "product_kind": "family_or_set",
+      "pass_window_count": null,
+      "emission_line_count": null,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "651858a2-0df1-5a54-9330-1526063afc3a",
+      "slug": "ts-optics-cls",
+      "brand_id": "9be42912-d07e-5598-9207-15d5a47053e4",
+      "brand_name": "TS-Optics",
+      "name": "TS-Optics CLS",
+      "display_name": "TS-Optics CLS",
+      "primary_category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "primary_category_code": "broadband",
+      "technical_class": "broadband_or_moderate_band",
+      "market_band_label": "broadband",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": null,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "06a530ff-eede-57bf-a4aa-2dfd3bd108bf",
+      "slug": "antlia-h-alpha-2-5-nm-ultra",
+      "brand_id": "53a0b30b-aba2-5920-b94d-e8d1534f746b",
+      "brand_name": "Antlia",
+      "name": "Antlia H-alpha 2.5 nm Ultra",
+      "display_name": "Antlia H-alpha 2.5 nm Ultra",
+      "primary_category_id": "2c3ed833-78b8-5c53-bc65-5cccccdf549c",
+      "primary_category_code": "single_line_narrowband",
+      "technical_class": "single_line_narrowband",
+      "market_band_label": "single",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": 1,
+      "bandwidth_min_nm": 2.5,
+      "bandwidth_max_nm": 2.5,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "category_verified",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "b685a659-7e8b-5126-b4a2-23da46cc544c",
+      "slug": "antlia-h-alpha-3-nm-pro",
+      "brand_id": "53a0b30b-aba2-5920-b94d-e8d1534f746b",
+      "brand_name": "Antlia",
+      "name": "Antlia H-alpha 3 nm Pro",
+      "display_name": "Antlia H-alpha 3 nm Pro",
+      "primary_category_id": "2c3ed833-78b8-5c53-bc65-5cccccdf549c",
+      "primary_category_code": "single_line_narrowband",
+      "technical_class": "single_line_narrowband",
+      "market_band_label": "single",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": 1,
+      "bandwidth_min_nm": 3.0,
+      "bandwidth_max_nm": 3.0,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "category_verified",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "20eef586-e791-526c-bd74-9abd0384b4c6",
+      "slug": "antlia-h-alpha-4-5-nm-edge",
+      "brand_id": "53a0b30b-aba2-5920-b94d-e8d1534f746b",
+      "brand_name": "Antlia",
+      "name": "Antlia H-alpha 4.5 nm EDGE",
+      "display_name": "Antlia H-alpha 4.5 nm EDGE",
+      "primary_category_id": "2c3ed833-78b8-5c53-bc65-5cccccdf549c",
+      "primary_category_code": "single_line_narrowband",
+      "technical_class": "single_line_narrowband",
+      "market_band_label": "single",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": 1,
+      "bandwidth_min_nm": 4.5,
+      "bandwidth_max_nm": 4.5,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "category_verified",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "b7b45257-7cf5-5d03-9fcc-bd4cccec6dc7",
+      "slug": "antlia-h-beta-3-nm-pro",
+      "brand_id": "53a0b30b-aba2-5920-b94d-e8d1534f746b",
+      "brand_name": "Antlia",
+      "name": "Antlia H-beta 3 nm Pro",
+      "display_name": "Antlia H-beta 3 nm Pro",
+      "primary_category_id": "2c3ed833-78b8-5c53-bc65-5cccccdf549c",
+      "primary_category_code": "single_line_narrowband",
+      "technical_class": "single_line_narrowband",
+      "market_band_label": "single",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": 1,
+      "bandwidth_min_nm": 3.0,
+      "bandwidth_max_nm": 3.0,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "0a09ff47-06c7-575f-a295-7fe64c34a90f",
+      "slug": "antlia-nii-3-nm-pro",
+      "brand_id": "53a0b30b-aba2-5920-b94d-e8d1534f746b",
+      "brand_name": "Antlia",
+      "name": "Antlia NII 3 nm Pro",
+      "display_name": "Antlia NII 3 nm Pro",
+      "primary_category_id": "2c3ed833-78b8-5c53-bc65-5cccccdf549c",
+      "primary_category_code": "single_line_narrowband",
+      "technical_class": "single_line_narrowband",
+      "market_band_label": "single",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": 1,
+      "bandwidth_min_nm": 3.0,
+      "bandwidth_max_nm": 3.0,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "23d0af8a-4438-5896-a104-c0b1b30bac56",
+      "slug": "antlia-oiii-2-5-nm-ultra",
+      "brand_id": "53a0b30b-aba2-5920-b94d-e8d1534f746b",
+      "brand_name": "Antlia",
+      "name": "Antlia OIII 2.5 nm Ultra",
+      "display_name": "Antlia OIII 2.5 nm Ultra",
+      "primary_category_id": "2c3ed833-78b8-5c53-bc65-5cccccdf549c",
+      "primary_category_code": "single_line_narrowband",
+      "technical_class": "single_line_narrowband",
+      "market_band_label": "single",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": 1,
+      "bandwidth_min_nm": 2.5,
+      "bandwidth_max_nm": 2.5,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "category_verified",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "c44cf5a6-c989-5ebb-96ca-da17bfe83543",
+      "slug": "antlia-oiii-3-nm-pro",
+      "brand_id": "53a0b30b-aba2-5920-b94d-e8d1534f746b",
+      "brand_name": "Antlia",
+      "name": "Antlia OIII 3 nm Pro",
+      "display_name": "Antlia OIII 3 nm Pro",
+      "primary_category_id": "2c3ed833-78b8-5c53-bc65-5cccccdf549c",
+      "primary_category_code": "single_line_narrowband",
+      "technical_class": "single_line_narrowband",
+      "market_band_label": "single",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": 1,
+      "bandwidth_min_nm": 3.0,
+      "bandwidth_max_nm": 3.0,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "category_verified",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "07ca89ea-b365-5360-820d-a317722c57ae",
+      "slug": "antlia-oiii-4-5-nm-edge",
+      "brand_id": "53a0b30b-aba2-5920-b94d-e8d1534f746b",
+      "brand_name": "Antlia",
+      "name": "Antlia OIII 4.5 nm EDGE",
+      "display_name": "Antlia OIII 4.5 nm EDGE",
+      "primary_category_id": "2c3ed833-78b8-5c53-bc65-5cccccdf549c",
+      "primary_category_code": "single_line_narrowband",
+      "technical_class": "single_line_narrowband",
+      "market_band_label": "single",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": 1,
+      "bandwidth_min_nm": 4.5,
+      "bandwidth_max_nm": 4.5,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "category_verified",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "5bebeab5-c995-5fee-9a45-18a2027a649c",
+      "slug": "antlia-sii-2-5-nm-ultra",
+      "brand_id": "53a0b30b-aba2-5920-b94d-e8d1534f746b",
+      "brand_name": "Antlia",
+      "name": "Antlia SII 2.5 nm Ultra",
+      "display_name": "Antlia SII 2.5 nm Ultra",
+      "primary_category_id": "2c3ed833-78b8-5c53-bc65-5cccccdf549c",
+      "primary_category_code": "single_line_narrowband",
+      "technical_class": "single_line_narrowband",
+      "market_band_label": "single",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": 1,
+      "bandwidth_min_nm": 2.5,
+      "bandwidth_max_nm": 2.5,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "category_verified",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "1ec8e967-cb18-58d0-b721-04901894a360",
+      "slug": "antlia-sii-3-nm-pro",
+      "brand_id": "53a0b30b-aba2-5920-b94d-e8d1534f746b",
+      "brand_name": "Antlia",
+      "name": "Antlia SII 3 nm Pro",
+      "display_name": "Antlia SII 3 nm Pro",
+      "primary_category_id": "2c3ed833-78b8-5c53-bc65-5cccccdf549c",
+      "primary_category_code": "single_line_narrowband",
+      "technical_class": "single_line_narrowband",
+      "market_band_label": "single",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": 1,
+      "bandwidth_min_nm": 3.0,
+      "bandwidth_max_nm": 3.0,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "category_verified",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "da2ea76a-9092-5688-a2f1-47aa78d68c3e",
+      "slug": "astrodon-gen2-h-alpha-oiii-sii-3-nm-5-nm",
+      "brand_id": "77709413-57a6-5878-9044-33f84ff8d0a2",
+      "brand_name": "Astrodon",
+      "name": "Astrodon Gen2 H-alpha / OIII / SII (3 nm / 5 nm)",
+      "display_name": "Astrodon Gen2 H-alpha / OIII / SII (3 nm / 5 nm)",
+      "primary_category_id": "2c3ed833-78b8-5c53-bc65-5cccccdf549c",
+      "primary_category_code": "single_line_narrowband",
+      "technical_class": "narrowband_family_or_set",
+      "market_band_label": "single",
+      "product_kind": "family_or_set",
+      "pass_window_count": null,
+      "emission_line_count": 3,
+      "bandwidth_min_nm": 3.0,
+      "bandwidth_max_nm": 5.0,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "9bafbfc4-4a28-5fc8-bdce-4139e75aad6c",
+      "slug": "astronomik-h-alpha-6-nm-12-nm",
+      "brand_id": "b630e70f-1dfa-558b-85b8-f249bafa4dd9",
+      "brand_name": "Astronomik",
+      "name": "Astronomik H-alpha 6 nm / 12 nm",
+      "display_name": "Astronomik H-alpha 6 nm / 12 nm",
+      "primary_category_id": "2c3ed833-78b8-5c53-bc65-5cccccdf549c",
+      "primary_category_code": "single_line_narrowband",
+      "technical_class": "single_line_narrowband",
+      "market_band_label": "single",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": 1,
+      "bandwidth_min_nm": 6.0,
+      "bandwidth_max_nm": 12.0,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "e1a311cf-2ee1-5b4d-bfa1-5f7999f4b6b7",
+      "slug": "astronomik-maxfr",
+      "brand_id": "b630e70f-1dfa-558b-85b8-f249bafa4dd9",
+      "brand_name": "Astronomik",
+      "name": "Astronomik MaxFR",
+      "display_name": "Astronomik MaxFR",
+      "primary_category_id": "2c3ed833-78b8-5c53-bc65-5cccccdf549c",
+      "primary_category_code": "single_line_narrowband",
+      "technical_class": "single_line_narrowband",
+      "market_band_label": "single",
+      "product_kind": "series",
+      "pass_window_count": null,
+      "emission_line_count": null,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": "optimized_or_pres_shifted",
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "170ff7f5-9633-5b92-84ca-5b5758955a44",
+      "slug": "astronomik-oiii-6-nm-12-nm",
+      "brand_id": "b630e70f-1dfa-558b-85b8-f249bafa4dd9",
+      "brand_name": "Astronomik",
+      "name": "Astronomik OIII 6 nm / 12 nm",
+      "display_name": "Astronomik OIII 6 nm / 12 nm",
+      "primary_category_id": "2c3ed833-78b8-5c53-bc65-5cccccdf549c",
+      "primary_category_code": "single_line_narrowband",
+      "technical_class": "single_line_narrowband",
+      "market_band_label": "single",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": 1,
+      "bandwidth_min_nm": 6.0,
+      "bandwidth_max_nm": 12.0,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "ade36bc5-7ccd-5d53-88e5-764061832568",
+      "slug": "astronomik-sii-6-nm-12-nm",
+      "brand_id": "b630e70f-1dfa-558b-85b8-f249bafa4dd9",
+      "brand_name": "Astronomik",
+      "name": "Astronomik SII 6 nm / 12 nm",
+      "display_name": "Astronomik SII 6 nm / 12 nm",
+      "primary_category_id": "2c3ed833-78b8-5c53-bc65-5cccccdf549c",
+      "primary_category_code": "single_line_narrowband",
+      "technical_class": "single_line_narrowband",
+      "market_band_label": "single",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": 1,
+      "bandwidth_min_nm": 6.0,
+      "bandwidth_max_nm": 12.0,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "da699ae0-5681-5b67-a784-bfdf3dab7b5b",
+      "slug": "baader-cmos-narrowband-h-alpha-oiii-sii",
+      "brand_id": "dcc94b7a-a512-5fff-a6a9-e6242100b476",
+      "brand_name": "Baader",
+      "name": "Baader CMOS Narrowband (H-alpha / OIII / SII)",
+      "display_name": "Baader CMOS Narrowband (H-alpha / OIII / SII)",
+      "primary_category_id": "2c3ed833-78b8-5c53-bc65-5cccccdf549c",
+      "primary_category_code": "single_line_narrowband",
+      "technical_class": "narrowband_family_or_set",
+      "market_band_label": "single",
+      "product_kind": "family_or_set",
+      "pass_window_count": null,
+      "emission_line_count": 3,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "ada3ac74-5e04-5f80-8901-1cebb6ce9cd2",
+      "slug": "baader-cmos-ultra-narrowband-f-2-ve-f-3",
+      "brand_id": "dcc94b7a-a512-5fff-a6a9-e6242100b476",
+      "brand_name": "Baader",
+      "name": "Baader CMOS Ultra-Narrowband (f/2 ve f/3)",
+      "display_name": "Baader CMOS Ultra-Narrowband (f/2 ve f/3)",
+      "primary_category_id": "2c3ed833-78b8-5c53-bc65-5cccccdf549c",
+      "primary_category_code": "single_line_narrowband",
+      "technical_class": "single_line_narrowband",
+      "market_band_label": "single",
+      "product_kind": "series",
+      "pass_window_count": null,
+      "emission_line_count": null,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": "optimized_or_pres_shifted",
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "a5f92332-52ba-58e2-b55f-12e36d80ae96",
+      "slug": "baader-h-alpha-3-5-nm-klasik",
+      "brand_id": "dcc94b7a-a512-5fff-a6a9-e6242100b476",
+      "brand_name": "Baader",
+      "name": "Baader H-alpha 3.5 nm (klasik)",
+      "display_name": "Baader H-alpha 3.5 nm (klasik)",
+      "primary_category_id": "2c3ed833-78b8-5c53-bc65-5cccccdf549c",
+      "primary_category_code": "single_line_narrowband",
+      "technical_class": "single_line_narrowband",
+      "market_band_label": "single",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": 1,
+      "bandwidth_min_nm": 3.5,
+      "bandwidth_max_nm": 3.5,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "83f699fa-f2f1-5d84-bf34-ca3a67c80c56",
+      "slug": "baader-f-2-highspeed-h-alpha-oiii-sii",
+      "brand_id": "dcc94b7a-a512-5fff-a6a9-e6242100b476",
+      "brand_name": "Baader",
+      "name": "Baader f/2 Highspeed (H-alpha, OIII, SII)",
+      "display_name": "Baader f/2 Highspeed (H-alpha, OIII, SII)",
+      "primary_category_id": "2c3ed833-78b8-5c53-bc65-5cccccdf549c",
+      "primary_category_code": "single_line_narrowband",
+      "technical_class": "narrowband_family_or_set",
+      "market_band_label": "single",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": 3,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": "optimized_or_pres_shifted",
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "1e087c31-ab6f-578e-8307-a41d57ba5aec",
+      "slug": "chroma-h-alpha-oiii-sii-3-nm-5-nm",
+      "brand_id": "a0b690dc-9f06-5fad-9056-6335ff1523fd",
+      "brand_name": "Chroma",
+      "name": "Chroma H-alpha / OIII / SII (3 nm / 5 nm)",
+      "display_name": "Chroma H-alpha / OIII / SII (3 nm / 5 nm)",
+      "primary_category_id": "2c3ed833-78b8-5c53-bc65-5cccccdf549c",
+      "primary_category_code": "single_line_narrowband",
+      "technical_class": "narrowband_family_or_set",
+      "market_band_label": "single",
+      "product_kind": "family_or_set",
+      "pass_window_count": null,
+      "emission_line_count": 3,
+      "bandwidth_min_nm": 3.0,
+      "bandwidth_max_nm": 5.0,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "abe73bbb-c7a2-5af0-b29c-113a44319296",
+      "slug": "omegon-pro-veil-h-alpha",
+      "brand_id": "6cbef754-02e2-50ff-8c2f-ef0d47b20b0e",
+      "brand_name": "Omegon",
+      "name": "Omegon Pro Veil H-alpha",
+      "display_name": "Omegon Pro Veil H-alpha",
+      "primary_category_id": "2c3ed833-78b8-5c53-bc65-5cccccdf549c",
+      "primary_category_code": "single_line_narrowband",
+      "technical_class": "single_line_narrowband",
+      "market_band_label": "single",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": 1,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "d3110b59-56d6-5abd-a41a-1b51720eb178",
+      "slug": "omegon-pro-veil-oiii",
+      "brand_id": "6cbef754-02e2-50ff-8c2f-ef0d47b20b0e",
+      "brand_name": "Omegon",
+      "name": "Omegon Pro Veil OIII",
+      "display_name": "Omegon Pro Veil OIII",
+      "primary_category_id": "2c3ed833-78b8-5c53-bc65-5cccccdf549c",
+      "primary_category_code": "single_line_narrowband",
+      "technical_class": "single_line_narrowband",
+      "market_band_label": "single",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": 1,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "a0f67434-07b9-5a58-9bd3-8e372dfa6724",
+      "slug": "omegon-pro-veil-sii",
+      "brand_id": "6cbef754-02e2-50ff-8c2f-ef0d47b20b0e",
+      "brand_name": "Omegon",
+      "name": "Omegon Pro Veil SII",
+      "display_name": "Omegon Pro Veil SII",
+      "primary_category_id": "2c3ed833-78b8-5c53-bc65-5cccccdf549c",
+      "primary_category_code": "single_line_narrowband",
+      "technical_class": "single_line_narrowband",
+      "market_band_label": "single",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": 1,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "3cf4d130-11de-5b0e-9356-732aa1668efa",
+      "slug": "optolong-h-alpha-3-nm",
+      "brand_id": "99d1c3b9-859a-5c0a-a905-de0bbf0e544c",
+      "brand_name": "Optolong",
+      "name": "Optolong H-alpha 3 nm",
+      "display_name": "Optolong H-alpha 3 nm",
+      "primary_category_id": "2c3ed833-78b8-5c53-bc65-5cccccdf549c",
+      "primary_category_code": "single_line_narrowband",
+      "technical_class": "single_line_narrowband",
+      "market_band_label": "single",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": 1,
+      "bandwidth_min_nm": 3.0,
+      "bandwidth_max_nm": 3.0,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "2d358e82-1a00-5351-92f9-8117680b077d",
+      "slug": "optolong-oiii-3-nm",
+      "brand_id": "99d1c3b9-859a-5c0a-a905-de0bbf0e544c",
+      "brand_name": "Optolong",
+      "name": "Optolong OIII 3 nm",
+      "display_name": "Optolong OIII 3 nm",
+      "primary_category_id": "2c3ed833-78b8-5c53-bc65-5cccccdf549c",
+      "primary_category_code": "single_line_narrowband",
+      "technical_class": "single_line_narrowband",
+      "market_band_label": "single",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": 1,
+      "bandwidth_min_nm": 3.0,
+      "bandwidth_max_nm": 3.0,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "4f6ef133-baf6-5fe4-a52f-ac3e20432245",
+      "slug": "optolong-sho-3-nm-7-nm-set",
+      "brand_id": "99d1c3b9-859a-5c0a-a905-de0bbf0e544c",
+      "brand_name": "Optolong",
+      "name": "Optolong SHO 3 nm / 7 nm set",
+      "display_name": "Optolong SHO 3 nm / 7 nm set",
+      "primary_category_id": "2c3ed833-78b8-5c53-bc65-5cccccdf549c",
+      "primary_category_code": "single_line_narrowband",
+      "technical_class": "narrowband_family_or_set",
+      "market_band_label": "single",
+      "product_kind": "family_or_set",
+      "pass_window_count": null,
+      "emission_line_count": 3,
+      "bandwidth_min_nm": 3.0,
+      "bandwidth_max_nm": 7.0,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "873d764e-5b45-5353-a382-a2f2b43274a0",
+      "slug": "optolong-sii-3-nm",
+      "brand_id": "99d1c3b9-859a-5c0a-a905-de0bbf0e544c",
+      "brand_name": "Optolong",
+      "name": "Optolong SII 3 nm",
+      "display_name": "Optolong SII 3 nm",
+      "primary_category_id": "2c3ed833-78b8-5c53-bc65-5cccccdf549c",
+      "primary_category_code": "single_line_narrowband",
+      "technical_class": "single_line_narrowband",
+      "market_band_label": "single",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": 1,
+      "bandwidth_min_nm": 3.0,
+      "bandwidth_max_nm": 3.0,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "b176f122-68e1-5e9c-96d0-455a30df9023",
+      "slug": "player-one-anti-halo-pro-h-alpha-oiii-sii",
+      "brand_id": "7f47033d-dbe2-50be-b04b-e849be392474",
+      "brand_name": "Player One",
+      "name": "Player One Anti-Halo Pro (H-alpha / OIII / SII)",
+      "display_name": "Player One Anti-Halo Pro (H-alpha / OIII / SII)",
+      "primary_category_id": "2c3ed833-78b8-5c53-bc65-5cccccdf549c",
+      "primary_category_code": "single_line_narrowband",
+      "technical_class": "narrowband_family_or_set",
+      "market_band_label": "single",
+      "product_kind": "family_or_set",
+      "pass_window_count": null,
+      "emission_line_count": 3,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "856d0a9c-7cd9-5144-97bf-51fced969a8c",
+      "slug": "zwo-h-alpha-oiii-sii-7-nm-sho-set",
+      "brand_id": "1517e85b-a5f8-5524-8ba0-4d7896b7ae01",
+      "brand_name": "ZWO",
+      "name": "ZWO H-alpha / OIII / SII (7 nm / SHO set)",
+      "display_name": "ZWO H-alpha / OIII / SII (7 nm / SHO set)",
+      "primary_category_id": "2c3ed833-78b8-5c53-bc65-5cccccdf549c",
+      "primary_category_code": "single_line_narrowband",
+      "technical_class": "narrowband_family_or_set",
+      "market_band_label": "single",
+      "product_kind": "family_or_set",
+      "pass_window_count": null,
+      "emission_line_count": 3,
+      "bandwidth_min_nm": 7.0,
+      "bandwidth_max_nm": 7.0,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "8ad174b0-1b3a-5daa-9cc4-04430b4757a6",
+      "slug": "altair-dualband-ultra-ha-oiii",
+      "brand_id": "72ef571a-1c59-5953-9627-1835d37ece53",
+      "brand_name": "Altair",
+      "name": "Altair DualBand Ultra Ha/OIII",
+      "display_name": "Altair DualBand Ultra Ha/OIII",
+      "primary_category_id": "906e35c2-4fee-524b-8cf0-fee0ae0d3ecc",
+      "primary_category_code": "dual_band",
+      "technical_class": "multi_narrowband",
+      "market_band_label": "dual",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": 2,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "ed3b48ab-0b75-59e5-aeb0-a8543801d132",
+      "slug": "altair-dualband-ultra-sii-oiii-4-nm",
+      "brand_id": "72ef571a-1c59-5953-9627-1835d37ece53",
+      "brand_name": "Altair",
+      "name": "Altair DualBand Ultra SII/OIII (4 nm)",
+      "display_name": "Altair DualBand Ultra SII/OIII (4 nm)",
+      "primary_category_id": "906e35c2-4fee-524b-8cf0-fee0ae0d3ecc",
+      "primary_category_code": "dual_band",
+      "technical_class": "multi_narrowband",
+      "market_band_label": "dual",
+      "product_kind": "single_filter",
+      "pass_window_count": 2,
+      "emission_line_count": 2,
+      "bandwidth_min_nm": 4.0,
+      "bandwidth_max_nm": 4.0,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "retailer_verified",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "4802a5c8-bec0-5d39-a0bc-16b191465b8b",
+      "slug": "antlia-alp-t-ha-oiii-3-nm",
+      "brand_id": "53a0b30b-aba2-5920-b94d-e8d1534f746b",
+      "brand_name": "Antlia",
+      "name": "Antlia ALP-T Ha & OIII (3 nm)",
+      "display_name": "Antlia ALP-T Ha & OIII (3 nm)",
+      "primary_category_id": "906e35c2-4fee-524b-8cf0-fee0ae0d3ecc",
+      "primary_category_code": "dual_band",
+      "technical_class": "multi_narrowband",
+      "market_band_label": "dual",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": 2,
+      "bandwidth_min_nm": 3.0,
+      "bandwidth_max_nm": 3.0,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "0d09dfdb-ac64-5a1b-a096-2a163d589558",
+      "slug": "antlia-alp-t-ha-oiii-5-nm",
+      "brand_id": "53a0b30b-aba2-5920-b94d-e8d1534f746b",
+      "brand_name": "Antlia",
+      "name": "Antlia ALP-T Ha & OIII (5 nm)",
+      "display_name": "Antlia ALP-T Ha & OIII (5 nm)",
+      "primary_category_id": "906e35c2-4fee-524b-8cf0-fee0ae0d3ecc",
+      "primary_category_code": "dual_band",
+      "technical_class": "multi_narrowband",
+      "market_band_label": "dual",
+      "product_kind": "single_filter",
+      "pass_window_count": 2,
+      "emission_line_count": 2,
+      "bandwidth_min_nm": 5.0,
+      "bandwidth_max_nm": 5.0,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "retailer_verified",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "2f4c6c2e-f3ea-5d0e-a481-cb97d4b34650",
+      "slug": "antlia-alp-t-ha-oiii-highspeed",
+      "brand_id": "53a0b30b-aba2-5920-b94d-e8d1534f746b",
+      "brand_name": "Antlia",
+      "name": "Antlia ALP-T Ha & OIII Highspeed",
+      "display_name": "Antlia ALP-T Ha & OIII Highspeed",
+      "primary_category_id": "906e35c2-4fee-524b-8cf0-fee0ae0d3ecc",
+      "primary_category_code": "dual_band",
+      "technical_class": "multi_narrowband",
+      "market_band_label": "dual",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": 2,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": "optimized_or_pres_shifted",
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "ed6aade8-b620-58e7-8b14-1c1061035c08",
+      "slug": "antlia-alp-t-sii-h-beta-3-5-5-nm",
+      "brand_id": "53a0b30b-aba2-5920-b94d-e8d1534f746b",
+      "brand_name": "Antlia",
+      "name": "Antlia ALP-T SII & H-beta (3.5 / 5 nm)",
+      "display_name": "Antlia ALP-T SII & H-beta (3.5 / 5 nm)",
+      "primary_category_id": "906e35c2-4fee-524b-8cf0-fee0ae0d3ecc",
+      "primary_category_code": "dual_band",
+      "technical_class": "multi_narrowband",
+      "market_band_label": "dual",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": 2,
+      "bandwidth_min_nm": 5.0,
+      "bandwidth_max_nm": 5.0,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "0ffb86b6-995a-5310-9127-d421eb103b61",
+      "slug": "antlia-alp-t-sii-oiii-3-nm",
+      "brand_id": "53a0b30b-aba2-5920-b94d-e8d1534f746b",
+      "brand_name": "Antlia",
+      "name": "Antlia ALP-T SII & OIII (3 nm)",
+      "display_name": "Antlia ALP-T SII & OIII (3 nm)",
+      "primary_category_id": "906e35c2-4fee-524b-8cf0-fee0ae0d3ecc",
+      "primary_category_code": "dual_band",
+      "technical_class": "multi_narrowband",
+      "market_band_label": "dual",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": 2,
+      "bandwidth_min_nm": 3.0,
+      "bandwidth_max_nm": 3.0,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "276f56c3-01da-5136-936d-246ca0f9066b",
+      "slug": "antlia-h-beta-oiii",
+      "brand_id": "53a0b30b-aba2-5920-b94d-e8d1534f746b",
+      "brand_name": "Antlia",
+      "name": "Antlia H-beta & OIII",
+      "display_name": "Antlia H-beta & OIII",
+      "primary_category_id": "906e35c2-4fee-524b-8cf0-fee0ae0d3ecc",
+      "primary_category_code": "dual_band",
+      "technical_class": "multi_narrowband",
+      "market_band_label": "dual",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": 2,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "5922643b-e0ab-52d1-83dc-e1c261f6c3aa",
+      "slug": "askar-colourmagic-d1",
+      "brand_id": "ff656b0e-1a2c-54f2-9313-bf2e8697306d",
+      "brand_name": "Askar",
+      "name": "Askar ColourMagic D1",
+      "display_name": "Askar ColourMagic D1",
+      "primary_category_id": "906e35c2-4fee-524b-8cf0-fee0ae0d3ecc",
+      "primary_category_code": "dual_band",
+      "technical_class": "multi_narrowband",
+      "market_band_label": "dual",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": null,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "4cc5943d-1525-5f9f-b1bf-84311b7ad1c8",
+      "slug": "askar-colourmagic-d2-oiii-sii",
+      "brand_id": "ff656b0e-1a2c-54f2-9313-bf2e8697306d",
+      "brand_name": "Askar",
+      "name": "Askar ColourMagic D2 (OIII + SII)",
+      "display_name": "Askar ColourMagic D2 (OIII + SII)",
+      "primary_category_id": "906e35c2-4fee-524b-8cf0-fee0ae0d3ecc",
+      "primary_category_code": "dual_band",
+      "technical_class": "multi_narrowband",
+      "market_band_label": "dual",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": 2,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "bd549eda-7b06-5a20-8efc-ec938f9b0ad0",
+      "slug": "askar-colourmagic-e2-sii-oiii",
+      "brand_id": "ff656b0e-1a2c-54f2-9313-bf2e8697306d",
+      "brand_name": "Askar",
+      "name": "Askar ColourMagic E2 (SII + OIII)",
+      "display_name": "Askar ColourMagic E2 (SII + OIII)",
+      "primary_category_id": "906e35c2-4fee-524b-8cf0-fee0ae0d3ecc",
+      "primary_category_code": "dual_band",
+      "technical_class": "multi_narrowband",
+      "market_band_label": "dual",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": 2,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "2be1dd25-eeb7-5c87-af9f-80b1194c863f",
+      "slug": "chroma-dual-band-oiii-ha",
+      "brand_id": "a0b690dc-9f06-5fad-9056-6335ff1523fd",
+      "brand_name": "Chroma",
+      "name": "Chroma Dual Band OIII/Ha",
+      "display_name": "Chroma Dual Band OIII/Ha",
+      "primary_category_id": "906e35c2-4fee-524b-8cf0-fee0ae0d3ecc",
+      "primary_category_code": "dual_band",
+      "technical_class": "multi_narrowband",
+      "market_band_label": "dual",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": 2,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "396552b6-8cbc-5c3a-95d6-862d10e6ac4d",
+      "slug": "explore-scientific-dual-band-h-alpha-oiii",
+      "brand_id": "4f851c74-4b54-52b3-8210-47587b07eb2c",
+      "brand_name": "Explore Scientific",
+      "name": "Explore Scientific Dual Band H-alpha/OIII",
+      "display_name": "Explore Scientific Dual Band H-alpha/OIII",
+      "primary_category_id": "906e35c2-4fee-524b-8cf0-fee0ae0d3ecc",
+      "primary_category_code": "dual_band",
+      "technical_class": "multi_narrowband",
+      "market_band_label": "dual",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": 2,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "bec303e7-f25b-5982-ae47-2a10c7fc12e4",
+      "slug": "idas-nbz",
+      "brand_id": "0c2f8b71-ceb8-5723-9d4b-f36587f159ce",
+      "brand_name": "IDAS",
+      "name": "IDAS NBZ",
+      "display_name": "IDAS NBZ",
+      "primary_category_id": "906e35c2-4fee-524b-8cf0-fee0ae0d3ecc",
+      "primary_category_code": "dual_band",
+      "technical_class": "multi_narrowband",
+      "market_band_label": "dual",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": null,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "47711aec-be33-519d-83b1-727b47bc27c0",
+      "slug": "idas-nbz-ii",
+      "brand_id": "0c2f8b71-ceb8-5723-9d4b-f36587f159ce",
+      "brand_name": "IDAS",
+      "name": "IDAS NBZ-II",
+      "display_name": "IDAS NBZ-II",
+      "primary_category_id": "906e35c2-4fee-524b-8cf0-fee0ae0d3ecc",
+      "primary_category_code": "dual_band",
+      "technical_class": "multi_narrowband",
+      "market_band_label": "dual",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": null,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "348f67cf-5b95-5f54-9b4d-84496be878af",
+      "slug": "optolong-l-para-10-nm",
+      "brand_id": "99d1c3b9-859a-5c0a-a905-de0bbf0e544c",
+      "brand_name": "Optolong",
+      "name": "Optolong L-Para (10 nm)",
+      "display_name": "Optolong L-Para (10 nm)",
+      "primary_category_id": "906e35c2-4fee-524b-8cf0-fee0ae0d3ecc",
+      "primary_category_code": "dual_band",
+      "technical_class": "multi_narrowband",
+      "market_band_label": "dual",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": null,
+      "bandwidth_min_nm": 10.0,
+      "bandwidth_max_nm": 10.0,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "5ebdd7ca-d78d-5759-a3c2-294c093845e7",
+      "slug": "optolong-l-synergy-7-nm",
+      "brand_id": "99d1c3b9-859a-5c0a-a905-de0bbf0e544c",
+      "brand_name": "Optolong",
+      "name": "Optolong L-Synergy 7 nm",
+      "display_name": "Optolong L-Synergy 7 nm",
+      "primary_category_id": "906e35c2-4fee-524b-8cf0-fee0ae0d3ecc",
+      "primary_category_code": "dual_band",
+      "technical_class": "multi_narrowband",
+      "market_band_label": "dual",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": null,
+      "bandwidth_min_nm": 7.0,
+      "bandwidth_max_nm": 7.0,
+      "fast_optics_profile": null,
+      "source_origin": "web_research",
+      "verification_status": "retailer_verified",
+      "is_discontinued": false,
+      "notes": "Astroshop L2 Dual-Combo ürün sayfasında 7 nm dual filtre olarak listelenmiştir."
+    },
+    {
+      "id": "81dbd7a4-12d9-52bd-9ba8-339c2a221bac",
+      "slug": "optolong-l-ultimate-3-nm",
+      "brand_id": "99d1c3b9-859a-5c0a-a905-de0bbf0e544c",
+      "brand_name": "Optolong",
+      "name": "Optolong L-Ultimate (3 nm)",
+      "display_name": "Optolong L-Ultimate (3 nm)",
+      "primary_category_id": "906e35c2-4fee-524b-8cf0-fee0ae0d3ecc",
+      "primary_category_code": "dual_band",
+      "technical_class": "multi_narrowband",
+      "market_band_label": "dual",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": null,
+      "bandwidth_min_nm": 3.0,
+      "bandwidth_max_nm": 3.0,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "ea8a1ec3-65cf-5536-b393-4d9519771244",
+      "slug": "optolong-l-extreme-7-nm",
+      "brand_id": "99d1c3b9-859a-5c0a-a905-de0bbf0e544c",
+      "brand_name": "Optolong",
+      "name": "Optolong L-eXtreme (7 nm)",
+      "display_name": "Optolong L-eXtreme (7 nm)",
+      "primary_category_id": "906e35c2-4fee-524b-8cf0-fee0ae0d3ecc",
+      "primary_category_code": "dual_band",
+      "technical_class": "multi_narrowband",
+      "market_band_label": "dual",
+      "product_kind": "single_filter",
+      "pass_window_count": 2,
+      "emission_line_count": 2,
+      "bandwidth_min_nm": 7.0,
+      "bandwidth_max_nm": 7.0,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "retailer_verified",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "587affc5-9ef7-5d43-b982-a72704294d9f",
+      "slug": "player-one-anti-halo-pro-ha-oiii",
+      "brand_id": "7f47033d-dbe2-50be-b04b-e849be392474",
+      "brand_name": "Player One",
+      "name": "Player One Anti-Halo PRO Ha+OIII",
+      "display_name": "Player One Anti-Halo PRO Ha+OIII",
+      "primary_category_id": "906e35c2-4fee-524b-8cf0-fee0ae0d3ecc",
+      "primary_category_code": "dual_band",
+      "technical_class": "multi_narrowband",
+      "market_band_label": "dual",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": 2,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "fd6f31d5-0a37-55e6-9ce5-c7e80e9867c4",
+      "slug": "svbony-sv220",
+      "brand_id": "687fe75a-3f23-54cf-9932-53229a6c4d1f",
+      "brand_name": "SVBONY",
+      "name": "SVBONY SV220",
+      "display_name": "SVBONY SV220",
+      "primary_category_id": "906e35c2-4fee-524b-8cf0-fee0ae0d3ecc",
+      "primary_category_code": "dual_band",
+      "technical_class": "multi_narrowband",
+      "market_band_label": "dual",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": null,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "7d485647-a311-5d45-8af3-dc4d41ae835d",
+      "slug": "touptek-puresight-a1-ha-oiii",
+      "brand_id": "67d3d2bd-3691-563a-adeb-5b2189d361cb",
+      "brand_name": "ToupTek",
+      "name": "ToupTek PureSight A1 Ha & OIII",
+      "display_name": "ToupTek PureSight A1 Ha & OIII",
+      "primary_category_id": "906e35c2-4fee-524b-8cf0-fee0ae0d3ecc",
+      "primary_category_code": "dual_band",
+      "technical_class": "multi_narrowband",
+      "market_band_label": "dual",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": 2,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "6fe5053f-6840-51b2-a1d0-7e4939fa1319",
+      "slug": "vaonis-dual-band-ha-oiii",
+      "brand_id": "c539ff38-0079-5a63-9621-411660191cd1",
+      "brand_name": "Vaonis",
+      "name": "Vaonis Dual Band Ha/OIII",
+      "display_name": "Vaonis Dual Band Ha/OIII",
+      "primary_category_id": "906e35c2-4fee-524b-8cf0-fee0ae0d3ecc",
+      "primary_category_code": "dual_band",
+      "technical_class": "multi_narrowband",
+      "market_band_label": "dual",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": 2,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "f1864c3b-2ef2-5b52-af61-e0668869a564",
+      "slug": "zwo-db2-duo-band",
+      "brand_id": "1517e85b-a5f8-5524-8ba0-4d7896b7ae01",
+      "brand_name": "ZWO",
+      "name": "ZWO DB2 Duo-Band",
+      "display_name": "ZWO DB2 Duo-Band",
+      "primary_category_id": "906e35c2-4fee-524b-8cf0-fee0ae0d3ecc",
+      "primary_category_code": "dual_band",
+      "technical_class": "multi_narrowband",
+      "market_band_label": "dual",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": null,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "web_research",
+      "verification_status": "retailer_verified",
+      "is_discontinued": false,
+      "notes": "Teleskop-Express güncel ürün sayfasında DB2 Duo-Band olarak listelenmiştir."
+    },
+    {
+      "id": "9564f6eb-6b57-5146-ae90-141d0efd2140",
+      "slug": "zwo-duo-band",
+      "brand_id": "1517e85b-a5f8-5524-8ba0-4d7896b7ae01",
+      "brand_name": "ZWO",
+      "name": "ZWO Duo-Band",
+      "display_name": "ZWO Duo-Band",
+      "primary_category_id": "906e35c2-4fee-524b-8cf0-fee0ae0d3ecc",
+      "primary_category_code": "dual_band",
+      "technical_class": "multi_narrowband",
+      "market_band_label": "dual",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": null,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "category_verified",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "046872bd-72c3-5578-b36e-70d95e6e0af0",
+      "slug": "altair-triband",
+      "brand_id": "72ef571a-1c59-5953-9627-1835d37ece53",
+      "brand_name": "Altair",
+      "name": "Altair TriBand",
+      "display_name": "Altair TriBand",
+      "primary_category_id": "a6d8bda7-7b90-583a-a5b5-f0f21eb9089a",
+      "primary_category_code": "triple_band",
+      "technical_class": "multi_narrowband",
+      "market_band_label": "triple",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": null,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "806bce8e-2866-5c63-9d9b-47e1e2e59ca2",
+      "slug": "altair-triband-ultra",
+      "brand_id": "72ef571a-1c59-5953-9627-1835d37ece53",
+      "brand_name": "Altair",
+      "name": "Altair TriBand Ultra",
+      "display_name": "Altair TriBand Ultra",
+      "primary_category_id": "a6d8bda7-7b90-583a-a5b5-f0f21eb9089a",
+      "primary_category_code": "triple_band",
+      "technical_class": "multi_narrowband",
+      "market_band_label": "triple",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": null,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "45124058-8dae-5050-8b6c-c5041c2d70c3",
+      "slug": "idas-nb1-tri-band-h-beta-oiii-h-alpha",
+      "brand_id": "0c2f8b71-ceb8-5723-9d4b-f36587f159ce",
+      "brand_name": "IDAS",
+      "name": "IDAS NB1 Tri-Band (H-beta, OIII, H-alpha)",
+      "display_name": "IDAS NB1 Tri-Band (H-beta, OIII, H-alpha)",
+      "primary_category_id": "a6d8bda7-7b90-583a-a5b5-f0f21eb9089a",
+      "primary_category_code": "triple_band",
+      "technical_class": "multi_narrowband",
+      "market_band_label": "triple",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": 3,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "retailer_verified",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "2235221c-4fd3-5737-b1e5-41c88f43e583",
+      "slug": "optolong-l-enhance-h-alpha-h-beta-oiii",
+      "brand_id": "99d1c3b9-859a-5c0a-a905-de0bbf0e544c",
+      "brand_name": "Optolong",
+      "name": "Optolong L-eNhance (H-alpha, H-beta, OIII)",
+      "display_name": "Optolong L-eNhance (H-alpha, H-beta, OIII)",
+      "primary_category_id": "a6d8bda7-7b90-583a-a5b5-f0f21eb9089a",
+      "primary_category_code": "triple_band",
+      "technical_class": "multi_narrowband",
+      "market_band_label": "triple",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": 3,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "retailer_verified",
+      "is_discontinued": false,
+      "notes": "Pazarlama sınıfı tri-banddır; fiziksel geçiş penceresi sayısı üretici eğrisiyle ayrıca doğrulanmalıdır."
+    },
+    {
+      "id": "fd00fe99-6374-57c3-8b8c-e6f93425e056",
+      "slug": "radian-triad-h-alpha-h-beta-oiii",
+      "brand_id": "6a40de7a-1eec-58ee-8ea8-fcf41790f8fe",
+      "brand_name": "Radian",
+      "name": "Radian Triad (H-alpha, H-beta, OIII)",
+      "display_name": "Radian Triad (H-alpha, H-beta, OIII)",
+      "primary_category_id": "a6d8bda7-7b90-583a-a5b5-f0f21eb9089a",
+      "primary_category_code": "triple_band",
+      "technical_class": "multi_narrowband",
+      "market_band_label": "triple",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": 3,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "conflicting",
+      "is_discontinued": false,
+      "notes": "Ekli listede üç çizgili olarak sınıflandırılmıştır; bazı OPT açıklamalarında SII de anıldığı için özgün üretici transmisyon eğrisiyle doğrulama gerekir."
+    },
+    {
+      "id": "fa5e6998-99d0-56ad-8c2c-ca2f5734068d",
+      "slug": "ts-optics-2-inch-tri-band-narrowband-nebula-filter-35-nm",
+      "brand_id": "9be42912-d07e-5598-9207-15d5a47053e4",
+      "brand_name": "TS-Optics",
+      "name": "TS-Optics 2-inch Tri-Band Narrowband Nebula Filter 35 nm",
+      "display_name": "TS-Optics 2-inch Tri-Band Narrowband Nebula Filter 35 nm",
+      "primary_category_id": "a6d8bda7-7b90-583a-a5b5-f0f21eb9089a",
+      "primary_category_code": "triple_band",
+      "technical_class": "multi_narrowband",
+      "market_band_label": "triple",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": null,
+      "bandwidth_min_nm": 35.0,
+      "bandwidth_max_nm": 35.0,
+      "fast_optics_profile": null,
+      "source_origin": "web_research",
+      "verification_status": "retailer_verified",
+      "is_discontinued": false,
+      "notes": "Teleskop-Express ürün sayfasında 35 nm tri-band dar bant filtre olarak listelenmiştir."
+    },
+    {
+      "id": "b910e932-bacb-5589-ab38-fcb2aea74126",
+      "slug": "altair-quadband",
+      "brand_id": "72ef571a-1c59-5953-9627-1835d37ece53",
+      "brand_name": "Altair",
+      "name": "Altair QuadBand",
+      "display_name": "Altair QuadBand",
+      "primary_category_id": "992edcd8-a6fc-59a6-9381-f0cabd956375",
+      "primary_category_code": "quad_band",
+      "technical_class": "multi_narrowband",
+      "market_band_label": "quad",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": null,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "314dd20b-f4ce-57d9-96ff-7bc3e4e7458f",
+      "slug": "altair-quadband-v2",
+      "brand_id": "72ef571a-1c59-5953-9627-1835d37ece53",
+      "brand_name": "Altair",
+      "name": "Altair QuadBand V2",
+      "display_name": "Altair QuadBand V2",
+      "primary_category_id": "992edcd8-a6fc-59a6-9381-f0cabd956375",
+      "primary_category_code": "quad_band",
+      "technical_class": "multi_narrowband",
+      "market_band_label": "quad",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": null,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "f6295947-1e36-5cfa-b03f-4bc2f2ac691f",
+      "slug": "chroma-quad-band-hb-oiii-ha-sii",
+      "brand_id": "a0b690dc-9f06-5fad-9056-6335ff1523fd",
+      "brand_name": "Chroma",
+      "name": "Chroma Quad Band Hb/OIII/Ha/SII",
+      "display_name": "Chroma Quad Band Hb/OIII/Ha/SII",
+      "primary_category_id": "992edcd8-a6fc-59a6-9381-f0cabd956375",
+      "primary_category_code": "quad_band",
+      "technical_class": "multi_narrowband",
+      "market_band_label": "quad",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": 4,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "1df3d345-616d-5bd7-86e2-be84254c1fa6",
+      "slug": "hutech-quad-band-pass",
+      "brand_id": "552d6174-fcf9-585f-a991-5b76db01d5c1",
+      "brand_name": "Hutech",
+      "name": "Hutech Quad Band Pass",
+      "display_name": "Hutech Quad Band Pass",
+      "primary_category_id": "992edcd8-a6fc-59a6-9381-f0cabd956375",
+      "primary_category_code": "quad_band",
+      "technical_class": "multi_narrowband",
+      "market_band_label": "quad",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": null,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "file_only",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "4252cb03-9d08-590d-ad40-d5493f02d643",
+      "slug": "optolong-l-quad",
+      "brand_id": "99d1c3b9-859a-5c0a-a905-de0bbf0e544c",
+      "brand_name": "Optolong",
+      "name": "Optolong L-Quad",
+      "display_name": "Optolong L-Quad",
+      "primary_category_id": "992edcd8-a6fc-59a6-9381-f0cabd956375",
+      "primary_category_code": "quad_band",
+      "technical_class": "hybrid_multiband_broadband",
+      "market_band_label": "quad",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": null,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "retailer_verified",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "16f374f3-d745-5271-8e9e-d9285bcd497a",
+      "slug": "radian-triad-ultra-h-alpha-h-beta-oiii-sii",
+      "brand_id": "6a40de7a-1eec-58ee-8ea8-fcf41790f8fe",
+      "brand_name": "Radian",
+      "name": "Radian Triad Ultra (H-alpha, H-beta, OIII, SII)",
+      "display_name": "Radian Triad Ultra (H-alpha, H-beta, OIII, SII)",
+      "primary_category_id": "992edcd8-a6fc-59a6-9381-f0cabd956375",
+      "primary_category_code": "quad_band",
+      "technical_class": "multi_narrowband",
+      "market_band_label": "quad",
+      "product_kind": "single_filter",
+      "pass_window_count": 4,
+      "emission_line_count": 4,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "retailer_verified",
+      "is_discontinued": false,
+      "notes": "OPT ve Astroshop ürün sayfalarında dört ultra-dar geçiş bandı: H-alpha, H-beta, SII ve OIII olarak açıklanır."
+    },
+    {
+      "id": "763bd358-2bb1-5b69-9624-985556099ce1",
+      "slug": "radian-triad-ultra-pre-shifted-hizli-teleskoplar-icin",
+      "brand_id": "6a40de7a-1eec-58ee-8ea8-fcf41790f8fe",
+      "brand_name": "Radian",
+      "name": "Radian Triad Ultra Pre-Shifted (hızlı teleskoplar için)",
+      "display_name": "Radian Triad Ultra Pre-Shifted (hızlı teleskoplar için)",
+      "primary_category_id": "992edcd8-a6fc-59a6-9381-f0cabd956375",
+      "primary_category_code": "quad_band",
+      "technical_class": "multi_narrowband",
+      "market_band_label": "quad",
+      "product_kind": "single_filter",
+      "pass_window_count": null,
+      "emission_line_count": null,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": "pre_shifted_fast_optics",
+      "source_origin": "attached_list",
+      "verification_status": "category_verified",
+      "is_discontinued": false,
+      "notes": null
+    },
+    {
+      "id": "a0b46321-08ea-5ea8-888e-dadb2682007d",
+      "slug": "sightron-quad-band-pass",
+      "brand_id": "7472dee0-aa4e-5d9a-b07a-346824ecbc9a",
+      "brand_name": "Sightron",
+      "name": "Sightron Quad Band Pass",
+      "display_name": "Sightron Quad Band Pass",
+      "primary_category_id": "992edcd8-a6fc-59a6-9381-f0cabd956375",
+      "primary_category_code": "quad_band",
+      "technical_class": "multi_narrowband",
+      "market_band_label": "quad",
+      "product_kind": "single_filter",
+      "pass_window_count": 4,
+      "emission_line_count": 4,
+      "bandwidth_min_nm": null,
+      "bandwidth_max_nm": null,
+      "fast_optics_profile": null,
+      "source_origin": "attached_list",
+      "verification_status": "retailer_verified",
+      "is_discontinued": false,
+      "notes": "Teleskop-Express ürün açıklaması Ha, OIII, Hb ve SII çizgilerini belirtir."
+    }
+  ],
+  "product_categories": [
+    {
+      "product_id": "d2cbb4c3-f1c0-58c3-bf26-9c46a7a215c1",
+      "category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "is_primary": true
+    },
+    {
+      "product_id": "2ab88de4-e9e2-5742-8c27-b38aea722365",
+      "category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "is_primary": true
+    },
+    {
+      "product_id": "54ddd04c-c56d-5dc0-861c-c2ac5d9c4d7d",
+      "category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "is_primary": true
+    },
+    {
+      "product_id": "2af937e8-02ed-5cba-ba06-a2bc77a3efd3",
+      "category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "is_primary": true
+    },
+    {
+      "product_id": "738908a3-c0c8-56c6-93b1-6d689e8ec732",
+      "category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "is_primary": true
+    },
+    {
+      "product_id": "75e34271-f0f2-5769-ac0f-acb99b065f9f",
+      "category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "is_primary": true
+    },
+    {
+      "product_id": "18fac725-20cc-5a72-9b15-b8bd824e84d3",
+      "category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "is_primary": true
+    },
+    {
+      "product_id": "1b885ff9-0636-5ce9-925a-1846723ef89a",
+      "category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "is_primary": true
+    },
+    {
+      "product_id": "c3ce57c5-0fcd-55a1-8337-a94227bb5afb",
+      "category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "is_primary": true
+    },
+    {
+      "product_id": "91c0bae7-9dfe-5ff5-9325-d402c116c597",
+      "category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "is_primary": true
+    },
+    {
+      "product_id": "a35c6b73-d00e-5284-9415-b3a0e992a7a7",
+      "category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "is_primary": true
+    },
+    {
+      "product_id": "b06cdc5e-625a-5898-b604-d20cc7485b01",
+      "category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "is_primary": true
+    },
+    {
+      "product_id": "6002c46d-2524-51ae-bdd3-ae05f94d5797",
+      "category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "is_primary": true
+    },
+    {
+      "product_id": "b31f7d7c-b61a-56b7-84d6-30cd575587fb",
+      "category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "is_primary": true
+    },
+    {
+      "product_id": "97d3f7d5-0f61-5a37-a004-d4e5920e0c71",
+      "category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "is_primary": true
+    },
+    {
+      "product_id": "1ae74ae1-d8ac-5ff4-8fa3-260437444786",
+      "category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "is_primary": true
+    },
+    {
+      "product_id": "675d55a6-cc47-5e0c-a839-db9eaaf2076d",
+      "category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "is_primary": true
+    },
+    {
+      "product_id": "351b7683-785a-5bcd-a63b-f19e2b20265a",
+      "category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "is_primary": true
+    },
+    {
+      "product_id": "93e38fbb-475e-5b21-854f-416af18dbe2d",
+      "category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "is_primary": true
+    },
+    {
+      "product_id": "c2e8dff1-3626-5bc5-ab0b-1239080992a2",
+      "category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "is_primary": true
+    },
+    {
+      "product_id": "70970037-88de-5f61-b024-c02b7d2b5b21",
+      "category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "is_primary": true
+    },
+    {
+      "product_id": "48ec9e5c-f8f0-5ed5-a409-cd7d99718462",
+      "category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "is_primary": true
+    },
+    {
+      "product_id": "b3b4e54c-0b1e-5cea-a672-7d2e3de39948",
+      "category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "is_primary": true
+    },
+    {
+      "product_id": "1a70aa6c-97ff-5049-8e4e-6dc690d42c40",
+      "category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "is_primary": true
+    },
+    {
+      "product_id": "11632a79-1ab1-50a6-8d99-b9beea8ad151",
+      "category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "is_primary": true
+    },
+    {
+      "product_id": "54db751d-e281-563a-89ef-0624e4b6dc98",
+      "category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "is_primary": true
+    },
+    {
+      "product_id": "506ab115-bf32-5ac5-b398-be4414deb14e",
+      "category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "is_primary": true
+    },
+    {
+      "product_id": "651858a2-0df1-5a54-9330-1526063afc3a",
+      "category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "is_primary": true
+    },
+    {
+      "product_id": "265dab9c-8857-5c48-8355-b57530f07e87",
+      "category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "is_primary": true
+    },
+    {
+      "product_id": "b3c0f8b3-c07f-5e6f-95b2-bc274ccf0183",
+      "category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "is_primary": true
+    },
+    {
+      "product_id": "21c22c7d-0cec-5f81-bbcf-6d6475b66f58",
+      "category_id": "32607392-1757-5987-98b2-0f8caa3fea78",
+      "is_primary": true
+    },
+    {
+      "product_id": "06a530ff-eede-57bf-a4aa-2dfd3bd108bf",
+      "category_id": "2c3ed833-78b8-5c53-bc65-5cccccdf549c",
+      "is_primary": true
+    },
+    {
+      "product_id": "23d0af8a-4438-5896-a104-c0b1b30bac56",
+      "category_id": "2c3ed833-78b8-5c53-bc65-5cccccdf549c",
+      "is_primary": true
+    },
+    {
+      "product_id": "5bebeab5-c995-5fee-9a45-18a2027a649c",
+      "category_id": "2c3ed833-78b8-5c53-bc65-5cccccdf549c",
+      "is_primary": true
+    },
+    {
+      "product_id": "b685a659-7e8b-5126-b4a2-23da46cc544c",
+      "category_id": "2c3ed833-78b8-5c53-bc65-5cccccdf549c",
+      "is_primary": true
+    },
+    {
+      "product_id": "c44cf5a6-c989-5ebb-96ca-da17bfe83543",
+      "category_id": "2c3ed833-78b8-5c53-bc65-5cccccdf549c",
+      "is_primary": true
+    },
+    {
+      "product_id": "1ec8e967-cb18-58d0-b721-04901894a360",
+      "category_id": "2c3ed833-78b8-5c53-bc65-5cccccdf549c",
+      "is_primary": true
+    },
+    {
+      "product_id": "0a09ff47-06c7-575f-a295-7fe64c34a90f",
+      "category_id": "2c3ed833-78b8-5c53-bc65-5cccccdf549c",
+      "is_primary": true
+    },
+    {
+      "product_id": "b7b45257-7cf5-5d03-9fcc-bd4cccec6dc7",
+      "category_id": "2c3ed833-78b8-5c53-bc65-5cccccdf549c",
+      "is_primary": true
+    },
+    {
+      "product_id": "20eef586-e791-526c-bd74-9abd0384b4c6",
+      "category_id": "2c3ed833-78b8-5c53-bc65-5cccccdf549c",
+      "is_primary": true
+    },
+    {
+      "product_id": "07ca89ea-b365-5360-820d-a317722c57ae",
+      "category_id": "2c3ed833-78b8-5c53-bc65-5cccccdf549c",
+      "is_primary": true
+    },
+    {
+      "product_id": "da699ae0-5681-5b67-a784-bfdf3dab7b5b",
+      "category_id": "2c3ed833-78b8-5c53-bc65-5cccccdf549c",
+      "is_primary": true
+    },
+    {
+      "product_id": "ada3ac74-5e04-5f80-8901-1cebb6ce9cd2",
+      "category_id": "2c3ed833-78b8-5c53-bc65-5cccccdf549c",
+      "is_primary": true
+    },
+    {
+      "product_id": "a5f92332-52ba-58e2-b55f-12e36d80ae96",
+      "category_id": "2c3ed833-78b8-5c53-bc65-5cccccdf549c",
+      "is_primary": true
+    },
+    {
+      "product_id": "83f699fa-f2f1-5d84-bf34-ca3a67c80c56",
+      "category_id": "2c3ed833-78b8-5c53-bc65-5cccccdf549c",
+      "is_primary": true
+    },
+    {
+      "product_id": "9bafbfc4-4a28-5fc8-bdce-4139e75aad6c",
+      "category_id": "2c3ed833-78b8-5c53-bc65-5cccccdf549c",
+      "is_primary": true
+    },
+    {
+      "product_id": "170ff7f5-9633-5b92-84ca-5b5758955a44",
+      "category_id": "2c3ed833-78b8-5c53-bc65-5cccccdf549c",
+      "is_primary": true
+    },
+    {
+      "product_id": "ade36bc5-7ccd-5d53-88e5-764061832568",
+      "category_id": "2c3ed833-78b8-5c53-bc65-5cccccdf549c",
+      "is_primary": true
+    },
+    {
+      "product_id": "e1a311cf-2ee1-5b4d-bfa1-5f7999f4b6b7",
+      "category_id": "2c3ed833-78b8-5c53-bc65-5cccccdf549c",
+      "is_primary": true
+    },
+    {
+      "product_id": "3cf4d130-11de-5b0e-9356-732aa1668efa",
+      "category_id": "2c3ed833-78b8-5c53-bc65-5cccccdf549c",
+      "is_primary": true
+    },
+    {
+      "product_id": "2d358e82-1a00-5351-92f9-8117680b077d",
+      "category_id": "2c3ed833-78b8-5c53-bc65-5cccccdf549c",
+      "is_primary": true
+    },
+    {
+      "product_id": "873d764e-5b45-5353-a382-a2f2b43274a0",
+      "category_id": "2c3ed833-78b8-5c53-bc65-5cccccdf549c",
+      "is_primary": true
+    },
+    {
+      "product_id": "4f6ef133-baf6-5fe4-a52f-ac3e20432245",
+      "category_id": "2c3ed833-78b8-5c53-bc65-5cccccdf549c",
+      "is_primary": true
+    },
+    {
+      "product_id": "abe73bbb-c7a2-5af0-b29c-113a44319296",
+      "category_id": "2c3ed833-78b8-5c53-bc65-5cccccdf549c",
+      "is_primary": true
+    },
+    {
+      "product_id": "d3110b59-56d6-5abd-a41a-1b51720eb178",
+      "category_id": "2c3ed833-78b8-5c53-bc65-5cccccdf549c",
+      "is_primary": true
+    },
+    {
+      "product_id": "a0f67434-07b9-5a58-9bd3-8e372dfa6724",
+      "category_id": "2c3ed833-78b8-5c53-bc65-5cccccdf549c",
+      "is_primary": true
+    },
+    {
+      "product_id": "1e087c31-ab6f-578e-8307-a41d57ba5aec",
+      "category_id": "2c3ed833-78b8-5c53-bc65-5cccccdf549c",
+      "is_primary": true
+    },
+    {
+      "product_id": "da2ea76a-9092-5688-a2f1-47aa78d68c3e",
+      "category_id": "2c3ed833-78b8-5c53-bc65-5cccccdf549c",
+      "is_primary": true
+    },
+    {
+      "product_id": "856d0a9c-7cd9-5144-97bf-51fced969a8c",
+      "category_id": "2c3ed833-78b8-5c53-bc65-5cccccdf549c",
+      "is_primary": true
+    },
+    {
+      "product_id": "b176f122-68e1-5e9c-96d0-455a30df9023",
+      "category_id": "2c3ed833-78b8-5c53-bc65-5cccccdf549c",
+      "is_primary": true
+    },
+    {
+      "product_id": "ea8a1ec3-65cf-5536-b393-4d9519771244",
+      "category_id": "906e35c2-4fee-524b-8cf0-fee0ae0d3ecc",
+      "is_primary": true
+    },
+    {
+      "product_id": "81dbd7a4-12d9-52bd-9ba8-339c2a221bac",
+      "category_id": "906e35c2-4fee-524b-8cf0-fee0ae0d3ecc",
+      "is_primary": true
+    },
+    {
+      "product_id": "348f67cf-5b95-5f54-9b4d-84496be878af",
+      "category_id": "906e35c2-4fee-524b-8cf0-fee0ae0d3ecc",
+      "is_primary": true
+    },
+    {
+      "product_id": "0d09dfdb-ac64-5a1b-a096-2a163d589558",
+      "category_id": "906e35c2-4fee-524b-8cf0-fee0ae0d3ecc",
+      "is_primary": true
+    },
+    {
+      "product_id": "4802a5c8-bec0-5d39-a0bc-16b191465b8b",
+      "category_id": "906e35c2-4fee-524b-8cf0-fee0ae0d3ecc",
+      "is_primary": true
+    },
+    {
+      "product_id": "2f4c6c2e-f3ea-5d0e-a481-cb97d4b34650",
+      "category_id": "906e35c2-4fee-524b-8cf0-fee0ae0d3ecc",
+      "is_primary": true
+    },
+    {
+      "product_id": "bec303e7-f25b-5982-ae47-2a10c7fc12e4",
+      "category_id": "906e35c2-4fee-524b-8cf0-fee0ae0d3ecc",
+      "is_primary": true
+    },
+    {
+      "product_id": "47711aec-be33-519d-83b1-727b47bc27c0",
+      "category_id": "906e35c2-4fee-524b-8cf0-fee0ae0d3ecc",
+      "is_primary": true
+    },
+    {
+      "product_id": "5922643b-e0ab-52d1-83dc-e1c261f6c3aa",
+      "category_id": "906e35c2-4fee-524b-8cf0-fee0ae0d3ecc",
+      "is_primary": true
+    },
+    {
+      "product_id": "2be1dd25-eeb7-5c87-af9f-80b1194c863f",
+      "category_id": "906e35c2-4fee-524b-8cf0-fee0ae0d3ecc",
+      "is_primary": true
+    },
+    {
+      "product_id": "587affc5-9ef7-5d43-b982-a72704294d9f",
+      "category_id": "906e35c2-4fee-524b-8cf0-fee0ae0d3ecc",
+      "is_primary": true
+    },
+    {
+      "product_id": "7d485647-a311-5d45-8af3-dc4d41ae835d",
+      "category_id": "906e35c2-4fee-524b-8cf0-fee0ae0d3ecc",
+      "is_primary": true
+    },
+    {
+      "product_id": "9564f6eb-6b57-5146-ae90-141d0efd2140",
+      "category_id": "906e35c2-4fee-524b-8cf0-fee0ae0d3ecc",
+      "is_primary": true
+    },
+    {
+      "product_id": "6fe5053f-6840-51b2-a1d0-7e4939fa1319",
+      "category_id": "906e35c2-4fee-524b-8cf0-fee0ae0d3ecc",
+      "is_primary": true
+    },
+    {
+      "product_id": "fd6f31d5-0a37-55e6-9ce5-c7e80e9867c4",
+      "category_id": "906e35c2-4fee-524b-8cf0-fee0ae0d3ecc",
+      "is_primary": true
+    },
+    {
+      "product_id": "8ad174b0-1b3a-5daa-9cc4-04430b4757a6",
+      "category_id": "906e35c2-4fee-524b-8cf0-fee0ae0d3ecc",
+      "is_primary": true
+    },
+    {
+      "product_id": "396552b6-8cbc-5c3a-95d6-862d10e6ac4d",
+      "category_id": "906e35c2-4fee-524b-8cf0-fee0ae0d3ecc",
+      "is_primary": true
+    },
+    {
+      "product_id": "4cc5943d-1525-5f9f-b1bf-84311b7ad1c8",
+      "category_id": "906e35c2-4fee-524b-8cf0-fee0ae0d3ecc",
+      "is_primary": true
+    },
+    {
+      "product_id": "0ffb86b6-995a-5310-9127-d421eb103b61",
+      "category_id": "906e35c2-4fee-524b-8cf0-fee0ae0d3ecc",
+      "is_primary": true
+    },
+    {
+      "product_id": "ed3b48ab-0b75-59e5-aeb0-a8543801d132",
+      "category_id": "906e35c2-4fee-524b-8cf0-fee0ae0d3ecc",
+      "is_primary": true
+    },
+    {
+      "product_id": "ed6aade8-b620-58e7-8b14-1c1061035c08",
+      "category_id": "906e35c2-4fee-524b-8cf0-fee0ae0d3ecc",
+      "is_primary": true
+    },
+    {
+      "product_id": "276f56c3-01da-5136-936d-246ca0f9066b",
+      "category_id": "906e35c2-4fee-524b-8cf0-fee0ae0d3ecc",
+      "is_primary": true
+    },
+    {
+      "product_id": "bd549eda-7b06-5a20-8efc-ec938f9b0ad0",
+      "category_id": "906e35c2-4fee-524b-8cf0-fee0ae0d3ecc",
+      "is_primary": true
+    },
+    {
+      "product_id": "fd00fe99-6374-57c3-8b8c-e6f93425e056",
+      "category_id": "a6d8bda7-7b90-583a-a5b5-f0f21eb9089a",
+      "is_primary": true
+    },
+    {
+      "product_id": "45124058-8dae-5050-8b6c-c5041c2d70c3",
+      "category_id": "a6d8bda7-7b90-583a-a5b5-f0f21eb9089a",
+      "is_primary": true
+    },
+    {
+      "product_id": "2235221c-4fd3-5737-b1e5-41c88f43e583",
+      "category_id": "a6d8bda7-7b90-583a-a5b5-f0f21eb9089a",
+      "is_primary": true
+    },
+    {
+      "product_id": "046872bd-72c3-5578-b36e-70d95e6e0af0",
+      "category_id": "a6d8bda7-7b90-583a-a5b5-f0f21eb9089a",
+      "is_primary": true
+    },
+    {
+      "product_id": "806bce8e-2866-5c63-9d9b-47e1e2e59ca2",
+      "category_id": "a6d8bda7-7b90-583a-a5b5-f0f21eb9089a",
+      "is_primary": true
+    },
+    {
+      "product_id": "2af937e8-02ed-5cba-ba06-a2bc77a3efd3",
+      "category_id": "a6d8bda7-7b90-583a-a5b5-f0f21eb9089a",
+      "is_primary": false
+    },
+    {
+      "product_id": "738908a3-c0c8-56c6-93b1-6d689e8ec732",
+      "category_id": "a6d8bda7-7b90-583a-a5b5-f0f21eb9089a",
+      "is_primary": false
+    },
+    {
+      "product_id": "16f374f3-d745-5271-8e9e-d9285bcd497a",
+      "category_id": "992edcd8-a6fc-59a6-9381-f0cabd956375",
+      "is_primary": true
+    },
+    {
+      "product_id": "763bd358-2bb1-5b69-9624-985556099ce1",
+      "category_id": "992edcd8-a6fc-59a6-9381-f0cabd956375",
+      "is_primary": true
+    },
+    {
+      "product_id": "f6295947-1e36-5cfa-b03f-4bc2f2ac691f",
+      "category_id": "992edcd8-a6fc-59a6-9381-f0cabd956375",
+      "is_primary": true
+    },
+    {
+      "product_id": "b910e932-bacb-5589-ab38-fcb2aea74126",
+      "category_id": "992edcd8-a6fc-59a6-9381-f0cabd956375",
+      "is_primary": true
+    },
+    {
+      "product_id": "314dd20b-f4ce-57d9-96ff-7bc3e4e7458f",
+      "category_id": "992edcd8-a6fc-59a6-9381-f0cabd956375",
+      "is_primary": true
+    },
+    {
+      "product_id": "4252cb03-9d08-590d-ad40-d5493f02d643",
+      "category_id": "992edcd8-a6fc-59a6-9381-f0cabd956375",
+      "is_primary": true
+    },
+    {
+      "product_id": "2ab88de4-e9e2-5742-8c27-b38aea722365",
+      "category_id": "992edcd8-a6fc-59a6-9381-f0cabd956375",
+      "is_primary": false
+    },
+    {
+      "product_id": "75e34271-f0f2-5769-ac0f-acb99b065f9f",
+      "category_id": "992edcd8-a6fc-59a6-9381-f0cabd956375",
+      "is_primary": false
+    },
+    {
+      "product_id": "a0b46321-08ea-5ea8-888e-dadb2682007d",
+      "category_id": "992edcd8-a6fc-59a6-9381-f0cabd956375",
+      "is_primary": true
+    },
+    {
+      "product_id": "1df3d345-616d-5bd7-86e2-be84254c1fa6",
+      "category_id": "992edcd8-a6fc-59a6-9381-f0cabd956375",
+      "is_primary": true
+    },
+    {
+      "product_id": "fa5e6998-99d0-56ad-8c2c-ca2f5734068d",
+      "category_id": "a6d8bda7-7b90-583a-a5b5-f0f21eb9089a",
+      "is_primary": true
+    },
+    {
+      "product_id": "f1864c3b-2ef2-5b52-af61-e0668869a564",
+      "category_id": "906e35c2-4fee-524b-8cf0-fee0ae0d3ecc",
+      "is_primary": true
+    },
+    {
+      "product_id": "5ebdd7ca-d78d-5759-a3c2-294c093845e7",
+      "category_id": "906e35c2-4fee-524b-8cf0-fee0ae0d3ecc",
+      "is_primary": true
+    }
+  ],
+  "product_passbands": [
+    {
+      "id": "ea446980-f3a4-5d8d-a1e4-b4ce00f57cea",
+      "product_id": "06a530ff-eede-57bf-a4aa-2dfd3bd108bf",
+      "spectral_line_id": "642ee21e-629f-54f4-aee0-c69d178552d5",
+      "spectral_line_code": "ha",
+      "bandwidth_nm": 2.5,
+      "sequence_no": 1,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "2179b342-f1e1-5a54-a73b-0291a4c3016e",
+      "product_id": "b685a659-7e8b-5126-b4a2-23da46cc544c",
+      "spectral_line_id": "642ee21e-629f-54f4-aee0-c69d178552d5",
+      "spectral_line_code": "ha",
+      "bandwidth_nm": 3.0,
+      "sequence_no": 1,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "ff96b4d9-7010-51ec-8abf-5f44406ddd31",
+      "product_id": "20eef586-e791-526c-bd74-9abd0384b4c6",
+      "spectral_line_id": "642ee21e-629f-54f4-aee0-c69d178552d5",
+      "spectral_line_code": "ha",
+      "bandwidth_nm": 4.5,
+      "sequence_no": 1,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "72591212-3090-5ade-bc76-d177f4c8d497",
+      "product_id": "b7b45257-7cf5-5d03-9fcc-bd4cccec6dc7",
+      "spectral_line_id": "a3bdcb01-3b0f-5899-941c-9fafd74a26a6",
+      "spectral_line_code": "hb",
+      "bandwidth_nm": 3.0,
+      "sequence_no": 1,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "5b143913-beef-5ad3-a248-8df4a1640d17",
+      "product_id": "0a09ff47-06c7-575f-a295-7fe64c34a90f",
+      "spectral_line_id": "7f073541-6137-5bc2-8fdf-7c18a48a1949",
+      "spectral_line_code": "nii",
+      "bandwidth_nm": 3.0,
+      "sequence_no": 1,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "86e96fb6-2027-517c-9559-55e3c43703cd",
+      "product_id": "23d0af8a-4438-5896-a104-c0b1b30bac56",
+      "spectral_line_id": "a5d32165-b4bc-5c4c-a5df-c0f8883d4df1",
+      "spectral_line_code": "oiii",
+      "bandwidth_nm": 2.5,
+      "sequence_no": 1,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "2f8f7006-caaf-5eac-b6a6-0ed86c7dee70",
+      "product_id": "c44cf5a6-c989-5ebb-96ca-da17bfe83543",
+      "spectral_line_id": "a5d32165-b4bc-5c4c-a5df-c0f8883d4df1",
+      "spectral_line_code": "oiii",
+      "bandwidth_nm": 3.0,
+      "sequence_no": 1,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "86902111-ba7b-54db-9211-5e072d22d2af",
+      "product_id": "07ca89ea-b365-5360-820d-a317722c57ae",
+      "spectral_line_id": "a5d32165-b4bc-5c4c-a5df-c0f8883d4df1",
+      "spectral_line_code": "oiii",
+      "bandwidth_nm": 4.5,
+      "sequence_no": 1,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "3656192e-ccf3-5712-a12d-12cece1c9c0f",
+      "product_id": "5bebeab5-c995-5fee-9a45-18a2027a649c",
+      "spectral_line_id": "7bf1d163-62e9-5432-8eef-3f6701474f6c",
+      "spectral_line_code": "sii",
+      "bandwidth_nm": 2.5,
+      "sequence_no": 1,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "54e05846-5614-55d7-9e1a-aea4d4722d8a",
+      "product_id": "1ec8e967-cb18-58d0-b721-04901894a360",
+      "spectral_line_id": "7bf1d163-62e9-5432-8eef-3f6701474f6c",
+      "spectral_line_code": "sii",
+      "bandwidth_nm": 3.0,
+      "sequence_no": 1,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "513f30ed-8166-54ba-9863-7d2fc15a6082",
+      "product_id": "da2ea76a-9092-5688-a2f1-47aa78d68c3e",
+      "spectral_line_id": "642ee21e-629f-54f4-aee0-c69d178552d5",
+      "spectral_line_code": "ha",
+      "bandwidth_nm": null,
+      "sequence_no": 1,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "a8ef4131-99bf-53f4-ae84-a02c268697f5",
+      "product_id": "da2ea76a-9092-5688-a2f1-47aa78d68c3e",
+      "spectral_line_id": "a5d32165-b4bc-5c4c-a5df-c0f8883d4df1",
+      "spectral_line_code": "oiii",
+      "bandwidth_nm": null,
+      "sequence_no": 2,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "7029e025-bbfd-5c9d-8c63-0a6685a4a9c2",
+      "product_id": "da2ea76a-9092-5688-a2f1-47aa78d68c3e",
+      "spectral_line_id": "7bf1d163-62e9-5432-8eef-3f6701474f6c",
+      "spectral_line_code": "sii",
+      "bandwidth_nm": null,
+      "sequence_no": 3,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "ce4ac9d3-d730-5d00-98c5-eae2c793efc3",
+      "product_id": "9bafbfc4-4a28-5fc8-bdce-4139e75aad6c",
+      "spectral_line_id": "642ee21e-629f-54f4-aee0-c69d178552d5",
+      "spectral_line_code": "ha",
+      "bandwidth_nm": null,
+      "sequence_no": 1,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "0cca146d-b159-52ff-a83b-d9e2fd4f0de7",
+      "product_id": "170ff7f5-9633-5b92-84ca-5b5758955a44",
+      "spectral_line_id": "a5d32165-b4bc-5c4c-a5df-c0f8883d4df1",
+      "spectral_line_code": "oiii",
+      "bandwidth_nm": null,
+      "sequence_no": 1,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "585d1905-3238-5106-8a43-78c0a85e048e",
+      "product_id": "ade36bc5-7ccd-5d53-88e5-764061832568",
+      "spectral_line_id": "7bf1d163-62e9-5432-8eef-3f6701474f6c",
+      "spectral_line_code": "sii",
+      "bandwidth_nm": null,
+      "sequence_no": 1,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "4e3aeb21-872a-581e-b262-608a11e74ba2",
+      "product_id": "da699ae0-5681-5b67-a784-bfdf3dab7b5b",
+      "spectral_line_id": "642ee21e-629f-54f4-aee0-c69d178552d5",
+      "spectral_line_code": "ha",
+      "bandwidth_nm": null,
+      "sequence_no": 1,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "0a4de421-3686-50fe-90bd-cd1d7a4111dd",
+      "product_id": "da699ae0-5681-5b67-a784-bfdf3dab7b5b",
+      "spectral_line_id": "a5d32165-b4bc-5c4c-a5df-c0f8883d4df1",
+      "spectral_line_code": "oiii",
+      "bandwidth_nm": null,
+      "sequence_no": 2,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "7521831a-d661-5acd-8c53-279be33dae51",
+      "product_id": "da699ae0-5681-5b67-a784-bfdf3dab7b5b",
+      "spectral_line_id": "7bf1d163-62e9-5432-8eef-3f6701474f6c",
+      "spectral_line_code": "sii",
+      "bandwidth_nm": null,
+      "sequence_no": 3,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "171b1c19-5507-5388-943c-2f3cd6e1cbce",
+      "product_id": "a5f92332-52ba-58e2-b55f-12e36d80ae96",
+      "spectral_line_id": "642ee21e-629f-54f4-aee0-c69d178552d5",
+      "spectral_line_code": "ha",
+      "bandwidth_nm": 3.5,
+      "sequence_no": 1,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "070386cc-82e1-57dd-ad02-c2faf92e92ee",
+      "product_id": "83f699fa-f2f1-5d84-bf34-ca3a67c80c56",
+      "spectral_line_id": "642ee21e-629f-54f4-aee0-c69d178552d5",
+      "spectral_line_code": "ha",
+      "bandwidth_nm": null,
+      "sequence_no": 1,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "80feaf9b-f9fa-5fe7-a39f-a6aac976b6b9",
+      "product_id": "83f699fa-f2f1-5d84-bf34-ca3a67c80c56",
+      "spectral_line_id": "a5d32165-b4bc-5c4c-a5df-c0f8883d4df1",
+      "spectral_line_code": "oiii",
+      "bandwidth_nm": null,
+      "sequence_no": 2,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "3bcf3819-4dbb-5f20-9a06-aab95c08dcc3",
+      "product_id": "83f699fa-f2f1-5d84-bf34-ca3a67c80c56",
+      "spectral_line_id": "7bf1d163-62e9-5432-8eef-3f6701474f6c",
+      "spectral_line_code": "sii",
+      "bandwidth_nm": null,
+      "sequence_no": 3,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "dcbd5e0a-185a-55be-b7f2-16589d84bbcb",
+      "product_id": "1e087c31-ab6f-578e-8307-a41d57ba5aec",
+      "spectral_line_id": "642ee21e-629f-54f4-aee0-c69d178552d5",
+      "spectral_line_code": "ha",
+      "bandwidth_nm": null,
+      "sequence_no": 1,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "3ef9b4f4-e6a9-50ef-88ef-91c99c07f59d",
+      "product_id": "1e087c31-ab6f-578e-8307-a41d57ba5aec",
+      "spectral_line_id": "a5d32165-b4bc-5c4c-a5df-c0f8883d4df1",
+      "spectral_line_code": "oiii",
+      "bandwidth_nm": null,
+      "sequence_no": 2,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "48958ca3-4b65-5673-be3e-debf7b5c886f",
+      "product_id": "1e087c31-ab6f-578e-8307-a41d57ba5aec",
+      "spectral_line_id": "7bf1d163-62e9-5432-8eef-3f6701474f6c",
+      "spectral_line_code": "sii",
+      "bandwidth_nm": null,
+      "sequence_no": 3,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "a696f359-122b-5925-a926-313ca6769e22",
+      "product_id": "abe73bbb-c7a2-5af0-b29c-113a44319296",
+      "spectral_line_id": "642ee21e-629f-54f4-aee0-c69d178552d5",
+      "spectral_line_code": "ha",
+      "bandwidth_nm": null,
+      "sequence_no": 1,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "07b2af33-7e22-5ef9-a20f-f16e8c44f305",
+      "product_id": "d3110b59-56d6-5abd-a41a-1b51720eb178",
+      "spectral_line_id": "a5d32165-b4bc-5c4c-a5df-c0f8883d4df1",
+      "spectral_line_code": "oiii",
+      "bandwidth_nm": null,
+      "sequence_no": 1,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "b881086c-0d3d-5cf7-85b4-e40756f7b066",
+      "product_id": "a0f67434-07b9-5a58-9bd3-8e372dfa6724",
+      "spectral_line_id": "7bf1d163-62e9-5432-8eef-3f6701474f6c",
+      "spectral_line_code": "sii",
+      "bandwidth_nm": null,
+      "sequence_no": 1,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "df785a08-a7c0-5c27-9c30-4f254a464366",
+      "product_id": "3cf4d130-11de-5b0e-9356-732aa1668efa",
+      "spectral_line_id": "642ee21e-629f-54f4-aee0-c69d178552d5",
+      "spectral_line_code": "ha",
+      "bandwidth_nm": 3.0,
+      "sequence_no": 1,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "575ddffe-a8a4-5e34-bc34-edbe47fdab09",
+      "product_id": "2d358e82-1a00-5351-92f9-8117680b077d",
+      "spectral_line_id": "a5d32165-b4bc-5c4c-a5df-c0f8883d4df1",
+      "spectral_line_code": "oiii",
+      "bandwidth_nm": 3.0,
+      "sequence_no": 1,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "2e48ab3d-08f7-5f6d-b5d2-b5d6f763f64c",
+      "product_id": "4f6ef133-baf6-5fe4-a52f-ac3e20432245",
+      "spectral_line_id": "642ee21e-629f-54f4-aee0-c69d178552d5",
+      "spectral_line_code": "ha",
+      "bandwidth_nm": null,
+      "sequence_no": 1,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "b30fc629-155b-5073-9cc3-711d7162b031",
+      "product_id": "4f6ef133-baf6-5fe4-a52f-ac3e20432245",
+      "spectral_line_id": "a5d32165-b4bc-5c4c-a5df-c0f8883d4df1",
+      "spectral_line_code": "oiii",
+      "bandwidth_nm": null,
+      "sequence_no": 2,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "8e5dbb2b-bd87-5ab4-8c02-9c7573907afe",
+      "product_id": "4f6ef133-baf6-5fe4-a52f-ac3e20432245",
+      "spectral_line_id": "7bf1d163-62e9-5432-8eef-3f6701474f6c",
+      "spectral_line_code": "sii",
+      "bandwidth_nm": null,
+      "sequence_no": 3,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "b82d2441-c6c5-5ed0-af8d-676a04f17027",
+      "product_id": "873d764e-5b45-5353-a382-a2f2b43274a0",
+      "spectral_line_id": "7bf1d163-62e9-5432-8eef-3f6701474f6c",
+      "spectral_line_code": "sii",
+      "bandwidth_nm": 3.0,
+      "sequence_no": 1,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "33eb4fcd-50a9-5c64-9281-07c18d46b013",
+      "product_id": "b176f122-68e1-5e9c-96d0-455a30df9023",
+      "spectral_line_id": "642ee21e-629f-54f4-aee0-c69d178552d5",
+      "spectral_line_code": "ha",
+      "bandwidth_nm": null,
+      "sequence_no": 1,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "923c33ab-e175-5fa2-8786-ea193855bc48",
+      "product_id": "b176f122-68e1-5e9c-96d0-455a30df9023",
+      "spectral_line_id": "a5d32165-b4bc-5c4c-a5df-c0f8883d4df1",
+      "spectral_line_code": "oiii",
+      "bandwidth_nm": null,
+      "sequence_no": 2,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "9641e8f2-487c-5dfb-b512-0b95aa13b415",
+      "product_id": "b176f122-68e1-5e9c-96d0-455a30df9023",
+      "spectral_line_id": "7bf1d163-62e9-5432-8eef-3f6701474f6c",
+      "spectral_line_code": "sii",
+      "bandwidth_nm": null,
+      "sequence_no": 3,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "38970a98-f2f5-51b2-9d24-992c01d26183",
+      "product_id": "856d0a9c-7cd9-5144-97bf-51fced969a8c",
+      "spectral_line_id": "642ee21e-629f-54f4-aee0-c69d178552d5",
+      "spectral_line_code": "ha",
+      "bandwidth_nm": 7.0,
+      "sequence_no": 1,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "918ca8a5-4c8b-5f66-9ce6-445d85a07684",
+      "product_id": "856d0a9c-7cd9-5144-97bf-51fced969a8c",
+      "spectral_line_id": "a5d32165-b4bc-5c4c-a5df-c0f8883d4df1",
+      "spectral_line_code": "oiii",
+      "bandwidth_nm": 7.0,
+      "sequence_no": 2,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "f94eac56-29ae-524d-a9c7-6fb901b405bb",
+      "product_id": "856d0a9c-7cd9-5144-97bf-51fced969a8c",
+      "spectral_line_id": "7bf1d163-62e9-5432-8eef-3f6701474f6c",
+      "spectral_line_code": "sii",
+      "bandwidth_nm": 7.0,
+      "sequence_no": 3,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "e1c3fa1e-cbb9-5acc-bdeb-40f90efa1d76",
+      "product_id": "8ad174b0-1b3a-5daa-9cc4-04430b4757a6",
+      "spectral_line_id": "642ee21e-629f-54f4-aee0-c69d178552d5",
+      "spectral_line_code": "ha",
+      "bandwidth_nm": null,
+      "sequence_no": 1,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "c26f3efa-87b6-5bc0-95e1-4bc91e5066ce",
+      "product_id": "8ad174b0-1b3a-5daa-9cc4-04430b4757a6",
+      "spectral_line_id": "a5d32165-b4bc-5c4c-a5df-c0f8883d4df1",
+      "spectral_line_code": "oiii",
+      "bandwidth_nm": null,
+      "sequence_no": 2,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "798073b8-dc1d-5444-8e0a-ee301d60e9dc",
+      "product_id": "ed3b48ab-0b75-59e5-aeb0-a8543801d132",
+      "spectral_line_id": "a5d32165-b4bc-5c4c-a5df-c0f8883d4df1",
+      "spectral_line_code": "oiii",
+      "bandwidth_nm": 4.0,
+      "sequence_no": 1,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "03a185f2-dc3d-58eb-9638-0716d99f70ff",
+      "product_id": "ed3b48ab-0b75-59e5-aeb0-a8543801d132",
+      "spectral_line_id": "7bf1d163-62e9-5432-8eef-3f6701474f6c",
+      "spectral_line_code": "sii",
+      "bandwidth_nm": 4.0,
+      "sequence_no": 2,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "534931dc-71d8-5a95-baab-d7fc5b0cbb43",
+      "product_id": "4802a5c8-bec0-5d39-a0bc-16b191465b8b",
+      "spectral_line_id": "642ee21e-629f-54f4-aee0-c69d178552d5",
+      "spectral_line_code": "ha",
+      "bandwidth_nm": 3.0,
+      "sequence_no": 1,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "b4e6d624-6810-5b84-8057-8245f09bd5a7",
+      "product_id": "4802a5c8-bec0-5d39-a0bc-16b191465b8b",
+      "spectral_line_id": "a5d32165-b4bc-5c4c-a5df-c0f8883d4df1",
+      "spectral_line_code": "oiii",
+      "bandwidth_nm": 3.0,
+      "sequence_no": 2,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "e24e6b67-c261-5db6-9686-3037cc68e73d",
+      "product_id": "0d09dfdb-ac64-5a1b-a096-2a163d589558",
+      "spectral_line_id": "642ee21e-629f-54f4-aee0-c69d178552d5",
+      "spectral_line_code": "ha",
+      "bandwidth_nm": 5.0,
+      "sequence_no": 1,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "d697585d-6466-5278-82f5-864894f9d2db",
+      "product_id": "0d09dfdb-ac64-5a1b-a096-2a163d589558",
+      "spectral_line_id": "a5d32165-b4bc-5c4c-a5df-c0f8883d4df1",
+      "spectral_line_code": "oiii",
+      "bandwidth_nm": 5.0,
+      "sequence_no": 2,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "f47a6f2a-7f4a-5f93-8853-ca549e9eb37c",
+      "product_id": "2f4c6c2e-f3ea-5d0e-a481-cb97d4b34650",
+      "spectral_line_id": "642ee21e-629f-54f4-aee0-c69d178552d5",
+      "spectral_line_code": "ha",
+      "bandwidth_nm": null,
+      "sequence_no": 1,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "b86e8954-8b55-5a67-b69b-141845b456b2",
+      "product_id": "2f4c6c2e-f3ea-5d0e-a481-cb97d4b34650",
+      "spectral_line_id": "a5d32165-b4bc-5c4c-a5df-c0f8883d4df1",
+      "spectral_line_code": "oiii",
+      "bandwidth_nm": null,
+      "sequence_no": 2,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "857e531b-8d72-581f-b7bf-9a354dd778a9",
+      "product_id": "ed6aade8-b620-58e7-8b14-1c1061035c08",
+      "spectral_line_id": "a3bdcb01-3b0f-5899-941c-9fafd74a26a6",
+      "spectral_line_code": "hb",
+      "bandwidth_nm": 5.0,
+      "sequence_no": 1,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "9ae97b3e-5c4f-5f53-b55c-2c474acad97a",
+      "product_id": "ed6aade8-b620-58e7-8b14-1c1061035c08",
+      "spectral_line_id": "7bf1d163-62e9-5432-8eef-3f6701474f6c",
+      "spectral_line_code": "sii",
+      "bandwidth_nm": 5.0,
+      "sequence_no": 2,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "e7b78ec5-9e39-592a-883e-94804ca71728",
+      "product_id": "0ffb86b6-995a-5310-9127-d421eb103b61",
+      "spectral_line_id": "a5d32165-b4bc-5c4c-a5df-c0f8883d4df1",
+      "spectral_line_code": "oiii",
+      "bandwidth_nm": 3.0,
+      "sequence_no": 1,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "df813fab-3202-5877-a9f2-59e10decb4c7",
+      "product_id": "0ffb86b6-995a-5310-9127-d421eb103b61",
+      "spectral_line_id": "7bf1d163-62e9-5432-8eef-3f6701474f6c",
+      "spectral_line_code": "sii",
+      "bandwidth_nm": 3.0,
+      "sequence_no": 2,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "4bf59440-251d-5f60-af9e-f461910e5220",
+      "product_id": "276f56c3-01da-5136-936d-246ca0f9066b",
+      "spectral_line_id": "a3bdcb01-3b0f-5899-941c-9fafd74a26a6",
+      "spectral_line_code": "hb",
+      "bandwidth_nm": null,
+      "sequence_no": 1,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "9ba4d27d-cc52-5aeb-85b9-ae518f9d2248",
+      "product_id": "276f56c3-01da-5136-936d-246ca0f9066b",
+      "spectral_line_id": "a5d32165-b4bc-5c4c-a5df-c0f8883d4df1",
+      "spectral_line_code": "oiii",
+      "bandwidth_nm": null,
+      "sequence_no": 2,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "124051b9-7141-5fe5-b7c2-af7e38a13dea",
+      "product_id": "4cc5943d-1525-5f9f-b1bf-84311b7ad1c8",
+      "spectral_line_id": "a5d32165-b4bc-5c4c-a5df-c0f8883d4df1",
+      "spectral_line_code": "oiii",
+      "bandwidth_nm": null,
+      "sequence_no": 1,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "7eaead08-a636-5ad0-bcbe-e868abacb36f",
+      "product_id": "4cc5943d-1525-5f9f-b1bf-84311b7ad1c8",
+      "spectral_line_id": "7bf1d163-62e9-5432-8eef-3f6701474f6c",
+      "spectral_line_code": "sii",
+      "bandwidth_nm": null,
+      "sequence_no": 2,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "8adbdada-561f-59df-acd9-9b17017a5666",
+      "product_id": "bd549eda-7b06-5a20-8efc-ec938f9b0ad0",
+      "spectral_line_id": "a5d32165-b4bc-5c4c-a5df-c0f8883d4df1",
+      "spectral_line_code": "oiii",
+      "bandwidth_nm": null,
+      "sequence_no": 1,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "3d7a39da-485f-59fa-b7ba-ba4a90e7391a",
+      "product_id": "bd549eda-7b06-5a20-8efc-ec938f9b0ad0",
+      "spectral_line_id": "7bf1d163-62e9-5432-8eef-3f6701474f6c",
+      "spectral_line_code": "sii",
+      "bandwidth_nm": null,
+      "sequence_no": 2,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "5bbe2afe-fdab-5329-a31d-db31c043c16a",
+      "product_id": "2be1dd25-eeb7-5c87-af9f-80b1194c863f",
+      "spectral_line_id": "642ee21e-629f-54f4-aee0-c69d178552d5",
+      "spectral_line_code": "ha",
+      "bandwidth_nm": null,
+      "sequence_no": 1,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "340149ef-2461-5f02-ac92-75e1d37d20bf",
+      "product_id": "2be1dd25-eeb7-5c87-af9f-80b1194c863f",
+      "spectral_line_id": "a5d32165-b4bc-5c4c-a5df-c0f8883d4df1",
+      "spectral_line_code": "oiii",
+      "bandwidth_nm": null,
+      "sequence_no": 2,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "4c1a21de-97b0-563b-8651-b5ad3837e458",
+      "product_id": "396552b6-8cbc-5c3a-95d6-862d10e6ac4d",
+      "spectral_line_id": "642ee21e-629f-54f4-aee0-c69d178552d5",
+      "spectral_line_code": "ha",
+      "bandwidth_nm": null,
+      "sequence_no": 1,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "9a4b5b5d-0058-5b64-af99-d28ef6bd1efe",
+      "product_id": "396552b6-8cbc-5c3a-95d6-862d10e6ac4d",
+      "spectral_line_id": "a5d32165-b4bc-5c4c-a5df-c0f8883d4df1",
+      "spectral_line_code": "oiii",
+      "bandwidth_nm": null,
+      "sequence_no": 2,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "7494c58d-e50e-581b-9c5e-876b67ab305e",
+      "product_id": "587affc5-9ef7-5d43-b982-a72704294d9f",
+      "spectral_line_id": "642ee21e-629f-54f4-aee0-c69d178552d5",
+      "spectral_line_code": "ha",
+      "bandwidth_nm": null,
+      "sequence_no": 1,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "42836127-5382-5714-8866-92f3e575f2d8",
+      "product_id": "587affc5-9ef7-5d43-b982-a72704294d9f",
+      "spectral_line_id": "a5d32165-b4bc-5c4c-a5df-c0f8883d4df1",
+      "spectral_line_code": "oiii",
+      "bandwidth_nm": null,
+      "sequence_no": 2,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "338e9086-9c0b-52a1-b5e0-7410afbc6c0e",
+      "product_id": "7d485647-a311-5d45-8af3-dc4d41ae835d",
+      "spectral_line_id": "642ee21e-629f-54f4-aee0-c69d178552d5",
+      "spectral_line_code": "ha",
+      "bandwidth_nm": null,
+      "sequence_no": 1,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "1be92889-720b-5d57-a03b-292b6e571302",
+      "product_id": "7d485647-a311-5d45-8af3-dc4d41ae835d",
+      "spectral_line_id": "a5d32165-b4bc-5c4c-a5df-c0f8883d4df1",
+      "spectral_line_code": "oiii",
+      "bandwidth_nm": null,
+      "sequence_no": 2,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "195a1233-a53a-520b-b55c-a8cedea24bda",
+      "product_id": "6fe5053f-6840-51b2-a1d0-7e4939fa1319",
+      "spectral_line_id": "642ee21e-629f-54f4-aee0-c69d178552d5",
+      "spectral_line_code": "ha",
+      "bandwidth_nm": null,
+      "sequence_no": 1,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "4d050a68-b5cd-50a6-8dd6-367560db3879",
+      "product_id": "6fe5053f-6840-51b2-a1d0-7e4939fa1319",
+      "spectral_line_id": "a5d32165-b4bc-5c4c-a5df-c0f8883d4df1",
+      "spectral_line_code": "oiii",
+      "bandwidth_nm": null,
+      "sequence_no": 2,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "23a7d7fc-e25b-5323-b158-bfe9dff0b7fc",
+      "product_id": "45124058-8dae-5050-8b6c-c5041c2d70c3",
+      "spectral_line_id": "642ee21e-629f-54f4-aee0-c69d178552d5",
+      "spectral_line_code": "ha",
+      "bandwidth_nm": null,
+      "sequence_no": 1,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "f06da69f-6036-5ea8-94d7-ec8dffb666cf",
+      "product_id": "45124058-8dae-5050-8b6c-c5041c2d70c3",
+      "spectral_line_id": "a3bdcb01-3b0f-5899-941c-9fafd74a26a6",
+      "spectral_line_code": "hb",
+      "bandwidth_nm": null,
+      "sequence_no": 2,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "5ac56a6b-d5fc-5632-8743-c4edb0fd30ef",
+      "product_id": "45124058-8dae-5050-8b6c-c5041c2d70c3",
+      "spectral_line_id": "a5d32165-b4bc-5c4c-a5df-c0f8883d4df1",
+      "spectral_line_code": "oiii",
+      "bandwidth_nm": null,
+      "sequence_no": 3,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "f63ac2a4-070d-50e3-a07d-04c87df952f8",
+      "product_id": "2235221c-4fd3-5737-b1e5-41c88f43e583",
+      "spectral_line_id": "642ee21e-629f-54f4-aee0-c69d178552d5",
+      "spectral_line_code": "ha",
+      "bandwidth_nm": null,
+      "sequence_no": 1,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "b31a117d-c2aa-5dfc-a1d8-21f8f970ef42",
+      "product_id": "2235221c-4fd3-5737-b1e5-41c88f43e583",
+      "spectral_line_id": "a3bdcb01-3b0f-5899-941c-9fafd74a26a6",
+      "spectral_line_code": "hb",
+      "bandwidth_nm": null,
+      "sequence_no": 2,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "ecf587fe-6909-5baf-a39e-971e1cf2dad1",
+      "product_id": "2235221c-4fd3-5737-b1e5-41c88f43e583",
+      "spectral_line_id": "a5d32165-b4bc-5c4c-a5df-c0f8883d4df1",
+      "spectral_line_code": "oiii",
+      "bandwidth_nm": null,
+      "sequence_no": 3,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "e8c13bf2-52ca-562f-b15d-ccbc1b32581d",
+      "product_id": "fd00fe99-6374-57c3-8b8c-e6f93425e056",
+      "spectral_line_id": "642ee21e-629f-54f4-aee0-c69d178552d5",
+      "spectral_line_code": "ha",
+      "bandwidth_nm": null,
+      "sequence_no": 1,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "bfe09571-8c54-524b-ad29-62c534ccfa3f",
+      "product_id": "fd00fe99-6374-57c3-8b8c-e6f93425e056",
+      "spectral_line_id": "a3bdcb01-3b0f-5899-941c-9fafd74a26a6",
+      "spectral_line_code": "hb",
+      "bandwidth_nm": null,
+      "sequence_no": 2,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "85e3b406-38e4-567a-ad5d-cbf7fa3f9223",
+      "product_id": "fd00fe99-6374-57c3-8b8c-e6f93425e056",
+      "spectral_line_id": "a5d32165-b4bc-5c4c-a5df-c0f8883d4df1",
+      "spectral_line_code": "oiii",
+      "bandwidth_nm": null,
+      "sequence_no": 3,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "67bcbc96-6b79-5d43-acf3-ed1a5a7c0158",
+      "product_id": "f6295947-1e36-5cfa-b03f-4bc2f2ac691f",
+      "spectral_line_id": "642ee21e-629f-54f4-aee0-c69d178552d5",
+      "spectral_line_code": "ha",
+      "bandwidth_nm": null,
+      "sequence_no": 1,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "4e8fbf71-5269-54ba-8eba-1a22357444c7",
+      "product_id": "f6295947-1e36-5cfa-b03f-4bc2f2ac691f",
+      "spectral_line_id": "a3bdcb01-3b0f-5899-941c-9fafd74a26a6",
+      "spectral_line_code": "hb",
+      "bandwidth_nm": null,
+      "sequence_no": 2,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "6886aff3-d34b-5aff-a706-f3ca92691dfd",
+      "product_id": "f6295947-1e36-5cfa-b03f-4bc2f2ac691f",
+      "spectral_line_id": "a5d32165-b4bc-5c4c-a5df-c0f8883d4df1",
+      "spectral_line_code": "oiii",
+      "bandwidth_nm": null,
+      "sequence_no": 3,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "e0b0ed62-b158-5338-ab44-e41220741023",
+      "product_id": "f6295947-1e36-5cfa-b03f-4bc2f2ac691f",
+      "spectral_line_id": "7bf1d163-62e9-5432-8eef-3f6701474f6c",
+      "spectral_line_code": "sii",
+      "bandwidth_nm": null,
+      "sequence_no": 4,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "429b1276-9a06-5dc5-86e9-b9f69ce9ad06",
+      "product_id": "16f374f3-d745-5271-8e9e-d9285bcd497a",
+      "spectral_line_id": "642ee21e-629f-54f4-aee0-c69d178552d5",
+      "spectral_line_code": "ha",
+      "bandwidth_nm": null,
+      "sequence_no": 1,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "da23d5f5-b379-57c0-b867-e60f5df16c0d",
+      "product_id": "16f374f3-d745-5271-8e9e-d9285bcd497a",
+      "spectral_line_id": "a3bdcb01-3b0f-5899-941c-9fafd74a26a6",
+      "spectral_line_code": "hb",
+      "bandwidth_nm": null,
+      "sequence_no": 2,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "85e54dff-fef2-54fd-9b82-46c205220c06",
+      "product_id": "16f374f3-d745-5271-8e9e-d9285bcd497a",
+      "spectral_line_id": "a5d32165-b4bc-5c4c-a5df-c0f8883d4df1",
+      "spectral_line_code": "oiii",
+      "bandwidth_nm": null,
+      "sequence_no": 3,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "c33d094e-9a1e-59a3-8878-de807abe4072",
+      "product_id": "16f374f3-d745-5271-8e9e-d9285bcd497a",
+      "spectral_line_id": "7bf1d163-62e9-5432-8eef-3f6701474f6c",
+      "spectral_line_code": "sii",
+      "bandwidth_nm": null,
+      "sequence_no": 4,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "d9261a4a-7c1c-5ee9-b8bf-c1dab67e469d",
+      "product_id": "a0b46321-08ea-5ea8-888e-dadb2682007d",
+      "spectral_line_id": "642ee21e-629f-54f4-aee0-c69d178552d5",
+      "spectral_line_code": "ha",
+      "bandwidth_nm": null,
+      "sequence_no": 1,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "c6bb323c-fe9e-52d3-9771-17080524ac51",
+      "product_id": "a0b46321-08ea-5ea8-888e-dadb2682007d",
+      "spectral_line_id": "a3bdcb01-3b0f-5899-941c-9fafd74a26a6",
+      "spectral_line_code": "hb",
+      "bandwidth_nm": null,
+      "sequence_no": 2,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "7870b4d6-f957-5626-865e-e8ddc6f5b5aa",
+      "product_id": "a0b46321-08ea-5ea8-888e-dadb2682007d",
+      "spectral_line_id": "a5d32165-b4bc-5c4c-a5df-c0f8883d4df1",
+      "spectral_line_code": "oiii",
+      "bandwidth_nm": null,
+      "sequence_no": 3,
+      "source_basis": "name_or_attached_list"
+    },
+    {
+      "id": "5e8b4370-aeb2-55de-b002-697124dde2f5",
+      "product_id": "a0b46321-08ea-5ea8-888e-dadb2682007d",
+      "spectral_line_id": "7bf1d163-62e9-5432-8eef-3f6701474f6c",
+      "spectral_line_code": "sii",
+      "bandwidth_nm": null,
+      "sequence_no": 4,
+      "source_basis": "name_or_attached_list"
+    }
+  ],
+  "product_aliases": [
+    {
+      "id": "6b28ae31-bad4-5b96-a86c-244e5680fd1e",
+      "product_id": "2ab88de4-e9e2-5742-8c27-b38aea722365",
+      "alias": "Optolong L-QEF",
+      "locale": "en"
+    },
+    {
+      "id": "306055af-320a-513b-9f3e-59f88b4f6d07",
+      "product_id": "2ab88de4-e9e2-5742-8c27-b38aea722365",
+      "alias": "L-QEF",
+      "locale": "en"
+    },
+    {
+      "id": "95d7ab80-e518-50c3-a650-6041bdee1bf8",
+      "product_id": "ea8a1ec3-65cf-5536-b393-4d9519771244",
+      "alias": "L-eXtreme",
+      "locale": "en"
+    },
+    {
+      "id": "38e29798-1703-5a90-817d-7edde02f04e0",
+      "product_id": "ea8a1ec3-65cf-5536-b393-4d9519771244",
+      "alias": "L-eXtreme 7nm",
+      "locale": "en"
+    },
+    {
+      "id": "7104eb12-523a-57aa-9837-00ffdb1a0a30",
+      "product_id": "81dbd7a4-12d9-52bd-9ba8-339c2a221bac",
+      "alias": "L-Ultimate",
+      "locale": "en"
+    },
+    {
+      "id": "3042caa4-451a-5e11-829f-5f70cdea860f",
+      "product_id": "81dbd7a4-12d9-52bd-9ba8-339c2a221bac",
+      "alias": "L-Ultimate 3nm",
+      "locale": "en"
+    },
+    {
+      "id": "087a4de8-d6de-5bff-bc5b-ef4fc442ee61",
+      "product_id": "2235221c-4fd3-5737-b1e5-41c88f43e583",
+      "alias": "L-eNhance",
+      "locale": "en"
+    },
+    {
+      "id": "34905c05-153a-5bfb-a5bc-bf7a96eb6ad6",
+      "product_id": "16f374f3-d745-5271-8e9e-d9285bcd497a",
+      "alias": "Triad Ultra",
+      "locale": "en"
+    },
+    {
+      "id": "1844fc24-0897-5053-ae53-135dfb25df7a",
+      "product_id": "45124058-8dae-5050-8b6c-c5041c2d70c3",
+      "alias": "IDAS NB1",
+      "locale": "en"
+    },
+    {
+      "id": "24801ab4-3ab7-5fea-b6ef-4ba0dada1660",
+      "product_id": "0d09dfdb-ac64-5a1b-a096-2a163d589558",
+      "alias": "Antlia ALP-T 5nm Ha OIII",
+      "locale": "en"
+    },
+    {
+      "id": "ff98006b-89e6-5980-9bf9-de5e4a42e7ef",
+      "product_id": "4802a5c8-bec0-5d39-a0bc-16b191465b8b",
+      "alias": "Antlia ALP-T 3nm Ha OIII",
+      "locale": "en"
+    },
+    {
+      "id": "f9798220-ce04-5908-bfe2-0149d5f3b9ab",
+      "product_id": "9564f6eb-6b57-5146-ae90-141d0efd2140",
+      "alias": "ZWO Duo Band",
+      "locale": "en"
+    },
+    {
+      "id": "f631ecac-f254-54b4-847c-420de0c8a822",
+      "product_id": "f1864c3b-2ef2-5b52-af61-e0668869a564",
+      "alias": "ZWO DB2",
+      "locale": "en"
+    }
+  ],
+  "retailers": [
+    {
+      "slug": "agena-astro",
+      "name": "Agena Astro",
+      "domain": "agenaastro.com",
+      "retailer_type": "retailer",
+      "notes": "Astrofotografi filtreleri ve çok bantlı filtre kategorileri mevcut.",
+      "id": "f4ec96da-9757-59da-bca2-8e2a4f666881"
+    },
+    {
+      "slug": "opt",
+      "name": "OPT",
+      "domain": "optcorp.com",
+      "retailer_type": "retailer_brand_owner",
+      "notes": "Radian Triad/Triad Ultra ürün ve içerik sayfaları.",
+      "id": "4d9fc7c0-e26d-5875-ad31-1b9714814c80"
+    },
+    {
+      "slug": "astroshop-eu",
+      "name": "Astroshop.eu",
+      "domain": "astroshop.eu",
+      "retailer_type": "retailer",
+      "notes": "Çok sayıda marka ve filtre kategorisi.",
+      "id": "b701ee66-810d-503c-9350-9ea240c377d2"
+    },
+    {
+      "slug": "teleskop-express",
+      "name": "Teleskop-Express",
+      "domain": "teleskop-express.de",
+      "retailer_type": "retailer",
+      "notes": "TS-Optics, Antlia, IDAS, Altair, ZWO ve Sightron filtreleri.",
+      "id": "9f321976-335e-5698-a76b-a45be9086b56"
+    },
+    {
+      "slug": "telescopes-net",
+      "name": "Telescopes.net",
+      "domain": "telescopes.net",
+      "retailer_type": "retailer",
+      "notes": "Filtre ve görüntüleme aksesuarı kategorisi; sayfa dinamik olduğundan ürün bazlı doğrulama sınırlı.",
+      "id": "4ca3ec60-94bd-517a-b86a-bdfe975dc7be"
+    },
+    {
+      "slug": "primalucelab",
+      "name": "PrimaLuceLab",
+      "domain": "primalucelab.com",
+      "retailer_type": "manufacturer_retailer",
+      "notes": "Araştırmada bağımsız astrofotografi filtre serisinden çok görüntüleme otomasyonu ve aksesuarları görüldü; ürün kaydı eklenmedi.",
+      "id": "ea7fcb32-5a88-5276-bc81-c683891565ce"
+    }
+  ],
+  "sources": [
+    {
+      "id": "20483429-8332-5d16-860c-00b7a10d1a8a",
+      "product_id": "16f374f3-d745-5271-8e9e-d9285bcd497a",
+      "retailer_id": "4d9fc7c0-e26d-5875-ad31-1b9714814c80",
+      "url": "https://optcorp.com/products/radian-triad-ultra-filter-52mm",
+      "source_type": "product",
+      "verified_at": "2026-08-05",
+      "status": "active",
+      "notes": "Dört ultra-dar bant: Ha, Hb, SII, OIII."
+    },
+    {
+      "id": "67da0a80-2dea-5d3a-b0fe-fd86f3814d89",
+      "product_id": "16f374f3-d745-5271-8e9e-d9285bcd497a",
+      "retailer_id": "b701ee66-810d-503c-9350-9ea240c377d2",
+      "url": "https://www.astroshop.eu/uhc-filters/filters-opt-triad-ultra-quad-band-narrowband-filter-2-/p,61632",
+      "source_type": "product",
+      "verified_at": "2026-08-05",
+      "status": "active",
+      "notes": "Quad-band ürün sayfası."
+    },
+    {
+      "id": "3fc4ff65-e775-556a-9457-d9c01ecae6ef",
+      "product_id": "a0b46321-08ea-5ea8-888e-dadb2682007d",
+      "retailer_id": "9f321976-335e-5698-a76b-a45be9086b56",
+      "url": "https://www.teleskop-express.de/en/filters-254/photo-swanband-nebular-filters-304/photo-narrowband-filters-2-inch-m48-302/hutech-quad-band-pass-narrow-band-nebula-filter-m48x0-75-made-in-japan-17297",
+      "source_type": "product",
+      "verified_at": "2026-08-05",
+      "status": "active",
+      "notes": "Ha, OIII, Hb ve SII geçişleri."
+    },
+    {
+      "id": "c1d97a36-6e04-5c43-9a68-5d1c60c6f09d",
+      "product_id": "0d09dfdb-ac64-5a1b-a096-2a163d589558",
+      "retailer_id": "9f321976-335e-5698-a76b-a45be9086b56",
+      "url": "https://www.teleskop-express.de/en/filters-254/photo-swanband-nebular-filters-304/photo-narrowband-filters-2-inch-m48-302/antlia-alp-t-2-inch-dual-band-narrow-band-nebula-filter-h-alpha-and-o-iii-5-nm-14045",
+      "source_type": "product",
+      "verified_at": "2026-08-05",
+      "status": "active",
+      "notes": "Ha ve OIII, 5 nm."
+    },
+    {
+      "id": "11103aa8-9844-501d-a02a-ba34bc0be6c5",
+      "product_id": "0d09dfdb-ac64-5a1b-a096-2a163d589558",
+      "retailer_id": "f4ec96da-9757-59da-bca2-8e2a4f666881",
+      "url": "https://agenaastro.com/antlia-alp-t-dual-narrow-band-oiii-ha-imaging-filter-2-mounted.html",
+      "source_type": "product",
+      "verified_at": "2026-08-05",
+      "status": "active",
+      "notes": "Dual narrowband OIII ve Ha."
+    },
+    {
+      "id": "736f2391-e3ad-5752-818a-99d78396f802",
+      "product_id": "45124058-8dae-5050-8b6c-c5041c2d70c3",
+      "retailer_id": "9f321976-335e-5698-a76b-a45be9086b56",
+      "url": "https://www.teleskop-express.de/en/filters-254/photo-swanband-nebular-filters-304/photo-narrowband-filters-2-inch-m48-302/idas-nb1-tri-band-narrow-nebula-filter-h-beta-o-iii-h-alpha-2-inch-mounted-11363",
+      "source_type": "product",
+      "verified_at": "2026-08-05",
+      "status": "active",
+      "notes": "Triple-line pass: Hb, OIII, Ha."
+    },
+    {
+      "id": "4e68c759-5f44-550f-9321-26d3a3fb8fc5",
+      "product_id": "ea8a1ec3-65cf-5536-b393-4d9519771244",
+      "retailer_id": "b701ee66-810d-503c-9350-9ea240c377d2",
+      "url": "https://www.astroshop.eu/uhc-filters/optolong-filters-l-extreme-2-/p,66894",
+      "source_type": "product",
+      "verified_at": "2026-08-05",
+      "status": "active",
+      "notes": "İki adet 7 nm geçiş bandı."
+    },
+    {
+      "id": "bc6e60b6-aca5-5bf2-905a-ced73e2be4b5",
+      "product_id": "2235221c-4fd3-5737-b1e5-41c88f43e583",
+      "retailer_id": "b701ee66-810d-503c-9350-9ea240c377d2",
+      "url": "https://www.astroshop.eu/combinations-sets/optolong-filters-l2-dual-combo-set-2-/p,87712",
+      "source_type": "related_product",
+      "verified_at": "2026-08-05",
+      "status": "active",
+      "notes": "Sayfa L-eNhance için Ha, Hb ve OIII geçen tri-band tanımını içerir."
+    },
+    {
+      "id": "a228eee6-af35-5e7e-ae21-6d7761f8d779",
+      "product_id": "4252cb03-9d08-590d-ad40-d5493f02d643",
+      "retailer_id": "f4ec96da-9757-59da-bca2-8e2a4f666881",
+      "url": "https://agenaastro.com/optolong-l-quad-quadband-light-pollution-filter-2-inch-mounted-m48.html",
+      "source_type": "product",
+      "verified_at": "2026-08-05",
+      "status": "active",
+      "notes": "Geniş hedeflerde renk dengesi odaklı quad-bandpass."
+    },
+    {
+      "id": "9c1e3ec5-15e0-5262-9768-039a1830a391",
+      "product_id": "75e34271-f0f2-5769-ac0f-acb99b065f9f",
+      "retailer_id": "f4ec96da-9757-59da-bca2-8e2a4f666881",
+      "url": "https://agenaastro.com/antlia-quadband-anti-light-pollution-filter-2-mounted-quadlp-2.html",
+      "source_type": "product",
+      "verified_at": "2026-08-05",
+      "status": "active",
+      "notes": "Renkli ve mono kameralar için quad-band ışık kirliliği filtresi."
+    },
+    {
+      "id": "5d918264-889c-5ece-b20a-18e14e14e6dd",
+      "product_id": "75e34271-f0f2-5769-ac0f-acb99b065f9f",
+      "retailer_id": "9f321976-335e-5698-a76b-a45be9086b56",
+      "url": "https://www.teleskop-express.de/de/filter-254/foto-schmalband-nebelfilter-304/foto-schmalband-filter-2-zoll-m48-302/antlia-2-quad-band-anti-lichtverschmutzungs-schmalbandfilter-17066",
+      "source_type": "product",
+      "verified_at": "2026-08-05",
+      "status": "active",
+      "notes": "Geniş bant ile dar bant arasında hibrit kullanım."
+    },
+    {
+      "id": "0aa6b9cf-9536-5159-a8bf-51461c3098c6",
+      "product_id": "ed3b48ab-0b75-59e5-aeb0-a8543801d132",
+      "retailer_id": "9f321976-335e-5698-a76b-a45be9086b56",
+      "url": "https://www.teleskop-express.de/en/filters-254/photo-swanband-nebular-filters-304/photo-narrowband-filters-2-inch-m48-302/altair-mounted-sii-oiii-dualband-ultra-4nm-cmos-filter-2-with-test-report-17564",
+      "source_type": "product",
+      "verified_at": "2026-08-05",
+      "status": "active",
+      "notes": "SII/OIII 4 nm dual-band."
+    },
+    {
+      "id": "bdd8007d-abe6-5ee1-9a93-e14da58bc62b",
+      "product_id": "fa5e6998-99d0-56ad-8c2c-ca2f5734068d",
+      "retailer_id": "9f321976-335e-5698-a76b-a45be9086b56",
+      "url": "https://www.teleskop-express.de/en/filters-254/photo-swanband-nebular-filters-304/photo-narrowband-filters-2-inch-m48-302/ts-optics-2-zoll-tri-band-schmalband-nebelfilter-fuer-astrokameras-m48x0-75-17553",
+      "source_type": "product",
+      "verified_at": "2026-08-05",
+      "status": "active",
+      "notes": "35 nm tri-band dar bant filtre."
+    },
+    {
+      "id": "d4405fb9-8bc5-503b-8322-198baa19e8c6",
+      "product_id": "f1864c3b-2ef2-5b52-af61-e0668869a564",
+      "retailer_id": "9f321976-335e-5698-a76b-a45be9086b56",
+      "url": "https://www.teleskop-express.de/en/filters-254/photo-swanband-nebular-filters-304/photo-narrowband-filters-2-inch-m48-302/zwo-2-duo-band-narrow-band-nebula-filter-for-color-and-astro-cameras-11628",
+      "source_type": "product",
+      "verified_at": "2026-08-05",
+      "status": "active",
+      "notes": "ZWO DB2 Duo-Band."
+    },
+    {
+      "id": "81d06a77-f7be-5385-96da-e4312081194c",
+      "product_id": "5ebdd7ca-d78d-5759-a3c2-294c093845e7",
+      "retailer_id": "b701ee66-810d-503c-9350-9ea240c377d2",
+      "url": "https://www.astroshop.eu/combinations-sets/optolong-filters-l2-dual-combo-set-2-/p,87712",
+      "source_type": "related_product",
+      "verified_at": "2026-08-05",
+      "status": "active",
+      "notes": "L-Synergy 7 nm dual filtre."
+    },
+    {
+      "id": "8cd8fddc-f4c0-5919-a5d7-0afb78123f73",
+      "product_id": null,
+      "retailer_id": "f4ec96da-9757-59da-bca2-8e2a4f666881",
+      "url": "https://agenaastro.com/astrophotography/filters.html",
+      "source_type": "catalog_or_research",
+      "verified_at": "2026-08-05",
+      "status": "active_or_observed",
+      "notes": "Çok bantlı filtrelerin iki ila dört dalga boyunu geçirebildiğini açıklayan kategori sayfası."
+    },
+    {
+      "id": "989f1733-26b1-5c91-aa34-2b31bb639497",
+      "product_id": null,
+      "retailer_id": "f4ec96da-9757-59da-bca2-8e2a4f666881",
+      "url": "https://agenaastro.com/astrophotography/filters/narrowband-imaging-filter.html",
+      "source_type": "catalog_or_research",
+      "verified_at": "2026-08-05",
+      "status": "active_or_observed",
+      "notes": "Dar bant görüntüleme filtreleri kategorisi."
+    },
+    {
+      "id": "a125a833-c11c-54c5-9e64-0f36a8aa06bf",
+      "product_id": null,
+      "retailer_id": "b701ee66-810d-503c-9350-9ea240c377d2",
+      "url": "https://www.astroshop.eu/filters/15_15/m,Antlia",
+      "source_type": "catalog_or_research",
+      "verified_at": "2026-08-05",
+      "status": "active_or_observed",
+      "notes": "Antlia filtre katalog sayfası."
+    },
+    {
+      "id": "ea12b887-8167-54f1-8952-dff0ff5cf9b2",
+      "product_id": null,
+      "retailer_id": "4d9fc7c0-e26d-5875-ad31-1b9714814c80",
+      "url": "https://optcorp.com/collections/triad-filters",
+      "source_type": "catalog_or_research",
+      "verified_at": "2026-08-05",
+      "status": "active_or_observed",
+      "notes": "Radian Triad filtre koleksiyonu."
+    },
+    {
+      "id": "40469fbc-63ff-5646-abb0-64a3faf4a242",
+      "product_id": null,
+      "retailer_id": "4ca3ec60-94bd-517a-b86a-bdfe975dc7be",
+      "url": "https://telescopes.net/accessories/filters.html",
+      "source_type": "catalog_or_research",
+      "verified_at": "2026-08-05",
+      "status": "active_or_observed",
+      "notes": "Genel filtre kategorisi."
+    },
+    {
+      "id": "ccfd4265-09d7-56de-8a9c-0bd1b6c1186b",
+      "product_id": null,
+      "retailer_id": "ea7fcb32-5a88-5276-bc81-c683891565ce",
+      "url": "https://www.primalucelab.com/",
+      "source_type": "catalog_or_research",
+      "verified_at": "2026-08-05",
+      "status": "active_or_observed",
+      "notes": "Araştırılan üretici/mağaza; bağımsız filtre ürün serisi doğrulanamadı."
+    }
+  ],
+  "classification_notes": [
+    {
+      "code": "marketing-vs-optical-count",
+      "title_tr": "Pazarlama sınıfı ile optik geçiş sayısı ayrımı",
+      "body_tr": "Dual, tri ve quad ifadeleri bazı üreticilerde emisyon çizgisi sayısını, bazılarında fiziksel geçiş penceresi sayısını ifade eder. Bu nedenle market_band_label, emission_line_count ve pass_window_count ayrı alanlardır.",
+      "id": "53a0be46-017d-5b89-8d4b-8f7ff353c550"
+    },
+    {
+      "code": "hybrid-multiband",
+      "title_tr": "Hibrit çok bantlı filtreler",
+      "body_tr": "Antlia Triband RGB Ultra, Antlia Quad Band Anti-Light Pollution ve Optolong L-Quad gibi modeller klasik ultra-dar nebula filtresi yerine geniş ve dar hedefler arasında hibrit kullanım sunabilir.",
+      "id": "16aafb07-6831-5610-9cec-d93e931a99e6"
+    },
+    {
+      "code": "source-preservation",
+      "title_tr": "Kaynak listesinin korunması",
+      "body_tr": "Ekli listedeki kategori ve ürün adları aynen korunur. Web araştırmasıyla eklenen veya doğrulanan bilgiler ayrı source_origin ve verification_status alanlarında tutulur.",
+      "id": "29f83049-06ca-5be7-852b-0eb6f0aa0a53"
+    },
+    {
+      "code": "no-price-stock",
+      "title_tr": "Fiyat ve stok dışarıda bırakıldı",
+      "body_tr": "Fiyat ve stok hızla değiştiğinden çekirdek seed verisine eklenmemiştir. Bunlar yalnızca ayrı ve zaman damgalı bir entegrasyonla güncellenmelidir.",
+      "id": "a3a8e398-60e6-5e5a-8342-dae2a270a0a1"
+    }
+  ]
+}

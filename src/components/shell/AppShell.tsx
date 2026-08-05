@@ -39,6 +39,21 @@ const PreviewEditorPanel = lazy(() =>
   }))
 );
 
+/**
+ * İNCELEME MODU — her sayfada, her öğede çalışan not ve metin düzenleme.
+ *
+ * `PreviewEditorPanel`den AYRI bir bileşen: o yalnızca ana sayfanın
+ * hero'sunu düzenliyor ve slayt alanlarını biliyor. Bu ise sayfadan
+ * habersiz — herhangi bir başlığa, paragrafa ya da düğmeye tıklanabiliyor.
+ * İkisini tek bileşende birleştirmek, hero'ya özel alan mantığını genel
+ * seçiciyle aynı dosyaya sıkıştırmak olurdu.
+ */
+const ReviewMode = lazy(() =>
+  import('@/features/preview-editor/ReviewMode').then((m) => ({
+    default: m.ReviewMode,
+  }))
+);
+
 export function AppShell() {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
@@ -128,6 +143,14 @@ export function AppShell() {
           <ErrorBoundary label="PreviewEditorPanel">
             <Suspense fallback={null}>
               <PreviewEditorPanel />
+            </Suspense>
+          </ErrorBoundary>
+        )}
+
+        {isPreviewEditorEnabled && (
+          <ErrorBoundary label="ReviewMode">
+            <Suspense fallback={null}>
+              <ReviewMode />
             </Suspense>
           </ErrorBoundary>
         )}
