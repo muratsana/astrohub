@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { events as eventsSeed } from '@/features/events/data';
 import type { AstroEvent, EventType } from '@/features/events/types';
+import { ETHEM_EVENT_SLUG, enrichEvent } from '@/features/events/enrichment';
 import { gradientFromSeed } from '@/components/media/tints';
 import { useCatalog } from './useCatalog';
 import type { ContentSelection } from './select';
@@ -69,7 +70,7 @@ export function mapEventRow(row: EventRow): AstroEvent {
   const latitude = num(row.latitude);
   const longitude = num(row.longitude);
 
-  return {
+  return enrichEvent({
     id: row.id,
     slug: row.slug,
     title: row.title,
@@ -105,7 +106,7 @@ export function mapEventRow(row: EventRow): AstroEvent {
       name: row.source_name ?? 'Astrohub kaydı',
       lastVerifiedAt: row.source_last_verified_at ?? '',
     },
-  };
+  });
 }
 
 async function fetchEvents(client: SupabaseClient): Promise<AstroEvent[]> {
@@ -123,12 +124,15 @@ async function fetchEvents(client: SupabaseClient): Promise<AstroEvent[]> {
     .order('starts_at');
 
   if (error) throw new Error(error.message);
-  return (data as unknown as EventRow[]).map(mapEventRow);
+  const rows = (data as unknown as EventRow[]).map(mapEventRow);
+  if (rows.some((event) => event.slug === ETHEM_EVENT_SLUG)) return rows;
+  const ethem = eventsSeed.find((event) => event.slug === ETHEM_EVENT_SLUG);
+  return ethem ? [...rows, enrichEvent(ethem)] : rows;
 }
 
 /** Etkinlik kataloğu: veritabanı varsa oradan, yoksa tohum diziden. */
 export function useEventCatalog(): ContentSelection<AstroEvent> {
-  return useCatalog('etkinlik', eventsSeed, fetchEvents);
+  return useCatalog('etkinlik', eventsSeed.map(enrichEvent), fetchEvents);
 }
 
 export interface NewEventInput {

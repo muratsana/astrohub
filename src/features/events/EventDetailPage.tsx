@@ -5,6 +5,7 @@ import { ButtonLink } from '@/components/ui/Button';
 import { EventInterest } from './EventInterest';
 import { EventChanges } from './EventChanges';
 import { PhotoPlaceholder } from '@/components/media/PhotoPlaceholder';
+import { RemoteImage } from '@/components/media/RemoteImage';
 import { PlaceholderPage } from '@/components/PlaceholderPage';
 import { useEventCatalog } from '@/services/content/events';
 import { eventTypeLabels } from './types';
@@ -72,11 +73,30 @@ export function EventDetailPage() {
         ]}
       />
       <Container className="py-8 sm:py-10">
-        <PhotoPlaceholder
-          gradient={event.gradient}
-          alt={event.title}
-          className="aspect-[3/1] w-full border border-border"
-        />
+        <div className="relative aspect-[3/1] w-full overflow-hidden rounded-card border border-border bg-surface-2">
+          {event.image ? (
+            <RemoteImage
+              src={event.image.url}
+              alt={event.title}
+              seed={event.slug}
+              tint={event.gradient}
+              sizes="(min-width: 1024px) 1120px, 100vw"
+              priority
+            />
+          ) : (
+            <PhotoPlaceholder
+              gradient={event.gradient}
+              alt={event.title}
+              className="h-full w-full"
+              rounded="rounded-none"
+            />
+          )}
+          {event.image && (
+            <span className="absolute inset-x-0 bottom-0 bg-background/80 px-3 py-1.5 text-[0.68rem] text-muted-foreground backdrop-blur-sm">
+              Görsel: {event.image.credit} · {event.image.licence}
+            </span>
+          )}
+        </div>
 
         <div className="mt-6 flex flex-col gap-8 lg:flex-row">
           {/* Sol: içerik */}
@@ -97,9 +117,7 @@ export function EventDetailPage() {
               <AdminEditLink to={`/admin/events?slug=${event.slug}`} />
             </div>
 
-            <h1 className="mt-3 type-page text-foreground">
-              {event.title}
-            </h1>
+            <h1 className="mt-3 type-page text-foreground">{event.title}</h1>
             <p className="tabular mt-2 text-sm text-muted-foreground">
               {dateLabel} · {timeLabel} · {event.venue}, {event.city}
             </p>

@@ -71,8 +71,16 @@ describe('mapEventRow', () => {
   });
 
   it('gradyanı slug’dan kararlı türetir', () => {
-    expect(mapEventRow(eventRow).gradient).toBe(gradientFromSeed('perseid-2026'));
+    expect(mapEventRow(eventRow).gradient).toBe(
+      gradientFromSeed('perseid-2026')
+    );
     expect(mapEventRow(eventRow).gradient).toBe(mapEventRow(eventRow).gradient);
+  });
+
+  it('Supabase satırını etkinlik görseliyle zenginleştirir', () => {
+    const event = mapEventRow(eventRow);
+    expect(event.image?.url).toContain('TUG%20full%20site.jpg');
+    expect(event.image?.credit).toContain('Wikimedia Commons');
   });
 });
 

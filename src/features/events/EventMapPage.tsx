@@ -11,6 +11,7 @@ import { SortableHeader } from '@/components/ui/SortableHeader';
 import { AdminEditLink } from '@/components/admin/AdminEditLink';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { PhotoPlaceholder } from '@/components/media/PhotoPlaceholder';
+import { RemoteImage } from '@/components/media/RemoteImage';
 import { breadcrumbJsonLd } from '@/lib/seo';
 import { useLocationContext } from '@/features/location/LocationContext';
 import { LocationPicker } from '@/features/location/LocationPicker';
@@ -33,6 +34,7 @@ import {
 import type { LatLng } from '@/features/sky/tileMath';
 import { useTheme } from '@/features/theme/ThemeContext';
 import { hasNetworkAccess } from '@/lib/runtime';
+import { ETHEM_EVENT_SLUG } from './enrichment';
 
 /**
  * ETKİNLİKLER ANA MODÜLÜ.
@@ -139,14 +141,12 @@ export function EventMapPage() {
   }, [located]);
 
   const featuredItem =
-    featuredEvents.slugs.length > 0
-      ? (applyFeatured(
-          catalog.items,
-          featuredEvents.slugs,
-          (event) => event.slug,
-          1
-        )[0] ?? null)
-      : null;
+    applyFeatured(
+      catalog.items,
+      [ETHEM_EVENT_SLUG, ...featuredEvents.slugs],
+      (event) => event.slug,
+      1
+    )[0] ?? null;
   const featuredDistance = featuredItem
     ? located.find(({ item }) => item.slug === featuredItem.slug)?.distanceKm
     : undefined;
@@ -252,20 +252,42 @@ export function EventMapPage() {
             to={`/etkinlik/${featuredItem.slug}`}
             className="group mb-4 grid overflow-hidden rounded-card border border-primary/50 bg-surface-1 transition-colors hover:border-primary md:h-[525px] md:grid-cols-[minmax(0,58%)_minmax(0,1fr)]"
           >
-            <PhotoPlaceholder
-              gradient={featuredItem.gradient}
-              alt={`${featuredItem.title} etkinlik görseli`}
-              className="min-h-[17.5rem] md:h-full md:min-h-0"
-              rounded="rounded-none"
-            />
-            <div className="flex min-h-[17.5rem] flex-col justify-center p-4 md:min-h-0 md:p-5">
+            <div className="relative min-h-[17.5rem] overflow-hidden bg-surface-2 md:h-full md:min-h-0">
+              {featuredItem.image ? (
+                <RemoteImage
+                  src={featuredItem.image.url}
+                  alt={`${featuredItem.title} etkinlik görseli`}
+                  seed={featuredItem.slug}
+                  tint={featuredItem.gradient}
+                  sizes="(min-width: 768px) 58vw, 100vw"
+                  priority
+                />
+              ) : (
+                <PhotoPlaceholder
+                  gradient={featuredItem.gradient}
+                  alt={`${featuredItem.title} etkinlik görseli`}
+                  className="h-full min-h-[17.5rem]"
+                  rounded="rounded-none"
+                />
+              )}
+              {featuredItem.image && (
+                <span className="absolute inset-x-0 bottom-0 bg-background/80 px-3 py-1.5 text-[0.68rem] text-muted-foreground backdrop-blur-sm">
+                  Görsel: {featuredItem.image.credit} ·{' '}
+                  {featuredItem.image.licence}
+                </span>
+              )}
+            </div>
+            <div className="flex min-h-[17.5rem] flex-col p-4 md:min-h-0 md:p-5">
               <div className="min-w-0 flex-1">
                 <Badge tone="primary">Öne çıkan</Badge>
                 <h2 className="mt-3 type-section text-foreground transition-colors group-hover:text-white">
                   {featuredItem.title}
                 </h2>
-                <p className="mt-2.5 line-clamp-5 text-body-sm leading-relaxed text-muted-foreground">
+                <p className="mt-2.5 text-body-sm leading-relaxed text-muted-foreground">
                   {featuredItem.city} · {formatEventDate(featuredItem.startsAt)}
+                </p>
+                <p className="mt-4 line-clamp-7 text-body-sm leading-relaxed text-muted-foreground">
+                  {featuredItem.description}
                 </p>
               </div>
               {featuredDistance !== undefined && (
@@ -363,7 +385,8 @@ export function EventMapPage() {
                       <p className="truncate text-body-sm text-foreground">
                         <span className="font-medium">{hit.item.title}</span>
                         <span className="ml-2 text-muted-foreground">
-                          {hit.item.city} · {formatLocalDistance(hit.distanceKm)}
+                          {hit.item.city} ·{' '}
+                          {formatLocalDistance(hit.distanceKm)}
                         </span>
                       </p>
                     );
