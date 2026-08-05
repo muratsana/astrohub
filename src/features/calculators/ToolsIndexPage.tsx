@@ -26,6 +26,74 @@ const tools =
     ?.items.filter((tool) => tool.to !== '/araclar') ?? [];
 
 /**
+ * ARAÇLARIN GRUPLANMASI — kullanıcının SORUSUNA göre.
+ *
+ * Eskiden yedi kart düz bir ızgarada, hepsi aynı ağırlıkta duruyordu:
+ * "Bu gece ne çekeyim" ile "kaç panele böleyim" yan yanaydı ve
+ * aralarındaki fark görünmüyordu. Numaralandırma (01–07) bir sıra
+ * vaat ediyordu ama o sıranın bir anlamı yoktu.
+ *
+ * Üç grup, çekim gecesinin sırasını izliyor: önce geceyi seç, sonra
+ * kadrajı kur, sonra pozu planla. Referans (ekipman, hedef katalogu)
+ * ayrı duruyor çünkü onlar araç değil, araçların beslendiği veri.
+ *
+ * KAYNAK YİNE `siteMap`: bir araç eklendiğinde burada görünür ama
+ * gruplanmamışsa "Diğer" başlığına düşer — kaybolmaz, sadece buraya bir
+ * satır eklemeyi hatırlatan görünür bir iz bırakır.
+ */
+const GROUPS: { title: string; hint: string; paths: string[] }[] = [
+  {
+    title: 'Gece',
+    hint: 'Ne zaman, hangi hedef, ne kadar karanlık',
+    paths: ['/bu-gece', '/planlayici', '/araclar/takvim'],
+  },
+  {
+    title: 'Kadraj',
+    hint: 'Hedef bu setup’a sığıyor mu',
+    paths: ['/simulator', '/araclar/mosaic'],
+  },
+  {
+    title: 'Poz ve saha',
+    hint: 'Kaç kare, kaç gece, nereden',
+    paths: ['/araclar/poz-plani', '/araclar/isik-kirliligi'],
+  },
+];
+
+/**
+ * Referans alanları — araç değil, araçların okuduğu katalog.
+ *
+ * Denetimde ölçülen boşluk şuydu: `/ekipman` ve `/hedefler` bu sayfada
+ * HİÇ görünmüyordu, oysa araçların tamamı ikisinden besleniyor.
+ * Kullanıcı "araçlar" diye girip setup'ını nereden kuracağını
+ * bulamıyordu.
+ */
+const REFERENCE: { label: string; to: string; description: string }[] = [
+  {
+    label: 'Ekipman ve Setup',
+    to: '/ekipman',
+    description:
+      'Setup’ını burada kur ve kaydet — bütün araçlar onu okur.',
+  },
+  {
+    label: 'Hedef Kataloğu',
+    to: '/hedefler',
+    description: 'Messier, NGC, IC — açısal boyut ve konum verisiyle.',
+  },
+];
+
+const grouped = GROUPS.map((group) => ({
+  ...group,
+  items: group.paths
+    .map((path) => tools.find((tool) => tool.to === path))
+    .filter((tool): tool is (typeof tools)[number] => tool !== undefined),
+}));
+
+/** Hiçbir gruba girmeyen araçlar — yeni eklenmiş olabilir. */
+const ungrouped = tools.filter(
+  (tool) => !GROUPS.some((group) => group.paths.includes(tool.to))
+);
+
+/**
  * Araç ikonları — rotaya göre.
  *
  * NEDEN BURADA, `navigation.ts` İÇİNDE DEĞİL: gezinme haritası saf veri
@@ -69,44 +137,85 @@ export function ToolsIndexPage() {
           </p>
         </header>
 
-        <ul className="grid gap-px border border-border bg-border sm:grid-cols-2 lg:grid-cols-3">
-          {tools.map((tool, i) => {
-            const Icon = toolIcons[tool.to];
-            return (
-            <li key={tool.to + tool.label}>
-              <Link
-                to={tool.to}
-                className="group flex h-full flex-col bg-surface-1 p-5 transition-colors hover:bg-surface-2"
-              >
-                {/* İkon ve sıra numarası aynı satırda: numara künye,
-                    ikon tanıma işareti — ikisi de küçük ve üstte. */}
-                <span className="mb-3 flex items-center gap-2.5">
-                  {Icon && (
-                    <Icon className="h-6 w-6 shrink-0 text-border-strong transition-colors group-hover:text-primary" />
-                  )}
-                  <span className="tabular label text-primary">
-                    {String(i + 1).padStart(2, '0')}
-                  </span>
-                </span>
-                <span className="flex items-baseline gap-2">
-                  <span className="font-display text-readout-sm font-bold text-foreground transition-colors group-hover:text-primary">
-                    {tool.label}
-                  </span>
-                  {tool.soon && <Badge>Yakında</Badge>}
-                </span>
-                {tool.description && (
-                  <span className="mt-2 text-meta leading-relaxed text-muted-foreground">
-                    {tool.description}
-                  </span>
+        {[...grouped, { title: 'Diğer', hint: '', items: ungrouped }]
+          .filter((group) => group.items.length > 0)
+          .map((group) => (
+            <section key={group.title} className="mb-8 last:mb-0">
+              <div className="mb-3 flex flex-wrap items-baseline gap-x-3 border-b border-border pb-2">
+                <h2 className="type-section text-foreground">{group.title}</h2>
+                {group.hint && (
+                  <p className="text-meta text-muted-foreground">{group.hint}</p>
                 )}
-                <span className="mt-auto pt-5 text-meta tracking-[0.04em] text-faint transition-colors group-hover:text-primary">
-                  {tool.soon ? 'yol haritasında' : 'aracı aç →'}
-                </span>
-              </Link>
-            </li>
-            );
-          })}
-        </ul>
+              </div>
+
+              {/*
+                `auto-rows-fr` + tam dolan satır: eski ızgarada yedi kart
+                üç sütuna yerleşince sağ altta boş bir dolgu bloğu
+                kalıyordu (kapsayıcının `bg-border` zemini görünüyordu).
+                Gruplar iki ve üçlü olduğu için artık boş hücre çıkmıyor.
+              */}
+              <ul className="grid gap-px border border-border bg-border sm:grid-cols-2 lg:grid-cols-3">
+                {group.items.map((tool) => {
+                  const Icon = toolIcons[tool.to];
+                  return (
+                    <li key={tool.to + tool.label}>
+                      <Link
+                        to={tool.to}
+                        className="group flex h-full flex-col bg-surface-1 p-5 transition-colors hover:bg-surface-2"
+                      >
+                        {Icon && (
+                          <Icon className="mb-3 h-6 w-6 shrink-0 text-border-strong transition-colors group-hover:text-primary" />
+                        )}
+                        <span className="flex items-baseline gap-2">
+                          <span className="font-display text-readout-sm font-bold text-foreground transition-colors group-hover:text-primary">
+                            {tool.label}
+                          </span>
+                          {tool.soon && <Badge>Yakında</Badge>}
+                        </span>
+                        {tool.description && (
+                          <span className="mt-2 text-meta leading-relaxed text-muted-foreground">
+                            {tool.description}
+                          </span>
+                        )}
+                        <span className="mt-auto pt-5 text-meta tracking-[0.04em] text-faint transition-colors group-hover:text-primary">
+                          {tool.soon ? 'yol haritasında' : 'aracı aç →'}
+                        </span>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          ))}
+
+        <section className="mt-8">
+          <div className="mb-3 flex flex-wrap items-baseline gap-x-3 border-b border-border pb-2">
+            <h2 className="type-section text-foreground">Referans</h2>
+            <p className="text-meta text-muted-foreground">
+              Araçların okuduğu kataloglar
+            </p>
+          </div>
+          <ul className="grid gap-px border border-border bg-border sm:grid-cols-2">
+            {REFERENCE.map((item) => (
+              <li key={item.to}>
+                <Link
+                  to={item.to}
+                  className="group flex h-full flex-col bg-surface-1 p-5 transition-colors hover:bg-surface-2"
+                >
+                  <span className="font-display text-readout-sm font-bold text-foreground transition-colors group-hover:text-primary">
+                    {item.label}
+                  </span>
+                  <span className="mt-2 text-meta leading-relaxed text-muted-foreground">
+                    {item.description}
+                  </span>
+                  <span className="mt-auto pt-5 text-meta tracking-[0.04em] text-faint transition-colors group-hover:text-primary">
+                    katalogu aç →
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
       </Container>
     </>
   );

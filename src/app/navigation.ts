@@ -82,6 +82,12 @@ export const siteMap: NavGroup[] = [
         keywords: ['galeri', 'arşiv', 'foto', 'astrofotoğraf'],
       },
       {
+        label: 'Aylık Seçki',
+        to: '/secki',
+        description: 'Ayın oylanan kareleri ve seçki arşivi',
+        keywords: ['seçki', 'aylık', 'oylama', 'oy'],
+      },
+      {
         label: 'Fotoğraf Yükle',
         to: '/galeri/yukle',
         description: 'Yeni kayıt aç — hedef, setup, pozlama',
@@ -109,6 +115,18 @@ export const siteMap: NavGroup[] = [
         to: '/etkinlikler',
         description: 'Konum dağılımı ve size en yakın etkinlikler',
         keywords: ['şenlik', 'kamp', 'atölye', 'harita', 'yakınımda', 'konum'],
+      },
+      {
+        label: 'Etkinlik Ekle',
+        to: '/etkinlik/yeni',
+        description: 'Şenlik, gözlem gecesi ya da atölye duyur',
+        keywords: ['etkinlik ekle', 'duyur', 'yeni etkinlik'],
+      },
+      {
+        label: 'Topluluğunu Ekle',
+        to: '/topluluklar/ekle',
+        description: 'Dernek, kulüp ya da gözlem grubunu dizine ekle',
+        keywords: ['kulüp ekle', 'dernek ekle', 'topluluk ekle'],
       },
       {
         label: 'Kulüpler ve Topluluklar',
@@ -297,17 +315,6 @@ export const siteMap: NavGroup[] = [
     ],
   },
   {
-    title: 'Hesap',
-    items: [
-      {
-        label: 'Hesabım',
-        to: '/hesap',
-        description: 'Profil bilgileri ve hesap ayarları',
-        keywords: ['profil', 'hesap', 'ayar', 'kullanıcı adı'],
-      },
-    ],
-  },
-  {
     title: 'Saha',
     items: [
       {
@@ -315,6 +322,12 @@ export const siteMap: NavGroup[] = [
         to: '/saha',
         description: 'Karanlık gökyüzü noktaları ve haritası',
         keywords: ['kamp', 'astrocamping', 'nokta', 'saha', 'harita'],
+      },
+      {
+        label: 'Saha Noktası Ekle',
+        to: '/saha/yeni',
+        description: 'Bildiğin karanlık gökyüzü noktasını paylaş',
+        keywords: ['saha ekle', 'nokta ekle', 'kamp yeri ekle'],
       },
       {
         label: 'Rasathane ve Planetaryumlar',
@@ -350,6 +363,12 @@ export const siteMap: NavGroup[] = [
   {
     title: 'Hesap',
     items: [
+      {
+        label: 'Hesabım',
+        to: '/hesap',
+        description: 'Profil bilgileri ve hesap ayarları',
+        keywords: ['profil', 'hesap', 'ayar', 'kullanıcı adı'],
+      },
       {
         label: 'Üye Paneli',
         to: '/panel',
@@ -405,6 +424,12 @@ export const siteMap: NavGroup[] = [
     title: 'Kurumsal',
     items: [
       { label: 'Hakkında', to: '/hakkinda' },
+      {
+        label: 'İletişim',
+        to: '/iletisim',
+        description: 'Soru, geri bildirim ve iş birliği',
+        keywords: ['iletişim', 'bize ulaşın', 'destek', 'geri bildirim'],
+      },
       {
         label: 'KVKK ve Gizlilik',
         to: '/kvkk',

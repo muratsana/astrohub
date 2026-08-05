@@ -37,7 +37,7 @@ const BASE = `file://${path.join(root, 'dist-preview', 'index.html')}`;
 /** Mobil genişlik: dokunma hedefi sorunları burada ortaya çıkar. */
 const VIEWPORT = { width: 390, height: 844 };
 
-const ROUTES = ['/', '/galeri', '/etkinlikler', '/araclar/fov', '/forum'];
+const ROUTES = ['/', '/galeri', '/etkinlikler', '/simulator', '/forum'];
 
 /** Metni olmayan ikon kontrolleri — WCAG 2.5.5. */
 const MIN_ICON = 44;

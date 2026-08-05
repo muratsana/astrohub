@@ -249,7 +249,6 @@ describe('kart ailesi dağılmıyor', () => {
       'components/RouteFallback.tsx',
       'features/sky/DarkCalendarPage.tsx',
       'features/calculators/MosaicPlannerPage.tsx',
-      'features/calculators/FovCalculatorPage.tsx',
       'features/upload/UploadWizardPage.tsx',
       'features/events/EventDetailPage.tsx',
       'features/events/EventMapPage.tsx',

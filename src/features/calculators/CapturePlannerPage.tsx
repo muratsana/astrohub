@@ -7,6 +7,7 @@ import { Input, Select } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
 import { PageMeta } from '@/components/seo/PageMeta';
+import { ActiveSetupBar } from '@/features/setups/ActiveSetupBar';
 import { formatIntegration } from '@/domain/photography/integration';
 import {
   ditherAdvice,
@@ -157,6 +158,8 @@ export function CapturePlannerPage() {
           title="Poz ve Entegrasyon Planlayıcı"
           description="Hedeflediğin toplam süreyi filtrelere paylaştırır, kare sayısına çevirir ve kaç gece gerektiğini söyler."
         />
+
+        <ActiveSetupBar className="mb-4" />
 
         <div className="grid gap-4 lg:grid-cols-[minmax(0,400px)_minmax(0,1fr)]">
           <div className="space-y-4">

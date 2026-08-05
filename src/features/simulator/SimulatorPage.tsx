@@ -9,6 +9,8 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { Panel, SpecList, SpecRow } from '@/components/ui/Panel';
 import { Readout } from '@/components/ui/Readout';
 import { PageMeta } from '@/components/seo/PageMeta';
+import { ActiveSetupBar } from '@/features/setups/ActiveSetupBar';
+import { useSetupPrefill } from '@/features/setups/useSetupPrefill';
 import { computeOptics } from '@/domain/astronomy/optics';
 import { parseAngularSizeArcmin } from '@/domain/astronomy/mosaic';
 import { checkSetup, type CheckSeverity } from '@/domain/equipment/compatibility';
@@ -67,6 +69,18 @@ export function SimulatorPage() {
   const [seeingArcsec, setSeeingArcsec] = useState(3);
   const [guideFocalLength, setGuideFocalLength] = useState(120);
   const [guidePixelSize, setGuidePixelSize] = useState(3.75);
+  /*
+    AKTİF SETUP'TAN DOLDURMA. Ekipman modülünde kurulan setup buraya
+    kendiliğinden geliyor — kullanıcı aynı üç seçimi ikinci kez yapmıyor.
+    Elle değiştirdiği değer korunuyor; ayrıntı `useSetupPrefill` başlığında.
+  */
+  useSetupPrefill((slots) => {
+    if (slots.montur) setMountSlug(slots.montur);
+    if (slots.optik) setOpticSlug(slots.optik);
+    if (slots.kamera) setCameraSlug(slots.kamera);
+    if (slots['guide-scope']) setGuideSlug(slots['guide-scope']);
+  });
+
   const [targetSlug, setTargetSlug] = useState(
     framedTargets.find((entry) => entry.target.slug === 'm31-andromeda')?.target
       .slug ?? framedTargets[0]?.target.slug ?? ''
@@ -271,6 +285,8 @@ export function SimulatorPage() {
             </ButtonLink>
           }
         />
+
+        <ActiveSetupBar className="mb-4" />
 
         <div className="mb-4 flex flex-wrap gap-2">
           <Badge tone={status?.connected ? 'success' : 'warning'}>
