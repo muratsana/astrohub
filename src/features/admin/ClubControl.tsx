@@ -35,6 +35,7 @@ export function ClubControl({ canWrite }: { canWrite: boolean }) {
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState<string | null>(null);
   const [draft, setDraft] = useState<ClubInfoDraft | null>(null);
+  const [editPhotos, setEditPhotos] = useState<File[]>([]);
   const [newDraft, setNewDraft] = useState<ClubInfoDraft>(() =>
     emptyClubDraft()
   );
@@ -68,12 +69,17 @@ export function ClubControl({ canWrite }: { canWrite: boolean }) {
   function edit(club: AdminClub) {
     setOpen(club.slug);
     setDraft(draftFromClub(club));
+    setEditPhotos([]);
   }
 
   const verified = items?.filter((c) => c.verifiedAt).length ?? 0;
   const pending = items?.filter((c) => c.status === 'pending').length ?? 0;
   const newProblem = describeClubInfoProblem(newDraft, newPhotos);
-  const editProblem = draft ? describeClubInfoProblem(draft) : null;
+  const editing = items?.find((c) => c.slug === open) ?? null;
+  const editProblem =
+    draft && editing
+      ? describeClubInfoProblem(draft, editPhotos, editing.photoPaths.length)
+      : null;
 
   return (
     <Panel
@@ -227,6 +233,9 @@ export function ClubControl({ canWrite }: { canWrite: boolean }) {
                   idPrefix={`club-${club.slug}`}
                   draft={draft}
                   onChange={setDraft}
+                  photos={editPhotos}
+                  onPhotos={setEditPhotos}
+                  existingPhotoCount={club.photoPaths.length}
                 />
                 <div className="mt-3 flex items-center gap-2">
                   <Button
@@ -234,8 +243,14 @@ export function ClubControl({ canWrite }: { canWrite: boolean }) {
                     disabled={busy || Boolean(editProblem)}
                     onClick={() =>
                       run(async () => {
-                        await saveClubInfo(club.slug, draft);
+                        await saveClubInfo(
+                          club.slug,
+                          draft,
+                          editPhotos,
+                          club.photoPaths
+                        );
                         setOpen(null);
+                        setEditPhotos([]);
                       })
                     }
                   >
@@ -268,12 +283,14 @@ function ClubForm({
   onChange,
   photos,
   onPhotos,
+  existingPhotoCount = 0,
 }: {
   idPrefix: string;
   draft: ClubInfoDraft;
   onChange: (draft: ClubInfoDraft) => void;
   photos?: File[];
   onPhotos?: (photos: File[]) => void;
+  existingPhotoCount?: number;
 }) {
   const set = <K extends keyof ClubInfoDraft>(
     key: K,
@@ -436,9 +453,9 @@ function ClubForm({
       </div>
       {onPhotos && (
         <Field
-          label="Fotoğraflar"
+          label="Logo / grup fotoğrafı"
           htmlFor={`${idPrefix}-photos`}
-          hint={`En fazla ${CLUB_PHOTO_LIMIT} fotoğraf · JPEG, PNG veya WebP`}
+          hint={`Toplam en fazla ${CLUB_PHOTO_LIMIT} görsel · JPEG, PNG veya WebP`}
         >
           <Input
             id={`${idPrefix}-photos`}
@@ -447,13 +464,24 @@ function ClubForm({
             multiple
             onChange={(e) =>
               onPhotos(
-                Array.from(e.target.files ?? []).slice(0, CLUB_PHOTO_LIMIT)
+                Array.from(e.target.files ?? []).slice(
+                  0,
+                  Math.max(0, CLUB_PHOTO_LIMIT - existingPhotoCount)
+                )
               )
             }
           />
+          <p className="mt-1 text-meta text-faint">
+            {existingPhotoCount > 0
+              ? `${existingPhotoCount} mevcut görsel · ${Math.max(
+                  0,
+                  CLUB_PHOTO_LIMIT - existingPhotoCount
+                )} yeni görsel eklenebilir.`
+              : 'Logo, afiş veya grup fotoğrafı eklenebilir.'}
+          </p>
           {photos && photos.length > 0 && (
             <p className="mt-1 text-meta text-faint">
-              {photos.length} fotoğraf seçildi.
+              {photos.length} yeni görsel seçildi.
             </p>
           )}
         </Field>

@@ -1,7 +1,9 @@
 import { sanitizeText } from '@/lib/sanitize';
 import { getSupabase } from '@/services/supabase/client';
 import {
+  CLUB_PHOTO_LIMIT,
   createClubRecord,
+  uploadClubPhotos,
   validateClubDraft,
   type ClubDraft,
 } from '@/services/clubs/submission';
@@ -153,10 +155,14 @@ export function emptyClubDraft(): ClubInfoDraft {
 
 export function describeClubInfoProblem(
   draft: ClubInfoDraft,
-  photos: { size: number; type: string }[] = []
+  photos: { size: number; type: string }[] = [],
+  existingPhotoCount = 0
 ): string | null {
   const problem = validateClubDraft(draft, photos);
   if (problem) return problem;
+  if (existingPhotoCount + photos.length > CLUB_PHOTO_LIMIT) {
+    return `Toplulukta en fazla ${CLUB_PHOTO_LIMIT} fotoğraf olabilir.`;
+  }
   if (
     draft.joinUrl &&
     !/^https:\/\/[A-Za-z0-9.-]+(\/\S*)?$/.test(draft.joinUrl)
@@ -208,12 +214,22 @@ export async function createAdminClub(
 
 export async function saveClubInfo(
   slug: string,
-  draft: ClubInfoDraft
+  draft: ClubInfoDraft,
+  photos: File[] = [],
+  existingPhotoPaths: string[] = []
 ): Promise<void> {
-  const sorun = describeClubInfoProblem(draft);
+  const sorun = describeClubInfoProblem(
+    draft,
+    photos,
+    existingPhotoPaths.length
+  );
   if (sorun) throw new Error(sorun);
 
   const supabase = await client();
+  const uploaded =
+    photos.length > 0
+      ? await uploadClubPhotos(await reviewerId(), slug, photos)
+      : [];
   const { error } = await supabase
     .from('clubs')
     .update({
@@ -236,11 +252,24 @@ export async function saveClubInfo(
       join_url: draft.joinUrl.trim() || null,
       social_url: draft.socialUrl.trim() || null,
       whatsapp_url: draft.whatsappUrl.trim() || null,
+      photo_paths:
+        uploaded.length > 0
+          ? [...existingPhotoPaths, ...uploaded].slice(0, CLUB_PHOTO_LIMIT)
+          : existingPhotoPaths,
       source_name: sanitizeText(draft.sourceName, { maxLength: 120 }) || null,
       info_checked_on: draft.infoCheckedOn || null,
     })
     .eq('slug', slug);
-  if (error) throw new Error(error.message);
+  if (error) {
+    if (uploaded.length > 0) {
+      try {
+        await supabase.storage.from('club-photos').remove(uploaded);
+      } catch (cause) {
+        console.error('geri alma: topluluk fotoğrafları silinemedi', cause);
+      }
+    }
+    throw new Error(error.message);
+  }
 }
 
 async function reviewerId(): Promise<string> {

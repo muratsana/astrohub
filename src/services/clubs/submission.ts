@@ -101,7 +101,7 @@ async function client() {
   return promise;
 }
 
-async function uploadClubPhotos(
+export async function uploadClubPhotos(
   userId: string,
   slug: string,
   files: File[]

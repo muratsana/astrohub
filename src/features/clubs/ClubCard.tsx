@@ -1,6 +1,8 @@
 import { Badge } from '@/components/ui/Badge';
 import {
   ContentCard,
+  ContentCardBody,
+  ContentCardMedia,
   ContentCardMeta,
   ContentCardTitle,
 } from '@/components/ui/ContentCard';
@@ -27,31 +29,31 @@ export function ClubCard({
   return (
     <ContentCard
       to={`/topluluk/${club.slug}`}
-      className={cn(
-        'p-3',
-        variant === 'list' && 'sm:flex-row sm:items-center sm:gap-3'
-      )}
+      variant={variant}
+      className={variant === 'grid' ? undefined : 'items-start'}
     >
-      {club.photos?.[0] && (
-        <div
-          className={cn(
-            'relative overflow-hidden rounded-card border border-border bg-surface-2',
-            variant === 'list'
-              ? 'aspect-[4/3] w-full sm:w-32'
-              : 'aspect-[16/9] w-full'
-          )}
-        >
-          <RemoteImage
-            src={club.photos[0].url}
-            alt={club.photos[0].alt}
-            seed={club.slug}
-            sizes={
-              variant === 'list' ? '128px' : '(min-width: 1024px) 260px, 100vw'
-            }
-          />
-        </div>
-      )}
-      <div className="min-w-0 flex-1">
+      <ContentCardMedia
+        variant={variant}
+        ratio="standard"
+        className={variant === 'list' ? 'mt-0' : undefined}
+      >
+        <RemoteImage
+          src={club.photos?.[0]?.url}
+          alt={club.photos?.[0]?.alt ?? `${club.name} görseli`}
+          seed={club.slug}
+          tint={club.kind}
+          sizes={
+            variant === 'list' ? '128px' : '(min-width: 1024px) 260px, 100vw'
+          }
+        />
+      </ContentCardMedia>
+
+      <ContentCardBody
+        className={cn(
+          'p-0',
+          variant === 'grid' ? 'px-2.5 py-2' : 'min-h-24 py-0'
+        )}
+      >
         <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
           <ContentCardTitle lines={2} className="font-medium leading-snug">
             {club.name}
@@ -73,23 +75,23 @@ export function ClubCard({
               : 'kuruluş bilinmiyor'}
           {club.memberCount ? ` · ${club.memberCount} üye` : ''}
         </ContentCardMeta>
-      </div>
 
-      <div className={cn('mt-2', variant === 'list' && 'sm:mt-0 sm:shrink-0')}>
-        <div className="flex flex-wrap gap-1">
-          <Badge tone="primary">{clubKindLabels[club.kind]}</Badge>
-          {/* Doğrulama rozeti önde: ziyaretçinin kartta aradığı ilk şey
-              "bu kayıt teyitli mi". */}
-          {club.verifiedAt && <Badge tone="success">Doğrulanmış</Badge>}
-          {club.topics?.slice(0, 2).map((topic) => (
-            <Badge key={topic} tone="cold">
-              {clubTopicLabels[topic]}
-            </Badge>
-          ))}
-          {club.publicEvents && <Badge>Halka açık</Badge>}
-          {club.sharedEquipment && <Badge tone="cold">Ortak ekipman</Badge>}
+        <div className="mt-auto pt-2">
+          <div className="flex flex-wrap gap-1">
+            <Badge tone="primary">{clubKindLabels[club.kind]}</Badge>
+            {/* Doğrulama rozeti önde: ziyaretçinin kartta aradığı ilk şey
+                "bu kayıt teyitli mi". */}
+            {club.verifiedAt && <Badge tone="success">Doğrulanmış</Badge>}
+            {club.topics?.slice(0, 2).map((topic) => (
+              <Badge key={topic} tone="cold">
+                {clubTopicLabels[topic]}
+              </Badge>
+            ))}
+            {club.publicEvents && <Badge>Halka açık</Badge>}
+            {club.sharedEquipment && <Badge tone="cold">Ortak ekipman</Badge>}
+          </div>
         </div>
-      </div>
+      </ContentCardBody>
     </ContentCard>
   );
 }

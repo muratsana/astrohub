@@ -88,4 +88,17 @@ describe('describeClubInfoProblem', () => {
       describeClubInfoProblem({ ...gecerli, infoCheckedOn: bugun })
     ).toBeNull();
   });
+
+  it('mevcut görsellerle birlikte toplam 3 sınırını koruyor', () => {
+    expect(
+      describeClubInfoProblem(
+        gecerli,
+        [
+          { size: 120_000, type: 'image/jpeg' },
+          { size: 130_000, type: 'image/webp' },
+        ],
+        2
+      )
+    ).toMatch(/en fazla 3/);
+  });
 });

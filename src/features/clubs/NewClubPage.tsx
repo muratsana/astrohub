@@ -97,7 +97,7 @@ export function NewClubPage() {
             { label: 'Topluluğunu ekle' },
           ]}
           title="Topluluğunu Ekle"
-          description="Gönderimler admin onayından sonra topluluk dizininde yayımlanır. Maksimum 3 fotoğraf eklenebilir."
+          description="Gönderimler admin onayından sonra topluluk dizininde yayımlanır. Maksimum 3 logo, afiş veya grup fotoğrafı eklenebilir."
         />
 
         <Panel title={done ? 'Gönderim alındı' : 'Topluluk bilgileri'}>
@@ -212,9 +212,9 @@ export function NewClubPage() {
                   />
                 </Field>
                 <Field
-                  label="Fotoğraflar"
+                  label="Logo / grup fotoğrafı"
                   htmlFor="club-photos"
-                  hint={`En fazla ${CLUB_PHOTO_LIMIT} fotoğraf · JPEG, PNG veya WebP`}
+                  hint={`En fazla ${CLUB_PHOTO_LIMIT} görsel · JPEG, PNG veya WebP`}
                 >
                   <Input
                     id="club-photos"
@@ -232,7 +232,7 @@ export function NewClubPage() {
                   />
                   {photos.length > 0 && (
                     <p className="mt-1 text-meta text-faint">
-                      {photos.length} fotoğraf seçildi.
+                      {photos.length} görsel seçildi.
                     </p>
                   )}
                 </Field>
