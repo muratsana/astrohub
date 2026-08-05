@@ -207,7 +207,7 @@ export function DrizzleGuidePage() {
           title="Astrofotoğrafçılıkta Drizzle"
           description="Hubble için icat edilmiş bir algoritma, bahçenizdeki teleskopta ne işe yarıyor? Yağmur damlası benzetmesinden PHD2'nin dither ayarlarına kadar, sıfırdan anlatım."
           actions={
-            <ButtonLink to="/simulator" size="sm" variant="secondary">
+            <ButtonLink to="/araclar/kadraj" size="sm" variant="secondary">
               Kendi setup&apos;ında dene
             </ButtonLink>
           }

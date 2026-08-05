@@ -50,7 +50,7 @@ const GROUPS: { title: string; hint: string; paths: string[] }[] = [
   {
     title: 'Kadraj',
     hint: 'Hedef bu setup’a sığıyor mu',
-    paths: ['/simulator', '/araclar/mosaic'],
+    paths: ['/araclar/kadraj', '/araclar/mosaic'],
   },
   {
     title: 'Poz ve saha',
@@ -107,7 +107,7 @@ const ungrouped = tools.filter(
  */
 const toolIcons: Record<string, typeof GridIcon> = {
   '/araclar': GridIcon,
-  '/simulator': FrameIcon,
+  '/araclar/kadraj': FrameIcon,
   '/araclar/isik-kirliligi': MapIcon,
   '/bu-gece': MoonIcon,
   '/planlayici': RouteIcon,

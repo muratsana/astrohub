@@ -63,8 +63,8 @@ export const glossaryCategoryLabels: Record<GlossaryCategory, string> = {
 export const categoryTool: Partial<
   Record<GlossaryCategory, { label: string; to: string }>
 > = {
-  optik: { label: 'FoV Simülatörü', to: '/simulator' },
-  kamera: { label: 'Pixel Scale Simülatörü', to: '/simulator' },
+  optik: { label: 'FoV Simülatörü', to: '/araclar/kadraj' },
+  kamera: { label: 'Pixel Scale Simülatörü', to: '/araclar/kadraj' },
   kosullar: { label: 'Işık Kirliliği Haritası', to: '/araclar/isik-kirliligi' },
   gokyuzu: { label: 'Bu Gece Gökyüzünde', to: '/bu-gece' },
 };

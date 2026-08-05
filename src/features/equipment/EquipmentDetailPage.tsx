@@ -347,7 +347,7 @@ export function EquipmentDetailPage() {
                 elle girebilirsiniz; hazır ön ayar listesinde de bulunur.
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
-                <ButtonLink to="/simulator" size="sm" variant="secondary">
+                <ButtonLink to="/araclar/kadraj" size="sm" variant="secondary">
                   Simülatörde dene
                 </ButtonLink>
               </div>

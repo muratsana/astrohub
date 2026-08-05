@@ -243,9 +243,9 @@ export const siteMap: NavGroup[] = [
         keywords: ['araç', 'hesaplayıcı', 'tools'],
       },
       {
-        label: 'FoV · Pixel Scale · Simülatör',
-        to: '/simulator',
-        description: 'Kadraj, örnekleme, setup uyumluluk, ASCOM bridge ve hedef planı',
+        label: 'Kadraj ve Pixel Scale',
+        to: '/araclar/kadraj',
+        description: 'Görüş alanı, örnekleme ve kadraj önizlemesi',
         keywords: [
           'simulator',
           'simülatör',
@@ -351,6 +351,12 @@ export const siteMap: NavGroup[] = [
         to: '/ekipman',
         description: 'Teleskop, montür, kamera, filtre, reducer, barlow',
         keywords: ['teleskop', 'montür', 'kamera', 'filtre', 'ekipman'],
+      },
+      {
+        label: 'Mount Bridge',
+        to: '/ekipman/bridge',
+        description: 'ASCOM montür bağlantısı ve capture akışı',
+        keywords: ['ascom', 'bridge', 'montür', 'mount', 'capture', 'nina', 'phd2'],
       },
       {
         label: 'Ekipman Karşılaştırma',

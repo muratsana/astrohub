@@ -87,7 +87,7 @@ const actionCommands: Command[] = [
     kind: 'arac',
     title: 'FoV ve setup simülatörü',
     subtitle: 'Görüş alanı, pixel scale, setup uyumu ve canlı montür bilgisi',
-    to: '/simulator',
+    to: '/araclar/kadraj',
     keywords: [
       'fov',
       'görüş alanı',

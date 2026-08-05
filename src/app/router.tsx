@@ -397,7 +397,11 @@ export const appRoutes = [
         ),
       },
       {
-        path: 'simulator',
+        /* KANONİK ADRES `/araclar/kadraj`. Sayfa artık yalnızca kadraj
+           hesabı yapıyor: uyumluluk kontrolü Ekipman modülüne, ASCOM
+           köprüsü `/ekipman/bridge`e taşındı. "Simülatör" adı ne yaptığını
+           söylemiyordu ve adres araçların dışında duruyordu. */
+        path: 'araclar/kadraj',
         element: route(
           named(
             () => import('@/features/simulator/SimulatorPage'),
@@ -405,6 +409,7 @@ export const appRoutes = [
           )
         ),
       },
+      { path: 'simulator', element: <RedirectTo to="/araclar/kadraj" /> },
 
       /* ═════════════ ARAÇLAR ═════════════ */
       {
@@ -416,12 +421,12 @@ export const appRoutes = [
           )
         ),
       },
-      { path: 'araclar/fov', element: <RedirectTo to="/simulator" /> },
-      { path: 'araclar/simulator', element: <RedirectTo to="/simulator" /> },
+      { path: 'araclar/fov', element: <RedirectTo to="/araclar/kadraj" /> },
+      { path: 'araclar/simulator', element: <RedirectTo to="/araclar/kadraj" /> },
       // Tek kanonik çalışma alanı: FoV, pixel scale ve setup uyumluluk Simülatör'de birleşir.
       {
         path: 'araclar/pixel-scale',
-        element: <RedirectTo to="/simulator" />,
+        element: <RedirectTo to="/araclar/kadraj" />,
       },
       {
         path: 'araclar/isik-kirliligi',
@@ -443,7 +448,7 @@ export const appRoutes = [
       },
       {
         path: 'araclar/setup-uyumluluk',
-        element: <RedirectTo to="/simulator" />,
+        element: <RedirectTo to="/ekipman" />,
       },
       {
         path: 'araclar/takvim',
@@ -562,6 +567,18 @@ export const appRoutes = [
           named(
             () => import('@/features/equipment/EquipmentComparePage'),
             'EquipmentComparePage'
+          )
+        ),
+      },
+      {
+        /* ASCOM köprüsü — Simülatör'ün içindeydi, ileri seviye ve donanım
+           gerektiren bir alan olduğu için Ekipman modülünün altına indi.
+           Gerekçe `BridgePage` başlığında. */
+        path: 'ekipman/bridge',
+        element: route(
+          named(
+            () => import('@/features/equipment/BridgePage'),
+            'BridgePage'
           )
         ),
       },

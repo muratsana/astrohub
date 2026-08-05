@@ -139,7 +139,7 @@ export function EquipmentPage() {
                 Karşılaştır
               </ButtonLink>
               <ButtonLink
-                to="/simulator"
+                to="/araclar/kadraj"
                 size="sm"
                 variant="secondary"
               >

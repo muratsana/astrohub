@@ -152,8 +152,11 @@ describe('komut paleti', () => {
   });
 
   it('sayfa adıyla arayınca gezinme komutu bulur', () => {
+    /* "fov" artık başlıkta geçmiyor (sayfa "Kadraj ve Pixel Scale" oldu)
+       ama anahtar kelimede duruyor — kullanıcının aradığı terim ile
+       sayfanın adı aynı olmak zorunda değil. */
     const items = runCommandSearch('fov').flatMap((g) => g.items);
-    expect(items.some((c) => c.to === '/simulator')).toBe(true);
+    expect(items.some((c) => c.to === '/araclar/kadraj')).toBe(true);
   });
 
   it('katalog koduyla arayınca içerik sonucu bulur', () => {

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router';
 import { Badge, type BadgeTone } from '@/components/ui/Badge';
 import { Button, ButtonLink } from '@/components/ui/Button';
@@ -19,15 +19,9 @@ import { breadcrumbJsonLd } from '@/lib/seo';
 import { PresetSelect } from '@/features/calculators/PresetSelect';
 import { useCalculatorPresets } from '@/features/calculators/presets';
 import {
-  DEFAULT_BRIDGE_URL,
-  connectMountBridge,
-  disconnectMountBridge,
-  fetchMountBridgeDrivers,
-  fetchMountBridgeStatus,
   loadArchivePlans,
   saveArchivePlans,
   type ArchivePlan,
-  type MountBridgeStatus,
 } from './bridge';
 
 const framedTargets = fixedTargets
@@ -41,13 +35,6 @@ const framedTargets = fixedTargets
 
 export function SimulatorPage() {
   const presets = useCalculatorPresets();
-  const [bridgeUrl, setBridgeUrl] = useState(DEFAULT_BRIDGE_URL);
-  const [driverId, setDriverId] = useState('ASCOM.Simulator.Telescope');
-  const [drivers, setDrivers] = useState<{ id: string; name: string }[]>([]);
-  const [driversError, setDriversError] = useState('');
-  const [status, setStatus] = useState<MountBridgeStatus | null>(null);
-  const [bridgeBusy, setBridgeBusy] = useState(false);
-  const [polling, setPolling] = useState(false);
   const [opticSlug, setOpticSlug] = useState('');
   const [cameraSlug, setCameraSlug] = useState('');
   const [mountSlug, setMountSlug] = useState('');
@@ -174,54 +161,10 @@ export function SimulatorPage() {
     ]
   );
 
-  const refreshBridge = useCallback(async () => {
-    setStatus(await fetchMountBridgeStatus(bridgeUrl));
-  }, [bridgeUrl]);
 
-  const loadDrivers = useCallback(async () => {
-    setBridgeBusy(true);
-    try {
-      const result = await fetchMountBridgeDrivers(bridgeUrl);
-      setDrivers(result.drivers);
-      setDriversError(result.error ?? '');
-      if (!result.error && result.drivers.length > 0) {
-        setDriverId((current) =>
-          result.drivers.some((driver) => driver.id === current)
-            ? current
-            : result.drivers[0].id
-        );
-      }
-    } finally {
-      setBridgeBusy(false);
-    }
-  }, [bridgeUrl]);
 
-  async function connectBridge() {
-    setBridgeBusy(true);
-    try {
-      setStatus(await connectMountBridge(bridgeUrl, driverId.trim()));
-      setPolling(true);
-    } finally {
-      setBridgeBusy(false);
-    }
-  }
 
-  async function disconnectBridge() {
-    setBridgeBusy(true);
-    try {
-      setStatus(await disconnectMountBridge(bridgeUrl));
-      setPolling(false);
-    } finally {
-      setBridgeBusy(false);
-    }
-  }
 
-  useEffect(() => {
-    if (!polling) return;
-    refreshBridge();
-    const timer = window.setInterval(refreshBridge, 2000);
-    return () => window.clearInterval(timer);
-  }, [polling, refreshBridge]);
 
   function savePlan() {
     if (!selected) return;
@@ -255,19 +198,15 @@ export function SimulatorPage() {
     !!selected &&
     selected.size.widthArcmin <= fovWidth &&
     selected.size.heightArcmin <= fovHeight;
-  const capture = status?.capture;
-  const completedFrames = capture?.completedFrames ?? 0;
-  const totalFrames = capture?.totalFrames ?? 0;
-  const captureProgress = totalFrames > 0 ? (completedFrames / totalFrames) * 100 : 0;
 
   return (
     <>
       <PageMeta
         title="Simülatör"
-        description="FoV, Pixel Scale, setup uyumluluk, ASCOM bridge ve kişisel hedef arşivi tek ekranda."
+        description="Görüş alanı, pixel scale ve kadraj önizlemesi — hedefin setup\u2019ına sığıp sığmadığını gösterir."
         jsonLd={breadcrumbJsonLd([
           { name: 'Ana Sayfa', path: '/' },
-          { name: 'Simülatör', path: '/simulator' },
+          { name: 'Simülatör', path: '/araclar/kadraj' },
         ])}
       />
 
@@ -275,10 +214,11 @@ export function SimulatorPage() {
         <PageHeader
           breadcrumb={[
             { label: 'Ana Sayfa', to: '/' },
-            { label: 'Simülatör' },
+            { label: 'Araçlar', to: '/araclar' },
+            { label: 'Kadraj' },
           ]}
-          title="FoV · Pixel Scale · Setup Simülatör"
-          description="Hazır ekipman seti, canlı montür verisi, hedef kataloğu, kadraj hesabı ve uyumluluk kontrolü aynı masaüstü çalışma alanında."
+          title="Kadraj ve Pixel Scale"
+          description="Hedef bu setup\u2019a sığıyor mu? Görüş alanı, örnekleme ve kadraj önizlemesi. Uyumluluk kontrolü Ekipman modülünde, montür bağlantısı Mount Bridge sayfasında."
           actions={
             <ButtonLink to="/arsivim" size="sm" variant="secondary">
               Arşivim
@@ -289,12 +229,6 @@ export function SimulatorPage() {
         <ActiveSetupBar className="mb-4" />
 
         <div className="mb-4 flex flex-wrap gap-2">
-          <Badge tone={status?.connected ? 'success' : 'warning'}>
-            {status?.connected ? 'ASCOM canlı' : 'Bridge bekleniyor'}
-          </Badge>
-          <Badge tone={capture ? 'success' : 'muted'}>
-            {capture?.app ? `${capture.app} capture` : 'Capture bekleniyor'}
-          </Badge>
           <Badge tone={severityTone(compatibility?.verdict)}>
             Setup {severityLabel(compatibility?.verdict)}
           </Badge>
@@ -425,10 +359,6 @@ export function SimulatorPage() {
                 <div className="absolute inset-0 opacity-55 [background-image:radial-gradient(circle,rgba(255,255,255,0.75)_1px,transparent_1.2px)] [background-size:39px_39px]" />
                 <div className="absolute inset-0 opacity-30 [background-image:radial-gradient(circle,rgba(255,255,255,0.8)_1px,transparent_1.2px)] [background-size:71px_71px] [transform:rotate(9deg)_scale(1.2)]" />
                 <div className="absolute left-4 top-4 flex flex-wrap gap-2">
-                  <Badge tone={status?.connected ? 'success' : 'warning'}>
-                    {status?.connected ? 'montür canlı' : 'simülasyon'}
-                  </Badge>
-                  {status?.name && <Badge tone="cold">{status.name}</Badge>}
                   <Badge tone={targetFits ? 'success' : 'warning'}>
                     {targetFits ? 'hedef kadrajda' : 'hedef taşabilir'}
                   </Badge>
@@ -481,10 +411,15 @@ export function SimulatorPage() {
               </div>
             </Panel>
 
+            {/* RA/DEC göstergeleri buradaydı ve ASCOM köprüsünden
+                besleniyordu; köprü kurmamış ziyaretçide — yani neredeyse
+                herkeste — iki gösterge kalıcı olarak "—" gösteriyordu.
+                Köprü kendi sayfasına taşındı (/ekipman/bridge); yerlerini
+                kadrajın kendi sayıları aldı. */}
             <div className="grid gap-4 md:grid-cols-3">
-              <Readout label="RA" value={formatRa(status?.rightAscensionHours)} tone={status?.connected ? 'cold' : 'muted'} />
-              <Readout label="DEC" value={formatDeg(status?.declinationDeg)} tone={status?.connected ? 'cold' : 'muted'} />
               <Readout label="Pixel scale" value={result ? result.pixelScale.toFixed(2) : '—'} unit="″/px" />
+              <Readout label="Görüş alanı" value={result ? `${result.fov.widthDeg.toFixed(2)}×${result.fov.heightDeg.toFixed(2)}` : '—'} unit="°" />
+              <Readout label="Efektif odak" value={result ? result.effectiveFocalLength.toFixed(0) : '—'} unit="mm" />
             </div>
 
             <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
@@ -512,115 +447,6 @@ export function SimulatorPage() {
           </main>
 
           <aside className="space-y-4">
-            <Panel
-              title="Mount Bridge"
-              status={status?.connected ? 'bağlı' : status?.ok ? 'açık' : 'kapalı'}
-            >
-              <div className="space-y-3">
-                <Field label="Bridge adresi" htmlFor="bridge-url">
-                  <Input
-                    id="bridge-url"
-                    value={bridgeUrl}
-                    onChange={(event) => setBridgeUrl(event.target.value)}
-                    spellCheck={false}
-                  />
-                </Field>
-                <Field label="ASCOM DriverId" htmlFor="bridge-driver">
-                  <Input
-                    id="bridge-driver"
-                    value={driverId}
-                    onChange={(event) => setDriverId(event.target.value)}
-                    spellCheck={false}
-                  />
-                </Field>
-                {drivers.length > 0 && (
-                  <Field label="Bulunan ASCOM sürücüleri" htmlFor="bridge-driver-select">
-                    <Select
-                      id="bridge-driver-select"
-                      value={driverId}
-                      onChange={(event) => setDriverId(event.target.value)}
-                    >
-                      {drivers.map((driver) => (
-                        <option key={driver.id} value={driver.id}>
-                          {driver.name} · {driver.id}
-                        </option>
-                      ))}
-                    </Select>
-                  </Field>
-                )}
-                <div className="flex flex-wrap gap-2">
-                  <Button type="button" size="sm" onClick={connectBridge} disabled={bridgeBusy || !driverId.trim()}>
-                    Bağlan
-                  </Button>
-                  <Button type="button" size="sm" variant="secondary" onClick={disconnectBridge} disabled={bridgeBusy}>
-                    Kes
-                  </Button>
-                  <Button type="button" size="sm" variant="secondary" onClick={loadDrivers} disabled={bridgeBusy}>
-                    Sürücüleri tara
-                  </Button>
-                  <Button type="button" size="sm" variant={polling ? 'secondary' : 'primary'} onClick={() => setPolling((value) => !value)}>
-                    {polling ? 'Durdur' : 'Canlı izle'}
-                  </Button>
-                </div>
-                {driversError && (
-                  <p className="text-meta leading-relaxed text-warning">
-                    {driversError}. Windows’ta ASCOM Platform ve bridge çalışıyor olmalı.
-                  </p>
-                )}
-                {status?.error && (
-                  <p className="text-meta leading-relaxed text-warning">
-                    {status.error}. Windows’ta bridge’i başlatın: tools/mount-bridge.
-                  </p>
-                )}
-                <SpecList>
-                  <SpecRow label="Sürücü" value={status?.driverId ?? '—'} />
-                  <SpecRow label="Model" value={status?.name ?? '—'} />
-                  <SpecRow label="Takip" value={yesNo(status?.tracking)} />
-                  <SpecRow label="Slew" value={yesNo(status?.slewing)} />
-                  <SpecRow label="Alt / Az" value={`${formatDeg(status?.altitudeDeg)} / ${formatDeg(status?.azimuthDeg)}`} />
-                  <SpecRow label="Konum" value={`${formatDeg(status?.siteLatitudeDeg)} / ${formatDeg(status?.siteLongitudeDeg)}`} />
-                </SpecList>
-              </div>
-            </Panel>
-
-            <Panel title="Setup uyumluluk" status={severityLabel(compatibility?.verdict)}>
-              <div className="space-y-3">
-                {compatibility?.checks.map((check) => (
-                  <div key={check.id} className="border-b border-border pb-3 last:border-0 last:pb-0">
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="text-body-sm text-foreground">{check.title}</span>
-                      <Badge tone={severityTone(check.severity)}>{check.value}</Badge>
-                    </div>
-                    <p className="mt-1.5 text-meta leading-relaxed text-muted-foreground">
-                      {check.detail}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </Panel>
-
-            <Panel title="Capture akışı" status={capture?.state ?? 'bekliyor'}>
-              {capture ? (
-                <div className="space-y-3">
-                  <SpecList>
-                    <SpecRow label="Uygulama" value={capture.app ?? '—'} />
-                    <SpecRow label="Sequence" value={capture.sequenceName ?? '—'} />
-                    <SpecRow label="Hedef" value={capture.target ?? '—'} />
-                    <SpecRow label="Filtre" value={capture.filter ?? '—'} />
-                    <SpecRow label="Guiding RMS" value={capture.rmsArcsec === undefined ? '—' : `${capture.rmsArcsec.toFixed(2)}″`} />
-                  </SpecList>
-                  <ProgressBar value={captureProgress} />
-                  <p className="tabular text-meta text-muted-foreground">
-                    {completedFrames}/{totalFrames || '—'} kare · kalan {capture.remainingFrames ?? '—'}
-                  </p>
-                </div>
-              ) : (
-                <p className="text-meta leading-relaxed text-muted-foreground">
-                  PHD2, SGP, TheSkyX, NINA veya ZWO AIR verisi bridge JSON alanına
-                  geldiğinde sequence ve guiding bilgileri burada canlı görünür.
-                </p>
-              )}
-            </Panel>
 
             <Panel title="Arşive ekle">
               <div className="space-y-3">
@@ -757,23 +583,5 @@ function selectedPresetLabel(
   return options.find((option) => option.slug === slug)?.label ?? fallback;
 }
 
-function formatRa(value?: number): string {
-  if (value === undefined) return '—';
-  const hours = Math.floor(value);
-  const minutes = Math.floor((value - hours) * 60);
-  const seconds = Math.round(((value - hours) * 60 - minutes) * 60);
-  return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
-}
 
-function formatDeg(value?: number): string {
-  return value === undefined ? '—' : `${value.toFixed(2)}°`;
-}
 
-function yesNo(value?: boolean): string {
-  if (value === undefined) return '—';
-  return value ? 'Açık' : 'Kapalı';
-}
-
-function pad(value: number): string {
-  return String(value).padStart(2, '0');
-}

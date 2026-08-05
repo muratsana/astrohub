@@ -57,6 +57,10 @@
       "destination": "/app.html"
     },
     {
+      "source": "/araclar/kadraj",
+      "destination": "/app.html"
+    },
+    {
       "source": "/araclar/mosaic",
       "destination": "/app.html"
     },
@@ -194,6 +198,10 @@
     },
     {
       "source": "/ekipman/:category",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/ekipman/bridge",
       "destination": "/app.html"
     },
     {
