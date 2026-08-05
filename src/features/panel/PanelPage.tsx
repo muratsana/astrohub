@@ -521,7 +521,7 @@ export function PanelPage() {
               <p className="py-3 text-meta leading-relaxed text-muted-foreground">
                 Henüz kayıtlı setup yok. Uyumluluk aracında bir zincir kurup
                 kaydettiğinizde burada listelenir.{' '}
-                <Link to="/araclar/setup-uyumluluk" className="text-primary">
+                <Link to="/simulator" className="text-primary">
                   Setup kur →
                 </Link>
               </p>

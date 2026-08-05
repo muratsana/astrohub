@@ -125,11 +125,11 @@ export function EquipmentPage() {
                 Karşılaştır
               </ButtonLink>
               <ButtonLink
-                to="/araclar/setup-uyumluluk"
+                to="/simulator"
                 size="sm"
                 variant="secondary"
               >
-                Setup Uyumluluğu
+                Setup Simülatörü
               </ButtonLink>
             </>
           }

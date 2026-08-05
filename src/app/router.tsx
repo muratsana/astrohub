@@ -80,13 +80,6 @@ const sitesPage = () =>
   route(
     named(() => import('@/features/observing-sites/SitesPage'), 'SitesPage')
   );
-const fovPage = () =>
-  route(
-    named(
-      () => import('@/features/calculators/FovCalculatorPage'),
-      'FovCalculatorPage'
-    )
-  );
 const equipmentPage = () =>
   route(
     named(() => import('@/features/equipment/EquipmentPage'), 'EquipmentPage')
@@ -405,7 +398,7 @@ export const appRoutes = [
           )
         ),
       },
-      { path: 'araclar/fov', element: fovPage() },
+      { path: 'araclar/fov', element: <RedirectTo to="/simulator" /> },
       { path: 'araclar/simulator', element: <RedirectTo to="/simulator" /> },
       // Tek kanonik çalışma alanı: FoV, pixel scale ve setup uyumluluk Simülatör'de birleşir.
       {

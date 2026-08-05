@@ -159,8 +159,8 @@ export function TargetDetailPage() {
             </dl>
 
             <div className="mt-6 flex flex-wrap gap-3">
-              <ButtonLink to="/araclar/fov" variant="secondary" size="sm">
-                FOV'da dene
+              <ButtonLink to="/simulator" variant="secondary" size="sm">
+                Simülatörde dene
               </ButtonLink>
               <ButtonLink to="/hedefler" variant="ghost" size="sm">
                 ← Tüm hedefler

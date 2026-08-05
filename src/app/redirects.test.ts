@@ -38,7 +38,9 @@ const MOVED: [string, string][] = [
   ['/harita/gozlem-noktalari', '/saha'],
   ['/harita/isik-kirliligi', '/araclar/isik-kirliligi'],
   ['/gozlem-noktasi/:slug', '/saha/:slug'],
-  ['/araclar/pixel-scale', '/araclar/fov'],
+  ['/araclar/fov', '/simulator'],
+  ['/araclar/pixel-scale', '/simulator'],
+  ['/araclar/setup-uyumluluk', '/simulator'],
 ];
 
 describe('taşınan adresler', () => {

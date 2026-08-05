@@ -320,19 +320,12 @@ export function EquipmentDetailPage() {
 
             <Panel title="Hesaplayıcılarda kullan">
               <p className="text-meta leading-relaxed text-muted-foreground">
-                Bu modelin değerlerini FOV, mozaik ve uyumluluk hesaplarına
+                Bu modelin değerlerini FoV, pixel scale ve uyumluluk hesaplarına
                 elle girebilirsiniz; hazır ön ayar listesinde de bulunur.
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
-                <ButtonLink to="/araclar/fov" size="sm" variant="secondary">
-                  FOV Hesaplayıcı
-                </ButtonLink>
-                <ButtonLink
-                  to="/araclar/setup-uyumluluk"
-                  size="sm"
-                  variant="secondary"
-                >
-                  Uyumluluk Kontrolü
+                <ButtonLink to="/simulator" size="sm" variant="secondary">
+                  Simülatörde dene
                 </ButtonLink>
               </div>
             </Panel>

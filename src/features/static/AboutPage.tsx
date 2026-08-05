@@ -53,7 +53,7 @@ export function AboutPage() {
               <>
                 <strong>Ekipman veritabanı ve araçlar:</strong> marka/model
                 kataloğu, setup oluşturucu ve{' '}
-                <Link to="/araclar/fov">FOV / pixel scale hesaplayıcı</Link>.
+                <Link to="/simulator">FoV / pixel scale simülatörü</Link>.
               </>,
               <>
                 <strong>Eğitim ve pazaryeri:</strong> başlangıçtan ileri seviyeye

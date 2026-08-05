@@ -101,7 +101,7 @@ export function SetupDetailPage() {
             message="Bu setup bu cihazda kayıtlı değil"
             hint="Setup'lar hesap sistemi gelene kadar tarayıcınızda saklanıyor. Başkasının paylaştığı bir bağlantıysa, bağlantının kodlanmış setup verisini (?d=…) içermesi gerekir."
             action={
-              <ButtonLink to="/araclar/setup-uyumluluk" size="sm">
+              <ButtonLink to="/simulator" size="sm">
                 Yeni Setup Kur
               </ButtonLink>
             }
@@ -302,7 +302,7 @@ export function SetupDetailPage() {
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <ButtonLink
-                  to="/araclar/setup-uyumluluk"
+                  to="/simulator"
                   size="sm"
                   variant="secondary"
                 >
@@ -319,7 +319,7 @@ export function SetupDetailPage() {
         {deleted && (
           <p className="mt-4 text-center text-meta text-muted-foreground">
             Setup silindi.{' '}
-            <Link to="/araclar/setup-uyumluluk" className="text-primary">
+            <Link to="/simulator" className="text-primary">
               Yeni bir tane kurabilirsiniz.
             </Link>
           </p>
