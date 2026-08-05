@@ -165,6 +165,15 @@ export function EventMapPage() {
     .filter(Boolean)
     .join(' · ');
   const live = hasNetworkAccess && allowed;
+  const distanceReference =
+    location.source === 'device' || location.source === 'site'
+      ? ''
+      : ` (${location.label} merkez)`;
+
+  function formatLocalDistance(km: number): string {
+    const distance = formatDistance(km);
+    return distance === '—' ? distance : `${distance}${distanceReference}`;
+  }
 
   function focusEvent(item: AstroEvent) {
     if (!item.coords) return;
@@ -221,7 +230,7 @@ export function EventMapPage() {
     <>
       <PageMeta
         title="Etkinlikler"
-        description="Türkiye'deki astronomi etkinliklerinin konum dağılımı ve size en yakın etkinlikler — mesafeye göre sıralı."
+        description="Türkiye'deki astronomi etkinlikleri: harita, yakın etkinlik listesi ve çevrimiçi programlar."
         jsonLd={breadcrumbJsonLd([
           { name: 'Ana Sayfa', path: '/' },
           { name: 'Etkinlikler', path: '/etkinlikler' },
@@ -261,7 +270,7 @@ export function EventMapPage() {
               </div>
               {featuredDistance !== undefined && (
                 <span className="tabular mt-auto w-fit rounded-card border border-border bg-background px-2.5 py-1.5 text-body-sm text-cold">
-                  {formatDistance(featuredDistance)}
+                  {formatLocalDistance(featuredDistance)}
                 </span>
               )}
             </div>
@@ -313,7 +322,7 @@ export function EventMapPage() {
                       lat: item.coords!.latitude,
                       lng: item.coords!.longitude,
                     },
-                    label: `${item.title}, ${item.city}, ${formatDistance(distanceKm)} uzaklıkta`,
+                    label: `${item.title}, ${item.city}, ${formatLocalDistance(distanceKm)} uzaklıkta`,
                     popup: (
                       <>
                         <span className="block truncate text-body-sm font-medium text-foreground">
@@ -323,7 +332,7 @@ export function EventMapPage() {
                           {item.city} · {formatEventDate(item.startsAt)}
                         </span>
                         <span className="mt-1 block text-meta text-cold">
-                          {formatDistance(distanceKm)}
+                          {formatLocalDistance(distanceKm)}
                         </span>
                       </>
                     ),
@@ -354,7 +363,7 @@ export function EventMapPage() {
                       <p className="truncate text-body-sm text-foreground">
                         <span className="font-medium">{hit.item.title}</span>
                         <span className="ml-2 text-muted-foreground">
-                          {hit.item.city} · {formatDistance(hit.distanceKm)}
+                          {hit.item.city} · {formatLocalDistance(hit.distanceKm)}
                         </span>
                       </p>
                     );
@@ -505,7 +514,7 @@ export function EventMapPage() {
                             {formatEventDate(item.endsAt ?? item.startsAt)}
                           </td>
                           <td className="tabular py-2.5 pr-4 align-top text-body-sm text-cold">
-                            {formatDistance(distanceKm)}
+                            {formatLocalDistance(distanceKm)}
                           </td>
                           <td className="py-2.5 pl-4 align-top">
                             <div className="flex justify-end gap-2">
