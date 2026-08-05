@@ -41,6 +41,9 @@ jobs:
       - name: Vercel rewrite listesi
         run: npm run check:rewrites
 
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
       - name: CSP denetimi
         run: npm run check:csp
 
