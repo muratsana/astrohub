@@ -476,7 +476,7 @@ export function EventMapPage() {
                 />
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="w-full min-w-[860px] border-collapse text-left">
+                  <table className="w-full min-w-[980px] border-collapse text-left">
                     <thead className="border-b border-border text-meta text-muted-foreground">
                       <tr>
                         <th scope="col" className="px-0 py-2 pr-4 font-medium">
@@ -511,21 +511,50 @@ export function EventMapPage() {
                             active === item.slug && 'text-primary'
                           )}
                         >
-                          <td className="max-w-[320px] py-2.5 pr-4 align-top">
-                            <Link
-                              to={`/etkinlik/${item.slug}`}
-                              className="flex min-h-6 items-center truncate text-caption text-foreground transition-colors hover:text-primary"
-                            >
-                              {item.title}
-                            </Link>
-                            <span className="mt-1 flex flex-wrap gap-1.5">
-                              <Badge tone="primary">
-                                {eventTypeLabels[item.type]}
-                              </Badge>
-                              <Badge tone={item.free ? 'success' : 'muted'}>
-                                {item.free ? 'Ücretsiz' : 'Ücretli'}
-                              </Badge>
-                            </span>
+                          <td className="max-w-[390px] py-2.5 pr-4 align-top">
+                            <div className="flex items-start gap-3">
+                              <Link
+                                to={`/etkinlik/${item.slug}`}
+                                className="relative h-14 w-20 shrink-0 overflow-hidden rounded-card border border-border bg-surface-2"
+                                aria-label={`${item.title} detayını aç`}
+                              >
+                                {item.image ? (
+                                  <RemoteImage
+                                    src={item.image.url}
+                                    alt={`${item.title} etkinlik görseli`}
+                                    seed={item.slug}
+                                    tint={item.gradient}
+                                    className="h-full w-full object-cover transition duration-300 hover:scale-105"
+                                    sizes="80px"
+                                  />
+                                ) : (
+                                  <PhotoPlaceholder
+                                    gradient={item.gradient}
+                                    alt={`${item.title} etkinlik görseli`}
+                                    className="h-full w-full"
+                                  />
+                                )}
+                              </Link>
+                              <div className="min-w-0">
+                                <Link
+                                  to={`/etkinlik/${item.slug}`}
+                                  className="block truncate text-caption text-foreground transition-colors hover:text-primary"
+                                >
+                                  {item.title}
+                                </Link>
+                                <p className="mt-1 line-clamp-1 text-body-sm text-muted-foreground">
+                                  {item.description}
+                                </p>
+                                <span className="mt-1.5 flex flex-wrap gap-1.5">
+                                  <Badge tone="primary">
+                                    {eventTypeLabels[item.type]}
+                                  </Badge>
+                                  <Badge tone={item.free ? 'success' : 'muted'}>
+                                    {item.free ? 'Ücretsiz' : 'Ücretli'}
+                                  </Badge>
+                                </span>
+                              </div>
+                            </div>
                           </td>
                           <td className="py-2.5 pr-4 align-top text-body-sm text-muted-foreground">
                             {item.city}
