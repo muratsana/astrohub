@@ -43,6 +43,9 @@ function profile(termsAcceptedAt: string | null): Profile {
     websiteUrl: null,
     avatarPath: null,
     termsAcceptedAt,
+    accountStatus: 'active',
+    suspendedUntil: null,
+    statusReason: null,
   };
 }
 

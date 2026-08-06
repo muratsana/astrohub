@@ -18,6 +18,9 @@ import { safeUrl } from '@/lib/url';
  * baş başa bırakmama nezaketi.
  */
 
+/** `app.account_status` enum'unun istemci karşılığı. */
+export type AccountStatus = 'active' | 'suspended' | 'banned' | 'deactivated';
+
 export interface Profile {
   id: string;
   username: string;
@@ -26,6 +29,16 @@ export interface Profile {
   city: string | null;
   websiteUrl: string | null;
   avatarPath: string | null;
+  /**
+   * Hesabın yazma yetkisi. BU ALAN BİR GÜVENLİK KONTROLÜ DEĞİL — yaptırım
+   * RLS'te (`app.is_account_active`). Buradaki değer yalnızca kullanıcıya
+   * durumunu ANLATMAK için: yoksa askıdaki kişi form gönderdiğinde
+   * "satır eklenemedi" gibi bir hata görür ve neden olduğunu anlamaz.
+   */
+  accountStatus: AccountStatus;
+  suspendedUntil: string | null;
+  /** Yöneticinin girdiği, kullanıcıya gösterilen gerekçe. */
+  statusReason: string | null;
   /**
    * Kullanım koşullarının onaylandığı an; `null` ise onay hiç alınmamış.
    * Google ile giren kullanıcılar ve 0031 öncesinde açılmış hesaplar
@@ -43,6 +56,13 @@ interface ProfileRow {
   website_url: string | null;
   avatar_path: string | null;
   terms_accepted_at: string | null;
+  /* Üçü İSTEĞE BAĞLI: bu alanları yalnızca `SELECT` sabiti çekiyor ve
+     `mapProfileRow` başka yerlerden de (daha dar seçimlerle) çağrılıyor.
+     Zorunlu yapmak, alanı hiç istemeyen çağrıları derlemez hâle
+     getirirdi; eksikse `active` varsayılıyor. */
+  account_status?: AccountStatus;
+  suspended_until?: string | null;
+  status_reason?: string | null;
 }
 
 export function mapProfileRow(row: ProfileRow): Profile {
@@ -55,11 +75,34 @@ export function mapProfileRow(row: ProfileRow): Profile {
     websiteUrl: row.website_url,
     avatarPath: row.avatar_path,
     termsAcceptedAt: row.terms_accepted_at,
+    accountStatus: row.account_status ?? 'active',
+    suspendedUntil: row.suspended_until ?? null,
+    statusReason: row.status_reason ?? null,
   };
 }
 
+/**
+ * Kullanıcı yazabilir mi?
+ *
+ * `app.is_account_active()` ile AYNI kuralı uyguluyor — orada da süresi
+ * geçmiş askı aktif sayılıyor. İki yerde iki farklı kural, arayüzün
+ * "askıdasın" dediği kullanıcının yazabilmesi (ya da tersi) demekti.
+ *
+ * Yine de bu bir yetki kontrolü DEĞİL: kaynak tek, yaptırım RLS'te.
+ */
+export function canWrite(profile: Profile | null): boolean {
+  if (!profile) return true;
+  if (profile.accountStatus === 'active') return true;
+  if (profile.accountStatus !== 'suspended') return false;
+  return (
+    profile.suspendedUntil !== null &&
+    new Date(profile.suspendedUntil) <= new Date()
+  );
+}
+
 const SELECT =
-  'id, username, display_name, bio, city, website_url, avatar_path, terms_accepted_at';
+  'id, username, display_name, bio, city, website_url, avatar_path, ' +
+  'terms_accepted_at, account_status, suspended_until, status_reason';
 
 /**
  * Onayı kendi profil satırına yazar.

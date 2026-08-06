@@ -8,6 +8,7 @@ import { NavDrawer } from './NavDrawer';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { isPreviewEditorEnabled } from '@/features/preview-editor/PreviewEditorContext';
 import { AnnouncementBar } from '@/features/site/AnnouncementBar';
+import { AccountStatusNotice } from '@/features/auth/AccountStatusNotice';
 import { MaintenanceGate } from '@/features/site/MaintenanceGate';
 import { RadioDock } from '@/features/radio/RadioDock';
 
@@ -110,6 +111,19 @@ export function AppShell() {
           okunup geçilmesi gereken bir metin — kaydırınca gitmeli.
         */}
         <AnnouncementBar />
+
+        {/*
+          HESAP DURUMU ŞERİDİ duyurunun hemen altında ve yine yapışkan
+          değil: askıdaki kullanıcıya durumunu bir kez söylüyor, sonra
+          kaydırıp okumaya devam ediyor. Yapışkan olsaydı ceza, cezanın
+          kendisinden çok daha uzun süre ekranda kalırdı.
+
+          `ErrorBoundary`: profil sorgusu düşerse kabuk çökmemeli —
+          şeridin görünmemesi, sitenin açılmamasından iyi.
+        */}
+        <ErrorBoundary label="AccountStatusNotice">
+          <AccountStatusNotice />
+        </ErrorBoundary>
 
         <div className="sticky top-0 z-[var(--z-sticky)] bg-background/95 backdrop-blur-md">
           <Topbar onOpenNav={openNav} />

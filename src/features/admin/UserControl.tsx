@@ -20,6 +20,13 @@ import {
   roleLabels,
   ROLES,
   MEMBERSHIP_STATUSES,
+  ACCOUNT_STATUSES,
+  accountStatusLabels,
+  accountStatusDescriptions,
+  isWriteAllowed,
+  setAccountStatus,
+  setAdminNote,
+  type AccountStatus,
   type AdminUser,
   type DeletionRequest,
   type MembershipStatus,
@@ -35,9 +42,19 @@ import { cn } from '@/lib/cn';
  * Bu panelde kullanıcı SİLME düğmesi YOK ve bu bilinçli. Silme yalnızca
  * kullanıcının kendi KVKK talebiyle başlıyor (aşağıdaki liste); bir
  * yöneticinin tek tıkla hesap silebilmesi, yanlış satıra basıldığında
- * geri dönüşü olmayan bir kayıp demekti. Yönetici bir hesabı
- * durduracaksa rollerini alır ve içeriğini arşivler — ikisi de geri
- * alınabilir.
+ * geri dönüşü olmayan bir kayıp demekti.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * DURDURMANIN YOLU ARTIK ROL ALMAK DEĞİL
+ *
+ * Bu ekranda eskiden şu yazıyordu: "bir hesabı durdurmak için rollerini
+ * alın ve içeriğini arşivleyin". O tavsiye işe yaramıyordu — rolsüz
+ * kullanıcı da fotoğraf yükler, yorum yazar, ilan açar. Yani panelin
+ * elinde gerçekten susturma aracı yoktu (keşif bulgusu T3).
+ *
+ * Artık `account_status` var ve yaptırımı RLS yapıyor: askıdaki kullanıcı
+ * PostgREST'e doğrudan istek atsa bile 42501 alıyor. Aşağıdaki düğmeler
+ * o alanı yazıyor, yasağı uygulamıyor — uygulayan yer veritabanı.
  *
  * ══════════════════════════════════════════════════════════════════════
  * KENDİ ROLÜNÜ ALMAK
@@ -194,6 +211,20 @@ export function UserControl() {
                 </button>
 
                 <span className="flex flex-wrap gap-1">
+                  {/* Durum rozeti YALNIZCA aktif olmayanlarda. Herkeste
+                      "Aktif" yazsaydı göz onu okumayı bırakır ve asıl
+                      önemli olan üç satır kalabalıkta kaybolurdu. */}
+                  {u.status !== 'active' && (
+                    <Badge tone={u.status === 'banned' ? 'danger' : 'warning'}>
+                      {accountStatusLabels[u.status]}
+                      {u.status === 'suspended' &&
+                        (isWriteAllowed(u)
+                          ? ' · süresi doldu'
+                          : u.suspendedUntil
+                            ? ` · ${new Date(u.suspendedUntil).toLocaleDateString('tr-TR')}`
+                            : ' · süresiz')}
+                    </Badge>
+                  )}
                   {u.roles.length === 0 && <Badge>Üye</Badge>}
                   {u.roles.map((r) => (
                     <Badge
@@ -371,14 +402,21 @@ export function UserControl() {
                     </Button>
                   </div>
 
+                  <AccountStatusSection
+                    user={u}
+                    busy={busy}
+                    isSelf={isSelf}
+                    onApply={run}
+                  />
+
                   {/*
                     KULLANICI SİLME DÜĞMESİ YOK — sebebi yazılı, yoksa
                     "unutulmuş" sanılıp eklenir.
                   */}
                   <p className="text-meta leading-relaxed text-faint">
                     Hesap silme bu ekrandan yapılmaz: talep kullanıcıdan gelir
-                    (aşağıdaki liste). Bir hesabı durdurmak için rollerini alın
-                    ve içeriğini arşivleyin — ikisi de geri alınabilir.
+                    (aşağıdaki liste). Geri alınabilir durdurma için yukarıdaki
+                    askı/yasak aksiyonlarını kullanın.
                   </p>
                 </div>
               )}
@@ -419,5 +457,197 @@ export function UserControl() {
         )}
       </div>
     </Panel>
+  );
+}
+
+/**
+ * HESAP DURUMU BÖLÜMÜ.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * GEREKÇE FORMDA, ONAY DİYALOĞUNDA DEĞİL
+ *
+ * Belge "onay diyaloğu + sebep alanı" istiyor. Sebebi forma koyup
+ * düğmeyi sebep yazılana kadar kapalı tutmak aynı korumayı veriyor ve
+ * bir adım eksiltiyor: yönetici gerekçeyi zaten yazmak zorunda, üstüne
+ * bir de "emin misiniz?" penceresi kapatmak zorunda kalmıyor.
+ *
+ * Tek istisna YASAKLAMA: orada ikinci bir onay var, çünkü yasak
+ * kullanıcının public profilini ve içeriklerini anında görünmez yapıyor
+ * ve yanlış satıra basmanın bedeli görünür.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * KENDİNİ ASKIYA ALAMAZSIN
+ *
+ * Yönetici kendi `admin` rolünü verebiliyor/alabiliyor (devretme
+ * senaryosu) ama kendi hesabını askıya alması bir işe yaramaz: RLS
+ * yöneticiye zaten muafiyet tanımıyor, yalnızca `is_account_active`
+ * kontrolü var ve o kendi satırına da bakar. Sonuç, yöneticinin kendini
+ * yazamaz hâle getirmesi olurdu. Düğme kapalı.
+ */
+function AccountStatusSection({
+  user,
+  busy,
+  isSelf,
+  onApply,
+}: {
+  user: AdminUser;
+  busy: boolean;
+  isSelf: boolean;
+  onApply: (action: () => Promise<void>) => Promise<void>;
+}) {
+  const [reason, setReason] = useState('');
+  const [days, setDays] = useState('7');
+  const [note, setNote] = useState(user.adminNote ?? '');
+  const [confirmBan, setConfirmBan] = useState(false);
+
+  const reasonOk = reason.trim().length >= 3;
+
+  /** Süreli askı bitişi. "0" seçildiğinde süresiz. */
+  function until(): string | null {
+    const n = Number(days);
+    if (!n) return null;
+    return new Date(Date.now() + n * 86400000).toISOString();
+  }
+
+  function apply(status: AccountStatus) {
+    return onApply(async () => {
+      await setAccountStatus(user.id, {
+        status,
+        reason,
+        until: status === 'suspended' ? until() : null,
+      });
+      setReason('');
+      setConfirmBan(false);
+    });
+  }
+
+  return (
+    <div className="rounded-card border border-border bg-surface-1 p-3">
+      <p className="label mb-1.5">Hesap durumu</p>
+
+      <p className="mb-2 text-meta leading-relaxed text-faint">
+        Şu an:{' '}
+        <strong className="text-foreground">
+          {accountStatusLabels[user.status]}
+        </strong>{' '}
+        — {accountStatusDescriptions[user.status]}
+        {user.status === 'suspended' && user.suspendedUntil && (
+          <>
+            {' '}
+            Bitiş:{' '}
+            <span className="tabular">
+              {new Date(user.suspendedUntil).toLocaleString('tr-TR')}
+            </span>
+            {isWriteAllowed(user) && ' (süresi doldu, yazabiliyor)'}
+          </>
+        )}
+        {user.statusReason && (
+          <>
+            {' '}
+            Gerekçe: <em className="text-muted-foreground">{user.statusReason}</em>
+          </>
+        )}
+      </p>
+
+      {isSelf ? (
+        <p className="text-meta text-warning">
+          Kendi hesabınızın durumunu değiştiremezsiniz.
+        </p>
+      ) : (
+        <>
+          <div className="flex flex-wrap items-end gap-2">
+            <label className="min-w-[12rem] flex-1">
+              <span className="label mb-1 block">
+                Gerekçe (kullanıcıya gösterilir)
+              </span>
+              <Input
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                placeholder="Örn. tekrarlanan telif ihlali"
+                className="h-8 w-full text-meta"
+              />
+            </label>
+            <label>
+              <span className="label mb-1 block">Askı süresi</span>
+              <Select
+                value={days}
+                onChange={(e) => setDays(e.target.value)}
+                className="h-8 text-meta"
+              >
+                <option value="3">3 gün</option>
+                <option value="7">7 gün</option>
+                <option value="30">30 gün</option>
+                <option value="0">Süresiz</option>
+              </Select>
+            </label>
+          </div>
+
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {ACCOUNT_STATUSES.filter((s) => s !== 'deactivated').map((s) => {
+              const current = user.status === s;
+              const ban = s === 'banned';
+              return (
+                <Button
+                  key={s}
+                  type="button"
+                  size="sm"
+                  variant={ban ? 'danger' : s === 'active' ? 'secondary' : 'ghost'}
+                  disabled={busy || current || !reasonOk}
+                  onClick={() => {
+                    if (ban && !confirmBan) {
+                      setConfirmBan(true);
+                      return;
+                    }
+                    void apply(s);
+                  }}
+                >
+                  {current ? '✓ ' : ''}
+                  {ban && confirmBan ? 'Yasağı onayla' : accountStatusLabels[s]}
+                </Button>
+              );
+            })}
+          </div>
+
+          {!reasonOk && (
+            <p className="mt-1.5 text-meta text-faint">
+              Aksiyonlar gerekçe yazılınca açılır — bu metin kullanıcıya
+              gösterilecek.
+            </p>
+          )}
+          {confirmBan && (
+            <p className="mt-1.5 text-meta text-danger">
+              Yasak, kullanıcının profilini ve içeriklerini public
+              yüzeylerden düşürür. Onaylamak için tekrar basın.
+            </p>
+          )}
+        </>
+      )}
+
+      {/* Dahili not — kullanıcıya GÖSTERİLMEZ, gerekçeyle karıştırılmasın
+          diye ayrı kutuda ve etiketi bunu söylüyor. */}
+      <div className="mt-3 border-t border-border pt-2">
+        <label className="block">
+          <span className="label mb-1 block">
+            Dahili not (kullanıcıya gösterilmez)
+          </span>
+          <Input
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="Yalnızca yönetim görür"
+            className="h-8 w-full text-meta"
+          />
+        </label>
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          className="mt-1.5"
+          disabled={busy || note === (user.adminNote ?? '')}
+          onClick={() => void onApply(() => setAdminNote(user.id, note))}
+        >
+          Notu kaydet
+        </Button>
+      </div>
+    </div>
   );
 }

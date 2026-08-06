@@ -83,6 +83,38 @@ export const membershipLabels: Record<MembershipStatus, string> = {
   none: 'Yok',
 };
 
+/**
+ * HESAP DURUMU (Faz 1, Görev 1.1).
+ *
+ * Yaptırım BURADA DEĞİL. Bu tip yalnızca panelin ne göstereceğini
+ * söylüyor; askıdaki kullanıcının yazamamasını `app.is_account_active()`
+ * ve ona bağlanan on bir RLS politikası sağlıyor
+ * (`20260806162000_account_status_enforcement.sql`). Arayüzü kapatmak
+ * bir güvenlik önlemi değil, nezaket.
+ */
+export const ACCOUNT_STATUSES = [
+  'active',
+  'suspended',
+  'banned',
+  'deactivated',
+] as const;
+
+export type AccountStatus = (typeof ACCOUNT_STATUSES)[number];
+
+export const accountStatusLabels: Record<AccountStatus, string> = {
+  active: 'Aktif',
+  suspended: 'Askıda',
+  banned: 'Yasaklı',
+  deactivated: 'Dondurulmuş',
+};
+
+export const accountStatusDescriptions: Record<AccountStatus, string> = {
+  active: 'Normal. Yazma yetkisi tam.',
+  suspended: 'Okur, yazamaz. Süreli ya da süresiz.',
+  banned: 'Kalıcı. Public profili ve içerikleri listelerden düşer.',
+  deactivated: 'Kullanıcının kendi isteğiyle dondurduğu hesap.',
+};
+
 export interface AdminUser {
   id: string;
   username: string;
@@ -94,6 +126,30 @@ export interface AdminUser {
   membershipEnds: string | null;
   /** Yüklediği yayındaki fotoğraf sayısı — kim aktif, bir bakışta. */
   photoCount: number;
+  status: AccountStatus;
+  /** Süreli askının bitişi. `suspended` + null = süresiz. */
+  suspendedUntil: string | null;
+  /** Kullanıcıya gösterilen gerekçe. */
+  statusReason: string | null;
+  /** Yalnızca panelde görünen dahili not. */
+  adminNote: string | null;
+  lastSeenAt: string | null;
+  /** NULL ise kullanıcı adı hâlâ otomatik üretilmiş (`user_xxx`). */
+  usernameCustomizedAt: string | null;
+}
+
+/**
+ * Askı süresi dolmuş mu? `app.is_account_active()` ile AYNI kuralı
+ * uyguluyor — orada da süresi geçmiş askı aktif sayılıyor. İki yerde iki
+ * farklı kural, panelin "askıda" dediği kullanıcının yazabilmesi demekti.
+ */
+export function isWriteAllowed(user: {
+  status: AccountStatus;
+  suspendedUntil: string | null;
+}): boolean {
+  if (user.status === 'active') return true;
+  if (user.status !== 'suspended') return false;
+  return user.suspendedUntil !== null && new Date(user.suspendedUntil) <= new Date();
 }
 
 async function client() {
@@ -108,6 +164,12 @@ interface ProfileRow {
   display_name: string | null;
   city: string | null;
   created_at: string;
+  account_status: AccountStatus;
+  suspended_until: string | null;
+  status_reason: string | null;
+  admin_note: string | null;
+  last_seen_at: string | null;
+  username_customized_at: string | null;
 }
 
 /**
@@ -130,7 +192,10 @@ export async function fetchUsers(
 
   let query = supabase
     .from('profiles')
-    .select('id, username, display_name, city, created_at')
+    .select(
+      'id, username, display_name, city, created_at, account_status, ' +
+        'suspended_until, status_reason, admin_note, last_seen_at, username_customized_at'
+    )
     .order('created_at', { ascending: false })
     .limit(limit);
 
@@ -145,7 +210,11 @@ export async function fetchUsers(
   const { data, error } = await query;
   if (error) throw new Error(error.message);
 
-  const profiles = (data ?? []) as ProfileRow[];
+  /* `as unknown as` — PostgREST'in tip çıkarımı çok satırlı select
+     dizesini çözemiyor ve `GenericStringError[]` döndürüyor. Alan
+     listesi elle yazıldığı için şekli biliyoruz; ara dönüşüm bunu
+     derleyiciye söylüyor. */
+  const profiles = (data ?? []) as unknown as ProfileRow[];
   if (profiles.length === 0) return [];
 
   const ids = profiles.map((p) => p.id);
@@ -195,6 +264,12 @@ export async function fetchUsers(
     membership: memberMap.get(p.id)?.status ?? 'none',
     membershipEnds: memberMap.get(p.id)?.ends ?? null,
     photoCount: photoCounts.get(p.id) ?? 0,
+    status: p.account_status,
+    suspendedUntil: p.suspended_until,
+    statusReason: p.status_reason,
+    adminNote: p.admin_note,
+    lastSeenAt: p.last_seen_at,
+    usernameCustomizedAt: p.username_customized_at,
   }));
 }
 
@@ -325,4 +400,72 @@ export async function fetchDeletionRequests(): Promise<DeletionRequest[]> {
     scheduledFor: row.scheduled_for,
     status: row.status,
   }));
+}
+
+/**
+ * HESAP DURUMU DEĞİŞTİRME (Görev 1.4/4).
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * SEBEP ZORUNLU, ÇÜNKÜ KULLANICI ONU GÖRÜYOR
+ *
+ * `status_reason` panelde tutulan bir not değil; askıya alınan kişiye
+ * gösterilecek metin. Boş bırakılabilseydi kullanıcı "hesabınız askıda"
+ * yazısını görüp neden olduğunu hiç öğrenemezdi. Dahili not için ayrı
+ * alan var (`admin_note`).
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * BU FONKSİYON BİR GÜVENLİK SINIRI DEĞİL
+ *
+ * Admin olmayan biri bunu çağırırsa `profiles_guard_admin_fields`
+ * tetikleyicisi isteği 42501 ile reddediyor. Buradaki kontroller
+ * yalnızca hata mesajını anlaşılır kılmak için.
+ *
+ * Denetim kaydını da bu fonksiyon YAZMIYOR: `profiles_audit_status`
+ * tetikleyicisi yazıyor. Panelden geçmeyen bir değişiklik de kaçmasın
+ * diye orada.
+ */
+export interface StatusChange {
+  status: AccountStatus;
+  /** Kullanıcıya gösterilecek gerekçe — zorunlu. */
+  reason: string;
+  /** Süreli askı bitişi (ISO). `suspended` dışında yok sayılır. */
+  until?: string | null;
+}
+
+export async function setAccountStatus(
+  userId: string,
+  change: StatusChange
+): Promise<void> {
+  const reason = change.reason.trim();
+  if (!reason) {
+    throw new Error('Gerekçe zorunlu — kullanıcıya bu metin gösterilecek.');
+  }
+
+  const supabase = await client();
+  const { data: session } = await supabase.auth.getUser();
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({
+      account_status: change.status,
+      /* Askı dışındaki durumlarda süre anlamsız; temizlenmezse
+         "yasaklı ama 3 gün sonra biter" gibi bir satır kalırdı. */
+      suspended_until: change.status === 'suspended' ? (change.until ?? null) : null,
+      status_reason: reason,
+      status_changed_by: session.user?.id ?? null,
+      status_changed_at: new Date().toISOString(),
+    })
+    .eq('id', userId);
+
+  if (error) throw new Error(error.message);
+}
+
+/** Dahili not — kullanıcıya gösterilmez, yalnızca panelde. */
+export async function setAdminNote(userId: string, note: string): Promise<void> {
+  const supabase = await client();
+  const { error } = await supabase
+    .from('profiles')
+    .update({ admin_note: note.trim() || null })
+    .eq('id', userId);
+  if (error) throw new Error(error.message);
 }

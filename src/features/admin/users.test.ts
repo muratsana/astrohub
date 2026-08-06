@@ -6,6 +6,11 @@ import {
   roleDescriptions,
   roleLabels,
   revokeRole,
+  ACCOUNT_STATUSES,
+  accountStatusLabels,
+  accountStatusDescriptions,
+  isWriteAllowed,
+  setAccountStatus,
   type AppRole,
   type MembershipStatus,
 } from './users';
@@ -107,5 +112,81 @@ describe('son yönetici koruması', () => {
    */
   it('yapılandırma yokken sessizce başarılı dönmüyor', async () => {
     await expect(revokeRole('bir-kullanici', 'admin')).rejects.toThrow();
+  });
+});
+
+/**
+ * HESAP DURUMU (Faz 1, Görev 1.1).
+ *
+ * Buradaki testler YAPTIRIMI ölçmüyor — yaptırım RLS'te ve canlı
+ * veritabanında rol taklidiyle doğrulandı (bkz.
+ * `docs/KARARLAR-ADMIN-YENIDEN-YAZIM.md`, Görev 1.1 kanıt tablosu).
+ *
+ * Bu testlerin işi, İSTEMCİ kopyasının veritabanıyla aynı kuralı
+ * uygulaması. `app.is_account_active()` süresi geçmiş askıyı aktif
+ * sayıyor; `isWriteAllowed` aynı şeyi söylemezse panel "askıda" yazan
+ * bir kullanıcının rahatça yazdığını gösterir — ya da tersi, ki daha
+ * kötü: yönetici cezanın işlediğini sanır.
+ */
+describe('hesap durumu', () => {
+  it('veritabanındaki account_status enum sırasıyla aynı', () => {
+    expect(ACCOUNT_STATUSES).toEqual([
+      'active',
+      'suspended',
+      'banned',
+      'deactivated',
+    ]);
+  });
+
+  it('her durumun etiketi ve açıklaması var', () => {
+    for (const s of ACCOUNT_STATUSES) {
+      expect(accountStatusLabels[s], s).toBeTruthy();
+      expect(accountStatusDescriptions[s], s).toBeTruthy();
+    }
+  });
+
+  it('aktif hesap yazabilir', () => {
+    expect(isWriteAllowed({ status: 'active', suspendedUntil: null })).toBe(true);
+  });
+
+  it('süresiz askı yazamaz', () => {
+    expect(isWriteAllowed({ status: 'suspended', suspendedUntil: null })).toBe(
+      false
+    );
+  });
+
+  it('süresi dolmamış askı yazamaz', () => {
+    const yarin = new Date(Date.now() + 86400000).toISOString();
+    expect(isWriteAllowed({ status: 'suspended', suspendedUntil: yarin })).toBe(
+      false
+    );
+  });
+
+  /* `app.is_account_active()` ile aynı kural: süresi geçmiş askı aktif
+     sayılıyor ve bunun için bir cron işi ÇALIŞMASI gerekmiyor. */
+  it('süresi geçmiş askı yazabilir — kayıt hâlâ suspended olsa bile', () => {
+    const dun = new Date(Date.now() - 86400000).toISOString();
+    expect(isWriteAllowed({ status: 'suspended', suspendedUntil: dun })).toBe(
+      true
+    );
+  });
+
+  it('yasaklı ve dondurulmuş hesap süre ne olursa olsun yazamaz', () => {
+    const dun = new Date(Date.now() - 86400000).toISOString();
+    expect(isWriteAllowed({ status: 'banned', suspendedUntil: dun })).toBe(false);
+    expect(isWriteAllowed({ status: 'deactivated', suspendedUntil: null })).toBe(
+      false
+    );
+  });
+
+  /* Gerekçe kullanıcıya GÖSTERİLİYOR; boş bırakılabilseydi askıya alınan
+     kişi sebebini hiç öğrenemezdi. Kontrol veritabanına gitmeden önce. */
+  it('gerekçesiz durum değişikliği reddedilir', async () => {
+    await expect(
+      setAccountStatus('00000000-0000-0000-0000-000000000000', {
+        status: 'suspended',
+        reason: '   ',
+      })
+    ).rejects.toThrow(/Gerekçe zorunlu/);
   });
 });
