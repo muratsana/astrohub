@@ -186,7 +186,7 @@ export function SnrGuidePage() {
             </ul>
           </nav>
 
-          <div className="min-w-0 max-w-[75ch]">
+          <div className="min-w-0">
             <section
               aria-labelledby="snr-giris"
               className="mb-8 rounded-card border border-border-strong bg-surface-1 p-4 sm:p-5"

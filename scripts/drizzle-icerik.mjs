@@ -278,6 +278,26 @@ for (const forbidden of [/<script\b/i, /\son\w+\s*=/i, /javascript:/i]) {
   }
 }
 
+/*
+  DEĞERİ `null`/`undefined` OLAN NİTELİK = ÇİZİM BİR DEĞER ÜRETEMEDİ.
+
+  SNR rehberinde tam olarak bu oldu: dört panel `canvas.toDataURL()`
+  çıktısını `<image href>` niteliğine yazıyor, çağrı `null` döndü ve
+  paneller canlıda siyah kutu olarak yayınlandı. Aynı kural burada da
+  duruyor — bu üretici bugün canvas kullanmıyor ama kaynak güncellenip
+  yeni bir şekil eklenirse hata sessiz kalmasın.
+*/
+{
+  const bozuk = joined.match(/\s[\w:-]+="(?:null|undefined)"/g);
+  if (bozuk) {
+    console.error(
+      'Değeri null/undefined olan nitelik var — çizim bir değer ' +
+        `üretememiş:\n  ${[...new Set(bozuk)].join('\n  ')}`
+    );
+    process.exit(1);
+  }
+}
+
 /* ── 6. yaz ─────────────────────────────────────────────────────────── */
 mkdirSync(OUT_DIR, { recursive: true });
 
