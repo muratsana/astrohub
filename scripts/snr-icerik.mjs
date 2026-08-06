@@ -40,6 +40,7 @@
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import zlib from 'node:zlib';
 import { JSDOM, VirtualConsole } from 'jsdom';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -58,31 +59,99 @@ const html = readFileSync(SRC, 'utf8');
 /* ── 1. paketin kendi çizim kodunu bir kez çalıştır ─────────────────── */
 
 /*
-  CANVAS VEKİLİ ENJEKTE EDİLİYOR — ÖLÇÜLDÜ, ŞART.
+  CANVAS ÇALIŞIR HÂLDE ENJEKTE EDİLİYOR — ÖLÇÜLDÜ, ŞART.
 
   Paketin tamamı TEK bir `<script>` bloğu. jsdom'da
   `HTMLCanvasElement.getContext` yok; simülatörün canvas satırı
   `TypeError` fırlatıyor ve tek blok olduğu için ondan SONRAKİ her şey —
-  yani dört şeklin çizimi de — hiç çalışmıyor. İlk denemede dördü de boş
-  kaldı ve betik (doğru biçimde) durdu.
+  şekillerin çizimi de — hiç çalışmıyor. İlk denemede hepsi boş kaldı ve
+  betik (doğru biçimde) durdu.
 
-  `canvas` npm paketini kurmak da bir seçenekti; kurulmadı çünkü
-  ihtiyacımız gerçek bir çizim değil, script'in sonuna kadar akması.
-  Vekil yalnızca kaynağın kullandığı iki metodu karşılıyor
-  (`createImageData`, `putImageData`); simülatörün pikselleri zaten
-  atılıyor, o bileşen React tarafında yeniden çiziliyor.
+  İLK ÇÖZÜM YETERSİZDİ ve canlıda yakalandı. `createImageData` ile
+  `putImageData` sahteydi, `toDataURL` hiç yoktu. Şekil 2'nin dört foton
+  paneli tam olarak `toDataURL()` çıktısını `<image href>` niteliğine
+  yazıyor; sahte bağlamda o çağrı `null` döndü ve dört panel canlıda
+  SİYAH KUTU olarak yayınlandı (kullanıcı bildirdi). Ders: "script sonuna
+  kadar aksın" yetmiyor, üretilen piksellerin de doğru olması gerekiyor.
+
+  Şimdi vekil gerçek bir 2B bağlam: piksel tamponunu saklıyor ve
+  `toDataURL` çağrıldığında onu PNG'ye kodlayıp `data:` adresi
+  döndürüyor. `canvas` npm paketi yine kurulmadı — yerel derleme
+  gerektiren ağır bir bağımlılık ve ihtiyacımız olan tek şey RGBA
+  tamponunu PNG'ye çevirmek; `node:zlib` bunu zaten yapabiliyor.
 
   Vekil ÇIKTIYA GİRMİYOR: enjeksiyon yalnızca jsdom'a verilen dizede,
   serileştirilen `<main>` gövdesinde değil.
 */
+
+/** CRC-32 (PNG parçaları için). Tablo bir kez kuruluyor. */
+const CRC_TABLO = (() => {
+  const t = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) {
+    let c = n;
+    for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+    t[n] = c >>> 0;
+  }
+  return t;
+})();
+
+function crc32(buf) {
+  let c = 0xffffffff;
+  for (let i = 0; i < buf.length; i++) c = CRC_TABLO[(c ^ buf[i]) & 0xff] ^ (c >>> 8);
+  return (c ^ 0xffffffff) >>> 0;
+}
+
+function pngParca(tip, veri) {
+  const uzunluk = Buffer.alloc(4);
+  uzunluk.writeUInt32BE(veri.length, 0);
+  const govde = Buffer.concat([Buffer.from(tip, 'latin1'), veri]);
+  const crc = Buffer.alloc(4);
+  crc.writeUInt32BE(crc32(govde), 0);
+  return Buffer.concat([uzunluk, govde, crc]);
+}
+
+/** RGBA tamponunu 8 bit renkli PNG `data:` adresine çevirir. */
+function pngDataUrl(width, height, rgba) {
+  const satirBayt = width * 4;
+  const ham = Buffer.alloc((satirBayt + 1) * height);
+  for (let y = 0; y < height; y++) {
+    ham[y * (satirBayt + 1)] = 0; /* filtre: yok */
+    Buffer.from(rgba.buffer, rgba.byteOffset + y * satirBayt, satirBayt).copy(
+      ham,
+      y * (satirBayt + 1) + 1
+    );
+  }
+  const ihdr = Buffer.alloc(13);
+  ihdr.writeUInt32BE(width, 0);
+  ihdr.writeUInt32BE(height, 4);
+  ihdr[8] = 8; /* bit derinliği */
+  ihdr[9] = 6; /* renk tipi: RGBA */
+  const png = Buffer.concat([
+    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+    pngParca('IHDR', ihdr),
+    pngParca('IDAT', zlib.deflateSync(ham, { level: 9 })),
+    pngParca('IEND', Buffer.alloc(0)),
+  ]);
+  return `data:image/png;base64,${png.toString('base64')}`;
+}
+
+/* Vekil, jsdom'un içinden çağrılacak; PNG kodlayıcı Node tarafında
+   kalıyor ve pencereye tek bir köprü fonksiyonu olarak veriliyor. */
 const CANVAS_VEKILI = `<script>
   HTMLCanvasElement.prototype.getContext = function () {
+    var tuval = this;
     return {
+      canvas: tuval,
       createImageData: function (w, h) {
         return { data: new Uint8ClampedArray(w * h * 4), width: w, height: h };
       },
-      putImageData: function () {},
+      putImageData: function (im) { tuval.__piksel = im; },
     };
+  };
+  HTMLCanvasElement.prototype.toDataURL = function () {
+    var im = this.__piksel;
+    if (!im) return '';
+    return window.__pngKodla(im.width, im.height, im.data);
   };
 </script>`;
 
@@ -101,6 +170,12 @@ const sessizKonsol = new VirtualConsole();
 const dom = new JSDOM(enjekteli, {
   runScripts: 'dangerously',
   virtualConsole: sessizKonsol,
+  beforeParse(pencere) {
+    /* Köprü: sayfa içindeki vekil buradan PNG istiyor. Kodlayıcı Node
+       tarafında kalıyor — jsdom'un içine zlib taşımak gereksiz. */
+    pencere.__pngKodla = (w, h, veri) =>
+      pngDataUrl(w, h, veri instanceof Uint8ClampedArray ? veri : new Uint8ClampedArray(veri));
+  },
 });
 const belge = dom.window.document;
 
@@ -124,6 +199,71 @@ if (!mainEl) {
   console.error('Kaynak HTML içinde <main> bulunamadı.');
   process.exit(1);
 }
+
+/* ── 1b. ELLE LİSTE YETMİYOR: gövdenin tamamı taranıyor ─────────────── */
+
+/*
+  YUKARIDAKİ `CIZILEN` LİSTESİ BİR KEZ EKSİK KALDI.
+
+  Liste, kaynaktaki `getElementById('sabit-metin')` çağrılarından elle
+  çıkarılmıştı. Şekil 2'nin dört paneli ise `getElementById(ids[k])` ile,
+  yani DEĞİŞKENDEN çözülüyor — tarama onları görmedi, listeye girmediler,
+  kontrol edilmediler ve dördü de canlıda siyah kutu olarak yayınlandı.
+
+  Ders: hangi kapların dolması gerektiğini elle saymak, bir gün eksik
+  sayılacak bir liste tutmaktır. Aşağıdaki iki kural gövdenin TAMAMINA
+  bakıyor ve elle bakım istemiyor:
+
+    1. Boş kalan çizim kabı (`<svg>`, `<g>`, `<canvas>`) — bir şeklin
+       çizilmediğinin doğrudan işareti.
+    2. Değeri `null`/`undefined` olan nitelik — çizim ÇALIŞTI ama bir
+       değer üretemedi demek. Panelleri asıl bu yakalardı:
+       `href="null"`.
+
+  `photonpanels` istisnası: kaynakta duruyor ama paketin kendi kodu da
+  ona hiçbir şey yazmıyor (ölü işaretleme). Boş bir `<g>` hiçbir şey
+  çizmediği için zararsız; kaldırmak kaynaktan sapmak olurdu.
+*/
+{
+  const IZINLI_BOS = new Set(['photonpanels']);
+  const kaplar = [...mainEl.querySelectorAll('svg, g, canvas')];
+  const bos = kaplar.filter(
+    (el) =>
+      el.children.length === 0 &&
+      el.textContent.trim() === '' &&
+      el.tagName.toLowerCase() !== 'canvas' &&
+      !IZINLI_BOS.has(el.id)
+  );
+  if (bos.length > 0) {
+    console.error(
+      'Boş kalan çizim kabı var — şekil çizilmemiş:\n' +
+        bos
+          .map((el) => `  <${el.tagName.toLowerCase()} id="${el.id || '(kimliksiz)'}">`)
+          .join('\n')
+    );
+    process.exit(1);
+  }
+
+  const bozukNitelik = [];
+  for (const el of mainEl.querySelectorAll('*')) {
+    for (const nitelik of el.attributes) {
+      if (nitelik.value === 'null' || nitelik.value === 'undefined') {
+        bozukNitelik.push(
+          `  <${el.tagName.toLowerCase()} ${nitelik.name}="${nitelik.value}">`
+        );
+      }
+    }
+  }
+  if (bozukNitelik.length > 0) {
+    console.error(
+      'Değeri null/undefined olan nitelik var — çizim bir değer ' +
+        'üretememiş:\n' +
+        bozukNitelik.join('\n')
+    );
+    process.exit(1);
+  }
+}
+
 let body = mainEl.innerHTML;
 
 /* ── 2. tool bloklarını sök ─────────────────────────────────────────── */

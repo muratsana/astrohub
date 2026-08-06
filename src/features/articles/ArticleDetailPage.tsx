@@ -1,5 +1,6 @@
 import { Link, useParams } from 'react-router';
 import { Container } from '@/components/ui/Container';
+import { ReadingLayout } from '@/components/ui/ReadingLayout';
 import { Badge } from '@/components/ui/Badge';
 import { NotFoundPage } from '@/components/NotFoundPage';
 import { PageMeta } from '@/components/seo/PageMeta';
@@ -61,86 +62,138 @@ export function ArticleDetailPage() {
       />
 
       <Container className="py-10 sm:py-12">
-        <article className="mx-auto max-w-3xl">
-          <nav aria-label="İz" className="label mb-5">
-            <Link to="/yazilar" className="transition-colors hover:text-primary">
-              ← Yazılar
-            </Link>
-          </nav>
+        <ReadingLayout
+          aside={
+            <div className="space-y-8">
+              {/*
+                KÜNYE YAN SÜTUNDA, METNİN ÜSTÜNDE DEĞİL.
 
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-            <span className="flex flex-wrap items-center gap-2">
-              <Badge tone="cold">{articleCategoryLabels[article.category]}</Badge>
-              <Badge
-                tone={
-                  article.level === 'Başlangıç'
-                    ? 'success'
-                    : article.level === 'Orta'
-                      ? 'primary'
-                      : 'danger'
-                }
+                Rozet satırı ve yazar/tarih satırı başlıkla gövde arasında
+                duruyordu; okumaya gelen kişi her seferinde onların üstünden
+                atlıyordu. Yana alınca hem metin daha erken başlıyor hem de
+                yan sütun HER yazıda dolu oluyor — "ilgili yazılar" boşsa
+                (kategorisinde tek yazıysa) sütun boş kalmıyor.
+              */}
+              <section aria-labelledby="yazi-kunye">
+                <h2
+                  id="yazi-kunye"
+                  className="label mb-3 border-b border-border pb-2"
+                >
+                  Künye
+                </h2>
+                <dl className="space-y-2.5">
+                  <div>
+                    <dt className="text-meta text-faint">Kategori</dt>
+                    <dd className="mt-1">
+                      <Badge tone="cold">
+                        {articleCategoryLabels[article.category]}
+                      </Badge>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-meta text-faint">Seviye</dt>
+                    <dd className="mt-1">
+                      <Badge
+                        tone={
+                          article.level === 'Başlangıç'
+                            ? 'success'
+                            : article.level === 'Orta'
+                              ? 'primary'
+                              : 'danger'
+                        }
+                      >
+                        {article.level}
+                      </Badge>
+                    </dd>
+                  </div>
+                  {article.duration && (
+                    <div>
+                      <dt className="text-meta text-faint">Okuma</dt>
+                      <dd className="tabular text-caption text-foreground">
+                        {article.duration}
+                      </dd>
+                    </div>
+                  )}
+                  <div>
+                    <dt className="text-meta text-faint">Yazar</dt>
+                    <dd className="text-caption text-foreground">
+                      {article.author}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-meta text-faint">Yayın</dt>
+                    <dd className="tabular text-caption text-foreground">
+                      {new Date(article.publishedAt).toLocaleDateString(
+                        'tr-TR',
+                        { day: '2-digit', month: 'long', year: 'numeric' }
+                      )}
+                    </dd>
+                  </div>
+                </dl>
+                <div className="mt-3">
+                  <AdminEditLink
+                    to={`/admin/content?kind=yazi&slug=${article.slug}`}
+                  />
+                </div>
+              </section>
+
+              {related.length > 0 && (
+                <section aria-labelledby="ilgili-yazilar">
+                  <h2
+                    id="ilgili-yazilar"
+                    className="label mb-3 border-b border-border pb-2"
+                  >
+                    İlgili yazılar
+                  </h2>
+                  <ul>
+                    {related.map((r) => (
+                      <li key={r.slug}>
+                        <Link
+                          to={articleHref(r)}
+                          className="block border-b border-border py-2.5 transition-colors hover:text-primary"
+                        >
+                          <span className="block text-caption leading-snug text-foreground">
+                            {r.title}
+                          </span>
+                          <span className="tabular mt-1 block text-meta text-faint">
+                            {r.duration}
+                          </span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+            </div>
+          }
+        >
+          <article>
+            <nav aria-label="İz" className="label mb-5">
+              <Link
+                to="/yazilar"
+                className="transition-colors hover:text-primary"
               >
-                {article.level}
-              </Badge>
-              <span className="tabular text-meta text-faint">
-                {article.duration}
-              </span>
-            </span>
-            <AdminEditLink to={`/admin/content?kind=yazi&slug=${article.slug}`} />
-          </div>
+                ← Yazılar
+              </Link>
+            </nav>
 
-          <h1 className="type-page-lg text-foreground">
-            {article.title}
-          </h1>
+            <h1 className="type-page-lg text-foreground">{article.title}</h1>
 
-          <p className="tabular mt-3 text-meta text-muted-foreground">
-            {article.author} ·{' '}
-            {new Date(article.publishedAt).toLocaleDateString('tr-TR', {
-              day: '2-digit',
-              month: 'long',
-              year: 'numeric',
-            })}
-          </p>
+            <p className="mt-6 border-l-2 border-primary pl-4 text-body-sm leading-relaxed text-foreground">
+              {article.summary}
+            </p>
 
-          <p className="mt-6 border-l-2 border-primary pl-4 text-body-sm leading-relaxed text-foreground">
-            {article.summary}
-          </p>
+            <BlockRenderer
+              className="mt-8"
+              blocks={article.bodyBlocks ?? paragraphsToBlocks(article.body)}
+            />
 
-          <BlockRenderer
-            className="mt-8"
-            blocks={article.bodyBlocks ?? paragraphsToBlocks(article.body)}
-          />
-
-          <p className="mt-10 border-t border-border pt-5 text-meta leading-relaxed text-faint">
-            Bu yazı topluluk katkısıyla güncellenir. Eksik ya da hatalı bulduğun
-            bir nokta varsa bildirmen içeriği doğrudan iyileştirir.
-          </p>
-
-          {related.length > 0 && (
-            <section className="mt-10">
-              <h2 className="label mb-3 border-b border-border pb-2">
-                İlgili yazılar
-              </h2>
-              <ul>
-                {related.map((r) => (
-                  <li key={r.slug}>
-                    <Link
-                      to={articleHref(r)}
-                      className="flex items-baseline justify-between gap-4 border-b border-border py-2.5 transition-colors hover:text-primary"
-                    >
-                      <span className="text-caption text-foreground">
-                        {r.title}
-                      </span>
-                      <span className="tabular shrink-0 text-meta text-faint">
-                        {r.duration}
-                      </span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
-        </article>
+            <p className="mt-10 border-t border-border pt-5 text-meta leading-relaxed text-faint">
+              Bu yazı topluluk katkısıyla güncellenir. Eksik ya da hatalı
+              bulduğun bir nokta varsa bildirmen içeriği doğrudan iyileştirir.
+            </p>
+          </article>
+        </ReadingLayout>
       </Container>
     </>
   );
