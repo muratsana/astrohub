@@ -29,6 +29,10 @@
       "destination": "/app.html"
     },
     {
+      "source": "/akis",
+      "destination": "/app.html"
+    },
+    {
       "source": "/aksaray-astronomi-etkinlikleri",
       "destination": "/app.html"
     },
@@ -250,6 +254,10 @@
     },
     {
       "source": "/etkinlikler/harita",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/etkinlikler/takvim",
       "destination": "/app.html"
     },
     {

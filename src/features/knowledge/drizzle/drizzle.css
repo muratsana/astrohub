@@ -72,8 +72,42 @@
   margin: 24px 0 6px;
   font-weight: 600;
 }
+/*
+  GÖVDE METNİ İKİ YANA YASLI.
+
+  Yaslama yalnızca yeterince geniş sütunda çalışır: dar bir kolonda
+  kelime araları açılıp "nehir" denen dikey beyaz şeritler oluşur ve
+  metin okunmaz hâle gelir. Bu yüzden kural bir genişlik eşiğine bağlı;
+  telefonda metin sola yaslı kalıyor.
+
+  `hyphens: auto` yaslamanın koşulu, süsü değil: tireleme olmadan
+  tarayıcı satırı doldurmak için yalnızca boşlukları esnetebilir ve
+  Türkçenin uzun kelimeleriyle aralar iyice açılır.
+
+  Başlıklar, tablolar ve şekil altyazıları YASLANMIYOR — kısa metinlerde
+  yaslama her satırı ayrı bir aralıkla dizip düzeni bozar.
+*/
 .dz-root p {
   margin: 0 0 18px;
+}
+
+@media (min-width: 640px) {
+  .dz-root p,
+  .dz-root li {
+    text-align: justify;
+    hyphens: auto;
+    -webkit-hyphens: auto;
+  }
+
+  .dz-root .dz-figcap,
+  .dz-root figcaption,
+  .dz-root table p,
+  .dz-root .dz-tag,
+  .dz-root .dz-legend {
+    text-align: left;
+    hyphens: manual;
+    -webkit-hyphens: manual;
+  }
 }
 .dz-root a {
   color: var(--dz-accent);
@@ -178,12 +212,52 @@
 
 /* ──────────────────────────────────────────── kartlar ve çağrı kutuları ── */
 
+/*
+  LEVHA KENDİ MÜREKKEBİNİ TANIMLIYOR.
+
+  Figür çerçevesi HER TEMADA koyu (SVG'lerin arka planı dosyanın içine
+  gömülü, yukarıdaki `--dz-plate` notuna bakın). Bu yüzden içindeki metin
+  temanın `--color-foreground`ını kullanamaz: açık temada o renk neredeyse
+  siyahtır ve koyu levhanın üstünde OKUNMAZ olur.
+
+  Bu tam olarak başımıza geldi: açık temada Şekil 5'in altyazısındaki
+  `<em>` parçaları görünmüyordu — metin oradaydı, rengi zemine eşitti.
+  Kalın metin görünüyordu çünkü `.dz-figcap b` sabit bir renk taşıyordu;
+  italik için böyle bir kural yoktu.
+
+  Tek tek eleman kuralı yazmak yerine değişkenler burada yeniden
+  tanımlanıyor: levhanın içine giren HER şey (em, strong, code, link,
+  gelecekte eklenecek her ne ise) doğru mürekkebi miras alır. Unutulacak
+  bir kural kalmıyor.
+*/
 .dz-root .dz-fig {
+  --dz-ink: #dcdad2;
+  --dz-ink-2: #898781;
+  --dz-ink-3: #6a6862;
+  --dz-surface: #23231f;
+  --dz-surface-2: #2c2c28;
+  --dz-line: #34342f;
+  --dz-rule: #46463f;
+
+  /*
+    VURGU RENKLERİ DE LEVHAYA GÖRE. Açık temada bunlar koyulaştırılmış
+    tonlardır (kehribar #9b5000'a iner) çünkü orada beyaz zeminin üstünde
+    dururlar. Koyu levhada aynı ton okunmaz hâle geliyor: ölçüldü, şekil
+    altyazısındaki `<code>` parçaları 2.36 kontrast veriyordu (eşik 3).
+    Levha her temada koyu olduğu için koyu tema tonları burada geçerli.
+  */
+  --dz-accent: #ff9d2e;
+  --dz-cold: #6ea8c7;
+  --dz-good: #4ed24e;
+  --dz-warn: #f5c04c;
+  --dz-crit: #e5705f;
+
   background: var(--dz-plate);
   border: 1px solid var(--dz-plate-line);
   border-radius: var(--radius-card, 2px);
   padding: 18px 18px 12px;
   margin: 28px 0;
+  color: var(--dz-ink-2);
 }
 .dz-root .dz-fig svg {
   display: block;

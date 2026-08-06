@@ -40,7 +40,9 @@ export function ActiveSetupBar({ className }: { className?: string }) {
         label: model ? `${model.brand} ${model.model}` : slug,
       };
     })
-    .filter((entry): entry is { slot: SlotId; label: string } => entry !== null);
+    .filter(
+      (entry): entry is { slot: SlotId; label: string } => entry !== null
+    );
 
   if (options.length === 0) {
     return (

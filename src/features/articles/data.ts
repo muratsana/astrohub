@@ -219,16 +219,38 @@ export const articles: Article[] = [
   {
     slug: 'drizzle-rehberi',
     href: '/yazilar/drizzle-rehberi',
-    title: 'Drizzle: Örnekleme, Dither ve pixfrac',
+    /* Başlık sayfadakiyle BİREBİR aynı: kartta bir ad, açılan
+       sayfada başka bir ad görmek okuyucuya doğru yere gelip gelmediğini
+       sorgulatıyordu. */
+    title: 'Astrofotoğrafçılıkta Drizzle',
     category: 'isleme',
     level: 'İleri',
-    duration: '45 dk okuma',
+    duration: '35 dk okuma',
     publishedAt: '2026-08-05',
     author: 'Astrohub',
     summary:
-      'Drizzle ne zaman işe yarar, ne zaman yalnızca gürültü büyütür: yetersiz örnekleme testi, dither deseni, pixfrac seçimi ve dört hesaplayıcıyla canlı bir simülatör.',
+      'Yıldızlar kare kare mi çıkıyor, detay bir türlü gelmiyor mu? Hubble ekibinin aynı dert için bulduğu yöntem bahçenizdeki teleskopta da çalışıyor. Yağmur damlası benzetmesiyle, hiç bilmeyene göre anlatım — ve kendi setup’ınızda deneyebileceğiniz dört hesaplayıcı.',
     body: [],
-    tint: '150,185,235',
+    tint: '255,157,46',
+    /*
+      KAPAK DEPODA ÇİZİLDİ (`public/gorseller/drizzle-kapak.svg`).
+
+      Bu dosyanın kuralı görselin "yazının ne hakkında olduğunu bir
+      bakışta söylemesi". Drizzle bir gökcismi değil, bir yeniden
+      örnekleme yöntemi — buraya bir bulutsu koymak, kartı süsleyip
+      okuyucuya yanlış şey vaat etmek olurdu. Şema algoritmanın kendi
+      metaforunu çiziyor: kaba pikseller küçültülüp ince bir ızgaraya
+      damlıyor.
+
+      Kredi alanı "Astrohub" diyor çünkü çizim bize ait; lisans satırı
+      dış kaynaklarda CC BY şartını karşılamak için var, burada yalnızca
+      kaynağı dürüstçe adlandırıyor.
+    */
+    image: {
+      url: '/gorseller/drizzle-kapak.svg',
+      credit: 'Astrohub — drizzle şeması',
+      licence: 'Astrohub',
+    },
   },
 ];
 

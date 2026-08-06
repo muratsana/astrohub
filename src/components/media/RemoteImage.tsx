@@ -62,9 +62,30 @@ export function RemoteImage({
 }) {
   const [failed, setFailed] = useState(false);
 
-  // `safeUrl` http(s) dışındaki şemaları ve kontrol karakteriyle
-  // gizlenmiş adresleri reddeder (§15.4).
-  const url = src ? safeUrl(src) : null;
+  /*
+    İKİ TÜR ADRES KABUL EDİLİYOR.
+
+    1. Mutlak http(s) adresi — `safeUrl` http(s) dışındaki şemaları ve
+       kontrol karakteriyle gizlenmiş adresleri reddeder (§15.4).
+    2. Kendi kökümüzden servis edilen varlık (`/gorseller/...`).
+
+    İkincisi neden ayrı ele alınıyor: `safeUrl` tabansız `new URL()`
+    kullanıyor, dolayısıyla köke göreli bir yol ATILIR ve görsel sessizce
+    yıldız alanına düşer. Drizzle rehberinin kapağı depoda çizilmiş bir
+    SVG ve dış bir barındırıcısı yok.
+
+    `safeUrl` gevşetilmedi, bilerek: o yardımcı kullanıcıdan gelen
+    adresleri de süzüyor ve orada göreli yol kabul etmek, ileride başka
+    bir çağrı yerinde site içi bir adrese yönlendirmeye kapı açardı. Kural
+    burada, yalnızca görsel için duruyor.
+
+    `//baska-site.com` KABUL EDİLMİYOR: tek eğik çizgiyle başlayıp ikinci
+    karakteri eğik çizgi OLMAYAN yollar geçiyor. Protokole göreli adres,
+    adı köke benzese de başka bir kaynaktır.
+  */
+  const yerel =
+    typeof src === 'string' && src.startsWith('/') && !src.startsWith('//');
+  const url = src ? (yerel ? src : safeUrl(src)) : null;
 
   if (!url || failed) {
     return <StarField seed={seed} tint={tint} />;

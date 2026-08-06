@@ -150,6 +150,109 @@ for (const segment of segments) {
   if (segment.kind === 'html') segment.html = prefixClasses(segment.html);
 }
 
+/* ── 3b. R grafiği: boş SVG'yi DERLEME ZAMANINDA doldur ─────────────── */
+
+/**
+ * KAYNAKTA BU ŞEKİL BOŞ GELİYOR.
+ *
+ * `<svg id="rchart">` paketin standalone sürümünde `<script>` ile
+ * çiziliyor. Betik script etiketlerini attığı için şekil bizde boş bir
+ * kutu olarak kalıyordu: başlık, açıklama ve renk anahtarı görünüyor ama
+ * eğrilerin yeri bomboş (kullanıcı bildirdi).
+ *
+ * Çalışma zamanında çizmek yerine BURADA çiziliyor. Sebep: grafiğin hiç
+ * girdisi yok — tamamen `R(r)` fonksiyonundan çıkan sabit bir şekil.
+ * Sabit bir şekli tarayıcıya her açılışta yeniden hesaplatmak hem
+ * gereksiz JS hem de JS kapalıyken boş kutu demekti. Diğer 10 infografik
+ * de kaynakta zaten statik SVG.
+ *
+ * Çizim mantığı kaynaktaki fonksiyonun bire bir karşılığı; renkler ve
+ * ölçek değerleri paketten aynen alındı (seri renkleri paketin bilinçli
+ * seçimi, `drizzle.css` başlığında da yazılı).
+ */
+function rGrafigi() {
+  const W = 720, H = 330, L = 54, Rp = 132, T = 18, B = 44;
+  const x0 = L, x1 = W - Rp, y0 = H - B, y1 = T;
+  const xmin = 0.05, xmax = 1.0, ymin = 1.0, ymax = 3.6;
+  const X = (v) => x0 + ((v - xmin) / (xmax - xmin)) * (x1 - x0);
+  const Y = (v) => y0 - ((Math.min(v, ymax) - ymin) / (ymax - ymin)) * (y0 - y1);
+  /* `core.ts` içindeki `noiseCorrelation` ile aynı bağıntı. */
+  const Rfac = (r) => (r >= 1 ? r / (1 - 1 / (3 * r)) : 1 / (1 - r / 3));
+
+  const p = [];
+  const yazi = (x, y, metin, renk, boyut, ek = '') =>
+    `<text x="${x}" y="${y}" fill="${renk}" font-size="${boyut}" font-family="system-ui"${ek}>${metin}</text>`;
+
+  for (const v of [1.0, 1.5, 2.0, 2.5, 3.0, 3.5]) {
+    p.push(
+      `<line x1="${x0}" y1="${Y(v)}" x2="${x1}" y2="${Y(v)}" stroke="#2c2c2a" stroke-width="1"/>`,
+      yazi(x0 - 10, Y(v) + 4, v.toFixed(1), '#898781', 11.5, ' text-anchor="end"')
+    );
+  }
+  p.push(
+    `<line x1="${x0}" y1="${y0}" x2="${x1}" y2="${y0}" stroke="#383835" stroke-width="1.2"/>`
+  );
+  for (const v of [0.2, 0.4, 0.6, 0.8, 1.0]) {
+    p.push(
+      yazi(X(v), y0 + 20, v.toFixed(1), '#898781', 11.5, ' text-anchor="middle"')
+    );
+  }
+  p.push(
+    yazi((x0 + x1) / 2, y0 + 40, 'pixfrac (damla boyutu)', '#898781', 12.5, ' text-anchor="middle"'),
+    yazi(16, (y0 + y1) / 2, 'R — gürültü korelasyon faktörü', '#898781', 12.5,
+      ` text-anchor="middle" transform="rotate(-90 16 ${(y0 + y1) / 2})"`)
+  );
+
+  for (const se of [
+    { s: 1, c: '#3987e5', n: '1×' },
+    { s: 2, c: '#d95926', n: '2×' },
+    { s: 3, c: '#199e70', n: '3×' },
+  ]) {
+    let d = '';
+    let ilk = true;
+    for (let v = xmin; v <= 1.0001; v += 0.01) {
+      const R = Rfac(v * se.s);
+      /* Eğri tavanı aşınca kalem kaldırılıyor; aksi hâlde grafiğin
+         dışından geçen düz bir çizgi çizilirdi. */
+      if (R > ymax + 0.4) { ilk = true; continue; }
+      d += `${ilk ? 'M' : 'L'}${X(v).toFixed(1)},${Y(R).toFixed(1)} `;
+      ilk = false;
+    }
+    p.push(`<path d="${d.trim()}" fill="none" stroke="${se.c}" stroke-width="2" stroke-linejoin="round"/>`);
+
+    const po = 1 / se.s;
+    if (po <= 1.0) {
+      p.push(`<circle cx="${X(po).toFixed(1)}" cy="${Y(1.5).toFixed(1)}" r="5.5" fill="#1a1a19" stroke="${se.c}" stroke-width="2"/>`);
+    }
+    const Re = Rfac(1.0 * se.s);
+    const ty = Re > ymax ? Y(ymax) + (se.s === 3 ? 14 : 0) : Y(Re);
+    p.push(yazi(x1 + 12, ty + 4, `${se.n} → R ${Re.toFixed(2)}`, se.c, 12.5, ' font-weight="700"'));
+  }
+
+  p.push(
+    `<line x1="${x0}" y1="${Y(1.5)}" x2="${x1}" y2="${Y(1.5)}" stroke="#4ed24e" stroke-width="1.2" opacity="0.45"/>`,
+    yazi(x0 + 8, Y(1.72), '○ = r 1 · denge noktası', '#4ed24e', 11.5, ' font-weight="600"'),
+    yazi(x0 + 8, Y(1.72) + 16, 'damla tam bir çıktı pikseli boyutunda', '#898781', 11,
+      ' stroke="#1a1a19" stroke-width="3.5" paint-order="stroke"')
+  );
+
+  return `<g>${p.join('')}</g>`;
+}
+
+{
+  const bosSvg = /(<svg[^>]*id="rchart"[^>]*>)\s*(<\/svg>)/;
+  let dolduruldu = false;
+  for (const segment of segments) {
+    if (segment.kind !== 'html' || !bosSvg.test(segment.html)) continue;
+    segment.html = segment.html.replace(bosSvg, (_a, ac, kapa) => `${ac}${rGrafigi()}${kapa}`);
+    dolduruldu = true;
+  }
+  if (!dolduruldu) {
+    console.error('R grafiği için boş `#rchart` bulunamadı — kaynak değişmiş.');
+    process.exit(1);
+  }
+}
+
 /* ── 4. içindekiler ─────────────────────────────────────────────────── */
 const toc = [];
 {

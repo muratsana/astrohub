@@ -30,11 +30,7 @@ import { moonlessDarkMinutes } from '@/domain/astronomy/nightCalendar';
 import { zonedMidnight } from '@/domain/time/zonedDay';
 import { altitudeCurve, usableWindow } from '@/domain/astronomy/sessionPlan';
 import { AltitudeChart } from './AltitudeChart';
-import {
-  readCityParam,
-  shareableCityId,
-  withCityParam,
-} from './locationShare';
+import { readCityParam, shareableCityId, withCityParam } from './locationShare';
 import { cn } from '@/lib/cn';
 
 /**
@@ -116,7 +112,11 @@ export function TonightPage() {
       location.longitude,
       location.timeZone
     );
-    const moonless = moonlessDarkMinutes(night, location.latitude, location.longitude);
+    const moonless = moonlessDarkMinutes(
+      night,
+      location.latitude,
+      location.longitude
+    );
 
     const window =
       night.start && night.end ? { start: night.start, end: night.end } : null;
@@ -124,8 +124,12 @@ export function TonightPage() {
     const rows = window
       ? targets
           .map((target) => {
-            const coords = { ra: parseRa(target.ra), dec: parseDec(target.dec) };
-            if (Number.isNaN(coords.ra) || Number.isNaN(coords.dec)) return null;
+            const coords = {
+              ra: parseRa(target.ra),
+              dec: parseDec(target.dec),
+            };
+            if (Number.isNaN(coords.ra) || Number.isNaN(coords.dec))
+              return null;
 
             const usable = usableWindow(
               coords,
@@ -161,8 +165,10 @@ export function TonightPage() {
         : sky.rows.filter((row) => row.target.kind === kind);
 
     return [...filtered].sort((a, b) => {
-      if (sort === 'zirve') return b.usable.peakAltitude - a.usable.peakAltitude;
-      if (sort === 'ad') return a.target.name.localeCompare(b.target.name, 'tr');
+      if (sort === 'zirve')
+        return b.usable.peakAltitude - a.usable.peakAltitude;
+      if (sort === 'ad')
+        return a.target.name.localeCompare(b.target.name, 'tr');
       return b.usable.minutes - a.usable.minutes;
     });
   }, [sky.rows, sort, kind]);
@@ -315,8 +321,11 @@ export function TonightPage() {
                 <Select
                   id="tonight-kind"
                   value={kind}
-                  onChange={(e) => setKind(e.target.value as TargetKind | 'hepsi')}
-                  className="h-8 w-auto text-meta"
+                  onChange={(e) =>
+                    setKind(e.target.value as TargetKind | 'hepsi')
+                  }
+                  width="auto"
+                  className="h-8 text-meta"
                 >
                   <option value="hepsi">Tüm türler</option>
                   {Object.entries(targetKindLabels).map(([value, label]) => (
@@ -333,7 +342,8 @@ export function TonightPage() {
                   id="tonight-sort"
                   value={sort}
                   onChange={(e) => setSort(e.target.value as SortKey)}
-                  className="h-8 w-auto text-meta"
+                  width="auto"
+                  className="h-8 text-meta"
                 >
                   <option value="pencere">Pencere süresi</option>
                   <option value="zirve">Zirve yüksekliği</option>

@@ -10,8 +10,13 @@ import { PageMeta } from '@/components/seo/PageMeta';
 import {
   forumCategories,
   forumCategoryOrder,
+  forumLabelLimit,
+  forumLabelOrder,
+  forumLabels,
   type ForumCategoryId,
+  type ForumLabelId,
 } from './types';
+import { cn } from '@/lib/cn';
 import { sanitizeText } from '@/lib/sanitize';
 import { useAuth } from '@/features/auth/AuthContext';
 import { createThread } from '@/services/content/forum';
@@ -35,6 +40,7 @@ export function NewThreadPage() {
   const [category, setCategory] = useState<string>(forumCategoryOrder[0]);
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
+  const [labels, setLabels] = useState<ForumLabelId[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -50,7 +56,7 @@ export function NewThreadPage() {
         title,
         body,
         category: category as ForumCategoryId,
-        labels: [],
+        labels,
         authorId: user.id,
       });
       navigate(`/forum/${slug}`);
@@ -115,6 +121,67 @@ export function NewThreadPage() {
             {info && (
               <p className="-mt-2 text-meta text-faint">{info.description}</p>
             )}
+
+            {/*
+              ROZET SEÇİMİ — çoklu ama SINIRLI.
+
+              Serbest metin etiket yerine sabit bir set var çünkü
+              süzgecin işe yaraması buna bağlı: herkesin kendi yazdığı
+              etiket, hiçbir şeyi bir araya getirmez. Sınır (`forumLabelLimit`)
+              ise şu yüzden: her konuya altı rozetin de takılması hâlinde
+              rozet hiçbir şeyi ayırt etmez olurdu.
+
+              `Field` KULLANILMADI: o bileşen `<label htmlFor>` üretip tek
+              bir kontrolü işaret ediyor. Burada işaret edilecek tek kontrol
+              yok — altı düğmeden oluşan bir grup var ve ekran okuyucuya
+              bunu söyleyen şey `role="group"`.
+            */}
+            <div className="space-y-1.5">
+              <span id="thread-labels-label" className="label block">
+                Rozetler <span className="text-faint">(isteğe bağlı)</span>
+              </span>
+              <div
+                role="group"
+                aria-labelledby="thread-labels-label"
+                className="flex flex-wrap gap-1.5"
+              >
+                {forumLabelOrder.map((id) => {
+                  const secili = labels.includes(id);
+                  const dolu = labels.length >= forumLabelLimit;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      aria-pressed={secili}
+                      title={forumLabels[id].description}
+                      disabled={!secili && dolu}
+                      onClick={() =>
+                        setLabels((mevcut) =>
+                          mevcut.includes(id)
+                            ? mevcut.filter((x) => x !== id)
+                            : mevcut.length < forumLabelLimit
+                              ? [...mevcut, id]
+                              : mevcut
+                        )
+                      }
+                      className={cn(
+                        'rounded-card border px-2.5 py-1 text-meta font-medium transition-colors',
+                        secili
+                          ? 'border-primary bg-primary/12 text-primary'
+                          : 'border-border text-muted-foreground hover:border-border-strong hover:text-foreground',
+                        !secili && dolu && 'cursor-not-allowed opacity-45'
+                      )}
+                    >
+                      {forumLabels[id].name}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-meta text-faint">
+                Konunun türünü seçin — en çok {forumLabelLimit} tane.
+                Rozetler forumda süzgeç olarak kullanılıyor.
+              </p>
+            </div>
 
             <Field
               label="Başlık"

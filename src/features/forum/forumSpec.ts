@@ -1,5 +1,5 @@
 import type { ExplorerSpec, SortSpec } from '@/features/explorer/query';
-import { forumCategories, type ForumThread } from './types';
+import { forumCategories, forumLabels, type ForumThread } from './types';
 
 /**
  * FORUMUN DATA EXPLORER TANIMI (Faz 4).
@@ -67,6 +67,27 @@ export const forumSpec: ExplorerSpec<ForumThread> = {
       valueOf: (t) => t.category,
       labelOf: (v) =>
         forumCategories[v as keyof typeof forumCategories]?.name ?? v,
+    },
+    {
+      param: 'rozet',
+      label: 'Rozet',
+      /* Bir konu birden çok rozet taşıyabiliyor; faset motoru dizi
+         döndürmeyi zaten destekliyor ve her rozet ayrı bir seçenek
+         oluyor. */
+      valueOf: (t) => t.labels ?? [],
+      labelOf: (v) => forumLabels[v as keyof typeof forumLabels]?.name ?? v,
+    },
+    {
+      param: 'cozulmemis',
+      label: 'Çözülmemiş',
+      /*
+        TERS MANTIK. Faset yalnızca ÇÖZÜLMEMİŞ konularda değer üretiyor,
+        yani seçim açıkken onlar geçiyor. Çözülmüş konular için `null`
+        dönmek, seçim kapalıyken hiçbir şeyi süzmemek demek — "hepsi"
+        için ayrı bir seçenek gerekmiyor.
+      */
+      valueOf: (t) => (t.solved ? null : 'evet'),
+      labelOf: () => 'evet',
     },
   ],
 

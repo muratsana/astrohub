@@ -61,6 +61,42 @@ const WIDGETS: Record<DrizzleWidgetId, () => React.ReactElement> = {
 
 const PUBLISHED = '2026-08-05';
 
+/**
+ * GİRİŞ KUTUSU — makalenin ÖNÜNE, makalenin İÇİNE değil.
+ *
+ * Makale teknik olarak doğru ama ilk paragrafından itibaren "yetersiz
+ * örnekleme", "pixfrac", "dither deseni" diyor. Bu terimleri bilmeyen
+ * biri için giriş bir duvar; oysa asıl cevabı (drizzle sana lazım mı?)
+ * üç cümlede vermek mümkün.
+ *
+ * Kutu üretilen gövdeye DOKUNMUYOR: içerik `content.generated.ts` ve her
+ * derlemede kaynaktan yeniden üretiliyor, oraya elle yazılan bir şey ilk
+ * üretimde silinirdi. Bu yüzden karşılama React tarafında duruyor.
+ *
+ * Kısa tutuldu — üç terim ve bir "kısa cevap". Uzun bir önsöz, yazıyı
+ * okumaya gelen kişiyi yazıdan uzaklaştırır.
+ */
+const TERIMLER: { terim: string; karsilik: string; aciklama: string }[] = [
+  {
+    terim: 'Örnekleme',
+    karsilik: 'yıldız kaç piksele düşüyor',
+    aciklama:
+      'Teleskobun gösterdiği en küçük ayrıntı tek bir piksele sığıyorsa "yetersiz örnekleme" var demektir: yıldızlar yuvarlak değil kare çıkar, detay kaydedilmeden kaybolur.',
+  },
+  {
+    terim: 'Dither',
+    karsilik: 'kareler arası minik kaydırma',
+    aciklama:
+      'Her pozdan sonra teleskobu birkaç piksel kaydırmak. Aynı yıldız her karede farklı bir piksele düştüğü için, tek tek karelerin kaçırdığı ayrıntı toplamda geri gelir.',
+  },
+  {
+    terim: 'Pixfrac',
+    karsilik: 'damlanın büyüklüğü',
+    aciklama:
+      'Drizzle her pikseli küçültüp çıktı ızgarasına "damlatır". Damla ne kadar küçükse detay o kadar keskin, gürültü o kadar fazla olur. Dengeyi bulmak bu yazının ana konusu.',
+  },
+];
+
 export function DrizzleGuidePage() {
   const bodyRef = useRef<HTMLDivElement>(null);
   const [activeId, setActiveId] = useState(drizzleToc[0]?.id ?? '');
@@ -181,7 +217,7 @@ export function DrizzleGuidePage() {
           breadcrumbJsonLd([
             { name: 'Ana Sayfa', path: '/' },
             { name: 'Yazılar', path: '/yazilar' },
-            { name: 'Drizzle Rehberi', path: '/yazilar/drizzle-rehberi' },
+            { name: 'Astrofotoğrafçılıkta Drizzle', path: '/yazilar/drizzle-rehberi' },
           ]),
           {
             '@context': 'https://schema.org',
@@ -202,7 +238,7 @@ export function DrizzleGuidePage() {
           breadcrumb={[
             { label: 'Ana Sayfa', to: '/' },
             { label: 'Yazılar', to: '/yazilar' },
-            { label: 'Drizzle Rehberi' },
+            { label: 'Astrofotoğrafçılıkta Drizzle' },
           ]}
           title="Astrofotoğrafçılıkta Drizzle"
           description="Hubble için icat edilmiş bir algoritma, bahçenizdeki teleskopta ne işe yarıyor? Yağmur damlası benzetmesinden PHD2'nin dither ayarlarına kadar, sıfırdan anlatım."
@@ -244,7 +280,61 @@ export function DrizzleGuidePage() {
             </ul>
           </nav>
 
-          <article ref={bodyRef} className="dz-root min-w-0 max-w-[75ch]">
+          <div className="min-w-0 max-w-[75ch]">
+            <section
+              aria-labelledby="dz-giris"
+              className="mb-8 rounded-card border border-border-strong bg-surface-1 p-4 sm:p-5"
+            >
+              <h2 id="dz-giris" className="type-section mb-2 text-foreground">
+                Hiç duymadıysanız: en kısa cevap
+              </h2>
+              <p className="max-w-[65ch] text-body-sm leading-relaxed text-muted-foreground">
+                Drizzle, <strong className="text-foreground">yıldızların
+                kare kare çıktığı</strong> kurulumlarda işe yarar. Teleskop
+                ve kameranız zaten yeterince ince ayrıntı yakalıyorsa
+                drizzle size detay <em>kazandırmaz</em> — sadece gürültüyü
+                büyütür ve dosyaları dörde katlar. Yani ilk soru “nasıl
+                yaparım” değil, <strong className="text-foreground">“bana
+                lazım mı”</strong>. Aşağıdaki ilk hesaplayıcı bunu tek
+                bakışta söylüyor.
+              </p>
+
+              <p className="mt-3 max-w-[65ch] text-body-sm leading-relaxed text-muted-foreground">
+                Cevap “evet” çıkarsa şart şu:{' '}
+                <strong className="text-foreground">
+                  poz aralarında dither yapmış olmalısınız
+                </strong>
+                . Dithersiz karelerde drizzle çalışmaz — elinde yeni bilgi
+                yoktur, olmayan ayrıntıyı üretemez.
+              </p>
+
+              <dl className="mt-4 grid gap-3 border-t border-border pt-4 sm:grid-cols-3">
+                {TERIMLER.map((t) => (
+                  <div key={t.terim}>
+                    <dt className="text-body-sm font-medium text-foreground">
+                      {t.terim}
+                      {/* Karşılık ayrı satırda: yan yana yazıldığında üç
+                          sütunun ikisinde sarıyor ve başlıklar farklı
+                          yüksekliklerde başlıyordu. */}
+                      <span className="mt-0.5 block text-meta font-normal text-primary">
+                        {t.karsilik}
+                      </span>
+                    </dt>
+                    <dd className="mt-1 text-meta leading-relaxed text-muted-foreground">
+                      {t.aciklama}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+
+              <p className="mt-4 text-meta leading-relaxed text-faint">
+                Yazı buradan sonra teknikleşiyor ama her bölüm kendi
+                başına okunabilir; sıkıldığınız yerde hesaplayıcılara
+                atlayıp kendi rakamlarınızı deneyebilirsiniz.
+              </p>
+            </section>
+
+            <article ref={bodyRef} className="dz-root">
             {drizzleSegments.map((segment, index) => {
               if (segment.kind === 'widget') {
                 const Widget = WIDGETS[segment.id];
@@ -259,7 +349,8 @@ export function DrizzleGuidePage() {
                 </Fragment>
               );
             })}
-          </article>
+            </article>
+          </div>
         </div>
       </Container>
     </>

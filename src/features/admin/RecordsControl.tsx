@@ -202,7 +202,8 @@ export function RecordsControl({
                       setRecordStatus(kind, row.id, e.target.value)
                     )
                   }
-                  className="h-8 w-auto text-meta"
+                  width="auto"
+                  className="h-8 text-meta"
                 >
                   {spec.statuses.map((st) => (
                     <option key={st} value={st}>
