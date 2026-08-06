@@ -249,22 +249,22 @@ canvas{display:block; image-rendering:pixelated; border-radius:8px; background:#
     </ul>
   </div>
 
-  <p>Astrofotoğrafçılık forumlarında en çok karıştırılan konulardan biri drizzle. Kimi "her zaman aç, bedava çözünürlük" der, kimi "asla kullanma, sadece gürültü" der. İkisi de yanlış — çünkü drizzle <strong>koşullu</strong> bir tekniktir: belirli bir veri kusurunu düzeltmek için tasarlanmıştır, o kusur sizde yoksa hiçbir şey yapmaz.</p>
+  <p>Forumlarda drizzle kadar tartışılan az konu var. Biri "her zaman aç, bedava çözünürlük" diyor, öbürü "sakın açma, sadece gürültü getirir" diyor. İkisi de yanılıyor, çünkü ikisi de aynı hatayı yapıyor: drizzle'ı herkese uyan bir ayar sanıyorlar. Oysa drizzle bir ilaç gibi. Belirli bir derde iyi gelir. O dert sizde yoksa hiçbir işe yaramaz, yan etkileri yerinde durur.</p>
 
-  <p>Bu yazıda önce o kusurun ne olduğunu (piksel ölçeği ve örnekleme), sonra drizzle'ın onu nasıl düzelttiğini, sonra da drizzle'ın çalışması için mutlaka gereken şeyi — <strong>dithering</strong> ve onu sağlayan <strong>PHD2</strong>'yi — sıfırdan anlatacağım. Sonunda kendi kurulumunuz için "drizzle yapmalı mıyım?" sorusuna sayısal cevap veren bir karar ağacı ve hesaplayıcılar var.</p>
+  <p>Sıra şöyle: önce derdin ne olduğuna bakacağız, sonra drizzle'ın onu nasıl iyileştirdiğine, sonra da çalışması için şart olan tek şeye — kareler arasında teleskobu birazcık kaydırmaya. Sonunda kendi ekipmanınızın rakamlarını girip "bana lazım mı?" sorusuna cevap alabileceğiniz hesaplayıcılar var. Formül ezberlemeniz gerekmiyor; hesabı onlar yapıyor.</p>
 
   <hr>
 
   <!-- ==================== 1 · TEMELLER ==================== -->
   <h2 id="temeller"><span class="sec-no">BÖLÜM 1</span><br>Temeller: piksel, görüntü ölçeği ve FWHM</h2>
 
-  <p>Drizzle'ı anlamak için önce sensörünüzün gökyüzünü nasıl "böldüğünü" anlamak gerekir. Üç kavram yeterli.</p>
+  <p>Drizzle'ın ne yaptığını anlamak için önce kameranızın gökyüzünü nasıl parçalara ayırdığını görmek gerekiyor. Üç fikir yeter, üçü de gündelik hayattan tanıdık.</p>
 
   <h3>Piksel bir nokta değil, bir kova</h3>
 
-  <p>Sensörünüzdeki her piksel, kendi alanına düşen <strong>bütün ışığı toplayıp tek bir sayı üretir</strong>. Piksel içindeki ışığın nasıl dağıldığını bilmez — sadece toplamı bilir. Bu, drizzle'ın tüm mantığının dayandığı gerçektir: bir piksel, üzerine düşen sahnenin <em>ortalamasını</em> verir, detayını değil.</p>
+  <p>Yağmuru ölçmek için bahçeye dizilmiş kovaları düşünün. Her kova ağzına düşen suyu toplar ve size tek bir sayı verir: "bu kadar yağmış". Kovanın içinde suyun sağa mı sola mı daha çok düştüğünü asla öğrenemezsiniz. Sensörünüzün pikselleri de tam olarak böyle. Her piksel kendi alanına düşen ışığı toplayıp tek bir sayı üretir; <strong>o alanın içinde ışığın nasıl dağıldığı kaydedilmez</strong>. Drizzle'ın bütün mantığı bu tek cümleye dayanıyor.</p>
 
-  <p>Teleskobunuz bir yıldızı sensöre nokta olarak değil, küçük bir ışık lekesi olarak düşürür. Bu lekeye <strong>PSF</strong> (Point Spread Function — nokta yayılım fonksiyonu) denir. Genişliğini ölçmenin standart yolu <strong>FWHM</strong>'dir (Full Width at Half Maximum — yarı yükseklikteki tam genişlik): lekenin, tepe parlaklığının yarısına düştüğü noktalar arasındaki mesafe. FWHM'yi ister yay saniyesi (″), ister piksel cinsinden ifade edebilirsiniz — ve drizzle kararı tam olarak <em>piksel cinsinden</em> FWHM'ye bağlıdır.</p>
+  <p>İkinci fikir: yıldızlar görüntünüzde nokta değil. Teleskop ne kadar iyi olursa olsun, araya giren hava ve optiğin kendi sınırları yüzünden her yıldız küçük bir ışık lekesine dönüşür. Bu lekenin ne kadar şişkin olduğunu tek bir sayıyla anlatırız; astronomlar ona <strong>FWHM</strong> der. İsmi önemli değil, akılda tutulacak şey şu: <strong>leke kaç piksele yayılıyor?</strong> Drizzle kararının tamamı bu sayıya bakar.</p>
 
   <div class="fig">
     <svg viewBox="0 0 800 300" role="img" aria-label="Işığın teleskoptan sensöre ulaşıp piksel ızgarasında sayıya dönüşmesi">
@@ -348,7 +348,7 @@ canvas{display:block; image-rendering:pixelated; border-radius:8px; background:#
     <div class="c">206.265 sayısı radyandan yay saniyesine çevirme sabitinden gelir (µm/mm birim dönüşümü dahil).</div>
   </div>
 
-  <p>Örnek: 3.76 µm pikselli bir kamera, 400 mm odaklı bir teleskopta <code>206.265 × 3.76 / 400 = 1.94″/px</code> verir. Aynı kamera 2000 mm odakta 0.39″/px verir. Odak uzunluğu arttıkça her piksel gökyüzünün daha küçük bir parçasına bakar — yani örnekleme <em>sıklaşır</em>.</p>
+  <p>Üçüncü fikir: aynı kamera, farklı teleskoplarda farklı davranır. Kısa odaklı bir teleskopta her piksel gökyüzünün geniş bir parçasına bakar, uzun odaklıda dar bir parçasına. Yani "pikselim büyük mü küçük mü" sorusunun cevabı kameranızda değil, kamerayla teleskobun birlikteliğinde saklı. Aynı kamerayı 400 mm'lik bir teleskoba takarsanız her piksel yaklaşık 2 yay saniyesi görür; 2000 mm'lik bir teleskoba takarsanız beşte biri kadarını. Bu sayıyı elle hesaplamanız gerekmiyor — az aşağıdaki hesaplayıcı sizin için yapıyor.</p>
 
   <h3>Sihirli oran: FWHM'nin kaç piksele düştüğü</h3>
 
@@ -359,7 +359,7 @@ canvas{display:block; image-rendering:pixelated; border-radius:8px; background:#
     <div class="c">Pratikte bu sayıyı hesaplamanıza gerek yok — yığınlama yazılımınız kayıtlı karelerinizde ölçer. PixInsight'ta <code>Scripts &gt; Image Analysis &gt; FWHMEccentricity</code>, Siril'de kare istatistikleri, ASTAP'ta HFD/FWHM sütunu.</div>
   </div>
 
-  <p>Buradaki FWHM<sub>yay saniyesi</sub>, atmosferin (seeing), optiğin ve <em>rehberleme hatasının</em> birleşik sonucudur. Yani mükemmel bir gecede aynı ekipmanla daha küçük FWHM alırsınız — ve <strong>iyi seeing sizi daha da yetersiz-örneklenmiş hale getirir</strong>. Bu, deneyimli kullanıcıların "en iyi gecelerde drizzle daha çok işe yarıyor" gözleminin sebebi.</p>
+  <p>Burada ters gibi görünen bir şey var. Lekenin genişliği her gece aynı değildir: hava sakinse yıldızlar daha derli toplu çıkar. Kulağa iyi haber gibi geliyor, öyle de — ama bir yan etkisi var. Leke küçüldükçe daha az piksele düşer, yani <strong>en iyi gecelerinizde kameranız detayı yakalamakta en çok zorlanır</strong>. Deneyimli kullanıcıların "en iyi gecelerde drizzle daha çok işe yarıyor" demesinin sebebi tam olarak bu.</p>
 
   <div class="tool" id="calc-sampling">
     <h4>Hesaplayıcı 1 — Örnekleme durumunuz</h4>
@@ -385,7 +385,7 @@ canvas{display:block; image-rendering:pixelated; border-radius:8px; background:#
   <!-- ==================== 2 · ÖRNEKLEME ==================== -->
   <h2 id="ornekleme"><span class="sec-no">BÖLÜM 2</span><br>Örnekleme: az mı, tam mı, çok mu?</h2>
 
-  <p>Sinyal işlemede bir teorem var: bir dalgayı doğru yeniden üretebilmek için, en yüksek frekansının <strong>en az iki katı</strong> sıklıkta örneklemeniz gerekir. Buna <strong>Nyquist kriteri</strong> denir. Astrofotoğrafta bunun karşılığı şudur: bir yıldızın ışık lekesini doğru kaydedebilmek için <strong>FWHM'nin en az 2 piksele düşmesi</strong> gerekir.</p>
+  <p>Bir şeyin şeklini kaydetmek istiyorsanız onu en az iki noktadan ölçmeniz gerekir. Tek ölçüm size sadece "bir şey var" der, şeklini anlatmaz. Bu kural ses kaydından fotoğrafa kadar her yerde geçerli; mühendisler ona Nyquist kriteri diyor ama adını bilmek zorunda değilsiniz. Bize düşen karşılığı basit: <strong>bir yıldızın ışık lekesi en az iki piksele yayılmalı</strong>. Daha azına sığıyorsa şekli kaydedilmiyor demektir ve yıldız yuvarlak değil, köşeli çıkar.</p>
 
   <div class="fig">
     <svg viewBox="0 0 800 340" role="img" aria-label="Yetersiz, doğru ve aşırı örnekleme karşılaştırması">
@@ -478,12 +478,12 @@ canvas{display:block; image-rendering:pixelated; border-radius:8px; background:#
 
   <div class="callout warn">
     <span class="t">Yay saniyesi eşiği tek başına yeterli değil</span>
-    <p>Forumlarda sıkça "2″/px üstündeyse drizzle yap" denir. Bu kaba bir kılavuzdur ve <strong>seeing'i hesaba katmaz</strong>. 2.5″/px'te ama 6″ seeing'de çekim yapıyorsanız FWHM 2.4 piksele düşer — yetersiz örneklenmiş değilsiniz. Ölçüt her zaman <strong>kayıtlı karelerinizde ölçülen piksel cinsinden FWHM</strong>'dir; ekipman kataloğundaki sayı değil.</p>
+    <p>Forumlarda sık duyulan bir kestirme var: "2″/px üstündeysen drizzle yap." Bu kural havayı hesaba katmadığı için yanıltıcı. Havanın çalkantılı olduğu bir gecede yıldızlar zaten şişer ve rahatça birkaç piksele yayılır — o gece drizzle'a ihtiyacınız yoktur. Bakılacak yer ekipmanın kutusundaki rakam değil, <strong>o gece çektiğiniz karelerde yıldızların gerçekte kaç piksele yayıldığı</strong>. Bu sayıyı Siril, PixInsight ve ASTAP dâhil hemen her program size söyler.</p>
   </div>
 
   <div class="callout bad">
     <span class="t">Dikkat: modern kameralar çoğunlukla aşırı örneklenmiş</span>
-    <p>ASTAP geliştiricisi Han Kleijn, normal drizzle desteğini yazılımdan tamamen <strong>kaldırdı</strong> ve gerekçesini şöyle açıkladı: <em>"Bugünlerde piksellerinin çok büyük olduğu ve drizzle gerektiren (yani yetersiz örneklenmiş) amatörler olduğuna dair bir belirti görmüyorum. Çoğu, küçük piksel boyutları ve göreli kötü seeing yüzünden aşırı örneklenmiş görüntülere sahip."</em> Bu, "her zaman drizzle aç" tavsiyesinin ne kadar tehlikeli olduğunu gösteren güçlü bir veri noktası.</p>
+    <p>Bu konuda çarpıcı bir örnek var. ASTAP'ın geliştiricisi Han Kleijn, drizzle desteğini programından tamamen çıkardı. Gerekçesi şuydu: <em>"Bugünlerde piksellerinin çok büyük olduğu ve drizzle gerektiren amatörler olduğuna dair bir belirti görmüyorum. Çoğunun görüntüsü, küçük piksel boyutları ve göreli kötü seeing yüzünden zaten fazlasıyla ayrıntılı."</em> Yani bugünün kameralarında sorun çoğu zaman ters yönde. "Her zaman aç" tavsiyesinin neden kötü bir tavsiye olduğunu bundan iyi anlatan bir şey yok.</p>
   </div>
 
   <hr>
@@ -491,9 +491,9 @@ canvas{display:block; image-rendering:pixelated; border-radius:8px; background:#
   <!-- ==================== 3 · DRIZZLE NEDİR ==================== -->
   <h2 id="drizzle"><span class="sec-no">BÖLÜM 3</span><br>Drizzle nedir ve nasıl çalışır?</h2>
 
-  <p>Drizzle'ın resmi adı <strong>"Variable-Pixel Linear Reconstruction"</strong> (değişken pikselli doğrusal yeniden yapılandırma). 1998'de Andrew Fruchter ve Richard Hook tarafından, Hubble Uzay Teleskobu'nun <em>Hubble Deep Field</em> çekimleri için geliştirildi. Hubble'ın WFPC2 kamerası yetersiz örneklenmiş görüntü üretiyordu ve astronomlar bu görüntülerden mümkün olan son detayı çıkarmak istiyordu.</p>
+  <p>Drizzle 1998'de, Hubble Uzay Teleskobu'nun o meşhur "derin alan" çekimleri için bulundu. Hubble'ın o günkü kamerası da bizim bugün yaşadığımız dertten muzdaripti: optik, sensörün kaydedebileceğinden fazla detay üretiyordu ve fark boşa gidiyordu. Andrew Fruchter ile Richard Hook, gökyüzüne yeniden çıkmadan, ellerindeki kareleri daha akıllı birleştirerek o detayın bir kısmını geri almanın yolunu buldu. Uzun adı "değişken pikselli doğrusal yeniden yapılandırma"; kimse öyle demiyor.</p>
 
-  <p>Adı "çiseleme" anlamına gelen <em>drizzle</em>, algoritmanın çalışma biçiminden geliyor: her giriş pikselinin değeri, bir <strong>damla</strong> gibi daha ince bir çıktı ızgarasının üzerine "çiselenir".</p>
+  <p>Adı da buradan geliyor: İngilizcede <em>drizzle</em> "çiselemek" demek. Her karedeki her piksel, küçük bir damla gibi, daha ince gözlü yeni bir ızgaranın üzerine çiseleniyor. Kovalar sabit dururken yağmurun her seferinde biraz farklı yere düşmesi gibi.</p>
 
   <h3>Üç adımda mekanizma</h3>
 
@@ -503,7 +503,7 @@ canvas{display:block; image-rendering:pixelated; border-radius:8px; background:#
     <li><strong>Dağıt (distribute).</strong> Damlanın taşıdığı ışığı, örttüğü çıktı piksellerine <strong>örtüşme alanıyla orantılı</strong> olarak paylaştırın. Her çıktı pikseli aynı zamanda ne kadar "ağırlık" aldığını da biriktirir.</li>
   </ol>
 
-  <p>Bütün kareler için bunu tekrarlayın, sonunda her çıktı pikselini biriktirdiği toplam ağırlığa bölün. Bitti.</p>
+  <p>Bunu bütün kareler için tekrarlayın. Sonunda her yeni piksel, üstüne düşen bütün damlaların ortalamasını taşır. Hepsi bu.</p>
 
   <div class="fig">
     <svg viewBox="0 0 800 330" role="img" aria-label="Drizzle mekanizmasının üç adımı: küçült, yerleştir, dağıt">
@@ -573,9 +573,9 @@ canvas{display:block; image-rendering:pixelated; border-radius:8px; background:#
     <div class="figcap"><b>Şekil 3 — Drizzle'ın üç adımı.</b> Kritik nokta 3. adım: damla bir çıktı pikselinin %45'ini örtüyorsa, o pikselin aldığı ağırlık 0.45'tir. Hiçbir enterpolasyon, hiçbir tahmin yok — sadece geometri. Bu yüzden drizzle <em>ölçtüğünüz</em> değerleri korur, uydurmaz.</div>
   </div>
 
-  <h3>Matematiği (korkutucu değil)</h3>
+  <h3>Meraklısına: perde arkasındaki iki satır</h3>
 
-  <p>Fruchter &amp; Hook'un makalesindeki iki denklem, yukarıdaki 3. adımın tam ifadesidir. Her giriş pikseli için, örttüğü her çıktı pikselinde şu güncelleme yapılır:</p>
+  <p>Bu bölümü atlayabilirsiniz; drizzle'ı kullanmak için gerekmiyor. Merak edenler için asıl işi yapan hesap şu kadar basit: her damla, üstüne düştüğü her yeni piksele <strong>ne kadar örtüştüyse o kadar</strong> katkı yapar ve sonuçta ağırlıklı bir ortalama alınır. Fruchter ile Hook'un makalesindeki iki satır tam olarak bunu söylüyor:</p>
 
   <div class="eq">
     W<span class="hi">yeni</span> = a · w + W<span class="hi">eski</span><br>
@@ -590,11 +590,11 @@ canvas{display:block; image-rendering:pixelated; border-radius:8px; background:#
     </div>
   </div>
 
-  <p>Özü: <strong>ağırlıklı ortalama</strong>. Ağırlık, geometrik örtüşme alanı. Bu kadar. Bu sadeliği yüzünden drizzle <em>doğrusal</em> bir işlemdir — fotometriyi (parlaklık ölçümlerini) bozmaz, bu da onu bilimsel çalışmalarda kullanılabilir kılar.</p>
+  <p>Yani özeti: <strong>ağırlıklı ortalama</strong>, ağırlık da damlanın ne kadarının o pikselin üstüne düştüğü. Bu sadelik bir yan fayda getiriyor: drizzle parlaklıkları bozmuyor. Bir yıldızın görüntüdeki toplam ışığı ölçülebilir kalıyor — bilimsel çalışmalarda kullanılabilmesinin sebebi bu.</p>
 
   <h3>İki uç nokta: interlacing ve shift-and-add</h3>
 
-  <p>Drizzle aslında iki eski yöntem arasında sürekli bir geçiş sağlar. Fruchter &amp; Hook'un kendi ifadesiyle: <em>"Interlacing, pixfrac → 0.0 limitinde drizzle'a eşdeğerdir; shift-and-add ise pixfrac = 1.0'a eşdeğerdir."</em></p>
+  <p>Damlanın büyüklüğünü değiştirdiğinizde drizzle, kendinden önceki iki eski yöntemin arasında gidip geliyor. Damlayı iyice küçültürseniz eski "interlacing" yöntemine, damlayı hiç küçültmezseniz "shift-and-add" yöntemine dönüşüyor. Fruchter ile Hook bunu şöyle yazmış: <em>"Interlacing, pixfrac → 0.0 limitinde drizzle'a eşdeğerdir; shift-and-add ise pixfrac = 1.0'a eşdeğerdir."</em> Aradaki her değer, iki uç arasında bir denge.</p>
 
   <div class="fig">
     <svg viewBox="0 0 800 250" role="img" aria-label="Interlacing, drizzle ve shift-and-add karşılaştırması">
@@ -674,7 +674,7 @@ canvas{display:block; image-rendering:pixelated; border-radius:8px; background:#
 
   <div class="callout">
     <span class="t">Drizzle bir "büyütme" (upscale) değildir</span>
-    <p>Photoshop'ta bir görüntüyü 2× büyüttüğünüzde yazılım <strong>var olmayan pikselleri komşularından tahmin eder</strong> — buna enterpolasyon denir. Drizzle bunu yapmaz: her çıktı pikselinin değeri, gerçekten o bölgeye düşmüş <em>ölçülmüş</em> giriş pikselerinden gelir. Hiçbir kare o bölgeye denk gelmemişse, drizzle o pikseli boş bırakır (delik). Bu, drizzle'ın hem gücü hem de dithering'e bağımlılığının sebebidir.</p>
+    <p>Photoshop'ta bir görüntüyü iki katına büyüttüğünüzde program aradaki pikselleri <strong>komşularına bakıp uydurur</strong>. Drizzle bunu yapmaz: her yeni pikselin değeri, oraya gerçekten düşmüş <em>ölçülmüş</em> ışıktan gelir. Hiçbir kare o bölgeye denk gelmemişse, drizzle o pikseli boş bırakır (delik). Bu, drizzle'ın hem gücü hem de dithering'e bağımlılığının sebebidir.</p>
   </div>
 
   <hr>
@@ -682,11 +682,11 @@ canvas{display:block; image-rendering:pixelated; border-radius:8px; background:#
   <!-- ==================== 4 · SİMÜLATÖR ==================== -->
   <h2 id="simulator"><span class="sec-no">BÖLÜM 4</span><br>Canlı simülatör: drizzle'ı kendiniz çalıştırın</h2>
 
-  <p>Aşağıdaki simülatör gerçek drizzle algoritmasını tarayıcınızda çalıştırıyor. Yapay bir "gerçek gökyüzü" tanımlanıyor, yetersiz-örneklenmiş kameranızla farklı kayma pozisyonlarından örnekleniyor ve sonra üç yöntemle yeniden birleştiriliyor.</p>
+  <p>Aşağıdaki simülatör anlatılanı okuduğunuz sayfada, gerçekten çalıştırıyor. Yapay bir gökyüzü kuruyor, onu detayı taşıyamayan bir kamerayla farklı konumlardan çekiyor ve sonuçları üç ayrı yöntemle birleştiriyor. Düğmelerle oynayın — drizzle'ın ne yaptığını on cümleden daha iyi anlatır.</p>
 
   <div class="callout warn">
     <span class="t">Önce şunu deneyin</span>
-    <p><strong>"Dithering" anahtarını kapatın.</strong> Kare sayısını artırın. Drizzle panelinde hiçbir şeyin düzelmediğini, hatta çıktının delik deşik olduğunu göreceksiniz. Sonra dithering'i açın ve aynı kare sayısıyla farkı görün. Bu, bu yazının en önemli tek dersi.</p>
+    <p><strong>Şunu mutlaka deneyin:</strong> "Dithering" anahtarını kapatın ve kare sayısını sonuna kadar artırın. Hiçbir şeyin düzelmediğini, hatta çıktının delik deşik olduğunu göreceksiniz. Sonra anahtarı açın, kare sayısını değiştirmeden farka bakın. Bu yazıdan tek bir şey aklınızda kalacaksa, o şey bu.</p>
   </div>
 
   <div class="tool" id="sim">
@@ -777,7 +777,7 @@ canvas{display:block; image-rendering:pixelated; border-radius:8px; background:#
 
   <p>Bir damla birden fazla çıktı pikselini örtüyorsa (ki genelde örter), aynı giriş pikselinin gürültüsü o çıktı piksellerinin <em>hepsine</em> dağılır. Sonuç: komşu çıktı pikselleri artık bağımsız değil, <strong>korelasyonlu</strong>. Bu, piksel-piksel gürültü ölçen araçların yanılmasına yol açar — çünkü komşular birbirine benzediği için ölçülen "gürültü" gerçekte olduğundan küçük çıkar.</p>
 
-  <p>Fruchter &amp; Hook bu etkiyi tam olarak niceliklendirdi. Önce yardımcı bir değişken tanımlanır:</p>
+  <p>Bu etkinin ne kadar olduğu hesaplanabiliyor. Aşağıdaki iki satır meraklısı için; sonucu okumak yeterli.</p>
 
   <div class="eq">
     r = pixfrac × drizzle ölçeği<br><br>
@@ -786,7 +786,7 @@ canvas{display:block; image-rendering:pixelated; border-radius:8px; background:#
     <div class="c"><b>R</b>, piksel-piksel ölçülen gürültünün gerçek büyük-ölçek gürültüsünü <b>kaç kat küçük gösterdiğidir</b>. R = 2.2 ise, ölçüm aracınız gürültüyü gerçeğin yarısından az gösteriyor demektir.</div>
   </div>
 
-  <p>Bu formüllerin önemli bir sonucu var: <strong>R, r ile birlikte tekdüze artar.</strong> pixfrac küçüldükçe R düşer (r → 0 iken R → 1). Yani "en düşük R" isteseniz pixfrac'i sıfıra yaklaştırmanız gerekirdi — <em>ama bu felaket olurdu</em>, çünkü minik damlalar çıktı ızgarasının çoğunu boş bırakır. Dolayısıyla <strong>R'yi tek başına optimize edilecek bir sayı olarak görmeyin</strong>; ödediğiniz bedelin büyüklüğünü gösteren bir gösterge olarak görün.</p>
+  <p>Sonuç şu: <strong>damla küçüldükçe bu yan etki azalıyor.</strong> Buradan "öyleyse damlayı iyice küçültelim" sonucu çıkmıyor — çıkarsa felaket olur, çünkü minik damlalar yeni ızgaranın çoğunu boş bırakır. Yani bu sayı <strong>tek başına peşine düşülecek bir hedef değil, ödediğiniz bedeli gösteren bir gösterge. Kararı ona bakarak değil, bir sayı olarak görmeyin</strong>; ödediğiniz bedelin büyüklüğünü gösteren bir gösterge olarak görün.</p>
 
   <div class="fig">
     <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:10px;margin-bottom:6px">
@@ -845,20 +845,20 @@ canvas{display:block; image-rendering:pixelated; border-radius:8px; background:#
 
   <h3>Peki gürültü gerçekten artıyor mu?</h3>
 
-  <p>Evet. 2× drizzle, aynı fotonları 4 kat daha fazla piksele böler; her bir çıktı pikselinin sinyali doğal olarak düşer. AstroPixelProcessor'ın dokümantasyonu bunu açık açık söylüyor: <em>"Drizzle BÜYÜK bir gürültü enjektörüdür"</em> ve <em>"Drizzle her zaman keskinlik ile gürültü arasındaki dengedir."</em></p>
+  <p>Evet, artıyor. Aynı miktarda ışığı dört kat fazla piksele bölüyorsunuz; her pikselin payına doğal olarak daha azı düşüyor. AstroPixelProcessor'ın kendi belgesi bunu hiç yumuşatmadan söylüyor: <em>"Drizzle BÜYÜK bir gürültü enjektörüdür"</em> ve <em>"Drizzle her zaman keskinlik ile gürültü arasındaki dengedir."</em></p>
 
-  <p>Ama <strong>gürültünün dokusu</strong> genelde iyileşir. Drizzle'sız bir yığında gürültü daha büyük ölçekli, yumuşak lekeler halinde görünür; drizzle'lıda daha ince taneli ve düzenlidir. İnce taneli gürültü, gürültü azaltma araçlarının çok daha kolay başa çıktığı bir şeydir. Bu yüzden bazı kullanıcılar "SNR düştü ama görüntü daha temiz görünüyor" der — ikisi de doğrudur.</p>
+  <p>Ama gürültünün <strong>dokusu</strong> genelde iyileşir. Drizzle yapılmamış bir yığında gürültü iri ve yumuşak lekeler hâlinde görünür; drizzle'lıda daha ince taneli olur. İnce taneli gürültüyle gürültü azaltma araçları çok daha kolay baş eder. Bazı kullanıcıların "sayılar kötüleşti ama görüntü daha temiz görünüyor" der — ikisi de doğrudur.</p>
 
   <div class="callout">
     <span class="t">Pratik kural</span>
-    <p>pixfrac'i <strong>1 ÷ ölçek</strong> değerinden başlatın (2× için 0.5, 3× için 0.33). Çıktıda delikler ya da Moiré desenleri görürseniz ya <strong>pixfrac'i yükseltin</strong> ya da <strong>daha çok kare toplayın</strong>. Bu iki seçenek arasındaki tercih, drizzle ayarlamanın tamamıdır.</p>
+    <p>Damla boyutunu şuradan başlatın: iki kat büyütüyorsanız 0.5, üç kat büyütüyorsanız 0.33. Sonra çıktıya %100 yakınlaştırıp bakın. Delikler ya da tuhaf hâle desenleri görüyorsanız iki seçeneğiniz var: <strong>damlayı biraz büyütün</strong> ya da <strong>daha çok kare toplayın</strong>. Drizzle'ı ayarlamak dediğimiz şey, bu iki seçenek arasındaki tercihten ibaret.</p>
   </div>
   <hr>
 
   <!-- ==================== 6 · DITHERING ==================== -->
   <h2 id="dithering"><span class="sec-no">BÖLÜM 6</span><br>Dithering: drizzle'ın yakıtı</h2>
 
-  <p><strong>Dithering</strong>, pozlar arasında teleskobu birkaç piksellik küçük, rastgele miktarlarda kaydırmaktır. Astrofotoğrafçılar bunu uzun zamandır yapıyor — ama çoğu, drizzle'la ilişkisini bilmeden.</p>
+  <p>Dithering kulağa teknik geliyor ama yaptığı şey çok basit: <strong>her pozdan sonra teleskobu birkaç piksel kaydırmak</strong>. Hepsi bu. Astrofotoğrafçılar bunu yıllardır yapıyor, çoğu da drizzle'la ilgisini bilmeden — çünkü tek başına bile işe yarıyor. Drizzle içinse sadece faydalı değil, <em>şart</em>.</p>
 
   <h3>Dithering'in dört işi</h3>
 
@@ -892,7 +892,7 @@ canvas{display:block; image-rendering:pixelated; border-radius:8px; background:#
 
   <h3>Alt-piksel faz: drizzle'ın gerçekten ihtiyaç duyduğu şey</h3>
 
-  <p>"Alt-piksel dithering" ifadesi çok kişiyi yanlış yönlendiriyor. Anlamı <em>"kaydırma bir pikselden küçük olmalı"</em> değil. Anlamı şu: her karenin kayma miktarının <strong>kesirli kısmı</strong> (yani 7.36 pikselin ".36"sı) farklı olmalı ve 0 ile 1 arasına iyi yayılmalı.</p>
+  <p>"Alt-piksel dithering" lafı çok kişiyi yanlış yola sokuyor. Kaydırmanın bir pikselden <em>küçük</em> olması gerektiği anlamına gelmiyor. Anlatmak istediği şu: kaydırma 7 piksel de olabilir, 7.36 piksel de — önemli olan sondaki küsurat, yani ".36". Her karede o küsurat farklı olsun ve 0 ile 1 arasına iyi yayılsınalı.</p>
 
   <div class="fig">
     <svg viewBox="0 0 800 290" role="img" aria-label="Dithersiz, tam piksel ve rastgele dither durumlarında örnekleme fazlarının dağılımı">
@@ -956,7 +956,7 @@ canvas{display:block; image-rendering:pixelated; border-radius:8px; background:#
   <!-- ==================== 7 · PHD2 ==================== -->
   <h2 id="phd2"><span class="sec-no">BÖLÜM 7</span><br>PHD2 Guiding: sıfırdan</h2>
 
-  <p><strong>PHD2</strong> ("Push Here Dummy" 2), ücretsiz ve açık kaynaklı otomatik rehberleme yazılımıdır. Amatör astrofotoğrafın fiili standardıdır. Görevi iki katmanlıdır: (1) uzun pozlar boyunca teleskobu hedefte tutmak, (2) çekim yazılımının komutuyla <strong>dithering yapmak</strong>.</p>
+  <p>Dithering'i pratikte kim yapıyor? Çoğu kurulumda PHD2 adlı ücretsiz bir program. Adı "Push Here Dummy 2" — yani "düğmeye bas yeter" — ve gerçekten de öyle çalışır. İki işi var: uzun pozlar boyunca teleskobu hedefte tutmak, bir de çekim programınız her poz bitiminde "şimdi kaydır" dediğinde <strong>dithering yapmak</strong>.</p>
 
   <h3>Rehberleme döngüsü</h3>
 
@@ -1081,13 +1081,13 @@ canvas{display:block; image-rendering:pixelated; border-radius:8px; background:#
     </table>
   </div>
 
-  <p>Pratik hedef: <strong>Total RMS ≈ görüntü ölçeğinizin yarısı</strong>. 2″/px'te çekiyorsanız 1″ RMS gayet iyidir. 0.5″/px'te çekiyorsanız aynı 1″ RMS yıldızlarınızı şişirir.</p>
+  <p>Nereye kadar iyileştirmeli? Basit bir hedef: rehberleme hatanız, bir pikselin gördüğü alanın yarısı kadar olsun. Her piksel 2 yay saniyesi görüyorsa 1 yay saniyelik hata gayet iyidir. Ama her piksel 0.5 yay saniyesi görüyorsa aynı hata yıldızlarınızı şişirir. Yani "iyi rehberleme" mutlak bir sayı değil, ekipmanınıza göre değişen bir eşik.</p>
 
-  <p>RA RMS'in DEC'ten biraz yüksek olması normaldir. İkisi arasında <strong>2–3 kat</strong> fark varsa yıldızlarınız uzamış çıkar. Ve unutmayın: <em>seeing rehberlenemez.</em> 3.5″ seeing'de 0.4″ RMS kovalamak anlamsızdır.</p>
+  <p>İki eksenden birinin ötekinden biraz kötü olması normal. Aralarında iki üç kat fark varsa yıldızlar bir yöne uzamış çıkar, oraya bakmak gerekir. Bir de şunu unutmayın: <em>havayı rehberleyemezsiniz.</em> Yıldızların zaten 3.5 yay saniyesi şiştiği bir gecede 0.4'lük bir rehberleme hatasının peşine düşmek, hiçbir şeyi değiştirmez.</p>
 
   <div class="callout bad">
     <span class="t">Kötü rehberleme drizzle'a yardım etmez — zarar verir</span>
-    <p>"Rastgele hata = bedava dither = drizzle için iyi" düşüncesi çekici ama <strong>yanlış</strong>. İki farklı zaman ölçeğini ayırmak gerekir:</p>
+    <p>"Rehberleme zaten rastgele hata yapıyor, o hâlde bedava dither alıyorum" diye düşünmek cazip ama yanlış. İki farklı şeyi karıştırmamak gerekiyor:</p>
     <p><strong>Pozlar arası</strong> kayma: alt-piksel faz çeşitliliği sağlar → faydalı. Ama dithering bunu zaten <em>kasten ve daha iyi</em> sağlıyor; rehberleme hatası buna bir şey eklemiyor.</p>
     <p><strong>Poz sırasındaki</strong> titreşim: PSF'i genişletir, yıldızları bulanıklaştırır ve uzatır → <strong>drizzle'ın kurtarmaya çalıştığı detayı yok eder</strong>. Drizzle <em>örneklemeyi</em> onarır, <em>optiği/atmosferi</em> değil. Bulanıklaşmış detay her karede kayıptır, geri gelmez. Üstelik drizzle 2× kusurları da <em>büyütür</em>: uzamış yıldızlar drizzle ile yuvarlaklaşmaz, daha büyük ve daha belirgin uzamış yıldızlar olur.</p>
   </div>
@@ -1118,7 +1118,7 @@ canvas{display:block; image-rendering:pixelated; border-radius:8px; background:#
 
   <h3>Birim tuzağı: hangi pikselin pikseli?</h3>
 
-  <p>PHD2'nin dither miktarı <strong>her zaman rehber kamera pikseli</strong> cinsindendir. NINA'daki "Dither Pixels", SGP'deki kademe, APT'deki değer, ASIAIR'deki "Distance" — hepsi aynı sayıyı besler. Çekim kameranızın pikseli değildir.</p>
+  <p>Burada herkesin düştüğü bir tuzak var. Dither miktarını girdiğiniz kutu — programınızda adı ne olursa olsun — <strong>rehber kameranızın pikselini</strong> kastediyor, çekim kameranızınkini değil. İki kameranın pikselleri farklı boyutta olduğu için, girdiğiniz sayı gökyüzünde bambaşka bir kaymaya karşılık gelebilir.</p>
 
   <p>İki dokümante edilmiş istisna var ve ikisi de kafa karıştırır: <strong>NINA'nın "Direct Guider" / "Mount Dither"</strong> modu ve <strong>APT'nin "Direct Dithering"</strong> modu, aynı isimli alanı <em>çekim</em> kamerası pikseli olarak yorumlar. Rehber kamerası olmadan dither yaparken bunu unutmayın.</p>
 
@@ -1187,7 +1187,7 @@ canvas{display:block; image-rendering:pixelated; border-radius:8px; background:#
     </table>
   </div>
 
-  <p>Drizzle açısından önemli olan toplam <strong>farklı dither pozisyonu sayısıdır</strong>, dither'in büyüklüğü değil. 60 saniyelik 200 pozu her 3 karede bir dither'leyerek çekerseniz ~66 farklı pozisyon elde edersiniz; bu 2× drizzle için fazlasıyla yeterlidir.</p>
+  <p>Drizzle'ın umursadığı şey kaydırmanın <strong>büyüklüğü değil, kaç farklı konumdan çektiğiniz</strong>. 200 kareyi her üç karede bir kaydırarak çekerseniz yaklaşık 66 farklı konumunuz olur; bu iki kat büyütme için fazlasıyla yeterlidir.</p>
 
   <h3>Uygulama bazında varsayılanlar</h3>
 

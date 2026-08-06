@@ -219,7 +219,10 @@ export const articles: Article[] = [
   {
     slug: 'drizzle-rehberi',
     href: '/yazilar/drizzle-rehberi',
-    title: 'Drizzle: Örnekleme, Dither ve pixfrac',
+    /* Başlık sayfadakiyle BİREBİR aynı: kartta bir ad, açılan
+       sayfada başka bir ad görmek okuyucuya doğru yere gelip gelmediğini
+       sorgulatıyordu. */
+    title: 'Astrofotoğrafçılıkta Drizzle',
     category: 'isleme',
     level: 'İleri',
     duration: '35 dk okuma',

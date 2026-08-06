@@ -217,7 +217,7 @@ export function DrizzleGuidePage() {
           breadcrumbJsonLd([
             { name: 'Ana Sayfa', path: '/' },
             { name: 'Yazılar', path: '/yazilar' },
-            { name: 'Drizzle Rehberi', path: '/yazilar/drizzle-rehberi' },
+            { name: 'Astrofotoğrafçılıkta Drizzle', path: '/yazilar/drizzle-rehberi' },
           ]),
           {
             '@context': 'https://schema.org',
@@ -238,7 +238,7 @@ export function DrizzleGuidePage() {
           breadcrumb={[
             { label: 'Ana Sayfa', to: '/' },
             { label: 'Yazılar', to: '/yazilar' },
-            { label: 'Drizzle Rehberi' },
+            { label: 'Astrofotoğrafçılıkta Drizzle' },
           ]}
           title="Astrofotoğrafçılıkta Drizzle"
           description="Hubble için icat edilmiş bir algoritma, bahçenizdeki teleskopta ne işe yarıyor? Yağmur damlası benzetmesinden PHD2'nin dither ayarlarına kadar, sıfırdan anlatım."

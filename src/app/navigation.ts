@@ -157,7 +157,7 @@ export const siteMap: NavGroup[] = [
         keywords: ['makale', 'eğitim', 'rehber', 'ders', 'işleme'],
       },
       {
-        label: 'Drizzle Rehberi',
+        label: 'Astrofotoğrafçılıkta Drizzle',
         to: '/yazilar/drizzle-rehberi',
         description:
           'Örnekleme, pixfrac ve PHD2 dithering — hesaplayıcılı uzun rehber',
