@@ -28,7 +28,11 @@ import { RecordsControl, AuditControl } from './RecordsControl';
 import { CommentsControl } from './CommentsControl';
 import { ForumCategories } from './ForumCategories';
 import type { EntryKind } from '@/services/content/entries';
-import type { RecordKind } from './records';
+import {
+  fetchDashboard,
+  type DashboardStats,
+  type RecordKind,
+} from './records';
 import {
   AlertIcon,
   BookIcon,
@@ -100,6 +104,9 @@ export function AdminPage() {
 
   const [filter, setFilter] = useState<ModerationStatus | 'hepsi'>('pending');
   const [queue, setQueue] = useState<QueueResult | null>(null);
+  /* Gösterge sayıları kuyruktan AYRI: kuyruk ilk 100 kaydı çekiyor ve
+     ondan hesaplanan sayı 100'ü aşan bir sistemde yanlış olurdu. */
+  const [dashboard, setDashboard] = useState<DashboardStats | null>(null);
   const [queueError, setQueueError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -116,6 +123,16 @@ export function AdminPage() {
   }, [filter, roles.canAccessAdmin]);
 
   useEffect(load, [load]);
+
+  useEffect(() => {
+    if (!roles.canAccessAdmin) return;
+    fetchDashboard()
+      .then(setDashboard)
+      .catch(() => {
+        /* Gösterge okunamazsa panelin geri kalanı çalışsın: kartlar
+           "—" gösterir, moderasyon kuyruğu kendi yolundan gelir. */
+      });
+  }, [roles.canAccessAdmin]);
 
   /*
     KARAR NOTU SATIR BAŞINA TUTULUYOR.
@@ -243,7 +260,7 @@ export function AdminPage() {
     <Shell header={header} active={bolum} onChange={setBolum}>
       {bolum === 'ozet' && (
         <AdminOverview
-          counts={counts}
+          dashboard={dashboard}
           roleNames={roles.roles.map((r) => roleLabels[r])}
           isAdmin={roles.isAdmin}
           onChange={setBolum}
@@ -840,30 +857,104 @@ function AdminSidebar({
 }
 
 function AdminOverview({
-  counts,
+  dashboard,
   roleNames,
   isAdmin,
   onChange,
 }: {
-  counts: QueueResult['counts'] | undefined;
+  dashboard: DashboardStats | null;
   roleNames: string[];
   isAdmin: boolean;
   onChange: (id: BolumId) => void;
 }) {
-  const pending = counts?.pending ?? '—';
-  const escalated = counts?.escalated ?? '—';
-  const approved = counts?.approved ?? '—';
-  const rejected = counts?.rejected ?? '—';
+  /* Değer yoksa "—": sıfır göstermek "hiç yok" demek olurdu ve okunamayan
+     bir sayıyla gerçekten sıfır olan bir sayı aynı görünürdü. */
+  const d = (v: number | undefined) => (dashboard ? (v ?? 0) : '—');
 
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.75fr)]">
-      <Panel title="Yönetim özeti" status={counts ? 'canlı' : 'yükleniyor…'}>
+      <Panel
+        title="Yönetim özeti"
+        status={dashboard ? 'canlı' : 'yükleniyor…'}
+      >
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          <Readout label="Bekleyen" value={pending} tone="primary" />
-          <Readout label="Yükseltilen" value={escalated} tone="cold" />
-          <Readout label="Onaylanan" value={approved} tone="muted" />
-          <Readout label="Reddedilen" value={rejected} tone="muted" />
+          <Readout
+            label="Bekleyen moderasyon"
+            value={d(dashboard?.moderasyonBekleyen)}
+            tone="primary"
+          />
+          <Readout label="Toplam üye" value={d(dashboard?.kullaniciToplam)} />
+          <Readout
+            label="7 günde yeni"
+            value={d(dashboard?.kullaniciYeni7g)}
+            tone="cold"
+          />
+          <Readout
+            label="Askı/yasak"
+            value={d(dashboard?.kullaniciAskida)}
+            /* `Readout` uyarı tonu taşımıyor; dikkat çekmesi gereken
+               sıfırdan büyük değer `primary` ile öne çıkıyor. */
+            tone={dashboard && dashboard.kullaniciAskida > 0 ? 'primary' : 'muted'}
+          />
+          <Readout label="Taslak içerik" value={d(dashboard?.icerikTaslak)} />
+          <Readout label="Yayındaki içerik" value={d(dashboard?.icerikYayinda)} />
+          <Readout
+            label="Bekleyen fotoğraf"
+            value={d(dashboard?.fotografBekleyen)}
+          />
+          <Readout
+            label="Silme talebi"
+            value={d(dashboard?.silmeTalebi)}
+            tone={dashboard && dashboard.silmeTalebi > 0 ? 'primary' : 'muted'}
+          />
         </div>
+
+        {/*
+          BUGÜNKÜ HAREKET SAYISI kartlarla değil metinle: sıfır olduğunda
+          bir kart "0" göstermek "bugün hiçbir şey yapılmadı" bilgisini
+          gereğinden fazla vurgular. Cümle içinde geçmesi yeterli.
+        */}
+        <p className="mt-2 text-meta text-muted-foreground">
+          Bugün {d(dashboard?.auditBugun)} yönetim hareketi kaydedildi.
+        </p>
+
+        {/*
+          SON HAREKETLER — sayılar "ne kadar", bu liste "ne oldu".
+          Aynı RPC çağrısından geliyor; ayrı bir istek yok.
+
+          Boş liste HİÇ ÇİZİLMİYOR: "son hareketler" başlığı altında boş
+          bir kutu, verinin gelmediği izlenimini verirdi. Kayıt yoksa
+          bölüm de yok.
+        */}
+        {dashboard && dashboard.sonHareketler.length > 0 && (
+          <div className="mt-4 border-t border-border pt-3">
+            <p className="label mb-1.5">Son hareketler</p>
+            <ul className="space-y-px">
+              {dashboard.sonHareketler.slice(0, 8).map((h, i) => (
+                <li
+                  key={`${h.zaman}-${i}`}
+                  className="flex flex-wrap items-baseline gap-x-2 text-meta"
+                >
+                  <span className="tabular text-faint">
+                    {new Date(h.zaman).toLocaleString('tr-TR')}
+                  </span>
+                  <span className="text-foreground">{h.eylem}</span>
+                  {h.kim && <span className="text-primary">@{h.kim}</span>}
+                  {h.hedef && (
+                    <span className="text-muted-foreground">{h.hedef}</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+            <button
+              type="button"
+              onClick={() => onChange('audit')}
+              className="mt-1.5 text-meta text-primary hover:underline"
+            >
+              Tüm denetim kaydı →
+            </button>
+          </div>
+        )}
 
         <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
           <OverviewButton

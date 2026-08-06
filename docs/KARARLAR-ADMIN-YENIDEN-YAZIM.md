@@ -186,3 +186,49 @@ yapıldı; her test geri alındı.
 ile çalışan sunucu işleri ve SQL konsolu da kurala takılıyordu — platform
 kendi kendini kilitlemişti. Yaptırımı doğrulamak için yazdığım test bunu
 ilk denemede yakaladı.
+
+
+---
+
+## SPRINT RAPORU — S1 ve S2 (06.08.2026)
+
+### Tamamlanan
+
+| Görev | Ne yapıldı | Kanıt |
+|---|---|---|
+| 1.1 | Hesap durumu şeması, `app.is_account_active()`, 11 yazma politikasına yaptırım, `profiles_guard_admin_fields`, yasaklının SELECT'ten düşmesi | Canlıda rol taklidiyle ölçüldü — yukarıdaki kabul kriteri tablosu |
+| 1.2 | Gösterge paneli `app.admin_dashboard()` RPC'sine bağlandı: dokuz sayı + son 20 hareket, tek çağrı | Panel `/admin` |
+| 1.3 | Sunucu taraflı sayfalama (`range` + `count: exact`), durum/rol/şehir/arama filtreleri, üç sıralama, CSV (5.000 sınırı + `users.export` denetimi) | `/admin/users` |
+| 1.4 | Durum aksiyonları (askı/yasak/aktif, zorunlu gerekçe), dahili not, içerik sayımı ve örnek satırlar, anonimleştirme, silme talebi kapatma, kullanıcı başına denetim kaydı | `/admin/users` satır açılışı |
+| 1.5 | Moderasyon kararları denetime düşüyor (`app.audit_moderation`), karar notu arayüze bağlandı | Canlıda tetikleyici testi |
+| 1.6 | Denetim ekranı: eylem/hedef/tarih filtreleri, actor kullanıcı adı, detay dökümü | `/admin/audit` |
+
+### Engellenen
+
+**Tam hesap silme (Görev 1.4/6).** `auth.users` yalnızca `service_role` ile
+yazılabiliyor; SPA'da böyle bir yer yok (karar K4). Panel anonimleştirme
+sunuyor ve tam silmenin neden yapılamadığını arayüzde yazıyor. Öneri:
+ihtiyaç doğduğunda `admin-ops` Edge Function'ı (K4'teki üç işle birlikte).
+
+**E-posta gösterimi (Görev 1.3/1.4).** Bilinçli olarak yapılmadı — karar K3.
+
+### Şema değişiklikleri
+
+`20260806160000_lock_spatial_ref_sys` · `20260806161000_account_status` ·
+`20260806162000_account_status_enforcement` · `20260806180000_moderation_audit` ·
+`20260806200000_admin_dashboard_rpc`
+
+### Yol boyunca bulunan ve düzeltilen üç şey
+
+1. **`spatial_ref_sys` yazmaya açıktı** ve anon anahtarla sömürülebiliyordu
+   (K1). `REVOKE` işe yaramadı; tetikleyiciyle kapatıldı.
+2. **`profiles_update_own` askıdaki kullanıcıya kendi cezasını kaldırma
+   yolu bırakıyordu.** Bu olmadan Görev 1.1'in tamamı boştu.
+3. **Gösterge paneli moderasyon sayılarını kuyruğun ilk 100 kaydından
+   hesaplıyordu** — 100'ü aşan bir sistemde sessizce yanlış sayı.
+
+### Sonraki sprint
+
+S3: Faz 2'nin başı — içerik durum makinesi (`CHECK` kısıtı, karar K6),
+`content_revisions`, blok editörünün genişletilmesi (karar K5: tablo,
+görsel, video, kod, PDF gömme, özel bileşen blokları).

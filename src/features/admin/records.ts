@@ -369,3 +369,61 @@ export async function fetchAuditFacets(): Promise<{
     ].sort(),
   };
 }
+
+/**
+ * YÖNETİM GÖSTERGE PANELİ — tek çağrı (Görev 1.2).
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * SAYILAR NEDEN RPC'DEN
+ *
+ * Belge §1.2 "tek RPC/görünüm, N ayrı sorgu değil" diyor ve gerekçesi
+ * ölçülebilir: dokuz sayı dokuz istek demek — dokuz ağ gidiş-dönüşü,
+ * dokuz ayrı hata yolu ve ekranda dokuz ayrı "—".
+ *
+ * Ölçülen eski durum daha kötüydü: panel yalnızca moderasyon sayımlarını
+ * gösteriyordu ve onları da kuyruğun İLK 100 kaydından istemcide
+ * hesaplıyordu. 100'den fazla kayıt olduğunda sayı yanlıştı ve yanlış
+ * olduğunu söyleyen bir şey yoktu.
+ *
+ * Yetki kontrolü fonksiyonun içinde (`app.admin_dashboard`); burada
+ * ikinci bir kontrol yok, çünkü asıl sınır orası.
+ */
+export interface DashboardStats {
+  kullaniciToplam: number;
+  kullaniciYeni7g: number;
+  kullaniciAskida: number;
+  moderasyonBekleyen: number;
+  icerikTaslak: number;
+  icerikYayinda: number;
+  fotografBekleyen: number;
+  silmeTalebi: number;
+  auditBugun: number;
+  sonHareketler: {
+    zaman: string;
+    eylem: string;
+    hedef: string | null;
+    kim: string | null;
+  }[];
+}
+
+export async function fetchDashboard(): Promise<DashboardStats> {
+  const supabase = await client();
+  const { data, error } = await supabase.rpc('admin_dashboard');
+  if (error) throw new Error(error.message);
+
+  const d = (data ?? {}) as Record<string, unknown>;
+  const sayi = (k: string) => Number(d[k] ?? 0);
+
+  return {
+    kullaniciToplam: sayi('kullanici_toplam'),
+    kullaniciYeni7g: sayi('kullanici_yeni_7g'),
+    kullaniciAskida: sayi('kullanici_askida'),
+    moderasyonBekleyen: sayi('moderasyon_bekleyen'),
+    icerikTaslak: sayi('icerik_taslak'),
+    icerikYayinda: sayi('icerik_yayinda'),
+    fotografBekleyen: sayi('fotograf_bekleyen'),
+    silmeTalebi: sayi('silme_talebi'),
+    auditBugun: sayi('audit_bugun'),
+    sonHareketler: (d.son_hareketler ?? []) as DashboardStats['sonHareketler'],
+  };
+}
