@@ -206,6 +206,29 @@ export const articles: Article[] = [
     },
   },
   /*
+    SNR REHBERİ — gövdesi burada DEĞİL (drizzle kaydıyla aynı gerekçe:
+    içerik derleme öncesi üretiliyor ve kendi sayfasında duruyor).
+  */
+  {
+    slug: 'snr-rehberi',
+    href: '/yazilar/snr-rehberi',
+    title: 'Sinyal–Gürültü Oranı: Neden 4 Kat Süre 2 Kat İyileştirir',
+    category: 'teknik',
+    level: 'Orta',
+    duration: '40 dk okuma',
+    publishedAt: '2026-08-06',
+    author: 'Astrohub',
+    summary:
+      'Fotoğrafınız neden hâlâ gürültülü? Cevap pozlama süresinde değil, topladığınız foton sayısında. Ve kötü haber şu: iyileşme gittikçe pahalılaşıyor. Canlı simülatörle gürültünüzün nereden geldiğini görün — çoğu zaman kamera değil gökyüzü.',
+    body: [],
+    tint: '255,157,46',
+    image: {
+      url: '/gorseller/snr-kapak.svg',
+      credit: 'Astrohub — SNR şeması',
+      licence: 'Astrohub',
+    },
+  },
+  /*
     DRIZZLE REHBERİ — gövdesi burada DEĞİL.
 
     Rehber 16 bölüm, 16 tablo, 11 infografik, dört hesaplayıcı ve canlı

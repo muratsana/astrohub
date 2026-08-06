@@ -284,6 +284,15 @@ export const appRoutes = [
          `/yazi/drizzle-rehberi` adresini paylaşan biri, gövdesi bilerek
          boş bırakılmış künye kaydına değil rehberin kendisine düşsün. */
       { path: 'yazi/drizzle-rehberi', element: <RedirectTo to="/yazilar/drizzle-rehberi" /> },
+      { path: 'yazi/snr-rehberi', element: <RedirectTo to="/yazilar/snr-rehberi" /> },
+      {
+        /* Drizzle ile aynı gerekçe: 15 bölüm, 15 tablo, 7 infografik ve
+           dört interaktif araç blok tabanlı yazı modeline sığmıyor. */
+        path: 'yazilar/snr-rehberi',
+        element: route(
+          named(() => import('@/features/knowledge/SnrGuidePage'), 'SnrGuidePage')
+        ),
+      },
       {
         /* Statik parça `yazi/:slug`ten AYRI bir dal: rehber, blok tabanlı
            yazı modeline sığmayan (16 tablo, 11 infografik, 4 hesaplayıcı)

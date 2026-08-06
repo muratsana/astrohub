@@ -169,6 +169,21 @@ export const siteMap: NavGroup[] = [
         keywords: ['makale', 'eğitim', 'rehber', 'ders', 'işleme'],
       },
       {
+        label: 'Astrofotoğrafta SNR',
+        to: '/yazilar/snr-rehberi',
+        description:
+          'Sinyal, gürültü ve süre — simülatörlü uzun rehber',
+        keywords: [
+          'snr',
+          'sinyal gürültü',
+          'gürültü',
+          'poz süresi',
+          'entegrasyon',
+          'bortle',
+          'okuma gürültüsü',
+        ],
+      },
+      {
         label: 'Astrofotoğrafçılıkta Drizzle',
         to: '/yazilar/drizzle-rehberi',
         description:

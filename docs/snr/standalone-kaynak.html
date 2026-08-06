@@ -1,0 +1,2059 @@
+<!DOCTYPE html>
+<html lang="tr" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Astrofotoğrafta SNR — Sinyal, Gürültü ve Kare Sayısı</title>
+<style>
+:root{
+  --bg:#0d0d0d;
+  --surface:#1a1a19;
+  --surface-2:#141413;
+  --ink:#ffffff;
+  --ink-2:#c3c2b7;
+  --ink-3:#898781;
+  --line:#2c2c2a;
+  --rule:#383835;
+  --s1:#3987e5;  /* mavi */
+  --s2:#d95926;  /* turuncu */
+  --s3:#199e70;  /* akuamarin */
+  --s4:#c98500;  /* sarı */
+  --s5:#d55181;  /* macenta */
+  --s8:#e66767;  /* kırmızı */
+  --good:#0ca30c;
+  --warn:#fab219;
+  --serious:#ec835a;
+  --crit:#d03b3b;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  --maxw: 860px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth; scroll-padding-top:70px}
+body{
+  margin:0; background:var(--bg); color:var(--ink-2);
+  font-family:var(--sans); font-size:17px; line-height:1.72;
+  -webkit-font-smoothing:antialiased;
+}
+img,svg{max-width:100%}
+
+/* ---------- Üst bar ---------- */
+.topbar{
+  position:sticky; top:0; z-index:60;
+  background:rgba(13,13,13,.86); backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--line);
+}
+.topbar-in{
+  max-width:1180px; margin:0 auto; padding:10px 20px;
+  display:flex; align-items:center; gap:16px;
+}
+.brand{font-size:13px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-3); font-weight:600; white-space:nowrap}
+.brand b{color:var(--s1)}
+.progress{flex:1; height:3px; background:var(--line); border-radius:2px; overflow:hidden}
+.progress i{display:block; height:100%; width:0; background:var(--s1)}
+.tocbtn{
+  background:transparent; border:1px solid var(--rule); color:var(--ink-2);
+  padding:6px 12px; border-radius:999px; font:inherit; font-size:13px; cursor:pointer;
+}
+.tocbtn:hover{border-color:var(--s1); color:var(--ink)}
+@media(max-width:760px){ .brand-long{display:none} .topbar-in{gap:12px} }
+
+/* ---------- Yerleşim ---------- */
+.wrap{max-width:1180px; margin:0 auto; padding:0 20px; display:grid; grid-template-columns:250px minmax(0,1fr); gap:48px}
+.sidebar{position:sticky; top:70px; align-self:start; max-height:calc(100vh - 90px); overflow-y:auto; padding:24px 0 40px; font-size:14px}
+.sidebar h4{color:var(--ink-3); font-size:11px; letter-spacing:.14em; text-transform:uppercase; margin:0 0 12px}
+.sidebar a{display:block; color:var(--ink-3); text-decoration:none; padding:5px 0 5px 12px; border-left:2px solid var(--line); line-height:1.4}
+.sidebar a:hover{color:var(--ink)}
+.sidebar a.on{color:var(--s1); border-left-color:var(--s1)}
+main{padding:8px 0 100px; min-width:0; max-width:var(--maxw)}
+@media(max-width:1000px){
+  .wrap{grid-template-columns:1fr; gap:0}
+  .sidebar{display:none; position:static; max-height:none; padding:16px 0; border-bottom:1px solid var(--line)}
+  .sidebar.open{display:block}
+}
+
+/* ---------- Tipografi ---------- */
+h1{font-size:clamp(34px,6vw,54px); line-height:1.08; color:var(--ink); letter-spacing:-.025em; margin:0 0 18px; font-weight:800}
+h2{font-size:clamp(25px,3.6vw,33px); line-height:1.2; color:var(--ink); letter-spacing:-.02em; margin:72px 0 6px; font-weight:750}
+h3{font-size:20px; color:var(--ink); margin:40px 0 8px; font-weight:700; letter-spacing:-.01em}
+h4{font-size:16px; color:var(--ink); margin:26px 0 6px; font-weight:650}
+p{margin:0 0 18px}
+a{color:var(--s1)}
+strong{color:var(--ink); font-weight:650}
+em{color:var(--ink); font-style:italic}
+code{font-family:var(--mono); font-size:.88em; background:#232322; color:#e8c9a0; padding:2px 6px; border-radius:4px}
+ul,ol{margin:0 0 18px; padding-left:22px}
+li{margin:0 0 8px}
+li::marker{color:var(--ink-3)}
+hr{border:0; border-top:1px solid var(--line); margin:56px 0}
+.kicker{color:var(--s1); font-size:12px; letter-spacing:.18em; text-transform:uppercase; font-weight:700; margin:0 0 14px}
+.lead{font-size:20px; line-height:1.62; color:var(--ink-2)}
+.sec-no{display:inline-block; font-family:var(--mono); font-size:12px; color:var(--s1); border:1px solid var(--rule); border-radius:5px; padding:2px 8px; margin-bottom:10px; letter-spacing:.06em}
+
+/* ---------- Hero ---------- */
+.hero{padding:64px 0 8px; border-bottom:1px solid var(--line); margin-bottom:8px}
+.hero .lead{max-width:640px}
+.meta{display:flex; flex-wrap:wrap; gap:10px; margin:26px 0 8px}
+.chip{font-size:12.5px; color:var(--ink-3); border:1px solid var(--rule); border-radius:999px; padding:4px 12px}
+.chip b{color:var(--ink-2); font-weight:600}
+
+/* ---------- Kartlar ---------- */
+.card{background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:22px 24px; margin:26px 0}
+.card>*:first-child{margin-top:0}
+.card>*:last-child{margin-bottom:0}
+.fig{background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:20px 20px 14px; margin:30px 0}
+.fig svg{display:block; width:100%; height:auto}
+.figcap{font-size:13.5px; color:var(--ink-3); line-height:1.55; margin-top:14px; padding-top:12px; border-top:1px solid var(--line)}
+.figcap b{color:var(--ink-2); font-weight:650}
+
+.callout{border-left:3px solid var(--s1); background:var(--surface); border-radius:0 12px 12px 0; padding:16px 20px; margin:26px 0; font-size:16px}
+.callout .t{display:block; color:var(--ink); font-weight:700; margin-bottom:4px; font-size:14px; letter-spacing:.02em}
+.callout.warn{border-left-color:var(--warn)}
+.callout.warn .t{color:var(--warn)}
+.callout.bad{border-left-color:var(--crit)}
+.callout.bad .t{color:var(--crit)}
+.callout.good{border-left-color:var(--good)}
+.callout.good .t{color:var(--good)}
+.callout p:last-child{margin-bottom:0}
+
+.tldr{background:linear-gradient(160deg,#16233a,#141413); border:1px solid #24405f; border-radius:16px; padding:26px 28px; margin:34px 0}
+.tldr h3{margin-top:0; color:var(--ink); font-size:15px; letter-spacing:.12em; text-transform:uppercase; color:var(--s1)}
+.tldr ul{margin-bottom:0}
+.tldr li{margin-bottom:11px}
+
+/* ---------- Tablolar ---------- */
+.tw{overflow-x:auto; margin:26px 0; border:1px solid var(--line); border-radius:12px; background:var(--surface)}
+table{border-collapse:collapse; width:100%; font-size:14.5px; min-width:520px}
+th,td{padding:11px 15px; text-align:left; border-bottom:1px solid var(--line); vertical-align:top; line-height:1.5}
+th{color:var(--ink); font-weight:650; font-size:12px; letter-spacing:.07em; text-transform:uppercase; background:var(--surface-2); white-space:nowrap}
+tr:last-child td{border-bottom:0}
+td.num, th.num{font-variant-numeric:tabular-nums; text-align:right; white-space:nowrap}
+.tag{display:inline-block; font-size:11.5px; font-weight:700; padding:2px 8px; border-radius:5px; letter-spacing:.03em; white-space:nowrap}
+.tag.g{background:rgba(12,163,12,.16); color:#4ed24e}
+.tag.y{background:rgba(250,178,25,.16); color:#f5c04c}
+.tag.r{background:rgba(208,59,59,.18); color:#f08080}
+.tag.b{background:rgba(57,135,229,.16); color:#7db4f0}
+
+/* ---------- Etkileşimli araçlar ---------- */
+.tool{background:linear-gradient(170deg,#181d24,#141413); border:1px solid #263140; border-radius:16px; padding:24px; margin:32px 0}
+.tool h4{margin:0 0 4px; color:var(--ink); font-size:17px}
+.tool .sub{font-size:13.5px; color:var(--ink-3); margin:0 0 20px}
+.grid2{display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:14px}
+.fld label{display:block; font-size:12.5px; letter-spacing:.02em; color:var(--ink-3); margin-bottom:5px; font-weight:600}
+.fld input[type=number], .fld select{
+  width:100%; background:#0f0f0e; border:1px solid var(--rule); color:var(--ink);
+  padding:9px 11px; border-radius:8px; font:inherit; font-size:15px; font-variant-numeric:tabular-nums;
+}
+.fld input:focus,.fld select:focus{outline:none; border-color:var(--s1)}
+.rng{display:flex; align-items:center; gap:12px}
+.rng input[type=range]{flex:1; accent-color:var(--s1); height:4px}
+.rng .v{font-family:var(--mono); font-size:14px; color:var(--s1); min-width:52px; text-align:right; font-variant-numeric:tabular-nums}
+.out{margin-top:20px; padding-top:18px; border-top:1px solid var(--line); display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:16px}
+.stat .k{font-size:11px; letter-spacing:.09em; text-transform:uppercase; color:var(--ink-3); font-weight:600}
+.stat .v{font-size:27px; color:var(--ink); font-weight:700; line-height:1.15; margin-top:2px}
+.stat .v small{font-size:14px; color:var(--ink-3); font-weight:500}
+.verdict{margin-top:18px; padding:14px 16px; border-radius:10px; font-size:15px; line-height:1.55; border:1px solid var(--rule); background:#0f0f0e}
+.verdict b{display:block; margin-bottom:3px}
+.sw{display:inline-block; width:11px; height:11px; border-radius:3px; margin-right:7px; vertical-align:baseline}
+
+/* ---------- Sekmeler ---------- */
+.tabs{display:flex; gap:4px; flex-wrap:wrap; margin:26px 0 0; border-bottom:1px solid var(--line)}
+.tabs button{
+  background:transparent; border:0; border-bottom:2px solid transparent; color:var(--ink-3);
+  padding:9px 14px; font:inherit; font-size:14.5px; font-weight:600; cursor:pointer; border-radius:6px 6px 0 0;
+}
+.tabs button:hover{color:var(--ink)}
+.tabs button.on{color:var(--s1); border-bottom-color:var(--s1)}
+.panel{display:none; padding-top:8px}
+.panel.on{display:block}
+
+/* ---------- Akordiyon ---------- */
+details{border:1px solid var(--line); border-radius:11px; background:var(--surface); margin:12px 0; overflow:hidden}
+details summary{cursor:pointer; padding:14px 18px; color:var(--ink); font-weight:650; font-size:15.5px; list-style:none; display:flex; justify-content:space-between; gap:12px; align-items:center}
+details summary::-webkit-details-marker{display:none}
+details summary::after{content:"+"; color:var(--s1); font-size:20px; font-weight:400; line-height:1}
+details[open] summary::after{content:"−"}
+details .body{padding:0 18px 16px; font-size:15.5px}
+details .body>*:last-child{margin-bottom:0}
+
+/* ---------- Formül ---------- */
+.eq{background:#0f0f0e; border:1px solid var(--rule); border-radius:10px; padding:16px 20px; margin:20px 0; font-family:var(--mono); font-size:15px; color:var(--ink); overflow-x:auto; line-height:2}
+.eq .c{color:var(--ink-3); font-family:var(--sans); font-size:13.5px}
+.eq .hi{color:var(--s4)}
+
+/* ---------- Kaynaklar ---------- */
+.src{font-size:14px; color:var(--ink-3)}
+.src li{margin-bottom:7px}
+.src a{color:var(--s1); text-decoration:none; border-bottom:1px solid rgba(57,135,229,.3)}
+.src a:hover{border-bottom-color:var(--s1)}
+
+canvas{display:block; image-rendering:pixelated; border-radius:8px; background:#000}
+.legend{display:flex; flex-wrap:wrap; gap:16px; font-size:13px; color:var(--ink-2); margin-top:14px}
+.legend span{display:flex; align-items:center; gap:7px}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-in">
+    <div class="brand">SNR<span class="brand-long"> <b>·</b> Astrofotoğraf Rehberi</span></div>
+    <div class="progress"><i id="prog"></i></div>
+    <button class="tocbtn" id="tocbtn">İçindekiler</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <nav class="sidebar" id="toc">
+    <h4>İçindekiler</h4>
+    <a href="#giris">Giriş</a>
+    <a href="#temel">1 · Sinyal ve gürültü</a>
+    <a href="#foton">2 · Foton gürültüsü</a>
+    <a href="#karekok">3 · Kare sayısı kuralı</a>
+    <a href="#simulator">4 · Canlı simülatör</a>
+    <a href="#gokyuzu">5 · Gökyüzü parlaklığı</a>
+    <a href="#objeler">6 · Objelerin gerçek parlaklığı</a>
+    <a href="#pozsuresi">7 · Okuma gürültüsü &amp; poz süresi</a>
+    <a href="#cmos">8 · CMOS ve CCD</a>
+    <a href="#sogutma">9 · Karanlık akım &amp; soğutma</a>
+    <a href="#filtre">10 · Filtreler</a>
+    <a href="#kalibrasyon">11 · Kalibrasyon kareleri</a>
+    <a href="#ay">12 · Ay</a>
+    <a href="#planlama">13 · Ne kadar süre gerekir?</a>
+    <a href="#yanlis">14 · Yaygın yanlışlar</a>
+    <a href="#ozet">15 · Tek sayfalık özet</a>
+    <a href="#kaynaklar">Kaynaklar</a>
+  </nav>
+
+  <main>
+  <header class="hero" id="giris">
+    <p class="kicker">Derin gökyüzü görüntüleme · Teknik rehber</p>
+    <h1>Sinyal, gürültü<br>ve kare sayısı</h1>
+    <p class="lead">Neden bazı fotoğraflar tertemiz çıkarken bazıları kum gibi görünür? Neden 2 saat çeken biriyle 8 saat çeken biri arasındaki fark, beklediğiniz kadar büyük değildir? Cevap tek bir sayıda: SNR.</p>
+    <div class="meta">
+      <span class="chip"><b>Seviye:</b> Herkes için</span>
+      <span class="chip"><b>Okuma:</b> ~30 dk</span>
+      <span class="chip"><b>İçerik:</b> 3 hesaplayıcı, 1 simülatör, 11 infografik</span>
+      <span class="chip"><b>Güncel:</b> Ağustos 2026</span>
+    </div>
+  </header>
+
+  <p>Bir gece dışarı çıkıp M42'yi çektiniz. Yarım saat sonra ekranda güzel bir Orion Bulutsusu var. Ertesi hafta M33'ü denediniz — aynı teleskop, aynı kamera, aynı gökyüzü, hatta daha uzun süre. Ama sonuç kumlu, soluk, hayal kırıklığı.</p>
+
+  <p>Hiçbir şeyi yanlış yapmadınız. İki obje arasındaki fark, ekipmanınızla ilgili değil. Piksel başına gelen foton sayısıyla ilgili. Ve bu yazının konusu tam olarak bu.</p>
+
+  <p>SNR — <strong>sinyal-gürültü oranı</strong> — astrofotoğrafın en önemli tek sayısıdır. Odak, takip, filtre, işleme... hepsi önemlidir. Ama hepsinin ortak amacı budur: SNR'ı yükseltmek. Neyse ki anlaşılması sanıldığı kadar zor değil. Birkaç basit fikir, birkaç gerçek rakam, hepsi bu.</p>
+
+  <div class="tldr">
+    <h3>Kısa özet</h3>
+    <ul>
+      <li><strong>Sinyal</strong>, objenizden gelen ışık. <strong>Gürültü</strong>, o ışığın ölçümündeki rastgele dalgalanma. Fotoğrafın kalitesini ikisinin oranı belirler.</li>
+      <li>Gürültünün en büyük kısmı kameranızdan değil, <strong>fotonların kendisinden</strong> gelir. Bu fiziğin kuralı; daha iyi bir kamera bunu değiştirmez.</li>
+      <li>SNR, toplam sürenin <strong>karekökü</strong> kadar artar. İki kat daha iyi bir sonuç için <strong>dört kat</strong> süre gerekir. 4 saatten 8 saate çıkmak size sadece %41 kazandırır.</li>
+      <li>En büyük rakibiniz gökyüzü parlaklığıdır. Bortle 8'de Bortle 4'ün bir saatte verdiğini almak için <strong>19 saat</strong> çekmeniz gerekir.</li>
+      <li>Objenin katalogdaki parlaklığı değil, <strong>yüzey parlaklığı</strong> belirleyicidir. M33 kataloğa göre M57'den 17 kat parlak; banliyö gökyüzünde çekmesi <strong>2.000 kat</strong> daha uzun sürer.</li>
+      <li>Modern CMOS kameraların okuma gürültüsü o kadar düşük ki, artık <strong>uzun poz zorunluluğu ortadan kalktı</strong>. Şehirde 30 saniyelik kareler yeterli.</li>
+    </ul>
+  </div>
+
+  <hr>
+
+  <!-- ==================== 1 · TEMEL ==================== -->
+  <h2 id="temel"><span class="sec-no">BÖLÜM 1</span><br>Sinyal ve gürültü: iki basit fikir</h2>
+
+  <p>Yağmuru ölçmek istediğinizi düşünün. Bahçeye bir kova koyuyorsunuz, bir saat sonra içindeki suyu ölçüyorsunuz. Kolay.</p>
+
+  <p>Şimdi çok hafif bir çiseleme olsun. Kovaya bir saatte topu topu on damla düşüyor. Aynı bahçeye ikinci bir kova koysanız, ona sekiz damla düşer. Üçüncüsüne on üç. Hepsi aynı yağmuru ölçüyor ama hepsi farklı sayı veriyor.</p>
+
+  <p>İşte gürültü budur. Yağmurun kendisi değişmiyor; <strong>ölçüm rastgele dalgalanıyor</strong>. Ve dalgalanma, ölçtüğünüz miktar küçüldükçe oransal olarak büyüyor.</p>
+
+  <p>Sensörünüzdeki her piksel bir kova. Fotonlar da damlalar. Aradaki tek fark, fotonların çok daha az sayıda gelmesi — soluk bir galaksinin dış kolundan bir piksele, beş dakikada belki yirmi foton düşer.</p>
+
+  <div class="fig">
+    <svg viewBox="0 0 800 300" role="img" aria-label="Piksel kovası benzetmesi: parlak ve soluk objelerde foton sayısı ve dalgalanma">
+      <defs>
+        <linearGradient id="wat" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#5598e7"/><stop offset="100%" stop-color="#1c5cab"/>
+        </linearGradient>
+      </defs>
+
+      <text x="400" y="24" fill="#898781" font-size="13" font-family="system-ui" text-anchor="middle">Aynı kaynak, üç ayrı piksel — hepsi farklı sayı veriyor</text>
+
+      <!-- PARLAK OBJE -->
+      <g transform="translate(40,54)">
+        <text x="150" y="0" fill="#4ed24e" font-size="14" font-family="system-ui" font-weight="700" text-anchor="middle">PARLAK OBJE · piksel başına ~10.000 foton</text>
+        <g font-family="system-ui" font-size="12.5" fill="#898781" text-anchor="middle">
+          <!-- 3 kova -->
+          <g transform="translate(20,20)">
+            <path d="M0 0 L8 78 L52 78 L60 0 Z" fill="none" stroke="#383835" stroke-width="1.5"/>
+            <path d="M2.2 21 L8 78 L52 78 L57.8 21 Z" fill="url(#wat)" opacity=".9"/>
+            <text x="30" y="98" fill="#fff" font-size="13" font-weight="700">9.948</text>
+          </g>
+          <g transform="translate(110,20)">
+            <path d="M0 0 L8 78 L52 78 L60 0 Z" fill="none" stroke="#383835" stroke-width="1.5"/>
+            <path d="M2.0 19 L8 78 L52 78 L58.0 19 Z" fill="url(#wat)" opacity=".9"/>
+            <text x="30" y="98" fill="#fff" font-size="13" font-weight="700">10.071</text>
+          </g>
+          <g transform="translate(200,20)">
+            <path d="M0 0 L8 78 L52 78 L60 0 Z" fill="none" stroke="#383835" stroke-width="1.5"/>
+            <path d="M2.1 20 L8 78 L52 78 L57.9 20 Z" fill="url(#wat)" opacity=".9"/>
+            <text x="30" y="98" fill="#fff" font-size="13" font-weight="700">9.983</text>
+          </g>
+        </g>
+        <text x="150" y="140" fill="#c3c2b7" font-size="12.5" font-family="system-ui" text-anchor="middle">Dalgalanma ±100 civarı — yani <tspan fill="#4ed24e" font-weight="700">binde 10</tspan>.</text>
+        <text x="150" y="160" fill="#898781" font-size="12.5" font-family="system-ui" text-anchor="middle">Göz bunu fark etmez. Pürüzsüz görünür.</text>
+      </g>
+
+      <!-- ayırıcı -->
+      <line x1="400" y1="60" x2="400" y2="230" stroke="#2c2c2a" stroke-width="1"/>
+
+      <!-- SOLUK OBJE -->
+      <g transform="translate(450,54)">
+        <text x="150" y="0" fill="#f08080" font-size="14" font-family="system-ui" font-weight="700" text-anchor="middle">SOLUK OBJE · piksel başına ~25 foton</text>
+        <g font-family="system-ui" font-size="12.5" fill="#898781" text-anchor="middle">
+          <g transform="translate(20,20)">
+            <path d="M0 0 L8 78 L52 78 L60 0 Z" fill="none" stroke="#383835" stroke-width="1.5"/>
+            <path d="M5.4 60 L8 78 L52 78 L54.6 60 Z" fill="url(#wat)" opacity=".9"/>
+            <text x="30" y="98" fill="#fff" font-size="13" font-weight="700">19</text>
+          </g>
+          <g transform="translate(110,20)">
+            <path d="M0 0 L8 78 L52 78 L60 0 Z" fill="none" stroke="#383835" stroke-width="1.5"/>
+            <path d="M4.3 49 L8 78 L52 78 L55.7 49 Z" fill="url(#wat)" opacity=".9"/>
+            <text x="30" y="98" fill="#fff" font-size="13" font-weight="700">31</text>
+          </g>
+          <g transform="translate(200,20)">
+            <path d="M0 0 L8 78 L52 78 L60 0 Z" fill="none" stroke="#383835" stroke-width="1.5"/>
+            <path d="M5.0 56 L8 78 L52 78 L55.0 56 Z" fill="url(#wat)" opacity=".9"/>
+            <text x="30" y="98" fill="#fff" font-size="13" font-weight="700">23</text>
+          </g>
+        </g>
+        <text x="150" y="140" fill="#c3c2b7" font-size="12.5" font-family="system-ui" text-anchor="middle">Dalgalanma ±5 civarı — yani <tspan fill="#f08080" font-weight="700">%20</tspan>.</text>
+        <text x="150" y="160" fill="#898781" font-size="12.5" font-family="system-ui" text-anchor="middle">İşte gördüğünüz "kum" bu.</text>
+      </g>
+    </svg>
+    <div class="figcap"><b>Şekil 1 — Aynı gürültü, farklı sonuç.</b> Parlak objede mutlak dalgalanma <em>daha büyük</em> (±100 foton), soluk objede daha küçük (±5 foton). Ama görüntüyü belirleyen mutlak değer değil, <strong>orandır</strong>. Bu yüzden parlak obje temiz, soluk obje kumlu çıkar.</div>
+  </div>
+
+  <h3>SNR nedir, tek cümleyle</h3>
+
+  <p>SNR, ölçtüğünüz sinyalin o dalgalanmaya bölümüdür:</p>
+
+  <div class="eq">
+    SNR = sinyal ÷ gürültü
+    <div class="c">Yukarıdaki parlak objede 10.000 ÷ 100 = <b>100</b>. Soluk objede 25 ÷ 5 = <b>5</b>. Aradaki fark, ekranda gördüğünüz farkın ta kendisi.</div>
+  </div>
+
+  <p>Pratikte ne anlama geldiğini bilmek işinize yarar:</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th class="num">SNR</th><th>Ne görürsünüz</th></tr></thead>
+      <tbody>
+        <tr><td class="num">1–2</td><td>Bir şeyin orada olduğunu <em>sanıyorsunuz</em>. Emin değilsiniz.</td></tr>
+        <tr><td class="num">3</td><td>Kabaca "tespit ettim" diyebileceğiniz eşik.</td></tr>
+        <tr><td class="num">5–10</td><td>Yapı belli, ama işlerken gürültü azaltma şart.</td></tr>
+        <tr><td class="num">20–50</td><td>Rahat işlenebilir, temiz görüntü.</td></tr>
+        <tr><td class="num">100+</td><td>Parlak bölgeler. Sorununuz artık gürültü değil, dinamik aralık.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Gürültü ile lekeyi karıştırmayın</h3>
+
+  <p>Bu ayrımı baştan yapmak, sonradan çok baş ağrısı önler. Fotoğrafınızı bozan her şey "gürültü" değildir.</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Sorun</th><th>Karakteri</th><th>Çözümü</th></tr></thead>
+      <tbody>
+        <tr><td>Foton gürültüsü, okuma gürültüsü</td><td><b>Rastgele.</b> Her karede farklı yerde</td><td><span class="tag g">Kare biriktirmek</span></td></tr>
+        <tr><td>Işık kirliliği gradyanı</td><td><b>Sabit.</b> Her karede aynı yerde</td><td><span class="tag b">Gradyan giderme (DBE, GraXpert)</span></td></tr>
+        <tr><td>Vinyetleme, toz gölgeleri</td><td><b>Sabit</b>, çarpımsal</td><td><span class="tag b">Flat kareler</span></td></tr>
+        <tr><td>Sıcak pikseller, amp glow</td><td><b>Sabit</b> desen</td><td><span class="tag b">Dark kareler + dithering</span></td></tr>
+        <tr><td>Uydu izleri, kozmik ışınlar</td><td><b>Rastgele</b>, tek karede</td><td><span class="tag b">Eleme (sigma clipping)</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>Yığınlama sadece ilk satırı çözer. Gradyanı yığınlayarak yok edemezsiniz — 500 kare de çekseniz orada durur. Bu yüzden "gürültüm var" derken hangisinden bahsettiğinizi bilmek gerekir.</p>
+
+  <div class="callout">
+    <span class="t">Neden gürültü sınırı belirler</span>
+    <p>Bir yapıyı görebilmenizin şartı, o yapının parlaklığının çevresindeki gürültüden büyük olmasıdır. Gürültü seviyesinin altında kalan her şey görünmez — orada olsa bile. SharpCap bunu net bir kuralla ifade eder: <em>"Yığınlanmış görüntüde görebileceğiniz en sönük obje, gürültü seviyesine eşit parlaklıktadır."</em> Yani gürültüyü yarıya indirmek, iki kat daha sönük yapıları görünür kılar.</p>
+  </div>
+
+  <hr>
+
+  <!-- ==================== 2 · FOTON GÜRÜLTÜSÜ ==================== -->
+  <h2 id="foton"><span class="sec-no">BÖLÜM 2</span><br>Foton gürültüsü: evrenin koyduğu sınır</h2>
+
+  <p>Yeni başlayanların çoğu gürültünün kameradan geldiğini sanır. Daha iyi bir kamera alsam gürültü biter diye düşünür.</p>
+
+  <p>Bitmez. Çünkü gürültünün büyük kısmı kameranızda değil, <strong>ışığın kendisinde</strong>.</p>
+
+  <p>Fotonlar düzenli aralıklarla gelmez. Rastgele gelirler. Saniyede ortalama 100 foton düşen bir piksele, bu saniye 93, sonraki saniye 108, sonraki 101 foton düşebilir. Bu, sayılabilir rastgele olayların tabi olduğu kuralın — Poisson dağılımının — sonucudur ve son derece basit bir formülü vardır:</p>
+
+  <div class="eq">
+    Gürültü = √Sinyal
+    <div class="c">100 foton topladıysanız gürültünüz √100 = <b>10 foton</b>. 10.000 foton topladıysanız gürültünüz √10.000 = <b>100 foton</b>.</div>
+  </div>
+
+  <p>Buradan çok işe yarar bir sonuç çıkar. Daha çok foton toplarsanız <em>mutlak</em> gürültünüz artar — ama SNR'ınız da artar:</p>
+
+  <div class="eq">
+    SNR = Sinyal ÷ √Sinyal = √Sinyal
+    <div class="c">Yani <b>topladığınız foton sayısının karekökü</b>. 100 foton → SNR 10. 10.000 foton → SNR 100.</div>
+  </div>
+
+  <p>Bu tek satır, astrofotoğrafın neden bu kadar sabır istediğini açıklar. Ve neden "daha iyi kamera" cevabının çoğu zaman yanlış cevap olduğunu.</p>
+
+  <div class="fig">
+    <svg viewBox="0 0 800 330" role="img" aria-label="Foton sayısı arttıkça SNR'ın karekök olarak artması">
+      <text x="400" y="22" fill="#898781" font-size="13" font-family="system-ui" text-anchor="middle">Aynı yıldız, artan foton sayısı</text>
+      <g id="photonpanels"></g>
+      <g font-family="system-ui" text-anchor="middle">
+        <!-- 4 panel -->
+        <g transform="translate(30,44)">
+          <rect x="0" y="0" width="160" height="160" fill="#000" stroke="#2c2c2a"/>
+          <g id="p1"></g>
+          <text x="80" y="184" fill="#fff" font-size="13.5" font-weight="700">100 foton</text>
+          <text x="80" y="204" fill="#f08080" font-size="12.5">gürültü ±10 · SNR 10</text>
+        </g>
+        <g transform="translate(220,44)">
+          <rect x="0" y="0" width="160" height="160" fill="#000" stroke="#2c2c2a"/>
+          <g id="p2"></g>
+          <text x="80" y="184" fill="#fff" font-size="13.5" font-weight="700">400 foton</text>
+          <text x="80" y="204" fill="#f5c04c" font-size="12.5">gürültü ±20 · SNR 20</text>
+        </g>
+        <g transform="translate(410,44)">
+          <rect x="0" y="0" width="160" height="160" fill="#000" stroke="#2c2c2a"/>
+          <g id="p3"></g>
+          <text x="80" y="184" fill="#fff" font-size="13.5" font-weight="700">1.600 foton</text>
+          <text x="80" y="204" fill="#7db4f0" font-size="12.5">gürültü ±40 · SNR 40</text>
+        </g>
+        <g transform="translate(600,44)">
+          <rect x="0" y="0" width="160" height="160" fill="#000" stroke="#2c2c2a"/>
+          <g id="p4"></g>
+          <text x="80" y="184" fill="#fff" font-size="13.5" font-weight="700">6.400 foton</text>
+          <text x="80" y="204" fill="#4ed24e" font-size="12.5">gürültü ±80 · SNR 80</text>
+        </g>
+      </g>
+      <text x="400" y="290" fill="#c3c2b7" font-size="13" font-family="system-ui" text-anchor="middle">Her adımda foton sayısı <tspan fill="#fff" font-weight="700">4 katına</tspan> çıkıyor, SNR <tspan fill="#fff" font-weight="700">2 katına</tspan>.</text>
+      <text x="400" y="312" fill="#898781" font-size="12.5" font-family="system-ui" text-anchor="middle">Mutlak gürültü sürekli büyüyor — ama sinyal daha hızlı büyüyor.</text>
+    </svg>
+    <div class="figcap"><b>Şekil 2 — Karekök kuralı gözle.</b> Soldan sağa her panelde toplanan foton sayısı dört katına çıkıyor. Görüntü belirginleşiyor ama iyileşme hızı sürekli yavaşlıyor: ilk sıçrama çok belirgin, sonuncusu ancak dikkatli bakınca fark ediliyor.</div>
+  </div>
+
+  <div class="callout warn">
+    <span class="t">Sık sorulan: "Peki kameramın gürültüsü hiç mi önemli değil?"</span>
+    <p>Önemli — ama düşündüğünüzden az. Modern soğutmalı bir CMOS kameranın okuma gürültüsü kare başına <strong>1–3 elektron</strong> civarındadır. Şehir semasında beş dakikalık bir pozda o pikselde biriken gökyüzü ışığı <strong>1.000 elektronu</strong> geçer ve kendi gürültüsü √1000 ≈ 32 elektrondur. 32'nin yanında 1.5 hiçbir şeydir. Bu iki sayının nasıl toplandığını Bölüm 7'de göreceğiz — ama şimdiden bilin: gürültü kaynakları toplanmaz, <strong>kareleri toplanır</strong>. Bu yüzden küçük olan büyüğün yanında gerçekten kaybolur.</p>
+  </div>
+
+  <hr>
+
+  <!-- ==================== 3 · KAREKÖK ==================== -->
+  <h2 id="karekok"><span class="sec-no">BÖLÜM 3</span><br>Kare sayısı: neden 4 kat süre, 2 kat iyileşme</h2>
+
+  <p>Tek kare çektiniz, gürültülü. İkinci kareyi çekip birinciyle ortalamasını aldınız. Ne oldu?</p>
+
+  <p>Sinyal aynı kaldı — obje iki karede de aynı parlaklıkta. Ama gürültü rastgele olduğu için biri artıya, diğeri eksiye sapmış olabilir; ortalama alınca kısmen birbirlerini götürdüler. Gürültü azaldı.</p>
+
+  <p>Ne kadar azaldı? <strong>√2 kadar</strong>, yani %41. Dört kare için √4 = 2 kat. Yüz kare için 10 kat.</p>
+
+  <div class="eq">
+    N kare yığınlarsanız → SNR, <span class="hi">√N</span> kat artar
+    <div class="c">Bu, astrofotoğrafın en temel kuralıdır ve doğrudan Bölüm 2'deki √Sinyal kuralından çıkar: N kare çekmek, N kat foton toplamaktır.</div>
+  </div>
+
+  <p>Şimdi bu formülün acı tarafına gelelim. Karekök yavaş büyüyen bir fonksiyondur:</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Süreyi kaça katlarsanız</th><th class="num">SNR kaç kat artar</th><th>Hissiyat</th></tr></thead>
+      <tbody>
+        <tr><td>2 kat (2 saat → 4 saat)</td><td class="num">1.41×</td><td>Fark var, ama çarpıcı değil</td></tr>
+        <tr><td>3 kat</td><td class="num">1.73×</td><td>Belirgin</td></tr>
+        <tr><td><b>4 kat</b> (2 saat → 8 saat)</td><td class="num"><b>2.00×</b></td><td>Net iyileşme</td></tr>
+        <tr><td>9 kat</td><td class="num">3.00×</td><td>Başka bir fotoğraf gibi</td></tr>
+        <tr><td>16 kat (2 saat → 32 saat)</td><td class="num">4.00×</td><td>Bambaşka</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>Tersinden bakmak daha çarpıcı: gürültüyü <strong>yarıya</strong> indirmek istiyorsanız <strong>dört kat</strong> daha uzun çekeceksiniz. Üçte birine indirmek istiyorsanız <strong>dokuz kat</strong>.</p>
+
+  <p>Bu yüzden ciddi fotoğraflar 10, 20, 50 saatlik toplamlarla üretilir. Ve bu yüzden bir gece daha eklemek, ikinci gecede ilk gecedeki kadar fark yaratmaz.</p>
+
+  <div class="fig">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:10px;margin-bottom:6px">
+      <div style="color:#fff;font-weight:700;font-size:16px">Toplam süre ve SNR</div>
+      <div style="color:#898781;font-size:13px">M33, Bortle 4, 5 dakikalık kareler</div>
+    </div>
+    <svg id="sqrtchart" viewBox="0 0 720 340" role="img" aria-label="Toplam entegrasyon süresine göre SNR eğrisi"></svg>
+    <div class="figcap"><b>Şekil 3 — Azalan getiri, gerçek rakamlarla.</b> İlk saatte SNR sıfırdan 4.4'e fırlıyor. Beşinci saat sizi 9.8'e taşıyor. Onuncu saat 13.8. Kırkıncı saat 27.6. Eğri hiç düzleşmiyor — ama tırmanma hızı sürekli yavaşlıyor. <b>Önemli:</b> eğri asla durmaz. "Yeterli" diye bir nokta yoktur; sadece "bana yeter" noktası vardır.</div>
+  </div>
+
+  <div class="callout good">
+    <span class="t">Pratik durma kuralı</span>
+    <p>Şöyle düşünün: fark edeceğiniz en küçük iyileşme kabaca <strong>%20</strong>'dir. %20 iyileşme için toplam sürenizi <strong>1.44 katına</strong> çıkarmanız gerekir. Yani 10 saatiniz varsa, gözle görülür bir fark için 4.4 saat daha eklemelisiniz. 30 saatiniz varsa 13 saat daha. Bir gecelik ekleme toplamınızı %44 artırmıyorsa, artık düz kısımdasınız — o zamanı başka bir objeye ayırın.</p>
+  </div>
+
+  <h3>Kare sayısı mı, toplam süre mi?</h3>
+
+  <p>"60 tane 5 dakikalık kare mi, 300 tane 1 dakikalık kare mi?" Bu, forumların en eski tartışmasıdır. İkisi de 5 saat.</p>
+
+  <p>Kısa cevap: <strong>okuma gürültüsünü boğduğunuz sürece ikisi de aynıdır.</strong> Toplam süre neyse SNR odur; nasıl dilimlediğinizin önemi yoktur.</p>
+
+  <p>Uzun cevap Bölüm 7'de — çünkü "boğmak" ne demek, onu önce anlamak gerekiyor. Şimdilik şunu aklınızda tutun: kare sayısını artırmak sihirli değildir. <strong>Foton biriktirmek sihirlidir.</strong> Kareler sadece o fotonları paketleme şeklinizdir.</p>
+
+  <div class="callout warn">
+    <span class="t">Bir istisna: eleme için kare sayısı gerekir</span>
+    <p>Uydu izlerini, kozmik ışınları ve uçakları elemek için yığınlama yazılımının istatistik yapacak kadar kareye ihtiyacı var. <strong>10 kare mutlak alt sınırdır</strong>; 20–30 daha rahattır. 5 tane 1 saatlik kare, matematiksel olarak 30 tane 10 dakikalık kareyle aynı SNR'ı verse de, tek bir uydu izi o karelerden birini mahveder ve elinizde eleyecek veri kalmaz.</p>
+  </div>
+  <hr>
+
+  <!-- ==================== 4 · SİMÜLATÖR ==================== -->
+  <h2 id="simulator"><span class="sec-no">BÖLÜM 4</span><br>Canlı simülatör: kendiniz deneyin</h2>
+
+  <p>Aşağıdaki simülatör gerçek fizikle çalışıyor. 80 mm f/6 bir teleskop ve 3.76 µm pikselli bir kamera varsayıyor, seçtiğiniz objenin gerçek yüzey parlaklığını kullanıyor, gökyüzü ışığını Bortle sınıfından hesaplıyor ve sonucu Poisson istatistiğiyle gürültülendiriyor.</p>
+
+  <p>Rakamlar uydurma değil. M33 için Bortle 4'te 5 saatte çıkan SNR ≈ 10 değeri, gerçekten o kadar çeken birinin göreceği değerdir.</p>
+
+  <div class="callout warn">
+    <span class="t">Önce şunları deneyin</span>
+    <p><strong>1.</strong> Hedefi <em>M57</em> yapın, gökyüzünü Bortle 8'e çekin, süreyi yarım saatte bırakın. Şehirden bile tertemiz.<br>
+    <strong>2.</strong> Şimdi sadece hedefi <em>M33</em> yapın. Hiçbir şeyi değiştirmeyin. Aradaki uçurumu görün.<br>
+    <strong>3.</strong> M33'ü kurtarmaya çalışın: kare sayısını sonuna kadar açın. Yetmediğini görün.<br>
+    <strong>4.</strong> Gökyüzünü Bortle 4'e çekin. Asıl çözümün bu olduğunu görün.</p>
+  </div>
+
+  <div class="tool" id="sim">
+    <h4>SNR simülatörü</h4>
+    <p class="sub">80 mm f/6 · 3.76 µm piksel · 1.62″/px. Ayarları değiştirin, üç panel anında yeniden hesaplanır.</p>
+
+    <div class="grid2" style="margin-bottom:18px">
+      <div class="fld">
+        <label>Hedef obje</label>
+        <select id="sm_obj"></select>
+      </div>
+      <div class="fld">
+        <label>Gökyüzü (Bortle)</label>
+        <div class="rng"><input type="range" id="sm_b" min="1" max="9" step="1" value="5"><span class="v" id="sm_b_v">5</span></div>
+      </div>
+      <div class="fld">
+        <label>Kare sayısı</label>
+        <div class="rng"><input type="range" id="sm_n" min="1" max="240" step="1" value="36"><span class="v" id="sm_n_v">36</span></div>
+      </div>
+      <div class="fld">
+        <label>Poz süresi (kare başına)</label>
+        <select id="sm_t">
+          <option value="15">15 saniye</option>
+          <option value="30">30 saniye</option>
+          <option value="60">60 saniye</option>
+          <option value="120">120 saniye</option>
+          <option value="300" selected>300 saniye (5 dk)</option>
+          <option value="600">600 saniye (10 dk)</option>
+        </select>
+      </div>
+      <div class="fld">
+        <label>Kamera</label>
+        <select id="sm_cam">
+          <option value="1.5" selected>Modern CMOS — okuma gürültüsü 1.5 e⁻</option>
+          <option value="3.45">CMOS düşük gain — 3.45 e⁻</option>
+          <option value="9">Eski CCD (KAF-8300) — 9 e⁻</option>
+          <option value="13">Eski CCD (KAI-11002) — 13 e⁻</option>
+        </select>
+      </div>
+      <div class="fld">
+        <label>Filtre</label>
+        <select id="sm_f">
+          <option value="none" selected>Yok / UV-IR kesme</option>
+          <option value="lp">Işık kirliliği filtresi</option>
+          <option value="dual7">Çift bant 7 nm</option>
+          <option value="dual3">Çift bant 3 nm</option>
+          <option value="ha3">Hα 3 nm (mono)</option>
+        </select>
+      </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px">
+      <div>
+        <canvas id="sc_true" width="200" height="200" style="width:100%"></canvas>
+        <div style="font-size:12.5px;color:var(--ink-3);margin-top:7px;line-height:1.4"><b style="color:#c3c2b7">Gerçek obje</b><br>Gürültüsüz referans</div>
+      </div>
+      <div>
+        <canvas id="sc_one" width="200" height="200" style="width:100%"></canvas>
+        <div style="font-size:12.5px;color:var(--ink-3);margin-top:7px;line-height:1.4"><b style="color:#c3c2b7">Tek kare</b><br><span id="sc_one_sub">Ham hâli</span></div>
+      </div>
+      <div>
+        <canvas id="sc_stack" width="200" height="200" style="width:100%"></canvas>
+        <div style="font-size:12.5px;color:var(--ink-3);margin-top:7px;line-height:1.4"><b style="color:#7db4f0">Yığın sonucu</b><br><span id="sc_stack_sub">—</span></div>
+      </div>
+    </div>
+
+    <div class="verdict" id="sm_msg" style="margin-top:20px">Hesaplanıyor…</div>
+
+    <div class="out" style="grid-template-columns:repeat(auto-fit,minmax(120px,1fr))">
+      <div class="stat"><div class="k">SNR (yığın)</div><div class="v" id="sm_snr" style="font-size:26px">—</div></div>
+      <div class="stat"><div class="k">Toplam süre</div><div class="v" id="sm_time" style="font-size:23px">—</div></div>
+      <div class="stat"><div class="k">Obje / gökyüzü</div><div class="v" id="sm_ratio" style="font-size:23px">—</div></div>
+      <div class="stat"><div class="k">SNR (tek kare)</div><div class="v" id="sm_snr1" style="font-size:23px">—</div></div>
+    </div>
+
+    <div style="margin-top:20px">
+      <div style="font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);font-weight:600;margin-bottom:8px">Gürültü bütçesi — hangi kaynak ne kadar pay alıyor</div>
+      <svg id="sm_budget" viewBox="0 0 720 74" style="display:block;width:100%;height:auto"></svg>
+      <div class="legend" style="margin-top:10px">
+        <span><i class="sw" style="background:#3987e5"></i>Objenin kendi foton gürültüsü</span>
+        <span><i class="sw" style="background:#d95926"></i>Gökyüzü</span>
+        <span><i class="sw" style="background:#199e70"></i>Karanlık akım</span>
+        <span><i class="sw" style="background:#c98500"></i>Okuma gürültüsü</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout good">
+    <span class="t">Simülatörden çıkarılacak dersler</span>
+    <p><strong>1.</strong> Gürültü bütçesi çubuğuna bakın. Geniş bantta ve şehirde neredeyse tamamı turuncu — yani <em>gökyüzü</em>. Kameranız değil.<br>
+    <strong>2.</strong> Eski CCD'yi seçip poz süresini 15 saniyeye indirin: sarı bant (okuma gürültüsü) çubuğu ele geçirir. Modern CMOS'a geçin, kaybolur. CMOS devriminin tamamı bu.<br>
+    <strong>3.</strong> M42 çekirdeğini seçin: mavi bant baskın olur. Burada gökyüzü önemsizdir, objenin kendi fotonları yeter. Bu yüzden M42 şehirden bile çekilir.<br>
+    <strong>4.</strong> IFN'i seçip her ayarı sonuna kadar açın. SNR 3'ü zor geçer. Bazı objeler için tek çözüm karanlık gökyüzüne gitmektir.</p>
+  </div>
+
+  <hr>
+
+  <!-- ==================== 5 · GÖKYÜZÜ ==================== -->
+  <h2 id="gokyuzu"><span class="sec-no">BÖLÜM 5</span><br>Gökyüzü parlaklığı: en büyük rakip</h2>
+
+  <p>Gece göğü siyah değildir. Şehirden bakarsanız zaten belli; ama en karanlık çölde bile gökyüzü sıfır parlaklıkta değildir. Havadaki atomların ışıması, zodyak ışığı, uzak yıldızların toplam ışığı — hepsi bir zemin oluşturur.</p>
+
+  <p>Sorun şu: <strong>gökyüzü ışığı da fotondur ve o da kendi gürültüsünü getirir.</strong> Objenizden gelen sinyale hiçbir katkısı yoktur, ama gürültüye katkısı devasadır. Kamera "bu foton galaksiden mi geldi, sokak lambasından mı" diye ayıramaz.</p>
+
+  <p>Gökyüzü parlaklığı <strong>mag/arcsec²</strong> ile ölçülür. Sayı <em>büyüdükçe</em> gökyüzü <em>karanlıklaşır</em> — astronomideki tüm parlaklık ölçekleri gibi ters çalışır. SQM adı verilen küçük cihazlar bunu doğrudan ölçer.</p>
+
+  <div class="fig">
+    <svg viewBox="0 0 800 352" role="img" aria-label="Bortle sınıflarına göre gökyüzü parlaklığı ve göreli foton akısı">
+      <text x="400" y="20" fill="#898781" font-size="13" font-family="system-ui" text-anchor="middle">Bortle sınıfı, gökyüzü parlaklığı ve göreli gökyüzü ışığı</text>
+      <g id="bortlebars"></g>
+    </svg>
+    <div class="figcap"><b>Şekil 4 — Bortle 8, Bortle 3'ten 30 kat parlak.</b> Çubukların uzunluğu piksel başına düşen gökyüzü fotonuyla orantılı. Not: Bortle ölçeğinin orijinali (Sky &amp; Telescope, 2001) sadece görsel tanımlar ve çıplak gözle görülebilen en sönük yıldız üzerinden tanımlanır — <strong>mag/arcsec² karşılıkları sonradan eklenmiştir ve kaynaklar arasında yer yer 0.5 kadire varan fark vardır.</strong> Buradaki değerler handprint.com'un lightpollutionmap.info tarafından da kullanılan tablosunun ara değerleridir; Wikipedia'nın tablosu özellikle Bortle 2–3 için daha parlak değerler verir. Sınıf sınırları bu yüzden yaklaşık kabul edilmelidir.</div>
+  </div>
+
+  <h3>Bunun size maliyeti ne?</h3>
+
+  <p>Gökyüzü baskınsa — yani objeniz gökyüzünden sönükse ki soluk hedeflerde hep öyledir — aynı SNR'a ulaşmak için gereken süre, doğrudan gökyüzü akısıyla orantılı artar.</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Bortle</th><th class="num">mag/arcsec²</th><th class="num">Gökyüzü ışığı</th><th>Bortle 4'te 1 saat = burada</th></tr></thead>
+      <tbody>
+        <tr><td>1 — Mükemmel karanlık</td><td class="num">22.00</td><td class="num">0.52×</td><td class="num"><span class="tag g">31 dakika</span></td></tr>
+        <tr><td>3 — Kırsal</td><td class="num">21.80</td><td class="num">0.63×</td><td class="num"><span class="tag g">38 dakika</span></td></tr>
+        <tr><td>4 — Kırsal / banliyö</td><td class="num">21.30</td><td class="num">1.00×</td><td class="num">1 saat</td></tr>
+        <tr><td>5 — Banliyö</td><td class="num">20.10</td><td class="num">3.0×</td><td class="num"><span class="tag y">3 saat</span></td></tr>
+        <tr><td>6 — Parlak banliyö</td><td class="num">19.20</td><td class="num">6.9×</td><td class="num"><span class="tag y">6.9 saat</span></td></tr>
+        <tr><td>7 — Banliyö / şehir</td><td class="num">18.65</td><td class="num">11.5×</td><td class="num"><span class="tag r">11.5 saat</span></td></tr>
+        <tr><td>8 — Şehir</td><td class="num">18.10</td><td class="num">19.1×</td><td class="num"><span class="tag r">19 saat</span></td></tr>
+        <tr><td>9 — Şehir merkezi</td><td class="num">17.50</td><td class="num">33.1×</td><td class="num"><span class="tag r">33 saat</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>Şu satıra bir daha bakın: <strong>Bortle 8'de bir gecede aldığınızı, Bortle 4'te 20 dakikada alırsınız.</strong></p>
+
+  <p>Bu, astrofotoğrafta parası ödenmeyen en büyük yükseltmedir. Yeni bir kamera size %20 kazandırır. İki saat araba sürmek 19 kat kazandırır.</p>
+
+  <div class="callout">
+    <span class="t">Ama bu her obje için geçerli değil</span>
+    <p>Yukarıdaki 19 kat, <em>gökyüzünün objeden çok parlak olduğu</em> durum için. Obje parlaksa denklem değişir. Gerçek formül şu: gereken süre oranı = (obje + gökyüzü₂) ÷ (obje + gökyüzü₁).</p>
+    <p>Pratikte ne demek olduğuna bakın — Bortle 8'e taşınmanın maliyeti, objenin parlaklığına göre:</p>
+    <div class="tw" style="margin:14px 0 0">
+      <table>
+        <thead><tr><th>Obje</th><th class="num">Bortle 4 → Bortle 8 maliyeti</th></tr></thead>
+        <tbody>
+          <tr><td>IFN, M31 dış halesi</td><td class="num"><span class="tag r">18–19× süre</span></td></tr>
+          <tr><td>M33</td><td class="num"><span class="tag r">16× süre</span></td></tr>
+          <tr><td>M51, NGC 7000, M81, M45 tozu</td><td class="num"><span class="tag r">10–12× süre</span></td></tr>
+          <tr><td>M27, M42 iç bölge</td><td class="num"><span class="tag y">4–6× süre</span></td></tr>
+          <tr><td>M31 çekirdeği, M57</td><td class="num"><span class="tag g">1.7–2.3× süre</span></td></tr>
+          <tr><td>M42 çekirdeği</td><td class="num"><span class="tag g">1.1× süre — neredeyse hiç</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="margin-top:14px;margin-bottom:0">Yani ışık kirliliği <em>fakiri daha fakir yapar</em>. Parlak objeler şehirde de gayet iyi çıkar. Bu, balkonundan çekim yapanlar için gerçek ve kullanışlı bir bilgi: hedef seçiminizi gökyüzünüze göre yapın.</p>
+  </div>
+
+  <hr>
+
+  <!-- ==================== 6 · OBJELER ==================== -->
+  <h2 id="objeler"><span class="sec-no">BÖLÜM 6</span><br>Objelerin gerçek parlaklığı: M57 – M33 paradoksu</h2>
+
+  <p>Katalogda M33'ün parlaklığı <strong>5.7 kadir</strong>. M57'nin parlaklığı <strong>8.8 kadir</strong>. Yani M33, M57'den yaklaşık <strong>17 kat parlak</strong>.</p>
+
+  <p>Buna rağmen M57'yi şehir balkonunuzdan yarım saatte çekersiniz. M33'ü aynı balkondan bütün gece çekseniz doğru dürüst çıkmaz.</p>
+
+  <p>Sebep şu: katalog parlaklığı, objenin <strong>tüm ışığını tek bir noktaya toplarsanız</strong> ne kadar parlak olacağını söyler. Ama obje bir nokta değil. Gökyüzünde bir alan kaplar. Ve sensörünüzdeki her piksel, o alanın sadece minicik bir parçasını görür.</p>
+
+  <p>Önemli olan sayı, <strong>yüzey parlaklığı</strong>dır: birim alana düşen ışık. Ve iki obje arasındaki fark burada tersine döner.</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Obje</th><th class="num">Katalog kadri</th><th class="num">Boyut</th><th class="num">Yüzey parlaklığı</th></tr></thead>
+      <tbody>
+        <tr><td><b>M33</b> Üçgen Galaksisi</td><td class="num">5.7</td><td class="num">70.8′ × 41.7′</td><td class="num"><span class="tag r">23.1</span></td></tr>
+        <tr><td><b>M57</b> Halka Bulutsusu</td><td class="num">8.8</td><td class="num">1.4′ × 1.0′</td><td class="num"><span class="tag g">17.8</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>M33'ün ışığı <strong>2.320 arcdakika kare</strong>lik bir alana yayılmış. M57'ninki <strong>1.1 arcdakika kare</strong>ye sıkışmış — iki binde biri kadar alan. Piksel başına M57, M33'ten <strong>5.3 kadir</strong>, yani <strong>132 kat</strong> parlaktır.</p>
+
+  <p>Toplam süreye çevirirsek: aynı SNR'a ulaşmak için M33, M57'den <strong>800 ile 7.500 kat</strong> arasında daha uzun süre ister — kesin rakam gökyüzünüze bağlı. Banliyö (Bortle 5) için oran yaklaşık <strong>2.000 kat</strong>.</p>
+
+  <p>Somut olarak: aynı banliyö gökyüzünde M57'de SNR 10'a <strong>25 saniyede</strong> ulaşırsınız. M33'te aynı SNR için <strong>14 saat</strong> gerekir. Aynı gece, aynı teleskop, aynı kamera.</p>
+
+  <div class="fig">
+    <svg viewBox="0 0 800 380" role="img" aria-label="Gerçek gökyüzü objelerinin yüzey parlaklığı skalası ve gökyüzü seviyeleriyle karşılaştırması">
+      <text x="400" y="20" fill="#898781" font-size="13" font-family="system-ui" text-anchor="middle">Yüzey parlaklığı skalası — sağa gittikçe sönükleşir</text>
+      <g id="sbscale"></g>
+    </svg>
+    <div class="figcap"><b>Şekil 5 — Her şey aynı skalada.</b> Yatay eksen yüzey parlaklığı (mag/arcsec²). Dikey çizgiler gökyüzü seviyelerini gösterir. <strong>Bir objenin sizin gökyüzü çizginizin solunda kalması, o objenin gökyüzünden parlak olduğu anlamına gelir</strong> — kolay hedeftir. Sağında kalan her obje gökyüzünün altındadır ve ancak biriktirerek çıkarılır. Sağa gidildikçe gereken süre katlanarak artar. Değerler kataloglara göre ±0.3 kadar değişebilir; M42 gibi objelerde tek bir sayı yoktur çünkü obje kendi içinde muazzam bir aralık taşır.</div>
+  </div>
+
+  <h3>M42: tek bir objede sekiz kadirlik uçurum</h3>
+
+  <p>Orion Bulutsusu'nun Trapezium bölgesi yaklaşık <strong>15.5</strong> yüzey parlaklığındadır. Aynı bulutsunun dış halkaları <strong>23.5</strong> civarıdır. Arada <strong>8 kadir</strong>, yani <strong>1.585 kat</strong> parlaklık farkı var.</p>
+
+  <p>Hiçbir tek poz bu aralığı kapsayamaz. Dış bölgeleri çıkaracak kadar uzun poz verirseniz çekirdek bembeyaz yanar. Çekirdeği koruyacak kadar kısa poz verirseniz dış bölgeler gürültünün altında kalır.</p>
+
+  <p>Bu yüzden ciddi M42 fotoğrafları iki ayrı seri gerektirir — mesela 13 tane 10 dakikalık kare dış bölgeler için, 21 tane 1 dakikalık kare çekirdek için — ve işlemede birleştirilir. M45 Ülker'de de aynı sorun vardır: yıldızlar 30 saniyede doyar, etraflarındaki toz bulutu saatler ister.</p>
+
+  <div class="callout warn">
+    <span class="t">Dikkat: birim tuzağı</span>
+    <p>İnternette M33'ün yüzey parlaklığını <strong>14.2</strong> olarak göreceksiniz. Bu sayı doğru ama birimi farklı: <strong>mag/arcdakika²</strong>. mag/arcsaniye²'ye çevirmek için <strong>8.89 eklemeniz</strong> gerekir → 23.1. Planetaryum yazılımlarının ve pek çok katalogun "surface brightness" sütunu arcdakika cinsindendir. İki birimi karıştırırsanız objeyi 3.500 kat parlak sanırsınız. Amatör kaynakların yarısı bu hatayı yapar.</p>
+  </div>
+
+  <h3>Gerçek dünyadan süreler</h3>
+
+  <p>Bu tablodaki her satır, yayınlanmış gerçek çalışmalardan:</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Hedef</th><th class="num">Tipik toplam süre</th><th>Neden</th></tr></thead>
+      <tbody>
+        <tr><td><b>M42 çekirdeği</b></td><td class="num">30–45 dakika</td><td>Denver şehir merkezinden 44 × 60 sn ile çekildiği belgeli. Sorun gürültü değil, doygunluk.</td></tr>
+        <tr><td>M57, M27</td><td class="num">1–4 saat</td><td>Yüksek yüzey parlaklığı. İhtiyaç duyduğunuz şey süre değil, odak uzaklığı.</td></tr>
+        <tr><td>M42 tam HDR</td><td class="num">4–10 saat</td><td>Derinlik değil, dinamik aralık meselesi.</td></tr>
+        <tr><td>NGC 7000 (Hα)</td><td class="num">3–10 saat</td><td>Dar bantla Bortle 8–9'dan bile çekilebiliyor.</td></tr>
+        <tr><td>M45 Ülker</td><td class="num">4–15 saat</td><td>Yıldızlar hemen çıkar; yansıma tozu saatler ister.</td></tr>
+        <tr><td>M81 / M82</td><td class="num">5–20 saat</td><td>Çekirdekler kolay, dış kollar ve gelgit yapıları zor.</td></tr>
+        <tr><td>M31</td><td class="num">6 – 100+ saat</td><td>6 saat güzel bir fotoğraf verir. Dış hale ve Hα bölgeleri için 100 saatlik projeler var.</td></tr>
+        <tr><td><b>M33</b></td><td class="num">10–40 saat</td><td>Bir AstroBin "günün fotoğrafı" 310 saat. Klasik "kolay sanılan zor hedef".</td></tr>
+        <tr><td><b>IFN</b> (galaktik sirus)</td><td class="num">17–50+ saat</td><td>Sadece Bortle 1–4. Belgeli bir örnek: Bortle 3'te 17 saat, filtresiz DSLR.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>IFN — Integrated Flux Nebula — bu işin uç noktasıdır. En parlak bölgeleri bile <strong>24.5 mag/arcsec²</strong> civarındadır. Yani <strong>en karanlık doğal gökyüzünden bile 10 kat sönüktür.</strong> Şehirden IFN çekmek imkânsızdır; hiçbir filtre, hiçbir süre bunu değiştirmez.</p>
+
+  <div class="tool" id="calc-obj">
+    <h4>Hesaplayıcı 1 — İki objeyi karşılaştırın</h4>
+    <p class="sub">Aynı gökyüzünde, aynı ekipmanla, aynı SNR'a ulaşmak için gereken süreler.</p>
+    <div class="grid2">
+      <div class="fld"><label>Birinci obje</label><select id="co_a"></select></div>
+      <div class="fld"><label>İkinci obje</label><select id="co_b"></select></div>
+      <div class="fld"><label>Gökyüzü (Bortle)</label>
+        <div class="rng"><input type="range" id="co_b_sky" min="1" max="9" step="1" value="5"><span class="v" id="co_sky_v">5</span></div>
+      </div>
+      <div class="fld"><label>Birinci obje için ayırdığınız süre (saat)</label><input type="number" id="co_h" value="2" step="0.5" min="0.1"></div>
+    </div>
+    <div class="out">
+      <div class="stat"><div class="k">İkinci obje için gereken</div><div class="v" id="co_need" style="font-size:26px">—</div></div>
+      <div class="stat"><div class="k">Süre oranı</div><div class="v" id="co_ratio" style="font-size:23px">—<small>×</small></div></div>
+      <div class="stat"><div class="k">Ulaşılan SNR</div><div class="v" id="co_snr" style="font-size:23px">—</div></div>
+    </div>
+    <div class="verdict" id="co_verdict">—</div>
+  </div>
+  <hr>
+
+  <!-- ==================== 7 · OKUMA GÜRÜLTÜSÜ ==================== -->
+  <h2 id="pozsuresi"><span class="sec-no">BÖLÜM 7</span><br>Okuma gürültüsü ve poz süresi</h2>
+
+  <p>Şimdiye kadar konuştuğumuz gürültü fotonlardan geliyordu. Bir tane daha var ve tamamen kameranıza ait: <strong>okuma gürültüsü</strong>.</p>
+
+  <p>Sensör, her pikselde biriken elektronları bir sayıya çevirir. Bu çevirme işlemi kusursuz değildir; her okumada birkaç elektronluk rastgele bir hata bırakır. Poz ne kadar uzun olursa olsun bu hata aynıdır — çünkü poza değil, <strong>okuma işlemine</strong> bağlıdır.</p>
+
+  <p>İşte kilit nokta burada. Kaç kare çekerseniz, o kadar kez okuma yaparsınız. 300 kare = 300 kez okuma gürültüsü. 10 kare = 10 kez. Uzun pozların tek gerçek avantajı budur: <strong>daha az okuma.</strong></p>
+
+  <h3>Gürültüler nasıl toplanır</h3>
+
+  <p>Bunu bilmek gerekiyor çünkü sezgiye aykırı. Gürültü kaynakları düz toplanmaz. <strong>Kareleri toplanır, sonra karekök alınır.</strong></p>
+
+  <div class="eq">
+    Toplam gürültü = √( gökyüzü + obje + karanlık + okuma² )
+    <div class="c">Örnek: gökyüzü gürültüsü 32 e⁻, okuma gürültüsü 1.5 e⁻ ise toplam √(32² + 1.5²) = <b>32.04</b> e⁻. Okuma gürültüsü %0.1 fark yaratmış — pratikte yok gibi.</div>
+  </div>
+
+  <p>Bu yüzden büyük olan küçüğü yutar. Ve bu yüzden okuma gürültüsünü tamamen sıfırlamaya çalışmanın anlamı yoktur — sadece <em>yeterince küçük</em> olması yeter.</p>
+
+  <h3>"Okuma gürültüsünü boğmak"</h3>
+
+  <p>Poz süresi seçiminin tamamı tek bir soruya iner: <strong>bir karede biriken gökyüzü ışığı, okuma gürültüsünü bastıracak kadar çok mu?</strong></p>
+
+  <p>Yaygın kural şudur: bir karede biriken gökyüzü elektronu, okuma gürültüsünün karesinin <strong>10 katı</strong> olsun. O zaman okuma gürültüsü toplam gürültüyü sadece <strong>%5</strong> artırır — göz ardı edilebilir.</p>
+
+  <div class="eq">
+    Gereken poz = 10 × (okuma gürültüsü)² ÷ (gökyüzü hızı)
+    <div class="c">Okuma gürültüsü elektron, gökyüzü hızı elektron/piksel/saniye cinsinden. Sonuç saniye.</div>
+  </div>
+
+  <p>Dikkat edin: formülde okuma gürültüsü <strong>karesiyle</strong> giriyor. Okuma gürültüsünü yarıya indirmek, gereken pozu <strong>dörtte bire</strong> indirir. İşte CMOS devriminin matematiği tam olarak bu.</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Kamera</th><th class="num">Okuma gür.</th><th class="num">Bortle 4</th><th class="num">Bortle 6</th><th class="num">Bortle 8</th></tr></thead>
+      <tbody>
+        <tr><td>Modern CMOS (IMX571, HCG)</td><td class="num">1.5 e⁻</td><td class="num"><span class="tag g">125 sn</span></td><td class="num"><span class="tag g">18 sn</span></td><td class="num"><span class="tag g">7 sn</span></td></tr>
+        <tr><td>CMOS düşük gain</td><td class="num">3.45 e⁻</td><td class="num">11 dk</td><td class="num">96 sn</td><td class="num">35 sn</td></tr>
+        <tr><td>CCD KAF-8300</td><td class="num">9 e⁻</td><td class="num"><span class="tag r">75 dk</span></td><td class="num"><span class="tag y">11 dk</span></td><td class="num">4 dk</td></tr>
+        <tr><td>CCD KAI-11002</td><td class="num">13 e⁻</td><td class="num"><span class="tag r">2.6 saat</span></td><td class="num"><span class="tag r">23 dk</span></td><td class="num"><span class="tag y">8 dk</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>Tabloya bir bakın. Karanlık bir gökyüzünde eski bir CCD ile <em>teorik olarak</em> 75 dakikalık kareler çekmeniz gerekirdi. Kimse çekmiyordu tabii — takip yetmez, uydu geçer, bulut gelir. CCD kullanıcıları bu yüzden okuma gürültüsü cezasını kabullenip 10–20 dakikalık kareler çekiyordu.</p>
+
+  <p>Modern bir CMOS'la aynı gökyüzünde <strong>2 dakika</strong> yeter. Şehirde <strong>7 saniye</strong>.</p>
+
+  <div class="tool" id="calc-sub">
+    <h4>Hesaplayıcı 2 — Poz süreniz ne olmalı?</h4>
+    <p class="sub">Kameranızın okuma gürültüsünü ve gökyüzünüzü girin. Alt sınırı hesaplayın.</p>
+    <div class="grid2">
+      <div class="fld"><label>Okuma gürültüsü (e⁻)</label><input type="number" id="cs_rn" value="1.5" step="0.1" min="0.3"></div>
+      <div class="fld"><label>Gökyüzü (Bortle)</label>
+        <div class="rng"><input type="range" id="cs_b" min="1" max="9" step="1" value="6"><span class="v" id="cs_b_v">6</span></div>
+      </div>
+      <div class="fld"><label>Odak oranı (f/)</label><input type="number" id="cs_f" value="6" step="0.1" min="1"></div>
+      <div class="fld"><label>Piksel boyutu (µm)</label><input type="number" id="cs_px" value="3.76" step="0.01" min="0.5"></div>
+      <div class="fld"><label>Filtre</label>
+        <select id="cs_filt">
+          <option value="1" selected>Yok / UV-IR kesme</option>
+          <option value="0.55">Işık kirliliği filtresi</option>
+          <option value="0.042">Çift bant 7 nm</option>
+          <option value="0.018">Çift bant 3 nm</option>
+          <option value="0.0095">Hα 3 nm (mono)</option>
+        </select>
+      </div>
+      <div class="fld"><label>Kabul edilebilir SNR kaybı</label>
+        <select id="cs_tol">
+          <option value="9.76" selected>%5 — güvenli (önerilen)</option>
+          <option value="4.76">%10 — kabul edilebilir</option>
+          <option value="2.27">%20 — kısa kare stratejisi</option>
+        </select>
+      </div>
+    </div>
+    <div class="out">
+      <div class="stat"><div class="k">Gökyüzü hızı</div><div class="v" id="cs_sky" style="font-size:22px">—<small> e⁻/px/sn</small></div></div>
+      <div class="stat"><div class="k">Önerilen poz</div><div class="v" id="cs_t" style="font-size:26px">—</div></div>
+      <div class="stat"><div class="k">Karede gökyüzü</div><div class="v" id="cs_e" style="font-size:22px">—<small> e⁻</small></div></div>
+    </div>
+    <div class="verdict" id="cs_verdict">—</div>
+  </div>
+
+  <div class="callout warn">
+    <span class="t">"3 kat" mı "10 kat" mı? İkisi de doğru olabilir</span>
+    <p>Forumlarda bu kuralı bazen "gökyüzü, okuma gürültüsünün 3 katı olsun" diye okursunuz, bazen "10 katı olsun". Çelişki gibi görünür ama değil — <strong>birimler farklı</strong>.</p>
+    <p>Bazı yazarlar <em>gürültü</em> cinsinden konuşur: √gökyüzü ≥ 3 × okuma gürültüsü. Bu, gökyüzü ≥ 9 × okuma² demektir — yani neredeyse tam olarak 10 kuralı. Bazıları <em>sinyal</em> cinsinden konuşur: gökyüzü ≥ 3 × okuma². Bu daha gevşektir, %13 SNR kaybına denk gelir.</p>
+    <p style="margin-bottom:0">İkisi de savunulabilir. Bu yazıda sinyal cinsinden 10 katı kullanıyoruz — SharpCap'in varsayılanı da budur. İnternetteki tartışmaların çoğu, aslında aynı şeyi farklı birimle söyleyen insanların birbirini anlamamasıdır.</p>
+  </div>
+
+  <h3>Peki uzun poz vermenin bir zararı var mı?</h3>
+
+  <p>Var, ve göz ardı edilmemeli:</p>
+
+  <ul>
+    <li><strong>Yıldız çekirdekleri doyar.</strong> Doymuş piksel geri getirilemez; yıldız renkleri kaybolur, şişkin beyaz toplar kalır.</li>
+    <li><strong>Kaybettiğinizde çok kaybedersiniz.</strong> Uydu geçen 10 dakikalık kare = 10 dakika çöp. 30 saniyelik kare = 30 saniye çöp.</li>
+    <li><strong>Takip hatası birikir.</strong> Uzun pozda rüzgâr, seeing ve rehberleme hatası daha çok kareyi bozar.</li>
+    <li><strong>Eleme zorlaşır.</strong> Az kareniz olur, sigma eleme çalışmaz.</li>
+  </ul>
+
+  <p>Buna karşılık çok kısa poz vermenin de bedeli var: her kare arasındaki indirme ve dither süresi ölü zamandır. 10 saniyelik kare çekip aralarda 5 saniye kaybediyorsanız gecenizin <strong>üçte birini</strong> çöpe atıyorsunuz — ki bu, kazandığınız %5'ten çok daha fazladır.</p>
+
+  <div class="callout warn">
+    <span class="t">Bu rakamlar neden temkinli</span>
+    <p>Buradaki gökyüzü hızları görsel (V) banda göre hesaplanıyor. Filtresiz ya da UV-IR kesmeli çeken gerçek bir kamera V bandından <strong>2–3 kat geniş</strong> bir aralığı toplar, yani pratikte daha çok gökyüzü elektronu birikir ve gereken poz süresi <strong>daha da kısalır</strong>. Yani tablodaki değerler güvenli taraftadır: Bortle 6'da 18 saniye yerine gerçekte 6–9 saniye yeterli olabilir. Objeyle gökyüzü aynı bantta hesaplandığı için SNR <em>oranları</em> bundan etkilenmez — sadece mutlak poz süresi alt sınırı temkinli çıkar.</p>
+  </div>
+
+  <div class="callout good">
+    <span class="t">Pratik özet</span>
+    <p>Hesaplayıcının verdiği süreyi <strong>alt sınır</strong> olarak alın. Sonra kendi koşullarınıza göre yukarı ayarlayın: ölü zamanı makul tutacak, yıldızları yakmayacak, kaybettiğinizde canınızı yakmayacak bir değer seçin. Çoğu kurulum için bu <strong>60–300 saniye</strong> aralığına düşer. Tam sayıyı bulmak için saatler harcamayın — SharpCap'in kendi dokümantasyonundaki örnek şunu söylüyor: <em>47 saniyeden 300 saniyeye çıkmak (6.4 kat uzun kare) sadece %5 kazandırıyor.</em></p>
+  </div>
+
+  <hr>
+
+  <!-- ==================== 8 · CMOS / CCD ==================== -->
+  <h2 id="cmos"><span class="sec-no">BÖLÜM 8</span><br>CMOS ve CCD: neden her şey değişti</h2>
+
+  <p>2015'te Sony tüm CCD üretimini durduracağını duyurdu. Son sevkiyatlar <strong>2026 Mart'ında</strong> yapıldı. Kâğıt üzerinde CCD dönemi bu yıl kapandı.</p>
+
+  <p>Ama amatör astrofotoğrafta değişim çok daha önce, tek bir sayıyla oldu: <strong>okuma gürültüsü</strong>.</p>
+
+  <div class="fig">
+    <svg viewBox="0 0 800 300" role="img" aria-label="CCD ve CMOS okuma mimarilerinin karşılaştırması">
+      <text x="400" y="20" fill="#898781" font-size="13" font-family="system-ui" text-anchor="middle">Neden CMOS'un okuma gürültüsü daha düşük?</text>
+
+      <!-- CCD -->
+      <g transform="translate(30,46)">
+        <text x="160" y="0" fill="#e66767" font-size="14" font-family="system-ui" font-weight="700" text-anchor="middle">CCD — tek çıkış kapısı</text>
+        <g fill="none" stroke="#2c2c2a" stroke-width="1">
+          <rect x="30" y="18" width="260" height="130" stroke="#3d3d3a" stroke-width="1.3"/>
+          <line x1="82" y1="18" x2="82" y2="148"/><line x1="134" y1="18" x2="134" y2="148"/>
+          <line x1="186" y1="18" x2="186" y2="148"/><line x1="238" y1="18" x2="238" y2="148"/>
+          <line x1="30" y1="50" x2="290" y2="50"/><line x1="30" y1="83" x2="290" y2="83"/><line x1="30" y1="116" x2="290" y2="116"/>
+        </g>
+        <!-- akış okları -->
+        <g stroke="#e66767" stroke-width="1.6" fill="none" opacity=".85">
+          <path d="M56 40 L56 140"/><path d="M108 40 L108 140"/><path d="M160 40 L160 140"/><path d="M212 40 L212 140"/><path d="M264 40 L264 140"/>
+          <path d="M264 152 L70 152"/>
+        </g>
+        <polygon points="56,146 51,136 61,136" fill="#e66767"/>
+        <polygon points="64,152 74,147 74,157" fill="#e66767"/>
+        <circle cx="46" cy="152" r="13" fill="#2a1414" stroke="#e66767" stroke-width="1.8"/>
+        <text x="46" y="157" fill="#f08080" font-size="13" font-family="system-ui" text-anchor="middle" font-weight="700">A</text>
+        <text x="160" y="192" fill="#c3c2b7" font-size="12.5" font-family="system-ui" text-anchor="middle">Bütün pikseller sırayla</text>
+        <text x="160" y="210" fill="#c3c2b7" font-size="12.5" font-family="system-ui" text-anchor="middle"><tspan fill="#f08080" font-weight="700">tek bir yükselteçten</tspan> geçer</text>
+        <text x="160" y="232" fill="#898781" font-size="12" font-family="system-ui" text-anchor="middle">16 milyon pikseli makul sürede okumak için</text>
+        <text x="160" y="248" fill="#898781" font-size="12" font-family="system-ui" text-anchor="middle">o yükselteç hızlı çalışmak zorunda —</text>
+        <text x="160" y="264" fill="#898781" font-size="12" font-family="system-ui" text-anchor="middle">ve hızlı yükselteç gürültülüdür.</text>
+      </g>
+
+      <line x1="400" y1="50" x2="400" y2="280" stroke="#2c2c2a" stroke-width="1"/>
+
+      <!-- CMOS -->
+      <g transform="translate(440,46)">
+        <text x="160" y="0" fill="#4ed2a0" font-size="14" font-family="system-ui" font-weight="700" text-anchor="middle">CMOS — her sütuna bir dönüştürücü</text>
+        <g fill="none" stroke="#2c2c2a" stroke-width="1">
+          <rect x="30" y="18" width="260" height="130" stroke="#3d3d3a" stroke-width="1.3"/>
+          <line x1="82" y1="18" x2="82" y2="148"/><line x1="134" y1="18" x2="134" y2="148"/>
+          <line x1="186" y1="18" x2="186" y2="148"/><line x1="238" y1="18" x2="238" y2="148"/>
+          <line x1="30" y1="50" x2="290" y2="50"/><line x1="30" y1="83" x2="290" y2="83"/><line x1="30" y1="116" x2="290" y2="116"/>
+        </g>
+        <g stroke="#199e70" stroke-width="1.5" fill="none" opacity=".85">
+          <path d="M56 148 L56 160"/><path d="M108 148 L108 160"/><path d="M160 148 L160 160"/><path d="M212 148 L212 160"/><path d="M264 148 L264 160"/>
+        </g>
+        <g>
+          <rect x="44" y="160" width="24" height="18" rx="4" fill="#12211b" stroke="#199e70" stroke-width="1.5"/>
+          <rect x="96" y="160" width="24" height="18" rx="4" fill="#12211b" stroke="#199e70" stroke-width="1.5"/>
+          <rect x="148" y="160" width="24" height="18" rx="4" fill="#12211b" stroke="#199e70" stroke-width="1.5"/>
+          <rect x="200" y="160" width="24" height="18" rx="4" fill="#12211b" stroke="#199e70" stroke-width="1.5"/>
+          <rect x="252" y="160" width="24" height="18" rx="4" fill="#12211b" stroke="#199e70" stroke-width="1.5"/>
+        </g>
+        <text x="160" y="200" fill="#c3c2b7" font-size="12.5" font-family="system-ui" text-anchor="middle">Her sütunun <tspan fill="#4ed2a0" font-weight="700">kendi dönüştürücüsü</tspan> var</text>
+        <text x="160" y="226" fill="#898781" font-size="12" font-family="system-ui" text-anchor="middle">Binlerce dönüştürücü paralel çalıştığı için</text>
+        <text x="160" y="242" fill="#898781" font-size="12" font-family="system-ui" text-anchor="middle">her biri çok yavaş — dolayısıyla çok sessiz —</text>
+        <text x="160" y="258" fill="#898781" font-size="12" font-family="system-ui" text-anchor="middle">olabilir. Toplam okuma yine de hızlıdır.</text>
+      </g>
+    </svg>
+    <div class="figcap"><b>Şekil 6 — Mimarinin sonucu.</b> CCD'de bir yükselteç 16 milyon pikselin yükünü taşır. CMOS'ta iş binlerce dönüştürücüye bölünür. Sonuç: CCD'de 4–14 elektron olan okuma gürültüsü, CMOS'ta 1–3 elektrona düşer. Bölüm 7'deki formülde bu <strong>kare</strong> olarak girdiği için, poz süresi gereksinimi 10–60 kat azalır.</div>
+  </div>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Sensör</th><th>Tipik kamera</th><th class="num">Okuma gürültüsü</th><th class="num">Kuyu kapasitesi</th><th class="num">Dinamik aralık</th></tr></thead>
+      <tbody>
+        <tr><td colspan="5" style="background:#232322;color:#f08080;font-weight:700;font-size:12px;letter-spacing:.06em">CCD</td></tr>
+        <tr><td>KAI-11002</td><td>Atik 11000, G3-11000</td><td class="num">12–14 e⁻</td><td class="num">60.000 e⁻</td><td class="num">12.3 kademe</td></tr>
+        <tr><td>KAF-16200</td><td>Moravian G3-16200</td><td class="num">10 e⁻</td><td class="num">41.000 e⁻</td><td class="num">12.0</td></tr>
+        <tr><td>KAF-8300</td><td>Atik 383L+, STT-8300</td><td class="num">7–9 e⁻</td><td class="num">25.500 e⁻</td><td class="num">11.5</td></tr>
+        <tr><td>ICX694</td><td>Atik 460EX</td><td class="num">5 e⁻</td><td class="num">18.000 e⁻</td><td class="num">11.8</td></tr>
+        <tr><td>ICX285</td><td>Atik 314L+</td><td class="num">4 e⁻</td><td class="num">19.500 e⁻</td><td class="num">12.2</td></tr>
+        <tr><td colspan="5" style="background:#232322;color:#4ed2a0;font-weight:700;font-size:12px;letter-spacing:.06em">CMOS</td></tr>
+        <tr><td><b>IMX571</b> (APS-C, 26 MP)</td><td>ASI2600, QHY268, Poseidon</td><td class="num"><b>1.0–3.5 e⁻</b></td><td class="num">51.000 e⁻</td><td class="num"><b>13.9</b></td></tr>
+        <tr><td><b>IMX455</b> (tam kare, 61 MP)</td><td>ASI6200, QHY600</td><td class="num">1.0–3.7 e⁻</td><td class="num">51.400 e⁻</td><td class="num">~14</td></tr>
+        <tr><td><b>IMX533</b> (1″ kare, 9 MP)</td><td>ASI533, Ares-C</td><td class="num">1.0–3.8 e⁻</td><td class="num">50.000 e⁻</td><td class="num">13.7</td></tr>
+        <tr><td>IMX294</td><td>ASI294</td><td class="num">1.2 e⁻</td><td class="num">63.700 e⁻</td><td class="num">—</td></tr>
+        <tr><td>IMX585 (STARVIS 2)</td><td>ASI585, Uranus-C</td><td class="num">0.7 e⁻</td><td class="num">47.000 e⁻</td><td class="num">—</td></tr>
+        <tr><td>MN34230</td><td>ASI1600 (2016)</td><td class="num">1.2–3.9 e⁻</td><td class="num">20.000 e⁻</td><td class="num">12.3</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>Tablodaki en ilginç satır dinamik aralık sütunu. CMOS pikselleri daha küçük ve daha az elektron tutuyor — buna rağmen dinamik aralığı daha geniş. Sebep basit: dinamik aralık kuyu kapasitesinin okuma gürültüsüne bölümüdür ve okuma gürültüsü 5 kat düşünce oran büyür.</p>
+
+  <div class="callout warn">
+    <span class="t">"16 bit her zaman daha iyidir" — hayır</span>
+    <p>Bit derinliği sadece <em>ölçeklendirmeyi</em> belirler, bilgi üretmez. Gerçek tavan <strong>kuyu kapasitesi ÷ okuma gürültüsü</strong>dür. 25.500 e⁻ kuyusu ve 9 e⁻ okuma gürültüsü olan bir CCD'nin ayırt edebildiği seviye sayısı ~2.800'dür; bunu 65.536 seviyeye bölmek boşa yer kaplar. Öte yandan 12 bitlik ASI1600, düşük okuma gürültüsü sayesinde 12.3 kademe dinamik aralığa ulaşır. <strong>Ve yığınlamada tek karenin bit derinliği neredeyse tamamen anlamını yitirir</strong> — 100 kareyi ortalamak zaten ara değerleri geri getirir.</p>
+  </div>
+
+  <h3>CCD'nin hâlâ üstün olduğu yerler</h3>
+
+  <p>Dürüst olmak gerekirse birkaç tane var:</p>
+
+  <ul>
+    <li><strong>Büyük pikseller, derin kuyular.</strong> KAI-11002'nin 9 µm pikseli 60.000 elektron tutar. IMX571'in 3.76 µm pikseli 51.000 tutar ama 5.7 kat küçük alanda. Birim gökyüzü alanı başına CCD yaklaşık 5 kat daha fazla yük taşır — parlak yıldızlar daha geç doyar.</li>
+    <li><strong>Sütun deseni yok.</strong> CMOS'ta her sütunun ayrı dönüştürücüsü olduğu için sütunlar arası küçük farklar dikey bantlaşma yaratabilir. CCD tek yükselteç kullandığı için buna yapısal olarak bağışıktır.</li>
+    <li><strong>Kalibrasyon daha basit.</strong> Gain/offset eşleştirmek gerekmez, bias kareleri sorunsuz çalışır.</li>
+  </ul>
+
+  <p>Buna karşılık "CMOS doğrusal değildir, fotometri yapılmaz" iddiası artık geçerliliğini yitirdi. IMX571'in bağımsız laboratuvar testinde doğrusallık uyum katsayısı pratikte <strong>1.000</strong> çıkıyor. AAVSO çevreleri bugün fotometri için IMX571 tabanlı kameraları aktif olarak öneriyor. İddianın hâlâ geçerli olduğu tek yer <strong>çok kısa pozlar</strong> (saniyenin onda birinden kısa) — bu da bias karelerinin neden CMOS'ta sorun çıkardığını açıklar.</p>
+
+  <hr>
+
+  <!-- ==================== 9 · SOĞUTMA ==================== -->
+  <h2 id="sogutma"><span class="sec-no">BÖLÜM 9</span><br>Karanlık akım ve soğutma: eskisi kadar önemli mi?</h2>
+
+  <p><strong>Karanlık akım</strong>, sensörün ısısı yüzünden kendiliğinden üretilen elektronlardır. Kapak kapalıyken bile birikir. Ve o da kendi foton gürültüsünü taşır.</p>
+
+  <p>CCD döneminde bu ciddi bir sorundu. Bugün değil. Rakamlara bakalım:</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Sensör</th><th class="num">0 °C</th><th class="num">−20 °C</th><th>5 dakikalık pozda biriken</th></tr></thead>
+      <tbody>
+        <tr><td>IMX571 (ASI2600) — üretici</td><td class="num">0.0022 e⁻/sn</td><td class="num">0.00012 e⁻/sn</td><td>0 °C'de 0.66 e⁻ → gürültüsü <b>0.81 e⁻</b></td></tr>
+        <tr><td>IMX533 (Ares-C Pro)</td><td class="num">0.001 e⁻/sn</td><td class="num">0.000044 e⁻/sn</td><td>0 °C'de 0.3 e⁻ → gürültüsü <b>0.55 e⁻</b></td></tr>
+        <tr><td>KAF-8300 CCD (Atik)</td><td class="num">—</td><td class="num">0.1 e⁻/sn <span class="tag y">−10 °C</span></td><td>30 e⁻ → gürültüsü <b>5.5 e⁻</b></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>Modern bir CMOS'ta, sıfır derecede beş dakikalık bir pozda karanlık akımın getirdiği gürültü <strong>0.8 elektron</strong>. Kameranın kendi okuma gürültüsü zaten 1.5 elektron. Şehirde gökyüzünün gürültüsü 30 elektron.</p>
+
+  <p>Yani karanlık akım, modern kameralarda gürültü bütçesinin <strong>ölçülemeyecek kadar küçük</strong> bir parçası.</p>
+
+  <div class="callout">
+    <span class="t">O zaman soğutma neden hâlâ var?</span>
+    <p>Üç sebeple, ve hiçbiri "gürültüyü azaltmak" değil:</p>
+    <p><strong>1. Tekrarlanabilirlik.</strong> Dark kütüphanesi kurabilmek için sensörün her gece aynı sıcaklıkta olması gerekir. Soğutmanın asıl işlevi budur — sıcaklığı <em>düşürmek</em> değil, <em>sabitlemek</em>.</p>
+    <p><strong>2. Sıcak pikseller.</strong> Ortalama karanlık akım küçük, ama dağılımın kuyruğundaki bozuk pikseller küçük değil. Soğutma onları bastırır.</p>
+    <p><strong>3. Uzun dar bant pozları.</strong> 10–20 dakikalık Hα karelerinde karanlık akım 2–4 kat daha çok birikir.</p>
+    <p style="margin-bottom:0">Özetle: CCD'de soğutma <em>zorunluluktu</em>, CMOS'ta <em>kalibrasyonu kolaylaştıran bir kolaylık</em>.</p>
+  </div>
+
+  <h3>Amp glow: gürültü değil, ama yine de zararlı</h3>
+
+  <p>Bazı sensörlerin köşelerinde uzun pozlarda beliren o parlak leke, sensörün kendi devrelerinin ısı ve kızılötesi ışımasından kaynaklanır. ASI1600, ASI294, ASI183 bu konuda bilinen isimlerdir. IMX571, IMX455 ve IMX533 ise "amp glow yok" diye pazarlanır.</p>
+
+  <p>Amp glow <strong>gürültü değildir</strong> — her karede tam olarak aynı yerde, aynı şekilde çıkar. Bu yüzden dark kareler onu temiz şekilde çıkarır.</p>
+
+  <p>Ama bir tuzağı var: <strong>o leke de fotondur ve kendi rastgele gürültüsünü taşır.</strong> Lekede 500 elektron biriktiyse, dark karesi o 500 elektronu çıkarır — ama geriye √500 ≈ 22 elektronluk, hiçbir şeyin çıkaramayacağı bir gürültü kalır. Sonuç: ortası temiz, kenarları gürültülü bir fotoğraf.</p>
+
+  <div class="callout warn">
+    <span class="t">CMOS kalibrasyonunda üç kural</span>
+    <p><strong>Dark'lar birebir eşleşmeli.</strong> Poz süresi, sıcaklık, gain <em>ve</em> offset — dördü de aynı olmalı. CCD'de gevşek davranabilirdiniz, CMOS'ta davranamazsınız.</p>
+    <p><strong>Dark ölçekleme (optimization) kullanmayın.</strong> ZWO bunu resmî olarak söylüyor: ölçekleme, amp glow'un ters gölgesini bırakır. Sabit ayarlarla bir dark kütüphanesi kurun ve birebir çıkarın.</p>
+    <p style="margin-bottom:0"><strong>Bias karesi çekmeyin.</strong> Bias, saniyenin on binde biri gibi bir pozdur ve pek çok CMOS sensör bu bölgede doğrusal değildir. Yerine <strong>dark-flat</strong> (flat'lerinizle aynı süreli dark) kullanın. Bu, yeni CMOS kullanıcılarının en sık düştüğü tuzaktır.</p>
+  </div>
+  <hr>
+
+  <!-- ==================== 10 · FİLTRELER ==================== -->
+  <h2 id="filtre"><span class="sec-no">BÖLÜM 10</span><br>Filtreler: gökyüzünü kesmek</h2>
+
+  <p>Gökyüzü ışığı en büyük düşmansa, akla gelen ilk çözüm onu filtreyle kesmektir. Mantıklı. Ama ne kadar işe yaradığı, hangi filtreyi hangi objede kullandığınıza bağlı — ve aradaki fark inanılmaz büyük.</p>
+
+  <p>Bir filtrenin size ne kazandırdığı tek bir orana bakar:</p>
+
+  <div class="eq">
+    SNR kazancı = (objeden geçen oran) ÷ √(gökyüzünden geçen oran)
+    <div class="c">Filtre objenin ışığını da kesiyorsa pay küçülür. Sadece gökyüzünü kesiyorsa payda küçülür ve kazanırsınız.</div>
+  </div>
+
+  <h3>Işık kirliliği filtreleri: beklentinizi düşürün</h3>
+
+  <p>Bunlar sokak lambalarının belirli dalga boylarını (sodyum, cıva) keser, gerisini geçirir. Sorun şu: bir galaksinin ışığı da o "gerisi"nin içindedir. Objeyi de kesersiniz.</p>
+
+  <p>Gerçekçi rakam: <strong>1.0 ile 1.25 kat arası SNR kazancı.</strong> Yani en iyi ihtimalle sürenizin %36'sını kurtarırsınız. Gökyüzünü yarıya indirmek, mag/arcsec² cinsinden <strong>0.75</strong> kadirlik bir iyileşmedir — bir Bortle sınıfı bile etmez.</p>
+
+  <p>Kötü haber: bu rakamlar <em>eski sodyum aydınlatma</em> içindir. Şehirler beyaz LED'e geçtikçe kesilecek dar bant kalmıyor ve kazanç 1.0'a doğru iniyor.</p>
+
+  <div class="callout bad">
+    <span class="t">Ölçülmüş bir karşı örnek</span>
+    <p>M81/M82 üzerinde her biri 3 saatlik kontrollü bir karşılaştırmada, IDAS LPS-D3 filtresi kullanan görüntünün SNR'ı filtresizden <strong>daha kötü</strong> çıktı. Filtre arka plan gradyanını yumuşattı, ama galaksinin ışığını o kadar kesti ki net sonuç zarar oldu.</p>
+    <p style="margin-bottom:0">Geniş bant hedefler için topluluk görüşü şu yönde birleşiyor: <strong>ışık kirliliği filtresi bir kontrast/gradyan aracıdır, SNR aracı değildir.</strong> Aynı parayı daha fazla entegrasyon süresine veya karanlık gökyüzüne giden benzine harcamak daha çok kazandırır.</p>
+  </div>
+
+  <h3>Dar bant: burada işler tamamen değişiyor</h3>
+
+  <p>Emisyon bulutsuları ışıklarını birkaç <em>çok dar</em> dalga boyunda yayar — Hα 656 nm, OIII 501 nm, SII 672 nm. Gökyüzü ise geniş bir tayfa yayılmış hâldedir.</p>
+
+  <p>3 nanometrelik bir Hα filtresi, gökyüzünün yaklaşık <strong>%99'unu</strong> keser. Bulutsunun Hα ışığından ise neredeyse hiçbir şey kaybetmez. Sonuç:</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Filtre</th><th class="num">Gökyüzü baskılaması</th><th class="num">Gökyüzü kararması</th><th class="num">Emisyon hedefinde SNR kazancı</th></tr></thead>
+      <tbody>
+        <tr><td>Işık kirliliği (geniş bant)</td><td class="num">2×</td><td class="num">0.8 kadir</td><td class="num"><span class="tag y">1.2×</span></td></tr>
+        <tr><td>Çift bant 7 nm (L-eXtreme)</td><td class="num">24×</td><td class="num">3.4 kadir</td><td class="num"><span class="tag g">4.4×</span></td></tr>
+        <tr><td>Çift bant 3 nm (L-Ultimate)</td><td class="num">56×</td><td class="num">4.4 kadir</td><td class="num"><span class="tag g">6.8×</span></td></tr>
+        <tr><td>Hα 7 nm (mono)</td><td class="num">45×</td><td class="num">4.1 kadir</td><td class="num"><span class="tag g">6.5×</span></td></tr>
+        <tr><td><b>Hα 3 nm (mono)</b></td><td class="num"><b>105×</b></td><td class="num"><b>5.1 kadir</b></td><td class="num"><span class="tag g"><b>9.9×</b></span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>Bu tablodaki son satır şu anlama geliyor: <strong>Bortle 8 gökyüzünde 3 nm Hα filtresiyle çalışan bir kameranın gördüğü arka plan, Bortle 1'de filtresiz çalışan bir kameranınkinden daha karanlıktır.</strong></p>
+
+  <p>"Dar bant Bortle 8'i Bortle 4 yapar" sözünü duymuşsunuzdur. Arka plan açısından söz doğru — hatta iddiadan bile iyi.</p>
+
+  <div class="fig">
+    <svg viewBox="0 0 800 300" role="img" aria-label="Dar bant filtrenin gökyüzü ışığını kesmesi">
+      <text x="400" y="20" fill="#898781" font-size="13" font-family="system-ui" text-anchor="middle">Aynı gökyüzü, aynı bulutsu — filtreli ve filtresiz</text>
+      <g id="filterfig"></g>
+    </svg>
+    <div class="figcap"><b>Şekil 7 — Dar bandın çalışma mantığı.</b> Gökyüzü ışığı (turuncu) tüm tayfa yayılmış; bulutsunun Hα ışığı (kırmızı çizgi) tek bir dalga boyunda. Filtre sadece o dar aralığı geçirince, bulutsudan neredeyse hiçbir şey kaybetmeden gökyüzünün %99'unu atmış olursunuz. <b>Ama bu sadece emisyon bulutsuları için geçerlidir.</b></div>
+  </div>
+
+  <div class="callout bad">
+    <span class="t">Dar bandın çalışmadığı yerler</span>
+    <p>Galaksi, yıldız kümesi, yansıma bulutsusu — bunlar sürekli tayfta ışır. Dar bant filtre objeyi de gökyüzü kadar keser. Matematiksel olarak SNR kazancınız 1'in <strong>altına</strong> düşer; 3 nm filtreyle bir galaksi çekmek, filtresiz çekmekten yaklaşık <strong>8 kat kötüdür</strong>.</p>
+    <p style="margin-bottom:0">Yani M31, M51, M81, M45 için Bortle 8 hâlâ Bortle 8'dir. Dar bant onları kurtarmaz.</p>
+  </div>
+
+  <h3>3 nm mi 7 nm mi? Teori ile ölçüm çelişiyor</h3>
+
+  <p>Teoriye göre 3 nm, 7 nm'den √(14/6) = <strong>1.53 kat</strong> daha iyi SNR vermeli.</p>
+
+  <p>Ölçümler bunu doğrulamıyor. Bortle 9'da ASI533MC ile yapılan bir karşılaştırmada L-Ultimate (3 nm) ile L-eXtreme (7 nm) arasındaki gürültü farkı <strong>%5.5</strong> çıktı. Chroma 3 nm ile Astronomik 6 nm karşılaştırmasında <strong>6 nm biraz daha iyi SNR verdi</strong> — çünkü geniş bant daha fazla gerçek sinyal geçiriyor.</p>
+
+  <p>Sebepler: emisyon çizgisi sıfır genişlikte değil ve dar filtre kanatlarını kırpar; hızlı odak oranlarında geçiş bandı kayar ve 3 nm'de bu daha çok zarar verir; birçok "dar bant" hedefte ciddi sürekli tayf vardır; ve OIII bölgesindeki hava parıltısı çizgileri zaten dar olduğu için bant daraltmak onları kesmez.</p>
+
+  <div class="callout">
+    <span class="t">Dürüst tavsiye</span>
+    <p>7 nm'den 3 nm'ye geçmek, ağır ışık kirliliğinde <strong>%5–25</strong> arası bir kazanç verir; karanlık gökyüzünde veya hızlı optikte net kayıp bile olabilir. Filtre yükseltmesi yerine aynı parayı entegrasyon süresine ayırmak çoğu durumda daha iyi bir yatırımdır. Ama <strong>filtresizden dar banda</strong> geçiş bambaşka bir hikâye — orada kazanç gerçekten 5–10 kat.</p>
+  </div>
+
+  <h3>Dar bantta poz süresi neden uzuyor?</h3>
+
+  <p>Bölüm 7'nin kuralını hatırlayın: gökyüzü, okuma gürültüsünü boğacak kadar birikmeli. Dar bant filtre gökyüzünü 100 kat kestiğinde, aynı miktarda gökyüzü elektronu biriktirmek için <strong>100 kat</strong> uzun poz vermeniz gerekir.</p>
+
+  <p>Sonuç ters yüz oluyor:</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Durum</th><th class="num">Önerilen poz süresi</th></tr></thead>
+      <tbody>
+        <tr><td>Bortle 8, filtresiz, modern CMOS</td><td class="num"><span class="tag g">7 saniye</span></td></tr>
+        <tr><td>Bortle 8, çift bant 3 nm</td><td class="num"><span class="tag y">6 dakika</span></td></tr>
+        <tr><td>Bortle 8, Hα 3 nm mono</td><td class="num"><span class="tag y">12 dakika</span></td></tr>
+        <tr><td>Bortle 1, filtresiz, modern CMOS</td><td class="num">4 dakika</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>"Dar bant uzun poz ister" sezgisi doğru — ama sebebi çoğu kişinin sandığı gibi "az ışık geliyor" değil. Sebep, <strong>gökyüzünün artık okuma gürültüsünü boğamaması</strong>.</p>
+
+  <hr>
+
+  <!-- ==================== 11 · KALİBRASYON ==================== -->
+  <h2 id="kalibrasyon"><span class="sec-no">BÖLÜM 11</span><br>Kalibrasyon karelerinin gizli maliyeti</h2>
+
+  <p>Bu bölüm kısa ama muhtemelen bu yazıdaki en çok göz ardı edilen bilgi.</p>
+
+  <p>Dark ve flat kareleri de fotoğraftır. Onların da gürültüsü vardır. Ve her ışık karesinden dark'ı çıkardığınızda, <strong>dark'ın gürültüsünü ışık karenize eklemiş olursunuz</strong>.</p>
+
+  <p>Bu, düzeltilemez bir taban yaratır. Ne kadar çok ışık karesi çekerseniz çekin, sığ bir master dark o tabanı yukarıda tutar.</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th class="num">Kaç dark karesi</th><th class="num">Eklenen gürültü</th><th>Telafi etmek için gereken ekstra süre</th></tr></thead>
+      <tbody>
+        <tr><td class="num">1</td><td class="num"><span class="tag r">+%41</span></td><td class="num">+%100</td></tr>
+        <tr><td class="num">5</td><td class="num"><span class="tag y">+%9.5</span></td><td class="num">+%20</td></tr>
+        <tr><td class="num">10</td><td class="num">+%4.9</td><td class="num">+%10</td></tr>
+        <tr><td class="num"><b>20</b></td><td class="num"><span class="tag g">+%2.5</span></td><td class="num">+%5</td></tr>
+        <tr><td class="num">30</td><td class="num">+%1.7</td><td class="num">+%3.3</td></tr>
+        <tr><td class="num">50</td><td class="num">+%1.0</td><td class="num">+%2</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>Tabloyu okumanın kolay yolu: <strong>20 dark karesi, iyi ile mükemmel arasındaki sınırdır.</strong> 20'nin altına inerseniz gözle görülür bedel ödersiniz; 50'nin üstüne çıkmak fark ettirmez.</p>
+
+  <div class="callout warn">
+    <span class="t">Tablonun geçerli olduğu durum</span>
+    <p>Yukarıdaki yüzdeler, dark karesinin gürültüsünün ışık karesinin gürültüsüne <em>yakın</em> olduğu durumu varsayar — yani okuma gürültüsünün baskın olduğu kısa pozları ve dar bant karelerini. Şehirde uzun geniş bant pozu çekiyorsanız ışık karenizin gürültüsü zaten 30 elektronu geçer, dark karesininki 2 elektron civarındadır ve tek bir dark bile ihmal edilebilir bir katkı yapar. <strong>Yani dark sayısı, gökyüzü baskın olduğunda daha az kritiktir; dar bantta ve karanlık gökyüzünde ise gerçekten önemlidir.</strong></p>
+  </div>
+
+  <p>Kaynaklar burada tam anlaşmıyor. PixInsight en az 10 diyor, DeepSkyStacker 20'yi asgari sayıp 50–100 öneriyor, forum konsensüsü 30 civarında toplanıyor. Roger Clark ise düşük desen gürültülü modern sensörlerde <em>sığ dark'ların hiç dark kullanmamaktan kötü olabileceğini</em> gösteriyor. Hepsi savunulabilir; belirleyici olan sensörünüzün sabit desen sorununun ne kadar ciddi olduğu.</p>
+
+  <div class="callout good">
+    <span class="t">Flat'lerde sayı değil, parlaklık önemli</span>
+    <p>Flat karesinin gürültüsü, <em>kare sayısı × kare başına toplanan elektron</em> ile azalır. Yani parlak flat çekmek, çok flat çekmekle aynı işi görür — üstelik daha hızlıdır. Histogramın ortalarına oturan <strong>20 flat</strong>, sönük 60 flat'ten iyidir. Pratik hedef: doyma noktasının yarısı civarı.</p>
+  </div>
+
+  <p>Ve dark kareler için kritik bir not: <strong>bunların sayısı ışık karelerinizin sayısıyla ilgisizdir.</strong> 500 ışık karesi çekmeniz 500 dark gerektirmez. Master dark bir kez kurulur, ayarları değişmediği sürece aylarca kullanılır.</p>
+
+  <hr>
+
+  <!-- ==================== 12 · AY ==================== -->
+  <h2 id="ay"><span class="sec-no">BÖLÜM 12</span><br>Ay: ayda iki hafta mı kaybediyorsunuz?</h2>
+
+  <p>Dolunay, en karanlık gökyüzünü bile <strong>3–4 kadir</strong> parlatır — yani gökyüzü ışığını <strong>20–40 kat</strong> artırır. Bortle 1 bir bölge, dolunayda Bortle 7–8 gibi davranır. Kesin rakam Ay'ın yüksekliğine, hedefinize olan açısal uzaklığına ve havanın berraklığına göre değişir; puslu bir dolunay gecesi kuru bir dolunay gecesinden çok daha kötüdür.</p>
+
+  <p>Geniş bant çekim için bu felakettir: aynı SNR için <strong>20 kat</strong> süre gerekir. Pratikte ayda iki hafta çekim yapamazsınız.</p>
+
+  <p>Ama dar bantta durum bambaşkadır. Ay ışığı, Güneş'ten yansıyan sürekli tayftır — dar bir çizgi değil. 3 nm'lik bir Hα filtresi onun yüzde birini geçirir. Bulutsunun Hα ışığı ise etkilenmez.</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Kurulum</th><th>Dolunayın etkisi</th></tr></thead>
+      <tbody>
+        <tr><td>Geniş bant / RGB</td><td><span class="tag r">SNR 4.5–6 kat düşer — 20–40 kat süre gerekir</span></td></tr>
+        <tr><td>Işık kirliliği filtresi</td><td><span class="tag r">Neredeyse hiç yardımcı olmaz — ay ışığında kesecek çizgi yok</span></td></tr>
+        <tr><td>Çift bant 7 / 3 nm</td><td><span class="tag y">Kullanılabilir; arka plan zaten çok düşük</span></td></tr>
+        <tr><td><b>Hα 3 nm</b></td><td><span class="tag g">Pratikte etkilenmez</span></td></tr>
+        <tr><td>OIII / SII</td><td><span class="tag y">Belirgin etkilenir — mavi tarafta saçılma daha güçlü, hava parıltısı çizgileri de tam orada</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>Belgelenmiş bir örnek: Bortle 9 bir arka bahçede, neredeyse dolunay altında, 3 nm çift bant filtreyle <strong>10 dakikalık kareler</strong> ve toplam 15 saatle Sihirbaz Bulutsusu çekildi. Filtresiz bu tamamen imkânsızdır.</p>
+
+  <div class="callout good">
+    <span class="t">Pratik takvim</span>
+    <p>Geniş bant hedeflerinizi ayın karanlık iki haftasına, dar bant hedeflerinizi aydınlık iki haftasına planlayın. Aynı ekipmanla yılda çekim yapabileceğiniz gece sayısını neredeyse ikiye katlar. Hα'nın dolunayı takmadığını, OIII'ün taktığını unutmayın.</p>
+  </div>
+
+  <hr>
+
+  <!-- ==================== 13 · PLANLAMA ==================== -->
+  <h2 id="planlama"><span class="sec-no">BÖLÜM 13</span><br>Ne kadar süre gerekir?</h2>
+
+  <p>Buraya kadar okuduğunuz her şey tek bir pratik soruya çıkıyor: <strong>bu obje için kaç saat ayırmalıyım?</strong></p>
+
+  <p>Aşağıdaki hesaplayıcı bunu sizin koşullarınıza göre veriyor. Kesin bir rakam değil — seeing, şeffaflık, işleme becerisi hepsi etkiler. Ama doğru büyüklük mertebesini verir ve "bu obje bu gökyüzünden çekilir mi" sorusuna dürüst cevap verir.</p>
+
+  <div class="tool" id="calc-plan">
+    <h4>Hesaplayıcı 3 — Entegrasyon planlayıcı</h4>
+    <p class="sub">Hedefinizi ve koşullarınızı seçin, ulaşmak istediğiniz SNR için gereken süreyi görün.</p>
+    <div class="grid2">
+      <div class="fld"><label>Hedef obje</label><select id="cp_obj"></select></div>
+      <div class="fld"><label>Gökyüzü (Bortle)</label>
+        <div class="rng"><input type="range" id="cp_b" min="1" max="9" step="1" value="5"><span class="v" id="cp_b_v">5</span></div>
+      </div>
+      <div class="fld"><label>Teleskop açıklığı (mm)</label><input type="number" id="cp_ap" value="80" step="5" min="20"></div>
+      <div class="fld"><label>Odak oranı (f/)</label><input type="number" id="cp_f" value="6" step="0.1" min="1"></div>
+      <div class="fld"><label>Piksel boyutu (µm)</label><input type="number" id="cp_px" value="3.76" step="0.01" min="0.5"></div>
+      <div class="fld"><label>Filtre</label>
+        <select id="cp_filt">
+          <option value="none" selected>Yok / UV-IR kesme</option>
+          <option value="lp">Işık kirliliği filtresi</option>
+          <option value="dual7">Çift bant 7 nm</option>
+          <option value="dual3">Çift bant 3 nm</option>
+          <option value="ha3">Hα 3 nm (mono)</option>
+        </select>
+      </div>
+      <div class="fld"><label>Hedef SNR</label>
+        <select id="cp_snr">
+          <option value="3">3 — sadece tespit</option>
+          <option value="10" selected>10 — işlenebilir</option>
+          <option value="20">20 — temiz sonuç</option>
+          <option value="40">40 — dergi kalitesi</option>
+        </select>
+      </div>
+    </div>
+    <div class="out">
+      <div class="stat"><div class="k">Gereken süre</div><div class="v" id="cp_time" style="font-size:28px">—</div></div>
+      <div class="stat"><div class="k">Kaç gece <small>(5 sa/gece)</small></div><div class="v" id="cp_nights" style="font-size:23px">—</div></div>
+      <div class="stat"><div class="k">Obje / gökyüzü</div><div class="v" id="cp_ratio" style="font-size:23px">—</div></div>
+      <div class="stat"><div class="k">Bortle 3'te sürerdi</div><div class="v" id="cp_dark" style="font-size:23px">—</div></div>
+    </div>
+    <div class="verdict" id="cp_verdict">—</div>
+  </div>
+
+  <hr>
+
+  <!-- ==================== 14 · YANLIŞLAR ==================== -->
+  <h2 id="yanlis"><span class="sec-no">BÖLÜM 14</span><br>Yaygın yanlışlar</h2>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th style="width:38%">Sık duyulan</th><th>Gerçek</th></tr></thead>
+      <tbody>
+        <tr><td>"Daha iyi kamera alsam gürültüm biter"</td><td><span class="tag r">Hayır</span> Gürültünün büyük kısmı fotonlardan ve gökyüzünden gelir. Kameranın payı, şehirde tipik olarak %1'in altındadır. Simülatördeki gürültü bütçesi çubuğuna bakın.</td></tr>
+        <tr><td>"İki kat süre, iki kat kalite"</td><td><span class="tag r">Hayır</span> İki kat süre <b>1.41 kat</b> SNR verir. İki katı için <b>dört kat</b> süre gerekir.</td></tr>
+        <tr><td>"M33 parlak bir galaksi, kolay olmalı"</td><td><span class="tag r">Tuzak</span> Katalog kadri 5.7 ama ışık 2.320 arcdakika kareye yayılmış. Yüzey parlaklığı 23.1 — gökyüzünden sönük. Banliyöde M57'den <b>2.000 kat</b> uzun sürer.</td></tr>
+        <tr><td>"Yüzey parlaklığı 14.2" <i>(M33 için)</i></td><td><span class="tag y">Birim hatası</span> O sayı mag/<b>arcdakika²</b>. arcsaniye²'ye çevirmek için 8.89 ekleyin → 23.1.</td></tr>
+        <tr><td>"Uzun poz her zaman daha iyi"</td><td><span class="tag y">Kısmen</span> Okuma gürültüsünü boğduktan sonra kazanç neredeyse durur. SharpCap'in örneği: 47 sn → 300 sn, sadece %5.</td></tr>
+        <tr><td>"CCD daha kaliteli, CMOS ucuz iştir"</td><td><span class="tag r">Eskidi</span> Modern CMOS'un dinamik aralığı daha geniş, okuma gürültüsü 5 kat düşük, doğrusallığı fotometriye yeterli. Sony'nin son CCD sevkiyatı 2026 Mart'ında yapıldı.</td></tr>
+        <tr><td>"16 bit her zaman 12 bitten iyidir"</td><td><span class="tag y">Yanıltıcı</span> Tavanı belirleyen kuyu kapasitesi ÷ okuma gürültüsü. Yığınlamada tek karenin bit derinliği zaten anlamını yitirir.</td></tr>
+        <tr><td>"Işık kirliliği filtresi şehri kurtarır"</td><td><span class="tag y">Abartılı</span> Geniş bant hedefte en iyi ihtimalle 1.2 kat. Bir Bortle sınıfı bile etmez. LED aydınlatmada daha da az.</td></tr>
+        <tr><td>"Dar bant her objede işe yarar"</td><td><span class="tag r">Hayır</span> Sadece emisyon bulutsularında. Galaksi ve yıldız kümesinde net <b>kayıp</b> verir.</td></tr>
+        <tr><td>"3 nm, 7 nm'den açık ara iyidir"</td><td><span class="tag y">Ölçüm desteklemiyor</span> Teori 1.53 kat diyor; ölçülen fark %5–25. Bazı testlerde 6 nm daha iyi çıktı.</td></tr>
+        <tr><td>"Soğutma gürültüyü büyük ölçüde azaltır"</td><td><span class="tag y">Artık değil</span> Modern CMOS'ta 0 °C'de 5 dakikalık pozun karanlık akım gürültüsü 0.8 elektron. Soğutmanın asıl işi <b>tekrarlanabilirlik</b>.</td></tr>
+        <tr><td>"Amp glow gürültüdür"</td><td><span class="tag y">Hayır ama</span> Sabit bir desendir, dark çıkarır. Fakat kendi foton gürültüsü kalır ve o çıkmaz.</td></tr>
+        <tr><td>"CMOS'ta bias karesi çekilir"</td><td><span class="tag r">Genelde hayır</span> Çok kısa pozlarda CMOS doğrusal değildir. Yerine dark-flat kullanın.</td></tr>
+        <tr><td>"5 dark yeter"</td><td><span class="tag y">Bedeli var</span> 5 dark, gürültünüzü %9.5 artırır — telafisi %20 daha uzun çekim. 20 kullanın.</td></tr>
+        <tr><td>"Kaç ışık karesi çekersem o kadar dark gerekir"</td><td><span class="tag r">İlgisiz</span> Dark sayısı ışık sayısından bağımsızdır. Bir kez kurun, aylarca kullanın.</td></tr>
+        <tr><td>"SNR betiği fotoğrafın kalitesini söyler"</td><td><span class="tag y">Dikkatli olun</span> SNR yereldir — çekirdek, kollar ve arka plan bambaşka değerler verir. Ölçümü doğrusal, gürültü azaltması yapılmamış veride yapın.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <hr>
+
+  <!-- ==================== 15 · ÖZET ==================== -->
+  <h2 id="ozet"><span class="sec-no">BÖLÜM 15</span><br>Tek sayfalık özet</h2>
+
+  <h3>Yedi cümlede SNR</h3>
+  <ol>
+    <li>Gürültünün çoğu kameranızdan değil, <strong>fotonlardan</strong> gelir. Gürültü = √sinyal.</li>
+    <li>SNR, toplam sürenin <strong>karekökü</strong> ile artar. İki kat SNR = dört kat süre.</li>
+    <li>Geniş bantta en büyük gürültü kaynağı <strong>gökyüzü</strong>dür. Bortle 8, Bortle 4'ün 19 katı süre ister.</li>
+    <li>Objeyi belirleyen katalog kadri değil, <strong>yüzey parlaklığı</strong>dır.</li>
+    <li>Poz süresi, gökyüzünün <strong>okuma gürültüsünü boğmasına</strong> yetecek kadar uzun olmalı — daha fazlası değil.</li>
+    <li>Modern CMOS'un düşük okuma gürültüsü, gereken poz süresini <strong>10–60 kat</strong> kısalttı.</li>
+    <li>Dar bant sadece <strong>emisyon bulutsularında</strong> işe yarar — ama orada 5–10 kat kazandırır.</li>
+  </ol>
+
+  <h3>Sıralı öncelik listesi</h3>
+
+  <p>Fotoğraflarınızı iyileştirmek istiyorsanız, etkisi en büyükten en küçüğe:</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th class="num">#</th><th>Ne yapmalı</th><th class="num">Kazanç</th></tr></thead>
+      <tbody>
+        <tr><td class="num">1</td><td><b>Daha karanlık gökyüzüne gidin</b></td><td class="num"><span class="tag g">3–19× süre</span></td></tr>
+        <tr><td class="num">2</td><td><b>Daha uzun toplam süre biriktirin</b></td><td class="num"><span class="tag g">√kat</span></td></tr>
+        <tr><td class="num">3</td><td><b>Gökyüzünüze uygun hedef seçin</b></td><td class="num"><span class="tag g">10–100×</span></td></tr>
+        <tr><td class="num">4</td><td>Emisyon hedeflerinde dar bant filtre</td><td class="num"><span class="tag g">5–10×</span></td></tr>
+        <tr><td class="num">5</td><td>Poz süresini doğru seçin</td><td class="num"><span class="tag y">%5–30</span></td></tr>
+        <tr><td class="num">6</td><td>20+ dark, parlak flat</td><td class="num"><span class="tag y">%5–20</span></td></tr>
+        <tr><td class="num">7</td><td>Daha düşük okuma gürültülü kamera</td><td class="num"><span class="tag y">%0–5 <small>(zaten boğulmuşsa)</small></span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>Listenin sıralaması, çoğu kişinin para harcama sıralamasının tam tersidir. Yedinci maddeye binlerce lira harcanır; birinci madde bir depo benzine bakar.</p>
+
+  <div class="callout good">
+    <span class="t">Ve akılda kalacak tek cümle</span>
+    <p>SNR'ı belirleyen şey <strong>topladığınız foton sayısı</strong> ve <strong>onların yanında gelen gökyüzü ışığıdır</strong>. Geri kalan her şey — kamera, filtre, poz süresi, kalibrasyon — bu iki sayının etrafındaki ince ayardır.</p>
+  </div>
+
+  <hr>
+
+  <!-- ==================== KAYNAKLAR ==================== -->
+  <h2 id="kaynaklar">Kaynaklar</h2>
+
+  <h4>Temel teori</h4>
+  <ul class="src">
+    <li><a href="https://www.cloudynights.com/articles/column/fishing-for-photons/signal-to-noise-understanding-it-measuring-it-and-improving-it-part-1-r1895/">Craig Stark — Signal to Noise, Bölüm 1</a> · <a href="https://www.cloudynights.com/articles/column/fishing-for-photons/signal-to-noise-understanding-it-measuring-it-and-improving-it-part-2-understanding-one-pixel-r1902/">Bölüm 2</a> · <a href="https://www.cloudynights.com/articles/column/fishing-for-photons/signal-to-noise-part-3-measuring-your-camera-r1929/">Bölüm 3</a></li>
+    <li><a href="https://vikdhillon.staff.shef.ac.uk/teaching/phy217/detectors/phy217_det_ccdeqn.html">Vik Dhillon (Sheffield) — CCD denklemi</a> · <a href="https://www.ucolick.org/~bolte/AY257/s_n.pdf">M. Bolte (UCO/Lick) — S/N ders notu (PDF)</a> · <a href="https://www.eso.org/~ohainaut/ccd/sn.html">ESO — Signal, Noise and Detection</a></li>
+    <li><a href="https://chara.gsu.edu//~bentz/a4100.6100/handouts/merline1995.pdf">Merline &amp; Howell 1995 — S/N denkleminin özgün hâli (PDF)</a> · <a href="https://ui.adsabs.harvard.edu/abs/1989PASP..101..616H/abstract">Howell 1989, PASP 101, 616</a></li>
+    <li><a href="https://www.starrywonders.com/snr.html">Steve Cannistra — SNR ve alt poz hesapları</a> · <a href="https://www.starrywonders.com/coolinghidden.html">Soğutmanın gizli maliyeti</a></li>
+    <li><a href="https://jonrista.com/the-astrophotographers-guide/astrophotography-basics/snr/">Jon Rista — Astrophotography Basics: SNR</a></li>
+  </ul>
+
+  <h4>Poz süresi ve gürültü bütçesi</h4>
+  <ul class="src">
+    <li><a href="http://docs.sharpcap.co.uk/3.2/15_SmartHistogram.htm">SharpCap — Smart Histogram dokümantasyonu</a> · <a href="https://tools.sharpcap.co.uk/">SharpCap gökyüzü parlaklığı aracı</a> · <a href="https://www.youtube.com/watch?v=3RH93UvP358">Robin Glover — Deep Sky Astrophotography with CMOS Cameras (konuşma)</a></li>
+    <li><a href="https://starizona.com/blogs/tutorials/optimum-exposures">Starizona / Stan Moore — Optimum Exposures</a> · <a href="https://www.astronomyhouston.org/getting-you-exposed-part-2-ap-corner">Houston Astronomical Society — C katsayısı tablosu</a></li>
+    <li><a href="https://www.astropix.com/html/astrophotography/exposures_for_astrophotography.html">Jerry Lodriguss — Exposures for Astrophotography</a></li>
+    <li><a href="http://deepskystacker.free.fr/english/theory.htm">DeepSkyStacker — Teori sayfası</a> · <a href="https://siril.org/tutorials/signal-to-noise/">Siril — SNR eğitimi</a></li>
+    <li><a href="https://clarkvision.com/articles/dark-frame-subtraction-vs-no-darks/">Roger Clark — Dark kareler gürültü ekler</a> · <a href="https://www.pixinsight.com/tutorials/master-frames/">PixInsight — Master kare önerileri</a></li>
+  </ul>
+
+  <h4>Gökyüzü, objeler ve filtreler</h4>
+  <ul class="src">
+    <li><a href="https://skyandtelescope.org/astronomy-resources/light-pollution-and-astronomy-the-bortle-dark-sky-scale/">Bortle — özgün Sky &amp; Telescope makalesi (2001)</a> · <a href="https://www.handprint.com/ASTRO/bortle.html">handprint.com — Bortle/SQM tablosu</a> · <a href="https://www.lightpollutionmap.info/help.html">lightpollutionmap.info — dönüşüm formülleri</a></li>
+    <li><a href="https://tony-flanders.com/surface-brightness/">Tony Flanders — Yüzey parlaklığı</a> · <a href="https://rasc-vancouver.com/2020/08/23/surface-brightness-vs-magnitude/">RASC Vancouver — Yüzey parlaklığı ve kadir</a> · <a href="https://clarkvision.com/astro/surface-brightness-profiles/introduction.html">Clarkvision — Yüzey parlaklığı profilleri</a></li>
+    <li><a href="https://www.eso.org/observing/dfo/quality/FORS1/qc/skybrightness/aa3223.pdf">Patat 2003 — Paranal gökyüzü parlaklığı (PDF)</a> · <a href="https://arxiv.org/abs/astro-ph/9909153">Benn &amp; Ellison — La Palma gece göğü</a></li>
+    <li><a href="https://urbanastrophotography.com/light-pollution-filter-shootout/">Urban Astrophotography — Işık kirliliği filtresi karşılaştırması</a> · <a href="https://rouzastro.com/narrowband-filter-shootout-chroma-3nm-vs-astronomik-6nm/">Rouz Astro — Chroma 3 nm vs Astronomik 6 nm</a></li>
+    <li><a href="https://www.galactic-hunter.com/post/optolong-l-ultimate">Galactic Hunter — L-Ultimate incelemesi (Bortle 9, dolunay)</a> · <a href="https://www.galactic-hunter.com/post/what-is-ifn">IFN rehberi</a> · <a href="https://www.astrobin.com/346041/">Andrew Klinger — 17 saatlik IFN, Bortle 3</a></li>
+    <li><a href="https://www.skyatnightmagazine.com/astrophotography/astrophoto-tips/astrophotography-during-full-moon">BBC Sky at Night — Dolunayda astrofotoğraf testi</a> · <a href="https://astrobackyard.com/astrophotography-full-moon/">AstroBackyard — Dolunayda Hα</a></li>
+  </ul>
+
+  <h4>Sensörler</h4>
+  <ul class="src">
+    <li><a href="https://www.framos.com/en/news/framos-update-regarding-sony-s-final-discontinuation-process-for-ccd-sensors">FRAMOS — Sony CCD üretiminin sonlandırılma takvimi</a> · <a href="https://skyandtelescope.org/astronomy-resources/astrophotography-upgrade-stepping-up-to-cmos/">Sky &amp; Telescope — CMOS'a geçiş</a></li>
+    <li><a href="https://www.zwoastro.com/product/new-asi2600mm-mc-pro/">ZWO ASI2600 (IMX571)</a> · <a href="https://www.zwoastro.com/product/asi6200/">ASI6200 (IMX455)</a> · <a href="https://www.qhyccd.com/scientific-camera-qhy268m-pro/">QHY268M Pro</a> · <a href="https://www.atik-cameras.com/wp-content/uploads/2017/02/Atik-Specifications-Tables-Feb-17.pdf">Atik CCD spesifikasyon tablosu (PDF)</a></li>
+    <li><a href="https://www.exoclock.space/documents/QHY268M_Robert_Lines.pdf">Robert Lines — QHY268M bağımsız laboratuvar raporu (PDF)</a> · <a href="https://www.cloudynights.com/topic/636702-asi1600mmpro-relationship-btw-ron-and-gain/">ASI1600 okuma gürültüsü / gain ölçümleri</a></li>
+    <li><a href="https://www.zwoastro.com/2018/04/03/what-is-amp-glow/">ZWO — Amp glow nedir</a> · <a href="https://britastro.org/forums/topic/bias-frames-for-cmos">BAA — CMOS'ta bias kareleri</a> · <a href="https://www.atik-cameras.com/news/cmos-ccd-now-question/">Atik — CMOS mu CCD mi?</a></li>
+  </ul>
+
+  <p style="margin-top:44px;padding-top:20px;border-top:1px solid var(--line);font-size:13.5px;color:var(--ink-3)">
+    Bu yazıdaki sayısal değerler yukarıdaki kaynaklardan doğrulanmıştır. Simülatör ve hesaplayıcılar 80 mm f/6 açıklık, 3.76 µm piksel, %60 kuantum verimi ve %85 optik geçirgenlik varsayar; kendi kurulumunuz için hesaplayıcılara girdiğiniz değerler kullanılır. Bortle sınıflarının mag/arcsec² karşılıkları resmî değildir ve kaynaklar arasında ±0.3 kadar fark gösterir. Yüzey parlaklığı değerleri kataloğa göre değişebilir; M42 gibi geniş dinamik aralıklı objelerde tek bir değer anlamlı değildir. Üretici okuma gürültüsü ve karanlık akım değerleri, bağımsız ölçümlerle yer yer 4–8 kat farklılık gösterir; böyle durumlarda her iki değer de belirtilmiştir.
+  </p>
+
+  </main>
+</div>
+<script>
+"use strict";
+
+/* ================================================================
+   ÇEKİRDEK — fizik
+   ================================================================ */
+var NPHOT_V0 = 1000 * 890;      // V=0 için foton/s/cm²
+
+/** Verilen yüzey parlaklığı için e-/piksel/saniye. */
+function rate(mag, ap, fl, px, qe, thr, ff) {
+  ap = ap || 80; fl = fl || 480; px = px || 3.76;
+  qe = (qe === undefined) ? 0.60 : qe;
+  thr = (thr === undefined) ? 0.85 : thr;
+  ff = (ff === undefined) ? 1 : ff;
+  var A = Math.PI * Math.pow(ap / 20, 2);          // cm²
+  var sc = 206.265 * px / fl;                       // arcsec/px
+  return NPHOT_V0 * Math.pow(10, -0.4 * mag) * A * sc * sc * qe * thr * ff;
+}
+
+var BORTLE = {1:22.00, 2:21.93, 3:21.80, 4:21.30, 5:20.10, 6:19.20, 7:18.65, 8:18.10, 9:17.50};
+var BORTLE_NAME = {1:'Mükemmel karanlık', 2:'Gerçek karanlık', 3:'Kırsal', 4:'Kırsal/banliyö',
+                   5:'Banliyö', 6:'Parlak banliyö', 7:'Banliyö/şehir', 8:'Şehir', 9:'Şehir merkezi'};
+
+/* Filtreler: [gökyüzü, geniş bant obje, emisyon obje] geçirgenlik */
+var FILTERS = {
+  none:  {sky:1.00,   broad:1.00,  em:1.00,  ad:'Filtre yok'},
+  lp:    {sky:0.55,   broad:0.90,  em:0.93,  ad:'Işık kirliliği filtresi'},
+  dual7: {sky:0.042,  broad:0.040, em:0.90,  ad:'Çift bant 7 nm'},
+  dual3: {sky:0.018,  broad:0.017, em:0.90,  ad:'Çift bant 3 nm'},
+  ha3:   {sky:0.0095, broad:0.009, em:0.95,  ad:'Hα 3 nm'}
+};
+
+/* Gerçek objeler — yüzey parlaklığı mag/arcsec² */
+var OBJECTS = [
+  {id:'m42c',  n:'M42 çekirdeği (Trapezium)', sb:15.5, sh:'neb',  em:true,  note:'Gökyüzünden her koşulda parlak'},
+  {id:'m57',   n:'M57 Halka Bulutsusu',       sb:17.8, sh:'ring', em:true,  note:'Küçük ama çok parlak'},
+  {id:'m31c',  n:'M31 çekirdeği',             sb:18.5, sh:'gal',  em:false, note:'Galaksinin en kolay kısmı'},
+  {id:'m42',   n:'M42 iç bölgesi',            sb:19.6, sh:'neb',  em:true,  note:'Klasik başlangıç hedefi'},
+  {id:'m27',   n:'M27 Dumbbell',              sb:20.2, sh:'ring', em:true,  note:'Banliyöden rahat'},
+  {id:'n7000', n:'NGC 7000 Kuzey Amerika',    sb:21.5, sh:'neb',  em:true,  note:'Dar bantla şehirden çekilir'},
+  {id:'m81',   n:'M81 Bode Galaksisi',        sb:21.5, sh:'gal',  em:false, note:'Çekirdek kolay, kollar zor'},
+  {id:'m45',   n:'M45 Ülker tozu',            sb:21.3, sh:'neb',  em:false, note:'Yansıma tozu — dar bant işe yaramaz'},
+  {id:'m51',   n:'M51 Girdap Galaksisi',      sb:21.7, sh:'gal',  em:false, note:'Gelgit köprüsü için derin veri ister'},
+  {id:'m33',   n:'M33 Üçgen Galaksisi',       sb:23.1, sh:'gal',  em:false, note:'Kolay sanılan zor hedef'},
+  {id:'m31o',  n:'M31 dış diski',             sb:24.0, sh:'gal',  em:false, note:'Gökyüzünün çok altında'},
+  {id:'ifn',   n:'IFN — galaktik sirus',      sb:25.5, sh:'wisp', em:false, note:'Doğal gökyüzünden bile sönük'}
+];
+function objById(id){ for(var i=0;i<OBJECTS.length;i++) if(OBJECTS[i].id===id) return OBJECTS[i]; return OBJECTS[0]; }
+
+var DARKRATE = 0.0002;   // e-/px/s, modern soğutmalı CMOS
+
+/** Yığınlanmış SNR. */
+function snrOf(S, B, T, n, RN, D) {
+  D = (D === undefined) ? DARKRATE : D;
+  return S * T / Math.sqrt((S + B + D) * T + n * RN * RN);
+}
+/** Hedef SNR için gereken toplam süre (saniye). t=alt poz. */
+function timeForSNR(target, S, B, RN, t, D) {
+  D = (D === undefined) ? DARKRATE : D;
+  // S²T² = SNR²((S+B+D)T + (T/t)RN²)  ->  T = SNR²((S+B+D)+RN²/t) / S²
+  return target * target * ((S + B + D) + RN * RN / t) / (S * S);
+}
+function fmtDur(sec) {
+  if (!isFinite(sec) || sec <= 0) return '—';
+  var h = sec / 3600;
+  if (h < 1) return Math.round(sec / 60) + ' dakika';
+  if (h < 10) return h.toFixed(1) + ' saat';
+  if (h < 1000) return Math.round(h) + ' saat';
+  return Math.round(h).toLocaleString('tr-TR') + ' saat (≈ ' + Math.round(h / 5).toLocaleString('tr-TR') + ' gece)';
+}
+var f2 = function (x) { return Number(x).toFixed(2); };
+
+/* ================================================================
+   TOC + ilerleme
+   ================================================================ */
+(function () {
+  var links = Array.prototype.slice.call(document.querySelectorAll('.sidebar a'));
+  var secs = links.map(function (a) { return document.getElementById(a.getAttribute('href').slice(1)); }).filter(Boolean);
+  var prog = document.getElementById('prog');
+  function upd() {
+    var h = document.documentElement;
+    prog.style.width = Math.min(100, h.scrollTop / Math.max(1, h.scrollHeight - h.clientHeight) * 100).toFixed(1) + '%';
+    var cur = 0;
+    for (var i = 0; i < secs.length; i++) if (secs[i].getBoundingClientRect().top < 140) cur = i;
+    links.forEach(function (a, i) { a.classList.toggle('on', i === cur); });
+  }
+  window.addEventListener('scroll', upd, {passive: true});
+  window.addEventListener('resize', upd);
+  document.getElementById('tocbtn').addEventListener('click', function () {
+    document.getElementById('toc').classList.toggle('open');
+  });
+  links.forEach(function (a) { a.addEventListener('click', function () { document.getElementById('toc').classList.remove('open'); }); });
+  upd();
+})();
+
+/* ================================================================
+   Görsel yardımcılar
+   ================================================================ */
+var NS = 'http://www.w3.org/2000/svg';
+function el(n, a) { var e = document.createElementNS(NS, n); for (var k in a) e.setAttribute(k, a[k]); return e; }
+function txt(x, y, s, o) {
+  o = o || {};
+  var t = el('text', {x: x, y: y, fill: o.fill || '#898781', 'font-size': o.size || 12.5,
+                      'font-family': 'system-ui', 'text-anchor': o.anchor || 'start'});
+  if (o.weight) t.setAttribute('font-weight', o.weight);
+  t.textContent = s; return t;
+}
+function mulberry32(a) {
+  return function () {
+    a |= 0; a = (a + 0x6d2b79f5) | 0;
+    var t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function gaussFrom(rnd) {
+  var spare = null;
+  return function () {
+    if (spare !== null) { var v = spare; spare = null; return v; }
+    var u = Math.max(1e-9, rnd()), v2 = rnd(), m = Math.sqrt(-2 * Math.log(u));
+    spare = m * Math.sin(2 * Math.PI * v2);
+    return m * Math.cos(2 * Math.PI * v2);
+  };
+}
+
+/* ================================================================
+   ŞEKİL 2 — foton gürültüsü panelleri
+   ================================================================ */
+(function () {
+  var counts = [100, 400, 1600, 6400], ids = ['p1', 'p2', 'p3', 'p4'];
+  counts.forEach(function (N, k) {
+    var S = 64, c = document.createElement('canvas');
+    c.width = S; c.height = S;
+    var ctx = c.getContext('2d'), im = ctx.createImageData(S, S), px = im.data;
+    var rnd = mulberry32(11 + k * 7), g = gaussFrom(rnd);
+    var sig = 1 / Math.sqrt(N);   // göreli gürültü
+    for (var y = 0; y < S; y++) for (var x = 0; x < S; x++) {
+      var dx = (x - S / 2) / 7.5, dy = (y - S / 2) / 7.5;
+      var star = Math.exp(-(dx * dx + dy * dy) / 2);
+      var dx2 = (x - S * 0.72) / 4.5, dy2 = (y - S * 0.30) / 4.5;
+      star += 0.45 * Math.exp(-(dx2 * dx2 + dy2 * dy2) / 2);
+      var v = (0.10 + 0.9 * star) * (1 + g() * sig * 3.2);
+      var t = Math.max(0, Math.min(1, Math.asinh(Math.max(0, v) * 9) / Math.asinh(9)));
+      var i = (y * S + x) * 4, gg = Math.round(255 * t);
+      px[i] = Math.round(gg * .93); px[i + 1] = Math.round(gg * .96); px[i + 2] = gg; px[i + 3] = 255;
+    }
+    ctx.putImageData(im, 0, 0);
+    var img = el('image', {x: 0, y: 0, width: 160, height: 160, preserveAspectRatio: 'none'});
+    img.setAttribute('href', c.toDataURL());
+    img.setAttribute('image-rendering', 'pixelated');
+    document.getElementById(ids[k]).appendChild(img);
+  });
+})();
+
+/* ================================================================
+   ŞEKİL 3 — √T eğrisi
+   ================================================================ */
+(function () {
+  var svg = document.getElementById('sqrtchart'); if (!svg) return;
+  var W = 720, H = 340, L = 60, R = 30, T = 22, B = 52;
+  var x0 = L, x1 = W - R, y0 = H - B, y1 = T;
+  var xmax = 40, ymax = 30;
+  var X = function (v) { return x0 + v / xmax * (x1 - x0); };
+  var Y = function (v) { return y0 - v / ymax * (y0 - y1); };
+  var g = el('g', {});
+  [0, 5, 10, 15, 20, 25, 30].forEach(function (v) {
+    g.appendChild(el('line', {x1: x0, y1: Y(v), x2: x1, y2: Y(v), stroke: '#2c2c2a', 'stroke-width': 1}));
+    g.appendChild(txt(x0 - 10, Y(v) + 4, String(v), {anchor: 'end', size: 11.5}));
+  });
+  [0, 5, 10, 20, 30, 40].forEach(function (v) {
+    g.appendChild(txt(X(v), y0 + 20, v + ' sa', {anchor: 'middle', size: 11.5}));
+  });
+  g.appendChild(txt((x0 + x1) / 2, y0 + 42, 'Toplam entegrasyon süresi', {anchor: 'middle', size: 12.5}));
+  g.appendChild(txt(16, (y0 + y1) / 2, 'SNR', {anchor: 'middle', size: 12.5}));
+  g.lastChild.setAttribute('transform', 'rotate(-90 16 ' + ((y0 + y1) / 2) + ')');
+
+  var S = rate(23.1), Bk = rate(BORTLE[4]), d = '';
+  for (var h = 0.02; h <= xmax + 0.001; h += 0.05) {
+    var Ts = h * 3600, n = Math.max(1, Ts / 300);
+    d += (d ? 'L' : 'M') + X(h).toFixed(1) + ',' + Y(snrOf(S, Bk, Ts, n, 1.5)).toFixed(1) + ' ';
+  }
+  g.appendChild(el('path', {d: d, fill: 'none', stroke: '#3987e5', 'stroke-width': 2.4, 'stroke-linejoin': 'round'}));
+
+  [[1.25, '1.25 sa', 0], [5, '5 sa', 0], [20, '20 sa', 0], [40, '40 sa', 1]].forEach(function (m) {
+    var v = snrOf(S, Bk, m[0] * 3600, m[0] * 12, 1.5);
+    g.appendChild(el('line', {x1: X(m[0]), y1: Y(v), x2: X(m[0]), y2: y0, stroke: '#383835', 'stroke-width': 1}));
+    g.appendChild(el('circle', {cx: X(m[0]), cy: Y(v), r: 5, fill: '#1a1a19', stroke: '#3987e5', 'stroke-width': 2}));
+    g.appendChild(txt(X(m[0]) + (m[2] ? -10 : 9), Y(v) - (m[2] ? -4 : 7), m[1] + ' → SNR ' + v.toFixed(1),
+                      {fill: '#7db4f0', size: 12, weight: 700, anchor: m[2] ? 'end' : 'start'}));
+  });
+  // 4 kat vurgusu — eğrinin altındaki boş alana
+  var yb = 7.6;
+  g.appendChild(el('path', {d: 'M' + X(5) + ',' + Y(yb - 1.1) + ' L' + X(5) + ',' + Y(yb) + ' L' + X(20) + ',' + Y(yb) + ' L' + X(20) + ',' + Y(yb - 1.1),
+                            stroke: '#c98500', 'stroke-width': 1.4, fill: 'none'}));
+  g.appendChild(txt((X(5) + X(20)) / 2, Y(yb) - 8, '4 kat süre  →  2 kat SNR', {fill: '#c98500', size: 12.5, weight: 700, anchor: 'middle'}));
+  svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+  svg.appendChild(g);
+})();
+
+/* ================================================================
+   ŞEKİL 4 — Bortle çubukları
+   ================================================================ */
+(function () {
+  var host = document.getElementById('bortlebars'); if (!host) return;
+  var x0 = 210, x1 = 600, maxF = rate(BORTLE[9]) / rate(BORTLE[1]);
+  var y = 40;
+  for (var b = 1; b <= 9; b++) {
+    var f = rate(BORTLE[b]) / rate(BORTLE[1]);
+    var w = Math.max(3, (x1 - x0) * f / maxF);
+    var col = b <= 3 ? '#199e70' : (b <= 5 ? '#c98500' : (b <= 7 ? '#d95926' : '#e66767'));
+    host.appendChild(txt(x0 - 12, y + 13, 'Bortle ' + b, {anchor: 'end', size: 13, fill: '#c3c2b7', weight: 700}));
+    host.appendChild(txt(x0 - 12, y + 27, BORTLE_NAME[b], {anchor: 'end', size: 11, fill: '#898781'}));
+    host.appendChild(el('rect', {x: x0, y: y + 2, width: w, height: 18, rx: 4, fill: col, opacity: 0.85}));
+    host.appendChild(txt(x0 + w + 10, y + 16, BORTLE[b].toFixed(2) + '  ·  ' + f.toFixed(2) + '×',
+                         {size: 12, fill: '#898781'}));
+    y += 30;
+  }
+  host.appendChild(txt(x0, y + 16, 'Çubuk uzunluğu = piksel başına gökyüzü fotonu (Bortle 1 = 1.00×)', {size: 12, fill: '#898781'}));
+})();
+
+/* ================================================================
+   ŞEKİL 5 — yüzey parlaklığı skalası
+   ================================================================ */
+(function () {
+  var host = document.getElementById('sbscale'); if (!host) return;
+  var x0 = 60, x1 = 745, lo = 15, hi = 26.2;
+  var X = function (m) { return x0 + (m - lo) / (hi - lo) * (x1 - x0); };
+  var axisY = 236;
+
+  // gökyüzü bantları
+  [[4, '#199e70', 'Bortle 4 gökyüzü'], [6, '#c98500', 'Bortle 6'], [8, '#e66767', 'Bortle 8']].forEach(function (s) {
+    var xx = X(BORTLE[s[0]]);
+    host.appendChild(el('line', {x1: xx, y1: 42, x2: xx, y2: axisY, stroke: s[1], 'stroke-width': 1.6, opacity: .75}));
+    var t = txt(xx, 36, s[2], {fill: s[1], size: 11.5, weight: 700, anchor: 'middle'});
+    host.appendChild(t);
+  });
+  host.appendChild(el('rect', {x: X(BORTLE[8]), y: 42, width: X(hi) - X(BORTLE[8]), height: axisY - 42, fill: '#e66767', opacity: .05}));
+
+  // eksen
+  host.appendChild(el('line', {x1: x0, y1: axisY, x2: x1, y2: axisY, stroke: '#383835', 'stroke-width': 1.4}));
+  for (var m = 15; m <= 26; m++) {
+    host.appendChild(el('line', {x1: X(m), y1: axisY, x2: X(m), y2: axisY + 6, stroke: '#383835', 'stroke-width': 1}));
+    host.appendChild(txt(X(m), axisY + 22, String(m), {anchor: 'middle', size: 11.5}));
+  }
+  host.appendChild(txt((x0 + x1) / 2, axisY + 44, 'Yüzey parlaklığı (mag/arcsec²) — sağa gittikçe sönük', {anchor: 'middle', size: 12.5}));
+  host.appendChild(txt(x0, axisY + 66, '← kolay: gökyüzünden parlak', {size: 12, fill: '#4ed24e', weight: 600}));
+  host.appendChild(txt(x1, axisY + 66, 'zor: gökyüzünün altında →', {size: 12, fill: '#f08080', weight: 600, anchor: 'end'}));
+
+  // objeler — çakışmayan satırlara aç gözlü yerleştirme
+  var rows = [56, 80, 104, 128, 152, 176, 200], rowEnd = rows.map(function () { return -1e9; });
+  var sorted = OBJECTS.slice().sort(function (p1, p2) { return p1.sb - p2.sb; });
+  sorted.forEach(function (o) {
+    var xx = X(o.sb);
+    var w = o.n.length * 6.5 + 16;                       // yaklaşık etiket genişliği
+    var right = xx > x1 - w;                             // sağa taşacaksa sola yaz
+    var start = right ? xx - w : xx;
+    var r = 0;
+    for (; r < rows.length; r++) { if (start > rowEnd[r] + 10) break; }
+    if (r === rows.length) {                       // hepsi dolu: en az dolu satırı seç
+      r = 0;
+      for (var q = 1; q < rows.length; q++) if (rowEnd[q] < rowEnd[r]) r = q;
+    }
+    rowEnd[r] = start + w;
+    var yy = rows[r];
+    var col = o.sb < BORTLE[8] ? '#4ed24e' : (o.sb < BORTLE[6] ? '#f5c04c' : (o.sb < BORTLE[4] ? '#d95926' : '#f08080'));
+    host.appendChild(el('line', {x1: xx, y1: yy + 6, x2: xx, y2: axisY, stroke: col, 'stroke-width': 1, opacity: .35}));
+    host.appendChild(el('circle', {cx: xx, cy: yy, r: 5, fill: '#1a1a19', stroke: col, 'stroke-width': 2}));
+    host.appendChild(txt(xx + (right ? -10 : 10), yy + 4, o.n,
+                         {size: 12, fill: '#c3c2b7', anchor: right ? 'end' : 'start', weight: 600}));
+  });
+})();
+
+/* ================================================================
+   ŞEKİL 7 — dar bant filtre
+   ================================================================ */
+(function () {
+  var host = document.getElementById('filterfig'); if (!host) return;
+  var x0 = 152, x1 = 748, yTop = 46, hgt = 74;
+  function panel(y, label, skyOn, note, col) {
+    host.appendChild(txt(x0 - 12, y + 20, label, {anchor: 'end', size: 12.5, fill: '#c3c2b7', weight: 700}));
+    host.appendChild(el('rect', {x: x0, y: y, width: x1 - x0, height: hgt, fill: '#0f0f0e', stroke: '#2c2c2a'}));
+    if (skyOn === 'full') {
+      host.appendChild(el('rect', {x: x0 + 1, y: y + hgt - 34, width: x1 - x0 - 2, height: 33, fill: '#d95926', opacity: .55}));
+    } else {
+      var hx = x0 + (x1 - x0) * 0.62;
+      host.appendChild(el('rect', {x: hx - 7, y: y + hgt - 34, width: 14, height: 33, fill: '#d95926', opacity: .55}));
+    }
+    // Ha çizgisi
+    var hax = x0 + (x1 - x0) * 0.62;
+    host.appendChild(el('rect', {x: hax - 3, y: y + 6, width: 6, height: hgt - 7, fill: '#e66767'}));
+    host.appendChild(txt(hax, y - 6, 'Hα 656 nm', {anchor: 'middle', size: 11, fill: '#f08080', weight: 700}));
+    host.appendChild(txt(x1 + 0, y + hgt + 16, note, {anchor: 'end', size: 12, fill: col, weight: 600}));
+  }
+  panel(yTop, 'Filtresiz', 'full', 'Gökyüzü tüm tayfta — gürültünün neredeyse tamamı buradan', '#f08080');
+  panel(yTop + 118, '3 nm Hα filtresi', 'narrow', 'Gökyüzünün %99\'u kesildi, Hα neredeyse tam geçti', '#4ed24e');
+  host.appendChild(txt(x0, yTop + 118 + hgt + 42, 'Dalga boyu →', {size: 12}));
+  host.appendChild(txt(x1, yTop + 118 + hgt + 42, 'Turuncu: gökyüzü ışığı · Kırmızı: bulutsunun Hα ışığı', {size: 12, anchor: 'end'}));
+})();
+
+/* ================================================================
+   SİMÜLATÖR
+   ================================================================ */
+(function () {
+  var sel = document.getElementById('sm_obj');
+  OBJECTS.forEach(function (o) {
+    var op = document.createElement('option');
+    op.value = o.id; op.textContent = o.n + '  ·  YP ' + o.sb.toFixed(1);
+    sel.appendChild(op);
+  });
+  sel.value = 'm42';
+
+  var SZ = 116;   // simülasyon çözünürlüğü
+
+  /* --- şekil fonksiyonları: 0..1 --- */
+  function shapeGal(x, y) {
+    var dx = (x - .5), dy = (y - .5);
+    var xr = dx * Math.cos(.5) - dy * Math.sin(.5), yr = (dx * Math.sin(.5) + dy * Math.cos(.5)) / 0.45;
+    var r = Math.sqrt(xr * xr + yr * yr);
+    var v = 1.15 * Math.exp(-r / 0.055) + 0.85 * Math.exp(-r / 0.20);
+    var th = Math.atan2(yr, xr);
+    for (var k = 0; k < 2; k++) {
+      var arm = Math.cos(2 * (th - Math.log(Math.max(r, .02)) * 2.4 + k * Math.PI));
+      v += 0.34 * Math.max(0, arm) * Math.exp(-Math.abs(r - 0.14) / 0.16) * Math.min(1, r / 0.05);
+    }
+    v *= (1 - 0.30 * Math.exp(-Math.pow((r - 0.115) / 0.022, 2)));  // toz şeridi
+    return v;
+  }
+  function shapeNeb(x, y) {
+    var v = 0, blobs = [[.42,.46,.20,1.0],[.58,.40,.15,.75],[.36,.60,.17,.62],[.62,.62,.13,.5],
+                        [.50,.30,.11,.42],[.30,.38,.10,.35],[.70,.52,.12,.38],[.46,.72,.12,.3]];
+    for (var i = 0; i < blobs.length; i++) {
+      var b = blobs[i], dx = (x - b[0]) / b[2], dy = (y - b[1]) / b[2];
+      v += b[3] * Math.exp(-(dx * dx + dy * dy));
+    }
+    var fx = (x - .5), fy = (y - .5);
+    v += 0.45 * Math.exp(-Math.pow((fy - 0.30 * Math.sin(fx * 5)) / 0.045, 2)) * Math.exp(-Math.abs(fx) / .5);
+    return v;
+  }
+  function shapeRing(x, y) {
+    var dx = (x - .5) / 1.0, dy = (y - .5) / 0.82;
+    var r = Math.sqrt(dx * dx + dy * dy);
+    var v = 1.0 * Math.exp(-Math.pow((r - 0.20) / 0.055, 2));
+    v += 0.30 * Math.exp(-Math.pow(r / 0.17, 2));
+    v += 0.10 * Math.exp(-Math.pow((r - 0.30) / 0.11, 2));
+    return v;
+  }
+  function shapeWisp(x, y) {
+    var v = 0.05;
+    for (var k = 0; k < 5; k++) {
+      var ph = k * 1.3;
+      var d = (y - (0.18 + k * 0.16) - 0.10 * Math.sin(x * 4 + ph));
+      v += 0.55 * Math.exp(-Math.pow(d / 0.055, 2)) * (0.6 + 0.4 * Math.sin(x * 7 + ph));
+    }
+    return Math.max(0, v);
+  }
+  var SHAPES = {gal: shapeGal, neb: shapeNeb, ring: shapeRing, wisp: shapeWisp};
+
+  var cache = {};
+  function shapeMap(kind) {
+    if (cache[kind]) return cache[kind];
+    var f = SHAPES[kind], m = new Float64Array(SZ * SZ), sum = 0, peak = 0;
+    for (var y = 0; y < SZ; y++) for (var x = 0; x < SZ; x++) {
+      var v = Math.max(0, f((x + .5) / SZ, (y + .5) / SZ));
+      m[y * SZ + x] = v; sum += v; if (v > peak) peak = v;
+    }
+    var mean = sum / (SZ * SZ);
+    for (var i = 0; i < m.length; i++) m[i] /= mean;      // ortalama = 1
+    cache[kind] = {map: m, peak: peak / mean};
+    return cache[kind];
+  }
+  // yıldızlar (obje haritasından bağımsız, sabit)
+  var STARS = (function () {
+    var r = mulberry32(4242), out = [];
+    for (var i = 0; i < 14; i++) out.push({x: r(), y: r(), a: 3 + 70 * Math.pow(r(), 3.0), s: 0.9 + r() * 0.7});
+    return out;
+  })();
+
+  var E = {};
+  ['sm_obj','sm_b','sm_n','sm_t','sm_cam','sm_f'].forEach(function (k) { E[k] = document.getElementById(k); });
+
+  function render(canvas, rateMap, T, n, RN, B, D, refPeakSignal) {
+    canvas.width = SZ; canvas.height = SZ;
+    var ctx = canvas.getContext('2d'), im = ctx.createImageData(SZ, SZ), px = im.data;
+    var rnd = mulberry32(20260805), g = gaussFrom(rnd);
+    var K = 5, denom = Math.asinh(K);
+    for (var i = 0; i < SZ * SZ; i++) {
+      var S = rateMap[i];
+      var sig = S * T;
+      var val = sig;
+      if (n > 0) {
+        var noise = Math.sqrt((S + B + D) * T + n * RN * RN);
+        val = sig + noise * g();
+      }
+      var t = Math.asinh(Math.max(0, val / refPeakSignal) * K) / denom;
+      t = Math.max(0, Math.min(1, t));
+      var gg = Math.round(255 * t), o = i * 4;
+      px[o] = Math.round(gg * .93); px[o + 1] = Math.round(gg * .96); px[o + 2] = gg; px[o + 3] = 255;
+    }
+    ctx.putImageData(im, 0, 0);
+  }
+
+  function budget(varObj, varSky, varDark, varRead) {
+    var svg = document.getElementById('sm_budget');
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    var tot = varObj + varSky + varDark + varRead, x = 0, W = 720, h = 30;
+    var parts = [[varObj, '#3987e5', 'obje'], [varSky, '#d95926', 'gökyüzü'],
+                 [varDark, '#199e70', 'karanlık'], [varRead, '#c98500', 'okuma']];
+    parts.forEach(function (p) {
+      var w = W * p[0] / tot;
+      if (w <= 0) return;
+      svg.appendChild(el('rect', {x: x + (x > 0 ? 1 : 0), y: 0, width: Math.max(0, w - (x > 0 ? 1 : 0)), height: h, fill: p[1], rx: 3}));
+      var pct = 100 * p[0] / tot;
+      if (w > 52) {
+        var t = txt(x + w / 2, 20, pct.toFixed(0) + '%', {fill: '#0d0d0d', size: 13, weight: 700, anchor: 'middle'});
+        svg.appendChild(t);
+      } else if (w > 16) {
+        svg.appendChild(txt(x + w / 2, 48, pct.toFixed(0) + '%', {fill: p[1], size: 11.5, weight: 700, anchor: 'middle'}));
+      }
+      x += w;
+    });
+    svg.setAttribute('viewBox', '0 0 720 74');
+  }
+
+  var raf = null;
+  function run() {
+    var o = objById(E.sm_obj.value);
+    var bortle = +E.sm_b.value, n = +E.sm_n.value, t = +E.sm_t.value;
+    var RN = +E.sm_cam.value, F = FILTERS[E.sm_f.value];
+    document.getElementById('sm_b_v').textContent = bortle;
+    document.getElementById('sm_n_v').textContent = n;
+
+    var objT = o.em ? F.em : F.broad;
+    var S = rate(o.sb) * objT;
+    var B = rate(BORTLE[bortle]) * F.sky;
+    var T = n * t, D = DARKRATE;
+
+    var sm = shapeMap(o.sh);
+    var rateMap = new Float64Array(SZ * SZ);
+    for (var i = 0; i < rateMap.length; i++) rateMap[i] = S * sm.map[i];
+    // yıldızlar
+    STARS.forEach(function (st) {
+      var cx = st.x * SZ, cy = st.y * SZ, sg = st.s;
+      var r0 = Math.ceil(3.2 * sg);
+      for (var yy = Math.max(0, Math.floor(cy - r0)); yy <= Math.min(SZ - 1, Math.ceil(cy + r0)); yy++)
+        for (var xx = Math.max(0, Math.floor(cx - r0)); xx <= Math.min(SZ - 1, Math.ceil(cx + r0)); xx++) {
+          var dx = (xx + .5 - cx) / sg, dy = (yy + .5 - cy) / sg;
+          rateMap[yy * SZ + xx] += st.a * S * Math.exp(-(dx * dx + dy * dy) / 2);
+        }
+    });
+
+    var refPeak = S * sm.peak * T;
+    render(document.getElementById('sc_true'), rateMap, T, 0, RN, B, D, refPeak);
+    render(document.getElementById('sc_one'), rateMap, t, 1, RN, B, D, S * sm.peak * t);
+    render(document.getElementById('sc_stack'), rateMap, T, n, RN, B, D, refPeak);
+
+    var snr = snrOf(S, B, T, n, RN, D), snr1 = snrOf(S, B, t, 1, RN, D);
+    document.getElementById('sm_snr').textContent = snr < 100 ? snr.toFixed(1) : Math.round(snr);
+    document.getElementById('sm_snr1').textContent = snr1 < 10 ? snr1.toFixed(2) : snr1.toFixed(1);
+    document.getElementById('sm_time').textContent = fmtDur(T);
+    document.getElementById('sm_ratio').textContent = (S / B) >= 1 ? (S / B).toFixed(1) + '×' : '1 / ' + (B / S).toFixed(0);
+    document.getElementById('sc_one_sub').textContent = t + ' saniye · tek kare';
+    document.getElementById('sc_stack_sub').textContent = n + ' kare · ' + fmtDur(T);
+
+    budget(S * T, B * T, D * T, n * RN * RN);
+
+    // mesaj
+    var m, readShare = (n * RN * RN) / ((S + B + D) * T + n * RN * RN);
+    var skyShare = (B * T) / ((S + B + D) * T + n * RN * RN);
+    if (snr < 1.5) {
+      m = '<b class="dz-bad" style="color:#f08080">Bu koşullarda çıkmaz.</b> SNR ' + snr.toFixed(2) + ' — obje gürültünün içinde kayboluyor. ' +
+          (o.sb > 23 ? 'Bu obje zaten çok sönük; ' : '') +
+          'Gökyüzünü karartmak (Bortle sürgüsünü sola çekin) süre eklemekten <b>çok</b> daha etkili olur.';
+    } else if (snr < 4) {
+      m = '<b style="color:#f5c04c">Zar zor tespit.</b> SNR ' + snr.toFixed(1) + '. Objenin orada olduğunu görürsünüz ama işlenebilir bir fotoğraf çıkmaz. ' +
+          'Şu anki SNR\'ı iki katına çıkarmak için toplam süreyi <b>4 katına</b> (' + fmtDur(T * 4) + ') çıkarmanız gerekir.';
+    } else if (snr < 12) {
+      m = '<b style="color:#f5c04c">İşlenebilir ama gürültülü.</b> SNR ' + snr.toFixed(1) + '. Gürültü azaltma şart olacak. ' +
+          'SNR 20\'ye ulaşmak için toplam süre <b>' + fmtDur(T * Math.pow(20 / snr, 2)) + '</b> olmalı.';
+    } else if (snr < 30) {
+      m = '<b style="color:#4ed24e">İyi.</b> SNR ' + snr.toFixed(1) + ' — rahat işlenir, temiz bir sonuç. ' +
+          'Buradan sonrası azalan getiri: iki kat daha iyi için ' + fmtDur(T * 4) + ' gerekir.';
+    } else {
+      m = '<b style="color:#4ed24e">Çok iyi.</b> SNR ' + Math.round(snr) + '. Bu objede gürültü artık sorununuz değil; ' +
+          'dinamik aralık, yıldız şişkinliği ve işleme kalitesi ön plana çıkar.';
+    }
+    if (readShare > 0.30) {
+      m += '<br><br><b style="color:#c98500">Dikkat:</b> gürültünüzün %' + Math.round(readShare * 100) +
+           '\'i <b>okuma gürültüsünden</b> geliyor. Poz süreniz bu kamera ve gökyüzü için çok kısa. ' +
+           'Poz süresini artırın ya da düşük okuma gürültülü bir kameraya geçin.';
+    } else if (skyShare > 0.85 && o.sb > 21) {
+      m += '<br><br>Gürültünüzün %' + Math.round(skyShare * 100) + '\'i <b>gökyüzünden</b> geliyor. ' +
+           'Kamera değiştirmenin buna hiçbir faydası olmaz — çözüm daha karanlık gökyüzü, uygun filtre veya daha çok süre.';
+    }
+    document.getElementById('sm_msg').innerHTML = m;
+  }
+  function schedule() { if (raf) cancelAnimationFrame(raf); raf = requestAnimationFrame(run); }
+  ['sm_obj','sm_b','sm_n','sm_t','sm_cam','sm_f'].forEach(function (k) {
+    E[k].addEventListener('input', schedule); E[k].addEventListener('change', schedule);
+  });
+  run();
+})();
+
+/* ================================================================
+   HESAPLAYICI 1 — obje karşılaştırma
+   ================================================================ */
+(function () {
+  var a = document.getElementById('co_a'), b = document.getElementById('co_b');
+  OBJECTS.forEach(function (o) {
+    [a, b].forEach(function (sel) {
+      var op = document.createElement('option');
+      op.value = o.id; op.textContent = o.n; sel.appendChild(op);
+    });
+  });
+  a.value = 'm57'; b.value = 'm33';
+  function calc() {
+    var A = objById(a.value), Bo = objById(b.value);
+    var bl = +document.getElementById('co_b_sky').value;
+    document.getElementById('co_sky_v').textContent = bl;
+    var hrs = Math.max(0.05, +document.getElementById('co_h').value || 2);
+    var sky = rate(BORTLE[bl]), RN = 1.5, t = 300;
+    var SA = rate(A.sb), SB = rate(Bo.sb);
+    var T = hrs * 3600, n = T / t;
+    var snr = snrOf(SA, sky, T, n, RN);
+    var need = timeForSNR(snr, SB, sky, RN, t);
+    document.getElementById('co_need').textContent = fmtDur(need);
+    document.getElementById('co_ratio').innerHTML = (need / T >= 1 ? (need / T).toFixed(1) : (need / T).toFixed(2)) + '<small>×</small>';
+    document.getElementById('co_snr').textContent = snr < 100 ? snr.toFixed(1) : Math.round(snr);
+    var r = need / T, msg;
+    if (a.value === b.value) {
+      msg = 'Aynı objeyi seçtiniz — doğal olarak süre aynı.';
+    } else if (r > 50) {
+      msg = '<b style="color:#f08080">' + Bo.n + ', ' + A.n + '\'den ' + Math.round(r) + ' kat daha uzun süre istiyor.</b> ' +
+            'Yüzey parlaklıkları arasında ' + (Bo.sb - A.sb).toFixed(1) + ' kadir fark var — yani piksel başına ' +
+            Math.round(Math.pow(10, 0.4 * (Bo.sb - A.sb))) + ' kat daha az ışık. Katalog kadirlerine bakarak karar vermenin neden yanıltıcı olduğu tam olarak budur.';
+    } else if (r > 3) {
+      msg = '<b style="color:#f5c04c">' + Bo.n + ' için ' + r.toFixed(1) + ' kat daha uzun süre gerekiyor.</b> ' +
+            'Aynı gecede ikisini birden hedeflemek gerçekçi değil — ' + Bo.n + ' için ayrı bir proje planlayın.';
+    } else if (r > 1) {
+      msg = '<b style="color:#4ed24e">İkisi de benzer bütçede.</b> ' + Bo.n + ' yalnızca ' + r.toFixed(2) +
+            ' kat daha uzun istiyor; aynı sezonda ikisini de bitirebilirsiniz.';
+    } else {
+      msg = '<b style="color:#4ed24e">' + Bo.n + ' aslında daha kolay.</b> ' + A.n + ' için ayırdığınız sürenin sadece ' +
+            (r * 100).toFixed(0) + '\'i yeterli.';
+    }
+    document.getElementById('co_verdict').innerHTML = msg;
+  }
+  ['co_a','co_b','co_b_sky','co_h'].forEach(function (id) {
+    var e = document.getElementById(id);
+    e.addEventListener('input', calc); e.addEventListener('change', calc);
+  });
+  calc();
+})();
+
+/* ================================================================
+   HESAPLAYICI 2 — poz süresi
+   ================================================================ */
+(function () {
+  function calc() {
+    var RN = Math.max(0.1, +document.getElementById('cs_rn').value || 1.5);
+    var bl = +document.getElementById('cs_b').value;
+    var fr = Math.max(1, +document.getElementById('cs_f').value || 6);
+    var px = Math.max(0.5, +document.getElementById('cs_px').value || 3.76);
+    var ff = +document.getElementById('cs_filt').value;
+    var k = +document.getElementById('cs_tol').value;
+    document.getElementById('cs_b_v').textContent = bl;
+
+    // f/oranı ve piksel boyutu yeterli: e-/px/s ∝ (px/f)²
+    var ap = 80, fl = ap * fr;
+    var sky = rate(BORTLE[bl], ap, fl, px) * ff;
+    var t = k * RN * RN / sky;
+
+    document.getElementById('cs_sky').innerHTML = (sky < 0.01 ? sky.toFixed(4) : sky.toFixed(3)) + '<small> e⁻/px/sn</small>';
+    document.getElementById('cs_t').textContent = t < 90 ? Math.round(t) + ' saniye'
+                                : (t < 3600 ? (t / 60).toFixed(1) + ' dakika' : (t / 3600).toFixed(1) + ' saat');
+    document.getElementById('cs_e').innerHTML = Math.round(sky * t) + '<small> e⁻</small>';
+
+    var msg;
+    if (t < 20) {
+      msg = '<b style="color:#4ed24e">Çok kısa kareler yeterli.</b> Bu koşullarda gökyüzü okuma gürültüsünü ' +
+            Math.round(t) + ' saniyede boğuyor. Pratikte bu kadar kısaya inmeyin: kare arası ölü zaman ' +
+            've dosya sayısı sizi yer. <b>60–120 saniye</b> makul bir seçim olur, SNR kaybı ihmal edilebilir.';
+    } else if (t < 200) {
+      msg = '<b style="color:#4ed24e">İdeal aralık.</b> ' + Math.round(t) + ' saniye alt sınırınız. ' +
+            'Bunu 2–3 katına çıkarmanın SNR maliyeti neredeyse sıfır, buna karşılık dosya sayısı düşer. ' +
+            'Yıldızlarınızı yakmadığı sürece <b>' + Math.round(t) + '–' + Math.round(t * 3) + ' saniye</b> arası çalışın.';
+    } else if (t < 900) {
+      msg = '<b style="color:#f5c04c">Uzun kareler gerekiyor.</b> ' + (t / 60).toFixed(1) + ' dakika. ' +
+            'Bu, karanlık gökyüzü ya da dar bant filtre kullandığınızı gösterir. Takibinizin bu süreyi ' +
+            'kaldırdığından emin olun; kaldırmıyorsa daha kısa kare çekip biraz SNR feda etmek daha iyidir.';
+    } else {
+      msg = '<b style="color:#f08080">Pratikte ulaşılamaz bir süre çıktı.</b> ' + (t / 60).toFixed(0) + ' dakika. ' +
+            'Bu genellikle yüksek okuma gürültülü bir kamerayı çok karanlık gökyüzünde ya da çok dar bantta ' +
+            'kullandığınız anlamına gelir. Kimse bu kadar uzun kare çekmez — makul bir süre seçip okuma gürültüsü ' +
+            'cezasını kabul edin. Eski CCD kullanıcıları tam olarak bunu yapıyordu.';
+    }
+    if (RN > 5) {
+      msg += '<br><br><b>Not:</b> ' + RN.toFixed(1) + ' e⁻ okuma gürültüsü yüksek. Modern CMOS\'ta bu değer 1–1.5 e⁻; ' +
+             'gereken poz süresi okuma gürültüsünün <b>karesiyle</b> orantılı olduğu için, geçiş yaparsanız ' +
+             'süre yaklaşık <b>' + Math.round(Math.pow(RN / 1.5, 2)) + ' kat</b> kısalır.';
+    }
+    document.getElementById('cs_verdict').innerHTML = msg;
+  }
+  ['cs_rn','cs_b','cs_f','cs_px','cs_filt','cs_tol'].forEach(function (id) {
+    var e = document.getElementById(id);
+    e.addEventListener('input', calc); e.addEventListener('change', calc);
+  });
+  calc();
+})();
+
+/* ================================================================
+   HESAPLAYICI 3 — planlayıcı
+   ================================================================ */
+(function () {
+  var sel = document.getElementById('cp_obj');
+  OBJECTS.forEach(function (o) {
+    var op = document.createElement('option');
+    op.value = o.id; op.textContent = o.n; sel.appendChild(op);
+  });
+  sel.value = 'm33';
+  function calc() {
+    var o = objById(sel.value);
+    var bl = +document.getElementById('cp_b').value;
+    var ap = Math.max(20, +document.getElementById('cp_ap').value || 80);
+    var fr = Math.max(1, +document.getElementById('cp_f').value || 6);
+    var px = Math.max(0.5, +document.getElementById('cp_px').value || 3.76);
+    var F = FILTERS[document.getElementById('cp_filt').value];
+    var target = +document.getElementById('cp_snr').value;
+    document.getElementById('cp_b_v').textContent = bl;
+
+    var fl = ap * fr, RN = 1.5;
+    var objT = o.em ? F.em : F.broad;
+    var S = rate(o.sb, ap, fl, px) * objT;
+    var B = rate(BORTLE[bl], ap, fl, px) * F.sky;
+    var t = Math.min(600, Math.max(30, 9.76 * RN * RN / Math.max(1e-6, B)));
+    var T = timeForSNR(target, S, B, RN, t);
+    var Tdark = timeForSNR(target, S, rate(BORTLE[3], ap, fl, px) * F.sky, RN, t);
+
+    document.getElementById('cp_time').textContent = fmtDur(T);
+    document.getElementById('cp_nights').textContent = (T / 3600 / 5) < 1 ? '1 gecenin bir kısmı'
+                          : Math.ceil(T / 3600 / 5) + ' gece';
+    document.getElementById('cp_ratio').textContent = (S / B) >= 1 ? (S / B).toFixed(1) + '×' : '1 / ' + (B / S).toFixed(0);
+    document.getElementById('cp_dark').textContent = fmtDur(Tdark);
+
+    var hrs = T / 3600, msg;
+    if (hrs < 1.5) {
+      msg = '<b style="color:#4ed24e">Bir gecelik iş.</b> ' + o.n + ' bu koşullarda SNR ' + target + ' için ' +
+            fmtDur(T) + ' istiyor. ' + o.note + '.';
+    } else if (hrs < 8) {
+      msg = '<b style="color:#4ed24e">Makul bir proje.</b> ' + fmtDur(T) + ' — bir ya da iki temiz gece. ' + o.note + '.';
+    } else if (hrs < 30) {
+      msg = '<b style="color:#f5c04c">Ciddi bir proje.</b> ' + fmtDur(T) + ' gerekiyor. ' +
+            'Bortle 3 bir gökyüzünde aynı sonuç <b>' + fmtDur(Tdark) + '</b> sürerdi — ' +
+            'yani karanlık gökyüzüne gitmek size ' + (T / Tdark).toFixed(1) + ' kat kazandırır.';
+    } else if (hrs < 200) {
+      msg = '<b style="color:#f08080">Çok uzun.</b> ' + fmtDur(T) + '. Bu hedef bu gökyüzü için uygun değil. ' +
+            'Seçenekleriniz: karanlık gökyüzüne gitmek (' + fmtDur(Tdark) + '), ' +
+            (o.em ? 'dar bant filtreye geçmek' : 'daha parlak bir hedef seçmek') + ', ya da hedef SNR\'ı düşürmek.';
+    } else {
+      msg = '<b style="color:#f08080">Pratikte imkânsız.</b> ' + fmtDur(T) + '. ' +
+            'Bu obje ve bu gökyüzü birbirine uymuyor. ' +
+            (o.sb > 24 ? 'Bu sınıf hedefler yalnızca Bortle 1–4 gökyüzünde çekilebilir.' :
+             'Gökyüzünüzü karartmadan bu hedefe girmeyin.');
+    }
+    if (!o.em && (F.sky < 0.1)) {
+      msg += '<br><br><b style="color:#f08080">Uyarı:</b> ' + o.n + ' bir emisyon bulutsusu değil. ' +
+             'Dar bant filtre objenin ışığını gökyüzü kadar kesiyor, net sonuç <b>kayıp</b>. Bu hedefte filtreyi kaldırın.';
+    }
+    document.getElementById('cp_verdict').innerHTML = msg;
+  }
+  ['cp_obj','cp_b','cp_ap','cp_f','cp_px','cp_filt','cp_snr'].forEach(function (id) {
+    var e = document.getElementById(id);
+    e.addEventListener('input', calc); e.addEventListener('change', calc);
+  });
+  calc();
+})();
+</script>
+</body>
+</html>

@@ -64,6 +64,12 @@ export const staticEntries: SitemapEntry[] = [
   { path: '/cerezler', priority: 0.2, changefreq: 'yearly' },
   { path: '/yazilar', priority: 0.8, changefreq: 'weekly' },
   {
+    path: '/yazilar/snr-rehberi',
+    priority: 0.7,
+    changefreq: 'yearly',
+    lastmod: '2026-08-06',
+  },
+  {
     path: '/yazilar/drizzle-rehberi',
     priority: 0.7,
     changefreq: 'yearly',
