@@ -642,6 +642,9 @@
   color: var(--dz-ink-3);
   font-weight: 600;
 }
+.dz-root .dz-stat.dz-sm .dz-val {
+  font-size: 22px;
+}
 .dz-root .dz-stat .dz-val {
   font-size: 25px;
   color: var(--dz-ink);

@@ -705,11 +705,19 @@
       "destination": "/app.html"
     },
     {
+      "source": "/yazi/snr-rehberi",
+      "destination": "/app.html"
+    },
+    {
       "source": "/yazilar",
       "destination": "/app.html"
     },
     {
       "source": "/yazilar/drizzle-rehberi",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/yazilar/snr-rehberi",
       "destination": "/app.html"
     },
     {
