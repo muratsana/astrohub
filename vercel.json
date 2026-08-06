@@ -693,6 +693,10 @@
       "destination": "/app.html"
     },
     {
+      "source": "/yazi/drizzle-rehberi",
+      "destination": "/app.html"
+    },
+    {
       "source": "/yazilar",
       "destination": "/app.html"
     },

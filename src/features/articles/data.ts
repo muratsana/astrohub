@@ -28,6 +28,17 @@ export const articleCategoryLabels: Record<ArticleCategory, string> = {
 export interface Article {
   slug: string;
   title: string;
+  /**
+   * Yazının kendi adresi — verilmezse `/yazi/<slug>` varsayılır.
+   *
+   * Bazı yazılar bir metin kaydı değil, kendi sayfası olan interaktif bir
+   * belge (drizzle rehberi: dört hesaplayıcı ve canlı bir simülatör
+   * taşıyor). Bunları `/yazi/<slug>` altında göstermek, gövdesi boş bir
+   * kayıt uydurmak olurdu. Liste, şerit, arama ve "ilgili yazılar"
+   * `articleHref()` üzerinden okuduğu için kart her yerde doğru yere
+   * gidiyor; eski `/yazi/<slug>` adresi de yönlendirmeyle korunuyor.
+   */
+  href?: string;
   category: ArticleCategory;
   level: ArticleLevel;
   /** "15 dk okuma" gibi okuma süresi. */
@@ -194,7 +205,44 @@ export const articles: Article[] = [
       licence: 'CC BY 4.0',
     },
   },
+  /*
+    DRIZZLE REHBERİ — gövdesi burada DEĞİL.
+
+    Rehber 16 bölüm, 16 tablo, 11 infografik, dört hesaplayıcı ve canlı
+    bir simülatörden oluşuyor; `/yazilar/drizzle-rehberi` altında kendi
+    sayfası var ve içeriği derleme öncesi üretiliyor
+    (`scripts/drizzle-icerik.mjs`). Buradaki kayıt yalnızca künye: yazı
+    listede, ana sayfa şeridinde ve aramada görünsün diye. Gövdeyi
+    kopyalamak aynı metni iki yerde tutmak olurdu ve ikisi ilk
+    güncellemede ayrışırdı.
+  */
+  {
+    slug: 'drizzle-rehberi',
+    href: '/yazilar/drizzle-rehberi',
+    title: 'Drizzle: Örnekleme, Dither ve pixfrac',
+    category: 'isleme',
+    level: 'İleri',
+    duration: '45 dk okuma',
+    publishedAt: '2026-08-05',
+    author: 'Astrohub',
+    summary:
+      'Drizzle ne zaman işe yarar, ne zaman yalnızca gürültü büyütür: yetersiz örnekleme testi, dither deseni, pixfrac seçimi ve dört hesaplayıcıyla canlı bir simülatör.',
+    body: [],
+    tint: '150,185,235',
+  },
 ];
+
+/**
+ * Yazının gideceği adres.
+ *
+ * Çoğu yazı `/yazi/<slug>` altında duruyor; kendi sayfası olanlar `href`
+ * taşıyor. Bağlantıyı kuran her yüzey (liste, ana sayfa şeridi, arama
+ * dizini, "ilgili yazılar") bunu kullanmalı — aksi hâlde bir yüzey
+ * güncellenmeyi unutur ve kart boş bir kayda gider.
+ */
+export function articleHref(article: Pick<Article, 'slug' | 'href'>): string {
+  return article.href ?? `/yazi/${article.slug}`;
+}
 
 export function getArticleBySlug(slug: string): Article | undefined {
   return articles.find((a) => a.slug === slug);

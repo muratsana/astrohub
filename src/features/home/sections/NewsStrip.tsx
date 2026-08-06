@@ -4,7 +4,7 @@ import { SectionHeader } from '@/components/ui/SectionHeader';
 import { Badge } from '@/components/ui/Badge';
 import { RemoteImage } from '@/components/media/RemoteImage';
 import { newsCategoryLabels } from '@/features/news/data';
-import { articleCategoryLabels } from '@/features/articles/data';
+import { articleCategoryLabels, articleHref } from '@/features/articles/data';
 import { useNewsItems } from '@/features/news/useNews';
 import { useArticles } from '@/features/articles/useArticles';
 import { applyFeatured, useFeatured } from '@/services/content/featured';
@@ -247,7 +247,7 @@ export function NewsStrip({
             {latestArticles.map((article) => (
               <StripRow
                 key={article.slug}
-                to={`/yazi/${article.slug}`}
+                to={articleHref(article)}
                 badge={
                   <Badge tone="cold">
                     {articleCategoryLabels[article.category]}

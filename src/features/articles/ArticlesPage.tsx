@@ -1,5 +1,4 @@
 import { useMemo } from 'react';
-import { Link } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { FilterCell, filterControlClass } from '@/components/ui/FilterBar';
 import { Input, Select } from '@/components/ui/Input';
@@ -12,7 +11,11 @@ import {
 } from '@/components/ui/EditorialList';
 import { useViewMode } from '@/components/ui/useViewMode';
 import { AdminEditLink } from '@/components/admin/AdminEditLink';
-import { articleCategoryLabels, type ArticleCategory } from './data';
+import {
+  articleCategoryLabels,
+  articleHref,
+  type ArticleCategory,
+} from './data';
 import { useArticles } from './useArticles';
 import { useExplorer } from '@/features/explorer/useExplorer';
 import { articlesSpec } from './articlesSpec';
@@ -73,7 +76,7 @@ export function ArticlesPage() {
     () =>
       result.map((article) => ({
         slug: article.slug,
-        to: `/yazi/${article.slug}`,
+        to: articleHref(article),
         title: article.title,
         summary: article.summary,
         category: articleCategoryLabels[article.category],
@@ -110,35 +113,6 @@ export function ArticlesPage() {
             işe yaramaz.
           </p>
         </header>
-
-        {/*
-          DRIZZLE REHBERİ LİSTENİN DIŞINDA.
-
-          Kendi rotası var çünkü blok tabanlı yazı modeline sığmıyor
-          (16 tablo, 11 infografik, 4 çalışan hesaplayıcı — ayrıntı
-          `DrizzleGuidePage` başlığında). Listeye sahte bir kayıt olarak
-          eklemek, katalogdan gelmeyen bir satırı katalogdanmış gibi
-          göstermek olurdu; onun yerine listenin üstünde kendi şeridiyle
-          duruyor ve modül haritasında da kayıtlı.
-        */}
-        <Link
-          to="/yazilar/drizzle-rehberi"
-          className="group mb-6 flex flex-col gap-2 border border-border-strong bg-surface-1 p-5 transition-colors hover:border-primary hover:bg-surface-2 sm:flex-row sm:items-center sm:justify-between sm:gap-6"
-        >
-          <span className="min-w-0">
-            <span className="label text-primary">Uzun rehber · interaktif</span>
-            <span className="mt-1.5 block font-display text-readout-sm font-bold text-foreground transition-colors group-hover:text-primary">
-              Astrofotoğrafçılıkta Drizzle
-            </span>
-            <span className="mt-1.5 block text-meta leading-relaxed text-muted-foreground">
-              Örnekleme, pixfrac, PHD2 dithering ve karar ağacı — dört
-              hesaplayıcı ve canlı bir drizzle simülatörüyle.
-            </span>
-          </span>
-          <span className="shrink-0 text-meta tracking-[0.04em] text-faint transition-colors group-hover:text-primary">
-            ~35 dk · rehberi aç →
-          </span>
-        </Link>
 
         <EditorialList
           view={view}

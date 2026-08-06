@@ -257,6 +257,11 @@ export const appRoutes = [
           )
         ),
       },
+      /* Rehberin künyesi yazılar listesinde duruyor ve kart doğrudan kendi
+         sayfasına gidiyor. Bu yönlendirme eski/derin bağlantılar için:
+         `/yazi/drizzle-rehberi` adresini paylaşan biri, gövdesi bilerek
+         boş bırakılmış künye kaydına değil rehberin kendisine düşsün. */
+      { path: 'yazi/drizzle-rehberi', element: <RedirectTo to="/yazilar/drizzle-rehberi" /> },
       {
         /* Statik parça `yazi/:slug`ten AYRI bir dal: rehber, blok tabanlı
            yazı modeline sığmayan (16 tablo, 11 infografik, 4 hesaplayıcı)

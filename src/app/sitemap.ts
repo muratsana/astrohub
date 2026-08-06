@@ -146,11 +146,18 @@ export function contentEntries(): SitemapEntry[] {
       priority: 0.7,
       changefreq: 'weekly' as const,
     })),
-    ...articles.map((a) => ({
-      path: `/yazi/${a.slug}`,
-      priority: 0.6,
-      changefreq: 'monthly' as const,
-    })),
+    /* Kendi adresi olan yazılar (`href` taşıyanlar) BURADA DEĞİL: onlar
+       yukarıdaki sabit listede kendi kanonik yollarıyla duruyor.
+       `/yazi/<slug>` bu kayıtlarda yalnızca bir yönlendirme ve sitemap'e
+       yönlendirme koymak, arama motoruna aynı belgeyi iki adresle
+       bildirmek olurdu. */
+    ...articles
+      .filter((a) => !a.href)
+      .map((a) => ({
+        path: `/yazi/${a.slug}`,
+        priority: 0.6,
+        changefreq: 'monthly' as const,
+      })),
     ...news.map((n) => ({
       path: `/haber/${n.slug}`,
       priority: 0.7,
