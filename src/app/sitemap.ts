@@ -69,6 +69,12 @@ export const staticEntries: SitemapEntry[] = [
     lastmod: '2026-08-06',
   },
   {
+    path: '/yazilar/kutup-hizalamasi',
+    priority: 0.7,
+    changefreq: 'yearly',
+    lastmod: '2026-08-06',
+  },
+  {
     path: '/yazilar/drizzle-rehberi',
     priority: 0.7,
     changefreq: 'yearly',

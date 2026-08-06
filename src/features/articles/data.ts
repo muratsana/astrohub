@@ -229,6 +229,30 @@ export const articles: Article[] = [
     },
   },
   /*
+    KUTUP HİZALAMASI REHBERİ — gövdesi burada DEĞİL (diğer iki rehber
+    kaydıyla aynı gerekçe: içerik derleme öncesi üretiliyor ve kendi
+    sayfasında duruyor).
+  */
+  {
+    slug: 'kutup-hizalamasi',
+    href: '/yazilar/kutup-hizalamasi',
+    title: 'Kutup Hizalaması: Sıfırdan Tam Rehber',
+    category: 'teknik',
+    level: 'Orta',
+    duration: '35 dk okuma',
+    publishedAt: '2026-08-06',
+    author: 'Astrohub',
+    summary:
+      'Herkes yapmanız gerektiğini söylüyor; kimse ne kadar iyi yapmanız gerektiğini söylemiyor. Sürüklenmeyi guiding siler, alan dönmesini silemez — farkı kendi ekipmanınızla, gerçek piksel ölçeğinde görün.',
+    body: [],
+    tint: '110,168,199',
+    image: {
+      url: '/gorseller/kutup-kapak.svg',
+      credit: 'Astrohub — kutup hizalaması şeması',
+      licence: 'Astrohub',
+    },
+  },
+  /*
     DRIZZLE REHBERİ — gövdesi burada DEĞİL.
 
     Rehber 16 bölüm, 16 tablo, 11 infografik, dört hesaplayıcı ve canlı

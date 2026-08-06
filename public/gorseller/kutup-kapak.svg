@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" width="1600" height="900" role="img" aria-labelledby="kutup-kapak-baslik">
+  <title id="kutup-kapak-baslik">Kutup hizalaması şeması: solda hizalı eksende noktasal yıldızlar, sağda hatalı eksende köşelere doğru uzayan yay izleri; ortada kutup çevresinde dönen alan</title>
+
+  <!--
+    KUTUP HİZALAMASI KAPAK GÖRSELİ.
+
+    Yazının tek cümlelik özeti şu: hizalama hatasının asıl sonucu yıldızın
+    kayması değil, KADRAJIN DÖNMESİDİR — ve guiding onu düzeltemez. Kapak
+    bunu iki panelde anlatıyor:
+
+      sol  → eksen kutba bakıyor: yıldızlar nokta, köşeler dahil.
+      sağ  → eksen kaçık: merkez hâlâ nokta (guiding rehber yıldızı sabit
+             tutuyor) ama köşelere gidildikçe iz uzuyor. İzin uzunluğu
+             merkeze olan uzaklıkla doğru orantılı; şekil bunu ölçekli
+             çiziyor, abartmıyor.
+
+    Ortadaki halka dönme merkezini gösteriyor: sağ panelde bütün izler o
+    merkezin etrafındaki yayların parçası.
+
+    Neden çizim, neden fotoğraf değil: `features/articles/data.ts` kart
+    görselinin "yazının ne hakkında olduğunu bir bakışta söylemesi"
+    gerektiğini yazıyor. Temiz bir gece fotoğrafı bunu söylemezdi; iki
+    panelin yan yana farkı söylüyor.
+
+    Renkler tema değişkenlerine BAĞLANMADI: kart görseli olarak `<img>`
+    ile basılıyor, yani belgenin CSS'ini görmüyor. Palet Astrohub'ın koyu
+    temasından elle alındı.
+  -->
+
+  <defs>
+    <radialGradient id="kutup-yildiz" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="1"/>
+      <stop offset="30%" stop-color="#fffef8" stop-opacity="0.55"/>
+      <stop offset="70%" stop-color="#fffef8" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#fffef8" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1600" height="900" fill="#0b0b0a"/>
+
+  <!-- ── sol panel: hizalı ────────────────────────────────────────── -->
+  <g>
+    <rect x="90" y="150" width="640" height="600" fill="#07070a" stroke="#34342f"/>
+    <text x="90" y="128" fill="#dcdad2" font-family="system-ui,sans-serif" font-size="30" font-weight="600">Eksen kutba bakıyor</text>
+    <text x="90" y="790" fill="#898781" font-family="system-ui,sans-serif" font-size="23">Köşeler dahil her yıldız nokta</text>
+
+    <!-- Yıldızlar: hepsi noktasal. Konumlar elle dağıtıldı; ızgara
+         görünmesin diye düzensiz. -->
+    <g>
+      <circle cx="180" cy="230" r="9" fill="url(#kutup-yildiz)"/>
+      <circle cx="330" cy="200" r="7" fill="url(#kutup-yildiz)"/>
+      <circle cx="520" cy="245" r="10" fill="url(#kutup-yildiz)"/>
+      <circle cx="660" cy="205" r="7" fill="url(#kutup-yildiz)"/>
+      <circle cx="240" cy="380" r="8" fill="url(#kutup-yildiz)"/>
+      <circle cx="410" cy="330" r="6" fill="url(#kutup-yildiz)"/>
+      <circle cx="600" cy="395" r="9" fill="url(#kutup-yildiz)"/>
+      <circle cx="150" cy="520" r="7" fill="url(#kutup-yildiz)"/>
+      <circle cx="345" cy="560" r="10" fill="url(#kutup-yildiz)"/>
+      <circle cx="505" cy="505" r="6" fill="url(#kutup-yildiz)"/>
+      <circle cx="680" cy="600" r="8" fill="url(#kutup-yildiz)"/>
+      <circle cx="215" cy="690" r="9" fill="url(#kutup-yildiz)"/>
+      <circle cx="430" cy="700" r="7" fill="url(#kutup-yildiz)"/>
+      <circle cx="620" cy="720" r="8" fill="url(#kutup-yildiz)"/>
+    </g>
+  </g>
+
+  <!-- ── sağ panel: hatalı ────────────────────────────────────────── -->
+  <g>
+    <rect x="870" y="150" width="640" height="600" fill="#07070a" stroke="#34342f"/>
+    <text x="870" y="128" fill="#ff9d2e" font-family="system-ui,sans-serif" font-size="30" font-weight="600">Eksen kaçık — alan dönüyor</text>
+    <text x="870" y="790" fill="#898781" font-family="system-ui,sans-serif" font-size="23">Merkez nokta, köşeler yay</text>
+
+    <!--
+      İZLER ÖLÇEKLİ.
+
+      Dönme merkezi (1190, 450). Her izin uzunluğu merkeze olan uzaklıkla
+      doğru orantılı: yay, aynı açısal dönmenin (≈ 4°) o yarıçaptaki
+      karşılığı. Yakındaki yıldızlar bu yüzden neredeyse nokta.
+    -->
+    <g stroke="#fffef8" stroke-linecap="round" fill="none" opacity="0.85">
+      <path d="M 960 210 A 289 289 0 0 1 977 191" stroke-width="7"/>
+      <path d="M 1110 180 A 273 273 0 0 1 1129 165" stroke-width="6"/>
+      <path d="M 1300 225 A 250 250 0 0 1 1315 209" stroke-width="7"/>
+      <path d="M 1440 185 A 355 355 0 0 1 1461 168" stroke-width="6"/>
+      <path d="M 1020 360 A 194 194 0 0 1 1032 347" stroke-width="6"/>
+      <path d="M 1190 310 A 140 140 0 0 1 1200 301" stroke-width="5"/>
+      <path d="M 1380 375 A 199 199 0 0 1 1391 362" stroke-width="6"/>
+      <path d="M 930 500 A 262 262 0 0 1 936 518" stroke-width="6"/>
+      <path d="M 1125 560 A 128 128 0 0 1 1131 568" stroke-width="6"/>
+      <path d="M 1285 505 A 101 101 0 0 1 1291 512" stroke-width="5"/>
+      <path d="M 1460 600 A 305 305 0 0 1 1468 620" stroke-width="6"/>
+      <path d="M 995 690 A 297 297 0 0 1 1004 710" stroke-width="7"/>
+      <path d="M 1210 700 A 250 250 0 0 1 1215 717" stroke-width="6"/>
+      <path d="M 1400 720 A 340 340 0 0 1 1407 743" stroke-width="6"/>
+    </g>
+
+    <!-- Dönme merkezi = rehber yıldız. Guiding tam olarak burayı sabit
+         tutuyor; bütün mesele merkezden uzaklaştıkça izin uzaması. -->
+    <circle cx="1190" cy="450" r="11" fill="url(#kutup-yildiz)"/>
+    <circle cx="1190" cy="450" r="46" fill="none" stroke="#ff9d2e" stroke-width="2" stroke-dasharray="7 7" opacity="0.75"/>
+    <text x="1190" y="530" fill="#ff9d2e" font-family="system-ui,sans-serif" font-size="21" text-anchor="middle">dönme merkezi</text>
+  </g>
+
+  <!-- ── alt künye ─────────────────────────────────────────────────── -->
+  <text x="90" y="855" fill="#6a6862" font-family="ui-monospace,monospace" font-size="22" letter-spacing="0.12em">GUIDING SÜRÜKLENMEYİ SİLER · ALAN DÖNMESİNİ SİLEMEZ</text>
+</svg>

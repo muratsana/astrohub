@@ -195,6 +195,25 @@ export const siteMap: NavGroup[] = [
         ],
       },
       {
+        label: 'Kutup Hizalaması',
+        to: '/yazilar/kutup-hizalamasi',
+        description:
+          'Sürüklenme, alan dönmesi ve PHD2 grafiği — simülatörlü uzun rehber',
+        keywords: [
+          'kutup hizalaması',
+          'polar align',
+          'polar hizalama',
+          'drift',
+          'sürüklenme',
+          'alan dönmesi',
+          'field rotation',
+          'phd2',
+          'guiding assistant',
+          'polarscope',
+          'sharpcap',
+        ],
+      },
+      {
         label: 'Terimler Sözlüğü',
         to: '/sozluk',
         description: 'Bortle, seeing, pixel scale — kısa tanımlar',

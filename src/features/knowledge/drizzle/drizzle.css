@@ -741,6 +741,108 @@
   font-weight: 650;
 }
 
+/* ───────────────────────────── kutup hizalaması rehberinin araçları ── */
+
+/*
+  ÜÇÜNCÜ REHBERİN GETİRDİĞİ SINIFLAR.
+
+  Drizzle ve SNR paketleri bu dosyanın kapsadığı sınıf kümesini
+  paylaşıyordu; kutup hizalaması paketi aynı tasarım sistemini kullanıyor
+  ama iki şey daha getiriyor: bir PHD2 grafiği kutusu ve senaryo seçmek
+  için hap düğmeler. Paketin kendi `astro-article.css`i bunları TAŞIMIYOR
+  (yalnızca tek dosyalık referans derlemesinin içinde duruyorlardı),
+  dolayısıyla buraya alındılar.
+*/
+
+/* Karar metninin ilk satırı — kendi satırında durur. */
+.dz-root .dz-verdict b.dz-hd {
+  display: block;
+  margin-bottom: 3px;
+}
+
+/* Panel altyazısı (simülatörün iki karesi). `dz-panel-cap` ile aynı işi
+   yapıyor; paket bu adı kullandığı için ikisi de tanımlı. */
+.dz-root .dz-pcap {
+  font-size: 12.5px;
+  color: var(--dz-ink-3);
+  line-height: 1.45;
+  margin-top: 8px;
+}
+.dz-root .dz-pcap b {
+  color: var(--dz-ink-2);
+}
+
+/*
+  PHD2 KUTUSU SABİT KOYU — TEMAYA BAĞLI DEĞİL.
+
+  İçindeki grafik gerçek bir PHD2 penceresini taklit ediyor: RA mavi, DEC
+  kırmızı, eğilim çizgisi turuncu ve zemin siyah. Açık temada zemini
+  beyaza çevirmek, okurun ekranında göreceğiyle bağı koparırdı; grafik bir
+  süs değil, referans.
+*/
+.dz-root .dz-phdbox {
+  margin-top: 18px;
+  background: #0b0b0a;
+  border: 1px solid var(--dz-rule);
+  border-radius: var(--radius-card, 2px);
+  padding: 12px 12px 8px;
+}
+.dz-root .dz-phdbox svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.dz-root .dz-phdhead {
+  font-size: 11px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: #8a8880;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.dz-root .dz-swrow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  font-size: 12.5px;
+  color: #a8a69e;
+  margin-top: 10px;
+}
+.dz-root .dz-swrow span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Senaryo seçici — altı hap düğme. */
+.dz-root .dz-pillrow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 14px 0 0;
+}
+.dz-root .dz-pill {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  font: inherit;
+  font-size: 12.5px;
+  background: transparent;
+  border: 1px solid var(--dz-rule);
+  border-radius: 999px;
+  padding: 4px 11px;
+  color: var(--dz-ink-3);
+  cursor: pointer;
+  user-select: none;
+}
+.dz-root .dz-pill:hover {
+  color: var(--dz-ink-2);
+}
+.dz-root .dz-pill.dz-on {
+  border-color: var(--dz-accent);
+  color: var(--dz-accent);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .dz-root * {
     transition: none !important;

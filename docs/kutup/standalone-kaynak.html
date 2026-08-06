@@ -1,0 +1,3008 @@
+<!DOCTYPE html>
+<html lang="tr" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kutup Hizalaması — Sıfırdan Tam Rehber</title>
+<style>
+:root{
+  --bg:#0d0d0d;
+  --surface:#1a1a19;
+  --surface-2:#141413;
+  --ink:#ffffff;
+  --ink-2:#c3c2b7;
+  --ink-3:#898781;
+  --line:#2c2c2a;
+  --rule:#383835;
+  --s1:#3987e5;  /* mavi */
+  --s2:#d95926;  /* turuncu */
+  --s3:#199e70;  /* akuamarin */
+  --s4:#c98500;  /* sarı */
+  --s5:#d55181;  /* macenta */
+  --s8:#e66767;  /* kırmızı */
+  --good:#0ca30c;
+  --warn:#fab219;
+  --serious:#ec835a;
+  --crit:#d03b3b;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  --maxw: 860px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth; scroll-padding-top:70px}
+body{
+  margin:0; background:var(--bg); color:var(--ink-2);
+  font-family:var(--sans); font-size:17px; line-height:1.72;
+  -webkit-font-smoothing:antialiased;
+}
+img,svg{max-width:100%}
+
+/* ---------- Üst bar ---------- */
+.topbar{
+  position:sticky; top:0; z-index:60;
+  background:rgba(13,13,13,.86); backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--line);
+}
+.topbar-in{
+  max-width:1180px; margin:0 auto; padding:10px 20px;
+  display:flex; align-items:center; gap:16px;
+}
+.brand{font-size:13px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-3); font-weight:600; white-space:nowrap}
+.brand b{color:var(--s1)}
+.progress{flex:1; height:3px; background:var(--line); border-radius:2px; overflow:hidden}
+.progress i{display:block; height:100%; width:0; background:var(--s1)}
+.tocbtn{
+  background:transparent; border:1px solid var(--rule); color:var(--ink-2);
+  padding:6px 12px; border-radius:999px; font:inherit; font-size:13px; cursor:pointer;
+}
+.tocbtn:hover{border-color:var(--s1); color:var(--ink)}
+@media(max-width:760px){ .brand-long{display:none} .topbar-in{gap:12px} }
+
+/* ---------- Yerleşim ---------- */
+.wrap{max-width:1180px; margin:0 auto; padding:0 20px; display:grid; grid-template-columns:250px minmax(0,1fr); gap:48px}
+.sidebar{position:sticky; top:70px; align-self:start; max-height:calc(100vh - 90px); overflow-y:auto; padding:24px 0 40px; font-size:14px}
+.sidebar h4{color:var(--ink-3); font-size:11px; letter-spacing:.14em; text-transform:uppercase; margin:0 0 12px}
+.sidebar a{display:block; color:var(--ink-3); text-decoration:none; padding:5px 0 5px 12px; border-left:2px solid var(--line); line-height:1.4}
+.sidebar a:hover{color:var(--ink)}
+.sidebar a.on{color:var(--s1); border-left-color:var(--s1)}
+main{padding:8px 0 100px; min-width:0; max-width:var(--maxw)}
+@media(max-width:1000px){
+  .wrap{grid-template-columns:1fr; gap:0}
+  .sidebar{display:none; position:static; max-height:none; padding:16px 0; border-bottom:1px solid var(--line)}
+  .sidebar.open{display:block}
+}
+
+/* ---------- Tipografi ---------- */
+h1{font-size:clamp(34px,6vw,54px); line-height:1.08; color:var(--ink); letter-spacing:-.025em; margin:0 0 18px; font-weight:800}
+h2{font-size:clamp(25px,3.6vw,33px); line-height:1.2; color:var(--ink); letter-spacing:-.02em; margin:72px 0 6px; font-weight:750}
+h3{font-size:20px; color:var(--ink); margin:40px 0 8px; font-weight:700; letter-spacing:-.01em}
+h4{font-size:16px; color:var(--ink); margin:26px 0 6px; font-weight:650}
+p{margin:0 0 18px}
+a{color:var(--s1)}
+strong{color:var(--ink); font-weight:650}
+em{color:var(--ink); font-style:italic}
+code{font-family:var(--mono); font-size:.88em; background:#232322; color:#e8c9a0; padding:2px 6px; border-radius:4px}
+ul,ol{margin:0 0 18px; padding-left:22px}
+li{margin:0 0 8px}
+li::marker{color:var(--ink-3)}
+hr{border:0; border-top:1px solid var(--line); margin:56px 0}
+.kicker{color:var(--s1); font-size:12px; letter-spacing:.18em; text-transform:uppercase; font-weight:700; margin:0 0 14px}
+.lead{font-size:20px; line-height:1.62; color:var(--ink-2)}
+.sec-no{display:inline-block; font-family:var(--mono); font-size:12px; color:var(--s1); border:1px solid var(--rule); border-radius:5px; padding:2px 8px; margin-bottom:10px; letter-spacing:.06em}
+
+/* ---------- Hero ---------- */
+.hero{padding:64px 0 8px; border-bottom:1px solid var(--line); margin-bottom:8px}
+.hero .lead{max-width:640px}
+.meta{display:flex; flex-wrap:wrap; gap:10px; margin:26px 0 8px}
+.chip{font-size:12.5px; color:var(--ink-3); border:1px solid var(--rule); border-radius:999px; padding:4px 12px}
+.chip b{color:var(--ink-2); font-weight:600}
+
+/* ---------- Kartlar ---------- */
+.card{background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:22px 24px; margin:26px 0}
+.card>*:first-child{margin-top:0}
+.card>*:last-child{margin-bottom:0}
+.fig{background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:20px 20px 14px; margin:30px 0}
+.fig svg{display:block; width:100%; height:auto}
+.figcap{font-size:13.5px; color:var(--ink-3); line-height:1.55; margin-top:14px; padding-top:12px; border-top:1px solid var(--line)}
+.figcap b{color:var(--ink-2); font-weight:650}
+
+.callout{border-left:3px solid var(--s1); background:var(--surface); border-radius:0 12px 12px 0; padding:16px 20px; margin:26px 0; font-size:16px}
+.callout .t{display:block; color:var(--ink); font-weight:700; margin-bottom:4px; font-size:14px; letter-spacing:.02em}
+.callout.warn{border-left-color:var(--warn)}
+.callout.warn .t{color:var(--warn)}
+.callout.bad{border-left-color:var(--crit)}
+.callout.bad .t{color:var(--crit)}
+.callout.good{border-left-color:var(--good)}
+.callout.good .t{color:var(--good)}
+.callout p:last-child{margin-bottom:0}
+
+.tldr{background:linear-gradient(160deg,#16233a,#141413); border:1px solid #24405f; border-radius:16px; padding:26px 28px; margin:34px 0}
+.tldr h3{margin-top:0; color:var(--ink); font-size:15px; letter-spacing:.12em; text-transform:uppercase; color:var(--s1)}
+.tldr ul{margin-bottom:0}
+.tldr li{margin-bottom:11px}
+
+/* ---------- Tablolar ---------- */
+.tw{overflow-x:auto; margin:26px 0; border:1px solid var(--line); border-radius:12px; background:var(--surface)}
+table{border-collapse:collapse; width:100%; font-size:14.5px; min-width:520px}
+th,td{padding:11px 15px; text-align:left; border-bottom:1px solid var(--line); vertical-align:top; line-height:1.5}
+th{color:var(--ink); font-weight:650; font-size:12px; letter-spacing:.07em; text-transform:uppercase; background:var(--surface-2); white-space:nowrap}
+tr:last-child td{border-bottom:0}
+td.num, th.num{font-variant-numeric:tabular-nums; text-align:right; white-space:nowrap}
+.tag{display:inline-block; font-size:11.5px; font-weight:700; padding:2px 8px; border-radius:5px; letter-spacing:.03em; white-space:nowrap}
+.tag.g{background:rgba(12,163,12,.16); color:#4ed24e}
+.tag.y{background:rgba(250,178,25,.16); color:#f5c04c}
+.tag.r{background:rgba(208,59,59,.18); color:#f08080}
+.tag.b{background:rgba(57,135,229,.16); color:#7db4f0}
+
+/* ---------- Etkileşimli araçlar ---------- */
+.tool{background:linear-gradient(170deg,#181d24,#141413); border:1px solid #263140; border-radius:16px; padding:24px; margin:32px 0}
+.tool h4{margin:0 0 4px; color:var(--ink); font-size:17px}
+.tool .sub{font-size:13.5px; color:var(--ink-3); margin:0 0 20px}
+.grid2{display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:14px}
+.fld label{display:block; font-size:12.5px; letter-spacing:.02em; color:var(--ink-3); margin-bottom:5px; font-weight:600}
+.fld input[type=number], .fld select{
+  width:100%; background:#0f0f0e; border:1px solid var(--rule); color:var(--ink);
+  padding:9px 11px; border-radius:8px; font:inherit; font-size:15px; font-variant-numeric:tabular-nums;
+}
+.fld input:focus,.fld select:focus{outline:none; border-color:var(--s1)}
+.rng{display:flex; align-items:center; gap:12px}
+.rng input[type=range]{flex:1; accent-color:var(--s1); height:4px}
+.rng .v{font-family:var(--mono); font-size:14px; color:var(--s1); min-width:52px; text-align:right; font-variant-numeric:tabular-nums}
+.out{margin-top:20px; padding-top:18px; border-top:1px solid var(--line); display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:16px}
+.stat .k{font-size:11px; letter-spacing:.09em; text-transform:uppercase; color:var(--ink-3); font-weight:600}
+.stat .v{font-size:27px; color:var(--ink); font-weight:700; line-height:1.15; margin-top:2px}
+.stat .v small{font-size:14px; color:var(--ink-3); font-weight:500}
+.verdict{margin-top:18px; padding:14px 16px; border-radius:10px; font-size:15px; line-height:1.55; border:1px solid var(--rule); background:#0f0f0e}
+.verdict b.hd{display:block; margin-bottom:3px}
+.sw{display:inline-block; width:11px; height:11px; border-radius:3px; margin-right:7px; vertical-align:baseline}
+
+/* ---------- Sekmeler ---------- */
+.tabs{display:flex; gap:4px; flex-wrap:wrap; margin:26px 0 0; border-bottom:1px solid var(--line)}
+.tabs button{
+  background:transparent; border:0; border-bottom:2px solid transparent; color:var(--ink-3);
+  padding:9px 14px; font:inherit; font-size:14.5px; font-weight:600; cursor:pointer; border-radius:6px 6px 0 0;
+}
+.tabs button:hover{color:var(--ink)}
+.tabs button.on{color:var(--s1); border-bottom-color:var(--s1)}
+.panel{display:none; padding-top:8px}
+.panel.on{display:block}
+
+/* ---------- Akordiyon ---------- */
+details{border:1px solid var(--line); border-radius:11px; background:var(--surface); margin:12px 0; overflow:hidden}
+details summary{cursor:pointer; padding:14px 18px; color:var(--ink); font-weight:650; font-size:15.5px; list-style:none; display:flex; justify-content:space-between; gap:12px; align-items:center}
+details summary::-webkit-details-marker{display:none}
+details summary::after{content:"+"; color:var(--s1); font-size:20px; font-weight:400; line-height:1}
+details[open] summary::after{content:"−"}
+details .body{padding:0 18px 16px; font-size:15.5px}
+details .body>*:last-child{margin-bottom:0}
+
+/* ---------- Formül ---------- */
+.eq{background:#0f0f0e; border:1px solid var(--rule); border-radius:10px; padding:16px 20px; margin:20px 0; font-family:var(--mono); font-size:15px; color:var(--ink); overflow-x:auto; line-height:2}
+.eq .c{color:var(--ink-3); font-family:var(--sans); font-size:13.5px}
+.eq .hi{color:var(--s4)}
+
+/* ---------- Kaynaklar ---------- */
+.src{font-size:14px; color:var(--ink-3)}
+.src li{margin-bottom:7px}
+.src a{color:var(--s1); text-decoration:none; border-bottom:1px solid rgba(57,135,229,.3)}
+.src a:hover{border-bottom-color:var(--s1)}
+
+canvas{display:block; image-rendering:pixelated; border-radius:8px; background:#000}
+.legend{display:flex; flex-wrap:wrap; gap:16px; font-size:13px; color:var(--ink-2); margin-top:14px}
+.legend span{display:flex; align-items:center; gap:7px}
+
+/* ---------- Simülatör panelleri ---------- */
+.panels{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px; margin-top:18px}
+.panels canvas{width:100%; height:auto; aspect-ratio:1/1; image-rendering:auto}
+.pcap{font-size:12.5px; color:var(--ink-3); line-height:1.45; margin-top:8px}
+.pcap b{color:var(--ink-2)}
+.pcap b.hl{color:var(--s1)}
+.stat.sm .v{font-size:21px}
+.note{font-size:13px; color:var(--ink-3); margin:16px 0 0; line-height:1.55}
+.phdbox{margin-top:18px; background:#0b0b0a; border:1px solid var(--rule); border-radius:10px; padding:12px 12px 8px}
+.phdbox svg{display:block; width:100%; height:auto}
+.swrow{display:flex; flex-wrap:wrap; gap:14px; font-size:12.5px; color:var(--ink-2); margin-top:10px}
+.swrow span{display:flex; align-items:center; gap:6px}
+.pill{display:inline-flex; gap:6px; align-items:center; font-size:12.5px; border:1px solid var(--rule); border-radius:999px; padding:4px 11px; color:var(--ink-3); cursor:pointer; user-select:none}
+.pill.on{border-color:var(--s1); color:var(--s1)}
+.pillrow{display:flex; flex-wrap:wrap; gap:8px; margin:2px 0 0}
+@media(prefers-reduced-motion:reduce){ html{scroll-behavior:auto} }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-in">
+    <div class="brand">KUTUP HİZALAMASI<span class="brand-long"> <b>·</b> Astrofotoğraf Rehberi</span></div>
+    <div class="progress"><i id="prog"></i></div>
+    <button class="tocbtn" id="tocbtn">İçindekiler</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <nav class="sidebar" id="toc">
+    <h4>İçindekiler</h4>
+    <a href="#giris">Giriş</a>
+    <a href="#nedir">1 · Kutup hizalaması nedir?</a>
+    <a href="#neolur">2 · Hizasızlık ne yapar?</a>
+    <a href="#sayilar">3 · Sayılara dökelim</a>
+    <a href="#simulator">4 · Canlı simülatör</a>
+    <a href="#alandonmesi">5 · Alan dönmesi</a>
+    <a href="#neyeter">6 · Ne kadar iyi yeterli?</a>
+    <a href="#phd2">7 · PHD2 grafiğini okumak</a>
+    <a href="#drift">8 · Drift alignment</a>
+    <a href="#polarscope">9 · Polarscope</a>
+    <a href="#sharpcap">10 · SharpCap</a>
+    <a href="#nina">11 · N.I.N.A. TPPA</a>
+    <a href="#asiair">12 · ASIAIR</a>
+    <a href="#digerleri">13 · Diğer yöntemler</a>
+    <a href="#saha">14 · Sahada</a>
+    <a href="#yanlis">15 · Yaygın yanlışlar</a>
+    <a href="#kaynaklar">Kaynaklar</a>
+  </nav>
+
+  <main>
+
+  <!-- ==================== HERO ==================== -->
+  <header class="hero" id="giris">
+    <div class="kicker">Astrofotoğraf · Temeller</div>
+    <h1>Kutup hizalaması: sıfırdan tam rehber</h1>
+    <p class="lead">Herkes yapmanız gerektiğini söylüyor. Kimse tam olarak <em>neden</em> ve <em>ne kadar iyi</em> yapmanız gerektiğini söylemiyor. Bu yazı ikisini de anlatıyor — üstelik hatanın etkisini kendi gözünüzle görebileceğiniz bir simülatörle.</p>
+    <div class="meta">
+      <span class="chip"><b>Seviye:</b> sıfırdan başlıyor</span>
+      <span class="chip"><b>Okuma:</b> ~35 dakika</span>
+      <span class="chip"><b>İçerir:</b> 4 etkileşimli araç</span>
+      <span class="chip"><b>Kapsam:</b> polarscope · SharpCap · N.I.N.A. · ASIAIR · PHD2</span>
+    </div>
+  </header>
+
+  <p>Teleskobunuzu kurdunuz. Kamera bağlı, odak tutmuş, hedef ekranda görünüyor. İlk beş dakikalık kareyi çektiniz ve yıldızlar minik çizgiler hâlinde çıktı. Guiding'i açtınız, sorun düzeldi. Buraya kadar her şey yolunda gibi.</p>
+
+  <p>Ama sabah, 60 kareyi üst üste bindirmeye çalıştığınızda köşelerin tutmadığını fark ediyorsunuz. Kareler birbirine göre hafifçe <em>dönmüş</em> — üstelik bu, guiding açıkken olmuş.</p>
+
+  <p>İşte kutup hizalaması tam olarak bunun hikâyesidir. Guiding bazı sorunları sizin yerinize çözer, bazılarına ise hiç dokunamaz. Hangisinin hangisi olduğunu bilmek, gece boyunca ayar cıvatalarıyla boğuşup boğuşmayacağınızı belirler.</p>
+
+  <p>Bu yazıda önce işin fiziğini kuracağız (korkmayın, tek bir çarpma işlemi yeter), sonra bunu kendi ekipmanınızın sayılarına döküp <strong>size ne kadar hassasiyet gerektiğini</strong> hesaplayacağız, en sonunda da 2026'da kullanılan bütün yöntemleri tek tek gezeceğiz.</p>
+
+  <div class="tldr">
+    <h3>Kısa özet</h3>
+    <ul>
+      <li>Kutup hizalaması, montürünüzün <strong>dönme ekseninin</strong> Dünya'nın dönme eksenine paralel olmasıdır. Başka hiçbir şey değil.</li>
+      <li>Hizasızlık iki şey yapar: <strong>deklinasyonda sürüklenme</strong> ve <strong>alan dönmesi</strong>. Guiding birincisini düzeltir, ikincisini <b>düzeltemez</b>.</li>
+      <li>Basit kural: <strong>1 yay dakikası hata ≈ 0.26 yay saniyesi/dakika sürüklenme</strong> — yani saatte 16 yay saniyesi.</li>
+      <li>Alan dönmesi kutba yaklaştıkça <strong>1/cos(deklinasyon)</strong> ile büyür. Deklinasyon 70°'de ekvatordakinin 3 katıdır.</li>
+      <li>Guiding yapıyorsanız <strong>birkaç yay dakikası</strong> fazlasıyla yeterlidir. PHD2 kılavuzunun kendi ifadesi: <em>"yeterince yakın, yeterince iyidir."</em></li>
+      <li>Polarscope 2026'da hâlâ çalışır ama <strong>kendi kolimasyon hatasını göremez</strong>. Plaka çözümlemeli yazılımlar (SharpCap, N.I.N.A., ASIAIR) bu sorunu tamamen ortadan kaldırır.</li>
+      <li>PHD2 grafiğinde kutup hatasının imzası nettir: <strong>DEC eğiliminin sabit eğimi</strong>. Ama bunu boşluk (backlash) ve esnemeden ayırmayı bilmeniz gerekir.</li>
+    </ul>
+  </div>
+
+  <hr>
+
+  <!-- ==================== 1 · NEDİR ==================== -->
+  <h2 id="nedir"><span class="sec-no">BÖLÜM 1</span><br>Kutup hizalaması nedir?</h2>
+
+  <p>Bir plak çaların döner tablasını düşünün. Üzerine bir bardak koyup tablayı çevirirseniz bardak daireler çizer. Şimdi bardağı hareketsiz göstermek istiyorsanız ne yaparsınız? Bardağı takip eden bir kamerayı, <em>tam olarak aynı eksen etrafında, aynı hızda</em> döndürürsünüz.</p>
+
+  <p>Gökyüzü de böyle döner. Dünya kendi ekseni etrafında döndüğü için yıldızlar, gökyüzünde sabit bir noktanın — <strong>gök kutbunun</strong> — etrafında yavaşça dönüyormuş gibi görünür. Kuzey yarımkürede bu nokta Kutup Yıldızı'nın (Polaris) çok yakınındadır.</p>
+
+  <p>Ekvatoryal bir montür, tek bir işi yapmak üzere tasarlanmıştır: bir eksen etrafında, gökyüzünün döndüğü hızda dönmek. Bu eksene <strong>sağ açıklık ekseni</strong> (RA ekseni) denir.</p>
+
+  <div class="callout">
+    <span class="t">Tanım</span>
+    <p>Kutup hizalaması, montürün RA ekseninin <strong>Dünya'nın dönme eksenine paralel</strong> hâle getirilmesidir. Eşdeğer ifadeyle: RA ekseni gökyüzünde tam olarak gök kutbunu göstermelidir.</p>
+  </div>
+
+  <p>Bu paralellik sağlandığında montür tek bir motorla, tek bir eksende, sabit hızda dönerek gökyüzünün hareketini birebir taklit eder. Yıldızlar kamerada sabit durur.</p>
+
+  <p>Paralellik bozulduğunda ise montür yanlış bir eksen etrafında döner. Yakındır ama aynı değildir. Ve bu küçük fark, saatler boyunca birikerek fotoğrafınızı bozar.</p>
+
+  <div class="fig">
+    <svg id="fig-axes" viewBox="0 0 800 340" role="img" aria-label="Dünya'nın dönme ekseni ile montürün RA ekseni arasındaki açı farkı"></svg>
+    <div class="figcap"><b>Şekil 1 —</b> Gökyüzü, gök kutbu etrafında döner. Montürünüz de bir eksen etrafında döner. İkisi arasındaki açı, kutup hizalama hatanızdır. Astrofotoğrafta bu açı <strong>yay dakikası</strong> (′) cinsinden ölçülür: 1 yay dakikası = 1/60 derece, yani Ay'ın görünen çapının yaklaşık otuzda biri.</div>
+  </div>
+
+  <h3>Hata neye benzer? İki bileşen</h3>
+
+  <p>Montürünüzün iki ayar mekanizması vardır ve hata da iki bileşene ayrılır:</p>
+
+  <ul>
+    <li><strong>Yükseklik (altitude) hatası</strong> — eksen olması gerekenden fazla yukarıyı ya da aşağıyı gösteriyor. Enlem ayar cıvatasıyla düzeltilir.</li>
+    <li><strong>Azimut hatası</strong> — eksen olması gerekenden doğuyu ya da batıyı gösteriyor. Yatay ayar vidalarıyla düzeltilir.</li>
+  </ul>
+
+  <p>Bunlar birbirinden bağımsızdır ve her yöntem ikisini ayrı ayrı raporlar. Toplam hata ise ikisinin dik toplamıdır:</p>
+
+  <div class="eq">
+    Toplam hata = √( yükseklik hatası<span class="hi">²</span> + azimut hatası<span class="hi">²</span> )
+    <div class="c">Örnek: 3′ yükseklik + 4′ azimut = 5′ toplam. Yazılımların gösterdiği "Total Error" tam olarak budur.</div>
+  </div>
+
+  <div class="fig">
+    <svg id="fig-components" viewBox="0 0 800 300" role="img" aria-label="Azimut ve yükseklik hatasının gökyüzündeki karşılığı"></svg>
+    <div class="figcap"><b>Şekil 2 —</b> Kutbun etrafına çizilmiş bir hedef tahtası gibi düşünün. Montür ekseninizin gösterdiği nokta merkezden ne kadar uzaksa hatanız o kadar büyüktür. Yükseklik ayarı bu noktayı dikey, azimut ayarı yatay yönde kaydırır. <b>Küçük bir tuzak:</b> azimut vidasını 1′ çevirmek gökyüzünde 1′ hareket etmez — kutup ufuktan enleminiz kadar yüksekte olduğu için gökyüzündeki karşılığı <code>cos(enlem)</code> kadar küçülür. 40° enlemde azimut vidasını gökyüzünde 1′ hareket ettirmek için yaklaşık 1.3′ çevirmeniz gerekir.</div>
+  </div>
+
+  <hr>
+
+  <!-- ==================== 2 · NE OLUR ==================== -->
+  <h2 id="neolur"><span class="sec-no">BÖLÜM 2</span><br>Hizasızlık tam olarak ne yapar?</h2>
+
+  <p>Üç şey olur ve bunları ayrı ayrı düşünmek gerekir, çünkü her birinin çözümü farklıdır.</p>
+
+  <h3>1. Deklinasyonda sürüklenme</h3>
+
+  <p>Montür yanlış eksende döndüğü için yıldız, kadrajda yavaş yavaş yukarı ya da aşağı kayar. Bu kaymanın yönü kuzey-güney doğrultusundadır — yani <strong>deklinasyon</strong> ekseninde.</p>
+
+  <p>Guiding yapmıyorsanız bu, doğrudan yıldız izi demektir. Guiding yapıyorsanız PHD2 her karede montüre "biraz kuzeye" (ya da "biraz güneye") komutu göndererek bunu kapatır. Yani <strong>guiding bu sorunu çözer</strong>.</p>
+
+  <p>Ama bir bedeli vardır: PHD2'nin sürekli aynı yöne düzeltme yapması, montürünüzün deklinasyon eksenindeki boşluğu ve sürtünmeyi sürekli çalıştırır. Ayrıca gecenin bir yerinde, gökyüzündeki belirli bir noktada bu yön <em>tersine döner</em> — ve o anda deklinasyon boşluğu devreye girip birkaç kareyi bozar.</p>
+
+  <h3>2. Alan dönmesi</h3>
+
+  <p>Asıl kritik olan etki budur. Montür yanlış eksen etrafında döndüğü için kadrajınız, poz boyunca yavaşça <strong>kendi ekseninde döner</strong>.</p>
+
+  <p>Guiding, rehber yıldızı sabit tutar. Ama sabit tutmak, dönmeyi durdurmak demek değildir. Rehber yıldız yerinde kalır, kadrajın geri kalanı onun etrafında döner. Merkeze yakın yıldızlar neredeyse hiç kıpırdamaz; köşedekiler yay çizer.</p>
+
+  <div class="callout warn">
+    <span class="t">Bunu bir kez anlarsanız gerisi kolay</span>
+    <p>Guiding, iki serbestlik dereceli bir düzeltmedir: bir yıldızın <em>konumunu</em> sabitler. Dönme üçüncü bir serbestlik derecesidir ve guiding ona dokunamaz. Onu düzeltmenin tek yolu ya kutup hizalamasını iyileştirmek ya da alan döndürücü (field derotator) kullanmaktır.</p>
+  </div>
+
+  <h3>3. Gösterme (GOTO) ve model hataları</h3>
+
+  <p>Montürünüzün gökyüzü modeli, RA ekseninin kutbu gösterdiğini varsayar. Göstermiyorsa hizalama yıldızları tutmaz, GOTO ıskalar, meridyen dönüşünden sonra hedef kadrajdan kaçar. Bu, görüntü kalitesinden çok <em>gecenizi</em> bozan bir sorundur.</p>
+
+  <p>Aşağıdaki tablo bu üçünü yan yana koyuyor; aslında yazının geri kalanının özeti de burada saklı:</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Etki</th><th>Nasıl görünür</th><th>Guiding düzeltir mi?</th><th>Ne zaman canınızı yakar</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><b>DEC sürüklenmesi</b></td>
+          <td>Yıldızlar kuzey-güney yönünde uzar; PHD2'de DEC eğrisi sürekli tırmanır</td>
+          <td><span class="tag g">Evet</span></td>
+          <td>Guiding'siz çekimde, ilk dakikadan itibaren</td>
+        </tr>
+        <tr>
+          <td><b>Alan dönmesi</b></td>
+          <td>Köşelerde yay şeklinde izler; kareler üst üste binmiyor</td>
+          <td><span class="tag r">Hayır</span></td>
+          <td>Uzun pozda, yüksek deklinasyonda, büyük sensörde</td>
+        </tr>
+        <tr>
+          <td><b>GOTO / model</b></td>
+          <td>Hedef kadrajda değil; meridyen dönüşünde kayma</td>
+          <td><span class="tag y">Kısmen</span> (plaka çözümleme kurtarır)</td>
+          <td>Hata birkaç dereceye çıktığında</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>Dikkat edin: guiding yapan biri için <strong>alan dönmesi tek gerçek kısıttır</strong>. Kutup hizalamanızın ne kadar iyi olması gerektiğini belirleyen şey de odur. Bölüm 6'da bunu tam olarak hesaplayacağız.</p>
+
+  <hr>
+
+  <!-- ==================== 3 · SAYILAR ==================== -->
+  <h2 id="sayilar"><span class="sec-no">BÖLÜM 3</span><br>Sayılara dökelim: 1 yay dakikası ne demek?</h2>
+
+  <p>Bütün konunun tek bir sayıya indiği yer burası. Gökyüzü dakikada 15.04 yay dakikası döner. Ekseniniz gerçek eksenden ε kadar sapmışsa, yıldız da dakikada en fazla <em>ε çarpı dönme açısı</em> kadar kayar.</p>
+
+  <div class="eq">
+    Sürüklenme (yay sn/dk) = <span class="hi">0.2625</span> × hata (yay dakikası)
+    <div class="c">Türetimi: ω = 15.041 yay sn/sn = 902.5 yay sn/dk; 1 yay dakikası = 2.909×10⁻⁴ radyan; çarpımı 0.2625.</div>
+  </div>
+
+  <p>Aynı bağıntıyı ters yönden de yazabiliriz — ölçtüğünüz sürüklenmeden hatayı bulmak için:</p>
+
+  <div class="eq">
+    Hata (yay dakikası) = <span class="hi">3.81</span> × sürüklenme (yay sn/dk)
+    <div class="c">Bu 3.81 sayısı, PHD2'nin kaynak kodunda 3.8197 olarak geçer ve tam olarak <b>12/π</b>'dir. (Yıldız gününe göre tam değeri 3.8093; aradaki %0.27'lik fark pratikte görünmez.)</div>
+  </div>
+
+  <p>Bu iki satır, bütün drift alignment yönteminin temelidir. Sürüklenmeyi ölçersiniz, çarparsınız, hatanızı bulursunuz.</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Hizalama hatası</th><th class="num">Sürüklenme (yay sn/dk)</th><th class="num">5 dakikada</th><th class="num">Bir saatte</th><th>Guiding'siz sonuç</th></tr></thead>
+      <tbody>
+        <tr><td>0.5′ (30″)</td><td class="num">0.13</td><td class="num">0.7″</td><td class="num">7.9″</td><td>Görünmez</td></tr>
+        <tr><td><b>1′</b></td><td class="num">0.26</td><td class="num">1.3″</td><td class="num">15.8″</td><td>Uzun pozda fark edilir</td></tr>
+        <tr><td>2′</td><td class="num">0.53</td><td class="num">2.6″</td><td class="num">31.5″</td><td>Belirgin uzama</td></tr>
+        <tr><td><b>5′</b></td><td class="num">1.31</td><td class="num">6.6″</td><td class="num">78.8″</td><td>Açık yıldız izi</td></tr>
+        <tr><td>10′</td><td class="num">2.63</td><td class="num">13.1″</td><td class="num">158″</td><td>Kare çöp</td></tr>
+        <tr><td>30′ (Ay çapı)</td><td class="num">7.88</td><td class="num">39.4″</td><td class="num">473″</td><td>Hedef kadrajdan çıkar</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="note" style="margin:-14px 0 22px">Tablodaki değerler <b>en kötü durumu</b> gösterir: hatanın tamamının o anki saat açısında sürüklenmeye dönüştüğü hâli. Gökyüzünün başka bir yerine baktığınızda aynı hata daha az sürüklenme üretir — bölümün sonundaki formüle bakın.</p>
+
+  <p>Karşılaştırma için: iyi bir gecede yıldızların şişkinliği (FWHM) 2–4 yay saniyesi arasındadır. Yani <strong>5 dakikalık guiding'siz bir karede 2 yay saniyesinden fazla sürüklenme</strong> zaten görünür hale gelir — bu da yaklaşık 1.5′ hataya karşılık gelir.</p>
+
+  <div class="callout">
+    <span class="t">Guiding yapıyorsanız bu tablonun tamamı geçersiz</span>
+    <p>Yukarıdaki sayılar <strong>guiding'siz</strong> çekim içindir. Guiding açıkken bu sürüklenmenin tamamı düzeltilir; geriye yalnızca alan dönmesi kalır ve o çok daha küçüktür. Bu yüzden "kaç yay dakikası yeterli" sorusunun cevabı guiding'li ve guiding'siz çekimde tamamen farklıdır.</p>
+  </div>
+
+  <h3>Sürüklenme her yerde aynı mı?</h3>
+
+  <p>Hayır, aynı değil. Üstelik bu fark, birazdan göreceğimiz drift alignment yönteminin bütün mantığını kuran şeydir.</p>
+
+  <p>Sürüklenme, teleskobun gökyüzünde <em>nereye</em> baktığına bağlıdır. Daha doğrusu: <strong>saat açısına</strong> bağlıdır (hedefin meridyenden ne kadar doğuda/batıda olduğu). İki bileşen şöyle davranır:</p>
+
+  <div class="eq">
+    DEC sürüklenmesi = ω × [ yükseklik hatası × <span class="hi">sin H</span> − azimut hatası × cos(enlem) × <span class="hi">cos H</span> ]
+    <div class="c">H = saat açısı. Meridyende H = 0, doğu ufkunda H = +6 saat.</div>
+  </div>
+
+  <p>Bunun pratik anlamı çarpıcı derecede kullanışlıdır:</p>
+
+  <ul>
+    <li><strong>Meridyende (H = 0):</strong> <code>sin H = 0</code>, yani <em>yükseklik hatası hiç sürüklenme üretmez</em>. Gördüğünüz sürüklenmenin tamamı azimut hatasındandır.</li>
+    <li><strong>Doğu veya batı ufkunda (H = ±6 saat):</strong> <code>cos H = 0</code>, yani <em>azimut hatası hiç sürüklenme üretmez</em>. Gördüğünüz sürüklenmenin tamamı yükseklik hatasındandır.</li>
+  </ul>
+
+  <p>İki eksen böylece birbirinden tamamen ayrılır. Klasik drift alignment yöntemi tam olarak bunu kullanır: önce meridyende bakıp azimutu ayarlarsınız, sonra ufka bakıp yüksekliği. Bölüm 8'de adım adım yapacağız.</p>
+
+  <div class="fig">
+    <svg id="fig-ha" viewBox="0 0 800 430" role="img" aria-label="Saat açısına göre azimut ve yükseklik hatasının sürüklenmeye katkısı"></svg>
+    <div class="figcap"><b>Şekil 3 —</b> İki eğri tam olarak diktir. Mavi eğrinin sıfır olduğu yerde turuncu maksimumdadır. Bu yüzden meridyen "azimut istasyonu", ufuk ise "yükseklik istasyonu"dur. Alt satırdaki soluk eğriler alan dönmesinin aynı saat açısındaki davranışıdır — dikkat edin, sürüklenmenin sıfır olduğu yerde alan dönmesi <em>en yüksektir</em>. Doğa bu ikisini aynı anda ölçmenize izin vermez.</div>
+  </div>
+
+  <div class="callout warn">
+    <span class="t">Yaygın bir yanlışı burada düzeltelim</span>
+    <p>Çoğu kaynak "sürüklenmeyi ölçmek için gök ekvatoruna yakın bir yıldız seçin, çünkü sürüklenme orada en fazladır" der. <strong>Bu gerekçe yanlıştır.</strong> Yukarıdaki formülde deklinasyon hiç geçmiyor — DEC sürüklenmesi hedefin deklinasyonundan <em>bağımsızdır</em>. (Bunu hem geometriden hem de tam bir katı-cisim simülasyonuyla doğruladık; profesyonel gözlemevlerinde kullanılan TPOINT gösterme modelinin deklinasyon terimlerinde de <code>cos δ</code> yoktur.)</p>
+    <p>Ekvatora yakın ölçmenin <em>gerçek</em> gerekçeleri şunlardır: (1) PHD2'nin ve Barrett'ın kullandığı çevirme formülünde bir <code>1/cos δ</code> çarpanı vardır ve bu çarpan yalnızca ekvatorda 1'e eşittir — başka yerde okuduğunuz sayı olduğundan büyük çıkar; (2) alan dönmesi ekvatorda en küçüktür, dolayısıyla ölçümünüzü kirletmez; (3) kırılma (refraksiyon) kaynaklı sahte sürüklenme meridyende en zayıftır. Yani öğüt doğru, açıklaması yanlış. Bölüm 7'de bu <code>1/cos δ</code> meselesine geri döneceğiz — PHD2 kullanıcıları için gerçek bir tuzak.</p>
+  </div>
+
+  <hr>
+  <!-- ==================== 4 · SİMÜLATÖR ==================== -->
+  <h2 id="simulator"><span class="sec-no">BÖLÜM 4</span><br>Canlı simülatör: hatayı kendi gözünüzle görün</h2>
+
+  <p>Buraya kadar anlattığımız her şey aşağıdaki tek araçta toplanıyor. Kutup hizalama hatasını arttırdıkça hem <strong>karenizde</strong> ne olduğunu hem de <strong>PHD2 grafiğinizde</strong> nasıl göründüğünü aynı anda izleyebilirsiniz.</p>
+
+  <p>Karşınızda iki panel var: soldaki guiding kapalıyken, sağdaki ise açıkken ne göreceğinizi gösteriyor. Aradaki farkı kendi gözünüzle görmek, bu yazının en önemli fikrini tek başına anlatıyor — <em>guiding sürüklenmeyi siler, dönmeyi silmez.</em></p>
+
+  <div class="tool" id="tool-sim">
+    <h4>Kutup hizalaması simülatörü</h4>
+    <p class="sub">Ayarları değiştirin; iki kare ve PHD2 grafiği anında yeniden hesaplanır.</p>
+
+    <div class="grid2">
+      <div class="fld"><label for="sm_err">Kutup hizalama hatası</label>
+        <div class="rng"><input id="sm_err" type="range" min="0" max="30" step="0.5" value="8"><span class="v" id="sm_err_v">8′</span></div>
+      </div>
+      <div class="fld"><label for="sm_dir">Hatanın yönü</label>
+        <select id="sm_dir">
+          <option value="alt">Tamamı yükseklik hatası</option>
+          <option value="az">Tamamı azimut hatası</option>
+          <option value="mix" selected>Yarı yarıya (gerçekçi)</option>
+        </select>
+      </div>
+      <div class="fld"><label for="sm_tgt">Hedef</label>
+        <select id="sm_tgt"></select>
+      </div>
+      <div class="fld"><label for="sm_ha">Saat açısı</label>
+        <div class="rng"><input id="sm_ha" type="range" min="-6" max="6" step="0.25" value="1"><span class="v" id="sm_ha_v">+1.0 s</span></div>
+      </div>
+      <div class="fld"><label for="sm_exp">Poz süresi</label>
+        <select id="sm_exp">
+          <option value="60">60 saniye</option>
+          <option value="120">120 saniye</option>
+          <option value="300" selected>300 saniye (5 dk)</option>
+          <option value="600">600 saniye (10 dk)</option>
+          <option value="1200">1200 saniye (20 dk)</option>
+        </select>
+      </div>
+      <div class="fld"><label for="sm_fl">Odak uzunluğu (mm)</label>
+        <input id="sm_fl" type="number" min="50" step="10" value="530">
+      </div>
+      <div class="fld"><label for="sm_sen">Sensör</label>
+        <select id="sm_sen"></select>
+      </div>
+      <div class="fld"><label for="sm_lat">Enlem (°)</label>
+        <input id="sm_lat" type="number" min="0" max="75" step="1" value="40">
+      </div>
+    </div>
+
+    <div class="panels">
+      <div>
+        <canvas id="sm_unguided" width="480" height="480" aria-label="Guiding kapalıyken kare"></canvas>
+        <div class="pcap"><b>Guiding kapalı</b><br><span id="sm_cap1">—</span></div>
+      </div>
+      <div>
+        <canvas id="sm_guided" width="480" height="480" aria-label="Guiding açıkken kare"></canvas>
+        <div class="pcap"><b class="hl">Guiding açık</b><br><span id="sm_cap2">—</span></div>
+      </div>
+    </div>
+    <p class="note">Her iki panel de kadrajınızın <b>köşesinden alınmış 240×240 piksellik bir kesittir</b> ve gerçek piksel ölçeğinde çizilir — izler abartılmamıştır. Köşeyi seçmemizin sebebi, alan dönmesinin izi orada en uzun olmasıdır; kadrajın ortasında hemen hemen hiçbir şey görünmez. Dönme merkezi (rehber yıldız) kadrajın ortasındadır, yani bu kesitin dışındadır.</p>
+
+    <div class="phdbox">
+      <div style="font-size:11px; letter-spacing:.09em; text-transform:uppercase; color:var(--ink-3); font-weight:600; margin-bottom:6px">
+        PHD2 guiding grafiği — <span id="sm_phdmode">guiding açık</span>
+      </div>
+      <svg id="sm_phd" viewBox="0 0 720 260" role="img" aria-label="Benzetilmiş PHD2 guiding grafiği"></svg>
+      <div class="swrow">
+        <span><i class="sw" style="background:#3987e5"></i>RA</span>
+        <span><i class="sw" style="background:#e66767"></i>DEC</span>
+        <span><i class="sw" style="background:#c98500"></i>DEC eğilim çizgisi</span>
+      </div>
+    </div>
+
+    <div class="pillrow" style="margin-top:14px">
+      <span class="pill on" id="sm_pg1" role="button" tabindex="0">Guiding açık</span>
+      <span class="pill" id="sm_pg0" role="button" tabindex="0">Guiding kapalı (ölçüm modu)</span>
+    </div>
+
+    <div class="out">
+      <div class="stat"><div class="k">DEC sürüklenmesi</div><div class="v" id="sm_drift">—<small> ″/dk</small></div></div>
+      <div class="stat sm"><div class="k">Alan dönmesi</div><div class="v" id="sm_rot">—<small>″</small></div></div>
+      <div class="stat sm"><div class="k">Köşede iz</div><div class="v" id="sm_trail">—<small> px</small></div></div>
+      <div class="stat sm"><div class="k">PHD2 ne derdi</div><div class="v" id="sm_phderr">—</div></div>
+    </div>
+
+    <div class="verdict" id="sm_verdict">—</div>
+  </div>
+
+  <h3>Simülatörle denemeye değer üç şey</h3>
+
+  <ol>
+    <li><strong>Hatayı 0'dan 20′'ya çekin, hedefi M42 (deklinasyon −5°) yapın.</strong> Guiding'li panelde neredeyse hiçbir şey olmadığını göreceksiniz. Ekvator civarında alan dönmesi çok zayıftır.</li>
+    <li><strong>Şimdi hedefi NGC 188 (deklinasyon +85°) yapın.</strong> Aynı hatayla köşeler tam anlamıyla dağılır. Kutba yakın hedefler kutup hizalamasını affetmez.</li>
+    <li><strong>Saat açısını −6'dan +6'ya kaydırın, hatayı "tamamı azimut" yapın.</strong> Sürüklenmenin meridyende (0) en yüksek, ufukta sıfır olduğunu göreceksiniz — Bölüm 3'teki formülün canlı hali.</li>
+  </ol>
+
+  <hr>
+
+  <!-- ==================== 5 · ALAN DÖNMESİ ==================== -->
+  <h2 id="alandonmesi"><span class="sec-no">BÖLÜM 5</span><br>Alan dönmesi: guiding'in duvara tosladığı yer</h2>
+
+  <p>Simülatörde gördüğünüz sağdaki panel, kutup hizalamasının gerçek bedelidir. Şimdi neden öyle olduğuna bakalım.</p>
+
+  <p>Guiding yazılımı tek bir yıldıza bakar ve onu tek bir piksele sabitler. Bunu yapmak için montüre RA ve DEC düzeltmeleri gönderir; yani elinde iki komut, dolayısıyla iki serbestlik derecesi vardır.</p>
+
+  <p>Ama montürün ekseni yanlış yerde olduğu için, kameranızın "yukarısı" gökyüzünün "kuzeyi" ile aynı yeri göstermez — ve bu fark gece boyunca <em>değişir</em>. Bu değişim, kadrajın dönmesidir. Guiding yazılımının bunu düzeltecek üçüncü bir komutu yoktur.</p>
+
+  <div class="callout bad">
+    <span class="t">Kısacası</span>
+    <p>Guiding, tüm kadrajın <em>ötelenmesini</em> siler. <em>Dönmesini</em> silemez. Üstelik guiding'in kendi RA düzeltmeleri, yüksek deklinasyonda dönmenin bir parçasını doğrudan üretir.</p>
+  </div>
+
+  <h3>Dönme hızı</h3>
+
+  <p>Alan dönmesinin hızı şudur:</p>
+
+  <div class="eq">
+    Dönme (yay sn/dk) = ω × [ yükseklik × cos H + azimut × cos(enlem) × sin H ] ÷ <span class="hi">cos δ</span>
+    <div class="c">δ = hedefin deklinasyonu. Köşeli parantez, sürüklenme formülündekinin tam olarak diki — biri sıfırken diğeri maksimumdur.</div>
+  </div>
+
+  <p>Üç şeyi hemen görüyorsunuz:</p>
+
+  <ul>
+    <li>Dönme, hatayla <strong>doğru orantılıdır</strong>. Hatayı yarıya indirin, dönme yarıya iner.</li>
+    <li>Dönme, <code>1/cos δ</code> ile büyür. Ekvatorda 1×, deklinasyon 60°'de 2×, 70°'de 2.9×, 80°'de 5.8×, 85°'de 11.5×.</li>
+    <li>Dönme, poz süresiyle <strong>doğrusal</strong> büyür. Bu, sürüklenmenin aksine, kısa pozla kaçabileceğiniz bir sorundur.</li>
+  </ul>
+
+  <div class="fig">
+    <svg id="fig-rot" viewBox="0 0 800 400" role="img" aria-label="Deklinasyona göre alan dönmesi ve köşe izleri"></svg>
+    <div class="figcap"><b>Şekil 4 —</b> Solda: dönme merkezi rehber yıldızdır. Merkeze yakın yıldızlar neredeyse kıpırdamaz, köşedekiler yay çizer — iz uzunluğu merkeze uzaklıkla doğru orantılıdır. Sağda: aynı 10′ hatanın ürettiği dönme, deklinasyona göre. Ekvatorda önemsiz, kutup civarında yıkıcı.</div>
+  </div>
+
+  <h3>Kadraja ne kadar iz düşer?</h3>
+
+  <p>Dönme açısını ize çevirmek basit bir çarpma işidir: <strong>iz = dönme açısı × merkeze uzaklık</strong>. Merkez rehber yıldızdır, en uzak nokta da sensörün köşesidir.</p>
+
+  <div class="eq">
+    İz (µm) = hata(′) × süre(dk) × odak(mm) × ψ(°) ÷ ( <span class="hi">45000</span> × cos δ )
+    <div class="c">ψ = rehber yıldız ile karenin karşı köşesi arasındaki açı. Bu, Frank Barrett'ın yayımlanmış formülüdür (Denklem 13); 45000 sabitinin tam değeri 45018.6'dır.</div>
+  </div>
+
+  <p>Gerçek sayılarla: 530 mm odak, APS-C sensör (köşe açısı ψ ≈ 1.5°), 300 saniyelik poz, 10′ hata:</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Hedef</th><th class="num">Deklinasyon</th><th class="num">Dönme (300 sn)</th><th class="num">Köşede iz</th><th>Görünür mü?</th></tr></thead>
+      <tbody>
+        <tr><td>M42 Orion</td><td class="num">−5°</td><td class="num">13.2″</td><td class="num">0.35″ (0.24 px)</td><td><span class="tag g">Hayır</span></td></tr>
+        <tr><td>M31 Andromeda</td><td class="num">+41°</td><td class="num">17.5″</td><td class="num">0.47″ (0.32 px)</td><td><span class="tag g">Hayır</span></td></tr>
+        <tr><td>M81 / M82</td><td class="num">+69°</td><td class="num">36.8″</td><td class="num">0.98″ (0.67 px)</td><td><span class="tag y">Sınırda</span></td></tr>
+        <tr><td>NGC 7023 İris</td><td class="num">+68°</td><td class="num">35.3″</td><td class="num">0.94″ (0.64 px)</td><td><span class="tag y">Sınırda</span></td></tr>
+        <tr><td>NGC 188</td><td class="num">+85°</td><td class="num">157″</td><td class="num">4.18″ (2.86 px)</td><td><span class="tag r">Evet, açıkça</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>Bu tablodan çıkan sonuç, çoğu insanı şaşırtır: <strong>10 yay dakikalık bir hata, gökyüzünün büyük kısmında guiding ile görünmezdir.</strong> Kutup hizalamasına gecenin yarısını harcamanın çoğu zaman gereksiz olmasının sebebi budur.</p>
+
+  <p>Ama iki durumda tablo tersine döner: kutba yakın hedefler ve çok uzun tek pozlar. Bu ikisini aynı gecede yapıyorsanız hizalamanızı ciddiye alın.</p>
+
+  <div class="callout">
+    <span class="t">Kareler arası dönme — sinsi olan</span>
+    <p>Tek karedeki iz görünmese bile, dönme <em>gece boyunca birikir</em>. 10′ hatayla deklinasyon 70°'de dönme saatte yaklaşık 0.13 derecedir. Beş saatlik bir projede bu 0.65 derece eder. Yığınlama yazılımınız bunu düzeltir (dönmeli hizalama yapar), ama bedeli kırpılmış köşelerdir: kadrajınızın kenarlarından bir şerit kaybedersiniz. Uzun projelerde bu, tek karedeki izden daha çok canınızı yakar.</p>
+  </div>
+
+  <div class="callout warn">
+    <span class="t">ψ'yi doğru seçin — OAG kullananlar için ters bir sürpriz</span>
+    <p>Formüldeki ψ, dönme merkezinden görüntünün en uzak noktasına olan açıdır. Dönme merkezi rehber yıldızdır, dolayısıyla ψ'yi belirleyen şey <em>rehber yıldızın nerede olduğudur</em>.</p>
+    <p><strong>Ayrı rehber teleskop</strong> ana teleskopla eş eksenlidir; rehber yıldız kabaca ana kadrajın merkezindedir, yani ψ ≈ yarım köşegen. <strong>Off-axis rehber (OAG)</strong> ise prizmayla, ana kameranın görüş alanının <em>dışından</em> ışık alır — rehber yıldız kadrajın bir kenarındadır ve karşı köşeye olan açı yaklaşık <strong>iki katına</strong> çıkar. Aynı hizalama hatasıyla OAG, köşede kabaca iki kat uzun iz üretir.</p>
+    <p>Bu, OAG'yi kötü yapmaz — OAG diferansiyel esnemeyi tamamen ortadan kaldırır ki o çok daha sinsi bir sorundur. Ama alan dönmesi hesabında ψ'yi büyük almayı unutmayın.</p>
+  </div>
+
+  <hr>
+
+  <!-- ==================== 6 · NE KADAR YETERLİ ==================== -->
+  <h2 id="neyeter"><span class="sec-no">BÖLÜM 6</span><br>Ne kadar iyi yeterli?</h2>
+
+  <p>Bu sorunun tek bir cevabı yok, çünkü tolerans dört şeye birden bağlı: poz süreniz, odak uzunluğunuz, sensörünüzün boyutu ve hedefinizin deklinasyonu.</p>
+
+  <p>Ama şu iki cümle, vakaların %90'ını kapsar:</p>
+
+  <div class="callout good">
+    <span class="t">Pratik cevap</span>
+    <p><strong>Guiding yapıyorsanız:</strong> 5 yay dakikasının altı fazlasıyla yeterlidir. 1–2 yay dakikası mükemmeldir. Bunun altını kovalamak, ölçüm gürültüsünü kovalamaktır.</p>
+    <p><strong>Guiding yapmıyorsanız:</strong> tolerans poz sürenizle belirlenir. 60 saniyelik karelerde 2–3 yay dakikası iş görür; 300 saniyeye çıkıyorsanız 1 yay dakikasının altına inmeniz gerekir.</p>
+  </div>
+
+  <p>PHD2'nin kendi kılavuzu bu konuda alışılmadık derecede net: <em>"gök kutbuna yaklaşık 10 yay dakikası içinde makul bir mekanik kutup hizalaması yapın"</em> ve hemen ardından <em>"büyük hassasiyet gerekmiyor, 'yeterince yakın' 'yeterince iyi'dir."</em> PHD2'nin geliştiricilerinin yazdığı <em>Best Practices</em> belgesi aynı fikri daha da açık söyler: <em>"iyi bir kutup hizalaması yapın, ama takıntı hâline getirmeyin."</em></p>
+
+  <p>Hatta ilginç bir ters etki de var: PHD2'nin Guiding Assistant, montürünüzde büyük deklinasyon boşluğu tespit ederse <strong>10 yay dakikasının altındaki</strong> kutup hatası için hiç öneri vermez — normalde 5 yay dakikasının üstünde uyarırken, boşluk varsa o uyarıyı tamamen bırakır — çünkü küçük bir kasıtlı hizasızlık, deklinasyon düzeltmelerini tek yönde tutarak boşluğun devreye girmesini engeller.</p>
+
+  <h3>Kendi toleransınızı hesaplayın</h3>
+
+  <p>Aşağıdaki araç, Barrett'ın Denklem 3'ünü uygular. Kabul edilebilir iz uzunluğunu siz belirlersiniz; makul bir seçim <strong>bir piksel</strong>'dir.</p>
+
+  <div class="tool" id="tool-tol">
+    <h4>Hesaplayıcı 1 — Ne kadar hassas olmalıyım?</h4>
+    <p class="sub">Ekipmanınızı ve hedefinizi girin; alan dönmesinin görünür hâle geleceği hata sınırını görün.</p>
+
+    <div class="grid2">
+      <div class="fld"><label for="tl_fl">Odak uzunluğu (mm)</label>
+        <input id="tl_fl" type="number" min="50" step="10" value="530"></div>
+      <div class="fld"><label for="tl_sen">Sensör</label><select id="tl_sen"></select></div>
+      <div class="fld"><label for="tl_exp">Tek poz süresi</label>
+        <select id="tl_exp">
+          <option value="30">30 saniye</option>
+          <option value="60">60 saniye</option>
+          <option value="120">120 saniye</option>
+          <option value="300" selected>300 saniye (5 dk)</option>
+          <option value="600">600 saniye (10 dk)</option>
+          <option value="1200">1200 saniye (20 dk)</option>
+        </select></div>
+      <div class="fld"><label for="tl_dec">Hedefin deklinasyonu</label>
+        <div class="rng"><input id="tl_dec" type="range" min="-30" max="88" step="1" value="45"><span class="v" id="tl_dec_v">+45°</span></div></div>
+      <div class="fld"><label for="tl_tol">Kabul edilebilir iz</label>
+        <select id="tl_tol">
+          <option value="0.5">Yarım piksel — çok titiz</option>
+          <option value="1" selected>1 piksel — makul</option>
+          <option value="2">2 piksel — rahat</option>
+          <option value="fwhm">Yıldız şişkinliğinin 1/3'ü</option>
+        </select></div>
+      <div class="fld"><label for="tl_guide">Guiding yöntemi</label>
+        <select id="tl_guide">
+          <option value="scope" selected>Ayrı rehber teleskop (eş eksenli)</option>
+          <option value="oag">OAG — kadrajın kenarından</option>
+        </select></div>
+    </div>
+
+    <div class="out">
+      <div class="stat"><div class="k">İzin verilen hata</div><div class="v" id="tl_max">—</div></div>
+      <div class="stat sm"><div class="k">Eksen başına</div><div class="v" id="tl_axis">—</div></div>
+      <div class="stat sm"><div class="k">Piksel ölçeği</div><div class="v" id="tl_scale">—<small> ″/px</small></div></div>
+      <div class="stat sm"><div class="k">Guiding'siz sınır</div><div class="v" id="tl_ung">—</div></div>
+    </div>
+
+    <div class="verdict" id="tl_verdict">—</div>
+    <p class="note">"Eksen başına" değeri, hatanın iki eksene eşit dağıldığı varsayımıyla toplam ÷ √2'dir. Yazılımlar azimut ve yükseklik hatasını ayrı gösterdiği için ayarlarken bakacağınız sayı budur. "Guiding'siz sınır", aynı poz süresinde sürüklenmenin aynı toleransı aşmayacağı hatadır — genellikle alan dönmesi sınırından çok daha katıdır. Hesap, dönmenin en güçlü olduğu saat açısını (en kötü durumu) varsayar.</p>
+  </div>
+
+  <div class="callout">
+    <span class="t">Bu hesabın söylemediği şey</span>
+    <p>Formül yalnızca <strong>alan dönmesini</strong> hesaba katar. Gerçekte hizalama hatanız arttıkça guiding'in işi de zorlaşır: deklinasyon düzeltmeleri sıklaşır, boşluk daha sık devreye girer, meridyen dönüşünde yön değişimi daha sert olur. Bu yüzden hesabın verdiği sayıyı <em>üst sınır</em> olarak alın, hedef olarak değil.</p>
+  </div>
+
+  <hr>
+  <!-- ==================== 7 · PHD2 GRAFİĞİ ==================== -->
+  <h2 id="phd2"><span class="sec-no">BÖLÜM 7</span><br>PHD2 grafiğinde kutup hatasını okumak</h2>
+
+  <p>PHD2'nin guiding grafiği, montürünüz hakkında düşündüğünüzden çok daha fazlasını söyler. Ama önce bir yanlış anlaşılmayı temizleyelim.</p>
+
+  <div class="callout warn">
+    <span class="t">"DEC düzeltmelerim hep aynı yönde, kutup hizalamam bozuk mu?"</span>
+    <p>Hayır — ve bu, en sık yapılan yanlış okumadır. PHD2'nin kendi analiz belgesi net: <em>"Deklinasyon için, düzeltmelerin hepsinin aynı yönde olmasında yanlış bir şey yok, bu iyi bir şey bile."</em> Tek yönlü DEC düzeltmesi, montürün deklinasyon boşluğuna hiç girmediği anlamına gelir; birçok kişi bunu <em>bilerek</em> yapar.</p>
+    <p>Patoloji, düzeltmelerin hep aynı yönde olması değil; <strong>hep aynı yönde olup yıldızı geri getirememesidir</strong>. Grafikte DEC eğrisi durmadan tırmanıyorsa ve düzeltmeler yetişemiyorsa, o zaman kutup hatası (ya da başka bir şey) çok büyüktür.</p>
+  </div>
+
+  <h3>Gerçek imza: DEC eğilim çizgisinin eğimi</h3>
+
+  <p>Kutup hatasının ölçülebilir imzası, guiding <em>kapalıyken</em> ortaya çıkar. PHD2 bunu iki yerde yapar:</p>
+
+  <ul>
+    <li><strong>Grafiğin "Trendlines" kutucuğu</strong> — açtığınızda her iki eksene eğilim çizgisi ekler. PHD2 kılavuzunun ifadesiyle: <em>"deklinasyon eğilim çizgisi yoğun olarak kullanılır."</em></li>
+    <li><strong>Guiding Assistant</strong> — çalıştırdığınızda guiding komutlarını geçici olarak keser ve yıldızın serbest hareketini ölçer. Sonuçlar arasında <strong>"Polar Alignment Error"</strong> satırı vardır, yay dakikası cinsinden.</li>
+  </ul>
+
+  <p>Guiding Assistant'ın yaptığı hesap tam olarak Bölüm 3'teki formüldür: DEC örneklerine bir doğru uydurur, eğimi alır, 3.8197 ile çarpar. Tek eklediği şey bir <code>1/cos δ</code> bölmesidir — ve o çarpanın nesi olduğuna birazdan geleceğiz.</p>
+
+  <div class="callout">
+    <span class="t">Ne kadar beklemeli?</span>
+    <p>PHD2 kılavuzu: <em>"Yaklaşık iki dakikalık veri toplamadan sonra... Kutup Hizalama Hatası gibi daha oynak ölçümler genellikle kararlı hâle gelir"</em> — ama kesin bir sonuç için <em>"Guiding Assistant'ı 10 dakikaya kadar çalıştırmanız gerekir."</em></p>
+  </div>
+
+  <div class="fig">
+    <svg id="fig-ga" viewBox="0 0 800 470" role="img" aria-label="PHD2 Guiding Assistant sonuç panelinin yeniden çizimi"></svg>
+    <div class="figcap"><b>Şekil 5 —</b> PHD2 <b>Guiding Assistant</b> penceresi (yeniden çizim; etiketler PHD2 kaynak kodundaki İngilizce dizelerin birebir aynısıdır). Aradığınız satır sağ alttaki <b>"Polar Alignment Error"</b>. Değer <code>1.7 arc-min</code> biçiminde, yay dakikası olarak yazılır; başında <code>&gt;</code> işareti varsa PHD2 teleskobun deklinasyonunu bilmiyor demektir ve gösterilen sayı bir <em>alt sınırdır</em>. Ölçüm sürerken guiding çıkışı kapalıdır — yıldızın serbestçe gezinmesi normaldir. <a href="https://openphdguiding.org/man/Tools.htm">Gerçek ekran görüntüsü: PHD2 kılavuzu, Tools</a>.</div>
+  </div>
+
+  <h3 id="phd2-cosdelta">PHD2'nin bildirdiği sayıya nasıl bakmalı</h3>
+
+  <p>Burada gerçek bir tuzak var ve PHD2 kullanıcılarının çoğu bunun farkında değil.</p>
+
+  <p>Deklinasyon sürüklenmesi, Bölüm 3'te gördüğümüz gibi hedefin deklinasyonundan <strong>bağımsızdır</strong>. Ama PHD2 (Barrett'ın makalesini izleyerek) sonucu <code>cos δ</code>'ya böler. Sonuç: teleskobunuz ekvatordan uzaktayken PHD2 size <em>olduğundan büyük</em> bir hata bildirir.</p>
+
+  <div class="tw">
+    <table>
+      <caption style="caption-side:top; text-align:left; padding:11px 15px; color:var(--ink-3); font-size:13px">Gerçek hizalama hatası her satırda <b>10 yay dakikası</b>.</caption>
+      <thead><tr><th>Rehber yıldızın deklinasyonu</th><th class="num">PHD2'nin bildirdiği</th><th class="num">Şişme</th></tr></thead>
+      <tbody>
+        <tr><td class="num">0°</td><td class="num">10.0′</td><td class="num">1.0×</td></tr>
+        <tr><td class="num">20°</td><td class="num">10.7′</td><td class="num">1.1×</td></tr>
+        <tr><td class="num">40°</td><td class="num">13.1′</td><td class="num">1.3×</td></tr>
+        <tr><td class="num">60°</td><td class="num">20.1′</td><td class="num">2.0×</td></tr>
+        <tr><td class="num">75°</td><td class="num">38.7′</td><td class="num">3.9×</td></tr>
+        <tr><td class="num">85°</td><td class="num">115′</td><td class="num">11.5×</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="note" style="margin:-14px 0 22px">Tablodaki "bildirilen" değerler PHD2'nin kendi sabitiyle (3.8197) hesaplanmıştır; bu sabit gökyüzünü saatte 15° kabul eder ve yıldız gününe göre %0.27 fazla okur. Deklinasyon 0'da bu yüzden 10.0′ yerine 10.03′ çıkar — pratikte görünmez, ama tablodaki son haneyi kendiniz hesaplarsanız aradaki farkın sebebi budur.</p>
+
+  <p>Yani M81'e (deklinasyon 69°) bakarken Guiding Assistant size "22 yay dakikası" derse, panik yapmayın: gerçek hatanız muhtemelen 8 yay dakikası civarındadır.</p>
+
+  <p>PHD2 kılavuzu bu sorunu doğrudan itiraf etmez ama çözümünü söyler: <em>"hesaplanan kutup hizalama hatası, teleskobun o anki deklinasyonuna duyarlıdır. En doğru ölçüm için teleskobu gök ekvatorunun birkaç derece yakınına ve meridyene yakın bir yere doğrultmalısınız."</em> Bu öğüde uyarsanız <code>cos δ ≈ 1</code> olur ve bildirilen sayı doğrudur.</p>
+
+  <div class="callout good">
+    <span class="t">Pratik kural</span>
+    <p>PHD2'nin kutup hizalama hatası ölçümünü <strong>daima deklinasyon 0 civarında, meridyene yakın</strong> yapın. Başka bir yerde okuduğunuz sayıyı <code>cos δ</code> ile çarparak düzeltebilirsiniz. Bölüm 8'deki hesaplayıcı ikisini de gösteriyor.</p>
+  </div>
+
+  <details>
+    <summary>Bu bir "hata" mı, yoksa bilinçli bir tercih mi?</summary>
+    <div class="body">
+      <p>Dürüst cevap: bu, aracın yazarlarıyla bir <em>görüş ayrılığı</em>dır, belgelenmiş bir yazılım hatası değil. PHD2 bu hesabı Frank Barrett'ın yayımlanmış makalesinden alır ve Barrett de <code>cos δ</code>'ya böler. PHD2'nin kendi ipucu metni de bölmeyi bir <em>düzeltme</em> gibi sunar: <em>"Teleskobun deklinasyonu bilinmiyorsa gösterilen değer bir alt sınırdır ve gerçek hata daha büyük olabilir."</em></p>
+      <p>Buna karşılık geometri nettir: deklinasyon sürüklenmesi ω × [yükseklik·sin H − azimut·cos(enlem)·cos H] ile verilir ve bu ifadede δ hiç geçmez. Bunu hem analitik olarak hem de tam bir katı-cisim benzetimiyle (deklinasyon 0'dan 89°'ye kadar aynı sürüklenme hızı, 5 anlamlı hane) doğruladık; profesyonel gözlemevlerinin kullandığı TPOINT gösterme modelinin deklinasyon terimleri de (MA·sin H + ME·cos H) δ içermez.</p>
+      <p>Pratik sonuç değişmiyor: PHD2 kılavuzunun kendi öğüdüne uyup ölçümü ekvatora yakın yaparsanız <code>cos δ ≈ 1</code> olur ve tartışma ortadan kalkar.</p>
+    </div>
+  </details>
+
+  <h3>Grafikteki dört farklı sorunu birbirinden ayırmak</h3>
+
+  <p>Diyelim ki DEC ekseninde bir gariplik görüyorsunuz. Bu kutup hatası mı, boşluk mu, esneme mi, yoksa sürtünme mi? Aşağıdaki araç bu sorunları yan yana koyuyor; göreceğiniz gibi imzaları birbirinden oldukça farklı.</p>
+
+  <div class="tool" id="tool-graph">
+    <h4>Hesaplayıcı 2 — PHD2 grafiği teşhis aracı</h4>
+    <p class="sub">Bir sorun seçin; o sorunun grafikte nasıl göründüğünü ve nasıl ayırt edileceğini görün.</p>
+
+    <div class="pillrow" style="margin-bottom:16px">
+      <span class="pill on" data-gr="ok" role="button" tabindex="0">Sağlıklı guiding</span>
+      <span class="pill" data-gr="polar" role="button" tabindex="0">Kutup hizalama hatası</span>
+      <span class="pill" data-gr="backlash" role="button" tabindex="0">DEC boşluğu</span>
+      <span class="pill" data-gr="flex" role="button" tabindex="0">Diferansiyel esneme</span>
+      <span class="pill" data-gr="stiction" role="button" tabindex="0">Sürtünme / salınım</span>
+      <span class="pill" data-gr="seeing" role="button" tabindex="0">Kötü seeing</span>
+    </div>
+
+    <div class="phdbox">
+      <svg id="gr_svg" viewBox="0 0 720 280" role="img" aria-label="Farklı guiding sorunlarının PHD2 grafiğindeki görünümü"></svg>
+      <div class="swrow">
+        <span><i class="sw" style="background:#3987e5"></i>RA</span>
+        <span><i class="sw" style="background:#e66767"></i>DEC</span>
+        <span><i class="sw" style="background:#c98500"></i>DEC eğilim çizgisi</span>
+      </div>
+    </div>
+
+    <div class="out" style="grid-template-columns:repeat(auto-fit,minmax(110px,1fr))">
+      <div class="stat sm"><div class="k">Toplam RMS</div><div class="v" id="gr_rms">—<small>″</small></div></div>
+      <div class="stat sm"><div class="k">DEC eğimi</div><div class="v" id="gr_slope">—<small> ″/dk</small></div></div>
+      <div class="stat sm"><div class="k">RA RMS</div><div class="v" id="gr_ra">—<small>″</small></div></div>
+      <div class="stat sm"><div class="k">DEC RMS</div><div class="v" id="gr_dec">—<small>″</small></div></div>
+    </div>
+
+    <div class="verdict" id="gr_verdict">—</div>
+  </div>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Sorun</th><th>Ayırt edici işaret</th><th>Ne yapmalı</th></tr></thead>
+      <tbody>
+        <tr><td><b>Kutup hizalama hatası</b></td><td>DEC eğilim çizgisinin sabit, tek yönlü eğimi. Guiding kapatıldığında düz bir rampa.</td><td>Hizalamayı düzeltin — ya da hata küçükse görmezden gelin</td></tr>
+        <tr><td><b>DEC boşluğu (backlash)</b></td><td>Sadece <em>yön değiştiğinde</em> tepkisizlik. Aynı yönde düzeltme yaparken sorun yok.</td><td>Guiding Assistant'ın boşluk testini çalıştırın; tek yönlü guiding'e geçin</td></tr>
+        <tr><td><b>Diferansiyel esneme</b></td><td>Grafik <em>iyi</em> görünür ama ana kamerada yıldızlar uzamıştır. Rehber ile ana teleskop birbirine göre kayıyordur.</td><td>Bağlantıları sıkın; OAG'ye geçin</td></tr>
+        <tr><td><b>Sürtünme (stiction)</b></td><td>Yön değişiminden sonra önce gecikme, sonra <em>aşırı</em> düzeltme — ardından salınım.</td><td>Deklinasyon eksenini gevşetip yağlayın; agresifliği düşürün</td></tr>
+        <tr><td><b>Seeing</b></td><td>Yüksek frekanslı, yönsüz gürültü. Eğilim çizgisi düz.</td><td>Rehber pozunu uzatın; min-move'u yükseltin</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>PHD2'nin belgeleri bu ayrımı özlü bir şekilde koyar. Boşluk için: <em>"guiding komutlarında yön değiştiğinde montür oldukça tepkisizleşiyor."</em> Büyük kutup hatası içinse: <em>"Guiding darbelerinin hepsi aynı yönde, dolayısıyla bunun bir boşluk sorunu olmadığını biliyoruz."</em></p>
+
+  <div class="callout warn">
+    <span class="t">Boşluk, kutup hatasını maskeler</span>
+    <p>PHD2'nin Guiding Assistant, montürünüzde büyük deklinasyon boşluğu tespit ederse 10 yay dakikasının altındaki kutup hatası için öneride bulunmaz. Kaynak kodundaki yorum açık: küçük bir hizasızlık, DEC düzeltmelerini tek yönde tutarak boşluğu devre dışı bırakır — yani <em>işe yarar</em>. Boşluğu ölçmeden önce montür yazılımındaki kendi boşluk telafisini kapatmayı unutmayın.</p>
+  </div>
+
+  <h3>Kırılma (refraksiyon): görmezden gelinen kirletici</h3>
+
+  <p>Atmosfer, ufka yakın yıldızları olduklarından yukarıda gösterir. Bu etki yükseklikle değiştiği için, teleskobunuz gökyüzünde ilerledikçe <em>gerçek bir kutup hatası gibi görünen</em> yavaş bir sürüklenme üretir.</p>
+
+  <p>Bunun günlük hayattaki karşılığı üç maddede toplanabilir:</p>
+
+  <ul>
+    <li>Ufka yakın yaptığınız drift ölçümleri, kırılma yüzünden gerçek hatanızı olduğundan farklı gösterir. Bu yüzden yükseklik ölçümü için önerilen bölge ufkun tam dibi değil, <strong>ufkun 23–35 derece üzerid</strong>ir.</li>
+    <li>Gökyüzünün her yerinde aynı anda sıfır sürüklenme veren <em>tek bir</em> kutup hizalaması yoktur. Bir bölgeyi mükemmelleştirirseniz başka bir bölgede küçük bir sürüklenme kalır.</li>
+    <li>SharpCap gibi bazı araçlar bunu düzeltir (konumunuzu girerseniz); düzeltmenin büyüklüğü kendi belgelerine göre <em>"60° enlemde yaklaşık 0.5 yay dakikası, 25° enlemde 2 yay dakikası"</em>dır.</li>
+  </ul>
+
+  <p>Yani rakamların son yay saniyesini kovalamanın fizikî bir anlamı yok. Atmosfer zaten o kadarını size vermeyecek.</p>
+
+  <hr>
+
+  <!-- ==================== 8 · DRIFT ALIGNMENT ==================== -->
+  <h2 id="drift"><span class="sec-no">BÖLÜM 8</span><br>Drift alignment: en eski ve en doğru yöntem</h2>
+
+  <p>Drift alignment, kutup hizalamasını <em>dolaylı</em> değil <em>doğrudan</em> ölçen tek yöntemdir. Kutbun nerede olduğunu bilmesine gerek yoktur, retiküle, kalibrasyona, plaka çözümlemeye gerek yoktur. Sadece "yıldız kayıyor mu?" diye sorar — ki zaten canınızı yakan şey tam olarak odur.</p>
+
+  <p>PHD2 kılavuzunun ifadesiyle drift alignment <em>"hâlâ çoğu kişi tarafından doğruluk açısından 'altın standart' sayılır"</em>. Bedeli zamandır.</p>
+
+  <h3>Yöntemin mantığı</h3>
+
+  <p>Bölüm 3'teki formülü hatırlayın. İki bileşen, saat açısına göre birbirinden ayrılıyordu. Drift alignment bunu iki ayrı istasyona çevirir:</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Adım</th><th>Nereye bakılır</th><th>Ne ayarlanır</th><th>Neden orası</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><b>1</b></td>
+          <td>Meridyen × gök ekvatoru<br><span style="color:var(--ink-3)">(tam güneyde, yaklaşık başucu yüksekliğinde değil, ekvator yüksekliğinde)</span></td>
+          <td><b>Azimut</b></td>
+          <td>Burada <code>sin H = 0</code>; yükseklik hatası sürüklenme üretemez. Ölçtüğünüz her şey azimuttandır.</td>
+        </tr>
+        <tr>
+          <td><b>2</b></td>
+          <td>Doğu ya da batı ufku, ufkun <b>23–35°</b> üzerinde, gök ekvatorunda</td>
+          <td><b>Yükseklik</b></td>
+          <td>Burada <code>cos H ≈ 0</code>; azimut hatası sürüklenme üretemez. Ölçtüğünüz her şey yükseklikten.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>PHD2'nin Drift Align aracı bu iki konumu size gösterir ve gerekirse montürü oraya sürer. Aracın ekranındaki talimatlar birebir şöyledir: <em>"Meridyene ve ekvatora yakın bir yere sürün"</em> ve <em>"Ekvatora ve doğu ya da batı ufkuna yakın bir yere sürün."</em></p>
+
+  <h3>PHD2 Drift Align — adım adım</h3>
+
+  <ol>
+    <li><strong>Önce kalibre edin.</strong> Araç kalibrasyon olmadan başlamaz. Kılavuz, <em>"deklinasyonu 0'a 20 derece içinde"</em> bir yıldızda kalibre etmenizi ister. Kalibrasyon, o an bulunduğunuz meridyen tarafı için geçerli olmalıdır.</li>
+    <li><strong>Ölç ("Drift").</strong> PHD2 bir yıldız seçer ve guiding'e başlar. Grafikte kırmızı DEC eğilim çizgisini izlersiniz. Kılavuz: <em>"Önce DEC eğilim çizgisi yukarı aşağı zıplayacak, ama kısa sürede gürültü ortalanacak ve çizginin eğimi bir miktar kararlı hâle gelecek."</em> Amaç eğimi <strong>düzleştirmek</strong>tir.</li>
+    <li><strong>Ayarla ("Adjust").</strong> PHD2 guiding'i durdurur ve ekrana <strong>macenta bir daire</strong> çizer. Rehber yıldızı o dairenin kenarına taşıyacak kadar alt/azimut ayarı yaparsınız. Daire, eğim ne kadar dikse o kadar büyüktür — bazen ekranın dışına taşar, bu normaldir.</li>
+    <li><strong>Tekrarla.</strong> Eğim düzleşene kadar ölç-ayarla döngüsünü sürdürün. Sonra ikinci istasyona geçip yüksekliği aynı şekilde yapın.</li>
+  </ol>
+
+  <div class="fig">
+    <svg id="fig-drift" viewBox="0 0 800 400" role="img" aria-label="PHD2 Drift Align aracının yeniden çizimi"></svg>
+    <div class="figcap"><b>Şekil 6 —</b> PHD2 <b>Drift Align</b> aracı (yeniden çizim; etiketler kaynak koddan birebir). Sekme yoktur: sağ alttaki tek düğme <code>&gt; Altitude</code> ile <code>&lt; Azimuth</code> arasında gidip gelir ve pencere başlığı da ona göre değişir. "Scope Pointing" bölümündeki <b>Slew</b> düğmesi montürü doğru istasyona sürer, <b>Save</b> ise o konumu o eksen için varsayılan olarak kaydeder. Alttaki not alanı ("Azimuth adjustment notes") profilinize kaydedilir — bir dahaki sefere hangi yöne çevireceğinizi tahmin etmemek için buraya yazın. <a href="https://openphdguiding.org/man/Tutorials.htm">Gerçek ekran görüntüsü: PHD2 kılavuzu, Tutorials</a>.</div>
+  </div>
+
+  <div class="callout">
+    <span class="t">Hangi yöne çevireceğinizi PHD2 bilmiyor — ve bunu dürüstçe söylüyor</span>
+    <p>Kılavuzdan: <em>"Azimutu ilk kez ayarlıyorsanız hangi yöne gideceğinizi bilemezsiniz — doğuya mı batıya mı? PHD2 de bilmiyor, o yüzden tahmin etmek zorundasınız, %50 şansınız var."</em></p>
+    <p>Bu yüzden aracın içinde <strong>not alanları</strong> vardır: "azimut düğmesini saat yönünde çevirdim, eğim aşağı gitti" gibi bir not yazarsanız PHD2 bunu profilinize kaydeder ve bir daha tahmin etmezsiniz. Bu, en çok göz ardı edilen ve en çok zaman kazandıran özelliktir.</p>
+  </div>
+
+  <h3>Ölçtüğünüz sürüklenmeyi hatayla çevirin</h3>
+
+  <p>PHD2 kullanmıyor, sadece bir retiküllü göz merceğiyle ya da elde kamera görüntüsüyle ölçüyor olabilirsiniz. Aşağıdaki araç, ölçtüğünüz kaymayı doğrudan yay dakikasına çevirir.</p>
+
+  <div class="tool" id="tool-drift">
+    <h4>Hesaplayıcı 3 — Sürüklenmeden hataya</h4>
+    <p class="sub">Ölçtüğünüz kaymayı girin; hangi eksende ne kadar hatanız olduğunu görün.</p>
+
+    <div class="grid2">
+      <div class="fld"><label for="dr_mode">Ölçüm birimi</label>
+        <select id="dr_mode">
+          <option value="px" selected>Piksel</option>
+          <option value="as">Yay saniyesi</option>
+        </select></div>
+      <div class="fld"><label for="dr_amt">Kayma miktarı</label>
+        <input id="dr_amt" type="number" step="0.5" min="0" value="1.5"></div>
+      <div class="fld"><label for="dr_min">Ölçüm süresi (dakika)</label>
+        <input id="dr_min" type="number" step="0.5" min="0.5" value="5"></div>
+      <div class="fld"><label for="dr_px">Rehber piksel boyutu (µm)</label>
+        <input id="dr_px" type="number" step="0.05" min="1" value="3.75"></div>
+      <div class="fld"><label for="dr_fl">Rehber odak uzunluğu (mm)</label>
+        <input id="dr_fl" type="number" step="10" min="30" value="120"></div>
+      <div class="fld"><label for="dr_sta">Nerede ölçtünüz?</label>
+        <select id="dr_sta">
+          <option value="mer" selected>Meridyen + ekvator → azimut hatası</option>
+          <option value="hor">Doğu/batı ufku → yükseklik hatası</option>
+        </select></div>
+      <div class="fld"><label for="dr_dec">Rehber yıldızın deklinasyonu</label>
+        <div class="rng"><input id="dr_dec" type="range" min="-40" max="85" step="1" value="0"><span class="v" id="dr_dec_v">0°</span></div></div>
+      <div class="fld"><label for="dr_lat">Enlem (°)</label>
+        <input id="dr_lat" type="number" min="0" max="75" step="1" value="40"></div>
+    </div>
+
+    <div class="out">
+      <div class="stat"><div class="k">Bu eksendeki hata</div><div class="v" id="dr_err">—</div></div>
+      <div class="stat sm"><div class="k">Sürüklenme hızı</div><div class="v" id="dr_rate">—<small> ″/dk</small></div></div>
+      <div class="stat sm"><div class="k">Ayar vidasında</div><div class="v" id="dr_knob">—</div></div>
+      <div class="stat sm"><div class="k">PHD2 ne derdi</div><div class="v" id="dr_phd">—</div></div>
+    </div>
+
+    <div class="verdict" id="dr_verdict">—</div>
+    <p class="note">"Ayar vidasında" değeri, azimut için <code>cos(enlem)</code> düzeltmesini içerir: gökyüzünde 1′ oynatmak için vidayı 1/cos(enlem) kadar çevirmeniz gerekir. Yükseklik ayarında böyle bir çarpan yoktur.</p>
+  </div>
+
+  <h3>PHD2'nin diğer iki kutup hizalama aracı</h3>
+
+  <p>PHD2'de aslında <strong>üç</strong> ayrı araç vardır. Kılavuzun kendi karşılaştırma tablosu şöyle (1 = en düşük, 3 = en yüksek):</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Yöntem</th><th class="num">Doğruluk</th><th class="num">Hız</th><th>Gökyüzü görüşü</th><th>Notlar</th></tr></thead>
+      <tbody>
+        <tr><td><b>Drift Align</b> (klasik)</td><td class="num">3</td><td class="num">1</td><td>Doğu/batı ufku + meridyen/ekvator</td><td>En çok sürme; eksenler ayrı ayrı ölçülür</td></tr>
+        <tr><td><b>Static Polar Align</b></td><td class="num">1</td><td class="num">3</td><td>Kutup bölgesi</td><td>Kutup bölgesindeki yıldızları tanımanız gerekir; çok az sürme</td></tr>
+        <tr><td><b>Polar Drift Align</b></td><td class="num">2</td><td class="num">2</td><td>Kutup bölgesi</td><td>En basit; kalibrasyon bile gerektirmez</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <ul>
+    <li><strong>Static Polar Align</strong> — montürü kutba 5 derece içinde getirip Dec = ±90'a sürersiniz; bir referans yıldızı seçip açılır listeden tanımlarsınız; PHD2 montürü 10 derece batıya sürer ve ekrana dönme merkezini (kırmızı artı) ile hedef yörüngeyi (yeşil daire) çizer. Kalibrasyon gerektirir. <em>Doğruluktan feragat edip hızı optimize eder.</em></li>
+    <li><strong>Polar Drift Align</strong> — kutba yakın bir yıldızda sürüklenmeyi ölçer ve iki ekseni <em>aynı anda</em> hesaplar. Kılavuzun ifadesiyle <em>"muhtemelen en basit olanı"</em> ve <strong>kalibrasyon gerektirmez</strong>. Bedeli: yıldız kutuptan uzaklaştıkça doğruluğu düşer.</li>
+  </ul>
+
+  <div class="callout">
+    <span class="t">Drift alignment 2026'da hâlâ gerekli mi?</span>
+    <p>Çoğu insan için hayır. Plaka çözümlemeli araçlar (SharpCap, N.I.N.A., ASIAIR) dakikalar içinde yay dakikası altı sonuç veriyor. Ama drift alignment iki durumda hâlâ vazgeçilmez: (1) sabit bir gözlemevi kurup <em>gerçekten</em> en iyi sonucu istiyorsanız, (2) kutup bölgeniz ağaç ya da binayla kapalıysa ve TPPA gibi bir araç da elinizde yoksa. Bir de üçüncüsü var: sonucu <em>doğrulamak</em> için. Başka bir yöntemle hizaladıktan sonra Guiding Assistant'ı çalıştırıp DEC eğimine bakmak, hizalamanızın gerçekten iyi olduğunun tek bağımsız kanıtıdır.</p>
+  </div>
+
+  <hr>
+  <!-- ==================== 9 · POLARSCOPE ==================== -->
+  <h2 id="polarscope"><span class="sec-no">BÖLÜM 9</span><br>Polarscope: nasıl çalışır, neden artık demode?</h2>
+
+  <p>Polarscope, montürünüzün RA ekseninin içinden geçen küçük bir teleskoptur. İçinde bir retikül bulunur; bu da cam üzerine kazınmış ince bir desenden ibarettir. Otuz yıl boyunca astrofotoğrafın standart giriş yöntemi oldu ve bugün hâlâ çoğu ekvatoryal montürün üzerinde duruyor.</p>
+
+  <h3>Temel fikir</h3>
+
+  <p>Polaris, gök kutbunun tam üzerinde değildir — <strong>2026 itibarıyla kutuptan yaklaşık 37.7 yay dakikası (0.63°) uzaktadır</strong> ve kutbun etrafında bir yıldız gününde (23 saat 56 dakika) bir tur atar. (Bu mesafe presesyon nedeniyle yılda yaklaşık 14 yay saniyesi azalıyor; en yakın konumuna 2100'lerin başında, yaklaşık 27.6 yay dakikasında ulaşacak.)</p>
+
+  <p>Yani Polaris'i retikülün merkezine koymak <em>yanlıştır</em>. Onu, kutbun etrafındaki dairesel yörüngesinde <em>o anki doğru saatine</em> koymanız gerekir.</p>
+
+  <div class="fig">
+    <svg id="fig-scope" viewBox="0 0 800 400" role="img" aria-label="Polarscope retikülü, Polaris'in saat kadranındaki konumu ve kolimasyon hatası"></svg>
+    <div class="figcap"><b>Şekil 7 —</b> Solda: tipik bir kuzey retikülü. Büyük daire Polaris'in kutup etrafındaki yörüngesi, kadran ise saat açısını gösterir. SynScan el kumandası size doğrudan <em>"Polaris Position in P.Scope = SS:DD"</em> der; siz de daireyi saat kadranı gibi düşünüp Polaris'i o saate koyarsınız. Sağda: kolimasyon hatası. Retikülün optik ekseni RA ekseniyle çakışmıyorsa, mükemmel bir hizalama yaptığınızı sanırken sabit bir hata bırakırsınız — ve bunu göz merceğinden asla göremezsiniz.</div>
+  </div>
+
+  <h3>Polaris'in yerini bulmanın üç yolu</h3>
+
+  <p>Sky-Watcher'ın kendi kılavuzu bu üç yöntemi de anlatıyor:</p>
+
+  <ol>
+    <li><strong>El kumandası (en doğrusu).</strong> SynScan ekranda <em>"Polaris Position in P.Scope=SS:DD"</em> yazar. Büyük daireyi 12:00'si yukarıda bir saat kabul edip Polaris'i o saate yerleştirirsiniz.</li>
+    <li><strong>Kochab yöntemi.</strong> Polaris'ten Kochab'a (β Ursae Minoris) olan yön, Polaris'in retikülde olması gereken yönü verir.</li>
+    <li><strong>Asterizm yöntemi.</strong> Retikül üzerindeki Büyükayı / Kraliçe (Cassiopeia) desenlerini gökyüzündeki gerçek konumlarıyla hizalarsınız.</li>
+  </ol>
+
+  <p>Telefon uygulamaları (PolarFinder, PS Align Pro, SynScan uygulaması) aynı hesabı yapar. Yalnız bir tuzak var: <strong>her retikül saat kadranı düzeninde değildir.</strong> Eski Sky-Watcher EQ6 retiküllerinde radyal bir çizgi ve üzerinde işaretler vardır; oradaki kural farklıdır (çizgiyi Kochab'a doğrultursunuz). Uygulamanın verdiği saat okumasını yanlış retikülde kullanırsanız hizalamayı bozarsınız.</p>
+
+  <h3>Asıl sorun: kolimasyon</h3>
+
+  <p>Polarscope size <em>kendi optik ekseninin</em> nereye baktığını söyler. Montürünüzün RA ekseninin nereye baktığını değil. İkisi çakışmıyorsa — ki fabrikadan çıkarken çoğu zaman tam çakışmaz, taşıma ve darbe de bozar — hizalamayı yanlış eksene yaparsınız.</p>
+
+  <p>İşin can sıkıcı tarafı, bu hatayı göz merceğinden görmenizin mümkün olmamasıdır: bakarken her şey mükemmel görünür.</p>
+
+  <div class="callout warn">
+    <span class="t">Polarscope kolimasyon kontrolü — 5 dakika, herkes yapmalı</span>
+    <p>Sky-Watcher'ın kendi kılavuzundaki yöntem birebir şöyle:</p>
+    <ol>
+      <li>Sabit bir hedef seçin (gece Polaris, gündüz uzak bir nesne). Alt/azimut ayarlarıyla retikülün <b>merkezine</b> koyun.</li>
+      <li>Montürü RA ekseninde <b>yarım tur</b> (180°) çevirin.</li>
+      <li>Nesne hâlâ merkezdeyse polarscope hizalıdır, iş bitti.</li>
+      <li>Kaydıysa: 1.5 mm alyan anahtarla polarscope'un üç küçük ayar vidasını kullanarak <b>sapmanın yarısını</b> düzeltin. (Yarısı, çünkü 180° dönüş hatayı ikiye katlar — gerçek eksen tam ortadadır.)</li>
+      <li>Nesne dönme boyunca merkezde kalana kadar tekrarlayın.</li>
+    </ol>
+    <p>Kılavuzun uyarısı da birebir: <em>"Bir vidayı yalnızca ¼ tur gevşetin, sonra diğer ikisini sıkın. Vidaları aşırı sıkmayın... Bir vidayı tamamen gevşetmeyin ve aynı anda birden fazla vidayı gevşetmeyin."</em> Retikül plakası yerinden çıkarsa göz merceğini sökerek geri oturtabilirsiniz.</p>
+  </div>
+
+  <h3>Güney yarımküre: iş ciddi anlamda zorlaşıyor</h3>
+
+  <p>Kuzeyde Polaris 2. kadirdedir ve şehirden bile görünür. Güneyde karşılığı olan σ Octantis <strong>5.42 kadirdir</strong> — çıplak gözle zar zor görülür, gök kutbundan da bir dereceden biraz fazla uzaktadır. Retiküldeki güney deseni 5–6 kadir civarında dört sönük yıldıza dayanır; ışık kirliliği olan bir yerde bunları polarscope'tan görmek pratikte imkânsızdır.</p>
+
+  <p>Bu, plaka çözümlemeli yöntemlerin güney yarımkürede neden orantısız derecede değerli olduğunu açıklar: hiçbiri belirli bir yıldızı görmenizi gerektirmez.</p>
+
+  <h3>Peki polarscope ne kadar doğru?</h3>
+
+  <p>İşin garibi, <strong>incelediğimiz üreticilerin hiçbiri polarscope'u için sayısal bir doğruluk değeri yayımlamıyor.</strong> Sky-Watcher, iOptron ve Astro-Physics'in belgelerini taradık: hiçbirinde "şu kadar yay dakikası" yazmıyor. Buna karşılık iPolar ve PoleMaster gibi elektronik ürünler açıkça 30 yay saniyesi iddia ediyor. Bu karşıtlığın kendisi bir cevaptır.</p>
+
+  <p>Genel kabul, iyi kolimasyonlu bir polarscope ile dikkatli bir kullanıcının <strong>birkaç yay dakikası</strong> mertebesine ulaşabileceğidir. Bu da — Bölüm 6'yı hatırlayın — guiding yapan biri için <em>fazlasıyla yeterlidir</em>.</p>
+
+  <div class="callout good">
+    <span class="t">Yani polarscope gerçekten demode mi?</span>
+    <p>Doğruluk açısından hayır, <em>iş akışı</em> açısından evet. Bir polarscope size şunları dayatır: eğilip bükülerek göz merceğine bakmak, kutbu doğrudan görebilmek, retikülü aydınlatmak, saat açısını hesaplamak, kolimasyonu ayrı ayrı kontrol etmek ve sonucu doğrulayamamak. Plaka çözümlemeli bir araç bunların hepsini siler ve üstüne ölçtüğü sayıyı size gösterir.</p>
+    <p>Yine de bir yedek olarak vazgeçilmezdir: bilgisayarınız açılmadığında, kamera bağlanmadığında ya da sadece hızlı bir görsel gözlem yapacağınızda polarscope 60 saniyede sizi işe başlatır.</p>
+  </div>
+
+  <hr>
+
+  <!-- ==================== 10 · SHARPCAP ==================== -->
+  <h2 id="sharpcap"><span class="sec-no">BÖLÜM 10</span><br>SharpCap Polar Alignment</h2>
+
+  <p>SharpCap, yazılımsal kutup hizalamasının en yaygın ve en iyi belgelenmiş uygulamasıdır. Windows üzerinde çalışır ve kendi plaka çözümleyicisini içinde taşır; yani ne internet bağlantısına ne de ayrı bir yıldız veritabanı kurmaya ihtiyacınız olur.</p>
+
+  <h3>Nasıl çalışır?</h3>
+
+  <p>SharpCap iki kare çözümler. Aralarında montürü RA ekseninde döndürürsünüz. İki çözümden montürün gerçek dönme eksenini geometrik olarak hesaplar, sonra o ekseni gerçek kutupla karşılaştırır. Aradaki fark, hatanızdır.</p>
+
+  <p>Bu yaklaşımın güzelliği, <strong>montürün gerçek RA eksenini ölçmesidir</strong> — polarscope'un çözemediği kolimasyon sorunu burada hiç ortaya çıkmaz.</p>
+
+  <h3>Gerekenler (kılavuzdan birebir)</h3>
+
+  <ul>
+    <li>Ekvatoryal montür</li>
+    <li>SharpCap'in desteklediği bir kamera + teleskop ya da rehber teleskop</li>
+    <li><strong>Görüş alanı 0.6° ile 2.5° arasında</strong></li>
+    <li>Gök kutbunun açık görünmesi</li>
+    <li><strong>Görüş alanında en az 15 yıldız</strong></li>
+    <li><strong>Kutba yaklaşık 5 derece içinde</strong> önceden hizalanmış olmak</li>
+  </ul>
+
+  <p>SharpCap'in yıldız veritabanı kutbun yaklaşık 6–7 derece çevresini kapsar ve her yarımkürede 16.000'den fazla yıldız içerir. Bu, hem kuzey hem güney yarımkürede çalıştığı anlamına gelir.</p>
+
+  <div class="callout">
+    <span class="t">Takip açık olmalı mı?</span>
+    <p>Hayır. SharpCap'in resmî SSS'si açık: <em>"Kutup hizalama yaparken montürün takip yapıp yapmaması fark etmez."</em> Bu, PHD2 ve N.I.N.A. TPPA'dan önemli bir farktır.</p>
+  </div>
+
+  <h3>Adım adım</h3>
+
+  <ol>
+    <li><strong>Giriş ekranı.</strong> Gereksinimleri hatırlatır. NEXT.</li>
+    <li><strong>Birinci kare.</strong> Teleskobu kutbun 5 derece içine getirin. Kazanç ve pozu, yıldızlar algılanana kadar ayarlayın. SharpCap her kareyi çözmeye çalışır; ekranda <em>"Most Recent Frame: Solved"</em> yeşil yazmalı.</li>
+    <li><strong>İkinci kare.</strong> Montürü RA ekseninde <strong>yaklaşık 90 derece</strong> çevirin — ister kavramayı gevşetip elle, ister GOTO ile. NEXT.</li>
+    <li><strong>Ayarlama.</strong> SharpCap parlak bir yıldızı işaretler ve ona bir hedef gösterir. <strong>Yalnızca alt/azimut vidalarını</strong> kullanarak yıldızı hedefe taşırsınız.</li>
+  </ol>
+
+  <div class="callout bad">
+    <span class="t">Kılavuzun büyük harflerle yazdığı tek uyarı</span>
+    <p><em>"SON AŞAMAYA GEÇMEK İÇİN NEXT'E BASILANA KADAR YÜKSEKLİK VEYA AZİMUTU AYARLAMAYIN."</em></p>
+    <p>Erken ayar yaparsanız SharpCap'in gösterdiği yön okları ters görünür ve saatlerce niye çalışmadığını anlamaya çalışırsınız. Yön oklarının ters göründüğü durumların birinci sebebi budur.</p>
+  </div>
+
+  <p>Ayarlama sırasında işaretli yıldız değişebilir — bu normaldir, kılavuz açıkça söylüyor. Hedefe yaklaştıkça ok ve hedef, birleştirmeniz gereken <strong>iki paralel çizgiye</strong> dönüşür.</p>
+
+  <div class="fig">
+    <svg id="fig-sharpcap" viewBox="0 0 800 430" role="img" aria-label="SharpCap kutup hizalama ayar aşamasının yeniden çizimi"></svg>
+    <div class="figcap"><b>Şekil 8 —</b> SharpCap'in <b>dördüncü aşaması</b> — ayarlama ekranı (yeniden çizim; etiketler kılavuzdaki İngilizce dizelerin aynısı). Kullanılan yıldızlar sarı, diğerleri kırmızı işaretlenir. İşiniz tek bir şey: işaretli yıldızı hedefe taşımak — yalnızca <b>alt/azimut</b> vidalarıyla. Sağ üstteki <code>Most Recent Frame</code> satırı sürekli yeşil <code>Solved</code> göstermelidir; kırmızı <code>Could Not Solve</code> görüyorsanız pozu uzatın ya da kazancı artırın. <em>Not: SharpCap'in hata değerini ekrana hangi sayı biçimiyle yazdığı belgelerinde yer almıyor; buradaki biçim temsilîdir.</em> <a href="https://docs.sharpcap.co.uk/4.1/9_PolarAlignment.htm">Gerçek ekran görüntüleri: SharpCap 4.1 kılavuzu</a>.</div>
+  </div>
+
+  <h3>Ne kadar iyi yeterli — SharpCap'in kendi eşikleri</h3>
+
+  <p>SharpCap, sayısal bir eşik yayımlayan az sayıdaki kaynaktan biri (diğerleri ZWO ve Ekos, aşağıda):</p>
+
+  <div class="eq">
+    <span class="hi">2 yay dakikasının altı</span> = iyi &nbsp;&nbsp;·&nbsp;&nbsp; <span class="hi">1 yay dakikasının altı</span> = mükemmel
+    <div class="c">SharpCap 4.1 kılavuzu, "Polar Alignment" bölümü. Not: kullanıcıların sıkça bahsettiği "Excellent / Good / Fair / Poor" şeklinde sayısal bantlara bölünmüş bir tablo, SharpCap'in resmî belgelerinin hiçbirinde yok — yalnızca yukarıdaki cümle var.</div>
+  </div>
+
+  <h3>Ücretsiz mi?</h3>
+
+  <p>Kısmen ücretsiz. <strong>Ölçüm bedava</strong>; canlı ayar yönlendirmesi (dördüncü aşama) ise SharpCap Pro gerektirir. SharpCap'in kendi ifadesiyle: <em>"Aracı Pro lisansı olmadan da kutup hizalama doğruluğunuzu ölçmek için kullanabilirsiniz, ama Pro lisansıyla ayar yaparken ekranda canlı güncellenen hatayı görebilirsiniz."</em> Kişisel lisans yılda 14 £'dir.</p>
+
+  <h3>Ne zaman patlar?</h3>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Belirti</th><th>Sebep</th></tr></thead>
+      <tbody>
+        <tr><td>Hiç çözemiyor (sürekli kırmızı "Could Not Solve")</td><td>Yeterli yıldız algılanmıyor (gereken 15); kutuptan 5–6 dereceden fazla uzaktasınız; sıcak pikseller yıldız sanılıyor</td></tr>
+        <tr><td>Arada bir çözüyor</td><td>Pozu uzatın, kazancı artırın, odağı kontrol edin</td></tr>
+        <tr><td>Ayardan sonra sonuç tutmuyor</td><td>90° dönerken bir şey oynadı — kablo, denge, yatak boşluğu. SharpCap SSS'si: <em>"en yaygın sebep, montür döndürülürken bir şeyin hareket etmesi ya da esnemesidir."</em></td></tr>
+        <tr><td>Yön okları ters</td><td>NEXT'e basmadan ayar yaptınız</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <span class="t">2026 durumu</span>
+    <p>Kararlı sürüm SharpCap 4.1'dir. 4.2 beta ise kutup hizalamasını yeni "SharpSolve" motoruna taşıyor: yüksek çözünürlüklü indeks kuruluysa <strong>0.25 derecelik görüş alanına kadar</strong> inebiliyor ve kutbun 45 derece uzağına kadar çözmeyi deniyor. Uzun odaklı kurulumlar için önemli bir gelişme.</p>
+  </div>
+
+  <hr>
+
+  <!-- ==================== 11 · NINA ==================== -->
+  <h2 id="nina"><span class="sec-no">BÖLÜM 11</span><br>N.I.N.A. — Three Point Polar Alignment (TPPA)</h2>
+
+  <p>TPPA, N.I.N.A.'nın eklenti mağazasından kurulan ücretsiz ve açık kaynaklı bir eklentidir. Yazarı, N.I.N.A.'nın da yazarı olan Stefan Berg. Ağustos 2026 itibarıyla güncel sürüm 2.2.6.5.</p>
+
+  <p>En önemli özelliği ise şu: <strong>gök kutbunu görmenize hiç gerek yok.</strong></p>
+
+  <div class="callout good">
+    <span class="t">TPPA'nın SSS'sinden birebir</span>
+    <p><em>"Kutba ya da yakınına doğrultmam gerekir mi?" — "Hayır. TPPA ufkunuzun üstünde neredeyse her yerde çalışabilir."</em></p>
+    <p>Bahçesinin kuzeyi binayla kapalı olan herkes için bu tek başına yeterli bir sebeptir.</p>
+  </div>
+
+  <h3>"Üç nokta" ne demek?</h3>
+
+  <p>TPPA, RA ekseni boyunca birbirinden ayrılmış <strong>üç konumda</strong> plaka çözümlemesi yapar. Üç noktadan geçen bir çember, montürün gerçek dönme eksenini verir. Sonra bu ekseni, bulunduğunuz konum için hesaplanan gerçek kutup ekseniyle karşılaştırır.</p>
+
+  <ol>
+    <li>Başlangıç konumuna sürer (ya da bulunduğunuz yerden başlar) ve <strong>takibi açar</strong>.</li>
+    <li>Kare çeker, çözümler. <em>Nokta 1.</em></li>
+    <li>Montürü RA ekseninde — otomatik ya da elle — <strong>en az "Target Distance" derecesi</strong> kadar hareket ettirir. Varsayılan <strong>10 derece</strong>. Kare çeker, çözümler. <em>Nokta 2.</em></li>
+    <li>Aynı hareketi tekrar eder. <em>Nokta 3.</em> (Elle modda üçüncü noktadan sonra 10 saniyelik oturma süresi bekler — bu sırada montüre dokunmayın.)</li>
+    <li>Ekseni yeniden kurar, hatayı hesaplar.</li>
+    <li><strong>Düzeltme aşaması:</strong> takip devam ederken sürekli çözümleme yapar ve hatayı canlı günceller. Yalnızca alt/azimut ayarlarını değiştirirsiniz. Bir yıldıza sol tıklarsanız görsel göstergeler o yıldızı izler.</li>
+  </ol>
+
+  <div class="fig">
+    <svg id="fig-tppa" viewBox="0 0 800 450" role="img" aria-label="N.I.N.A. TPPA panelinin yeniden çizimi"></svg>
+    <div class="figcap"><b>Şekil 9 —</b> N.I.N.A. <b>Three Point Polar Alignment</b> paneli (yeniden çizim; etiketler eklentinin XAML dosyalarından birebir). Üç kutu soldan sağa azimut, yükseklik ve toplam hatayı gösterir; büyük rakam <em>o anki</em>, altındaki küçük rakam <em>başlangıçtaki</em> değerdir — yani ne kadar yol aldığınızı görürsünüz. Değerler derece-dakika-saniye biçiminde yazılır. Ok ve "Move left/west" gibi yönergeler hangi vidayı hangi yöne çevireceğinizi söyler. Hedef halkaları <b>30″, 1′ ve 5′</b>'de çizilir. <a href="https://github.com/isbeorn/nina.plugin.polaralignment">Gerçek ekran görüntüleri: eklenti deposu</a>.</div>
+  </div>
+
+  <h3>Nereye doğrultmalı?</h3>
+
+  <p>TPPA her yerde çalışır ama bazı bölgeler daha bağışlayıcıdır. SSS'nin önerileri:</p>
+
+  <ul>
+    <li>Yarımkürenizin kutup tarafına doğru bir alan tercih edin (güneyde tam güney).</li>
+    <li>Mümkünse <strong>15 derece yükseklikten yukarıda</strong> bir alan seçin.</li>
+    <li><strong>Tam doğu (90°) ve tam batıdan (270°) kaçının</strong> — düzeltme matematiği orada zayıftır. TPPA bu bölgeye çok yaklaşırsanız sizi uyarır.</li>
+    <li>Tam başucundan kaçının.</li>
+    <li>Üç ölçüm ya da düzeltme sırasında <strong>meridyeni geçecek</strong> bir konum seçmeyin.</li>
+  </ul>
+
+  <h3>Ne gerekir?</h3>
+
+  <ul>
+    <li>N.I.N.A.'da <strong>enlem ve boylamın doğru girilmiş olması</strong></li>
+    <li>Çekime hazır bir kamera (rehber kamera da olur, ana kamera da)</li>
+    <li><strong>Çalışan bir plaka çözümleyici</strong> — N.I.N.A.'nın desteklediği herhangi biri olur; en yaygınları ASTAP, PlateSolve2 ve PlateSolve3. (N.I.N.A. hem birincil hem kör çözümleme için ASTAP'ı öneriyor.)</li>
+    <li>Otomatik modda: ASCOM <code>MoveAxis</code> destekleyen bağlı bir montür. <strong>Elle modda montür bağlantısı isteğe bağlıdır</strong> — ama o zaman kör çözümleyici ayarlı olmalı.</li>
+  </ul>
+
+  <div class="callout warn">
+    <span class="t">TPPA'nın 1 numaralı hata sebebi</span>
+    <p>Plaka çözümleme başka her yerde çalışırken TPPA'da başarısız oluyorsa, sebep neredeyse her zaman <strong>arama yarıçapıdır</strong>. TPPA hızlı çalışmak için kendi "Search Radius" ayarını kullanır; bu yarıçap, gösterme hatanız + kutup hatanızın toplamından küçükse çözümleme başarısız olur. Önce yarıçapı büyütün, sonra poz/odak/piksel boyutuna bakın.</p>
+  </div>
+
+  <h3>Faydalı ayarlar</h3>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Ayar</th><th class="num">Varsayılan</th><th>Ne işe yarar</th></tr></thead>
+      <tbody>
+        <tr><td>Target Distance</td><td class="num">10°</td><td>Ölçüm noktaları arasındaki açı. Küçültmek hızlandırır ama doğruluğu düşürür.</td></tr>
+        <tr><td>Move Rate</td><td class="num">3</td><td>Otomatik modda RA ekseninin sürülme hızı</td></tr>
+        <tr><td>Search Radius</td><td class="num">10 (30'a sıkıştırılır)</td><td>Plaka çözümleme arama yarıçapı, derece</td></tr>
+        <tr><td><b>Alignment Tolerance</b></td><td class="num">0 (kapalı)</td><td><b>Yay dakikası cinsinden.</b> Sıfırdan büyükse, hata bu değerin altına indiğinde TPPA kendini bitirir. Ondalık kabul eder: <code>0.5</code> = 30 yay saniyesi.</td></tr>
+        <tr><td>Adjust for refraction</td><td class="num">Kapalı</td><td>Kırılma düzeltmesi. SSS'ye göre <em>hâlâ test aşamasında</em>.</td></tr>
+        <tr><td>Manual Mode</td><td class="num">Kapalı</td><td>RA hareketini siz yaparsınız; montür bağlantısı gerekmez</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>Ekrandaki hedef daireleri <strong>30 yay saniyesi, 1 yay dakikası ve 5 yay dakikasında</strong> çizilir — pratikte ulaşabileceğiniz hassasiyetin ne olduğunu bu üç halka söylüyor.</p>
+
+  <div class="callout">
+    <span class="t">Eklentinin kendi öğüdü</span>
+    <p>Başlangıç hatası büyükse canlı ekranı sonsuza kadar kovalamayın; TPPA'yı yeniden çalıştırın. Eklentinin uyarı metni açık: <em>"Başlangıçtaki kutup hizalama hatası büyük. Düzeltme aşaması güvenilir olmayacak. Lütfen montürü kutba yaklaştırıp sonucu doğrulamak için yeni bir tur yapın!"</em> Pratikte bir kaba geçiş + bir ince geçiş, tek bir düzeltme döngüsünü uzatmaktan daha hızlıdır.</p>
+    <p>Ve en çok yapılan iki hata, eklentinin kendi yönergesiyle: <em>"İlk üç nokta arasında yalnızca RA eksenini hareket ettirin."</em> ve <em>"Başlangıç hatası göründükten sonra yalnızca montür yüksekliğini ve azimutunu ayarlayın."</em></p>
+  </div>
+
+  <hr>
+
+  <!-- ==================== 12 · ASIAIR ==================== -->
+  <h2 id="asiair"><span class="sec-no">BÖLÜM 12</span><br>ZWO ASIAIR</h2>
+
+  <p>ASIAIR, bilgisayar taşımak istemeyenlerin en yaygın çözümüdür. Kutup hizalaması, uygulamanın "PA" sekmesinden tek dokunuşla başlar ve montürü sizin yerinize kendisi döndürür.</p>
+
+  <h3>Nasıl çalışır?</h3>
+
+  <p>ASIAIR Plus kılavuzundan birebir: <em>"Ekvatoryal montür mevcut konumunda görüntü çekip analiz eder, ardından otomatik olarak yaklaşık 60 derece dönerek tekrar çeker ve analiz eder."</em></p>
+
+  <p>Yani SharpCap'in iki kareli yaklaşımının aynısı, ama dönüşü sizin yerinize montür yapıyor ve <strong>60 derece</strong> yetiyor.</p>
+
+  <h3>Hazırlık — kılavuzun istedikleri</h3>
+
+  <ol>
+    <li>Montür sıfır konumundayken teleskobun kabaca gerçek kuzeyi (ya da güneyi) göstermesi önerilir</li>
+    <li>Ana kamera ve montür ASIAIR'e düzgün bağlı olmalı</li>
+    <li>Teleskobun önü açık olmalı; "Preview" modunda yıldız görebilmelisiniz</li>
+  </ol>
+
+  <p>Sonra "Start Calibration"a basar, hesaplanan sapmalara göre <strong>montürün yükseklik ve azimut açısını elle ayarlarsınız</strong>.</p>
+
+  <div class="fig">
+    <svg id="fig-asiair" viewBox="0 0 800 412" role="img" aria-label="ASIAIR kutup hizalama ekranının yeniden çizimi"></svg>
+    <div class="figcap"><b>Şekil 10 —</b> ASIAIR'in kutup hizalama ekranı (yeniden çizim). ZWO'nun kılavuzu bu ekranı ağırlıklı olarak düz metinle anlattığı için burada yalnızca <em>belgelerde birebir geçen</em> düğme ve etiketler kullanıldı: <code>Start Calibration</code>, <code>Auto Refresh</code> ve <code>Finish</code>. Hata değerleri yay dakikası (<code>'</code>) cinsinden gösterilir. Oklar kılavuzda tarif edildiği gibi doğrudan hangi düğmeyi nasıl çevireceğinizi söyler: <em>"Yukarı ok: yükseklik ince ayar düğmesini saat yönünde çevirin."</em> <a href="https://i.zwoastro.com/wp-content/uploads/2026/03/65dcf5cda6be810ffda56fcaed20a573.pdf">Kaynak: ASIAIR Plus Kullanım Kılavuzu V1.3, s. 45–48</a>.</div>
+  </div>
+
+  <h3>Eşik</h3>
+
+  <div class="eq">
+    ZWO'nun ifadesi: <span class="hi">"Toplam hatanın 5 yay dakikası içinde olması kabul edilebilir sayılır; ne kadar küçükse o kadar iyi."</span>
+    <div class="c">ASIAIR Plus Kullanım Kılavuzu V1.3. Bu bir doğruluk <em>spesifikasyonu</em> değil, bir <em>kabul eşiğidir</em>; ZWO "şu kadar yay saniyesi hassasiyetle ölçer" şeklinde bir iddiada bulunmuyor.</div>
+  </div>
+
+  <p>Ekranda bir artı (hedef), bir daire (mevcut konumunuz), sayısal sapmalar, yön okları ve hizalama iyileştikçe değişen bir yüz ifadesi görürsünüz. ASIAIR yaklaştıkça görüntüyü otomatik yakınlaştırır. <strong>Yüz ifadesinin arkasındaki sayısal eşikleri ZWO yayımlamamıştır.</strong></p>
+
+  <h3>Bilinen sorunlar</h3>
+
+  <ul>
+    <li><strong>Çözümleme başarısız.</strong> Kullanıcı forumunda en sık rapor edilen sebep yetersiz kazanç/poz — yeterli yıldız çıkmıyor. İkincisi, teleskop ayarlarına yanlış girilmiş odak uzunluğu.</li>
+    <li><strong>All Sky Polar Alignment.</strong> ZWO, kutbu görmeden hizalama yapan bir mod da sunuyor. Kılavuzda yalnızca tek bir cümleyle geçiyor (<em>"gökyüzünün herhangi bir yerinde kutup hizalamasını destekler; önceden lensin gök kutbuna yakın doğrultulması gerekiyordu, bu yöntemde böyle bir sınır yok"</em>); <em>ayrıntılı bir prosedür yayımlanmamış</em>. ZWO'nun kendi forumunda, güney yarımkürede AM3 montürlerde takibin hizalama sırasında kapandığı ve sonucun bozulduğu bir hata bildirilmiş; ZWO log istemiş, yayımlanmış bir çözüm yok. Kullanıyorsanız sonucu bağımsız olarak doğrulayın.</li>
+  </ul>
+
+  <p>ASIAIR V3.0 (Temmuz 2026) yayımlandı; sürüm notlarında kutup hizalamasıyla ilgili bir değişiklik listelenmiyor.</p>
+
+  <hr>
+
+  <!-- ==================== 13 · DİĞERLERİ ==================== -->
+  <h2 id="digerleri"><span class="sec-no">BÖLÜM 13</span><br>Diğer yöntemler ve karşılaştırma</h2>
+
+  <h3>iOptron iPolar</h3>
+
+  <p>iPolar, RA ekseninin içine yerleşen küçük bir kameradır; kısacası polarscope'un elektronik halefidir. Üreticinin verdiği rakamlar şöyle:</p>
+
+  <ul>
+    <li>Hizalama hassasiyeti: <strong>30 yay saniyesi</strong> (üretici iddiası; ölçüm yöntemi yayımlanmamış)</li>
+    <li>Görüş alanı: <strong>~13 derece</strong></li>
+    <li>Gereksinim: montür RA ekseni gerçek kuzeye/güneye <strong>±6 derece</strong> içinde olmalı</li>
+    <li><strong>Polaris ya da σ Octantis'in görünmesi gerekmez</strong> — plaka çözümleme yapar</li>
+  </ul>
+
+  <p>Akış: sıfır konumu → dark kare (20 saniye) → çözümleme → "Confirm Position 1" → RA'da döndür → alt/azimut vidalarıyla bordo daireyi merkeze taşı → daire ile artı çakışınca yeşile döner, iş biter. Birçok iOptron montüre (CEM40 vb.) fabrikadan gömülü gelir.</p>
+
+  <h3>QHY PoleMaster</h3>
+
+  <ul>
+    <li>Hassasiyet: <strong>30 yay saniyesine kadar</strong> (üretici iddiası)</li>
+    <li>Görüş alanı: ürün sayfası <strong>11° × 8°</strong>, kılavuz <strong>11° × 6°</strong> diyor — iki resmî kaynak çelişiyor</li>
+    <li>9. kadire kadar yıldız görür; piksel ölçeği ~30 yay saniyesi</li>
+  </ul>
+
+  <p>iPolar'dan önemli bir farkı var: <strong>kutup yıldızını görmeniz ve fareyle tıklamanız gerekir.</strong> Sonra kutba yakın parlak bir yıldız seçip montürü <strong>iki kez yaklaşık 15 derece</strong> döndürürsünüz; yıldızın üç konumu bir çember belirler ve PoleMaster gerçek dönme merkezini böyle bulur. Kılavuz takibin açık tutulmasını öneriyor.</p>
+
+  <p>Kavramsal olarak PoleMaster'ın yöntemi — önce RA dönme merkezini ölçmek, sonra onu gerçek kutba taşımak — polarscope'un kolimasyon sorununa yapısal olarak bağışıktır.</p>
+
+  <h3>Ekos / KStars (Linux, StellarMate, Raspberry Pi)</h3>
+
+  <ul>
+    <li>Üç kare çeker ve çözümler, aralarında döner. <strong>Varsayılan dönüş 30 derece</strong>, ayarlanabilir, doğuya ya da batıya.</li>
+    <li>Meridyenin doğusunda ya da batısında <strong>30–60 derecelik</strong> bir yay görünür olmalı.</li>
+    <li>Kutup kapalıysa meridyene yakın başka bir yerden de çalışır.</li>
+    <li>Hatayı yay dakikası ve yay saniyesi olarak gösterir; "Refresh" modunda canlı geri bildirim verir.</li>
+    <li>Belgelerin ifadesi: <em>"Hatanız yeterince düşükse (örneğin bir yay dakikasından az) ayar yapmanız gerekmez."</em></li>
+  </ul>
+
+  <h3>ASTAP hakkında yaygın bir yanlış</h3>
+
+  <div class="callout warn">
+    <span class="t">ASTAP'ın kutup hizalama aracı yoktur</span>
+    <p>ASTAP bir <strong>plaka çözümleyicidir</strong>. N.I.N.A. TPPA ve Ekos onu arka planda kullanır, bu yüzden "ASTAP ile kutup hizalama yaptım" cümlesi yaygınlaşmıştır. ASTAP'ın 2021–2026 sürüm geçmişinin tamamını taradık: kutup hizalama diye bir özellik yok. Pratik sonucu şudur: TPPA çalışmıyorsa hata genellikle TPPA'da değil, ASTAP'ın yapılandırmasındadır (yıldız veritabanı, odak uzunluğu, arama yarıçapı).</p>
+  </div>
+
+  <h3>Akıllı teleskoplar (Seestar, Dwarf) kutup hizalaması ister mi?</h3>
+
+  <p>Çalışmak için hayır — bunlar alt-azimut montürlüdür. Ama bedeli alan dönmesidir ve ZWO bunu iki şeyle yönetir: <strong>10 saniyelik poz sınırı</strong> ve yığınlama sırasında dönme düzeltmesi. Seestar SSS'sinden birebir: <em>"Seestar S50, hedef takibi ve çekim için Alt/Azimut montür kullanır."</em></p>
+
+  <p>Son firmware'lerde S30/S50 için bir <strong>EQ modu</strong> eklendi: cihazın tamamı bir sıvı kafa ya da kama üzerinde kutba eğiliyor. Kazanç uzun poz ve dönme kırpması olmayan köşeler.</p>
+
+  <h3>Hepsi bir arada</h3>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Yöntem</th><th>Kutbu görmeli mi?</th><th>RA dönüşü</th><th>Takip</th><th>Belgelenen eşik</th><th>Ücret</th></tr></thead>
+      <tbody>
+        <tr><td><b>Polarscope</b></td><td><span class="tag r">Evet</span></td><td>—</td><td>Gerekmez</td><td>Üretici yayımlamıyor</td><td>Montürle gelir</td></tr>
+        <tr><td><b>SharpCap</b></td><td><span class="tag r">Evet</span> (5° içinde)</td><td>~90°</td><td>Gerekmez</td><td>&lt;2′ iyi, &lt;1′ mükemmel</td><td>Ölçüm ücretsiz, ayar Pro (14 £/yıl)</td></tr>
+        <tr><td><b>N.I.N.A. TPPA</b></td><td><span class="tag g">Hayır</span></td><td>2 × 10°</td><td><b>Açık olmalı</b></td><td>Eşik yok; halkalar 30″/1′/5′</td><td>Ücretsiz, açık kaynak</td></tr>
+        <tr><td><b>ASIAIR</b></td><td><span class="tag y">Standart PA: evet</span><br>All-Sky PA: hayır</td><td>~60° (otomatik)</td><td>Gerekir</td><td>&lt;5′ kabul edilebilir</td><td>Cihazla gelir</td></tr>
+        <tr><td><b>Ekos / StellarMate</b></td><td><span class="tag g">Hayır</span></td><td>2 × 30°</td><td>Gerekir</td><td>&lt;1′ ise ayar gerekmez</td><td>Ücretsiz, açık kaynak</td></tr>
+        <tr><td><b>iPolar</b></td><td><span class="tag y">Kutup bölgesi</span> (±6°)</td><td>Var</td><td>Gerekmez</td><td>30″ (üretici iddiası)</td><td>~Cihaz fiyatı</td></tr>
+        <tr><td><b>PoleMaster</b></td><td><span class="tag r">Evet</span> (yıldızı tıklarsınız)</td><td>2 × 15°</td><td>Önerilir</td><td>30″ (üretici iddiası)</td><td>~Cihaz fiyatı</td></tr>
+        <tr><td><b>PHD2 Drift Align</b></td><td><span class="tag g">Hayır</span></td><td>—</td><td>Gerekir</td><td>Eşik yok; en doğru sayılır</td><td>Ücretsiz</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="fig">
+    <svg id="fig-tree" viewBox="0 0 800 430" role="img" aria-label="Hangi kutup hizalama yöntemini seçmeliyim karar ağacı"></svg>
+    <div class="figcap"><b>Şekil 11 —</b> Karar ağacı. Neredeyse her yol plaka çözümlemeye çıkıyor — 2026'da bu, yöntem tercihinden çok bir varsayılan hâline geldi.</div>
+  </div>
+
+  <div class="callout">
+    <span class="t">Doğruluk karşılaştırması hakkında dürüst bir not</span>
+    <p>"SharpCap mı daha doğru, TPPA mı?" sorusuna birincil kaynaklara dayalı bir cevap <strong>yok</strong>. Ne SharpCap ne ZWO ne de TPPA yayımlanmış bir doğruluk spesifikasyonu veriyor; ikisini karşılaştıran bağımsız bir ölçüm de bulamadık. Forumlarda ikisi için de tipik olarak 10–60 yay saniyesi arası artık hata bildiriliyor — ama aynı başlıklarda seeing, tripod oturması ve montür esnemesinin bu sayıları belirlediği de söyleniyor. Yani karar verirken doğruluğu değil, <em>iş akışını</em> ölçüt alın: kutbu görebiliyor musunuz, bilgisayarınız var mı, montürünüz bağlı mı.</p>
+  </div>
+
+  <hr>
+  <!-- ==================== 14 · SAHADA ==================== -->
+  <h2 id="saha"><span class="sec-no">BÖLÜM 14</span><br>Sahada: cıvatalar, boşluk ve sıra</h2>
+
+  <p>Teori bitti. Karanlıkta, soğukta, elinizde el feneriyle yapacağınız işe geldik.</p>
+
+  <h3>Ayar mekanizmalarını tanıyın</h3>
+
+  <p><strong>Yükseklik (enlem) ayarı.</strong> Sky-Watcher EQ6 sınıfı montürlerde bu ayar, katlanır kollu bir <em>krikolu vidayla</em> yapılır. Teleskobun ağırlığı bu vidayı sürekli aşağı yönde zorlar; birazdan göreceğiniz gibi bunun pratik bir sonucu var.</p>
+
+  <p><strong>Azimut ayarı.</strong> Bu iş, tripodun üstündeki metal pime karşı çalışan <em>iki karşılıklı vidayla</em> yapılır: birini sıkarken diğerini gevşetmeniz gerekir. Kurulum sırasında kılavuz, iki vidayı pimin geçebileceği kadar açmanızı ve pimi aradaki boşluğa oturtmanızı ister.</p>
+
+  <p>ZWO AM5'te düzen biraz farklıdır: enlem aralığı <strong>iki kademelidir</strong> (0–60° ve 45–90°), azimutta ise ince ayar düğmelerinden ayrı <strong>kilitleme kolları</strong> vardır — kilitleme ayrı bir adımdır ve sonrasında hizalamayı tekrar kontrol etmeniz gerekir.</p>
+
+  <div class="callout good">
+    <span class="t">Bu yazının en pratik tek cümlesi</span>
+    <p>Sky-Watcher'ın kendi kılavuzundan: <em>"AZ-EQ6 GT montüründe hafif bir yükseklik boşluğu olması normaldir... yükseklik ayarını <b>yukarı doğru bir hareketle bitirmeniz</b> önerilir."</em></p>
+    <p>Sebebi basit: yükün ağırlığı vidayı aşağı bastırır. Hedef yüksekliğe <em>aşağıdan yukarı</em> yaklaşırsanız diş bir yüzeye yaslanmış olur ve orada kalır. Yukarıdan aşağı yaklaşırsanız montür saatler içinde kendiliğinden birkaç yay dakikası daha aşağı oturabilir. Hizalamanızın gece boyunca "kendi kendine bozulması" çoğunlukla budur.</p>
+  </div>
+
+  <p>Azimut için aynı ilkenin karşılığı: bitirirken iki vidayı birbirine karşı sıkın ki montür yakalansın — <strong>sonra ölçümü tekrarlayın</strong>. Kilitleme işlemi neredeyse her zaman birkaç yay dakikası kaydırır.</p>
+
+  <h3>Tripodu tesviye etmek gerçekten gerekli mi?</h3>
+
+  <p>Bu, astrofotoğrafın en çok yanlış anlaşılan konularından biridir. Net cevap şu:</p>
+
+  <div class="callout">
+    <span class="t">Kutup hizalamasının doğruluğu için: hayır</span>
+    <p>Kutup hizalaması, RA ekseninin gökyüzünde <em>nereyi gösterdiğidir</em> — iki açı, hepsi bu. Tripodun düz olup olmaması bunu değiştirmez. Yamaçtaki bir tripod da mükemmel kutup hizalı olabilir.</p>
+  </div>
+
+  <p>Ama üç gerçek sebep var:</p>
+
+  <ol>
+    <li><strong>Polarscope kullanıyorsanız gereklidir.</strong> Astro-Physics kendi kılavuzunda açıkça yazıyor: <em>"En yüksek doğruluğu elde etmek için montürünüzü doğu-batı yönünde tesviye etmeniz gerekecektir."</em> Sebebi: retikülün saat kadranı, montürün azimut ekseninin dik olduğunu varsayar. Montür doğu-batı eğikse retikülün "12:00"ı gerçekten yukarıyı göstermez ve Polaris'i yanlış saate koyarsınız.</li>
+    <li><strong>Ayarlar dikleşir.</strong> Montür eğikse "yükseklik" vidası artık saf yükseklik değiştirmez, "azimut" da saf azimut. İkisi birbirine karışır ve yakınsamak çok daha uzun sürer. Sonucu değil, <em>süreyi</em> etkiler.</li>
+    <li><strong>Enlem skalası anlamlı kalır.</strong> Kaba hizalamayı skalayla yapıyorsanız, skala tesviye edilmiş bir tabana göre kalibredir.</li>
+  </ol>
+
+  <p>Kısacası: plaka çözümlemeli bir araç kullanıyorsanız tesviye tamamen bir kolaylıktır. Polarscope kullanıyorsanız zorunludur.</p>
+
+  <h3>Sahada işlem sırası</h3>
+
+  <ol>
+    <li>Tripodu sağlam zemine kurun, bacakları açın, <strong>su terazisiyle tesviye edin</strong>.</li>
+    <li>Enlem skalasını yaklaşık enleminize getirin; pusulayla kabaca kuzeye/güneye doğrultun (manyetik sapmayı düzeltin). Gereken kabalık: iPolar ±6°, SharpCap 5°.</li>
+    <li>Teleskobu takın, <strong>RA ve DEC'te dengeleyin</strong>. Dengesiz yük, alt/azimut boşluğunu artırır ve guiding'i bozar.</li>
+    <li>Montürü <strong>sıfır / ev konumuna</strong> getirin. ASIAIR ve iPolar bunu şart koşar.</li>
+    <li><strong>Odak yapın.</strong> Odaksız yıldızlar, plaka çözümleme hatalarının bir numaralı sebebidir.</li>
+    <li>Kutup hizalama rutinini çalıştırın. <strong>Aynı anda tek bir ayarı</strong> değiştirin ve bir poz döngüsü bekleyin.</li>
+    <li>Yükseklik ayarını <strong>yukarı doğru</strong> bitirin.</li>
+    <li>Azimut vidalarını/kollarını kilitleyin, sonra <strong>ölçümü tekrarlayın</strong>.</li>
+    <li>Polarscope kullandıysanız kolimasyonu daha önce doğrulamış olun (Bölüm 9).</li>
+  </ol>
+
+  <h3>Harmonik (dalga dişlili) montürler farklı mı?</h3>
+
+  <p>AM5, AM3 gibi karşı ağırlıksız montürler için sık duyulan bir iddia var: "bunlar kutup hizalamasını daha az önemser."</p>
+
+  <p><strong>Bu iddiayı destekleyen hiçbir üretici belgesi yok.</strong> ZWO'nun AM5 kılavuzunda kutup hizalama toleransıyla ilgili tek bir cümle bile geçmiyor. Fizik de dişli tipine göre değişmez: RA ekseni kutbu göstermiyorsa alan yine döner, deklinasyon yine sürüklenir.</p>
+
+  <p>Harmonik montürlerin gerçek farkı, periyodik hatalarının genellikle iyi bir sonsuz dişli montürden büyük olmasıdır — bu yüzden neredeyse her zaman guiding ile kullanılırlar. Guiding de sürüklenmeyi emer. Yani "daha toleranslı" görünmelerinin sebebi dişlileri değil, <em>guiding ile kullanılıyor olmalarıdır</em>. Alan dönmesi kuralı onlar için de aynen geçerlidir.</p>
+
+  <hr>
+
+  <!-- ==================== 15 · YANLIŞLAR ==================== -->
+  <h2 id="yanlis"><span class="sec-no">BÖLÜM 15</span><br>Yaygın yanlışlar</h2>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Sık duyulan</th><th>Gerçek</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>"Polaris'i polarscope'un ortasına koydum, hizalandım"</td>
+          <td><b>Hayır.</b> Polaris kutuptan 37.7 yay dakikası uzaktadır. Ortaya koymak, yaklaşık <b>0.63 derecelik</b> — yani 38 yay dakikalık — bir hata bırakır. Onu yörüngesindeki doğru saate koymanız gerekir.</td>
+        </tr>
+        <tr>
+          <td>"Guiding yapıyorum, kutup hizalaması önemsiz"</td>
+          <td><b>Yarı doğru.</b> Guiding sürüklenmeyi siler ama alan dönmesini silemez. Ekvatorda gerçekten önemsizleşir; deklinasyon 70°'nin üstünde önemli olmaya devam eder.</td>
+        </tr>
+        <tr>
+          <td>"DEC düzeltmelerim hep aynı yönde, hizalamam bozuk"</td>
+          <td><b>Hayır.</b> PHD2'nin kendi belgesi bunu <em>iyi bir şey</em> sayıyor — boşluğa hiç girmiyorsunuz demektir. Sorun, düzeltmelerin yıldızı geri getirememesidir.</td>
+        </tr>
+        <tr>
+          <td>"Guiding Assistant 25′ dedi, felaket"</td>
+          <td><b>Nereye baktığınıza bağlı.</b> Yüksek deklinasyonda PHD2 hatayı <code>1/cos δ</code> kadar şişirir. Deklinasyon 70°'de 25′ okuması, gerçekte ~8.5′ demektir. Ölçümü ekvatorda tekrarlayın.</td>
+        </tr>
+        <tr>
+          <td>"Sürüklenmeyi ölçmek için ekvatordaki yıldız seçilir çünkü sürüklenme orada en fazladır"</td>
+          <td><b>Gerekçe yanlış.</b> DEC sürüklenmesi deklinasyondan bağımsızdır. Ekvatorun tercih edilme sebebi, çevirme formülünün orada yansız olması ve alan dönmesinin orada en zayıf olmasıdır.</td>
+        </tr>
+        <tr>
+          <td>"Tripodu tesviye etmezsem kutup hizalaması bozulur"</td>
+          <td><b>Hayır.</b> Tesviye, polarscope retikülü için ve ayarların birbirine karışmaması için gerekir. Plaka çözümlemeli yöntemlerde doğruluğa etkisi yoktur.</td>
+        </tr>
+        <tr>
+          <td>"30 yay saniyesine indirdim, artık kusursuz"</td>
+          <td><b>Ölçüm gürültüsündesiniz.</b> Atmosferik kırılma bile gökyüzünün farklı bölgelerinde 0.5–2 yay dakikalık farklar yaratır. Gökyüzünün her yerinde aynı anda sıfır veren tek bir hizalama yoktur.</td>
+        </tr>
+        <tr>
+          <td>"Yükseklik vidasını istediğim yönden ayarlarım"</td>
+          <td><b>Hayır.</b> Yükü vidayı aşağı bastırır. Ayarı <b>yukarı doğru</b> bitirmezseniz montür gece boyunca oturur ve hizalamanız kendiliğinden bozulur.</td>
+        </tr>
+        <tr>
+          <td>"ASTAP ile kutup hizalaması yaptım"</td>
+          <td><b>ASTAP'ın böyle bir aracı yok.</b> O bir plaka çözümleyicidir; N.I.N.A. TPPA ya da Ekos onu arka planda kullanır.</td>
+        </tr>
+        <tr>
+          <td>"Harmonik montürüm kutup hizalamasını umursamıyor"</td>
+          <td><b>Kaynaksız bir iddia.</b> Hiçbir üretici böyle bir tolerans yayımlamıyor. Fizik dişliye bakmaz.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <hr>
+
+  <!-- ==================== KAYNAKLAR ==================== -->
+  <h2 id="kaynaklar">Kaynaklar</h2>
+
+  <p style="font-size:15px">Bu yazıdaki bütün sayısal iddialar aşağıdaki birincil kaynaklara karşı doğrulanmıştır. Formüller ayrıca bağımsız bir katı-cisim simülasyonuyla sayısal olarak sınanmış ve Barrett'ın yayımlanmış örnekleri yeniden üretilmiştir.</p>
+
+  <h4>Matematik</h4>
+  <ul class="src">
+    <li>Frank Barrett — <a href="http://celestialwonders.com/articles/polaralignment/PolarAlignmentAccuracy.pdf">Determining Polar Axis Alignment Accuracy</a> (2. baskı, 2016). Denklem 1, 3 ve 13'ün kaynağı.</li>
+    <li>Frank Barrett — <a href="http://celestialwonders.com/articles/polaralignment/MeasuringAlignmentError.pdf">Measuring Polar Axis Alignment Error</a> (3. baskı, 2016).</li>
+    <li>Frank Barrett — <a href="http://celestialwonders.com/articles/polaralignment/polaralignmentsurvey.html">Survey of Polar Alignment Methods</a>.</li>
+    <li><a href="http://celestialwonders.com/tools/rotationMaxErrorCalc.html">Field Rotation Calculator</a> ve <a href="http://celestialwonders.com/tools/polarMaxErrorCalc.html">Maximum Polar Alignment Error Calculator</a>.</li>
+    <li>Patrick Wallace — <a href="https://sites.astro.caltech.edu/~srk/TP/Literature/Wallace_Telescope_Pointing.pdf">Telescope Pointing</a> (TPOINT modelinin MA/ME terimleri).</li>
+    <li>Software Bisque — <a href="https://www.bisque.com/wp-content/cs-content/help/theskyxsaeandpro/The_Geometrical_Terms.htm">TPoint Geometrical Terms</a> (azimut düzeltmesindeki 1/cos(enlem) çarpanı).</li>
+  </ul>
+
+  <h4>PHD2</h4>
+  <ul class="src">
+    <li><a href="https://openphdguiding.org/man/Tools.htm">PHD2 Kılavuzu — Tools and Utilities</a> (üç kutup hizalama aracının karşılaştırması, Guiding Assistant).</li>
+    <li><a href="https://openphdguiding.org/man/Tutorials.htm">PHD2 Kılavuzu — Tutorials</a> (Drift Align, Static Polar Align, Polar Drift Align adım adım).</li>
+    <li><a href="https://openphdguiding.org/man/Trouble_shooting.htm">PHD2 Kılavuzu — Trouble-shooting</a> ("10 yay dakikası içinde makul bir hizalama").</li>
+    <li><a href="https://openphdguiding.org/man/Visualization.htm">PHD2 Kılavuzu — Visualization</a> (eğilim çizgileri).</li>
+    <li><a href="https://openphdguiding.org/man/Supplemental_Info.htm">PHD2 Kılavuzu — Supplemental Information</a> (boşluk, sürtünme, tek yönlü guiding).</li>
+    <li><a href="https://openphdguiding.org/Analyzing_PHD2_Guide_Logs.pdf">Analyzing PHD2 Guiding Results</a> (grafik imzaları).</li>
+    <li><a href="https://openphdguiding.org/PHD2_BestPractices_2019-12.pdf">PHD2 Best Practices</a> (Waddington &amp; Galasso).</li>
+  </ul>
+
+  <h4>Yazılımlar</h4>
+  <ul class="src">
+    <li><a href="https://docs.sharpcap.co.uk/4.1/9_PolarAlignment.htm">SharpCap 4.1 Kılavuzu — Polar Alignment</a>.</li>
+    <li><a href="https://www.sharpcap.co.uk/sharpcap/features/polar-alignment/polar-alignment-troubleshooting">SharpCap — Polar Alignment Troubleshooting</a>.</li>
+    <li><a href="https://www.sharpcap.co.uk/sharpcap-faqs">SharpCap SSS</a> ve <a href="https://www.sharpcap.co.uk/sharpcap/sharpcap-pro/sharpcappro">SharpCap Pro</a>.</li>
+    <li><a href="https://github.com/isbeorn/nina.plugin.polaralignment/blob/master/PolarAlignment/FAQ.md">N.I.N.A. TPPA — resmî SSS</a> ve <a href="https://github.com/isbeorn/nina.plugin.polaralignment">eklenti deposu</a>.</li>
+    <li><a href="https://nighttime-imaging.eu/docs/master/site/advanced/platesolving/">N.I.N.A. — Plate Solving</a>.</li>
+    <li><a href="https://i.zwoastro.com/wp-content/uploads/2026/03/65dcf5cda6be810ffda56fcaed20a573.pdf">ASIAIR Plus Kullanım Kılavuzu V1.3</a>.</li>
+    <li><a href="https://kstars-docs.kde.org/en/user_manual/ekos-align.html">KStars El Kitabı — Ekos Align</a>.</li>
+    <li><a href="https://www.hnsky.org/astap.htm">ASTAP belgeleri</a> (kutup hizalama aracı içermez).</li>
+  </ul>
+
+  <h4>Donanım</h4>
+  <ul class="src">
+    <li><a href="https://www.firstlightoptics.com/user/AZ_EQ6-GT_instruction_manual.pdf">Sky-Watcher AZ-EQ6 GT Kılavuzu</a> (polarscope kolimasyonu, yükseklik boşluğu, azimut vidaları).</li>
+    <li><a href="https://www.opticalvision.co.uk/documents/172.pdf">Sky-Watcher EQ6 Polarscope Talimatları</a> (eski retikül deseni).</li>
+    <li><a href="https://www.astro-physics.info/tech_support/mounts/rapas-instructions.pdf">Astro-Physics RAPAS Talimatları</a> (doğu-batı tesviye gerekliliği).</li>
+    <li><a href="https://www.ioptron.com/v/manuals/3339_iPolarOperationManual.pdf">iOptron iPolar Kullanım Kılavuzu</a> ve <a href="https://www.ioptron.com/product-p/3339.htm">ürün sayfası</a>.</li>
+    <li><a href="https://www.qhyccd.com/polemaster/">QHY PoleMaster</a> ve <a href="https://www.qhyccd.com/uploadfile/2018/1225/20181225042450636.pdf">kullanım kılavuzu</a>.</li>
+    <li><a href="https://i.zwoastro.com/zwo-website/manuals/AM5_user_manual_V1.0.pdf">ZWO AM5 Kullanım Kılavuzu</a>.</li>
+    <li><a href="https://www.seestar.com/blogs/faq/s50">ZWO Seestar S50 SSS</a> (alt-azimut ve alan dönmesi).</li>
+    <li><a href="https://en.wikipedia.org/wiki/Sigma_Octantis">Sigma Octantis</a> (güney kutup yıldızının parlaklığı).</li>
+  </ul>
+
+  <p class="note" style="margin-top:28px">Son güncelleme: Ağustos 2026. Polaris'in kutba uzaklığı astronomik efemeristen hesaplanmıştır (J2026.0 için 37.7′). Yazılım sürümleri ve fiyatlar bu tarih itibarıyladır.</p>
+
+  </main>
+</div>
+<script>
+/* =======================================================================
+   Kutup hizalaması — ortak yardımcılar ve fizik çekirdeği
+   ======================================================================= */
+var NS = 'http://www.w3.org/2000/svg';
+function el(p, t, a) {
+  var e = document.createElementNS(NS, t);
+  for (var k in a) if (a[k] !== null && a[k] !== undefined) e.setAttribute(k, a[k]);
+  if (p) p.appendChild(e);
+  return e;
+}
+function txt(p, x, y, s, a) {
+  var e = el(p, 'text', a || {});
+  e.setAttribute('x', x); e.setAttribute('y', y);
+  e.textContent = s;
+  if (!e.getAttribute('font-family')) e.setAttribute('font-family', 'system-ui,sans-serif');
+  return e;
+}
+function mulberry32(seed) {
+  var t = seed >>> 0;
+  return function () {
+    t += 0x6D2B79F5;
+    var r = Math.imul(t ^ (t >>> 15), 1 | t);
+    r ^= r + Math.imul(r ^ (r >>> 7), 61 | r);
+    return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function gaussFrom(rnd) {
+  var u = 0, v = 0;
+  while (u === 0) u = rnd();
+  while (v === 0) v = rnd();
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+}
+
+var D2R = Math.PI / 180;
+var ARCMIN = D2R / 60;
+var OMEGA = 2 * Math.PI / 86164.0905 * 60 / D2R * 3600;   /* 902.464 yay sn/dk */
+var K_PHD2 = 12 / Math.PI;                                 /* 3.8197 */
+var BARRETT_K = 45000;
+
+function errorVector(altErr, azErr, latDeg) {
+  var a = altErr * ARCMIN;
+  var b = azErr * ARCMIN * Math.cos(latDeg * D2R);
+  return { a: a, b: b, epsArcmin: Math.hypot(a, b) / ARCMIN };
+}
+function decDrift(a, b, H) {
+  var h = H * 15 * D2R;
+  return OMEGA * (a * Math.sin(h) - b * Math.cos(h));
+}
+function raDriftF(a, b, H, dec) {
+  var h = H * 15 * D2R;
+  return -OMEGA * Math.sin(dec * D2R) * (a * Math.cos(h) + b * Math.sin(h));
+}
+function fieldRot(a, b, H, dec) {
+  var h = H * 15 * D2R;
+  var cd = Math.max(0.02, Math.cos(dec * D2R));
+  return OMEGA * (a * Math.cos(h) + b * Math.sin(h)) / cd;
+}
+function pixelScale(pxUm, flMm) { return 206.265 * pxUm / flMm; }
+function fmtErr(m) {
+  if (!isFinite(m)) return '—';
+  if (m < 1) return Math.round(m * 60) + '″';
+  if (m < 10) return m.toFixed(1) + '′';
+  return Math.round(m) + '′';
+}
+
+var SENSORS = [
+  { id: 'apsc', ad: 'APS-C · IMX571 (ASI2600)', w: 23.5, h: 15.7, px: 3.76 },
+  { id: 'imx533', ad: '1″ kare · IMX533 (ASI533)', w: 11.3, h: 11.3, px: 3.76 },
+  { id: 'm43', ad: '4/3″ · IMX294 (ASI294)', w: 19.1, h: 13.0, px: 4.63 },
+  { id: 'ff', ad: 'Tam kare · IMX455 (ASI6200)', w: 36.0, h: 24.0, px: 3.76 },
+  { id: 'imx585', ad: '1.2″ · IMX585 (ASI585)', w: 11.2, h: 6.3, px: 2.9 }
+];
+var TARGETS = [
+  { id: 'm42', ad: 'M42 Orion Bulutsusu', dec: -5.4 },
+  { id: 'm31', ad: 'M31 Andromeda', dec: 41.3 },
+  { id: 'ngc7000', ad: 'NGC 7000 Kuzey Amerika', dec: 44.3 },
+  { id: 'm51', ad: 'M51 Girdap Galaksisi', dec: 47.2 },
+  { id: 'm101', ad: 'M101 Fırıldak Galaksisi', dec: 54.3 },
+  { id: 'ic1396', ad: 'IC 1396 Fil Hortumu', dec: 57.5 },
+  { id: 'ngc7023', ad: 'NGC 7023 İris Bulutsusu', dec: 68.2 },
+  { id: 'm81', ad: 'M81 / M82', dec: 69.1 },
+  { id: 'ngc188', ad: 'NGC 188 (kutba çok yakın)', dec: 85.2 }
+];
+
+/* =======================================================================
+   ŞEKİL 1 — İki eksen
+   ======================================================================= */
+(function () {
+  var s = document.getElementById('fig-axes');
+  if (!s) return;
+  el(s, 'rect', { x: 0, y: 0, width: 800, height: 340, rx: 14, fill: '#1a1a19' });
+
+  var cx = 250, cy = 118;
+  /* gökyüzü daireleri */
+  [34, 62, 90].forEach(function (r, i) {
+    el(s, 'circle', { cx: cx, cy: cy, r: r, fill: 'none', stroke: '#2c2c2a', 'stroke-width': 1 });
+  });
+  /* yıldızlar */
+  var rnd = mulberry32(7);
+  for (var i = 0; i < 26; i++) {
+    var ang = rnd() * Math.PI * 2, rr = 20 + rnd() * 78;
+    el(s, 'circle', { cx: cx + Math.cos(ang) * rr, cy: cy + Math.sin(ang) * rr * 0.9, r: 1 + rnd() * 1.4, fill: '#c3c2b7', opacity: 0.55 + rnd() * 0.45 });
+  }
+  /* NCP */
+  el(s, 'circle', { cx: cx, cy: cy, r: 4.5, fill: 'none', stroke: '#199e70', 'stroke-width': 2 });
+  el(s, 'line', { x1: cx - 11, y1: cy, x2: cx + 11, y2: cy, stroke: '#199e70', 'stroke-width': 1.4 });
+  el(s, 'line', { x1: cx, y1: cy - 11, x2: cx, y2: cy + 11, stroke: '#199e70', 'stroke-width': 1.4 });
+  var tn = txt(s, cx + 16, cy + 26, 'Gök kutbu', { fill: '#199e70', 'font-size': 13, 'font-weight': 700 });
+  tn.setAttribute('paint-order', 'stroke'); tn.setAttribute('stroke', '#1a1a19'); tn.setAttribute('stroke-width', 4);
+  var tn2 = txt(s, cx + 16, cy + 42, 'gökyüzü bunun etrafında döner', { fill: '#898781', 'font-size': 11.5 });
+  tn2.setAttribute('paint-order', 'stroke'); tn2.setAttribute('stroke', '#1a1a19'); tn2.setAttribute('stroke-width', 4);
+
+  /* dönme oku */
+  var ap = el(s, 'path', { d: 'M ' + (cx + 90) + ' ' + cy + ' A 90 81 0 0 1 ' + (cx + 55) + ' ' + (cy + 64), fill: 'none', stroke: '#3987e5', 'stroke-width': 2, 'marker-end': 'url(#arrb)' });
+  var defs = el(s, 'defs', {});
+  var mk = el(defs, 'marker', { id: 'arrb', markerWidth: 8, markerHeight: 8, refX: 6, refY: 3, orient: 'auto' });
+  el(mk, 'path', { d: 'M0,0 L6,3 L0,6 z', fill: '#3987e5' });
+  var mk2 = el(defs, 'marker', { id: 'arro', markerWidth: 8, markerHeight: 8, refX: 6, refY: 3, orient: 'auto' });
+  el(mk2, 'path', { d: 'M0,0 L6,3 L0,6 z', fill: '#d95926' });
+
+  /* montür */
+  var mx = 150, my = 292;
+  el(s, 'rect', { x: mx - 34, y: my, width: 68, height: 12, rx: 3, fill: '#383835' });
+  el(s, 'rect', { x: mx - 13, y: my - 22, width: 26, height: 24, rx: 4, fill: '#2c2c2a', stroke: '#4a4a46' });
+  txt(s, mx, my + 30, 'montür', { fill: '#898781', 'font-size': 12, 'text-anchor': 'middle' });
+
+  /* gerçek eksen (kutba) */
+  el(s, 'line', { x1: mx, y1: my - 22, x2: cx, y2: cy, stroke: '#199e70', 'stroke-width': 2, 'stroke-dasharray': '6 5' });
+  /* montür ekseni — abartılı sapma */
+  var ang2 = Math.atan2(cy - (my - 22), cx - mx) - 13 * D2R;
+  var L = Math.hypot(cx - mx, cy - (my - 22)) * 0.93;
+  var ex = mx + Math.cos(ang2) * L, ey = (my - 22) + Math.sin(ang2) * L;
+  el(s, 'line', { x1: mx, y1: my - 22, x2: ex, y2: ey, stroke: '#d95926', 'stroke-width': 2.4, 'marker-end': 'url(#arro)' });
+  el(s, 'circle', { cx: ex, cy: ey, r: 3.5, fill: '#d95926' });
+  var te = txt(s, ex - 10, ey - 10, 'montür ekseni', { fill: '#d95926', 'font-size': 11.5, 'text-anchor': 'end', 'font-weight': 650 });
+  te.setAttribute('paint-order', 'stroke'); te.setAttribute('stroke', '#1a1a19'); te.setAttribute('stroke-width', 4);
+
+  /* açı yayı */
+  var r0 = 92;
+  var a1 = Math.atan2(cy - (my - 22), cx - mx), a2 = ang2;
+  el(s, 'path', {
+    d: 'M ' + (mx + Math.cos(a1) * r0) + ' ' + ((my - 22) + Math.sin(a1) * r0) +
+       ' A ' + r0 + ' ' + r0 + ' 0 0 0 ' + (mx + Math.cos(a2) * r0) + ' ' + ((my - 22) + Math.sin(a2) * r0),
+    fill: 'none', stroke: '#c98500', 'stroke-width': 2
+  });
+  txt(s, mx + Math.cos((a1 + a2) / 2) * (r0 + 20) - 4, (my - 22) + Math.sin((a1 + a2) / 2) * (r0 + 20) + 4,
+      'ε', { fill: '#c98500', 'font-size': 19, 'font-weight': 700, 'font-style': 'italic' });
+
+  txt(s, 470, 60, 'Gerçek kutup ekseni', { fill: '#199e70', 'font-size': 14, 'font-weight': 700 });
+  txt(s, 470, 80, 'Dünya\'nın dönme eksenine paralel.', { fill: '#c3c2b7', 'font-size': 13 });
+  txt(s, 470, 97, 'Hedeflediğiniz doğrultu bu.', { fill: '#898781', 'font-size': 12.5 });
+
+  txt(s, 470, 138, 'Montürünüzün RA ekseni', { fill: '#d95926', 'font-size': 14, 'font-weight': 700 });
+  txt(s, 470, 158, 'Montür gece boyunca bunun', { fill: '#c3c2b7', 'font-size': 13 });
+  txt(s, 470, 175, 'etrafında döner — doğru olsa da', { fill: '#c3c2b7', 'font-size': 13 });
+  txt(s, 470, 192, 'olmasa da.', { fill: '#c3c2b7', 'font-size': 13 });
+
+  txt(s, 470, 232, 'ε = kutup hizalama hatası', { fill: '#c98500', 'font-size': 14, 'font-weight': 700 });
+  txt(s, 470, 252, 'Yay dakikası cinsinden ölçülür.', { fill: '#c3c2b7', 'font-size': 13 });
+  txt(s, 470, 269, 'Şekilde abartılmıştır: gerçekte', { fill: '#898781', 'font-size': 12.5 });
+  txt(s, 470, 286, 'iyi bir hizalamada bu açı, bu', { fill: '#898781', 'font-size': 12.5 });
+  txt(s, 470, 303, 'sayfadaki bir noktanın binde biri.', { fill: '#898781', 'font-size': 12.5 });
+})();
+
+/* =======================================================================
+   ŞEKİL 2 — Hata bileşenleri
+   ======================================================================= */
+(function () {
+  var s = document.getElementById('fig-components');
+  if (!s) return;
+  el(s, 'rect', { x: 0, y: 0, width: 800, height: 300, rx: 14, fill: '#1a1a19' });
+
+  var cx = 178, cy = 150, sc = 12.6;  /* px per arcmin */
+  [1, 2, 5, 10].forEach(function (r) {
+    el(s, 'circle', { cx: cx, cy: cy, r: r * sc, fill: 'none', stroke: r === 5 ? '#383835' : '#2c2c2a', 'stroke-width': 1 });
+    if (r === 1) return;
+    var la = 135 * D2R;
+    var tl = txt(s, cx + Math.cos(la) * r * sc, cy + Math.sin(la) * r * sc + 4, r + '′', { fill: '#6b6a65', 'font-size': 10.5, 'text-anchor': 'middle' });
+    tl.setAttribute('paint-order', 'stroke'); tl.setAttribute('stroke', '#1a1a19'); tl.setAttribute('stroke-width', 3.5);
+  });
+  el(s, 'line', { x1: cx - 132, y1: cy, x2: cx + 132, y2: cy, stroke: '#2c2c2a' });
+  el(s, 'line', { x1: cx, y1: cy - 132, x2: cx, y2: cy + 132, stroke: '#2c2c2a' });
+  el(s, 'circle', { cx: cx, cy: cy, r: 3.5, fill: '#199e70' });
+  var tgk = txt(s, cx, cy + 126, 'gök kutbu = merkez', { fill: '#199e70', 'font-size': 11.5, 'text-anchor': 'middle' });
+  tgk.setAttribute('paint-order', 'stroke'); tgk.setAttribute('stroke', '#1a1a19'); tgk.setAttribute('stroke-width', 4);
+
+  /* hata noktası: az 4', alt 3' */
+  var px = cx + 4 * sc, py = cy - 3 * sc;
+  el(s, 'line', { x1: cx, y1: cy, x2: px, y2: cy, stroke: '#3987e5', 'stroke-width': 2.5 });
+  el(s, 'line', { x1: px, y1: cy, x2: px, y2: py, stroke: '#d95926', 'stroke-width': 2.5 });
+  el(s, 'line', { x1: cx, y1: cy, x2: px, y2: py, stroke: '#c98500', 'stroke-width': 2, 'stroke-dasharray': '4 4' });
+  el(s, 'circle', { cx: px, cy: py, r: 5, fill: '#c98500' });
+  function lab(x, y, t, col, anch) {
+    var e = txt(s, x, y, t, { fill: col, 'font-size': 12, 'font-weight': 650, 'text-anchor': anch || 'start' });
+    e.setAttribute('paint-order', 'stroke'); e.setAttribute('stroke', '#1a1a19'); e.setAttribute('stroke-width', 4);
+    return e;
+  }
+  lab(px, py - 14, 'montür ekseni', '#c98500', 'middle');
+  lab(cx + 2 * sc, cy + 18, 'azimut 4′', '#3987e5', 'middle');
+  lab(px + 9, cy - 1.5 * sc + 4, 'yükseklik 3′', '#d95926');
+  lab(cx - 6, cy - 2.3 * sc, 'toplam 5′', '#c98500', 'end');
+
+  /* sağ taraf */
+  txt(s, 400, 44, 'İki vida, iki bileşen', { fill: '#ffffff', 'font-size': 15, 'font-weight': 700 });
+
+  el(s, 'rect', { x: 400, y: 62, width: 356, height: 62, rx: 9, fill: '#141413', stroke: '#2c2c2a' });
+  el(s, 'circle', { cx: 428, cy: 93, r: 11, fill: 'none', stroke: '#d95926', 'stroke-width': 2.2 });
+  el(s, 'line', { x1: 428, y1: 82, x2: 428, y2: 104, stroke: '#d95926', 'stroke-width': 2.2 });
+  txt(s, 452, 87, 'Yükseklik (enlem) vidası', { fill: '#d95926', 'font-size': 13.5, 'font-weight': 650 });
+  txt(s, 452, 106, 'Ekseni yukarı-aşağı taşır. Vidada 1′ = gökyüzünde 1′.', { fill: '#898781', 'font-size': 12 });
+
+  el(s, 'rect', { x: 400, y: 136, width: 356, height: 78, rx: 9, fill: '#141413', stroke: '#2c2c2a' });
+  el(s, 'circle', { cx: 428, cy: 175, r: 11, fill: 'none', stroke: '#3987e5', 'stroke-width': 2.2 });
+  el(s, 'line', { x1: 417, y1: 175, x2: 439, y2: 175, stroke: '#3987e5', 'stroke-width': 2.2 });
+  txt(s, 452, 161, 'Azimut vidaları', { fill: '#3987e5', 'font-size': 13.5, 'font-weight': 650 });
+  txt(s, 452, 180, 'Ekseni doğu-batı taşır. Ama gökyüzünde', { fill: '#898781', 'font-size': 12 });
+  txt(s, 452, 197, '1′ için 1/cos(enlem) kadar çevirmelisiniz.', { fill: '#898781', 'font-size': 12 });
+
+  el(s, 'rect', { x: 400, y: 226, width: 356, height: 50, rx: 9, fill: '#16233a', stroke: '#24405f' });
+  txt(s, 416, 248, '40° enlemde: gökyüzünde 1′ = vidada 1.31′', { fill: '#c3c2b7', 'font-size': 12.5 });
+  txt(s, 416, 266, '60° enlemde: gökyüzünde 1′ = vidada 2.00′', { fill: '#c3c2b7', 'font-size': 12.5 });
+})();
+
+/* =======================================================================
+   ŞEKİL 3 — Saat açısına göre duyarlılık
+   ======================================================================= */
+(function () {
+  var s = document.getElementById('fig-ha');
+  if (!s) return;
+  el(s, 'rect', { x: 0, y: 0, width: 800, height: 430, rx: 14, fill: '#1a1a19' });
+
+  var x0 = 70, x1 = 748;
+  function X(h) { return x0 + (h + 6) / 12 * (x1 - x0); }
+
+  function panel(yTop, yBot, title, curves, showX) {
+    function Y(v) { return yBot - v * (yBot - yTop); }
+    el(s, 'line', { x1: x0, y1: yBot, x2: x1, y2: yBot, stroke: '#383835' });
+    el(s, 'line', { x1: x0, y1: yBot, x2: x0, y2: yTop - 4, stroke: '#383835' });
+    [0, 0.5, 1].forEach(function (v) {
+      el(s, 'line', { x1: x0, y1: Y(v), x2: x1, y2: Y(v), stroke: '#232322' });
+      txt(s, x0 - 8, Y(v) + 4, (v * 100).toFixed(0) + '%', { fill: '#6b6a65', 'font-size': 10.5, 'text-anchor': 'end' });
+    });
+    [-6, -4, -2, 0, 2, 4, 6].forEach(function (h) {
+      el(s, 'line', { x1: X(h), y1: yBot, x2: X(h), y2: yBot + 4, stroke: '#383835' });
+      if (showX) txt(s, X(h), yBot + 20, (h > 0 ? '+' : '') + h + 's', { fill: '#898781', 'font-size': 11.5, 'text-anchor': 'middle' });
+    });
+    var tt = txt(s, x0, yTop - 14, title, { fill: '#ffffff', 'font-size': 13.5, 'font-weight': 700 });
+    tt.setAttribute('paint-order', 'stroke'); tt.setAttribute('stroke', '#1a1a19'); tt.setAttribute('stroke-width', 4);
+    curves.forEach(function (c) {
+      var d = '';
+      for (var h = -6; h <= 6.0001; h += 0.1) d += (d ? ' L ' : 'M ') + X(h).toFixed(1) + ' ' + Y(c.f(h)).toFixed(1);
+      el(s, 'path', { d: d, fill: 'none', stroke: c.c, 'stroke-width': c.w || 2.6 });
+    });
+    return Y;
+  }
+
+  var AZ = function (h) { return Math.abs(Math.cos(h * 15 * D2R)); };
+  var AL = function (h) { return Math.abs(Math.sin(h * 15 * D2R)); };
+
+  var Y1 = panel(80, 222, 'DEC sürüklenmesine katkı', [{ f: AZ, c: '#3987e5' }, { f: AL, c: '#d95926' }], false);
+  var Y2 = panel(268, 348, 'Alan dönmesine katkı — tam tersi', [{ f: AL, c: '#3987e5', w: 2.2 }, { f: AZ, c: '#d95926', w: 2.2 }], true);
+  txt(s, (x0 + x1) / 2, 390, 'Saat açısı (meridyenden uzaklık)', { fill: '#898781', 'font-size': 12.5, 'text-anchor': 'middle' });
+
+  /* istasyon çizgileri */
+  function station(h, label, sub, col) {
+    el(s, 'line', { x1: X(h), y1: 80, x2: X(h), y2: 348, stroke: col, 'stroke-width': 1.2, 'stroke-dasharray': '3 4', opacity: 0.55 });
+    var t = txt(s, X(h), 30, label, { fill: col, 'font-size': 12, 'font-weight': 700, 'text-anchor': 'middle' });
+    t.setAttribute('paint-order', 'stroke'); t.setAttribute('stroke', '#1a1a19'); t.setAttribute('stroke-width', 4);
+    var t2 = txt(s, X(h), 44, sub, { fill: '#898781', 'font-size': 10.5, 'text-anchor': 'middle' });
+    t2.setAttribute('paint-order', 'stroke'); t2.setAttribute('stroke', '#1a1a19'); t2.setAttribute('stroke-width', 4);
+  }
+  station(0, 'AZİMUT İSTASYONU', 'meridyen', '#3987e5');
+  station(-6, 'YÜKSEKLİK', 'doğu ufku', '#d95926');
+  station(6, 'YÜKSEKLİK', 'batı ufku', '#d95926');
+
+  /* açıklama */
+  el(s, 'line', { x1: 70, y1: 410, x2: 96, y2: 410, stroke: '#3987e5', 'stroke-width': 2.6 });
+  txt(s, 104, 414, 'azimut hatasının katkısı', { fill: '#c3c2b7', 'font-size': 12 });
+  el(s, 'line', { x1: 300, y1: 410, x2: 326, y2: 410, stroke: '#d95926', 'stroke-width': 2.6 });
+  txt(s, 334, 414, 'yükseklik hatasının katkısı', { fill: '#c3c2b7', 'font-size': 12 });
+})();
+
+/* =======================================================================
+   ŞEKİL 4 — Alan dönmesi
+   ======================================================================= */
+(function () {
+  var s = document.getElementById('fig-rot');
+  if (!s) return;
+  el(s, 'rect', { x: 0, y: 0, width: 800, height: 400, rx: 14, fill: '#1a1a19' });
+
+  /* --- sol: dönen kadraj --- */
+  var fx = 46, fy = 62, fw = 296, fh = 218;
+  el(s, 'rect', { x: fx, y: fy, width: fw, height: fh, rx: 6, fill: '#0b0b0a', stroke: '#2c2c2a' });
+  txt(s, fx, fy - 14, 'Guiding ile çekilmiş bir kare', { fill: '#ffffff', 'font-size': 14, 'font-weight': 700 });
+
+  var gcx = fx + fw / 2, gcy = fy + fh / 2;
+  var rnd = mulberry32(21), rot = 0.155;   /* radyan, abartılı */
+  for (var i = 0; i < 46; i++) {
+    var sx = fx + 10 + rnd() * (fw - 20), sy = fy + 10 + rnd() * (fh - 20);
+    var dx = sx - gcx, dy = sy - gcy, r = Math.hypot(dx, dy);
+    var br = 0.35 + rnd() * 0.65;
+    if (r < 12) continue;
+    var ex = gcx + (dx * Math.cos(rot) - dy * Math.sin(rot));
+    var ey = gcy + (dx * Math.sin(rot) + dy * Math.cos(rot));
+    el(s, 'path', {
+      d: 'M ' + sx.toFixed(1) + ' ' + sy.toFixed(1) + ' A ' + r.toFixed(1) + ' ' + r.toFixed(1) + ' 0 0 1 ' + ex.toFixed(1) + ' ' + ey.toFixed(1),
+      fill: 'none', stroke: '#e8e6dd', 'stroke-width': 1.1 + br, 'stroke-linecap': 'round', opacity: 0.35 + br * 0.55
+    });
+  }
+  [46, 86].forEach(function (rr) {
+    el(s, 'circle', { cx: gcx, cy: gcy, r: rr, fill: 'none', stroke: '#232322', 'stroke-width': 1, 'stroke-dasharray': '3 6' });
+  });
+  el(s, 'circle', { cx: gcx, cy: gcy, r: 8, fill: 'none', stroke: '#e66767', 'stroke-width': 1.6 });
+  el(s, 'circle', { cx: gcx, cy: gcy, r: 2.4, fill: '#e66767' });
+  var t1 = txt(s, gcx + 13, gcy + 4, 'rehber yıldız — sabit', { fill: '#e66767', 'font-size': 11.5, 'font-weight': 650 });
+  t1.setAttribute('paint-order', 'stroke'); t1.setAttribute('stroke', '#0b0b0a'); t1.setAttribute('stroke-width', 3.5);
+  var t2 = txt(s, fx + fw - 10, fy + 20, 'köşede en uzun iz', { fill: '#c98500', 'font-size': 11.5, 'text-anchor': 'end', 'font-weight': 650 });
+  t2.setAttribute('paint-order', 'stroke'); t2.setAttribute('stroke', '#0b0b0a'); t2.setAttribute('stroke-width', 3.5);
+  txt(s, fx, fy + fh + 22, 'İz uzunluğu = dönme açısı × merkeze uzaklık', { fill: '#898781', 'font-size': 12 });
+
+  /* --- sağ: 1/cos δ eğrisi --- */
+  var ax0 = 430, ax1 = 762, ay0 = 300, ay1 = 62;
+  function X(d) { return ax0 + d / 88 * (ax1 - ax0); }
+  function Y(v) { return ay0 - Math.min(v, 12) / 12 * (ay0 - ay1); }
+  txt(s, ax0, 48, 'Aynı hata, farklı deklinasyon', { fill: '#ffffff', 'font-size': 14, 'font-weight': 700 });
+  el(s, 'line', { x1: ax0, y1: ay0, x2: ax1, y2: ay0, stroke: '#383835' });
+  el(s, 'line', { x1: ax0, y1: ay0, x2: ax0, y2: ay1 - 4, stroke: '#383835' });
+  [1, 3, 6, 9, 12].forEach(function (v) {
+    el(s, 'line', { x1: ax0, y1: Y(v), x2: ax1, y2: Y(v), stroke: '#232322' });
+    txt(s, ax0 - 7, Y(v) + 4, v + '×', { fill: '#6b6a65', 'font-size': 11, 'text-anchor': 'end' });
+  });
+  [0, 20, 40, 60, 80].forEach(function (d) {
+    el(s, 'line', { x1: X(d), y1: ay0, x2: X(d), y2: ay0 + 5, stroke: '#383835' });
+    txt(s, X(d), ay0 + 20, d + '°', { fill: '#898781', 'font-size': 11.5, 'text-anchor': 'middle' });
+  });
+  txt(s, (ax0 + ax1) / 2, ay0 + 40, 'Hedefin deklinasyonu', { fill: '#898781', 'font-size': 12.5, 'text-anchor': 'middle' });
+
+  var d = '';
+  for (var dd = 0; dd <= 86.5; dd += 0.5) {
+    var v = 1 / Math.cos(dd * D2R);
+    if (v > 12.4) break;
+    d += (d ? ' L ' : 'M ') + X(dd).toFixed(1) + ' ' + Y(v).toFixed(1);
+  }
+  el(s, 'path', { d: d, fill: 'none', stroke: '#c98500', 'stroke-width': 2.8 });
+
+  var marks = [[-5.4, 'M42', 1, -9], [41.3, 'M31', -1, -9], [69.1, 'M81', -1, 20], [85.2, 'NGC 188', -1, 20]];
+  marks.forEach(function (m) {
+    var dd2 = Math.max(0, m[0]), v = 1 / Math.cos(dd2 * D2R);
+    if (v > 12) v = 12;
+    el(s, 'circle', { cx: X(dd2), cy: Y(v), r: 4, fill: '#c98500', stroke: '#1a1a19', 'stroke-width': 1.5 });
+    var tt = txt(s, X(dd2) + (m[2] > 0 ? 8 : -9), Y(v) + m[3], m[1] + ' ' + v.toFixed(1) + '×',
+        { fill: '#c3c2b7', 'font-size': 11.5, 'text-anchor': m[2] > 0 ? 'start' : 'end', 'font-weight': 650 });
+    tt.setAttribute('paint-order', 'stroke'); tt.setAttribute('stroke', '#1a1a19'); tt.setAttribute('stroke-width', 4);
+  });
+  txt(s, ax0 + 14, ay1 + 16, 'dönme  =  1 / cos δ', { fill: '#c98500', 'font-size': 12.5, 'font-weight': 650 });
+  txt(s, 430, 356, 'Ekvatorda önemsiz olan hata, kutba yakın hedefte', { fill: '#898781', 'font-size': 12 });
+  txt(s, 430, 374, 'kat kat büyür. Aynı montür, aynı gece.', { fill: '#898781', 'font-size': 12 });
+})();
+
+/* =======================================================================
+   ŞEKİL 5 — Polarscope
+   ======================================================================= */
+(function () {
+  var s = document.getElementById('fig-scope');
+  if (!s) return;
+  el(s, 'rect', { x: 0, y: 0, width: 800, height: 400, rx: 14, fill: '#1a1a19' });
+
+  /* --- sol: retikül --- */
+  var cx = 180, cy = 192, R = 106;
+  txt(s, 44, 44, 'Retikülde Polaris\'in yeri', { fill: '#ffffff', 'font-size': 14, 'font-weight': 700 });
+  el(s, 'circle', { cx: cx, cy: cy, r: R + 22, fill: '#0b0b0a', stroke: '#2c2c2a', 'stroke-width': 2 });
+  el(s, 'circle', { cx: cx, cy: cy, r: R, fill: 'none', stroke: '#7db4f0', 'stroke-width': 1.6 });
+  /* 12 saatlik kadran */
+  for (var k = 0; k < 24; k++) {
+    var a2 = (k / 24) * Math.PI * 2 - Math.PI / 2;
+    var major = k % 2 === 0;
+    el(s, 'line', {
+      x1: cx + Math.cos(a2) * (R - (major ? 10 : 5)), y1: cy + Math.sin(a2) * (R - (major ? 10 : 5)),
+      x2: cx + Math.cos(a2) * R, y2: cy + Math.sin(a2) * R,
+      stroke: '#7db4f0', 'stroke-width': major ? 1.6 : 1, opacity: major ? 0.9 : 0.5
+    });
+  }
+  [[0, '12'], [6, '3'], [12, '6'], [18, '9']].forEach(function (m) {
+    var a3 = (m[0] / 24) * Math.PI * 2 - Math.PI / 2;
+    txt(s, cx + Math.cos(a3) * (R + 15), cy + Math.sin(a3) * (R + 15) + 4, m[1],
+        { fill: '#7db4f0', 'font-size': 12.5, 'text-anchor': 'middle', 'font-weight': 650 });
+  });
+  /* merkez artı = gök kutbu */
+  el(s, 'line', { x1: cx - 15, y1: cy, x2: cx + 15, y2: cy, stroke: '#199e70', 'stroke-width': 1.6 });
+  el(s, 'line', { x1: cx, y1: cy - 15, x2: cx, y2: cy + 15, stroke: '#199e70', 'stroke-width': 1.6 });
+  el(s, 'circle', { cx: cx, cy: cy, r: 3, fill: '#199e70' });
+  var tg = txt(s, cx - 20, cy + 26, 'gök kutbu', { fill: '#199e70', 'font-size': 11, 'text-anchor': 'end' });
+  tg.setAttribute('paint-order', 'stroke'); tg.setAttribute('stroke', '#0b0b0a'); tg.setAttribute('stroke-width', 3.5);
+  /* Polaris — 4:30 */
+  var pa = (4.5 / 12) * Math.PI * 2 - Math.PI / 2;
+  var pxx = cx + Math.cos(pa) * R, pyy = cy + Math.sin(pa) * R;
+  el(s, 'line', { x1: cx, y1: cy, x2: pxx, y2: pyy, stroke: '#c98500', 'stroke-width': 1.4, 'stroke-dasharray': '4 4' });
+  el(s, 'circle', { cx: pxx, cy: pyy, r: 6, fill: '#ffffff' });
+  el(s, 'circle', { cx: pxx, cy: pyy, r: 11, fill: 'none', stroke: '#d95926', 'stroke-width': 1.8 });
+  var tp = txt(s, pxx + 2, pyy + 30, 'Polaris — 4:30', { fill: '#d95926', 'font-size': 12.5, 'font-weight': 700, 'text-anchor': 'middle' });
+  tp.setAttribute('paint-order', 'stroke'); tp.setAttribute('stroke', '#0b0b0a'); tp.setAttribute('stroke-width', 4);
+  var tr = txt(s, cx + Math.cos(pa) * R * 0.5 + 26, cy + Math.sin(pa) * R * 0.5 - 2, '37.7′',
+      { fill: '#c98500', 'font-size': 12, 'font-weight': 650, 'text-anchor': 'middle' });
+  tr.setAttribute('paint-order', 'stroke'); tr.setAttribute('stroke', '#0b0b0a'); tr.setAttribute('stroke-width', 4);
+
+  txt(s, 44, 348, 'El kumandası "SS:DD" der; Polaris\'i o saate', { fill: '#898781', 'font-size': 12 });
+  txt(s, 44, 366, 'koyarsınız. Merkeze koymak 37.7′ hata bırakır', { fill: '#898781', 'font-size': 12 });
+  txt(s, 44, 384, '— kabul edilebilirin yaklaşık 8 katı.', { fill: '#898781', 'font-size': 12 });
+
+  /* --- sağ: kolimasyon --- */
+  txt(s, 400, 44, 'Görmediğiniz hata: kolimasyon', { fill: '#ffffff', 'font-size': 14, 'font-weight': 700 });
+  var bx = 400, by = 66, bw = 356, bh = 168;
+  el(s, 'rect', { x: bx, y: by, width: bw, height: bh, rx: 9, fill: '#0b0b0a', stroke: '#2c2c2a' });
+
+  var ox = bx + 44, oy = by + bh / 2, LEN = 250;
+  el(s, 'line', { x1: ox, y1: oy, x2: ox + LEN, y2: oy, stroke: '#199e70', 'stroke-width': 2, 'stroke-dasharray': '7 5' });
+  var tra = txt(s, ox + 128, oy - 9, 'gerçek RA ekseni', { fill: '#199e70', 'font-size': 11.5 });
+  tra.setAttribute('paint-order', 'stroke'); tra.setAttribute('stroke', '#0b0b0a'); tra.setAttribute('stroke-width', 4);
+
+  var oa = -10 * D2R;
+  el(s, 'line', { x1: ox, y1: oy, x2: ox + Math.cos(oa) * LEN, y2: oy + Math.sin(oa) * LEN, stroke: '#e66767', 'stroke-width': 2.2 });
+  var to1 = txt(s, ox + LEN - 16, oy + Math.sin(oa) * LEN - 13, 'polarscope optik ekseni', { fill: '#e66767', 'font-size': 11.5, 'text-anchor': 'end' });
+  to1.setAttribute('paint-order', 'stroke'); to1.setAttribute('stroke', '#0b0b0a'); to1.setAttribute('stroke-width', 4);
+  el(s, 'line', { x1: ox, y1: oy, x2: ox + Math.cos(-oa) * LEN, y2: oy + Math.sin(-oa) * LEN, stroke: '#e66767', 'stroke-width': 1.6, 'stroke-dasharray': '5 4', opacity: 0.6 });
+  var to2 = txt(s, ox + LEN - 16, oy + Math.sin(-oa) * LEN + 22, '180° döndürünce', { fill: '#e66767', 'font-size': 11, opacity: 0.85, 'text-anchor': 'end' });
+  to2.setAttribute('paint-order', 'stroke'); to2.setAttribute('stroke', '#0b0b0a'); to2.setAttribute('stroke-width', 4);
+  el(s, 'circle', { cx: ox, cy: oy, r: 4, fill: '#c3c2b7' });
+
+  var xx = ox + LEN - 6;
+  el(s, 'line', { x1: xx, y1: oy + Math.sin(oa) * (LEN - 6), x2: xx, y2: oy + Math.sin(-oa) * (LEN - 6), stroke: '#c98500', 'stroke-width': 1.8 });
+  el(s, 'line', { x1: xx - 5, y1: oy + Math.sin(oa) * (LEN - 6), x2: xx + 5, y2: oy + Math.sin(oa) * (LEN - 6), stroke: '#c98500', 'stroke-width': 1.8 });
+  el(s, 'line', { x1: xx - 5, y1: oy + Math.sin(-oa) * (LEN - 6), x2: xx + 5, y2: oy + Math.sin(-oa) * (LEN - 6), stroke: '#c98500', 'stroke-width': 1.8 });
+  var tt2 = txt(s, xx + 9, oy + 4, 'sapma', { fill: '#c98500', 'font-size': 11.5, 'font-weight': 650 });
+  tt2.setAttribute('paint-order', 'stroke'); tt2.setAttribute('stroke', '#0b0b0a'); tt2.setAttribute('stroke-width', 4);
+  var tt3 = txt(s, xx + 9, oy + 18, '2 ×', { fill: '#c98500', 'font-size': 11.5, 'font-weight': 650 });
+  tt3.setAttribute('paint-order', 'stroke'); tt3.setAttribute('stroke', '#0b0b0a'); tt3.setAttribute('stroke-width', 4);
+
+  txt(s, 400, 262, 'Montürü RA\'da 180° çevirin. Hedef merkezde kalmıyorsa', { fill: '#c3c2b7', 'font-size': 12.5 });
+  txt(s, 400, 280, 'polarscope kaçıktır — ve sapmanın YARISINI düzeltirsiniz,', { fill: '#c3c2b7', 'font-size': 12.5 });
+  txt(s, 400, 298, 'çünkü gerçek eksen tam ortadadır.', { fill: '#c3c2b7', 'font-size': 12.5 });
+  txt(s, 400, 330, 'Bu hatayı göz merceğinden ASLA göremezsiniz —', { fill: '#e66767', 'font-size': 12.5, 'font-weight': 650 });
+  txt(s, 400, 348, 'her şey mükemmel hizalanmış görünür.', { fill: '#e66767', 'font-size': 12.5, 'font-weight': 650 });
+})();
+
+/* =======================================================================
+   ŞEKİL 6 — Karar ağacı
+   ======================================================================= */
+(function () {
+  var s = document.getElementById('fig-tree');
+  if (!s) return;
+  el(s, 'rect', { x: 0, y: 0, width: 800, height: 430, rx: 14, fill: '#1a1a19' });
+
+  function box(x, y, w, h, title, sub, col, fill) {
+    el(s, 'rect', { x: x, y: y, width: w, height: h, rx: 9, fill: fill || '#141413', stroke: col, 'stroke-width': 1.6 });
+    var t = txt(s, x + w / 2, y + (sub ? 24 : h / 2 + 5), title, { fill: col, 'font-size': 13.5, 'font-weight': 700, 'text-anchor': 'middle' });
+    if (sub) {
+      sub.split('|').forEach(function (line, i) {
+        txt(s, x + w / 2, y + 43 + i * 16, line, { fill: '#898781', 'font-size': 11.5, 'text-anchor': 'middle' });
+      });
+    }
+    return t;
+  }
+  function link(x1, y1, x2, y2, label) {
+    el(s, 'path', { d: 'M ' + x1 + ' ' + y1 + ' C ' + x1 + ' ' + ((y1 + y2) / 2) + ', ' + x2 + ' ' + ((y1 + y2) / 2) + ', ' + x2 + ' ' + y2, fill: 'none', stroke: '#383835', 'stroke-width': 1.6 });
+    if (label) {
+      var t = txt(s, (x1 + x2) / 2, (y1 + y2) / 2 + 4, label, { fill: '#c3c2b7', 'font-size': 11.5, 'text-anchor': 'middle', 'font-weight': 650 });
+      t.setAttribute('paint-order', 'stroke'); t.setAttribute('stroke', '#1a1a19'); t.setAttribute('stroke-width', 5);
+    }
+  }
+
+  box(272, 24, 256, 40, 'Kutup bölgesini görebiliyor musunuz?', '', '#ffffff');
+
+  link(340, 64, 168, 108, 'HAYIR');
+  link(460, 64, 610, 108, 'EVET');
+
+  box(56, 108, 224, 40, 'Bilgisayar var mı?', '', '#c3c2b7');
+  box(500, 108, 224, 40, 'Bilgisayar var mı?', '', '#c3c2b7');
+
+  link(112, 148, 92, 196, 'evet');
+  link(224, 148, 236, 196, 'hayır');
+  link(556, 148, 528, 196, 'evet');
+  link(668, 148, 690, 196, 'hayır');
+
+  box(24, 196, 136, 74, 'N.I.N.A. TPPA', 'ya da Ekos|kutup gerekmez', '#199e70');
+  box(176, 196, 136, 74, 'ASIAIR', 'All-Sky PA|(doğrulayın)', '#c98500');
+  box(452, 196, 152, 74, 'SharpCap', '~90° dönüş|0.6–2.5° FOV', '#3987e5');
+  box(620, 196, 156, 74, 'Polarscope', 'ya da iPolar /|PoleMaster', '#c98500');
+
+  el(s, 'line', { x1: 40, y1: 300, x2: 760, y2: 300, stroke: '#2c2c2a' });
+
+  box(40, 322, 340, 82, 'Sonucu doğrulamak isterseniz', 'PHD2 → Guiding Assistant → "Polar Alignment Error"|Ölçümü ekvatora yakın, meridyende yapın|10 dakika çalıştırın', '#e66767', '#141413');
+  box(408, 322, 352, 82, 'En yüksek doğruluk gerekiyorsa', 'PHD2 Drift Align — "altın standart"|Meridyende azimut, ufukta yükseklik|Yavaş ama en güvenilir', '#d55181', '#141413');
+})();
+</script>
+<script>
+/* =======================================================================
+   YAZILIM EKRANLARININ YENİDEN ÇİZİMİ
+   Bunlar gerçek ekran görüntüsü değildir: telif sorunu olmasın diye
+   sıfırdan çizilmiş temsilî panellerdir. Etiketler, ilgili programın
+   kaynak kodundan / resmî kılavuzundan birebir alınmıştır.
+   ======================================================================= */
+(function () {
+  var UI = {
+    bg: '#1b1d20', chrome: '#26292d', line: '#3a3e44', line2: '#2f3338',
+    ink: '#e2e5e8', ink2: '#a9b0b7', ink3: '#7b838b',
+    ok: '#4caf50', bad: '#e05252', blue: '#4a90d9', amber: '#e0a63a',
+    mono: 'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace',
+    sans: 'system-ui,-apple-system,Segoe UI,Roboto,sans-serif'
+  };
+
+  function win(s, x, y, w, h, title) {
+    el(s, 'rect', { x: x, y: y, width: w, height: h, rx: 7, fill: UI.bg, stroke: UI.line, 'stroke-width': 1.2 });
+    el(s, 'path', { d: 'M ' + x + ' ' + (y + 7) + ' a 7 7 0 0 1 7 -7 h ' + (w - 14) + ' a 7 7 0 0 1 7 7 v 21 h ' + (-w) + ' z', fill: UI.chrome });
+    el(s, 'line', { x1: x, y1: y + 28, x2: x + w, y2: y + 28, stroke: UI.line });
+    [0, 1, 2].forEach(function (i) {
+      el(s, 'circle', { cx: x + 14 + i * 13, cy: y + 14, r: 4, fill: ['#5a5f66', '#5a5f66', '#5a5f66'][i] });
+    });
+    txt(s, x + 60, y + 19, title, { fill: UI.ink2, 'font-size': 12, 'font-family': UI.sans, 'font-weight': 600 });
+  }
+
+  function grp(s, x, y, w, h, label) {
+    el(s, 'rect', { x: x, y: y, width: w, height: h, rx: 4, fill: 'none', stroke: UI.line });
+    el(s, 'rect', { x: x + 9, y: y - 7, width: label.length * 5.9 + 10, height: 14, fill: UI.bg });
+    txt(s, x + 14, y + 4, label, { fill: UI.ink2, 'font-size': 10.5, 'font-family': UI.sans, 'font-weight': 600 });
+  }
+
+  function fld(s, x, y, w, h, value, opts) {
+    opts = opts || {};
+    el(s, 'rect', { x: x, y: y, width: w, height: h, rx: 3, fill: '#131518', stroke: UI.line2 });
+    txt(s, x + 7, y + h / 2 + 4, value, { fill: opts.color || UI.ink, 'font-size': opts.size || 11, 'font-family': opts.mono === false ? UI.sans : UI.mono });
+  }
+
+  function btn(s, x, y, w, h, label, kind) {
+    var f = kind === 'ok' ? '#2f6b33' : (kind === 'p' ? '#33383e' : '#2b2f34');
+    var st = kind === 'ok' ? '#4caf50' : UI.line;
+    el(s, 'rect', { x: x, y: y, width: w, height: h, rx: 4, fill: f, stroke: st });
+    txt(s, x + w / 2, y + h / 2 + 4, label, { fill: kind === 'ok' ? '#d7f5d9' : UI.ink, 'font-size': 11, 'font-family': UI.sans, 'text-anchor': 'middle', 'font-weight': 600 });
+  }
+
+  function chk(s, x, y, label, on) {
+    el(s, 'rect', { x: x, y: y - 8, width: 11, height: 11, rx: 2, fill: on ? UI.blue : '#131518', stroke: on ? UI.blue : UI.line });
+    if (on) el(s, 'path', { d: 'M ' + (x + 2.5) + ' ' + (y - 2.5) + ' l 2.4 2.4 l 4.2 -5', fill: 'none', stroke: '#fff', 'stroke-width': 1.7, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' });
+    txt(s, x + 18, y + 1, label, { fill: UI.ink2, 'font-size': 11, 'font-family': UI.sans });
+  }
+
+  /** açıklama balonu (Türkçe) */
+  function note(s, x, y, w, lines, col) {
+    col = col || '#c98500';
+    el(s, 'rect', { x: x, y: y, width: w, height: 16 + lines.length * 15, rx: 6, fill: '#241f14', stroke: col });
+    lines.forEach(function (l, i) {
+      txt(s, x + 11, y + 19 + i * 15, l, { fill: '#e9d3a2', 'font-size': 11.5, 'font-family': UI.sans });
+    });
+  }
+  function arrow(s, x1, y1, x2, y2, col) {
+    col = col || '#c98500';
+    var id = 'ar' + Math.round(x1 * 7 + y1 * 13 + x2 * 3 + y2);
+    var defs = el(s, 'defs', {});
+    var m = el(defs, 'marker', { id: id, markerWidth: 9, markerHeight: 9, refX: 7, refY: 3.5, orient: 'auto' });
+    el(m, 'path', { d: 'M0,0 L7,3.5 L0,7 z', fill: col });
+    el(s, 'path', { d: 'M ' + x1 + ' ' + y1 + ' L ' + x2 + ' ' + y2, stroke: col, 'stroke-width': 1.7, fill: 'none', 'marker-end': 'url(#' + id + ')' });
+  }
+
+  /* ==================================================================
+     ŞEKİL 5 — PHD2 Guiding Assistant
+     ================================================================== */
+  (function () {
+    var s = document.getElementById('fig-ga');
+    if (!s) return;
+    el(s, 'rect', { x: 0, y: 0, width: 800, height: 470, rx: 14, fill: '#1a1a19' });
+    win(s, 12, 12, 776, 446, 'Guiding Assistant');
+
+    txt(s, 30, 58, 'Guiding output is disabled and star movement is being measured.', { fill: UI.ink, 'font-size': 11.5, 'font-family': UI.sans, 'font-weight': 600 });
+    txt(s, 30, 74, 'Click Stop after 2 minutes (longer if you’re measuring RA tracking accuracy of the mount).', { fill: UI.ink, 'font-size': 11.5, 'font-family': UI.sans, 'font-weight': 600 });
+
+    /* --- Measurement Status --- */
+    grp(s, 28, 98, 356, 84, 'Measurement Status');
+    var ms = [['Start time', '21:14:07', 'Exposure time', '2s'],
+              ['SNR', '24.6', 'Star mass', '18450'],
+              ['Elapsed time', '137s', 'Sample count', '68']];
+    ms.forEach(function (r, i) {
+      var y = 122 + i * 21;
+      txt(s, 42, y, r[0], { fill: UI.ink2, 'font-size': 10.5, 'font-family': UI.sans });
+      txt(s, 132, y, r[1], { fill: UI.ink, 'font-size': 10.5, 'font-family': UI.mono });
+      txt(s, 214, y, r[2], { fill: UI.ink2, 'font-size': 10.5, 'font-family': UI.sans });
+      txt(s, 312, y, r[3], { fill: UI.ink, 'font-size': 10.5, 'font-family': UI.mono });
+    });
+
+    /* --- High-frequency Star Motion --- */
+    grp(s, 28, 206, 356, 82, 'High-frequency Star Motion');
+    [['Right ascension, RMS', '0.31 px (  0.41 arc-sec)'],
+     ['Declination, RMS', '0.28 px (  0.37 arc-sec)'],
+     ['Total, RMS', '0.42 px (  0.55 arc-sec)']].forEach(function (r, i) {
+      var y = 230 + i * 21;
+      txt(s, 42, y, r[0], { fill: UI.ink2, 'font-size': 10.5, 'font-family': UI.sans });
+      txt(s, 208, y, r[1], { fill: UI.ink, 'font-size': 10.5, 'font-family': UI.mono });
+    });
+
+    /* --- Other Star Motion --- */
+    grp(s, 400, 98, 372, 190, 'Other Star Motion');
+    var os = [['Right ascension, Peak', '0.94 px (  1.23 arc-sec)'],
+              ['Declination, Peak', '0.81 px (  1.06 arc-sec)'],
+              ['Right ascension, Peak-Peak', '1.88 px (  2.46 arc-sec)'],
+              ['Right ascension Drift Rate', '0.11 px/min ( 0.14 arc-sec/min)'],
+              ['Right ascension Max Drift Rate', '0.28 px/min ( 0.37 arc-sec/min)'],
+              ['Drift-limiting exposure', '9.6 s'],
+              ['Declination Drift Rate', '0.35 px/min ( 0.46 arc-sec/min)'],
+              ['Declination Backlash', '>= 1200  +/-  150 ms'],
+              ['Polar Alignment Error', '1.7 arc-min']];
+    os.forEach(function (r, i) {
+      var y = 122 + i * 19;
+      var hot = i === 8;
+      if (hot) el(s, 'rect', { x: 406, y: y - 13, width: 360, height: 19, rx: 3, fill: 'rgba(201,133,0,.18)', stroke: '#c98500' });
+      txt(s, 414, y, r[0], { fill: hot ? '#ffd98a' : UI.ink2, 'font-size': 10.5, 'font-family': UI.sans, 'font-weight': hot ? 700 : 400 });
+      txt(s, 596, y, r[1], { fill: hot ? '#ffd98a' : UI.ink, 'font-size': 10.5, 'font-family': UI.mono, 'font-weight': hot ? 700 : 400 });
+    });
+
+    /* --- alt kontroller --- */
+    chk(s, 30, 320, 'Measure Declination Backlash', true);
+    btn(s, 470, 308, 74, 24, 'Start');
+    btn(s, 552, 308, 124, 24, 'Review previous');
+    btn(s, 684, 308, 74, 24, 'Stop', 'p');
+    txt(s, 200, 350, 'Measuring...', { fill: UI.ink, 'font-size': 11.5, 'font-family': UI.sans, 'font-weight': 700, 'text-anchor': 'middle' });
+
+    /* --- Türkçe açıklama --- */
+    note(s, 400, 366, 372, [
+      'Aradığınız satır bu. Sürüklenme hızını 3.82 ile çarpar,',
+      'sonucu yay dakikası olarak yazar. Başında "> " varsa',
+      'PHD2 deklinasyonu bilmiyor: sayı bir ALT SINIRDIR.'
+    ]);
+    arrow(s, 432, 364, 432, 286);
+
+    note(s, 28, 366, 352, [
+      'Ölçüm sırasında guiding çıkışı kapatılır — yıldızın',
+      'gezinmesi normaldir. En az 2 dakika, mümkünse',
+      '10 dakika bekleyin; kutup hatası okuması geç oturur.'
+    ], '#3987e5');
+  })();
+
+  /* ==================================================================
+     ŞEKİL 6 — PHD2 Drift Align
+     ================================================================== */
+  (function () {
+    var s = document.getElementById('fig-drift');
+    if (!s) return;
+    el(s, 'rect', { x: 0, y: 0, width: 800, height: 400, rx: 14, fill: '#1a1a19' });
+    win(s, 12, 12, 776, 300, 'Drift Align - Azimuth Adjustment');
+
+    /* yön simgesi */
+    el(s, 'circle', { cx: 62, cy: 92, r: 26, fill: '#131518', stroke: UI.line });
+    el(s, 'path', { d: 'M 62 72 L 68 92 L 62 88 L 56 92 z', fill: UI.blue });
+    el(s, 'path', { d: 'M 62 112 L 56 92 L 62 96 L 68 92 z', fill: '#5a5f66' });
+
+    [ 'Slew to near the Meridian and the Equator.',
+      'Press Drift to measure drift, watch the Dec trend line.',
+      'Press Adjust and adjust your mount’s azimuth.',
+      'Repeat Drift/Adjust until alignment is complete.',
+      'Then, click Altitude to begin Altitude adjustment.' ].forEach(function (l, i) {
+      txt(s, 104, 60 + i * 16, l, { fill: i === 0 ? UI.ink : UI.ink2, 'font-size': 11.5, 'font-family': UI.sans });
+    });
+
+    /* Scope Pointing */
+    grp(s, 30, 156, 456, 96, 'Scope Pointing');
+    txt(s, 168, 178, 'Meridian Offset (°)', { fill: UI.ink2, 'font-size': 10.5, 'font-family': UI.sans, 'text-anchor': 'middle' });
+    txt(s, 312, 178, 'Declination (°)', { fill: UI.ink2, 'font-size': 10.5, 'font-family': UI.sans, 'text-anchor': 'middle' });
+    txt(s, 44, 202, 'Current', { fill: UI.ink2, 'font-size': 11, 'font-family': UI.sans });
+    fld(s, 112, 190, 112, 18, '--');
+    fld(s, 256, 190, 112, 18, '--');
+    txt(s, 44, 230, 'Slew To', { fill: UI.ink2, 'font-size': 11, 'font-family': UI.sans });
+    fld(s, 112, 218, 112, 18, '0');
+    fld(s, 256, 218, 112, 18, '0');
+    btn(s, 380, 218, 46, 18, 'Slew');
+    btn(s, 432, 218, 46, 18, 'Save');
+
+    /* notlar */
+    txt(s, 508, 168, 'Azimuth adjustment notes', { fill: UI.ink2, 'font-size': 11, 'font-family': UI.sans });
+    el(s, 'rect', { x: 508, y: 176, width: 262, height: 76, rx: 3, fill: '#131518', stroke: UI.line2 });
+    txt(s, 516, 194, 'azimut düğmesini saat yönünde çevirince', { fill: UI.ink3, 'font-size': 10.5, 'font-family': UI.sans });
+    txt(s, 516, 209, 'DEC eğimi AŞAĞI gitti — doğru yön bu', { fill: UI.ink3, 'font-size': 10.5, 'font-family': UI.sans });
+
+    /* düğmeler + durum */
+    btn(s, 30, 258, 74, 24, 'Drift');
+    btn(s, 112, 258, 74, 24, 'Adjust');
+    btn(s, 696, 258, 74, 24, '> Altitude', 'p');
+    el(s, 'rect', { x: 13, y: 290, width: 774, height: 21, fill: '#141619' });
+    el(s, 'line', { x1: 12, y1: 290, x2: 788, y2: 290, stroke: UI.line });
+    txt(s, 26, 305, 'Drifting... click Adjust when done drifting', { fill: UI.ink2, 'font-size': 11, 'font-family': UI.sans });
+
+    note(s, 12, 326, 380, [
+      'Sekme yok: sağ alttaki tek düğme "> Altitude" ile',
+      '"< Azimuth" arasında gidip gelir, başlık da değişir.'
+    ], '#3987e5');
+    note(s, 404, 326, 384, [
+      'Not alanı profilinize kaydedilir. Hangi yönün işe',
+      'yaradığını buraya yazın — bir daha tahmin etmezsiniz.'
+    ]);
+  })();
+
+  /* ==================================================================
+     ŞEKİL 8 — SharpCap ayar aşaması
+     ================================================================== */
+  (function () {
+    var s = document.getElementById('fig-sharpcap');
+    if (!s) return;
+    el(s, 'rect', { x: 0, y: 0, width: 800, height: 430, rx: 14, fill: '#1a1a19' });
+    win(s, 12, 12, 776, 406, 'SharpCap — Polar Alignment');
+
+    /* kamera görüntüsü */
+    var vx = 26, vy = 54, vw = 466, vh = 348;
+    el(s, 'rect', { x: vx, y: vy, width: vw, height: vh, rx: 4, fill: '#050506', stroke: UI.line });
+    var rnd = mulberry32(5);
+    for (var i = 0; i < 90; i++) {
+      var px = vx + 8 + rnd() * (vw - 16), py = vy + 8 + rnd() * (vh - 16);
+      var br = rnd();
+      el(s, 'circle', { cx: px, cy: py, r: 0.7 + br * 1.6, fill: '#e8e6dd', opacity: 0.25 + br * 0.6 });
+      if (br > 0.86) el(s, 'circle', { cx: px, cy: py, r: 6, fill: 'none', stroke: '#e0c33a', 'stroke-width': 1.1, opacity: 0.85 });
+      else if (br > 0.66) el(s, 'circle', { cx: px, cy: py, r: 5, fill: 'none', stroke: '#e05252', 'stroke-width': 0.9, opacity: 0.5 });
+    }
+    /* işaretli yıldız + hedef */
+    var sx = vx + 150, sy = vy + 210, tx = vx + 300, ty = vy + 120;
+    el(s, 'circle', { cx: tx, cy: ty, r: 17, fill: 'none', stroke: '#4caf50', 'stroke-width': 2 });
+    el(s, 'circle', { cx: tx, cy: ty, r: 5, fill: 'none', stroke: '#4caf50', 'stroke-width': 1.4 });
+    el(s, 'circle', { cx: sx, cy: sy, r: 4, fill: '#ffffff' });
+    el(s, 'circle', { cx: sx, cy: sy, r: 11, fill: 'none', stroke: '#e0c33a', 'stroke-width': 2 });
+    arrow(s, sx + 12, sy - 8, tx - 16, ty + 12, '#e0c33a');
+    var t1 = txt(s, vx + 16, vy + 34, '1′ 24″', { fill: '#4caf50', 'font-size': 26, 'font-family': UI.mono, 'font-weight': 700 });
+    t1.setAttribute('opacity', 0.9);
+    txt(s, vx + 16, vy + 52, 'Polar Align Error', { fill: '#7fc98a', 'font-size': 11, 'font-family': UI.sans });
+    txt(s, vx + vw - 14, vy + vh - 14, 'sarı = çözümde kullanılan yıldızlar', { fill: '#8a8a80', 'font-size': 10, 'font-family': UI.sans, 'text-anchor': 'end' });
+
+    /* sağ panel */
+    var px0 = 508;
+    txt(s, px0, 70, 'Polar Alignment', { fill: UI.ink, 'font-size': 13, 'font-family': UI.sans, 'font-weight': 700 });
+    ['Introduction Stage', 'First Image Stage', 'Second Image Stage', 'Adjustment Stage'].forEach(function (l, i) {
+      var y = 92 + i * 20, cur = i === 3;
+      if (cur) el(s, 'rect', { x: px0 - 6, y: y - 13, width: 272, height: 20, rx: 3, fill: 'rgba(74,144,217,.16)', stroke: UI.blue });
+      el(s, 'circle', { cx: px0 + 4, cy: y - 4, r: 3.4, fill: i < 3 ? UI.ok : (cur ? UI.blue : UI.line) });
+      txt(s, px0 + 16, y, l, { fill: cur ? UI.ink : UI.ink3, 'font-size': 11, 'font-family': UI.sans, 'font-weight': cur ? 700 : 400 });
+    });
+    el(s, 'line', { x1: px0, y1: 186, x2: px0 + 266, y2: 186, stroke: UI.line });
+
+    txt(s, px0, 208, 'Most Recent Frame', { fill: UI.ink2, 'font-size': 11, 'font-family': UI.sans });
+    txt(s, px0 + 266, 208, 'Solved', { fill: UI.ok, 'font-size': 11.5, 'font-family': UI.sans, 'font-weight': 700, 'text-anchor': 'end' });
+    txt(s, px0, 232, 'Polar Align Error', { fill: UI.ink2, 'font-size': 11, 'font-family': UI.sans });
+    txt(s, px0 + 266, 234, '1′ 24″', { fill: UI.ink, 'font-size': 15, 'font-family': UI.mono, 'font-weight': 700, 'text-anchor': 'end' });
+    el(s, 'line', { x1: px0, y1: 248, x2: px0 + 266, y2: 248, stroke: UI.line });
+
+    txt(s, px0, 270, 'Move mount:', { fill: UI.ink3, 'font-size': 10.5, 'font-family': UI.sans });
+    txt(s, px0, 288, 'yıldızı hedefe taşıyana kadar', { fill: UI.ink2, 'font-size': 11, 'font-family': UI.sans });
+    txt(s, px0, 304, 'YALNIZCA alt / azimut vidaları', { fill: '#e0a63a', 'font-size': 11, 'font-family': UI.sans, 'font-weight': 700 });
+
+    chk(s, px0, 336, 'Show align error on image', true);
+    chk(s, px0, 358, 'Play sounds during adjustment', true);
+    btn(s, px0, 372, 84, 24, 'Restart');
+    btn(s, px0 + 182, 372, 84, 24, 'Next', 'ok');
+  })();
+
+  /* ==================================================================
+     ŞEKİL 9 — N.I.N.A. TPPA
+     ================================================================== */
+  (function () {
+    var s = document.getElementById('fig-tppa');
+    if (!s) return;
+    el(s, 'rect', { x: 0, y: 0, width: 800, height: 450, rx: 14, fill: '#1a1a19' });
+    win(s, 12, 12, 776, 356, 'N.I.N.A. — Three Point Polar Alignment');
+
+    var cols = [
+      ['Azimuth Error', 'h', '00° 04′ 12″', 'Move left/west', 'l', '00° 12′ 41″', '#3987e5'],
+      ['Altitude Error', 'v', '00° 02′ 05″', 'Move down', 'd', '00° 07′ 18″', '#d95926'],
+      ['Total Error', '', '00° 04′ 41″', '', '', '00° 14′ 37″', '#c98500']
+    ];
+    cols.forEach(function (c, i) {
+      var x = 28 + i * 250, y = 54, w = 234, h = 132;
+      el(s, 'rect', { x: x, y: y, width: w, height: h, rx: 5, fill: '#131518', stroke: UI.line });
+      txt(s, x + 14, y + 20, c[0], { fill: UI.ink2, 'font-size': 11, 'font-family': UI.sans, 'font-weight': 600 });
+      /* başlık ok simgesi */
+      if (c[1] === 'h') {
+        el(s, 'path', { d: 'M ' + (x + w - 34) + ' ' + (y + 16) + ' l -8 0 m 0 0 l 3.4 -3.4 m -3.4 3.4 l 3.4 3.4 M ' + (x + w - 26) + ' ' + (y + 16) + ' l 8 0 m 0 0 l -3.4 -3.4 m 3.4 3.4 l -3.4 3.4', stroke: UI.ink3, 'stroke-width': 1.3, fill: 'none' });
+      } else if (c[1] === 'v') {
+        el(s, 'path', { d: 'M ' + (x + w - 30) + ' ' + (y + 10) + ' l 0 -6 m 0 0 l -3.4 3.4 m 3.4 -3.4 l 3.4 3.4 M ' + (x + w - 30) + ' ' + (y + 18) + ' l 0 6 m 0 0 l -3.4 -3.4 m 3.4 3.4 l 3.4 -3.4', stroke: UI.ink3, 'stroke-width': 1.3, fill: 'none' });
+      }
+      txt(s, x + w / 2, y + 62, c[2], { fill: c[6], 'font-size': 23, 'font-family': UI.mono, 'font-weight': 700, 'text-anchor': 'middle' });
+      if (c[3]) {
+        var ax = x + w / 2, ay = y + 88;
+        var lab = txt(s, ax + (c[4] === 'l' ? 8 : 0), ay, c[3], { fill: UI.ink2, 'font-size': 12, 'font-family': UI.sans, 'text-anchor': 'middle' });
+        var tw = c[3].length * 6.1;
+        if (c[4] === 'l') el(s, 'path', { d: 'M ' + (ax - tw / 2 - 4) + ' ' + (ay - 4) + ' l -10 0 m 0 0 l 4 -4 m -4 4 l 4 4', stroke: UI.ink2, 'stroke-width': 1.5, fill: 'none' });
+        if (c[4] === 'd') el(s, 'path', { d: 'M ' + (ax - tw / 2 - 12) + ' ' + (ay - 9) + ' l 0 10 m 0 0 l -4 -4 m 4 4 l 4 -4', stroke: UI.ink2, 'stroke-width': 1.5, fill: 'none' });
+      }
+      txt(s, x + w / 2, y + 116, c[5], { fill: UI.ink3, 'font-size': 12, 'font-family': UI.mono, 'text-anchor': 'middle' });
+    });
+    txt(s, 28, 204, 'büyük rakam: şu anki hata   ·   küçük rakam: başlangıçtaki hata', { fill: UI.ink3, 'font-size': 10.5, 'font-family': UI.sans });
+
+    /* hedef halkaları */
+    var cx = 106, cy = 292;
+    el(s, 'rect', { x: 28, y: 218, width: 234, height: 148, rx: 5, fill: '#131518', stroke: UI.line });
+    [22, 44, 62].forEach(function (r, i) {
+      el(s, 'circle', { cx: cx, cy: cy, r: r, fill: 'none', stroke: '#3a3e44', 'stroke-dasharray': '3 4' });
+      var a = [-58, -20, 20][i] * D2R;
+      var tl = txt(s, cx + Math.cos(a) * (r + 13), cy + Math.sin(a) * (r + 13) + 3.5, ['30″', '1′', '5′'][i],
+          { fill: UI.ink3, 'font-size': 9.5, 'font-family': UI.sans, 'text-anchor': 'middle' });
+      tl.setAttribute('paint-order', 'stroke'); tl.setAttribute('stroke', '#131518'); tl.setAttribute('stroke-width', 3);
+    });
+    el(s, 'line', { x1: cx - 70, y1: cy, x2: cx + 70, y2: cy, stroke: '#2f3338' });
+    el(s, 'line', { x1: cx, y1: cy - 70, x2: cx, y2: cy + 70, stroke: '#2f3338' });
+    el(s, 'circle', { cx: cx + 30, cy: cy - 18, r: 4.5, fill: '#c98500' });
+    txt(s, 40, 240, 'Target circles', { fill: UI.ink2, 'font-size': 10.5, 'font-family': UI.sans, 'font-weight': 600 });
+
+    /* ayarlar */
+    var ox = 282, oy = 218;
+    el(s, 'rect', { x: ox, y: oy, width: 490, height: 148, rx: 5, fill: '#131518', stroke: UI.line });
+    txt(s, ox + 12, oy + 22, 'Options', { fill: UI.ink2, 'font-size': 10.5, 'font-family': UI.sans, 'font-weight': 600 });
+    chk(s, ox + 12, oy + 48, 'Manual Mode?', false);
+    chk(s, ox + 170, oy + 48, 'Start from current position?', true);
+    [['Measure Point Distance', '10'], ['Telescope Move Rate', '3'],
+     ['Solver Search Radius', '30'], ['Alignment Tolerance', '0.5']].forEach(function (r, i) {
+      var x = ox + 12 + (i % 2) * 244, y = oy + 74 + Math.floor(i / 2) * 28;
+      txt(s, x, y + 12, r[0], { fill: UI.ink2, 'font-size': 10.5, 'font-family': UI.sans });
+      fld(s, x + 152, y, 54, 18, r[1]);
+    });
+    /* oynat / durdur */
+    el(s, 'rect', { x: ox + 382, y: oy + 8, width: 96, height: 26, rx: 4, fill: '#2b2f34', stroke: UI.line });
+    el(s, 'path', { d: 'M ' + (ox + 400) + ' ' + (oy + 14) + ' l 13 8 l -13 8 z', fill: UI.ok });
+    el(s, 'rect', { x: ox + 428, y: oy + 15, width: 12, height: 12, rx: 2, fill: '#7b838b' });
+    el(s, 'rect', { x: ox + 452, y: oy + 15, width: 4, height: 12, fill: '#7b838b' });
+    el(s, 'rect', { x: ox + 459, y: oy + 15, width: 4, height: 12, fill: '#7b838b' });
+
+    note(s, 28, 380, 744, [
+      'Uyarı satırları da bu panelde belirir — örneğin "Initial Polar Alignment error is large.',
+      'Correction phase will be unreliable." Böyle bir uyarı görürseniz canlı ekranı kovalamayın, TPPA’yı baştan çalıştırın.'
+    ], '#3987e5');
+  })();
+
+  /* ==================================================================
+     ŞEKİL 10 — ASIAIR
+     ================================================================== */
+  (function () {
+    var s = document.getElementById('fig-asiair');
+    if (!s) return;
+    el(s, 'rect', { x: 0, y: 0, width: 800, height: 412, rx: 14, fill: '#1a1a19' });
+    el(s, 'rect', { x: 12, y: 12, width: 776, height: 322, rx: 9, fill: UI.bg, stroke: UI.line });
+    el(s, 'rect', { x: 12, y: 12, width: 776, height: 30, rx: 9, fill: '#101418' });
+    el(s, 'line', { x1: 12, y1: 42, x2: 788, y2: 42, stroke: UI.line });
+    txt(s, 28, 32, 'Polar Alignment', { fill: UI.ink, 'font-size': 12.5, 'font-family': UI.sans, 'font-weight': 700 });
+    txt(s, 772, 32, 'ASIAIR', { fill: UI.ink3, 'font-size': 11, 'font-family': UI.sans, 'text-anchor': 'end' });
+
+    /* görüntü alanı */
+    var vx = 232, vy = 54, vw = 336, vh = 262;
+    el(s, 'rect', { x: vx, y: vy, width: vw, height: vh, rx: 4, fill: '#050506', stroke: UI.line });
+    var rnd = mulberry32(17);
+    for (var i = 0; i < 70; i++) {
+      el(s, 'circle', { cx: vx + 8 + rnd() * (vw - 16), cy: vy + 8 + rnd() * (vh - 16), r: 0.7 + rnd() * 1.5, fill: '#e8e6dd', opacity: 0.3 + rnd() * 0.6 });
+    }
+    var cx = vx + vw / 2, cy = vy + vh / 2;
+    el(s, 'line', { x1: cx - 40, y1: cy, x2: cx + 40, y2: cy, stroke: '#4caf50', 'stroke-width': 1.4 });
+    el(s, 'line', { x1: cx, y1: cy - 40, x2: cx, y2: cy + 40, stroke: '#4caf50', 'stroke-width': 1.4 });
+    el(s, 'circle', { cx: cx, cy: cy, r: 6, fill: 'none', stroke: '#4caf50', 'stroke-width': 1.4 });
+    el(s, 'circle', { cx: cx - 46, cy: cy - 34, r: 13, fill: 'none', stroke: '#e0a63a', 'stroke-width': 2 });
+    el(s, 'circle', { cx: cx - 46, cy: cy - 34, r: 3, fill: '#e0a63a' });
+    arrow(s, cx - 46, cy - 52, cx - 46, cy - 78, '#e0a63a');
+    arrow(s, cx - 64, cy - 34, cx - 92, cy - 34, '#e0a63a');
+    txt(s, cx - 46, cy - 86, 'yükseklik düğmesi: saat yönü', { fill: '#e0a63a', 'font-size': 10, 'font-family': UI.sans, 'text-anchor': 'middle' });
+    txt(s, cx - 98, cy - 30, 'azimut', { fill: '#e0a63a', 'font-size': 10, 'font-family': UI.sans, 'text-anchor': 'end' });
+
+    /* sol okumalar */
+    el(s, 'rect', { x: 28, y: 54, width: 190, height: 262, rx: 4, fill: '#131518', stroke: UI.line });
+    txt(s, 42, 76, 'Sapma', { fill: UI.ink2, 'font-size': 11, 'font-family': UI.sans, 'font-weight': 600 });
+    [['Azimut', "3.2'", '#3987e5'], ['Yükseklik', "1.8'", '#d95926']].forEach(function (r, i) {
+      var y = 100 + i * 62;
+      txt(s, 42, y + 14, r[0], { fill: UI.ink3, 'font-size': 11, 'font-family': UI.sans });
+      txt(s, 204, y + 34, r[1], { fill: r[2], 'font-size': 26, 'font-family': UI.mono, 'font-weight': 700, 'text-anchor': 'end' });
+    });
+    el(s, 'line', { x1: 42, y1: 232, x2: 204, y2: 232, stroke: UI.line });
+    txt(s, 42, 254, 'Toplam', { fill: UI.ink3, 'font-size': 11, 'font-family': UI.sans });
+    txt(s, 204, 276, "3.7'", { fill: '#4caf50', 'font-size': 28, 'font-family': UI.mono, 'font-weight': 700, 'text-anchor': 'end' });
+    txt(s, 204, 296, '5′ altı = kabul edilebilir', { fill: '#7fc98a', 'font-size': 10, 'font-family': UI.sans, 'text-anchor': 'end' });
+
+    /* sağ kontroller */
+    el(s, 'rect', { x: 582, y: 54, width: 190, height: 262, rx: 4, fill: '#131518', stroke: UI.line });
+    btn(s, 596, 74, 162, 30, 'Start Calibration', 'ok');
+    btn(s, 596, 116, 162, 28, 'Finish');
+    chk(s, 596, 172, 'Auto Refresh', true);
+    txt(s, 596, 200, 'açıkken sapma değerleri', { fill: UI.ink3, 'font-size': 10, 'font-family': UI.sans });
+    txt(s, 596, 214, 'siz ayar yaparken canlı', { fill: UI.ink3, 'font-size': 10, 'font-family': UI.sans });
+    txt(s, 596, 228, 'olarak güncellenir', { fill: UI.ink3, 'font-size': 10, 'font-family': UI.sans });
+    el(s, 'line', { x1: 596, y1: 248, x2: 758, y2: 248, stroke: UI.line });
+    txt(s, 596, 270, 'Montür ~60° döndürülür,', { fill: UI.ink2, 'font-size': 10.5, 'font-family': UI.sans });
+    txt(s, 596, 286, 'iki kare çözümlenir, sapma', { fill: UI.ink2, 'font-size': 10.5, 'font-family': UI.sans });
+    txt(s, 596, 302, 'hesaplanır.', { fill: UI.ink2, 'font-size': 10.5, 'font-family': UI.sans });
+
+    note(s, 12, 348, 776, [
+      'ZWO’nun kılavuzu bu ekranı düz metinle anlatıyor; yalnızca "Start Calibration", "Auto Refresh" ve "Finish"',
+      'birebir belgelenmiş etiketlerdir. Sapma satırlarının uygulamadaki İngilizce adları yayımlanmadığı için Türkçe yazıldı.'
+    ], '#3987e5');
+  })();
+})();
+</script>
+<script>
+/* =======================================================================
+   PHD2 grafiği çizici — hem simülatör hem teşhis aracı kullanır
+   ======================================================================= */
+function drawPhdGraph(svg, series, opt) {
+  while (svg.firstChild) svg.removeChild(svg.firstChild);
+  opt = opt || {};
+  var W = 720, H = 260;
+  var x0 = 44, x1 = W - 12, yTop = 16, yBot = 168, yMid = (yTop + yBot) / 2;
+  var barTop = 190, barBot = 246, barMid = (barTop + barBot) / 2;
+
+  el(svg, 'rect', { x: 0, y: 0, width: W, height: H, fill: '#0b0b0a' });
+
+  var n = series.dec.length;
+  var maxV = 0.6;
+  for (var i = 0; i < n; i++) {
+    maxV = Math.max(maxV, Math.abs(series.dec[i]), Math.abs(series.ra[i]));
+  }
+  maxV = Math.ceil(maxV * 1.15 * 2) / 2;
+  function X(i) { return x0 + i / Math.max(1, n - 1) * (x1 - x0); }
+  function Y(v) { return yMid - v / maxV * (yBot - yTop) / 2; }
+
+  /* ızgara */
+  el(svg, 'line', { x1: x0, y1: yMid, x2: x1, y2: yMid, stroke: '#3a3a37', 'stroke-width': 1 });
+  var step = maxV / 2;
+  [-2, -1, 1, 2].forEach(function (k) {
+    el(svg, 'line', { x1: x0, y1: Y(k * step), x2: x1, y2: Y(k * step), stroke: '#1e1e1c' });
+  });
+  [-2, -1, 0, 1, 2].forEach(function (k) {
+    txt(svg, x0 - 6, Y(k * step) + 4, (k * step).toFixed(step < 1 ? 1 : 0), { fill: '#6b6a65', 'font-size': 10, 'text-anchor': 'end', 'font-family': 'ui-monospace,monospace' });
+  });
+  txt(svg, 6, yMid - 26, '″', { fill: '#6b6a65', 'font-size': 11 });
+
+  /* çizgiler */
+  function poly(arr, color, w) {
+    var d = '';
+    for (var i = 0; i < n; i++) d += (i ? ' L ' : 'M ') + X(i).toFixed(1) + ' ' + Y(arr[i]).toFixed(1);
+    el(svg, 'path', { d: d, fill: 'none', stroke: color, 'stroke-width': w || 1.4, 'stroke-linejoin': 'round' });
+  }
+  poly(series.ra, '#3987e5', 1.3);
+  poly(series.dec, '#e66767', 1.6);
+
+  /* DEC eğilim çizgisi (en küçük kareler) */
+  var sx = 0, sy = 0, sxy = 0, sxx = 0;
+  for (var i2 = 0; i2 < n; i2++) { sx += i2; sy += series.dec[i2]; sxy += i2 * series.dec[i2]; sxx += i2 * i2; }
+  var slope = (n * sxy - sx * sy) / (n * sxx - sx * sx);
+  var icpt = (sy - slope * sx) / n;
+  el(svg, 'line', {
+    x1: X(0), y1: Y(icpt), x2: X(n - 1), y2: Y(icpt + slope * (n - 1)),
+    stroke: '#c98500', 'stroke-width': 2, 'stroke-dasharray': '7 5'
+  });
+
+  /* düzeltme çubukları */
+  el(svg, 'rect', { x: x0, y: barTop, width: x1 - x0, height: barBot - barTop, fill: '#0f0f0e', rx: 4 });
+  el(svg, 'line', { x1: x0, y1: barMid, x2: x1, y2: barMid, stroke: '#3a3a37' });
+  var maxC = 0.001;
+  for (var i3 = 0; i3 < n; i3++) maxC = Math.max(maxC, Math.abs(series.corr[i3]));
+  var bw = Math.max(1.2, (x1 - x0) / n - 1.2);
+  for (var i4 = 0; i4 < n; i4++) {
+    var c = series.corr[i4];
+    if (!c) continue;
+    var hgt = Math.abs(c) / maxC * ((barBot - barTop) / 2 - 3);
+    el(svg, 'rect', {
+      x: X(i4) - bw / 2, y: c > 0 ? barMid - hgt : barMid, width: bw, height: Math.max(1, hgt),
+      fill: c > 0 ? '#199e70' : '#d55181'
+    });
+  }
+  txt(svg, x0 - 6, barMid + 4, 'DEC', { fill: '#6b6a65', 'font-size': 9.5, 'text-anchor': 'end' });
+  txt(svg, x0 + 4, barTop - 5, 'DEC düzeltme darbeleri', { fill: '#6b6a65', 'font-size': 10 });
+  txt(svg, x1 - 2, barTop - 5, (opt.xlabel || ''), { fill: '#6b6a65', 'font-size': 10, 'text-anchor': 'end' });
+
+  /* rms */
+  var sr = 0, sd = 0;
+  for (var i5 = 0; i5 < n; i5++) { sr += series.ra[i5] * series.ra[i5]; sd += series.dec[i5] * series.dec[i5]; }
+  return {
+    slopePerMin: slope * (60 / (opt.expSec || 2)),
+    raRms: Math.sqrt(sr / n),
+    decRms: Math.sqrt(sd / n),
+    totRms: Math.sqrt((sr + sd) / n)
+  };
+}
+
+/* Guiding izi üretici.
+   Model: yıldızın GERÇEK konumu (sürüklenme + periyodik hata + guiding
+   düzeltmeleri) ayrı tutulur; ölçüm buna seeing gürültüsü eklenerek üretilir.
+   PHD2 grafiği düzeltmeden ÖNCEKİ ölçümü çizer, biz de öyle yapıyoruz. */
+function makeTrace(o) {
+  var n = o.n || 130, expSec = o.expSec || 2, dt = expSec / 60;
+  var rnd = mulberry32(o.seed || 4242);
+  var ra = [], dec = [], corr = [];
+  var decTrue = 0, raTrue = 0, dsm = 0, lastDir = 0, blDebt = 0;
+  var seeing = o.seeing === undefined ? 0.42 : o.seeing;
+  var minMove = o.minMove === undefined ? 0.12 : o.minMove;
+  var aggr = o.aggr === undefined ? 0.85 : o.aggr;
+  var lp = o.lp === undefined ? 0.45 : o.lp;
+
+  for (var i = 0; i < n; i++) {
+    var t = i * expSec;
+    decTrue += (o.decRate || 0) * dt;
+    raTrue += (o.raRate || 0) * dt;
+    var pe = (o.pe || 0) * Math.sin(2 * Math.PI * t / 480);
+
+    var osc = (o.decOsc || 0) * Math.sin(2 * Math.PI * t / (o.decOscP || 100));
+    var decMeas = decTrue + osc + gaussFrom(rnd) * seeing;
+    var raMeas = raTrue + pe + gaussFrom(rnd) * seeing;
+
+    var c = 0;
+    if (o.guided !== false) {
+      dsm = dsm * (1 - lp) + decMeas * lp;
+      if (Math.abs(dsm) > minMove) {
+        c = -dsm * aggr;
+        var dir = c > 0 ? 1 : -1;
+        if (o.backlash && dir !== lastDir && lastDir !== 0) blDebt = o.backlash;
+        var applied = c;
+        if (blDebt > 0) {
+          var eat = Math.min(blDebt, Math.abs(applied));
+          blDebt -= eat;
+          applied = applied - dir * eat;
+        }
+        if (o.stiction && dir !== lastDir && lastDir !== 0) applied *= o.stiction;
+        decTrue = Math.max(-9, Math.min(9, decTrue + applied));
+        dsm = Math.max(-9, Math.min(9, dsm + applied));
+        lastDir = dir;
+      }
+      raTrue -= (raTrue + pe) * aggr;
+    }
+    ra.push(raMeas); dec.push(decMeas); corr.push(c);
+  }
+  return { ra: ra, dec: dec, corr: corr };
+}
+
+/* =======================================================================
+   ARAÇ 1 — Simülatör
+   ======================================================================= */
+(function () {
+  var root = document.getElementById('tool-sim');
+  if (!root) return;
+
+  var selT = document.getElementById('sm_tgt'), selS = document.getElementById('sm_sen');
+  TARGETS.forEach(function (t) {
+    var o = document.createElement('option'); o.value = t.id;
+    o.textContent = t.ad + ' · δ ' + (t.dec >= 0 ? '+' : '') + t.dec.toFixed(0) + '°';
+    selT.appendChild(o);
+  });
+  selT.value = 'm81';
+  SENSORS.forEach(function (s) {
+    var o = document.createElement('option'); o.value = s.id; o.textContent = s.ad; selS.appendChild(o);
+  });
+
+  /* yıldız damgası */
+  var sprite = null, spriteR = 0;
+  function makeSprite(r) {
+    if (sprite && spriteR === r) return sprite;
+    spriteR = r;
+    var c = document.createElement('canvas');
+    c.width = c.height = r * 2 + 2;
+    var g = c.getContext('2d');
+    var gr = g.createRadialGradient(r + 1, r + 1, 0, r + 1, r + 1, r);
+    gr.addColorStop(0, 'rgba(255,255,255,1)');
+    gr.addColorStop(0.22, 'rgba(255,255,252,0.62)');
+    gr.addColorStop(0.5, 'rgba(255,255,248,0.16)');
+    gr.addColorStop(0.78, 'rgba(255,255,248,0.03)');
+    gr.addColorStop(1, 'rgba(255,255,248,0)');
+    g.fillStyle = gr; g.fillRect(0, 0, c.width, c.height);
+    sprite = c;
+    return c;
+  }
+
+  var STARS = (function () {
+    var r = mulberry32(99), a = [];
+    for (var i = 0; i < 44; i++) {
+      a.push({ x: r() - 0.5, y: r() - 0.5, b: Math.pow(r(), 2.1) * 0.95 + 0.09 });
+    }
+    return a;
+  })();
+
+  function renderCrop(cv, p) {
+    var S = cv.width;               /* tuval pikseli */
+    var ctx = cv.getContext('2d');
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.fillStyle = '#07070a'; ctx.fillRect(0, 0, S, S);
+    ctx.globalCompositeOperation = 'lighter';
+
+    var cropHalf = S / 2 * p.scale;                 /* yay saniyesi */
+    var fwhmPx = Math.max(1.6, p.fwhm / p.scale);
+    var R = Math.max(4, Math.round(fwhmPx * 2.1));
+    var sp = makeSprite(R);
+
+    var maxTrail = Math.hypot(p.driftX, p.driftY) + Math.abs(p.rot) * Math.hypot(p.ccx, p.ccy);
+    var K = Math.max(6, Math.min(70, Math.ceil(maxTrail / p.scale * 2.5) + 6));
+
+    for (var i = 0; i < STARS.length; i++) {
+      var st = STARS[i];
+      var bx = p.ccx + st.x * cropHalf * 2, by = p.ccy + st.y * cropHalf * 2;
+      var amp = st.b / K * 1.5;
+      for (var k = 0; k < K; k++) {
+        var f = K === 1 ? 0 : k / (K - 1);
+        var th = p.rot * f;
+        var rx = bx * Math.cos(th) - by * Math.sin(th);
+        var ry = bx * Math.sin(th) + by * Math.cos(th);
+        if (!p.guided) { rx += p.driftX * f; ry += p.driftY * f; }
+        var sx = (rx - p.ccx) / p.scale + S / 2;
+        var sy = (ry - p.ccy) / p.scale + S / 2;
+        if (sx < -R || sx > S + R || sy < -R || sy > S + R) continue;
+        ctx.globalAlpha = Math.min(1, amp);
+        ctx.drawImage(sp, sx - R - 1, sy - R - 1);
+      }
+    }
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = 'source-over';
+    /* kesit çerçevesi bilgisi */
+    ctx.strokeStyle = 'rgba(255,255,255,.10)';
+    ctx.strokeRect(0.5, 0.5, S - 1, S - 1);
+  }
+
+  function calc() {
+    var errT = parseFloat(document.getElementById('sm_err').value);
+    var dir = document.getElementById('sm_dir').value;
+    var tgt = TARGETS.filter(function (t) { return t.id === selT.value; })[0] || TARGETS[7];
+    var H = parseFloat(document.getElementById('sm_ha').value);
+    var expS = parseFloat(document.getElementById('sm_exp').value);
+    var fl = Math.max(50, parseFloat(document.getElementById('sm_fl').value) || 530);
+    var sen = SENSORS.filter(function (s) { return s.id === selS.value; })[0] || SENSORS[0];
+    var lat = Math.min(75, Math.max(0, parseFloat(document.getElementById('sm_lat').value) || 40));
+
+    document.getElementById('sm_err_v').textContent = errT.toFixed(1) + '′';
+    document.getElementById('sm_ha_v').textContent = (H >= 0 ? '+' : '') + H.toFixed(1) + ' s';
+
+    var alt = 0, az = 0;
+    if (dir === 'alt') alt = errT;
+    else if (dir === 'az') az = errT / Math.max(0.2, Math.cos(lat * D2R));
+    else { alt = errT / Math.SQRT2; az = errT / Math.SQRT2 / Math.max(0.2, Math.cos(lat * D2R)); }
+
+    var v = errorVector(alt, az, lat);
+    var dd = decDrift(v.a, v.b, H);
+    var dr = raDriftF(v.a, v.b, H, tgt.dec);
+    var fr = fieldRot(v.a, v.b, H, tgt.dec);
+
+    var tMin = expS / 60;
+    var scale = pixelScale(sen.px, fl);                 /* ″/px */
+    var halfDiagArcsec = Math.hypot(sen.w, sen.h) / 2 / fl * 206265;
+    var rotRad = fr * tMin / 206265;
+    var cornerTrail = Math.abs(rotRad) * halfDiagArcsec;   /* yay saniyesi */
+
+    /* kesit merkezi: sensörün köşesine yakın */
+    var UP = 2, S = 240;                       /* 240 görüntü pikseli, 2× örneklenmiş tuval */
+    var cropHalf = S / 2 * scale;
+    var cx = Math.max(0, sen.w / 2 / fl * 206265 - cropHalf);
+    var cy = Math.max(0, sen.h / 2 / fl * 206265 - cropHalf);
+
+    var common = { scale: scale / UP, fwhm: 2.6, rot: rotRad, driftX: dr * tMin, driftY: dd * tMin, ccx: cx, ccy: cy };
+    renderCrop(document.getElementById('sm_unguided'), Object.assign({}, common, { guided: false }));
+    renderCrop(document.getElementById('sm_guided'), Object.assign({}, common, { guided: true }));
+
+    var driftTot = Math.hypot(dd, dr) * tMin;
+    document.getElementById('sm_cap1').innerHTML =
+      'Sürüklenme + dönme birlikte: <b>' + (driftTot / scale).toFixed(1) + ' piksel</b> iz.<br>' +
+      'Kadrajın köşesinden 240×240 piksellik kesit (1:1).';
+    document.getElementById('sm_cap2').innerHTML =
+      'Sürüklenme silindi. Kalan: <b>' + cornerTrail.toFixed(2) + '″</b> = <b>' + (cornerTrail / scale).toFixed(2) + ' piksel</b> alan dönmesi.<br>' +
+      'Aynı kesit, aynı ölçek.';
+
+    document.getElementById('sm_drift').innerHTML = Math.abs(dd).toFixed(2) + '<small> ″/dk</small>';
+    document.getElementById('sm_rot').innerHTML = Math.abs(fr * tMin).toFixed(1) + '<small>″</small>';
+    document.getElementById('sm_trail').innerHTML = (cornerTrail / scale).toFixed(2) + '<small> px</small>';
+    var phdErr = K_PHD2 * Math.abs(dd) / Math.max(0.02, Math.cos(tgt.dec * D2R));
+    document.getElementById('sm_phderr').textContent = fmtErr(phdErr);
+
+    /* PHD2 grafiği */
+    var guided = document.getElementById('sm_pg1').classList.contains('on');
+    var tr = makeTrace({
+      n: 130, expSec: 2, decRate: dd, raRate: guided ? 0 : dr, guided: guided,
+      pe: guided ? 0.35 : 1.1, seed: 4242
+    });
+    drawPhdGraph(document.getElementById('sm_phd'), tr, { expSec: 2, xlabel: '~4.3 dakika' });
+    document.getElementById('sm_phdmode').textContent = guided ? 'guiding açık' : 'guiding kapalı (ölçüm modu)';
+
+    /* değerlendirme */
+    var px = cornerTrail / scale, msg;
+    if (px < 0.35) {
+      msg = '<b class="hd" style="color:#4ed24e">Bu hata sizi hiç etkilemiyor.</b> Köşedeki iz ' + px.toFixed(2) +
+            ' piksel — yıldız şişkinliğinin çok altında. Guiding açıkken bu kareyi kusursuz sayabilirsiniz. ' +
+            'Kutup hizalamasına daha fazla zaman ayırmanın hiçbir getirisi yok.';
+    } else if (px < 1) {
+      msg = '<b class="hd" style="color:#4ed24e">Sınırda ama sorun değil.</b> Köşede ' + px.toFixed(2) +
+            ' piksellik dönme izi var. Tek karede fark edilmez; ancak gece boyunca biriken dönme yüzünden ' +
+            'yığınlama sırasında köşelerden bir miktar kırpma yapmanız gerekebilir.';
+    } else if (px < 2.5) {
+      msg = '<b class="hd" style="color:#f5c04c">Köşelerde görünür.</b> ' + px.toFixed(1) + ' piksellik iz, sıkı bir incelemede ' +
+            'fark edilir. Hatayı yarıya indirirseniz iz de yarıya iner — dönme hatayla doğru orantılıdır. ' +
+            'Ya da poz sürenizi kısaltın: iz süreyle de doğru orantılı.';
+    } else {
+      msg = '<b class="hd" style="color:#f08080">Kare bozuluyor.</b> Köşede ' + px.toFixed(1) + ' piksellik dönme izi var ve ' +
+            'guiding bunu düzeltemez. ' +
+            (tgt.dec > 60 ? 'Hedefiniz kutba çok yakın (δ ' + tgt.dec.toFixed(0) + '°), bu yüzden dönme ' +
+              (1 / Math.cos(tgt.dec * D2R)).toFixed(1) + ' katına çıkıyor. ' : '') +
+            'Hizalamayı düzeltin ya da poz süresini kısaltın.';
+    }
+    if (!guided) {
+      msg += '<br><br><b>Grafik ölçüm modunda:</b> DEC eğilim çizgisinin eğimi ' + Math.abs(dd).toFixed(2) +
+             ' ″/dk. Bunu 3.82 ile çarpınca ' + fmtErr(K_PHD2 * Math.abs(dd)) +
+             ' çıkıyor — PHD2 Guiding Assistant tam olarak bunu yapar.';
+    } else {
+      var pos = 0, neg = 0;
+      for (var q = 0; q < tr.corr.length; q++) { if (tr.corr[q] > 0) pos++; else if (tr.corr[q] < 0) neg++; }
+      var frac = (pos + neg) ? Math.max(pos, neg) / (pos + neg) : 0;
+      if (frac > 0.65 && (pos + neg) > 6) {
+        msg += '<br><br><b>Grafikteki imza:</b> DEC düzeltme darbelerinin <b>%' + Math.round(frac * 100) +
+               '\'i aynı yönde</b>. Bu tek başına bir sorun değil — hatta deklinasyon boşluğunu devre dışı bırakır. ' +
+               'Sorun, meridyen dönüşünde bu yönün tersine dönmesi ve o anda boşluğun devreye girmesidir.';
+      } else {
+        msg += '<br><br><b>Grafikte belirgin bir imza yok.</b> Bu sürüklenme hızında (' +
+               Math.abs(dd).toFixed(2) + ' ″/dk) guiding hatayı seeing gürültüsünün içinde rahatça yutuyor ve ' +
+               'düzeltme darbeleri iki yöne de dağılıyor. Hatayı ölçmek istiyorsanız guiding\'i kapatmanız ' +
+               'gerekir — Guiding Assistant tam olarak bunu yapar.';
+      }
+    }
+    document.getElementById('sm_verdict').innerHTML = msg;
+  }
+
+  ['sm_err', 'sm_dir', 'sm_tgt', 'sm_ha', 'sm_exp', 'sm_fl', 'sm_sen', 'sm_lat'].forEach(function (id) {
+    var e = document.getElementById(id);
+    e.addEventListener('input', calc); e.addEventListener('change', calc);
+  });
+  function setG(on) {
+    document.getElementById('sm_pg1').classList.toggle('on', on);
+    document.getElementById('sm_pg0').classList.toggle('on', !on);
+    calc();
+  }
+  document.getElementById('sm_pg1').addEventListener('click', function () { setG(true); });
+  document.getElementById('sm_pg0').addEventListener('click', function () { setG(false); });
+  document.getElementById('sm_pg1').addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setG(true); } });
+  document.getElementById('sm_pg0').addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setG(false); } });
+  calc();
+})();
+
+/* =======================================================================
+   ARAÇ 2 — PHD2 grafiği teşhis aracı
+   ======================================================================= */
+(function () {
+  var root = document.getElementById('tool-graph');
+  if (!root) return;
+  var svg = document.getElementById('gr_svg');
+
+  var CASES = {
+    ok: {
+      trace: { decRate: 0.05, raRate: 0, seeing: 0.34, pe: 0.3, guided: true, seed: 11 },
+      v: '<b class="hd" style="color:#4ed24e">Sağlıklı guiding.</b> Her iki eksende de gürültü yönsüz, eğilim çizgisi düz, ' +
+         'düzeltmeler iki yöne de dağılmış. Bu grafikte aranacak bir şey yok — RMS değeri seeing tarafından belirleniyor. ' +
+         'Bu noktadan sonra iyileşme, montürden değil gökyüzünden gelir.'
+    },
+    polar: {
+      trace: { decRate: 2.63, raRate: 0, seeing: 0.28, pe: 0.5, guided: false, seed: 23 },
+      v: '<b class="hd" style="color:#f5c04c">Kutup hizalama hatası — ölçüm modunda.</b> Bu grafik <b>guiding kapalıyken</b> ' +
+         'alınmıştır; PHD2\'nin Guiding Assistant tam olarak bunu yapar: düzeltme darbelerini keser ve yıldızın ' +
+         'serbest hareketini ölçer. Bu yüzden alt satırdaki darbe kutusu boştur.<br><br>' +
+         'İmza nettir: <b>DEC eğilim çizgisi düz bir rampa</b>. Eğim 2.63 ″/dk; 3.82 ile çarpınca ' +
+         '<b>10 yay dakikası</b> hata eder. RA ekseni periyodik hatayla salınıyor ama net bir eğilimi yok — ' +
+         'bu ayrımın kendisi teşhisin parçasıdır.<br><br>' +
+         '<b>Guiding açıkken</b> aynı hata çok daha sinsi görünür: DEC çizgisi düzleşir, geriye yalnızca ' +
+         '<em>hep aynı yöne giden düzeltme darbeleri</em> kalır. Bölüm 4\'teki simülatörde "Guiding açık / kapalı" ' +
+         'düğmesiyle ikisini karşılaştırabilirsiniz.'
+    },
+    backlash: {
+      trace: { decRate: 0, decOsc: 1.6, decOscP: 110, raRate: 0, seeing: 0.3, pe: 0.3, guided: true, backlash: 1.7, minMove: 0.12, aggr: 0.85, lp: 0.5, seed: 31 },
+      v: '<b class="hd" style="color:#f5c04c">Deklinasyon boşluğu.</b> Ayırt edici işaret: sorun yalnızca <b>yön değiştiğinde</b> ' +
+         'ortaya çıkıyor. Aynı yönde düzeltme yaparken her şey normal; yön dönünce montür birkaç kare boyunca hiç tepki ' +
+         'vermiyor ve yıldız uzaklaşmaya devam ediyor.<br><br>Çözüm: Guiding Assistant\'ın boşluk testini çalıştırın ' +
+         '(önce montür yazılımındaki kendi boşluk telafisini kapatın). 3 saniyeden uzun boşlukta PHD2 doğrudan <b>tek yönlü ' +
+         'guiding\'e</b> geçmenizi önerir — ve o zaman küçük bir kasıtlı kutup hatası işinize yarar.'
+    },
+    flex: {
+      trace: { decRate: 0.06, raRate: 0.04, seeing: 0.3, pe: 0.25, guided: true, seed: 47 },
+      v: '<b class="hd" style="color:#f08080">Diferansiyel esneme — grafiğin yalan söylediği durum.</b> Gördüğünüz gibi grafik ' +
+         '<em>kusursuz</em>. Rehber yıldız yerli yerinde. Ama ana kameranızdaki yıldızlar uzamış çıkıyor.<br><br>' +
+         'Sebep: rehber teleskop ile ana teleskop birbirine göre kayıyor. PHD2 rehber kameradaki yıldızı sabit tutuyor, ' +
+         'ana kamera ise başka bir yere bakıyor. PHD2 kılavuzu bunu düzeltilemeyen hatalar listesine koyar.<br><br>' +
+         'Teşhis: iyi guiding logu + kötü ana kare. Çözüm: bütün bağlantıları sıkın, odaklayıcıyı kilitleyin, ' +
+         'mümkünse OAG\'ye geçin. <b>Bu bir kutup hizalama sorunu değildir</b> — hizalamayı düzelterek çözemezsiniz.'
+    },
+    stiction: {
+      trace: { decRate: 0.4, raRate: 0, seeing: 0.45, pe: 0.3, guided: true, stiction: 2.1, minMove: 0.14, aggr: 0.9, lp: 0.6, seed: 53 },
+      v: '<b class="hd" style="color:#f5c04c">Sürtünme (stiction) ve salınım.</b> Boşluğa benzer ama farkı şu: yön değişiminden sonra ' +
+         'önce gecikme, ardından <b>aşırı düzeltme</b> geliyor ve sistem salınmaya başlıyor. PHD2 kılavuzu bunu deklinasyon ' +
+         'salınımlarının en yaygın sebebi sayar ve Guiding Assistant\'ın boşluk ile sürtünmeyi her zaman ayırt ' +
+         'edemeyeceğini söyler.<br><br>Çözüm: deklinasyon eksenini gevşetip yağlayın, agresifliği düşürün, min-move\'u yükseltin.'
+    },
+    seeing: {
+      trace: { decRate: 0.05, raRate: 0, seeing: 1.15, pe: 0.4, guided: true, minMove: 0.08, aggr: 0.9, seed: 67 },
+      v: '<b class="hd">Kötü seeing.</b> Yüksek frekanslı, yönsüz gürültü. Eğilim çizgisi düz — yani bir sürüklenme yok. ' +
+         'Montürünüzde bir sorun yok; atmosfer çalkalanıyor.<br><br>Bu durumda guiding\'i daha agresif yapmak işleri ' +
+         '<b>kötüleştirir</b>: guiding seeing gürültüsünü kovalamaya başlar. Rehber pozunu uzatın (2 sn → 3–4 sn) ve ' +
+         'min-move değerini yükseltin. Guiding Assistant bunu zaten önerir.'
+    }
+  };
+
+  function show(key) {
+    var c = CASES[key] || CASES.ok;
+    var tr = makeTrace(Object.assign({ n: 150, expSec: 2 }, c.trace));
+    var st = drawPhdGraph(svg, tr, { expSec: 2, xlabel: '5 dakika' });
+    document.getElementById('gr_rms').innerHTML = st.totRms.toFixed(2) + '<small>″</small>';
+    document.getElementById('gr_slope').innerHTML = st.slopePerMin.toFixed(2) + '<small> ″/dk</small>';
+    document.getElementById('gr_ra').innerHTML = st.raRms.toFixed(2) + '<small>″</small>';
+    document.getElementById('gr_dec').innerHTML = st.decRms.toFixed(2) + '<small>″</small>';
+    document.getElementById('gr_verdict').innerHTML = c.v;
+  }
+
+  var pills = root.querySelectorAll('.pill[data-gr]');
+  Array.prototype.forEach.call(pills, function (p) {
+    function go() {
+      Array.prototype.forEach.call(pills, function (q) { q.classList.remove('on'); });
+      p.classList.add('on');
+      show(p.getAttribute('data-gr'));
+    }
+    p.addEventListener('click', go);
+    p.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+  });
+  show('ok');
+})();
+
+/* =======================================================================
+   ARAÇ 3 — Tolerans hesaplayıcı
+   ======================================================================= */
+(function () {
+  var root = document.getElementById('tool-tol');
+  if (!root) return;
+  var sel = document.getElementById('tl_sen');
+  SENSORS.forEach(function (s) {
+    var o = document.createElement('option'); o.value = s.id; o.textContent = s.ad; sel.appendChild(o);
+  });
+
+  function calc() {
+    var fl = Math.max(50, parseFloat(document.getElementById('tl_fl').value) || 530);
+    var sen = SENSORS.filter(function (s) { return s.id === sel.value; })[0] || SENSORS[0];
+    var expS = parseFloat(document.getElementById('tl_exp').value);
+    var dec = parseFloat(document.getElementById('tl_dec').value);
+    var tolSel = document.getElementById('tl_tol').value;
+    var guideWhere = document.getElementById('tl_guide').value;
+
+    document.getElementById('tl_dec_v').textContent = (dec >= 0 ? '+' : '') + dec + '°';
+
+    var scale = pixelScale(sen.px, fl);
+    var psi = Math.atan2(Math.hypot(sen.w, sen.h) / 2, fl) / D2R;
+    /* Dönme merkezi rehber yıldızdır. Ayrı rehber teleskop eş eksenlidir → yıldız
+       kadrajın ortasında, ψ ≈ yarım köşegen. OAG ise kadrajın DIŞINDAN ışık alır →
+       karşı köşeye olan açı yaklaşık iki katına çıkar. */
+    if (guideWhere === 'oag') psi *= 2.0;
+
+    var tauUm;
+    if (tolSel === 'fwhm') tauUm = (2.6 / 3) / scale * sen.px;   /* FWHM/3, piksele sonra µm'ye */
+    else tauUm = parseFloat(tolSel) * sen.px;
+
+    var tMin = expS / 60;
+    var maxErr = BARRETT_K * tauUm * Math.cos(dec * D2R) / (tMin * fl * psi);
+    var perAxis = maxErr / Math.SQRT2;
+
+    /* guiding'siz sınır: sürüklenme aynı toleransı aşmasın */
+    var tolArcsec = tauUm / sen.px * scale;
+    var maxDrift = tolArcsec / tMin;              /* ″/dk */
+    var ungErr = maxDrift / 0.262521;             /* yay dakikası */
+
+    document.getElementById('tl_max').textContent = fmtErr(maxErr);
+    document.getElementById('tl_axis').textContent = fmtErr(perAxis);
+    document.getElementById('tl_scale').innerHTML = scale.toFixed(2) + '<small> ″/px</small>';
+    document.getElementById('tl_ung').textContent = fmtErr(ungErr);
+
+    var msg;
+    if (maxErr > 30) {
+      msg = '<b class="hd" style="color:#4ed24e">Bu kurulumda alan dönmesi sizin sorununuz değil.</b> ' + fmtErr(maxErr) +
+            ' bile ' + tolArcsec.toFixed(2) + '″ izin altında kalıyor. Kaba bir hizalama (polarscope, hatta pusula + ' +
+            'enlem skalası) yeterli. Zamanınızı odağa ve guiding\'e harcayın.';
+    } else if (maxErr > 8) {
+      msg = '<b class="hd" style="color:#4ed24e">Rahat bir hedef.</b> ' + fmtErr(maxErr) + ' altında kalmanız yeterli — ' +
+            'yani eksen başına ' + fmtErr(perAxis) + '. Herhangi bir plaka çözümlemeli araç bunu birkaç dakikada verir. ' +
+            'Polarscope bile (kolimasyonu doğruysa) yetişir.';
+    } else if (maxErr > 2) {
+      msg = '<b class="hd" style="color:#f5c04c">Dikkat gerektiriyor.</b> ' + fmtErr(maxErr) + ' toplam, eksen başına ' +
+            fmtErr(perAxis) + '. Bu, SharpCap/TPPA/ASIAIR sınıfı bir araç ve dikkatli bir ayar demektir. ' +
+            'Polarscope tek başına riskli.';
+    } else {
+      msg = '<b class="hd" style="color:#f08080">Zorlu.</b> Yalnızca ' + fmtErr(maxErr) + ' toleransınız var (eksen başına ' +
+            fmtErr(perAxis) + '). ' +
+            (dec > 60 ? 'Hedefiniz kutba çok yakın; dönme ' + (1 / Math.cos(dec * D2R)).toFixed(1) + ' katına çıkıyor. ' : '') +
+            (expS >= 600 ? 'Pozunuz da çok uzun. ' : '') +
+            'Poz süresini yarıya indirmek toleransı iki katına çıkarır — çoğu zaman en kolay çözüm budur.';
+    }
+    if (ungErr < maxErr / 3) {
+      msg += '<br><br><b>Guiding yapmıyorsanız</b> asıl sınır sürüklenmedir: ' + fmtErr(ungErr) +
+             '. Alan dönmesi sınırından <b>' + (maxErr / ungErr).toFixed(0) + ' kat</b> daha katı. ' +
+             'Guiding\'in kutup hizalaması gereksinimini bu kadar gevşetmesinin sebebi budur.';
+    }
+    if (guideWhere === 'oag') {
+      msg += '<br><br><b>Not:</b> OAG seçtiniz. Prizma ana kameranın görüş alanının <em>dışından</em> ışık aldığı için ' +
+             'rehber yıldız kadrajın kenarındadır ve karşı köşeye olan dönme kolu (ψ) yaklaşık iki katına çıkar; ' +
+             'tolerans da yarıya iner. Bu, OAG\'yi kötü yapmaz — diferansiyel esnemeyi tamamen ortadan kaldırır — ' +
+             'ama alan dönmesi hesabında bunu unutmayın.';
+    }
+    document.getElementById('tl_verdict').innerHTML = msg;
+  }
+
+  ['tl_fl', 'tl_sen', 'tl_exp', 'tl_dec', 'tl_tol', 'tl_guide'].forEach(function (id) {
+    var e = document.getElementById(id);
+    e.addEventListener('input', calc); e.addEventListener('change', calc);
+  });
+  calc();
+})();
+
+/* =======================================================================
+   ARAÇ 4 — Sürüklenmeden hataya
+   ======================================================================= */
+(function () {
+  var root = document.getElementById('tool-drift');
+  if (!root) return;
+
+  function calc() {
+    var mode = document.getElementById('dr_mode').value;
+    var amt = Math.max(0, parseFloat(document.getElementById('dr_amt').value) || 0);
+    var mins = Math.max(0.1, parseFloat(document.getElementById('dr_min').value) || 5);
+    var pxUm = Math.max(1, parseFloat(document.getElementById('dr_px').value) || 3.75);
+    var fl = Math.max(30, parseFloat(document.getElementById('dr_fl').value) || 120);
+    var sta = document.getElementById('dr_sta').value;
+    var dec = parseFloat(document.getElementById('dr_dec').value);
+    var lat = Math.min(75, Math.max(0, parseFloat(document.getElementById('dr_lat').value) || 40));
+
+    document.getElementById('dr_dec_v').textContent = (dec >= 0 ? '+' : '') + dec + '°';
+    document.getElementById('dr_px').parentNode.style.opacity = mode === 'px' ? '1' : '.45';
+    document.getElementById('dr_fl').parentNode.style.opacity = mode === 'px' ? '1' : '.45';
+
+    var scale = pixelScale(pxUm, fl);
+    var arcsec = mode === 'px' ? amt * scale : amt;
+    var rate = arcsec / mins;                     /* ″/dk */
+
+    /* geometrik doğru hata (deklinasyondan bağımsız) */
+    var errSky = rate / 0.262521;                 /* yay dakikası, gökyüzü açısı */
+    var knob = sta === 'mer' ? errSky / Math.max(0.2, Math.cos(lat * D2R)) : errSky;
+    var phd = K_PHD2 * rate / Math.max(0.02, Math.cos(dec * D2R));
+
+    document.getElementById('dr_err').textContent = fmtErr(errSky);
+    document.getElementById('dr_rate').innerHTML = rate.toFixed(2) + '<small> ″/dk</small>';
+    document.getElementById('dr_knob').textContent = fmtErr(knob);
+    document.getElementById('dr_phd').textContent = fmtErr(phd);
+
+    var axis = sta === 'mer' ? 'azimut' : 'yükseklik';
+    var msg = '<b class="hd">Ölçüm sonucu.</b>Ölçtüğünüz <b>' + rate.toFixed(2) + ' ″/dk</b> sürüklenme, <b>' +
+              fmtErr(errSky) + '</b> ' + axis + ' hatasına karşılık geliyor. ';
+    if (sta === 'mer') {
+      msg += 'Meridyende ölçtüğünüz için yükseklik hatası bu sonuca <em>hiç</em> karışmaz — okuduğunuz her şey azimuttandır. ' +
+             'Ayar vidasında ise ' + fmtErr(knob) + ' hareket etmeniz gerekir (enlem ' + lat + '° için 1/cos düzeltmesi).';
+    } else {
+      msg += 'Ufka yakın ölçtüğünüz için azimut hatası bu sonuca karışmaz — okuduğunuz her şey yükseklikten. ' +
+             'Yükseklik ayarında ölçek düzeltmesi yoktur: ' + fmtErr(knob) + ' kadar oynatın ve <b>yukarı doğru bitirin</b>.';
+    }
+    if (errSky < 1) {
+      msg = '<b class="hd" style="color:#4ed24e">Zaten çok iyi.</b>' + msg.replace('<b class="hd">Ölçüm sonucu.</b>', '') + '<br><br>Bu seviyede ölçtüğünüz şey büyük ölçüde ' +
+            'seeing ve montür periyodik hatasıdır. Daha fazla iyileştirme kovalamayın.';
+    } else if (errSky > 20) {
+      msg = '<b class="hd" style="color:#f08080">Büyük bir hata.</b>' + msg.replace('<b class="hd">Ölçüm sonucu.</b>', '') + '<br><br>Bu kadar büyük bir sapmayı tek seferde ' +
+            'düzeltmeye çalışmak yerine kaba bir geçiş yapıp ölçümü tekrarlayın.';
+    }
+    if (Math.abs(dec) > 25) {
+      msg += '<br><br><b>PHD2 farkı:</b> aynı sürüklenmeyi PHD2 Guiding Assistant <b>' + fmtErr(phd) + '</b> olarak ' +
+             'bildirirdi, çünkü sonucu cos δ\'ya bölüyor. Deklinasyon ' + dec + '°\'de bu <b>' +
+             (1 / Math.cos(dec * D2R)).toFixed(1) + ' kat</b> şişirme demek. Ölçümü ekvatora yakın tekrarlarsanız ' +
+             'iki sayı çakışır.';
+    }
+    document.getElementById('dr_verdict').innerHTML = msg;
+  }
+
+  ['dr_mode', 'dr_amt', 'dr_min', 'dr_px', 'dr_fl', 'dr_sta', 'dr_dec', 'dr_lat'].forEach(function (id) {
+    var e = document.getElementById(id);
+    e.addEventListener('input', calc); e.addEventListener('change', calc);
+  });
+  calc();
+})();
+
+/* =======================================================================
+   İçindekiler + ilerleme çubuğu
+   ======================================================================= */
+(function () {
+  var btn = document.getElementById('tocbtn'), toc = document.getElementById('toc');
+  if (btn) btn.addEventListener('click', function () { toc.classList.toggle('open'); });
+  var links = toc ? toc.querySelectorAll('a') : [];
+  var prog = document.getElementById('prog');
+  function onScroll() {
+    var h = document.documentElement;
+    var p = h.scrollTop / Math.max(1, h.scrollHeight - h.clientHeight);
+    if (prog) prog.style.width = (p * 100).toFixed(1) + '%';
+    var best = null, bestD = 1e9;
+    Array.prototype.forEach.call(links, function (a) {
+      var id = a.getAttribute('href').slice(1);
+      var t = document.getElementById(id);
+      if (!t) return;
+      var d = Math.abs(t.getBoundingClientRect().top - 90);
+      if (t.getBoundingClientRect().top < 200 && d < bestD) { bestD = d; best = a; }
+    });
+    Array.prototype.forEach.call(links, function (a) { a.classList.remove('on'); });
+    if (best) best.classList.add('on');
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+})();
+</script>
+</body>
+</html>

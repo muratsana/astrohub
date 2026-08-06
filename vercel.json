@@ -705,6 +705,10 @@
       "destination": "/app.html"
     },
     {
+      "source": "/yazi/kutup-hizalamasi",
+      "destination": "/app.html"
+    },
+    {
       "source": "/yazi/snr-rehberi",
       "destination": "/app.html"
     },
@@ -714,6 +718,10 @@
     },
     {
       "source": "/yazilar/drizzle-rehberi",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/yazilar/kutup-hizalamasi",
       "destination": "/app.html"
     },
     {

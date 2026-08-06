@@ -282,6 +282,19 @@ export const appRoutes = [
          boş bırakılmış künye kaydına değil rehberin kendisine düşsün. */
       { path: 'yazi/drizzle-rehberi', element: <RedirectTo to="/yazilar/drizzle-rehberi" /> },
       { path: 'yazi/snr-rehberi', element: <RedirectTo to="/yazilar/snr-rehberi" /> },
+      { path: 'yazi/kutup-hizalamasi', element: <RedirectTo to="/yazilar/kutup-hizalamasi" /> },
+      {
+        /* Üçüncü uzun form rehber, ilk ikisiyle aynı gerekçe: 15 bölüm,
+           11 tablo, 13 şekil, canlı simülatör ve üç araç blok tabanlı
+           yazı modeline sığmıyor. Ayrıntı `PolarGuidePage` başlığında. */
+        path: 'yazilar/kutup-hizalamasi',
+        element: route(
+          named(
+            () => import('@/features/knowledge/PolarGuidePage'),
+            'PolarGuidePage'
+          )
+        ),
+      },
       {
         /* Drizzle ile aynı gerekçe: 15 bölüm, 15 tablo, 7 infografik ve
            dört interaktif araç blok tabanlı yazı modeline sığmıyor. */
