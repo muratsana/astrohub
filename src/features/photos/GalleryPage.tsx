@@ -24,9 +24,6 @@ import { usePhotoWeekRounds } from '@/services/content/photoOfWeek';
 import { cities as turkeyCities } from '@/features/location/cities';
 import { useExplorer } from '@/features/explorer/useExplorer';
 import { gallerySpec } from './gallerySpec';
-import { CsvExportButton } from '@/features/explorer/CsvExportButton';
-import { SavedViewsMenu } from '@/features/explorer/SavedViewsMenu';
-import type { CsvColumn } from '@/lib/csv';
 import { personalFacet, withFacets } from '@/features/explorer/personalFacets';
 import { useSavedPhotoIds } from '@/services/content/collections';
 import { useFollowingIds } from '@/services/content/social';
@@ -37,6 +34,7 @@ import { breadcrumbJsonLd } from '@/lib/seo';
 import { photoWeekArchive, selectWeeklyPhoto } from './weeklyPick';
 import { formatExposure } from '@/domain/photography/exif';
 import {
+  exposureRowSeconds,
   formatIntegration,
   totalIntegrationSeconds,
 } from '@/domain/photography/integration';
@@ -57,29 +55,6 @@ const paletteOptions: (ProcessingPalette | 'hepsi')[] = [
  * Gece Manzarası) — yedi ince türü gözle taramak yerine dört renkli rozet.
  * Izgara ve liste görünümü arasında geçiş yapılabilir; seçim saklanır.
  */
-/**
- * CSV SÜTUNLARI.
- *
- * KART ÜZERİNDE GÖRÜNENLER değil, KAYDIN KÜNYESİ dışa aktarılıyor:
- * dosyayı açan kişi listeyi gözle taramak için değil, üzerinde işlem
- * yapmak için indiriyor. Gradyan ve görsel yolu gibi çizim alanları
- * dışarıda — elektronik tabloda karşılığı yok.
- */
-const CSV_SUTUNLARI: CsvColumn<AstroPhoto>[] = [
-  { label: 'Başlık', value: (p) => p.title },
-  { label: 'Hedef', value: (p) => p.target.name },
-  { label: 'Katalog', value: (p) => p.target.catalog },
-  { label: 'Takımyıldız', value: (p) => p.target.constellation },
-  { label: 'Tür', value: (p) => p.type },
-  { label: 'Palet', value: (p) => p.palette },
-  { label: 'Kullanıcı', value: (p) => p.user.username },
-  { label: 'Şehir', value: (p) => p.city },
-  { label: 'Çekim', value: (p) => p.capturedAt },
-  { label: 'Beğeni', value: (p) => p.likes },
-  { label: 'Yorum', value: (p) => p.comments },
-  { label: 'Adres', value: (p) => `/fotograf/${p.slug}` },
-];
-
 export function GalleryPage() {
   const [view, setView] = useViewMode('galeri');
 
@@ -168,14 +143,9 @@ export function GalleryPage() {
           title="Fotoğraf Galerisi"
           description="Topluluğun astrofotoğraf arşivi. Her kayıt hedefi, setup'ı, filtresi ve gökyüzü koşullarıyla birlikte saklanır."
           actions={
-            <>
-              <ButtonLink to="/secki" size="sm" variant="secondary">
-                Aylık Seçki
-              </ButtonLink>
-              <ButtonLink to="/galeri/yukle" size="sm">
-                Fotoğraf Yükle
-              </ButtonLink>
-            </>
+            <ButtonLink to="/galeri/yukle" size="sm">
+              Fotoğraf Yükle
+            </ButtonLink>
           }
         />
 
@@ -222,6 +192,20 @@ export function GalleryPage() {
                   aria-hidden
                   className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,transparent,color-mix(in_srgb,var(--color-background)_24%,transparent))]"
                 />
+                {/*
+                  FİLM ŞERİDİ — kart ızgarasındaki `PlateFrame` ile aynı
+                  çentikler. Haftanın fotoğrafı kendi düzenini kurduğu için
+                  `PlateFrame` kullanmıyor; çentikleri elle taşıyor ki
+                  öne çıkan kare de galerinin görsel diliyle konuşsun.
+                */}
+                <span
+                  aria-hidden
+                  className="ticks-y pointer-events-none absolute inset-x-0 top-0 h-[5px]"
+                />
+                <span
+                  aria-hidden
+                  className="ticks-y pointer-events-none absolute inset-x-0 bottom-0 h-[5px]"
+                />
               </Link>
               <div className="flex min-w-0 flex-col justify-center p-4 sm:p-5">
                 <div className="flex flex-wrap items-center gap-2">
@@ -250,19 +234,17 @@ export function GalleryPage() {
                   </Link>
                 </p>
                 <WeeklyPhotoKunye photo={weeklyPick.photo} />
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <ButtonLink
-                    to={`/fotograf/${weeklyPick.photo.slug}`}
-                    size="sm"
-                  >
-                    Fotoğrafı aç
-                  </ButtonLink>
+                {/* "Fotoğrafı aç" kaldırıldı: görselin kendisi zaten
+                    fotoğrafın sayfasına gidiyor, başlık da öyle. Aynı
+                    hedefe üçüncü bir düğme koymak künyenin yerini
+                    yiyordu. */}
+                <div className="mt-4">
                   <ButtonLink
                     to="/haftanin-fotografi"
                     size="sm"
                     variant="secondary"
                   >
-                    Arşiv
+                    Haftanın fotoğrafları arşivi
                   </ButtonLink>
                 </div>
               </div>
@@ -340,23 +322,6 @@ export function GalleryPage() {
             })),
           }}
           view={{ mode: view, onChange: setView }}
-          /*
-            KAYDEDİLMİŞ GÖRÜNÜM + CSV: ikisi de yazıldığı hâlde hiçbir
-            sayfaya bağlanmamıştı (eski dal incelemesi §4). Bileşenler
-            kendi görünürlük kurallarını taşıyor — CSV yalnızca
-            yöneticide, kayıtlı görünümler yalnızca oturum açıkken
-            çiziliyor — bu yüzden burada koşul yok.
-          */
-          extra={
-            <>
-              <SavedViewsMenu module="galeri" />
-              <CsvExportButton
-                module="galeri"
-                rows={result}
-                columns={CSV_SUTUNLARI}
-              />
-            </>
-          }
         >
           <FilterCell
             label="Ara"
@@ -525,87 +490,136 @@ export function GalleryPage() {
  * toplam entegrasyon. Boş alan zaten listeye girmiyor, yani dört değerden
  * azı varsa satır kısalıyor — "—" ile doldurulmuyor.
  */
+/**
+ * HAFTANIN FOTOĞRAFININ TAM KÜNYESİ.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * DÖRT SATIRLIK ÖZET YETMİYORDU
+ *
+ * Önceden künye ilk dört alanla kesiliyordu ("poz süresi, çekim yeri,
+ * çekim tarihi, toplam entegrasyon") ve gerisini görmek için fotoğrafın
+ * sayfasına gitmek gerekiyordu. Oysa haftanın fotoğrafı vitrindir:
+ * bakan kişinin ilk sorusu "bu nasıl çekilmiş" ve cevabın burada olması
+ * gerekiyor.
+ *
+ * Şimdi iki blok var:
+ *
+ *   1. FİLTRE TABLOSU — her filtre için kare sayısı × poz süresi ve o
+ *      filtrenin toplamı, altında genel toplam. Astrofotoğrafta "20 saat"
+ *      tek başına eksik bilgi: 20 saatin ne kadarı Hα, ne kadarı OIII
+ *      olduğu sonucun rengini belirliyor.
+ *   2. KÜNYE — çekim tarihi/yeri, gökyüzü koşulu ve ekipman zinciri.
+ *
+ * VERİ YOKSA SATIR YOK. Boş bir "—" listesi, künyesi olmayan bir kaydı
+ * künyesi varmış gibi gösterirdi; her alan kendi varlığını kontrol
+ * ediyor.
+ */
 function WeeklyPhotoKunye({ photo }: { photo: AstroPhoto }) {
-  const rows = weeklyPhotoExifRows(photo).slice(0, 4);
-  if (rows.length === 0) return null;
+  const pozlar = photo.exposures ?? [];
+  const toplam = totalIntegrationSeconds(pozlar);
+
+  const kunye: [string, string][] = [];
+  const ekle = (etiket: string, deger?: string | number | null) => {
+    const metin = deger === null || deger === undefined ? '' : String(deger);
+    if (metin.trim() !== '') kunye.push([etiket, metin]);
+  };
+  ekle('Çekim tarihi', formatPhotoDate(photo.capturedAt));
+  ekle('Çekim yeri', photo.location.label);
+  ekle(
+    'Gökyüzü',
+    [
+      photo.location.bortle ? `Bortle ${photo.location.bortle}` : null,
+      photo.location.sqm ? `SQM ${photo.location.sqm}` : null,
+    ]
+      .filter(Boolean)
+      .join(' · ')
+  );
+  ekle('Optik', photo.setup.optic || photo.exif?.lens);
+  ekle('Kamera', photo.setup.camera || photo.exif?.camera);
+  ekle('Montür', photo.setup.mount);
+  ekle('Guiding', photo.setup.guiding);
+  ekle('Redüktör', photo.setup.reducer);
+  ekle('İşleme paleti', photo.palette);
+
+  if (pozlar.length === 0 && kunye.length === 0) return null;
 
   return (
-    <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1.5 border-t border-border pt-3">
-      {rows.map(([label, value]) => (
-        <div key={label} className="min-w-0">
-          <dt className="text-meta text-faint">{label}</dt>
-          <dd className="truncate text-meta text-foreground" title={value}>
-            {value}
-          </dd>
+    <div className="mt-3 space-y-3 border-t border-border pt-3">
+      {pozlar.length > 0 && (
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[18rem] border-collapse text-left">
+            <caption className="sr-only">
+              Filtre bazlı pozlama dökümü
+            </caption>
+            <thead>
+              <tr className="text-meta text-faint">
+                <th scope="col" className="pb-1 pr-3 font-medium">
+                  Filtre
+                </th>
+                <th scope="col" className="pb-1 pr-3 text-right font-medium">
+                  Kare
+                </th>
+                <th scope="col" className="pb-1 pr-3 text-right font-medium">
+                  Poz
+                </th>
+                <th scope="col" className="pb-1 text-right font-medium">
+                  Toplam
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {pozlar.map((satir, index) => (
+                <tr
+                  key={`${satir.filter}-${index}`}
+                  className="border-t border-border/60"
+                >
+                  <td className="py-1 pr-3 text-meta text-foreground">
+                    {satir.filter}
+                  </td>
+                  <td className="tabular py-1 pr-3 text-right text-meta text-muted-foreground">
+                    {satir.frames}
+                  </td>
+                  <td className="tabular py-1 pr-3 text-right text-meta text-muted-foreground">
+                    {formatExposure(satir.exposureSeconds)}
+                  </td>
+                  <td className="tabular py-1 text-right text-meta text-foreground">
+                    {formatIntegration(exposureRowSeconds(satir))}
+                  </td>
+                </tr>
+              ))}
+              {toplam > 0 && (
+                <tr className="border-t border-border">
+                  <td className="py-1 pr-3 text-meta text-faint">Toplam</td>
+                  <td className="tabular py-1 pr-3 text-right text-meta text-faint">
+                    {pozlar.reduce((acc, satir) => acc + satir.frames, 0)}
+                  </td>
+                  <td className="py-1 pr-3" />
+                  <td className="tabular py-1 text-right text-meta font-medium text-primary">
+                    {formatIntegration(toplam)}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
-      ))}
-    </dl>
+      )}
+
+      {kunye.length > 0 && (
+        <dl className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+          {kunye.map(([etiket, deger]) => (
+            <div key={etiket} className="min-w-0">
+              <dt className="text-meta text-faint">{etiket}</dt>
+              <dd className="truncate text-meta text-foreground" title={deger}>
+                {deger}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      )}
+    </div>
   );
 }
 
-function weeklyPhotoExifRows(photo: AstroPhoto): [string, string][] {
-  const exif = photo.exif;
-  const rows: [string, string][] = [];
-  const add = (label: string, value?: string | null) => {
-    if (value && value.trim() !== '') rows.push([label, value]);
-  };
-  const primaryExposure = photo.exposures[0]?.exposureSeconds;
-  const uniqueExposureSeconds = [
-    ...new Set(photo.exposures.map((row) => row.exposureSeconds)),
-  ];
-  const exposureLabel =
-    exif?.exposureSeconds !== null && exif?.exposureSeconds !== undefined
-      ? formatExposure(exif.exposureSeconds)
-      : uniqueExposureSeconds.length === 1
-        ? formatExposure(uniqueExposureSeconds[0])
-        : primaryExposure
-          ? photo.exposures
-              .map(
-                (row) => `${row.filter} ${formatExposure(row.exposureSeconds)}`
-              )
-              .join(' · ')
-          : null;
-  const filterLabel =
-    photo.setup.filters ||
-    [...new Set(photo.exposures.map((row) => row.filter).filter(Boolean))].join(
-      ' · '
-    );
-  const integrationSeconds = totalIntegrationSeconds(photo.exposures);
-  const exposurePlan = photo.exposures
-    .filter((row) => row.filter && row.frames > 0 && row.exposureSeconds > 0)
-    .map(
-      (row) =>
-        `${row.filter}: ${row.frames}×${formatExposure(row.exposureSeconds)}`
-    )
-    .join(' · ');
-
-  add('Poz süresi', exposureLabel);
-  add('Çekim yeri', photo.location.label);
-  add('Çekim tarihi', formatPhotoDate(photo.capturedAt));
-  if (integrationSeconds > 0)
-    add('Toplam entegrasyon', formatIntegration(integrationSeconds));
-  add('Filtreler', filterLabel);
-  add('Poz planı', exposurePlan);
-
-  const sky = [
-    photo.location.bortle ? `Bortle ${photo.location.bortle}` : null,
-    photo.location.sqm ? `SQM ${photo.location.sqm}` : null,
-  ].filter(Boolean);
-  add('Gökyüzü', sky.join(' · '));
-
-  add('Optik', photo.setup.optic || exif?.lens);
-  add('Kamera', photo.setup.camera || exif?.camera);
-  if (exif?.lens && exif.lens !== photo.setup.optic)
-    rows.push(['Lens', exif.lens]);
-  if (exif?.iso !== null && exif?.iso !== undefined)
-    rows.push(['ISO', String(exif.iso)]);
-  if (exif?.focalMm !== null && exif?.focalMm !== undefined)
-    rows.push(['Odak', `${Number(exif.focalMm.toFixed(1))} mm`]);
-  if (exif?.apertureF !== null && exif?.apertureF !== undefined)
-    rows.push(['Diyafram', `f/${Number(exif.apertureF.toFixed(1))}`]);
-
-  return rows;
-}
 
 function formatPhotoDate(value: string): string {
   const [year, month, day] = value.slice(0, 10).split('-');

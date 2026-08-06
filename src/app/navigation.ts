@@ -82,12 +82,6 @@ export const siteMap: NavGroup[] = [
         keywords: ['galeri', 'arşiv', 'foto', 'astrofotoğraf'],
       },
       {
-        label: 'Aylık Seçki',
-        to: '/secki',
-        description: 'Ayın oylanan kareleri ve seçki arşivi',
-        keywords: ['seçki', 'aylık', 'oylama', 'oy'],
-      },
-      {
         label: 'Fotoğraf Yükle',
         to: '/galeri/yukle',
         description: 'Yeni kayıt aç — hedef, setup, pozlama',

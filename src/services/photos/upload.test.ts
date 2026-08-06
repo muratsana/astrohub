@@ -117,6 +117,7 @@ const input = {
   slug: 'gece',
   title: 'Gece',
   photoType: 'deep-sky',
+  palette: 'RGB',
   copyrightConfirmed: true,
 };
 

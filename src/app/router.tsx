@@ -135,15 +135,12 @@ export const appRoutes = [
           )
         ),
       },
-      {
-        path: 'secki',
-        element: route(
-          named(
-            () => import('@/features/photos/MonthlySelectionPage'),
-            'MonthlySelectionPage'
-          )
-        ),
-      },
+      /* AYLIK SEÇKİ KALDIRILDI. Haftanın fotoğrafı arşivi aynı işi
+         yapıyor — her haftanın kazananı orada zaten listeleniyor — ve iki
+         ayrı "seçki" sayfası okuyucuya hangisinin asıl olduğu sorusunu
+         sorduruyordu. Adres yönlendirmede kalıyor: dış bağlantılar ve
+         yer imleri kırılmasın. */
+      { path: 'secki', element: <RedirectTo to="/haftanin-fotografi" /> },
       {
         path: 'haftanin-fotografi',
         element: route(

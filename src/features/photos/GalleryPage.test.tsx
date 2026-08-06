@@ -90,20 +90,6 @@ describe('GalleryPage (§7.2)', () => {
       })
     ).toBeInTheDocument();
     expect(screen.getAllByText('32. Hafta').length).toBeGreaterThan(0);
-    /*
-      KÜNYE DÖRT DEĞERE İNDİ. Şerit eskiden dokuz satırlık tam EXIF
-      tablosunu taşıyordu ve şeridin YÜKSEKLİĞİNİ o tablo belirliyordu
-      (ölçüm: 1440×900'de 611px, galeri ızgarası fold'un 220px altında
-      başlıyordu). Görsel sabit 16:9 oranına alınınca tablo sığmıyor;
-      künyenin tamamı fotoğraf detay sayfasında ve "Fotoğrafı aç"
-      hemen yanında duruyor.
-    */
-    expect(screen.getByText('Poz süresi')).toBeInTheDocument();
-    expect(screen.getByText('Çekim yeri')).toBeInTheDocument();
-    expect(screen.getByText('Saklıkent, Antalya')).toBeInTheDocument();
-    expect(
-      screen.queryByText(/exif \/ çekim künyesi/i)
-    ).not.toBeInTheDocument();
     const weeklyHero = screen
       .getByRole('link', { name: `Haftanın Fotoğrafı: ${photos[0].title}` })
       .closest('section');
@@ -111,14 +97,42 @@ describe('GalleryPage (§7.2)', () => {
       name: `Haftanın Fotoğrafı: ${photos[0].title}`,
     });
     expect(weeklyHero).not.toBeNull();
-    /* Filtre, poz planı ve setup satırları künyeden çıktı — dördün
-       dışında kalan her şey detay sayfasında. */
+
+    /*
+      TAM KÜNYE ŞERİTTE.
+
+      Bir ara dört değere indirilmişti (şeridin yüksekliğini künye
+      belirliyordu ve galeri ızgarası fold'un altına kaçıyordu). Görsel
+      sabit 16:9'a alınınca yükseklik görselden geliyor; künye artık
+      şeridi büyütmüyor ve tamamı burada durabiliyor.
+
+      Haftanın fotoğrafı vitrindir: bakanın ilk sorusu "bu nasıl
+      çekilmiş" ve cevabın detay sayfasına tıklamadan görünmesi
+      gerekiyor. Filtre tablosu ayrıca astrofotoğrafa özgü: "20 saat"
+      tek başına eksik bilgi, o sürenin ne kadarının Hα olduğu sonucun
+      rengini belirliyor.
+    */
+    expect(within(weeklyHero!).getByText('Filtre')).toBeInTheDocument();
+    expect(within(weeklyHero!).getByText('Kare')).toBeInTheDocument();
+    /* "Toplam" iki kez geçiyor: sütun başlığı ve toplam satırının
+       etiketi. İkisi de olmalı. */
+    expect(within(weeklyHero!).getAllByText('Toplam')).toHaveLength(2);
     expect(within(weeklyHero!).getByText('Çekim tarihi')).toBeInTheDocument();
+    expect(within(weeklyHero!).getByText('Çekim yeri')).toBeInTheDocument();
     expect(
-      within(weeklyHero!).getByText('Toplam entegrasyon')
+      within(weeklyHero!).getByText('Saklıkent, Antalya')
     ).toBeInTheDocument();
+    expect(within(weeklyHero!).getByText('Optik')).toBeInTheDocument();
+    expect(within(weeklyHero!).getByText('Kamera')).toBeInTheDocument();
+    expect(within(weeklyHero!).getByText('Montür')).toBeInTheDocument();
     expect(
-      within(weeklyHero!).queryByText('Poz planı')
+      within(weeklyHero!).getByText('İşleme paleti')
+    ).toBeInTheDocument();
+
+    /* "Fotoğrafı aç" kaldırıldı: görsel ve başlık zaten aynı yere
+       gidiyor, üçüncü bir düğme künyenin yerini yiyordu. */
+    expect(
+      within(weeklyHero!).queryByRole('link', { name: /fotoğrafı aç/i })
     ).not.toBeInTheDocument();
     expect(
       screen.getByRole('link', { name: `@${photos[0].user.username}` })

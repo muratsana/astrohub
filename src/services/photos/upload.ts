@@ -42,6 +42,19 @@ export interface UploadInput {
   slug: string;
   title: string;
   photoType: string;
+  /**
+   * İŞLEME PALETİ — ZORUNLU, isteğe bağlı değil.
+   *
+   * `AstroPhoto.palette` zorunlu bir alan ve galeri süzgeci ("Tüm
+   * paletler") ona dayanıyor. Yükleme sihirbazı bunu hiç sormuyordu:
+   * yayımlanan her yeni fotoğraf paletsiz kaydediliyor, süzgeçte
+   * görünmüyor ve kartındaki "RGB · 20 sa" satırı yarım kalıyordu.
+   *
+   * `?` ile isteğe bağlı bırakmak, çağıranın unutmasını derleme
+   * zamanında değil yayın sonrasında fark etmek demekti — telif
+   * onayında aynı hata bir kez yaşandı, aynı karar burada da veriliyor.
+   */
+  palette: string;
   description?: string;
   capturedAt?: string;
   locationLabel?: string;
@@ -231,6 +244,7 @@ export async function uploadPhoto(
           maxLength: 5000,
         }),
         photo_type: input.photoType,
+        palette: input.palette,
         object_id: input.objectId ?? null,
         setup_id: input.setupId ?? null,
         target_label: input.targetLabel

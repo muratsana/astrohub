@@ -11,7 +11,7 @@ import {
 import { checkUploadSize, formatBytes } from '@/domain/membership/quota';
 import { Container } from '@/components/ui/Container';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
+import { Input, Select } from '@/components/ui/Input';
 import { Field } from '@/components/ui/Field';
 import { Badge } from '@/components/ui/Badge';
 import {
@@ -19,7 +19,12 @@ import {
   formatIntegration,
   type FilterExposure,
 } from '@/domain/photography/integration';
-import { photoTypeLabels, PHOTO_LICENSE, type PhotoType } from '@/features/photos/types';
+import {
+  photoTypeLabels,
+  PHOTO_LICENSE,
+  type PhotoType,
+  type ProcessingPalette,
+} from '@/features/photos/types';
 import { TargetPicker } from '@/features/targets/TargetPicker';
 import { SetupSelect } from './SetupSelect';
 import { getTargetBySlug } from '@/features/targets/data';
@@ -43,6 +48,20 @@ import {
   FULL_FRAME,
   type CropRect,
 } from '@/domain/photography/crop';
+
+/**
+ * İşleme paleti seçenekleri — `ProcessingPalette` ile birebir.
+ *
+ * Açıklamalar ürünün parçası: paleti ilk kez seçen biri "SHO" kısaltmasını
+ * bilmek zorunda değil ama hangi filtrelerle çektiğini biliyor.
+ */
+const PALET_SECENEKLERI: { value: ProcessingPalette; label: string }[] = [
+  { value: 'RGB', label: 'RGB — kırmızı/yeşil/mavi' },
+  { value: 'LRGB', label: 'LRGB — parlaklık + RGB' },
+  { value: 'SHO', label: 'SHO — Hubble paleti (SII/Hα/OIII)' },
+  { value: 'HOO', label: 'HOO — Hα + OIII' },
+  { value: 'Mono', label: 'Mono — tek kanal' },
+];
 
 const steps = [
   'Dosya',
@@ -94,6 +113,8 @@ interface WizardState {
   effectiveFRatio?: number | null;
   pixelScaleArcsec?: number | null;
   exposures: FilterExposure[];
+  /** İşleme paleti — boş bırakılamaz, yayın adımına geçişi kilitliyor. */
+  palette: ProcessingPalette | '';
   software: string;
   aiDeclared: boolean;
   license: string;
@@ -115,6 +136,7 @@ const initialState: WizardState = {
   camera: '',
   mount: '',
   exposures: [{ filter: 'L', frames: 0, exposureSeconds: 0 }],
+  palette: '',
   software: '',
   aiDeclared: false,
   /*
@@ -218,6 +240,7 @@ export function UploadWizardPage() {
           slug: slugifyPhoto(state.title || file.name),
           title: state.title || file.name,
           photoType: state.type,
+          palette: state.palette,
           capturedAt: state.capturedAt || undefined,
           locationLabel: state.locationLabel || undefined,
           locationVisibility: state.locationVisibility,
@@ -403,6 +426,11 @@ export function UploadWizardPage() {
         return state.fileName.trim().length > 0;
       case 1:
         return state.title.trim().length > 0;
+      case 4:
+        /* Palet seçilmeden yayın adımına geçilemiyor: `AstroPhoto.palette`
+           zorunlu ve galeri süzgeci ona dayanıyor. Sihirbaz bunu hiç
+           sormadığı için yeni yüklenen fotoğraflar paletsiz kalıyordu. */
+        return state.palette !== '';
       case 5:
         return state.copyrightConfirmed;
       default:
@@ -790,6 +818,40 @@ export function UploadWizardPage() {
                 title="Pozlama ve filtreler"
                 hint="Toplam entegrasyon otomatik hesaplanır"
               />
+
+              {/*
+                İŞLEME PALETİ ZORUNLU.
+
+                Galeri süzgecinde "Tüm paletler" seçimi var ve kart
+                künyesi "RGB · 20 sa" diye yazıyor; palet boşsa fotoğraf
+                o süzgeçte hiç görünmüyor ve künye yarım kalıyor.
+                Sihirbaz bu alanı hiç sormuyordu.
+
+                Serbest metin değil sabit liste: süzgecin işe yaraması
+                buna bağlı — herkesin kendi yazdığı palet adı hiçbir şeyi
+                bir araya getirmez.
+              */}
+              <Field
+                label="İşleme paleti"
+                htmlFor="palette"
+                hint="Zorunlu — galeri süzgeci ve kart künyesi bunu kullanıyor."
+              >
+                <Select
+                  id="palette"
+                  value={state.palette}
+                  aria-invalid={state.palette === '' ? true : undefined}
+                  onChange={(e) =>
+                    patch({ palette: e.target.value as ProcessingPalette | '' })
+                  }
+                >
+                  <option value="">Seçin…</option>
+                  {PALET_SECENEKLERI.map((p) => (
+                    <option key={p.value} value={p.value}>
+                      {p.label}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
               <div className="space-y-3">
                 {state.exposures.map((row, i) => (
                   <div

@@ -76,8 +76,12 @@ export function DiscoverPage() {
           description="Türkiye'nin astrofotoğrafçıları, bu sezon en çok çalışılan hedefler ve topluluğun yeni içerikleri."
           meta={`${photographers.length} üretici`}
           actions={
-            <ButtonLink to="/secki" size="sm" variant="secondary">
-              Aylık seçki
+            <ButtonLink
+              to="/haftanin-fotografi"
+              size="sm"
+              variant="secondary"
+            >
+              Haftanın fotoğrafları
             </ButtonLink>
           }
         />
