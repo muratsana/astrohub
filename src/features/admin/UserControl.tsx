@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router';
 import { Panel } from '@/components/ui/Panel';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -14,6 +15,9 @@ import {
   fetchDeletionRequests,
   exportUsersCsv,
   fetchUserAudit,
+  fetchUserContent,
+  anonymizeUser,
+  cancelDeletionRequest,
   USER_PAGE_SIZE,
   USER_SORTS,
   userSortLabels,
@@ -35,6 +39,7 @@ import {
   setAdminNote,
   type AccountStatus,
   type AuditEntry,
+  type UserContent,
   type AdminUser,
   type AppRole,
   type DeletionRequest,
@@ -540,6 +545,8 @@ export function UserControl() {
                     onApply={run}
                   />
 
+                  <UserContentSection user={u} busy={busy} onApply={run} />
+
                   <UserAuditTrail userId={u.id} />
 
                   {/*
@@ -615,6 +622,34 @@ export function UserControl() {
                     planlanan:{' '}
                     {new Date(r.scheduledFor).toLocaleDateString('tr-TR')}
                   </span>
+                )}
+                {/*
+                  TALEBİ KAPATMAK, TALEBİ YERİNE GETİRMEK DEĞİL.
+
+                  Yerine getirme (anonimleştirme) kullanıcının kendi
+                  satırındaki KVKK bölümünden yapılıyor; orada hangi
+                  içeriğin kalacağı da görünüyor. Buradaki düğme yalnızca
+                  kullanıcı vazgeçtiğinde ya da talep hatalı olduğunda
+                  kuyruğu temizliyor — aksi hâlde liste hiç boşalmayan bir
+                  uyarıya dönüşür ve gerçek talepler içinde kaybolur.
+                */}
+                {r.status === 'pending' && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    disabled={busy}
+                    onClick={() =>
+                      void run(() =>
+                        cancelDeletionRequest(
+                          r.id,
+                          'Panelden kapatıldı: talep geri çekildi ya da hatalı.'
+                        )
+                      )
+                    }
+                  >
+                    Talebi kapat
+                  </Button>
                 )}
               </li>
             ))}
@@ -905,6 +940,178 @@ function UserAuditTrail({ userId }: { userId: string }) {
           </li>
         ))}
       </ul>
+    </div>
+  );
+}
+
+/**
+ * KULLANICININ İÇERİĞİ VE KVKK AKSİYONLARI (Görev 1.4).
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * SAYIM HER ZAMAN, LİSTE ÖRNEKLİK
+ *
+ * Altı sayı bir bakışta profili anlatıyor: yüz fotoğraf yüklemiş biriyle
+ * üç yorum yazmış biri farklı kararlar gerektiriyor. Örnek satırlar
+ * beşer tane ve moderasyona atlamak için — arşiv göstermek için değil.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * ANONİMLEŞTİRME İKİ BASIŞ, TAM SİLME HİÇ YOK
+ *
+ * Anonimleştirme geri alınamıyor (eski kullanıcı adı ve bio geri
+ * gelmiyor), o yüzden ikinci bir onay istiyor.
+ *
+ * Tam silme düğmesi YOK. `auth.users` yalnızca `service_role` ile
+ * yazılabiliyor ve SPA'da öyle bir yer yok (karar K4). Düğmeyi koyup
+ * "yapılamadı" demektense hiç koymamak ve nedenini yazmak dürüst olan.
+ */
+function UserContentSection({
+  user,
+  busy,
+  onApply,
+}: {
+  user: AdminUser;
+  busy: boolean;
+  onApply: (action: () => Promise<void>) => Promise<void>;
+}) {
+  const [content, setContent] = useState<UserContent | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [reason, setReason] = useState('');
+  const [confirm, setConfirm] = useState(false);
+
+  useEffect(() => {
+    let iptal = false;
+    fetchUserContent(user.id)
+      .then((c) => {
+        if (!iptal) setContent(c);
+      })
+      .catch((e: unknown) => {
+        if (!iptal) {
+          setError(e instanceof Error ? e.message : 'İçerik okunamadı');
+        }
+      });
+    return () => {
+      iptal = true;
+    };
+  }, [user.id]);
+
+  const anonim = user.username.startsWith('silinmis-uye-');
+
+  return (
+    <div className="rounded-card border border-border bg-surface-1 p-3">
+      <p className="label mb-1.5">İçerik</p>
+
+      {error && <p className="text-meta text-warning">{error}</p>}
+      {!content && !error && (
+        <p className="text-meta text-faint">İçerik sayısı okunuyor…</p>
+      )}
+
+      {content && (
+        <>
+          <dl className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+            {(
+              [
+                ['Fotoğraf', content.photos],
+                ['Yorum', content.comments],
+                ['İlan', content.listings],
+                ['Konu', content.threads],
+                ['Mesaj', content.posts],
+                ['Gözlem', content.logs],
+              ] as [string, number][]
+            ).map(([etiket, sayi]) => (
+              <div
+                key={etiket}
+                className="rounded-card border border-border bg-surface-2 px-2 py-1.5"
+              >
+                <dt className="text-meta text-faint">{etiket}</dt>
+                <dd className="tabular text-body-sm text-foreground">{sayi}</dd>
+              </div>
+            ))}
+          </dl>
+
+          {(content.recentPhotos.length > 0 ||
+            content.recentListings.length > 0) && (
+            <ul className="mt-2 space-y-1">
+              {[...content.recentPhotos, ...content.recentListings].map(
+                (item) => (
+                  <li
+                    key={item.id}
+                    className="flex flex-wrap items-baseline gap-2 text-meta"
+                  >
+                    <Link
+                      to={item.path}
+                      className="text-primary hover:underline"
+                    >
+                      {item.title}
+                    </Link>
+                    <span className="text-faint">{item.status}</span>
+                  </li>
+                )
+              )}
+            </ul>
+          )}
+        </>
+      )}
+
+      {/* ── KVKK ── */}
+      <div className="mt-3 border-t border-border pt-2">
+        <p className="label mb-1.5">KVKK</p>
+
+        {anonim ? (
+          <p className="text-meta text-muted-foreground">
+            Bu hesap anonimleştirilmiş. İçerikleri &quot;silinmiş üye&quot;
+            imzasıyla duruyor.
+          </p>
+        ) : (
+          <>
+            <div className="flex flex-wrap items-end gap-2">
+              <label className="min-w-[12rem] flex-1">
+                <span className="label mb-1 block">
+                  Gerekçe (denetim kaydına yazılır)
+                </span>
+                <Input
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                  placeholder="Örn. kullanıcının KVKK talebi"
+                  className="h-8 w-full text-meta"
+                />
+              </label>
+              <Button
+                type="button"
+                size="sm"
+                variant="danger"
+                disabled={busy || reason.trim().length < 3}
+                onClick={() => {
+                  if (!confirm) {
+                    setConfirm(true);
+                    return;
+                  }
+                  void onApply(async () => {
+                    await anonymizeUser(user.id, reason);
+                    setReason('');
+                    setConfirm(false);
+                  });
+                }}
+              >
+                {confirm ? 'Anonimleştirmeyi onayla' : 'Anonimleştir'}
+              </Button>
+            </div>
+
+            {confirm && (
+              <p className="mt-1.5 text-meta text-danger">
+                Kullanıcı adı, görünen ad, bio, şehir, site ve avatar
+                silinecek; hesap dondurulacak. Geri alınamaz. İçerikler
+                kalacak.
+              </p>
+            )}
+          </>
+        )}
+
+        <p className="mt-2 text-meta leading-relaxed text-faint">
+          Tam silme bu panelden yapılamıyor: kimlik kaydı (`auth.users`)
+          yalnızca sunucu tarafı anahtarla silinebiliyor ve bu uygulamanın
+          sunucu tarafı yok. Talep kuyrukta kalır.
+        </p>
+      </div>
     </div>
   );
 }

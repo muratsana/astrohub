@@ -685,3 +685,220 @@ export async function fetchUserAudit(
     detail: row.detail ?? {},
   }));
 }
+
+/**
+ * KULLANICININ İÇERİĞİ (Görev 1.4, sol kolon).
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * SAYIM ÖNCE, LİSTE SONRA
+ *
+ * Yönetici bir kullanıcıya bakarken önce "ne kadar üretmiş" sorusunu
+ * soruyor, sonra "ne üretmiş". Sayımlar `head: true` ile geliyor —
+ * satırlar taşınmıyor, yalnızca sayı. Örnek satırlar ayrı ve az (beşer):
+ * amaç arşiv göstermek değil, moderasyona atlamak için bir tutamak
+ * vermek.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * YORUM VE FORUM SAYIMI YAPILDI, LİSTESİ YAPILMADI
+ *
+ * Bir yorumun kendi başına adresi yok; bağlamı olmadan gösterilen bir
+ * yorum satırı ("çok güzel") moderatöre hiçbir şey söylemiyor. Sayı
+ * anlamlı (yüz yorum yazmış biri farklı bir profil), tekil satır değil.
+ * Yorumların moderasyonu kendi kuyruğundan yapılıyor.
+ */
+export interface UserContent {
+  photos: number;
+  comments: number;
+  listings: number;
+  threads: number;
+  posts: number;
+  logs: number;
+  /** Moderasyona atlamak için birkaç örnek. */
+  recentPhotos: { id: string; title: string; status: string; path: string }[];
+  recentListings: { id: string; title: string; status: string; path: string }[];
+}
+
+export async function fetchUserContent(userId: string): Promise<UserContent> {
+  const supabase = await client();
+
+  const say = async (table: string, column: string) => {
+    const { count, error } = await supabase
+      .from(table)
+      .select(column, { count: 'exact', head: true })
+      .eq(column, userId);
+    if (error) throw new Error(error.message);
+    return count ?? 0;
+  };
+
+  const [photos, comments, listings, threads, posts, logs] = await Promise.all([
+    say('astro_photos', 'user_id'),
+    say('photo_comments', 'user_id'),
+    say('listings', 'seller_id'),
+    say('forum_threads', 'author_id'),
+    say('forum_posts', 'author_id'),
+    say('observation_logs', 'user_id'),
+  ]);
+
+  const [photoRows, listingRows] = await Promise.all([
+    supabase
+      .from('astro_photos')
+      .select('id, slug, title, status')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(5),
+    supabase
+      .from('listings')
+      .select('id, slug, title, status')
+      .eq('seller_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(5),
+  ]);
+
+  return {
+    photos,
+    comments,
+    listings,
+    threads,
+    posts,
+    logs,
+    recentPhotos: (
+      (photoRows.data ?? []) as {
+        id: string;
+        slug: string;
+        title: string;
+        status: string;
+      }[]
+    ).map((r) => ({
+      id: r.id,
+      title: r.title || '(başlıksız)',
+      status: r.status,
+      path: `/fotograf/${r.slug}`,
+    })),
+    recentListings: (
+      (listingRows.data ?? []) as {
+        id: string;
+        slug: string;
+        title: string;
+        status: string;
+      }[]
+    ).map((r) => ({
+      id: r.id,
+      title: r.title || '(başlıksız)',
+      status: r.status,
+      path: `/ilan/${r.slug}`,
+    })),
+  };
+}
+
+/**
+ * ANONİMLEŞTİRME (Görev 1.4/6 — KVKK).
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * İÇERİK KALIR, KİMLİK GİDER
+ *
+ * Belge iki ayrı düğme istiyor: anonimleştir ve tam sil. Bu fonksiyon
+ * birincisi. Kişiyi tanımlayan her alan temizleniyor (görünen ad, bio,
+ * şehir, site, avatar), kullanıcı adı `silinmis-uye-XXXX` oluyor;
+ * fotoğraflar, yorumlar ve ilanlar YERİNDE KALIYOR ve "silinmiş üye"
+ * imzasıyla görünüyor.
+ *
+ * Gerekçe: bir kullanıcının yıllarca yüklediği fotoğraflar başkalarının
+ * yorum yaptığı, beğendiği, referans verdiği içerikler. Kimlik hakkı
+ * silinmeyi gerektiriyor; topluluğun arşivini silmeyi değil.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * TAM SİLME BURADA YOK VE BU BİR EKSİK DEĞİL
+ *
+ * Gerçek silme `auth.users` satırını kaldırmak demek ve o tablo yalnızca
+ * `service_role` ile yazılabiliyor — SPA'da böyle bir yer yok (karar K4).
+ * Panel bu yüzden tam silme vaat etmiyor; talep kuyrukta kalıyor ve
+ * arayüz bunu açıkça söylüyor. Vaat edip yapmamak, yapmamaktan kötü.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * KULLANICI ADI ÇAKIŞMASI
+ *
+ * `username` benzersiz (citext). Kimliğin ilk dört onaltılık hanesi
+ * kullanılıyor; aynı ön eki taşıyan iki kullanıcının çakışma olasılığı
+ * pratikte yok, ama olursa veritabanı reddediyor ve hata yüzeye çıkıyor —
+ * sessizce yanlış ada yazmaktansa.
+ */
+export async function anonymizeUser(
+  userId: string,
+  reason: string
+): Promise<void> {
+  const gerekce = reason.trim();
+  if (!gerekce) {
+    throw new Error('Gerekçe zorunlu — denetim kaydına yazılacak.');
+  }
+
+  const supabase = await client();
+  const { data: session } = await supabase.auth.getUser();
+  const yeniAd = `silinmis-uye-${userId.replace(/-/g, '').slice(0, 4)}`;
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({
+      username: yeniAd,
+      display_name: null,
+      bio: null,
+      city: null,
+      website_url: null,
+      avatar_path: null,
+      account_status: 'deactivated',
+      status_reason: gerekce,
+      status_changed_by: session.user?.id ?? null,
+      status_changed_at: new Date().toISOString(),
+    })
+    .eq('id', userId);
+  if (error) throw new Error(error.message);
+
+  /* Kullanıcı adı ve durum değişikliği `profiles_audit_status`
+     tetikleyicisinden zaten düşüyor; bu satır eylemin ADINI kayda
+     geçiriyor — "username_change" ile "anonymize" aynı şey değil. */
+  await supabase.from('audit_logs').insert({
+    actor_id: session.user?.id ?? null,
+    action: 'user.anonymize',
+    target_type: 'profile',
+    target_id: userId,
+    detail: { yeni_ad: yeniAd, gerekce },
+  });
+
+  /* Bekleyen silme talebi varsa kapatılıyor: talep karşılandı. */
+  await supabase
+    .from('account_deletion_requests')
+    .update({ status: 'anonymized' })
+    .eq('user_id', userId)
+    .eq('status', 'pending');
+}
+
+/**
+ * Silme talebini kapatır (işleme almadan).
+ *
+ * Kullanıcı vazgeçtiyse ya da talep hatalıysa kuyruktan düşmeli; aksi
+ * hâlde liste hiç boşalmayan bir uyarıya dönüşür ve gerçek talepler
+ * içinde kaybolur.
+ */
+export async function cancelDeletionRequest(
+  requestId: string,
+  reason: string
+): Promise<void> {
+  const gerekce = reason.trim();
+  if (!gerekce) throw new Error('Gerekçe zorunlu.');
+
+  const supabase = await client();
+  const { data: session } = await supabase.auth.getUser();
+
+  const { error } = await supabase
+    .from('account_deletion_requests')
+    .update({ status: 'cancelled', reason: gerekce })
+    .eq('id', requestId);
+  if (error) throw new Error(error.message);
+
+  await supabase.from('audit_logs').insert({
+    actor_id: session.user?.id ?? null,
+    action: 'user.deletion_request_cancel',
+    target_type: 'account_deletion_request',
+    target_id: requestId,
+    detail: { gerekce },
+  });
+}

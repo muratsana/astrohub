@@ -13,6 +13,9 @@ import {
   setAccountStatus,
   fetchUsers,
   exportUsersCsv,
+  anonymizeUser,
+  cancelDeletionRequest,
+  fetchUserContent,
   USER_SORTS,
   USER_PAGE_SIZE,
   userSortLabels,
@@ -227,5 +230,35 @@ describe('kullanıcı listesi sorgusu', () => {
 
   it('CSV dışa aktarımı da sessizce boş dosya üretmiyor', async () => {
     await expect(exportUsersCsv({})).rejects.toThrow();
+  });
+});
+
+/**
+ * KVKK AKSİYONLARI (Görev 1.4/6).
+ *
+ * Anonimleştirmenin kendisi veritabanına yazıyor ve burada ölçülemiyor.
+ * Ölçülen şey, YAZMADAN ÖNCEKİ kapı: gerekçesiz bir anonimleştirme
+ * denetim kaydında "neden" sütunu boş bir satır bırakırdı ve o satır
+ * altı ay sonra hiçbir şey ifade etmezdi.
+ */
+describe('KVKK aksiyonları', () => {
+  it('gerekçesiz anonimleştirme reddedilir', async () => {
+    await expect(
+      anonymizeUser('00000000-0000-0000-0000-000000000000', '  ')
+    ).rejects.toThrow(/Gerekçe zorunlu/);
+  });
+
+  it('gerekçesiz talep kapatma reddedilir', async () => {
+    await expect(
+      cancelDeletionRequest('00000000-0000-0000-0000-000000000000', '')
+    ).rejects.toThrow(/Gerekçe zorunlu/);
+  });
+
+  /* İçerik sayımı yapılandırma yokken sessizce sıfır dönmemeli: sıfır
+     "hiç içerik yok" demek ve yönetici o kullanıcıyı içeriksiz sanar. */
+  it('içerik sayımı yapılandırma yokken sessizce sıfır dönmüyor', async () => {
+    await expect(
+      fetchUserContent('00000000-0000-0000-0000-000000000000')
+    ).rejects.toThrow();
   });
 });
