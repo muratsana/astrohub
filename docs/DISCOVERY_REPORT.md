@@ -2,12 +2,12 @@
 
 **Belge:** `ASTROHUB_ADMIN_REWRITE.md` v1.0 · **Tarih:** 06.08.2026
 **Kapsam:** Görev 0.1 (kod haritası), 0.2 (admin envanteri ve yıkım planı), 0.3 (şema doğrulaması)
-**Durum:** Faz 1'e geçmek için Murat onayı bekleniyor (belge §0.1, §2 kabul kriteri).
+**Durum:** Murat kararı bana bıraktı (06.08.2026). Kararlar `docs/KARARLAR-ADMIN-YENIDEN-YAZIM.md` belgesinde; §5'teki yedi açık soru orada K1–K7 olarak cevaplandı ve Faz 1 başladı.
 
 > **Önce en kritik iki madde:**
 >
 > 1. **Belge yanlış bir yığın varsayıyor.** Astrohub Next.js değil; **Vite 6 + React Router 8 tek sayfa uygulaması**. Sunucu tarafı çalışma zamanı yok: middleware yok, server action yok, route handler yok, `service_role` çalıştıracak bir yer yok. Belgedeki en az yedi kabul kriteri bu hâliyle uygulanamaz — §4'te her biri için karşılık öneriyorum.
-> 2. **Canlıda gerçek bir güvenlik açığı var.** `public.spatial_ref_sys` üzerinde RLS kapalı **ve `anon` rolüne INSERT/UPDATE/DELETE/TRUNCATE verilmiş.** Belge (T6) "salt-okunur katalogdur, risk oluşturmaz" diyordu; ölçüm bunun aksini gösteriyor. Ayrıntı ve düzeltme önerisi §3.3'te.
+> 2. **Canlıda gerçek bir güvenlik açığı vardı — KAPATILDI.** `public.spatial_ref_sys` üzerinde RLS kapalıydı **ve `anon` rolüne INSERT/UPDATE/DELETE/TRUNCATE verilmişti**; site kendi anon anahtarıyla yazabiliyordu. Belge (T6) "risk oluşturmaz" diyordu, ölçüm aksini gösterdi. §3.3'te ayrıntı, çözüm ve doğrulama.
 
 ---
 
@@ -169,13 +169,25 @@ Doğruladım; **yetki var**:
 
 RLS de kapalı (`relrowsecurity = false`). Yani **kimliksiz bir istemci PostgREST üzerinden bu tabloyu değiştirebilir ya da `TRUNCATE` edebilir.** Tablo PostGIS'in koordinat sistemi kataloğu; boşalırsa coğrafi dönüşümler ve `observing_sites`/`events` konum sorguları bozulur.
 
-**Önerilen düzeltme (migration, onayınıza sunuluyor — belge §0.4):**
+**DURUM: KAPATILDI** (06.08.2026, karar K1 — bkz. `docs/KARARLAR-ADMIN-YENIDEN-YAZIM.md`).
 
-```sql
-revoke insert, update, delete, truncate on public.spatial_ref_sys from anon, authenticated;
-```
+`REVOKE` işe yaramadı: yetkileri veren rol `supabase_admin`, bağlantımız
+`postgres` ve PostgreSQL'de bir yetkiyi yalnızca onu veren rol geri alabiliyor
+— komut hatasız döner, `information_schema` aynı kalır. Aynı sebeple tabloda
+RLS de açılamıyor (sahibi `supabase_admin`, `postgis` eklentisine ait).
 
-`SELECT` korunuyor (PostGIS'in kendi çalışması için gerekli). Geri alınabilir. **Uygulamadım — onay bekliyorum.**
+Uygulanan çözüm ifade düzeyinde tetikleyici
+(`20260806160000_lock_spatial_ref_sys.sql`): tetikleyici oluşturmak için
+sahiplik değil TRIGGER yetkisi yetiyor. Doğrulandı — anon anahtarla:
+
+| İstek | Önce | Sonra |
+|---|---|---|
+| `SELECT` | 200 | 200 |
+| `PATCH` | **204** | 401 |
+| `DELETE` | **204** | 401 |
+| `POST` | — | 401 |
+
+PostGIS çalışmaya devam ediyor (Ankara–İstanbul 339.9 km, katalog 8.500 satır).
 
 ### 3.4. Diğer şema notları
 
