@@ -9,7 +9,7 @@ export function BlockRenderer({
   className?: string;
 }) {
   return (
-    <div className={cn('space-y-5 text-body-sm leading-[1.85] text-muted-foreground', className)}>
+    <div className={cn('metin-yasli space-y-5 text-body-sm leading-[1.85] text-muted-foreground', className)}>
       {blocks.map((block, index) => {
         const key = `${block.type}-${index}`;
         if (block.type === 'heading') {

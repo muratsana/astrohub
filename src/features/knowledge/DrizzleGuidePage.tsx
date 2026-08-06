@@ -283,12 +283,12 @@ export function DrizzleGuidePage() {
           <div className="min-w-0">
             <section
               aria-labelledby="dz-giris"
-              className="mb-8 rounded-card border border-border-strong bg-surface-1 p-4 sm:p-5"
+              className="metin-yasli mb-8 rounded-card border border-border-strong bg-surface-1 p-4 sm:p-5"
             >
               <h2 id="dz-giris" className="type-section mb-2 text-foreground">
                 Hiç duymadıysanız: en kısa cevap
               </h2>
-              <p className="max-w-[65ch] text-body-sm leading-relaxed text-muted-foreground">
+              <p className="text-body-sm leading-relaxed text-muted-foreground">
                 Drizzle, <strong className="text-foreground">yıldızların
                 kare kare çıktığı</strong> kurulumlarda işe yarar. Teleskop
                 ve kameranız zaten yeterince ince ayrıntı yakalıyorsa
@@ -299,7 +299,7 @@ export function DrizzleGuidePage() {
                 bakışta söylüyor.
               </p>
 
-              <p className="mt-3 max-w-[65ch] text-body-sm leading-relaxed text-muted-foreground">
+              <p className="mt-3 text-body-sm leading-relaxed text-muted-foreground">
                 Cevap “evet” çıkarsa şart şu:{' '}
                 <strong className="text-foreground">
                   poz aralarında dither yapmış olmalısınız

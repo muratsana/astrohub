@@ -51,33 +51,25 @@
 /* ────────────────────────────────────────── ölçü (satır uzunluğu) ── */
 
 /*
-  METİN DAR, ŞEKİL GENİŞ.
+  METİN DE SÜTUNUN TAMAMINI KULLANIYOR.
 
-  Önceden sütunun tamamı 75ch ile sınırlıydı ve sonuç ölçüldü: 1440px
-  ekranda makale ~770px yer kaplıyor, sağında ~430px ölü alan kalıyordu
-  (kullanıcı bildirdi). Tek kelimeyle sınırı kaldırmak da yanlış olurdu —
-  100+ karakterlik satırda göz satır sonundan başına dönerken yerini
-  kaybeder; okunabilirlik için 65–75 karakter yerleşik bir aralık.
+  Burada bir ara çözüm denendi ve yanlış çıktı: metin 72ch'de tutulup
+  şekiller/tablolar sütunun tamamına bırakılmıştı. Ölçülen sonuç: aynı
+  makalede paragraflar 727px'te bitiyor, hemen altındaki kutu 1163px'e
+  uzanıyordu. İki farklı sağ kenar, metnin bittiği yerde ~430px'lik bir
+  boşluk ve göz için "hizasız" bir sayfa (kullanıcı ekran görüntüsüyle
+  üç kez bildirdi).
 
-  Çözüm ikisini AYIRMAK: ölçü yalnızca METİN düzeyindeki elemanlara
-  uygulanıyor, şekiller / tablolar / hesaplayıcılar sütunun tamamını
-  kullanıyor. Zaten yer isteyen şeyler onlar: 16 sütunlu tablolar
-  sıkışıyordu, 720px genişliğinde çizilmiş infografikler küçültülüyordu.
+  Klasik 65–75 karakter ölçüsü ragged-right dizgi için konmuş bir
+  kuraldır. Buradaki metin iki yana yaslı ve `hyphens: auto` açık
+  (aşağıda) — satır sonu göz için sabit bir dikey hat olduğundan geri
+  dönüş noktası belirsiz kalmıyor. Tek sağ kenar, iki farklı sağ
+  kenardan iyi.
 
-  Seçici `> div >` üzerinden: üretilen gövde parça parça `<div>` içine
-  basılıyor, dolayısıyla bu MAKALENİN üst düzey metni demek. Kutuların
-  (`.dz-tool`, `.dz-fig`, `.dz-callout`) içindeki paragraflar kapsam
-  dışında kalıyor — onların genişliğini kendi kabı belirlemeli.
+  Dolayısıyla ölçüyü artık KAP belirliyor: `Container`'ın genişliği ne
+  ise paragraf da o. Ayrı bir üst sınır yok; olsaydı sayfada yine iki
+  hizalama olurdu.
 */
-.dz-root > div > p,
-.dz-root > div > ul,
-.dz-root > div > ol,
-.dz-root > div > h2,
-.dz-root > div > h3,
-.dz-root > div > h4,
-.dz-root > div > blockquote {
-  max-width: 72ch;
-}
 
 /* ─────────────────────────────────────────────────────── tipografi ── */
 

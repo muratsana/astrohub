@@ -602,6 +602,32 @@
   }
 
   /*
+   * İKİ YANA YASLI GÖVDE METNİ — rehberlerdeki dizgiyle aynı.
+   *
+   * Uzun metin iki yerde yaşıyor: `docs/` altından üretilen rehberler
+   * (kendi `drizzle.css`'i) ve `BlockRenderer` üzerinden basılan yazı /
+   * haber gövdeleri. İkisi ayrı dizildiğinde aynı sitede iki farklı
+   * metin görünümü oluyordu; bu sınıf ikincisini birincisine eşitler.
+   *
+   * `hyphens: auto` yaslamanın koşulu, süsü değil: tireleme olmadan
+   * tarayıcı satırı yalnızca boşlukları esneterek doldurur ve Türkçenin
+   * uzun kelimeleriyle kelime araları "nehir" denen dikey beyaz
+   * şeritlere dönüşür. `<html lang="tr">` ayarlı olduğu için tarayıcı
+   * doğru tireleme sözlüğünü seçiyor.
+   *
+   * Eşik 640px: dar kolonda yaslama her satırda ayrı bir kelime aralığı
+   * üretir, telefonda metin sola yaslı kalıyor.
+   */
+  @media (min-width: 640px) {
+    .metin-yasli p,
+    .metin-yasli li {
+      text-align: justify;
+      hyphens: auto;
+      -webkit-hyphens: auto;
+    }
+  }
+
+  /*
    * GECE SKORU HALKASI — dolgu yüzdesi doğrudan skor.
    *
    * Ayrı bir görsel ölçek yok: halka %72 doluysa skor 72. İki ölçek

@@ -189,12 +189,12 @@ export function SnrGuidePage() {
           <div className="min-w-0">
             <section
               aria-labelledby="snr-giris"
-              className="mb-8 rounded-card border border-border-strong bg-surface-1 p-4 sm:p-5"
+              className="metin-yasli mb-8 rounded-card border border-border-strong bg-surface-1 p-4 sm:p-5"
             >
               <h2 id="snr-giris" className="type-section mb-2 text-foreground">
                 Hiç duymadıysanız: en kısa cevap
               </h2>
-              <p className="max-w-[65ch] text-body-sm leading-relaxed text-muted-foreground">
+              <p className="text-body-sm leading-relaxed text-muted-foreground">
                 Fotoğrafınızın “temizliği” pozlama süresiyle değil,{' '}
                 <strong className="text-foreground">
                   topladığınız foton sayısıyla
@@ -208,7 +208,7 @@ export function SnrGuidePage() {
                 veriyi iki katına çıkarmak bir sezon demek.
               </p>
 
-              <p className="mt-3 max-w-[65ch] text-body-sm leading-relaxed text-muted-foreground">
+              <p className="mt-3 text-body-sm leading-relaxed text-muted-foreground">
                 Bunun pratik sonucu, çoğu kişinin sandığının tersi:{' '}
                 <strong className="text-foreground">
                   daha iyi kamera almak genelde yanlış cevap

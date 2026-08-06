@@ -116,7 +116,19 @@ function seedTint(item: EditorialItem): string {
   return item.tint ?? tintFromSeed(item.slug);
 }
 
-function LeadCard({ item, label }: { item: EditorialItem; label: string }) {
+/**
+ * MANŞET KARTI — liste dışından da çağrılabilir.
+ *
+ * Etkinlikler ana sayfası editöryel listeyi kullanmıyor (orada asıl
+ * görünüm harita), ama tepesinde bir "öne çıkan" kartı var. O kart elle
+ * yazıldığında bu bileşenin kopyasıydı: aynı 525px yükseklik, aynı
+ * 58/42 bölünme, farklı rozet, farklı görsel kredisi yerleşimi, farklı
+ * hover davranışı. Kopya olduğu için de ayrışıyordu.
+ *
+ * Dışa açılınca manşet ölçüsü tek yerde tanımlı: galeri, haberler,
+ * yazılar, ilanlar ve etkinlikler aynı kartı görüyor.
+ */
+export function LeadCard({ item, label }: { item: EditorialItem; label: string }) {
   return (
     <div className="relative mb-3">
       <ContentCard
