@@ -14,8 +14,7 @@ import {
 import { CardGrid } from '@/components/ui/CardGrid';
 import { ModuleToolbar } from '@/components/ui/ModuleToolbar';
 import { CatalogSourceNote } from '@/components/ui/CatalogSourceNote';
-import { CARD_RATIO } from '@/components/ui/cardRatios';
-import { cn } from '@/lib/cn';
+import { FeaturedPanel } from '@/components/ui/FeaturedPanel';
 import { RemoteImage } from '@/components/media/RemoteImage';
 import { useViewMode } from '@/components/ui/useViewMode';
 import { PhotoCard } from './PhotoCard';
@@ -150,106 +149,71 @@ export function GalleryPage() {
         />
 
         {/*
-          HAFTANIN FOTOĞRAFI — YÜKSEKLİĞİ GÖRSEL BELİRLİYOR, METİN DEĞİL.
+          HAFTANIN FOTOĞRAFI — düzen artık `FeaturedPanel`'den geliyor.
 
           Ölçülen eski durum (1440×900): şerit 611px, alt kenarı 838px ve
           galeri ızgarası 1120px'de başlıyordu — yani fold üstünde HİÇ
-          fotoğraf yoktu. 1366×768'de şeridin kendisi bile fold'un altına
-          taşıyordu; 390×844'te 932px ile ekranın tamamından uzundu.
+          fotoğraf yoktu. Sebep şuydu: görselin yüksekliğini KOMŞU SÜTUN
+          dayatıyordu, dokuz satırlık EXIF tablosu ne kadar uzarsa görsel
+          de o kadar uzuyordu.
 
-          Sebep şuydu: görsel `min-h` ile duruyor, gerçek yüksekliği
-          KOMŞU SÜTUN dayatıyordu — dokuz satırlık EXIF tablosu ne kadar
-          uzarsa görsel de o kadar uzuyordu. Yani bir fotoğraf şeridinin
-          boyunu tablo satır sayısı belirliyordu.
-
-          Şimdi görsel sabit `wide` (16:9) oranında ve sütun genişliği o
-          oranın ~305px yüksekliğe denk düşeceği şekilde ayarlı — eski
-          boyun yarısı. Metin sütunu bu yüksekliğe sığmak zorunda, tersi
-          değil; künye bu yüzden dört değere indi ve tamamı "Fotoğrafı aç"
-          ile bir tık ötede duruyor.
+          Çözüm — görselin sabit 16:9 oranda durması, metnin ona sığması —
+          doğruydu ama yalnızca bu sayfada uygulanmıştı. Aynı düzen artık
+          ortak bileşende; haber, yazı, ilan ve etkinlik manşetleri de
+          buradan geliyor. Gerekçenin tamamı `FeaturedPanel` başlığında.
         */}
         {weeklyPick && (
-          <section className="mb-5 overflow-hidden rounded-card border border-border bg-surface-1">
-            <div className="grid gap-0 lg:grid-cols-[minmax(0,0.62fr)_minmax(300px,1fr)]">
-              <Link
-                to={`/fotograf/${weeklyPick.photo.slug}`}
-                aria-label={`Haftanın Fotoğrafı: ${weeklyPick.photo.title}`}
-                className={cn(
-                  'relative overflow-hidden bg-surface-2',
-                  CARD_RATIO.wide
+          <FeaturedPanel
+            to={`/fotograf/${weeklyPick.photo.slug}`}
+            mediaLabel={`Haftanın Fotoğrafı: ${weeklyPick.photo.title}`}
+            media={
+              <RemoteImage
+                src={weeklyPick.photo.image?.url}
+                alt={weeklyPick.photo.target.name}
+                seed={weeklyPick.photo.slug}
+                tint={weeklyPick.photo.gradient}
+                sizes="(min-width: 1024px) 760px, 100vw"
+                widths={[640, 960, 1200]}
+                priority
+              />
+            }
+            badges={
+              <>
+                <Badge tone="success" className="w-fit">
+                  Haftanın Fotoğrafı
+                </Badge>
+                <Badge tone="primary" className="w-fit">
+                  {weeklyPick.weekLabel}
+                </Badge>
+                {weeklyPick.yearLabel && (
+                  <span className="text-meta tabular text-faint">
+                    {weeklyPick.yearLabel}
+                  </span>
                 )}
-              >
-                <RemoteImage
-                  src={weeklyPick.photo.image?.url}
-                  alt={weeklyPick.photo.target.name}
-                  seed={weeklyPick.photo.slug}
-                  tint={weeklyPick.photo.gradient}
-                  sizes="(min-width: 1024px) 760px, 100vw"
-                  widths={[640, 960, 1200]}
-                  priority
-                />
-                <span
-                  aria-hidden
-                  className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,transparent,color-mix(in_srgb,var(--color-background)_24%,transparent))]"
-                />
-                {/*
-                  FİLM ŞERİDİ — kart ızgarasındaki `PlateFrame` ile aynı
-                  çentikler. Haftanın fotoğrafı kendi düzenini kurduğu için
-                  `PlateFrame` kullanmıyor; çentikleri elle taşıyor ki
-                  öne çıkan kare de galerinin görsel diliyle konuşsun.
-                */}
-                <span
-                  aria-hidden
-                  className="ticks-y pointer-events-none absolute inset-x-0 top-0 h-[5px]"
-                />
-                <span
-                  aria-hidden
-                  className="ticks-y pointer-events-none absolute inset-x-0 bottom-0 h-[5px]"
-                />
-              </Link>
-              <div className="flex min-w-0 flex-col justify-center p-4 sm:p-5">
-                <div className="flex flex-wrap items-center gap-2">
-                  <Badge tone="success" className="w-fit">
-                    Haftanın Fotoğrafı
-                  </Badge>
-                  <Badge tone="primary" className="w-fit">
-                    {weeklyPick.weekLabel}
-                  </Badge>
-                  {weeklyPick.yearLabel && (
-                    <span className="text-meta tabular text-faint">
-                      {weeklyPick.yearLabel}
-                    </span>
-                  )}
-                </div>
-                <h2 className="type-section mt-3 text-foreground">
-                  {weeklyPick.photo.title}
-                </h2>
-                <p className="mt-1 text-body-sm text-muted-foreground">
-                  {weeklyPick.photo.target.name} ·{' '}
-                  <Link
-                    to={`/profil/${weeklyPick.photo.user.username}`}
-                    className="text-muted-foreground transition-colors hover:text-primary"
-                  >
-                    @{weeklyPick.photo.user.username}
-                  </Link>
-                </p>
-                <WeeklyPhotoKunye photo={weeklyPick.photo} />
-                {/* "Fotoğrafı aç" kaldırıldı: görselin kendisi zaten
-                    fotoğrafın sayfasına gidiyor, başlık da öyle. Aynı
-                    hedefe üçüncü bir düğme koymak künyenin yerini
-                    yiyordu. */}
-                <div className="mt-4">
-                  <ButtonLink
-                    to="/haftanin-fotografi"
-                    size="sm"
-                    variant="secondary"
-                  >
-                    Haftanın fotoğrafları arşivi
-                  </ButtonLink>
-                </div>
-              </div>
-            </div>
-          </section>
+              </>
+            }
+            title={weeklyPick.photo.title}
+            subtitle={
+              <>
+                {weeklyPick.photo.target.name} ·{' '}
+                <Link
+                  to={`/profil/${weeklyPick.photo.user.username}`}
+                  className="text-muted-foreground transition-colors hover:text-primary"
+                >
+                  @{weeklyPick.photo.user.username}
+                </Link>
+              </>
+            }
+            /* Panelde AKSİYON DÜĞMESİ YOK — ikisi de kaldırıldı.
+               "Fotoğrafı aç" görselin ve başlığın zaten gittiği yere
+               üçüncü bir kapıydı; "Haftanın fotoğrafları arşivi" ise
+               hemen altındaki arşiv şeridinin "Tüm arşiv" düğmesiyle
+               aynı adrese gidiyordu. İkisi 48px yer tutuyor ve o yer
+               künyenin: düğmeler dururken tam EXIF ortak 350px'lik
+               panele sığmıyordu. */
+          >
+            <WeeklyPhotoKunye photo={weeklyPick.photo} />
+          </FeaturedPanel>
         )}
 
         {weeklyArchive.length > 0 && (
@@ -544,7 +508,19 @@ function WeeklyPhotoKunye({ photo }: { photo: AstroPhoto }) {
   if (pozlar.length === 0 && kunye.length === 0) return null;
 
   return (
-    <div className="mt-3 space-y-3 border-t border-border pt-3">
+    /*
+      TABLO VE KÜNYE YAN YANA.
+
+      İkisi alt alta dizildiğinde metin sütunu 1440px'de 536px istiyordu
+      ve manşet paneli diğer modüllerin iki katı yüksekliğe çıkıyordu.
+      Veriyi kısaltmak seçenek değildi — tam EXIF bu şeridin varlık
+      sebebi. Yan yana dizilince aynı veri 350px'lik ortak yüksekliğe
+      sığıyor: solda filtre dökümü, sağda ekipman künyesi.
+
+      `lg` altında panel zaten tek sütuna iniyor ve yüksekliği içerik
+      belirliyor; orada eski alt alta düzen sürüyor.
+    */
+    <div className="mt-3 grid gap-3 border-t border-border pt-3 lg:grid-cols-2 lg:gap-5">
       {pozlar.length > 0 && (
         <div className="overflow-x-auto">
           <table className="w-full min-w-[18rem] border-collapse text-left">
@@ -605,7 +581,7 @@ function WeeklyPhotoKunye({ photo }: { photo: AstroPhoto }) {
       )}
 
       {kunye.length > 0 && (
-        <dl className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+        <dl className="grid grid-cols-2 gap-x-4 gap-y-1.5 self-start">
           {kunye.map(([etiket, deger]) => (
             <div key={etiket} className="min-w-0">
               <dt className="text-meta text-faint">{etiket}</dt>

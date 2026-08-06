@@ -3,6 +3,7 @@ import { Link } from 'react-router';
 import { Badge } from './Badge';
 import { CardGrid } from './CardGrid';
 import { ContentCard, ContentCardMedia } from '@/components/ui/ContentCard';
+import { FeaturedPanel } from './FeaturedPanel';
 import { RemoteImage } from '@/components/media/RemoteImage';
 import { tintFromSeed } from '@/components/media/tints';
 import type { ViewMode } from './useViewMode';
@@ -121,69 +122,49 @@ function seedTint(item: EditorialItem): string {
  *
  * Etkinlikler ana sayfası editöryel listeyi kullanmıyor (orada asıl
  * görünüm harita), ama tepesinde bir "öne çıkan" kartı var. O kart elle
- * yazıldığında bu bileşenin kopyasıydı: aynı 525px yükseklik, aynı
- * 58/42 bölünme, farklı rozet, farklı görsel kredisi yerleşimi, farklı
- * hover davranışı. Kopya olduğu için de ayrışıyordu.
+ * yazıldığında bu bileşenin kopyasıydı ve kopya olduğu için ayrışmıştı.
  *
- * Dışa açılınca manşet ölçüsü tek yerde tanımlı: galeri, haberler,
- * yazılar, ilanlar ve etkinlikler aynı kartı görüyor.
+ * Düzenin kendisi burada değil, `FeaturedPanel`'de: bu işlev yalnızca
+ * bir `EditorialItem`'ı o panelin alanlarına çeviriyor. Böylece galeri
+ * (haftanın fotoğrafı), haberler, yazılar, ilanlar ve etkinlikler aynı
+ * ölçüyü paylaşıyor.
  */
 export function LeadCard({ item, label }: { item: EditorialItem; label: string }) {
   return (
-    <div className="relative mb-3">
-      <ContentCard
-        to={item.to}
-        className="grid gap-3 p-2 md:h-[525px] md:grid-cols-[minmax(0,58%)_minmax(0,1fr)]"
-      >
-        {/* `wide` (16:9) kart ailesindeki üçüncü orandır ve YALNIZCA
-          manşete aittir: sayfa başına bir tane, tam genişlik bir sütun
-          kaplar, ızgara satır hizasını etkilemez. */}
-        <ContentCardMedia
-          ratio="wide"
-          className="border border-border md:h-full md:aspect-auto"
-          badge={
-            <span className="rounded-card border border-primary/50 bg-primary/15 px-1.5 py-0.5 text-meta tracking-[0.02em] text-primary backdrop-blur-sm">
-              {label}
-            </span>
-          }
-        >
-          <RemoteImage
-            src={item.imageUrl}
-            alt={item.title}
-            sizes="(min-width: 768px) 58vw, 100vw"
-            seed={item.slug}
-            tint={seedTint(item)}
-          />
-        </ContentCardMedia>
-
-        <div className="flex flex-col py-2 pr-2">
-          <div className="mb-2 flex flex-wrap items-center gap-2">
-            <Badge tone="primary">{item.category}</Badge>
-            {item.meta && (
-              <span className="tabular text-meta text-faint">{item.meta}</span>
-            )}
-          </div>
-
-          <h2 className="type-section text-foreground transition-colors group-hover:text-white">
-            {item.title}
-          </h2>
-          <p className="mt-2.5 line-clamp-5 text-body-sm leading-relaxed text-muted-foreground">
-            {item.summary}
-          </p>
-
-          {item.imageCredit && (
-            <p className="mt-2 text-meta text-faint">
-              Görsel: {item.imageCredit}
-            </p>
+    <FeaturedPanel
+      to={item.to}
+      mediaLabel={`${label}: ${item.title}`}
+      media={
+        <RemoteImage
+          src={item.imageUrl}
+          alt={item.title}
+          sizes="(min-width: 1024px) 760px, 100vw"
+          seed={item.slug}
+          tint={seedTint(item)}
+        />
+      }
+      badges={
+        <>
+          <Badge tone="primary" className="w-fit">
+            {label}
+          </Badge>
+          <Badge className="w-fit">{item.category}</Badge>
+          {item.meta && (
+            <span className="tabular text-meta text-faint">{item.meta}</span>
           )}
-
-          {item.footer && <div className="mt-auto pt-3">{item.footer}</div>}
-        </div>
-      </ContentCard>
-      {item.action && (
-        <div className="absolute right-3 top-3 z-10">{item.action}</div>
+        </>
+      }
+      title={item.title}
+      action={item.action}
+      footer={item.footer}
+    >
+      <p className="mt-2.5 line-clamp-5 text-body-sm leading-relaxed text-muted-foreground">
+        {item.summary}
+      </p>
+      {item.imageCredit && (
+        <p className="mt-2 text-meta text-faint">Görsel: {item.imageCredit}</p>
       )}
-    </div>
+    </FeaturedPanel>
   );
 }
 
