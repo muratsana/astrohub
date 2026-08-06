@@ -178,12 +178,39 @@
 
 /* ──────────────────────────────────────────── kartlar ve çağrı kutuları ── */
 
+/*
+  LEVHA KENDİ MÜREKKEBİNİ TANIMLIYOR.
+
+  Figür çerçevesi HER TEMADA koyu (SVG'lerin arka planı dosyanın içine
+  gömülü, yukarıdaki `--dz-plate` notuna bakın). Bu yüzden içindeki metin
+  temanın `--color-foreground`ını kullanamaz: açık temada o renk neredeyse
+  siyahtır ve koyu levhanın üstünde OKUNMAZ olur.
+
+  Bu tam olarak başımıza geldi: açık temada Şekil 5'in altyazısındaki
+  `<em>` parçaları görünmüyordu — metin oradaydı, rengi zemine eşitti.
+  Kalın metin görünüyordu çünkü `.dz-figcap b` sabit bir renk taşıyordu;
+  italik için böyle bir kural yoktu.
+
+  Tek tek eleman kuralı yazmak yerine değişkenler burada yeniden
+  tanımlanıyor: levhanın içine giren HER şey (em, strong, code, link,
+  gelecekte eklenecek her ne ise) doğru mürekkebi miras alır. Unutulacak
+  bir kural kalmıyor.
+*/
 .dz-root .dz-fig {
+  --dz-ink: #dcdad2;
+  --dz-ink-2: #898781;
+  --dz-ink-3: #6a6862;
+  --dz-surface: #23231f;
+  --dz-surface-2: #2c2c28;
+  --dz-line: #34342f;
+  --dz-rule: #46463f;
+
   background: var(--dz-plate);
   border: 1px solid var(--dz-plate-line);
   border-radius: var(--radius-card, 2px);
   padding: 18px 18px 12px;
   margin: 28px 0;
+  color: var(--dz-ink-2);
 }
 .dz-root .dz-fig svg {
   display: block;

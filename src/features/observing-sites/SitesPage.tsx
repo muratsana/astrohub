@@ -259,7 +259,8 @@ export function SitesPage() {
               onChange={(event) =>
                 setType(event.target.value as SiteType | 'hepsi')
               }
-              className="h-8 w-auto text-meta"
+              width="auto"
+              className="h-8 text-meta"
             >
               <option value="hepsi">Tüm türler</option>
               {Object.entries(siteTypeLabels).map(([value, label]) => (
@@ -282,7 +283,8 @@ export function SitesPage() {
                     : Number(event.target.value)
                 )
               }
-              className="h-8 w-auto text-meta"
+              width="auto"
+              className="h-8 text-meta"
             >
               <option value="hepsi">Tüm Bortle</option>
               {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((value) => (

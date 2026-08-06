@@ -264,7 +264,8 @@ export function AdminPage() {
                 onChange={(e) =>
                   setFilter(e.target.value as ModerationStatus | 'hepsi')
                 }
-                className="h-8 w-auto text-meta"
+                width="auto"
+                className="h-8 text-meta"
               >
                 <option value="hepsi">Tüm durumlar</option>
                 {Object.entries(statusLabels).map(([value, label]) => (

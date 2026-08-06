@@ -33,7 +33,8 @@ export function FacilitiesPage() {
   const [kind, setKind] = useState<FacilityKind | 'hepsi'>('hepsi');
 
   const filtered = useMemo(
-    () => (kind === 'hepsi' ? facilities : facilities.filter((f) => f.kind === kind)),
+    () =>
+      kind === 'hepsi' ? facilities : facilities.filter((f) => f.kind === kind),
     [kind]
   );
 
@@ -76,10 +77,13 @@ export function FacilitiesPage() {
       <PageMeta
         title="Rasathaneler ve Planetaryumlar"
         description="Türkiye'deki rasathaneler, planetaryumlar ve bilim merkezleri: ziyaret koşulları, öne çıkan teçhizat ve size olan mesafeleri."
-        jsonLd={[jsonLd, breadcrumbJsonLd([
-          { name: 'Ana Sayfa', path: '/' },
-          { name: 'Tesisler', path: '/tesisler' },
-        ])]}
+        jsonLd={[
+          jsonLd,
+          breadcrumbJsonLd([
+            { name: 'Ana Sayfa', path: '/' },
+            { name: 'Tesisler', path: '/tesisler' },
+          ]),
+        ]}
       />
 
       <Container className="py-8 sm:py-10">
@@ -100,8 +104,11 @@ export function FacilitiesPage() {
             <Select
               id="facility-kind"
               value={kind}
-              onChange={(e) => setKind(e.target.value as FacilityKind | 'hepsi')}
-              className="h-8 w-auto text-meta"
+              onChange={(e) =>
+                setKind(e.target.value as FacilityKind | 'hepsi')
+              }
+              width="auto"
+              className="h-8 text-meta"
             >
               <option value="hepsi">Tüm türler</option>
               {Object.entries(facilityKindLabels).map(([value, label]) => (
