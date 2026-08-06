@@ -68,7 +68,8 @@ export function PhotoWeekAdminControl({ canWrite }: { canWrite: boolean }) {
             className="mb-2 flex gap-2"
             onSubmit={(event) => {
               event.preventDefault();
-              fetchUsers(search, 10).then(setUsers).catch((error: unknown) => setMessage(error instanceof Error ? error.message : 'Kullanıcı aranamadı.'));
+              fetchUsers({ search, pageSize: 10 })
+                .then((sayfa) => setUsers(sayfa.rows)).catch((error: unknown) => setMessage(error instanceof Error ? error.message : 'Kullanıcı aranamadı.'));
             }}
           >
             <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Kullanıcı ara" aria-label="Jüri için kullanıcı ara" className="h-9 flex-1 text-meta" />

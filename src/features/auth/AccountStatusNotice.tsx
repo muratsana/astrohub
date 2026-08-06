@@ -1,6 +1,8 @@
+import { useEffect } from 'react';
 import { Link } from 'react-router';
 import { useAuth } from './AuthContext';
 import { canWrite, useMyProfile } from '@/services/content/profile';
+import { touchLastSeen } from '@/services/content/lastSeen';
 
 /**
  * HESAP DURUMU BİLDİRİMİ — askıdaki kullanıcı neden yazamadığını bilsin.
@@ -33,6 +35,16 @@ import { canWrite, useMyProfile } from '@/services/content/profile';
 export function AccountStatusNotice() {
   const { user } = useAuth();
   const { profile, loading } = useMyProfile(user?.id);
+
+  /*
+    SON GÖRÜLME DAMGASI BURADA — ayrı bir bileşen açmamak için.
+    Bu bileşen kabukta, her sayfada ve oturum bilgisiyle zaten monte
+    ediliyor; damga da tam olarak "oturumlu kullanıcı siteyi kullandı"
+    demek. Sıklık sınırı `touchLastSeen` içinde (saatte bir).
+  */
+  useEffect(() => {
+    void touchLastSeen(user?.id);
+  }, [user?.id]);
 
   if (!user || loading || !profile) return null;
   if (canWrite(profile)) return null;

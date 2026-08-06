@@ -11,6 +11,11 @@ import {
   accountStatusDescriptions,
   isWriteAllowed,
   setAccountStatus,
+  fetchUsers,
+  exportUsersCsv,
+  USER_SORTS,
+  USER_PAGE_SIZE,
+  userSortLabels,
   type AppRole,
   type MembershipStatus,
 } from './users';
@@ -188,5 +193,39 @@ describe('hesap durumu', () => {
         reason: '   ',
       })
     ).rejects.toThrow(/Gerekçe zorunlu/);
+  });
+});
+
+/**
+ * LİSTE SORGUSU (Görev 1.3).
+ *
+ * Sunucu taraflı sayfalamanın kendisi veritabanına gidiyor ve burada
+ * ölçülemiyor. Ölçülen şey, sorguyu ÇEVRELEYEN kararlar: sabitlerin
+ * hizası ve yapılandırma yokken sessizce boş liste dönülmemesi.
+ *
+ * "Sessizce boş dönme" burada özellikle önemli: bir yönetici filtreye
+ * uyan kimse olmadığını mı yoksa bağlantının kopuk olduğunu mu gördüğünü
+ * ayırt edemezse, gerçek bir sorunu "kayıt yok" diye okur.
+ */
+describe('kullanıcı listesi sorgusu', () => {
+  it('sıralama seçenekleri ve etiketleri eksiksiz', () => {
+    expect(USER_SORTS).toEqual(['createdAt', 'username', 'lastSeen']);
+    for (const s of USER_SORTS) {
+      expect(userSortLabels[s], s).toBeTruthy();
+    }
+  });
+
+  it('sayfa boyutu makul bir üst sınırda', () => {
+    /* Belge 50/sayfa diyor. Değer değişirse sayfalama metinleri
+       (`1–50 / 120`) ve CSV sınırı birlikte gözden geçirilmeli. */
+    expect(USER_PAGE_SIZE).toBe(50);
+  });
+
+  it('yapılandırma yokken sessizce boş liste dönmüyor', async () => {
+    await expect(fetchUsers({ search: 'x' })).rejects.toThrow();
+  });
+
+  it('CSV dışa aktarımı da sessizce boş dosya üretmiyor', async () => {
+    await expect(exportUsersCsv({})).rejects.toThrow();
   });
 });

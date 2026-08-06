@@ -12,6 +12,13 @@ import { useAuth } from '@/features/auth/AuthContext';
 import {
   fetchUsers,
   fetchDeletionRequests,
+  exportUsersCsv,
+  fetchUserAudit,
+  USER_PAGE_SIZE,
+  USER_SORTS,
+  userSortLabels,
+  type UserQuery,
+  type UserSort,
   grantRole,
   revokeRole,
   setMembership,
@@ -27,7 +34,9 @@ import {
   setAccountStatus,
   setAdminNote,
   type AccountStatus,
+  type AuditEntry,
   type AdminUser,
+  type AppRole,
   type DeletionRequest,
   type MembershipStatus,
 } from './users';
@@ -67,16 +76,36 @@ import { cn } from '@/lib/cn';
 export function UserControl() {
   const { user } = useAuth();
   const [users, setUsers] = useState<AdminUser[] | null>(null);
+  const [total, setTotal] = useState(0);
   const [requests, setRequests] = useState<DeletionRequest[]>([]);
-  const [search, setSearch] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState<string | null>(null);
 
-  const load = useCallback((term: string) => {
+  /*
+    SORGU TEK NESNEDE. Filtreler ayrı `useState`lerde dursaydı her
+    değişiklikte "hangileriyle yükleyeceğim" sorusu yeniden çözülürdü ve
+    sayfa numarasını sıfırlamayı unutmak kaçınılmazdı — filtre değişip
+    sayfa 3'te kalmak, boş liste demek.
+  */
+  const [query, setQuery] = useState<UserQuery>({
+    search: '',
+    status: 'hepsi',
+    role: 'hepsi',
+    city: '',
+    sort: 'createdAt',
+    page: 0,
+  });
+  /* Arama kutusu forma bağlı: her tuşta sorgu atmıyoruz. */
+  const [searchDraft, setSearchDraft] = useState('');
+
+  const load = useCallback((q: UserQuery) => {
     setError(null);
-    fetchUsers(term)
-      .then(setUsers)
+    fetchUsers(q)
+      .then((sayfa) => {
+        setUsers(sayfa.rows);
+        setTotal(sayfa.total);
+      })
       .catch((e: unknown) =>
         setError(e instanceof Error ? e.message : 'Kullanıcılar okunamadı')
       );
@@ -88,20 +117,28 @@ export function UserControl() {
       });
   }, []);
 
-  useEffect(() => load(''), [load]);
+  useEffect(() => load(query), [load, query]);
+
+  /** Filtre değişince sayfa BAŞA döner — yoksa boş sayfada kalınır. */
+  function setFilter(patch: Partial<UserQuery>) {
+    setQuery((q) => ({ ...q, ...patch, page: 0 }));
+  }
 
   async function run(action: () => Promise<void>) {
     setBusy(true);
     setError(null);
     try {
       await action();
-      load(search);
+      load(query);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'İşlem uygulanamadı');
     } finally {
       setBusy(false);
     }
   }
+
+  const sayfaSayisi = Math.max(1, Math.ceil(total / USER_PAGE_SIZE));
+  const sayfa = query.page ?? 0;
 
   async function setPrimaryStatus(
     userId: string,
@@ -123,7 +160,11 @@ export function UserControl() {
   return (
     <Panel
       title="Kullanıcılar"
-      status={users ? `${users.length} kayıt` : 'okunuyor…'}
+      status={
+        users
+          ? `${total} kayıt · sayfa ${sayfa + 1}/${sayfaSayisi}`
+          : 'okunuyor…'
+      }
     >
       <p className="mb-3 text-meta leading-relaxed text-muted-foreground">
         Yetki veritabanında zorlanıyor: bu ekrandaki düğmeler yalnızca
@@ -137,41 +178,131 @@ export function UserControl() {
       {error && <Alert className="mb-3">{error}</Alert>}
 
       <form
-        className="mb-3 flex flex-wrap gap-2"
+        className="mb-3 flex flex-wrap items-end gap-2"
         onSubmit={(e) => {
           e.preventDefault();
-          load(search);
+          setFilter({ search: searchDraft });
         }}
       >
-        <Input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Kullanıcı adı ya da görünen ad"
-          className="h-9 max-w-xs flex-1 text-meta"
-          aria-label="Kullanıcı ara"
-        />
-        <Button size="sm" type="submit" disabled={busy}>
-          Ara
-        </Button>
-        {search && (
-          <Button
-            size="sm"
-            variant="ghost"
-            type="button"
+        <label className="min-w-[12rem] flex-1">
+          <span className="label mb-1 block">Ara</span>
+          <Input
+            value={searchDraft}
+            onChange={(e) => setSearchDraft(e.target.value)}
+            placeholder="Kullanıcı adı ya da görünen ad"
+            className="h-9 w-full text-meta"
+            aria-label="Kullanıcı ara"
+          />
+        </label>
+
+        <label>
+          <span className="label mb-1 block">Durum</span>
+          <Select
+            value={query.status}
             disabled={busy}
-            onClick={() => {
-              setSearch('');
-              load('');
-            }}
+            onChange={(e) =>
+              setFilter({ status: e.target.value as AccountStatus | 'hepsi' })
+            }
+            className="h-9 text-meta"
           >
-            Temizle
-          </Button>
-        )}
+            <option value="hepsi">Hepsi</option>
+            {ACCOUNT_STATUSES.map((s) => (
+              <option key={s} value={s}>
+                {accountStatusLabels[s]}
+              </option>
+            ))}
+          </Select>
+        </label>
+
+        <label>
+          <span className="label mb-1 block">Rol</span>
+          <Select
+            value={query.role}
+            disabled={busy}
+            onChange={(e) =>
+              setFilter({ role: e.target.value as AppRole | 'hepsi' })
+            }
+            className="h-9 text-meta"
+          >
+            <option value="hepsi">Hepsi</option>
+            {ROLES.map((r) => (
+              <option key={r} value={r}>
+                {roleLabels[r]}
+              </option>
+            ))}
+          </Select>
+        </label>
+
+        <label>
+          <span className="label mb-1 block">Şehir</span>
+          <Input
+            value={query.city ?? ''}
+            onChange={(e) => setFilter({ city: e.target.value })}
+            placeholder="Tümü"
+            className="h-9 w-32 text-meta"
+            aria-label="Şehre göre süz"
+          />
+        </label>
+
+        <label>
+          <span className="label mb-1 block">Sırala</span>
+          <Select
+            value={query.sort}
+            disabled={busy}
+            onChange={(e) => setFilter({ sort: e.target.value as UserSort })}
+            className="h-9 text-meta"
+          >
+            {USER_SORTS.map((s) => (
+              <option key={s} value={s}>
+                {userSortLabels[s]}
+              </option>
+            ))}
+          </Select>
+        </label>
+
+        <Button size="sm" type="submit" disabled={busy}>
+          Uygula
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          type="button"
+          disabled={busy}
+          onClick={() => {
+            setSearchDraft('');
+            setQuery({
+              search: '',
+              status: 'hepsi',
+              role: 'hepsi',
+              city: '',
+              sort: 'createdAt',
+              page: 0,
+            });
+          }}
+        >
+          Sıfırla
+        </Button>
+        {/*
+          CSV FİLTREYE UYAN TÜM KAYITLARI alır, ekrandaki sayfayı değil.
+          Yönetici "listeyi indir" derken gördüğü 50 satırı değil, süzdüğü
+          kümeyi kastediyor. Dışa aktarım `audit_logs`'a düşüyor
+          (`users.export`) — kişisel veri toplu olarak dışarı çıkıyor ve
+          bunun kaydı olmalı.
+        */}
+        <Button
+          size="sm"
+          variant="secondary"
+          type="button"
+          disabled={busy}
+          onClick={() => void run(() => exportUsersCsv(query))}
+        >
+          CSV indir
+        </Button>
       </form>
 
       {users && users.length === 0 && (
         <p className="py-4 text-center text-body-sm text-muted-foreground">
-          Eşleşen kullanıcı yok.
+          Filtreye uyan kullanıcı yok.
         </p>
       )}
 
@@ -409,6 +540,8 @@ export function UserControl() {
                     onApply={run}
                   />
 
+                  <UserAuditTrail userId={u.id} />
+
                   {/*
                     KULLANICI SİLME DÜĞMESİ YOK — sebebi yazılı, yoksa
                     "unutulmuş" sanılıp eklenir.
@@ -424,6 +557,38 @@ export function UserControl() {
           );
         })}
       </ul>
+
+      {/*
+        SAYFALAMA yalnızca birden çok sayfa varsa çiziliyor. Tek sayfalık
+        listede "1/1" ve iki kapalı düğme göstermek, kullanıcıya olmayan
+        bir mekanizmayı öğretmek olurdu.
+      */}
+      {sayfaSayisi > 1 && (
+        <div className="mt-3 flex items-center justify-between gap-2 border-t border-border pt-3">
+          <Button
+            size="sm"
+            variant="ghost"
+            type="button"
+            disabled={busy || sayfa === 0}
+            onClick={() => setQuery((q) => ({ ...q, page: sayfa - 1 }))}
+          >
+            ← Önceki
+          </Button>
+          <span className="tabular text-meta text-muted-foreground">
+            {sayfa * USER_PAGE_SIZE + 1}–
+            {Math.min((sayfa + 1) * USER_PAGE_SIZE, total)} / {total}
+          </span>
+          <Button
+            size="sm"
+            variant="ghost"
+            type="button"
+            disabled={busy || sayfa + 1 >= sayfaSayisi}
+            onClick={() => setQuery((q) => ({ ...q, page: sayfa + 1 }))}
+          >
+            Sonraki →
+          </Button>
+        </div>
+      )}
 
       {/* ── KVKK silme talepleri ── */}
       <div className="mt-4 border-t border-border pt-3">
@@ -648,6 +813,98 @@ function AccountStatusSection({
           Notu kaydet
         </Button>
       </div>
+    </div>
+  );
+}
+
+/**
+ * KULLANICI DENETİM GEÇMİŞİ (Görev 1.4/7).
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * AÇILINCA YÜKLENİYOR
+ *
+ * Liste 50 satır çiziyor; her satır açılışta kendi denetim kaydını
+ * çekseydi sayfa başına 50 ek sorgu olurdu ve bunların 49'u hiç
+ * okunmayacaktı. Bileşen yalnızca satır AÇILDIĞINDA monte ediliyor,
+ * yani sorgu da o zaman gidiyor.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * HAM `action` KODU DEĞİL, TÜRKÇE KARŞILIĞI
+ *
+ * `user.status_change` bir yöneticiye hiçbir şey söylemiyor. Bilinmeyen
+ * kod olduğu gibi gösteriliyor — sözlükte olmayan yeni bir eylem
+ * eklendiğinde satır boş görünmesin.
+ */
+const AUDIT_LABELS: Record<string, string> = {
+  'user.status_change': 'Hesap durumu değişti',
+  'user.username_change': 'Kullanıcı adı değişti',
+  'user.role_grant': 'Rol verildi',
+  'user.role_revoke': 'Rol alındı',
+  'users.export': 'Kullanıcı listesi dışa aktarıldı',
+};
+
+function UserAuditTrail({ userId }: { userId: string }) {
+  const [rows, setRows] = useState<AuditEntry[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let iptal = false;
+    fetchUserAudit(userId)
+      .then((r) => {
+        if (!iptal) setRows(r);
+      })
+      .catch((e: unknown) => {
+        if (!iptal) {
+          setError(e instanceof Error ? e.message : 'Denetim kaydı okunamadı');
+        }
+      });
+    return () => {
+      iptal = true;
+    };
+  }, [userId]);
+
+  if (error) {
+    return <p className="text-meta text-warning">{error}</p>;
+  }
+  if (!rows) {
+    return <p className="text-meta text-faint">Denetim kaydı okunuyor…</p>;
+  }
+  if (rows.length === 0) {
+    return (
+      <p className="text-meta text-faint">
+        Bu kullanıcı için denetim kaydı yok.
+      </p>
+    );
+  }
+
+  return (
+    <div>
+      <p className="label mb-1.5">Denetim kaydı (son {rows.length})</p>
+      <ul className="space-y-1">
+        {rows.map((row) => (
+          <li
+            key={row.id}
+            className="flex flex-wrap items-baseline gap-x-2 rounded-card border border-border bg-surface-1 px-2.5 py-1.5 text-meta"
+          >
+            <span className="tabular text-faint">
+              {new Date(row.createdAt).toLocaleString('tr-TR')}
+            </span>
+            <span className="text-foreground">
+              {AUDIT_LABELS[row.action] ?? row.action}
+            </span>
+            {/*
+              Detay jsonb; şeması eyleme göre değişiyor. Anahtar/değer
+              olarak dökmek, her eylem için ayrı bir gösterim yazmaktan
+              hem kısa hem de yeni eylemlerde kendiliğinden çalışıyor.
+            */}
+            {Object.entries(row.detail).map(([k, v]) => (
+              <span key={k} className="text-muted-foreground">
+                {k}: {v === null ? '—' : String(v)}
+              </span>
+            ))}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

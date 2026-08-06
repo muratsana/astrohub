@@ -1,4 +1,5 @@
 import { getSupabase } from '@/services/supabase/client';
+import { csvFileName, toCsv } from '@/lib/csv';
 
 /**
  * KULLANICI YÖNETİMİ — roller, üyelik ve silme talepleri.
@@ -172,42 +173,124 @@ interface ProfileRow {
   username_customized_at: string | null;
 }
 
+export const USER_SORTS = ['createdAt', 'username', 'lastSeen'] as const;
+export type UserSort = (typeof USER_SORTS)[number];
+
+export const userSortLabels: Record<UserSort, string> = {
+  createdAt: 'Kayıt tarihi',
+  username: 'Kullanıcı adı',
+  lastSeen: 'Son görülme',
+};
+
+export interface UserQuery {
+  search?: string;
+  status?: AccountStatus | 'hepsi';
+  role?: AppRole | 'hepsi';
+  city?: string;
+  sort?: UserSort;
+  /** 0 tabanlı. */
+  page?: number;
+  pageSize?: number;
+}
+
+export interface UserPage {
+  rows: AdminUser[];
+  /** Filtreye uyan TOPLAM kayıt — sayfadaki değil. */
+  total: number;
+}
+
+export const USER_PAGE_SIZE = 50;
+
 /**
- * Kullanıcı listesi.
+ * Kullanıcı listesi — sunucu taraflı sayfalama ve süzme (Görev 1.3).
  *
- * ÜÇ SORGU, GÖMME DEĞİL. `profiles`tan `user_roles`a PostgREST gömmesi
- * kurulabilirdi ama `memberships` ve fotoğraf sayısı için yine ayrı
- * sorgu gerekiyordu; üç küçük sorguyu istemcide birleştirmek, tek
- * karmaşık gömme ifadesinden hem okunur hem de her parçası ayrı ayrı
- * hata verebilir durumda.
+ * ══════════════════════════════════════════════════════════════════════
+ * SAYFALAMA NEDEN SUNUCUDA
+ *
+ * Önceki sürüm sabit 50 kayıt çekip istemcide gösteriyordu; 51. kullanıcı
+ * panelde HİÇ görünmüyordu ve bunu söyleyen bir şey de yoktu. Şimdi
+ * `range()` ile sayfalanıyor ve `count: exact` toplam sayıyı veriyor —
+ * yönetici kaç kaydın filtresine uyduğunu görüyor.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * ROL SÜZGECİ İKİ AŞAMALI
+ *
+ * Roller ayrı tabloda (`user_roles`) ve PostgREST gömmesi üzerinden
+ * süzmek `profiles`ın sayımını bozuyor. Bu yüzden rol filtresi varken
+ * önce o role sahip kimlikler çekiliyor, sonra `in()` ile ana sorguya
+ * veriliyor. Rol taşıyan kullanıcı sayısı doğası gereği küçük (şu an 2);
+ * bu liste büyürse `in()` yerine RPC gerekir.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * DÖRT SORGU, GÖMME DEĞİL
+ *
+ * `profiles`tan `user_roles`a gömme kurulabilirdi ama `memberships` ve
+ * fotoğraf sayısı için yine ayrı sorgu gerekiyordu; küçük sorguları
+ * istemcide birleştirmek tek karmaşık gömme ifadesinden hem okunur hem
+ * de her parçası ayrı ayrı hata verebilir durumda.
  *
  * `search` kullanıcı adı VE görünen adda arıyor: yönetici genelde birini
  * adıyla arıyor, kullanıcı adını hatırlamıyor.
  */
-export async function fetchUsers(
-  search = '',
-  limit = 50
-): Promise<AdminUser[]> {
+export async function fetchUsers(query: UserQuery = {}): Promise<UserPage> {
   const supabase = await client();
+  const {
+    search = '',
+    status = 'hepsi',
+    role = 'hepsi',
+    city = '',
+    sort = 'createdAt',
+    page = 0,
+    pageSize = USER_PAGE_SIZE,
+  } = query;
 
-  let query = supabase
+  /* Rol süzgeci: önce kimlikler, sonra `in()`. Gerekçe başlıkta. */
+  let roleIds: string[] | null = null;
+  if (role !== 'hepsi') {
+    const { data: rows, error: roleError } = await supabase
+      .from('user_roles')
+      .select('user_id')
+      .eq('role', role);
+    if (roleError) throw new Error(roleError.message);
+    roleIds = ((rows ?? []) as { user_id: string }[]).map((r) => r.user_id);
+    /* Hiç kimse o role sahip değilse sorguya hiç gitmiyoruz: `in()` boş
+       diziyle çağrıldığında PostgREST sözdizimi hatası veriyor. */
+    if (roleIds.length === 0) return { rows: [], total: 0 };
+  }
+
+  const siralama: Record<UserSort, { alan: string; artan: boolean }> = {
+    createdAt: { alan: 'created_at', artan: false },
+    username: { alan: 'username', artan: true },
+    lastSeen: { alan: 'last_seen_at', artan: false },
+  };
+  const { alan, artan } = siralama[sort];
+
+  const bas = page * pageSize;
+
+  let sorgu = supabase
     .from('profiles')
     .select(
       'id, username, display_name, city, created_at, account_status, ' +
-        'suspended_until, status_reason, admin_note, last_seen_at, username_customized_at'
+        'suspended_until, status_reason, admin_note, last_seen_at, username_customized_at',
+      { count: 'exact' }
     )
-    .order('created_at', { ascending: false })
-    .limit(limit);
+    /* `nullsFirst: false` — son görülmesi hiç yazılmamış kullanıcılar
+       listenin başında değil sonunda dursun. */
+    .order(alan, { ascending: artan, nullsFirst: false })
+    .range(bas, bas + pageSize - 1);
 
   const term = search.trim();
   if (term) {
     /* `or` içinde virgül ayırıcı; arama terimindeki virgül ifadeyi
        bozardı, bu yüzden temizleniyor. */
     const safe = term.replace(/[,()]/g, ' ').trim();
-    query = query.or(`username.ilike.%${safe}%,display_name.ilike.%${safe}%`);
+    sorgu = sorgu.or(`username.ilike.%${safe}%,display_name.ilike.%${safe}%`);
   }
+  if (status !== 'hepsi') sorgu = sorgu.eq('account_status', status);
+  if (city.trim()) sorgu = sorgu.ilike('city', `%${city.trim()}%`);
+  if (roleIds) sorgu = sorgu.in('id', roleIds);
 
-  const { data, error } = await query;
+  const { data, error, count } = await sorgu;
   if (error) throw new Error(error.message);
 
   /* `as unknown as` — PostgREST'in tip çıkarımı çok satırlı select
@@ -215,7 +298,8 @@ export async function fetchUsers(
      listesi elle yazıldığı için şekli biliyoruz; ara dönüşüm bunu
      derleyiciye söylüyor. */
   const profiles = (data ?? []) as unknown as ProfileRow[];
-  if (profiles.length === 0) return [];
+  const total = count ?? profiles.length;
+  if (profiles.length === 0) return { rows: [], total };
 
   const ids = profiles.map((p) => p.id);
 
@@ -254,7 +338,7 @@ export async function fetchUsers(
     photoCounts.set(row.user_id, (photoCounts.get(row.user_id) ?? 0) + 1);
   }
 
-  return profiles.map((p) => ({
+  const rows = profiles.map((p) => ({
     id: p.id,
     username: p.username,
     displayName: p.display_name,
@@ -271,6 +355,8 @@ export async function fetchUsers(
     lastSeenAt: p.last_seen_at,
     usernameCustomizedAt: p.username_customized_at,
   }));
+
+  return { rows, total };
 }
 
 export async function grantRole(userId: string, role: AppRole): Promise<void> {
@@ -468,4 +554,134 @@ export async function setAdminNote(userId: string, note: string): Promise<void> 
     .update({ admin_note: note.trim() || null })
     .eq('id', userId);
   if (error) throw new Error(error.message);
+}
+
+/**
+ * KULLANICI LİSTESİ CSV DIŞA AKTARIMI (Görev 1.3).
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * SAYFA DEĞİL, FİLTRE DIŞA AKTARILIR
+ *
+ * Yönetici "listeyi indir" derken ekrandaki 50 satırı değil, süzdüğü
+ * kümeyi kastediyor. Bu yüzden dışa aktarım sayfalamayı yok sayıp
+ * filtreye uyan tüm kayıtları çekiyor.
+ *
+ * ÜST SINIR VAR ve sessiz değil: 5.000 kaydın üstünde işlem reddediliyor.
+ * Tarayıcıda 50 bin satırlık bir CSV üretmek sekmeyi kilitler; sessizce
+ * ilk 5.000'i indirmek ise daha kötü — yönetici eksik bir dosyayı tam
+ * sanır.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * E-POSTA YOK
+ *
+ * Karar K3: e-posta panelde hiç görünmüyor, dolayısıyla CSV'de de yok.
+ * Liste kolonu olarak e-posta, tek tıkla bütün üyelerin adresini dışa
+ * aktarabilmek demekti.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * DENETİM KAYDI
+ *
+ * Kişisel veri toplu olarak dışarı çıkıyor; belge §0.6 gereği ve KVKK
+ * açısından bunun kaydı olmalı. `users.export` olarak yazılıyor, kaç
+ * kayıt ve hangi filtreyle olduğu detayda.
+ */
+const CSV_EXPORT_LIMIT = 5000;
+
+export async function exportUsersCsv(query: UserQuery = {}): Promise<void> {
+  const { total } = await fetchUsers({ ...query, page: 0, pageSize: 1 });
+  if (total > CSV_EXPORT_LIMIT) {
+    throw new Error(
+      `${total} kayıt CSV için fazla (sınır ${CSV_EXPORT_LIMIT}). Filtreyi daraltın.`
+    );
+  }
+
+  const { rows } = await fetchUsers({ ...query, page: 0, pageSize: total || 1 });
+
+  const csv = toCsv(rows, [
+    { label: 'Kullanıcı adı', value: (u) => u.username },
+    { label: 'Görünen ad', value: (u) => u.displayName },
+    { label: 'Şehir', value: (u) => u.city },
+    { label: 'Durum', value: (u) => accountStatusLabels[u.status] },
+    { label: 'Askı bitişi', value: (u) => u.suspendedUntil },
+    { label: 'Gerekçe', value: (u) => u.statusReason },
+    { label: 'Roller', value: (u) => u.roles.map((r) => roleLabels[r]).join(' · ') },
+    { label: 'Üyelik', value: (u) => membershipLabels[u.membership] },
+    { label: 'Fotoğraf', value: (u) => u.photoCount },
+    { label: 'Kayıt', value: (u) => u.createdAt },
+    { label: 'Son görülme', value: (u) => u.lastSeenAt },
+  ]);
+
+  const supabase = await client();
+  const { data: session } = await supabase.auth.getUser();
+  await supabase.from('audit_logs').insert({
+    actor_id: session.user?.id ?? null,
+    action: 'users.export',
+    target_type: 'profile',
+    target_id: null,
+    detail: { kayit: rows.length, filtre: query },
+  });
+
+  indirCsv(csv, csvFileName('kullanicilar'));
+}
+
+/**
+ * Tarayıcıda dosya indirir.
+ *
+ * `URL.revokeObjectURL` gecikmeli: hemen çağrılırsa bazı tarayıcılar
+ * indirmeyi başlatmadan bağlantıyı kaybediyor.
+ */
+function indirCsv(icerik: string, dosyaAdi: string): void {
+  if (typeof document === 'undefined' || typeof URL.createObjectURL !== 'function') {
+    return;
+  }
+  const blob = new Blob([icerik], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = dosyaAdi;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+/**
+ * Bir kullanıcıya ait son denetim kayıtları (Görev 1.4/7).
+ *
+ * `target_id` metin alanı; kullanıcı kimliği hem `profile` hem
+ * `user_role` hedef tipiyle yazılıyor (durum değişikliği ve rol atama
+ * ayrı tetikleyicilerden geliyor). İkisi de aynı kişiye ait, bu yüzden
+ * tip süzgeci yok — sorgu kimliğe bakıyor.
+ */
+export interface AuditEntry {
+  id: number;
+  action: string;
+  createdAt: string;
+  detail: Record<string, unknown>;
+}
+
+export async function fetchUserAudit(
+  userId: string,
+  limit = 20
+): Promise<AuditEntry[]> {
+  const supabase = await client();
+  const { data, error } = await supabase
+    .from('audit_logs')
+    .select('id, action, created_at, detail')
+    .eq('target_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (error) throw new Error(error.message);
+
+  return ((data ?? []) as {
+    id: number;
+    action: string;
+    created_at: string;
+    detail: Record<string, unknown> | null;
+  }[]).map((row) => ({
+    id: row.id,
+    action: row.action,
+    createdAt: row.created_at,
+    detail: row.detail ?? {},
+  }));
 }
