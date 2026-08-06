@@ -3,15 +3,17 @@ import { Link } from 'react-router';
 import { Panel } from '@/components/ui/Panel';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { Select } from '@/components/ui/Input';
+import { Input, Select } from '@/components/ui/Input';
 import { Alert } from '@/components/ui/Alert';
 import {
   deleteRecord,
+  fetchAuditFacets,
   fetchAuditLog,
   fetchRecords,
   setRecordStatus,
   setThreadLocked,
   RECORD_KINDS,
+  type AuditQuery,
   type AuditRow,
   type RecordKind,
   type RecordRow,
@@ -279,55 +281,211 @@ export function RecordsControl({
  * admin için yalnızca `select` politikası var ve öyle kalmalı. Panelde
  * de hiçbir eylem düğmesi yok.
  */
+/**
+ * DENETİM KAYDI GÖRÜNTÜLEYİCİSİ (Görev 1.6).
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * SALT OKUNUR — VE BU BİR ARAYÜZ KARARI DEĞİL
+ *
+ * `audit_logs` üzerinde yalnızca INSERT politikası var; UPDATE ve DELETE
+ * için politika HİÇ YOK, yani bu ekran düğme koysa bile veritabanı
+ * reddederdi. Kaydın değiştirilemez olması denetimin tek anlamı.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * FİLTRE SEÇENEKLERİ KAYITTAN TÜRÜYOR
+ *
+ * Eylem kodları sabit bir listeye yazılmadı: yeni bir tetikleyici yeni
+ * bir kod getirdiğinde filtre onu kendiliğinden görüyor. Elle tutulan
+ * liste bir gün eksik kalırdı ve eksik olduğu da fark edilmezdi —
+ * filtrede olmayan eylem, yokmuş gibi görünür.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * DETAY AÇILIR, VARSAYILAN KAPALI
+ *
+ * `detail` jsonb'sinin şekli eyleme göre değişiyor (durum değişikliğinde
+ * öncesi/sonrası, dışa aktarımda kayıt sayısı ve filtre). Hepsini her
+ * satırda açmak listeyi okunmaz yapardı; satır tıklanınca açılıyor.
+ */
 export function AuditControl() {
   const [rows, setRows] = useState<AuditRow[] | null>(null);
+  const [facets, setFacets] = useState<{
+    actions: string[];
+    targetTypes: string[];
+  }>({ actions: [], targetTypes: [] });
+  const [query, setQuery] = useState<AuditQuery>({});
+  const [open, setOpen] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchAuditLog()
+    fetchAuditLog(query)
       .then(setRows)
       .catch((e: unknown) => {
         setRows([]);
         setError(e instanceof Error ? e.message : 'Denetim kaydı okunamadı');
       });
+  }, [query]);
+
+  useEffect(() => {
+    fetchAuditFacets()
+      .then(setFacets)
+      .catch(() => {
+        /* Filtre listesi gelmezse ekran yine çalışsın: seçenekler boş
+           kalır, serbest metin araması ve tarih aralığı iş görür. */
+      });
   }, []);
+
+  const filtreVar =
+    Boolean(query.action) ||
+    Boolean(query.targetType) ||
+    Boolean(query.from) ||
+    Boolean(query.to);
 
   return (
     <Panel
       title="Denetim kaydı"
-      status={rows ? `son ${rows.length}` : 'okunuyor…'}
+      status={rows ? `${rows.length} kayıt` : 'okunuyor…'}
     >
       <p className="mb-2 text-meta leading-relaxed text-muted-foreground">
-        Salt okunur. Yönetici eylemlerinin izi burada tutuluyor ve panelden
-        değiştirilemiyor.
+        Salt okunur. Tabloda yalnızca ekleme politikası var — bu kayıt
+        panelden de, başka bir istemciden de değiştirilemez.
       </p>
 
       {error && <Alert className="mb-2">{error}</Alert>}
 
+      <div className="mb-3 flex flex-wrap items-end gap-2">
+        <label>
+          <span className="label mb-1 block">Eylem</span>
+          <Select
+            value={query.action ?? ''}
+            onChange={(e) =>
+              setQuery((q) => ({ ...q, action: e.target.value || undefined }))
+            }
+            className="h-8 text-meta"
+          >
+            <option value="">Hepsi</option>
+            {facets.actions.map((a) => (
+              <option key={a} value={a}>
+                {a}
+              </option>
+            ))}
+          </Select>
+        </label>
+
+        <label>
+          <span className="label mb-1 block">Hedef tipi</span>
+          <Select
+            value={query.targetType ?? ''}
+            onChange={(e) =>
+              setQuery((q) => ({
+                ...q,
+                targetType: e.target.value || undefined,
+              }))
+            }
+            className="h-8 text-meta"
+          >
+            <option value="">Hepsi</option>
+            {facets.targetTypes.map((t) => (
+              <option key={t} value={t}>
+                {t}
+              </option>
+            ))}
+          </Select>
+        </label>
+
+        <label>
+          <span className="label mb-1 block">Başlangıç</span>
+          <Input
+            type="date"
+            value={query.from ?? ''}
+            onChange={(e) =>
+              setQuery((q) => ({ ...q, from: e.target.value || undefined }))
+            }
+            className="h-8 text-meta"
+          />
+        </label>
+
+        <label>
+          <span className="label mb-1 block">Bitiş</span>
+          <Input
+            type="date"
+            value={query.to ?? ''}
+            onChange={(e) =>
+              setQuery((q) => ({ ...q, to: e.target.value || undefined }))
+            }
+            className="h-8 text-meta"
+          />
+        </label>
+
+        {filtreVar && (
+          <Button
+            size="sm"
+            variant="ghost"
+            type="button"
+            onClick={() => setQuery({})}
+          >
+            Filtreyi kaldır
+          </Button>
+        )}
+      </div>
+
       {rows && rows.length === 0 && !error && (
         <p className="py-3 text-center text-meta text-muted-foreground">
-          Henüz kayıt yok.
+          {filtreVar ? 'Filtreye uyan kayıt yok.' : 'Henüz kayıt yok.'}
         </p>
       )}
 
       <ul className="space-y-px">
-        {(rows ?? []).map((r) => (
-          <li
-            key={r.id}
-            className="flex flex-wrap items-baseline gap-x-2 border-b border-border py-1.5 text-meta last:border-0"
-          >
-            <span className="tabular text-faint">
-              {new Date(r.createdAt).toLocaleString('tr-TR')}
-            </span>
-            <span className="font-medium text-foreground">{r.action}</span>
-            {r.targetType && (
-              <span className="text-muted-foreground">
-                {r.targetType}
-                {r.targetId && ` · ${r.targetId.slice(0, 8)}`}
-              </span>
-            )}
-          </li>
-        ))}
+        {(rows ?? []).map((r) => {
+          const acik = open === r.id;
+          const detaylar = Object.entries(r.detail);
+          return (
+            <li key={r.id} className="border-b border-border py-1.5 last:border-0">
+              <button
+                type="button"
+                onClick={() => setOpen(acik ? null : r.id)}
+                aria-expanded={acik}
+                disabled={detaylar.length === 0}
+                className="flex w-full flex-wrap items-baseline gap-x-2 text-left text-meta disabled:cursor-default"
+              >
+                <span className="tabular text-faint">
+                  {new Date(r.createdAt).toLocaleString('tr-TR')}
+                </span>
+                <span className="font-medium text-foreground">{r.action}</span>
+                {r.actorName && (
+                  <span className="text-primary">@{r.actorName}</span>
+                )}
+                {r.targetType && (
+                  <span className="text-muted-foreground">
+                    {r.targetType}
+                    {r.targetId && ` · ${r.targetId.slice(0, 8)}`}
+                  </span>
+                )}
+                {detaylar.length > 0 && (
+                  <span className="ml-auto text-faint">
+                    {acik ? '−' : `+${detaylar.length}`}
+                  </span>
+                )}
+              </button>
+
+              {acik && detaylar.length > 0 && (
+                <dl className="mt-1.5 grid gap-x-4 gap-y-1 rounded-card border border-border bg-surface-2 px-3 py-2 text-meta sm:grid-cols-2">
+                  {detaylar.map(([k, v]) => (
+                    <div key={k} className="flex gap-2">
+                      <dt className="shrink-0 text-faint">{k}</dt>
+                      <dd className="min-w-0 break-words text-foreground">
+                        {v === null
+                          ? '—'
+                          : typeof v === 'object'
+                            ? JSON.stringify(v)
+                            : String(v)}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              )}
+            </li>
+          );
+        })}
       </ul>
     </Panel>
   );

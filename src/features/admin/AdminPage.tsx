@@ -6,7 +6,7 @@ import { Panel, SpecList, SpecRow } from '@/components/ui/Panel';
 import { Readout } from '@/components/ui/Readout';
 import { Badge } from '@/components/ui/Badge';
 import { Button, ButtonLink } from '@/components/ui/Button';
-import { Select } from '@/components/ui/Input';
+import { Input, Select } from '@/components/ui/Input';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { useAuth } from '@/features/auth/AuthContext';
@@ -117,11 +117,32 @@ export function AdminPage() {
 
   useEffect(load, [load]);
 
-  const act = async (item: ModerationItem, status: ModerationStatus) => {
+  /*
+    KARAR NOTU SATIR BAŞINA TUTULUYOR.
+
+    Tek bir `note` durumu olsaydı, bir kayda not yazıp başka bir kaydı
+    kapatan moderatör yanlış notu yanlış karara iliştirirdi. Anahtar
+    kuyruk kimliği.
+  */
+  const [notes, setNotes] = useState<Record<string, string>>({});
+
+  const act = async (
+    item: ModerationItem,
+    status: ModerationStatus,
+    note?: string
+  ) => {
     if (!user) return;
     setBusy(true);
     try {
-      await resolveItem(item.id, status, user.id);
+      await resolveItem(item.id, status, user.id, note?.trim() || undefined);
+      /* Kararı verilen kaydın notu temizleniyor: satır listeden düşse
+         de durum sözlüğünde kalırsa aynı kimlik yeniden görünürse eski
+         metinle geri gelir. */
+      setNotes((n) => {
+        const kalan = { ...n };
+        delete kalan[item.id];
+        return kalan;
+      });
       load();
     } catch (error) {
       setQueueError(
@@ -336,6 +357,21 @@ export function AdminPage() {
                         </p>
                       )}
 
+                      {/*
+                        ÇÖZÜLMÜŞ KAYITTA KARAR NOTU GÖRÜNÜR, kutu değil.
+                        Karar verildikten sonra notu değiştirmek, denetim
+                        kaydındaki metinle satırdaki metnin ayrışması
+                        demek olurdu.
+                      */}
+                      {item.resolution_note &&
+                        (item.status === 'approved' ||
+                          item.status === 'rejected') && (
+                          <p className="mt-1 rounded-card border border-border bg-surface-2 px-2.5 py-1.5 text-meta leading-relaxed text-muted-foreground">
+                            <span className="text-faint">Karar notu: </span>
+                            {item.resolution_note}
+                          </p>
+                        )}
+
                       <div className="mt-2 flex flex-wrap items-center gap-2">
                         {item.target_path && (
                           <Link
@@ -348,6 +384,27 @@ export function AdminPage() {
                         {item.status !== 'approved' &&
                           item.status !== 'rejected' && (
                             <>
+                              {/*
+                                KARAR NOTU ZORUNLU DEĞİL ama var: "neden
+                                kaldırıldı" sorusunun cevabı altı ay sonra
+                                yalnızca burada olacak. Zorunlu yapmadım
+                                çünkü apaçık spam için not yazdırmak
+                                kuyruğu yavaşlatır ve moderatör "spam"
+                                yazıp geçer — zorunluluk boş metni
+                                engellemez, anlamsız metni üretir.
+                              */}
+                              <Input
+                                value={notes[item.id] ?? ''}
+                                onChange={(e) =>
+                                  setNotes((n) => ({
+                                    ...n,
+                                    [item.id]: e.target.value,
+                                  }))
+                                }
+                                placeholder="Karar notu (isteğe bağlı)"
+                                aria-label="Karar notu"
+                                className="h-8 min-w-[12rem] flex-1 text-meta"
+                              />
                               <Button
                                 size="sm"
                                 variant="secondary"
@@ -359,7 +416,9 @@ export function AdminPage() {
                               <Button
                                 size="sm"
                                 disabled={busy}
-                                onClick={() => void act(item, 'approved')}
+                                onClick={() =>
+                                  void act(item, 'approved', notes[item.id])
+                                }
                               >
                                 İçerik kalsın
                               </Button>
@@ -367,7 +426,9 @@ export function AdminPage() {
                                 size="sm"
                                 variant="danger"
                                 disabled={busy}
-                                onClick={() => void act(item, 'rejected')}
+                                onClick={() =>
+                                  void act(item, 'rejected', notes[item.id])
+                                }
                               >
                                 Kaldır
                               </Button>

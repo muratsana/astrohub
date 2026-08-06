@@ -246,34 +246,126 @@ export interface AuditRow {
   targetType: string | null;
   targetId: string | null;
   actorId: string | null;
+  /** Eylemi yapanın kullanıcı adı; `actor_id` NULL ise (sistem) yok. */
+  actorName: string | null;
   createdAt: string;
+  /** Eyleme göre şekli değişen ayrıntı; öncesi/sonrası burada. */
+  detail: Record<string, unknown>;
 }
 
-export async function fetchAuditLog(limit = 30): Promise<AuditRow[]> {
+export interface AuditQuery {
+  /** Eylem kodu ya da bir parçası (`user.` → tüm kullanıcı eylemleri). */
+  action?: string;
+  targetType?: string;
+  /** ISO tarih (gün başlangıcı) — bu tarihten itibaren. */
+  from?: string;
+  /** ISO tarih — bu tarihe kadar (gün sonuna genişletiliyor). */
+  to?: string;
+  limit?: number;
+}
+
+/**
+ * DENETİM KAYDI OKUMA (Görev 1.6).
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * `actor_id` DEĞİL, KULLANICI ADI
+ *
+ * Ham UUID bir yöneticiye hiçbir şey söylemiyor: "8f2c1a…" kim? İkinci
+ * bir sorguyla `profiles`tan adlar çekiliyor ve satıra yazılıyor.
+ * PostgREST gömmesi kullanılmadı çünkü `audit_logs.actor_id` üzerinde
+ * yabancı anahtar `auth.users`a gidiyor, `profiles`a değil — gömme o
+ * yolu göremiyor.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * TARİH ARALIĞI GÜN SONUNA GENİŞLİYOR
+ *
+ * Kullanıcı "5 Ağustos'a kadar" derken 5 Ağustos'u dahil kastediyor.
+ * Ham `lte` ile o gün saat 00:00'dan sonrası düşerdi; bitiş tarihi bir
+ * gün ileri alınıp `lt` uygulanıyor.
+ */
+export async function fetchAuditLog(
+  query: AuditQuery = {}
+): Promise<AuditRow[]> {
+  const { action = '', targetType = '', from = '', to = '', limit = 100 } = query;
   const supabase = await client();
-  const { data, error } = await supabase
+
+  let sorgu = supabase
     .from('audit_logs')
-    .select('id, action, target_type, target_id, actor_id, created_at')
+    .select('id, action, target_type, target_id, actor_id, created_at, detail')
     .order('created_at', { ascending: false })
     .limit(limit);
 
+  if (action.trim()) sorgu = sorgu.ilike('action', `%${action.trim()}%`);
+  if (targetType.trim()) sorgu = sorgu.eq('target_type', targetType.trim());
+  if (from) sorgu = sorgu.gte('created_at', from);
+  if (to) {
+    const bitis = new Date(to);
+    bitis.setDate(bitis.getDate() + 1);
+    sorgu = sorgu.lt('created_at', bitis.toISOString());
+  }
+
+  const { data, error } = await sorgu;
   if (error) throw new Error(error.message);
 
-  return (
-    (data ?? []) as {
-      id: string;
-      action: string;
-      target_type: string | null;
-      target_id: string | null;
-      actor_id: string | null;
-      created_at: string;
-    }[]
-  ).map((r) => ({
+  const rows = (data ?? []) as {
+    id: string;
+    action: string;
+    target_type: string | null;
+    target_id: string | null;
+    actor_id: string | null;
+    created_at: string;
+    detail: Record<string, unknown> | null;
+  }[];
+
+  /* Eylemi yapanların adları — tek sorguda, benzersiz kimliklerle. */
+  const actorIds = [...new Set(rows.map((r) => r.actor_id).filter(Boolean))] as string[];
+  const adlar = new Map<string, string>();
+  if (actorIds.length > 0) {
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, username')
+      .in('id', actorIds);
+    for (const p of (profiles ?? []) as { id: string; username: string }[]) {
+      adlar.set(p.id, p.username);
+    }
+  }
+
+  return rows.map((r) => ({
     id: r.id,
     action: r.action,
     targetType: r.target_type,
     targetId: r.target_id,
     actorId: r.actor_id,
+    actorName: r.actor_id ? (adlar.get(r.actor_id) ?? null) : null,
     createdAt: r.created_at,
+    detail: r.detail ?? {},
   }));
+}
+
+/**
+ * Kayıtta geçen eylem kodları ve hedef tipleri — filtre listesi için.
+ *
+ * Sabit bir liste yazmadım: yeni bir tetikleyici yeni bir eylem kodu
+ * getirdiğinde filtre onu kendiliğinden görsün. Karşılığı fazladan bir
+ * sorgu, ama denetim ekranı sık açılan bir yer değil.
+ */
+export async function fetchAuditFacets(): Promise<{
+  actions: string[];
+  targetTypes: string[];
+}> {
+  const supabase = await client();
+  const { data, error } = await supabase
+    .from('audit_logs')
+    .select('action, target_type')
+    .order('created_at', { ascending: false })
+    .limit(1000);
+  if (error) throw new Error(error.message);
+
+  const rows = (data ?? []) as { action: string; target_type: string | null }[];
+  return {
+    actions: [...new Set(rows.map((r) => r.action))].sort(),
+    targetTypes: [
+      ...new Set(rows.map((r) => r.target_type).filter(Boolean) as string[]),
+    ].sort(),
+  };
 }
