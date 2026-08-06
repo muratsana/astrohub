@@ -264,7 +264,7 @@ export function PanelPage() {
      * ayrı bir iş (gece oturumu günlüğü, Faz 7 MUST-03) — o gelene
      * kadar bağlantı ne olduğunu söylüyor.
      */
-    { label: 'Planlayıcı', to: '/planlayici' },
+    { label: 'Planlayıcı', to: '/bu-gece/plan' },
     { label: 'Etkinliklerim', to: '/etkinlikler' },
     { label: 'Kaydedilenler', to: '/panel/kaydedilenler' },
     { label: 'Kayıtlı Noktalar', to: '/saha' },
@@ -521,7 +521,7 @@ export function PanelPage() {
               <p className="py-3 text-meta leading-relaxed text-muted-foreground">
                 Henüz kayıtlı setup yok. Uyumluluk aracında bir zincir kurup
                 kaydettiğinizde burada listelenir.{' '}
-                <Link to="/simulator" className="text-primary">
+                <Link to="/araclar/kadraj" className="text-primary">
                   Setup kur →
                 </Link>
               </p>

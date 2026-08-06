@@ -9,12 +9,27 @@ import { cn } from '@/lib/cn';
  */
 export function Panel({
   title,
+  titleAs: Heading = 'h2',
   status,
   children,
   className,
   bodyClassName,
 }: {
   title?: string;
+  /**
+   * Başlığın belge hiyerarşisindeki seviyesi.
+   *
+   * VARSAYILAN `h2` VE BU BİR DÜZELTME. Panel başlığı koşulsuz `h3`
+   * çiziyordu; sayfaların çoğunda araya giren bir `h2` olmadığı için
+   * yapı `h1 → h3` diye atlıyordu (denetimde 24 sayfada ölçüldü, WCAG
+   * 1.3.1). Ekran okuyucu kullanıcısı başlıklar arasında gezinirken bir
+   * seviye kayboluyordu.
+   *
+   * Panel gerçekten bir `h2`nin ALTINDA duruyorsa çağıran `h3` geçiyor —
+   * seviye içeriğe göre seçilir, görünüme göre değil. Görünüm zaten
+   * seviyeden bağımsız: `label` sınıfı üçünde de aynı.
+   */
+  titleAs?: 'h2' | 'h3' | 'h4';
   /** Başlığın sağındaki küçük durum bilgisi. */
   status?: ReactNode;
   children: ReactNode;
@@ -30,7 +45,7 @@ export function Panel({
     >
       {(title || status) && (
         <header className="flex items-center justify-between gap-3 border-b border-border px-4 py-2.5">
-          {title && <h3 className="label text-foreground">{title}</h3>}
+          {title && <Heading className="label text-foreground">{title}</Heading>}
           {status && (
             <span className="tabular text-meta text-muted-foreground">
               {status}

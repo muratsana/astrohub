@@ -10,7 +10,11 @@ import {
   equipmentPath,
 } from '@/features/equipment/data';
 import { sites } from '@/features/observing-sites/data';
-import { articles, articleCategoryLabels } from '@/features/articles/data';
+import {
+  articles,
+  articleCategoryLabels,
+  articleHref,
+} from '@/features/articles/data';
 import { news, newsCategoryLabels } from '@/features/news/data';
 import { listings } from '@/features/marketplace/data';
 
@@ -191,7 +195,7 @@ export const searchIndex: SearchDoc[] = [
       a.slug,
       a.title,
       `${articleCategoryLabels[a.category]} · ${a.level}`,
-      `/yazi/${a.slug}`,
+      articleHref(a),
       [articleCategoryLabels[a.category], a.level, a.summary, a.author]
     )
   ),

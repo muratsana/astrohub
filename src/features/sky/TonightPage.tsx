@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { NightViews } from './NightViews';
 import { Panel } from '@/components/ui/Panel';
 import { Readout } from '@/components/ui/Readout';
 import { Badge } from '@/components/ui/Badge';
@@ -228,12 +229,11 @@ export function TonightPage() {
               >
                 {kopyalandi ? 'Kopyalandı' : 'Bağlantıyı kopyala'}
               </Button>
-              <ButtonLink to="/planlayici" size="sm" variant="secondary">
-                Gece Planı Kur
-              </ButtonLink>
             </>
           }
         />
+
+        <NightViews />
 
         <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
           <Readout
@@ -296,7 +296,7 @@ export function TonightPage() {
             message="Bu gece astronomik karanlık oluşmuyor"
             hint="Yılın bu döneminde bu enlemde güneş −18°'nin altına inmiyor. Karanlık takviminden uygun geceyi seçebilirsiniz."
             action={
-              <ButtonLink to="/araclar/takvim" size="sm" variant="secondary">
+              <ButtonLink to="/bu-gece/takvim" size="sm" variant="secondary">
                 Karanlık Takvimi
               </ButtonLink>
             }

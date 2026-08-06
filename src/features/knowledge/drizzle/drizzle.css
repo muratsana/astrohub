@@ -1,0 +1,648 @@
+/**
+ * DRIZZLE REHBERİ — makale stilleri.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * HER KURAL `.dz-root` ALTINA SCOPE'LANMIŞTIR.
+ *
+ * Makale gövdesi ham HTML olarak basılıyor (üretilen içerik modülü) ve
+ * kendi eleman seçicilerine ihtiyaç duyuyor: `h2`, `table`, `details`…
+ * Bunları küresel yazmak sitenin geri kalanını ezerdi. Sınıf adları da
+ * `dz-` önekli — üretici script her sınıfa bu öneki ekliyor.
+ *
+ * RENKLER SİTENİN TOKEN'LARINDAN GELİYOR. Paket kendi koyu paletini
+ * taşıyordu; buradaki eşleme onu Astrohub'ın üç temasına (koyu · açık ·
+ * saha kırmızısı) bağlar. Tek istisna aşağıda `--dz-plate`: infografik
+ * SVG'lerin arka planı dosyanın İÇİNE gömülü ve açık temada da koyu
+ * kalıyor, o yüzden çerçeveleri her temada sabit koyu bir levha üstünde
+ * duruyor. Alternatifi 11 SVG'yi yeniden üretmekti; paketin kendi belgesi
+ * de bu yolu öneriyor.
+ *
+ * SERİ RENKLERİ (mavi/turuncu/akuamarin) DEĞİŞTİRİLMEDİ: paket bunların
+ * renk körlüğü ayrımı için doğrulanmış bir palet olduğunu söylüyor ve
+ * grafiklerin içine gömülü.
+ * ══════════════════════════════════════════════════════════════════════
+ */
+
+.dz-root {
+  /* Site token'larına bağlanan yüzey ve metin rolleri. */
+  --dz-surface: var(--color-surface-1);
+  --dz-surface-2: var(--color-surface-2);
+  --dz-ink: var(--color-foreground);
+  --dz-ink-2: var(--color-muted-foreground);
+  --dz-ink-3: var(--color-faint);
+  --dz-line: var(--color-border);
+  --dz-rule: var(--color-border-strong);
+  --dz-accent: var(--color-primary);
+  --dz-cold: var(--color-cold);
+  --dz-good: var(--color-success);
+  --dz-warn: var(--color-warning);
+  --dz-crit: var(--color-danger);
+
+  /* İnfografiklerin sabit levhası — SVG arka planları gömülü olduğu için
+     üç temada da aynı. */
+  --dz-plate: #1a1a19;
+  --dz-plate-line: #2c2c2a;
+
+  color: var(--dz-ink-2);
+  font-size: 16px;
+  line-height: 1.75;
+}
+
+/* ─────────────────────────────────────────────────────── tipografi ── */
+
+.dz-root h2 {
+  font-size: clamp(23px, 3.4vw, 30px);
+  line-height: 1.2;
+  color: var(--dz-ink);
+  letter-spacing: -0.02em;
+  margin: 64px 0 6px;
+  font-weight: 700;
+  scroll-margin-top: 88px;
+}
+.dz-root h3 {
+  font-size: 19px;
+  color: var(--dz-ink);
+  margin: 36px 0 8px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.dz-root h4 {
+  font-size: 16px;
+  color: var(--dz-ink);
+  margin: 24px 0 6px;
+  font-weight: 600;
+}
+.dz-root p {
+  margin: 0 0 18px;
+}
+.dz-root a {
+  color: var(--dz-accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: color-mix(in oklab, var(--dz-accent) 40%, transparent);
+}
+.dz-root a:hover {
+  text-decoration-color: var(--dz-accent);
+}
+.dz-root strong,
+.dz-root b {
+  color: var(--dz-ink);
+  font-weight: 650;
+}
+.dz-root em {
+  color: var(--dz-ink);
+  font-style: italic;
+}
+.dz-root code {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.87em;
+  background: var(--dz-surface-2);
+  color: var(--dz-accent);
+  padding: 2px 6px;
+  border-radius: var(--radius-card, 2px);
+  border: 1px solid var(--dz-line);
+}
+.dz-root ul,
+.dz-root ol {
+  margin: 0 0 18px;
+  padding-left: 22px;
+}
+.dz-root li {
+  margin: 0 0 8px;
+}
+.dz-root li::marker {
+  color: var(--dz-ink-3);
+}
+.dz-root hr {
+  border: 0;
+  border-top: 1px solid var(--dz-line);
+  margin: 52px 0;
+}
+.dz-root img,
+.dz-root svg {
+  max-width: 100%;
+}
+
+.dz-root .dz-kicker {
+  color: var(--dz-accent);
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-weight: 700;
+  margin: 0 0 14px;
+}
+.dz-root .dz-lead {
+  font-size: 19px;
+  line-height: 1.62;
+  color: var(--dz-ink-2);
+  max-width: 60ch;
+}
+.dz-root .dz-sec-no {
+  display: inline-block;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 12px;
+  color: var(--dz-accent);
+  border: 1px solid var(--dz-rule);
+  border-radius: var(--radius-card, 2px);
+  padding: 2px 8px;
+  margin-bottom: 10px;
+  letter-spacing: 0.06em;
+}
+
+/* Makalenin kendi hero'su. Başlık ve spot metin üretici tarafından
+   çıkarılmış durumda — `PageHeader` ikisini de taşıyor ve iki `h1` hem
+   SEO hem ekran okuyucu hatası olurdu. Burada kalan: üst etiket ve
+   künye rozetleri. */
+.dz-root .dz-hero {
+  padding: 0 0 8px;
+  border-bottom: 1px solid var(--dz-line);
+  margin-bottom: 8px;
+}
+.dz-root .dz-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 22px 0 8px;
+}
+.dz-root .dz-chip {
+  font-size: 12.5px;
+  color: var(--dz-ink-3);
+  border: 1px solid var(--dz-rule);
+  border-radius: var(--radius-card, 2px);
+  padding: 4px 10px;
+}
+.dz-root .dz-chip b {
+  color: var(--dz-ink-2);
+  font-weight: 600;
+}
+
+/* ──────────────────────────────────────────── kartlar ve çağrı kutuları ── */
+
+.dz-root .dz-fig {
+  background: var(--dz-plate);
+  border: 1px solid var(--dz-plate-line);
+  border-radius: var(--radius-card, 2px);
+  padding: 18px 18px 12px;
+  margin: 28px 0;
+}
+.dz-root .dz-fig svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.dz-root .dz-figcap {
+  font-size: 13px;
+  color: #898781;
+  line-height: 1.55;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--dz-plate-line);
+}
+.dz-root .dz-figcap b {
+  color: #c3c2b7;
+  font-weight: 650;
+}
+
+.dz-root .dz-callout {
+  border-left: 3px solid var(--dz-cold);
+  background: var(--dz-surface);
+  border-radius: 0 var(--radius-card, 2px) var(--radius-card, 2px) 0;
+  padding: 16px 20px;
+  margin: 26px 0;
+  font-size: 15px;
+}
+.dz-root .dz-callout .dz-t {
+  display: block;
+  color: var(--dz-ink);
+  font-weight: 700;
+  margin-bottom: 4px;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.dz-root .dz-callout.dz-warn {
+  border-left-color: var(--dz-warn);
+}
+.dz-root .dz-callout.dz-warn .dz-t {
+  color: var(--dz-warn);
+}
+.dz-root .dz-callout.dz-bad {
+  border-left-color: var(--dz-crit);
+}
+.dz-root .dz-callout.dz-bad .dz-t {
+  color: var(--dz-crit);
+}
+.dz-root .dz-callout.dz-good {
+  border-left-color: var(--dz-good);
+}
+.dz-root .dz-callout.dz-good .dz-t {
+  color: var(--dz-good);
+}
+.dz-root .dz-callout p:last-child {
+  margin-bottom: 0;
+}
+
+.dz-root .dz-tldr {
+  background: var(--dz-surface);
+  border: 1px solid var(--dz-rule);
+  border-left: 3px solid var(--dz-accent);
+  border-radius: var(--radius-card, 2px);
+  padding: 22px 24px;
+  margin: 32px 0;
+}
+.dz-root .dz-tldr h3 {
+  margin-top: 0;
+  font-size: 13px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--dz-accent);
+}
+.dz-root .dz-tldr ul {
+  margin-bottom: 0;
+}
+.dz-root .dz-tldr li {
+  margin-bottom: 10px;
+}
+
+/* ───────────────────────────────────────────────────────── tablolar ── */
+
+.dz-root .dz-tw {
+  overflow-x: auto;
+  margin: 26px 0;
+  border: 1px solid var(--dz-line);
+  border-radius: var(--radius-card, 2px);
+  background: var(--dz-surface);
+}
+.dz-root table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 14px;
+  min-width: 520px;
+}
+.dz-root th,
+.dz-root td {
+  padding: 10px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--dz-line);
+  vertical-align: top;
+  line-height: 1.5;
+}
+.dz-root th {
+  color: var(--dz-ink);
+  font-weight: 650;
+  font-size: 11.5px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  background: var(--dz-surface-2);
+  white-space: nowrap;
+}
+.dz-root tr:last-child td {
+  border-bottom: 0;
+}
+.dz-root td.dz-num,
+.dz-root th.dz-num {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.dz-root .dz-tag {
+  display: inline-block;
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: var(--radius-card, 2px);
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  border: 1px solid currentColor;
+}
+.dz-root .dz-tag.dz-g {
+  color: var(--dz-good);
+}
+.dz-root .dz-tag.dz-y {
+  color: var(--dz-warn);
+}
+.dz-root .dz-tag.dz-r {
+  color: var(--dz-crit);
+}
+.dz-root .dz-tag.dz-b {
+  color: var(--dz-cold);
+}
+
+/* ─────────────────────────────────────────────────────── akordiyon ── */
+
+.dz-root details {
+  border: 1px solid var(--dz-line);
+  border-radius: var(--radius-card, 2px);
+  background: var(--dz-surface);
+  margin: 12px 0;
+  overflow: hidden;
+}
+.dz-root details summary {
+  cursor: pointer;
+  padding: 13px 18px;
+  color: var(--dz-ink);
+  font-weight: 650;
+  font-size: 15px;
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+.dz-root details summary::-webkit-details-marker {
+  display: none;
+}
+.dz-root details summary::after {
+  content: '+';
+  color: var(--dz-accent);
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 1;
+}
+.dz-root details[open] summary::after {
+  content: '−';
+}
+.dz-root details summary:focus-visible {
+  outline: 2px solid var(--dz-accent);
+  outline-offset: -2px;
+}
+.dz-root details .dz-body {
+  padding: 0 18px 16px;
+  font-size: 15px;
+}
+.dz-root details .dz-body > *:last-child {
+  margin-bottom: 0;
+}
+
+/* ─────────────────────────────────────────────────────────── formül ── */
+
+.dz-root .dz-eq {
+  background: var(--dz-surface-2);
+  border: 1px solid var(--dz-rule);
+  border-radius: var(--radius-card, 2px);
+  padding: 16px 20px;
+  margin: 20px 0;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 14.5px;
+  color: var(--dz-ink);
+  overflow-x: auto;
+  line-height: 2;
+}
+.dz-root .dz-eq .dz-c {
+  color: var(--dz-ink-3);
+  font-family: inherit;
+  font-size: 13px;
+}
+.dz-root .dz-eq .dz-hi {
+  color: var(--dz-accent);
+}
+
+/* ───────────────────────────────────────────── yazılım sekmeleri ── */
+
+/*
+ * JS ÇALIŞMADAN ÖNCE HEPSİ AÇIK. Paneller varsayılan olarak görünür;
+ * `DrizzleGuidePage` sekmeleri bağladığında kapsayıcıya `data-dz-tabs`
+ * yazıyor ve gizleme kuralı ancak o zaman devreye giriyor. Tersi olsaydı
+ * (varsayılan gizli) JS'in çalışmadığı ya da geciktiği durumda beş
+ * yazılım bölümünden dördü kaybolurdu — arama motoru da göremezdi.
+ */
+.dz-root .dz-tabs {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin: 26px 0 0;
+  border-bottom: 1px solid var(--dz-line);
+}
+.dz-root .dz-tabs button {
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  color: var(--dz-ink-3);
+  padding: 9px 14px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 40px;
+}
+.dz-root .dz-tabs button:hover {
+  color: var(--dz-ink);
+}
+.dz-root .dz-tabs button.dz-on {
+  color: var(--dz-accent);
+  border-bottom-color: var(--dz-accent);
+}
+.dz-root .dz-panel {
+  display: block;
+  padding-top: 8px;
+}
+.dz-root [data-dz-tabs] ~ .dz-panel {
+  display: none;
+}
+.dz-root [data-dz-tabs] ~ .dz-panel.dz-on {
+  display: block;
+}
+
+/* ────────────────────────────────────────────────────────── kaynaklar ── */
+
+.dz-root .dz-src {
+  font-size: 14px;
+  color: var(--dz-ink-3);
+}
+.dz-root .dz-src li {
+  margin-bottom: 7px;
+}
+
+.dz-root .dz-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  font-size: 13px;
+  color: var(--dz-ink-2);
+  margin-top: 14px;
+}
+.dz-root .dz-legend span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.dz-root .dz-sw {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  border-radius: 2px;
+  margin-right: 7px;
+  vertical-align: baseline;
+}
+
+/* ═════════════════════════════════════════ etkileşimli hesaplayıcılar ═══ */
+
+.dz-root .dz-tool {
+  background: var(--dz-surface);
+  border: 1px solid var(--dz-rule);
+  border-radius: var(--radius-card, 2px);
+  padding: 22px;
+  margin: 32px 0;
+}
+.dz-root .dz-tool-title {
+  margin: 0 0 4px;
+  color: var(--dz-ink);
+  font-size: 16px;
+  font-weight: 700;
+}
+.dz-root .dz-tool .dz-sub {
+  font-size: 13px;
+  color: var(--dz-ink-3);
+  margin: 0 0 20px;
+}
+.dz-root .dz-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 14px;
+}
+.dz-root .dz-grid-sim {
+  margin-bottom: 18px;
+}
+.dz-root .dz-fld label {
+  display: block;
+  font-size: 12.5px;
+  letter-spacing: 0.02em;
+  color: var(--dz-ink-3);
+  margin-bottom: 5px;
+  font-weight: 600;
+  /* "µm" büyük harfe çevrilirse Yunan Mu'ya döner — paket bunu ayrıca
+     uyarıyor; site temasının uppercase kuralları buraya sızmasın. */
+  text-transform: none;
+}
+.dz-root .dz-fld input[type='number'],
+.dz-root .dz-fld select {
+  width: 100%;
+  background: var(--color-background);
+  border: 1px solid var(--dz-rule);
+  color: var(--dz-ink);
+  padding: 9px 11px;
+  border-radius: var(--radius-card, 2px);
+  font: inherit;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  min-height: 40px;
+}
+.dz-root .dz-fld input:focus-visible,
+.dz-root .dz-fld select:focus-visible {
+  outline: none;
+  border-color: var(--dz-accent);
+  box-shadow: 0 0 0 1px var(--dz-accent);
+}
+.dz-root .dz-rng {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.dz-root .dz-rng input[type='range'] {
+  flex: 1;
+  accent-color: var(--dz-accent);
+  height: 24px;
+  min-width: 0;
+}
+.dz-root .dz-rng .dz-v {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 14px;
+  color: var(--dz-accent);
+  min-width: 52px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.dz-root .dz-out {
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid var(--dz-line);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 16px;
+}
+.dz-root .dz-stat .dz-k {
+  font-size: 11px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--dz-ink-3);
+  font-weight: 600;
+}
+.dz-root .dz-stat .dz-val {
+  font-size: 25px;
+  color: var(--dz-ink);
+  font-weight: 700;
+  line-height: 1.15;
+  margin-top: 2px;
+  font-variant-numeric: tabular-nums;
+}
+.dz-root .dz-stat .dz-val small {
+  font-size: 13px;
+  color: var(--dz-ink-3);
+  font-weight: 500;
+}
+.dz-root .dz-verdict {
+  margin-top: 18px;
+  padding: 14px 16px;
+  border-radius: var(--radius-card, 2px);
+  font-size: 14.5px;
+  line-height: 1.6;
+  border: 1px solid var(--dz-line);
+  background: var(--dz-surface-2);
+}
+.dz-root .dz-note {
+  font-size: 13px;
+  color: var(--dz-ink-3);
+  margin: 14px 0 0;
+}
+.dz-root .dz-note-inline {
+  color: var(--dz-ink-3);
+  font-size: 13.5px;
+  margin: 12px 0 0;
+}
+
+.dz-root .dz-ok {
+  color: var(--dz-good);
+}
+.dz-root .dz-mid {
+  color: var(--dz-warn);
+}
+.dz-root .dz-bad {
+  color: var(--dz-crit);
+}
+.dz-root .dz-hl {
+  color: var(--dz-accent);
+}
+
+/* Simülatörün dört paneli. */
+.dz-root .dz-panels {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 14px;
+  margin-top: 4px;
+}
+.dz-root .dz-panels canvas {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  image-rendering: pixelated;
+  border-radius: var(--radius-card, 2px);
+  background: #000;
+  border: 1px solid var(--dz-line);
+}
+.dz-root .dz-panel-cap {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--dz-ink-3);
+  margin-top: 8px;
+}
+.dz-root .dz-panel-cap b {
+  color: var(--dz-ink-2);
+  font-weight: 650;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dz-root * {
+    transition: none !important;
+  }
+}

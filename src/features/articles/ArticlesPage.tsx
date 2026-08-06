@@ -11,7 +11,11 @@ import {
 } from '@/components/ui/EditorialList';
 import { useViewMode } from '@/components/ui/useViewMode';
 import { AdminEditLink } from '@/components/admin/AdminEditLink';
-import { articleCategoryLabels, type ArticleCategory } from './data';
+import {
+  articleCategoryLabels,
+  articleHref,
+  type ArticleCategory,
+} from './data';
 import { useArticles } from './useArticles';
 import { useExplorer } from '@/features/explorer/useExplorer';
 import { articlesSpec } from './articlesSpec';
@@ -72,7 +76,7 @@ export function ArticlesPage() {
     () =>
       result.map((article) => ({
         slug: article.slug,
-        to: `/yazi/${article.slug}`,
+        to: articleHref(article),
         title: article.title,
         summary: article.summary,
         category: articleCategoryLabels[article.category],

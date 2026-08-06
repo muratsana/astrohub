@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Container } from '@/components/ui/Container';
 import { Input, Select } from '@/components/ui/Input';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { FramingViews } from '@/features/simulator/FramingViews';
 import { Panel, SpecList, SpecRow } from '@/components/ui/Panel';
 import { Readout } from '@/components/ui/Readout';
 import { Badge } from '@/components/ui/Badge';
@@ -12,6 +13,8 @@ import {
   filterControlClass,
 } from '@/components/ui/FilterBar';
 import { PageMeta } from '@/components/seo/PageMeta';
+import { ActiveSetupBar } from '@/features/setups/ActiveSetupBar';
+import { useSetupPrefill } from '@/features/setups/useSetupPrefill';
 import { breadcrumbJsonLd } from '@/lib/seo';
 import { computeOptics } from '@/domain/astronomy/optics';
 import {
@@ -65,6 +68,13 @@ export function MosaicPlannerPage() {
   const [sensorHeight, setSensorHeight] = useState(15.7);
 
   // Hedef
+  /* Aktif setup'tan doldurma — simülatörle aynı seçim, ikinci kez
+     sorulmuyor. Optik ve kamera değerleri seçici üzerinden çözülüyor. */
+  useSetupPrefill((slots) => {
+    if (slots.optik) setOpticSlug(slots.optik);
+    if (slots.kamera) setCameraSlug(slots.kamera);
+  });
+
   const [targetWidth, setTargetWidth] = useState(178);
   const [targetHeight, setTargetHeight] = useState(63);
   const [overlapPercent, setOverlapPercent] = useState(15);
@@ -122,7 +132,8 @@ export function MosaicPlannerPage() {
         jsonLd={breadcrumbJsonLd([
           { name: 'Ana Sayfa', path: '/' },
           { name: 'Araçlar', path: '/araclar' },
-          { name: 'Mozaik Planlayıcı', path: '/araclar/mosaic' },
+          { name: 'Kadraj', path: '/araclar/kadraj' },
+          { name: 'Mozaik Planlayıcı', path: '/araclar/kadraj/mozaik' },
         ])}
       />
 
@@ -131,11 +142,16 @@ export function MosaicPlannerPage() {
           breadcrumb={[
             { label: 'Ana Sayfa', to: '/' },
             { label: 'Araçlar', to: '/araclar' },
+            { label: 'Kadraj', to: '/araclar/kadraj' },
             { label: 'Mozaik Planlayıcı' },
           ]}
           title="Mozaik Planlayıcı"
           description="Hedef tek kadraja sığmıyorsa kaç panele bölüneceğini, panellerin adım aralığını ve toplam gece sayısını hesaplar. Hesaplar cihazınızda yerel yapılır."
         />
+
+        <FramingViews />
+
+        <ActiveSetupBar className="mb-4" />
 
         <div className="grid gap-4 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
           {/* ───────── Girdiler ───────── */}

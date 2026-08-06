@@ -53,15 +53,21 @@ export const staticEntries: SitemapEntry[] = [
   { path: '/haberler', priority: 0.9, changefreq: 'daily' },
   { path: '/araclar/isik-kirliligi', priority: 0.6, changefreq: 'monthly' },
   { path: '/bu-gece', priority: 0.6, changefreq: 'daily' },
-  { path: '/planlayici', priority: 0.5, changefreq: 'monthly' },
+  { path: '/bu-gece/plan', priority: 0.5, changefreq: 'monthly' },
   { path: '/ekipman', priority: 0.7, changefreq: 'weekly' },
   { path: '/araclar', priority: 0.7, changefreq: 'monthly' },
-  { path: '/simulator', priority: 0.7, changefreq: 'monthly' },
-  { path: '/araclar/mosaic', priority: 0.6, changefreq: 'monthly' },
+  { path: '/araclar/kadraj', priority: 0.7, changefreq: 'monthly' },
+  { path: '/araclar/kadraj/mozaik', priority: 0.6, changefreq: 'monthly' },
   { path: '/araclar/poz-plani', priority: 0.6, changefreq: 'monthly' },
-  { path: '/araclar/takvim', priority: 0.6, changefreq: 'daily' },
+  { path: '/bu-gece/takvim', priority: 0.6, changefreq: 'daily' },
   { path: '/cerezler', priority: 0.2, changefreq: 'yearly' },
   { path: '/yazilar', priority: 0.8, changefreq: 'weekly' },
+  {
+    path: '/yazilar/drizzle-rehberi',
+    priority: 0.7,
+    changefreq: 'yearly',
+    lastmod: '2026-08-05',
+  },
   /* Sözlük ve SSS indekslenmeli: ikisi de arama motorundan gelen
      "X ne demek" / "kota nedir" sorularının doğal karşılığı. Gözlem
      günlüğü (`/gunluk`) BİLEREK LİSTEDE YOK — kişisel ve `noIndex`. */
@@ -140,11 +146,18 @@ export function contentEntries(): SitemapEntry[] {
       priority: 0.7,
       changefreq: 'weekly' as const,
     })),
-    ...articles.map((a) => ({
-      path: `/yazi/${a.slug}`,
-      priority: 0.6,
-      changefreq: 'monthly' as const,
-    })),
+    /* Kendi adresi olan yazılar (`href` taşıyanlar) BURADA DEĞİL: onlar
+       yukarıdaki sabit listede kendi kanonik yollarıyla duruyor.
+       `/yazi/<slug>` bu kayıtlarda yalnızca bir yönlendirme ve sitemap'e
+       yönlendirme koymak, arama motoruna aynı belgeyi iki adresle
+       bildirmek olurdu. */
+    ...articles
+      .filter((a) => !a.href)
+      .map((a) => ({
+        path: `/yazi/${a.slug}`,
+        priority: 0.6,
+        changefreq: 'monthly' as const,
+      })),
     ...news.map((n) => ({
       path: `/haber/${n.slug}`,
       priority: 0.7,

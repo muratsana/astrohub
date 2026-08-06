@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/Badge';
 import { NotFoundPage } from '@/components/NotFoundPage';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { absoluteUrl, breadcrumbJsonLd, SITE_NAME } from '@/lib/seo';
-import { articleCategoryLabels } from './data';
+import { articleCategoryLabels, articleHref } from './data';
 import { commonsWidthUrl } from '@/lib/commons';
 import { useArticles } from './useArticles';
 import { BlockRenderer } from '@/components/content/BlockRenderer';
@@ -125,7 +125,7 @@ export function ArticleDetailPage() {
                 {related.map((r) => (
                   <li key={r.slug}>
                     <Link
-                      to={`/yazi/${r.slug}`}
+                      to={articleHref(r)}
                       className="flex items-baseline justify-between gap-4 border-b border-border py-2.5 transition-colors hover:text-primary"
                     >
                       <span className="text-caption text-foreground">

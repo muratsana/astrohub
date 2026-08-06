@@ -200,7 +200,7 @@ await scenario('⌘K arama katmanını açar ve M31 sonuç döndürür', async (
 /* ══════════════════════ Hesaplayıcılar ══════════════════════ */
 
 await scenario('FOV hesaplayıcı girdi değişince sonucu günceller', async () => {
-  await goto('/simulator');
+  await goto('/araclar/kadraj');
 
   const before = await page.evaluate(() => document.body.innerText);
   await page.fill('#sim-focal', '1000');
@@ -214,7 +214,7 @@ await scenario('FOV hesaplayıcı girdi değişince sonucu günceller', async ()
 await scenario(
   'mozaik planlayıcı örtüşme artınca panel sayısını artırır',
   async () => {
-    await goto('/araclar/mosaic');
+    await goto('/araclar/kadraj/mozaik');
 
     // 250mm ön ayarında kadraj 5°'yi aşıyor ve çoğu hedef tek kareye sığıyor;
     // panel bölünmesini görmek için uzun odak seçiliyor.
@@ -237,23 +237,41 @@ await scenario(
   }
 );
 
-await scenario('setup uyumluluk yanlış backfocus’ta hata verir', async () => {
-  await goto('/simulator');
+/*
+ * UYUMLULUK ARTIK EKİPMAN MODÜLÜNDE.
+ *
+ * Bu senaryo `/araclar/kadraj` (eski `/simulator`) üzerinde koşuyordu.
+ * Modül ayrımından sonra kadraj sayfası yalnızca optik hesabı yapıyor;
+ * backfocus zinciri, ağırlık ve uyumluluk verdict'i Ekipman modülünde.
+ * Senaryo hesabın gerçekten yaşadığı yere taşındı — kadrajda koşmaya
+ * devam etseydi, kaldırılmış bir paneli arıyor olurdu.
+ */
+await scenario('ekipman modülü backfocus zincirini raporlar', async () => {
+  await goto('/ekipman');
 
-  await page.fill('#spacer', '30');
-  await page.waitForTimeout(300);
+  /* Ara halka alanı builder'ın "Kullanıcı değerleri" panelinde; zincir
+     bileşen seçilmeden de girdiyi kabul ediyor ve eksik veriyi söylüyor. */
+  await page.fill('#sb-spacer', '30');
+  await page.waitForTimeout(400);
   const text = await page.evaluate(() => document.body.innerText);
 
   assert(
-    includesTr(text, 'kurulamaz') || includesTr(text, 'ara halka ekleyin'),
-    'backfocus hatası raporlanmadı'
+    includesTr(text, 'backfocus'),
+    'backfocus zinciri hiç raporlanmadı'
+  );
+  /* Bileşen seçilmemişken motor TAHMİN ÜRETMEMELİ: "veri yetersiz"
+     demeli. Sessizce bir sayı göstermek, ölçülmemiş bir zinciri
+     ölçülmüş gibi sunmak olurdu. */
+  assert(
+    includesTr(text, 'veri yok') || includesTr(text, 'veri yetersiz'),
+    'eksik bileşende veri yetersiz denmedi'
   );
 });
 
 await scenario(
   'karanlık takvimi ay değiştirince yeniden hesaplar',
   async () => {
-    await goto('/araclar/takvim');
+    await goto('/bu-gece/takvim');
 
     /*
      * Gövde metninin tamamını karşılaştırmak kırılgan: sayfanın üst kısmı
@@ -828,7 +846,7 @@ const shotRoutes = [
   '/',
   '/galeri',
   '/etkinlikler',
-  '/araclar/mosaic',
+  '/araclar/kadraj/mozaik',
   '/forum',
 ];
 const shotWidths = [390, 1024, 1440];

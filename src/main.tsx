@@ -7,6 +7,7 @@ import { AuthProvider } from '@/features/auth/AuthContext';
 import { ThemeProvider } from '@/features/theme/ThemeContext';
 import { LocationProvider } from '@/features/location/LocationContext';
 import { PreviewEditorProvider } from '@/features/preview-editor/PreviewEditorContext';
+import { ActiveSetupProvider } from '@/features/setups/ActiveSetupContext';
 import { RadioProvider } from '@/features/radio/RadioContext';
 import { SiteConfigProvider } from '@/features/site/SiteConfigContext';
 import { UiPreferencesProvider } from '@/features/preferences/UiPreferencesProvider';
@@ -51,9 +52,18 @@ createRoot(rootEl).render(
                   yapıyor (bkz. o dosyanın başlığı).
                 */}
                 <UiPreferencesProvider>
-                  <PreviewEditorProvider>
-                    <RouterProvider router={router} />
-                  </PreviewEditorProvider>
+                  {/*
+                    AKTİF SETUP router'ın DIŞINDA: rota değiştiğinde seçim
+                    sıfırlanmamalı. Simülatörde setup'ını seçip mozaik
+                    planlayıcıya geçen kullanıcı aynı ekipmanla devam
+                    ediyor — modül ayrımının tek işe yarar hâle geldiği
+                    yer burası (bkz. ActiveSetupContext başlığı).
+                  */}
+                  <ActiveSetupProvider>
+                    <PreviewEditorProvider>
+                      <RouterProvider router={router} />
+                    </PreviewEditorProvider>
+                  </ActiveSetupProvider>
                 </UiPreferencesProvider>
               </SiteConfigProvider>
             </RadioProvider>

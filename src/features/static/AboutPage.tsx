@@ -53,7 +53,7 @@ export function AboutPage() {
               <>
                 <strong>Ekipman veritabanı ve araçlar:</strong> marka/model
                 kataloğu, setup oluşturucu ve{' '}
-                <Link to="/simulator">FoV / pixel scale simülatörü</Link>.
+                <Link to="/araclar/kadraj">FoV / pixel scale simülatörü</Link>.
               </>,
               <>
                 <strong>Eğitim ve pazaryeri:</strong> başlangıçtan ileri seviyeye

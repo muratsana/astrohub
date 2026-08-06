@@ -57,6 +57,14 @@
       "destination": "/app.html"
     },
     {
+      "source": "/araclar/kadraj",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/araclar/kadraj/mozaik",
+      "destination": "/app.html"
+    },
+    {
       "source": "/araclar/mosaic",
       "destination": "/app.html"
     },
@@ -137,6 +145,14 @@
       "destination": "/app.html"
     },
     {
+      "source": "/bu-gece/plan",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/bu-gece/takvim",
+      "destination": "/app.html"
+    },
+    {
       "source": "/burdur-astronomi-etkinlikleri",
       "destination": "/app.html"
     },
@@ -194,6 +210,10 @@
     },
     {
       "source": "/ekipman/:category",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/ekipman/bridge",
       "destination": "/app.html"
     },
     {
@@ -673,7 +693,15 @@
       "destination": "/app.html"
     },
     {
+      "source": "/yazi/drizzle-rehberi",
+      "destination": "/app.html"
+    },
+    {
       "source": "/yazilar",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/yazilar/drizzle-rehberi",
       "destination": "/app.html"
     },
     {

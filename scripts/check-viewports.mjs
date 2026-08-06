@@ -83,6 +83,53 @@ const MAX_BASLIK_ORANI = 0.7;
 const ODAK_GENISLIKLER = [1280, 1366];
 
 const browser = await launchBrowser();
+/**
+ * SAYFA YERLEŞENE KADAR BEKLER.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * NEDEN SABİT GECİKME YETMEDİ
+ *
+ * Burada `waitForTimeout(180)` vardı ve kapı KARARSIZDI: aynı derleme
+ * üzerinde üç koşu, üç farklı bulgu üretiyordu (bir seferinde 414×896'da
+ * taşma, bir seferinde 390×844'te, bir seferinde 1280 ve 1366'da fold).
+ * Denetimde ölçüldü — ayrıntı `docs/DENETIM-2026-08-05.md` §2.4.
+ *
+ * Sebep sayfada değil ölçümde: liste sayfaları lazy rota, üstüne karusel
+ * ve görsel yerleşimi biniyor. 180 ms'de sayfa hâlâ yerleşme ortasında ve
+ * ölçüm ARA bir duruma bakıyor. Sayfa dinlendiğinde ne taşma var ne fold
+ * sorunu (900/1400/1900/2400 ms'de ölçüldü, hepsi temiz).
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * KARARLILIK KOŞULU
+ *
+ * Sabit bir süre beklemek yerine, ÖLÇÜLEN DEĞERLER durana kadar
+ * bekleniyor: ardışık iki örneklemede belge genişliği, `main` yüksekliği
+ * ve gövde yüksekliği aynıysa yerleşme bitmiştir.
+ *
+ * Üst sınır var (`SON_TARIH`): sonsuza kadar dönen bir animasyon ya da
+ * sürekli boyut değiştiren bir öğe kapıyı askıda bırakmasın. Süre dolarsa
+ * son ölçüm kullanılıyor — bu, eski davranışa (bekle ve ölç) dönmek
+ * demek, yani en kötü durumda kapı bugünkü hâlinden kötü olmuyor.
+ */
+async function sayfaOtursun(page, { adim = 120, sonTarih = 4000 } = {}) {
+  const olc = () =>
+    page.evaluate(() => [
+      document.documentElement.scrollWidth,
+      document.body.scrollWidth,
+      Math.round(document.querySelector('main')?.getBoundingClientRect().height ?? 0),
+      document.body.scrollHeight,
+    ]);
+
+  const bitis = Date.now() + sonTarih;
+  let onceki = await olc();
+  while (Date.now() < bitis) {
+    await page.waitForTimeout(adim);
+    const simdi = await olc();
+    if (simdi.every((deger, i) => deger === onceki[i])) return;
+    onceki = simdi;
+  }
+}
+
 const hatalar = [];
 const satirlar = [];
 
@@ -94,10 +141,10 @@ for (const sayfa of SAYFALAR) {
     const page = await context.newPage();
     await page.goto(`${BASE}${sayfa.hash}`, { waitUntil: 'load' });
     await page.waitForSelector('main', { timeout: 15_000 });
-    /* Yazı tipleri ve ilk boyama otursun; hero yüksekliği font
-       yüklenmeden ölçülürse gerçek değerden sapar. */
+    /* Yazı tipleri otursun; hero yüksekliği font yüklenmeden ölçülürse
+       gerçek değerden sapar. */
     await page.evaluate(() => document.fonts?.ready);
-    await page.waitForTimeout(180);
+    await sayfaOtursun(page);
 
     const o = await page.evaluate(() => {
       const main = document.querySelector('main');

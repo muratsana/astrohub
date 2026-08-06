@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { Container } from '@/components/ui/Container';
-import { Input } from '@/components/ui/Input';
+import { Input, Select } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
 import {
   ContentCard,
@@ -31,7 +31,9 @@ import { EquipmentGlyph } from './EquipmentGlyph';
 import { RemoteImage } from '@/components/media/RemoteImage';
 import { useEquipmentCatalog } from '@/services/content/equipment';
 import { useExplorer } from '@/features/explorer/useExplorer';
-import { equipmentSpec } from './equipmentSpec';
+import { equipmentSpecFor } from './equipmentSpec';
+import { useFilterSpectra } from '@/services/content/filterSpectrum';
+import { RangeFilter } from '@/components/ui/RangeFilter';
 import { CatalogSourceNote } from '@/components/ui/CatalogSourceNote';
 import { cn } from '@/lib/cn';
 import { PageMeta } from '@/components/seo/PageMeta';
@@ -85,7 +87,19 @@ export function EquipmentPage() {
     [catalog.items, category]
   );
 
-  const ex = useExplorer(kategoriliste, equipmentSpec);
+  /*
+   * FİLTRE KATEGORİSİNDE EK SÜZGEÇLER. Spec `useMemo` içinde: her
+   * boyamada yeni bir nesne üretmek `useExplorer`ın `parseQuery`
+   * bağımlılığını her karede tetikler ve URL'i gereksiz yere yeniden
+   * yazardı.
+   */
+  const { specs: spectra } = useFilterSpectra();
+  const spec = useMemo(
+    () => equipmentSpecFor(category, spectra),
+    [category, spectra]
+  );
+
+  const ex = useExplorer(kategoriliste, spec);
   const result = ex.items;
 
   const title =
@@ -125,7 +139,7 @@ export function EquipmentPage() {
                 Karşılaştır
               </ButtonLink>
               <ButtonLink
-                to="/simulator"
+                to="/araclar/kadraj"
                 size="sm"
                 variant="secondary"
               >
@@ -168,12 +182,44 @@ export function EquipmentPage() {
             <Input
               id="eq-search"
               type="search"
-              placeholder="Marka, model veya teknik değer (ör. EQ6, 3.76 µm)"
+              placeholder={
+                category === 'filtre'
+                  ? 'Marka, model ya da çizgi (ör. Antlia, Hα, 3 nm)'
+                  : 'Marka, model veya teknik değer (ör. EQ6, 3.76 µm)'
+              }
               value={ex.searchInput}
               onChange={(e) => ex.setSearch(e.target.value)}
               className={filterControlClass}
             />
           </FilterCell>
+
+          {/*
+            SPEKTRAL SÜZGEÇLER — yalnızca filtre kategorisinde ve yalnızca
+            veri geldiyse. `spec.ranges` boşsa hiçbiri çizilmiyor; koşul
+            spec'in kendisinden okunuyor ki iki yerde ayrı karar
+            verilmesin (`equipmentSpecFor` başlığına bakın).
+          */}
+          {spec.ranges && (
+            <>
+              <FacetSelect
+                id="eq-sinif"
+                label="Sınıf"
+                param="sinif"
+                explorer={ex}
+              />
+              <FacetSelect
+                id="eq-cizgi"
+                label="Emisyon çizgisi"
+                param="cizgi"
+                explorer={ex}
+              />
+              <RangeFilter
+                spec={spec.ranges[0]}
+                value={ex.query.ranges.bant}
+                onChange={(next) => ex.setRange('bant', next)}
+              />
+            </>
+          )}
         </ModuleToolbar>
 
         <CatalogSourceNote selection={catalog} />
@@ -194,6 +240,62 @@ export function EquipmentPage() {
         )}
       </Container>
     </>
+  );
+}
+
+/**
+ * TEK SEÇİMLİ FACET AÇILIR LİSTESİ.
+ *
+ * Explorer facet'leri çoklu seçimi destekliyor ama burada tek seçim
+ * kullanılıyor: filtre listesi zaten kategoriye daralmış durumda ve
+ * "Hα + OIII" gibi bir çoklu seçim VEYA mantığıyla çalışıp beklenenin
+ * tersini verirdi (kullanıcı ikisini de geçiren filtreyi arıyor, birini
+ * ya da diğerini geçireni değil). Çoklu seçim gerektiğinde doğru cevap
+ * ayrı bir "hepsini içeren" kipi, aynı kutuda ikinci bir değer değil.
+ *
+ * Sayımlar `explorer.counts` üzerinden: seçili değer kendi sayımını
+ * sıfırlamıyor, yani kullanıcı seçimini değiştirmeden önce diğer
+ * seçeneklerin kaç sonuç vereceğini görüyor.
+ */
+function FacetSelect({
+  id,
+  label,
+  param,
+  explorer,
+}: {
+  id: string;
+  label: string;
+  param: string;
+  explorer: ReturnType<typeof useExplorer<EquipmentModel>>;
+}) {
+  const secili = explorer.query.facets[param]?.[0] ?? 'hepsi';
+  const sayimlar = explorer.counts(param);
+  if (sayimlar.size === 0) return null;
+
+  return (
+    <FilterCell label={label} htmlFor={id} active={secili !== 'hepsi'}>
+      <Select
+        id={id}
+        value={secili}
+        onChange={(event) => {
+          const mevcut = explorer.query.facets[param]?.[0];
+          if (mevcut) explorer.toggleFacet(param, mevcut);
+          if (event.target.value !== 'hepsi') {
+            explorer.toggleFacet(param, event.target.value);
+          }
+        }}
+        className={filterControlClass}
+      >
+        <option value="hepsi">Hepsi</option>
+        {[...sayimlar.entries()]
+          .sort((a, b) => a[0].localeCompare(b[0], 'tr'))
+          .map(([value, count]) => (
+            <option key={value} value={value}>
+              {value} ({count})
+            </option>
+          ))}
+      </Select>
+    </FilterCell>
   );
 }
 

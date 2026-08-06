@@ -82,6 +82,12 @@ export const siteMap: NavGroup[] = [
         keywords: ['galeri', 'arşiv', 'foto', 'astrofotoğraf'],
       },
       {
+        label: 'Aylık Seçki',
+        to: '/secki',
+        description: 'Ayın oylanan kareleri ve seçki arşivi',
+        keywords: ['seçki', 'aylık', 'oylama', 'oy'],
+      },
+      {
         label: 'Fotoğraf Yükle',
         to: '/galeri/yukle',
         description: 'Yeni kayıt aç — hedef, setup, pozlama',
@@ -111,6 +117,18 @@ export const siteMap: NavGroup[] = [
         keywords: ['şenlik', 'kamp', 'atölye', 'harita', 'yakınımda', 'konum'],
       },
       {
+        label: 'Etkinlik Ekle',
+        to: '/etkinlik/yeni',
+        description: 'Şenlik, gözlem gecesi ya da atölye duyur',
+        keywords: ['etkinlik ekle', 'duyur', 'yeni etkinlik'],
+      },
+      {
+        label: 'Topluluğunu Ekle',
+        to: '/topluluklar/ekle',
+        description: 'Dernek, kulüp ya da gözlem grubunu dizine ekle',
+        keywords: ['kulüp ekle', 'dernek ekle', 'topluluk ekle'],
+      },
+      {
         label: 'Kulüpler ve Topluluklar',
         to: '/topluluklar',
         description: 'Dernek, üniversite kulübü ve gözlem grupları',
@@ -137,6 +155,23 @@ export const siteMap: NavGroup[] = [
         to: '/yazilar',
         description: 'Rehberler, eğitim yazıları, işleme dersleri',
         keywords: ['makale', 'eğitim', 'rehber', 'ders', 'işleme'],
+      },
+      {
+        label: 'Drizzle Rehberi',
+        to: '/yazilar/drizzle-rehberi',
+        description:
+          'Örnekleme, pixfrac ve PHD2 dithering — hesaplayıcılı uzun rehber',
+        keywords: [
+          'drizzle',
+          'dither',
+          'dithering',
+          'phd2',
+          'pixfrac',
+          'örnekleme',
+          'sampling',
+          'fwhm',
+          'undersampling',
+        ],
       },
       {
         label: 'Terimler Sözlüğü',
@@ -208,9 +243,9 @@ export const siteMap: NavGroup[] = [
         keywords: ['araç', 'hesaplayıcı', 'tools'],
       },
       {
-        label: 'FoV · Pixel Scale · Simülatör',
-        to: '/simulator',
-        description: 'Kadraj, örnekleme, setup uyumluluk, ASCOM bridge ve hedef planı',
+        label: 'Kadraj ve Pixel Scale',
+        to: '/araclar/kadraj',
+        description: 'Görüş alanı, örnekleme ve kadraj önizlemesi',
         keywords: [
           'simulator',
           'simülatör',
@@ -238,7 +273,7 @@ export const siteMap: NavGroup[] = [
       },
       {
         label: 'Gözlem ve Çekim Planlayıcı',
-        to: '/planlayici',
+        to: '/bu-gece/plan',
         description: 'Gece planı ve hedef sırası',
         keywords: ['plan', 'gece planı'],
       },
@@ -250,13 +285,13 @@ export const siteMap: NavGroup[] = [
       },
       {
         label: 'Mozaik Planlayıcı',
-        to: '/araclar/mosaic',
+        to: '/araclar/kadraj/mozaik',
         description: 'Çok panelli kadraj planı ve örtüşme hesabı',
         keywords: ['mozaik', 'mosaic', 'panel'],
       },
       {
         label: 'Ay ve Karanlık Takvimi',
-        to: '/araclar/takvim',
+        to: '/bu-gece/takvim',
         description: 'Aylık karanlık pencere takvimi',
         keywords: ['takvim', 'ay fazı'],
       },
@@ -280,17 +315,6 @@ export const siteMap: NavGroup[] = [
     ],
   },
   {
-    title: 'Hesap',
-    items: [
-      {
-        label: 'Hesabım',
-        to: '/hesap',
-        description: 'Profil bilgileri ve hesap ayarları',
-        keywords: ['profil', 'hesap', 'ayar', 'kullanıcı adı'],
-      },
-    ],
-  },
-  {
     title: 'Saha',
     items: [
       {
@@ -298,6 +322,12 @@ export const siteMap: NavGroup[] = [
         to: '/saha',
         description: 'Karanlık gökyüzü noktaları ve haritası',
         keywords: ['kamp', 'astrocamping', 'nokta', 'saha', 'harita'],
+      },
+      {
+        label: 'Saha Noktası Ekle',
+        to: '/saha/yeni',
+        description: 'Bildiğin karanlık gökyüzü noktasını paylaş',
+        keywords: ['saha ekle', 'nokta ekle', 'kamp yeri ekle'],
       },
       {
         label: 'Rasathane ve Planetaryumlar',
@@ -323,6 +353,12 @@ export const siteMap: NavGroup[] = [
         keywords: ['teleskop', 'montür', 'kamera', 'filtre', 'ekipman'],
       },
       {
+        label: 'Mount Bridge',
+        to: '/ekipman/bridge',
+        description: 'ASCOM montür bağlantısı ve capture akışı',
+        keywords: ['ascom', 'bridge', 'montür', 'mount', 'capture', 'nina', 'phd2'],
+      },
+      {
         label: 'Ekipman Karşılaştırma',
         to: '/ekipman/karsilastir',
         description: 'Dört modeli teknik özellikleriyle yan yana koy',
@@ -333,6 +369,12 @@ export const siteMap: NavGroup[] = [
   {
     title: 'Hesap',
     items: [
+      {
+        label: 'Hesabım',
+        to: '/hesap',
+        description: 'Profil bilgileri ve hesap ayarları',
+        keywords: ['profil', 'hesap', 'ayar', 'kullanıcı adı'],
+      },
       {
         label: 'Üye Paneli',
         to: '/panel',
@@ -388,6 +430,12 @@ export const siteMap: NavGroup[] = [
     title: 'Kurumsal',
     items: [
       { label: 'Hakkında', to: '/hakkinda' },
+      {
+        label: 'İletişim',
+        to: '/iletisim',
+        description: 'Soru, geri bildirim ve iş birliği',
+        keywords: ['iletişim', 'bize ulaşın', 'destek', 'geri bildirim'],
+      },
       {
         label: 'KVKK ve Gizlilik',
         to: '/kvkk',

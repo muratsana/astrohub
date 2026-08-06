@@ -10,6 +10,8 @@ import { CardGrid } from '@/components/ui/CardGrid';
 import { NotFoundPage } from '@/components/NotFoundPage';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
+import { PassbandStrip } from './PassbandStrip';
+import { useFilterSpectrum } from '@/services/content/filterSpectrum';
 import { usePhotoCatalog } from '@/services/content/photos';
 import { listings } from '@/features/marketplace/data';
 import {
@@ -58,6 +60,7 @@ export function EquipmentDetailPage() {
     : undefined;
 
   const photos = usePhotoCatalog().items;
+  const spectrum = useFilterSpectrum(model?.slug);
 
   const shotWith = useMemo(() => {
     if (!model) return [];
@@ -165,6 +168,26 @@ export function EquipmentDetailPage() {
                 )}
               </SpecList>
             </Panel>
+
+            {/*
+              SPEKTRAL GEÇİŞ — yalnızca filtrelerde ve yalnızca veri varsa.
+
+              Veri `astro_filter_*` tablolarından geliyor ve tohumu YOK
+              (ayrıntı `services/content/filterSpectrum.ts` başlığında).
+              Veritabanı yapılandırılmamışsa ya da o filtre için kayıt
+              yoksa bölüm HİÇ çizilmiyor — boş bir "veri yok" paneli
+              göstermek, sayfayı eksik gösterirdi.
+            */}
+            {spectrum && (
+              <Panel
+                title="Spektral geçiş"
+                status={
+                  spectrum.isDiscontinued ? 'üretimi durduruldu' : undefined
+                }
+              >
+                <PassbandStrip spec={spectrum} />
+              </Panel>
+            )}
 
             {model.notes && model.notes.length > 0 && (
               <Panel title="Pratik notlar">
@@ -324,7 +347,7 @@ export function EquipmentDetailPage() {
                 elle girebilirsiniz; hazır ön ayar listesinde de bulunur.
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
-                <ButtonLink to="/simulator" size="sm" variant="secondary">
+                <ButtonLink to="/araclar/kadraj" size="sm" variant="secondary">
                   Simülatörde dene
                 </ButtonLink>
               </div>

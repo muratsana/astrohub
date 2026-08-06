@@ -80,7 +80,9 @@ function JuryVoteCard({
           <>
             <label className="block">
               <span className="label mb-1 block">Puan</span>
-              <Select value={score} onChange={(event) => setScore(Number(event.target.value))} className="h-9 w-24 text-meta">
+              {/* Genişlik `width` prop'uyla; sınıfla verilen genişlik taban
+                  `w-full` ile çakışıp kaybeder (gerekçe `ui/Input.tsx`). */}
+              <Select value={score} onChange={(event) => setScore(Number(event.target.value))} width="6rem" className="h-9 text-meta">
                 {Array.from({ length: 10 }, (_, index) => index + 1).map((value) => <option key={value} value={value}>{value} / 10</option>)}
               </Select>
             </label>

@@ -193,7 +193,7 @@ export const quickModules: QuickModule[] = [
     id: 'fov',
     title: 'FoV Setup Simülatörü',
     subtitle: 'Kadraj, pixel scale ve setup uyumunu tek ekranda gör',
-    to: '/simulator',
+    to: '/araclar/kadraj',
     icon: 'calculator',
     accent: 'var(--color-primary)',
   },

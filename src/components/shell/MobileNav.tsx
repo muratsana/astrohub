@@ -7,13 +7,28 @@ import {
   HomeIcon,
   PlusIcon,
   MenuIcon,
+  UsersIcon,
+  NewsIcon,
 } from '@/components/ui/icons';
 import { cn } from '@/lib/cn';
 
+/**
+ * Alt çubuk ikonları — `mobileNav` içindeki HER giriş burada olmalı.
+ *
+ * Eskiden yalnızca dört yol eşleniyordu ve `mobileNav` değiştiğinde
+ * (Saha çıkıp Topluluklar + Haberler girdiğinde) iki hücre birden
+ * `HomeIcon` yedeğine düşüyordu: çubukta yan yana iki özdeş ev simgesi
+ * duruyordu ve ikisi de "ana sayfa" demek değildi.
+ *
+ * `/saha` eşlemesi duruyor: yol hâlâ var ve alt çubuğa geri alınırsa
+ * ikonu hazır olsun.
+ */
 const iconFor: Record<string, typeof ImageIcon> = {
   '/': HomeIcon,
   '/galeri': ImageIcon,
   '/etkinlikler': CalendarIcon,
+  '/topluluklar': UsersIcon,
+  '/haberler': NewsIcon,
   '/saha': MapIcon,
 };
 

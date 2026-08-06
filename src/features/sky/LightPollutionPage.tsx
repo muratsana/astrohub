@@ -253,7 +253,7 @@ export function LightPollutionPage() {
                 <ButtonLink to="/saha" size="sm" variant="secondary">
                   Gözlem Noktaları
                 </ButtonLink>
-                <ButtonLink to="/araclar/takvim" size="sm" variant="ghost">
+                <ButtonLink to="/bu-gece/takvim" size="sm" variant="ghost">
                   Karanlık Takvimi
                 </ButtonLink>
               </div>

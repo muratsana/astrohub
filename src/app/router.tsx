@@ -6,7 +6,7 @@ import { NotFoundPage } from '@/components/NotFoundPage';
 import { RouteError } from '@/components/RouteError';
 import { RouteFallback } from '@/components/RouteFallback';
 import { PlaceholderPage } from '@/components/PlaceholderPage';
-import { RedirectTo, RedirectParam } from './Redirect';
+import { RedirectTo, RedirectParam, RedirectKeepQuery } from './Redirect';
 import { lazyWithRetry } from '@/lib/lazyWithRetry';
 import { cityRoutePaths } from '@/features/city/routes';
 import { FlagRoute } from '@/features/site/FlagRoute';
@@ -257,6 +257,23 @@ export const appRoutes = [
           )
         ),
       },
+      /* Rehberin künyesi yazılar listesinde duruyor ve kart doğrudan kendi
+         sayfasına gidiyor. Bu yönlendirme eski/derin bağlantılar için:
+         `/yazi/drizzle-rehberi` adresini paylaşan biri, gövdesi bilerek
+         boş bırakılmış künye kaydına değil rehberin kendisine düşsün. */
+      { path: 'yazi/drizzle-rehberi', element: <RedirectTo to="/yazilar/drizzle-rehberi" /> },
+      {
+        /* Statik parça `yazi/:slug`ten AYRI bir dal: rehber, blok tabanlı
+           yazı modeline sığmayan (16 tablo, 11 infografik, 4 hesaplayıcı)
+           kendi sayfası. Ayrıntı `DrizzleGuidePage` başlığında. */
+        path: 'yazilar/drizzle-rehberi',
+        element: route(
+          named(
+            () => import('@/features/knowledge/DrizzleGuidePage'),
+            'DrizzleGuidePage'
+          )
+        ),
+      },
       {
         path: 'yazi/:slug',
         element: route(
@@ -385,7 +402,11 @@ export const appRoutes = [
         ),
       },
       {
-        path: 'simulator',
+        /* KANONİK ADRES `/araclar/kadraj`. Sayfa artık yalnızca kadraj
+           hesabı yapıyor: uyumluluk kontrolü Ekipman modülüne, ASCOM
+           köprüsü `/ekipman/bridge`e taşındı. "Simülatör" adı ne yaptığını
+           söylemiyordu ve adres araçların dışında duruyordu. */
+        path: 'araclar/kadraj',
         element: route(
           named(
             () => import('@/features/simulator/SimulatorPage'),
@@ -393,6 +414,7 @@ export const appRoutes = [
           )
         ),
       },
+      { path: 'simulator', element: <RedirectTo to="/araclar/kadraj" /> },
 
       /* ═════════════ ARAÇLAR ═════════════ */
       {
@@ -404,12 +426,12 @@ export const appRoutes = [
           )
         ),
       },
-      { path: 'araclar/fov', element: <RedirectTo to="/simulator" /> },
-      { path: 'araclar/simulator', element: <RedirectTo to="/simulator" /> },
+      { path: 'araclar/fov', element: <RedirectTo to="/araclar/kadraj" /> },
+      { path: 'araclar/simulator', element: <RedirectTo to="/araclar/kadraj" /> },
       // Tek kanonik çalışma alanı: FoV, pixel scale ve setup uyumluluk Simülatör'de birleşir.
       {
         path: 'araclar/pixel-scale',
-        element: <RedirectTo to="/simulator" />,
+        element: <RedirectTo to="/araclar/kadraj" />,
       },
       {
         path: 'araclar/isik-kirliligi',
@@ -420,8 +442,12 @@ export const appRoutes = [
           )
         ),
       },
+      /* Mozaik, kadrajın ikinci görünümü (denetim §3.6): "sığmıyor"
+         cevabını alan kullanıcının bir sonraki sorusu zaten "kaç panele
+         bölerim". Gece modülüyle aynı gerekçeyle ayrı rota kaldı —
+         mozaik kendi hesabını ve panel önizlemesini taşıyor. */
       {
-        path: 'araclar/mosaic',
+        path: 'araclar/kadraj/mozaik',
         element: route(
           named(
             () => import('@/features/calculators/MosaicPlannerPage'),
@@ -430,18 +456,23 @@ export const appRoutes = [
         ),
       },
       {
-        path: 'araclar/setup-uyumluluk',
-        element: <RedirectTo to="/simulator" />,
+        path: 'araclar/mosaic',
+        element: <RedirectKeepQuery to="/araclar/kadraj/mozaik" />,
       },
       {
-        path: 'araclar/takvim',
-        element: route(
-          named(
-            () => import('@/features/sky/DarkCalendarPage'),
-            'DarkCalendarPage'
-          )
-        ),
+        path: 'araclar/setup-uyumluluk',
+        element: <RedirectTo to="/ekipman" />,
       },
+      /*
+        GECE MODÜLÜ — üç görünüm tek önek altında (denetim §3.6).
+
+        Sayfalar tek bir bileşende BİRLEŞTİRİLMEDİ: üçü toplam 1370 satır
+        ve her biri kendi ağır hesabını (yükseklik eğrisi, ay fazı ızgarası,
+        plan sıralaması) taşıyor. Tek rotaya toplamak, "bu gece ne var"
+        sorusuna gelen kullanıcıya üçünün paketini birden indirtirdi.
+        Ayrı rota + ortak görünüm şeridi hem tembel yüklemeyi hem de tek
+        modül hissini koruyor.
+      */
       {
         path: 'bu-gece',
         element: route(
@@ -449,10 +480,29 @@ export const appRoutes = [
         ),
       },
       {
-        path: 'planlayici',
+        path: 'bu-gece/plan',
         element: route(
           named(() => import('@/features/sky/PlannerPage'), 'PlannerPage')
         ),
+      },
+      {
+        path: 'bu-gece/takvim',
+        element: route(
+          named(
+            () => import('@/features/sky/DarkCalendarPage'),
+            'DarkCalendarPage'
+          )
+        ),
+      },
+      /* Eski adresler: paylaşılan plan bağlantısı sorguda yaşıyor,
+         bu yüzden sorguyu koruyan yönlendirme. */
+      {
+        path: 'planlayici',
+        element: <RedirectKeepQuery to="/bu-gece/plan" />,
+      },
+      {
+        path: 'araclar/takvim',
+        element: <RedirectKeepQuery to="/bu-gece/takvim" />,
       },
 
       /* ═════════════ İLANLAR ═════════════ */
@@ -550,6 +600,18 @@ export const appRoutes = [
           named(
             () => import('@/features/equipment/EquipmentComparePage'),
             'EquipmentComparePage'
+          )
+        ),
+      },
+      {
+        /* ASCOM köprüsü — Simülatör'ün içindeydi, ileri seviye ve donanım
+           gerektiren bir alan olduğu için Ekipman modülünün altına indi.
+           Gerekçe `BridgePage` başlığında. */
+        path: 'ekipman/bridge',
+        element: route(
+          named(
+            () => import('@/features/equipment/BridgePage'),
+            'BridgePage'
           )
         ),
       },
