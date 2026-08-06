@@ -105,6 +105,12 @@ export const siteMap: NavGroup[] = [
         description: 'Topluluğun üreticileri',
         keywords: ['keşfet', 'kullanıcı', 'fotoğrafçı'],
       },
+      {
+        label: 'Takip Akışı',
+        to: '/akis',
+        description: 'Takip ettiklerinin yeni fotoğraf, ilan ve konuları',
+        keywords: ['akış', 'takip', 'feed', 'yenilikler'],
+      },
     ],
   },
   {
@@ -115,6 +121,12 @@ export const siteMap: NavGroup[] = [
         to: '/etkinlikler',
         description: 'Konum dağılımı ve size en yakın etkinlikler',
         keywords: ['şenlik', 'kamp', 'atölye', 'harita', 'yakınımda', 'konum'],
+      },
+      {
+        label: 'Etkinlik Takvimi',
+        to: '/etkinlikler/takvim',
+        description: 'Ay ay hangi gece ne var — tür, şehir ve tarih süzgeciyle',
+        keywords: ['takvim', 'etkinlik takvimi', 'ne zaman', 'ay', 'tarih'],
       },
       {
         label: 'Etkinlik Ekle',

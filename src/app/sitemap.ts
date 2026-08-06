@@ -60,6 +60,7 @@ export const staticEntries: SitemapEntry[] = [
   { path: '/araclar/kadraj/mozaik', priority: 0.6, changefreq: 'monthly' },
   { path: '/araclar/poz-plani', priority: 0.6, changefreq: 'monthly' },
   { path: '/bu-gece/takvim', priority: 0.6, changefreq: 'daily' },
+  { path: '/etkinlikler/takvim', priority: 0.7, changefreq: 'daily' },
   { path: '/cerezler', priority: 0.2, changefreq: 'yearly' },
   { path: '/yazilar', priority: 0.8, changefreq: 'weekly' },
   {

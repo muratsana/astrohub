@@ -177,6 +177,15 @@ export const appRoutes = [
           named(() => import('@/features/profile/ProfilePage'), 'ProfilePage')
         ),
       },
+      /* Takip akışı: takip edilen kullanıcıların fotoğraf, ilan ve forum
+         hareketleri tek listede. Oturum gerektiriyor ve sayfa bunu kendisi
+         söylüyor — rota koruması yok, çünkü asıl koruma RLS'te. */
+      {
+        path: 'akis',
+        element: route(
+          named(() => import('@/features/activity/ActivityPage'), 'ActivityPage')
+        ),
+      },
 
       /* ═════════════ ETKİNLİKLER ═════════════ */
       {
@@ -207,6 +216,19 @@ export const appRoutes = [
       {
         path: 'etkinlikler/harita',
         element: <RedirectTo to="/etkinlikler" />,
+      },
+      /* Takvim, etkinlik modülünün ikinci görünümü: harita "nerede?",
+         takvim "ne zaman?" sorusunu cevaplıyor. Ayrı rota çünkü harita
+         sayfası 650 satır ve takvime gelen kullanıcıya altlık
+         katmanlarının paketini indirtmenin karşılığı yok. */
+      {
+        path: 'etkinlikler/takvim',
+        element: route(
+          named(
+            () => import('@/features/events/EventCalendarPage'),
+            'EventCalendarPage'
+          )
+        ),
       },
       {
         path: 'topluluklar',

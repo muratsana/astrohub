@@ -19,6 +19,7 @@ import { sortByProximity, formatDistance } from '@/domain/geography/distance';
 import { useEventCatalog } from '@/services/content/events';
 import { applyFeatured, useFeatured } from '@/services/content/featured';
 import { eventTypeLabels } from './types';
+import { EventViews } from './EventViews';
 import type { AstroEvent } from './types';
 import { cn } from '@/lib/cn';
 import { TileMap } from '@/features/sky/TileMap';
@@ -246,6 +247,8 @@ export function EventMapPage() {
           title="Etkinlikler"
           meta={location.label}
         />
+
+        <EventViews />
 
         {featuredItem && (
           <Link

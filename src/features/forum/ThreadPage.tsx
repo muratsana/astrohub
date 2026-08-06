@@ -20,6 +20,7 @@ import { useFlag } from '@/features/site/SiteConfigContext';
 import { FlagClosedNote } from '@/features/site/FlagClosedNote';
 import { cn } from '@/lib/cn';
 import { Alert } from '@/components/ui/Alert';
+import { LabelChip } from './LabelChip';
 
 /** Konu detayı: açılış mesajı + yanıtlar + yanıt kutusu. */
 export function ThreadPage() {
@@ -66,6 +67,11 @@ export function ThreadPage() {
               {thread.locked && (
                 <LockIcon className="h-3 w-3 text-faint" aria-label="Kilitli" />
               )}
+              {/* Rozetler künyenin başında: konunun TÜRÜ, sayısal
+                  istatistiklerinden önce okunmalı. */}
+              {(thread.labels ?? []).map((id) => (
+                <LabelChip key={id} id={id} />
+              ))}
               {thread.replyCount} yanıt ·{' '}
               {thread.viewCount.toLocaleString('tr-TR')} görüntülenme
             </span>

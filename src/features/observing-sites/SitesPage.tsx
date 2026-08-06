@@ -1,15 +1,16 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Link } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { Button, ButtonLink } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Panel } from '@/components/ui/Panel';
-import { Select } from '@/components/ui/Input';
+import { Input, Select } from '@/components/ui/Input';
 import { SortableHeader } from '@/components/ui/SortableHeader';
 import { AdminEditLink } from '@/components/admin/AdminEditLink';
 import { CatalogSourceNote } from '@/components/ui/CatalogSourceNote';
 import { PageMeta } from '@/components/seo/PageMeta';
+import { sitesSpec } from './sitesSpec';
 import { breadcrumbJsonLd } from '@/lib/seo';
 import { sortByProximity, formatDistance } from '@/domain/geography/distance';
 import { useLocationContext } from '@/features/location/LocationContext';
@@ -112,8 +113,38 @@ export function SitesPage() {
   const { location, permission, requestDeviceLocation } = useLocationContext();
   const { theme } = useTheme();
   const catalog = useSiteCatalog();
-  const [type, setType] = useState<SiteType | 'hepsi'>('hepsi');
-  const [bortle, setBortle] = useState<number | 'hepsi'>('hepsi');
+  /*
+    SÜZGEÇ DURUMU ADRES ÇUBUĞUNDA, `useState`TE DEĞİL.
+
+    Yerel durumda tutulduğunda "Bortle 2 kamp alanları" gibi bir liste
+    paylaşılamıyordu: bağlantıyı açan kişi sıfırlanmış sayfayı görüyordu.
+    Geri düğmesi de süzgeci geri almıyordu.
+
+    Arama alanları `sitesSpec.searchFields`ten geliyor — hangi alanların
+    aranacağı tek yerde tanımlı ve testi var. Sayfanın kendi sıralaması
+    duruyor: `sitesSpec.sorts` mesafeyi ifade edemez (kullanıcının
+    konumunu bilmez) ve bu sayfada asıl soru "bana en yakın karanlık yer".
+  */
+  const [params, setParams] = useSearchParams();
+  const type = (params.get('tur') ?? 'hepsi') as SiteType | 'hepsi';
+  const bortleParam = params.get('bortle');
+  const bortle: number | 'hepsi' =
+    bortleParam && /^[1-9]$/.test(bortleParam) ? Number(bortleParam) : 'hepsi';
+  const arama = params.get('ara') ?? '';
+
+  const paramYaz = (ad: string, deger: string | null) =>
+    setParams(
+      (mevcut) => {
+        const sonraki = new URLSearchParams(mevcut);
+        if (deger === null || deger === '' || deger === 'hepsi') {
+          sonraki.delete(ad);
+        } else {
+          sonraki.set(ad, deger);
+        }
+        return sonraki;
+      },
+      { replace: true }
+    );
   const [sort, setSort] = useState<{
     key: SiteSortKey;
     direction: SortDirection;
@@ -134,15 +165,17 @@ export function SitesPage() {
     setCenter({ lat: location.latitude, lng: location.longitude });
   }, [location.latitude, location.longitude]);
 
-  const filtered = useMemo(
-    () =>
-      catalog.items.filter(
-        (site) =>
-          (type === 'hepsi' || site.siteType === type) &&
-          (bortle === 'hepsi' || site.bortle === bortle)
-      ),
-    [bortle, catalog.items, type]
-  );
+  const filtered = useMemo(() => {
+    const q = arama.trim().toLocaleLowerCase('tr-TR');
+    return catalog.items.filter((site) => {
+      if (type !== 'hepsi' && site.siteType !== type) return false;
+      if (bortle !== 'hepsi' && site.bortle !== bortle) return false;
+      if (!q) return true;
+      return sitesSpec
+        .searchFields(site)
+        .some((alan) => (alan ?? '').toLocaleLowerCase('tr-TR').includes(q));
+    });
+  }, [arama, bortle, catalog.items, type]);
 
   const nearest = useMemo(
     () =>
@@ -250,15 +283,26 @@ export function SitesPage() {
             {nearest.length} saha · konum: {location.label}
           </p>
           <div className="flex flex-wrap items-center gap-2">
+            <label htmlFor="site-search" className="sr-only">
+              Saha ara
+            </label>
+            <Input
+              id="site-search"
+              type="search"
+              placeholder="Saha adı, bölge veya yol erişimi"
+              value={arama}
+              onChange={(event) => paramYaz('ara', event.target.value)}
+              width="16rem"
+              className="h-8 text-meta"
+            />
+
             <label htmlFor="site-type" className="sr-only">
               Tür
             </label>
             <Select
               id="site-type"
               value={type}
-              onChange={(event) =>
-                setType(event.target.value as SiteType | 'hepsi')
-              }
+              onChange={(event) => paramYaz('tur', event.target.value)}
               width="auto"
               className="h-8 text-meta"
             >
@@ -276,13 +320,7 @@ export function SitesPage() {
             <Select
               id="site-bortle"
               value={bortle}
-              onChange={(event) =>
-                setBortle(
-                  event.target.value === 'hepsi'
-                    ? 'hepsi'
-                    : Number(event.target.value)
-                )
-              }
+              onChange={(event) => paramYaz('bortle', event.target.value)}
               width="auto"
               className="h-8 text-meta"
             >

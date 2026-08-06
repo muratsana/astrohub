@@ -5,7 +5,11 @@ import { ButtonLink } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { CatalogSourceNote } from '@/components/ui/CatalogSourceNote';
-import { FilterCell, filterControlClass } from '@/components/ui/FilterBar';
+import {
+  FilterCell,
+  FilterToggle,
+  filterControlClass,
+} from '@/components/ui/FilterBar';
 import { ModuleToolbar } from '@/components/ui/ModuleToolbar';
 import { PinIcon, LockIcon, ChatIcon } from '@/components/ui/icons';
 import { PageMeta } from '@/components/seo/PageMeta';
@@ -16,9 +20,12 @@ import { forumSpec } from './forumSpec';
 import {
   forumCategories,
   forumCategoryOrder,
+  forumLabelOrder,
+  forumLabels,
   relativeTime,
   type ForumThread,
 } from './types';
+import { LabelChip } from './LabelChip';
 import { cn } from '@/lib/cn';
 
 /**
@@ -48,8 +55,20 @@ export function ForumPage() {
   const ex = useExplorer(threads, forumSpec);
   const result = ex.items;
   const category = ex.query.facets.kategori?.[0] ?? 'hepsi';
+  const rozetler = ex.query.facets.rozet ?? [];
+  const cozulmemis = (ex.query.facets.cozulmemis ?? []).includes('evet');
   const searching = ex.searchInput.trim().length > 0;
-  const showThreads = category !== 'hepsi' || searching;
+  /*
+    HERHANGİ BİR SÜZGEÇ AÇIKSA KONU LİSTESİ, KATEGORİ IZGARASI DEĞİL.
+
+    Kapı önce yalnızca kategori ve aramaya bakıyordu. Rozet ve
+    "çözülmemiş" süzgeçleri eklenince şu çıkardı: kullanıcı "Soru"
+    rozetine basıyor, sayfa hâlâ kategori ızgarasını gösteriyor ve
+    süzgeç hiçbir şey yapmamış gibi görünüyor. Süzgeç varsa sonucu
+    göstermek zorundayız.
+  */
+  const showThreads =
+    category !== 'hepsi' || searching || rozetler.length > 0 || cozulmemis;
   const sections = forumCategoryOrder
     .map((id) => ({
       id,
@@ -137,6 +156,44 @@ export function ForumPage() {
                 </option>
               ))}
             </Select>
+          </FilterCell>
+          {/*
+            ROZET SÜZGECİ TEK SEÇİM DEĞİL: bir konu birden çok rozet
+            taşıyabiliyor ve "soru VE çözülmemiş" gerçek bir arama.
+            `Select` bunu ifade edemezdi; faset motoru zaten çoklu seçimi
+            destekliyor ve seçim adres çubuğuna yazılıyor.
+          */}
+          <FilterCell label="Rozet" active={rozetler.length > 0}>
+            <div className="flex flex-wrap items-center gap-1">
+              {forumLabelOrder.map((id) => {
+                const secili = rozetler.includes(id);
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    aria-pressed={secili}
+                    title={forumLabels[id].description}
+                    onClick={() => ex.toggleFacet('rozet', id)}
+                    className={cn(
+                      'rounded-card border px-2 py-1 text-meta font-medium transition-colors',
+                      secili
+                        ? 'border-primary bg-primary/12 text-primary'
+                        : 'border-border text-muted-foreground hover:border-border-strong hover:text-foreground'
+                    )}
+                  >
+                    {forumLabels[id].name}
+                  </button>
+                );
+              })}
+            </div>
+          </FilterCell>
+          <FilterCell label="Durum" active={cozulmemis}>
+            <FilterToggle
+              id="forum-unsolved"
+              label="Yalnızca çözülmemiş"
+              checked={cozulmemis}
+              onChange={() => ex.toggleFacet('cozulmemis', 'evet')}
+            />
           </FilterCell>
         </ModuleToolbar>
 
@@ -281,6 +338,13 @@ function ThreadRow({ thread }: { thread: ForumThread }) {
           <h2 className="text-body-sm font-medium leading-snug text-foreground group-hover:text-primary">
             {thread.title}
           </h2>
+          {/* Rozetler başlığın YANINDA, altındaki künye satırında değil:
+              "soru mu, rehber mi" bilgisi başlığı okurken işe yarıyor,
+              bir satır sonra değil. Konu rozetsizse hiçbir şey çizilmiyor
+              — boş bir yer tutucu satırı seyreltirdi. */}
+          {(thread.labels ?? []).map((id) => (
+            <LabelChip key={id} id={id} />
+          ))}
         </div>
 
         <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
