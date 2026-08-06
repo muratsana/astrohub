@@ -63,7 +63,7 @@ export function LegalSection({
         </h2>
         <span aria-hidden className="h-px flex-1 bg-border" />
       </div>
-      <div className="space-y-3 text-body-sm leading-[1.75] text-muted-foreground [&_a]:text-link [&_a:hover]:underline [&_strong]:text-foreground">
+      <div className="metin-yasli space-y-3 text-body-sm leading-[1.75] text-muted-foreground [&_a]:text-link [&_a:hover]:underline [&_strong]:text-foreground">
         {children}
       </div>
     </section>
