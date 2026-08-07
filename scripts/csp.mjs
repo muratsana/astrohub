@@ -78,7 +78,14 @@ const DIRECTIVES = {
   /* `data:` — ikonlar ve yer tutucular.
      `blob:` — canvas ile üretilen küçültme önizlemesi.
      cartocdn/NASA GIBS/ArcGIS — harita karo katmanları.
-     wikimedia/esahubble — tohum içeriğin görselleri. */
+     wikimedia/esahubble — tohum içeriğin görselleri.
+
+     alasky.cds.unistra.fr — CDS'in hips2fits servisi. Katalogdaki
+     16.000 gök cisminin önizlemesi DSS2 (Digitized Sky Survey)
+     kesitlerinden geliyor; kaynak kamuya açık ve her koordinat için
+     kesit üretebildiği için kataloğun tamamı kapsanıyor. Bu satır
+     olmadan önizlemeler sessizce kırılır ve kartlar yordamsal yıldız
+     alanına düşerdi — yani hata görünmez olurdu. */
   'img-src': [
     "'self'",
     'data:',
@@ -90,6 +97,7 @@ const DIRECTIVES = {
     'https://commons.wikimedia.org',
     'https://upload.wikimedia.org',
     'https://cdn.esahubble.org',
+    'https://alasky.cds.unistra.fr',
   ],
 
   /* Fontlar self-host — dış kaynak yok. */

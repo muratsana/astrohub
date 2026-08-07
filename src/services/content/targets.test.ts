@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { mapTargetRow } from './targets';
 import { targets } from '@/features/targets/data';
-import { parseDec, parseRa } from '@/domain/astronomy/ephemeris';
+
 
 /**
  * Tohum kaydından, veritabanının döndüreceği satırı üretir.
@@ -14,8 +14,15 @@ function rowFor(slug: string, { asText = false } = {}) {
   const seed = targets.find((t) => t.slug === slug);
   if (!seed) throw new Error(`tohum kaydı yok: ${slug}`);
 
-  const raDeg = seed.ra ? parseRa(seed.ra) : null;
-  const decDeg = seed.dec ? parseDec(seed.dec) : null;
+  /*
+   * Koordinatlar tohumun HAM derecesinden geliyor, biçimlenmiş
+   * metninden değil. İlk sürüm "+22° 01′" dizesini geri ayrıştırıyordu
+   * ve bu, yay saniyesi altındaki basamağı kaybediyordu (22.017 →
+   * 22.0167). Veritabanı tam değeri saklıyor; fikstürün ondan daha az
+   * bilgi taşıması, testi gerçekte olmayan bir kayba karşı korurdu.
+   */
+  const raDeg = seed.raDeg;
+  const decDeg = seed.decDeg;
   const [major, minor] = seed.angularSize
     .split('×')
     .map((p) => Number(p.replace('′', '').trim()));
