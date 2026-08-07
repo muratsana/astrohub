@@ -43,6 +43,10 @@ const GROUP_OF: Record<TargetKind, TargetGroup | null> = {
   'gezegenimsi-bulutsu': 'bulutsu',
   'karanlik-bulutsu': 'bulutsu',
   'sungerimsi-kalinti': 'bulutsu',
+  /* Türü kaynakta ayrıntılandırılmamış bulutsular da bu gruba giriyor:
+     hangi tür olduğunu bilmiyoruz ama bulutsu olduğunu biliyoruz ve
+     grup filtresi tam olarak o soruyu soruyor. */
+  bulutsu: 'bulutsu',
 
   // ---- Küme: çözülmüş yıldızlar; seeing belirleyici
   'kuresel-kume': 'kume',
@@ -68,6 +72,8 @@ const GROUP_OF: Record<TargetKind, TargetGroup | null> = {
   'yildiz-bulutu': null,
   'cift-yildiz': null,
   asterizm: null,
+  yildiz: null,
+  diger: null,
   gezegen: null,
   ay: null,
   gunes: null,

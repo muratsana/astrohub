@@ -62,6 +62,20 @@ export interface CelestialTarget {
   /** "00sa 42dk 44sn" — boş dize, koordinatı olmayan hedeflerde. */
   ra: string;
   dec: string;
+  /*
+    HAM KOORDİNAT, derece. `ra`/`dec` insan için biçimlenmiş metin ve
+    hesaba giremiyor; gök taraması önizlemesi (SkyPreview) ile kadraj
+    hesapları sayıya ihtiyaç duyuyor. Metni geri ayrıştırmak yerine
+    sayıyı da taşımak, iki temsilin ayrışma ihtimalini ortadan
+    kaldırıyor — ikisi de aynı kaynaktan üretiliyor.
+
+    Koordinatı olmayan hedeflerde `null`: sıfır yazmak onları Koç
+    noktasına çivilerdi ve önizleme boş bir gökyüzü gösterirdi.
+  */
+  raDeg: number | null;
+  decDeg: number | null;
+  /** Büyük eksen, yay dakikası — önizleme kadrajı bunu kullanıyor. */
+  sizeArcmin: number | null;
   magnitude?: number;
   angularSize: string;
   bestMonths: string;
@@ -109,6 +123,9 @@ const KIND_NOUN: Record<TargetKind, string> = {
   'yildiz-bulutu': 'Yıldız Bulutu',
   'cift-yildiz': 'Çift Yıldızı',
   asterizm: 'Asterizmi',
+  bulutsu: 'Bulutsusu',
+  yildiz: 'Yıldızı',
+  diger: 'Gök Cismi',
   gezegen: 'Gezegeni',
   ay: 'Ay',
   gunes: 'Güneş',
@@ -123,6 +140,9 @@ function fromRow(row: CatalogRow): CelestialTarget {
   return {
     slug: row.slug ?? codeSlug(row.code),
     name: row.name ?? `${row.code} ${KIND_NOUN[row.kind]}`,
+    raDeg: row.ra * 15,
+    decDeg: row.dec,
+    sizeArcmin: sizeArcmin || null,
     catalog: row.code,
     aliases: row.aliases ?? [],
     kind: row.kind,
@@ -158,6 +178,9 @@ function fromMovingRow(row: MovingRow): CelestialTarget {
     // Koordinat alanları bilerek boş: gökyüzündeki yeri tarihe bağlı.
     ra: '',
     dec: '',
+    raDeg: null,
+    decDeg: null,
+    sizeArcmin: row.size ? longestAxisArcmin(row.size) : null,
     angularSize: row.size ? formatAngularSize(row.size) : '—',
     bestMonths: row.window,
     difficulty: 'Orta',

@@ -209,7 +209,29 @@ export function targetFit(kind: TargetKind): Record<FilterClass, FilterVerdict> 
     case 'yildiz-bulutu':
     case 'cift-yildiz':
     case 'asterizm':
+    case 'yildiz':
       return sureklilik('Yıldız ışığı süreklilik; renk bilgisi RGB’den geliyor.');
+
+    case 'bulutsu':
+    case 'diger': {
+      /* Türü kaynakta ayrıntılandırılmamış kayıtlar. Süreklilik
+         varsaymak güvenli taraf: geniş bant her hedefte bir şey
+         gösterir, dar bant yanlış hedefte hiçbir şey göstermez. Ama
+         "uygun değil" demiyoruz — emisyon çıkma ihtimali gerçek. */
+      const temel = sureklilik(
+        'Hedefin ışık türü kaynakta belirtilmemiş; geniş bant güvenli başlangıç.'
+      );
+      const belirsiz = v(
+        'dual-band',
+        'sinirli',
+        'Hedef emisyon bulutsusuysa işe yarar, yansıma bulutsusuysa söndürür — deneyerek görülür.'
+      );
+      return {
+        ...temel,
+        'dual-band': belirsiz,
+        'dar-bant': { ...belirsiz, filterClass: 'dar-bant' },
+      };
+    }
 
     case 'gezegen':
     case 'ay': {

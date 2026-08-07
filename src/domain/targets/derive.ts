@@ -26,6 +26,20 @@ export type TargetKind =
   | 'yildiz-bulutu'
   | 'cift-yildiz'
   | 'asterizm'
+  /*
+   * Aşağıdaki üçü elle girilmiş katalogda yoktu; birincil kataloglar
+   * içeri alındığında ortaya çıktılar (bkz. supabase/functions/
+   * katalog-yukle). "Neb" tipi bir bulutsudur ama emisyon mu yansıma mı
+   * olduğu kaynakta yazmıyor; "*" NGC numarası almış tekil bir yıldız;
+   * "Other" ise OpenNGC'nin kendi sınıflandıramadığı kayıtlar.
+   *
+   * Tahmin etmiyoruz. "Neb"i emisyon bulutsusu saymak 94 kayda yanlış
+   * filtre önerisi (SHO) verirdi ve kullanıcı geniş bant çekilmesi
+   * gereken bir hedefe dar bant filtre alırdı.
+   */
+  | 'bulutsu'
+  | 'yildiz'
+  | 'diger'
   | 'gezegen'
   | 'ay'
   | 'gunes'
@@ -47,6 +61,9 @@ export const targetKindLabels: Record<TargetKind, string> = {
   'yildiz-bulutu': 'Yıldız Bulutu',
   'cift-yildiz': 'Çift Yıldız',
   asterizm: 'Asterizm',
+  bulutsu: 'Bulutsu',
+  yildiz: 'Yıldız',
+  diger: 'Diğer',
   gezegen: 'Gezegen',
   ay: 'Ay',
   gunes: 'Güneş',
@@ -77,6 +94,9 @@ export const kindToPhotoType: Record<TargetKind, string> = {
   'yildiz-bulutu': 'deep-sky',
   'cift-yildiz': 'deep-sky',
   asterizm: 'deep-sky',
+  bulutsu: 'deep-sky',
+  yildiz: 'deep-sky',
+  diger: 'deep-sky',
   gezegen: 'gezegen',
   ay: 'ay',
   gunes: 'gunes',
@@ -257,6 +277,15 @@ export function recommendedFiltersFor(kind: TargetKind): string {
     case 'cift-yildiz':
     case 'asterizm':
       return 'UV/IR-cut; renk için RGB — dar bant yıldızları söndürür';
+    case 'bulutsu':
+      /* Türü belirsiz bulutsu: emisyon olsaydı dar bant, yansıma
+         olsaydı geniş bant derdik. Bilmediğimiz için ikisini birden
+         önermiyoruz — kullanıcıyı yanlış filtreye yönlendirmektense
+         kararı ona bırakmak dürüst olan. */
+      return 'Türü kaynakta ayrıntılandırılmamış; geniş bantla başlayıp Ha denemesi yapın';
+    case 'yildiz':
+    case 'diger':
+      return 'UV/IR-cut; renk için RGB';
     case 'gezegen':
       return 'RGB ya da IR-pass; yüksek kare hızlı video (lucky imaging)';
     case 'ay':
@@ -301,6 +330,11 @@ export function gradientFor(kind: TargetKind): string {
     case 'yildiz-bulutu':
     case 'asterizm':
     case 'cift-yildiz':
+      return 'radial-gradient(100% 90% at 50% 45%, #bfdbfe 0%, #6b7fae 30%, #26304a 65%, #050a12 100%)';
+    case 'bulutsu':
+      return 'radial-gradient(115% 95% at 48% 52%, #94a3b8 0%, #475569 38%, #1e293b 74%, #050a12 100%)';
+    case 'yildiz':
+    case 'diger':
       return 'radial-gradient(100% 90% at 50% 45%, #bfdbfe 0%, #6b7fae 30%, #26304a 65%, #050a12 100%)';
     case 'gezegen':
       return 'radial-gradient(75% 75% at 45% 45%, #fbbf24 0%, #b45309 38%, #3b1f08 72%, #050a12 100%)';

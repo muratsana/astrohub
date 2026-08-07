@@ -8,6 +8,7 @@ import {
   type TargetKind,
 } from '@/domain/targets/derive';
 import { searchTargets, targets, type CelestialTarget } from './data';
+import { useCatalogSearch } from '@/services/content/targets';
 
 /**
  * HEDEF SEÇİCİ — önce obje tipi, sonra katalog kaydı.
@@ -25,6 +26,21 @@ import { searchTargets, targets, type CelestialTarget } from './data';
  *
  * TİP SEÇMEK ZORUNLU DEĞİL. "Tüm türler" seçiliyken arama tüm katalogda
  * çalışır; kodu ezbere bilen kullanıcıyı iki tıkla yormanın anlamı yok.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * İKİ KAYNAK, TEK LİSTE
+ *
+ * Paketlenmiş liste 230 kayıt taşıyor; veritabanındaki katalog 16.149.
+ * Arama ikisini birden yapıyor:
+ *
+ *   · Paketlenmiş liste ANINDA cevap veriyor ve ağ gerektirmiyor. En
+ *     bilinen hedefler (M 31, NGC 7000, Ay) burada.
+ *   · Sunucu araması gecikmeli geliyor ve gerisini kapsıyor — Sh2-101,
+ *     LDN 1235, Arp 273 yalnızca orada.
+ *
+ * Sonuçlar slug'a göre tekilleniyor ve paketlenmiş olan önce geliyor:
+ * onun Türkçe adı ve editör açıklaması var, sunucudan gelen ikizinde
+ * yoksa listede iki kez görünmesindense iyisini göstermek doğru.
  */
 
 /** Tipleri kabaca "derin uzay" ve "güneş sistemi / manzara" diye ayırıyoruz. */
@@ -55,33 +71,44 @@ export function TargetPicker({
 }) {
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
+  /*
+    Seçilen kayıt burada TUTULUYOR, yalnızca slug'la aranmıyor: sunucudan
+    gelen bir hedef paketlenmiş listede yok ve `targets.find` onu
+    bulamazdı. Seçim yapıldıktan sonra kutunun boşalması, kullanıcının
+    seçtiğinin kaydedilmediği izlenimi verirdi.
+  */
+  const [secilenUzak, setSecilenUzak] = useState<CelestialTarget | null>(null);
   const listId = useRef(
     `target-picker-${Math.random().toString(36).slice(2, 7)}`
   ).current;
 
   const groups = useMemo(groupedKinds, []);
   const selected = useMemo(
-    () => targets.find((t) => t.slug === value) ?? null,
-    [value]
+    () =>
+      targets.find((t) => t.slug === value) ??
+      (secilenUzak?.slug === value ? secilenUzak : null),
+    [value, secilenUzak]
   );
 
-  const options = useMemo(() => {
+  const { rows: uzak, loading: uzakYukleniyor } = useCatalogSearch(query, kind);
+
+  const yerel = useMemo(() => {
     const base = query.trim() ? searchTargets(query, targets.length) : targets;
-    const filtered =
-      kind === 'hepsi' ? base : base.filter((t) => t.kind === kind);
-    // On beş satır: listenin altını görmek için kaydırma gerekmesin, ama
-    // "hiç sonuç yok" ile "çok sonuç var" ayrımı da kaybolmasın.
-    return filtered.slice(0, 15);
+    return kind === 'hepsi' ? base : base.filter((t) => t.kind === kind);
   }, [query, kind]);
 
-  const totalMatches = useMemo(() => {
-    const base = query.trim() ? searchTargets(query, targets.length) : targets;
-    return kind === 'hepsi'
-      ? base.length
-      : base.filter((t) => t.kind === kind).length;
-  }, [query, kind]);
+  const eslesenler = useMemo(() => {
+    const gorulen = new Set(yerel.map((t) => t.slug));
+    return [...yerel, ...uzak.filter((t) => !gorulen.has(t.slug))];
+  }, [yerel, uzak]);
+
+  // On beş satır: listenin altını görmek için kaydırma gerekmesin, ama
+  // "hiç sonuç yok" ile "çok sonuç var" ayrımı da kaybolmasın.
+  const options = eslesenler.slice(0, 15);
+  const totalMatches = eslesenler.length;
 
   function pick(target: CelestialTarget) {
+    setSecilenUzak(target);
     onChange(target);
     setQuery('');
     setOpen(false);
@@ -146,7 +173,7 @@ export function TargetPicker({
               id={`${listId}-search`}
               type="search"
               autoComplete="off"
-              placeholder="M 31, NGC 7000, Andromeda, Jüpiter…"
+              placeholder="M 31, NGC 7000, Sh2-101, Andromeda…"
               value={query}
               onChange={(e) => {
                 setQuery(e.target.value);
@@ -160,9 +187,9 @@ export function TargetPicker({
               <div className="absolute left-0 right-0 z-[var(--z-popover)] mt-1 overflow-hidden rounded-card border border-border-strong bg-surface-1 shadow-overlay">
                 {options.length === 0 ? (
                   <p className="px-3 py-3 text-body-sm leading-relaxed text-muted-foreground">
-                    Bu türde eşleşen kayıt yok. Katalogda olmayan bir hedef
-                    çektiyseniz seçimi boş bırakıp başlığa yazabilirsiniz —
-                    künye yine kaydedilir.
+                    {uzakYukleniyor
+                      ? 'Katalogda aranıyor…'
+                      : 'Bu türde eşleşen kayıt yok. Katalogda olmayan bir hedef çektiyseniz seçimi boş bırakıp başlığa yazabilirsiniz — künye yine kaydedilir.'}
                   </p>
                 ) : (
                   <>
@@ -188,10 +215,11 @@ export function TargetPicker({
                         </li>
                       ))}
                     </ul>
-                    {totalMatches > options.length && (
+                    {(totalMatches > options.length || uzakYukleniyor) && (
                       <p className="border-t border-border-strong px-3 py-1.5 text-meta text-faint">
-                        {totalMatches} eşleşmenin ilk {options.length} tanesi —
-                        aramayı daraltın.
+                        {uzakYukleniyor
+                          ? 'Katalogda aranıyor…'
+                          : `${totalMatches} eşleşmenin ilk ${options.length} tanesi — aramayı daraltın.`}
                       </p>
                     )}
                   </>
