@@ -70,13 +70,112 @@ async function klasoruBosalt(
 }
 
 /**
- * Kaydı ve bütün görsellerini kalıcı olarak siler.
+ * Fotoğrafı kaldırır — SOFT DELETE (FAZ 3).
  *
- * `userId` çağırandan geliyor ama YETKİ ORADAN GELMİYOR: yol kurmak için
- * gerekli, izni veren satır güvenliği. Başkasının kimliğiyle çağrılsa da
- * `delete` sorgusu sıfır satır etkiler.
+ * ══════════════════════════════════════════════════════════════════════
+ * NEDEN ARTIK KALICI DEĞİL
+ *
+ * Bu fonksiyon eskiden satırı `delete` ile kaldırıyor ve öncesinde
+ * depolamayı boşaltıyordu. FAZ 3'ün `*_hard_delete_admin` kısıtlayıcı
+ * politikası kalıcı silmeyi admine kilitledikten sonra o sıra SESSİZ BİR
+ * BOZULMAYA dönüştü: PostgREST `delete` sıfır satır etkilediğinde hata
+ * DÖNDÜRMÜYOR. Yani dosyalar siliniyor, satır duruyor ve fonksiyon
+ * "başarılı" diyordu — geriye görselleri olmayan bir galeri kaydı
+ * kalıyordu.
+ *
+ * Şimdi sıra tersine döndü ve dosyalara hiç dokunulmuyor:
+ *
+ *   1. `deleted_at` yazılıyor — kayıt public sorgulardan düşüyor
+ *      (`app.icerik_gorunur`) ve kotadan düşüyor
+ *      (`app.active_photo_count`).
+ *   2. Dosyalar YERİNDE KALIYOR, çünkü admin geri alabiliyor ve
+ *      dosyalar silinmişse geri gelen kayıt boş bir çerçeve olurdu.
+ *
+ * `deleted_by` istemciden gönderilmiyor: `app.icerik_silme_izi()`
+ * tetikleyicisi `auth.uid()` ile kendisi yazıyor ve denetim kaydını da o
+ * düşürüyor.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * SIFIR SATIR ARTIK SESSİZ GEÇMİYOR
+ *
+ * `select('id')` ekli: RLS isteği süzdüyse dönen dizi boş kalıyor ve
+ * fonksiyon hata veriyor. Başkasının fotoğrafını silmeye çalışan bir
+ * çağrı "oldu" cevabı almıyor.
+ *
+ * `userId` yalnızca imza uyumluluğu için duruyor; yetkiyi satır
+ * güvenliği veriyor.
  */
 export async function deletePhoto(input: {
+  userId: string;
+  photoId: string;
+}): Promise<void> {
+  const promise = getSupabase();
+  if (!promise) throw new Error('Veritabanı bağlantısı yapılandırılmamış');
+  const supabase = await promise;
+
+  const { data, error } = await supabase
+    .from('astro_photos')
+    .update({ deleted_at: new Date().toISOString() })
+    .eq('id', input.photoId)
+    .select('id');
+
+  if (error) throw new Error(error.message);
+  if (!data || data.length === 0) {
+    throw new Error('Fotoğraf kaldırılamadı — kayıt bulunamadı ya da yetki yok.');
+  }
+}
+
+/**
+ * Kaldırılmış fotoğrafı geri getirir (plan görev 5).
+ *
+ * Kota kontrolü BURADA DEĞİL: `deleted_at` null'a dönünce fotoğraf
+ * yeniden kotaya dahil oluyor ve kota doluysa `enforce_photo_quota`
+ * tetikleyicisi o anda itiraz ediyor. Yani beş fotoğrafı olan biri
+ * altıncıyı geri alamıyor ve gerekçesini veritabanından duyuyor.
+ */
+export async function restorePhoto(photoId: string): Promise<void> {
+  const promise = getSupabase();
+  if (!promise) throw new Error('Veritabanı bağlantısı yapılandırılmamış');
+  const supabase = await promise;
+
+  const { data, error } = await supabase
+    .from('astro_photos')
+    .update({ deleted_at: null })
+    .eq('id', photoId)
+    .select('id');
+
+  if (error) throw new Error(error.message);
+  if (!data || data.length === 0) {
+    throw new Error('Fotoğraf geri alınamadı — kayıt bulunamadı ya da yetki yok.');
+  }
+}
+
+/**
+ * Fotoğrafı ve bütün görsellerini KALICI olarak siler — yalnızca admin.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * SIRA: ÖNCE DOSYALAR, SONRA SATIR
+ *
+ * Bu sıra eski `deletePhoto`dan devralındı ve gerekçesi hâlâ geçerli:
+ * `photos` bucket'ı genel. Satırı silip dosyayı bırakmak, "sildim" diyen
+ * kullanıcının karesinin adresi bilen herkese açık kalması demek —
+ * gürültüsüz bir mahremiyet sızıntısı. Dosya temizliği düşerse satıra
+ * HİÇ dokunulmuyor ve hata yüzeye çıkıyor; yarım silinmiş kayıt
+ * bırakmaktansa durup tekrar denemek.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * SIFIR SATIR ARTIK GÜRÜLTÜLÜ
+ *
+ * Eski sürümün asıl kusuru sıra değil, SESSİZLİKTİ: PostgREST sıfır satır
+ * etkilendiğinde hata döndürmüyor, dolayısıyla RLS isteği süzdüğünde
+ * fonksiyon "başarılı" diyordu. `select('id')` bunu hataya çeviriyor.
+ *
+ * Bu yol yalnızca yönetim yüzeyinden çağrılıyor; sıradan kullanıcının
+ * silme yolu `deletePhoto` ve o depolamaya hiç dokunmuyor. Yani "admin
+ * olmayan biri dosyaları uçurup satırı bırakır" durumu bu fonksiyona
+ * ulaşamıyor.
+ */
+export async function purgePhoto(input: {
   userId: string;
   photoId: string;
 }): Promise<void> {
@@ -91,9 +190,17 @@ export async function deletePhoto(input: {
 
   /* Satır gidince beğeni, yorum, puan ve sürüm satırları `on delete
      cascade` ile birlikte gidiyor — burada tek tek silinmiyor. */
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('astro_photos')
     .delete()
-    .eq('id', input.photoId);
+    .eq('id', input.photoId)
+    .select('id');
+
   if (error) throw new Error(error.message);
+  if (!data || data.length === 0) {
+    throw new Error(
+      'Kalıcı silme reddedildi — bu işlem yalnızca yöneticilere açık. ' +
+        'Dosyalar temizlendi, satır duruyor.'
+    );
+  }
 }

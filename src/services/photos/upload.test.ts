@@ -17,7 +17,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const state = {
   uploadFails: new Set<string>(),
   removed: [] as { bucket: string; paths: string[] }[],
+  /** Kalıcı silme — FAZ 3'ten sonra geri alma yolunda BEKLENMİYOR. */
   deletedRows: [] as string[],
+  /** Geri almanın taslağı kaldırma biçimi: `deleted_at` yazması. */
+  softDeletedRows: [] as string[],
   insertedRows: 0,
   /** `astro_photos` insert yükü — alanların gerçekten yazıldığını görmek için. */
   photoInsert: null as Record<string, unknown> | null,
@@ -42,9 +45,17 @@ function tableApi(table: string) {
       void rows;
       return Promise.resolve({ error: state.exposureError });
     },
-    update() {
+    update(patch: unknown) {
+      const yama = (patch ?? {}) as Record<string, unknown>;
       return {
-        eq: async () => ({ error: state.updateError }),
+        eq: async (_column: string, value: string) => {
+          /* Geri alma taslağı `deleted_at` yazarak kaldırıyor; normal
+             akıştaki güncellemelerden bu alanla ayrılıyor. */
+          if ('deleted_at' in yama && yama.deleted_at !== null) {
+            state.softDeletedRows.push(value);
+          }
+          return { error: state.updateError };
+        },
       };
     },
     delete() {
@@ -129,6 +140,7 @@ beforeEach(() => {
   state.uploadFails = new Set();
   state.removed = [];
   state.deletedRows = [];
+  state.softDeletedRows = [];
   state.insertedRows = 0;
   state.photoInsert = null;
   state.exposureError = null;
@@ -167,7 +179,8 @@ describe('uploadPhoto — yarım kalan yükleme', () => {
 
     const photos = state.removed.find((r) => r.bucket === 'photos');
     expect(photos?.paths).toEqual([DISPLAY]);
-    expect(state.deletedRows).toEqual([PHOTO_ID]);
+    expect(state.softDeletedRows).toEqual([PHOTO_ID]);
+    expect(state.deletedRows).toEqual([]);
   });
 
   it('gösterim kopyası düşerse küçük resmi de siler', async () => {
@@ -177,7 +190,8 @@ describe('uploadPhoto — yarım kalan yükleme', () => {
 
     const photos = state.removed.find((r) => r.bucket === 'photos');
     expect(photos?.paths).toEqual([THUMB]);
-    expect(state.deletedRows).toEqual([PHOTO_ID]);
+    expect(state.softDeletedRows).toEqual([PHOTO_ID]);
+    expect(state.deletedRows).toEqual([]);
   });
 
   /*
@@ -193,7 +207,8 @@ describe('uploadPhoto — yarım kalan yükleme', () => {
     const originals = state.removed.find((r) => r.bucket === 'photo-originals');
     expect(photos?.paths.sort()).toEqual([DISPLAY, THUMB].sort());
     expect(originals?.paths).toEqual([ORIGINAL]);
-    expect(state.deletedRows).toEqual([PHOTO_ID]);
+    expect(state.softDeletedRows).toEqual([PHOTO_ID]);
+    expect(state.deletedRows).toEqual([]);
   });
 
   /*

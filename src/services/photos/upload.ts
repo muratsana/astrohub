@@ -229,9 +229,20 @@ export async function uploadPhoto(
     }
     if (photoId) {
       try {
-        await supabase.from('astro_photos').delete().eq('id', photoId);
+        /* SOFT DELETE — FAZ 3'ten sonra kalıcı silme yalnızca adminde
+           (`astro_photos_hard_delete_admin`). Buradaki `delete` çağrısı
+           sıradan bir kullanıcıda sessizce sıfır satır etkiler ve yarım
+           kalmış taslak, dosyaları silinmiş hâlde galeride kalırdı.
+
+           Taslak zaten public'te görünmüyor (`status='draft'`) ve kotaya
+           sayılmıyor; `deleted_at` yazmak onu yönetim yüzeylerinden de
+           düşürüyor. Kalıcı temizlik adminin işi. */
+        await supabase
+          .from('astro_photos')
+          .update({ deleted_at: new Date().toISOString() })
+          .eq('id', photoId);
       } catch (cause) {
-        console.error('geri alma: taslak satır silinemedi', cause);
+        console.error('geri alma: taslak satır kaldırılamadı', cause);
       }
     }
   }

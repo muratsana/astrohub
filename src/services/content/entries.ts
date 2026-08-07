@@ -366,13 +366,58 @@ export async function saveEntry(
   return (data as { id: string }).id;
 }
 
+/**
+ * İçeriği kaldırır — SOFT DELETE (FAZ 3).
+ *
+ * Kayıt public sorgulardan düşüyor (`app.icerik_gorunur`) ama
+ * veritabanında duruyor ve geri alınabiliyor. Kalıcı silme
+ * `content_entries_hard_delete_admin` kısıtlayıcı politikasıyla admine
+ * kilitli; `purgeEntry` onu çağırıyor.
+ *
+ * `select('id')` ekli: PostgREST sıfır satır etkilendiğinde hata
+ * döndürmüyor ve bu fonksiyon sessizce "oldu" derdi.
+ */
 export async function deleteEntry(id: string): Promise<void> {
   const supabase = await client();
-  const { error } = await supabase
+  const { data, error } = await supabase
+    .from('content_entries')
+    .update({ deleted_at: new Date().toISOString() })
+    .eq('id', id)
+    .select('id');
+  if (error) throw new Error(error.message);
+  if (!data || data.length === 0) {
+    throw new Error('İçerik kaldırılamadı — kayıt bulunamadı ya da yetki yok.');
+  }
+}
+
+/** Kaldırılmış içeriği geri getirir (plan görev 5). */
+export async function restoreEntry(id: string): Promise<void> {
+  const supabase = await client();
+  const { data, error } = await supabase
+    .from('content_entries')
+    .update({ deleted_at: null })
+    .eq('id', id)
+    .select('id');
+  if (error) throw new Error(error.message);
+  if (!data || data.length === 0) {
+    throw new Error('İçerik geri alınamadı — kayıt bulunamadı ya da yetki yok.');
+  }
+}
+
+/** Kalıcı silme — yalnızca admin. RLS reddederse sessiz geçmiyor. */
+export async function purgeEntry(id: string): Promise<void> {
+  const supabase = await client();
+  const { data, error } = await supabase
     .from('content_entries')
     .delete()
-    .eq('id', id);
+    .eq('id', id)
+    .select('id');
   if (error) throw new Error(error.message);
+  if (!data || data.length === 0) {
+    throw new Error(
+      'Kalıcı silme reddedildi — bu işlem yalnızca yöneticilere açık.'
+    );
+  }
 }
 
 export async function setEntryStatus(

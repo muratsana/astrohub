@@ -17,6 +17,8 @@
   "permissions": {
     "allow": [
       "mcp__Supabase",
+      "mcp__Supabase__execute_sql",
+      "mcp__supabase__execute_sql",
       "Bash(supabase:*)",
       "Bash(supabase *)",
       "Bash(npx supabase:*)",

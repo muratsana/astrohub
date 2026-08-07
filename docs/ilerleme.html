@@ -555,6 +555,33 @@
     "2:4": "tamamlandi",   // hesap durumu — FAZ 1'den kuruluydu
     "2:5": "tamamlandi",   // memberships_audit + notify_user denetim kaydı
 
+    // ── FAZ 3 — içerik durumları ve soft delete ─────────────────────────
+    // İKİ AŞAMAYA BÖLÜNDÜ. (A) soft delete altyapısı — bu kısım bitti ve
+    // canlıda. (B) beş enum'un tek sekiz değerli kümeye dönüştürülmesi —
+    // sırada. Ayrılmalarının sebebi risk: (A) hiçbir mevcut değere
+    // dokunmuyor; (B) yirmi dört politika, yirmi bir fonksiyon ve otuz
+    // beş arayüz dosyasını ilgilendiriyor.
+    //
+    // PLANDA BİR SORUN BULUNDU. Ortak küme yayın eksenini tarif ediyor
+    // ama bugünkü kolonlarda yayın durumu OLMAYAN üç değer var:
+    // events.cancelled, listings.reserved, listings.sold. Üçü de public'te
+    // görünmeye devam etmeli (satılmış ilan pazaryerinde durur, iptal
+    // edilen etkinliği kullanıcı görmeli). arsivlendi'ye eşlemek veri
+    // kaybı değil DAVRANIŞ kaybı olurdu. (B)'de bunlar ayrı alan
+    // kolonlarına taşınacak.
+    //
+    // SOFT DELETE'İN İKİ SESSİZ KIRILMASI ÖLÇÜLDÜ VE KAPATILDI:
+    //   • app.active_photo_count silinen fotoğrafı hâlâ sayıyordu —
+    //     kullanıcı fotoğrafını siliyor ama kota boşalmıyordu.
+    //   • deletePhoto önce depolamayı boşaltıp sonra satırı siliyordu;
+    //     kalıcı silme admine kilitlenince PostgREST sıfır satırda hata
+    //     DÖNDÜRMEDİĞİ için dosyalar uçuyor, satır kalıyor ve fonksiyon
+    //     "başarılı" diyordu.
+    "3:1": "tamamlandi",   // deleted_at/deleted_by/archived_at — altı tablo
+    "3:2": "tamamlandi",   // app.icerik_gorunur() + altı SELECT politikası
+    "3:3": "tamamlandi",   // *_hard_delete_admin kısıtlayıcı politikaları
+    "3:4": "yapiliyor",    // restorePhoto/restoreEntry var; panel yüzeyi yok
+
     // ── Kodla bitmeyenler (plan §10.2) — baştan işaretlendi ─────────────
     // Bunlar bir engel çıktığında değil, engel BİLİNDİĞİ için şimdiden
     // "sende". İş o noktaya geldiğinde sürpriz olmasın.
@@ -564,7 +591,7 @@
     "13:7": "sende",   // D11 — masaüstü köprü dağıtımı
   };
 
-  const GUNCELLEME = "7 Ağustos 2026 — FAZ 1 ve FAZ 2 tamam, dördü de canlı veritabanında";
+  const GUNCELLEME = "7 Ağustos 2026 — FAZ 1-2 tamam; FAZ 3'ün soft delete altyapısı canlıda";
 
   /* ── Buradan aşağısı görüntüleme mantığı; değiştirmeye gerek yok ─────── */
 
