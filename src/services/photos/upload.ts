@@ -57,8 +57,20 @@ export interface UploadInput {
   palette: string;
   description?: string;
   capturedAt?: string;
-  locationLabel?: string;
-  locationVisibility?: 'exact' | 'approximate' | 'region' | 'hidden';
+  /**
+   * ÇEKİM KONUMU — il ve ilçe, sihirbazda zorunlu.
+   *
+   * `locationLabel` ve `locationVisibility` alanlarının yerini aldı.
+   * İkisi de serbest metne dayanıyordu ve galeri şehir süzgeci o metni
+   * virgülden bölerek tahmin ediyordu; "evin balkonu" yazan biri "Evin
+   * Balkonu" adında bir şehir üretiyordu.
+   *
+   * Görünürlük artık seçilmiyor çünkü seçilecek bir şey kalmadı: her
+   * kaydın konumu il/ilçe düzeyinde ve o düzey gözlem yerini açığa
+   * çıkarmıyor.
+   */
+  city?: string;
+  district?: string;
   license?: string;
   allowDownload?: boolean;
   watermarkRequired?: boolean;
@@ -252,8 +264,20 @@ export async function uploadPhoto(
           : null,
         status: 'draft',
         captured_at: input.capturedAt || null,
-        location_label: input.locationLabel || null,
-        location_visibility: input.locationVisibility ?? 'approximate',
+        city: input.city || null,
+        district: input.district || null,
+        /*
+         * `location_label` HÂLÂ YAZILIYOR ama artık türetiliyor: eski
+         * kayıtlar ve onları okuyan yüzeyler (Bortle tahmini, künye
+         * satırı) bu alanı bekliyor ve boş bırakmak onları bozardı.
+         * Biçim "İlçe / İl" — okuyan insan için de aynı sıra.
+         */
+        location_label:
+          input.city && input.district
+            ? `${input.district} / ${input.city}`
+            : input.city || null,
+        /* Görünürlük seçilmiyor: konum zaten il/ilçe düzeyinde. */
+        location_visibility: 'region',
         license: input.license ?? 'Tüm hakları saklıdır',
         allow_download: input.allowDownload ?? false,
         watermark_required: input.watermarkRequired ?? true,

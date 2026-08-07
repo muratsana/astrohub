@@ -12,6 +12,7 @@ import { checkUploadSize, formatBytes } from '@/domain/membership/quota';
 import { Container } from '@/components/ui/Container';
 import { Button } from '@/components/ui/Button';
 import { Input, Select } from '@/components/ui/Input';
+import { LocationTypeahead } from '@/components/ui/LocationTypeahead';
 import { Field } from '@/components/ui/Field';
 import { Badge } from '@/components/ui/Badge';
 import {
@@ -93,8 +94,22 @@ interface WizardState {
   type: PhotoType;
   title: string;
   capturedAt: string;
-  locationLabel: string;
-  locationVisibility: 'exact' | 'approximate' | 'region' | 'hidden';
+  /**
+   * ÇEKİM KONUMU — il ve ilçe, ikisi de ZORUNLU.
+   *
+   * Önceden tek bir serbest metin alanı vardı ("Saklıkent, Antalya")
+   * ve galeri şehir süzgeci o metni virgülden bölüp son parçayı şehir
+   * sayıyordu. "evin balkonu" yazan biri "Evin Balkonu" adında bir
+   * şehir üretiyordu; süzgeç hiçbir zaman güvenilir olmadı.
+   *
+   * Görünürlük seçeneği de kalktı. "Tam koordinat" seçeneği bir
+   * gizlilik denetimi gibi duruyordu ama gerçekte yaptığı şey, EXIF'ten
+   * okunan ham enlem-boylamın etikete yazılabilmesiydi — yani bir
+   * denetim değil, bir sızıntı kapısı. İl/ilçe düzeyi kullanıcının
+   * gözlem yerini zaten açığa çıkarmıyor.
+   */
+  city: string;
+  district: string;
   optic: string;
   camera: string;
   mount: string;
@@ -130,8 +145,8 @@ const initialState: WizardState = {
   type: 'deep-sky',
   title: '',
   capturedAt: '',
-  locationLabel: '',
-  locationVisibility: 'approximate',
+  city: '',
+  district: '',
   optic: '',
   camera: '',
   mount: '',
@@ -175,7 +190,6 @@ export function UploadWizardPage() {
   const [exifState, setExifState] = useState<'idle' | 'reading' | 'read' | 'none'>(
     'idle'
   );
-  const [useExifGps, setUseExifGps] = useState(false);
   const [step, setStep] = useState(0);
   const [state, setState] = useState<WizardState>(initialState);
 
@@ -242,8 +256,8 @@ export function UploadWizardPage() {
           photoType: state.type,
           palette: state.palette,
           capturedAt: state.capturedAt || undefined,
-          locationLabel: state.locationLabel || undefined,
-          locationVisibility: state.locationVisibility,
+          city: state.city,
+          district: state.district,
           license: state.license,
           allowDownload: state.allowDownload,
           watermarkRequired: state.watermarkRequired,
@@ -286,9 +300,10 @@ export function UploadWizardPage() {
            * çöpe gidiyordu. Kullanıcı bir alanı elle değiştirdiğinde
            * dosyadaki asıl değer artık hiçbir yerde durmuyordu.
            *
-           * Koordinat gönderilmiyor — yalnızca varlığı. Kullanıcı EXIF
-           * konumunu kullanmayı seçse bile (`useExifGps`) o seçim
-           * `locationLabel`'a yansıyor; ham koordinat sunucuya gitmiyor.
+           * Koordinat gönderilmiyor — YALNIZCA VARLIĞI. Eskiden bir onay
+           * kutusu koordinatı serbest metin konum alanına yazabiliyordu;
+           * o alan da o kutu da kalktı. Bugün ham enlem-boylamın
+           * sunucuya ulaşabileceği hiçbir yol yok.
            */
           exif: exif
             ? {
@@ -386,7 +401,6 @@ export function UploadWizardPage() {
         : {}),
     });
     setExif(null);
-    setUseExifGps(false);
     /* Yeni dosya, yeni kadraj: önceki seçim başka bir görüntüye aitti. */
     setCrop(FULL_FRAME);
     setExifState('reading');
@@ -426,6 +440,12 @@ export function UploadWizardPage() {
         return state.fileName.trim().length > 0;
       case 1:
         return state.title.trim().length > 0;
+      case 2:
+        /* İl VE ilçe zorunlu. Konum artık künyenin isteğe bağlı bir
+           süsü değil: galeri süzgeci, Bortle tahmini ve "yakınımdaki
+           kareler" üçü de buna dayanıyor ve boş bırakılan bir konum
+           üçünü birden sessizce çalışmaz hâle getiriyordu. */
+        return state.city.trim() !== '' && state.district.trim() !== '';
       case 4:
         /* Palet seçilmeden yayın adımına geçilemiyor: `AstroPhoto.palette`
            zorunlu ve galeri süzgeci ona dayanıyor. Sihirbaz bunu hiç
@@ -601,28 +621,22 @@ export function UploadWizardPage() {
                      * her zaman gizlemektir. Onay açıkça istenir.
                      */
                     <div className="border-t border-warning/35 px-3 py-2.5">
+                      {/*
+                        UYARI DURUYOR, ONAY KUTUSU KALKTI.
+
+                        Kutu, koordinatı serbest metin konum alanına
+                        yazıyordu. O alan artık yok: konum il ve ilçeden
+                        ibaret ve ham koordinatın yazılacağı bir yer
+                        kalmadı. Uyarının kendisi kalıyor çünkü asıl işi
+                        farklı — kullanıcının dosyasında ne olduğunu ona
+                        söylemek.
+                      */}
                       <p className="text-body-sm leading-relaxed text-warning">
-                        Bu dosya <strong>GPS koordinatı taşıyor</strong>. Konum
-                        formunuza yazılmadı ve yayımlanmayacak; yalnızca
-                        haberiniz olsun diye bildiriyoruz.
+                        Bu dosya <strong>GPS koordinatı taşıyor</strong>.
+                        Koordinat sunucuya gönderilmiyor ve
+                        yayımlanmıyor; yalnızca haberiniz olsun diye
+                        bildiriyoruz.
                       </p>
-                      <label className="label mt-2 flex cursor-pointer items-center gap-2 text-muted-foreground has-[:checked]:text-foreground">
-                        <input
-                          type="checkbox"
-                          checked={useExifGps}
-                          onChange={(e) => {
-                            setUseExifGps(e.target.checked);
-                            if (e.target.checked && exif.gps) {
-                              patch({
-                                locationLabel: `${exif.gps.latitude.toFixed(4)}, ${exif.gps.longitude.toFixed(4)}`,
-                                locationVisibility: 'approximate',
-                              });
-                            }
-                          }}
-                          className="h-3.5 w-3.5 rounded-card border-border accent-primary"
-                        />
-                        Koordinatı konum alanına yaz (yaklaşık görünürlükle)
-                      </label>
                     </div>
                   )}
                 </div>
@@ -707,48 +721,45 @@ export function UploadWizardPage() {
             <div className="space-y-5">
               <StepTitle
                 title="Çekim oturumu"
-                hint="Konum görünürlüğünü sen seçersin; GPS asla otomatik yayımlanmaz (§15.3)"
+                hint="Konum il ve ilçe düzeyinde kaydedilir; GPS koordinatı hiçbir zaman yayımlanmaz (§15.3)"
               />
-              <div className="grid gap-5 sm:grid-cols-2">
-                <Field label="Çekim tarihi" htmlFor="w-date">
-                  <Input
-                    id="w-date"
-                    type="date"
-                    value={state.capturedAt}
-                    onChange={(e) => patch({ capturedAt: e.target.value })}
-                  />
-                </Field>
-                <Field label="Lokasyon (metin)" htmlFor="w-loc">
-                  <Input
-                    id="w-loc"
-                    placeholder="ör. Saklıkent, Antalya"
-                    value={state.locationLabel}
-                    onChange={(e) => patch({ locationLabel: e.target.value })}
-                  />
-                </Field>
-              </div>
-              <Field
-                label="Konum görünürlüğü"
-                htmlFor="w-vis"
-                hint="Tam koordinat yalnızca açık onayınla kamuya açılır."
-              >
-                <select
-                  id="w-vis"
-                  className={selectClass}
-                  value={state.locationVisibility}
-                  onChange={(e) =>
-                    patch({
-                      locationVisibility: e.target
-                        .value as WizardState['locationVisibility'],
-                    })
-                  }
-                >
-                  <option value="exact">Tam koordinat</option>
-                  <option value="approximate">Yaklaşık (önerilen)</option>
-                  <option value="region">İl/ilçe düzeyi</option>
-                  <option value="hidden">Gizli</option>
-                </select>
+              <Field label="Çekim tarihi" htmlFor="w-date">
+                <Input
+                  id="w-date"
+                  type="date"
+                  value={state.capturedAt}
+                  onChange={(e) => patch({ capturedAt: e.target.value })}
+                />
               </Field>
+              <Field
+                label="Çekim konumu (il / ilçe)"
+                htmlFor="w-location"
+                hint="Zorunlu — ilçe ya da il adı yazıp listeden seçin"
+              >
+                {/*
+                  TEK KUTU, İKİ AÇILIR LİSTE DEĞİL.
+
+                  İlk sürüm önce il sonra ilçe soruyordu; doğru veriyi
+                  topluyor ama yanlış soruyu önce soruyordu. "Gölbaşı"
+                  yazmak isteyen biri, önce onun hangi ilde olduğunu
+                  hatırlamak zorunda kalıyordu — oysa aradığı bilgi tam
+                  olarak oydu.
+                */}
+                <LocationTypeahead
+                  id="w-location"
+                  city={state.city}
+                  district={state.district}
+                  onSelect={(secim) => patch(secim)}
+                  onClear={() => patch({ city: '', district: '' })}
+                  required
+                />
+              </Field>
+              <p className="text-meta leading-relaxed text-muted-foreground">
+                Konum bu tek alandan ibaret. Gözlem yerinizin tam
+                koordinatı ne soruluyor ne de saklanıyor — il/ilçe hem
+                galeri süzgeci hem ışık kirliliği tahmini için yeterli,
+                hem de nerede gözlem yaptığınızı açığa çıkarmıyor.
+              </p>
             </div>
           )}
 

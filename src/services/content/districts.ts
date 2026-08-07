@@ -91,6 +91,147 @@ export async function fetchDistricts(provinceCode: number): Promise<District[]> 
   return items;
 }
 
+/**
+ * TÜM İLÇELER, İL ADIYLA BİRLİKTE — arama kutusu için.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * NEDEN HEPSİ BİRDEN
+ *
+ * `fetchDistricts` bir ilin listesini veriyor ve iki kademeli seçim
+ * için doğru olan bu. Ama kullanıcı "gölb" yazdığında hangi ilde
+ * olduğunu HENÜZ SÖYLEMEMİŞ oluyor — zaten aramasının sebebi de o.
+ * Önce il sormak, en çok yardıma ihtiyaç duyulan anda yardımı geri
+ * çekmek demek.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * NEDEN TEK SEFERDE, HER TUŞTA SUNUCUYA SORMAK YERİNE
+ *
+ * 974 satır 154 kB (sıkıştırılmış ~30 kB); bir kez iniyor ve modülde
+ * kalıyor. Her tuşta sunucuya
+ * sormak sekiz harflik bir aramada sekiz istek ve her birinde ağ gecikmesi
+ * demekti — yazarken duraklayan bir liste, yazmayı zorlaştırıyor.
+ *
+ * Paketlenmiş JS'e girmiyor (`districts.ts` başlığındaki gerekçe):
+ * indirilme anı kullanıcının arama kutusuna dokunduğu an.
+ */
+export interface DistrictWithProvince extends District {
+  provinceName: string;
+}
+
+let tumIlceler: Promise<DistrictWithProvince[]> | null = null;
+
+export function fetchAllDistricts(): Promise<DistrictWithProvince[]> {
+  if (tumIlceler) return tumIlceler;
+  if (!isSupabaseConfigured) return Promise.resolve([]);
+
+  tumIlceler = (async () => {
+    const promise = getSupabase();
+    if (!promise) return [];
+    const supabase = await promise;
+
+    const { data, error } = await supabase
+      .from('districts')
+      .select(
+        'province_code, name, slug, search_name, latitude, longitude, provinces(name)'
+      )
+      .eq('is_active', true)
+      .order('search_name')
+      /* PostgREST varsayılan satır tavanı 1.000 ve ilçe sayısı 974 —
+         sınıra çok yakın. Yeni bir ilçe eklendiğinde liste sessizce
+         kesilmesin diye tavan açıkça yükseltiliyor. */
+      .range(0, 1999);
+
+    if (error) {
+      /* Hata kalıcı bir söz olmamalı: bir sonraki deneme yeniden
+         istesin, boş listeye takılıp kalmasın. */
+      tumIlceler = null;
+      return [];
+    }
+
+    return ((data ?? []) as (Row & { provinces: { name: string } | { name: string }[] | null })[]).map(
+      (r) => ({
+        provinceCode: r.province_code,
+        name: r.name,
+        slug: r.slug,
+        searchName: r.search_name,
+        latitude: sayi(r.latitude),
+        longitude: sayi(r.longitude),
+        provinceName: Array.isArray(r.provinces)
+          ? (r.provinces[0]?.name ?? '')
+          : (r.provinces?.name ?? ''),
+      })
+    );
+  })();
+
+  return tumIlceler;
+}
+
+/**
+ * "gölb" → Ankara Gölbaşı, Adıyaman Gölbaşı…
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * SIRALAMA ELLE YAZILDI
+ *
+ * Tek bir "içeriyor" testi doğru sırayı vermiyor. "gölb" yazan biri
+ * Gölbaşı'nı arıyor; salt içerme testi "Çayırlı" gibi ilgisiz bir
+ * kaydı da aynı ağırlıkta bulurdu. Öncelik açık:
+ *
+ *   1  ilçe adı bu ÖNEKLE başlıyor        ("gölb" → Gölbaşı)
+ *   2  ilçe adı bu metni İÇERİYOR         ("başı" → Gölbaşı)
+ *   3  il adı önekle başlıyor             ("anka" → Ankara'nın ilçeleri)
+ *
+ * Aynı öncelikte olanlar il adına, sonra ilçe adına göre alfabetik:
+ * iki Gölbaşı varsa hangisinin önce geleceği rastgele olmamalı.
+ *
+ * ARAMA HEM İLÇEDE HEM İLDE ÇALIŞIYOR: kullanıcı "ankara gölbaşı" da
+ * yazabilir, sadece "gölbaşı" da, sadece "ankara" da.
+ */
+export function searchDistricts(
+  items: DistrictWithProvince[],
+  query: string,
+  limit = 12
+): DistrictWithProvince[] {
+  const q = normalizeTr(query.trim());
+  if (!q) return [];
+
+  /* Boşluklu girdi ("ankara gölb") iki parçaya bölünüyor: her parça
+     ilçe ya da il adında geçmeli. Tek bir birleşik metinde aramak
+     "ankaragölb" gibi bir dizeyi arardı ve hiçbir şey bulmazdı. */
+  const parcalar = q.split(/\s+/).filter(Boolean);
+
+  const puanli: { d: DistrictWithProvince; oncelik: number }[] = [];
+
+  for (const d of items) {
+    const ilce = normalizeTr(d.name);
+    const il = normalizeTr(d.provinceName);
+
+    const hepsiTutuyor = parcalar.every(
+      (p) => ilce.includes(p) || il.includes(p)
+    );
+    if (!hepsiTutuyor) continue;
+
+    const ilk = parcalar[0];
+    const oncelik = ilce.startsWith(ilk)
+      ? 1
+      : ilce.includes(ilk)
+        ? 2
+        : il.startsWith(ilk)
+          ? 3
+          : 4;
+
+    puanli.push({ d, oncelik });
+  }
+
+  puanli.sort(
+    (a, b) =>
+      a.oncelik - b.oncelik ||
+      a.d.provinceName.localeCompare(b.d.provinceName, 'tr') ||
+      a.d.name.localeCompare(b.d.name, 'tr')
+  );
+
+  return puanli.slice(0, limit).map((x) => x.d);
+}
+
 export interface DistrictsState {
   items: District[];
   loading: boolean;

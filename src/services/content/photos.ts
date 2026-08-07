@@ -79,6 +79,8 @@ interface PhotoRow {
   published_at: string | null;
   target_label: string | null;
   location_label: string | null;
+  city?: string | null;
+  district?: string | null;
   location_visibility: string | null;
   bortle: number | null;
   sqm: number | string | null;
@@ -168,9 +170,15 @@ function count(
 /**
  * "Saklıkent, Antalya" → "Antalya".
  *
- * Şehir ayrı bir kolon değil çünkü konum görünürlüğü kullanıcıya ait:
- * "bölge" seçen biri ilçe adı yazmıyor. Etiketin son parçası pratikte her
- * zaman şehir; virgül yoksa etiketin kendisi kullanılıyor.
+ * ARTIK YALNIZCA ESKİ KAYITLAR İÇİN. `20260807160000` ile `city` ve
+ * `district` gerçek kolonlar oldu ve yükleme formunda zorunlu; yeni
+ * kayıtlarda tahmine gerek yok.
+ *
+ * Bu fonksiyonun neden yetersiz olduğu da orada yazılı: "Saklıkent,
+ * Antalya" doğru çalışıyor ama "Antalya, Saklıkent" yanlış sonuç
+ * veriyor ve "evin balkonu" yazan biri "Evin Balkonu" adında bir şehir
+ * üretiyordu. Kolonu olmayan eski satırlar için elimizdeki tek şey bu
+ * tahmin — silmek onları süzgeçten tamamen düşürürdü.
  */
 export function cityFromLabel(label: string | null): string {
   if (!label) return 'Bilinmiyor';
@@ -355,13 +363,16 @@ export function mapPhotoRow(row: PhotoRow): AstroPhoto {
           `${round.iso_year}-${String(round.iso_week).padStart(2, '0')}`
       ),
     year: capturedAt ? new Date(capturedAt).getFullYear() : 0,
-    city: cityFromLabel(row.location_label),
+    /* Gerçek kolon varsa O kullanılıyor; yoksa eski etiketten tahmin.
+       Sıra önemli: tahmin bir yedek, ana yol değil. */
+    city: row.city ?? cityFromLabel(row.location_label),
+    district: row.district ?? undefined,
   };
 }
 
 const SELECT =
   'id, user_id, slug, title, description, photo_type, palette, captured_at, published_at, ' +
-  'target_label, location_label, location_visibility, bortle, sqm, license, ' +
+  'target_label, city, district, location_label, location_visibility, bortle, sqm, license, ' +
   'allow_download, watermark_required, ' +
   'ai_declared, like_count, comment_count, rating_sum, rating_count, editors_pick, ' +
   'display_path, thumb_path, setup_text, ' +

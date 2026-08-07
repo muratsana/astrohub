@@ -680,19 +680,46 @@ function CozumDugmesi({
  */
 function LocationTab({ photo }: { photo: AstroPhoto }) {
   const loc = photo.location;
+
+  /*
+   * İKİ NESİL KAYIT, İKİ FARKLI GÖSTERİM.
+   *
+   * `20260807160000` sonrası yüklenen kayıtlarda konum İL ve İLÇE
+   * kolonlarında ve ikisi de zorunlu. Öncekilerde serbest bir metin
+   * ("Saklıkent, Antalya", "evin balkonu") ve kullanıcının seçtiği bir
+   * görünürlük seviyesi var.
+   *
+   * Eski kayıtları yeni biçimde göstermek için etiketten il çıkarmak,
+   * tam olarak bu değişikliğin ortadan kaldırdığı tahmini geri
+   * getirirdi. Onlar kendi etiketleriyle görünüyor.
+   *
+   * GÖRÜNÜRLÜK SATIRI YALNIZCA ESKİ KAYITLARDA. Yeni kayıtların hepsi
+   * il/ilçe düzeyinde; herkeste aynı olan bir değeri satır olarak
+   * yazmak, seçilebilir bir ayar olduğu izlenimi verirdi.
+   */
+  const yapisal = Boolean(photo.city && photo.district);
+
   const visibilityLabel = {
     exact: 'Tam koordinat',
     approximate: 'Yaklaşık konum',
-    region: 'Bölge düzeyi',
+    region: 'İl/ilçe düzeyi',
     hidden: 'Gizli',
   }[loc.visibility];
+
   return (
     <div className="space-y-4">
       <DL
-        rows={[
-          ['Lokasyon', loc.label],
-          ['Konum görünürlüğü', visibilityLabel],
-        ]}
+        rows={
+          yapisal
+            ? [
+                ['İl', photo.city],
+                ['İlçe', photo.district!],
+              ]
+            : [
+                ['Lokasyon', loc.label],
+                ['Konum görünürlüğü', visibilityLabel],
+              ]
+        }
       />
       <BortleIndicator
         bortle={loc.bortle}

@@ -267,4 +267,12 @@ export interface AstroPhoto {
   photoOfWeekWins?: string[];
   year: number;
   city: string;
+  /**
+   * İlçe — `20260807160000` sonrası yüklenen kayıtlarda dolu.
+   *
+   * Eski kayıtlarda YOK ve uydurulmuyor: `location_label` serbest
+   * metindi ve ondan ilçe çıkarmak, şehir tahmininin aynı hatasını bir
+   * kademe daha ince yapmak olurdu.
+   */
+  district?: string;
 }
