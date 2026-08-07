@@ -149,6 +149,23 @@
   /* İçerik genişliği (§6.4) */
   --spacing-content: 1520px;
 
+  /*
+   * YÖNETİM PANELİ OKUMA GENİŞLİĞİ (yenileme planı H3).
+   *
+   * Panel `Container`ı `max-w-none` ile çağırıyordu: kenar çubuğu 17rem
+   * sabit kaldığı için içerik sütunu ekran ne kadar genişse o kadar
+   * uzuyordu. 2560px'lik bir ekranda tek satırlık bir etiket ile onun
+   * değeri arasında 2000px boşluk kalıyor ve göz ikisini
+   * eşleştiremiyordu — "karışık" şikayetinin ölçülebilir tarafı bu.
+   *
+   * 1400px, kenar çubuğu düşüldükten sonra ~1150px'lik bir çalışma
+   * sütunu bırakıyor: en geniş kayıt satırı sığıyor, göz kaymıyor.
+   * `--spacing-content` (1520) buraya uymuyor — o değer public sayfaların
+   * tam genişlikli galeri ve harita blokları için seçilmişti; panelde
+   * okunan şey ızgara değil satır.
+   */
+  --spacing-admin: 1400px;
+
   /* Sertlik: "dengeli" — 2px, her yerde aynı */
   --radius-card: 2px;
 

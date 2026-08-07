@@ -1060,7 +1060,15 @@ function Shell({
         description="Moderasyon kuyruğu ve içerik yönetimi."
         noIndex
       />
-      <Container className={cn('max-w-none py-6 sm:py-8')}>
+      {/*
+        OKUMA GENİŞLİĞİ SINIRI (H3). Eskiden `max-w-none` idi ve içerik
+        ekran genişliğince yayılıyordu. Geniş bir tablo artık sayfa
+        gövdesini değil kendi kutusunu kaydırıyor — bunu sağlayan
+        `<main>` üzerindeki `min-w-0`: ızgara sütununun içeriğe göre
+        büyümesini kesiyor, taşan blok kendi `overflow-x` kutusunda
+        kalıyor.
+      */}
+      <Container className={cn('max-w-admin py-6 sm:py-8')}>
         <div className="grid gap-4 lg:grid-cols-[16rem_minmax(0,1fr)] xl:grid-cols-[17rem_minmax(0,1fr)]">
           <AdminSidebar active={active} onChange={onChange} />
           <main className="min-w-0">
