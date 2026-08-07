@@ -1,39 +1,33 @@
-import { useEffect, useState } from 'react';
-import { useAuth } from '@/features/auth/AuthContext';
-import { getSupabase } from '@/services/supabase/client';
+import {
+  usePermissions,
+  roleLabels,
+  type AppRole,
+  type PermissionsStatus,
+} from '@/features/auth/usePermissions';
 
 /**
- * KULLANICI ROLLERİ (§15.1).
+ * ROLLER — ARTIK KENDİ SORGUSU YOK.
  *
- * Roller `user_roles` tablosundan okunur — JWT metadata'sından DEĞİL.
- * Metadata istemci tarafından değiştirilebilir bir alandır ve "admin mi"
- * sorusunun cevabı asla oradan alınmamalı.
+ * Bu kanca `user_roles` tablosunu doğrudan okuyordu. Yenileme planı
+ * FAZ 1, görev 5 tek bir yetki kapısı istiyor ve §6.8 aynı sorunun
+ * ikinci bir yolunu yasaklıyor: iki okuma yolu zamanla ayrışır ve
+ * ayrıştıklarında ortaya çıkan hata görünmez olur — menüde gizli ama
+ * API'den çağrılabilen bir özellik.
  *
- * BURADAKİ KONTROL YALNIZCA ARAYÜZ İÇİNDİR. Yetkiyi gerçekten zorlayan şey
- * RLS politikalarıdır: rol taşımayan bir kullanıcı `moderation_queue`
- * sorgusundan boş sonuç alır, sayfa "yetkin yok" dese de demese de. Bu ayrım
- * önemli — istemci tarafı kontrolü bir güvenlik sınırı değil, sadece
- * kullanıcıyı boş bir ekranla baş başa bırakmama nezaketidir.
+ * Bu yüzden gövde `usePermissions()`e devredildi. Ad ve dönüş şekli
+ * korunuyor: dokuz çağıran dosya değişmeden çalışıyor, ama hepsi artık
+ * aynı yanıtı görüyor — ve o yanıt yalnızca rolleri değil statüyü,
+ * izinleri ve kotaları da taşıyor.
+ *
+ * YENİ KOD `usePermissions()` KULLANMALI. Buradaki şekil yalnızca rol
+ * soruyor; "bu kullanıcı ilan yayımlayabilir mi" sorusunun cevabı rol
+ * değil izin — ve o yalnızca `usePermissions().izin(...)` içinde var.
  */
 
-export type AppRole =
-  | 'member'
-  | 'verified_organizer'
-  | 'club_manager'
-  | 'content_editor'
-  | 'moderator'
-  | 'admin';
+export type { AppRole };
+export { roleLabels };
 
-export const roleLabels: Record<AppRole, string> = {
-  member: 'Üye',
-  verified_organizer: 'Doğrulanmış Organizatör',
-  club_manager: 'Kulüp Yöneticisi',
-  content_editor: 'İçerik Editörü',
-  moderator: 'Moderatör',
-  admin: 'Yönetici',
-};
-
-export type RolesStatus = 'idle' | 'loading' | 'ready' | 'error' | 'unconfigured';
+export type RolesStatus = PermissionsStatus;
 
 export interface RolesState {
   status: RolesStatus;
@@ -45,77 +39,14 @@ export interface RolesState {
   error: string | null;
 }
 
-const EMPTY: RolesState = {
-  status: 'idle',
-  roles: [],
-  isAdmin: false,
-  isModerator: false,
-  canAccessAdmin: false,
-  error: null,
-};
-
 export function useRoles(): RolesState {
-  const { user, loading, configured } = useAuth();
-  const [state, setState] = useState<RolesState>(EMPTY);
-
-  useEffect(() => {
-    if (!configured) {
-      setState({ ...EMPTY, status: 'unconfigured' });
-      return;
-    }
-    if (loading) {
-      setState({ ...EMPTY, status: 'loading' });
-      return;
-    }
-    if (!user) {
-      setState({ ...EMPTY, status: 'ready' });
-      return;
-    }
-
-    let active = true;
-    setState({ ...EMPTY, status: 'loading' });
-
-    const clientPromise = getSupabase();
-    if (!clientPromise) {
-      setState({ ...EMPTY, status: 'unconfigured' });
-      return;
-    }
-
-    void clientPromise
-      .then((client) =>
-        client.from('user_roles').select('role').eq('user_id', user.id)
-      )
-      .then(({ data, error }) => {
-        if (!active) return;
-        if (error) {
-          setState({ ...EMPTY, status: 'error', error: error.message });
-          return;
-        }
-        const roles = (data ?? []).map((row) => row.role as AppRole);
-        const isAdmin = roles.includes('admin');
-        const isModerator = roles.includes('moderator');
-        setState({
-          status: 'ready',
-          roles,
-          isAdmin,
-          isModerator,
-          canAccessAdmin: isAdmin || isModerator,
-          error: null,
-        });
-      })
-      .catch((error: unknown) => {
-        if (!active) return;
-        setState({
-          ...EMPTY,
-          status: 'error',
-          error: error instanceof Error ? error.message : 'Roller okunamadı',
-        });
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [user, loading, configured]);
-
-  return state;
+  const p = usePermissions();
+  return {
+    status: p.status,
+    roles: p.roles,
+    isAdmin: p.isAdmin,
+    isModerator: p.isModerator,
+    canAccessAdmin: p.canAccessAdmin,
+    error: p.error,
+  };
 }

@@ -293,7 +293,7 @@
   // dep: önkoşul faz kimlikleri. Önkoşulu tamamlanmamış faz "önkoşul bekliyor"
   // etiketiyle işaretlenir; kilitlenmez, yalnızca uyarır.
   const PHASES = [
-    { id: "0", title: "Temizlik ve temel", dep: [], note: "Önkoşul. Bozuk panelin üstüne özellik eklemek, hataların kaynağını belirsizleştirir.", tasks: [
+    { id: "0", title: "Temizlik ve temel", dep: [], note: "<b>5. ve 6. madde KAPSAM DIŞI bırakıldı</b> (kullanıcı kararı, 7 Ağu): K1'in gerekçesi olan H3 tek satırlık bir genişlik hatası çıktı, H4 hiç yeniden üretilemedi. Altı modül silinmiyor; sonraki fazlar onların üzerine inşa edilecek. Maddeler §9.1 gereği panoda bırakıldı, durumu değiştirilmedi.", tasks: [
       "admin_dashboard RPC'sini public şemaya sarmala (H1)",
       "Yeni panel kabuğunu kur (kenar çubuğu, üst bar, sayfa başlığı)",
       "Tema köprüsü — eksik token'ları var() ile bağla, sabit renk yazma (H4)",
@@ -493,18 +493,31 @@
     //      (20260807190000_admin_dashboard_public_sarmalayici.sql) ve
     //      src/app/rpcExposure.test.ts hatanın sınıfını kalıcı kapattı.
     "0:0": "tamamlandi",
-    // 0:1 / 0:2  Kabuk (kenar çubuğu + üst bar + kırıntı yolu) ZATEN
-    //      kurulu ve panel temayı takip ediyor — sabit renk yok. Yani
-    //      H4 bu depoda yeniden üretilemedi. İkisi de K1 kararına bağlı:
-    //      panel shadcn/StageHub yerleşimine mi geçecek?
-    "0:1": "yapiliyor",
-    "0:2": "yapiliyor",
+    // 0:1 / 0:2  Ölçüldü, ZATEN KURULU: Shell + AdminSidebar + PageHeader
+    //      (kırıntı yolu dahil) yerinde ve panelde tek bir sabit renk
+    //      yok — 49 dosya tema token'larını kullanıyor, data-theme'i
+    //      takip ediyor. Yani H4 bu depoda yeniden üretilemedi.
+    //      K1 kararı "silme, üzerine inşa et" olduğu için shadcn'e geçiş
+    //      yapılmıyor; token köprüsüne de gerek kalmıyor.
+    "0:1": "tamamlandi",
+    "0:2": "tamamlandi",
     // 0:3  max-w-none → max-w-admin (1400px). H3 gerçekti, kapandı.
     "0:3": "tamamlandi",
     // 0:4 / 0:5  admin-legacy'ye taşıma ve silme K1 kararını bekliyor —
     //      4.231 satır çalışan ve 31 testi geçen kod söz konusu.
     // 0:6  npm audit fix uygulandı: 2 açık → 0.
     "0:6": "tamamlandi",
+
+    // ── FAZ 1 — yetki mimarisi ──────────────────────────────────────────
+    // Hepsi yerel PostgreSQL 16'da çalıştırılarak doğrulandı; kabul
+    // kriterlerinin tamamı (negatif testler dahil) geçti.
+    "1:0": "tamamlandi",   // app_role'a jury eklendi (ayrı göç — enum kuralı)
+    "1:1": "tamamlandi",   // features + role_permissions + tier_permissions
+    "1:2": "tamamlandi",   // tier_limits; app_settings.quotas oradan taşındı
+    "1:3": "tamamlandi",   // app.etkin_statu() + app.izin_var()
+    "1:4": "tamamlandi",   // app.kota(); setup ve foto kotası tetikleyicide
+    "1:5": "tamamlandi",   // pg_cron: uyelik-suresi-dusur
+    "1:6": "tamamlandi",   // usePermissions(); useRoles ona devredildi
 
     // ── Kodla bitmeyenler (plan §10.2) — baştan işaretlendi ─────────────
     // Bunlar bir engel çıktığında değil, engel BİLİNDİĞİ için şimdiden
@@ -515,7 +528,7 @@
     "13:7": "sende",   // D11 — masaüstü köprü dağıtımı
   };
 
-  const GUNCELLEME = "7 Ağustos 2026 — FAZ 0: H1 ve H3 kapandı, K1 kararı bekleniyor";
+  const GUNCELLEME = "7 Ağustos 2026 — FAZ 1 tamam (yerel veritabanında doğrulandı)";
 
   /* ── Buradan aşağısı görüntüleme mantığı; değiştirmeye gerek yok ─────── */
 
