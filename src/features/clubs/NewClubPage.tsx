@@ -4,14 +4,13 @@ import { useNavigate } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Panel } from '@/components/ui/Panel';
-import { DistrictSelect } from '@/components/ui/DistrictSelect';
 import { Field } from '@/components/ui/Field';
 import { Input, Select } from '@/components/ui/Input';
 import { Button, ButtonLink } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { useAuth } from '@/features/auth/AuthContext';
-import { cities as turkeyCities } from '@/features/location/cities';
+import { LocationTypeahead } from '@/components/ui/LocationTypeahead';
 import {
   clubKindLabels,
   clubTopicLabels,
@@ -340,7 +339,13 @@ function blankDraft(): ClubDraft {
   return {
     name: '',
     kind: 'dernek',
-    city: 'İstanbul',
+    /* BOŞ BAŞLIYOR. Eskiden 'İstanbul'du çünkü alan bir açılır listeydi
+       ve boş bir seçeneği yoktu — hiç dokunmayan kullanıcının kulübü
+       İstanbul'a kaydediliyordu. Doğrulama zaten il istiyor; boş
+       başlamak kullanıcıyı seçim yapmaya zorluyor, yanlış bir
+       varsayılanı onaylatmıyor. */
+    city: '',
+    district: '',
     foundedOn: '',
     place: '',
     topics: [],
@@ -459,25 +464,34 @@ export function NewClubPage() {
                     ))}
                   </Select>
                 </Field>
-                <Field label="İl" htmlFor="club-city">
-                  <Select
-                    id="club-city"
-                    value={draft.city}
-                    onChange={(e) => set('city', e.target.value)}
-                  >
-                    {turkeyCities.map((city) => (
-                      <option key={city.id} value={city.name}>
-                        {city.name}
-                      </option>
-                    ))}
-                  </Select>
-                </Field>
-                <Field label="İlçe" htmlFor="club-district">
-                  <DistrictSelect
-                    id="club-district"
-                    provinceName={draft.city}
-                    value={draft.district ?? ''}
-                    onChange={(v) => set('district', v)}
+                <Field label="Konum (il / ilçe)" htmlFor="club-location">
+                  {/*
+                    ESKİDEN 81 İLLİK BİR AÇILIR LİSTE + ayrı bir ilçe
+                    listesiydi. Açılır listenin sessiz bir sorunu vardı:
+                    ilk seçenek "İstanbul" olduğu için hiç dokunmayan
+                    kullanıcının kulübü İstanbul'a kaydediliyordu —
+                    boş bırakılamayan bir alan, varsayılanını doğru
+                    cevap gibi gösteriyor.
+
+                    `allowProvinceOnly` AÇIK: bir kulüp il genelinde
+                    faaliyet gösterebilir ve ilçe hiçbir zaman zorunlu
+                    değildi.
+                  */}
+                  <LocationTypeahead
+                    id="club-location"
+                    city={draft.city}
+                    district={draft.district ?? ''}
+                    onSelect={(secim) =>
+                      setDraft((d) => ({
+                        ...d,
+                        city: secim.city,
+                        district: secim.district,
+                      }))
+                    }
+                    onClear={() =>
+                      setDraft((d) => ({ ...d, city: '', district: '' }))
+                    }
+                    allowProvinceOnly
                   />
                 </Field>
                 <Field label="Kuruluş tarihi" htmlFor="club-founded">

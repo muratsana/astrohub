@@ -21,6 +21,19 @@ import { fetchProvinces } from '@/services/content/provinces';
  *
  * Ölçülen kural: alan `provinceName` ile doluyor — doluysa 81 ilden
  * biri, boşsa alan da BOŞ. Yanlış bir ili hazır seçmektense sordurmak.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * ALAN AÇILIR LİSTEDEN ARAMA KUTUSUNA GEÇTİ
+ *
+ * Testler yeniden yazıldı ama ÖLÇÜLEN KURAL AYNI. Form artık il ve
+ * ilçeyi tek bir `LocationTypeahead` ile soruyor; seçim yapılmışken
+ * kutu yerine bir özet satırı ("Ankara · il geneli"), yapılmamışken
+ * arama kutusu görünüyor. İddialar bu iki duruma bakıyor.
+ *
+ * Eski sürümün ölçtüğü "(listede yok)" seçeneği artık YOK — arama
+ * kutusu bilinmeyen bir değeri seçenek olarak sunmuyor, dolayısıyla
+ * "Cihaz konumu" gibi bir metin forma hiç giremiyor. Kuralın kendisi
+ * korunuyor: doldurma yalnızca `provinceName` üzerinden.
  */
 
 const ANKARA = {
@@ -55,8 +68,9 @@ function ac() {
   );
 }
 
-function sehirAlani() {
-  return screen.getByLabelText(/Şehir/) as HTMLSelectElement;
+/** Seçim yapılmamışken görünen arama kutusu; seçim varsa `null`. */
+function aramaKutusu() {
+  return screen.queryByRole('searchbox');
 }
 
 beforeEach(() => {
@@ -73,7 +87,9 @@ describe('yeni ilan — şehir alanı', () => {
 
     ac();
 
-    await waitFor(() => expect(sehirAlani().value).toBe('Ankara'));
+    /* Seçim dolu: kutu yerine özet satırı ve içinde il adı. */
+    await waitFor(() => expect(screen.getByText('Ankara')).toBeInTheDocument());
+    expect(aramaKutusu()).not.toBeInTheDocument();
   });
 
   it('cihaz konumu ile eşleşmiyorsa alan boş açılıyor', async () => {
@@ -90,9 +106,13 @@ describe('yeni ilan — şehir alanı', () => {
 
     ac();
 
-    await waitFor(() => expect(sehirAlani()).toBeInTheDocument());
-    expect(sehirAlani().value).toBe('');
-    expect(screen.queryByText(/listede yok/)).not.toBeInTheDocument();
+    /* Seçim yok: arama kutusu duruyor ve "Cihaz konumu" hiçbir yerde
+       bir konum değeri olarak görünmüyor. */
+    await waitFor(() => expect(aramaKutusu()).toBeInTheDocument());
+    expect(aramaKutusu()).toHaveValue('');
+    expect(
+      screen.queryByRole('button', { name: /değiştir/i })
+    ).not.toBeInTheDocument();
   });
 
   it('etiket ilçe taşısa bile alana yalnızca il adı giriyor', async () => {
@@ -110,9 +130,12 @@ describe('yeni ilan — şehir alanı', () => {
 
     ac();
 
-    await waitFor(() => expect(sehirAlani().value).toBe('Ankara'));
-    /* Etiketin tamamı alana girseydi seçici onu "(listede yok)" diye
-       koruyacaktı — o seçeneğin YOKLUĞU asıl ölçüm. */
-    expect(screen.queryByText(/listede yok/)).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText('Ankara')).toBeInTheDocument());
+    /* Etiketin tamamı alana girseydi özet satırında "Ankara / Çankaya"
+       yazardı. İlçe cihaz konumundan ÖN DOLDURULMUYOR: `districtName`
+       bir tahmin (en yakın merkez, 40 km'ye kadar) ve kullanıcının
+       doğrulamadığı bir adresi ilana yazmak olurdu. */
+    expect(screen.queryByText('Ankara / Çankaya')).not.toBeInTheDocument();
+    expect(screen.getByText('il geneli')).toBeInTheDocument();
   });
 });

@@ -15,6 +15,18 @@ const veri = vi.hoisted(() => ({
   hata: false,
 }));
 
+vi.mock('@/services/content/provinces', () => ({
+  fetchProvinces: () =>
+    Promise.resolve({
+      items: [
+        { code: 6, name: 'Ankara', isActive: true },
+        { code: 2, name: 'Adıyaman', isActive: true },
+        { code: 34, name: 'İstanbul', isActive: true },
+      ],
+      source: 'seed',
+    }),
+}));
+
 vi.mock('@/services/content/districts', async () => {
   const gercek =
     await vi.importActual<typeof import('@/services/content/districts')>(
@@ -142,5 +154,65 @@ describe('LocationTypeahead', () => {
     await waitFor(() => {
       expect(screen.getByText(/yüklenemedi/i)).toBeInTheDocument();
     });
+  });
+});
+
+describe('LocationTypeahead · il geneli', () => {
+  it('kapalıyken il satırı çıkmıyor', async () => {
+    // Fotoğrafta ilçe zorunlu: "Ankara geneli" diye bir gözlem noktası
+    // yok ve o satırı göstermek zorunluluğu delerdi.
+    ciz();
+    fireEvent.change(screen.getByRole('searchbox'), {
+      target: { value: 'ankara' },
+    });
+    await waitFor(() => screen.getAllByText('Ankara'));
+    expect(screen.queryByText('il geneli')).not.toBeInTheDocument();
+  });
+
+  it('açıkken il satırı listenin başında', async () => {
+    ciz({ allowProvinceOnly: true });
+    fireEvent.change(screen.getByRole('searchbox'), {
+      target: { value: 'ankara' },
+    });
+    await waitFor(() => screen.getByText('il geneli'));
+
+    const satirlar = screen.getAllByRole('button');
+    expect(satirlar[0]).toHaveTextContent('Ankara');
+    expect(satirlar[0]).toHaveTextContent('il geneli');
+  });
+
+  it('il seçimi ilçeyi BOŞALTIYOR', async () => {
+    /* Önceki ilçe korunsaydı "Ankara geneli" seçen kullanıcı hâlâ
+       Gölbaşı'na bağlı kalırdı — seçtiğinin tersi. */
+    const { onSelect } = ciz({
+      allowProvinceOnly: true,
+      city: '',
+      district: '',
+    });
+    fireEvent.change(screen.getByRole('searchbox'), {
+      target: { value: 'ankara' },
+    });
+    await waitFor(() => screen.getByText('il geneli'));
+
+    fireEvent.click(screen.getByText('il geneli'));
+    expect(onSelect).toHaveBeenCalledWith({ city: 'Ankara', district: '' });
+  });
+
+  it('yalnızca ÖNEK eşleşen iller öneriliyor', async () => {
+    // "kara" yazınca Ankara'yı il geneli olarak önermek, kullanıcının
+    // hiç düşünmediği bir seçimi öne koymak olurdu.
+    ciz({ allowProvinceOnly: true });
+    fireEvent.change(screen.getByRole('searchbox'), {
+      target: { value: 'kara' },
+    });
+    await waitFor(() => screen.getByText(/eşleşen ilçe yok/i));
+    expect(screen.queryByText('il geneli')).not.toBeInTheDocument();
+  });
+
+  it('ilçesiz seçim de "dolu" sayılıyor', () => {
+    ciz({ allowProvinceOnly: true, city: 'Ankara', district: '' });
+    expect(screen.queryByRole('searchbox')).not.toBeInTheDocument();
+    expect(screen.getByText('Ankara')).toBeInTheDocument();
+    expect(screen.getByText('il geneli')).toBeInTheDocument();
   });
 });

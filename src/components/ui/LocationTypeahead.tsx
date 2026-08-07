@@ -7,6 +7,8 @@ import {
   searchDistricts,
   type DistrictWithProvince,
 } from '@/services/content/districts';
+import { fetchProvinces } from '@/services/content/provinces';
+import { normalizeTr } from '@/lib/text';
 
 /**
  * KONUM ARAMA KUTUSU — "gölb" yazınca Ankara Gölbaşı.
@@ -41,6 +43,23 @@ import {
  * yol açıyordu ve alanın DOLU olduğu da net görünmüyordu.
  *
  * ══════════════════════════════════════════════════════════════════════
+ * İL GENELİ SEÇENEĞİ — `allowProvinceOnly`
+ *
+ * Fotoğrafta ilçe ZORUNLU: bir kare belirli bir yerden çekiliyor ve
+ * "Ankara geneli" diye bir gözlem noktası yok.
+ *
+ * İlan, etkinlik ve kulüpte ise ilçe İSTEĞE BAĞLI ve olması gereken de
+ * bu — bir kulüp il genelinde faaliyet gösterebilir, çevrim içi bir
+ * etkinliğin ilçesi olmaz, kargoyla satılan bir teleskopun ilçesi
+ * alıcıyı ilgilendirmez. Bu üçünde arama sonuçlarına "Ankara · il
+ * geneli" gibi satırlar da giriyor.
+ *
+ * İkinci ve daha az görünür faydası: il listesi PAKETLENMİŞ bir yedekle
+ * geliyor (`provinces.ts`), ilçe listesi gelmiyor. İlçe isteği
+ * başarısız olduğunda il geneli seçeneği hâlâ çalışıyor ve zorunlu bir
+ * alan yüzünden form kilitlenmiyor.
+ *
+ * ══════════════════════════════════════════════════════════════════════
  * LİSTE YOKSA NE OLUYOR
  *
  * Sunucu yapılandırılmamışsa ya da istek başarısızsa liste boş kalıyor
@@ -54,6 +73,7 @@ export function LocationTypeahead({
   onSelect,
   onClear,
   required,
+  allowProvinceOnly = false,
 }: {
   id: string;
   /** Seçili il; boşsa seçim yok. */
@@ -62,6 +82,8 @@ export function LocationTypeahead({
   onSelect: (secim: { city: string; district: string }) => void;
   onClear: () => void;
   required?: boolean;
+  /** "Ankara · il geneli" satırları da listelensin mi (başlıktaki gerekçe). */
+  allowProvinceOnly?: boolean;
 }) {
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
@@ -69,9 +91,12 @@ export function LocationTypeahead({
   const [state, setState] = useState<'idle' | 'loading' | 'ready' | 'failed'>(
     'idle'
   );
+  const [iller, setIller] = useState<string[]>([]);
   const kutu = useRef<HTMLDivElement>(null);
 
-  const secili = Boolean(city && district);
+  /* İl geneli seçiliyken de kutu "dolu" sayılıyor: `allowProvinceOnly`
+     açıkken ilçesiz bir seçim geçerli bir cevap. */
+  const secili = allowProvinceOnly ? Boolean(city) : Boolean(city && district);
 
   /*
     Liste kullanıcı KUTUYA DOKUNDUĞUNDA iniyor, sayfa açılırken değil.
@@ -90,10 +115,44 @@ export function LocationTypeahead({
       .catch(() => setState('failed'));
   }, [open, query, state]);
 
-  const sonuclar = useMemo(
+  useEffect(() => {
+    if (!allowProvinceOnly) return;
+    let active = true;
+    fetchProvinces()
+      .then((r) => {
+        if (active) setIller(r.items.filter((p) => p.isActive).map((p) => p.name));
+      })
+      .catch(() => {
+        /* İl listesi gelmezse yalnızca "il geneli" satırları eksik
+           kalıyor; ilçe araması etkilenmiyor. */
+      });
+    return () => {
+      active = false;
+    };
+  }, [allowProvinceOnly]);
+
+  const ilceSonuclari = useMemo(
     () => searchDistricts(items, query),
     [items, query]
   );
+
+  /*
+    İL GENELİ SATIRLARI ÖNDE.
+
+    "ankara" yazan biri büyük olasılıkla ili kastediyor; Ankara'nın
+    ilçelerini tek tek listelemek ona aradığını değil, aramasının
+    sonucunu gösterirdi. Yalnızca ÖNEK eşleşmesi alınıyor: "kara"
+    yazınca Ankara'yı il geneli olarak önermek, kullanıcının hiç
+    düşünmediği bir seçimi öne koymak olurdu.
+  */
+  const ilSonuclari = useMemo(() => {
+    if (!allowProvinceOnly) return [];
+    const q = normalizeTr(query.trim());
+    if (!q) return [];
+    return iller.filter((ad) => normalizeTr(ad).startsWith(q)).slice(0, 3);
+  }, [allowProvinceOnly, iller, query]);
+
+  const bosSonuc = ilceSonuclari.length === 0 && ilSonuclari.length === 0;
 
   function sec(d: DistrictWithProvince) {
     onSelect({ city: d.provinceName, district: d.name });
@@ -101,12 +160,21 @@ export function LocationTypeahead({
     setOpen(false);
   }
 
+  function ilSec(ad: string) {
+    /* İlçe BOŞ gönderiliyor, eski değer korunmuyor: kullanıcı "il
+       geneli"ni seçtiyse önceki ilçe seçimini geri almak istiyor
+       demektir. */
+    onSelect({ city: ad, district: '' });
+    setQuery('');
+    setOpen(false);
+  }
+
   if (secili) {
     return (
       <div className="flex items-center gap-2 rounded-card border border-primary/40 bg-surface-2 px-3 py-2.5">
-        <Badge tone="primary">{district}</Badge>
+        <Badge tone="primary">{district || city}</Badge>
         <span className="min-w-0 flex-1 truncate text-body-sm text-foreground">
-          {city}
+          {district ? city : 'il geneli'}
         </span>
         <Button
           size="sm"
@@ -129,7 +197,11 @@ export function LocationTypeahead({
         type="search"
         autoComplete="off"
         required={required}
-        placeholder="İlçe ya da il yazın — ör. Gölbaşı, Ankara"
+        placeholder={
+          allowProvinceOnly
+            ? 'İlçe ya da il yazın — ör. Gölbaşı, Ankara'
+            : 'İlçe adı yazın — ör. Gölbaşı'
+        }
         value={query}
         onChange={(e) => {
           setQuery(e.target.value);
@@ -151,14 +223,30 @@ export function LocationTypeahead({
                 ? 'İlçe listesi yükleniyor…'
                 : 'Aramaya başlayın — ilçe ya da il adı yazabilirsiniz.'}
             </p>
-          ) : sonuclar.length === 0 ? (
+          ) : bosSonuc ? (
             <p className="px-3 py-3 text-body-sm leading-relaxed text-muted-foreground">
               Eşleşen ilçe yok. Yazımı kontrol edin; il adıyla da
               arayabilirsiniz.
             </p>
           ) : (
             <ul className="max-h-72 overflow-auto">
-              {sonuclar.map((d) => (
+              {ilSonuclari.map((ad) => (
+                <li key={`il-${ad}`}>
+                  <button
+                    type="button"
+                    onClick={() => ilSec(ad)}
+                    className="flex w-full items-baseline gap-2 border-b border-border px-3 py-2 text-left transition-colors hover:bg-surface-2"
+                  >
+                    <span className="min-w-0 flex-1 truncate text-body-sm text-foreground">
+                      {ad}
+                    </span>
+                    <span className="shrink-0 text-meta text-muted-foreground">
+                      il geneli
+                    </span>
+                  </button>
+                </li>
+              ))}
+              {ilceSonuclari.map((d) => (
                 <li key={`${d.provinceCode}-${d.slug}`}>
                   <button
                     type="button"

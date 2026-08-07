@@ -1,12 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Panel } from '@/components/ui/Panel';
 import { Field } from '@/components/ui/Field';
 import { Input, Select } from '@/components/ui/Input';
-import { ProvinceSelect } from '@/components/ui/ProvinceSelect';
-import { DistrictSelect } from '@/components/ui/DistrictSelect';
+import { LocationTypeahead } from '@/components/ui/LocationTypeahead';
 import { Button, ButtonLink } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { PageMeta } from '@/components/seo/PageMeta';
@@ -109,6 +108,7 @@ export function NewListingPage() {
      ilana yazmak, kullanıcının doğrulamadığı bir adresi yayımlamak
      olurdu. */
   const [district, setDistrict] = useState('');
+
   const [condition, setCondition] = useState<ListingCondition>('İyi');
   const [description, setDescription] = useState('');
   const [includes, setIncludes] = useState('');
@@ -120,15 +120,23 @@ export function NewListingPage() {
   const [error, setError] = useState<string | null>(null);
 
   /*
-   * Cihaz konumu form AÇIKKEN çözülebiliyor (ilk izin, ya da yeniden
-   * alma). Alan hâlâ boşsa dolduruluyor; kullanıcı bir il seçtiyse
-   * DOKUNULMUYOR — seçimin üstüne yazmak, formu kullanıcının elinden
-   * almak olurdu.
+   * GEÇ ÖN DOLDURMA KALDIRILDI.
+   *
+   * Burada bir etki vardı: cihaz konumu form AÇIKKEN çözülürse alan hâlâ
+   * boşsa dolduruluyordu. Alan bir `select` iken zararsızdı — seçili
+   * seçenek değişiyordu, o kadar.
+   *
+   * Konum alanı arama kutusuna dönüşünce aynı davranış KONTROLÜ
+   * DEĞİŞTİRİR oldu: kutu seçim yapılınca yerini bir özet satırına
+   * bırakıyor. Yani kullanıcı yazmaya başladığı anda kutu elinin altından
+   * çekilebiliyor, ya da "Değiştir" ile temizlediği seçim bir saniye
+   * sonra geri geliyordu.
+   *
+   * Açılışta ön doldurma DURUYOR (`useState` başlangıç değeri): konum
+   * zaten biliniyorsa form onu hazır getiriyor. Sonradan gelen konum
+   * için doğru cevap sessizce yazmak değil, kullanıcının yazması —
+   * alanın ne gösterdiği her an kullanıcının kararı olsun.
    */
-  const { provinceName } = location;
-  useEffect(() => {
-    if (provinceName) setCity((current) => current || provinceName);
-  }, [provinceName]);
 
   /* Seçilen kategoriye ait modeller — bütün katalogda gezinmek yerine
      kullanıcı zaten seçtiği kategorinin içinde arıyor. */
@@ -340,23 +348,29 @@ export function NewListingPage() {
                   />
                 </Field>
 
-                <Field label="Şehir" htmlFor="l-city">
-                  {/* Serbest metindi: "Muğla", "Mugla", "MUĞLA" ayrı
-                      şehirler gibi kaydediliyor ve pazaryeri süzgecinde
-                      aynı il dört kez çıkıyordu. */}
-                  <ProvinceSelect id="l-city" value={city} onChange={setCity} />
-                </Field>
+                <Field label="Konum (il / ilçe)" htmlFor="l-location">
+                  {/*
+                    TEK KUTU. Önce il sonra ilçe soran iki açılır liste
+                    vardı; "Gölbaşı" yazmak isteyen biri önce onun hangi
+                    ilde olduğunu hatırlamak zorunda kalıyordu.
 
-                <Field label="İlçe" htmlFor="l-district">
-                  {/* İsteğe bağlı — ama elden teslimde belirleyici olan
-                      şey bu. "İstanbul" 15 milyonluk bir alan; alıcı
-                      teleskobu Kadıköy'den mi Silivri'den mi alacağını
-                      ilan açıklamasını okumadan bilemiyordu. */}
-                  <DistrictSelect
-                    id="l-district"
-                    provinceName={city}
-                    value={district}
-                    onChange={setDistrict}
+                    `allowProvinceOnly` AÇIK: kargoyla satılan bir
+                    teleskopun ilçesi alıcıyı ilgilendirmiyor ve ilçe bu
+                    formda hiçbir zaman zorunlu değildi.
+                  */}
+                  <LocationTypeahead
+                    id="l-location"
+                    city={city}
+                    district={district}
+                    onSelect={(secim) => {
+                      setCity(secim.city);
+                      setDistrict(secim.district);
+                    }}
+                    onClear={() => {
+                      setCity('');
+                      setDistrict('');
+                    }}
+                    allowProvinceOnly
                   />
                 </Field>
 

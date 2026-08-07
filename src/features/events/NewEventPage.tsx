@@ -3,8 +3,7 @@ import { useNavigate } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Panel } from '@/components/ui/Panel';
-import { ProvinceSelect } from '@/components/ui/ProvinceSelect';
-import { DistrictSelect } from '@/components/ui/DistrictSelect';
+import { LocationTypeahead } from '@/components/ui/LocationTypeahead';
 import { Field } from '@/components/ui/Field';
 import { Input, Select } from '@/components/ui/Input';
 import { Button, ButtonLink } from '@/components/ui/Button';
@@ -119,21 +118,25 @@ export function NewEventPage() {
                   ))}
                 </Select>
               </Field>
-              <Field label="İl" htmlFor="event-city">
-                {/* SERBEST METİNDİ. `ProvinceSelect` ilan formunda ve
-                    profilde bu sorunu çözerken etkinlik formu atlanmış:
-                    "Muğla", "Mugla", "MUĞLA" ayrı şehirler gibi
-                    kaydediliyor ve takvimin şehir süzgeci katalogdan
-                    üretildiği için aynı il listede birkaç kez
-                    görünüyordu. */}
-                <ProvinceSelect id="event-city" value={city} onChange={setCity} />
-              </Field>
-              <Field label="İlçe" htmlFor="event-district">
-                <DistrictSelect
-                  id="event-district"
-                  provinceName={city}
-                  value={district}
-                  onChange={setDistrict}
+              <Field label="Konum (il / ilçe)" htmlFor="event-location">
+                {/*
+                  SERBEST METİNDİ, sonra iki açılır liste oldu, şimdi tek
+                  kutu. `allowProvinceOnly` açık: çevrim içi ya da il
+                  geneli bir etkinliğin ilçesi yok.
+                */}
+                <LocationTypeahead
+                  id="event-location"
+                  city={city}
+                  district={district}
+                  onSelect={(secim) => {
+                    setCity(secim.city);
+                    setDistrict(secim.district);
+                  }}
+                  onClear={() => {
+                    setCity('');
+                    setDistrict('');
+                  }}
+                  allowProvinceOnly
                 />
               </Field>
             </div>

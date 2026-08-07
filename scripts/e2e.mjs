@@ -404,21 +404,37 @@ await scenario(
     );
     await page.fill('#l-price', '48500');
     /*
-     * ŞEHİR ARTIK SERBEST METİN DEĞİL (§4.1). Alan `provinces` listesinden
-     * beslenen bir `select`; liste asenkron geldiği için seçenek DOM'a
-     * girene kadar bekleniyor. Önizleme derlemesinde veritabanı yok,
-     * dolayısıyla burada görünen tohum yedeği — ölçülen şey listenin
-     * dolduğu ve seçimin form durumuna geçtiği.
+     * KONUM ALANI BU SENARYODA ETKİLEŞİME GİRMİYOR.
+     *
+     * Alan bir `select` iken burada bir il seçiliyordu. Artık tek bir
+     * arama kutusu ve KONUM BAĞLAMINDAN ÖN DOLU açılıyor — yani bu
+     * senaryonun ölçtüğü şey (eksik alanlar bildiriliyor mu, form
+     * tamamlanınca açılıyor mu) için zaten cevaplanmış durumda.
+     *
+     * Kutuyu burada sürmeye çalışmak, senaryonun konusu olmayan bir
+     * asenkron kaynağa (cihaz konumu geç çözülüyor, il bir kare sonra
+     * geliyor) bağımlılık kuruyor ve kararsız düşüyordu. Kutunun kendi
+     * davranışı — arama, sıralama, il geneli, temizleme — on iki birim
+     * testiyle ölçülüyor (`LocationTypeahead.test.tsx`,
+     * `districtSearch.test.ts`).
+     *
+     * Ölçülen tek şey burada alanın GERÇEKTEN dolu geldiği: boş gelseydi
+     * form aşağıdaki "tamamlandı" iddiasına hiç ulaşamazdı.
      */
     await page.waitForFunction(
-      () =>
-        Array.from(document.querySelectorAll('#l-city option')).some(
-          (o) => o.value === 'Ankara'
-        ),
+      () => {
+        const govde = document.body.innerText;
+        return (
+          govde.includes('Konum (il / ilçe)') &&
+          Array.from(document.querySelectorAll('button')).some((b) =>
+            (b.textContent || '').includes('Değiştir')
+          )
+        );
+      },
       null,
-      { timeout: 5000 }
+      { timeout: 8000 }
     );
-    await page.selectOption('#l-city', 'Ankara');
+
     await page.fill(
       '#l-desc',
       '2023 yılında alındı, yaklaşık 40 gece kullanıldı. Optikte çizik yok, kutusu ve faturası duruyor.'
