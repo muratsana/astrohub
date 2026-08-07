@@ -1,3 +1,4 @@
+import type { ContentStatus } from '@/domain/content/status';
 import { sanitizeText } from '@/lib/sanitize';
 import { getSupabase } from '@/services/supabase/client';
 import {
@@ -9,7 +10,8 @@ import {
 } from '@/services/clubs/submission';
 import { clubTopicLabels, type ClubTopic } from '@/features/clubs/data';
 
-export type ClubStatus = 'pending' | 'published' | 'rejected';
+/** Kulüp durumu artık ortak küme (FAZ 3). Ad geriye dönük uyum için. */
+export type ClubStatus = ContentStatus;
 
 export interface AdminClub {
   slug: string;
@@ -77,7 +79,7 @@ interface Row {
 }
 
 function status(raw: string | null): ClubStatus {
-  return raw === 'pending' || raw === 'rejected' ? raw : 'published';
+  return raw === 'incelemede' || raw === 'reddedildi' ? raw : 'yayinda';
 }
 
 function topics(raw: string[] | null): ClubTopic[] {
@@ -208,7 +210,7 @@ export async function createAdminClub(
       photos,
       sourceName: draft.sourceName || 'Admin girişi',
     },
-    { status: 'published', listed: true }
+    { status: 'yayinda', listed: true }
   );
 }
 
@@ -290,7 +292,7 @@ export async function setClubStatus(
     .from('clubs')
     .update({
       status: next,
-      listed: next === 'published',
+      listed: next === 'yayinda',
       reviewed_at: new Date().toISOString(),
       reviewed_by: id,
       rejection_reason: null,

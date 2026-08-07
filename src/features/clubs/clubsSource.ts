@@ -1,3 +1,4 @@
+import type { ContentStatus } from '@/domain/content/status';
 import { useEffect, useMemo, useState } from 'react';
 import { getSupabase, isSupabaseConfigured } from '@/services/supabase/client';
 import { clubPhotoUrl } from '@/services/clubs/photoUrl';
@@ -59,7 +60,7 @@ export interface ClubView extends AstronomyClub {
   verifiedAt: string | null;
   contactEmail?: string;
   joinUrl?: string;
-  status?: 'pending' | 'published' | 'rejected';
+  status?: ContentStatus;
 }
 
 const KINDS: ClubKind[] = ['dernek', 'universite', 'gozlem-grubu'];
@@ -89,7 +90,7 @@ export function toClubs(rows: unknown): ClubView[] {
 
   const listelenen = rows
     .filter(isRow)
-    .filter((r) => r.listed !== false && durum(r.status) === 'published');
+    .filter((r) => r.listed !== false && durum(r.status) === 'yayinda');
   /* Gelen satırların hepsi listeden çıkarılmışsa boş liste DOĞRU cevap:
      bu bir yönetici kararı, veri eksikliği değil. Böyle bir cevabı zaten
      yalnızca yönetici alır — ziyaretçiye o satırlar hiç gelmez. */
@@ -192,9 +193,9 @@ function konuListesi(raw: unknown): ClubTopic[] {
     .filter((v): v is ClubTopic => clubTopicOrder.includes(v as ClubTopic));
 }
 
-function durum(raw: unknown): 'pending' | 'published' | 'rejected' {
+function durum(raw: unknown): ContentStatus {
   const value = metin(raw);
-  return value === 'pending' || value === 'rejected' ? value : 'published';
+  return value === 'incelemede' || value === 'reddedildi' ? value : 'yayinda';
 }
 
 /**

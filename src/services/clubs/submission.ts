@@ -138,8 +138,8 @@ export async function uploadClubPhotos(
 
 export async function createClubRecord(
   input: ClubSubmitInput,
-  options: { status: 'pending' | 'published'; listed: boolean } = {
-    status: 'pending',
+  options: { status: 'incelemede' | 'yayinda'; listed: boolean } = {
+    status: 'incelemede',
     listed: false,
   }
 ): Promise<string> {
@@ -200,5 +200,5 @@ export async function createClubRecord(
 export async function createClubSubmission(
   input: ClubSubmitInput
 ): Promise<string> {
-  return createClubRecord(input, { status: 'pending', listed: false });
+  return createClubRecord(input, { status: 'incelemede', listed: false });
 }

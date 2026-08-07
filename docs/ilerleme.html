@@ -577,10 +577,28 @@
     //     kalıcı silme admine kilitlenince PostgREST sıfır satırda hata
     //     DÖNDÜRMEDİĞİ için dosyalar uçuyor, satır kalıyor ve fonksiyon
     //     "başarılı" diyordu.
+    // (B) AŞAMASI DA BİTTİ. Beş enum ve iki metin kolonu tek sekiz değerli
+    // app.content_status kümesine indi; cancelled/reserved/sold ayrı alan
+    // kolonlarına taşındı (events.cancelled_at, listings.sale_state).
+    // Yirmi dört politika, on fonksiyon, dört kısmi indeks ve on beş
+    // arayüz dosyası elden geçti.
+    //
+    // (B)'DE ÜÇ ŞEY ÖLÇÜLDÜ VE KAPATILDI:
+    //   • Kısmi indeks yüklemleri eski enum tipini taşıyordu; göç ilk
+    //     denemede orada düştü (42883).
+    //   • Uydu tabloların politikaları (yorum, poz, sürüm, ilan fotoğrafı,
+    //     saha ölçümü…) ebeveynin deleted_at'ine BAKMIYORDU — silinen
+    //     fotoğrafın yorumları hâlâ okunabiliyordu. FAZ 3/A'dan kalan bu
+    //     açık aynı göçte kapandı.
+    //   • Üç hatırlatma fonksiyonu 'cancelled' okuyordu; plpgsql gövdesi
+    //     olduğu için alter type onları yakalamadı. Düzeltilmeseydi hiçbir
+    //     hatırlatma kurulamaz ve gönderilemezdi.
+    "3:0": "tamamlandi",   // app.content_status — sekiz değerli ortak küme
     "3:1": "tamamlandi",   // deleted_at/deleted_by/archived_at — altı tablo
-    "3:2": "tamamlandi",   // app.icerik_gorunur() + altı SELECT politikası
+    "3:2": "tamamlandi",   // app.icerik_gorunur() + on dört politika
     "3:3": "tamamlandi",   // *_hard_delete_admin kısıtlayıcı politikaları
     "3:4": "yapiliyor",    // restorePhoto/restoreEntry var; panel yüzeyi yok
+    "3:5": "tamamlandi",   // eşleme tablosuyla tek seferlik dönüşüm
 
     // ── Kodla bitmeyenler (plan §10.2) — baştan işaretlendi ─────────────
     // Bunlar bir engel çıktığında değil, engel BİLİNDİĞİ için şimdiden
@@ -591,7 +609,7 @@
     "13:7": "sende",   // D11 — masaüstü köprü dağıtımı
   };
 
-  const GUNCELLEME = "7 Ağustos 2026 — FAZ 1-2 tamam; FAZ 3'ün soft delete altyapısı canlıda";
+  const GUNCELLEME = "7 Ağustos 2026 — FAZ 1-2 tamam; FAZ 3'te ortak durum kümesi canlıda";
 
   /* ── Buradan aşağısı görüntüleme mantığı; değiştirmeye gerek yok ─────── */
 

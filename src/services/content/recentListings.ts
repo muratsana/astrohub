@@ -89,7 +89,9 @@ async function fetchRecentListings(client: SupabaseClient): Promise<Listing[]> {
   const { data, error } = await client
     .from('listings')
     .select(SELECT)
-    .in('status', ['active', 'reserved'])
+    .eq('status', 'yayinda')
+    /* Satılmış ilan ana sayfa şeridinde görünmüyor (FAZ 3). */
+    .neq('sale_state', 'satildi')
     .order('posted_at', { ascending: false })
     .limit(24);
 

@@ -125,7 +125,7 @@ async function fetchPhotoActivity(
         'profiles!astro_photos_user_id_profiles_fkey(username, display_name)'
     )
     .in('user_id', followeeIds)
-    .eq('status', 'published')
+    .eq('status', 'yayinda')
     .order('published_at', { ascending: false, nullsFirst: false })
     .limit(30);
 

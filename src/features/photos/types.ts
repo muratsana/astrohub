@@ -1,3 +1,7 @@
+import {
+  contentStatusLabels,
+  type ContentStatus,
+} from '@/domain/content/status';
 import type { FilterExposure } from '@/domain/photography/integration';
 import type { PhotoVersion } from '@/domain/photography/versions';
 
@@ -35,14 +39,15 @@ export const photoTypeLabels: Record<PhotoType, string> = {
  * listesi üçünü de görmek zorunda: arşivlediği kaydı göremeyen kullanıcı
  * onu geri yayına alamaz.
  */
-export type PhotoStatus = 'draft' | 'published' | 'archived';
+/**
+ * Fotoğraf durumu artık ORTAK KÜMENİN kendisi (FAZ 3).
+ * Eskiden üç değerlik kendi birleşimiydi: draft | published | archived.
+ * Tip adı geriye dönük uyum için duruyor.
+ */
+export type PhotoStatus = ContentStatus;
 
 /** Sahibine gösterilen durum etiketleri. */
-export const photoStatusLabels: Record<PhotoStatus, string> = {
-  draft: 'Taslak',
-  published: 'Yayında',
-  archived: 'Arşivde',
-};
+export const photoStatusLabels = contentStatusLabels;
 
 /**
  * FOTOĞRAF LİSANSI — TEK KURAL, SEÇENEK YOK.

@@ -1,3 +1,4 @@
+import { CONTENT_STATUSES } from '@/domain/content/status';
 import { getSupabase } from '@/services/supabase/client';
 
 /**
@@ -71,7 +72,7 @@ export const RECORD_KINDS: Record<RecordKind, KindSpec> = {
     select:
       'id, slug, title, status, created_at, profiles!astro_photos_user_id_profiles_fkey(username)',
     statusColumn: 'status',
-    statuses: ['draft', 'published', 'archived'],
+    statuses: [...CONTENT_STATUSES],
     orderColumn: 'created_at',
     map: (r) => ({
       id: String(r.id),
@@ -89,7 +90,7 @@ export const RECORD_KINDS: Record<RecordKind, KindSpec> = {
     table: 'listings',
     select: 'id, slug, title, status, created_at, city',
     statusColumn: 'status',
-    statuses: ['draft', 'active', 'reserved', 'sold', 'archived'],
+    statuses: [...CONTENT_STATUSES],
     orderColumn: 'created_at',
     map: (r) => ({
       id: String(r.id),
@@ -122,7 +123,7 @@ export const RECORD_KINDS: Record<RecordKind, KindSpec> = {
     table: 'events',
     select: 'id, slug, title, status, created_at, city',
     statusColumn: 'status',
-    statuses: ['draft', 'published', 'cancelled'],
+    statuses: [...CONTENT_STATUSES],
     orderColumn: 'created_at',
     map: (r) => ({
       id: String(r.id),
@@ -140,7 +141,7 @@ export const RECORD_KINDS: Record<RecordKind, KindSpec> = {
        değil bölge olarak tutuluyor (nokta koordinatı ayrı). */
     select: 'id, slug, name, status, created_at, region',
     statusColumn: 'status',
-    statuses: ['pending', 'published', 'rejected'],
+    statuses: [...CONTENT_STATUSES],
     orderColumn: 'created_at',
     map: (r) => ({
       id: String(r.id),

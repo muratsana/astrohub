@@ -1,32 +1,34 @@
 import type { EquipmentCategory } from '../equipment/data';
+import {
+  contentStatusLabels,
+  saleStateLabels,
+  type ContentStatus,
+  type SaleState,
+} from '@/domain/content/status';
 
 /** İlan tohum verisi (§7.13). Gerçek ilan akışı + moderasyon Faz 1.8'de. */
 
 export type ListingCondition = 'Sıfır gibi' | 'Çok iyi' | 'İyi' | 'Yıpranmış';
 
 /**
- * İlan durumu — `app.listing_status` enum'unun aynısı.
+ * İlan durumu artık ORTAK KÜMENİN kendisi (FAZ 3).
  *
- * Pazaryeri listesi yalnızca `active`/`reserved` gösterir, bu yüzden
- * durum uzun süre arayüze hiç taşınmadı. "İlanlarım" ise satıcının
- * KENDİ kayıtlarını yönettiği yer: satılmış ya da arşivlenmiş ilanını
- * göremeyen satıcı, onu yeniden yayına alamaz.
+ * Eskiden bu tip beş değerlik kendi birleşimiydi: `draft | active |
+ * reserved | sold | archived`. İkisi yayın durumu değildi — `reserved`
+ * ve `sold` satış durumuydu ve ilan ikisinde de YAYINDA kalıyordu.
+ * İkisini tek kolonda tutmak, "satıldı" demek için ilanı yayından
+ * kaldırmak gibi görünen bir modele yol açıyordu.
+ *
+ * Ayrıldılar: yayın durumu `status` (ortak küme), satış durumu
+ * `saleState`. Tip adı geriye dönük uyum için duruyor.
  */
-export type ListingStatus =
-  | 'draft'
-  | 'active'
-  | 'reserved'
-  | 'sold'
-  | 'archived';
+export type ListingStatus = ContentStatus;
 
 /** Satıcıya gösterilen durum etiketleri. */
-export const listingStatusLabels: Record<ListingStatus, string> = {
-  draft: 'Taslak',
-  active: 'Yayında',
-  reserved: 'Rezerve',
-  sold: 'Satıldı',
-  archived: 'Arşivde',
-};
+export const listingStatusLabels = contentStatusLabels;
+
+export type { SaleState };
+export { saleStateLabels };
 
 export interface Listing {
   /**
@@ -89,6 +91,8 @@ export interface Listing {
    * Tohum kayıtlarda tanımsız.
    */
   status?: ListingStatus;
+  /** Satış durumu — yayın durumundan ayrı eksen (FAZ 3). */
+  saleState?: SaleState;
 }
 
 export const listings: Listing[] = [

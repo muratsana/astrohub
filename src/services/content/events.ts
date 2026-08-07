@@ -127,7 +127,7 @@ async function fetchEvents(client: SupabaseClient): Promise<AstroEvent[]> {
         'source_name, source_last_verified_at, ' +
         'event_sessions(starts_at, title, speaker, position)'
     )
-    .eq('status', 'published')
+    .eq('status', 'yayinda')
     .order('starts_at');
 
   if (error) throw new Error(error.message);
@@ -194,7 +194,7 @@ export async function createEventContribution(
     slug,
     title,
     event_type: input.type,
-    status: 'draft',
+    status: 'taslak',
     city: sanitizeText(input.city, { maxLength: 60 }),
     district: input.district
       ? sanitizeText(input.district, { maxLength: 60 })

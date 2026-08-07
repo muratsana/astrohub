@@ -73,7 +73,7 @@ export function ClubControl({ canWrite }: { canWrite: boolean }) {
   }
 
   const verified = items?.filter((c) => c.verifiedAt).length ?? 0;
-  const pending = items?.filter((c) => c.status === 'pending').length ?? 0;
+  const pending = items?.filter((c) => c.status === 'incelemede').length ?? 0;
   const newProblem = describeClubInfoProblem(newDraft, newPhotos);
   const editing = items?.find((c) => c.slug === open) ?? null;
   const editProblem =
@@ -175,25 +175,25 @@ export function ClubControl({ canWrite }: { canWrite: boolean }) {
                   >
                     {open === club.slug ? 'Kapat' : 'Düzenle'}
                   </Button>
-                  {club.status !== 'published' && (
+                  {club.status !== 'yayinda' && (
                     <Button
                       size="sm"
                       variant="secondary"
                       disabled={busy}
                       onClick={() =>
-                        run(() => setClubStatus(club.slug, 'published'))
+                        run(() => setClubStatus(club.slug, 'yayinda'))
                       }
                     >
                       Onayla
                     </Button>
                   )}
-                  {club.status !== 'rejected' && (
+                  {club.status !== 'reddedildi' && (
                     <Button
                       size="sm"
                       variant="ghost"
                       disabled={busy}
                       onClick={() =>
-                        run(() => setClubStatus(club.slug, 'rejected'))
+                        run(() => setClubStatus(club.slug, 'reddedildi'))
                       }
                     >
                       Reddet
@@ -272,8 +272,8 @@ export function ClubControl({ canWrite }: { canWrite: boolean }) {
 }
 
 function StatusBadge({ status }: { status: AdminClub['status'] }) {
-  if (status === 'pending') return <Badge tone="warning">Onay bekliyor</Badge>;
-  if (status === 'rejected') return <Badge tone="danger">Reddedildi</Badge>;
+  if (status === 'incelemede') return <Badge tone="warning">Onay bekliyor</Badge>;
+  if (status === 'reddedildi') return <Badge tone="danger">Reddedildi</Badge>;
   return <Badge tone="success">Yayında</Badge>;
 }
 

@@ -134,7 +134,7 @@ async function fetchSites(client: SupabaseClient): Promise<ObservingSite[]> {
         'caravan_ok, description, warnings, image_url, image_credit, ' +
         'image_licence, source_urls, rating, review_count'
     )
-    .eq('status', 'published')
+    .eq('status', 'yayinda')
     .order('name');
 
   if (error) throw new Error(error.message);
@@ -210,7 +210,7 @@ export async function createSiteContribution(
     slug,
     name,
     region: sanitizeText(input.region, { maxLength: 80 }),
-    status: 'pending',
+    status: 'incelemede',
     approx_latitude: Number(input.latitude.toFixed(4)),
     approx_longitude: Number(input.longitude.toFixed(4)),
     altitude_m: input.altitude ?? null,

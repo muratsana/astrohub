@@ -1,3 +1,7 @@
+import {
+  CONTENT_STATUSES,
+  PUBLIC_CONTENT_STATUS,
+} from '@/domain/content/status';
 import { useCallback, useEffect, useState } from 'react';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { photos as photosSeed } from '@/features/photos/data';
@@ -25,7 +29,7 @@ import type { ContentSelection } from './select';
  * yükleyip hiçbir yerde göremiyordu. Diğer beş katalogla aynı desen
  * burada da kuruldu.
  *
- * YALNIZCA YAYINDAKİLER. `status = 'published'` filtresi hem taslakları
+ * YALNIZCA YAYINDAKİLER. `status = 'yayinda'` filtresi hem taslakları
  * hem moderasyondan geçmemişleri dışarıda tutuyor. RLS zaten aynı sınırı
  * çiziyor; buradaki filtre onun yerine geçmiyor, sorguyu küçültüyor.
  *
@@ -404,7 +408,7 @@ const SELECT =
  * tutmak, panelin kullanıcıyı "Fotoğraf bulunamadı" sayfasına
  * göndermesi demekti.
  */
-export const PUBLIC_PHOTO_STATUS: PhotoStatus = 'published';
+export const PUBLIC_PHOTO_STATUS: PhotoStatus = PUBLIC_CONTENT_STATUS;
 
 /** Fotoğrafın herkese açık detay sayfası var mı? */
 export function isPhotoPubliclyVisible(status: PhotoStatus): boolean {
@@ -455,7 +459,7 @@ export interface MyPhotosState {
   refresh: () => void;
 }
 
-const PHOTO_STATUSES: PhotoStatus[] = ['draft', 'published', 'archived'];
+const PHOTO_STATUSES: readonly PhotoStatus[] = CONTENT_STATUSES;
 
 /*
  * Panel listesi künyenin tamamını istemiyor. Katalog `SELECT`'i beş tablo
@@ -489,7 +493,7 @@ const EMPTY_MY_PHOTOS = {
  * ══════════════════════════════════════════════════════════════════════
  * NEDEN `usePhotoCatalog` YETMİYOR — `useMyListings` ile aynı iki sebep
  *
- * 1. `fetchPhotos` yalnızca `status = 'published'` çekiyor. Taslağını ve
+ * 1. `fetchPhotos` yalnızca `status = 'yayinda'` çekiyor. Taslağını ve
  *    arşivlediği kaydı göremeyen kullanıcı ne taslağını bitirebilir ne
  *    arşivlediğini geri yayına alabilir — üstelik panelin "Taslak"
  *    sayacı da hep 0 gösterirdi.
@@ -538,8 +542,8 @@ export function useMyPhotos(userId: string | undefined): MyPhotosState {
         if (!active) return;
         setState({
           photos,
-          published: photos.filter((p) => p.status === 'published').length,
-          drafts: photos.filter((p) => p.status === 'draft').length,
+          published: photos.filter((p) => p.status === 'yayinda').length,
+          drafts: photos.filter((p) => p.status === 'taslak').length,
         });
         setError(null);
       })
@@ -570,7 +574,7 @@ function mapMyPhotoRow(row: MyPhotoRow): MyPhotoSummary {
        Taslak varsaymak yalnızca "henüz görünmüyor" der. */
     status: PHOTO_STATUSES.includes(row.status as PhotoStatus)
       ? (row.status as PhotoStatus)
-      : 'draft',
+      : 'taslak',
     capturedAt: row.captured_at ?? row.published_at ?? '',
     thumbUrl: publicPhotoUrl(row.thumb_path ?? row.display_path),
   };

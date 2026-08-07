@@ -254,9 +254,9 @@ describe('mapPhotoRow', () => {
  */
 describe('isPhotoPubliclyVisible', () => {
   it('yalnızca yayındaki kaydın sayfası var', () => {
-    expect(isPhotoPubliclyVisible('published')).toBe(true);
-    expect(isPhotoPubliclyVisible('draft')).toBe(false);
-    expect(isPhotoPubliclyVisible('archived')).toBe(false);
+    expect(isPhotoPubliclyVisible('yayinda')).toBe(true);
+    expect(isPhotoPubliclyVisible('taslak')).toBe(false);
+    expect(isPhotoPubliclyVisible('arsivlendi')).toBe(false);
   });
 
   it('katalog süzgeciyle aynı değerden besleniyor', () => {

@@ -37,8 +37,30 @@ function row(over: Record<string, unknown> = {}): any {
  */
 describe('mapListingRow — durum', () => {
   it('bilinen durumu taşır', () => {
-    expect(mapListingRow(row({ status: 'sold' })).status).toBe('sold');
-    expect(mapListingRow(row({ status: 'archived' })).status).toBe('archived');
+    expect(mapListingRow(row({ status: 'yayinda' })).status).toBe('yayinda');
+    expect(mapListingRow(row({ status: 'arsivlendi' })).status).toBe(
+      'arsivlendi'
+    );
+  });
+
+  /*
+   * FAZ 3: satış durumu ayrı eksen. Satılmış ilan YAYINDA kalıyor ve
+   * "satıldı" bilgisi `saleState` alanından geliyor — ikisini tek kolonda
+   * tutmak, satışı yayından kaldırma gibi göstermek demekti.
+   */
+  it('satış durumunu ayrı alanda taşır', () => {
+    const satilmis = mapListingRow(
+      row({ status: 'yayinda', sale_state: 'satildi' })
+    );
+    expect(satilmis.status).toBe('yayinda');
+    expect(satilmis.saleState).toBe('satildi');
+  });
+
+  it('tanınmayan satış durumunu uydurmaz', () => {
+    expect(
+      mapListingRow(row({ status: 'yayinda', sale_state: 'pazarlikta' }))
+        .saleState
+    ).toBe(undefined);
   });
 
   /*
@@ -85,14 +107,19 @@ describe('mapListingRow — ilan görseli', () => {
  */
 describe('isListingPubliclyVisible', () => {
   it('yayındaki ve rezerve ilanın sayfası var', () => {
-    expect(isListingPubliclyVisible('active')).toBe(true);
-    expect(isListingPubliclyVisible('reserved')).toBe(true);
+    expect(isListingPubliclyVisible('yayinda')).toBe(true);
+    expect(isListingPubliclyVisible('yayinda', 'rezerve')).toBe(true);
   });
 
+  /*
+   * FAZ 3'ten sonra satılmış ilan da `yayinda` — satış durumu ayrı
+   * kolonda. Kullanıcının gördüğü davranış DEĞİŞMEDİ: katalog satılmışı
+   * elediği için detay sayfası yine yok.
+   */
   it('satılan, taslak ve arşivlenen ilana bağlantı verilmez', () => {
-    expect(isListingPubliclyVisible('sold')).toBe(false);
-    expect(isListingPubliclyVisible('draft')).toBe(false);
-    expect(isListingPubliclyVisible('archived')).toBe(false);
+    expect(isListingPubliclyVisible('yayinda', 'satildi')).toBe(false);
+    expect(isListingPubliclyVisible('taslak')).toBe(false);
+    expect(isListingPubliclyVisible('arsivlendi')).toBe(false);
   });
 
   /* Tohum ilanlarda durum yok ve onların sayfası var. */

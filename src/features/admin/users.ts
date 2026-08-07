@@ -28,12 +28,12 @@ import { csvFileName, toCsv } from '@/lib/csv';
  * ══════════════════════════════════════════════════════════════════════
  * SON ADMİN KORUMASI
  *
- * `admin` rolünü almak, kendini dışarı kilitleyebilecek tek işlem.
- * `revokeRole` son admini almayı reddediyor — veritabanı bunu
- * bilmiyor (RLS satır bazlı, "kaç tane kaldı" sorusunu sormuyor), o
- * yüzden kural burada. Yanlış tarafta duran bir kural olduğunu biliyorum;
- * alternatifi bir tetikleyiciydi ve `user_roles`a yazan tek yol bu panel
- * olduğu için maliyeti taşımadı.
+ * `admin` rolünü almak, kendini dışarı kilitleyebilecek tek işlem. Kural
+ * ARTIK VERİTABANINDA: `app.guard_last_admin()` tetikleyicisi
+ * (`20260807220000`). Eskiden bu dosyadaki `revokeRole` sayıyordu ve
+ * yanlış taraftaydı — doğrudan bir REST çağrısı istemcideki sayımı hiç
+ * görmeden son admin satırını silebiliyordu. Sayım kaldırıldı ki aynı
+ * kuralın iki kaynağı olmasın.
  */
 
 /**
@@ -323,7 +323,10 @@ export async function fetchUsers(query: UserQuery = {}): Promise<UserPage> {
       .from('astro_photos')
       .select('user_id')
       .in('user_id', ids)
-      .eq('status', 'published'),
+      /* Ortak durum kümesi (FAZ 3). Silinenler sayılmıyor: yönetici
+         listesindeki sayı kullanıcının GÖRÜNEN üretimini anlatmalı. */
+      .eq('status', 'yayinda')
+      .is('deleted_at', null),
   ]);
 
   const roleMap = new Map<string, AppRole[]>();

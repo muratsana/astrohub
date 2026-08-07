@@ -1,3 +1,4 @@
+import type { ContentStatus } from '@/domain/content/status';
 import { useCallback, useEffect, useState } from 'react';
 import { getSupabase, isSupabaseConfigured } from '@/services/supabase/client';
 import { sanitizeText } from '@/lib/sanitize';
@@ -36,7 +37,8 @@ import {
  * açmak yerine bu listeyi genişletmenin gerekçesi o göçün başlığında.
  */
 export type EntryKind = 'haber' | 'yazi' | 'sozluk' | 'sss';
-export type EntryStatus = 'taslak' | 'yayinda';
+/** İçerik durumu artık ortak küme (FAZ 3). Ad geriye dönük uyum için. */
+export type EntryStatus = ContentStatus;
 
 export interface ContentEntry {
   id: string;

@@ -1,3 +1,9 @@
+import {
+  CONTENT_STATUSES,
+  PUBLIC_CONTENT_STATUS,
+  isSaleState,
+  type SaleState,
+} from '@/domain/content/status';
 import { useCallback, useEffect, useState } from 'react';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { getSupabase } from '@/services/supabase/client';
@@ -54,6 +60,7 @@ interface ListingRow {
   description: string;
   includes: string[] | null;
   status: string;
+  sale_state?: string | null;
   posted_at: string | null;
   profiles: { username: string; display_name: string | null } | null;
   equipment_models: { slug: string } | { slug: string }[] | null;
@@ -65,13 +72,7 @@ interface ListingRow {
 
 /* Tanınmayan durum `undefined` kalıyor: uydurulmuş bir "Yayında"
    etiketi, satıcıya ilanının göründüğünü söylemek olurdu. */
-const LISTING_STATUSES: ListingStatus[] = [
-  'draft',
-  'active',
-  'reserved',
-  'sold',
-  'archived',
-];
+const LISTING_STATUSES: readonly ListingStatus[] = CONTENT_STATUSES;
 
 const CONDITIONS: ListingCondition[] = [
   'Sıfır gibi',
@@ -139,12 +140,13 @@ export function mapListingRow(row: ListingRow): Listing {
     status: LISTING_STATUSES.includes(row.status as ListingStatus)
       ? (row.status as ListingStatus)
       : undefined,
+    saleState: isSaleState(row.sale_state) ? row.sale_state : undefined,
   };
 }
 
 const SELECT =
   'id, seller_id, slug, title, category_id, price, city, district, condition, has_invoice, ' +
-  'shipping_ok, negotiable, description, includes, status, posted_at, ' +
+  'shipping_ok, negotiable, description, includes, status, sale_state, posted_at, ' +
   'profiles!listings_seller_id_profiles_fkey(username, display_name), ' +
   'equipment_models(slug), listing_photos(storage_path, position)';
 
@@ -152,24 +154,37 @@ const SELECT =
  * Pazaryeri listesine — ve dolayısıyla `/ilan/:slug` sayfasına — giren
  * durumlar.
  *
- * `sold` BURADA YOK, RLS'te VAR. Satır güvenliği satılmış ilanı okutuyor
- * (bkz. `listings_read`), ama katalog onu çekmiyor: pazaryeri satılmış
- * ilanla dolmasın. Sonuç: detay sayfası satılmış ilanı BULAMAZ, çünkü
- * sayfa kataloğun içinden arıyor.
+ * FAZ 3'TEN SONRA İKİ EKSEN. Eskiden bu küme `['active', 'reserved']`
+ * idi ve `sold` dışarıda kalıyordu; satılmış ilan RLS'te okunabiliyordu
+ * ama katalog onu çekmediği için detay sayfası 404 veriyordu.
  *
- * Dışa açık olmasının sebebi tam da bu: satıcının kendi listesinde
- * (`/panel/ilanlar`) hangi satırın tıklanabileceğine bu küme karar
+ * Artık satılmış ilan da `yayinda`: satış durumu ayrı bir kolona
+ * (`sale_state`) taşındı ve yayın durumu yalnızca yayın durumunu
+ * anlatıyor. AMA KULLANICININ GÖRDÜĞÜ DAVRANIŞ DEĞİŞMİYOR — pazaryeri
+ * satılmış ilanla dolmasın diye eleme şimdi satış durumundan yapılıyor.
+ * Kolon ayrımı bir modelleme düzeltmesiydi, ürün kararı değil.
+ *
+ * Dışa açık olmasının sebebi: satıcının kendi listesinde
+ * (`/panel/ilanlar`) hangi satırın tıklanabileceğine bu kural karar
  * veriyor. İki yerde iki ayrı liste tutmak, panelin kullanıcıyı 404'e
  * göndermesi demekti.
  */
-export const PUBLIC_LISTING_STATUSES: ListingStatus[] = ['active', 'reserved'];
+export const PUBLIC_LISTING_STATUSES: ListingStatus[] = [PUBLIC_CONTENT_STATUS];
+
+/** Katalogdan elenen satış durumu — satılmış ilan listede görünmüyor. */
+export const HIDDEN_SALE_STATE: SaleState = 'satildi';
 
 /** İlanın herkese açık detay sayfası var mı? */
-export function isListingPubliclyVisible(status: ListingStatus | undefined) {
+export function isListingPubliclyVisible(
+  status: ListingStatus | undefined,
+  saleState?: SaleState
+) {
   /* Durumu okunamamış kayıt tıklanabilir sayılıyor: tohum ilanlarda durum
      yok ve onların sayfası var. Yanlış tarafa düşmek ölü bağlantı değil,
      yalnızca gereksiz bir tıklama. */
-  return status === undefined || PUBLIC_LISTING_STATUSES.includes(status);
+  if (status === undefined) return true;
+  if (saleState === HIDDEN_SALE_STATE) return false;
+  return PUBLIC_LISTING_STATUSES.includes(status);
 }
 
 async function fetchListings(client: SupabaseClient): Promise<Listing[]> {
@@ -177,6 +192,8 @@ async function fetchListings(client: SupabaseClient): Promise<Listing[]> {
     .from('listings')
     .select(SELECT)
     .in('status', PUBLIC_LISTING_STATUSES)
+    /* Satılmış ilan katalogda görünmüyor — eski davranış korunuyor. */
+    .neq('sale_state', HIDDEN_SALE_STATE)
     .order('posted_at', { ascending: false })
     .limit(200);
 
@@ -366,7 +383,7 @@ export async function createListing(input: NewListingInput): Promise<string> {
     includes: input.includes
       .map((line) => sanitizeText(line, { maxLength: 120 }))
       .filter(Boolean),
-    status: 'active',
+    status: 'yayinda',
     posted_at: new Date().toISOString(),
   });
 
@@ -384,7 +401,7 @@ export async function markListingSold(slug: string): Promise<void> {
   const supabase = await client();
   const { error } = await supabase
     .from('listings')
-    .update({ status: 'sold', sold_at: new Date().toISOString() })
+    .update({ sale_state: 'satildi', sold_at: new Date().toISOString() })
     .eq('slug', slug);
 
   if (error) throw new Error(error.message);

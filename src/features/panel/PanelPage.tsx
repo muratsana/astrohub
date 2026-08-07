@@ -37,16 +37,15 @@ import { JuryPanel } from './JuryPanel';
 
 /** Durum rengi: yayındaki yeşil, biten sönük, taslak uyarı sarısı. */
 function listingStatusTone(status: ListingStatus): BadgeTone {
-  if (status === 'active') return 'success';
-  if (status === 'reserved') return 'primary';
-  if (status === 'draft') return 'warning';
+  if (status === 'yayinda') return 'success';
+  if (status === 'taslak') return 'warning';
   return 'muted';
 }
 
 /** Fotoğrafta da aynı dil: yayında yeşil, taslak sarı, arşiv sönük. */
 function photoStatusTone(status: PhotoStatus): BadgeTone {
-  if (status === 'published') return 'success';
-  if (status === 'draft') return 'warning';
+  if (status === 'yayinda') return 'success';
+  if (status === 'taslak') return 'warning';
   return 'muted';
 }
 
@@ -642,8 +641,8 @@ export function PanelPage() {
                       )
                     }
                     action={
-                      (listing.status === 'active' ||
-                        listing.status === 'reserved') && (
+                      listing.status === 'yayinda' &&
+                      listing.saleState !== 'satildi' && (
                         <Button
                           size="sm"
                           variant="ghost"

@@ -78,7 +78,7 @@ export interface UploadInput {
   /**
    * Telif beyanı (§15.4) — kullanıcının "bu eserin sahibiyim" onayı.
    *
-   * ZORUNLU ALAN, isteğe bağlı değil. Veritabanı `status = 'published'`
+   * ZORUNLU ALAN, isteğe bağlı değil. Veritabanı `status = 'yayinda'`
    * olan her satırda bunu şart koşuyor
    * (`astro_photos_publish_requires_copyright`). Alan `?` ile isteğe
    * bağlı bırakılsaydı, çağıran taraf onu yazmayı unuttuğunda derleme
@@ -234,7 +234,7 @@ export async function uploadPhoto(
            sıradan bir kullanıcıda sessizce sıfır satır etkiler ve yarım
            kalmış taslak, dosyaları silinmiş hâlde galeride kalırdı.
 
-           Taslak zaten public'te görünmüyor (`status='draft'`) ve kotaya
+           Taslak zaten public'te görünmüyor (`status='taslak'`) ve kotaya
            sayılmıyor; `deleted_at` yazmak onu yönetim yüzeylerinden de
            düşürüyor. Kalıcı temizlik adminin işi. */
         await supabase
@@ -273,7 +273,7 @@ export async function uploadPhoto(
         target_label: input.targetLabel
           ? sanitizeText(input.targetLabel, { maxLength: 160 })
           : null,
-        status: 'draft',
+        status: 'taslak',
         captured_at: input.capturedAt || null,
         city: input.city || null,
         district: input.district || null,
@@ -524,7 +524,7 @@ export async function publishPhoto(photoId: string): Promise<void> {
   const supabase = await client();
   const { error } = await supabase
     .from('astro_photos')
-    .update({ status: 'published', published_at: new Date().toISOString() })
+    .update({ status: 'yayinda', published_at: new Date().toISOString() })
     .eq('id', photoId);
 
   if (error) throw new Error(error.message);
