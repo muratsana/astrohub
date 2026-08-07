@@ -71,7 +71,7 @@ export const DEFAULT_CLUBS: ClubView[] = seedClubs.map((c) => ({
 }));
 
 const SELECT =
-  'slug, name, kind, city, founded_on, place, founded_year, member_count, summary, ' +
+  'slug, name, kind, city, district, founded_on, place, founded_year, member_count, summary, ' +
   'topics, activities, public_events, shared_equipment, website, contact_email, ' +
   'join_url, social_url, whatsapp_url, photo_paths, organizer_name, source_name, ' +
   'info_checked_on, verified_at, listed, status';
@@ -142,6 +142,7 @@ function normalize(row: Record<string, unknown>): ClubView | null {
     name,
     kind,
     city: metin(row.city) || 'Bilinmiyor',
+    district: metin(row.district) || undefined,
     ...(metin(row.founded_on) ? { foundedOn: metin(row.founded_on) } : {}),
     ...(metin(row.place) ? { place: metin(row.place) } : {}),
     ...(yil !== null ? { foundedYear: yil } : {}),

@@ -18,6 +18,7 @@ import { clubKindLabels } from './data';
 import { citiesOf, useClubs } from './clubsSource';
 import { ClubCard } from './ClubCard';
 import { useExplorer } from '@/features/explorer/useExplorer';
+import { DistrictFilterCell } from '@/features/explorer/DistrictFilterCell';
 import { clubsSpec } from './clubsSpec';
 import { cities as turkeyCities } from '@/features/location/cities';
 
@@ -150,6 +151,16 @@ export function ClubsPage() {
               ))}
             </Select>
           </FilterCell>
+          <DistrictFilterCell
+            id="club-district"
+            counts={ex.counts('ilce')}
+            selected={ex.query.facets.ilce?.[0]}
+            onSelect={(next: string | undefined) => {
+              const mevcut = ex.query.facets.ilce?.[0];
+              if (mevcut) ex.toggleFacet('ilce', mevcut);
+              if (next) ex.toggleFacet('ilce', next);
+            }}
+          />
           <FilterToggle
             id="club-public"
             label="Halka açık etkinlik"

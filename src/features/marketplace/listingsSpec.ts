@@ -25,6 +25,17 @@ export const listingsSpec: ExplorerSpec<Listing> = {
         equipmentCategoryLabels[v as keyof typeof equipmentCategoryLabels] ?? v,
     },
     { param: 'sehir', label: 'Şehir', valueOf: (l) => l.city },
+    /*
+     * İLÇE — yalnızca VERİDE OLAN ilçeler listeleniyor.
+     *
+     * Şehir süzgeci 81 ilin tamamını gösteriyor çünkü liste sabit ve
+     * kullanıcı kendi ilini arıyor. İlçe farklı: 974 seçenek arasından
+     * ilan olmayan birini seçmek boş bir liste demek. `valueOf` ilçesi
+     * olmayan kayıtta `null` döndüğü için sayım haritası kendiliğinden
+     * yalnızca gerçek ilçeleri taşıyor ve hiç ilçe yoksa süzgeç
+     * çizilmiyor.
+     */
+    { param: 'ilce', label: 'İlçe', valueOf: (l) => l.district ?? null },
     {
       param: 'faturali',
       label: 'Faturalı',

@@ -38,6 +38,17 @@ export const clubsSpec: ExplorerSpec<ClubView> = {
       labelOf: () => 'var',
     },
     { param: 'sehir', label: 'Şehir', valueOf: (c) => c.city },
+    /*
+     * İLÇE — yalnızca VERİDE OLAN ilçeler listeleniyor.
+     *
+     * Şehir süzgeci 81 ilin tamamını gösteriyor çünkü liste sabit ve
+     * kullanıcı kendi ilini arıyor. İlçe farklı: 974 seçenek arasından
+     * ilan olmayan birini seçmek boş bir liste demek. `valueOf` ilçesi
+     * olmayan kayıtta `null` döndüğü için sayım haritası kendiliğinden
+     * yalnızca gerçek ilçeleri taşıyor ve hiç ilçe yoksa süzgeç
+     * çizilmiyor.
+     */
+    { param: 'ilce', label: 'İlçe', valueOf: (c) => c.district ?? null },
     {
       /* Doğrulanmış kulüpler (§14.7). Rozeti gösterip süzmeyi
          vermemek, ziyaretçiye "bunlardan hangileri teyitli" sorusunu

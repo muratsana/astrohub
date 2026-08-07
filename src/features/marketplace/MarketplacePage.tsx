@@ -30,6 +30,7 @@ import {
 } from '@/features/equipment/data';
 import { useListings } from '@/services/content/listings';
 import { useExplorer } from '@/features/explorer/useExplorer';
+import { DistrictFilterCell } from '@/features/explorer/DistrictFilterCell';
 import { listingsSpec } from './listingsSpec';
 import type { Listing } from './data';
 import { PageMeta } from '@/components/seo/PageMeta';
@@ -212,6 +213,16 @@ export function MarketplacePage() {
               ))}
             </Select>
           </FilterCell>
+          <DistrictFilterCell
+            id="listing-district"
+            counts={ex.counts('ilce')}
+            selected={ex.query.facets.ilce?.[0]}
+            onSelect={(next) => {
+              const mevcut = ex.query.facets.ilce?.[0];
+              if (mevcut) ex.toggleFacet('ilce', mevcut);
+              if (next) ex.toggleFacet('ilce', next);
+            }}
+          />
           <FilterToggle
             id="listing-invoice"
             label="Yalnızca faturalı"

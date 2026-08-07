@@ -15,6 +15,7 @@ import { ButtonLink } from '@/components/ui/Button';
 import { breadcrumbJsonLd } from '@/lib/seo';
 import { useEventCatalog } from '@/services/content/events';
 import { useExplorer } from '@/features/explorer/useExplorer';
+import { DistrictFilterCell } from '@/features/explorer/DistrictFilterCell';
 import { eventsSpec } from './eventsSpec';
 import { EventCalendar } from './EventCalendar';
 import { EventViews } from './EventViews';
@@ -165,6 +166,15 @@ export function EventCalendarPage() {
               ))}
             </Select>
           </FilterCell>
+
+          <DistrictFilterCell
+            id="event-district"
+            counts={ex.counts('ilce')}
+            selected={ex.query.facets.ilce?.[0]}
+            onSelect={(next: string | undefined) =>
+              tekSec('ilce', ex.query.facets.ilce?.[0] ?? 'hepsi', next ?? 'hepsi')
+            }
+          />
 
           <FilterCell
             label="Zaman"

@@ -38,6 +38,7 @@ interface EventRow {
   title: string;
   event_type: string;
   city: string;
+  district?: string | null;
   venue: string;
   latitude: number | string | null;
   longitude: number | string | null;
@@ -79,6 +80,7 @@ export function mapEventRow(row: EventRow): AstroEvent {
     title: row.title,
     type: row.event_type as EventType,
     city: row.city,
+    district: row.district ?? undefined,
     venue: row.venue,
     coords:
       latitude !== null && longitude !== null
@@ -118,7 +120,7 @@ async function fetchEvents(client: SupabaseClient): Promise<AstroEvent[]> {
   const { data, error } = await client
     .from('events')
     .select(
-      'id, slug, title, event_type, city, venue, latitude, longitude, starts_at, ' +
+      'id, slug, title, event_type, city, district, venue, latitude, longitude, starts_at, ' +
         'ends_at, free, camping, kids_friendly, astrophoto_focused, ' +
         'telescopes_provided, capacity, registered_count, organizer_name, ' +
         'organizer_verified, description, observed_targets, rules, ' +
@@ -145,6 +147,8 @@ export interface NewEventInput {
   title: string;
   type: EventType;
   city: string;
+  /** İlçe adı — isteğe bağlı; `DistrictSelect` kanonik yazımı veriyor. */
+  district?: string;
   venue: string;
   startsAt: string;
   endsAt?: string;
@@ -192,6 +196,9 @@ export async function createEventContribution(
     event_type: input.type,
     status: 'draft',
     city: sanitizeText(input.city, { maxLength: 60 }),
+    district: input.district
+      ? sanitizeText(input.district, { maxLength: 60 })
+      : null,
     venue: sanitizeText(input.venue, { maxLength: 160 }),
     latitude: input.latitude ?? null,
     longitude: input.longitude ?? null,

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Panel } from '@/components/ui/Panel';
+import { DistrictSelect } from '@/components/ui/DistrictSelect';
 import { Field } from '@/components/ui/Field';
 import { Input, Select } from '@/components/ui/Input';
 import { Button, ButtonLink } from '@/components/ui/Button';
@@ -470,6 +471,14 @@ export function NewClubPage() {
                       </option>
                     ))}
                   </Select>
+                </Field>
+                <Field label="İlçe" htmlFor="club-district">
+                  <DistrictSelect
+                    id="club-district"
+                    provinceName={draft.city}
+                    value={draft.district ?? ''}
+                    onChange={(v) => set('district', v)}
+                  />
                 </Field>
                 <Field label="Kuruluş tarihi" htmlFor="club-founded">
                   <Input

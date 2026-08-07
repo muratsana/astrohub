@@ -30,6 +30,17 @@ export const eventsSpec: ExplorerSpec<AstroEvent> = {
       labelOf: (v) => eventTypeLabels[v as keyof typeof eventTypeLabels] ?? v,
     },
     { param: 'sehir', label: 'Şehir', valueOf: (e) => e.city },
+    /*
+     * İLÇE — yalnızca VERİDE OLAN ilçeler listeleniyor.
+     *
+     * Şehir süzgeci 81 ilin tamamını gösteriyor çünkü liste sabit ve
+     * kullanıcı kendi ilini arıyor. İlçe farklı: 974 seçenek arasından
+     * ilan olmayan birini seçmek boş bir liste demek. `valueOf` ilçesi
+     * olmayan kayıtta `null` döndüğü için sayım haritası kendiliğinden
+     * yalnızca gerçek ilçeleri taşıyor ve hiç ilçe yoksa süzgeç
+     * çizilmiyor.
+     */
+    { param: 'ilce', label: 'İlçe', valueOf: (e) => e.district ?? null },
     {
       param: 'zaman',
       label: 'Zaman',

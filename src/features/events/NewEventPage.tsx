@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Panel } from '@/components/ui/Panel';
+import { ProvinceSelect } from '@/components/ui/ProvinceSelect';
+import { DistrictSelect } from '@/components/ui/DistrictSelect';
 import { Field } from '@/components/ui/Field';
 import { Input, Select } from '@/components/ui/Input';
 import { Button, ButtonLink } from '@/components/ui/Button';
@@ -22,6 +24,7 @@ export function NewEventPage() {
   const [title, setTitle] = useState('');
   const [type, setType] = useState<EventType>('halk-gozlemi');
   const [city, setCity] = useState('');
+  const [district, setDistrict] = useState('');
   const [venue, setVenue] = useState('');
   const [startsAt, setStartsAt] = useState('');
   const [endsAt, setEndsAt] = useState('');
@@ -38,6 +41,7 @@ export function NewEventPage() {
     title,
     type,
     city,
+    district: district || undefined,
     venue,
     startsAt,
     endsAt: endsAt || undefined,
@@ -116,10 +120,20 @@ export function NewEventPage() {
                 </Select>
               </Field>
               <Field label="İl" htmlFor="event-city">
-                <Input
-                  id="event-city"
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
+                {/* SERBEST METİNDİ. `ProvinceSelect` ilan formunda ve
+                    profilde bu sorunu çözerken etkinlik formu atlanmış:
+                    "Muğla", "Mugla", "MUĞLA" ayrı şehirler gibi
+                    kaydediliyor ve takvimin şehir süzgeci katalogdan
+                    üretildiği için aynı il listede birkaç kez
+                    görünüyordu. */}
+                <ProvinceSelect id="event-city" value={city} onChange={setCity} />
+              </Field>
+              <Field label="İlçe" htmlFor="event-district">
+                <DistrictSelect
+                  id="event-district"
+                  provinceName={city}
+                  value={district}
+                  onChange={setDistrict}
                 />
               </Field>
             </div>

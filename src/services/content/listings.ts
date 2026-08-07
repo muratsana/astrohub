@@ -46,6 +46,7 @@ interface ListingRow {
   category_id: string;
   price: number | string;
   city: string;
+  district: string | null;
   condition: string;
   has_invoice: boolean;
   shipping_ok: boolean;
@@ -113,6 +114,7 @@ export function mapListingRow(row: ListingRow): Listing {
       : equipmentCategoryOrder[0]) as EquipmentCategory,
     price: num(row.price),
     city: row.city,
+    district: row.district ?? undefined,
     condition: (CONDITIONS.includes(row.condition as ListingCondition)
       ? row.condition
       : 'İyi') as ListingCondition,
@@ -141,7 +143,7 @@ export function mapListingRow(row: ListingRow): Listing {
 }
 
 const SELECT =
-  'id, seller_id, slug, title, category_id, price, city, condition, has_invoice, ' +
+  'id, seller_id, slug, title, category_id, price, city, district, condition, has_invoice, ' +
   'shipping_ok, negotiable, description, includes, status, posted_at, ' +
   'profiles!listings_seller_id_profiles_fkey(username, display_name), ' +
   'equipment_models(slug), listing_photos(storage_path, position)';
@@ -274,6 +276,8 @@ export interface NewListingInput {
   category: EquipmentCategory;
   price: number;
   city: string;
+  /** İlçe adı — isteğe bağlı; `DistrictSelect` kanonik yazımı veriyor. */
+  district?: string;
   condition: ListingCondition;
   description: string;
   includes: string[];
@@ -348,6 +352,9 @@ export async function createListing(input: NewListingInput): Promise<string> {
     model_id: modelId,
     price: input.price,
     city: sanitizeText(input.city, { maxLength: 60 }),
+    district: input.district
+      ? sanitizeText(input.district, { maxLength: 60 })
+      : null,
     condition: input.condition,
     has_invoice: input.hasInvoice,
     shipping_ok: input.shippingOk,

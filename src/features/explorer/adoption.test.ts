@@ -1,6 +1,9 @@
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { listingsSpec } from '@/features/marketplace/listingsSpec';
+import { eventsSpec } from '@/features/events/eventsSpec';
+import { clubsSpec } from '@/features/clubs/clubsSpec';
 
 /**
  * ═══════════════════════════════════════════════════════════════════════
@@ -128,3 +131,28 @@ function tsxAra(dir: string, out: string[] = [], kok = dir): string[] {
   }
   return out;
 }
+
+/**
+ * İLÇE FACET'İ ÜÇ SPEC'TE DE VAR MI.
+ *
+ * Süzgeç ortak bir bileşende ama tanım her spec'te ayrı. Biri
+ * eklenmediğinde o sayfada ilçe hiç görünmez ve bu SESSİZ bir eksiklik:
+ * `DistrictFilterCell` sayım boşken zaten çizilmiyor, yani "facet
+ * unutuldu" ile "henüz ilçeli kayıt yok" ekranda birbirinin aynısı.
+ */
+describe('ilçe facet kapsaması', () => {
+  it('ilan, etkinlik ve kulüp spec’lerinde ilçe facet’i var', () => {
+    const eksik = [
+      ['ilanlar', listingsSpec],
+      ['etkinlikler', eventsSpec],
+      ['kulüpler', clubsSpec],
+    ]
+      .filter(([, spec]) => {
+        const s = spec as { facets: { param: string }[] };
+        return !s.facets.some((f) => f.param === 'ilce');
+      })
+      .map(([ad]) => ad);
+
+    expect(eksik).toEqual([]);
+  });
+});

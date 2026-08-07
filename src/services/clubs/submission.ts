@@ -22,6 +22,8 @@ export interface ClubDraft {
   name: string;
   kind: ClubKind;
   city: string;
+  /** İlçe adı — isteğe bağlı; `DistrictSelect` kanonik yazımı veriyor. */
+  district?: string;
   foundedOn: string;
   place: string;
   topics: ClubTopic[];
@@ -156,6 +158,9 @@ export async function createClubRecord(
     name,
     kind: input.kind,
     city: sanitizeText(input.city, { maxLength: 80 }),
+    district: input.district
+      ? sanitizeText(input.district, { maxLength: 80 })
+      : null,
     founded_on: input.foundedOn,
     founded_year: Number(input.foundedOn.slice(0, 4)),
     place: sanitizeText(input.place || input.city, { maxLength: 160 }),

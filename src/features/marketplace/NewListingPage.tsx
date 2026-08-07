@@ -6,6 +6,7 @@ import { Panel } from '@/components/ui/Panel';
 import { Field } from '@/components/ui/Field';
 import { Input, Select } from '@/components/ui/Input';
 import { ProvinceSelect } from '@/components/ui/ProvinceSelect';
+import { DistrictSelect } from '@/components/ui/DistrictSelect';
 import { Button, ButtonLink } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { PageMeta } from '@/components/seo/PageMeta';
@@ -102,6 +103,12 @@ export function NewListingPage() {
    * seçmektense kullanıcıya sordurmak.
    */
   const [city, setCity] = useState(location.provinceName ?? '');
+  /* İlçe konumdan ÖN DOLDURULMUYOR. `location.districtId` yalnızca
+     kullanıcı ilçeyi kendisi seçtiyse dolu; cihaz konumundan gelen
+     `districtName` bir TAHMİN (en yakın merkez, 40 km'ye kadar) ve onu
+     ilana yazmak, kullanıcının doğrulamadığı bir adresi yayımlamak
+     olurdu. */
+  const [district, setDistrict] = useState('');
   const [condition, setCondition] = useState<ListingCondition>('İyi');
   const [description, setDescription] = useState('');
   const [includes, setIncludes] = useState('');
@@ -139,6 +146,7 @@ export function NewListingPage() {
     category,
     price: Number(price.replace(',', '.')),
     city,
+    district: district || undefined,
     condition,
     description,
     /* Satır başına bir parça: "kutusu, adaptör, uzatma tüpü" diye tek
@@ -337,6 +345,19 @@ export function NewListingPage() {
                       şehirler gibi kaydediliyor ve pazaryeri süzgecinde
                       aynı il dört kez çıkıyordu. */}
                   <ProvinceSelect id="l-city" value={city} onChange={setCity} />
+                </Field>
+
+                <Field label="İlçe" htmlFor="l-district">
+                  {/* İsteğe bağlı — ama elden teslimde belirleyici olan
+                      şey bu. "İstanbul" 15 milyonluk bir alan; alıcı
+                      teleskobu Kadıköy'den mi Silivri'den mi alacağını
+                      ilan açıklamasını okumadan bilemiyordu. */}
+                  <DistrictSelect
+                    id="l-district"
+                    provinceName={city}
+                    value={district}
+                    onChange={setDistrict}
+                  />
                 </Field>
 
                 <Field label="Durum" htmlFor="l-condition">

@@ -60,6 +60,15 @@ export interface AstronomyClub {
   name: string;
   kind: ClubKind;
   city: string;
+  /**
+   * İlçe adı — `districts` tablosundaki kanonik yazım.
+   *
+   * İSTEĞE BAĞLI ve öyle kalıyor: mevcut kayıtların hiçbirinde yok ve
+   * zorunlu yapmak onları düzenlenemez hâle getirirdi. Süzgeçte
+   * yalnızca dolu olanlar görünüyor — "belirtilmemiş" diye bir seçenek
+   * yok, çünkü o bir yer adı değil, verinin yokluğu.
+   */
+  district?: string;
   foundedOn?: string;
   place?: string;
   foundedYear?: number;
