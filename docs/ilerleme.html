@@ -530,9 +530,30 @@
     "1:6": "tamamlandi",   // usePermissions(); useRoles ona devredildi
 
     // ── FAZ 2 — kullanıcı yönetimi ──────────────────────────────────────
-    // Başladı. Mevcut UserControl.tsx + users.ts okunuyor; hangi maddenin
-    // zaten kurulu olduğu ölçülmeden yeni kod yazılmıyor (§6.8).
-    "2:0": "yapiliyor",    // kullanıcı listesi: arama, filtre, sayfalama
+    // ÖNCE ÖLÇÜLDÜ (§6.8). Altı maddenin ÜÇÜ zaten kuruluydu ve yeniden
+    // yazılmadı: kullanıcı listesi (fetchUsers sunucu taraflı sayfalama,
+    // arama, durum/rol/şehir süzgeci), hesap durumu (FAZ 1'den gelen
+    // app.is_account_active + on bir RLS politikası) ve notify_user()
+    // (0044'ten beri var). Gerçek boşluk üç yerdeydi, üçü de kapandı.
+    //
+    // 7 Ağustos gözden geçirmesinde verilen kullanıcı kararları:
+    //   • Sistem mesajını moderatör de gönderebilir — açıldı.
+    //   • Rol vermede onay ekranı YOK: "admin yapar, admin kaldırır".
+    //     user_roles_admin_write zaten yalnızca admin geçiriyor; ölçüldü,
+    //     yerinde, dokunulmadı.
+    //   • Son admin koruması FAZ 2 kapsamına alındı ve istemciden
+    //     veritabanına taşındı (app.guard_last_admin).
+    //
+    // Üretimde sınandı (geri alınan işlem içinde): son admin silinemedi,
+    // iki admin varken devretme çalıştı, admin dışı roller serbest;
+    // geçmiş tarihli premium reddedildi, süresiz ve gelecek tarih kabul
+    // edildi, denetim satırları doğru düştü.
+    "2:0": "tamamlandi",   // liste/arama/süzme/sayfalama — ölçüldü, kuruluydu
+    "2:1": "tamamlandi",   // rol ver/al; jury listeye eklendi, son admin DB'de
+    "2:2": "tamamlandi",   // premium: süresiz / tarihe kadar + geçmiş tarih reddi
+    "2:3": "tamamlandi",   // sistem mesajı kutusu → notify_user()
+    "2:4": "tamamlandi",   // hesap durumu — FAZ 1'den kuruluydu
+    "2:5": "tamamlandi",   // memberships_audit + notify_user denetim kaydı
 
     // ── Kodla bitmeyenler (plan §10.2) — baştan işaretlendi ─────────────
     // Bunlar bir engel çıktığında değil, engel BİLİNDİĞİ için şimdiden
@@ -543,7 +564,7 @@
     "13:7": "sende",   // D11 — masaüstü köprü dağıtımı
   };
 
-  const GUNCELLEME = "7 Ağustos 2026 — FAZ 1 canlı veritabanına uygulandı; FAZ 2 başladı";
+  const GUNCELLEME = "7 Ağustos 2026 — FAZ 1 ve FAZ 2 tamam, dördü de canlı veritabanında";
 
   /* ── Buradan aşağısı görüntüleme mantığı; değiştirmeye gerek yok ─────── */
 

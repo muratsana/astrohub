@@ -36,6 +36,11 @@ import { csvFileName, toCsv } from '@/lib/csv';
  * olduğu için maliyeti taşımadı.
  */
 
+/**
+ * Sıra `app.app_role` enum'unun sırası. `jury` en sonda çünkü enum'a en
+ * son eklendi (`20260807200000_jury_rolu.sql`) ve PostgreSQL enum
+ * değerlerini araya sokmuyor.
+ */
 export const ROLES = [
   'member',
   'verified_organizer',
@@ -43,6 +48,7 @@ export const ROLES = [
   'content_editor',
   'moderator',
   'admin',
+  'jury',
 ] as const;
 
 export type AppRole = (typeof ROLES)[number];
@@ -54,6 +60,7 @@ export const roleLabels: Record<AppRole, string> = {
   content_editor: 'İçerik editörü',
   moderator: 'Moderatör',
   admin: 'Yönetici',
+  jury: 'Jüri',
 };
 
 /** Rolün ne açtığını tek cümlede söyler — panelde yanında yazıyor. */
@@ -64,6 +71,9 @@ export const roleDescriptions: Record<AppRole, string> = {
   content_editor: 'Haber, yazı, TV ve radyo yayınlarını düzenler.',
   moderator: 'İçerik kaldırır, forumu ve ilanları denetler.',
   admin: 'Her şey — rol verme dahil.',
+  /* Jüri yetkisi tek bir işten ibaret ve o iş photo_of_week_votes
+     politikalarında zorlanıyor; özellik izni taşımıyor. */
+  jury: 'Haftanın fotoğrafı adaylarına oy verir. Başka yetkisi yoktur.',
 };
 
 export const MEMBERSHIP_STATUSES = [
@@ -370,28 +380,19 @@ export async function grantRole(userId: string, role: AppRole): Promise<void> {
 /**
  * Rolü geri alır.
  *
- * SON ADMİN ALINAMAZ. Kendi admin rolünü alan bir yönetici paneli
- * tamamen kaybederdi ve geri dönüş yolu yalnızca SQL konsolu olurdu.
- * Sayım yazma öncesi yapılıyor; yarış durumunda iki eşzamanlı isteğin
- * ikisi de "iki admin var" görebilir, ama bunun için iki yöneticinin
- * aynı saniyede birbirini alması gerekir.
+ * SON ADMİN KORUMASI BURADA DEĞİL, VERİTABANINDA. Eskiden bu fonksiyon
+ * silmeden önce admin sayıyordu ve o sayım yanlış taraftaydı: panel
+ * `user_roles`a yazan tek yol değil, doğrudan bir REST çağrısı
+ * (`DELETE /rest/v1/user_roles?role=eq.admin`) istemcideki sayımı hiç
+ * görmeden son admin satırını silebiliyordu.
+ *
+ * Kural artık `app.guard_last_admin()` tetikleyicisinde
+ * (`20260807220000`). Buradaki sayım kaldırıldı çünkü aynı kuralın iki
+ * kaynağı olurdu; veritabanının hata metni zaten kullanıcıya gösterilen
+ * metnin aynısı.
  */
 export async function revokeRole(userId: string, role: AppRole): Promise<void> {
   const supabase = await client();
-
-  if (role === 'admin') {
-    const { data, error } = await supabase
-      .from('user_roles')
-      .select('user_id')
-      .eq('role', 'admin');
-    if (error) throw new Error(error.message);
-    if ((data ?? []).length <= 1) {
-      throw new Error(
-        'Son yönetici rolü alınamaz — paneli kimse açamaz hale gelirdi.'
-      );
-    }
-  }
-
   const { error } = await supabase
     .from('user_roles')
     .delete()
@@ -401,21 +402,83 @@ export async function revokeRole(userId: string, role: AppRole): Promise<void> {
 }
 
 /**
- * Üyelik durumunu elle ayarlar.
+ * Üyelik durumunu ve süresini elle ayarlar (FAZ 2, görev 3).
  *
  * NEDEN ELLE: ödeme sağlayıcısı henüz bağlı değil ve destek tarafında
  * "ödemesi geçti ama webhook düşmedi" durumu bir şekilde çözülebilmeli.
  * Alan `provider` boş kalıyor — böylece elle açılmış bir üyelik,
  * sağlayıcıdan gelenden ayırt edilebiliyor.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * SÜRESİZ İLE "DOKUNMA" AYNI ŞEY DEĞİL
+ *
+ * `endsAt` üç değer alıyor ve üçü de farklı:
+ *
+ *   `undefined` → süreye dokunma (yalnızca durum değişiyor)
+ *   `null`      → SÜRESİZ yap (var olan bitiş tarihini temizle)
+ *   tarih       → o tarihe kadar
+ *
+ * İkisini tek `null` ile ifade etmek, "durumu aktif yap" demek isteyen
+ * bir yöneticinin var olan bitiş tarihini farkında olmadan silmesi
+ * demekti.
+ *
+ * GEÇMİŞ TARİH KONTROLÜ BURADA DEĞİL: `app.guard_membership_period()`
+ * tetikleyicisi reddediyor (`20260807210000`). Buradaki tek iş, formun
+ * gönderdiği değeri doğru şekle çevirmek.
  */
 export async function setMembership(
   userId: string,
-  status: MembershipStatus
+  status: MembershipStatus,
+  endsAt?: string | null
 ): Promise<void> {
   const supabase = await client();
+
+  const kayit: {
+    user_id: string;
+    status: MembershipStatus;
+    current_period_end?: string | null;
+  } = { user_id: userId, status };
+
+  if (endsAt !== undefined) kayit.current_period_end = endsAt;
+
   const { error } = await supabase
     .from('memberships')
-    .upsert({ user_id: userId, status }, { onConflict: 'user_id' });
+    .upsert(kayit, { onConflict: 'user_id' });
+  if (error) throw new Error(error.message);
+}
+
+/**
+ * KULLANICIYA DOĞRUDAN SİSTEM MESAJI (FAZ 2, görev 4).
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * TABLOYA DEĞİL RPC'YE YAZILIYOR
+ *
+ * `notifications` tablosunda INSERT politikası YOK — hiçbir istemci
+ * oraya doğrudan satır yazamıyor ve bu kasıtlı: yazabilseydi herhangi
+ * bir üye başkasına "sistem" imzalı bildirim gönderebilirdi.
+ *
+ * `public.notify_user()` `security definer` ve içinde yetki kontrolü
+ * var (admin ya da moderatör). Denetim kaydını da o yazıyor — panelden
+ * geçmeyen bir çağrı da kayda düşsün diye.
+ *
+ * Gövde denetime yazılmıyor, uzunluğu yazılıyor: mesaj metni kişisel
+ * veri olabilir.
+ */
+export async function sendSystemMessage(
+  userId: string,
+  title: string,
+  body: string
+): Promise<void> {
+  const baslik = title.trim();
+  if (!baslik) throw new Error('Başlık zorunlu — bildirimde görünen metin bu.');
+
+  const supabase = await client();
+  const { error } = await supabase.rpc('notify_user', {
+    recipient: userId,
+    title: baslik,
+    body: body.trim() || null,
+    url: null,
+  });
   if (error) throw new Error(error.message);
 }
 

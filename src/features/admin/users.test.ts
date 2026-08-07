@@ -6,6 +6,7 @@ import {
   roleDescriptions,
   roleLabels,
   revokeRole,
+  sendSystemMessage,
   ACCOUNT_STATUSES,
   accountStatusLabels,
   accountStatusDescriptions,
@@ -45,6 +46,9 @@ describe('roller', () => {
       'content_editor',
       'moderator',
       'admin',
+      /* `jury` en sonda: enum'a en son eklendi ve PostgreSQL değerleri
+         araya sokmuyor. Sıra canlı `pg_enum` sorgusuyla doğrulandı. */
+      'jury',
     ]);
   });
 
@@ -111,15 +115,35 @@ describe('tip güvenliği', () => {
 
 describe('son yönetici koruması', () => {
   /*
-   * ASIL KURAL. Son admin rolü alınırsa paneli kimse açamaz ve geri
-   * dönüş yolu yalnızca SQL konsolu olur. Kural istemcide, çünkü RLS
-   * satır bazlı çalışıyor ve "kaç tane kaldı" sorusunu sormuyor.
+   * ASIL KURAL ARTIK VERİTABANINDA — `app.guard_last_admin()`
+   * tetikleyicisi (`20260807220000`). Eskiden bu sayım `revokeRole`
+   * içindeydi ve yanlış taraftaydı: doğrudan bir REST çağrısı
+   * (`DELETE /rest/v1/user_roles?role=eq.admin`) istemcideki kontrolü
+   * hiç görmeden son admin satırını silebiliyordu.
    *
-   * Yapılandırma yokken fonksiyon veritabanına hiç gitmeden hata
-   * veriyor; ölçülen şey bu yolun sessizce başarılı dönmemesi.
+   * Yaptırım üretimde sınandı (7 Ağu, geri alınan işlem içinde): tek
+   * admin varken silme `insufficient_privilege` ile reddedildi, iki
+   * admin varken devretme çalıştı, admin dışı roller serbest kaldı.
+   *
+   * Burada ölçülen tek şey `revokeRole`un yapılandırma yokken sessizce
+   * başarılı dönmemesi — kuralın kendisi değil, çağrı yolunun sağlamlığı.
    */
   it('yapılandırma yokken sessizce başarılı dönmüyor', async () => {
     await expect(revokeRole('bir-kullanici', 'admin')).rejects.toThrow();
+  });
+});
+
+describe('sistem mesajı', () => {
+  /*
+   * Başlık zorunlu ve kontrol veritabanına GİTMEDEN yapılıyor: bildirim
+   * listesinde görünen tek metin başlık, boş bir başlık kullanıcıya boş
+   * satır olarak görünürdü. Yetki kontrolü ise burada değil —
+   * `notify_user()` admin/moderatör değilse 42501 döndürüyor.
+   */
+  it('başlıksız mesajı veritabanına hiç göndermiyor', async () => {
+    await expect(sendSystemMessage('bir-kullanici', '   ', 'gövde')).rejects.toThrow(
+      /Başlık zorunlu/
+    );
   });
 });
 

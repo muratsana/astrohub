@@ -26,6 +26,7 @@ import {
   grantRole,
   revokeRole,
   setMembership,
+  sendSystemMessage,
   membershipLabels,
   roleDescriptions,
   roleLabels,
@@ -467,76 +468,9 @@ export function UserControl() {
                     </p>
                   </div>
 
-                  <div className="flex flex-wrap items-end gap-2">
-                    <label className="block">
-                      <span className="label mb-1 block">Üyelik</span>
-                      <Select
-                        value={u.membership}
-                        disabled={busy}
-                        onChange={(e) =>
-                          void run(() =>
-                            setMembership(
-                              u.id,
-                              e.target.value as MembershipStatus
-                            )
-                          )
-                        }
-                        className="h-8 text-meta"
-                      >
-                        {MEMBERSHIP_STATUSES.map((m) => (
-                          <option key={m} value={m}>
-                            {membershipLabels[m]}
-                          </option>
-                        ))}
-                      </Select>
-                    </label>
-                    {u.membershipEnds && (
-                      <span className="tabular pb-1.5 text-meta text-faint">
-                        bitiş:{' '}
-                        {new Date(u.membershipEnds).toLocaleDateString('tr-TR')}
-                      </span>
-                    )}
+                  <MembershipSection user={u} busy={busy} onApply={run} />
 
-                    {/*
-                      TEST PREMIUM — §12.2 "admin test kullanıcılarına
-                      kontrollü Premium entitlement verebilmelidir".
-
-                      Yukarıdaki açılır liste üyelik DURUMUNU değiştiriyor;
-                      bu düğme farklı bir şey yapıyor ve ayrı durmasının
-                      sebebi o: 30 GÜNLÜK bir süre koyuyor, kaydı
-                      `provider='test'` diye işaretliyor ve denetim
-                      kaydına yazıyor.
-
-                      Süre zorunlu çünkü süresiz bir test premium'u,
-                      unutulduğunda ücretsiz kalıcı premium olur.
-                      İşaret zorunlu çünkü ödeme sağlayıcısı bağlandığında
-                      gerçek abonelikleri bunlardan ayırmak gerekecek.
-                    */}
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="secondary"
-                      disabled={busy}
-                      onClick={() =>
-                        /* `run` void bekliyor; dönen bitiş tarihi
-                           listenin tazelenmesiyle zaten görünüyor. */
-                        void run(async () => {
-                          await grantTestPremium(u.id, 30);
-                        })
-                      }
-                    >
-                      Test premium (30 gün)
-                    </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="danger"
-                      disabled={busy}
-                      onClick={() => void run(() => revokeTestPremium(u.id))}
-                    >
-                      Test premiumi geri al
-                    </Button>
-                  </div>
+                  <SystemMessageSection user={u} busy={busy} onApply={run} />
 
                   <AccountStatusSection
                     user={u}
@@ -657,6 +591,282 @@ export function UserControl() {
         )}
       </div>
     </Panel>
+  );
+}
+
+/**
+ * ÜYELİK BÖLÜMÜ — durum ve süre (FAZ 2, görev 3).
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * SÜRE, DURUMLA BİRLİKTE UYGULANIYOR
+ *
+ * Önceki sürümde açılır listeden bir durum seçmek anında yazıyordu ve
+ * süreye dokunmanın hiçbir yolu yoktu: premium her zaman süresizdi ya da
+ * "Test premium (30 gün)" düğmesinin sabit süresini alıyordu.
+ *
+ * Şimdi ikisi tek formda ve "Uygula" ile birlikte gidiyor. Anında yazan
+ * bir açılır liste, süre alanını doldurmakta olan yöneticinin yarım
+ * kalmış girdisini kaydederdi.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * "SÜRESİZ" AYRI BİR SEÇİM, BOŞ ALAN DEĞİL
+ *
+ * Tarih alanını boş bırakmak iki farklı niyet olabilir: "süresiz olsun"
+ * ya da "süreye dokunma". Radyo düğmesi bunu açıkça soruyor ve
+ * `setMembership` üç ayrı değeri (`undefined` / `null` / tarih) bu
+ * yüzden ayırıyor.
+ *
+ * GEÇMİŞ TARİH KONTROLÜ BURADA DEĞİL: `app.guard_membership_period()`
+ * reddediyor. Form yalnızca `min` ile yanlış girdiyi zorlaştırıyor —
+ * tarayıcı doğrulaması bir güvenlik sınırı değil.
+ */
+function MembershipSection({
+  user,
+  busy,
+  onApply,
+}: {
+  user: AdminUser;
+  busy: boolean;
+  onApply: (action: () => Promise<void>) => Promise<void>;
+}) {
+  const [status, setStatus] = useState<MembershipStatus>(user.membership);
+  const [sureKipi, setSureKipi] = useState<'dokunma' | 'suresiz' | 'tarih'>(
+    'dokunma'
+  );
+  const [tarih, setTarih] = useState('');
+
+  /** Süre yalnızca premium sayılan durumlarda anlamlı. */
+  const sureliDurum = status === 'active' || status === 'grace';
+  const tarihEksik = sureKipi === 'tarih' && !tarih;
+
+  /** Bugün — `min` için. Geçmiş tarihi veritabanı da reddediyor. */
+  const bugun = new Date().toISOString().slice(0, 10);
+
+  function endsAt(): string | null | undefined {
+    if (!sureliDurum) return undefined;
+    if (sureKipi === 'suresiz') return null;
+    if (sureKipi === 'tarih' && tarih) {
+      /* Gün sonuna kuruluyor: "5 Eylül'e kadar" diyen bir yönetici o günün
+         de dahil olmasını bekliyor, gece yarısında kesilmesini değil. */
+      return new Date(`${tarih}T23:59:59`).toISOString();
+    }
+    return undefined;
+  }
+
+  return (
+    <div className="rounded-card border border-border bg-surface-1 p-3">
+      <p className="label mb-1.5">Üyelik</p>
+
+      <p className="mb-2 text-meta leading-relaxed text-faint">
+        Şu an:{' '}
+        <strong className="text-foreground">
+          {membershipLabels[user.membership]}
+        </strong>
+        {user.membershipEnds ? (
+          <>
+            {' · bitiş '}
+            <span className="tabular">
+              {new Date(user.membershipEnds).toLocaleDateString('tr-TR')}
+            </span>
+          </>
+        ) : user.membership === 'active' || user.membership === 'grace' ? (
+          ' · süresiz'
+        ) : null}
+      </p>
+
+      <div className="flex flex-wrap items-end gap-2">
+        <label className="block">
+          <span className="label mb-1 block">Durum</span>
+          <Select
+            value={status}
+            disabled={busy}
+            onChange={(e) => setStatus(e.target.value as MembershipStatus)}
+            className="h-8 text-meta"
+          >
+            {MEMBERSHIP_STATUSES.map((m) => (
+              <option key={m} value={m}>
+                {membershipLabels[m]}
+              </option>
+            ))}
+          </Select>
+        </label>
+
+        {sureliDurum && (
+          <>
+            <label className="block">
+              <span className="label mb-1 block">Süre</span>
+              <Select
+                value={sureKipi}
+                disabled={busy}
+                onChange={(e) =>
+                  setSureKipi(e.target.value as 'dokunma' | 'suresiz' | 'tarih')
+                }
+                className="h-8 text-meta"
+              >
+                <option value="dokunma">Değiştirme</option>
+                <option value="suresiz">Süresiz</option>
+                <option value="tarih">Tarihe kadar</option>
+              </Select>
+            </label>
+
+            {sureKipi === 'tarih' && (
+              <label className="block">
+                <span className="label mb-1 block">Bitiş</span>
+                <Input
+                  type="date"
+                  value={tarih}
+                  min={bugun}
+                  disabled={busy}
+                  onChange={(e) => setTarih(e.target.value)}
+                  className="h-8 text-meta"
+                />
+              </label>
+            )}
+          </>
+        )}
+
+        <Button
+          type="button"
+          size="sm"
+          disabled={busy || tarihEksik}
+          onClick={() =>
+            void onApply(async () => {
+              await setMembership(user.id, status, endsAt());
+              setSureKipi('dokunma');
+              setTarih('');
+            })
+          }
+        >
+          Uygula
+        </Button>
+      </div>
+
+      {/*
+        TEST PREMIUM — §12.2 "admin test kullanıcılarına kontrollü Premium
+        entitlement verebilmelidir".
+
+        Yukarıdaki form üyeliği elle tanımlıyor; bu düğme farklı bir şey
+        yapıyor ve ayrı durmasının sebebi o: kaydı `provider='test'` diye
+        İŞARETLİYOR. İşaret zorunlu çünkü ödeme sağlayıcısı bağlandığında
+        gerçek abonelikleri bunlardan ayırmak gerekecek.
+      */}
+      <div className="mt-2 flex flex-wrap gap-2 border-t border-border pt-2">
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
+          disabled={busy}
+          onClick={() =>
+            void onApply(async () => {
+              await grantTestPremium(user.id, 30);
+            })
+          }
+        >
+          Test premium (30 gün)
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="danger"
+          disabled={busy}
+          onClick={() => void onApply(() => revokeTestPremium(user.id))}
+        >
+          Test premiumi geri al
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * SİSTEM MESAJI BÖLÜMÜ (FAZ 2, görev 4).
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * BİLDİRİM, MESAJLAŞMA DEĞİL
+ *
+ * Bu kutu kullanıcıya bir BİLDİRİM gönderiyor (`kind='admin_direct'`),
+ * karşılıklı bir sohbet açmıyor. Gerekçe: yönetimden gelen "içeriğin şu
+ * sebeple kaldırıldı" mesajı bir duyuru; ona cevap yazılacak yer
+ * kullanıcının kendi şikayet akışı, yöneticinin gelen kutusu değil.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * GÖVDE İSTEĞE BAĞLI, BAŞLIK ZORUNLU
+ *
+ * Bildirim listesinde görünen tek metin başlık. Başlıksız bir bildirim
+ * kullanıcıya boş bir satır olarak görünürdü.
+ *
+ * Yetki kontrolü burada DEĞİL: `notify_user()` admin ya da moderatör
+ * değilse isteği 42501 ile reddediyor. Bu kutu herkese görünüyor çünkü
+ * `UserControl`un kendisi zaten role bağlı bir yüzey.
+ */
+function SystemMessageSection({
+  user,
+  busy,
+  onApply,
+}: {
+  user: AdminUser;
+  busy: boolean;
+  onApply: (action: () => Promise<void>) => Promise<void>;
+}) {
+  const [baslik, setBaslik] = useState('');
+  const [govde, setGovde] = useState('');
+  const [gonderildi, setGonderildi] = useState(false);
+
+  const hazir = baslik.trim().length >= 3;
+
+  return (
+    <div className="rounded-card border border-border bg-surface-1 p-3">
+      <p className="label mb-1.5">Sistem mesajı</p>
+
+      <p className="mb-2 text-meta leading-relaxed text-faint">
+        Kullanıcıya bildirim olarak gider ve okunmamış sayacına düşer.
+        Gönderim denetim kaydına yazılır; mesaj metni yazılmaz.
+      </p>
+
+      <div className="space-y-2">
+        <Input
+          value={baslik}
+          disabled={busy}
+          placeholder="Başlık — bildirim listesinde görünen metin"
+          onChange={(e) => {
+            setBaslik(e.target.value);
+            setGonderildi(false);
+          }}
+          className="text-meta"
+        />
+        <textarea
+          value={govde}
+          disabled={busy}
+          rows={3}
+          placeholder="Açıklama (isteğe bağlı)"
+          onChange={(e) => {
+            setGovde(e.target.value);
+            setGonderildi(false);
+          }}
+          className="w-full rounded-input border border-border bg-surface-2 px-2.5 py-1.5 text-meta text-foreground placeholder:text-faint focus:border-border-strong focus:outline-none"
+        />
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            size="sm"
+            disabled={busy || !hazir}
+            onClick={() =>
+              void onApply(async () => {
+                await sendSystemMessage(user.id, baslik, govde);
+                setBaslik('');
+                setGovde('');
+                setGonderildi(true);
+              })
+            }
+          >
+            Gönder
+          </Button>
+          {gonderildi && (
+            <span className="text-meta text-faint">Gönderildi.</span>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
 
