@@ -48,6 +48,11 @@ const GROUPS: { title: string; hint: string; paths: string[] }[] = [
     paths: ['/bu-gece', '/bu-gece/plan', '/bu-gece/takvim'],
   },
   {
+    title: 'Katalog',
+    hint: 'Gökyüzünde ne var, hangisi çekilir',
+    paths: ['/araclar/gokyuzu-katalogu'],
+  },
+  {
     title: 'Kadraj',
     hint: 'Hedef bu setup’a sığıyor mu',
     paths: ['/araclar/kadraj', '/araclar/kadraj/mozaik'],

@@ -57,6 +57,10 @@
       "destination": "/app.html"
     },
     {
+      "source": "/araclar/gokyuzu-katalogu",
+      "destination": "/app.html"
+    },
+    {
       "source": "/araclar/isik-kirliligi",
       "destination": "/app.html"
     },

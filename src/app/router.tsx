@@ -467,6 +467,18 @@ export const appRoutes = [
           )
         ),
       },
+      {
+        /* Gökyüzü Kataloğu: 16.663 gök cismi, sunucu taraflı filtre ve
+           sayfalama. Tembel yükleniyor — modülün tamamı yalnızca bu
+           adrese girildiğinde indiriliyor. */
+        path: 'araclar/gokyuzu-katalogu',
+        element: route(
+          named(
+            () => import('@/features/skycatalog/SkyCatalogPage'),
+            'SkyCatalogPage'
+          )
+        ),
+      },
       { path: 'araclar/fov', element: <RedirectTo to="/araclar/kadraj" /> },
       { path: 'araclar/simulator', element: <RedirectTo to="/araclar/kadraj" /> },
       // Tek kanonik çalışma alanı: FoV, pixel scale ve setup uyumluluk Simülatör'de birleşir.
