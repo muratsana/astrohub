@@ -231,8 +231,32 @@ select v.tier, v.key, v.value, v.label
   ) v
 on conflict (tier, key) do nothing;
 
-/* Taşındı — ikinci kaynak kalmıyor (§6.8). */
+/*
+ * Taşındı — ikinci kaynak kalmıyor (§6.8).
+ *
+ * GEREKÇE ZORUNLU. `record_setting_change()` tetikleyicisi (0059)
+ * `quotas` anahtarını `maintenance` ve `billing` ile birlikte riskli
+ * sayıyor: gerekçesiz değişiklik `22023` ile reddediliyor. Bu silme de
+ * bir kota değişikliği ve aynı kuraldan muaf değil — kaydın
+ * `setting_history`'de gerekçesiyle durması, sayının neden oradan
+ * kaybolduğunu sonradan bakan birine anlatan tek şey.
+ *
+ * `set local` yerine `set_config(..., false)`: göç dosyası bir işlem
+ * bloğu içinde çalıştığını varsayamaz (psql ile tek tek çalıştırılırsa
+ * `set local` sessizce etkisiz kalır ve silme yine düşerdi). Oturum
+ * düzeyinde yazılıp hemen ardından temizleniyor.
+ */
+select set_config(
+  'astrohub.reason',
+  'FAZ 1 yetki mimarisi: kota değerleri app_settings.quotas jsonb''sinden '
+  || 'tier_limits tablosuna taşındı. Tek doğruluk kaynağı artık o tablo.',
+  false
+);
+
 delete from public.app_settings where key = 'quotas';
+
+select set_config('astrohub.reason', '', false);
+
 drop function if exists app.quota_setting(text, integer);
 
 -- ══════════════════════════════════════════════════════════════════════
