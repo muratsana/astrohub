@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/Input';
 import { Field } from '@/components/ui/Field';
 import { AuthLayout } from './AuthLayout';
 import { useAuth } from './AuthContext';
-import { registerSchema, type RegisterValues } from './schema';
+import { registerSchema, type RegisterValues, MIN_PASSWORD_LENGTH } from './schema';
 import { Captcha, type CaptchaHandle } from './Captcha';
 import { captchaEnabled } from './captchaConfig';
 import { SocialAuth } from './GoogleButton';
@@ -112,7 +112,13 @@ export function RegisterPage() {
             label="Şifre"
             htmlFor="password"
             error={errors.password?.message}
-            hint="En az 8 karakter"
+            /* İPUCU ŞEMADAN SAPMAMALI. Burada "en az 8" yazıyordu ama
+               `registerSchema` 10 istiyor: kullanıcı 8 karakter yazıp
+               gönderiyor ve "en az 10 karakter olmalı" hatası alıyordu —
+               formun kendi söylediğine uymayan bir form. Sınır bilinçli
+               olarak 10 (gerekçesi `schema.ts` başlığında); yanlış olan
+               etiketti. */
+            hint={`En az ${MIN_PASSWORD_LENGTH} karakter`}
           >
             <Input
               id="password"

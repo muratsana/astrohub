@@ -1,6 +1,16 @@
 import { z } from 'zod';
 
 /** Giriş formu doğrulaması (§11.2 React Hook Form + Zod). */
+/**
+ * ŞİFRE ALT SINIRI — tek kaynak.
+ *
+ * Sayı iki yerde yazılıydı: şemada 10, kayıt formunun ipucunda 8.
+ * Kullanıcı 8 karakter yazıp gönderiyor ve formun kendi söylediğine
+ * uymayan bir hata alıyordu. Sabit dışa açıldı; arayüz metni bunu
+ * okuyor, yani ikisi bir daha ayrışamaz.
+ */
+export const MIN_PASSWORD_LENGTH = 10;
+
 export const loginSchema = z.object({
   email: z
     .string()
@@ -41,7 +51,10 @@ export const registerSchema = z
      */
     password: z
       .string()
-      .min(10, 'Şifre en az 10 karakter olmalı')
+      .min(
+        MIN_PASSWORD_LENGTH,
+        `Şifre en az ${MIN_PASSWORD_LENGTH} karakter olmalı`
+      )
       .max(72, 'Şifre en fazla 72 karakter olabilir'),
     confirmPassword: z.string().min(1, 'Şifre tekrarı gerekli'),
     /*
