@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { Container } from '@/components/ui/Container';
-import { ButtonLink } from '@/components/ui/Button';
+import { Button, ButtonLink } from '@/components/ui/Button';
 import { PhotoPlaceholder } from '@/components/media/PhotoPlaceholder';
 import { PlaceholderPage } from '@/components/PlaceholderPage';
 import { SectionHeader } from '@/components/ui/SectionHeader';
@@ -11,6 +11,7 @@ import {
   exposureRowSeconds,
 } from '@/domain/photography/integration';
 import { usePhotoCatalog } from '@/services/content/photos';
+import { useAlanCozumuIstegi } from '@/services/photos/solveRequest';
 import { useSavedPhoto } from '@/services/content/collections';
 import { usePhotoLike } from '@/services/content/engagement';
 import { PhotoComments } from './PhotoComments';
@@ -478,6 +479,13 @@ function ExposureTab({ photo }: { photo: AstroPhoto }) {
 }
 
 function ProcessingTab({ photo }: { photo: AstroPhoto }) {
+  /* Sahiplik burada yeniden soruluyor, prop olarak geçirilmiyor: sekme
+     bileşenleri tek bir haritadan aynı imzayla çağrılıyor ve yalnızca
+     bu sekme için imzayı değiştirmek, diğer altı sekmeye kullanılmayan
+     bir parametre eklemek demekti. */
+  const { user } = useAuth();
+  const canManage = Boolean(user && photo.ownerId === user.id);
+
   return (
     <div className="space-y-4">
       <DL
@@ -497,7 +505,13 @@ function ProcessingTab({ photo }: { photo: AstroPhoto }) {
           ],
         ]}
       />
-      <PlateSolvePanel solve={photo.solve} />
+      <PlateSolvePanel
+        solve={photo.solve}
+        photoId={photo.id ?? ''}
+        /* Kimliği olmayan kayıt tohum veriden geliyor ve sunucuda
+           karşılığı yok; ona çözüm istemek 404 ile döner. */
+        canManage={canManage && Boolean(photo.id)}
+      />
 
       {photo.processing.aiDeclared && (
         <p className="rounded-card border border-accent-blue/30 bg-accent-blue/10 px-4 py-3 text-xs text-accent-blue">
@@ -517,12 +531,39 @@ function ProcessingTab({ photo }: { photo: AstroPhoto }) {
  * açıkça söylüyor — iki satırı aynı listede yan yana koymak, ikisini
  * aynı güvenilirlikte gösterirdi.
  *
- * Dört durum, dört farklı cümle. "Yok" hâlinde HİÇBİR ŞEY gösterilmiyor:
- * çözüm istenmemiş bir fotoğrafta boş bir kutu, eksik bir şey varmış
- * izlenimi verirdi.
+ * Dört durum, dört farklı cümle. "Yok" hâlinde SAHİBİNE bir düğme
+ * gösteriliyor, başkasına hiçbir şey: çözüm istenmemiş bir fotoğrafta
+ * boş bir kutu izleyiciye eksik bir şey varmış izlenimi verir, ama
+ * sahibi tam olarak o eksiği kapatabilecek kişi.
  */
-function PlateSolvePanel({ solve }: { solve: AstroPhoto['solve'] }) {
-  if (solve.durum === 'yok') return null;
+function PlateSolvePanel({
+  solve,
+  photoId,
+  canManage,
+}: {
+  solve: AstroPhoto['solve'];
+  photoId: string;
+  canManage: boolean;
+}) {
+  const istek = useAlanCozumuIstegi(photoId);
+
+  const dugme = canManage ? (
+    <CozumDugmesi istek={istek} durum={solve.durum} />
+  ) : null;
+
+  if (solve.durum === 'yok') {
+    if (!canManage) return null;
+    return (
+      <div className="rounded-card border border-border bg-surface-2 px-4 py-3">
+        <p className="text-meta leading-relaxed text-muted-foreground">
+          Bu fotoğrafın alan çözümü yok. Çözüm, yıldız desenlerinden
+          kadrajın gökyüzündeki yerini hesaplar; sonuç görüntünün üstüne
+          katalog etiketleri olarak da düşer.
+        </p>
+        <div className="mt-2">{dugme}</div>
+      </div>
+    );
+  }
 
   if (solve.durum === 'kuyrukta') {
     return (
@@ -535,9 +576,14 @@ function PlateSolvePanel({ solve }: { solve: AstroPhoto['solve'] }) {
 
   if (solve.durum === 'basarisiz') {
     return (
-      <p className="rounded-card border border-border bg-surface-2 px-4 py-3 text-meta text-faint">
-        Alan çözümü yapılamadı{solve.error ? ` — ${solve.error}` : '.'}
-      </p>
+      <div className="rounded-card border border-border bg-surface-2 px-4 py-3">
+        <p className="text-meta text-faint">
+          Alan çözümü yapılamadı{solve.error ? ` — ${solve.error}` : '.'}
+        </p>
+        {/* İkinci deneme çoğu zaman tutuyor: çözücü düşük yıldız
+            sayısında ve yoğun bulutsu alanlarında bazen bulamıyor. */}
+        <div className="mt-2">{dugme}</div>
+      </div>
     );
   }
 
@@ -569,8 +615,54 @@ function PlateSolvePanel({ solve }: { solve: AstroPhoto['solve'] }) {
       <p className="mt-2 text-meta text-faint">
         Bu değerler fotoğraftaki yıldız desenlerinden hesaplandı
         {solve.provider ? ` (${solve.provider})` : ''}; künyedeki hedef
-        bilgisinden bağımsızdır.
+        bilgisinden bağımsızdır. Görüntünün üstündeki “Alan çözümü”
+        düğmesi katalog etiketlerini açıyor.
       </p>
+      {dugme && <div className="mt-2">{dugme}</div>}
+    </div>
+  );
+}
+
+/**
+ * Çözüm isteme düğmesi — üç durumu da tek yerde anlatıyor.
+ *
+ * Ayrı bileşen çünkü panelin dört dalında da aynı düğme görünüyor ve
+ * dördünde kopyalamak, birinde hata mesajını göstermeyi unutmaya açık
+ * kapı bırakırdı.
+ */
+function CozumDugmesi({
+  istek,
+  durum,
+}: {
+  istek: ReturnType<typeof useAlanCozumuIstegi>;
+  durum: AstroPhoto['solve']['durum'];
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <Button
+        size="sm"
+        variant="secondary"
+        disabled={istek.isPending || durum === 'kuyrukta'}
+        onClick={() => istek.mutate()}
+      >
+        {istek.isPending
+          ? 'Gönderiliyor…'
+          : durum === 'cozuldu'
+            ? 'Yeniden çöz'
+            : 'Alan çözümü iste'}
+      </Button>
+      {istek.isError && (
+        <span className="text-meta text-danger">
+          {(istek.error as Error).message}
+        </span>
+      )}
+      {istek.isSuccess && (
+        <span className="text-meta text-muted-foreground">
+          {istek.data.durum === 'kuyrukta'
+            ? 'Kuyruğa alındı — sonuç birkaç dakika içinde.'
+            : (istek.data.aciklama ?? 'İstek alındı.')}
+        </span>
+      )}
     </div>
   );
 }

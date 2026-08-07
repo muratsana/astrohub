@@ -1,5 +1,6 @@
 import type { ComponentProps } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { COZUM_YOK } from '@/features/photos/types';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 
@@ -65,6 +66,10 @@ describe('RecentRecords — gerçek görsel', () => {
     location: { label: 'Antalya', visibility: 'sehir', bortle: 4 },
     exposures: [],
     rating: { toplam: 0, sayi: 0 },
+    /* Alan çözümü alanı kartta okunuyor (çözüldü rozeti). Üretimde
+       eşleyici bunu her zaman dolduruyor; fikstür de doldurmalı ki
+       test, olmayan bir eksikliği tolere etmesin. */
+    solve: COZUM_YOK,
   };
 
   it('kaydın görselini karoya veriyor', () => {

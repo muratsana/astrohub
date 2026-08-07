@@ -1,6 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { PhotoViewer } from './PhotoViewer';
 import { photos } from './data';
 import { COZUM_YOK, type AstroPhoto } from './types';
@@ -20,11 +21,35 @@ function withoutImage(): AstroPhoto {
   return { ...withImage, image: undefined };
 }
 
+/*
+  Katalog etiketleri sunucudan geliyor; testte taklit ediliyor. Ölçülen
+  şey ETİKETİN ÇİZİLMESİ ve konumu — sorgunun kendisi ayrı ölçülüyor
+  (`plateProjection.test.ts` izdüşümü, migration'daki RPC veritabanında).
+*/
+const ALAN_CISIMLERI = vi.hoisted(() => ({ liste: [] as unknown[] }));
+
+vi.mock('@/services/content/fieldObjects', async () => {
+  const gercek = await vi.importActual<
+    typeof import('@/services/content/fieldObjects')
+  >('@/services/content/fieldObjects');
+  return {
+    ...gercek,
+    useAlandakiCisimler: (_c: unknown, etkin: boolean) => ({
+      data: etkin ? ALAN_CISIMLERI.liste : [],
+    }),
+  };
+});
+
 function renderViewer(photo: AstroPhoto) {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
   return render(
-    <MemoryRouter>
-      <PhotoViewer photo={photo} />
-    </MemoryRouter>
+    <QueryClientProvider client={client}>
+      <MemoryRouter>
+        <PhotoViewer photo={photo} />
+      </MemoryRouter>
+    </QueryClientProvider>
   );
 }
 
@@ -138,6 +163,46 @@ describe('PhotoViewer · alan çözümü katmanı', () => {
     expect(
       screen.queryByRole('button', { name: /alan çözümü/i })
     ).not.toBeInTheDocument();
+  });
+
+  it('katman açıkken katalog etiketlerini kadrajda gösteriyor', () => {
+    ALAN_CISIMLERI.liste = [
+      {
+        id: '1',
+        slug: 'm31',
+        ad: 'Andromeda Galaksisi',
+        katalog: 'M 31',
+        tur: 'galaksi',
+        raDeg: 10.68,
+        decDeg: 41.27,
+        kadir: 3.4,
+        boyutArcmin: 178,
+        nokta: { x: 0.5, y: 0.5 },
+      },
+      {
+        id: '2',
+        slug: 'm110',
+        ad: 'M 110 Galaksisi',
+        katalog: 'M 110',
+        tur: 'galaksi',
+        raDeg: 10.09,
+        decDeg: 41.68,
+        kadir: 8.5,
+        boyutArcmin: 21,
+        nokta: { x: 0.25, y: 0.2 },
+      },
+    ];
+
+    renderViewer(cozulmus);
+    // Katman KAPALIYKEN etiket yok: açıklama istenmemişken fotoğrafın
+    // üstüne yazı basmak, eseri izinsiz değiştirmek olurdu.
+    expect(screen.queryByText('M 31')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /alan çözümü/i }));
+    expect(screen.getByText('M 31')).toBeInTheDocument();
+    expect(screen.getByText('M 110')).toBeInTheDocument();
+
+    ALAN_CISIMLERI.liste = [];
   });
 
   it('kuyruktaki kayıtta düğme değil bekleme cümlesi gösteriliyor', () => {

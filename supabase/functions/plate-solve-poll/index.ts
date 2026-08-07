@@ -49,6 +49,14 @@ interface Calibration {
   dec: number;
   pixscale: number;
   orientation: number;
+  /**
+   * Kadrajın aynalı olup olmadığı (±1).
+   *
+   * Katalog etiketlerinin doğu-batı yönü buna bağlı: aynasız bir
+   * kadrajda kuzey yukarıdayken doğu SOLDADIR. Saklanmadığı sürece
+   * etiketler kadrajın yarısında yanlış tarafa düşerdi.
+   */
+  parity?: number;
   width_arcsec?: number;
   height_arcsec?: number;
 }
@@ -178,6 +186,10 @@ Deno.serve(async (req: Request) => {
         solve_ra_deg: cal.ra,
         solve_dec_deg: cal.dec,
         solve_rotation_deg: cal.orientation ?? null,
+        /* Parite kadrajın aynalı olup olmadığını söylüyor ve katalog
+           etiketlerinin doğu-batı yönü buna bağlı. Saklanmadığında
+           etiketler kadrajın yarısında yanlış tarafa düşerdi. */
+        solve_parity: cal.parity ?? null,
         solve_scale_arcsec_px: cal.pixscale ?? null,
         solve_field_width_deg: cal.width_arcsec ? cal.width_arcsec / 3600 : null,
         solve_field_height_deg: cal.height_arcsec

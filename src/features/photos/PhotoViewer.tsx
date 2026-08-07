@@ -2,6 +2,10 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { PhotoPlaceholder } from '@/components/media/PhotoPlaceholder';
 import { CloseIcon } from '@/components/ui/icons';
 import { cn } from '@/lib/cn';
+import {
+  cozumGeometrisi,
+  useAlandakiCisimler,
+} from '@/services/content/fieldObjects';
 import type { AstroPhoto } from './types';
 
 /**
@@ -243,8 +247,13 @@ function Lightbox({
  *   · kuzey/doğu gülü — alanın dönüklüğü (`rotationDeg`)
  *   · merkez artısı   — çözümün bulduğu alan merkezi
  *   · ölçek çubuğu    — `scaleArcsecPx`ten türeyen gerçek yay ölçüsü
+ *   · KATALOG ETİKETLERİ — kadrajdaki gök cisimlerinin adları, gerçek
+ *     koordinatlarından gnomonik izdüşümle yerleştirilmiş
  *
- * Üçü de ÖLÇÜM; hiçbiri künyeden ya da kullanıcı girdisinden gelmiyor.
+ * Hepsi ÖLÇÜM; hiçbiri künyeden ya da kullanıcı girdisinden gelmiyor.
+ * Etiketler kullanıcının yazdığı hedef adını DEĞİL, kataloğun o
+ * koordinatta ne olduğunu söylüyor — ikisi çeliştiğinde fark görünür
+ * olsun diye.
  *
  * Renkler sabit, token değil: katman her zaman fotoğrafın üstünde ve
  * fotoğraf üç temada da koyu. Açık temanın `--color-primary` değeri
@@ -261,6 +270,16 @@ function PlateSolveOverlay({
   visible: boolean;
 }) {
   const { solve } = photo;
+
+  /*
+    Katalog sorgusu yalnızca katman AÇIKKEN atılıyor: katmanı hiç
+    açmayan kullanıcı için her fotoğraf sayfasında boşuna bir istek
+    olurdu. `cozumGeometrisi` eksik alanlarda `null` dönüyor ve sorgu
+    da kurulmuyor.
+  */
+  const geometri = useMemo(() => cozumGeometrisi(solve), [solve]);
+  const { data: cisimlerHam } = useAlandakiCisimler(geometri, visible);
+  const cisimler = cisimlerHam ?? [];
 
   /*
    * Ölçek çubuğunun uzunluğu ÖLÇÜDEN türetiliyor, sabit değil: alan
@@ -328,6 +347,37 @@ function PlateSolveOverlay({
           </g>
         </svg>
       </div>
+
+      {cisimler.length > 0 && (
+        /*
+          Etiketler yüzde konumla yerleştiriliyor, SVG içinde değil:
+          `preserveAspectRatio="none"` yazıyı da esnetir ve dar kadrajlı
+          bir fotoğrafta metin okunmaz hâle gelirdi.
+        */
+        <div className="absolute inset-0">
+          {cisimler.map((c) => (
+            <div
+              key={c.id}
+              className="absolute -translate-x-1/2 -translate-y-1/2"
+              style={{
+                left: `${Math.max(0, Math.min(100, c.nokta.x * 100))}%`,
+                top: `${Math.max(0, Math.min(100, c.nokta.y * 100))}%`,
+              }}
+            >
+              <span
+                className="block size-2 rounded-full border"
+                style={{ borderColor: SOLVE_LINE }}
+              />
+              <span
+                className="tabular absolute left-3 top-1/2 -translate-y-1/2 whitespace-nowrap rounded bg-black/65 px-1.5 py-0.5 text-meta leading-tight backdrop-blur-[2px]"
+                style={{ color: SOLVE_TEXT }}
+              >
+                {c.katalog}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
 
       {bar && (
         /*

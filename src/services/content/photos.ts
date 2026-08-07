@@ -67,6 +67,7 @@ interface PhotoRow {
   solve_scale_arcsec_px?: number | null;
   solve_field_width_deg?: number | null;
   solve_field_height_deg?: number | null;
+  solve_parity?: number | null;
   solve_provider?: string | null;
   solve_error?: string | null;
   slug: string;
@@ -225,6 +226,7 @@ export function mapPhotoRow(row: PhotoRow): AstroPhoto {
     scaleArcsecPx: row.solve_scale_arcsec_px ?? null,
     fieldWidthDeg: row.solve_field_width_deg ?? null,
     fieldHeightDeg: row.solve_field_height_deg ?? null,
+    parity: row.solve_parity ?? null,
     provider: row.solve_provider ?? null,
     error: row.solve_error ?? null,
   };
@@ -367,6 +369,7 @@ const SELECT =
   'exif_aperture_f, exif_exposure_seconds, exif_gps_present, ' +
   'solve_status, solve_ra_deg, solve_dec_deg, solve_rotation_deg, ' +
   'solve_scale_arcsec_px, solve_field_width_deg, solve_field_height_deg, ' +
+  'solve_parity, ' +
   'solve_provider, solve_error, ' +
   /* Gömme ipucu ZORUNLU: `user_id` kolonunda iki yabancı anahtar var —
      biri `auth.users`a (kimlik bütünlüğü), biri `profiles`a (0015, gömme

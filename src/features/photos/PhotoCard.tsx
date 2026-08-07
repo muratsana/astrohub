@@ -42,12 +42,22 @@ export function PhotoCard({
       username={photo.user.username}
       family={{ label: info.label, className: info.className }}
       /*
-       * Rozet alanı iki işareti birden taşıyor: editör seçkisi ve puan
-       * ortalaması. `RatingBadge` oy yokken kendini hiç çizmiyor, o
-       * yüzden yeni yüklenmiş bir kart boş bir rozetle kalabalıklaşmıyor.
+       * Rozet alanı üç işareti birden taşıyor: editör seçkisi, puan
+       * ortalaması ve alan çözümü. `RatingBadge` oy yokken kendini hiç
+       * çizmiyor, o yüzden yeni yüklenmiş bir kart boş bir rozetle
+       * kalabalıklaşmıyor.
+       *
+       * ALAN ÇÖZÜMÜ ROZETİ galeride bir şey söylüyor: bu karenin
+       * gökyüzündeki yeri ÖLÇÜLMÜŞ. Künyedeki hedef adı bir iddia,
+       * çözüm bir ölçüm; rozet ikisi arasındaki farkı liste düzeyinde
+       * görünür kılıyor. Yalnızca çözülmüş kayıtlarda var — "sırada"
+       * ya da "başarısız" bir liste kartında anlatılacak şey değil.
        */
       flag={
-        photo.editorsPick || photo.rating.sayi > 0 || (photo.photoOfWeekWins?.length ?? 0) > 0 ? (
+        photo.solve.durum === 'cozuldu' ||
+        photo.editorsPick ||
+        photo.rating.sayi > 0 ||
+        (photo.photoOfWeekWins?.length ?? 0) > 0 ? (
           <>
             {(photo.photoOfWeekWins?.length ?? 0) > 0 && (
               <Badge tone="success" className="bg-background/85">
@@ -57,6 +67,11 @@ export function PhotoCard({
             {photo.editorsPick && (
               <Badge tone="primary" className="bg-background/85">
                 Editör
+              </Badge>
+            )}
+            {photo.solve.durum === 'cozuldu' && (
+              <Badge tone="cold" className="bg-background/85">
+                ⌖ Çözüldü
               </Badge>
             )}
             <RatingBadge rating={photo.rating} className="bg-background/85" />

@@ -86,6 +86,14 @@ export interface PlateSolve {
   scaleArcsecPx: number | null;
   fieldWidthDeg: number | null;
   fieldHeightDeg: number | null;
+  /**
+   * Kadraj aynalı mı (astrometry.net paritesi, ±1).
+   *
+   * Katalog etiketlerinin doğu-batı yönü buna bağlı: aynasız bir
+   * kadrajda kuzey yukarıdayken doğu SOLDADIR. Bilinmiyorsa `null` ve
+   * izdüşüm aynasız varsayıyor.
+   */
+  parity: number | null;
   provider: string | null;
   error: string | null;
 }
@@ -105,6 +113,7 @@ export const COZUM_YOK: PlateSolve = {
   scaleArcsecPx: null,
   fieldWidthDeg: null,
   fieldHeightDeg: null,
+  parity: null,
   provider: null,
   error: null,
 };

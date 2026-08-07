@@ -30,6 +30,7 @@ const base: AstroPhoto = {
     scaleArcsecPx: null,
     fieldWidthDeg: null,
     fieldHeightDeg: null,
+    parity: null,
     provider: null,
     error: null,
   },
