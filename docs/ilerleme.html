@@ -509,8 +509,18 @@
     "0:6": "tamamlandi",
 
     // ── FAZ 1 — yetki mimarisi ──────────────────────────────────────────
-    // Hepsi yerel PostgreSQL 16'da çalıştırılarak doğrulandı; kabul
-    // kriterlerinin tamamı (negatif testler dahil) geçti.
+    // ÜRETİMDE. İki göç canlı veritabanına uygulandı (7 Ağu):
+    // jury_rolu ve yetki_mimarisi. Önce yerel PostgreSQL 16'da kabul
+    // kriterleri tek tek sınanmıştı; şimdi sonuçlar canlıdan okundu:
+    // tier_limits'te taşınan değerler korunmuş (foto 5/30, revizyon 0/5,
+    // depolama 250/2000 MB), app_settings.quotas kalmadı, dört tabloda
+    // RLS + politikalar, pg_cron işi kurulu, altı gerçek kullanıcı doğru
+    // statüyü alıyor ve kimse yeni kotanın üstünde değil.
+    //
+    // Yerelin yakalayamadığı bir hata canlıda çıktı ve kapatıldı:
+    // record_setting_change() `quotas` anahtarını riskli sayıyor ve
+    // gerekçesiz silmeyi 22023 ile reddediyor. Göç artık gerekçesini
+    // setting_history'ye yazıyor (commit 4a2f78a).
     "1:0": "tamamlandi",   // app_role'a jury eklendi (ayrı göç — enum kuralı)
     "1:1": "tamamlandi",   // features + role_permissions + tier_permissions
     "1:2": "tamamlandi",   // tier_limits; app_settings.quotas oradan taşındı
@@ -518,6 +528,11 @@
     "1:4": "tamamlandi",   // app.kota(); setup ve foto kotası tetikleyicide
     "1:5": "tamamlandi",   // pg_cron: uyelik-suresi-dusur
     "1:6": "tamamlandi",   // usePermissions(); useRoles ona devredildi
+
+    // ── FAZ 2 — kullanıcı yönetimi ──────────────────────────────────────
+    // Başladı. Mevcut UserControl.tsx + users.ts okunuyor; hangi maddenin
+    // zaten kurulu olduğu ölçülmeden yeni kod yazılmıyor (§6.8).
+    "2:0": "yapiliyor",    // kullanıcı listesi: arama, filtre, sayfalama
 
     // ── Kodla bitmeyenler (plan §10.2) — baştan işaretlendi ─────────────
     // Bunlar bir engel çıktığında değil, engel BİLİNDİĞİ için şimdiden
@@ -528,7 +543,7 @@
     "13:7": "sende",   // D11 — masaüstü köprü dağıtımı
   };
 
-  const GUNCELLEME = "7 Ağustos 2026 — FAZ 1 tamam (yerel veritabanında doğrulandı)";
+  const GUNCELLEME = "7 Ağustos 2026 — FAZ 1 canlı veritabanına uygulandı; FAZ 2 başladı";
 
   /* ── Buradan aşağısı görüntüleme mantığı; değiştirmeye gerek yok ─────── */
 
