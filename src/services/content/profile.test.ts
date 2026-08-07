@@ -6,6 +6,7 @@ const base: ProfileEdit = {
   displayName: 'Murat Sana',
   bio: 'Ankara’dan gözlem yapıyorum.',
   city: 'Ankara',
+  district: 'Çankaya',
   websiteUrl: '',
 };
 
@@ -68,6 +69,10 @@ describe('mapProfileRow', () => {
     });
     expect(profile.displayName).toBeNull();
     expect(profile.city).toBeNull();
+    /* İlçe kolonu SELECT'te olmayan çağrılardan da geliyor; alan hiç
+       yoksa `undefined` değil `null` olmalı — aksi hâlde "girilmemiş"
+       ile "sorulmamış" arayüzde ayrışırdı. */
+    expect(profile.district).toBeNull();
     expect(profile.username).toBe('murat');
   });
 
@@ -78,11 +83,14 @@ describe('mapProfileRow', () => {
       display_name: 'Murat Sana',
       bio: 'iki satır',
       city: 'Ankara',
+      district: 'Çankaya',
       website_url: 'https://example.com',
       avatar_path: 'u1/avatar.jpg',
       terms_accepted_at: '2026-07-31T00:00:00Z',
     });
     expect(profile.displayName).toBe('Murat Sana');
+    expect(profile.city).toBe('Ankara');
+    expect(profile.district).toBe('Çankaya');
     expect(profile.websiteUrl).toBe('https://example.com');
     expect(profile.avatarPath).toBe('u1/avatar.jpg');
   });

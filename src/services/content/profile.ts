@@ -27,6 +27,8 @@ export interface Profile {
   displayName: string | null;
   bio: string | null;
   city: string | null;
+  /** İlçe — `districts` kanonik yazımı. İl gibi isteğe bağlı. */
+  district: string | null;
   websiteUrl: string | null;
   avatarPath: string | null;
   /**
@@ -53,6 +55,7 @@ interface ProfileRow {
   display_name: string | null;
   bio: string | null;
   city: string | null;
+  district?: string | null;
   website_url: string | null;
   avatar_path: string | null;
   terms_accepted_at: string | null;
@@ -72,6 +75,7 @@ export function mapProfileRow(row: ProfileRow): Profile {
     displayName: row.display_name,
     bio: row.bio,
     city: row.city,
+    district: row.district ?? null,
     websiteUrl: row.website_url,
     avatarPath: row.avatar_path,
     termsAcceptedAt: row.terms_accepted_at,
@@ -101,7 +105,7 @@ export function canWrite(profile: Profile | null): boolean {
 }
 
 const SELECT =
-  'id, username, display_name, bio, city, website_url, avatar_path, ' +
+  'id, username, display_name, bio, city, district, website_url, avatar_path, ' +
   'terms_accepted_at, account_status, suspended_until, status_reason';
 
 /**
@@ -232,6 +236,7 @@ export interface ProfileEdit {
   displayName: string;
   bio: string;
   city: string;
+  district: string;
   websiteUrl: string;
 }
 
@@ -303,6 +308,12 @@ export async function updateProfile(
       display_name: sanitizeText(edit.displayName, { maxLength: 60 }) || null,
       bio: sanitizeText(edit.bio, { multiline: true }) || null,
       city: sanitizeText(edit.city, { maxLength: 60 }) || null,
+      /* İl boşaltıldıysa ilçe de düşüyor: ilçesiz bir il anlamlı ama
+         ilsiz bir ilçe değil — "Gölbaşı" tek başına iki farklı yeri
+         işaret ediyor. */
+      district: edit.city.trim()
+        ? sanitizeText(edit.district, { maxLength: 60 }) || null
+        : null,
       website_url: edit.websiteUrl.trim() ? safeUrl(edit.websiteUrl.trim()) : null,
       updated_at: new Date().toISOString(),
     })

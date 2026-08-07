@@ -40,6 +40,7 @@ function profile(termsAcceptedAt: string | null): Profile {
     displayName: 'Murat',
     bio: null,
     city: null,
+    district: null,
     websiteUrl: null,
     avatarPath: null,
     termsAcceptedAt,

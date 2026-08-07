@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { Container } from '@/components/ui/Container';
-import { ProvinceSelect } from '@/components/ui/ProvinceSelect';
+import { LocationTypeahead } from '@/components/ui/LocationTypeahead';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Panel, SpecList, SpecRow } from '@/components/ui/Panel';
 import { Field } from '@/components/ui/Field';
@@ -47,6 +47,7 @@ export function AccountPage() {
     displayName: '',
     bio: '',
     city: '',
+    district: '',
     websiteUrl: '',
   });
   const [busy, setBusy] = useState(false);
@@ -65,6 +66,7 @@ export function AccountPage() {
       displayName: profile.displayName ?? '',
       bio: profile.bio ?? '',
       city: profile.city ?? '',
+      district: profile.district ?? '',
       websiteUrl: profile.websiteUrl ?? '',
     });
   }, [profile]);
@@ -200,14 +202,36 @@ export function AccountPage() {
                   />
                 </Field>
 
-                <Field label="Şehir" htmlFor="p-city">
-                  {/* Tek kaynak: profil şehri de `provinces` listesinden.
-                      Serbest metin döneminden kalan değer korunuyor. */}
-                  <ProvinceSelect
-                    id="p-city"
-                    value={edit.city}
-                    placeholder="Belirtilmedi"
-                    onChange={(city) => setEdit((v) => ({ ...v, city }))}
+                <Field
+                  label="Şehir"
+                  htmlFor="p-location"
+                  hint="İsteğe bağlı — profilinizde herkese görünür"
+                >
+                  {/*
+                    Tek kaynak: profil şehri de `provinces`/`districts`
+                    listesinden. Serbest metin döneminden kalan değer
+                    kutu tarafından korunuyor.
+
+                    `allowProvinceOnly` AÇIK: burası bir "memleket"
+                    alanı, konum girişi değil. İl yeterli ve ilçe hiçbir
+                    zaman zorunlu olmamalı — üstelik alan profilde
+                    herkese açık.
+                  */}
+                  <LocationTypeahead
+                    id="p-location"
+                    city={edit.city}
+                    district={edit.district}
+                    onSelect={(secim) =>
+                      setEdit((v) => ({
+                        ...v,
+                        city: secim.city,
+                        district: secim.district,
+                      }))
+                    }
+                    onClear={() =>
+                      setEdit((v) => ({ ...v, city: '', district: '' }))
+                    }
+                    allowProvinceOnly
                   />
                 </Field>
               </div>

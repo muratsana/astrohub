@@ -80,9 +80,26 @@ export function ProfilePage() {
     (sum, p) => sum + totalIntegrationSeconds(p.exposures),
     0
   );
+  /*
+   * KULLANICININ KENDİ KONUMU İLÇESİYLE, FOTOĞRAF ŞEHİRLERİ İL DÜZEYİNDE.
+   *
+   * Profilde iki farklı şey yan yana duruyor: kişinin kendi belirttiği
+   * yer ve fotoğraflarının çekildiği yerler. İlki bir beyan, ikincisi
+   * bir özet — özeti ilçe ilçe dökmek onlarca rozet üretir ve "bu kişi
+   * nereden çekiyor" sorusunu cevaplamak yerine gömerdi.
+   *
+   * Kendi konumu ilçesiyle yazılıyor çünkü kullanıcı onu bilerek girdi;
+   * girmediyse yalnızca il, onu da girmediyse hiçbir şey.
+   */
+  const kendiKonumu = profile?.city
+    ? profile.district
+      ? `${profile.district}, ${profile.city}`
+      : profile.city
+    : null;
+
   const cities = [
     ...new Set(
-      [profile?.city, ...userPhotos.map((p) => p.city)].filter(
+      [kendiKonumu, ...userPhotos.map((p) => p.city)].filter(
         (city): city is string => Boolean(city)
       )
     ),
