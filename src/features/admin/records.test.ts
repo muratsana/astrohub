@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { RECORD_KINDS, setRecordStatus, type RecordKind } from './records';
+import {
+  RECORD_KINDS,
+  restoreRecord,
+  setRecordStatus,
+  softDeleteRecord,
+  type RecordKind,
+} from './records';
 
 /**
  * İÇERİK KAYITLARI — tür tanımlarının bütünlüğü.
@@ -136,5 +142,52 @@ describe('setRecordStatus · beyaz liste', () => {
     await expect(setRecordStatus('thread', 'x', 'açık')).rejects.toThrow(
       /durum değiştirilemiyor/
     );
+  });
+});
+
+/**
+ * SOFT DELETE TANIMI (FAZ 3).
+ *
+ * `softDeletable` bayrağı bir arayüz kararını değil ŞEMA GERÇEĞİNİ
+ * anlatıyor: `deleted_at` kolonu altı içerik tablosuna eklendi, forum
+ * konularına eklenmedi. Bayrak yanlış olursa panel var olmayan bir
+ * kolonu sorgular ve o sekme ham veritabanı hatasıyla boşalır.
+ */
+describe('softDeletable · şemayla hizalı', () => {
+  it('deleted_at taşıyan türler seçim listesinde de onu istiyor', () => {
+    for (const k of KINDS) {
+      const spec = RECORD_KINDS[k];
+      if (spec.softDeletable) {
+        expect(spec.select, k).toContain('deleted_at');
+      } else {
+        expect(spec.select, k).not.toContain('deleted_at');
+      }
+    }
+  });
+
+  it('forum konusu soft delete edilemiyor — o tabloda kolon yok', () => {
+    expect(RECORD_KINDS.thread.softDeletable).toBe(false);
+  });
+
+  it('beş içerik türünün dördü soft delete edilebiliyor', () => {
+    const acik = KINDS.filter((k) => RECORD_KINDS[k].softDeletable);
+    expect(acik).toEqual(['photo', 'listing', 'event', 'site']);
+  });
+});
+
+describe('softDeleteRecord / restoreRecord · desteklenmeyen tür', () => {
+  /*
+   * Veritabanına HİÇ GİTMEDEN reddediliyor. Forum konusunda `deleted_at`
+   * yok; istek gitseydi PostgREST "column does not exist" derdi ve
+   * yönetici bunu bir yetki sorunu sanabilirdi.
+   */
+  it('forum konusunda kaldırma açıkça reddediliyor', async () => {
+    await expect(softDeleteRecord('thread', 'x')).rejects.toThrow(
+      /bu ekrandan yapılamıyor/
+    );
+  });
+
+  it('forum konusunda geri alma açıkça reddediliyor', async () => {
+    await expect(restoreRecord('thread', 'x')).rejects.toThrow(/geri alma yok/);
   });
 });

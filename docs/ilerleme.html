@@ -597,7 +597,13 @@
     "3:1": "tamamlandi",   // deleted_at/deleted_by/archived_at — altı tablo
     "3:2": "tamamlandi",   // app.icerik_gorunur() + on dört politika
     "3:3": "tamamlandi",   // *_hard_delete_admin kısıtlayıcı politikaları
-    "3:4": "yapiliyor",    // restorePhoto/restoreEntry var; panel yüzeyi yok
+    // Geri alma yüzeyi: RecordsControl'a "Silinmişler" sekmesi eklendi.
+    // Yaşayan ve silinmiş kayıtlar ayrı görünümde — tek listede
+    // karıştırmak, silinmiş kaydı yanlışlıkla düzenlemeye açık
+    // bırakırdı. "Sil" düğmesi artık "Kaldır" (soft delete, geri
+    // alınabilir); kalıcı silme ayrı, onaylı ve yalnızca adminde.
+    // Forum konusunda deleted_at yok, o türde anahtar hiç görünmüyor.
+    "3:4": "tamamlandi",   // Silinmişler sekmesi + Geri al + kalıcı silme ayrımı
     "3:5": "tamamlandi",   // eşleme tablosuyla tek seferlik dönüşüm
 
     // ── Kodla bitmeyenler (plan §10.2) — baştan işaretlendi ─────────────
@@ -609,7 +615,7 @@
     "13:7": "sende",   // D11 — masaüstü köprü dağıtımı
   };
 
-  const GUNCELLEME = "7 Ağustos 2026 — FAZ 1-2 tamam; FAZ 3'te ortak durum kümesi canlıda";
+  const GUNCELLEME = "7 Ağustos 2026 — FAZ 1, 2 ve 3 tamam; hepsi canlı veritabanında";
 
   /* ── Buradan aşağısı görüntüleme mantığı; değiştirmeye gerek yok ─────── */
 

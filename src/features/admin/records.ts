@@ -49,6 +49,8 @@ export interface RecordRow {
   createdAt: string | null;
   /** Sitedeki adresi; yoksa satır bağlantısız çiziliyor. */
   path: string | null;
+  /** Soft delete anı (FAZ 3). Dolu ise kayıt public'te yok, geri alınabilir. */
+  deletedAt: string | null;
 }
 
 interface KindSpec {
@@ -58,6 +60,15 @@ interface KindSpec {
   statusColumn: string | null;
   /** Durum sütununun alabileceği değerler; yoksa durum değiştirilemiyor. */
   statuses: readonly string[];
+  /**
+   * Tabloda `deleted_at` var mı (FAZ 3).
+   *
+   * Forum konularında YOK: soft delete altı içerik tablosuna eklendi,
+   * forum kendi kilit mekanizmasıyla yönetiliyor. Bayrak olmadan
+   * "silinmişler" sekmesi forum için var olmayan bir kolonu sorgular ve
+   * ham veritabanı hatası verirdi.
+   */
+  softDeletable: boolean;
   orderColumn: string;
   map: (row: Record<string, unknown>) => RecordRow;
 }
@@ -70,9 +81,11 @@ export const RECORD_KINDS: Record<RecordKind, KindSpec> = {
     label: 'Fotoğraflar',
     table: 'astro_photos',
     select:
-      'id, slug, title, status, created_at, profiles!astro_photos_user_id_profiles_fkey(username)',
+      'id, slug, title, status, created_at, deleted_at, ' +
+      'profiles!astro_photos_user_id_profiles_fkey(username)',
     statusColumn: 'status',
     statuses: [...CONTENT_STATUSES],
+    softDeletable: true,
     orderColumn: 'created_at',
     map: (r) => ({
       id: String(r.id),
@@ -83,14 +96,16 @@ export const RECORD_KINDS: Record<RecordKind, KindSpec> = {
       status: String(r.status ?? '—'),
       createdAt: s(r.created_at),
       path: s(r.slug) ? `/fotograf/${r.slug}` : null,
+      deletedAt: s(r.deleted_at),
     }),
   },
   listing: {
     label: 'İlanlar',
     table: 'listings',
-    select: 'id, slug, title, status, created_at, city',
+    select: 'id, slug, title, status, created_at, deleted_at, city',
     statusColumn: 'status',
     statuses: [...CONTENT_STATUSES],
+    softDeletable: true,
     orderColumn: 'created_at',
     map: (r) => ({
       id: String(r.id),
@@ -99,6 +114,7 @@ export const RECORD_KINDS: Record<RecordKind, KindSpec> = {
       status: String(r.status ?? '—'),
       createdAt: s(r.created_at),
       path: s(r.slug) ? `/ilan/${r.slug}` : null,
+      deletedAt: s(r.deleted_at),
     }),
   },
   thread: {
@@ -108,6 +124,7 @@ export const RECORD_KINDS: Record<RecordKind, KindSpec> = {
     /* Forumda `status` yok; kilit tek durum ve ayrı bir kolon. */
     statusColumn: null,
     statuses: [],
+    softDeletable: false,
     orderColumn: 'created_at',
     map: (r) => ({
       id: String(r.id),
@@ -116,14 +133,16 @@ export const RECORD_KINDS: Record<RecordKind, KindSpec> = {
       status: r.locked ? 'kilitli' : 'açık',
       createdAt: s(r.created_at),
       path: s(r.slug) ? `/forum/${r.slug}` : null,
+      deletedAt: null,
     }),
   },
   event: {
     label: 'Etkinlikler',
     table: 'events',
-    select: 'id, slug, title, status, created_at, city',
+    select: 'id, slug, title, status, created_at, deleted_at, city',
     statusColumn: 'status',
     statuses: [...CONTENT_STATUSES],
+    softDeletable: true,
     orderColumn: 'created_at',
     map: (r) => ({
       id: String(r.id),
@@ -132,6 +151,7 @@ export const RECORD_KINDS: Record<RecordKind, KindSpec> = {
       status: String(r.status ?? '—'),
       createdAt: s(r.created_at),
       path: s(r.slug) ? `/etkinlik/${r.slug}` : null,
+      deletedAt: s(r.deleted_at),
     }),
   },
   site: {
@@ -139,9 +159,10 @@ export const RECORD_KINDS: Record<RecordKind, KindSpec> = {
     table: 'observing_sites',
     /* Gözlem noktasında `city` YOK, `region` var — konum burada ilçe
        değil bölge olarak tutuluyor (nokta koordinatı ayrı). */
-    select: 'id, slug, name, status, created_at, region',
+    select: 'id, slug, name, status, created_at, deleted_at, region',
     statusColumn: 'status',
     statuses: [...CONTENT_STATUSES],
+    softDeletable: true,
     orderColumn: 'created_at',
     map: (r) => ({
       id: String(r.id),
@@ -150,6 +171,7 @@ export const RECORD_KINDS: Record<RecordKind, KindSpec> = {
       status: String(r.status ?? '—'),
       createdAt: s(r.created_at),
       path: s(r.slug) ? `/saha/${r.slug}` : null,
+      deletedAt: s(r.deleted_at),
     }),
   },
 };
@@ -160,10 +182,21 @@ async function client() {
   return promise;
 }
 
+/**
+ * Kayıt listesi.
+ *
+ * `deleted` bayrağı iki ayrı görünüm veriyor (FAZ 3): varsayılan liste
+ * YAŞAYAN kayıtları, `deleted: true` ise SİLİNMİŞLERİ gösteriyor. İkisini
+ * tek listede karıştırmak, silinmiş kaydı yanlışlıkla düzenlemeye açık
+ * bırakırdı; ayrı sekme "burada olanlar geri alınabilir" diyor.
+ *
+ * Forum konularında `deleted_at` yok; o türde bayrak yok sayılıyor.
+ */
 export async function fetchRecords(
   kind: RecordKind,
   limit = 40,
-  slug?: string | null
+  slug?: string | null,
+  options: { deleted?: boolean } = {}
 ): Promise<RecordRow[]> {
   const spec = RECORD_KINDS[kind];
   const supabase = await client();
@@ -173,6 +206,12 @@ export async function fetchRecords(
     .select(spec.select)
     .order(spec.orderColumn, { ascending: false })
     .limit(limit);
+
+  if (spec.softDeletable) {
+    query = options.deleted
+      ? query.not('deleted_at', 'is', null)
+      : query.is('deleted_at', null);
+  }
 
   if (slug) query = query.eq('slug', slug);
 
@@ -218,11 +257,66 @@ export async function setThreadLocked(
 }
 
 /**
- * Kalıcı silme.
+ * SOFT DELETE (FAZ 3, plan görev 5).
+ *
+ * Kayıt public'ten düşüyor ama veritabanında duruyor ve geri alınabiliyor.
+ * `deleted_by` ile denetim kaydını `app.icerik_silme_izi()` tetikleyicisi
+ * yazıyor — istemci kimliği göndermiyor.
+ */
+export async function softDeleteRecord(
+  kind: RecordKind,
+  id: string
+): Promise<void> {
+  const spec = RECORD_KINDS[kind];
+  if (!spec.softDeletable) {
+    throw new Error(`${spec.label} için kaldırma bu ekrandan yapılamıyor.`);
+  }
+
+  const supabase = await client();
+  const { data, error } = await supabase
+    .from(spec.table)
+    .update({ deleted_at: new Date().toISOString() })
+    .eq('id', id)
+    .select('id');
+  if (error) throw new Error(error.message);
+  if (!data || data.length === 0) {
+    throw new Error('Kayıt kaldırılamadı — bulunamadı ya da yetki yok.');
+  }
+}
+
+/** Silinmiş kaydı geri getirir (plan görev 5). */
+export async function restoreRecord(
+  kind: RecordKind,
+  id: string
+): Promise<void> {
+  const spec = RECORD_KINDS[kind];
+  if (!spec.softDeletable) {
+    throw new Error(`${spec.label} için geri alma yok.`);
+  }
+
+  const supabase = await client();
+  const { data, error } = await supabase
+    .from(spec.table)
+    .update({ deleted_at: null })
+    .eq('id', id)
+    .select('id');
+  if (error) throw new Error(error.message);
+  if (!data || data.length === 0) {
+    throw new Error('Kayıt geri alınamadı — bulunamadı ya da yetki yok.');
+  }
+}
+
+/**
+ * Kalıcı silme — YALNIZCA ADMİN.
  *
  * Geri alınamaz ve bağlı kayıtları da götürüyor (fotoğrafın beğenileri,
- * yorumları, puanları `on delete cascade`). Arayüz bu yüzden ayrı bir
- * onay istiyor; buradaki fonksiyon onayı VARSAYIYOR.
+ * yorumları, puanları `on delete cascade`). Arayüz ayrı bir onay istiyor;
+ * buradaki fonksiyon onayı VARSAYIYOR.
+ *
+ * Yetki sınırı `*_hard_delete_admin` kısıtlayıcı politikalarında. Moderatör
+ * çağırırsa RLS isteği süzüyor ve PostgREST sıfır satırda HATA DÖNDÜRMÜYOR;
+ * `select('id')` bunu hataya çeviriyor ki çağıran sessizce "silindi"
+ * sanmasın.
  */
 export async function deleteRecord(
   kind: RecordKind,
@@ -230,8 +324,17 @@ export async function deleteRecord(
 ): Promise<void> {
   const spec = RECORD_KINDS[kind];
   const supabase = await client();
-  const { error } = await supabase.from(spec.table).delete().eq('id', id);
+  const { data, error } = await supabase
+    .from(spec.table)
+    .delete()
+    .eq('id', id)
+    .select('id');
   if (error) throw new Error(error.message);
+  if (!data || data.length === 0) {
+    throw new Error(
+      'Kalıcı silme reddedildi — bu işlem yalnızca yöneticilere açık.'
+    );
+  }
 }
 
 /* ══════════════════════════════════════════════════════════════════════

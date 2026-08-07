@@ -7,6 +7,8 @@ import { Input, Select } from '@/components/ui/Input';
 import { Alert } from '@/components/ui/Alert';
 import {
   deleteRecord,
+  restoreRecord,
+  softDeleteRecord,
   fetchAuditFacets,
   fetchAuditLog,
   fetchRecords,
@@ -44,13 +46,15 @@ import { cn } from '@/lib/cn';
  * sırada duruyor, silme en sağda ve sönük — sıralama bir tercih beyanı.
  */
 
+/* Ortak durum kümesi (FAZ 3). 'kilitli' foruma özgü ve kümede yok. */
 const statusTone = (
   s: string
 ): 'muted' | 'primary' | 'success' | 'danger' | 'warning' => {
-  if (s === 'published' || s === 'active') return 'success';
-  if (s === 'draft' || s === 'pending') return 'warning';
-  if (s === 'rejected' || s === 'cancelled' || s === 'kilitli') return 'danger';
-  if (s === 'archived' || s === 'sold' || s === 'expired') return 'muted';
+  if (s === 'yayinda') return 'success';
+  if (s === 'taslak' || s === 'incelemede') return 'warning';
+  if (s === 'reddedildi' || s === 'kilitli') return 'danger';
+  if (s === 'arsivlendi' || s === 'yayindan_kaldirildi' || s === 'silindi')
+    return 'muted';
   return 'primary';
 };
 
@@ -87,14 +91,22 @@ export function RecordsControl({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState<string | null>(null);
+  /*
+   * SİLİNMİŞLER AYRI GÖRÜNÜM (FAZ 3, plan görev 5).
+   *
+   * Yaşayan ve silinmiş kayıtları tek listede karıştırmak, silinmiş bir
+   * kaydı yanlışlıkla düzenlemeye açık bırakırdı. Ayrı sekme "burada
+   * olanlar geri alınabilir" diyor.
+   */
+  const [silinmisler, setSilinmisler] = useState(false);
 
   const load = useCallback(
-    (k: RecordKind) => {
+    (k: RecordKind, deleted = false) => {
       setRows(null);
       setError(null);
       setConfirming(null);
       const slug = k === initialKind ? targetSlug : null;
-      fetchRecords(k, slug ? 1 : 40, slug)
+      fetchRecords(k, slug ? 1 : 40, slug, { deleted })
         .then(setRows)
         .catch((e: unknown) => {
           setRows([]);
@@ -104,7 +116,7 @@ export function RecordsControl({
     [initialKind, targetSlug]
   );
 
-  useEffect(() => load(kind), [load, kind]);
+  useEffect(() => load(kind, silinmisler), [load, kind, silinmisler]);
 
   useEffect(() => {
     if (initialAllowedKind) setKind(initialAllowedKind);
@@ -115,7 +127,7 @@ export function RecordsControl({
     setError(null);
     try {
       await action();
-      load(kind);
+      load(kind, silinmisler);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'İşlem uygulanamadı');
     } finally {
@@ -149,6 +161,30 @@ export function RecordsControl({
               {RECORD_KINDS[k].label}
             </button>
           ))}
+        </div>
+      )}
+
+      {/*
+        Silinmişler yalnızca `deleted_at` taşıyan türlerde anlamlı; forum
+        konularında o kolon yok ve anahtarı göstermek var olmayan bir
+        görünüm vaat etmek olurdu.
+      */}
+      {spec.softDeletable && (
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <Button
+            size="sm"
+            variant={silinmisler ? 'secondary' : 'ghost'}
+            disabled={busy}
+            onClick={() => setSilinmisler((v) => !v)}
+          >
+            {silinmisler ? '← Yayındakilere dön' : 'Silinmişler'}
+          </Button>
+          {silinmisler && (
+            <span className="text-meta text-faint">
+              Bu kayıtlar public'te görünmüyor ama veritabanında duruyor —
+              geri alınabilirler.
+            </span>
+          )}
         </div>
       )}
 
@@ -231,6 +267,34 @@ export function RecordsControl({
                 </Button>
               )}
 
+              {/*
+                KALDIR ARTIK SOFT DELETE (FAZ 3). Kayıt public'ten düşüyor
+                ama duruyor; kalıcı silme ayrı ve onaylı bir adım.
+              */}
+              {spec.softDeletable && !silinmisler && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  disabled={busy}
+                  onClick={() =>
+                    void run(() => softDeleteRecord(kind, row.id))
+                  }
+                >
+                  Kaldır
+                </Button>
+              )}
+
+              {silinmisler && (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  disabled={busy}
+                  onClick={() => void run(() => restoreRecord(kind, row.id))}
+                >
+                  Geri al
+                </Button>
+              )}
+
               <Button
                 size="sm"
                 variant="ghost"
@@ -239,7 +303,7 @@ export function RecordsControl({
                   setConfirming(confirming === row.id ? null : row.id)
                 }
               >
-                Sil
+                Kalıcı sil
               </Button>
             </div>
 
@@ -248,7 +312,8 @@ export function RecordsControl({
                 <span className="flex-1 text-meta leading-relaxed text-warm">
                   <strong>{row.title}</strong> kalıcı olarak silinecek. Bağlı
                   kayıtlar (beğeni, yorum, puan, fotoğraf) da gider ve geri
-                  alınamaz. Kaldırmak yeterliyse durumu <em>arşiv</em> yapın.
+                  alınamaz. Yalnızca yönetici yapabilir. Kaldırmak yeterliyse{' '}
+                  <em>Kaldır</em> deyin — o işlem geri alınabilir.
                 </span>
                 <Button
                   size="sm"
