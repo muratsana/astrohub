@@ -20,6 +20,9 @@ tools/mount-bridge/exe/obj/
 .env.*
 !.env.example
 !.env.production
+# Radyo dağıtım şablonu: içinde sır yok, yalnızca doldurulacak alanların
+# listesi. README'nin aktivasyon adımı bu dosyadan kopyalatıyor.
+!.env.ornek
 
 # Supabase yerel
 supabase/.branches/
