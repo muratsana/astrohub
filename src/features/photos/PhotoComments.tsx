@@ -7,6 +7,7 @@ import type { AstroPhoto } from './types';
 import { Alert } from '@/components/ui/Alert';
 import { useFlag } from '@/features/site/SiteConfigContext';
 import { FlagClosedNote } from '@/features/site/FlagClosedNote';
+import { ReportButton } from '@/features/admin/ReportButton';
 
 /**
  * FOTOĞRAF YORUMLARI.
@@ -60,7 +61,7 @@ export function PhotoComments({ photo }: { photo: AstroPhoto }) {
               <span className="tabular text-meta text-faint">
                 {new Date(comment.createdAt).toLocaleDateString('tr-TR')}
               </span>
-              {comment.author.username === thread.currentUsername && (
+              {comment.author.username === thread.currentUsername ? (
                 <button
                   type="button"
                   onClick={() => void thread.remove(comment.id)}
@@ -68,6 +69,24 @@ export function PhotoComments({ photo }: { photo: AstroPhoto }) {
                 >
                   Sil
                 </button>
+              ) : (
+                /*
+                  ŞİKÂYET KENDİ YORUMUNDA GÖRÜNMÜYOR. Kendi yorumunu
+                  şikâyet etmek bir işe yaramıyor ve satırdaki tek eylem
+                  yeri "Sil" ile paylaşılıyor — ikisi birden gösterilseydi
+                  kullanıcı kendi yorumunu şikâyet edip moderatörü boşuna
+                  meşgul edebilirdi.
+
+                  Yorumun kendi adresi yok; moderatör fotoğrafın sayfasına
+                  gidiyor ve yorumu orada görüyor.
+                */
+                <ReportButton
+                  compact
+                  targetType="comment"
+                  targetId={comment.id}
+                  targetPath={`/fotograf/${photo.slug}`}
+                  className="ml-auto"
+                />
               )}
             </div>
             <p className="mt-1 whitespace-pre-line text-body-sm leading-relaxed text-muted-foreground">

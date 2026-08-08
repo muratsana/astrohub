@@ -7,6 +7,7 @@ import { Readout } from '@/components/ui/Readout';
 import { CardGrid } from '@/components/ui/CardGrid';
 import { PhotoCard } from '@/features/photos/PhotoCard';
 import { PlaceholderPage } from '@/components/PlaceholderPage';
+import { ReportButton } from '@/features/admin/ReportButton';
 import {
   totalIntegrationSeconds,
   formatIntegration,
@@ -156,6 +157,25 @@ export function ProfilePage() {
                   </a>
                 )}
                 <UserActions targetUserId={ownerId} displayName={displayName} />
+                {/*
+                  PROFİL ŞİKÂYETİ. Hedef kullanıcı KİMLİĞİ, kullanıcı adı
+                  değil: ad değiştirilebiliyor (FAZ 2'de panelden, ileride
+                  kullanıcının kendisi) ve değiştiği anda şikâyet kaydı
+                  kime ait olduğunu kaybederdi.
+                */}
+                {/*
+                  Kimlik yoksa düğme HİÇ çizilmiyor. Tohum profillerin
+                  veritabanı satırı yok; kullanıcı adını kimlik yerine
+                  koymak, moderatörün açamayacağı bir kayıt üretirdi.
+                */}
+                {ownerId && (
+                  <ReportButton
+                    compact
+                    targetType="profile"
+                    targetId={ownerId}
+                    targetPath={`/profil/${username}`}
+                  />
+                )}
               </div>
             </div>
           }

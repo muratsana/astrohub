@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { AuthProvider } from '@/features/auth/AuthContext';
 import { ProfilePage } from './ProfilePage';
 
 const photoCatalog = vi.hoisted(() => ({ items: [] as unknown[] }));
@@ -25,12 +26,20 @@ vi.mock('@/features/social/UserActions', () => ({
   UserActions: () => null,
 }));
 
+/*
+ * AuthProvider GEREKLİ ve mock'lanmadı: sayfa FAZ 5'te şikâyet düğmesi
+ * kazandı, o da oturum bağlamını okuyor. `UserActions` gibi mock'lamak
+ * kolaydı ama düğmenin gerçekten çizildiğini kimse ölçmezdi — testin
+ * kaçırdığı şey tam olarak buydu.
+ */
 function renderProfile(path = '/profil/murat') {
   return render(
     <MemoryRouter initialEntries={[path]}>
-      <Routes>
-        <Route path="/profil/:username" element={<ProfilePage />} />
-      </Routes>
+      <AuthProvider>
+        <Routes>
+          <Route path="/profil/:username" element={<ProfilePage />} />
+        </Routes>
+      </AuthProvider>
     </MemoryRouter>
   );
 }

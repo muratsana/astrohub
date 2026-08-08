@@ -21,6 +21,7 @@ import { FlagClosedNote } from '@/features/site/FlagClosedNote';
 import { cn } from '@/lib/cn';
 import { Alert } from '@/components/ui/Alert';
 import { LabelChip } from './LabelChip';
+import { ReportButton } from '@/features/admin/ReportButton';
 
 /** Konu detayı: açılış mesajı + yanıtlar + yanıt kutusu. */
 export function ThreadPage() {
@@ -77,16 +78,34 @@ export function ThreadPage() {
             </span>
           }
           actions={
-            <span className="text-meta text-muted-foreground">{info.name}</span>
+            <span className="flex flex-wrap items-center gap-2">
+              <span className="text-meta text-muted-foreground">
+                {info.name}
+              </span>
+              <ReportButton
+                compact
+                targetType="forum_thread"
+                targetId={thread.id}
+                targetPath={`/forum/${thread.slug}`}
+              />
+            </span>
           }
         />
 
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,300px)]">
           <div className="space-y-2.5">
-            <PostCard post={openingPost} opening />
+            <PostCard
+              post={openingPost}
+              opening
+              threadPath={`/forum/${thread.slug}`}
+            />
 
             {thread.replies.map((post) => (
-              <PostCard key={post.id} post={post} />
+              <PostCard
+                key={post.id}
+                post={post}
+                threadPath={`/forum/${thread.slug}`}
+              />
             ))}
 
             {thread.replies.length < thread.replyCount && (
@@ -149,7 +168,16 @@ function Row({ label, value }: { label: string; value: string }) {
   );
 }
 
-function PostCard({ post, opening }: { post: ForumPost; opening?: boolean }) {
+function PostCard({
+  post,
+  opening,
+  threadPath,
+}: {
+  post: ForumPost;
+  opening?: boolean;
+  /* Gönderinin kendi adresi yok; şikâyet kaydı konuya işaret ediyor. */
+  threadPath: string;
+}) {
   return (
     <article
       className={cn(
@@ -168,6 +196,18 @@ function PostCard({ post, opening }: { post: ForumPost; opening?: boolean }) {
         <span className="tabular ml-auto text-meta text-faint">
           {relativeTime(post.createdAt)}
         </span>
+        {/*
+          Gönderinin kendi adresi yok; moderatör konuya gidiyor ve
+          gönderiyi orada görüyor. Hedef KİMLİĞİ yine de gönderinin
+          kendisi: konu kimliği yazılsaydı hangi iletinin şikâyet
+          edildiği kaybolurdu.
+        */}
+        <ReportButton
+          compact
+          targetType="forum_post"
+          targetId={post.id}
+          targetPath={threadPath}
+        />
       </header>
 
       {/*

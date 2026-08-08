@@ -637,6 +637,27 @@
     "4:4": "tamamlandi",   // public'te yalnızca yayındaki içerik
     "4:5": "tamamlandi",   // topluluk sahipliği — manager_user_id + RLS
 
+    // ── FAZ 5 — moderasyon kuyruğu ──────────────────────────────────────
+    // ÖLÇÜM: veritabanı katmanı ZATEN TAMDI ve hiç dokunulmadı.
+    // moderation_queue şeması eksiksiz (hedef, durum, sebep, atama,
+    // çözen, çözüm notu), moderation_audit tetikleyicisi denetime
+    // yazıyor, notify_moderation_result şikâyetçiye bildirim gönderiyor,
+    // RLS üç katmanlı (şikâyet: kendi adına ve yalnızca pending; okuma ve
+    // karar: admin+moderatör; kalıcı silme: yalnızca admin).
+    //
+    // Kabul kriteri "çözülen kayıt varsayılan görünümden düşer, arşivde
+    // kalır" da zaten karşılanıyordu: panel süzgeci 'pending' ile
+    // açılıyor, "hepsi" arşivi veriyor.
+    //
+    // GERÇEK BOŞLUK ARAYÜZDEYDİ: şikâyet düğmesi yalnızca fotoğraf, ilan
+    // ve özel mesajda vardı. Yorum, profil, forum konusu ve forum
+    // gönderisi eksikti — yani enum dokuz hedef türü tanıyordu ama
+    // kullanıcı bunların dördünü hiç şikâyet edemiyordu.
+    "5:0": "tamamlandi",   // merkezî kuyruk — ölçüldü, kuruluydu
+    "5:3": "tamamlandi",   // şikâyet akışı: dört eksik yüzey bağlandı
+    "5:5": "tamamlandi",   // RecordsControl durum/silme + forum kilidi (FAZ 3)
+    "5:1": "yapiliyor",    // onayla/reddet var; arşivle ve geri bildirim dar
+
     // ── Kodla bitmeyenler (plan §10.2) — baştan işaretlendi ─────────────
     // Bunlar bir engel çıktığında değil, engel BİLİNDİĞİ için şimdiden
     // "sende". İş o noktaya geldiğinde sürpriz olmasın.
@@ -646,7 +667,7 @@
     "13:7": "sende",   // D11 — masaüstü köprü dağıtımı
   };
 
-  const GUNCELLEME = "8 Ağustos 2026 — FAZ 1-3 tamam; FAZ 4’ün onay akışı uçtan uca çalışıyor";
+  const GUNCELLEME = "8 Ağustos 2026 — FAZ 1-4 tamam; FAZ 5’te şikâyet akışı tüm yüzeylerde";
 
   /* ── Buradan aşağısı görüntüleme mantığı; değiştirmeye gerek yok ─────── */
 
