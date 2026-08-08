@@ -41,3 +41,15 @@ birbirinden ayrı düşer.
 Plan §8.2'de beş açık soru var. FAZ 1'e başlamadan önce en kritiği
 cevaplanmalı: **premium hangi özellikleri açıyor?** Bu netleşmeden yetki
 mimarisinin kota satırları doldurulamaz.
+
+---
+
+## Pano nerede
+
+`ilerleme.html` bu klasörden **çıkarıldı** ve depoda `docs/ilerleme.html`
+olarak tutuluyor. İki kopya bırakmak planın kendi §6.8 kuralını çiğnerdi
+("aynı içeriğin ikinci bir kaynağını bırakma") — hangisinin güncel olduğu
+belirsizleşirdi.
+
+Yayımlanmış adres:
+https://claude.ai/code/artifact/054318db-6d48-4179-9898-2c9efe3af282
