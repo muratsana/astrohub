@@ -606,6 +606,31 @@
     "3:4": "tamamlandi",   // Silinmişler sekmesi + Geri al + kalıcı silme ayrımı
     "3:5": "tamamlandi",   // eşleme tablosuyla tek seferlik dönüşüm
 
+    // ── FAZ 4 — içerik yönetimi ve onay akışı ───────────────────────────
+    // VERİTABANI TARAFI KURULDU, ARAYÜZ SIRADA.
+    //
+    // Ölçüm: clubs gereken kolonları ZATEN taşıyordu (manager_user_id,
+    // rejection_reason, submitted_by, reviewed_*, verified_*) — eksik olan
+    // tek şey RLS'ti. content_entries ise katkı akışını hiç taşımıyordu:
+    // yazma tamamen admin'e kapalıydı, gönderen belli değildi ve ret
+    // gerekçesi tutulacak yer yoktu.
+    //
+    // Durum kümesi FAZ 3'te hazırdı; bu göç yeni durum icat etmedi,
+    // KİMİN hangi geçişi yapabileceğini yazdı. Kimin içerik
+    // gönderebileceği ise FAZ 1'in app.izin_var('icerik_olustur')
+    // fonksiyonundan geliyor — rol listesi politikaya kopyalanmadı.
+    //
+    // Üretimde sınandı: üye taslak açabildi, doğrudan yayınlayamadı,
+    // incelemeye gönderebildi, inceleme alanlarını yazamadı; admin
+    // reddetti ve damga tetikleyiciden düştü; sahibi ret gerekçesini
+    // gördü, başkası ve anon göremedi. Kulüpte: sahibi içerik alanını
+    // düzenledi, listed/status/verified/sahiplik alanlarına dokunamadı,
+    // başkası hiç düzenleyemedi (planın negatif kabul kriteri), admin
+    // hepsini yapabildi.
+    "4:4": "tamamlandi",   // public'te yalnızca yayındaki içerik
+    "4:5": "tamamlandi",   // topluluk sahipliği — manager_user_id + RLS
+    "4:1": "yapiliyor",    // onay akışı: DB kuralları hazır, panel yüzeyi yok
+
     // ── Kodla bitmeyenler (plan §10.2) — baştan işaretlendi ─────────────
     // Bunlar bir engel çıktığında değil, engel BİLİNDİĞİ için şimdiden
     // "sende". İş o noktaya geldiğinde sürpriz olmasın.
@@ -615,7 +640,7 @@
     "13:7": "sende",   // D11 — masaüstü köprü dağıtımı
   };
 
-  const GUNCELLEME = "7 Ağustos 2026 — FAZ 1, 2 ve 3 tamam; hepsi canlı veritabanında";
+  const GUNCELLEME = "8 Ağustos 2026 — FAZ 1-3 tamam; FAZ 4’ün onay akışı veritabanında";
 
   /* ── Buradan aşağısı görüntüleme mantığı; değiştirmeye gerek yok ─────── */
 
