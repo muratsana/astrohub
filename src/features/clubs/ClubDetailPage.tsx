@@ -14,6 +14,7 @@ import { events } from '@/features/events/data';
 import { eventTypeLabels } from '@/features/events/types';
 import { clubKindLabels, clubTopicLabels } from './data';
 import { useClub } from './clubsSource';
+import { ClubDeletionPanel } from './ClubDeletionPanel';
 import { cityPathForName } from '@/features/city/routes';
 
 /**
@@ -391,6 +392,10 @@ export function ClubDetailPage() {
                 </ButtonLink>
               </div>
             </Panel>
+
+            {/* Yalnızca kaydın sahibine çiziliyor; sahipliği veritabanı
+                söylüyor (bkz. ClubDeletionPanel). */}
+            <ClubDeletionPanel slug={club.slug} clubName={club.name} />
           </div>
         </div>
       </Container>

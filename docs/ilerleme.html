@@ -665,13 +665,25 @@
     "5:2": "tamamlandi",   // forum kaldırma: metin yerine kural açıklaması
     "5:3": "tamamlandi",   // şikâyet akışı: dört eksik yüzey bağlandı
     "5:5": "tamamlandi",   // RecordsControl durum/silme + forum kilidi (FAZ 3)
-    // "reddet" artık içeriği gerçekten kaldırıyor; eksik kalan
-    // "düzenleyerek onayla" — başkasının cümlesini değiştirmek bilinçli
-    // olarak yapılmıyor (bkz. admin/comments.ts), yani bu eylem kutusu
-    // hiç gelmeyecek. "Arşivle" ve "geri bildirim" veritabanında var
-    // (removed_content, notify_moderation_result), kuyruk arayüzünde
-    // henüz ayrı düğme değil.
-    "5:1": "yapiliyor",    // reddet→kaldırma bağlandı; arşiv/geri bildirim düğmesi yok
+    // EYLEMLER TAMAMLANDI. "Arşivle" ve "Soru sor" kuyrukta artık ayrı
+    // düğme: arşiv kararsız kapanış (yinelenen/konusu kalmamış kayıt —
+    // bugüne kadar bunlar "İçerik kalsın" ile kapanıyor ve denetim
+    // günlüğünde incelenmiş gibi görünüyorlardı), "Soru sor" ise karar
+    // vermeden bildirim gönderiyor ve kaydın durumuna dokunmuyor.
+    // Eksik kalan tek eylem "düzenleyerek onayla" — başkasının cümlesini
+    // değiştirmek bilinçli olarak yapılmıyor (bkz. admin/comments.ts),
+    // yani bu kutu hiç gelmeyecek.
+    "5:1": "tamamlandi",   // onayla/reddet/arşivle/geri bildirim — dördü de bağlı
+
+    // TOPLULUK SİLME ONAYI (5:4). Sahip kendi kaydını doğrudan
+    // silebiliyordu: clubs üzerindeki sahip politikası deleted_at
+    // sütununu kapsamıyordu. Artık tetikleyici doğrudan silmeyi
+    // reddediyor ve akış iki aşamalı: sahip gerekçeli talep açıyor,
+    // kararı yalnızca admin veriyor. Talep moderatöre listelenmiyor
+    // (RLS), gerekçesiz talep ve gerekçesiz ret veritabanında kısıtla
+    // düşüyor, ret gerekçesi sahibine bildirim olarak gidiyor.
+    // Uçtan uca canlı veritabanında rol taklidiyle ölçüldü.
+    "5:4": "tamamlandi",   // gerekçe zorunlu, iki aşamalı, yalnızca admin
 
     // ── Kodla bitmeyenler (plan §10.2) — baştan işaretlendi ─────────────
     // Bunlar bir engel çıktığında değil, engel BİLİNDİĞİ için şimdiden
@@ -682,7 +694,7 @@
     "13:7": "sende",   // D11 — masaüstü köprü dağıtımı
   };
 
-  const GUNCELLEME = "8 Ağustos 2026 — FAZ 1-4 tamam; FAZ 5’te kaldırma artık metni değil yalnızca ihlali siliyor";
+  const GUNCELLEME = "8 Ağustos 2026 — FAZ 1-4 tamam; FAZ 5’te topluluk silme artık sahibin talebi, admin’in kararı";
 
   /* ── Buradan aşağısı görüntüleme mantığı; değiştirmeye gerek yok ─────── */
 

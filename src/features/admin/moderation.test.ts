@@ -2,7 +2,12 @@ import { describe, it, expect } from 'vitest';
 import {
   canRemoveContent,
   countByStatus,
+  decideClubDeletion,
+  durumEtiketi,
+  isResolved,
   removeContent,
+  resolveItem,
+  sendModerationFeedback,
   targetLabels,
   statusLabels,
   reasonLabels,
@@ -15,8 +20,15 @@ describe('moderasyon kuyruğu sayımı', () => {
   it('boş kuyrukta tüm durumlar sıfır döner', () => {
     const counts = countByStatus([]);
     expect(Object.values(counts).every((n) => n === 0)).toBe(true);
-    // Panelin rozetleri eksik anahtar bekleyemez; hepsi tanımlı olmalı.
-    expect(Object.keys(counts)).toHaveLength(5);
+    /*
+      SAYI SABİTİ YOK, KARŞILAŞTIRMA VAR.
+
+      Test "5 durum olmalı" diyordu ve altıncı durum eklenince (FAZ 6:
+      `archived`) kırıldı — oysa ölçmek istediği şey sayı değil, sayaçta
+      HER DURUMUN BİR ANAHTARI OLMASI. Eksik anahtar panelin rozetini
+      `undefined` gösterirdi.
+    */
+    expect(Object.keys(counts).sort()).toEqual(Object.keys(statusLabels).sort());
   });
 
   it('durumlara göre sayar', () => {
@@ -54,13 +66,7 @@ describe('etiket sözlükleri', () => {
   });
 
   it('her durumun karşılığı var ve boş değil', () => {
-    const statuses: ModerationStatus[] = [
-      'pending',
-      'in_review',
-      'approved',
-      'rejected',
-      'escalated',
-    ];
+    const statuses = Object.keys(statusLabels) as ModerationStatus[];
     for (const status of statuses) {
       expect(statusLabels[status].length).toBeGreaterThan(2);
     }
@@ -139,5 +145,90 @@ describe('varsayılan kaldırma gerekçesi', () => {
   it('kullanıcıya gösterilmeye uygun bir cümle', () => {
     expect(VARSAYILAN_KALDIRMA_GEREKCESI.trim().length).toBeGreaterThan(20);
     expect(VARSAYILAN_KALDIRMA_GEREKCESI).not.toMatch(/TODO|lorem|xxx/i);
+  });
+});
+
+/**
+ * TOPLULUK SİLME TALEBİ (FAZ 6).
+ *
+ * Buradaki iki risk de sessiz: talebi düz UPDATE ile kapatmak topluluğu
+ * SİLMEZ (kuyrukta "onaylandı" yazan, sitede duran bir topluluk kalır) ve
+ * gerekçesiz ret sahibine boş bir bildirim gönderir.
+ */
+describe('silme talebi — kararı ayrı kapı veriyor', () => {
+  it('talebi düz kuyruk güncellemesiyle kapatmıyor', async () => {
+    await expect(
+      resolveItem('talep-1', 'approved', 'admin-1', undefined, 'club_deletion')
+    ).rejects.toThrow(/Silmeyi onayla/);
+  });
+
+  it('şikâyet kaydı aynı yoldan geçmeye devam ediyor', async () => {
+    /* Yapılandırma yok; hata SUNUCU yolundan geliyor — yani kapı açık. */
+    await expect(
+      resolveItem('sikayet-1', 'approved', 'admin-1', undefined, 'comment')
+    ).rejects.toThrow(/yapılandırılmamış/i);
+  });
+
+  it('gerekçesiz ret veritabanına hiç gitmiyor', async () => {
+    await expect(decideClubDeletion('talep-1', false, '   ')).rejects.toThrow(
+      /Ret gerekçesi zorunlu/
+    );
+  });
+
+  it('onayda gerekçe istemiyor', async () => {
+    /* Onay için gerekçe zorunlu değil: bildirimin gövdesi sabit cümle.
+       Hata sunucu yolundan geliyorsa doğrulama geçmiş demektir. */
+    await expect(decideClubDeletion('talep-1', true)).rejects.toThrow(
+      /yapılandırılmamış/i
+    );
+  });
+
+  it('boş geri bildirim gönderilmiyor', async () => {
+    await expect(sendModerationFeedback('kayit-1', '  ')).rejects.toThrow(
+      /boş olamaz/
+    );
+  });
+});
+
+describe('durum okunuşu türe göre değişiyor', () => {
+  /*
+   * Kuyruğun `approved`/`rejected` değerleri şikâyette İÇERİK hakkında,
+   * talepte TALEP hakkında ve tam ters okunuyor. Aynı etiketi
+   * kullansaydık onaylanmış bir silme talebi kuyrukta "Onaylandı" diye
+   * görünürdü — topluluğun kaldırıldığını hiçbir yerde yazmadan.
+   */
+  it('onaylanmış talep "Silindi" diyor, onaylanmış şikâyet "Onaylandı"', () => {
+    expect(
+      durumEtiketi({ target_type: 'club_deletion', status: 'approved' })
+    ).toBe('Silindi');
+    expect(durumEtiketi({ target_type: 'comment', status: 'approved' })).toBe(
+      'Onaylandı'
+    );
+  });
+
+  it('reddedilmiş talep "Reddedildi" diyor, reddedilmiş şikâyet "Kaldırıldı"', () => {
+    expect(
+      durumEtiketi({ target_type: 'club_deletion', status: 'rejected' })
+    ).toBe('Reddedildi');
+    expect(durumEtiketi({ target_type: 'comment', status: 'rejected' })).toBe(
+      'Kaldırıldı'
+    );
+  });
+});
+
+describe('kapanmış kayıt', () => {
+  /* Arşiv de bir kapanış: veritabanı da kapalı talebi yeniden karara
+     bağlamayı reddediyor. Panelde düğmelerin kaybolması bununla aynı
+     kuralı söylüyor. */
+  it('arşiv kapanış sayılıyor', () => {
+    expect(isResolved('archived')).toBe(true);
+    expect(isResolved('approved')).toBe(true);
+    expect(isResolved('rejected')).toBe(true);
+  });
+
+  it('açık kayıtlar kapanmış sayılmıyor', () => {
+    expect(isResolved('pending')).toBe(false);
+    expect(isResolved('in_review')).toBe(false);
+    expect(isResolved('escalated')).toBe(false);
   });
 });

@@ -45,9 +45,13 @@ import {
 } from '@/components/ui/icons';
 import {
   canRemoveContent,
+  decideClubDeletion,
+  durumEtiketi,
   fetchQueue,
+  isResolved,
   removeContent,
   resolveItem,
+  sendModerationFeedback,
   targetLabels,
   statusLabels,
   reasonLabels,
@@ -81,6 +85,9 @@ const statusTone: Record<
   approved: 'success',
   rejected: 'danger',
   escalated: 'warning',
+  /* Arşiv bir hüküm değil: ne "haklıydı" ne "haksızdı". Rengi de
+     hüküm bildirmiyor. */
+  archived: 'muted',
 };
 
 export function AdminPage() {
@@ -145,6 +152,43 @@ export function AdminPage() {
   */
   const [notes, setNotes] = useState<Record<string, string>>({});
 
+  /*
+    HER EYLEM AYNI DEFTERİ TUTUYOR.
+
+    Karar, arşiv, silme talebi ve geri bildirim dört ayrı çağrı ama
+    sonrasında yapılacak iş aynı: not kutusunu temizle, kuyruğu yeniden
+    oku, hatayı ekrana taşı. Tek yerde durmazsa biri unutulur ve ekranda
+    kalan eski not bir sonraki karara iliştirilirdi.
+  */
+  const uygula = async (item: ModerationItem, calisma: () => Promise<void>) => {
+    if (!user) return;
+    setBusy(true);
+    try {
+      await calisma();
+      setNotes((n) => {
+        const kalan = { ...n };
+        delete kalan[item.id];
+        return kalan;
+      });
+      load();
+    } catch (error) {
+      setQueueError(
+        error instanceof Error ? error.message : 'İşlem uygulanamadı'
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  /* Silme talebinin kararı ayrı RPC'den geçiyor: topluluğun kaldırılması,
+     sahibine giden bildirim ve denetim kaydı orada tek işlemde. */
+  const talepKarari = (item: ModerationItem, onay: boolean) =>
+    uygula(item, () => decideClubDeletion(item.id, onay, notes[item.id]));
+
+  /* Karar vermeden soru sormak: kaydın durumuna dokunmuyor. */
+  const geriBildirim = (item: ModerationItem) =>
+    uygula(item, () => sendModerationFeedback(item.id, notes[item.id] ?? ''));
+
   const act = async (
     item: ModerationItem,
     status: ModerationStatus,
@@ -167,7 +211,13 @@ export function AdminPage() {
       if (status === 'rejected' && canRemoveContent(item.target_type)) {
         await removeContent(item.target_type, item.target_id);
       }
-      await resolveItem(item.id, status, user.id, note?.trim() || undefined);
+      await resolveItem(
+        item.id,
+        status,
+        user.id,
+        note?.trim() || undefined,
+        item.target_type
+      );
       /* Kararı verilen kaydın notu temizleniyor: satır listeden düşse
          de durum sözlüğünde kalırsa aynı kimlik yeniden görünürse eski
          metinle geri gelir. */
@@ -293,6 +343,7 @@ export function AdminPage() {
                 'escalated',
                 'approved',
                 'rejected',
+                'archived',
               ] as ModerationStatus[]
             ).map((status) => (
               <Readout
@@ -370,14 +421,19 @@ export function AdminPage() {
                       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
                         <span className="flex flex-wrap items-center gap-2">
                           <Badge tone={statusTone[item.status]}>
-                            {statusLabels[item.status]}
+                            {durumEtiketi(item)}
                           </Badge>
                           <span className="text-caption font-medium text-foreground">
                             {targetLabels[item.target_type]}
                           </span>
-                          <span className="text-meta text-muted-foreground">
-                            {reasonLabels[item.reason]}
-                          </span>
+                          {/* Talepte şikâyet sebebi yok; kayıt türü zaten
+                              "silme talebi" diyor, yanına "Diğer" yazmak
+                              anlamsız bir sütun doldurmaktı. */}
+                          {item.target_type !== 'club_deletion' && (
+                            <span className="text-meta text-muted-foreground">
+                              {reasonLabels[item.reason]}
+                            </span>
+                          )}
                         </span>
                         <span className="tabular text-meta text-faint">
                           {new Date(item.created_at).toLocaleString('tr-TR')}
@@ -386,6 +442,11 @@ export function AdminPage() {
 
                       {item.note && (
                         <p className="mt-1 text-body-sm leading-relaxed text-muted-foreground">
+                          {item.target_type === 'club_deletion' && (
+                            <span className="text-faint">
+                              Sahibinin gerekçesi:{' '}
+                            </span>
+                          )}
                           {item.note}
                         </p>
                       )}
@@ -396,14 +457,16 @@ export function AdminPage() {
                         kaydındaki metinle satırdaki metnin ayrışması
                         demek olurdu.
                       */}
-                      {item.resolution_note &&
-                        (item.status === 'approved' ||
-                          item.status === 'rejected') && (
-                          <p className="mt-1 rounded-card border border-border bg-surface-2 px-2.5 py-1.5 text-meta leading-relaxed text-muted-foreground">
-                            <span className="text-faint">Karar notu: </span>
-                            {item.resolution_note}
-                          </p>
-                        )}
+                      {item.resolution_note && isResolved(item.status) && (
+                        <p className="mt-1 rounded-card border border-border bg-surface-2 px-2.5 py-1.5 text-meta leading-relaxed text-muted-foreground">
+                          <span className="text-faint">
+                            {item.target_type === 'club_deletion'
+                              ? 'Sahibine iletilen gerekçe: '
+                              : 'Karar notu: '}
+                          </span>
+                          {item.resolution_note}
+                        </p>
+                      )}
 
                       <div className="mt-2 flex flex-wrap items-center gap-2">
                         {item.target_path && (
@@ -411,62 +474,146 @@ export function AdminPage() {
                             to={item.target_path}
                             className="text-meta text-primary hover:underline"
                           >
-                            İçeriğe git →
+                            {item.target_type === 'club_deletion'
+                              ? 'Topluluğa git →'
+                              : 'İçeriğe git →'}
                           </Link>
                         )}
-                        {item.status !== 'approved' &&
-                          item.status !== 'rejected' && (
-                            <>
-                              {/*
-                                KARAR NOTU ZORUNLU DEĞİL ama var: "neden
-                                kaldırıldı" sorusunun cevabı altı ay sonra
-                                yalnızca burada olacak. Zorunlu yapmadım
-                                çünkü apaçık spam için not yazdırmak
-                                kuyruğu yavaşlatır ve moderatör "spam"
-                                yazıp geçer — zorunluluk boş metni
-                                engellemez, anlamsız metni üretir.
-                              */}
-                              <Input
-                                value={notes[item.id] ?? ''}
-                                onChange={(e) =>
-                                  setNotes((n) => ({
-                                    ...n,
-                                    [item.id]: e.target.value,
-                                  }))
-                                }
-                                placeholder="Karar notu (isteğe bağlı)"
-                                aria-label="Karar notu"
-                                className="h-8 min-w-[12rem] flex-1 text-meta"
-                              />
-                              <Button
-                                size="sm"
-                                variant="secondary"
-                                disabled={busy}
-                                onClick={() => void act(item, 'in_review')}
-                              >
-                                Üzerime al
-                              </Button>
-                              <Button
-                                size="sm"
-                                disabled={busy}
-                                onClick={() =>
-                                  void act(item, 'approved', notes[item.id])
-                                }
-                              >
-                                İçerik kalsın
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="danger"
-                                disabled={busy}
-                                onClick={() =>
-                                  void act(item, 'rejected', notes[item.id])
-                                }
-                              >
-                                Kaldır
-                              </Button>
-                            </>
-                          )}
+                        {!isResolved(item.status) && (
+                          <>
+                            {/*
+                              TEK KUTU, ÜÇ İŞ.
+
+                              Şikâyette karar notu (isteğe bağlı), silme
+                              talebinde ret gerekçesi (zorunlu), her ikisinde
+                              "Soru sor" mesajı. Ayrı ayrı üç kutu koymak,
+                              aynı anda ikisini doldurup hangisinin gittiğini
+                              bilmemek demekti — metin tek, nereye gideceğini
+                              basılan düğme söylüyor.
+
+                              Karar notu şikâyette zorunlu değil: apaçık spam
+                              için not yazdırmak kuyruğu yavaşlatır ve
+                              moderatör "spam" yazıp geçer — zorunluluk boş
+                              metni engellemez, anlamsız metni üretir.
+                            */}
+                            <Input
+                              value={notes[item.id] ?? ''}
+                              onChange={(e) =>
+                                setNotes((n) => ({
+                                  ...n,
+                                  [item.id]: e.target.value,
+                                }))
+                              }
+                              placeholder={
+                                item.target_type === 'club_deletion'
+                                  ? 'Ret gerekçesi (sahibine iletilir)'
+                                  : 'Karar notu (isteğe bağlı)'
+                              }
+                              aria-label={
+                                item.target_type === 'club_deletion'
+                                  ? 'Ret gerekçesi'
+                                  : 'Karar notu'
+                              }
+                              className="h-8 min-w-[12rem] flex-1 text-meta"
+                            />
+
+                            {item.target_type === 'club_deletion' ? (
+                              <>
+                                {/*
+                                  DÜĞME ADLARI TALEBİN DİLİNDE.
+
+                                  Kuyruğun `approved`/`rejected` değerleri
+                                  şikâyette İÇERİK hakkında konuşuyor
+                                  ("kalsın"/"kalksın"), talepte TALEP
+                                  hakkında ve tam tersi okunuyor: onay,
+                                  topluluğun kaldırılması demek. Aynı
+                                  düğmeleri kullansaydık admin "İçerik
+                                  kalsın" diyerek topluluğu SİLERDİ.
+                                */}
+                                <Button
+                                  size="sm"
+                                  variant="danger"
+                                  disabled={busy}
+                                  onClick={() => void talepKarari(item, true)}
+                                >
+                                  Silmeyi onayla
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="secondary"
+                                  disabled={busy || !notes[item.id]?.trim()}
+                                  onClick={() => void talepKarari(item, false)}
+                                >
+                                  Talebi reddet
+                                </Button>
+                              </>
+                            ) : (
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="secondary"
+                                  disabled={busy}
+                                  onClick={() => void act(item, 'in_review')}
+                                >
+                                  Üzerime al
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  disabled={busy}
+                                  onClick={() =>
+                                    void act(item, 'approved', notes[item.id])
+                                  }
+                                >
+                                  İçerik kalsın
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="danger"
+                                  disabled={busy}
+                                  onClick={() =>
+                                    void act(item, 'rejected', notes[item.id])
+                                  }
+                                >
+                                  Kaldır
+                                </Button>
+                                {/*
+                                  ARŞİV: yinelenen ya da konusu kalmamış
+                                  kayıt için. İçerik hakkında hüküm
+                                  vermiyor — bugüne kadar bu kayıtlar
+                                  "İçerik kalsın" ile kapatılıyor ve
+                                  denetim günlüğünde incelenmiş gibi
+                                  görünüyorlardı.
+                                */}
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  disabled={busy}
+                                  onClick={() =>
+                                    void act(item, 'archived', notes[item.id])
+                                  }
+                                >
+                                  Arşivle
+                                </Button>
+                              </>
+                            )}
+
+                            {/*
+                              KARAR VERMEDEN SORMAK.
+
+                              "Etkinlik kayıtlarınız ne olsun?" diye sormak
+                              kaydı kapatmak değil: bu düğme yalnızca
+                              bildirim gönderiyor, durum yerinde kalıyor.
+                            */}
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              disabled={busy || !notes[item.id]?.trim()}
+                              onClick={() => void geriBildirim(item)}
+                            >
+                              Soru sor
+                            </Button>
+                          </>
+                        )}
                       </div>
 
                       {/*
@@ -478,14 +625,15 @@ export function AdminPage() {
                         söylemeseydik moderatör ikinci durumda işin
                         bittiğini sanır ve içerik yayında kalırdı.
                       */}
-                      {item.status !== 'approved' &&
-                        item.status !== 'rejected' && (
-                          <p className="mt-1.5 text-meta leading-relaxed text-faint">
-                            {canRemoveContent(item.target_type)
+                      {!isResolved(item.status) && (
+                        <p className="mt-1.5 text-meta leading-relaxed text-faint">
+                          {item.target_type === 'club_deletion'
+                            ? '"Silmeyi onayla" topluluğu dizinden kaldırır ve sahibine bildirim gider; ret gerekçesi de sahibine iletilir.'
+                            : canRemoveContent(item.target_type)
                               ? '"Kaldır" metni siteden kaldırır ve yerinde kural açıklaması bırakır; özgün metin arşivde saklanır.'
                               : `"Kaldır" yalnızca bu kaydı kapatır. ${targetLabels[item.target_type]} içeriği ilgili panelden kaldırılır.`}
-                          </p>
-                        )}
+                        </p>
+                      )}
                     </li>
                   ))}
                 </ul>
