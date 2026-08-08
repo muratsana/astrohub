@@ -3,13 +3,32 @@ import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import path from 'node:path';
 import { readFileSync } from 'node:fs';
-import {
-  buildSitemapXml,
-  fetchDbSitemapEntries,
-  type SitemapEntry,
-} from './src/app/sitemap';
 import { renderServiceWorker } from './src/pwa/buildSw';
 import { validateClientEnv } from './src/lib/envCheck';
+
+/**
+ * BU DOSYA UYGULAMA KODUNU İÇE AKTARAMAZ.
+ *
+ * Vite yapılandırmayı esbuild ile paketlerken göreli olmayan her
+ * belirteci DIŞARIDA bırakıyor — `@/...` takma adı da öyle. Node o
+ * belirteci bir paket adı sanıp "Cannot find package '@/domain'" diyor
+ * ve derleme yapılandırma daha okunmadan düşüyor.
+ *
+ * Tuzak sinsi: kırılma bu dosyada değil, aktarılan modülün
+ * aktardıklarının ONLARCA adım ötesinde oluşuyor. Depoda tam olarak bu
+ * yaşandı — `sitemap.xml` eklentisi 26 dosyalık bir zinciri buraya
+ * çekiyordu; zincirin dibindeki bir dosya `@/domain/...` yazmaya
+ * başlayınca `npm run build` dört commit boyunca kırık kaldı ve testler
+ * geçmeye devam ettiği için kimse fark etmedi.
+ *
+ * Bu yüzden buradan yalnızca KENDİ BAŞINA DURAN yardımcılar aktarılıyor
+ * (`buildSw`, `envCheck` — ikisi de bağımlılıksız). Uygulama verisine
+ * ihtiyaç duyan üretim işleri prerender adımına ait: orası Vite'ın kendi
+ * boru hattından geçiyor ve takma adlar orada çözülüyor.
+ *
+ * Kural `viteConfig.test.ts` ile ölçülüyor; elle uyulacak bir kural
+ * olsaydı yine unutulurdu.
+ */
 
 /**
  * Ortam değişkeni nöbeti (T-003). Biçimi bozuk değer her derlemede,
@@ -40,66 +59,6 @@ function envGuard(): Plugin {
           `Ortam değişkeni doğrulaması başarısız:\n- ${errors.join('\n- ')}`
         );
       }
-    },
-  };
-}
-
-/**
- * Derleme sırasında `sitemap.xml` üretir (§16.2).
- *
- * Mutlak URL zorunlu olduğu için `VITE_SITE_URL` tanımlı değilse dosya
- * üretilmez ve uyarı verilir — yanlış alan adıyla sitemap yayımlamak,
- * sitemap'i hiç yayımlamamaktan daha zararlıdır.
- */
-function sitemap(): Plugin {
-  let siteUrl: string | undefined;
-  let supabaseUrl: string | undefined;
-  let anonKey: string | undefined;
-
-  return {
-    name: 'astrohub-sitemap',
-    apply: (_config, env) => env.command === 'build' && !env.isSsrBuild,
-    configResolved(config) {
-      siteUrl = config.env.VITE_SITE_URL?.trim();
-      supabaseUrl = config.env.VITE_SUPABASE_URL?.trim();
-      anonKey = config.env.VITE_SUPABASE_ANON_KEY?.trim();
-    },
-    async generateBundle() {
-      if (!siteUrl) {
-        this.warn(
-          'VITE_SITE_URL tanımlı değil — sitemap.xml üretilmedi. ' +
-            'Yayın alan adını .env dosyasına ekleyin.'
-        );
-        return;
-      }
-
-      /*
-       * Panelden yayımlanan haber/yazılar gerçek yayın tarihleriyle
-       * sitemap'e girer (QA SEO-02). Veritabanına ulaşılamazsa derleme
-       * KIRILMAZ: tohum sitemap, eksik sitemap'ten iyidir — ama sessiz de
-       * kalınmaz, uyarı düşülür.
-       */
-      let dbEntries: SitemapEntry[] = [];
-      if (supabaseUrl && anonKey) {
-        try {
-          dbEntries = await fetchDbSitemapEntries(supabaseUrl, anonKey);
-        } catch (error) {
-          this.warn(
-            `Sitemap veritabanı kayıtları alınamadı (${String(error)}); ` +
-              'yalnızca tohum girdilerle üretildi.'
-          );
-        }
-      }
-
-      // Tohum sayfalar için derleme tarihi `lastmod` olur; veritabanı
-      // kayıtları kendi yayın tarihini taşır.
-      const lastmod = new Date().toISOString().slice(0, 10);
-
-      this.emitFile({
-        type: 'asset',
-        fileName: 'sitemap.xml',
-        source: buildSitemapXml(siteUrl, lastmod, dbEntries),
-      });
     },
   };
 }
@@ -151,7 +110,7 @@ function serviceWorker(): Plugin {
 }
 
 export default defineConfig(({ isSsrBuild }) => ({
-  plugins: [envGuard(), react(), tailwindcss(), sitemap(), serviceWorker()],
+  plugins: [envGuard(), react(), tailwindcss(), serviceWorker()],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

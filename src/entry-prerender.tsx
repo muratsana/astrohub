@@ -17,7 +17,13 @@ import { SiteConfigProvider } from '@/features/site/SiteConfigContext';
 import { UiPreferencesProvider } from '@/features/preferences/UiPreferencesProvider';
 import { PreviewEditorProvider } from '@/features/preview-editor/PreviewEditorContext';
 import { appRoutes } from '@/app/router';
-import { staticEntries, contentEntries, buildSitemapXml } from '@/app/sitemap';
+import {
+  staticEntries,
+  contentEntries,
+  buildSitemapXml,
+  fetchDbSitemapEntries,
+  type SitemapEntry,
+} from '@/app/sitemap';
 import { SITE_URL } from '@/lib/seo';
 
 /**
@@ -159,8 +165,21 @@ export function prerenderPaths(): string[] {
  * Bu, deponun defalarca yakaladığı hatanın aynısı: kod yazılmış, kimse
  * çağırmıyor. Testlerin geçiyor olması durumu gizliyordu — üretici
  * doğru XML üretiyordu, yalnızca kimse üretmesini istemiyordu.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * VERİTABANI KAYITLARI ARTIK BURADA (ikinci bulunan hata)
+ *
+ * Aynı dosyayı `vite.config.ts` içindeki bir eklenti de üretiyordu ve o
+ * eklenti, panelden yayımlanan haber/yazıları GERÇEK yayın tarihleriyle
+ * ekliyordu (QA SEO-02). Ama prerender `vite build`den SONRA çalışıyor
+ * ve aynı dosyanın üzerine yazıyordu: veritabanı sorgusu her derlemede
+ * atılıyor, sonucu sessizce çöpe gidiyordu.
+ *
+ * İki üretici yerine bir üretici var artık, veritabanı sorgusu da onda.
+ * Eklentinin kaldırılmasının ikinci bir faydası: `vite.config.ts` artık
+ * uygulama kodunu içe aktarmıyor (bkz. viteConfig.test.ts).
  */
-export function sitemapXml(): string | null {
+export async function sitemapXml(): Promise<string | null> {
   /*
    * SİTE ADRESİ YOKSA DOSYA DA YOK.
    *
@@ -173,5 +192,29 @@ export function sitemapXml(): string | null {
    */
   if (!SITE_URL) return null;
   const bugun = new Date().toISOString().slice(0, 10);
-  return buildSitemapXml(SITE_URL, bugun);
+
+  /*
+   * VERİTABANINA ULAŞILAMAZSA DERLEME KIRILMAZ.
+   *
+   * Tohum girdilerle üretilmiş bir sitemap, hiç üretilmemiş bir
+   * sitemap'ten iyi: statik sayfaların tamamı yine ilan ediliyor,
+   * yalnızca panelden yayımlanmış içerik eksik kalıyor. Ama sessiz de
+   * kalınmıyor — uyarı derleme çıktısına düşüyor.
+   */
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim();
+  const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim();
+
+  let dbEntries: SitemapEntry[] = [];
+  if (supabaseUrl && anonKey) {
+    try {
+      dbEntries = await fetchDbSitemapEntries(supabaseUrl, anonKey);
+    } catch (error) {
+      console.warn(
+        `sitemap: veritabanı kayıtları alınamadı (${String(error)}); ` +
+          'yalnızca tohum girdilerle üretildi.'
+      );
+    }
+  }
+
+  return buildSitemapXml(SITE_URL, bugun, dbEntries);
 }

@@ -144,8 +144,12 @@ try {
  * Burada üretiliyor çünkü kaynak listesi (`staticEntries` +
  * `contentEntries`) zaten bu SSR paketinde ve prerender'ın kendisiyle
  * aynı yerden okunuyor — iki ayrı liste, iki ayrı gerçeklik demekti.
+ *
+ * ASENKRON: panelden yayımlanan içerik veritabanından çekiliyor. Eskiden
+ * bu sorguyu `vite.config.ts` içindeki ayrı bir eklenti atıyordu ve
+ * sonucu bu satır sessizce üzerine yazıyordu.
  */
-const sitemapGovde = sitemapXml();
+const sitemapGovde = await sitemapXml();
 if (sitemapGovde) {
   writeFileSync(path.join(distDir, 'sitemap.xml'), sitemapGovde);
   const urlSayisi = (sitemapGovde.match(/<url>/g) ?? []).length;
