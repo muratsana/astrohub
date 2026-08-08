@@ -138,12 +138,21 @@ export interface PhotoComment {
   body: string;
   createdAt: string;
   author: { username: string; displayName: string };
+  /**
+   * Moderasyon kaldırdıysa gösterilecek gerekçe; doluysa `body` boştur.
+   *
+   * Kaldırılan yorum listeden düşmüyor. Bir yorumu izsiz silmek, ona
+   * verilen yanıtları anlamsız bırakıyor ve okuyan kişiye hiçbir şey
+   * söylemiyor.
+   */
+  removalReason?: string;
 }
 
 interface CommentRow {
   id: string;
   body: string;
   created_at: string;
+  removal_reason: string | null;
   profiles: { username: string; display_name: string | null } | null;
 }
 
@@ -178,7 +187,7 @@ export function usePhotoComments(photoId: string | undefined): CommentThread {
       const { data, error: readError } = await supabase
         .from('photo_comments')
         .select(
-          'id, body, created_at, ' +
+          'id, body, created_at, removal_reason, ' +
             'profiles!photo_comments_user_id_profiles_fkey(username, display_name)'
         )
         .eq('photo_id', photoId)
@@ -191,6 +200,10 @@ export function usePhotoComments(photoId: string | undefined): CommentThread {
           id: row.id,
           body: row.body,
           createdAt: row.created_at,
+          /* Boş dize `undefined`a düşürülüyor: arayüz "gerekçe var mı"
+             diye baktığı için boş bir metni geçirmek, açıklaması olmayan
+             bir kaldırma kutusu çizdirirdi. */
+          removalReason: (row.removal_reason ?? '').trim() || undefined,
           author: {
             username: row.profiles?.username ?? 'bilinmiyor',
             displayName:

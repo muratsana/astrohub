@@ -64,6 +64,15 @@ export interface ForumPost {
   body: string;
   /** Konuyu açanın "çözüm" olarak işaretlediği yanıt. */
   solution?: boolean;
+  /**
+   * Moderasyon kaldırdıysa gösterilecek gerekçe.
+   *
+   * Doluysa `body` boştur — metin `removed_content` arşivine taşınmıştır.
+   * İki alan yerine tek bir "kaldırıldı" bayrağı tutmadık: gerekçenin
+   * kendisi gösterilecek metin, bayrak olsaydı arayüz onu yeniden
+   * uydurmak zorunda kalırdı.
+   */
+  removalReason?: string;
 }
 
 export interface ForumThread {
@@ -87,6 +96,14 @@ export interface ForumThread {
   replies: ForumPost[];
   /** Sabit setten seçilen rozetler. */
   labels?: ForumLabelId[];
+  /**
+   * Açılış mesajı moderasyonla kaldırıldıysa gerekçe.
+   *
+   * Konu silinmiyor: başlık, künye ve yanıtlar yerinde kalıyor — tartışma
+   * kaldırılan iletiden sonra da anlamlı. Kaybolan tek şey ihlal eden
+   * metin.
+   */
+  removalReason?: string;
 }
 
 export const forumCategories: Record<ForumCategoryId, ForumCategory> = {

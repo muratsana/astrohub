@@ -8,6 +8,7 @@ import { Alert } from '@/components/ui/Alert';
 import { useFlag } from '@/features/site/SiteConfigContext';
 import { FlagClosedNote } from '@/features/site/FlagClosedNote';
 import { ReportButton } from '@/features/admin/ReportButton';
+import { RemovedNotice } from '@/features/admin/RemovedNotice';
 
 /**
  * FOTOĞRAF YORUMLARI.
@@ -61,7 +62,12 @@ export function PhotoComments({ photo }: { photo: AstroPhoto }) {
               <span className="tabular text-meta text-faint">
                 {new Date(comment.createdAt).toLocaleDateString('tr-TR')}
               </span>
-              {comment.author.username === thread.currentUsername ? (
+              {/* Kaldırılmış yorumda ne "Sil" ne şikâyet var: silinecek
+                  metin kalmadı, şikâyet edilecek olan da. Satırın eylem
+                  yeri boş kalıyor — kaldırma kutusu zaten durumu
+                  söylüyor. */}
+              {comment.removalReason ? null : comment.author.username ===
+                thread.currentUsername ? (
                 <button
                   type="button"
                   onClick={() => void thread.remove(comment.id)}
@@ -89,9 +95,13 @@ export function PhotoComments({ photo }: { photo: AstroPhoto }) {
                 />
               )}
             </div>
-            <p className="mt-1 whitespace-pre-line text-body-sm leading-relaxed text-muted-foreground">
-              {comment.body}
-            </p>
+            {comment.removalReason ? (
+              <RemovedNotice reason={comment.removalReason} className="mt-1" />
+            ) : (
+              <p className="mt-1 whitespace-pre-line text-body-sm leading-relaxed text-muted-foreground">
+                {comment.body}
+              </p>
+            )}
           </li>
         ))}
       </ul>

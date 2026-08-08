@@ -44,7 +44,9 @@ import {
   UserIcon,
 } from '@/components/ui/icons';
 import {
+  canRemoveContent,
   fetchQueue,
+  removeContent,
   resolveItem,
   targetLabels,
   statusLabels,
@@ -151,6 +153,20 @@ export function AdminPage() {
     if (!user) return;
     setBusy(true);
     try {
+      /*
+        İÇERİK ÖNCE KALDIRILIYOR, KUYRUK SONRA KAPANIYOR.
+
+        Sıra tersine olsaydı ve kaldırma hata verseydi (yetki, ağ, silinmiş
+        satır) kuyrukta "kaldırıldı" yazan ama sitede duran bir içerik
+        kalırdı — kuyruğa bakan hiç kimse bunu fark edemezdi. Bu sırayla
+        en kötü ihtimalde kayıt açık kalıyor: moderatör tekrar deniyor.
+
+        Kaldırmayı uygulayamadığımız hedeflerde (fotoğraf, ilan, profil…)
+        karar yine kaydediliyor; içerik ilgili panelden yürütülüyor.
+      */
+      if (status === 'rejected' && canRemoveContent(item.target_type)) {
+        await removeContent(item.target_type, item.target_id);
+      }
       await resolveItem(item.id, status, user.id, note?.trim() || undefined);
       /* Kararı verilen kaydın notu temizleniyor: satır listeden düşse
          de durum sözlüğünde kalırsa aynı kimlik yeniden görünürse eski
@@ -452,6 +468,24 @@ export function AdminPage() {
                             </>
                           )}
                       </div>
+
+                      {/*
+                        DÜĞMENİN NE YAPTIĞI YAZIYOR.
+
+                        "Kaldır" iki farklı şey yapıyor: kaldırabildiğimiz
+                        hedeflerde metni gerçekten kaldırıyor, diğerlerinde
+                        yalnızca kararı kaydediyor. Aradaki farkı
+                        söylemeseydik moderatör ikinci durumda işin
+                        bittiğini sanır ve içerik yayında kalırdı.
+                      */}
+                      {item.status !== 'approved' &&
+                        item.status !== 'rejected' && (
+                          <p className="mt-1.5 text-meta leading-relaxed text-faint">
+                            {canRemoveContent(item.target_type)
+                              ? '"Kaldır" metni siteden kaldırır ve yerinde kural açıklaması bırakır; özgün metin arşivde saklanır.'
+                              : `"Kaldır" yalnızca bu kaydı kapatır. ${targetLabels[item.target_type]} içeriği ilgili panelden kaldırılır.`}
+                          </p>
+                        )}
                     </li>
                   ))}
                 </ul>

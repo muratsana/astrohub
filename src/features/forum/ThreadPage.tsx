@@ -22,6 +22,7 @@ import { cn } from '@/lib/cn';
 import { Alert } from '@/components/ui/Alert';
 import { LabelChip } from './LabelChip';
 import { ReportButton } from '@/features/admin/ReportButton';
+import { RemovedNotice } from '@/features/admin/RemovedNotice';
 
 /** Konu detayı: açılış mesajı + yanıtlar + yanıt kutusu. */
 export function ThreadPage() {
@@ -39,13 +40,21 @@ export function ThreadPage() {
     author: thread.author,
     createdAt: thread.createdAt,
     body: thread.body,
+    /* Açılış mesajının kaldırma gerekçesi KONUNUN üzerinde duruyor
+       (`forum_threads.removal_reason`) — açılış mesajının ayrı bir
+       `forum_posts` satırı yok. */
+    removalReason: thread.removalReason,
   };
 
   return (
     <>
       <PageMeta
         title={thread.title}
-        description={thread.body.slice(0, 160)}
+        /* Kaldırılmış konuda gövde boş; açıklamayı meta'ya da yazıyoruz.
+           Boş bir description arama sonucunda ve paylaşım kartında
+           başlığın altını boş bırakırdı — kaldırıldığı orada da
+           anlaşılsın. */
+        description={thread.removalReason ?? thread.body.slice(0, 160)}
         jsonLd={breadcrumbJsonLd([
           { name: 'Ana Sayfa', path: '/' },
           { name: 'Forum', path: '/forum' },
@@ -82,12 +91,16 @@ export function ThreadPage() {
               <span className="text-meta text-muted-foreground">
                 {info.name}
               </span>
-              <ReportButton
-                compact
-                targetType="forum_thread"
-                targetId={thread.id}
-                targetPath={`/forum/${thread.slug}`}
-              />
+              {/* Kaldırılmış konuda şikâyet düğmesi yok — karar zaten
+                  verilmiş; ikinci bir şikâyet kuyruğu boş yere şişirir. */}
+              {!thread.removalReason && (
+                <ReportButton
+                  compact
+                  targetType="forum_thread"
+                  targetId={thread.id}
+                  targetPath={`/forum/${thread.slug}`}
+                />
+              )}
             </span>
           }
         />
@@ -201,23 +214,32 @@ function PostCard({
           gönderiyi orada görüyor. Hedef KİMLİĞİ yine de gönderinin
           kendisi: konu kimliği yazılsaydı hangi iletinin şikâyet
           edildiği kaybolurdu.
+
+          KALDIRILMIŞ GÖNDERİ ŞİKÂYET EDİLEMİYOR: ortada şikâyet edilecek
+          metin kalmadı ve gelen kayıt moderatöre boş bir hedef gösterir.
         */}
-        <ReportButton
-          compact
-          targetType="forum_post"
-          targetId={post.id}
-          targetPath={threadPath}
-        />
+        {!post.removalReason && (
+          <ReportButton
+            compact
+            targetType="forum_post"
+            targetId={post.id}
+            targetPath={threadPath}
+          />
+        )}
       </header>
 
-      {/*
-        Gövde düz metindir ve React tarafından kaçırılarak basılır.
-        `dangerouslySetInnerHTML` bilerek kullanılmıyor — zengin metin
-        eklendiğinde önce sanitize katmanı gelecek (bkz. lib/sanitize.ts).
-      */}
-      <p className="whitespace-pre-line px-3 py-3 text-caption leading-[1.7] text-muted-foreground">
-        {post.body}
-      </p>
+      {post.removalReason ? (
+        <RemovedNotice reason={post.removalReason} className="m-3" />
+      ) : (
+        /*
+          Gövde düz metindir ve React tarafından kaçırılarak basılır.
+          `dangerouslySetInnerHTML` bilerek kullanılmıyor — zengin metin
+          eklendiğinde önce sanitize katmanı gelecek (bkz. lib/sanitize.ts).
+        */
+        <p className="whitespace-pre-line px-3 py-3 text-caption leading-[1.7] text-muted-foreground">
+          {post.body}
+        </p>
+      )}
     </article>
   );
 }

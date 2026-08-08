@@ -338,6 +338,15 @@ function ThreadRow({ thread }: { thread: ForumThread }) {
           <h2 className="text-body-sm font-medium leading-snug text-foreground group-hover:text-primary">
             {thread.title}
           </h2>
+          {/* Listede yalnızca kısa bir işaret var, gerekçenin tamamı
+              değil: satır bir gezinme öğesi, kararın metni konunun
+              içinde okunuyor. Konu listeden düşmüyor — açılış mesajı
+              kaldırılsa da yanıtlar sürüyor olabilir. */}
+          {thread.removalReason && (
+            <span className="shrink-0 rounded-card border border-dashed border-border-strong px-1.5 py-0.5 text-meta text-faint">
+              Kaldırıldı
+            </span>
+          )}
           {/* Rozetler başlığın YANINDA, altındaki künye satırında değil:
               "soru mu, rehber mi" bilgisi başlığı okurken işe yarıyor,
               bir satır sonra değil. Konu rozetsizse hiçbir şey çizilmiyor

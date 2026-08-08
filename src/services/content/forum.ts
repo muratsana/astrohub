@@ -41,6 +41,7 @@ interface PostRow {
   id: string;
   body: string;
   created_at: string;
+  removal_reason: string | null;
   profiles: AuthorRow | null;
 }
 
@@ -58,6 +59,7 @@ interface ThreadRow {
   locked: boolean;
   solution_post_id: string | null;
   labels: string[] | null;
+  removal_reason: string | null;
   profiles: AuthorRow | null;
   forum_posts: PostRow[] | null;
 }
@@ -84,6 +86,19 @@ function author(row: AuthorRow | null) {
   };
 }
 
+/**
+ * Kaldırma gerekçesi — boş metin `undefined`a düşürülüyor.
+ *
+ * Kolon boş dizeyle de dolabilir (eski satır, elle düzenleme). Arayüz
+ * "gerekçe var mı" diye baktığı için boş dizeyi geçirmek, içi boş bir
+ * kaldırma kutusu çizdirirdi: gövde gizlenir ama yerine hiçbir açıklama
+ * gelmez — kullanıcının gördüğü en kötü hâl.
+ */
+function removalReason(raw: string | null): string | undefined {
+  const text = (raw ?? '').trim();
+  return text.length > 0 ? text : undefined;
+}
+
 function mapPost(row: PostRow, solutionId: string | null): ForumPost {
   return {
     id: row.id,
@@ -91,6 +106,7 @@ function mapPost(row: PostRow, solutionId: string | null): ForumPost {
     createdAt: row.created_at,
     body: row.body,
     solution: solutionId !== null && row.id === solutionId ? true : undefined,
+    removalReason: removalReason(row.removal_reason),
   };
 }
 
@@ -120,14 +136,21 @@ export function mapThreadRow(row: ThreadRow): ForumThread {
     body: row.body,
     replies,
     labels: labels(row.labels),
+    removalReason: removalReason(row.removal_reason),
   };
 }
 
+/* Kaldırılmış satırlar sorgudan ELENMİYOR. `deleted_at` süzgeci koysaydık
+   kaldırılan konu listeden tamamen düşer, kaldırılan yanıt da tartışmanın
+   ortasından sessizce silinirdi — sonraki yanıtlar cevapsız kalmış bir
+   konuşmaya dönerdi. Satır yerinde duruyor; gövdesi veritabanında zaten
+   boşaltıldı ve yerine `removal_reason` geçiyor. */
 const SELECT =
   'id, slug, title, body, category_id, created_at, last_activity_at, ' +
   'reply_count, view_count, pinned, locked, solution_post_id, labels, ' +
+  'removal_reason, ' +
   'profiles!forum_threads_author_id_profiles_fkey(username, display_name), ' +
-  'forum_posts(id, body, created_at, ' +
+  'forum_posts(id, body, created_at, removal_reason, ' +
   'profiles!forum_posts_author_id_profiles_fkey(username, display_name))';
 
 async function fetchThreads(client: SupabaseClient): Promise<ForumThread[]> {

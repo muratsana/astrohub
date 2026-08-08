@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { COMMENT_KINDS, deleteComment, type CommentKind } from './comments';
+import { COMMENT_KINDS, removeComment, type CommentKind } from './comments';
 
 /**
  * KULLANICI METİNLERİ — tür tanımlarının şemayla hizası.
@@ -61,22 +61,52 @@ describe('COMMENT_KINDS · tanım bütünlüğü', () => {
   });
 });
 
-describe('deleteComment', () => {
+describe('removeComment', () => {
   /*
    * Yapılandırma yokken sessizce başarılı dönmemeli: moderatör "kaldırdım"
    * sanıp kapatırsa uygunsuz metin sitede kalır.
    */
   it('yapılandırma yokken sessizce başarılı dönmüyor', async () => {
-    await expect(deleteComment('photoComment', 'x')).rejects.toThrow();
+    await expect(removeComment('photoComment', 'x')).rejects.toThrow();
+  });
+});
+
+/**
+ * YUMUŞAK KALDIRMA — hangi tabloda mümkün.
+ *
+ * Bayrak ile `select` ifadesi birlikte doğru olmak zorunda. `softRemoval`
+ * açıkken `removal_reason` seçilmezse panel kaldırılmış satırı DOLU
+ * gösterir: gövde boş olduğu için satır bomboş görünür ve moderatör
+ * gerekçesini hiç okumaz. Ters yönde — bayrak kapalıyken güncelleme
+ * denemek — olmayan kolona yazmak demek ve sorgu tümden düşer.
+ */
+describe('yumuşak kaldırma', () => {
+  it('yalnızca kolonları olan tablolarda açık', () => {
+    expect(COMMENT_KINDS.photoComment.softRemoval).toBe(true);
+    expect(COMMENT_KINDS.forumPost.softRemoval).toBe(true);
+    /* `site_reviews`ta `deleted_at`/`removal_reason` yok (FAZ 3 altı
+       tabloya ekledi, bu onlardan biri değil). */
+    expect(COMMENT_KINDS.siteReview.softRemoval).toBe(false);
+  });
+
+  it('yumuşak kaldırma yapan tür gerekçeyi de okuyor', () => {
+    for (const k of KINDS) {
+      const spec = COMMENT_KINDS[k];
+      expect(spec.select.includes('removal_reason'), k).toBe(spec.softRemoval);
+    }
   });
 });
 
 /**
  * DÜZENLEME YOK.
  *
- * Modül yalnızca okuma ve silme veriyor. Bir moderatörün başkasının
+ * Modül yalnızca okuma ve kaldırma veriyor. Bir moderatörün başkasının
  * cümlesini değiştirebilmesi, o kişinin ağzına söz koymak demek — ve
  * böyle bir fonksiyon eklenirse bu test kırılır.
+ *
+ * Kaldırmanın kendisi `update` cümlesi kullanıyor ama dışa verilen ad
+ * `removeComment`: testin baktığı şey modülün YÜZEYİ, içindeki SQL
+ * değil.
  */
 describe('modül yüzeyi', () => {
   it('güncelleme fonksiyonu dışa vermiyor', async () => {

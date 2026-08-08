@@ -24,6 +24,7 @@ function row(over: Record<string, unknown> = {}): any {
     locked: false,
     solution_post_id: null,
     labels: [],
+    removal_reason: null,
     profiles: { username: 'mert_astro', display_name: 'Mert Yılmaz' },
     forum_posts: [],
     ...over,
@@ -265,5 +266,66 @@ describe('filterThreads', () => {
         label: 'soru',
       }).map((t) => t.id)
     ).toEqual(['baska']);
+  });
+});
+
+
+/**
+ * KALDIRILMIŞ İÇERİK — eşlemenin arayüze söylediği şey.
+ *
+ * Gövde veritabanında boşaltılıyor ve yerini `removal_reason` alıyor.
+ * Eşleme bu alanı taşımazsa arayüzün elinde yalnızca boş bir gövde
+ * kalıyor: kaldırılan ileti, hiç yazılmamış bir ileti gibi görünüyor —
+ * kaldırıldığı da, nedeni de kayboluyor.
+ */
+describe('mapThreadRow — kaldırılmış içerik', () => {
+  it('konunun kaldırma gerekçesini taşır', () => {
+    const thread = mapThreadRow(
+      row({ body: '', removal_reason: 'Topluluk kurallarına uymadı.' })
+    );
+    expect(thread.removalReason).toBe('Topluluk kurallarına uymadı.');
+    expect(thread.body).toBe('');
+  });
+
+  it('yanıtın kaldırma gerekçesini taşır', () => {
+    const thread = mapThreadRow(
+      row({
+        forum_posts: [
+          {
+            id: 'p1',
+            body: '',
+            created_at: '2026-07-20T20:00:00Z',
+            removal_reason: 'Hakaret içerdiği için kaldırıldı.',
+            profiles: null,
+          },
+        ],
+      })
+    );
+    expect(thread.replies[0].removalReason).toBe(
+      'Hakaret içerdiği için kaldırıldı.'
+    );
+  });
+
+  /*
+   * Kaldırılmamış satırda alan TANIMSIZ olmalı, boş dize değil. Arayüz
+   * "gerekçe var mı" diye bakıyor; boş dize de `null` da geçerse
+   * kaldırılmamış bir ileti kaldırılmış gibi çizilirdi.
+   */
+  it('kaldırılmamış satırda gerekçe tanımsız', () => {
+    expect(mapThreadRow(row()).removalReason).toBeUndefined();
+    expect(mapThreadRow(row({ removal_reason: '   ' })).removalReason).toBeUndefined();
+  });
+
+  /*
+   * Kaldırılmış konu listeden DÜŞMÜYOR: eşleme onu diğerleriyle aynı
+   * şekilde döndürüyor. Süzmeyi burada yapsaydık, açılış mesajı
+   * kaldırılan bir konunun sürmekte olan yanıtları da erişilemez olurdu.
+   */
+  it('kaldırılmış konu yine de eşleniyor', () => {
+    const thread = mapThreadRow(
+      row({ body: '', removal_reason: 'Kural ihlali.' })
+    );
+    expect(thread.id).toBeTruthy();
+    expect(thread.title).toBeTruthy();
   });
 });

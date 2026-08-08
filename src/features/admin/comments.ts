@@ -29,9 +29,30 @@ import { getSupabase } from '@/services/supabase/client';
  * Düzenleme yok ve olmamalı: bir moderatörün başkasının cümlesini
  * değiştirebilmesi, o kişinin ağzına söz koymak demek. Uygun olmayan bir
  * metin kaldırılır, düzeltilmez.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * "KALDIRMA" ARTIK İKİ FARKLI İŞ (plan FAZ 5, görev 3)
+ *
+ * Fotoğraf yorumu ve forum gönderisinde kaldırma artık satırı yok
+ * etmiyor: gövde `removed_content` arşivine taşınıyor, yerine kural
+ * açıklaması geçiyor ve satır sayfada duruyor. Sebebi tek cümlede —
+ * kaldırılan bir iletiyi izsiz silmek, ona verilen yanıtları anlamsız
+ * bırakıyor.
+ *
+ * Saha yorumu (`site_reviews`) bu yolun DIŞINDA ve kalıcı siliniyor. O
+ * tabloda `deleted_at`/`removal_reason` kolonları yok; kolonsuz tabloya
+ * yumuşak silme yazmak sessizce hata verirdi. Ayrıca bir saha yorumu
+ * konuşmanın parçası değil, tek başına duran bir değerlendirme —
+ * yerinde açıklama bırakmanın kazandıracağı bir bağlam yok.
  */
 
 export type CommentKind = 'photoComment' | 'forumPost' | 'siteReview';
+
+/* Gerekçe metni moderasyon kuyruğuyla ORTAK. İki yüzeyde iki ayrı cümle
+   olsaydı, aynı kural ihlali sayfaya hangi panelden kaldırıldığına göre
+   farklı yazıyla düşerdi. */
+export { VARSAYILAN_KALDIRMA_GEREKCESI } from './moderation';
+import { VARSAYILAN_KALDIRMA_GEREKCESI } from './moderation';
 
 export interface CommentRow {
   id: string;
@@ -41,6 +62,15 @@ export interface CommentRow {
   createdAt: string | null;
   /** Saha yorumunda 5 üzerinden puan; diğerlerinde yok. */
   rating: number | null;
+  /**
+   * Daha önce kaldırılmışsa gerekçe; `body` o satırda boştur.
+   *
+   * Kaldırılmış satır listede KALIYOR. Moderatör panelinden gizleseydik,
+   * "bu yorum neden kaldırılmış" sorusunun cevabı yalnızca denetim
+   * kaydında kalırdı — kararı gözden geçirmek isteyen moderatörün
+   * bakacağı ilk yer burası.
+   */
+  removalReason: string | null;
 }
 
 interface CommentSpec {
@@ -49,6 +79,16 @@ interface CommentSpec {
   authorColumn: 'user_id' | 'author_id';
   select: string;
   hasRating: boolean;
+  /**
+   * Kaldırma satırı yok etmek yerine gövdeyi arşive taşıyıp yerine
+   * gerekçe bırakıyor mu?
+   *
+   * Tablo başına yazılı, çünkü kolonlar tablo başına farklı: yumuşak
+   * kaldırma yalnızca `deleted_at` ve `removal_reason` taşıyan tablolarda
+   * mümkün. Tek bir genel bayrak varsayıp `site_reviews`a da uygulasaydık
+   * güncelleme "kolon yok" hatasıyla dönerdi.
+   */
+  softRemoval: boolean;
 }
 
 export const COMMENT_KINDS: Record<CommentKind, CommentSpec> = {
@@ -56,16 +96,18 @@ export const COMMENT_KINDS: Record<CommentKind, CommentSpec> = {
     label: 'Fotoğraf yorumları',
     table: 'photo_comments',
     authorColumn: 'user_id',
-    select: 'id, body, user_id, created_at',
+    select: 'id, body, user_id, created_at, removal_reason',
     hasRating: false,
+    softRemoval: true,
   },
   forumPost: {
     label: 'Forum gönderileri',
     table: 'forum_posts',
     /* Forumda yazar `author_id` — diğer ikisinde `user_id`. */
     authorColumn: 'author_id',
-    select: 'id, body, author_id, created_at',
+    select: 'id, body, author_id, created_at, removal_reason',
     hasRating: false,
+    softRemoval: true,
   },
   siteReview: {
     label: 'Saha yorumları',
@@ -73,6 +115,7 @@ export const COMMENT_KINDS: Record<CommentKind, CommentSpec> = {
     authorColumn: 'user_id',
     select: 'id, body, user_id, created_at, rating',
     hasRating: true,
+    softRemoval: false,
   },
 };
 
@@ -139,6 +182,10 @@ export async function fetchComments(
       createdAt: typeof r.created_at === 'string' ? r.created_at : null,
       rating:
         spec.hasRating && typeof r.rating === 'number' ? r.rating : null,
+      removalReason:
+        typeof r.removal_reason === 'string' && r.removal_reason.trim()
+          ? r.removal_reason
+          : null,
     };
   });
 }
@@ -146,15 +193,34 @@ export async function fetchComments(
 /**
  * Metni kaldırır.
  *
- * Geri alınamaz. Arayüz bu yüzden ayrı bir onay istiyor; buradaki
- * fonksiyon onayı VARSAYIYOR — `records.ts`teki silmeyle aynı sözleşme.
+ * `softRemoval` olan tablolarda satır duruyor: gövde arşive taşınıyor ve
+ * yerine gerekçe geçiyor — taşımayı da denetim kaydını da veritabanı
+ * tetikleyicisi yapıyor (`app.tartisma_kaldirma`). Diğerinde satır
+ * kalıcı siliniyor ve geri alınamıyor.
+ *
+ * Arayüz her iki durumda da ayrı bir onay istiyor; buradaki fonksiyon
+ * onayı VARSAYIYOR — `records.ts`teki silmeyle aynı sözleşme.
  */
-export async function deleteComment(
+export async function removeComment(
   kind: CommentKind,
-  id: string
+  id: string,
+  reason: string = VARSAYILAN_KALDIRMA_GEREKCESI
 ): Promise<void> {
   const spec = COMMENT_KINDS[kind];
   const supabase = await client();
+
+  if (spec.softRemoval) {
+    const { error } = await supabase
+      .from(spec.table)
+      .update({
+        deleted_at: new Date().toISOString(),
+        removal_reason: reason.trim() || VARSAYILAN_KALDIRMA_GEREKCESI,
+      })
+      .eq('id', id);
+    if (error) throw new Error(error.message);
+    return;
+  }
+
   const { error } = await supabase.from(spec.table).delete().eq('id', id);
   if (error) throw new Error(error.message);
 }

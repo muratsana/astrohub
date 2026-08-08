@@ -89,6 +89,83 @@ export interface QueueResult {
   counts: Record<ModerationStatus, number>;
 }
 
+/* ══════════════════ İçeriğin kendisini kaldırma ══════════════════ */
+
+/**
+ * KUYRUK KAYDINI KAPATMAK İÇERİĞİ KALDIRMAZ.
+ *
+ * `moderation_queue.status = 'rejected'` yalnızca "şikâyet haklıydı"
+ * demek; şikâyet edilen metin hâlâ yayında kalıyordu. Moderatör kuyrukta
+ * "Kaldır" diyor, kuyruk temizleniyor ve içerik yerinde duruyordu —
+ * kuyruğa bakan herkesin işin bittiğini sandığı bir boşluk.
+ *
+ * Aşağıdaki eşleme, kaldırmanın gerçekten uygulanabildiği hedefleri
+ * veriyor. Eksik olanlar bilerek eksik:
+ *   · `photo`, `listing`, `event`, `site` — bunların kaldırılması içerik
+ *     panellerinde durum değişikliğiyle yapılıyor (FAZ 3), metin
+ *     boşaltmakla değil.
+ *   · `profile` — profil kaldırmak kullanıcı hesabına dokunmak demek;
+ *     kuyruk düğmesinin arkasına saklanacak bir iş değil.
+ *   · `message` — moderatör `messages` tablosunu okuyamıyor bile.
+ */
+const REMOVABLE: Partial<Record<ModerationTarget, string>> = {
+  comment: 'photo_comments',
+  forum_thread: 'forum_threads',
+  forum_post: 'forum_posts',
+};
+
+/** Kuyruktaki karar, içeriği de kaldırabiliyor mu? */
+export function canRemoveContent(target: ModerationTarget): boolean {
+  return target in REMOVABLE;
+}
+
+/**
+ * İçeriğin YERİNE GEÇECEK metin.
+ *
+ * Moderatörün karar notundan AYRI tutuluyor. Karar notu iç kayıt için
+ * ("şikâyet haklı, üçüncü tekrar") ve altı ay sonra kararı anlamak için
+ * yazılıyor; bu cümle ise siteyi okuyan herkesin göreceği metin. İkisini
+ * birleştirseydik moderatörün kendine yazdığı not vitrine çıkardı.
+ */
+export const VARSAYILAN_KALDIRMA_GEREKCESI =
+  'Topluluk kurallarına uymadığından kaldırılmıştır.';
+
+/**
+ * İçeriği kaldırır: gövde `removed_content` arşivine taşınır, yerine
+ * gerekçe geçer.
+ *
+ * Taşımayı ve denetim kaydını veritabanı tetikleyicisi yapıyor
+ * (`app.tartisma_kaldirma`). İstemci yalnızca `deleted_at` ve
+ * `removal_reason` yazıyor — arşivleme istemcide olsaydı, doğrudan SQL
+ * ile ya da başka bir yüzeyden yapılan kaldırma metni izsiz yok ederdi.
+ */
+export async function removeContent(
+  target: ModerationTarget,
+  targetId: string,
+  reason: string = VARSAYILAN_KALDIRMA_GEREKCESI
+): Promise<void> {
+  const table = REMOVABLE[target];
+  if (!table) {
+    throw new Error(
+      `${targetLabels[target]} bu ekrandan kaldırılamıyor; ilgili içerik panelinden yürütün.`
+    );
+  }
+
+  const clientPromise = getSupabase();
+  if (!clientPromise) throw new Error('Supabase yapılandırılmamış');
+
+  const client = await clientPromise;
+  const { error } = await client
+    .from(table)
+    .update({
+      deleted_at: new Date().toISOString(),
+      removal_reason: reason.trim() || VARSAYILAN_KALDIRMA_GEREKCESI,
+    })
+    .eq('id', targetId);
+
+  if (error) throw new Error(error.message);
+}
+
 /** Kuyruğu okur. Yetkisiz kullanıcıda boş liste döner (RLS). */
 export async function fetchQueue(
   status?: ModerationStatus

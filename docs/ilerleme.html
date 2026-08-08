@@ -653,10 +653,25 @@
     // ve özel mesajda vardı. Yorum, profil, forum konusu ve forum
     // gönderisi eksikti — yani enum dokuz hedef türü tanıyordu ama
     // kullanıcı bunların dördünü hiç şikâyet edemiyordu.
+    //
+    // İKİNCİ BOŞLUK — KUYRUK KARARI İÇERİĞE DOKUNMUYORDU. "Kaldır"
+    // düğmesi yalnızca moderation_queue.status alanını 'rejected'
+    // yapıyordu; şikâyet edilen metin sitede yayında kalıyordu ve
+    // kuyruğa bakan herkes işin bittiğini sanıyordu. Kaldırma artık
+    // gövdeyi removed_content arşivine taşıyor, yerine gerekçe koyuyor
+    // ve satırı sayfada bırakıyor (tetikleyici: app.tartisma_kaldirma).
+    // Gerekçesiz kaldırma veritabanı tarafından reddediliyor.
     "5:0": "tamamlandi",   // merkezî kuyruk — ölçüldü, kuruluydu
+    "5:2": "tamamlandi",   // forum kaldırma: metin yerine kural açıklaması
     "5:3": "tamamlandi",   // şikâyet akışı: dört eksik yüzey bağlandı
     "5:5": "tamamlandi",   // RecordsControl durum/silme + forum kilidi (FAZ 3)
-    "5:1": "yapiliyor",    // onayla/reddet var; arşivle ve geri bildirim dar
+    // "reddet" artık içeriği gerçekten kaldırıyor; eksik kalan
+    // "düzenleyerek onayla" — başkasının cümlesini değiştirmek bilinçli
+    // olarak yapılmıyor (bkz. admin/comments.ts), yani bu eylem kutusu
+    // hiç gelmeyecek. "Arşivle" ve "geri bildirim" veritabanında var
+    // (removed_content, notify_moderation_result), kuyruk arayüzünde
+    // henüz ayrı düğme değil.
+    "5:1": "yapiliyor",    // reddet→kaldırma bağlandı; arşiv/geri bildirim düğmesi yok
 
     // ── Kodla bitmeyenler (plan §10.2) — baştan işaretlendi ─────────────
     // Bunlar bir engel çıktığında değil, engel BİLİNDİĞİ için şimdiden
@@ -667,7 +682,7 @@
     "13:7": "sende",   // D11 — masaüstü köprü dağıtımı
   };
 
-  const GUNCELLEME = "8 Ağustos 2026 — FAZ 1-4 tamam; FAZ 5’te şikâyet akışı tüm yüzeylerde";
+  const GUNCELLEME = "8 Ağustos 2026 — FAZ 1-4 tamam; FAZ 5’te kaldırma artık metni değil yalnızca ihlali siliyor";
 
   /* ── Buradan aşağısı görüntüleme mantığı; değiştirmeye gerek yok ─────── */
 

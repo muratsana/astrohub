@@ -5,11 +5,12 @@ import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
 import {
   COMMENT_KINDS,
-  deleteComment,
   fetchComments,
+  removeComment,
   type CommentKind,
   type CommentRow,
 } from './comments';
+import { RemovedNotice } from './RemovedNotice';
 import { cn } from '@/lib/cn';
 
 /**
@@ -28,6 +29,14 @@ import { cn } from '@/lib/cn';
  *
  * Bir moderatörün başkasının cümlesini değiştirebilmesi, o kişinin
  * ağzına söz koymak demek. Uygun olmayan metin kaldırılır, düzeltilmez.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * ONAY KUTUSU TÜRE GÖRE FARKLI KONUŞUYOR
+ *
+ * Yorum ve forum gönderisinde kaldırma geri alınabiliyor (gövde arşive
+ * gidiyor), saha yorumunda gitmiyor. Tek bir "geri alınamaz" cümlesi
+ * ilkinde yalan, ikincisinde doğru olurdu — ve yalan olan yönü,
+ * moderatörü gereksiz yere tereddüde düşürüp kuyruğu yavaşlatan yön.
  */
 const KIND_ORDER: CommentKind[] = ['photoComment', 'forumPost', 'siteReview'];
 
@@ -61,10 +70,10 @@ export function CommentsControl({
     setBusy(true);
     setError(null);
     try {
-      await deleteComment(kind, id);
+      await removeComment(kind, id);
       load(kind);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Silinemedi');
+      setError(e instanceof Error ? e.message : 'Kaldırılamadı');
     } finally {
       setBusy(false);
     }
@@ -80,6 +89,12 @@ export function CommentsControl({
         metniyle</strong> gösteriliyor — kırpılmış bir önizleme, sorunun
         üçüncü satırda olduğu bir yazıyı temiz gösterirdi. Düzenleme yok:
         uygun olmayan metin kaldırılır, düzeltilmez.
+      </p>
+
+      <p className="mb-3 text-meta leading-relaxed text-muted-foreground">
+        {COMMENT_KINDS[kind].softRemoval
+          ? 'Kaldırılan metnin yerinde kural açıklaması kalıyor ve satır sayfadan silinmiyor — kaldırılan bir iletiyi izsiz yok etmek, ona verilen yanıtları anlamsız bırakır.'
+          : 'Saha yorumu kaldırıldığında kalıcı siliniyor: tek başına duran bir değerlendirme, yerinde açıklama bırakmanın bağlam kazandırdığı bir konuşmanın parçası değil.'}
       </p>
 
       {kinds.length > 1 && (
@@ -133,28 +148,39 @@ export function CommentsControl({
                 </span>
               )}
               <span className="flex-1" />
-              <Button
-                size="sm"
-                variant="ghost"
-                disabled={busy}
-                onClick={() =>
-                  setConfirming(confirming === row.id ? null : row.id)
-                }
-              >
-                Kaldır
-              </Button>
+              {/* Kaldırılmış satırda düğme yok: ikinci kez kaldırmak
+                  bir şey değiştirmiyor, tetikleyici de boş gövdeyi
+                  arşivin üzerine yazardı. */}
+              {!row.removalReason && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  disabled={busy}
+                  onClick={() =>
+                    setConfirming(confirming === row.id ? null : row.id)
+                  }
+                >
+                  Kaldır
+                </Button>
+              )}
             </div>
 
-            {/* `whitespace-pre-line`: kullanıcının satır aralarını koruyor —
-                tek bloğa sıkıştırmak anlamı değiştirebiliyor. */}
-            <p className="mt-1 whitespace-pre-line break-words text-body-sm leading-relaxed text-muted-foreground">
-              {row.body}
-            </p>
+            {row.removalReason ? (
+              <RemovedNotice reason={row.removalReason} className="mt-1" />
+            ) : (
+              /* `whitespace-pre-line`: kullanıcının satır aralarını koruyor —
+                 tek bloğa sıkıştırmak anlamı değiştirebiliyor. */
+              <p className="mt-1 whitespace-pre-line break-words text-body-sm leading-relaxed text-muted-foreground">
+                {row.body}
+              </p>
+            )}
 
             {confirming === row.id && (
               <div className="mt-2 flex flex-wrap items-center gap-2 rounded-card border border-warm/40 bg-warm/8 px-3 py-2">
                 <span className="flex-1 text-meta text-warm">
-                  Bu metin kalıcı olarak kaldırılacak. Geri alınamaz.
+                  {COMMENT_KINDS[kind].softRemoval
+                    ? 'Metin siteden kaldırılacak ve yerinde kural açıklaması kalacak. Özgün metin arşivde saklanıyor.'
+                    : 'Bu metin kalıcı olarak kaldırılacak. Geri alınamaz.'}
                 </span>
                 <Button size="sm" disabled={busy} onClick={() => void remove(row.id)}>
                   Kaldır
