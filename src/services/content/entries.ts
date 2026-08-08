@@ -57,6 +57,11 @@ export interface ContentEntry {
   tint: string | null;
   image: { url: string; credit: string; licence: string } | null;
   source: { name: string; url: string } | null;
+  /** Gönderen kullanıcı (FAZ 4). `author` serbest imza; sahiplik bu alanda. */
+  submittedBy: string | null;
+  /** Ret gerekçesi — yalnızca sahibine ve yönetime görünür. */
+  rejectionReason: string | null;
+  reviewedAt: string | null;
 }
 
 interface EntryRow {
@@ -74,6 +79,12 @@ interface EntryRow {
   duration: string | null;
   level: string | null;
   tint: string | null;
+  /* FAZ 4 alanları isteğe bağlı yazıldı: `body_blocks` ile aynı gerekçe —
+     eski bir yanıt ya da tohumdan kurulan bir satır bunları taşımıyor
+     olabilir ve eksiklik `null`a düşmeli, tip hatasına değil. */
+  submitted_by?: string | null;
+  rejection_reason?: string | null;
+  reviewed_at?: string | null;
   image_url: string | null;
   image_credit: string | null;
   image_licence: string | null;
@@ -110,13 +121,16 @@ export function mapEntryRow(row: EntryRow): ContentEntry {
     source: row.source_url
       ? { name: row.source_name ?? row.source_url, url: row.source_url }
       : null,
+    submittedBy: row.submitted_by ?? null,
+    rejectionReason: row.rejection_reason ?? null,
+    reviewedAt: row.reviewed_at ?? null,
   };
 }
 
 const SELECT =
   'id, kind, slug, title, summary, body, body_blocks, category, published_at, status, ' +
-  'author, duration, level, tint, image_url, image_credit, image_licence, ' +
-  'source_name, source_url';
+  'author, duration, level, tint, submitted_by, rejection_reason, reviewed_at, ' +
+  'image_url, image_credit, image_licence, source_name, source_url';
 
 async function client() {
   const promise = getSupabase();
@@ -183,6 +197,118 @@ export function useEntries(
       active = false;
     };
   }, [kind, includeDrafts, tick]);
+
+  const refresh = useCallback(() => setTick((t) => t + 1), []);
+  return { entries, loading, error, refresh };
+}
+
+/**
+ * KULLANICININ KENDİ GÖNDERDİKLERİ (FAZ 4, plan görev 4).
+ *
+ * "Kullanıcı kendi içeriğinin durumunu kendi panelinden görsün" ve kabul
+ * kriteri: "içerik sahibi kendi taslağını ve ret gerekçesini görüyor."
+ *
+ * Tür süzgeci YOK: kullanıcı "haberlerim" ve "yazılarım" diye ayrı ayrı
+ * düşünmüyor, "gönderdiklerim" diye düşünüyor. Durum sırası da bilinçli —
+ * reddedilen ve taslak olanlar üstte, çünkü eylem bekleyenler onlar.
+ */
+export function useMyEntries(userId: string | null): EntriesState {
+  const [entries, setEntries] = useState<ContentEntry[]>([]);
+  const [loading, setLoading] = useState(isSupabaseConfigured && !!userId);
+  const [error, setError] = useState<string | null>(null);
+  const [tick, setTick] = useState(0);
+
+  useEffect(() => {
+    if (!isSupabaseConfigured || !userId) {
+      setEntries([]);
+      setLoading(false);
+      return;
+    }
+    let active = true;
+    setLoading(true);
+
+    client()
+      .then(async (supabase) => {
+        const { data, error: queryError } = await supabase
+          .from('content_entries')
+          .select(SELECT)
+          .eq('submitted_by', userId)
+          .is('deleted_at', null)
+          .order('updated_at', { ascending: false });
+        if (queryError) throw new Error(queryError.message);
+        return (data as unknown as EntryRow[]).map(mapEntryRow);
+      })
+      .then((rows) => {
+        if (!active) return;
+        setEntries(rows);
+        setError(null);
+      })
+      .catch((e: unknown) => {
+        if (!active) return;
+        setError(e instanceof Error ? e.message : 'Gönderilerin okunamadı');
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [userId, tick]);
+
+  const refresh = useCallback(() => setTick((t) => t + 1), []);
+  return { entries, loading, error, refresh };
+}
+
+/**
+ * İNCELEME KUYRUĞU — yönetimin bekleyen katkıları.
+ *
+ * Tür ayrımı yok ve bu bilinçli: inceleme sırası gönderim zamanına göre,
+ * içerik türüne göre değil. Sekmeler arasında gezinerek bekleyen katkı
+ * aramak, bir katkıyı gözden kaçırmanın en kolay yolu olurdu.
+ */
+export function useReviewQueue(): EntriesState {
+  const [entries, setEntries] = useState<ContentEntry[]>([]);
+  const [loading, setLoading] = useState(isSupabaseConfigured);
+  const [error, setError] = useState<string | null>(null);
+  const [tick, setTick] = useState(0);
+
+  useEffect(() => {
+    if (!isSupabaseConfigured) {
+      setLoading(false);
+      return;
+    }
+    let active = true;
+    setLoading(true);
+
+    client()
+      .then(async (supabase) => {
+        const { data, error: queryError } = await supabase
+          .from('content_entries')
+          .select(SELECT)
+          .eq('status', 'incelemede')
+          .is('deleted_at', null)
+          .order('updated_at', { ascending: true });
+        if (queryError) throw new Error(queryError.message);
+        return (data as unknown as EntryRow[]).map(mapEntryRow);
+      })
+      .then((rows) => {
+        if (!active) return;
+        setEntries(rows);
+        setError(null);
+      })
+      .catch((e: unknown) => {
+        if (!active) return;
+        setError(e instanceof Error ? e.message : 'Kuyruk okunamadı');
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [tick]);
 
   const refresh = useCallback(() => setTick((t) => t + 1), []);
   return { entries, loading, error, refresh };
@@ -422,16 +548,83 @@ export async function purgeEntry(id: string): Promise<void> {
   }
 }
 
+/**
+ * Durum değiştirir.
+ *
+ * HANGİ GEÇİŞİN KİME AÇIK OLDUĞU BURADA DEĞİL: `app.icerik_gecis_kurali()`
+ * tetikleyicisi karar veriyor (`20260807250000`). Sahibi yayına almaya
+ * kalkarsa istek 42501 ile geri dönüyor ve mesajı kullanıcıya gösteriliyor.
+ *
+ * `select('id')` ekli: PostgREST sıfır satır etkilendiğinde hata
+ * DÖNDÜRMÜYOR, yani RLS isteği süzdüğünde bu fonksiyon sessizce
+ * "başarılı" derdi.
+ */
 export async function setEntryStatus(
   id: string,
   status: EntryStatus
 ): Promise<void> {
   const supabase = await client();
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('content_entries')
     .update({ status, updated_at: new Date().toISOString() })
-    .eq('id', id);
+    .eq('id', id)
+    .select('id');
   if (error) throw new Error(error.message);
+  if (!data || data.length === 0) {
+    throw new Error('Durum değiştirilemedi — kayıt bulunamadı ya da yetki yok.');
+  }
+}
+
+/**
+ * ONAY AKIŞI (FAZ 4, plan görev 2).
+ *
+ * Dört adım, dört fonksiyon. `setEntryStatus` üzerinden ham durum yazmak
+ * yerine adı olan işlemler var: çağıran taraf "hangi durumu yazmalıyım"
+ * sorusunu sormuyor ve ret gerekçesi unutulamıyor.
+ */
+
+/** Sahibi içeriğini incelemeye gönderir. */
+export async function submitEntry(id: string): Promise<void> {
+  await setEntryStatus(id, 'incelemede');
+}
+
+/** Sahibi geri çeker — inceleme sırasında fikir değiştirebilmeli. */
+export async function withdrawEntry(id: string): Promise<void> {
+  await setEntryStatus(id, 'taslak');
+}
+
+/** Yönetim yayına alır. `reviewed_*` damgasını tetikleyici vuruyor. */
+export async function approveEntry(id: string): Promise<void> {
+  await setEntryStatus(id, 'yayinda');
+}
+
+/**
+ * Yönetim reddeder — GEREKÇE ZORUNLU.
+ *
+ * Reddedip sebebini söylememek, katkıyı sessizce çöpe atmaktır: gönderen
+ * neyi düzelteceğini bilemez ve büyük ihtimalle aynı şeyi tekrar gönderir.
+ * Gerekçe sahibine gösteriliyor (`content_entries_read` onu görüyor).
+ */
+export async function rejectEntry(id: string, reason: string): Promise<void> {
+  const gerekce = reason.trim();
+  if (!gerekce) {
+    throw new Error('Ret gerekçesi zorunlu — gönderene bu metin gösterilecek.');
+  }
+
+  const supabase = await client();
+  const { data, error } = await supabase
+    .from('content_entries')
+    .update({
+      status: 'reddedildi',
+      rejection_reason: gerekce,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', id)
+    .select('id');
+  if (error) throw new Error(error.message);
+  if (!data || data.length === 0) {
+    throw new Error('Reddedilemedi — kayıt bulunamadı ya da yetki yok.');
+  }
 }
 
 /** Kayıttan forma — düzenleme açılırken. */

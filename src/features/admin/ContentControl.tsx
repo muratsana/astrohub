@@ -1,3 +1,4 @@
+import { contentStatusLabels } from '@/domain/content/status';
 import { useEffect, useState } from 'react';
 import { Panel } from '@/components/ui/Panel';
 import { Button } from '@/components/ui/Button';
@@ -12,6 +13,8 @@ import {
   draftFromEntry,
   saveEntry,
   setEntryStatus,
+  approveEntry,
+  rejectEntry,
   slugFromTitle,
   useEntries,
   validateEntry,
@@ -39,6 +42,17 @@ import { importContentFile } from './contentImport';
  * SİLME ONAY İSTİYOR ve geri alınamayacağını yazıyor — tek tıkla
  * silinebilen bir içerik, er geç silinir.
  */
+/* Ortak durum kümesinin rozet renkleri (FAZ 3/4). */
+function durumTonu(
+  durum: string
+): 'success' | 'warning' | 'danger' | 'muted' | 'primary' {
+  if (durum === 'yayinda') return 'success';
+  if (durum === 'incelemede') return 'primary';
+  if (durum === 'taslak') return 'warning';
+  if (durum === 'reddedildi') return 'danger';
+  return 'muted';
+}
+
 export function ContentControl({
   canWrite,
   initialKind = 'haber',
@@ -100,6 +114,9 @@ function KindEditor({
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  /* Ret gerekçesi formu — hangi kayıt için açık olduğu ve metni. */
+  const [reddedilen, setReddedilen] = useState<string | null>(null);
+  const [redGerekce, setRedGerekce] = useState('');
   const [importing, setImporting] = useState(false);
   const [importWarnings, setImportWarnings] = useState<string[]>([]);
   const [openedSlug, setOpenedSlug] = useState<string | null>(null);
@@ -157,14 +174,21 @@ function KindEditor({
     }
   }
 
-  async function toggleStatus(entry: ContentEntry) {
+  /**
+   * ONAY AKIŞI (FAZ 4).
+   *
+   * Eskiden tek düğme vardı ve iki durum arasında gidip geliyordu
+   * (yayinda ↔ taslak). Ortak durum kümesi sekiz değer taşıyor ve
+   * `incelemede` gelen bir katkının iki ayrı cevabı var: onay ve ret.
+   * Ret gerekçesiz olamıyor, bu yüzden ayrı bir form açıyor.
+   */
+  async function durumUygula(action: () => Promise<void>) {
     setBusy(true);
     try {
-      await setEntryStatus(
-        entry.id,
-        entry.status === 'yayinda' ? 'taslak' : 'yayinda'
-      );
+      await action();
       refresh();
+      setRedGerekce('');
+      setReddedilen(null);
     } catch (e) {
       setMessage(e instanceof Error ? e.message : 'Durum değiştirilemedi.');
     } finally {
@@ -242,19 +266,53 @@ function KindEditor({
                   </button>
 
                   <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                    <Badge
-                      tone={entry.status === 'yayinda' ? 'success' : 'muted'}
-                    >
-                      {entry.status === 'yayinda' ? 'Yayında' : 'Taslak'}
+                    <Badge tone={durumTonu(entry.status)}>
+                      {contentStatusLabels[entry.status]}
                     </Badge>
-                    <button
-                      type="button"
-                      disabled={!canWrite || busy}
-                      onClick={() => toggleStatus(entry)}
-                      className="text-meta text-cold hover:text-primary disabled:opacity-40"
-                    >
-                      {entry.status === 'yayinda' ? 'Taslağa al' : 'Yayınla'}
-                    </button>
+
+                    {/* İncelemedeki katkının iki cevabı var. */}
+                    {entry.status === 'incelemede' ? (
+                      <>
+                        <button
+                          type="button"
+                          disabled={!canWrite || busy}
+                          onClick={() =>
+                            void durumUygula(() => approveEntry(entry.id))
+                          }
+                          className="text-meta text-cold hover:text-primary disabled:opacity-40"
+                        >
+                          Onayla ve yayınla
+                        </button>
+                        <button
+                          type="button"
+                          disabled={!canWrite || busy}
+                          onClick={() =>
+                            setReddedilen(
+                              reddedilen === entry.id ? null : entry.id
+                            )
+                          }
+                          className="text-meta text-danger hover:underline disabled:opacity-40"
+                        >
+                          Reddet
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled={!canWrite || busy}
+                        onClick={() =>
+                          void durumUygula(() =>
+                            setEntryStatus(
+                              entry.id,
+                              entry.status === 'yayinda' ? 'taslak' : 'yayinda'
+                            )
+                          )
+                        }
+                        className="text-meta text-cold hover:text-primary disabled:opacity-40"
+                      >
+                        {entry.status === 'yayinda' ? 'Yayından al' : 'Yayınla'}
+                      </button>
+                    )}
                     {confirmDelete === entry.id ? (
                       <>
                         <span className="text-meta text-danger">
@@ -287,6 +345,55 @@ function KindEditor({
                       </button>
                     )}
                   </div>
+
+                  {/*
+                    RET GEREKÇESİ ZORUNLU. Reddedip sebebini söylememek,
+                    katkıyı sessizce çöpe atmaktır: gönderen neyi
+                    düzelteceğini bilemez ve aynı şeyi tekrar gönderir.
+                  */}
+                  {reddedilen === entry.id && (
+                    <div className="mt-2 space-y-1.5 rounded-card border border-danger/40 bg-danger/8 p-2">
+                      <textarea
+                        value={redGerekce}
+                        rows={2}
+                        disabled={busy}
+                        placeholder="Ret gerekçesi — gönderene bu metin gösterilecek"
+                        onChange={(e) => setRedGerekce(e.target.value)}
+                        className="w-full rounded-input border border-border bg-surface-2 px-2 py-1 text-meta text-foreground placeholder:text-faint focus:border-border-strong focus:outline-none"
+                      />
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          disabled={busy || redGerekce.trim().length < 3}
+                          onClick={() =>
+                            void durumUygula(() =>
+                              rejectEntry(entry.id, redGerekce)
+                            )
+                          }
+                          className="text-meta text-danger underline disabled:no-underline disabled:opacity-40"
+                        >
+                          Reddet
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setReddedilen(null);
+                            setRedGerekce('');
+                          }}
+                          className="text-meta text-muted-foreground"
+                        >
+                          vazgeç
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Verilmiş ret gerekçesi listede görünür kalıyor. */}
+                  {entry.status === 'reddedildi' && entry.rejectionReason && (
+                    <p className="mt-1.5 text-meta leading-relaxed text-danger">
+                      Ret gerekçesi: {entry.rejectionReason}
+                    </p>
+                  )}
                 </div>
               </li>
             ))}

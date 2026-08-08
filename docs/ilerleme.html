@@ -627,9 +627,15 @@
     // düzenledi, listed/status/verified/sahiplik alanlarına dokunamadı,
     // başkası hiç düzenleyemedi (planın negatif kabul kriteri), admin
     // hepsini yapabildi.
+    // ARAYÜZ DE BAĞLANDI: ContentControl'ün ikili anahtarı (yayinda ↔
+    // taslak) gerçek akışa dönüştü — incelemedeki katkının iki ayrı
+    // cevabı var ve ret gerekçesiz olamıyor. Panelde "Gönderilerim"
+    // bölümü açıldı: kullanıcı kendi taslağını, incelemedekini ve RET
+    // GEREKÇESİNİ görüyor, incelemeye gönderip geri çekebiliyor.
+    "4:1": "tamamlandi",   // gönder → incelemede → onay/ret → yayın
+    "4:3": "tamamlandi",   // kullanıcı kendi içeriğinin durumunu görüyor
     "4:4": "tamamlandi",   // public'te yalnızca yayındaki içerik
     "4:5": "tamamlandi",   // topluluk sahipliği — manager_user_id + RLS
-    "4:1": "yapiliyor",    // onay akışı: DB kuralları hazır, panel yüzeyi yok
 
     // ── Kodla bitmeyenler (plan §10.2) — baştan işaretlendi ─────────────
     // Bunlar bir engel çıktığında değil, engel BİLİNDİĞİ için şimdiden
@@ -640,7 +646,7 @@
     "13:7": "sende",   // D11 — masaüstü köprü dağıtımı
   };
 
-  const GUNCELLEME = "8 Ağustos 2026 — FAZ 1-3 tamam; FAZ 4’ün onay akışı veritabanında";
+  const GUNCELLEME = "8 Ağustos 2026 — FAZ 1-3 tamam; FAZ 4’ün onay akışı uçtan uca çalışıyor";
 
   /* ── Buradan aşağısı görüntüleme mantığı; değiştirmeye gerek yok ─────── */
 

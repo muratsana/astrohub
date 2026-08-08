@@ -6,6 +6,7 @@ import { deletePhoto } from '@/services/photos/remove';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Panel } from '@/components/ui/Panel';
 import { Readout } from '@/components/ui/Readout';
+import { Alert } from '@/components/ui/Alert';
 import { useAuth } from '@/features/auth/AuthContext';
 import {
   formatQuotaLabel,
@@ -25,6 +26,12 @@ import {
 } from '@/services/content/listings';
 import { isPhotoPubliclyVisible, useMyPhotos } from '@/services/content/photos';
 import {
+  submitEntry,
+  useMyEntries,
+  withdrawEntry,
+} from '@/services/content/entries';
+import { contentStatusLabels } from '@/domain/content/status';
+import {
   listingStatusLabels,
   type ListingStatus,
 } from '@/features/marketplace/data';
@@ -39,6 +46,15 @@ import { JuryPanel } from './JuryPanel';
 function listingStatusTone(status: ListingStatus): BadgeTone {
   if (status === 'yayinda') return 'success';
   if (status === 'taslak') return 'warning';
+  return 'muted';
+}
+
+/** Gönderi durumu: incelemede mavi, reddedilen kırmızı. */
+function gonderiTonu(durum: string): BadgeTone {
+  if (durum === 'yayinda') return 'success';
+  if (durum === 'incelemede') return 'primary';
+  if (durum === 'taslak') return 'warning';
+  if (durum === 'reddedildi') return 'danger';
   return 'muted';
 }
 
@@ -168,6 +184,22 @@ export function PanelPage() {
    * uydurmak demekti.
    */
   const myPhotos = useMyPhotos(user?.id);
+  /* Gönderdiği içerikler — FAZ 4 görev 4. Yalnızca kendi bölümünde
+     çekiliyor; panelin her açılışında ek sorgu atmanın anlamı yok. */
+  const myEntries = useMyEntries(
+    section === 'gonderilerim' ? (user?.id ?? null) : null
+  );
+  const [gonderiHatasi, setGonderiHatasi] = useState<string | null>(null);
+
+  async function gonderiIslemi(action: () => Promise<void>) {
+    setGonderiHatasi(null);
+    try {
+      await action();
+      myEntries.refresh();
+    } catch (e) {
+      setGonderiHatasi(e instanceof Error ? e.message : 'İşlem uygulanamadı');
+    }
+  }
   /*
    * Kayıtlar yalnızca kendi bölümünde okunuyor: kota kutusunun aksine
    * panelin geri kalanında kullanılmıyorlar ve her ziyarette çekmek,
@@ -268,6 +300,7 @@ export function PanelPage() {
     { label: 'Kaydedilenler', to: '/panel/kaydedilenler' },
     { label: 'Kayıtlı Noktalar', to: '/saha' },
     { label: 'İlanlarım', to: '/panel/ilanlar' },
+    { label: 'Gönderilerim', to: '/panel/gonderilerim' },
     ...(jury.active || section === 'juri'
       ? [{ label: 'Jüri Oylaması', to: '/panel/juri', note: jury.round ? 'açık tur var' : undefined }]
       : []),
@@ -598,6 +631,96 @@ export function PanelPage() {
           </Panel>
         )}
 
+        {/*
+          GÖNDERİLERİM (FAZ 4, plan görev 4).
+
+          Kabul kriteri: "içerik sahibi kendi taslağını ve ret gerekçesini
+          görüyor." Ret gerekçesi burada AÇIKÇA yazıyor — reddedildiğini
+          görüp sebebini görememek, katkıyı sessizce çöpe atmakla aynı şey.
+
+          Tür ayrımı yok: kullanıcı "haberlerim" ve "yazılarım" diye
+          düşünmüyor, "gönderdiklerim" diye düşünüyor.
+        */}
+        {section === 'gonderilerim' && (
+          <Panel
+            title="Gönderilerim"
+            status={
+              myEntries.loading
+                ? 'yükleniyor…'
+                : `${myEntries.entries.length} içerik`
+            }
+            className="mb-4"
+          >
+            {gonderiHatasi && <Alert className="mb-3">{gonderiHatasi}</Alert>}
+
+            {myEntries.error ? (
+              <p className="py-3 text-meta leading-relaxed text-danger">
+                Gönderilerin okunamadı: {myEntries.error}
+              </p>
+            ) : myEntries.loading ? (
+              <p className="py-3 text-meta leading-relaxed text-muted-foreground">
+                Gönderilerin yükleniyor…
+              </p>
+            ) : myEntries.entries.length === 0 ? (
+              <p className="py-3 text-meta leading-relaxed text-muted-foreground">
+                Henüz içerik göndermediniz. Gönderdiğiniz haber ve yazılar
+                yönetim onayından sonra yayımlanır; durumları burada görünür.
+              </p>
+            ) : (
+              <ul>
+                {myEntries.entries.map((entry) => (
+                  <PanelRow
+                    key={entry.id}
+                    to={
+                      entry.status === 'yayinda'
+                        ? `/${entry.kind === 'haber' ? 'haber' : 'yazi'}/${entry.slug}`
+                        : undefined
+                    }
+                    title={entry.title}
+                    meta={`${entry.kind} · ${entry.publishedAt}`}
+                    note="henüz yayında değil"
+                    badge={
+                      <Badge tone={gonderiTonu(entry.status)}>
+                        {contentStatusLabels[entry.status]}
+                      </Badge>
+                    }
+                    action={
+                      entry.status === 'taslak' ||
+                      entry.status === 'reddedildi' ? (
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() =>
+                            void gonderiIslemi(() => submitEntry(entry.id))
+                          }
+                        >
+                          İncelemeye gönder
+                        </Button>
+                      ) : entry.status === 'incelemede' ? (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() =>
+                            void gonderiIslemi(() => withdrawEntry(entry.id))
+                          }
+                        >
+                          Geri çek
+                        </Button>
+                      ) : undefined
+                    }
+                  >
+                    {entry.status === 'reddedildi' && entry.rejectionReason && (
+                      <p className="mt-1 text-meta leading-relaxed text-danger">
+                        Ret gerekçesi: {entry.rejectionReason}
+                      </p>
+                    )}
+                  </PanelRow>
+                ))}
+              </ul>
+            )}
+          </Panel>
+        )}
+
         {section === 'ilanlar' && (
           <Panel
             title="İlanlarım"
@@ -626,7 +749,7 @@ export function PanelPage() {
                   <PanelRow
                     key={listing.slug}
                     to={
-                      isListingPubliclyVisible(listing.status)
+                      isListingPubliclyVisible(listing.status, listing.saleState)
                         ? `/ilan/${listing.slug}`
                         : undefined
                     }

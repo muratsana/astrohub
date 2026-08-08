@@ -1,3 +1,4 @@
+import { rejectEntry } from './entries';
 import { describe, expect, it } from 'vitest';
 import {
   EMPTY_DRAFT,
@@ -157,6 +158,9 @@ describe('mergeWithSeed', () => {
     tint: null,
     image: null,
     source: null,
+    submittedBy: null,
+    rejectionReason: null,
+    reviewedAt: null,
   });
 
   it('aynı slug varsa veritabanı kaydı tohumun yerine geçer', () => {
@@ -202,5 +206,34 @@ describe('draftFromEntry', () => {
     expect(draft.bodyText).toBe('bir\n\niki');
     expect(draft.status).toBe('taslak');
     expect(draft.level).toBe('Orta');
+  });
+});
+
+
+/**
+ * ONAY AKIŞI (FAZ 4).
+ *
+ * Buradaki testler YAPTIRIMI ölçmüyor — hangi geçişin kime açık olduğu
+ * `app.icerik_gecis_kurali()` tetikleyicisinde ve üretimde rol taklidiyle
+ * doğrulandı (üye doğrudan yayınlayamadı, incelemeye gönderebildi,
+ * inceleme alanlarını yazamadı).
+ *
+ * Ölçülen şey istemcinin kendi sözünü tutması: gerekçesiz ret
+ * veritabanına HİÇ GİTMEMELİ. Sunucuya gitseydi kayıt reddedilmiş ama
+ * gerekçesiz kalırdı ve gönderen neyi düzelteceğini bilemezdi.
+ */
+describe('rejectEntry — gerekçe zorunlu', () => {
+  it('boş gerekçeyle veritabanına gitmiyor', async () => {
+    await expect(rejectEntry('bir-icerik', '   ')).rejects.toThrow(
+      /Ret gerekçesi zorunlu/
+    );
+  });
+
+  it('gerekçe varsa yapılandırma yokluğunda bile sunucuya ulaşmayı deniyor', async () => {
+    /* Yapılandırma yok, dolayısıyla istemci kurulamıyor ve hata SUNUCU
+       yolundan geliyor — yani doğrulama gerekçeyi geçirmiş. */
+    await expect(
+      rejectEntry('bir-icerik', 'Kaynak belirtilmemiş.')
+    ).rejects.toThrow(/yapılandırılmamış/i);
   });
 });
