@@ -7,7 +7,6 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { CatalogSourceNote } from '@/components/ui/CatalogSourceNote';
 import {
   FilterCell,
-  FilterToggle,
   filterControlClass,
 } from '@/components/ui/FilterBar';
 import { ModuleToolbar } from '@/components/ui/ModuleToolbar';
@@ -68,23 +67,20 @@ export function ForumPage() {
   const result = ex.items;
   const category = ex.query.facets.kategori?.[0] ?? 'hepsi';
   const rozetler = ex.query.facets.rozet ?? [];
-  const cozulmemis = (ex.query.facets.cozulmemis ?? []).includes('evet');
   const searching = ex.searchInput.trim().length > 0;
   /*
     HERHANGİ BİR SÜZGEÇ AÇIKSA KONU LİSTESİ, KATEGORİ IZGARASI DEĞİL.
 
-    Kapı önce yalnızca kategori ve aramaya bakıyordu. Rozet ve
-    "çözülmemiş" süzgeçleri eklenince şu çıkardı: kullanıcı "Soru"
-    rozetine basıyor, sayfa hâlâ kategori ızgarasını gösteriyor ve
-    süzgeç hiçbir şey yapmamış gibi görünüyor. Süzgeç varsa sonucu
+    Kapı önce yalnızca kategori ve aramaya bakıyordu. Rozet süzgeci eklenince
+    kullanıcı "Soru" rozetine basıyor, sayfa hâlâ kategori ızgarasını gösteriyor
+    ve süzgeç hiçbir şey yapmamış gibi görünüyordu. Süzgeç varsa sonucu
     göstermek zorundayız.
   */
   const showThreads =
     view === 'list' ||
     category !== 'hepsi' ||
     searching ||
-    rozetler.length > 0 ||
-    cozulmemis;
+    rozetler.length > 0;
   const sections = forumCategoryOrder
     .map((id) => ({
       id,
@@ -176,9 +172,8 @@ export function ForumPage() {
           </FilterCell>
           {/*
             ROZET SÜZGECİ TEK SEÇİM DEĞİL: bir konu birden çok rozet
-            taşıyabiliyor ve "soru VE çözülmemiş" gerçek bir arama.
-            `Select` bunu ifade edemezdi; faset motoru zaten çoklu seçimi
-            destekliyor ve seçim adres çubuğuna yazılıyor.
+            taşıyabiliyor. `Select` bunu ifade edemezdi; faset motoru zaten
+            çoklu seçimi destekliyor ve seçim adres çubuğuna yazılıyor.
           */}
           <FilterCell label="Rozet" active={rozetler.length > 0}>
             <div className="flex flex-wrap items-center gap-1">
@@ -203,14 +198,6 @@ export function ForumPage() {
                 );
               })}
             </div>
-          </FilterCell>
-          <FilterCell label="Durum" active={cozulmemis}>
-            <FilterToggle
-              id="forum-unsolved"
-              label="Yalnızca çözülmemiş"
-              checked={cozulmemis}
-              onChange={() => ex.toggleFacet('cozulmemis', 'evet')}
-            />
           </FilterCell>
         </ModuleToolbar>
 

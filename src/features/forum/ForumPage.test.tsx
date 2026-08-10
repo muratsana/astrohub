@@ -30,6 +30,7 @@ describe('ForumPage kategori özeti', () => {
     expect(screen.getByText('2 konu')).toBeInTheDocument();
     expect(screen.queryByText('@astrohub')).not.toBeInTheDocument();
     expect(screen.queryByText(/İlk teleskop:/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/çözülmemiş/i)).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Izgara görünümü' }));
     expect(screen.queryByText(/Son konu:/)).not.toBeInTheDocument();

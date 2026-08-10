@@ -323,12 +323,10 @@ export function filterThreads(
     category = 'hepsi',
     label = 'hepsi',
     search = '',
-    onlyUnsolved = false,
   }: {
     category?: ForumCategoryId | 'hepsi';
     label?: ForumLabelId | 'hepsi';
     search?: string;
-    onlyUnsolved?: boolean;
   }
 ): ForumThread[] {
   const q = trLower(search.trim());
@@ -338,7 +336,6 @@ export function filterThreads(
     if (label !== 'hepsi' && !(thread.labels ?? []).includes(label)) {
       return false;
     }
-    if (onlyUnsolved && thread.solved) return false;
     if (!q) return true;
 
     const haystack = [
