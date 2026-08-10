@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { getSupabase, isSupabaseConfigured } from '@/services/supabase/client';
 import { sanitizeText, sanitizeUsername } from '@/lib/sanitize';
 import { safeUrl } from '@/lib/url';
+import { avatarStoragePath } from '@/domain/profile/avatar';
 
 /**
  * PROFİL — hesabın kendi kaydı.
@@ -102,6 +103,13 @@ export function canWrite(profile: Profile | null): boolean {
     profile.suspendedUntil !== null &&
     new Date(profile.suspendedUntil) <= new Date()
   );
+}
+
+export function profileAvatarUrl(path: string | null | undefined): string | null {
+  if (!path) return null;
+  const base = import.meta.env.VITE_SUPABASE_URL?.trim();
+  if (!base) return null;
+  return `${base}/storage/v1/object/public/avatars/${path}`;
 }
 
 const SELECT =
@@ -320,6 +328,53 @@ export async function updateProfile(
     .eq('id', userId);
 
   if (error) throw new Error(error.message);
+}
+
+export async function uploadProfileAvatar(
+  userId: string,
+  blob: Blob,
+  previousPath: string | null | undefined
+): Promise<void> {
+  const supabase = await client();
+  const path = avatarStoragePath(userId);
+  const { error: uploadError } = await supabase.storage
+    .from('avatars')
+    .upload(path, blob, {
+      contentType: 'image/jpeg',
+      cacheControl: '31536000',
+      upsert: false,
+    });
+  if (uploadError) throw new Error(uploadError.message);
+
+  const { error: profileError } = await supabase
+    .from('profiles')
+    .update({ avatar_path: path, updated_at: new Date().toISOString() })
+    .eq('id', userId);
+
+  if (profileError) {
+    await supabase.storage.from('avatars').remove([path]);
+    throw new Error(profileError.message);
+  }
+
+  if (previousPath && previousPath !== path) {
+    await supabase.storage.from('avatars').remove([previousPath]);
+  }
+}
+
+export async function removeProfileAvatar(
+  userId: string,
+  path: string | null | undefined
+): Promise<void> {
+  const supabase = await client();
+  const { error } = await supabase
+    .from('profiles')
+    .update({ avatar_path: null, updated_at: new Date().toISOString() })
+    .eq('id', userId);
+  if (error) throw new Error(error.message);
+
+  if (path) {
+    await supabase.storage.from('avatars').remove([path]);
+  }
 }
 
 /**

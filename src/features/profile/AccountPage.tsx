@@ -19,6 +19,7 @@ import {
 } from '@/services/content/profile';
 import { Badge } from '@/components/ui/Badge';
 import { BlockList } from '@/features/social/BlockList';
+import { AvatarEditor } from './AvatarEditor';
 
 /**
  * HESABIM — profil yönetimi (denetim maddesi L2).
@@ -33,9 +34,8 @@ import { BlockList } from '@/features/social/BlockList';
  * saklamıyor, değiştirmeden önce yazıyor — sessizce kırmak, kullanıcının
  * paylaştığı bağlantıyı arkasından bozmak olurdu.
  *
- * AVATAR YOK ve bu da yazılı. Medya hattı (Faz 2) devreye girmeden
- * fotoğraf yüklemek için bir yol yok; boş bir "fotoğraf seç" düğmesi
- * koymak, olmayan bir özelliği varmış gibi göstermek olurdu.
+ * Profil fotoğrafı kendi küçük medya hattını kullanır: tarayıcıda kare
+ * kırpılır, 5 MB altına indirilir ve `avatars` bucket'ına yazılır.
  */
 export function AccountPage() {
   const navigate = useNavigate();
@@ -176,22 +176,25 @@ export function AccountPage() {
         )}
 
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,320px)]">
-          <Panel title="Profil bilgileri">
-            <div className="grid gap-3">
-              <Field
-                label="Kullanıcı adı"
-                htmlFor="p-username"
-                hint="Harf, rakam, alt çizgi ve tire. Profil adresinizde görünür."
-              >
-                <Input
-                  id="p-username"
-                  value={edit.username}
-                  maxLength={32}
-                  onChange={(e) =>
-                    setEdit((v) => ({ ...v, username: e.target.value }))
-                  }
-                />
-              </Field>
+          <div className="grid gap-4">
+            <AvatarEditor userId={user?.id} profile={profile} onDone={refresh} />
+
+            <Panel title="Profil bilgileri">
+              <div className="grid gap-3">
+                <Field
+                  label="Kullanıcı adı"
+                  htmlFor="p-username"
+                  hint="Harf, rakam, alt çizgi ve tire. Profil adresinizde görünür."
+                >
+                  <Input
+                    id="p-username"
+                    value={edit.username}
+                    maxLength={32}
+                    onChange={(e) =>
+                      setEdit((v) => ({ ...v, username: e.target.value }))
+                    }
+                  />
+                </Field>
 
               {/*
                 Adres kırılması sessizce olmamalı: kullanıcı adını
@@ -304,8 +307,9 @@ export function AccountPage() {
                   <span className="text-meta text-success">{message}</span>
                 )}
               </div>
-            </div>
-          </Panel>
+              </div>
+            </Panel>
+          </div>
 
           <div className="grid gap-4 lg:content-start">
             <Panel title="Hesap">
@@ -451,10 +455,6 @@ export function AccountPage() {
                 değil kendine kızıyor.
               */}
               <ul className="space-y-2 text-body-sm leading-relaxed text-muted-foreground">
-                <li>
-                  <span className="text-foreground">Profil fotoğrafı</span> —
-                  medya altyapısı devreye girdiğinde açılacak.
-                </li>
                 <li>
                   <span className="text-foreground">E-posta değiştirme</span> —
                   doğrulama akışı gerektiriyor.

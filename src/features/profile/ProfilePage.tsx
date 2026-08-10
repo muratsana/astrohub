@@ -16,7 +16,10 @@ import { usePhotoCatalog } from '@/services/content/photos';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
 import { UserActions } from '@/features/social/UserActions';
-import { useProfileByUsername } from '@/services/content/profile';
+import {
+  profileAvatarUrl,
+  useProfileByUsername,
+} from '@/services/content/profile';
 import { ProfileBadges } from './ProfileBadges';
 
 /**
@@ -74,6 +77,7 @@ export function ProfilePage() {
   }
 
   const displayName = profile?.displayName ?? seedUser?.displayName ?? username;
+  const avatarUrl = profileAvatarUrl(profile?.avatarPath);
   /* Tohum kayıtlarda `ownerId` yok; eylem şeridi o durumda kendini
      gizliyor (bkz. UserActions). */
   const ownerId = profile?.id ?? userPhotos.find((p) => p.ownerId)?.ownerId;
@@ -139,6 +143,13 @@ export function ProfilePage() {
           }
           actions={
             <div className="flex flex-col items-start gap-2 sm:items-end">
+              {avatarUrl && (
+                <img
+                  src={avatarUrl}
+                  alt={`${displayName} profil fotoğrafı`}
+                  className="h-20 w-20 rounded-full border border-border object-cover"
+                />
+              )}
               <div className="flex flex-wrap gap-1.5">
                 {cities.map((city) => (
                   <Badge key={city}>{city}</Badge>

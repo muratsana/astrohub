@@ -16,6 +16,8 @@ vi.mock('@/services/content/photos', () => ({
 }));
 
 vi.mock('@/services/content/profile', () => ({
+  profileAvatarUrl: (path: string | null | undefined) =>
+    path ? `https://cdn.example/${path}` : null,
   useProfileByUsername: () => ({
     ...profileState,
     refresh: vi.fn(),
@@ -72,6 +74,26 @@ describe('ProfilePage', () => {
     expect(screen.getByRole('link', { name: 'Portfolyo' })).toHaveAttribute(
       'href',
       'https://astrofoto.example'
+    );
+  });
+
+  it('profil avatarı varsa gösterir', () => {
+    profileState.profile = {
+      id: 'u1',
+      username: 'murat',
+      displayName: 'Murat Sana',
+      bio: null,
+      city: null,
+      websiteUrl: null,
+      avatarPath: 'u1/avatar.jpg',
+      termsAcceptedAt: null,
+    };
+
+    renderProfile();
+
+    expect(screen.getByAltText('Murat Sana profil fotoğrafı')).toHaveAttribute(
+      'src',
+      'https://cdn.example/u1/avatar.jpg'
     );
   });
 });
