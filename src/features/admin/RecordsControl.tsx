@@ -19,6 +19,7 @@ import {
   type AuditRow,
   type RecordKind,
   type RecordRow,
+  recordStatusLabel,
 } from './records';
 import { cn } from '@/lib/cn';
 
@@ -205,7 +206,9 @@ export function RecordsControl({
             className="border-b border-border py-2 last:border-0"
           >
             <div className="flex flex-wrap items-center gap-2">
-              <Badge tone={statusTone(row.status)}>{row.status}</Badge>
+              <Badge tone={statusTone(row.status)}>
+                {recordStatusLabel(row.status)}
+              </Badge>
 
               <span className="min-w-0 flex-1 truncate text-caption text-foreground">
                 {row.path ? (
@@ -245,7 +248,7 @@ export function RecordsControl({
                 >
                   {spec.statuses.map((st) => (
                     <option key={st} value={st}>
-                      {st}
+                      {recordStatusLabel(st)}
                     </option>
                   ))}
                 </Select>

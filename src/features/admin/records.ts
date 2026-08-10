@@ -1,4 +1,8 @@
-import { CONTENT_STATUSES } from '@/domain/content/status';
+import {
+  CONTENT_STATUSES,
+  contentStatusLabels,
+  isContentStatus,
+} from '@/domain/content/status';
 import { getSupabase } from '@/services/supabase/client';
 
 /**
@@ -39,6 +43,13 @@ import { getSupabase } from '@/services/supabase/client';
  */
 
 export type RecordKind = 'photo' | 'listing' | 'thread' | 'event' | 'site';
+
+export function recordStatusLabel(status: string): string {
+  if (isContentStatus(status)) return contentStatusLabels[status];
+  if (status === 'kilitli') return 'Kilitli';
+  if (status === 'açık') return 'Açık';
+  return status;
+}
 
 export interface RecordRow {
   id: string;

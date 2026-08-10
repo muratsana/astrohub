@@ -5,6 +5,7 @@ import { AuthProvider } from '@/features/auth/AuthContext';
 import { UserControl } from './UserControl';
 import { RecordsControl, AuditControl } from './RecordsControl';
 import { RECORD_KINDS } from './records';
+import { recordStatusLabel } from './records';
 
 /**
  * YÖNETİM YÜZEYLERİ — bağlandı mı, çöküyor mu, ne söylüyor.
@@ -91,6 +92,12 @@ describe('RecordsControl', () => {
     await waitFor(() => {
       expect(screen.getByText(/yapılandırılmamış/i)).toBeInTheDocument();
     });
+  });
+
+  it('durum enumlarını yöneticiye Türkçe gösterir', () => {
+    expect(recordStatusLabel('yayinda')).toBe('Yayında');
+    expect(recordStatusLabel('yayindan_kaldirildi')).toBe('Yayından kaldırıldı');
+    expect(recordStatusLabel('kilitli')).toBe('Kilitli');
   });
 });
 
