@@ -23,6 +23,7 @@ vi.mock('./useRoles', () => ({
 }));
 
 import { AdminPage } from './AdminPage';
+import { formatAdminCount } from './dashboard';
 
 function renderPanel(path = '/admin') {
   return render(
@@ -96,5 +97,11 @@ describe('StageHub tarzı admin GUI', () => {
     expect(screen.getByText(/Yönetici/i)).toBeInTheDocument();
     expect(screen.getByText(/mevcut AstroHub kontrollerine bağlıdır/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Rapor al' })).toBeDisabled();
+  });
+
+  it('dashboard sayaçlarını Türkçe biçimler ve boşta sahte sayı basmaz', () => {
+    expect(formatAdminCount(1284)).toBe('1.284');
+    expect(formatAdminCount(312)).toBe('312');
+    expect(formatAdminCount(null)).toBe('—');
   });
 });

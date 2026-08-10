@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router';
 import { Badge } from '@/components/ui/Badge';
 import { Button, ButtonLink } from '@/components/ui/Button';
@@ -22,7 +23,9 @@ import { EquipmentDataControl } from './EquipmentDataControl';
 import { SpecImportControl } from './SpecImportControl';
 import { useRoles } from './useRoles';
 import type { EntryKind } from '@/services/content/entries';
+import { fetchDashboard, type DashboardStats } from './records';
 import type { RecordKind } from './records';
+import { formatAdminCount } from './dashboard';
 import {
   AlertIcon,
   BellIcon,
@@ -155,14 +158,42 @@ const routeAliases: Record<string, AdminSectionId> = {
   '/admin/audit': 'aktivite',
 };
 
-const stats = [
-  ['Onay bekleyen', '18', 'Kuyruktaki içerikler', 'warning'],
-  ['Açık şikayet', '6', 'Moderasyon bekliyor', 'warning'],
-  ['Açık destek', '4', 'Yanıt bekleyen talep', 'primary'],
-  ['Açık hata', '0', 'İstemci hata günlüğü', 'success'],
-  ['Kullanıcı', '1.284', 'Toplam üye', 'cold'],
-  ['İçerik', '312', 'Yayındaki kayıt', 'primary'],
-] as const;
+type StatTone = 'warning' | 'primary' | 'success' | 'cold';
+
+const STATIC_STATS = [
+  ['Açık şikayet', '—', 'Moderasyon bekliyor', 'warning'],
+  ['Açık destek', '—', 'Yanıt bekleyen talep', 'primary'],
+  ['Açık hata', '—', 'İstemci hata günlüğü', 'success'],
+] as const satisfies readonly (readonly [string, string, string, StatTone])[];
+
+function dashboardStats(data: DashboardStats | null) {
+  return [
+    [
+      'Onay bekleyen',
+      formatAdminCount(data?.moderasyonBekleyen),
+      'Kuyruktaki içerikler',
+      'warning',
+    ],
+    ...STATIC_STATS,
+    [
+      'Kullanıcı',
+      formatAdminCount(data?.kullaniciToplam),
+      'Toplam üye',
+      'cold',
+    ],
+    [
+      'İçerik',
+      formatAdminCount(data?.icerikYayinda),
+      'Yayındaki kayıt',
+      'primary',
+    ],
+  ] as const satisfies readonly (readonly [
+    string,
+    string,
+    string,
+    StatTone,
+  ])[];
+}
 
 const trendRows = [
   ['Yeni kullanıcı (30g)', '142', [8, 12, 9, 14, 18, 21, 20, 24]],
@@ -457,6 +488,33 @@ function AdminSection({
 }
 
 function Dashboard() {
+  const [data, setData] = useState<DashboardStats | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+
+    fetchDashboard()
+      .then((nextData) => {
+        if (!alive) return;
+        setData(nextData);
+        setError(null);
+      })
+      .catch((err: unknown) => {
+        if (!alive) return;
+        setData(null);
+        setError(
+          err instanceof Error ? err.message : 'Dashboard verisi alınamadı'
+        );
+      });
+
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const stats = dashboardStats(data);
+
   return (
     <>
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
@@ -486,6 +544,11 @@ function Dashboard() {
           </div>
         ))}
       </section>
+      {error ? (
+        <p className="text-meta text-warning" role="status">
+          Canlı dashboard verisi alınamadı: {error}
+        </p>
+      ) : null}
 
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {trendRows.map(([label, value, values]) => (
