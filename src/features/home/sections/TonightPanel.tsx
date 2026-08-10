@@ -235,6 +235,16 @@ export function TonightPanel() {
                 </div>
               </div>
             </div>
+            {permission === 'denied' && (
+              <p
+                role="status"
+                className="mt-3 rounded-card border border-warning/40 bg-warning/10 px-3 py-2 text-meta text-warm"
+              >
+                Konum izni kapalı. Otomatik konum için tarayıcı adres
+                çubuğundaki site izninden konumu açın ya da listeden şehir
+                seçin.
+              </p>
+            )}
           </div>
 
           {/*

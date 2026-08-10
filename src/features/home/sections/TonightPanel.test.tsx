@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { TonightPanel } from './TonightPanel';
@@ -27,6 +27,10 @@ function renderPanel() {
     </MemoryRouter>
   );
 }
+
+beforeEach(() => {
+  localStorage.clear();
+});
 
 describe('TonightPanel · karar kolonu', () => {
   it('başlığı h2 olarak veriyor — sayfada ikinci bir h1 açmıyor', () => {
@@ -66,6 +70,22 @@ describe('TonightPanel · karar kolonu', () => {
     expect(
       within(group).getByRole('tab', { name: 'En İyi Yerler' })
     ).toBeInTheDocument();
+  });
+
+  it('tarayıcı konum izni kapalıysa görünür yardım gösteriyor', () => {
+    localStorage.setItem(
+      'astrohub:location',
+      JSON.stringify({ source: 'city', cityId: 'istanbul', permission: 'denied' })
+    );
+
+    renderPanel();
+
+    expect(screen.getByRole('status')).toHaveTextContent(
+      /konum izni kapalı/i
+    );
+    expect(screen.getByRole('status')).toHaveTextContent(
+      /listeden şehir seçin/i
+    );
   });
 });
 
