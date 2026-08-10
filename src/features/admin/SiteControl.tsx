@@ -14,6 +14,8 @@ import {
   createHeroSlide,
   deleteHeroSlide,
   describeHeroKeyProblem,
+  describeHeroImageProblem,
+  normalizeHeroImageUrl,
   fetchNavLinks,
   upsertNavLink,
   deleteNavLink,
@@ -1655,14 +1657,7 @@ function HeroSlideRowEditor({
         </Alan>
       </div>
 
-      {/* GÖRSEL KÜNYESİ: adres, kredi ve lisans birlikte yaşar. Kısıt
-          veritabanında (`hero_slides_credit_check`) — görsel varsa kredi
-          ve lisans boş bırakılamıyor, çünkü CC BY'nin şartı atıf. */}
-      {slide.image_url && (
-        <p className="mt-2 truncate text-meta text-faint">
-          Görsel: {slide.image_credit} · {slide.image_licence}
-        </p>
-      )}
+      <HeroGorselAlani slide={slide} canWrite={canWrite} onYaz={onYaz} />
 
       <div className="mt-2">
         <Kutu
@@ -1673,6 +1668,168 @@ function HeroSlideRowEditor({
         />
       </div>
     </li>
+  );
+}
+
+/**
+ * HERO GÖRSELİ — adres, kredi ve lisans (§13.2 son madde).
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * SATIRIN GERİ KALANI GİBİ "ODAKTAN ÇIKINCA KAYDET" DEĞİL
+ *
+ * Öteki alanlar tek tek yazılıyor; burada olamaz. `hero_slides_credit_check`
+ * "adres varsa kredi ve lisans da var" diyor, yani adresi tek başına
+ * gönderen ilk istek kısıta takılırdı — yönetici kredi kutusuna sıra
+ * gelmeden hata alırdı. Üçü tek yamada gidiyor; "Görseli kaydet" düğmesi
+ * bu yüzden var, üslup tercihi değil.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * ÖNİZLEME SÜS DEĞİL
+ *
+ * Yüklenmeyen bir adres sitede SESSİZ: `HeroPhoto` hata durumunda kendini
+ * gizleyip çizilen sahneyi bırakıyor ve krediyi basmıyor (gösterilmeyen
+ * görseli kredilendirmek yanlış atıf olurdu). Yönetici "kaydettim ama
+ * değişmedi" ile baş başa kalırdı. Buradaki küçük önizleme aynı adresi
+ * aynı tarayıcıda, aynı CSP altında çekiyor: yüklenmiyorsa sebebi
+ * kaydetmeden ÖNCE görünüyor.
+ */
+function HeroGorselAlani({
+  slide,
+  canWrite,
+  onYaz,
+}: {
+  slide: HeroSlideRow;
+  canWrite: boolean;
+  onYaz: (patch: HeroSlidePatch) => void;
+}) {
+  const [adres, setAdres] = useState(slide.image_url ?? '');
+  const [kredi, setKredi] = useState(slide.image_credit ?? '');
+  const [lisans, setLisans] = useState(slide.image_licence ?? '');
+  const [yuklenmedi, setYuklenmedi] = useState(false);
+
+  const sorun = describeHeroImageProblem(adres);
+  const eksikKunye = Boolean(adres.trim()) && (!kredi.trim() || !lisans.trim());
+  const degisti =
+    adres !== (slide.image_url ?? '') ||
+    kredi !== (slide.image_credit ?? '') ||
+    lisans !== (slide.image_licence ?? '');
+
+  /* Önizleme normalleştirilmiş adresi çekiyor: yönetici Commons SAYFA
+     adresini yapıştırdığında kutuda o duruyor ama kaydedilecek olan dosya
+     adresi — önizleme kaydedileni göstermezse yalan söyler. */
+  const onizleme = adres.trim() && !sorun ? normalizeHeroImageUrl(adres) : '';
+
+  return (
+    <div className="mt-2 border-t border-border pt-2">
+      <div className="flex flex-wrap items-start gap-3">
+        {onizleme && !yuklenmedi && (
+          <img
+            src={onizleme}
+            alt=""
+            className="h-16 w-24 shrink-0 rounded-card border border-border object-cover"
+            onError={() => setYuklenmedi(true)}
+          />
+        )}
+
+        <div className="grid min-w-[16rem] flex-1 gap-2">
+          <Alan etiket="Görsel adresi">
+            <Input
+              value={adres}
+              placeholder="https://commons.wikimedia.org/wiki/File:…"
+              disabled={!canWrite}
+              onChange={(e) => {
+                setAdres(e.target.value);
+                setYuklenmedi(false);
+              }}
+            />
+          </Alan>
+
+          <div className="grid gap-2 sm:grid-cols-2">
+            {/* Künye alanları adres yokken KAPALI: görselsiz slaytta kredi
+                girmek, olmayan bir şeye atıf yapmak olurdu. */}
+            <Alan etiket="Kredi (kaynak ve yapımcı)">
+              <Input
+                value={kredi}
+                maxLength={120}
+                placeholder="NASA, ESA, Hubble — Yaratılış Sütunları"
+                disabled={!canWrite || !adres.trim()}
+                onChange={(e) => setKredi(e.target.value)}
+              />
+            </Alan>
+            <Alan etiket="Lisans">
+              <Input
+                value={lisans}
+                maxLength={60}
+                list="hero-lisanslari"
+                placeholder="CC BY 4.0"
+                disabled={!canWrite || !adres.trim()}
+                onChange={(e) => setLisans(e.target.value)}
+              />
+            </Alan>
+          </div>
+          {/* Sık kullanılan üç değer; alan yine serbest, çünkü lisans
+              kaynağa göre değişiyor ve listeye sığmayan biri çıkabilir. */}
+          <datalist id="hero-lisanslari">
+            <option value="CC BY 4.0" />
+            <option value="CC BY-SA 4.0" />
+            <option value="Kamu malı" />
+          </datalist>
+        </div>
+      </div>
+
+      {sorun && (
+        <Alert tone="warning" variant="text" className="mt-1">
+          {sorun}
+        </Alert>
+      )}
+      {!sorun && yuklenmedi && (
+        <Alert tone="warning" variant="text" className="mt-1">
+          Bu adres yüklenmedi. Kaydedilirse sitede görsel çıkmaz, slayt
+          çizilen sahnesiyle kalır.
+        </Alert>
+      )}
+      {eksikKunye && (
+        <Alert tone="warning" variant="text" className="mt-1">
+          Görsel varsa kredi ve lisans zorunlu — atıfsız gösterim lisans
+          ihlali.
+        </Alert>
+      )}
+
+      <div className="mt-2 flex gap-2">
+        <Button
+          size="sm"
+          variant="secondary"
+          disabled={!canWrite || !degisti || Boolean(sorun) || eksikKunye}
+          onClick={() =>
+            onYaz({
+              image_url: adres.trim() || null,
+              image_credit: kredi.trim(),
+              image_licence: lisans.trim(),
+            })
+          }
+        >
+          Görseli kaydet
+        </Button>
+        {slide.image_url && (
+          <Button
+            size="sm"
+            variant="ghost"
+            disabled={!canWrite}
+            aria-label={`${slide.title} slaydının görselini kaldır`}
+            onClick={() => {
+              setAdres('');
+              setKredi('');
+              setLisans('');
+              /* Künye de gidiyor; üçünü birlikte `null` yapma işi veri
+                 katmanında, çünkü kural çağırana değil veriye ait. */
+              onYaz({ image_url: null });
+            }}
+          >
+            Görseli kaldır
+          </Button>
+        )}
+      </div>
+    </div>
   );
 }
 

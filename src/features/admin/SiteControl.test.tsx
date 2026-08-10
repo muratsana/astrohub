@@ -370,6 +370,78 @@ describe('hero slaytları', () => {
     expect(rozetler[1]!.placeholder).toBe('Rozetsiz');
   });
 
+  it('görsel künyesi TEK yamada gider, üç ayrı yazmada değil', async () => {
+    slaytlar = [slayt({ key: 'galeri' })];
+    render(<SiteControl canWrite />);
+
+    const adres = await screen.findByLabelText('Görsel adresi');
+    fireEvent.change(adres, {
+      target: { value: 'https://commons.wikimedia.org/wiki/File:Ay.jpg' },
+    });
+
+    /* Kredi ve lisans girilene kadar kaydetme kapalı: `hero_slides_credit_check`
+       adres varken künyeyi zorunlu tutuyor, yani eksik gönderim kısıta
+       takılırdı. Ayrıca CC BY'nin şartı atıf. */
+    expect(screen.getByRole('button', { name: 'Görseli kaydet' })).toBeDisabled();
+
+    fireEvent.change(screen.getByLabelText('Kredi (kaynak ve yapımcı)'), {
+      target: { value: 'NASA' },
+    });
+    fireEvent.change(screen.getByLabelText('Lisans'), {
+      target: { value: 'Kamu malı' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Görseli kaydet' }));
+
+    await waitFor(() => expect(heroYaz).toHaveBeenCalledTimes(1));
+    /* Yapıştırılan SAYFA adresi değil, çizilebilir DOSYA adresi
+       kaydediliyor — çeviriyi veri katmanı yapıyor. */
+    expect(heroYaz).toHaveBeenCalledWith('galeri', {
+      image_url: 'https://commons.wikimedia.org/wiki/File:Ay.jpg',
+      image_credit: 'NASA',
+      image_licence: 'Kamu malı',
+    });
+  });
+
+  it('CSP dışı adres kaydedilemez', async () => {
+    slaytlar = [slayt({ key: 'galeri' })];
+    render(<SiteControl canWrite />);
+
+    fireEvent.change(await screen.findByLabelText('Görsel adresi'), {
+      target: { value: 'https://ornek.com/foto.jpg' },
+    });
+
+    /* Veritabanı bu adresi kabul ederdi (https ile başlıyor); tarayıcı
+       çekmezdi. Kapı burada. */
+    expect(screen.getByText(/Bu alan adından görsel çekilemiyor/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Görseli kaydet' })).toBeDisabled();
+    expect(heroYaz).not.toHaveBeenCalled();
+  });
+
+  it('görseli kaldırmak künyeyi de götürür', async () => {
+    slaytlar = [
+      slayt({
+        key: 'galeri',
+        image_url: 'https://commons.wikimedia.org/wiki/Special:FilePath/Ay.jpg',
+        image_credit: 'NASA',
+        image_licence: 'Kamu malı',
+      }),
+    ];
+    render(<SiteControl canWrite />);
+
+    fireEvent.click(
+      await screen.findByRole('button', {
+        name: 'Başlık slaydının görselini kaldır',
+      })
+    );
+
+    /* Yalnızca adres gönderiliyor; kredi ve lisansı `null`layan kural veri
+       katmanında — olmayan bir görselin kredisi sonraki görselde yanlış
+       atıfa dönüşürdü. */
+    await waitFor(() =>
+      expect(heroYaz).toHaveBeenCalledWith('galeri', { image_url: null })
+    );
+  });
+
   it('yetkisiz kullanıcıda ekleme ve silme kapalı', async () => {
     slaytlar = [slayt({ key: 'galeri', title: 'Galeri' })];
     render(<SiteControl canWrite={false} />);

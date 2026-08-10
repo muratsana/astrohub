@@ -1,5 +1,6 @@
 import { getSupabase } from '@/services/supabase/client';
 import { sanitizeText } from '@/lib/sanitize';
+import { commonsImage } from '@/lib/commons';
 import type { HeroScene } from '@/components/media/HeroBackdrop';
 
 /**
@@ -347,7 +348,38 @@ export async function updateHeroSlide(
   )
     throw new Error('Sahne rengi "R,G,B" biçiminde olmalı (örn. 150,185,235).');
 
+  /* GÖRSEL KÜNYESİ ÜÇ ALANIN ORTAK İŞİ.
+     `hero_slides_credit_check` "adres varsa kredi ve lisans da var" diyor;
+     künye satırdaki öteki alanlar gibi tek tek yazılsaydı adresi gönderen
+     ilk istek kısıta takılır, yönetici kredi kutusuna sıra gelmeden hata
+     alırdı. Panel üçünü tek yamada yolluyor, burası da üçlüyü birlikte
+     doğruluyor — CC BY'nin şartı atıf, atıfsız gösterim lisans ihlali. */
+  if ('image_url' in patch && patch.image_url) {
+    const sorun = describeHeroImageProblem(patch.image_url);
+    if (sorun) throw new Error(sorun);
+    if (!patch.image_credit?.trim() || !patch.image_licence?.trim())
+      throw new Error(
+        'Görsel eklerken kredi ve lisans zorunlu — atıfsız gösterim lisans ihlali.'
+      );
+  }
+
   const temiz: Record<string, unknown> = { ...patch };
+
+  /* Adres kaldırılırken künye de gidiyor. Kısıt buna karışmazdı (yalnızca
+     adres varken çalışıyor) ama geride kalan kredi, OLMAYAN bir görselin
+     künyesi olurdu — sonraki görsel eklendiğinde yanlış atıfa dönüşür. */
+  if ('image_url' in patch && !patch.image_url) {
+    temiz.image_url = null;
+    temiz.image_credit = null;
+    temiz.image_licence = null;
+  } else if (typeof patch.image_url === 'string') {
+    temiz.image_url = normalizeHeroImageUrl(patch.image_url);
+    if (typeof patch.image_credit === 'string')
+      temiz.image_credit = sanitizeText(patch.image_credit, { maxLength: 120 });
+    if (typeof patch.image_licence === 'string')
+      temiz.image_licence = sanitizeText(patch.image_licence, { maxLength: 60 });
+  }
+
   if (typeof patch.badge === 'string')
     temiz.badge = sanitizeText(patch.badge, { maxLength: 40 });
   if (typeof patch.title === 'string')
@@ -461,6 +493,93 @@ export async function deleteHeroSlide(key: string): Promise<void> {
   if (error) throw new Error(error.message);
   if (!data || data.length === 0)
     throw new Error('Slayt silinemedi — kayıt bulunamadı ya da yetkiniz yok.');
+}
+
+/**
+ * Hero görselinin gelebileceği alan adları.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * BU LİSTE KEYFÎ DEĞİL — CSP'NİN `img-src`İNİN ALT KÜMESİ
+ *
+ * Veritabanı `image_url` için yalnızca "https:// ile başlasın" diyor
+ * (`hero_slides_image_check`). Tarayıcı ise `vercel.json`daki CSP'ye
+ * bakıyor ve listede olmayan bir alan adından görsel ÇEKMEZ. İkisinin
+ * arasındaki boşluk tam da sessiz bozulma: yönetici adresi kaydeder,
+ * kayıt başarılı olur, sitede hiçbir şey değişmez — `HeroPhoto` yükleme
+ * hatasında kendini gizleyip çizilen sahneyi bırakıyor. Konsolu açmayan
+ * kimse sebebini göremezdi.
+ *
+ * Liste `scripts/csp.mjs` ile eşleşmek ZORUNDA; eşleşmeyi
+ * `heroImage.test.ts` ölçüyor (dosyayı okuyup karşılaştırıyor), yani
+ * CSP'den bir alan adı çıkarsa test düşer.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * NEDEN VERİTABANI KISITI DEĞİL
+ *
+ * Sahne ve renk için kuralı veritabanına da yazdık; burada yazmadık,
+ * çünkü bu kural ötekilerle aynı ömre sahip değil: CSP bir dağıtım
+ * politikası ve uygulama sürümüyle birlikte değişiyor. Kısıt olarak
+ * dursaydı, CSP'ye yeni bir alan adı eklemek her seferinde bir göç
+ * gerektirirdi ve ikisi kaçınılmaz olarak ayrışırdı. Veritabanı
+ * DEĞİŞMEYEN kuralı tutuyor (https zorunlu, görsel varsa kredi ve lisans
+ * zorunlu); tarayıcının o an neyi çekebildiğini uygulama biliyor.
+ */
+export const HERO_IMAGE_HOSTS = [
+  'commons.wikimedia.org',
+  'upload.wikimedia.org',
+  'cdn.esahubble.org',
+];
+
+/** Projenin kendi depolaması; CSP'de `https://*.supabase.co` olarak geçiyor. */
+const SUPABASE_SONEKI = '.supabase.co';
+
+/* Hero tam genişlikte çiziliyor; `slides.ts` de aynı boyutu istiyor. */
+const HERO_GORSEL_GENISLIGI = 1800;
+
+/**
+ * Yapıştırılan adresi çizilebilir hâle getirir.
+ *
+ * Commons'ta bir dosyanın SAYFA adresi ("…/wiki/File:Ay.jpg") ile DOSYA
+ * adresi ("…/wiki/Special:FilePath/Ay.jpg") farklı şeyler; ilki bir HTML
+ * sayfası ve `<img>` içinde hiçbir şey çizmez. Yönetici tarayıcıdan
+ * kopyaladığında eline geçen HER ZAMAN birincisi oluyor. Reddetmek yerine
+ * çeviriyoruz — kural bilgisi bizde, yöneticide değil.
+ */
+export function normalizeHeroImageUrl(raw: string): string {
+  const url = raw.trim();
+  const sayfa =
+    /^https:\/\/commons\.wikimedia\.org\/wiki\/(?:File|Dosya):(.+)$/i.exec(url);
+  if (sayfa) return commonsImage(decodeURIComponent(sayfa[1]!), HERO_GORSEL_GENISLIGI);
+
+  /* Genişliksiz FilePath adresi tam boyutu indirir: Hubble mozaikleri
+     40 megapiksel. Çizimde `commonsSrcSet` daha küçük kopyalar üretiyor
+     ama `src` yine bu adres. */
+  if (
+    url.includes('commons.wikimedia.org/wiki/Special:FilePath/') &&
+    !url.includes('?')
+  )
+    return `${url}?width=${HERO_GORSEL_GENISLIGI}`;
+
+  return url;
+}
+
+/** Adres çizilebilir mi — değilse yöneticiye NEDEN olmadığını söyleyen metin. */
+export function describeHeroImageProblem(url: string): string | null {
+  const v = url.trim();
+  if (!v) return null;
+  if (!v.startsWith('https://')) return 'Görsel adresi https:// ile başlamalı.';
+
+  let host: string;
+  try {
+    host = new URL(v).hostname;
+  } catch {
+    return 'Görsel adresi geçerli bir URL değil.';
+  }
+
+  if (HERO_IMAGE_HOSTS.includes(host) || host.endsWith(SUPABASE_SONEKI))
+    return null;
+
+  return `Bu alan adından görsel çekilemiyor (${host}). Site güvenlik politikası yalnızca şunlara izin veriyor: ${HERO_IMAGE_HOSTS.join(', ')} ve proje depolaması.`;
 }
 
 /* ── Feature flag'ler ────────────────────────────────────────────────── */
