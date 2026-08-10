@@ -10,8 +10,8 @@ beforeEach(() => {
   setPreferenceAdapter(null);
 });
 
-describe('ForumPage görünüm anahtarı', () => {
-  it('liste ve kart görünümü arasında geçiyor', () => {
+describe('ForumPage kategori özeti', () => {
+  it('forum ana sayfasında konuları değil kategori başlıklarını gösteriyor', () => {
     const queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false } },
     });
@@ -24,13 +24,17 @@ describe('ForumPage görünüm anahtarı', () => {
       </QueryClientProvider>
     );
 
-    expect(screen.getByText('@astrohub')).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Ekipmanlar' })
+    ).toBeInTheDocument();
+    expect(screen.getByText('2 konu')).toBeInTheDocument();
+    expect(screen.queryByText('@astrohub')).not.toBeInTheDocument();
+    expect(screen.queryByText(/İlk teleskop:/)).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Izgara görünümü' }));
-    expect(screen.queryByText('@astrohub')).not.toBeInTheDocument();
-    expect(screen.getAllByText(/Son konu:/).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/Son konu:/)).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Liste görünümü' }));
-    expect(screen.getByText('@astrohub')).toBeInTheDocument();
+    expect(screen.queryByText('@astrohub')).not.toBeInTheDocument();
   });
 });

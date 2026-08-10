@@ -11,8 +11,7 @@ import {
   filterControlClass,
 } from '@/components/ui/FilterBar';
 import { ModuleToolbar } from '@/components/ui/ModuleToolbar';
-import { useViewMode, type ViewMode } from '@/components/ui/useViewMode';
-import { PinIcon, LockIcon, ChatIcon } from '@/components/ui/icons';
+import { useViewMode } from '@/components/ui/useViewMode';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
 import { useForumThreads } from '@/services/content/forum';
@@ -23,10 +22,8 @@ import {
   forumCategoryOrder,
   forumLabelOrder,
   forumLabels,
-  relativeTime,
   type ForumThread,
 } from './types';
-import { LabelChip } from './LabelChip';
 import { cn } from '@/lib/cn';
 
 /**
@@ -263,22 +260,6 @@ export function ForumPage() {
                     </span>
                   </header>
 
-                  {sectionThreads.length === 0 ? (
-                    <p className="px-3 py-3 text-body-sm text-faint">
-                      Bu başlıkta henüz konu yok.
-                    </p>
-                  ) : (
-                    <ul>
-                      {sectionThreads.map((thread) => (
-                        <li
-                          key={thread.id}
-                          className="border-b border-border last:border-0"
-                        >
-                          <ThreadRow thread={thread} view={view} />
-                        </li>
-                      ))}
-                    </ul>
-                  )}
                 </section>
               );
             })}
@@ -297,13 +278,11 @@ function ForumCategoryGrid({ threads }: { threads: ForumThread[] }) {
         const categoryThreads = threads.filter(
           (thread) => thread.category === id
         );
-        const latest = categoryThreads[0];
-
         return (
           <Link
             key={id}
             to={`/forum?kategori=${id}`}
-            className="group flex min-h-44 flex-col rounded-card border border-border bg-surface-1 p-4 transition-colors hover:border-primary/60 hover:bg-surface-2"
+            className="group flex min-h-32 flex-col rounded-card border border-border bg-surface-1 p-4 transition-colors hover:border-primary/60 hover:bg-surface-2"
           >
             <div className="flex items-start justify-between gap-3">
               <h2 className="text-caption font-semibold text-foreground group-hover:text-primary">
@@ -316,99 +295,9 @@ function ForumCategoryGrid({ threads }: { threads: ForumThread[] }) {
             <p className="mt-2 line-clamp-3 text-body-sm leading-relaxed text-muted-foreground">
               {info.description}
             </p>
-            {latest ? (
-              <p className="mt-auto pt-4 text-meta leading-snug text-faint">
-                Son konu:{' '}
-                <span className="text-muted-foreground">{latest.title}</span>
-              </p>
-            ) : (
-              <p className="mt-auto pt-4 text-meta text-faint">
-                İlk konuyu açmak için girin.
-              </p>
-            )}
           </Link>
         );
       })}
     </div>
-  );
-}
-
-function ThreadRow({ thread, view }: { thread: ForumThread; view: ViewMode }) {
-  const info = forumCategories[thread.category];
-
-  return (
-    <Link
-      to={`/forum/${thread.slug}`}
-      className="group flex items-start gap-3 px-3 py-2.5 transition-colors hover:bg-surface-2"
-    >
-      <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-1.5">
-          {thread.pinned && (
-            <PinIcon
-              className="h-3 w-3 shrink-0 text-primary"
-              aria-label="Sabitlenmiş konu"
-            />
-          )}
-          {thread.locked && (
-            <LockIcon
-              className="h-3 w-3 shrink-0 text-faint"
-              aria-label="Kilitli konu"
-            />
-          )}
-          <h2 className="text-body-sm font-medium leading-snug text-foreground group-hover:text-primary">
-            {thread.title}
-          </h2>
-          {/* Listede yalnızca kısa bir işaret var, gerekçenin tamamı
-              değil: satır bir gezinme öğesi, kararın metni konunun
-              içinde okunuyor. Konu listeden düşmüyor — açılış mesajı
-              kaldırılsa da yanıtlar sürüyor olabilir. */}
-          {thread.removalReason && (
-            <span className="shrink-0 rounded-card border border-dashed border-border-strong px-1.5 py-0.5 text-meta text-faint">
-              Kaldırıldı
-            </span>
-          )}
-          {/* Rozetler başlığın YANINDA, altındaki künye satırında değil:
-              "soru mu, rehber mi" bilgisi başlığı okurken işe yarıyor,
-              bir satır sonra değil. Konu rozetsizse hiçbir şey çizilmiyor
-              — boş bir yer tutucu satırı seyreltirdi. */}
-          {(thread.labels ?? []).map((id) => (
-            <LabelChip key={id} id={id} />
-          ))}
-        </div>
-
-        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
-          <span className="text-meta text-muted-foreground">{info.name}</span>
-          <span className="tabular text-meta text-muted-foreground">
-            @{thread.author.username}
-          </span>
-          <span aria-hidden className="text-meta text-faint">
-            ·
-          </span>
-          <span className="tabular text-meta text-faint">
-            {relativeTime(thread.lastActivityAt)}
-          </span>
-        </div>
-
-        {/* KART GÖRÜNÜMÜ: konunun ilk satırları. Kaldırılmış gönderide
-            `body` boş (metin `removed_content` arşivine taşındı) — orada
-            özet çizmiyoruz; boş bir kutu göstermek, hiç göstermemekten
-            kötü. */}
-        {view === 'grid' && thread.body && (
-          <p className="mt-1.5 line-clamp-2 text-meta leading-relaxed text-muted-foreground">
-            {thread.body}
-          </p>
-        )}
-      </div>
-
-      <div className="flex shrink-0 items-center gap-2 pt-0.5">
-        <span className="tabular inline-flex items-center gap-1 text-meta text-cold">
-          <ChatIcon className="h-3 w-3" />
-          {thread.replyCount}
-        </span>
-        <span className="tabular text-meta text-faint">
-          {thread.viewCount.toLocaleString('tr-TR')}
-        </span>
-      </div>
-    </Link>
   );
 }
