@@ -4,6 +4,7 @@ import { mapProfileRow, validateProfile, type ProfileEdit } from './profile';
 const base: ProfileEdit = {
   username: 'murat',
   displayName: 'Murat Sana',
+  displayNameVisible: true,
   bio: 'Ankara’dan gözlem yapıyorum.',
   city: 'Ankara',
   district: 'Çankaya',

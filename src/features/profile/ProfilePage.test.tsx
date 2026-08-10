@@ -18,6 +18,7 @@ vi.mock('@/services/content/photos', () => ({
 vi.mock('@/services/content/profile', () => ({
   profileAvatarUrl: (path: string | null | undefined) =>
     path ? `https://cdn.example/${path}` : null,
+  usePublicProfileContact: () => ({ contact: null, loading: false }),
   useProfileByUsername: () => ({
     ...profileState,
     refresh: vi.fn(),

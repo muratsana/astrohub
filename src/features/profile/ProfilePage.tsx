@@ -19,6 +19,7 @@ import { UserActions } from '@/features/social/UserActions';
 import {
   profileAvatarUrl,
   useProfileByUsername,
+  usePublicProfileContact,
 } from '@/services/content/profile';
 import { ProfileBadges } from './ProfileBadges';
 
@@ -39,6 +40,7 @@ export function ProfilePage() {
   const { username } = useParams<{ username: string }>();
   const photos = usePhotoCatalog().items;
   const { profile, loading, error } = useProfileByUsername(username);
+  const publicContact = usePublicProfileContact(profile?.id);
 
   const userPhotos = useMemo(
     () => photos.filter((p) => p.user.username === username),
@@ -76,7 +78,10 @@ export function ProfilePage() {
     );
   }
 
-  const displayName = profile?.displayName ?? seedUser?.displayName ?? username;
+  const displayName =
+    profile && profile.displayNameVisible === false
+      ? username
+      : (profile?.displayName ?? seedUser?.displayName ?? username);
   const avatarUrl = profileAvatarUrl(profile?.avatarPath);
   /* Tohum kayıtlarda `ownerId` yok; eylem şeridi o durumda kendini
      gizliyor (bkz. UserActions). */
@@ -165,6 +170,14 @@ export function ProfilePage() {
                     className="inline-flex h-8 shrink-0 items-center justify-center rounded-card border border-border-strong px-3.5 text-meta font-medium leading-none text-foreground transition-colors hover:border-primary hover:text-primary"
                   >
                     Portfolyo
+                  </a>
+                )}
+                {publicContact.contact?.phoneNumber && (
+                  <a
+                    href={`tel:${publicContact.contact.phoneNumber.replace(/\s+/g, '')}`}
+                    className="inline-flex h-8 shrink-0 items-center justify-center rounded-card border border-border-strong px-3.5 text-meta font-medium leading-none text-foreground transition-colors hover:border-primary hover:text-primary"
+                  >
+                    Telefon
                   </a>
                 )}
                 <UserActions targetUserId={ownerId} displayName={displayName} />

@@ -38,6 +38,7 @@ function profile(termsAcceptedAt: string | null): Profile {
     id: 'u1',
     username: 'murat',
     displayName: 'Murat',
+    displayNameVisible: true,
     bio: null,
     city: null,
     district: null,

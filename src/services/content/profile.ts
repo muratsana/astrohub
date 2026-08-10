@@ -26,6 +26,7 @@ export interface Profile {
   id: string;
   username: string;
   displayName: string | null;
+  displayNameVisible: boolean;
   bio: string | null;
   city: string | null;
   /** İlçe — `districts` kanonik yazımı. İl gibi isteğe bağlı. */
@@ -54,6 +55,7 @@ interface ProfileRow {
   id: string;
   username: string;
   display_name: string | null;
+  display_name_visible?: boolean | null;
   bio: string | null;
   city: string | null;
   district?: string | null;
@@ -74,6 +76,7 @@ export function mapProfileRow(row: ProfileRow): Profile {
     id: row.id,
     username: row.username,
     displayName: row.display_name,
+    displayNameVisible: row.display_name_visible !== false,
     bio: row.bio,
     city: row.city,
     district: row.district ?? null,
@@ -113,7 +116,7 @@ export function profileAvatarUrl(path: string | null | undefined): string | null
 }
 
 const SELECT =
-  'id, username, display_name, bio, city, district, website_url, avatar_path, ' +
+  'id, username, display_name, display_name_visible, bio, city, district, website_url, avatar_path, ' +
   'terms_accepted_at, account_status, suspended_until, status_reason';
 
 /**
@@ -242,10 +245,21 @@ export function useProfileByUsername(username: string | undefined): ProfileState
 export interface ProfileEdit {
   username: string;
   displayName: string;
+  displayNameVisible: boolean;
   bio: string;
   city: string;
   district: string;
   websiteUrl: string;
+}
+
+export interface ProfileContact {
+  phoneNumber: string | null;
+  phoneVisible: boolean;
+}
+
+interface ProfileContactRow {
+  phone_number: string | null;
+  phone_visible: boolean | null;
 }
 
 /**
@@ -314,6 +328,7 @@ export async function updateProfile(
          arasındaki farkı korumak, profil sayfasında "—" ile boş bir
          satırı ayırt etmeyi sağlıyor. */
       display_name: sanitizeText(edit.displayName, { maxLength: 60 }) || null,
+      display_name_visible: edit.displayNameVisible,
       bio: sanitizeText(edit.bio, { multiline: true }) || null,
       city: sanitizeText(edit.city, { maxLength: 60 }) || null,
       /* İl boşaltıldıysa ilçe de düşüyor: ilçesiz bir il anlamlı ama
@@ -327,6 +342,134 @@ export async function updateProfile(
     })
     .eq('id', userId);
 
+  if (error) throw new Error(error.message);
+}
+
+function mapContact(row: ProfileContactRow | null): ProfileContact {
+  return {
+    phoneNumber: row?.phone_number ?? null,
+    phoneVisible: row?.phone_visible === true,
+  };
+}
+
+export function useMyProfileContact(userId: string | undefined): {
+  contact: ProfileContact;
+  loading: boolean;
+  error: string | null;
+  refresh: () => void;
+} {
+  const [contact, setContact] = useState<ProfileContact>({
+    phoneNumber: null,
+    phoneVisible: false,
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [tick, setTick] = useState(0);
+
+  useEffect(() => {
+    if (!userId || !isSupabaseConfigured) {
+      setContact({ phoneNumber: null, phoneVisible: false });
+      setLoading(false);
+      return;
+    }
+
+    let active = true;
+    setLoading(true);
+    client()
+      .then(async (supabase) => {
+        const { data, error: queryError } = await supabase
+          .from('profile_contacts')
+          .select('phone_number, phone_visible')
+          .eq('user_id', userId)
+          .maybeSingle();
+        if (queryError) throw new Error(queryError.message);
+        return mapContact((data as ProfileContactRow | null) ?? null);
+      })
+      .then((next) => {
+        if (!active) return;
+        setContact(next);
+        setError(null);
+      })
+      .catch((e: unknown) => {
+        if (!active) return;
+        setError(e instanceof Error ? e.message : 'İletişim bilgisi okunamadı');
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [userId, tick]);
+
+  const refresh = useCallback(() => setTick((t) => t + 1), []);
+  return { contact, loading, error, refresh };
+}
+
+export function usePublicProfileContact(userId: string | undefined): {
+  contact: ProfileContact | null;
+  loading: boolean;
+} {
+  const [contact, setContact] = useState<ProfileContact | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!userId || !isSupabaseConfigured) {
+      setContact(null);
+      setLoading(false);
+      return;
+    }
+
+    let active = true;
+    setLoading(true);
+    client()
+      .then(async (supabase) => {
+        const { data } = await supabase
+          .from('profile_contacts')
+          .select('phone_number, phone_visible')
+          .eq('user_id', userId)
+          .maybeSingle();
+        return mapContact((data as ProfileContactRow | null) ?? null);
+      })
+      .then((next) => {
+        if (!active) return;
+        setContact(next.phoneVisible ? next : null);
+      })
+      .catch(() => {
+        if (active) setContact(null);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [userId]);
+
+  return { contact, loading };
+}
+
+export async function updateProfileContact(
+  userId: string,
+  contact: ProfileContact
+): Promise<void> {
+  const phone = sanitizeText(contact.phoneNumber ?? '', { maxLength: 32 });
+  if (phone && !/^[+0-9 ()-]{7,32}$/.test(phone)) {
+    throw new Error('Telefon numarası geçersiz görünüyor.');
+  }
+
+  const supabase = await client();
+  const { error } = await supabase.from('profile_contacts').upsert(
+    {
+      user_id: userId,
+      phone_number: phone || null,
+      phone_visible: phone ? contact.phoneVisible : false,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: 'user_id' }
+  );
   if (error) throw new Error(error.message);
 }
 
