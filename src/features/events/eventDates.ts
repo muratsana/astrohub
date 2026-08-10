@@ -1,10 +1,12 @@
 const shortDateFormatter = new Intl.DateTimeFormat('tr-TR', {
+  timeZone: 'Europe/Istanbul',
   day: '2-digit',
   month: '2-digit',
   year: 'numeric',
 });
 
 const longDateFormatter = new Intl.DateTimeFormat('tr-TR', {
+  timeZone: 'Europe/Istanbul',
   weekday: 'long',
   day: 'numeric',
   month: 'long',
@@ -12,6 +14,7 @@ const longDateFormatter = new Intl.DateTimeFormat('tr-TR', {
 });
 
 const timeFormatter = new Intl.DateTimeFormat('tr-TR', {
+  timeZone: 'Europe/Istanbul',
   hour: '2-digit',
   minute: '2-digit',
 });
