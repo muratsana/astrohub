@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Field } from '@/components/ui/Field';
 import { Input, Select } from '@/components/ui/Input';
+import { CARD_RATIO } from '@/components/ui/cardRatios';
 import { newsCategoryLabels, sortedNews } from '@/features/news/data';
 import { articleCategoryLabels, articles } from '@/features/articles/data';
 import {
@@ -686,10 +687,18 @@ function KindEditor({
               <img
                 src={draft.imageUrl}
                 alt=""
-                className="aspect-video w-full rounded-card border border-border object-cover"
+                className={cn(
+                  'w-full rounded-card border border-border object-cover',
+                  CARD_RATIO.wide
+                )}
               />
             ) : (
-              <div className="grid aspect-video place-items-center rounded-card border border-dashed border-border text-meta text-faint">
+              <div
+                className={cn(
+                  'grid place-items-center rounded-card border border-dashed border-border text-meta text-faint',
+                  CARD_RATIO.wide
+                )}
+              >
                 Görsel yok
               </div>
             )}
@@ -899,7 +908,7 @@ function KindEditor({
               </figure>
             )}
             <div>
-              <h1 className="font-display text-2xl font-bold text-foreground">
+              <h1 className="type-page-sm text-foreground">
                 {draft.title || 'Başlıksız içerik'}
               </h1>
               {draft.summary && (
