@@ -65,6 +65,33 @@ export const HERO_SCENES: HeroScene[] = [
   'chart',
 ];
 
+/** `tint` verilmediğinde/bozuk olduğunda kullanılan renk. */
+const VARSAYILAN_TINT = '150,185,235';
+
+/**
+ * Kayıtlı değer boşsa devreye giren varsayılanlar.
+ *
+ * İKİSİ DE DIŞA AÇIK, çünkü panel de aynı cevaba ihtiyaç duyuyor:
+ * yöneticiye rozet kutusunda "boş" gösterip sitede başka bir rozet
+ * çizmek, panelin yalan söylemesi olurdu. Mantığı iki yere kopyalamak
+ * yerine tek fonksiyondan geçiyoruz — kopyalasaydık biri değişip diğeri
+ * kalır ve fark ancak ziyaretçi ekranında görülürdü.
+ *
+ * Boş bırakmak GEÇERLİ bir tercih: koddaki beş slaydın anahtarı için
+ * "kodda ne yazıyorsa o" demenin yolu bu. Panelden açılan yeni bir
+ * anahtarın kodda karşılığı olmadığı için orada boş, gerçekten boş
+ * demek — rozet alanı o yüzden satır düzenleyicisinde de var.
+ */
+export function effectiveBadge(key: string, badge: string): string {
+  return badge.trim() || DEFAULT_HERO_SLIDES.find((s) => s.id === key)?.badge || '';
+}
+
+export function effectiveTint(key: string, tint: string): string {
+  const v = tint.trim();
+  if (/^\d{1,3},\d{1,3},\d{1,3}$/.test(v)) return v;
+  return DEFAULT_HERO_SLIDES.find((s) => s.id === key)?.tint ?? VARSAYILAN_TINT;
+}
+
 /** Sahnelerin panelde görünen adı — teknik anahtar yönetici için anlamsız. */
 export const heroSceneLabels: Record<HeroScene, string> = {
   nebula: 'Bulutsu — derin gökyüzü',
@@ -128,7 +155,7 @@ function normalize(row: Record<string, unknown>): Sirali | null {
 
   return {
     id: key,
-    badge: metin(row.badge) || varsayilan?.badge || '',
+    badge: effectiveBadge(key, metin(row.badge)),
     title,
     subtitle: metin(row.subtitle),
     ctaLabel: metin(row.cta_label) || 'Aç',
@@ -136,9 +163,7 @@ function normalize(row: Record<string, unknown>): Sirali | null {
     scene: HERO_SCENES.includes(row.scene as HeroScene)
       ? (row.scene as HeroScene)
       : (varsayilan?.scene ?? 'nebula'),
-    tint: /^\d{1,3},\d{1,3},\d{1,3}$/.test(metin(row.tint))
-      ? metin(row.tint)
-      : (varsayilan?.tint ?? '150,185,235'),
+    tint: effectiveTint(key, metin(row.tint)),
     ...(gorselGecerli
       ? { image: { url, credit, licence } }
       : {}),

@@ -49,6 +49,7 @@ function modul(over: Partial<HomeModule> & { key: string }): HomeModule {
 function slayt(over: Partial<HeroSlideRow> & { key: string }): HeroSlideRow {
   return {
     scene: 'nebula',
+    tint: '',
     badge: 'Rozet',
     title: 'Başlık',
     subtitle: '',
@@ -336,6 +337,37 @@ describe('hero slaytları', () => {
     await waitFor(() =>
       expect(heroYaz).toHaveBeenCalledWith('galeri', { scene: 'chart' })
     );
+  });
+
+  it('renk kutusunda SİTEDE ÇİZİLEN renk durur ve "R,G,B" olarak yazılır', async () => {
+    /* Kayıtlı `tint` boş; koddaki "galeri" slaydının rengi 232,120,96.
+       Kutuda boş/siyah gösterseydik panel, ziyaretçinin gördüğünden
+       başka bir şey söylerdi. */
+    slaytlar = [slayt({ key: 'galeri', tint: '' })];
+    render(<SiteControl canWrite />);
+
+    const kutu = await screen.findByLabelText<HTMLInputElement>('Sahne rengi');
+    expect(kutu.value).toBe('#e87860');
+
+    fireEvent.blur(kutu, { target: { value: '#96b9eb' } });
+    await waitFor(() =>
+      expect(heroYaz).toHaveBeenCalledWith('galeri', { tint: '150,185,235' })
+    );
+  });
+
+  it('rozet alanı boşken koddaki karşılığını yer tutucu gösterir', async () => {
+    slaytlar = [
+      slayt({ key: 'galeri', badge: '' }),
+      slayt({ key: 'yaz-kampi', badge: '', position: 2 }),
+    ];
+    render(<SiteControl canWrite />);
+
+    const rozetler = await screen.findAllByLabelText<HTMLInputElement>('Rozet');
+    /* "galeri" kodda var → boş bırakmak "kodda ne yazıyorsa o" demek.
+       "yaz-kampi" panelden açılmış bir anahtar; kodda karşılığı yok, boş
+       gerçekten boş — ikisini aynı göstermek yanlış olurdu. */
+    expect(rozetler[0]!.placeholder).toBe('Galeri');
+    expect(rozetler[1]!.placeholder).toBe('Rozetsiz');
   });
 
   it('yetkisiz kullanıcıda ekleme ve silme kapalı', async () => {

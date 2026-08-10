@@ -258,6 +258,8 @@ export interface HeroSlideRow {
   key: string;
   /** Çizilen arka plan; `HeroScene` ile aynı beşli. */
   scene: HeroScene;
+  /** Sahne rengi "R,G,B". Boş = koddaki varsayılana düş (`effectiveTint`). */
+  tint: string;
   badge: string;
   title: string;
   subtitle: string;
@@ -290,7 +292,7 @@ export async function fetchHeroSlides(): Promise<HeroSlideRow[]> {
   const { data, error } = await supabase
     .from('hero_slides')
     .select(
-      'key, scene, badge, title, subtitle, cta_label, cta_to, image_url, image_credit, image_licence, focal_x, focal_y, text_align, position, enabled, publish_from, publish_to'
+      'key, scene, tint, badge, title, subtitle, cta_label, cta_to, image_url, image_credit, image_licence, focal_x, focal_y, text_align, position, enabled, publish_from, publish_to'
     )
     .order('position');
   if (error) throw new Error(error.message);
@@ -333,6 +335,17 @@ export async function updateHeroSlide(
     const sorun = describePathProblem(patch.cta_to);
     if (sorun) throw new Error(sorun);
   }
+
+  /* Panelin renk seçicisi bu biçimi üretiyor; kontrol yine de burada,
+     çünkü `HeroSlidePatch` başka bir çağırana da açık ve veritabanı
+     kısıtının (`hero_slides_tint_check`) ham metni yöneticiye bir şey
+     anlatmaz. */
+  if (
+    typeof patch.tint === 'string' &&
+    patch.tint !== '' &&
+    !/^\d{1,3},\d{1,3},\d{1,3}$/.test(patch.tint)
+  )
+    throw new Error('Sahne rengi "R,G,B" biçiminde olmalı (örn. 150,185,235).');
 
   const temiz: Record<string, unknown> = { ...patch };
   if (typeof patch.badge === 'string')

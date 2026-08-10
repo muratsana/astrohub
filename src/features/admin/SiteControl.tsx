@@ -41,7 +41,12 @@ import {
   weatherProviderLabels,
   type WeatherProvider,
 } from '@/features/site/siteConfig';
-import { HERO_SCENES, heroSceneLabels } from '@/features/site/heroSlides';
+import {
+  HERO_SCENES,
+  heroSceneLabels,
+  effectiveBadge,
+  effectiveTint,
+} from '@/features/site/heroSlides';
 import type { HeroScene } from '@/components/media/HeroBackdrop';
 
 /**
@@ -522,6 +527,29 @@ function utcDamga(deger: string): string | null {
   if (!deger) return null;
   const d = new Date(deger);
   return Number.isNaN(d.getTime()) ? null : d.toISOString();
+}
+
+/**
+ * Hero rengi: "R,G,B" ↔ "#rrggbb".
+ *
+ * Sütun "150,185,235" biçimini tutuyor çünkü renk `HeroBackdrop` içinde
+ * canvas'a sayı üçlüsü olarak gidiyor. Yöneticiye bu üçlüyü ELLE
+ * YAZDIRMAK istemedik: metin kutusu "biraz daha mavi" sorusunun cevabını
+ * denemesi imkânsız bir hâle sokar ve biçimi bozan her giriş sessizce
+ * varsayılana düşerdi (`effectiveTint`). `<input type="color">` aynı
+ * değeri gösterip seçtiriyor; dönüşüm burada, tek yerde.
+ */
+function tintHex(tint: string): string {
+  const [r = 0, g = 0, b = 0] = tint.split(',').map(Number);
+  const pad = (n: number) =>
+    Math.min(255, Math.max(0, Math.round(n))).toString(16).padStart(2, '0');
+  return `#${pad(r)}${pad(g)}${pad(b)}`;
+}
+
+function hexTint(hex: string): string | null {
+  const m = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex.trim());
+  if (!m) return null;
+  return [m[1], m[2], m[3]].map((h) => parseInt(h!, 16)).join(',');
 }
 
 /* ── Özellik anahtarları ─────────────────────────────────────────────── */
@@ -1228,10 +1256,16 @@ function HeroSlidesSection({
  * BURADA DÖRT ALAN VAR, SATIRDA ON İKİ
  *
  * Form yalnızca `not null` olup varsayılanı OLMAYAN alanları soruyor:
- * anahtar, sahne, başlık, CTA adresi. Rozet, alt metin, görsel, odak
+ * anahtar, sahne, başlık, CTA adresi. Rozet, alt metin, sahne rengi, odak
  * noktası, yayın penceresi — hepsi boş/varsayılan doğuyor ve satır
  * düzenleyicisinden giriliyor. Formu on iki alana çıkarmak, "yeni slayt"
  * eylemini tek oturumda bitirilmesi gereken bir işe çevirirdi.
+ *
+ * Bu bölünme ancak satırda KARŞILIĞI VARSA dürüst: rozet ve sahne rengi
+ * alanları bu yüzden satır düzenleyicisine eklendi. Koddaki beş slaytta
+ * ikisi de boşken varsayılana düştüğü için eksiklikleri görünmüyordu;
+ * panelden açılan yeni bir anahtarın kodda karşılığı olmadığı için o
+ * slayt rozetsiz ve tek renk kalırdı — düzeltmenin yolu da yoktu.
  */
 function YeniHeroSlaydi({
   canWrite,
@@ -1350,8 +1384,8 @@ function YeniHeroSlaydi({
 
       <p className="mt-2 text-meta leading-relaxed text-faint">
         Slayt <strong className="text-foreground">kapalı</strong> oluşturulur
-        ve {sonrakiSira}. sıraya eklenir; rozet, alt metin ve görsel
-        künyesini satırdan girdikten sonra “Açık” kutusuyla yayına alın.
+        ve {sonrakiSira}. sıraya eklenir; rozet, alt metin ve sahne rengini
+        satırdan girdikten sonra “Açık” kutusuyla yayına alın.
       </p>
 
       <div className="mt-2 flex gap-2">
@@ -1396,8 +1430,10 @@ function HeroSlideRowEditor({
         <span className="tabular text-meta text-muted-foreground">
           {slide.position}
         </span>
+        {/* Rozeti boş olan yeni slaytta satır başlıksız görünürdü; sitede
+            ne çiziliyorsa listede de o yazıyor, o da yoksa başlık. */}
         <span className="text-body-sm font-medium text-foreground">
-          {slide.badge}
+          {effectiveBadge(slide.key, slide.badge) || slide.title}
         </span>
         <code className="text-meta text-faint">{slide.key}</code>
         {!slide.enabled && <Badge tone="muted">kapalı</Badge>}
@@ -1477,6 +1513,22 @@ function HeroSlideRowEditor({
             }}
           />
         </Alan>
+        {/* ROZET: koddaki beş slaytta boş bırakmak "kodda ne yazıyorsa o"
+            demek ve yer tutucu bunu gösteriyor. Panelden açılan yeni bir
+            anahtarın kodda karşılığı olmadığı için orada boş gerçekten
+            boş — alan bu yüzden var. */}
+        <Alan etiket="Rozet">
+          <Input
+            defaultValue={slide.badge}
+            maxLength={40}
+            placeholder={effectiveBadge(slide.key, '') || 'Rozetsiz'}
+            disabled={!canWrite}
+            onBlur={(e) => {
+              const v = e.target.value.trim();
+              if (v !== slide.badge) onYaz({ badge: v });
+            }}
+          />
+        </Alan>
         <Alan etiket="Alt metin">
           <Input
             defaultValue={slide.subtitle}
@@ -1538,6 +1590,22 @@ function HeroSlideRowEditor({
               </option>
             ))}
           </Select>
+        </Alan>
+        {/* Sahne rengi: kutuda SİTEDE ÇİZİLEN renk duruyor. Kayıtlı değer
+            boşsa `effectiveTint` koddaki karşılığına düşüyor — kutuya boş
+            bir renk göstermek, yöneticiye ekranda gördüğünden başka bir
+            şey söylemek olurdu. */}
+        <Alan etiket="Sahne rengi">
+          <Input
+            type="color"
+            className="h-10 px-1"
+            defaultValue={tintHex(effectiveTint(slide.key, slide.tint))}
+            disabled={!canWrite}
+            onBlur={(e) => {
+              const v = hexTint(e.target.value);
+              if (v && v !== slide.tint) onYaz({ tint: v });
+            }}
+          />
         </Alan>
         <Alan etiket="Odak noktası (yatay % / dikey %)">
           <div className="flex gap-2">
