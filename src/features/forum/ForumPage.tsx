@@ -11,6 +11,7 @@ import {
   filterControlClass,
 } from '@/components/ui/FilterBar';
 import { ModuleToolbar } from '@/components/ui/ModuleToolbar';
+import { useViewMode, type ViewMode } from '@/components/ui/useViewMode';
 import { PinIcon, LockIcon, ChatIcon } from '@/components/ui/icons';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
@@ -53,6 +54,20 @@ export function ForumPage() {
    * kullanıcı forumun kurallarını hiç görmezdi.
    */
   const ex = useExplorer(threads, forumSpec);
+
+  /*
+   * GÖRÜNÜM TERCİHİ (FAZ 11).
+   *
+   * Konu TARAMAK ve konu OKUMAK farklı işler: biri kısa başlık listesi
+   * ister, diğeri her satırda ne konuşulduğunu. Tek düzen seçmek
+   * kullanımlardan birini hep cezalandırıyordu — forum tek düzendeydi ve
+   * o düzen tarayanın işine yarıyordu, okuyanın değil.
+   *
+   * Tercih `useViewMode` ile saklanıyor: oturum açıksa hesapta, değilse
+   * yerelde. Her ziyarette yeniden seçtirmek, tercihi tercih olmaktan
+   * çıkarır.
+   */
+  const [view, setView] = useViewMode('forum', 'list');
   const result = ex.items;
   const category = ex.query.facets.kategori?.[0] ?? 'hepsi';
   const rozetler = ex.query.facets.rozet ?? [];
@@ -113,6 +128,7 @@ export function ForumPage() {
             onClearAll: ex.clearAll,
           }}
           result={{ current: ex.total, total: threads.length, noun: 'konu' }}
+          view={{ mode: view, onChange: setView }}
           sort={{
             id: 'forum-sort',
             value: ex.query.sort,
@@ -254,7 +270,7 @@ export function ForumPage() {
                           key={thread.id}
                           className="border-b border-border last:border-0"
                         >
-                          <ThreadRow thread={thread} />
+                          <ThreadRow thread={thread} view={view} />
                         </li>
                       ))}
                     </ul>
@@ -313,7 +329,7 @@ function ForumCategoryGrid({ threads }: { threads: ForumThread[] }) {
   );
 }
 
-function ThreadRow({ thread }: { thread: ForumThread }) {
+function ThreadRow({ thread, view }: { thread: ForumThread; view: ViewMode }) {
   const info = forumCategories[thread.category];
 
   return (
@@ -368,6 +384,16 @@ function ThreadRow({ thread }: { thread: ForumThread }) {
             {relativeTime(thread.lastActivityAt)}
           </span>
         </div>
+
+        {/* KART GÖRÜNÜMÜ: konunun ilk satırları. Kaldırılmış gönderide
+            `body` boş (metin `removed_content` arşivine taşındı) — orada
+            özet çizmiyoruz; boş bir kutu göstermek, hiç göstermemekten
+            kötü. */}
+        {view === 'grid' && thread.body && (
+          <p className="mt-1.5 line-clamp-2 text-meta leading-relaxed text-muted-foreground">
+            {thread.body}
+          </p>
+        )}
       </div>
 
       <div className="flex shrink-0 items-center gap-2 pt-0.5">

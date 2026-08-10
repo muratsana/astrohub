@@ -1,8 +1,9 @@
+import { useUpNavigation } from '@/app/useUpNavigation';
 import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { Badge } from '@/components/ui/Badge';
-import { ButtonLink } from '@/components/ui/Button';
+import { Button, ButtonLink } from '@/components/ui/Button';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { PhotoPlaceholder } from '@/components/media/PhotoPlaceholder';
 import { RemoteImage } from '@/components/media/RemoteImage';
@@ -22,6 +23,8 @@ import { deepSkyImages } from '@/lib/commons';
  */
 export function TargetDetailPage() {
   const { slug } = useParams<{ slug: string }>();
+  /* Geri dönüş: geldiği yer varsa oraya, yoksa üst rotaya (FAZ 11). */
+  const { geriDon } = useUpNavigation();
   const target = slug ? getTargetBySlug(slug) : undefined;
   const [copiedCoord, setCopiedCoord] = useState<string | null>(null);
 
@@ -109,9 +112,7 @@ export function TargetDetailPage() {
                 </span>
               )}
             </p>
-            <h1 className="mt-1 type-page text-foreground">
-              {target.name}
-            </h1>
+            <h1 className="mt-1 type-page text-foreground">{target.name}</h1>
             <div className="mt-3 flex flex-wrap gap-1.5">
               <Badge tone="primary">{targetKindLabels[target.kind]}</Badge>
               <Badge>{target.constellation}</Badge>
@@ -162,9 +163,9 @@ export function TargetDetailPage() {
               <ButtonLink to="/araclar/kadraj" variant="secondary" size="sm">
                 Simülatörde dene
               </ButtonLink>
-              <ButtonLink to="/hedefler" variant="ghost" size="sm">
+              <Button variant="ghost" size="sm" onClick={geriDon}>
                 ← Tüm hedefler
-              </ButtonLink>
+              </Button>
             </div>
           </div>
         </div>

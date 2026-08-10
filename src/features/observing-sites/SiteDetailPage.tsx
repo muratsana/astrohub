@@ -1,7 +1,8 @@
+import { useUpNavigation } from '@/app/useUpNavigation';
 import { useParams } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { Badge } from '@/components/ui/Badge';
-import { ButtonLink } from '@/components/ui/Button';
+import { Button, ButtonLink } from '@/components/ui/Button';
 import { PhotoPlaceholder } from '@/components/media/PhotoPlaceholder';
 import { PlaceholderPage } from '@/components/PlaceholderPage';
 import { useSiteCatalog } from '@/services/content/sites';
@@ -13,6 +14,8 @@ import { commonsWidthUrl } from '@/lib/commons';
 /** Kamp/gözlem noktası detayı (§7.8): gökyüzü + kamp + erişim kriterleri. */
 export function SiteDetailPage() {
   const { slug } = useParams<{ slug: string }>();
+  /* Geri dönüş: geldiği yer varsa oraya, yoksa üst rotaya (FAZ 11). */
+  const { geriDon } = useUpNavigation();
   const catalog = useSiteCatalog();
   const site = slug
     ? catalog.items.find((item) => item.slug === slug)
@@ -197,9 +200,9 @@ export function SiteDetailPage() {
             >
               Bu bölgeden fotoğraflar
             </ButtonLink>
-            <ButtonLink to="/saha" variant="ghost" className="mt-4 w-full">
+            <Button variant="ghost" className="mt-4 w-full" onClick={geriDon}>
               ← Tüm noktalar
-            </ButtonLink>
+            </Button>
           </aside>
         </div>
       </Container>

@@ -1,7 +1,8 @@
+import { useUpNavigation } from '@/app/useUpNavigation';
 import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { Container } from '@/components/ui/Container';
-import { Button, ButtonLink } from '@/components/ui/Button';
+import { Button } from '@/components/ui/Button';
 import { PhotoPlaceholder } from '@/components/media/PhotoPlaceholder';
 import { PlaceholderPage } from '@/components/PlaceholderPage';
 import { SectionHeader } from '@/components/ui/SectionHeader';
@@ -61,7 +62,11 @@ export function PhotoDetailPage() {
   }
 
   return (
-    <PhotoDetail photo={photo} all={catalog.items} onRefresh={catalog.refresh} />
+    <PhotoDetail
+      photo={photo}
+      all={catalog.items}
+      onRefresh={catalog.refresh}
+    />
   );
 }
 
@@ -74,6 +79,8 @@ function PhotoDetail({
   all: AstroPhoto[];
   onRefresh: () => void;
 }) {
+  /* Geri dönüş: geldiği yer varsa oraya, yoksa üst rotaya (FAZ 11). */
+  const { geriDon } = useUpNavigation();
   const { user } = useAuth();
   const [tab, setTab] = useState<TabId>('cekim');
   const integration = totalIntegrationSeconds(photo.exposures);
@@ -102,7 +109,10 @@ function PhotoDetail({
         description={`${photo.description.slice(0, 150)} · ${photo.setup.optic} + ${photo.setup.camera}, ${formatIntegration(integration)} entegrasyon, ${photo.city}.`}
         image={
           photo.image
-            ? { url: photo.image.url, alt: `${photo.title} — ${photo.target.catalog}` }
+            ? {
+                url: photo.image.url,
+                alt: `${photo.title} — ${photo.target.catalog}`,
+              }
             : undefined
         }
         jsonLd={[
@@ -137,9 +147,7 @@ function PhotoDetail({
               )}{' '}
               · {photoTypeLabels[photo.type]}
             </p>
-            <h1 className="mt-1 type-page text-foreground">
-              {photo.title}
-            </h1>
+            <h1 className="mt-1 type-page text-foreground">{photo.title}</h1>
             <p className="tabular mt-2 text-sm text-muted-foreground">
               <Link
                 to={`/profil/${photo.user.username}`}
@@ -297,9 +305,9 @@ function PhotoDetail({
         )}
 
         <div className="mt-10">
-          <ButtonLink to="/galeri" variant="secondary">
+          <Button variant="secondary" onClick={geriDon}>
             ← Galeriye dön
-          </ButtonLink>
+          </Button>
         </div>
       </Container>
     </>
@@ -394,9 +402,9 @@ function ExifPanel({ photo }: { photo: AstroPhoto }) {
 
       {exif.gpsPresent && (
         <p className="mt-3 rounded-card border border-cold/25 bg-cold/8 px-3 py-2 text-meta text-cold">
-          Dosyada konum verisi vardı; <strong>yayımlanmadı</strong>.
-          Koordinat veritabanına hiç yazılmıyor — konum yalnızca yukarıdaki
-          etikette, senin seçtiğin görünürlük seviyesinde duruyor.
+          Dosyada konum verisi vardı; <strong>yayımlanmadı</strong>. Koordinat
+          veritabanına hiç yazılmıyor — konum yalnızca yukarıdaki etikette,
+          senin seçtiğin görünürlük seviyesinde duruyor.
         </p>
       )}
     </div>
@@ -501,7 +509,9 @@ function ProcessingTab({ photo }: { photo: AstroPhoto }) {
           ],
           [
             'Watermark tercihi',
-            photo.access?.watermarkRequired ? 'Kaynak/filigran şartı var' : 'Zorunlu değil',
+            photo.access?.watermarkRequired
+              ? 'Kaynak/filigran şartı var'
+              : 'Zorunlu değil',
           ],
         ]}
       />
@@ -556,9 +566,9 @@ function PlateSolvePanel({
     return (
       <div className="rounded-card border border-border bg-surface-2 px-4 py-3">
         <p className="text-meta leading-relaxed text-muted-foreground">
-          Bu fotoğrafın alan çözümü yok. Çözüm, yıldız desenlerinden
-          kadrajın gökyüzündeki yerini hesaplar; sonuç görüntünün üstüne
-          katalog etiketleri olarak da düşer.
+          Bu fotoğrafın alan çözümü yok. Çözüm, yıldız desenlerinden kadrajın
+          gökyüzündeki yerini hesaplar; sonuç görüntünün üstüne katalog
+          etiketleri olarak da düşer.
         </p>
         <div className="mt-2">{dugme}</div>
       </div>
@@ -568,8 +578,8 @@ function PlateSolvePanel({
   if (solve.durum === 'kuyrukta') {
     return (
       <p className="rounded-card border border-border bg-surface-2 px-4 py-3 text-meta text-muted-foreground">
-        Alan çözümü sırada — yıldız desenlerinden kadraj hesaplanıyor.
-        Sonuç birkaç dakika içinde burada görünecek.
+        Alan çözümü sırada — yıldız desenlerinden kadraj hesaplanıyor. Sonuç
+        birkaç dakika içinde burada görünecek.
       </p>
     );
   }
@@ -615,8 +625,8 @@ function PlateSolvePanel({
       <p className="mt-2 text-meta text-faint">
         Bu değerler fotoğraftaki yıldız desenlerinden hesaplandı
         {solve.provider ? ` (${solve.provider})` : ''}; künyedeki hedef
-        bilgisinden bağımsızdır. Görüntünün üstündeki “Alan çözümü”
-        düğmesi katalog etiketlerini açıyor.
+        bilgisinden bağımsızdır. Görüntünün üstündeki “Alan çözümü” düğmesi
+        katalog etiketlerini açıyor.
       </p>
       {dugme && <div className="mt-2">{dugme}</div>}
     </div>

@@ -1,7 +1,8 @@
+import { useUpNavigation } from '@/app/useUpNavigation';
 import { useParams } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { Badge } from '@/components/ui/Badge';
-import { ButtonLink, ExternalButtonLink } from '@/components/ui/Button';
+import { Button, ExternalButtonLink } from '@/components/ui/Button';
 import { EventInterest } from './EventInterest';
 import { EventChanges } from './EventChanges';
 import { PhotoPlaceholder } from '@/components/media/PhotoPlaceholder';
@@ -22,6 +23,8 @@ import { ExternalLink } from '@/components/ExternalLink';
  */
 export function EventDetailPage() {
   const { slug } = useParams<{ slug: string }>();
+  /* Geri dönüş: geldiği yer varsa oraya, yoksa üst rotaya (FAZ 11). */
+  const { geriDon } = useUpNavigation();
   const catalog = useEventCatalog();
   const event = slug
     ? catalog.items.find((item) => item.slug === slug)
@@ -244,13 +247,13 @@ export function EventDetailPage() {
 
             <EventInterest event={event} />
 
-            <ButtonLink
-              to="/etkinlikler"
+            <Button
               variant="secondary"
               className="mt-4 w-full"
+              onClick={geriDon}
             >
               ← Tüm etkinlikler
-            </ButtonLink>
+            </Button>
           </aside>
         </div>
       </Container>
