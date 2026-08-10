@@ -1,9 +1,28 @@
 name: CI
 
 on:
+  # ÖNCEDEN HER DALDA KOŞUYORDU (`branches: ['**']`) ve bu, aynı commit'i
+  # hem çalışma dalına hem main'e gönderen bir akışta işi İKİYE
+  # katlıyordu: iki koşu × iki iş = dört runner işi, her biri Chromium
+  # indiren. Actions dakikası tam olarak böyle tükendi (10 Ağu).
+  #
+  # Kapı artık main'de ve pull request'te: kod yayın dalına girerken
+  # denetleniyor, ara push'lar dakika yakmıyor. Çalışma dalını denetlemek
+  # isteyen `workflow_dispatch` ile elle başlatabilir.
   push:
-    branches: ['**']
+    branches: [main]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'astrohub-plan/**'
+      - '.claude/**'
   pull_request:
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'astrohub-plan/**'
+      - '.claude/**'
+  workflow_dispatch:
 
 concurrency:
   # Aynı dala arka arkaya push edildiğinde eski koşuyu iptal et; sonucunu
@@ -41,6 +60,16 @@ jobs:
       - name: Vercel rewrite listesi
         run: npm run check:rewrites
 
+      - name: Playwright tarayıcı önbelleği
+        id: pw-cache
+        uses: actions/cache@v4
+        with:
+          # Tarayıcı ikilisi ~130 MB ve her koşuda yeniden iniyordu.
+          # Anahtar kilit dosyasına bağlı: Playwright sürümü değişmedikçe
+          # önbellek geçerli.
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
 
@@ -71,6 +100,16 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Playwright tarayıcı önbelleği
+        id: pw-cache
+        uses: actions/cache@v4
+        with:
+          # Tarayıcı ikilisi ~130 MB ve her koşuda yeniden iniyordu.
+          # Anahtar kilit dosyasına bağlı: Playwright sürümü değişmedikçe
+          # önbellek geçerli.
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
 
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
