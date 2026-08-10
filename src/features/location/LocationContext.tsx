@@ -600,8 +600,8 @@ export function LocationProvider({ children }: { children: ReactNode }) {
           return;
         }
         geo.getCurrentPosition(onSuccess, onFailure, {
-          enableHighAccuracy: false,
-          timeout: 30_000,
+          enableHighAccuracy: true,
+          timeout: 45_000,
           maximumAge: 0,
         });
       },

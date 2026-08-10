@@ -254,7 +254,7 @@ describe('cihaz konumu — ilçe etiketi', () => {
     );
   });
 
-  it('ilk deneme zaman aşımına düşerse ikinci denemede yüksek doğruluk istemiyor', async () => {
+  it('ilk deneme zaman aşımına düşerse ikinci denemede yüksek doğruluk deniyor', async () => {
     vi.mocked(fetchDistricts).mockResolvedValue([]);
     const calls: PositionOptions[] = [];
     vi.stubGlobal('navigator', {
@@ -289,8 +289,8 @@ describe('cihaz konumu — ilçe etiketi', () => {
     );
     expect(calls).toHaveLength(2);
     expect(calls[1]).toMatchObject({
-      enableHighAccuracy: false,
-      timeout: 30_000,
+      enableHighAccuracy: true,
+      timeout: 45_000,
     });
   });
 });
