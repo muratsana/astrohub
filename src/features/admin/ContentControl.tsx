@@ -523,79 +523,63 @@ function KindEditor({
                       <code>[bağlantı](/adres)</code> çalışır.
                     </p>
                   </div>
-                  <label className="cursor-pointer rounded-card border border-border px-2 py-1 text-meta text-cold hover:border-primary hover:text-primary">
-                    {importing ? 'İçe aktarılıyor…' : 'HTML / Word / PDF içe aktar'}
-                    <input
-                      type="file"
-                      accept=".html,.htm,.docx,.pdf,text/html,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                      disabled={!canWrite || importing}
-                      className="sr-only"
-                      onChange={async (event) => {
-                        const file = event.target.files?.[0];
-                        event.target.value = '';
-                        if (!file) return;
-                        setImporting(true);
-                        setImportWarnings([]);
-                        try {
-                          const result = await importContentFile(file);
-                          if (result.blocks.length === 0)
-                            throw new Error(
-                              'Belgede aktarılabilir metin bulunamadı.'
+                  {!editing && (
+                    <label className="cursor-pointer rounded-card border border-border px-2 py-1 text-meta text-cold hover:border-primary hover:text-primary">
+                      {importing
+                        ? 'İçe aktarılıyor…'
+                        : 'Yeni içerik: HTML / Word / PDF içe aktar'}
+                      <input
+                        type="file"
+                        accept=".html,.htm,.docx,.pdf,text/html,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                        disabled={!canWrite || importing}
+                        className="sr-only"
+                        onChange={async (event) => {
+                          const file = event.target.files?.[0];
+                          event.target.value = '';
+                          if (!file) return;
+                          setImporting(true);
+                          setImportWarnings([]);
+                          try {
+                            const result = await importContentFile(file);
+                            if (result.blocks.length === 0)
+                              throw new Error(
+                                'Belgede aktarılabilir metin bulunamadı.'
+                              );
+                            const mevcut = draft?.bodyBlocks ?? [];
+                            const eklendi = mevcut.length > 0;
+                            const blocks = eklendi
+                              ? [...mevcut, ...result.blocks]
+                              : result.blocks;
+                            setDraft((current) =>
+                              current
+                                ? {
+                                    ...current,
+                                    bodyBlocks: blocks,
+                                    bodyText: blocksToText(blocks),
+                                  }
+                                : current
                             );
-                          /*
-                           * DOLU TASLAĞIN ÜSTÜNE YAZILMIYOR, SONUNA
-                           * EKLENİYOR.
-                           *
-                           * Buradaki eski davranış `bodyBlocks`u koşulsuz
-                           * DEĞİŞTİRİYORDU: yazılmış bir taslakta yanlış
-                           * dosyayı seçmek, yazılan her şeyi geri
-                           * alınamaz biçimde siliyordu. Tek tık, sessiz
-                           * kayıp.
-                           *
-                           * `confirm()` ile sormak bu depoda bilinçli
-                           * olarak reddedilmiş bir yol (`RecordsControl`
-                           * başındaki gerekçe: diyalog odağı çalıyor ve
-                           * neyin gideceğini bağlamdan koparıyor).
-                           * Bunun yerine yıkıcı olmayan seçenek
-                           * varsayılan: boş taslakta değiştiriyor, dolu
-                           * taslakta ekliyor ve ne yaptığını yazıyor.
-                           * Fazlasını silmek blok başındaki "Sil"
-                           * düğmesiyle mümkün — geri getirmek değildi.
-                           */
-                          const mevcut = draft?.bodyBlocks ?? [];
-                          const eklendi = mevcut.length > 0;
-                          const blocks = eklendi
-                            ? [...mevcut, ...result.blocks]
-                            : result.blocks;
-                          setDraft((current) =>
-                            current
-                              ? {
-                                  ...current,
-                                  bodyBlocks: blocks,
-                                  bodyText: blocksToText(blocks),
-                                }
-                              : current
-                          );
-                          setImportWarnings([
-                            ...(eklendi
-                              ? [
-                                  `${result.blocks.length} blok mevcut içeriğin SONUNA eklendi; yazdıklarınız silinmedi.`,
-                                ]
-                              : []),
-                            ...result.warnings,
-                          ]);
-                        } catch (error) {
-                          setMessage(
-                            error instanceof Error
-                              ? error.message
-                              : 'Belge içe aktarılamadı.'
-                          );
-                        } finally {
-                          setImporting(false);
-                        }
-                      }}
-                    />
-                  </label>
+                            setImportWarnings([
+                              ...(eklendi
+                                ? [
+                                    `${result.blocks.length} blok mevcut yeni içeriğin SONUNA eklendi; yazdıklarınız silinmedi.`,
+                                  ]
+                                : []),
+                              ...result.warnings,
+                            ]);
+                          } catch (error) {
+                            setMessage(
+                              error instanceof Error
+                                ? error.message
+                                : 'Belge içe aktarılamadı.'
+                            );
+                          } finally {
+                            setImporting(false);
+                          }
+                        }}
+                      />
+                    </label>
+                  )}
                 </div>
                 <ContentBlockEditor
                   blocks={draft.bodyBlocks}
