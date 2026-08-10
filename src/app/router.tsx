@@ -631,9 +631,7 @@ export const appRoutes = [
       /* ═════════════ REFERANS ═════════════ */
       {
         path: 'hedefler',
-        element: route(
-          named(() => import('@/features/targets/TargetsPage'), 'TargetsPage')
-        ),
+        element: <RedirectTo to="/araclar/gokyuzu-katalogu" />,
       },
       {
         path: 'hedef/:slug',

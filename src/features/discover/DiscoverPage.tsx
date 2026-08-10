@@ -129,7 +129,7 @@ export function DiscoverPage() {
             /* "Bu sezon en çok çalışılan gökcisimleri" = "Popüler
                Hedefler". Aynı cümleyi iki kez yazmak vurgu değil gürültü. */
             title="Popüler Hedefler"
-            linkTo="/hedefler"
+            linkTo="/araclar/gokyuzu-katalogu"
           />
           <ul className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             {popularTargets.map((t) => (

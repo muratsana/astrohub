@@ -102,7 +102,7 @@ export function TargetsColumn({ ranked, timeZone, onMark }: Props) {
       )}
 
       <Link
-        to="/hedefler"
+        to="/araclar/gokyuzu-katalogu"
         className="mt-auto rounded-card border border-border px-3 py-2.5 text-center text-meta font-medium text-muted-foreground transition-colors hover:border-border-strong hover:text-foreground"
       >
         Tüm katalog · <span className="num">{catalog.length}</span> nesne

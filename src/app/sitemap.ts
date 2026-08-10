@@ -46,7 +46,7 @@ export const staticEntries: SitemapEntry[] = [
   { path: '/kesfet', priority: 0.8, changefreq: 'daily' },
   { path: '/galeri', priority: 0.9, changefreq: 'daily' },
   { path: '/haftanin-fotografi', priority: 0.8, changefreq: 'weekly' },
-  { path: '/hedefler', priority: 0.8, changefreq: 'weekly' },
+  { path: '/araclar/gokyuzu-katalogu', priority: 0.8, changefreq: 'weekly' },
   { path: '/etkinlikler', priority: 0.9, changefreq: 'daily' },
   { path: '/saha', priority: 0.8, changefreq: 'weekly' },
   { path: '/haberler', priority: 0.9, changefreq: 'daily' },

@@ -231,4 +231,26 @@ describe('cihaz konumu — ilçe etiketi', () => {
     expect(screen.getByTestId('etiket')).toHaveTextContent('Ankara / Çankaya');
     expect(screen.getByTestId('ilce')).toHaveTextContent('Çankaya');
   });
+
+  it('Permissions API yoksa saklanan izinle cihaz konumunu yine alıyor', async () => {
+    vi.mocked(fetchDistricts).mockResolvedValue([]);
+    localStorage.setItem(
+      'astrohub:location',
+      JSON.stringify({
+        source: 'city',
+        cityId: 'istanbul',
+        permission: 'granted',
+      })
+    );
+
+    render(
+      <LocationProvider>
+        <Prob />
+      </LocationProvider>
+    );
+
+    await waitFor(() =>
+      expect(screen.getByTestId('etiket')).toHaveTextContent('Ankara')
+    );
+  });
 });

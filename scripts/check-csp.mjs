@@ -94,7 +94,7 @@ const base = `http://127.0.0.1:${server.address().port}`;
 const ROUTES = [
   '/',
   '/galeri',
-  '/hedefler',
+  '/araclar/gokyuzu-katalogu',
   '/araclar/fov',
   '/araclar/isik-kirliligi',
   '/radyo',

@@ -13,6 +13,7 @@ import {
   MoonIcon,
   MosaicIcon,
   RouteIcon,
+  SparkleIcon,
 } from '@/components/ui/icons';
 
 /**
@@ -33,9 +34,9 @@ const tools =
  * aralarındaki fark görünmüyordu. Numaralandırma (01–07) bir sıra
  * vaat ediyordu ama o sıranın bir anlamı yoktu.
  *
- * Üç grup, çekim gecesinin sırasını izliyor: önce geceyi seç, sonra
- * kadrajı kur, sonra pozu planla. Referans (ekipman, hedef katalogu)
- * ayrı duruyor çünkü onlar araç değil, araçların beslendiği veri.
+ * Dört grup, çekim gecesinin sırasını izliyor: önce geceyi seç, sonra
+ * gökyüzü kataloğundan hedefi seç, sonra kadrajı kur, sonra pozu
+ * planla. Referans ayrı duruyor çünkü araç değil, araçların beslendiği veri.
  *
  * KAYNAK YİNE `siteMap`: bir araç eklendiğinde burada görünür ama
  * gruplanmamışsa "Diğer" başlığına düşer — kaybolmaz, sadece buraya bir
@@ -67,10 +68,8 @@ const GROUPS: { title: string; hint: string; paths: string[] }[] = [
 /**
  * Referans alanları — araç değil, araçların okuduğu katalog.
  *
- * Denetimde ölçülen boşluk şuydu: `/ekipman` ve `/hedefler` bu sayfada
- * HİÇ görünmüyordu, oysa araçların tamamı ikisinden besleniyor.
- * Kullanıcı "araçlar" diye girip setup'ını nereden kuracağını
- * bulamıyordu.
+ * Hedef kataloğu kaldırıldı: ana katalog artık `/araclar/gokyuzu-katalogu`.
+ * Burada yalnızca araçların okuduğu setup alanı kalıyor.
  */
 const REFERENCE: { label: string; to: string; description: string }[] = [
   {
@@ -78,11 +77,6 @@ const REFERENCE: { label: string; to: string; description: string }[] = [
     to: '/ekipman',
     description:
       'Setup’ını burada kur ve kaydet — bütün araçlar onu okur.',
-  },
-  {
-    label: 'Hedef Kataloğu',
-    to: '/hedefler',
-    description: 'Messier, NGC, IC — açısal boyut ve konum verisiyle.',
   },
 ];
 
@@ -112,6 +106,7 @@ const ungrouped = tools.filter(
  */
 const toolIcons: Record<string, typeof GridIcon> = {
   '/araclar': GridIcon,
+  '/araclar/gokyuzu-katalogu': SparkleIcon,
   '/araclar/kadraj': FrameIcon,
   '/araclar/isik-kirliligi': MapIcon,
   '/bu-gece': MoonIcon,
@@ -153,24 +148,16 @@ export function ToolsIndexPage() {
                 )}
               </div>
 
-              {/*
-                `auto-rows-fr` + tam dolan satır: eski ızgarada yedi kart
-                üç sütuna yerleşince sağ altta boş bir dolgu bloğu
-                kalıyordu (kapsayıcının `bg-border` zemini görünüyordu).
-                Gruplar iki ve üçlü olduğu için artık boş hücre çıkmıyor.
-              */}
-              <ul className="grid gap-px border border-border bg-border sm:grid-cols-2 lg:grid-cols-3">
+              <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {group.items.map((tool) => {
                   const Icon = toolIcons[tool.to];
                   return (
                     <li key={tool.to + tool.label}>
                       <Link
                         to={tool.to}
-                        className="group flex h-full flex-col bg-surface-1 p-5 transition-colors hover:bg-surface-2"
+                        className="group flex h-full flex-col rounded-card border border-border bg-surface-1 p-4 transition-colors hover:border-primary/50 hover:bg-surface-2"
                       >
-                        {Icon && (
-                          <Icon className="mb-3 h-6 w-6 shrink-0 text-border-strong transition-colors group-hover:text-primary" />
-                        )}
+                        <ToolVisual path={tool.to} Icon={Icon} />
                         <span className="flex items-baseline gap-2">
                           <span className="font-display text-readout-sm font-bold text-foreground transition-colors group-hover:text-primary">
                             {tool.label}
@@ -193,35 +180,72 @@ export function ToolsIndexPage() {
             </section>
           ))}
 
-        <section className="mt-8">
-          <div className="mb-3 flex flex-wrap items-baseline gap-x-3 border-b border-border pb-2">
-            <h2 className="type-section text-foreground">Referans</h2>
-            <p className="text-meta text-muted-foreground">
-              Araçların okuduğu kataloglar
-            </p>
-          </div>
-          <ul className="grid gap-px border border-border bg-border sm:grid-cols-2">
-            {REFERENCE.map((item) => (
-              <li key={item.to}>
-                <Link
-                  to={item.to}
-                  className="group flex h-full flex-col bg-surface-1 p-5 transition-colors hover:bg-surface-2"
-                >
-                  <span className="font-display text-readout-sm font-bold text-foreground transition-colors group-hover:text-primary">
-                    {item.label}
-                  </span>
-                  <span className="mt-2 text-meta leading-relaxed text-muted-foreground">
-                    {item.description}
-                  </span>
-                  <span className="mt-auto pt-5 text-meta tracking-[0.04em] text-faint transition-colors group-hover:text-primary">
-                    katalogu aç →
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </section>
+        {REFERENCE.length > 0 && (
+          <section className="mt-8">
+            <div className="mb-3 flex flex-wrap items-baseline gap-x-3 border-b border-border pb-2">
+              <h2 className="type-section text-foreground">Referans</h2>
+              <p className="text-meta text-muted-foreground">
+                Araçların okuduğu kataloglar
+              </p>
+            </div>
+            <ul className="grid gap-px border border-border bg-border sm:grid-cols-2">
+              {REFERENCE.map((item) => (
+                <li key={item.to}>
+                  <Link
+                    to={item.to}
+                    className="group flex h-full flex-col bg-surface-1 p-5 transition-colors hover:bg-surface-2"
+                  >
+                    <span className="font-display text-readout-sm font-bold text-foreground transition-colors group-hover:text-primary">
+                      {item.label}
+                    </span>
+                    <span className="mt-2 text-meta leading-relaxed text-muted-foreground">
+                      {item.description}
+                    </span>
+                    <span className="mt-auto pt-5 text-meta tracking-[0.04em] text-faint transition-colors group-hover:text-primary">
+                      katalogu aç →
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
       </Container>
     </>
+  );
+}
+
+function ToolVisual({
+  path,
+  Icon,
+}: {
+  path: string;
+  Icon?: typeof GridIcon;
+}) {
+  const tone =
+    path.includes('katalog')
+      ? 'from-cold/25 via-primary/10 to-transparent'
+      : path.includes('isik')
+        ? 'from-success/20 via-primary/10 to-transparent'
+        : path.includes('kadraj')
+          ? 'from-primary/25 via-cold/10 to-transparent'
+          : 'from-primary/20 via-warning/10 to-transparent';
+
+  return (
+    <span
+      aria-hidden
+      className={`relative mb-4 block h-28 overflow-hidden rounded-card border border-border bg-gradient-to-br ${tone}`}
+    >
+      <span className="absolute inset-x-5 top-1/2 h-px bg-border-strong/70" />
+      <span className="absolute inset-y-4 left-1/2 w-px bg-border-strong/70" />
+      <span className="absolute -right-8 -top-8 h-32 w-32 rounded-full border border-border-strong/60" />
+      <span className="absolute -bottom-10 left-8 h-28 w-28 rounded-full border border-border/80" />
+      {Icon && (
+        <span className="absolute left-4 top-4 grid h-10 w-10 place-items-center rounded-card border border-border bg-background/75 text-primary backdrop-blur-sm transition-colors group-hover:text-primary-hover">
+          <Icon className="h-5 w-5" />
+        </span>
+      )}
+      <span className="absolute bottom-4 right-4 h-2 w-2 rounded-full border border-primary bg-primary" />
+    </span>
   );
 }

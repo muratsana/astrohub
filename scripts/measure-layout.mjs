@@ -32,7 +32,7 @@ const cardPages = [
   { ad: 'Galeri', yol: '/galeri', aile: 'katalog' },
   { ad: 'İlanlar', yol: '/ilanlar', aile: 'katalog' },
   { ad: 'Ekipman', yol: '/ekipman', aile: 'katalog' },
-  { ad: 'Hedefler', yol: '/hedefler', aile: 'katalog' },
+  { ad: 'Gökyüzü Kataloğu', yol: '/araclar/gokyuzu-katalogu', aile: 'katalog' },
   { ad: 'Topluluklar', yol: '/topluluklar', aile: 'katalog' },
   { ad: 'Saha', yol: '/saha', aile: 'katalog' },
 ];

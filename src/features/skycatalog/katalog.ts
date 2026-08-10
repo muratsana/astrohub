@@ -7,19 +7,10 @@ import type { CelestialTarget } from '@/features/targets/data';
  * GÖKYÜZÜ KATALOĞU — veri katmanı.
  *
  * ══════════════════════════════════════════════════════════════════════
- * BU MODÜL NEDEN /hedefler'DEN AYRI
+ * BU MODÜL NEDEN ANA KATALOG
  *
- * `/hedefler` bir SEÇKİ: paketlenmiş 230 kayıt, ağ olmadan açılıyor,
- * "bu gece ne çekeyim" sorusuna cevap veriyor. Kartları büyük, açıklaması
- * uzun.
- *
- * Bu modülün sorusu başka: "NGC 6888'in yanında ne var", "Sharpless'ın
- * tamamını göster", "Kuğu'da 20 yay dakikasından büyük kaç emisyon
- * bulutsusu var". 16.663 nesnenin tamamı, filtreli ve sayfalı.
- *
- * İkisini tek sayfada birleştirmek her ikisini de bozardı: seçki 16.000
- * kaydın içinde kaybolur, katalog da seçkinin geniş kartlarında
- * gezilemez hâle gelirdi.
+ * Eski `/hedefler` sayfası 230 kayıtlık paketlenmiş bir seçkiydi. Ana
+ * katalog artık burası: 16.663 nesnenin tamamı, filtreli ve sayfalı.
  *
  * ══════════════════════════════════════════════════════════════════════
  * SUPABASE YOKSA NE OLUR

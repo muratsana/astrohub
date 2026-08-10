@@ -623,7 +623,16 @@ export function LocationProvider({ children }: { children: ReactNode }) {
    * birini cihaz konumuyla başka yere taşımak, seçimi geri almak olurdu.
    */
   useEffect(() => {
-    if (!navigator.permissions?.query) return;
+    const shouldRefreshDefaultLocation =
+      location.source === 'default' ||
+      (location.source === 'city' && location.cityId === DEFAULT_CITY_ID);
+
+    if (!navigator.permissions?.query) {
+      if (permission === 'granted' && shouldRefreshDefaultLocation) {
+        requestDeviceLocation();
+      }
+      return;
+    }
     let active = true;
 
     const applyStatus = (state: PermissionStatus['state']) => {
@@ -640,10 +649,7 @@ export function LocationProvider({ children }: { children: ReactNode }) {
         return;
       }
       setPermission('granted');
-      if (
-        location.source === 'default' ||
-        (location.source === 'city' && location.cityId === DEFAULT_CITY_ID)
-      ) {
+      if (shouldRefreshDefaultLocation) {
         requestDeviceLocation();
       }
     };
@@ -658,13 +664,20 @@ export function LocationProvider({ children }: { children: ReactNode }) {
         };
       })
       .catch(() => {
-        // Bazı tarayıcılar geolocation sorgusunu desteklemez — sessiz geç.
+        if (permission === 'granted' && shouldRefreshDefaultLocation) {
+          requestDeviceLocation();
+        }
       });
 
     return () => {
       active = false;
     };
-  }, [location.cityId, location.source, requestDeviceLocation]);
+  }, [
+    location.cityId,
+    location.source,
+    permission,
+    requestDeviceLocation,
+  ]);
 
   const dismissGeolocationOffer = useCallback(() => {
     setPermission('dismissed');

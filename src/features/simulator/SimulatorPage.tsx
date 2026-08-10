@@ -324,11 +324,17 @@ export function SimulatorPage() {
                     )}
                   </div>
                   <ButtonLink
-                    to={selected ? `/hedefler/${selected.target.slug}` : '/hedefler'}
+                    to={
+                      selected
+                        ? `/araclar/gokyuzu-katalogu?q=${encodeURIComponent(
+                            selected.target.catalog
+                          )}`
+                        : '/araclar/gokyuzu-katalogu'
+                    }
                     size="sm"
                     variant="secondary"
                   >
-                    Katalog detayını aç
+                    Katalogda aç
                   </ButtonLink>
                 </div>
               </div>
@@ -483,7 +489,6 @@ function ProgressBar({ value, className }: { value: number; className?: string }
     </div>
   );
 }
-
 
 
 

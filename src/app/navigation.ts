@@ -8,8 +8,8 @@
  * `siteMap` tek kaynaktır — komut paleti ve mobil çekmece
  * buradan beslenir, hiçbir bağlantı iki yerde ayrı ayrı tanımlanmaz.
  *
- * Not: Hedef kataloğu ve ekipman üst menüde değildir — galeri, bu gece,
- * profil ve araçların içinden doğal olarak kullanılan referans alanlarıdır.
+ * Not: Ekipman üst menüde değildir — galeri, bu gece, profil ve araçların
+ * içinden doğal olarak kullanılan referans alanıdır.
  */
 
 export interface NavItem {
@@ -405,12 +405,6 @@ export const siteMap: NavGroup[] = [
   {
     title: 'Referans',
     items: [
-      {
-        label: 'Hedef Kataloğu',
-        to: '/hedefler',
-        description: 'Messier, NGC, IC',
-        keywords: ['messier', 'ngc', 'ic', 'katalog', 'hedef'],
-      },
       {
         label: 'Ekipman Veritabanı',
         to: '/ekipman',

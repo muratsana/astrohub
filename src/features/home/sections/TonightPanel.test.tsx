@@ -137,7 +137,7 @@ describe('TonightPanel · hedef kolonu', () => {
   it('tüm katalog bağlantısı nesne sayısını taşıyor', () => {
     renderPanel();
     const link = screen.getByRole('link', { name: /tüm katalog/i });
-    expect(link).toHaveAttribute('href', '/hedefler');
+    expect(link).toHaveAttribute('href', '/araclar/gokyuzu-katalogu');
     expect(link.textContent).toMatch(/\d+ nesne/);
   });
 

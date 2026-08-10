@@ -83,7 +83,11 @@ export function ForumPage() {
     göstermek zorundayız.
   */
   const showThreads =
-    category !== 'hepsi' || searching || rozetler.length > 0 || cozulmemis;
+    view === 'list' ||
+    category !== 'hepsi' ||
+    searching ||
+    rozetler.length > 0 ||
+    cozulmemis;
   const sections = forumCategoryOrder
     .map((id) => ({
       id,
