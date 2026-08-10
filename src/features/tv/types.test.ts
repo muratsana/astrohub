@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   isValidYoutubeId,
   youtubeEmbedUrl,
+  youtubeIdFromInput,
   youtubeWatchUrl,
   sortBroadcasts,
   liveBroadcast,
@@ -25,6 +26,45 @@ describe('isValidYoutubeId', () => {
 
   it('tipler karışmaz', () => {
     expect(isValidYoutubeId('video', CHANNEL)).toBe(false);
+  });
+});
+
+/**
+ * Editöre video ekleyen kişinin elinde kimlik değil ADRES oluyor. Bu
+ * fonksiyon çıkarımı gevşek yapıyor ama doğrulamayı gevşetmiyor: hangi
+ * biçimden gelirse gelsin sonuç `isValidYoutubeId`den geçiyor. Yani
+ * kolaylık güvenlik sınırının ÖNÜNDE duruyor, yerine geçmiyor.
+ */
+describe('youtubeIdFromInput', () => {
+  it('yaygın adres biçimlerinden kimliği çıkarır', () => {
+    for (const adres of [
+      `https://www.youtube.com/watch?v=${VIDEO}`,
+      `https://youtu.be/${VIDEO}`,
+      `https://www.youtube.com/embed/${VIDEO}`,
+      `https://www.youtube.com/shorts/${VIDEO}`,
+      `https://www.youtube-nocookie.com/embed/${VIDEO}`,
+    ]) {
+      expect(youtubeIdFromInput(adres)).toBe(VIDEO);
+    }
+  });
+
+  it('düz kimliği olduğu gibi kabul eder', () => {
+    expect(youtubeIdFromInput(`  ${VIDEO}  `)).toBe(VIDEO);
+  });
+
+  /*
+   * Başka bir alan adı YouTube gibi davranamaz: çıkarım yalnızca bilinen
+   * konaklarda çalışıyor, aksi hâlde "youtube" geçen herhangi bir adres
+   * kimlik üretebilirdi.
+   */
+  it('tanımadığı konaktan kimlik üretmez', () => {
+    expect(youtubeIdFromInput(`https://kotu.example/watch?v=${VIDEO}`)).toBeNull();
+  });
+
+  it('kimlik çıkmayan girdide null döner', () => {
+    expect(youtubeIdFromInput('https://www.youtube.com/watch?v=kisa')).toBeNull();
+    expect(youtubeIdFromInput('')).toBeNull();
+    expect(youtubeIdFromInput('rastgele metin')).toBeNull();
   });
 });
 

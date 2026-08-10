@@ -78,6 +78,42 @@ export function youtubeEmbedUrl(
   return `https://www.youtube-nocookie.com/embed/${id}?${params}`;
 }
 
+/**
+ * Yapıştırılan adresten ya da düz kimlikten video kimliği çıkarır.
+ *
+ * NEDEN VAR: editöre video eklemek isteyen kişinin elinde kimlik değil
+ * tarayıcıdan kopyaladığı ADRES oluyor. "Kimliği kendin ayıkla" demek,
+ * onu `watch?v=` sonrasını elle kesmeye zorlamak ve her seferinde bir
+ * karakter fazla/eksik alma riskini kabul etmek olurdu.
+ *
+ * ÇIKARIM GEVŞEK, DOĞRULAMA KATI: hangi biçimden gelirse gelsin sonuç
+ * `isValidYoutubeId`den geçiyor, geçmezse `null`. Yani bu fonksiyon
+ * güvenlik sınırını genişletmiyor, yalnızca aynı sınırın önüne bir
+ * kolaylık koyuyor. Depolamaya yine yalnızca kimlik yazılıyor.
+ */
+export function youtubeIdFromInput(value: string): string | null {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  /* Düz kimlik: en sık durum, adres ayrıştırmaya hiç girmiyor. */
+  if (isValidYoutubeId('video', trimmed)) return trimmed;
+
+  try {
+    const url = new URL(trimmed);
+    const host = url.hostname.replace(/^www\./, '');
+    const aday =
+      host === 'youtu.be'
+        ? url.pathname.slice(1)
+        : host === 'youtube.com' || host === 'youtube-nocookie.com'
+          ? (url.searchParams.get('v') ??
+            url.pathname.replace(/^\/(embed|shorts|live)\//, ''))
+          : '';
+    return isValidYoutubeId('video', aday) ? aday : null;
+  } catch {
+    return null;
+  }
+}
+
 /** İzleyicinin YouTube'da açması için normal izleme adresi. */
 export function youtubeWatchUrl(ref: YoutubeRef, id: string): string | null {
   if (!isValidYoutubeId(ref, id)) return null;

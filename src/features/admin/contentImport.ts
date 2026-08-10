@@ -102,9 +102,23 @@ export async function importPdf(file: File): Promise<ImportResult> {
   };
 }
 
+/**
+ * HTML DOSYASI.
+ *
+ * `htmlToBlocks` en baştan beri vardı ama yalnızca Word dönüşümünün ara
+ * adımı olarak çağrılıyordu; kullanıcı bir `.html` dosyası seçemiyordu.
+ * Plan üç biçim istiyor (HTML → Word → PDF) ve üçünün en güvenlisi
+ * buydu: dosya hiçbir zaman render edilmiyor, `DOMParser` ile ayrıştırılıp
+ * yalnızca DOM METNİ kapalı bloklara alınıyor, `script`/`style` atlanıyor.
+ */
+export async function importHtml(file: File): Promise<ImportResult> {
+  return htmlToBlocks(await file.text());
+}
+
 export async function importContentFile(file: File): Promise<ImportResult> {
   const name = file.name.toLocaleLowerCase('tr-TR');
   if (name.endsWith('.docx')) return importDocx(file);
   if (name.endsWith('.pdf')) return importPdf(file);
-  throw new Error('Yalnızca .docx ve .pdf dosyaları desteklenir.');
+  if (name.endsWith('.html') || name.endsWith('.htm')) return importHtml(file);
+  throw new Error('Yalnızca .html, .docx ve .pdf dosyaları desteklenir.');
 }

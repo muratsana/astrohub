@@ -24,7 +24,11 @@ import {
 } from '@/services/content/entries';
 import { cn } from '@/lib/cn';
 import { BlockRenderer } from '@/components/content/BlockRenderer';
+import { InlineText } from '@/components/content/InlineText';
 import { blocksToText, type ContentBlock } from '@/domain/content/blocks';
+import { hasInlineMarkup } from '@/domain/content/inline';
+import { isAllowedImageHost } from '@/domain/content/imageHosts';
+import { isValidYoutubeId, youtubeIdFromInput } from '@/features/tv/types';
 import { importContentFile } from './contentImport';
 
 /**
@@ -513,14 +517,17 @@ function KindEditor({
                   <div>
                     <p className="label">İçerik blokları</p>
                     <p className="text-meta text-faint">
-                      Başlık, paragraf, alıntı ve listeleri sırayla düzenleyin.
+                      Başlık, paragraf, görsel, tablo, video ve listeleri
+                      sırayla düzenleyin. Metinde <code>**kalın**</code>,{' '}
+                      <code>*eğik*</code> ve{' '}
+                      <code>[bağlantı](/adres)</code> çalışır.
                     </p>
                   </div>
                   <label className="cursor-pointer rounded-card border border-border px-2 py-1 text-meta text-cold hover:border-primary hover:text-primary">
-                    {importing ? 'İçe aktarılıyor…' : 'Word / PDF içe aktar'}
+                    {importing ? 'İçe aktarılıyor…' : 'HTML / Word / PDF içe aktar'}
                     <input
                       type="file"
-                      accept=".docx,.pdf,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                      accept=".html,.htm,.docx,.pdf,text/html,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                       disabled={!canWrite || importing}
                       className="sr-only"
                       onChange={async (event) => {
@@ -535,16 +542,48 @@ function KindEditor({
                             throw new Error(
                               'Belgede aktarılabilir metin bulunamadı.'
                             );
+                          /*
+                           * DOLU TASLAĞIN ÜSTÜNE YAZILMIYOR, SONUNA
+                           * EKLENİYOR.
+                           *
+                           * Buradaki eski davranış `bodyBlocks`u koşulsuz
+                           * DEĞİŞTİRİYORDU: yazılmış bir taslakta yanlış
+                           * dosyayı seçmek, yazılan her şeyi geri
+                           * alınamaz biçimde siliyordu. Tek tık, sessiz
+                           * kayıp.
+                           *
+                           * `confirm()` ile sormak bu depoda bilinçli
+                           * olarak reddedilmiş bir yol (`RecordsControl`
+                           * başındaki gerekçe: diyalog odağı çalıyor ve
+                           * neyin gideceğini bağlamdan koparıyor).
+                           * Bunun yerine yıkıcı olmayan seçenek
+                           * varsayılan: boş taslakta değiştiriyor, dolu
+                           * taslakta ekliyor ve ne yaptığını yazıyor.
+                           * Fazlasını silmek blok başındaki "Sil"
+                           * düğmesiyle mümkün — geri getirmek değildi.
+                           */
+                          const mevcut = draft?.bodyBlocks ?? [];
+                          const eklendi = mevcut.length > 0;
+                          const blocks = eklendi
+                            ? [...mevcut, ...result.blocks]
+                            : result.blocks;
                           setDraft((current) =>
                             current
                               ? {
                                   ...current,
-                                  bodyBlocks: result.blocks,
-                                  bodyText: blocksToText(result.blocks),
+                                  bodyBlocks: blocks,
+                                  bodyText: blocksToText(blocks),
                                 }
                               : current
                           );
-                          setImportWarnings(result.warnings);
+                          setImportWarnings([
+                            ...(eklendi
+                              ? [
+                                  `${result.blocks.length} blok mevcut içeriğin SONUNA eklendi; yazdıklarınız silinmedi.`,
+                                ]
+                              : []),
+                            ...result.warnings,
+                          ]);
                         } catch (error) {
                           setMessage(
                             error instanceof Error
@@ -735,24 +774,129 @@ const BLOCK_LABELS: Record<ContentBlock['type'], string> = {
   quote: 'Alıntı',
   list: 'Liste',
   callout: 'Bilgi kutusu',
+  image: 'Görsel',
+  table: 'Tablo',
+  embed: 'Video',
 };
+
+/** Metnini tek bir alanla düzenlediğimiz bloklar. */
+function isTextBlock(
+  block: ContentBlock
+): block is Extract<
+  ContentBlock,
+  { type: 'paragraph' | 'heading' | 'quote' | 'callout' | 'list' }
+> {
+  return (
+    block.type === 'paragraph' ||
+    block.type === 'heading' ||
+    block.type === 'quote' ||
+    block.type === 'callout' ||
+    block.type === 'list'
+  );
+}
 
 function blankBlock(type: ContentBlock['type']): ContentBlock {
   if (type === 'heading') return { type, level: 2, text: '' };
   if (type === 'list') return { type, style: 'bullet', items: [''] };
   if (type === 'callout') return { type, tone: 'info', text: '' };
+  if (type === 'image') return { type, src: '', alt: '' };
+  if (type === 'table') return { type, header: ['', ''], rows: [['', '']] };
+  if (type === 'embed') return { type, provider: 'youtube', videoId: '', title: '' };
   return { type, text: '' };
 }
 
 function blockText(block: ContentBlock): string {
-  return block.type === 'list' ? block.items.join('\n') : block.text;
+  if (block.type === 'list') return block.items.join('\n');
+  return isTextBlock(block) ? block.text : '';
 }
 
 function withBlockText(block: ContentBlock, value: string): ContentBlock {
   if (block.type === 'list') {
     return { ...block, items: value.split('\n') };
   }
-  return { ...block, text: value };
+  return isTextBlock(block) ? { ...block, text: value } : block;
+}
+
+/*
+ * TABLO METİN OLARAK DÜZENLENİYOR: her satır bir satır, hücreler `|` ile
+ * ayrılıyor. Hücre hücre bir ızgara arayüzü yazmak yerine bunu seçtik,
+ * çünkü tablolar başka bir yerden (Word, Excel, sayfa) KOPYALANARAK
+ * geliyor ve metin alanına yapıştırılabiliyorlar. Izgarada aynı iş,
+ * hücreye tek tek girmek demekti.
+ *
+ * Satır sonundaki boş hücreler korunuyor (`split` kırpılmıyor): "değer
+ * yok" ile "sütun yok" farklı şeyler ve tablo hizası buna bakıyor.
+ */
+function tableToText(block: Extract<ContentBlock, { type: 'table' }>): string {
+  const satirlar = [...(block.header ? [block.header] : []), ...block.rows];
+  return satirlar.map((row) => row.join(' | ')).join('\n');
+}
+
+function textToTable(
+  block: Extract<ContentBlock, { type: 'table' }>,
+  value: string,
+  basliklı: boolean
+): ContentBlock {
+  const satirlar = value
+    .split('\n')
+    .map((line) => line.split('|').map((cell) => cell.trim()));
+
+  /* Tek satır varken "ilk satır başlık" seçiliyse gövde boş kalırdı ve
+     şema `rows`u en az bir satır istiyor. Boş bir gövde satırı bırakmak,
+     yazan kişinin yazmaya devam edeceği yeri açık tutuyor. */
+  if (basliklı) {
+    const [header = [''], ...rows] = satirlar;
+    return { ...block, header, rows: rows.length ? rows : [header.map(() => '')] };
+  }
+  return { ...block, header: undefined, rows: satirlar.length ? satirlar : [['']] };
+}
+
+/** Blok içi tek satırlık alan. Etiket görünür — `aria-label` yetmiyor:
+    gören kullanıcı da hangi alanın ne olduğunu bilmeli. */
+function BlockField({
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+}) {
+  return (
+    <label className="block text-meta text-muted-foreground">
+      <span className="mb-0.5 block text-faint">{label}</span>
+      <input
+        type="text"
+        value={value}
+        placeholder={placeholder}
+        onChange={(event) => onChange(event.target.value)}
+        className="w-full rounded-card border border-border bg-background px-2.5 py-1.5 text-meta text-foreground outline-none focus:border-primary"
+      />
+    </label>
+  );
+}
+
+/**
+ * SATIR İÇİ BİÇİM ÖNİZLEMESİ.
+ *
+ * Yalnızca metinde çizilecek bir biçim varken görünüyor; her bloğun
+ * altına ikinci bir metin kutusu koymak gürültü olurdu.
+ *
+ * Asıl işi güven vermek değil, UYARMAK. Ayrıştırıcı eski içeriğin
+ * üstünde de çalışıyor ve "3*4*5" gibi bir dizi istemeden eğik yazıya
+ * dönebilir (gerekçe `domain/content/inline.ts`). Yazan kişi sonucu
+ * yayımlamadan önce burada görüyor.
+ */
+function InlinePreview({ text }: { text: string }) {
+  if (!hasInlineMarkup(text)) return null;
+  return (
+    <p className="mt-1 rounded-card border border-dashed border-border px-2.5 py-1.5 text-meta leading-relaxed text-muted-foreground">
+      <span className="mr-1.5 text-faint">Önizleme:</span>
+      <InlineText text={text} />
+    </p>
+  );
 }
 
 function ContentBlockEditor({
@@ -867,18 +1011,163 @@ function ContentBlockEditor({
               Sil
             </button>
           </div>
-          <textarea
-            aria-label={`${index + 1}. blok metni`}
-            value={blockText(block)}
-            rows={block.type === 'list' ? 4 : 3}
-            placeholder={
-              block.type === 'list' ? 'Her satıra bir madde' : 'Metin'
-            }
-            onChange={(event) =>
-              replace(index, withBlockText(block, event.target.value))
-            }
-            className="w-full resize-y rounded-card border border-border bg-background px-2.5 py-2 text-meta leading-relaxed text-foreground outline-none focus:border-primary"
-          />
+          {isTextBlock(block) && (
+            <>
+              <textarea
+                aria-label={`${index + 1}. blok metni`}
+                value={blockText(block)}
+                rows={block.type === 'list' ? 4 : 3}
+                placeholder={
+                  block.type === 'list' ? 'Her satıra bir madde' : 'Metin'
+                }
+                onChange={(event) =>
+                  replace(index, withBlockText(block, event.target.value))
+                }
+                className="w-full resize-y rounded-card border border-border bg-background px-2.5 py-2 text-meta leading-relaxed text-foreground outline-none focus:border-primary"
+              />
+              <InlinePreview text={blockText(block)} />
+            </>
+          )}
+
+          {block.type === 'image' && (
+            <div className="grid gap-1.5 sm:grid-cols-2">
+              <BlockField
+                label="Görsel adresi (https)"
+                value={block.src}
+                onChange={(v) => replace(index, { ...block, src: v })}
+                placeholder="https://…"
+              />
+              <BlockField
+                label="Alternatif metin (zorunlu)"
+                value={block.alt}
+                onChange={(v) => replace(index, { ...block, alt: v })}
+                placeholder="Görselde ne var?"
+              />
+              <BlockField
+                label="Alt yazı"
+                value={block.caption ?? ''}
+                onChange={(v) =>
+                  replace(index, { ...block, caption: v || undefined })
+                }
+              />
+              <BlockField
+                label="Telif"
+                value={block.credit ?? ''}
+                onChange={(v) =>
+                  replace(index, { ...block, credit: v || undefined })
+                }
+              />
+              {/* Adres girilmişse küçük bir önizleme: yanlış bağlantıyı
+                  yayınlamadan önce görmek, kaydettikten sonra fark
+                  etmekten ucuz. */}
+              {isAllowedImageHost(block.src) && (
+                <img
+                  src={block.src}
+                  alt=""
+                  className="max-h-32 rounded-card border border-border object-contain sm:col-span-2"
+                />
+              )}
+              {/*
+               * KONAK UYARISI KAYDETMEDEN ÖNCE. Tarayıcının `img-src`
+               * beyaz listesi dışındaki görsel üretimde sessizce
+               * yüklenmiyor; uyarı olmasaydı editör bunu ancak yayından
+               * sonra, okurun gördüğü kırık kutuyla öğrenirdi.
+               */}
+              {block.src.trim() && !isAllowedImageHost(block.src) && (
+                <p className="text-meta text-warning sm:col-span-2">
+                  Bu adres izinli kaynaklardan değil ve yayında
+                  yüklenmez. Görseli siteye yükleyip depolama adresini
+                  kullanın.
+                </p>
+              )}
+              {!block.alt.trim() && (
+                <p className="text-meta text-warning sm:col-span-2">
+                  Alternatif metin boşken görsel yayımlanmaz — ekran okuyucu
+                  kullanan okur için görsel hiç yokmuş gibi olur.
+                </p>
+              )}
+            </div>
+          )}
+
+          {block.type === 'table' && (
+            <div className="space-y-1.5">
+              <label className="flex items-center gap-1.5 text-meta text-muted-foreground">
+                <input
+                  type="checkbox"
+                  checked={Boolean(block.header)}
+                  onChange={(event) =>
+                    replace(
+                      index,
+                      textToTable(
+                        block,
+                        tableToText(block),
+                        event.target.checked
+                      )
+                    )
+                  }
+                  className="h-3.5 w-3.5 accent-[var(--color-primary)]"
+                />
+                İlk satır başlık
+              </label>
+              <textarea
+                aria-label={`${index + 1}. tablo içeriği`}
+                value={tableToText(block)}
+                rows={5}
+                placeholder={'Ad | Çap | Odak\nNewton | 200 | 1000'}
+                onChange={(event) =>
+                  replace(
+                    index,
+                    textToTable(block, event.target.value, Boolean(block.header))
+                  )
+                }
+                className="w-full resize-y rounded-card border border-border bg-background px-2.5 py-2 font-mono text-meta leading-relaxed text-foreground outline-none focus:border-primary"
+              />
+              <p className="text-meta text-faint">
+                Her satır bir satır, hücreler <code>|</code> ile ayrılır.
+                Word ya da tablodan kopyalanan metni yapıştırıp
+                ayraçları düzeltmek en hızlı yol.
+              </p>
+              <BlockField
+                label="Tablo başlığı"
+                value={block.caption ?? ''}
+                onChange={(v) =>
+                  replace(index, { ...block, caption: v || undefined })
+                }
+              />
+            </div>
+          )}
+
+          {block.type === 'embed' && (
+            <div className="grid gap-1.5 sm:grid-cols-2">
+              <BlockField
+                label="YouTube adresi ya da kimliği"
+                value={block.videoId}
+                placeholder="https://www.youtube.com/watch?v=…"
+                onChange={(v) =>
+                  /* Yapıştırılan adresten kimlik çıkarılıyor; çıkmazsa
+                     yazılan değer olduğu gibi duruyor ki alan yazarken
+                     kilitlenmesin. Doğrulama aşağıdaki uyarıda. */
+                  replace(index, {
+                    ...block,
+                    videoId: youtubeIdFromInput(v) ?? v,
+                  })
+                }
+              />
+              <BlockField
+                label="Video başlığı (zorunlu)"
+                value={block.title}
+                onChange={(v) => replace(index, { ...block, title: v })}
+                placeholder="Ekran okuyucu bu adı okur"
+              />
+              {block.videoId && !isValidYoutubeId('video', block.videoId) && (
+                <p className="text-meta text-warning sm:col-span-2">
+                  Bu bir YouTube video kimliği değil. Adresi yapıştırın ya da
+                  11 karakterli kimliği yazın; biçim tutmazsa video
+                  yayımlanmaz.
+                </p>
+              )}
+            </div>
+          )}
         </div>
       ))}
       <div className="flex flex-wrap gap-1.5">

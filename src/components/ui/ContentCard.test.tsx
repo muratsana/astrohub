@@ -256,6 +256,10 @@ describe('kart ailesi dağılmıyor', () => {
       'features/news/NewsDetailPage.tsx',
       'features/targets/TargetDetailPage.tsx',
       'features/tv/TvPage.tsx',
+      /* Yazının içine gömülen video. `TvPage` ile aynı gerekçe: oranı
+         kart ailesi değil YouTube belirliyor — 16:9 dışında bir orana
+         zorlarsak oynatıcı kendi içinde siyah bant bırakır. */
+      'components/content/BlockRenderer.tsx',
       /* Tam ekran görüntüleyici — ızgara karosu değil, tek bir görselin
          kendisi. Oranı ekranı doldurmak için seçiliyor. */
       'features/photos/PhotoViewer.tsx',
