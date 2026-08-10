@@ -17,7 +17,8 @@ import {
 } from '@/features/equipment/data';
 import { ReportButton } from '@/features/admin/ReportButton';
 import { MessageButton } from '@/features/social/MessageButton';
-import { getListingBySlug, relatedListings, priceRange } from './data';
+import { relatedListings, priceRange } from './data';
+import { useListingBySlug } from '@/services/content/listings';
 import { AdminEditLink } from '@/components/admin/AdminEditLink';
 
 /**
@@ -47,7 +48,18 @@ const conditionTone = {
 
 export function ListingDetailPage() {
   const { slug } = useParams<{ slug: string }>();
-  const listing = slug ? getListingBySlug(slug) : undefined;
+  /*
+   * İLAN VERİTABANINDAN OKUNUYOR.
+   *
+   * Burada eskiden `getListingBySlug(slug)` vardı — yani sayfa yalnızca
+   * `data.ts` içindeki örnek ilanları tanıyordu. Kullanıcının yayımladığı
+   * her ilan, oluşturulduğu anda 404 veriyordu: kayıt veritabanına
+   * yazılıyor, pazaryeri listesinde görünüyor, ama detayına
+   * gidilemiyordu. Öteki detay sayfaları (etkinlik, fotoğraf) katalog
+   * kancasını kullanıyordu; ilan tek başına statik dosyada kalmıştı.
+   */
+  const { listing: bulunan, loading } = useListingBySlug(slug);
+  const listing = bulunan ?? undefined;
 
   const related = useMemo(
     () => (listing ? relatedListings(listing) : []),
@@ -60,6 +72,17 @@ export function ListingDetailPage() {
   const model = listing?.equipmentSlug
     ? getEquipmentBySlug(listing.equipmentSlug)
     : undefined;
+
+  /* YÜKLENİRKEN 404 ÇİZİLMİYOR. Sorgu bir tur sürüyor; o sırada
+     "sayfa bulunamadı" göstermek, var olan bir ilanı yok gibi
+     gösterirdi ve kullanıcı sayfayı kapatırdı. */
+  if (loading) {
+    return (
+      <Container className="py-16">
+        <p className="text-body-sm text-muted-foreground">İlan yükleniyor…</p>
+      </Container>
+    );
+  }
 
   if (!listing) return <NotFoundPage />;
 
@@ -247,10 +270,24 @@ export function ListingDetailPage() {
               </div>
 
               <SpecList className="mt-2">
+                {/*
+                  SIFIR PUAN "0.0 / 5" DİYE BASILMIYOR.
+
+                  Veritabanından gelen her satıcının puanı 0: puanlama
+                  henüz üretilmiyor (`mapListingRow`). "0.0 / 5" yazmak
+                  yeni satıcıyı KÖTÜ PUANLI gösteriyordu — olmayan bir
+                  güven işaretini var göstermek kadar zararlı, çünkü
+                  alıcı bunu bir hüküm sanıyor. Veri yokken cümle de
+                  yok.
+                */}
                 <SpecRow
                   label="Değerlendirme"
-                  value={`${listing.seller.rating.toFixed(1)} / 5`}
-                  tone="primary"
+                  value={
+                    listing.seller.rating > 0
+                      ? `${listing.seller.rating.toFixed(1)} / 5`
+                      : 'Henüz değerlendirme yok'
+                  }
+                  tone={listing.seller.rating > 0 ? 'primary' : undefined}
                 />
                 {listing.seller.sales !== undefined && (
                   <SpecRow

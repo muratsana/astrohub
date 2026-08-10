@@ -12,6 +12,7 @@ import {
   type Listing,
   type ListingCondition,
   type ListingStatus,
+  getListingBySlug,
 } from '@/features/marketplace/data';
 /* Taksonomiden — kataloğun kendisi burada gerekmiyor ve onu çekmek
    ana sayfa paketine 80 kB ekliyordu (bkz. taxonomy.ts). */
@@ -284,6 +285,107 @@ export function useMyListings(userId: string | undefined): MyListingsState {
 
   const refresh = useCallback(() => setTick((t) => t + 1), []);
   return { listings, loading, error, refresh };
+}
+
+/* ══════════════════════ Tek ilan (detay sayfası) ══════════════════════ */
+
+export interface ListingDetailState {
+  listing: Listing | null;
+  loading: boolean;
+  /** Veritabanı okunamadı; tohumda da yoksa sayfa 404 çiziyor. */
+  error: string | null;
+}
+
+/**
+ * Slug'a göre TEK ilan — detay sayfasının veri yolu.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * BU KANCA NEDEN VAR: DETAY SAYFASI VERİTABANINI HİÇ OKUMUYORDU
+ *
+ * `ListingDetailPage` ilanı `data.ts` içindeki statik listeden buluyordu
+ * (`getListingBySlug`). Sonuç: kullanıcının AÇTIĞI her ilan, yayımlandığı
+ * anda 404 veriyordu. İlan veritabanına yazılıyor, pazaryeri listesinde
+ * görünüyor, ama detayına gidilemiyordu — planın FAZ 16'da "yol
+ * bulunamadı" diye kaydettiği hata tam olarak buydu. Öteki bütün detay
+ * sayfaları (etkinlik, fotoğraf) katalog kancasını kullanıyordu; ilan
+ * tek başına statik dosyada kalmıştı.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * NEDEN `useListings()` İÇİNDEN ARAMIYORUZ
+ *
+ * Liste sorgusu yalnızca YAYINDAKİ ve satılmamış ilanları çekiyor, üstelik
+ * 200 satırla sınırlı. Detay sayfası bundan fazlasını görmeli:
+ *
+ *   · Satıcı kendi arşivlediği/satıldı işaretlediği ilanın sayfasını
+ *     açabilmeli (aksi hâlde geri alması imkânsız).
+ *   · Satılmış bir ilanın paylaşılmış bağlantısı ölmemeli.
+ *   · 201. ilan da açılabilmeli.
+ *
+ * Bu yüzden sorgu durum SÜZGECİ TAŞIMIYOR: kimin neyi görebileceğine
+ * RLS karar veriyor (`listings_read`) ve kural tek yerde kalıyor.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * TOHUM YEDEĞİ KORUNUYOR
+ *
+ * `data.ts` içindeki örnek ilanların adresleri hâlâ çalışıyor: veritabanı
+ * yapılandırılmamışsa ya da satır bulunamazsa tohuma bakılıyor. Önizleme
+ * derlemesi ve çevrimdışı geliştirme bu sayede ayakta.
+ */
+export function useListingBySlug(slug: string | undefined): ListingDetailState {
+  const [listing, setListing] = useState<Listing | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    const tohum = slug ? (getListingBySlug(slug) ?? null) : null;
+
+    if (!slug) {
+      setListing(null);
+      setLoading(false);
+      return;
+    }
+
+    const clientPromise = getSupabase();
+    if (!clientPromise) {
+      setListing(tohum);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    clientPromise
+      .then(async (client) => {
+        const { data, error: queryError } = await client
+          .from('listings')
+          .select(SELECT)
+          .eq('slug', slug)
+          .maybeSingle();
+        if (queryError) throw new Error(queryError.message);
+        return data ? mapListingRow(data as unknown as ListingRow) : null;
+      })
+      .then((row) => {
+        if (!active) return;
+        /* Satır yoksa tohuma düşüyoruz — örnek ilanların adresleri
+           veritabanında karşılığı olmadan da açılıyor. */
+        setListing(row ?? tohum);
+        setError(null);
+      })
+      .catch((e: unknown) => {
+        if (!active) return;
+        setListing(tohum);
+        setError(e instanceof Error ? e.message : 'İlan okunamadı');
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [slug]);
+
+  return { listing, loading, error };
 }
 
 /* ══════════════════════ Yazma ══════════════════════ */
