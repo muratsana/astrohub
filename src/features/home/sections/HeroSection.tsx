@@ -391,7 +391,7 @@ export function HeroSection() {
           </div>
 
           {slide.mediaBadge && (
-            <span className="absolute left-0 top-4 z-20 rounded-card border border-success/50 bg-background/85 px-2 py-1 text-meta font-medium tracking-[0.03em] text-success backdrop-blur-sm">
+            <span className="absolute left-5 top-4 z-20 rounded-card border border-success/50 bg-background/85 px-2 py-1 text-meta font-medium tracking-[0.03em] text-success backdrop-blur-sm sm:left-16 lg:left-20">
               {slide.mediaBadge}
             </span>
           )}
