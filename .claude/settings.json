@@ -163,6 +163,7 @@
       "Bash(rm -r .git:*)",
       "Bash(rm -rf src:*)",
       "Bash(rm -rf supabase:*)"
-    ]
+    ],
+    "defaultMode": "acceptEdits"
   }
 }

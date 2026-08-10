@@ -5,6 +5,8 @@ import { Container } from '@/components/ui/Container';
 import { MenuIcon, UserIcon } from '@/components/ui/icons';
 import { useMenu } from '@/features/site/SiteConfigContext';
 import { useAuth } from '@/features/auth/AuthContext';
+import { useMyProfile } from '@/services/content/profile';
+import { AccountMenu } from './AccountMenu';
 import { ThemeToggle } from '@/features/theme/ThemeToggle';
 import { RadioToggle } from '@/features/radio/RadioToggle';
 import { TvToggle } from '@/features/tv/TvToggle';
@@ -68,6 +70,9 @@ export function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
     dönüşüyor.
   */
   const { user, loading } = useAuth();
+  /* Menüdeki "Profilim" için kullanıcı adı gerekiyor; profil zaten
+     önbellekli okunuyor ve yoksa giriş hiç çizilmiyor. */
+  const { profile } = useMyProfile(user?.id);
 
   return (
     <header className="bg-background">
@@ -285,9 +290,7 @@ export function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
             */}
             <span className="hidden items-center gap-2 sm:flex">
               {loading ? null : user ? (
-                <ButtonLink to="/hesap" size="sm" variant="secondary">
-                  Hesabım
-                </ButtonLink>
+                <AccountMenu username={profile?.username} />
               ) : (
                 <>
                   <ButtonLink to="/giris" size="sm" variant="secondary">

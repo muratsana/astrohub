@@ -1,3 +1,4 @@
+import { UpLink } from '@/components/ui/UpLink';
 import { Link, useParams } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { ReadingLayout } from '@/components/ui/ReadingLayout';
@@ -169,12 +170,7 @@ export function ArticleDetailPage() {
         >
           <article>
             <nav aria-label="İz" className="label mb-5">
-              <Link
-                to="/yazilar"
-                className="transition-colors hover:text-primary"
-              >
-                ← Yazılar
-              </Link>
+              <UpLink etiket="Yazılar" />
             </nav>
 
             <h1 className="type-page-lg text-foreground">{article.title}</h1>
