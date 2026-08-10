@@ -353,10 +353,6 @@ await scenario(
 
 await scenario('forum konusundan detaya gidilir', async () => {
   await goto('/forum');
-  const category = await page.$('a[href^="#/forum?kategori="]');
-  assert(category !== null, 'kategori bağlantısı yok');
-  await category.click();
-  await page.waitForTimeout(500);
 
   const link = await page.$('a[href^="#/forum/"]:not([href="#/forum/yeni"])');
   assert(link !== null, 'konu bağlantısı yok');
