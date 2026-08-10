@@ -253,4 +253,44 @@ describe('cihaz konumu — ilçe etiketi', () => {
       expect(screen.getByTestId('etiket')).toHaveTextContent('Ankara')
     );
   });
+
+  it('ilk deneme zaman aşımına düşerse ikinci denemede yüksek doğruluk istemiyor', async () => {
+    vi.mocked(fetchDistricts).mockResolvedValue([]);
+    const calls: PositionOptions[] = [];
+    vi.stubGlobal('navigator', {
+      ...navigator,
+      geolocation: {
+        getCurrentPosition: (
+          ok: PositionCallback,
+          hata?: PositionErrorCallback | null,
+          options?: PositionOptions
+        ) => {
+          calls.push(options ?? {});
+          if (calls.length === 1) {
+            hata?.({
+              code: 3,
+              message: 'timeout',
+              PERMISSION_DENIED: 1,
+              POSITION_UNAVAILABLE: 2,
+              TIMEOUT: 3,
+            } as GeolocationPositionError);
+            return;
+          }
+          ok({ coords: CIHAZ } as unknown as GeolocationPosition);
+        },
+      },
+      permissions: undefined,
+    });
+
+    await calistir();
+
+    await waitFor(() =>
+      expect(screen.getByTestId('etiket')).toHaveTextContent('Ankara')
+    );
+    expect(calls).toHaveLength(2);
+    expect(calls[1]).toMatchObject({
+      enableHighAccuracy: false,
+      timeout: 30_000,
+    });
+  });
 });
