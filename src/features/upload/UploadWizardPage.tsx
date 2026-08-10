@@ -1,3 +1,4 @@
+import { useFilterSuggestions } from '@/services/content/filterSuggestions';
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { useAuth } from '@/features/auth/AuthContext';
@@ -176,6 +177,8 @@ const initialState: WizardState = {
  * sonraki okuyucuyu var olan bir özelliği yeniden yazmaya iter.
  */
 export function UploadWizardPage() {
+  /* Filtre önerileri: sık kullanılan sekizli + katalog (§17.1). */
+  const filtreOnerileri = useFilterSuggestions();
   /*
    * KIRPMA DURUMU DOSYADAN AYRI TUTULUYOR.
    *
@@ -863,6 +866,18 @@ export function UploadWizardPage() {
                   ))}
                 </Select>
               </Field>
+              {/*
+                ÖNERİ LİSTESİ SATIR BAŞINA DEĞİL, BİR KEZ.
+                Her poz satırına ayrı `<datalist>` koysaydık aynı yüz
+                seçenek satır sayısı kadar DOM'a yazılırdı; on satırlık
+                bir pozlama künyesinde bin düğüm eder.
+              */}
+              <datalist id="filtre-onerileri">
+                {filtreOnerileri.map((f) => (
+                  <option key={f.value} value={f.value} label={f.hint} />
+                ))}
+              </datalist>
+
               <div className="space-y-3">
                 {state.exposures.map((row, i) => (
                   <div
@@ -872,6 +887,8 @@ export function UploadWizardPage() {
                     <Field label={i === 0 ? 'Filtre' : ''} htmlFor={`f-${i}`}>
                       <Input
                         id={`f-${i}`}
+                        list="filtre-onerileri"
+                        placeholder="L, Hα, OIII…"
                         value={row.filter}
                         onChange={(e) => {
                           const next = [...state.exposures];

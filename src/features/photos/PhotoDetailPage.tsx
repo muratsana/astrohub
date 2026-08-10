@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { useUpNavigation } from '@/app/useUpNavigation';
 import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router';
@@ -337,14 +338,39 @@ function CaptureTab({ photo }: { photo: AstroPhoto }) {
   );
 }
 
+/**
+ * KÜNYEDEKİ EKİPMAN TIKLANABİLİR (§17.6).
+ *
+ * "Bu teleskopla başka ne çekilmiş" sorusunun cevabı galeride var ama
+ * oraya ulaşmanın yolu yoktu: kullanıcı adı kopyalayıp galeriye gidip
+ * süzgeci elle kurmak zorundaydı. Bağlantı doğrudan süzgeçlenmiş
+ * galeriye gidiyor — süzgeç parametresi `gallerySpec`teki `param`
+ * değeriyle aynı olmak ZORUNDA, yoksa bağlantı galeriyi süzgeçsiz açar
+ * ve hata sessiz olur.
+ */
+function EkipmanBaglantisi({ param, value }: { param: string; value: string }) {
+  /* Boş ya da "—" değerde bağlantı çizilmiyor: hiçbir fotoğrafın
+     eşleşmediği bir süzgece götürmek, çalışmayan bir düğmedir. */
+  if (!value || value === '—') return <>{value || '—'}</>;
+
+  return (
+    <Link
+      to={`/galeri?${param}=${encodeURIComponent(value)}`}
+      className="text-foreground underline decoration-border underline-offset-4 transition-colors hover:text-primary hover:decoration-primary"
+    >
+      {value}
+    </Link>
+  );
+}
+
 function EquipmentTab({ photo }: { photo: AstroPhoto }) {
   const s = photo.setup;
   return (
     <div className="space-y-6">
       <DL
         rows={[
-          ['Optik', s.optic],
-          ['Kamera', s.camera],
+          ['Optik', <EkipmanBaglantisi key="o" param="optik" value={s.optic} />],
+          ['Kamera', <EkipmanBaglantisi key="k" param="kamera" value={s.camera} />],
           ['Montür', s.mount],
           ['Guiding', s.guiding ?? '—'],
           ['Filtreler', s.filters ?? '—'],
@@ -743,7 +769,7 @@ function LocationTab({ photo }: { photo: AstroPhoto }) {
 
 /* ── Küçük yardımcılar ── */
 
-function DL({ rows }: { rows: [string, string][] }) {
+function DL({ rows }: { rows: [string, ReactNode][] }) {
   return (
     <dl className="grid gap-x-8 gap-y-3 sm:grid-cols-2">
       {rows.map(([label, value]) => (

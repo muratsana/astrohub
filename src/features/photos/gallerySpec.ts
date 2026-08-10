@@ -34,6 +34,10 @@ export const gallerySpec: ExplorerSpec<AstroPhoto> = {
     p.user.username,
     p.user.displayName,
     p.city,
+    /* Ekipman arama metnine dahil: "Newton" ya da "ASI294" yazan biri
+       süzgeci bulmak zorunda kalmasın (§17.7). */
+    p.setup.optic,
+    p.setup.camera,
   ],
 
   facets: [
@@ -45,6 +49,21 @@ export const gallerySpec: ExplorerSpec<AstroPhoto> = {
     },
     { param: 'palet', label: 'Palet', valueOf: (p) => p.palette },
     { param: 'sehir', label: 'Şehir', valueOf: (p) => p.city },
+    /*
+     * EKİPMAN SÜZGEÇLERİ (§17.7).
+     *
+     * Optik ve kamera AYRI süzgeç, birleşik bir "ekipman" değil: kimse
+     * "şu teleskop + şu kamera" ikilisini birlikte aramıyor; ya belirli
+     * bir teleskobun ne yapabildiğini merak ediyor ya belirli bir
+     * kameranın. Tek süzgeçte birleştirseydik her kombinasyon ayrı bir
+     * seçenek olurdu ve liste kullanılamaz hale gelirdi.
+     *
+     * Montür bilerek YOK: montür görüntünün kendisine değil takip
+     * kalitesine etki ediyor ve "bu montürle çekilenler" sorusunun
+     * karşılığı ekipman sayfasında, galeride değil.
+     */
+    { param: 'optik', label: 'Optik', valueOf: (p) => p.setup.optic },
+    { param: 'kamera', label: 'Kamera', valueOf: (p) => p.setup.camera },
   ],
 
   sorts: [
