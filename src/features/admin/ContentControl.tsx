@@ -188,6 +188,13 @@ function categoryLabels(kind: EntryKind): Record<string, string> {
   return faqCategoryLabels;
 }
 
+const ENTRY_KIND_LABELS: Record<EntryKind, string> = {
+  haber: 'Haberler',
+  yazi: 'Yazılar',
+  sozluk: 'Sözlük',
+  sss: 'SSS',
+};
+
 export function ContentControl({
   canWrite,
   initialKind = 'haber',
@@ -197,38 +204,13 @@ export function ContentControl({
   initialKind?: EntryKind;
   initialSlug?: string | null;
 }) {
-  const [kind, setKind] = useState<EntryKind>(initialKind);
-
-  useEffect(() => {
-    setKind(initialKind);
-  }, [initialKind]);
-
   return (
-    <Panel
-      title="İçerik yönetimi"
-      status={
-        kind === 'haber' || kind === 'yazi' ? (
-          <div className="flex gap-1">
-          {(['haber', 'yazi'] as EntryKind[]).map((k) => (
-            <button
-              key={k}
-              type="button"
-              onClick={() => setKind(k)}
-              className={cn(
-                'rounded-card border px-2 py-0.5 text-meta transition-colors',
-                kind === k
-                  ? 'border-primary text-primary'
-                  : 'border-border text-muted-foreground hover:text-foreground'
-              )}
-            >
-              {k === 'haber' ? 'Haberler' : 'Yazılar'}
-            </button>
-          ))}
-          </div>
-        ) : null
-      }
-    >
-      <KindEditor kind={kind} canWrite={canWrite} initialSlug={initialSlug} />
+    <Panel title={`${ENTRY_KIND_LABELS[initialKind]} yönetimi`}>
+      <KindEditor
+        kind={initialKind}
+        canWrite={canWrite}
+        initialSlug={initialSlug}
+      />
     </Panel>
   );
 }
@@ -359,14 +341,17 @@ function KindEditor({
 
   const problem = draft ? validateEntry(draft) : null;
 
-  return (
-    <div className="grid gap-3 lg:grid-cols-[minmax(0,300px)_minmax(0,1fr)]">
-      {/* Liste */}
-      <div>
-        <div className="mb-2 flex items-center justify-between gap-2">
-          <span className="label">
-            {visibleEntries.length} kayıt{loading ? ' · yükleniyor' : ''}
-          </span>
+  if (!draft) {
+    return (
+      <div className="space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <p className="label text-foreground">{ENTRY_KIND_LABELS[kind]}</p>
+            <p className="text-meta text-muted-foreground">
+              {visibleEntries.length} kayıt{loading ? ' · yükleniyor' : ''} ·
+              içerik seçip düzenle butonuyla tam sayfa editöre geçin
+            </p>
+          </div>
           <Button size="sm" onClick={startNew} disabled={!canWrite}>
             Yeni
           </Button>
@@ -383,35 +368,45 @@ function KindEditor({
             Henüz kayıt yok. "Yeni" ile ilk içeriği oluşturun.
           </p>
         ) : (
-          <ul className="max-h-[420px] space-y-1 overflow-y-auto">
+          <ul className="divide-y divide-border rounded-card border border-border bg-surface-1">
             {visibleEntries.map((entry) => (
               <li key={entry.id}>
                 <div
                   className={cn(
-                    'rounded-card border px-2 py-1.5',
+                    'grid gap-3 px-3 py-3 md:grid-cols-[minmax(0,1fr)_auto]',
                     editing?.id === entry.id
-                      ? 'border-primary/50 bg-surface-2'
-                      : 'border-border bg-surface-2/50'
+                      ? 'bg-surface-2'
+                      : 'bg-surface-1 hover:bg-surface-2/60'
                   )}
                 >
-                  <button
-                    type="button"
-                    onClick={() => startEdit(entry)}
-                    className="block w-full text-left"
-                  >
-                    <span className="line-clamp-2 text-body-sm leading-snug text-foreground">
+                  <div className="min-w-0">
+                    <span className="line-clamp-2 text-body-sm font-medium leading-snug text-foreground">
                       {entry.title}
                     </span>
                     <span className="tabular mt-0.5 block text-meta text-faint">
                       {entry.publishedAt} · {entry.slug}
                     </span>
-                  </button>
+                    {entry.summary && (
+                      <p className="mt-1 line-clamp-2 text-meta leading-relaxed text-muted-foreground">
+                        {entry.summary}
+                      </p>
+                    )}
+                  </div>
 
-                  <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                  <div className="flex flex-wrap items-center gap-1.5 md:justify-end">
                     <Badge tone={durumTonu(entry.status)}>
                       {contentStatusLabels[entry.status]}
                     </Badge>
                     {isSeedEntry(entry) && <Badge tone="muted">Tohum</Badge>}
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="secondary"
+                      aria-label={`Düzenle ${entry.title} ${entry.publishedAt} · ${entry.slug}`}
+                      onClick={() => startEdit(entry)}
+                    >
+                      Düzenle
+                    </Button>
 
                     {/* İncelemedeki katkının iki cevabı var. */}
                     {isSeedEntry(entry) ? (
@@ -546,36 +541,44 @@ function KindEditor({
             ))}
           </ul>
         )}
+        {message && (
+          <p className="mt-2 text-meta text-muted-foreground">{message}</p>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-card border border-border bg-surface-1 px-3 py-2">
+        <div>
+          <p className="label text-primary">
+            {ENTRY_KIND_LABELS[kind]} / {editing ? 'Düzenle' : 'Yeni içerik'}
+          </p>
+          <h3 className="mt-1 text-body-lg font-semibold text-foreground">
+            {draft.title || 'Başlıksız içerik'}
+          </h3>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button onClick={save} disabled={!canWrite || busy || !!problem}>
+            {busy ? 'Kaydediliyor…' : 'Kaydet'}
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => {
+              setDraft(null);
+              setEditing(null);
+            }}
+          >
+            Listeye dön
+          </Button>
+        </div>
       </div>
 
-      {/* Form */}
-      <div>
-        {!draft ? (
-          <p className="rounded-card border border-border bg-surface-2/50 px-3 py-8 text-center text-body-sm leading-relaxed text-muted-foreground">
-            Soldan bir kayıt seçin ya da "Yeni" ile içerik oluşturun.
-            <br />
-            <span className="text-faint">
-              Yeni kayıtlar taslak olarak açılır; yayına almak ayrı bir adımdır.
-            </span>
-          </p>
-        ) : (
-          <div className="grid gap-2.5 rounded-card border border-border bg-surface-1 p-3">
-            <div className="flex items-baseline justify-between gap-2">
-              <h3 className="label text-foreground">
-                {editing ? 'Düzenle' : 'Yeni içerik'}
-              </h3>
-              <button
-                type="button"
-                onClick={() => {
-                  setDraft(null);
-                  setEditing(null);
-                }}
-                className="text-meta text-muted-foreground hover:text-foreground"
-              >
-                Kapat
-              </button>
-            </div>
-
+      <div className="grid gap-3 rounded-card border border-border bg-surface-1 p-3">
+        <div className="grid gap-2.5 xl:grid-cols-[minmax(0,1fr)_360px]">
+          <div className="space-y-2.5">
             <Field label="Başlık" htmlFor="c-title">
               <Input
                 id="c-title"
@@ -653,241 +656,300 @@ function KindEditor({
                 className="w-full resize-y rounded-card border border-border bg-surface-2 px-2.5 py-2 text-meta leading-relaxed text-foreground outline-none focus:border-primary"
               />
             </Field>
+          </div>
 
-            <div className="grid gap-2.5 xl:grid-cols-2">
-              <div>
-                <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
-                  <div>
-                    <p className="label">İçerik editörü</p>
-                    <p className="text-meta text-faint">
-                      Word benzeri editör: başlık, kalın, eğik, liste, alıntı
-                      ve bağlantıyı doğrudan yazı içinde düzenleyin.
-                    </p>
-                  </div>
-                  {!editing && (
-                    <label className="cursor-pointer rounded-card border border-border px-2 py-1 text-meta text-cold hover:border-primary hover:text-primary">
-                      {importing
-                        ? 'İçe aktarılıyor…'
-                        : 'Yeni içerik: HTML / Word / PDF içe aktar'}
-                      <input
-                        type="file"
-                        accept=".html,.htm,.docx,.pdf,text/html,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                        disabled={!canWrite || importing}
-                        className="sr-only"
-                        onChange={async (event) => {
-                          const file = event.target.files?.[0];
-                          event.target.value = '';
-                          if (!file) return;
-                          setImporting(true);
-                          setImportWarnings([]);
-                          try {
-                            const result = await importContentFile(file);
-                            if (result.blocks.length === 0)
-                              throw new Error(
-                                'Belgede aktarılabilir metin bulunamadı.'
-                              );
-                            const mevcut = draft?.bodyBlocks ?? [];
-                            const eklendi = mevcut.length > 0;
-                            const blocks = eklendi
-                              ? [...mevcut, ...result.blocks]
-                              : result.blocks;
-                            setDraft((current) =>
-                              current
-                                ? {
-                                    ...current,
-                                    bodyBlocks: blocks,
-                                    bodyText: blocksToText(blocks),
-                                  }
-                                : current
-                            );
-                            setImportWarnings([
-                              ...(eklendi
-                                ? [
-                                    `${result.blocks.length} blok mevcut yeni içeriğin SONUNA eklendi; yazdıklarınız silinmedi.`,
-                                  ]
-                                : []),
-                              ...result.warnings,
-                            ]);
-                          } catch (error) {
-                            setMessage(
-                              error instanceof Error
-                                ? error.message
-                                : 'Belge içe aktarılamadı.'
-                            );
-                          } finally {
-                            setImporting(false);
-                          }
-                        }}
-                      />
-                    </label>
-                  )}
-                </div>
-                <RichContentEditor
-                  blocks={draft.bodyBlocks}
-                  placeholder="İçeriği buraya yazın veya yeni içerikte HTML / Word / PDF içe aktarın."
-                  onChange={(blocks) =>
-                    setDraft((current) =>
-                      current
-                        ? {
-                            ...current,
-                            bodyBlocks: blocks,
-                            bodyText: blocksToText(blocks),
-                          }
-                        : current
-                    )
-                  }
-                />
-                {importWarnings.length > 0 && (
-                  <ul className="mt-2 rounded-card border border-warning/40 bg-warning/5 px-3 py-2 text-meta leading-relaxed text-warning">
-                    {importWarnings.map((warning, index) => (
-                      <li key={`${warning}-${index}`}>• {warning}</li>
-                    ))}
-                  </ul>
-                )}
+          <div className="space-y-2.5 rounded-card border border-border bg-background p-3">
+            <div className="flex items-center justify-between gap-2">
+              <p className="label">Görsel</p>
+              <Button
+                type="button"
+                size="sm"
+                variant="danger"
+                disabled={!draft.imageUrl && !draft.imageCredit && !draft.imageLicence}
+                onClick={() =>
+                  setDraft((d) =>
+                    d
+                      ? {
+                          ...d,
+                          imageUrl: '',
+                          imageCredit: '',
+                          imageLicence: '',
+                        }
+                      : d
+                  )
+                }
+              >
+                Görseli kaldır
+              </Button>
+            </div>
+            {draft.imageUrl ? (
+              <img
+                src={draft.imageUrl}
+                alt=""
+                className="aspect-video w-full rounded-card border border-border object-cover"
+              />
+            ) : (
+              <div className="grid aspect-video place-items-center rounded-card border border-dashed border-border text-meta text-faint">
+                Görsel yok
               </div>
+            )}
+            <Field label="Görsel adresi" htmlFor="c-img">
+              <Input
+                id="c-img"
+                value={draft.imageUrl}
+                placeholder="https://"
+                onChange={(e) =>
+                  setDraft((d) =>
+                    d ? { ...d, imageUrl: e.target.value } : d
+                  )
+                }
+              />
+            </Field>
+            <Field
+              label="Görsel kredisi"
+              htmlFor="c-credit"
+              hint="Görsel eklediyseniz zorunlu."
+            >
+              <Input
+                id="c-credit"
+                value={draft.imageCredit}
+                placeholder="NASA, ESA"
+                onChange={(e) =>
+                  setDraft((d) =>
+                    d ? { ...d, imageCredit: e.target.value } : d
+                  )
+                }
+              />
+            </Field>
+            <Field label="Lisans" htmlFor="c-licence">
+              <Input
+                id="c-licence"
+                value={draft.imageLicence}
+                placeholder="CC BY 4.0"
+                onChange={(e) =>
+                  setDraft((d) =>
+                    d ? { ...d, imageLicence: e.target.value } : d
+                  )
+                }
+              />
+            </Field>
+          </div>
+        </div>
 
-              <div className="rounded-card border border-border bg-background p-3">
-                <p className="label mb-3">Canlı site önizlemesi</p>
-                {draft.bodyBlocks.length > 0 ? (
-                  <BlockRenderer blocks={draft.bodyBlocks} />
-                ) : (
-                  <p className="py-8 text-center text-meta text-faint">
-                    Önizleme için bir blok ekleyin.
-                  </p>
+        <div className="grid gap-2.5 sm:grid-cols-3">
+          <Field label="Yayın tarihi" htmlFor="c-date">
+            <Input
+              id="c-date"
+              type="date"
+              value={draft.publishedAt}
+              onChange={(e) =>
+                setDraft((d) =>
+                  d ? { ...d, publishedAt: e.target.value } : d
+                )
+              }
+            />
+          </Field>
+          <Field
+            label={kind === 'haber' ? 'Kaynak adı' : 'Yazar'}
+            htmlFor="c-author"
+          >
+            <Input
+              id="c-author"
+              value={kind === 'haber' ? draft.sourceName : draft.author}
+              onChange={(e) =>
+                setDraft((d) =>
+                  d
+                    ? kind === 'haber'
+                      ? { ...d, sourceName: e.target.value }
+                      : { ...d, author: e.target.value }
+                    : d
+                )
+              }
+            />
+          </Field>
+          <Field
+            label={kind === 'haber' ? 'Kaynak adresi' : 'Okuma süresi'}
+            htmlFor="c-meta"
+          >
+            <Input
+              id="c-meta"
+              value={kind === 'haber' ? draft.sourceUrl : draft.duration}
+              placeholder={kind === 'haber' ? 'https://' : '10 dk okuma'}
+              onChange={(e) =>
+                setDraft((d) =>
+                  d
+                    ? kind === 'haber'
+                      ? { ...d, sourceUrl: e.target.value }
+                      : { ...d, duration: e.target.value }
+                    : d
+                )
+              }
+            />
+          </Field>
+        </div>
+
+        <div>
+          <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <p className="label">İçerik editörü</p>
+              <p className="text-meta text-faint">
+                Word benzeri editör: başlık, kalın, eğik, liste, alıntı ve
+                bağlantıyı doğrudan yazı içinde düzenleyin.
+              </p>
+            </div>
+            {!editing && (
+              <label className="cursor-pointer rounded-card border border-border px-2 py-1 text-meta text-cold hover:border-primary hover:text-primary">
+                {importing
+                  ? 'İçe aktarılıyor…'
+                  : 'Yeni içerik: HTML / Word / PDF içe aktar'}
+                <input
+                  type="file"
+                  accept=".html,.htm,.docx,.pdf,text/html,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                  disabled={!canWrite || importing}
+                  className="sr-only"
+                  onChange={async (event) => {
+                    const file = event.target.files?.[0];
+                    event.target.value = '';
+                    if (!file) return;
+                    setImporting(true);
+                    setImportWarnings([]);
+                    try {
+                      const result = await importContentFile(file);
+                      if (result.blocks.length === 0)
+                        throw new Error(
+                          'Belgede aktarılabilir metin bulunamadı.'
+                        );
+                      const mevcut = draft.bodyBlocks;
+                      const eklendi = mevcut.length > 0;
+                      const blocks = eklendi
+                        ? [...mevcut, ...result.blocks]
+                        : result.blocks;
+                      setDraft((current) =>
+                        current
+                          ? {
+                              ...current,
+                              bodyBlocks: blocks,
+                              bodyText: blocksToText(blocks),
+                            }
+                          : current
+                      );
+                      setImportWarnings([
+                        ...(eklendi
+                          ? [
+                              `${result.blocks.length} blok mevcut yeni içeriğin SONUNA eklendi; yazdıklarınız silinmedi.`,
+                            ]
+                          : []),
+                        ...result.warnings,
+                      ]);
+                    } catch (error) {
+                      setMessage(
+                        error instanceof Error
+                          ? error.message
+                          : 'Belge içe aktarılamadı.'
+                      );
+                    } finally {
+                      setImporting(false);
+                    }
+                  }}
+                />
+              </label>
+            )}
+          </div>
+          <RichContentEditor
+            blocks={draft.bodyBlocks}
+            placeholder="İçeriği buraya yazın veya yeni içerikte HTML / Word / PDF içe aktarın."
+            onChange={(blocks) =>
+              setDraft((current) =>
+                current
+                  ? {
+                      ...current,
+                      bodyBlocks: blocks,
+                      bodyText: blocksToText(blocks),
+                    }
+                  : current
+              )
+            }
+          />
+          {importWarnings.length > 0 && (
+            <ul className="mt-2 rounded-card border border-warning/40 bg-warning/5 px-3 py-2 text-meta leading-relaxed text-warning">
+              {importWarnings.map((warning, index) => (
+                <li key={`${warning}-${index}`}>• {warning}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <div className="rounded-card border border-border bg-background p-4">
+          <p className="label mb-3">Canlı site önizlemesi</p>
+          <article className="space-y-4">
+            {draft.imageUrl && (
+              <figure className="space-y-1">
+                <img
+                  src={draft.imageUrl}
+                  alt=""
+                  className="max-h-[28rem] w-full rounded-card border border-border object-cover"
+                />
+                {(draft.imageCredit || draft.imageLicence) && (
+                  <figcaption className="text-meta text-faint">
+                    {[draft.imageCredit, draft.imageLicence]
+                      .filter(Boolean)
+                      .join(' · ')}
+                  </figcaption>
                 )}
-              </div>
+              </figure>
+            )}
+            <div>
+              <h1 className="font-display text-2xl font-bold text-foreground">
+                {draft.title || 'Başlıksız içerik'}
+              </h1>
+              {draft.summary && (
+                <p className="mt-2 text-body-sm leading-relaxed text-muted-foreground">
+                  {draft.summary}
+                </p>
+              )}
             </div>
-
-            <div className="grid gap-2.5 sm:grid-cols-3">
-              <Field label="Yayın tarihi" htmlFor="c-date">
-                <Input
-                  id="c-date"
-                  type="date"
-                  value={draft.publishedAt}
-                  onChange={(e) =>
-                    setDraft((d) =>
-                      d ? { ...d, publishedAt: e.target.value } : d
-                    )
-                  }
-                />
-              </Field>
-              <Field
-                label={kind === 'haber' ? 'Kaynak adı' : 'Yazar'}
-                htmlFor="c-author"
-              >
-                <Input
-                  id="c-author"
-                  value={kind === 'haber' ? draft.sourceName : draft.author}
-                  onChange={(e) =>
-                    setDraft((d) =>
-                      d
-                        ? kind === 'haber'
-                          ? { ...d, sourceName: e.target.value }
-                          : { ...d, author: e.target.value }
-                        : d
-                    )
-                  }
-                />
-              </Field>
-              <Field
-                label={kind === 'haber' ? 'Kaynak adresi' : 'Okuma süresi'}
-                htmlFor="c-meta"
-              >
-                <Input
-                  id="c-meta"
-                  value={kind === 'haber' ? draft.sourceUrl : draft.duration}
-                  placeholder={kind === 'haber' ? 'https://' : '10 dk okuma'}
-                  onChange={(e) =>
-                    setDraft((d) =>
-                      d
-                        ? kind === 'haber'
-                          ? { ...d, sourceUrl: e.target.value }
-                          : { ...d, duration: e.target.value }
-                        : d
-                    )
-                  }
-                />
-              </Field>
-            </div>
-
-            {/* Görsel — kredi zorunlu, gerekçesi ipucunda. */}
-            <div className="grid gap-2.5 sm:grid-cols-3">
-              <Field label="Görsel adresi" htmlFor="c-img">
-                <Input
-                  id="c-img"
-                  value={draft.imageUrl}
-                  placeholder="https://"
-                  onChange={(e) =>
-                    setDraft((d) =>
-                      d ? { ...d, imageUrl: e.target.value } : d
-                    )
-                  }
-                />
-              </Field>
-              <Field
-                label="Görsel kredisi"
-                htmlFor="c-credit"
-                hint="Görsel eklediyseniz zorunlu."
-              >
-                <Input
-                  id="c-credit"
-                  value={draft.imageCredit}
-                  placeholder="NASA, ESA"
-                  onChange={(e) =>
-                    setDraft((d) =>
-                      d ? { ...d, imageCredit: e.target.value } : d
-                    )
-                  }
-                />
-              </Field>
-              <Field label="Lisans" htmlFor="c-licence">
-                <Input
-                  id="c-licence"
-                  value={draft.imageLicence}
-                  placeholder="CC BY 4.0"
-                  onChange={(e) =>
-                    setDraft((d) =>
-                      d ? { ...d, imageLicence: e.target.value } : d
-                    )
-                  }
-                />
-              </Field>
-            </div>
-
-            {problem && (
-              <p className="rounded-card border border-warning/40 bg-surface-2 px-2.5 py-2 text-meta leading-snug text-warning">
-                {problem}
+            {draft.bodyBlocks.length > 0 ? (
+              <BlockRenderer blocks={draft.bodyBlocks} />
+            ) : (
+              <p className="py-8 text-center text-meta text-faint">
+                Önizleme için içerik yazın.
               </p>
             )}
+          </article>
+        </div>
 
-            <div className="flex flex-wrap items-center gap-2">
-              <Button onClick={save} disabled={!canWrite || busy || !!problem}>
-                {busy ? 'Kaydediliyor…' : 'Kaydet'}
-              </Button>
-              <label className="inline-flex items-center gap-1.5 text-meta text-muted-foreground">
-                <input
-                  type="checkbox"
-                  checked={draft.status === 'yayinda'}
-                  onChange={(e) =>
-                    setDraft((d) =>
-                      d
-                        ? {
-                            ...d,
-                            status: e.target.checked ? 'yayinda' : 'taslak',
-                          }
-                        : d
-                    )
-                  }
-                  className="h-3.5 w-3.5 accent-[var(--color-primary)]"
-                />
-                Kaydettikten sonra yayında olsun
-              </label>
-            </div>
-          </div>
+        {problem && (
+          <p className="rounded-card border border-warning/40 bg-surface-2 px-2.5 py-2 text-meta leading-snug text-warning">
+            {problem}
+          </p>
         )}
 
+        <div className="flex flex-wrap items-center gap-2">
+          <Button onClick={save} disabled={!canWrite || busy || !!problem}>
+            {busy ? 'Kaydediliyor…' : 'Kaydet'}
+          </Button>
+          <label className="inline-flex items-center gap-1.5 text-meta text-muted-foreground">
+            <input
+              type="checkbox"
+              checked={draft.status === 'yayinda'}
+              onChange={(e) =>
+                setDraft((d) =>
+                  d
+                    ? {
+                        ...d,
+                        status: e.target.checked ? 'yayinda' : 'taslak',
+                      }
+                    : d
+                )
+              }
+              className="h-3.5 w-3.5 accent-[var(--color-primary)]"
+            />
+            Kaydettikten sonra yayında olsun
+          </label>
+        </div>
+
         {message && (
-          <p className="mt-2 text-meta text-muted-foreground">{message}</p>
+          <p className="text-meta text-muted-foreground">{message}</p>
         )}
       </div>
     </div>

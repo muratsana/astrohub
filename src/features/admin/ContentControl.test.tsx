@@ -155,7 +155,7 @@ describe('ContentControl importer akışı', () => {
     renderControl();
     fireEvent.click(
       screen.getByRole('button', {
-        name: 'Örnek Haber 2026-08-10 · ornek-haber',
+        name: 'Düzenle Örnek Haber 2026-08-10 · ornek-haber',
       })
     );
     expect(
@@ -169,7 +169,7 @@ describe('ContentControl importer akışı', () => {
     renderControl();
     expect(
       screen.getByRole('button', {
-        name: 'Canlı Haber 2026-08-09 · canli-haber',
+        name: 'Düzenle Canlı Haber 2026-08-09 · canli-haber',
       })
     ).toBeInTheDocument();
     expect(screen.getByText('Tohum')).toBeInTheDocument();
@@ -180,10 +180,10 @@ describe('ContentControl importer akışı', () => {
     renderKind('sozluk');
     expect(
       screen.getByRole('button', {
-        name: 'Bortle ölçeği 2026-08-01 · bortle-olcegi',
+        name: 'Düzenle Bortle ölçeği 2026-08-01 · bortle-olcegi',
       })
     ).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Haberler' })).toBeNull();
+    expect(screen.queryByRole('heading', { name: 'Haberler yönetimi' })).toBeNull();
   });
 
   it('sss tohum içeriklerini listeler', () => {
@@ -191,7 +191,7 @@ describe('ContentControl importer akışı', () => {
     renderKind('sss');
     expect(
       screen.getByRole('button', {
-        name: 'Astrohub ücretli mi? 2026-08-01 · uyelik-ucretli-mi',
+        name: 'Düzenle Astrohub ücretli mi? 2026-08-01 · uyelik-ucretli-mi',
       })
     ).toBeInTheDocument();
   });
