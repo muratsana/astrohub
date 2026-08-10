@@ -577,7 +577,7 @@ function KindEditor({
         </div>
       </div>
 
-      <div className="grid gap-3 rounded-card border border-border bg-surface-1 p-3">
+      <div className="grid min-h-[calc(100dvh-14rem)] gap-3 rounded-card border border-border bg-surface-1 p-3">
         <div className="grid gap-2.5 xl:grid-cols-[minmax(0,1fr)_360px]">
           <div className="space-y-2.5">
             <Field label="Başlık" htmlFor="c-title">
