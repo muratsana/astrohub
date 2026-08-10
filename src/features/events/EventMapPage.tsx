@@ -24,6 +24,7 @@ import { EventViews } from './EventViews';
 import type { AstroEvent } from './types';
 import { cn } from '@/lib/cn';
 import { TileMap } from '@/features/sky/TileMap';
+import { formatEventDate, formatEventDateRange } from './eventDates';
 import {
   BASEMAP_CREDIT,
   OPACITY_RANGE,
@@ -54,19 +55,6 @@ type SortDirection = 'asc' | 'desc';
 type LocatedEvent = { item: AstroEvent; distanceKm: number };
 const TURKEY_CENTER: LatLng = { lat: 39, lng: 35 };
 const TURKEY_ZOOM = 5;
-
-const shortDateFormatter = new Intl.DateTimeFormat('tr-TR', {
-  day: '2-digit',
-  month: '2-digit',
-  year: 'numeric',
-});
-
-function formatEventDate(value: string | undefined): string {
-  if (!value) return '—';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '—';
-  return shortDateFormatter.format(date);
-}
 
 function sortLocatedEvents(
   items: LocatedEvent[],
@@ -260,7 +248,10 @@ export function EventMapPage() {
               title: featuredItem.title,
               summary: featuredItem.description,
               category: featuredItem.city,
-              meta: formatEventDate(featuredItem.startsAt),
+              meta: formatEventDateRange(
+                featuredItem.startsAt,
+                featuredItem.endsAt
+              ),
               tint: featuredItem.gradient,
               imageUrl: featuredItem.image?.url,
               imageCredit: featuredItem.image
@@ -328,7 +319,8 @@ export function EventMapPage() {
                           {item.title}
                         </span>
                         <span className="mt-1 block truncate text-meta text-muted-foreground">
-                          {item.city} · {formatEventDate(item.startsAt)}
+                          {item.city} ·{' '}
+                          {formatEventDateRange(item.startsAt, item.endsAt)}
                         </span>
                         <span className="mt-1 block text-meta text-cold">
                           {formatLocalDistance(distanceKm)}
@@ -602,7 +594,12 @@ export function EventMapPage() {
                         <span className="min-w-0 truncate text-caption text-foreground">
                           {item.title}
                         </span>
-                        <Badge tone="cold">Çevrimiçi</Badge>
+                        <span className="flex shrink-0 items-center gap-2">
+                          <span className="tabular text-meta text-muted-foreground">
+                            {formatEventDateRange(item.startsAt, item.endsAt)}
+                          </span>
+                          <Badge tone="cold">Çevrimiçi</Badge>
+                        </span>
                       </Link>
                       {item.contact && (
                         <ExternalButtonLink

@@ -15,6 +15,7 @@ import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd, eventJsonLd } from '@/lib/seo';
 import { AdminEditLink } from '@/components/admin/AdminEditLink';
 import { ExternalLink } from '@/components/ExternalLink';
+import { formatEventLongDateRange, formatEventTime } from './eventDates';
 
 /**
  * Etkinlik detay sayfası (§7.6): kapak, temel bilgi, program zaman çizelgesi,
@@ -39,17 +40,8 @@ export function EventDetailPage() {
     );
   }
 
-  const starts = new Date(event.startsAt);
-  const dateLabel = starts.toLocaleDateString('tr-TR', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
-  const timeLabel = starts.toLocaleTimeString('tr-TR', {
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  const dateLabel = formatEventLongDateRange(event.startsAt, event.endsAt);
+  const timeLabel = formatEventTime(event.startsAt);
   const capacity = capacityLabel(event);
 
   return (

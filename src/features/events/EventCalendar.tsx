@@ -11,6 +11,7 @@ import {
   initialMonth,
   startOfDay,
 } from './calendar';
+import { formatEventDateRange } from './eventDates';
 import { cn } from '@/lib/cn';
 
 /**
@@ -171,10 +172,7 @@ export function EventCalendar({ events }: { events: AstroEvent[] }) {
                   className="flex flex-wrap items-baseline gap-x-2 gap-y-1 px-3 py-2 transition-colors hover:bg-surface-2"
                 >
                   <span className="tabular shrink-0 text-meta text-primary">
-                    {new Date(event.startsAt).toLocaleDateString('tr-TR', {
-                      day: '2-digit',
-                      month: 'short',
-                    })}
+                    {formatEventDateRange(event.startsAt, event.endsAt)}
                   </span>
                   <span className="min-w-0 flex-1 truncate text-caption text-foreground">
                     {event.title}
