@@ -63,6 +63,7 @@ export function LocationPicker({
     provinces,
     permission,
     mode,
+    locationError,
     needsPermissionHelp,
     setCity,
     setDistrict,
@@ -179,7 +180,7 @@ export function LocationPicker({
                 : mode === 'UNAVAILABLE'
                   ? 'Bu tarayıcı cihaz konumunu desteklemiyor ya da bağlantı güvenli değil (HTTPS gerekir).'
                   : mode === 'ERROR'
-                    ? 'Konum alınamadı — tekrar denenebilir.'
+                    ? (locationError ?? 'Konum alınamadı, tekrar deneyin.')
                     : 'Koordinat sunucuya gönderilmez'}
             </span>
           </button>

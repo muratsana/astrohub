@@ -1,5 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, within, fireEvent } from '@testing-library/react';
+import {
+  render,
+  screen,
+  within,
+  fireEvent,
+  waitFor,
+} from '@testing-library/react';
 import { LocationPicker } from './LocationPicker';
 import { LocationProvider } from './LocationContext';
 import { resetProvinceCache } from '@/services/content/provinces';
@@ -58,6 +64,7 @@ beforeEach(() => {
 
 afterEach(() => {
   resetProvinceCache();
+  vi.unstubAllGlobals();
 });
 
 async function openPicker() {
@@ -113,5 +120,35 @@ describe('LocationPicker il listesi', () => {
       target: { value: 'zzzz' },
     });
     expect(within(list).getByText(/için il bulunamadı/)).toBeInTheDocument();
+  });
+
+  it('cihaz konum servisi veri döndürmeyince gerçek hata nedenini gösteriyor', async () => {
+    vi.stubGlobal('navigator', {
+      ...navigator,
+      geolocation: {
+        getCurrentPosition: (
+          _ok: PositionCallback,
+          fail?: PositionErrorCallback | null
+        ) =>
+          fail?.({
+            code: 2,
+            message: 'Position update is unavailable',
+            PERMISSION_DENIED: 1,
+            POSITION_UNAVAILABLE: 2,
+            TIMEOUT: 3,
+          } as GeolocationPositionError),
+      },
+      permissions: undefined,
+    });
+
+    const list = await openPicker();
+    fireEvent.click(
+      within(list).getByRole('option', { name: /Otomatik konuma dön/ })
+    );
+    fireEvent.click(screen.getByRole('button', { expanded: false }));
+
+    await waitFor(() =>
+      expect(screen.getByText(/cihaz konum servisi/i)).toBeInTheDocument()
+    );
   });
 });

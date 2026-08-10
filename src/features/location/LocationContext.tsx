@@ -139,6 +139,7 @@ interface LocationContextValue {
    */
   mode: LocationMode;
   modeLabel: string;
+  locationError: string | null;
   /** "Otomatik konuma dön" düğmesi çizilmeli mi. */
   canReturnToAuto: boolean;
   /** Tarayıcı ayar yönergesi gösterilmeli mi. */
@@ -566,10 +567,15 @@ export function LocationProvider({ children }: { children: ReactNode }) {
           err.code === err.PERMISSION_DENIED
             ? { type: 'GPS_DENIED' }
             : err.code === err.POSITION_UNAVAILABLE
-              ? { type: 'GPS_ERROR', message: 'Konum servisi yanıt vermedi.' }
+              ? {
+                  type: 'GPS_ERROR',
+                  message:
+                    'Tarayıcı izni açık, fakat cihaz konum servisi konum döndürmedi. İşletim sistemi konum servislerini ve tarayıcı iznini kontrol edin.',
+                }
               : {
                   type: 'GPS_ERROR',
-                  message: 'Konum alınamadı, tekrar deneyin.',
+                  message:
+                    'Cihaz konumu zaman aşımına uğradı. Konum servislerini kontrol edip tekrar deneyin.',
                 }
         )
       );
@@ -712,6 +718,7 @@ export function LocationProvider({ children }: { children: ReactNode }) {
       permission,
       mode: modeState.mode,
       modeLabel: modeLabels[modeState.mode],
+      locationError: modeState.error,
       canReturnToAuto: canReturnToAutoOf(modeState),
       needsPermissionHelp: needsPermissionHelpOf(modeState),
       shouldOfferGeolocation: permission === 'unasked',
