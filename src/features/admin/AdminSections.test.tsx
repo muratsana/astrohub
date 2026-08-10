@@ -164,14 +164,53 @@ describe('admin sidebar', () => {
   });
 });
 
+describe('içerik sekmeleri', () => {
+  /* Kullanıcı isteği: "her içerik türü için sekme". Ölçülen şey, türlerin
+     TAMAMININ tek sırada görünmesi — eksik bir tür, o türün panelde hiç
+     yönetilemediği anlamına gelir. */
+  const TURLER = [
+    'Haberler',
+    'Yazılar',
+    'İlanlar',
+    'Etkinlikler',
+    'Fotoğraflar',
+    'Gözlem noktaları',
+    'Topluluklar',
+    'Sözlük',
+    'SSS',
+    'Haftanın fotoğrafı',
+    'Yorumlar',
+  ];
+
+  it('her içerik türü için sekme var', () => {
+    renderPanel('/admin/content');
+    const sekmeler = screen
+      .getByRole('tablist', { name: 'İçerik türleri' })
+      .querySelectorAll('button');
+    expect(
+      Array.from(sekmeler).map((b) => b.textContent?.trim())
+    ).toEqual(TURLER);
+  });
+
+  it('sekme değişince o türün paneli açılıyor', async () => {
+    renderPanel('/admin/content');
+    fireEvent.click(screen.getByRole('tab', { name: 'İlanlar' }));
+    expect(await screen.findByText('İçerik kayıtları')).toBeInTheDocument();
+    /* Seçilmeyen tür ÇİZİLMİYOR: beşi birden asılı kalırsa hepsi veri
+       çeker ve görünmeyen dördü boşuna ağ turu yapar. */
+    expect(screen.queryByText('İçerik yönetimi')).not.toBeInTheDocument();
+  });
+});
+
 describe('bölümler ne açıyor', () => {
   const beklenen: Record<string, string[]> = {
-    'İçerik ve Kayıtlar': [
-      'İçerik yönetimi',
-      'İçerik kayıtları',
-      'Kulüp dizini',
-      'Kullanıcı metinleri',
-    ],
+    /* İçerik bölümü artık SEKMELİ (FAZ 4.1): türler üstte tek sırada,
+       yalnızca seçili olan çiziliyor. Önceden beş panel alt alta
+       duruyordu ve kullanıcı ilan/etkinlik düzenlemek için sayfanın
+       ortasına kadar kaydırmak zorundaydı — üstteki panel "İçerik
+       yönetimi" adını taşıdığı için çoğu kişi ötekilerin varlığını fark
+       etmiyordu. Varsayılan sekme "Haberler". */
+    'İçerik ve Kayıtlar': ['İçerik yönetimi'],
     Kullanıcılar: ['Kullanıcılar', 'Denetim kaydı'],
     Forum: ['Forum kategorileri', 'Forum konuları', 'Kullanıcı metinleri'],
     Anasayfa: ['Öne çıkan içerikler'],
