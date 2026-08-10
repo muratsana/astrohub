@@ -8,19 +8,19 @@ import {
 /**
  * BİLDİRİM TERCİHLERİ.
  *
- * DÖRT ANAHTAR VAR, ON SEÇENEK DEĞİL. §8.13 on maddelik bir liste
- * sayıyor ("şehrimde yeni etkinlik", "takip edilen hedef görünür
- * durumda"…) ama o maddelerin çoğunu üretecek tetikleyici henüz yok —
- * hatırlatma tablosu Faz 6'da, yayın bildirimi radyo/TV programına bağlı.
- * On kutu gösterip yedisinin hiçbir şeyi değiştirmemesi, kullanıcıya
- * kontrolü olduğu yalanını söylemek olurdu. Gösterilen dört kategori,
- * BUGÜN gerçekten bildirim üreten kategoriler; liste tetikleyici
- * eklendikçe genişleyecek.
+ * LİSTE ÜRETİCİDEN TÜRÜYOR, PLANDAN DEĞİL. Gösterilen sekiz kategori,
+ * veritabanında BUGÜN gerçekten bildirim üreten kategoriler — küme
+ * `app.notify` çağıran tetikleyiciler taranarak ölçüldü. `ilan` enum'da
+ * duruyor ama onu yazan tetikleyici yok (FAZ 8), o yüzden kutusu da yok:
+ * hiçbir şeyi değiştirmeyen bir anahtar, kullanıcıya kontrolü olduğu
+ * yalanını söylemek olurdu.
  *
- * SİSTEM KATEGORİSİ LİSTEDE YOK. Üyelik bitişi, moderasyon kararı ve
- * hesap uyarısı kapatılamıyor — sunucu tarafı da kapatmıyor
+ * SİSTEM KATEGORİSİ LİSTEDE YOK. Üyelik bitişi, hesap uyarısı ve
+ * yöneticinin doğrudan mesajı kapatılamıyor — sunucu tarafı da kapatmıyor
  * (`app.notification_allowed`). Kapatılamayan bir anahtarı ekranda
- * kapatılabilir göstermek, çalışmayan bir düğme koymaktı.
+ * kapatılabilir göstermek, çalışmayan bir düğme koymaktı. Moderasyon
+ * kararı ise artık AYRI ve kapatılabilir bir kategori: kendi bildirdiğin
+ * içeriğin sonucunu istememek meşru bir tercih.
  *
  * E-POSTA VE PUSH DA YOK. `notification_preferences` tablosunda
  * `email_enabled` ve `push_enabled` kolonları duruyor ama gönderen bir
@@ -85,9 +85,9 @@ export function NotificationPreferences() {
       </ul>
 
       <p className="mt-3 border-t border-border pt-3 text-meta leading-relaxed text-muted-foreground">
-        Hesabınla ilgili zorunlu bildirimler (moderasyon kararı, üyelik ve
-        güvenlik uyarıları) kapatılamaz. E-posta ve anlık bildirim henüz
-        gönderilmiyor; buradaki tercihler site içi bildirimleri yönetir.
+        Hesabınla ilgili zorunlu bildirimler (üyelik, güvenlik uyarıları ve
+        yöneticinin doğrudan mesajı) kapatılamaz. E-posta ve anlık bildirim
+        henüz gönderilmiyor; buradaki tercihler site içi bildirimleri yönetir.
       </p>
     </Panel>
   );

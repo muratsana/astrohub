@@ -178,10 +178,39 @@ describe('bildirim tercihleri', () => {
    * Ekranda kapatılabilir bir kutu göstermek, çalışmayan bir düğme
    * koymak olurdu.
    */
+  /*
+   * Desenler `^` ile başlıyor ama `$` ile BİTMİYOR: `<label>` hem kategori
+   * adını hem altındaki ipucu cümlesini sarıyor, dolayısıyla erişilebilir
+   * ad "Mesaj Sana özel mesaj geldiğinde" gibi birleşik bir metin. `$`
+   * koyulsaydı desen hiçbir zaman eşleşmez, testler de boşuna geçerdi.
+   */
   it('sistem kategorisi için anahtar sunulmaz', () => {
     renderPage();
-    expect(screen.queryByLabelText(/^Sistem$/)).toBeNull();
-    expect(screen.getByLabelText(/Sosyal/)).toBeInTheDocument();
+    expect(screen.queryByLabelText(/^Sistem/)).toBeNull();
+    expect(screen.getByLabelText(/^Mesaj/)).toBeInTheDocument();
+  });
+
+  /*
+   * Kategori kümesi beşten ona çıkınca "sosyal" içindeki mesaj, yorum ve
+   * beğeni kendi kategorilerine ayrıldı. Ekranın bunları AYRI anahtar
+   * olarak sunması, bölmenin tek amacıydı: daha önce "mesaj istemiyorum
+   * ama fotoğraf yorumu istiyorum" denemiyordu.
+   */
+  it('mesaj, galeri ve forum ayrı ayrı kapatılabiliyor', () => {
+    renderPage();
+    for (const label of [/^Mesaj/, /^Galeri/, /^Forum/]) {
+      expect(screen.getByLabelText(label)).toBeInTheDocument();
+    }
+  });
+
+  /*
+   * `ilan` kategorisi enum'da var ama onu yazan tetikleyici yok (FAZ 8).
+   * Hiçbir şeyi değiştirmeyen bir kutu, kullanıcıya kontrolü olduğu
+   * yalanını söylemek olurdu.
+   */
+  it('üreticisi olmayan kategori için anahtar sunulmaz', () => {
+    renderPage();
+    expect(screen.queryByLabelText(/^İlan/)).toBeNull();
   });
 
   it('kapatılamayan bildirimleri açıkça yazar', () => {

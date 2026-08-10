@@ -30,7 +30,12 @@ export type NotificationCategory =
   | 'icerik'
   | 'etkinlik'
   | 'yayin'
-  | 'sistem';
+  | 'sistem'
+  | 'mesaj'
+  | 'forum'
+  | 'galeri'
+  | 'ilan'
+  | 'moderasyon';
 
 export interface NotificationItem {
   id: string;
@@ -300,20 +305,51 @@ export async function deleteNotification(id: string): Promise<void> {
 /* ══════════════════════════════════════════════════════════════════════
  * TERCİHLER
  *
- * `notification_preferences.categories` biçimi: {"sosyal": false}.
- * Anahtar yoksa AÇIK sayılıyor — sunucudaki `app.notification_allowed`
- * ile aynı kural. İki taraf farklı varsayılan kullansaydı, hiç tercih
- * kaydetmemiş kullanıcı için ekran "açık" derken sunucu "kapalı"
- * davranırdı.
+ * `notification_preferences.categories` İKİ BİÇİM taşıyor ve ikisi de
+ * geçerli — sunucudaki `app.notification_allowed` da ikisini birden
+ * okuyor:
+ *
+ *   {"galeri": false}                          → hiçbir kanaldan
+ *   {"galeri": {"site": true, "email": false}} → sitede var, postada yok
+ *
+ * Anahtar yoksa AÇIK sayılıyor; haritada yazmayan kanal da açık —
+ * anahtarın yokluğu "hayır" değil "belirtilmemiş" demek. İki taraf farklı
+ * varsayılan kullansaydı, hiç tercih kaydetmemiş kullanıcı için ekran
+ * "açık" derken sunucu "kapalı" davranırdı.
  * ══════════════════════════════════════════════════════════════════════ */
+
+/** Site içi kanal — bu ekranın yönettiği tek kanal. */
+const SITE_CHANNEL = 'site';
+
+/**
+ * Ham `categories` değerinden site içi bildirimin açık olup olmadığını
+ * çıkarır. Sunucudaki `app.notification_allowed` ile birebir aynı kural:
+ * boolean tüm kanallar için geçerli, nesne kanal kanal okunur, tanınmayan
+ * biçim açık sayılır.
+ */
+function siteChannelEnabled(value: unknown): boolean {
+  if (value === false) return false;
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    const channel = (value as Record<string, unknown>)[SITE_CHANNEL];
+    return channel !== false;
+  }
+  return true;
+}
 
 /**
  * Kullanıcının kapatabileceği kategoriler.
  *
- * `sistem` LİSTEDE YOK ve bu bir eksik değil: üyelik bitişi, moderasyon
- * kararı, hesap uyarısı kapatılamıyor (sunucu tarafı da kapatmıyor).
- * Kapatılamayan bir anahtarı ekranda kapatılabilir göstermek, çalışmayan
- * bir düğme koymak olurdu.
+ * BUGÜN GERÇEKTEN BİLDİRİM ÜRETEN kategoriler listeleniyor; küme
+ * veritabanından ölçüldü (`app.notify` çağıran tetikleyicilerin ürettiği
+ * türler). `ilan` kategorisi enum'da var ama onu yazan bir tetikleyici
+ * henüz yok (FAZ 8'in konusu) — hiçbir şeyi değiştirmeyen bir kutu
+ * göstermek, kullanıcıya kontrolü olduğu yalanını söylemek olurdu.
+ *
+ * `sistem` LİSTEDE YOK ve bu bir eksik değil: üyelik bitişi, hesap
+ * uyarısı, yöneticinin doğrudan mesajı kapatılamıyor — sunucu tarafı da
+ * kapatmıyor. `moderasyon` ise ARTIK LİSTEDE: kendi şikâyetinin sonucunu
+ * almak istememek meşru bir tercih ve sunucu bu kategoriyi kapatılabilir
+ * sayıyor.
  */
 export const TOGGLEABLE_CATEGORIES: {
   key: NotificationCategory;
@@ -321,24 +357,44 @@ export const TOGGLEABLE_CATEGORIES: {
   hint: string;
 }[] = [
   {
+    key: 'mesaj',
+    label: 'Mesaj',
+    hint: 'Sana özel mesaj geldiğinde',
+  },
+  {
     key: 'sosyal',
-    label: 'Sosyal',
-    hint: 'Takip, yorum, beğeni, puan ve mesaj bildirimleri',
+    label: 'Takip',
+    hint: 'Biri seni takip etmeye başladığında',
+  },
+  {
+    key: 'galeri',
+    label: 'Galeri',
+    hint: 'Fotoğrafına yorum, yanıt, beğeni, puan ve öne çıkarma',
+  },
+  {
+    key: 'forum',
+    label: 'Forum',
+    hint: 'Açtığın konuya yanıt yazıldığında',
   },
   {
     key: 'icerik',
-    label: 'İçerik',
-    hint: 'Fotoğrafın öne çıkarıldığında, moderasyon sonucu ve ilan gelişmeleri',
+    label: 'Gönderdiğin içerik',
+    hint: 'Haber, yazı ve topluluk gönderin onaylandığında ya da reddedildiğinde',
+  },
+  {
+    key: 'moderasyon',
+    label: 'Moderasyon',
+    hint: 'Bildirdiğin içerik hakkında verilen karar',
   },
   {
     key: 'etkinlik',
     label: 'Etkinlik',
-    hint: 'Şehrindeki yeni etkinlikler, takip ettiklerinde değişiklik ve hatırlatma',
+    hint: 'Takip ettiğin etkinlikte değişiklik, iptal ve hatırlatma',
   },
   {
     key: 'yayin',
     label: 'Yayın',
-    hint: 'Radyo ve TV yayını başladığında',
+    hint: 'Radyo ve TV yayını başladığında, yeni podcast bölümü',
   },
 ];
 
@@ -357,9 +413,18 @@ export function useNotificationPreferences(): PreferenceState {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /*
+   * Sunucudan okunan haritanın DOKUNULMAMIŞ hâli. Ekran durumunda
+   * (`categories`) yalnızca site içi kanalın boolean karşılığı duruyor;
+   * yazarken kaybolmaması gereken her şey burada. Ref, çünkü değeri
+   * değiştiğinde yeniden çizim gerekmiyor — yalnızca bir sonraki yazmada
+   * okunuyor.
+   */
+  const rawCategories = useRef<Record<string, unknown>>({});
 
   useEffect(() => {
     if (!user || !isSupabaseConfigured) {
+      rawCategories.current = {};
       setCategories({});
       return;
     }
@@ -377,9 +442,19 @@ export function useNotificationPreferences(): PreferenceState {
         if (readError) throw new Error(readError.message);
         if (!active) return;
         const raw = (data?.categories ?? {}) as Record<string, unknown>;
+        /*
+         * HAM HARİTA SAKLANIYOR. Ekran yalnızca site içi kanalı ve yalnızca
+         * listelenen kategorileri gösteriyor; ama kayıtta e-posta/push
+         * tercihleri ve henüz listelenmeyen kategoriler de olabilir.
+         * Yazarken ham haritanın üstüne biniyoruz — aşağıdaki `toggle`
+         * bunu temel alıyor. Sadece ekrandaki dokuz anahtarı geri
+         * yazsaydık, kullanıcının "e-postayı sadece moderasyon için
+         * istiyorum" tercihi ilk kutu tıklamasında silinirdi.
+         */
+        rawCategories.current = raw;
         const next: Record<string, boolean> = {};
         for (const { key } of TOGGLEABLE_CATEGORIES) {
-          next[key] = raw[key] !== false;
+          next[key] = siteChannelEnabled(raw[key]);
         }
         setCategories(next);
       } catch (e) {
@@ -404,22 +479,35 @@ export function useNotificationPreferences(): PreferenceState {
       setSaving(true);
       setError(null);
 
+      /*
+       * TÜM HARİTA YAZILIYOR, TEK ANAHTAR DEĞİL: `jsonb` kolonuna kısmi
+       * yazma PostgREST üstünden mümkün değil. Ama yazılan harita ekrandaki
+       * anahtarlardan ibaret değil — okunan HAM harita temel alınıyor, ki
+       * e-posta/push tercihleri ve henüz listelenmeyen kategoriler yerinde
+       * kalsın.
+       *
+       * DEĞİŞTİRİLEN ANAHTARIN BİÇİMİ KORUNUYOR: kanal haritası olarak
+       * kaydedilmiş bir kategoride yalnızca `site` alanı yazılıyor,
+       * boolean ise boolean kalıyor. Aksi hâlde site içi bildirimi kapatan
+       * kullanıcı, aynı hamlede e-posta tercihini de kaybederdi.
+       */
+      const stored = rawCategories.current[key];
+      const merged: Record<string, unknown> = { ...rawCategories.current };
+      merged[key] =
+        stored && typeof stored === 'object' && !Array.isArray(stored)
+          ? { ...(stored as Record<string, unknown>), [SITE_CHANNEL]: enabled }
+          : enabled;
+
       try {
         const supabase = await client();
-        /*
-         * TÜM HARİTA YAZILIYOR, TEK ANAHTAR DEĞİL. `jsonb` kolonuna
-         * kısmi yazma PostgREST üstünden mümkün değil; okuyup birleştirip
-         * geri yazmak ise iki sekme açık kullanıcıda son yazanın diğerini
-         * ezmesi demek. Haritanın tamamı zaten dört anahtar — bütünü
-         * göndermek hem basit hem öngörülebilir.
-         */
         const { error: writeError } = await supabase
           .from('notification_preferences')
           .upsert(
-            { user_id: user.id, categories: next },
+            { user_id: user.id, categories: merged },
             { onConflict: 'user_id' }
           );
         if (writeError) throw new Error(writeError.message);
+        rawCategories.current = merged;
       } catch (e) {
         setCategories(previous);
         setError(e instanceof Error ? e.message : 'Tercih kaydedilemedi');
