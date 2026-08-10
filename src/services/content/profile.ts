@@ -321,3 +321,18 @@ export async function updateProfile(
 
   if (error) throw new Error(error.message);
 }
+
+/**
+ * Oturum açmış kullanıcının hesabını kalıcı siler.
+ *
+ * `auth.users` istemciden silinemez; bu yüzden service-role yalnızca Edge
+ * Function içinde durur. Fonksiyon body'den kullanıcı id almaz, JWT'deki
+ * kullanıcıyı siler.
+ */
+export async function deleteOwnAccount(): Promise<void> {
+  const supabase = await client();
+  const { error } = await supabase.functions.invoke('hesap-sil', {
+    body: {},
+  });
+  if (error) throw new Error(error.message);
+}

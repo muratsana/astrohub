@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router';
+import { useNavigate } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { LocationTypeahead } from '@/components/ui/LocationTypeahead';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -11,6 +11,7 @@ import { PageMeta } from '@/components/seo/PageMeta';
 import { useAuth } from '@/features/auth/AuthContext';
 import { useRoles, roleLabels } from '@/features/admin/useRoles';
 import {
+  deleteOwnAccount,
   updateProfile,
   useMyProfile,
   validateProfile,
@@ -56,6 +57,8 @@ export function AccountPage() {
   /* Tüm oturumları iptal etmek geri alınamaz; ikinci tık ayrı düğmede. */
   const [revokeArmed, setRevokeArmed] = useState(false);
   const [revokeBusy, setRevokeBusy] = useState(false);
+  const [deleteArmed, setDeleteArmed] = useState(false);
+  const [deleteBusy, setDeleteBusy] = useState(false);
 
   /* Sunucudan gelen kayıt forma bir kez yansıtılıyor; kullanıcı yazmaya
      başladıktan sonra tazeleme onu ezmemeli. */
@@ -115,6 +118,20 @@ export function AccountPage() {
       return;
     }
     navigate('/');
+  }
+
+  async function deleteAccount() {
+    setDeleteBusy(true);
+    setFailure(null);
+    try {
+      await deleteOwnAccount();
+      await signOut();
+      navigate('/');
+    } catch (e) {
+      setDeleteBusy(false);
+      setDeleteArmed(false);
+      setFailure(e instanceof Error ? e.message : 'Hesap silinemedi.');
+    }
   }
 
   return (
@@ -371,6 +388,53 @@ export function AccountPage() {
               )}
             </Panel>
 
+            <Panel title="Hesabı sil">
+              <p className="text-meta leading-relaxed text-muted-foreground">
+                Hesabınızı silerseniz profiliniz, oturumunuz ve hesabınıza
+                bağlı kişisel veriler kalıcı olarak kaldırılır. Bu işlem geri
+                alınamaz.
+              </p>
+
+              {deleteArmed ? (
+                <div className="mt-3 rounded-card border border-danger/45 bg-danger/10 p-3">
+                  <p className="text-body-sm font-semibold text-danger">
+                    Hesabınızı kalıcı olarak silmek istediğinizden emin misiniz?
+                  </p>
+                  <p className="mt-1 text-meta leading-relaxed text-muted-foreground">
+                    Onay verirseniz hesap hemen silinir ve tekrar giriş
+                    yapamazsınız. Bu işlem geri alınamaz.
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <Button
+                      size="sm"
+                      variant="danger"
+                      disabled={deleteBusy}
+                      onClick={() => void deleteAccount()}
+                    >
+                      {deleteBusy ? 'Siliniyor…' : 'Evet, kalıcı olarak sil'}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={deleteBusy}
+                      onClick={() => setDeleteArmed(false)}
+                    >
+                      Vazgeç
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <Button
+                  className="mt-3"
+                  size="sm"
+                  variant="danger"
+                  onClick={() => setDeleteArmed(true)}
+                >
+                  Hesabımı sil
+                </Button>
+              )}
+            </Panel>
+
             {/*
               ENGELLENENLER HESAP AYARLARINDA. Engellemek profil ve sohbet
               içinden tek tıkla yapılıyor; geri almanın yolu yalnızca o
@@ -394,13 +458,6 @@ export function AccountPage() {
                 <li>
                   <span className="text-foreground">E-posta değiştirme</span> —
                   doğrulama akışı gerektiriyor.
-                </li>
-                <li>
-                  <span className="text-foreground">Hesap silme</span> —{' '}
-                  <Link to="/kvkk" className="text-cold hover:text-primary">
-                    KVKK sayfasından
-                  </Link>{' '}
-                  talep edilebiliyor.
                 </li>
               </ul>
             </Panel>
