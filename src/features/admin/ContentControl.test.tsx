@@ -68,6 +68,32 @@ vi.mock('@/features/articles/data', () => ({
   ],
 }));
 
+vi.mock('@/features/knowledge/glossary', () => ({
+  glossaryCategoryLabels: { kosullar: 'Koşullar' },
+  glossaryTerms: [
+    {
+      slug: 'bortle-olcegi',
+      title: 'Bortle ölçeği',
+      category: 'kosullar',
+      summary: 'Gökyüzü karanlığını tarif eden dokuz basamaklı ölçek.',
+      body: ['Saha karşılaştırmasında kullanılır.'],
+    },
+  ],
+}));
+
+vi.mock('@/features/knowledge/faq', () => ({
+  faqCategoryLabels: { hesap: 'Hesap' },
+  faqItems: [
+    {
+      slug: 'uyelik-ucretli-mi',
+      title: 'Astrohub ücretli mi?',
+      category: 'hesap',
+      summary: 'Hayır. Şu an sitede ödeme alınmıyor.',
+      body: ['Standart üyelik ücretsizdir.'],
+    },
+  ],
+}));
+
 vi.mock('@/services/content/entries', async () => {
   const actual = await vi.importActual<typeof import('@/services/content/entries')>(
     '@/services/content/entries'
@@ -100,6 +126,14 @@ function renderControl() {
   return render(
     <MemoryRouter>
       <ContentControl canWrite initialKind="haber" />
+    </MemoryRouter>
+  );
+}
+
+function renderKind(kind: EntryKind) {
+  return render(
+    <MemoryRouter>
+      <ContentControl canWrite initialKind={kind} />
     </MemoryRouter>
   );
 }
@@ -139,5 +173,26 @@ describe('ContentControl importer akışı', () => {
       })
     ).toBeInTheDocument();
     expect(screen.getByText('Tohum')).toBeInTheDocument();
+  });
+
+  it('sözlük tohum içeriklerini listeler', () => {
+    state.entries = [];
+    renderKind('sozluk');
+    expect(
+      screen.getByRole('button', {
+        name: 'Bortle ölçeği 2026-08-01 · bortle-olcegi',
+      })
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Haberler' })).toBeNull();
+  });
+
+  it('sss tohum içeriklerini listeler', () => {
+    state.entries = [];
+    renderKind('sss');
+    expect(
+      screen.getByRole('button', {
+        name: 'Astrohub ücretli mi? 2026-08-01 · uyelik-ucretli-mi',
+      })
+    ).toBeInTheDocument();
   });
 });

@@ -8,6 +8,11 @@ import { Input, Select } from '@/components/ui/Input';
 import { newsCategoryLabels, sortedNews } from '@/features/news/data';
 import { articleCategoryLabels, articles } from '@/features/articles/data';
 import {
+  glossaryCategoryLabels,
+  glossaryTerms,
+} from '@/features/knowledge/glossary';
+import { faqCategoryLabels, faqItems } from '@/features/knowledge/faq';
+import {
   EMPTY_DRAFT,
   deleteEntry,
   draftFromEntry,
@@ -118,6 +123,54 @@ function seedEntries(kind: EntryKind): ContentEntry[] {
     }));
   }
 
+  if (kind === 'sozluk') {
+    return glossaryTerms.map((item) => ({
+      id: `${SEED_ID_PREFIX}sozluk:${item.slug}`,
+      kind: 'sozluk',
+      slug: item.slug,
+      title: item.title,
+      summary: item.summary,
+      body: item.body,
+      bodyBlocks: paragraphsToBlocks(item.body),
+      category: item.category,
+      publishedAt: '2026-08-01',
+      status: 'yayinda',
+      author: 'Astrohub',
+      duration: null,
+      level: null,
+      tint: null,
+      image: null,
+      source: null,
+      submittedBy: null,
+      rejectionReason: null,
+      reviewedAt: null,
+    }));
+  }
+
+  if (kind === 'sss') {
+    return faqItems.map((item) => ({
+      id: `${SEED_ID_PREFIX}sss:${item.slug}`,
+      kind: 'sss',
+      slug: item.slug,
+      title: item.title,
+      summary: item.summary,
+      body: item.body,
+      bodyBlocks: paragraphsToBlocks(item.body),
+      category: item.category,
+      publishedAt: '2026-08-01',
+      status: 'yayinda',
+      author: 'Astrohub',
+      duration: null,
+      level: null,
+      tint: null,
+      image: null,
+      source: null,
+      submittedBy: null,
+      rejectionReason: null,
+      reviewedAt: null,
+    }));
+  }
+
   return [];
 }
 
@@ -130,6 +183,13 @@ function mergeAdminEntries(
     ...dbEntries,
     ...seedEntries(kind).filter((entry) => !dbSlugs.has(entry.slug)),
   ].sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
+}
+
+function categoryLabels(kind: EntryKind): Record<string, string> {
+  if (kind === 'haber') return newsCategoryLabels;
+  if (kind === 'yazi') return articleCategoryLabels;
+  if (kind === 'sozluk') return glossaryCategoryLabels;
+  return faqCategoryLabels;
 }
 
 export function ContentControl({
@@ -151,7 +211,8 @@ export function ContentControl({
     <Panel
       title="İçerik yönetimi"
       status={
-        <div className="flex gap-1">
+        kind === 'haber' || kind === 'yazi' ? (
+          <div className="flex gap-1">
           {(['haber', 'yazi'] as EntryKind[]).map((k) => (
             <button
               key={k}
@@ -167,7 +228,8 @@ export function ContentControl({
               {k === 'haber' ? 'Haberler' : 'Yazılar'}
             </button>
           ))}
-        </div>
+          </div>
+        ) : null
       }
     >
       <KindEditor kind={kind} canWrite={canWrite} initialSlug={initialSlug} />
@@ -204,8 +266,7 @@ function KindEditor({
   const [importWarnings, setImportWarnings] = useState<string[]>([]);
   const [openedSlug, setOpenedSlug] = useState<string | null>(null);
 
-  const categories =
-    kind === 'haber' ? newsCategoryLabels : articleCategoryLabels;
+  const categories = categoryLabels(kind);
 
   function startNew() {
     setEditing(null);
