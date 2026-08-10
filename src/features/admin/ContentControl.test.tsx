@@ -161,7 +161,7 @@ describe('ContentControl importer akışı', () => {
     expect(
       screen.queryByText('Yeni içerik: HTML / Word / PDF içe aktar')
     ).not.toBeInTheDocument();
-    expect(screen.getByText('İçerik blokları')).toBeInTheDocument();
+    expect(screen.getByText('İçerik editörü')).toBeInTheDocument();
   });
 
   it('veritabanı boşken canlı site tohum içeriklerini listeler', () => {
