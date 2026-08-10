@@ -54,10 +54,9 @@ import { cn } from '@/lib/cn';
  * ══════════════════════════════════════════════════════════════════════
  * ROL VERMEK GERİ ALINABİLİR, KULLANICI SİLMEK DEĞİL
  *
- * Bu panelde kullanıcı SİLME düğmesi YOK ve bu bilinçli. Silme yalnızca
- * kullanıcının kendi KVKK talebiyle başlıyor (aşağıdaki liste); bir
- * yöneticinin tek tıkla hesap silebilmesi, yanlış satıra basıldığında
- * geri dönüşü olmayan bir kayıp demekti.
+ * Bu panelde "Kullanıcıyı sil" aksiyonu kimliği anonimleştirir ve hesabı
+ * dondurur. Gerçek `auth.users` silmesi service_role ister; SPA içinde yok.
+ * Yanlış satıra tek tıkla basılmasın diye gerekçe + ikinci onay zorunlu.
  *
  * ══════════════════════════════════════════════════════════════════════
  * DURDURMANIN YOLU ARTIK ROL ALMAK DEĞİL
@@ -468,9 +467,12 @@ export function UserControl() {
                     </p>
                   </div>
 
-                  <MembershipSection user={u} busy={busy} onApply={run} />
-
-                  <SystemMessageSection user={u} busy={busy} onApply={run} />
+                  <UserContentSection
+                    user={u}
+                    busy={busy}
+                    isSelf={isSelf}
+                    onApply={run}
+                  />
 
                   <AccountStatusSection
                     user={u}
@@ -479,19 +481,11 @@ export function UserControl() {
                     onApply={run}
                   />
 
-                  <UserContentSection user={u} busy={busy} onApply={run} />
+                  <MembershipSection user={u} busy={busy} onApply={run} />
+
+                  <SystemMessageSection user={u} busy={busy} onApply={run} />
 
                   <UserAuditTrail userId={u.id} />
-
-                  {/*
-                    KULLANICI SİLME DÜĞMESİ YOK — sebebi yazılı, yoksa
-                    "unutulmuş" sanılıp eklenir.
-                  */}
-                  <p className="text-meta leading-relaxed text-faint">
-                    Hesap silme bu ekrandan yapılmaz: talep kullanıcıdan gelir
-                    (aşağıdaki liste). Geri alınabilir durdurma için yukarıdaki
-                    askı/yasak aksiyonlarını kullanın.
-                  </p>
                 </div>
               )}
             </li>
@@ -1165,22 +1159,25 @@ function UserAuditTrail({ userId }: { userId: string }) {
  * beşer tane ve moderasyona atlamak için — arşiv göstermek için değil.
  *
  * ══════════════════════════════════════════════════════════════════════
- * ANONİMLEŞTİRME İKİ BASIŞ, TAM SİLME HİÇ YOK
+ * SİLME AKSİYONU İKİ BASIŞ, KİMLİK ANONİMLEŞİR
  *
- * Anonimleştirme geri alınamıyor (eski kullanıcı adı ve bio geri
- * gelmiyor), o yüzden ikinci bir onay istiyor.
+ * Paneldeki "Kullanıcıyı sil" düğmesi `auth.users` satırını silmez;
+ * kimliği anonimleştirir, hesabı dondurur ve içerikleri "silinmiş üye"
+ * imzasıyla bırakır. Bu geri alınamıyor, o yüzden ikinci bir onay istiyor.
  *
- * Tam silme düğmesi YOK. `auth.users` yalnızca `service_role` ile
- * yazılabiliyor ve SPA'da öyle bir yer yok (karar K4). Düğmeyi koyup
- * "yapılamadı" demektense hiç koymamak ve nedenini yazmak dürüst olan.
+ * Tam `auth.users` silmesi YOK. `auth.users` yalnızca `service_role` ile
+ * yazılabiliyor ve SPA'da öyle bir yer yok (karar K4). Düğme bu yüzden
+ * açıkça anonimleştirme/dondurma akışına bağlı.
  */
 function UserContentSection({
   user,
   busy,
+  isSelf,
   onApply,
 }: {
   user: AdminUser;
   busy: boolean;
+  isSelf: boolean;
   onApply: (action: () => Promise<void>) => Promise<void>;
 }) {
   const [content, setContent] = useState<UserContent | null>(null);
@@ -1264,12 +1261,16 @@ function UserContentSection({
 
       {/* ── KVKK ── */}
       <div className="mt-3 border-t border-border pt-2">
-        <p className="label mb-1.5">KVKK</p>
+        <p className="label mb-1.5">Kullanıcı silme</p>
 
         {anonim ? (
           <p className="text-meta text-muted-foreground">
             Bu hesap anonimleştirilmiş. İçerikleri &quot;silinmiş üye&quot;
             imzasıyla duruyor.
+          </p>
+        ) : isSelf ? (
+          <p className="text-meta text-warning">
+            Kendi hesabınızı bu panelden silemezsiniz.
           </p>
         ) : (
           <>
@@ -1302,7 +1303,7 @@ function UserContentSection({
                   });
                 }}
               >
-                {confirm ? 'Anonimleştirmeyi onayla' : 'Anonimleştir'}
+                {confirm ? 'Silme işlemini onayla' : 'Kullanıcıyı sil'}
               </Button>
             </div>
 
@@ -1317,9 +1318,9 @@ function UserContentSection({
         )}
 
         <p className="mt-2 text-meta leading-relaxed text-faint">
-          Tam silme bu panelden yapılamıyor: kimlik kaydı (`auth.users`)
-          yalnızca sunucu tarafı anahtarla silinebiliyor ve bu uygulamanın
-          sunucu tarafı yok. Talep kuyrukta kalır.
+          Bu aksiyon kullanıcının kimlik alanlarını anonimleştirir ve hesabı
+          dondurur. İçerikler silinmez; &quot;silinmiş üye&quot; imzasıyla kalır.
+          Tam `auth.users` silmesi yalnızca sunucu tarafı anahtarla yapılabilir.
         </p>
       </div>
     </div>
