@@ -351,14 +351,19 @@ await scenario(
 
 /* ══════════════════════ Forum ══════════════════════ */
 
-await scenario('forum konusundan detaya gidilir', async () => {
+await scenario('forum ana sayfası yalnız kategori özetlerini gösterir', async () => {
   await goto('/forum');
 
-  const link = await page.$('a[href^="#/forum/"]:not([href="#/forum/yeni"])');
-  assert(link !== null, 'konu bağlantısı yok');
-  await link.click();
-  await page.waitForTimeout(700);
-  assert((await heading()).length > 5, 'konu başlığı gelmedi');
+  const text = await page.evaluate(() => document.body.innerText);
+  assert(includesTr(text, 'ekipmanlar'), 'kategori başlığı yok');
+  assert(includesTr(text, '2 konu'), 'konu sayısı yok');
+  assert(!includesTr(text, 'ilk teleskop:'), 'ana sayfada konu başlığı görünüyor');
+  assert(!includesTr(text, '@astrohub'), 'ana sayfada konu yazarı görünüyor');
+});
+
+await scenario('forum konusu doğrudan adresten açılır', async () => {
+  await goto('/forum/ilk-teleskop-130-mm-mi-8-inc-dobson-mi');
+  assert(includesTr(await heading(), 'ilk teleskop'), 'konu başlığı gelmedi');
 });
 
 await scenario(
