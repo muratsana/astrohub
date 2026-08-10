@@ -1,12 +1,12 @@
 import { contentStatusLabels } from '@/domain/content/status';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Panel } from '@/components/ui/Panel';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Field } from '@/components/ui/Field';
 import { Input, Select } from '@/components/ui/Input';
-import { newsCategoryLabels } from '@/features/news/data';
-import { articleCategoryLabels } from '@/features/articles/data';
+import { newsCategoryLabels, sortedNews } from '@/features/news/data';
+import { articleCategoryLabels, articles } from '@/features/articles/data';
 import {
   EMPTY_DRAFT,
   deleteEntry,
@@ -25,7 +25,11 @@ import {
 import { cn } from '@/lib/cn';
 import { BlockRenderer } from '@/components/content/BlockRenderer';
 import { InlineText } from '@/components/content/InlineText';
-import { blocksToText, type ContentBlock } from '@/domain/content/blocks';
+import {
+  blocksToText,
+  paragraphsToBlocks,
+  type ContentBlock,
+} from '@/domain/content/blocks';
 import { hasInlineMarkup } from '@/domain/content/inline';
 import { isAllowedImageHost } from '@/domain/content/imageHosts';
 import { isValidYoutubeId, youtubeIdFromInput } from '@/features/tv/types';
@@ -55,6 +59,77 @@ function durumTonu(
   if (durum === 'taslak') return 'warning';
   if (durum === 'reddedildi') return 'danger';
   return 'muted';
+}
+
+const SEED_ID_PREFIX = 'seed:';
+
+function isSeedEntry(entry: ContentEntry | null): boolean {
+  return !!entry?.id.startsWith(SEED_ID_PREFIX);
+}
+
+function seedEntries(kind: EntryKind): ContentEntry[] {
+  if (kind === 'haber') {
+    return sortedNews().map((item) => ({
+      id: `${SEED_ID_PREFIX}haber:${item.slug}`,
+      kind: 'haber',
+      slug: item.slug,
+      title: item.title,
+      summary: item.summary,
+      body: item.body,
+      bodyBlocks: item.bodyBlocks ?? paragraphsToBlocks(item.body),
+      category: item.category,
+      publishedAt: item.publishedAt,
+      status: 'yayinda',
+      author: null,
+      duration: null,
+      level: null,
+      tint: item.tint,
+      image: item.image ?? null,
+      source: item.source.url
+        ? { name: item.source.name, url: item.source.url }
+        : null,
+      submittedBy: null,
+      rejectionReason: null,
+      reviewedAt: null,
+    }));
+  }
+
+  if (kind === 'yazi') {
+    return articles.map((item) => ({
+      id: `${SEED_ID_PREFIX}yazi:${item.slug}`,
+      kind: 'yazi',
+      slug: item.slug,
+      title: item.title,
+      summary: item.summary,
+      body: item.body,
+      bodyBlocks: item.bodyBlocks ?? paragraphsToBlocks(item.body),
+      category: item.category,
+      publishedAt: item.publishedAt,
+      status: 'yayinda',
+      author: item.author,
+      duration: item.duration,
+      level: item.level,
+      tint: item.tint,
+      image: item.image ?? null,
+      source: null,
+      submittedBy: null,
+      rejectionReason: null,
+      reviewedAt: null,
+    }));
+  }
+
+  return [];
+}
+
+function mergeAdminEntries(
+  kind: EntryKind,
+  dbEntries: ContentEntry[]
+): ContentEntry[] {
+  const dbSlugs = new Set(dbEntries.map((entry) => entry.slug));
+  return [
+    ...dbEntries,
+    ...seedEntries(kind).filter((entry) => !dbSlugs.has(entry.slug)),
+  ].sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
 }
 
 export function ContentControl({
@@ -112,6 +187,10 @@ function KindEditor({
   const { entries, loading, error, refresh } = useEntries(kind, {
     includeDrafts: true,
   });
+  const visibleEntries = useMemo(
+    () => mergeAdminEntries(kind, entries),
+    [entries, kind]
+  );
 
   const [editing, setEditing] = useState<ContentEntry | null>(null);
   const [draft, setDraft] = useState<EntryDraft | null>(null);
@@ -148,7 +227,7 @@ function KindEditor({
 
   useEffect(() => {
     if (!initialSlug || loading || openedSlug === initialSlug) return;
-    const entry = entries.find((item) => item.slug === initialSlug);
+    const entry = visibleEntries.find((item) => item.slug === initialSlug);
     if (entry) {
       setEditing(entry);
       setDraft(draftFromEntry(entry));
@@ -159,18 +238,22 @@ function KindEditor({
       );
     }
     setOpenedSlug(initialSlug);
-  }, [entries, initialSlug, loading, openedSlug]);
+  }, [initialSlug, loading, openedSlug, visibleEntries]);
 
   async function save() {
     if (!draft) return;
     setBusy(true);
     setMessage(null);
     try {
-      await saveEntry(draft, editing?.id);
+      await saveEntry(draft, isSeedEntry(editing) ? undefined : editing?.id);
       refresh();
       setDraft(null);
       setEditing(null);
-      setMessage('Kaydedildi.');
+      setMessage(
+        isSeedEntry(editing)
+          ? 'Tohum içerik veritabanına alındı ve artık panelden yönetilecek.'
+          : 'Kaydedildi.'
+      );
     } catch (e) {
       setMessage(e instanceof Error ? e.message : 'Kaydedilemedi.');
     } finally {
@@ -225,7 +308,7 @@ function KindEditor({
       <div>
         <div className="mb-2 flex items-center justify-between gap-2">
           <span className="label">
-            {entries.length} kayıt{loading ? ' · yükleniyor' : ''}
+            {visibleEntries.length} kayıt{loading ? ' · yükleniyor' : ''}
           </span>
           <Button size="sm" onClick={startNew} disabled={!canWrite}>
             Yeni
@@ -238,15 +321,13 @@ function KindEditor({
           </p>
         )}
 
-        {entries.length === 0 && !loading ? (
+        {visibleEntries.length === 0 && !loading ? (
           <p className="rounded-card border border-border bg-surface-2 px-2.5 py-3 text-center text-meta text-muted-foreground">
-            Henüz kayıt yok. "Yeni" ile ilk içeriği oluşturun — mevcut haber ve
-            yazılar uygulama içindeki veri dosyalarından geliyor ve burada
-            görünmüyor.
+            Henüz kayıt yok. "Yeni" ile ilk içeriği oluşturun.
           </p>
         ) : (
           <ul className="max-h-[420px] space-y-1 overflow-y-auto">
-            {entries.map((entry) => (
+            {visibleEntries.map((entry) => (
               <li key={entry.id}>
                 <div
                   className={cn(
@@ -273,9 +354,14 @@ function KindEditor({
                     <Badge tone={durumTonu(entry.status)}>
                       {contentStatusLabels[entry.status]}
                     </Badge>
+                    {isSeedEntry(entry) && <Badge tone="muted">Tohum</Badge>}
 
                     {/* İncelemedeki katkının iki cevabı var. */}
-                    {entry.status === 'incelemede' ? (
+                    {isSeedEntry(entry) ? (
+                      <span className="text-meta text-faint">
+                        Kaydedince panel kaydına dönüşür
+                      </span>
+                    ) : entry.status === 'incelemede' ? (
                       <>
                         <button
                           type="button"
@@ -317,7 +403,7 @@ function KindEditor({
                         {entry.status === 'yayinda' ? 'Yayından al' : 'Yayınla'}
                       </button>
                     )}
-                    {confirmDelete === entry.id ? (
+                    {!isSeedEntry(entry) && confirmDelete === entry.id ? (
                       <>
                         <span className="text-meta text-danger">
                           Geri alınamaz —
@@ -338,7 +424,7 @@ function KindEditor({
                           vazgeç
                         </button>
                       </>
-                    ) : (
+                    ) : !isSeedEntry(entry) ? (
                       <button
                         type="button"
                         disabled={!canWrite || busy}
@@ -347,7 +433,7 @@ function KindEditor({
                       >
                         Sil
                       </button>
-                    )}
+                    ) : null}
                   </div>
 
                   {/*

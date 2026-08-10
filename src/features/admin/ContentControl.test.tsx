@@ -8,6 +8,10 @@ import {
   type EntryKind,
 } from '@/services/content/entries';
 
+const state = vi.hoisted(() => ({
+  entries: [] as ContentEntry[],
+}));
+
 const entry: ContentEntry = {
   id: 'e1',
   kind: 'haber',
@@ -30,6 +34,40 @@ const entry: ContentEntry = {
   reviewedAt: null,
 };
 
+vi.mock('@/features/news/data', () => ({
+  newsCategoryLabels: { kesif: 'Keşif' },
+  sortedNews: () => [
+    {
+      slug: 'canli-haber',
+      title: 'Canlı Haber',
+      category: 'kesif',
+      publishedAt: '2026-08-09',
+      summary: 'Canlı sitede görünen haber özeti yeterince uzun.',
+      body: ['Canlı haber gövdesi'],
+      source: { name: 'Astrohub', url: 'https://astrohub.com.tr' },
+      tint: '150,185,235',
+    },
+  ],
+}));
+
+vi.mock('@/features/articles/data', () => ({
+  articleCategoryLabels: { rehber: 'Rehber' },
+  articles: [
+    {
+      slug: 'canli-yazi',
+      title: 'Canlı Yazı',
+      category: 'rehber',
+      level: 'Başlangıç',
+      duration: '10 dk okuma',
+      publishedAt: '2026-08-08',
+      author: 'Astrohub',
+      summary: 'Canlı sitede görünen yazı özeti yeterince uzun.',
+      body: ['Canlı yazı gövdesi'],
+      tint: '150,185,235',
+    },
+  ],
+}));
+
 vi.mock('@/services/content/entries', async () => {
   const actual = await vi.importActual<typeof import('@/services/content/entries')>(
     '@/services/content/entries'
@@ -37,7 +75,7 @@ vi.mock('@/services/content/entries', async () => {
   return {
     ...actual,
     useEntries: (kind: EntryKind) => ({
-      entries: [{ ...entry, kind }],
+      entries: state.entries.map((item) => ({ ...item, kind })),
       loading: false,
       error: null,
       refresh: vi.fn(),
@@ -54,7 +92,7 @@ vi.mock('@/services/content/entries', async () => {
       publishedAt: item.publishedAt,
       status: item.status,
     }),
-    validateEntry: () => [],
+    validateEntry: () => null,
   };
 });
 
@@ -67,6 +105,10 @@ function renderControl() {
 }
 
 describe('ContentControl importer akışı', () => {
+  beforeEach(() => {
+    state.entries = [{ ...entry }];
+  });
+
   it('importer yeni içerik eklemede görünür', () => {
     renderControl();
     fireEvent.click(screen.getByRole('button', { name: 'Yeni' }));
@@ -86,5 +128,16 @@ describe('ContentControl importer akışı', () => {
       screen.queryByText('Yeni içerik: HTML / Word / PDF içe aktar')
     ).not.toBeInTheDocument();
     expect(screen.getByText('İçerik blokları')).toBeInTheDocument();
+  });
+
+  it('veritabanı boşken canlı site tohum içeriklerini listeler', () => {
+    state.entries = [];
+    renderControl();
+    expect(
+      screen.getByRole('button', {
+        name: 'Canlı Haber 2026-08-09 · canli-haber',
+      })
+    ).toBeInTheDocument();
+    expect(screen.getByText('Tohum')).toBeInTheDocument();
   });
 });
