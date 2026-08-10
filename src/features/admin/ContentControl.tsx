@@ -349,8 +349,7 @@ function KindEditor({
           <div>
             <p className="label text-foreground">{ENTRY_KIND_LABELS[kind]}</p>
             <p className="text-meta text-muted-foreground">
-              {visibleEntries.length} kayıt{loading ? ' · yükleniyor' : ''} ·
-              içerik seçip düzenle butonuyla tam sayfa editöre geçin
+              {visibleEntries.length} kayıt{loading ? ' · yükleniyor' : ''}
             </p>
           </div>
           <Button size="sm" onClick={startNew} disabled={!canWrite}>
@@ -374,7 +373,7 @@ function KindEditor({
               <li key={entry.id}>
                 <div
                   className={cn(
-                    'grid gap-3 px-3 py-3 md:grid-cols-[minmax(0,1fr)_auto]',
+                    'grid gap-3 px-3 py-2.5 md:grid-cols-[minmax(0,1fr)_auto]',
                     editing?.id === entry.id
                       ? 'bg-surface-2'
                       : 'bg-surface-1 hover:bg-surface-2/60'
@@ -387,11 +386,6 @@ function KindEditor({
                     <span className="tabular mt-0.5 block text-meta text-faint">
                       {entry.publishedAt} · {entry.slug}
                     </span>
-                    {entry.summary && (
-                      <p className="mt-1 line-clamp-2 text-meta leading-relaxed text-muted-foreground">
-                        {entry.summary}
-                      </p>
-                    )}
                   </div>
 
                   <div className="flex flex-wrap items-center gap-1.5 md:justify-end">
@@ -410,31 +404,28 @@ function KindEditor({
                     </Button>
 
                     {/* İncelemedeki katkının iki cevabı var. */}
-                    {isSeedEntry(entry) ? (
-                      <span className="text-meta text-faint">
-                        Kaydedince panel kaydına dönüşür
-                      </span>
-                    ) : entry.status === 'incelemede' ? (
-                      <>
-                        <button
-                          type="button"
-                          disabled={!canWrite || busy}
-                          onClick={() =>
-                            void durumUygula(() => approveEntry(entry.id))
-                          }
-                          className="text-meta text-cold hover:text-primary disabled:opacity-40"
-                        >
-                          Onayla ve yayınla
-                        </button>
-                        <button
-                          type="button"
-                          disabled={!canWrite || busy}
-                          onClick={() =>
-                            setReddedilen(
-                              reddedilen === entry.id ? null : entry.id
-                            )
-                          }
-                          className="text-meta text-danger hover:underline disabled:opacity-40"
+                    {isSeedEntry(entry) ? null : entry.status ===
+                      'incelemede' ? (
+                        <>
+                          <button
+                            type="button"
+                            disabled={!canWrite || busy}
+                            onClick={() =>
+                              void durumUygula(() => approveEntry(entry.id))
+                            }
+                            className="text-meta text-cold hover:text-primary disabled:opacity-40"
+                          >
+                            Onayla ve yayınla
+                          </button>
+                          <button
+                            type="button"
+                            disabled={!canWrite || busy}
+                            onClick={() =>
+                              setReddedilen(
+                                reddedilen === entry.id ? null : entry.id
+                              )
+                            }
+                            className="text-meta text-danger hover:underline disabled:opacity-40"
                         >
                           Reddet
                         </button>
