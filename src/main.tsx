@@ -1,5 +1,6 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { watchStaleBuild } from '@/app/staleBuild';
 import { RouterProvider } from 'react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { router } from '@/app/router';
@@ -25,6 +26,10 @@ const queryClient = new QueryClient({
 
 const rootEl = document.getElementById('root');
 if (!rootEl) throw new Error('#root elementi bulunamadı');
+
+/* Yeni sürüm yayımlandığında açık sekmenin ham "Failed to fetch"
+   hatası göstermesini engelliyor (bkz. staleBuild.ts). */
+watchStaleBuild();
 
 createRoot(rootEl).render(
   <StrictMode>
