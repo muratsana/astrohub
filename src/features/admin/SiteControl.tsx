@@ -11,6 +11,9 @@ import {
   discardHomeDraft,
   fetchHeroSlides,
   updateHeroSlide,
+  createHeroSlide,
+  deleteHeroSlide,
+  describeHeroKeyProblem,
   fetchNavLinks,
   upsertNavLink,
   deleteNavLink,
@@ -38,6 +41,8 @@ import {
   weatherProviderLabels,
   type WeatherProvider,
 } from '@/features/site/siteConfig';
+import { HERO_SCENES, heroSceneLabels } from '@/features/site/heroSlides';
+import type { HeroScene } from '@/components/media/HeroBackdrop';
 
 /**
  * SİTE YÖNETİMİ — panelin ana sayfa, özellik anahtarı ve geçmiş yüzeyi
@@ -1075,12 +1080,20 @@ function NavLinkRow({
  * odak noktası, metin hizası ve CTA.
  *
  * ══════════════════════════════════════════════════════════════════════
- * EKLEME/SİLME YOK, DÜZENLEME VAR
+ * EKLEME VE SİLME ARTIK VAR — ESKİ GEREKÇE NEDEN DÜŞTÜ
  *
- * `home_modules` ile aynı karar ve aynı sebep: her slaytın `scene` alanı
- * kodda çizilen bir bileşene karşılık geliyor (`nebula`, `ridge`…).
- * Panelden yeni anahtar eklenebilseydi çizilecek sahnesi olmayan bir
- * slayt oluşurdu — panelde görünen, sitede boş kutu.
+ * Burada uzun süre "ekleme/silme yok" yazıyordu ve gerekçesi şuydu:
+ * `scene` kodda çizilen bir bileşene karşılık geliyor, panelden yeni
+ * anahtar açılırsa sahnesi olmayan slayt oluşur. Gerekçe doğru, çıkarım
+ * yanlıştı: sahne SEÇİLEBİLİR bir liste (beş sahne), serbest metin değil.
+ * Aşağıdaki form sahneyi `HERO_SCENES`ten seçtiriyor, veritabanı da
+ * `hero_slides_scene_check` ile aynı beşliyi tutuyor — sahnesiz slayt
+ * üretmenin yolu kalmadı.
+ *
+ * Not: düğmeler tek başına yetmezdi. `hero_slides` üzerinde INSERT ve
+ * DELETE politikası HİÇ YOKTU; RLS ikisini de sessizce sıfır satırla
+ * geçiriyordu. Göç 20260810100000 politikaları, 20260810101000 da
+ * silinen slaydın geri alınmasını ekledi.
  *
  * ══════════════════════════════════════════════════════════════════════
  * ODAK NOKTASI İKİ SAYI, GÖRSEL SEÇİCİ DEĞİL
@@ -1142,6 +1155,14 @@ function HeroSlidesSection({
     });
   }
 
+  /* Yeni slaydın yeri SONU. `position` benzersiz olduğu için "en büyük + 1"
+     boş bir sıra garantisi; liste sıralı geldiği halde `max` ile
+     hesaplıyoruz, çünkü sıra numaraları bitişik olmak zorunda değil. */
+  const sonrakiSira =
+    slides && slides.length > 0
+      ? Math.max(...slides.map((s) => s.position)) + 1
+      : 1;
+
   return (
     <Panel title="Hero slaytları">
       {hata && (
@@ -1152,29 +1173,196 @@ function HeroSlidesSection({
 
       {slides === null ? (
         <p className="text-body-sm text-muted-foreground">Yükleniyor…</p>
-      ) : slides.length === 0 ? (
-        <p className="text-body-sm text-muted-foreground">
-          Tanımlı slayt yok — ziyaretçi koddaki varsayılan beş slaytı
-          görüyor.
-        </p>
       ) : (
-        <ul className="space-y-2">
-          {slides.map((slide, i) => (
-            <HeroSlideRowEditor
-              key={slide.key}
-              slide={slide}
-              canWrite={canWrite && !mesgul}
-              ilk={i === 0}
-              son={i === slides.length - 1}
-              onTasi={(yon) => tasi(i, yon)}
-              onYaz={(patch) =>
-                void calistir(() => updateHeroSlide(slide.key, patch))
-              }
-            />
-          ))}
-        </ul>
+        <>
+          {slides.length === 0 ? (
+            <p className="text-body-sm text-muted-foreground">
+              Tanımlı slayt yok — ziyaretçi koddaki varsayılan beş slaytı
+              görüyor.
+            </p>
+          ) : (
+            <ul className="space-y-2">
+              {slides.map((slide, i) => (
+                <HeroSlideRowEditor
+                  key={slide.key}
+                  slide={slide}
+                  canWrite={canWrite && !mesgul}
+                  ilk={i === 0}
+                  son={i === slides.length - 1}
+                  onTasi={(yon) => tasi(i, yon)}
+                  onYaz={(patch) =>
+                    void calistir(() => updateHeroSlide(slide.key, patch))
+                  }
+                  onSil={() => void calistir(() => deleteHeroSlide(slide.key))}
+                />
+              ))}
+            </ul>
+          )}
+
+          <YeniHeroSlaydi
+            canWrite={canWrite && !mesgul}
+            sonrakiSira={sonrakiSira}
+            onEkle={(girdi) => calistir(() => createHeroSlide(girdi))}
+          />
+        </>
       )}
     </Panel>
+  );
+}
+
+/**
+ * YENİ SLAYT FORMU.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * MENÜDEKİ "EKLE" GİBİ TEK DÜĞME DEĞİL, DÖRT ALANLI FORM
+ *
+ * `nav_links` tarafında "Ekle" düğmesi doğrudan yer tutucu bir satır
+ * yazıyor ("Yeni bağlantı", `/`) — orada bu güvenli, çünkü her alan
+ * sonradan düzenlenebilir. Hero'da `key` DÜZENLENEMEZ: satırın kimliği,
+ * güncelleme filtresi ve varsayılan rozet eşleşmesi ona bağlı. Yer tutucu
+ * bir anahtarla oluşturulan slaydın adını sonradan düzeltmenin yolu
+ * "sil ve yeniden ekle" olurdu; ayrıca ikinci kez basıldığında anahtar
+ * çakışırdı. O yüzden anahtar ve sahne baştan soruluyor.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * BURADA DÖRT ALAN VAR, SATIRDA ON İKİ
+ *
+ * Form yalnızca `not null` olup varsayılanı OLMAYAN alanları soruyor:
+ * anahtar, sahne, başlık, CTA adresi. Rozet, alt metin, görsel, odak
+ * noktası, yayın penceresi — hepsi boş/varsayılan doğuyor ve satır
+ * düzenleyicisinden giriliyor. Formu on iki alana çıkarmak, "yeni slayt"
+ * eylemini tek oturumda bitirilmesi gereken bir işe çevirirdi.
+ */
+function YeniHeroSlaydi({
+  canWrite,
+  sonrakiSira,
+  onEkle,
+}: {
+  canWrite: boolean;
+  sonrakiSira: number;
+  onEkle: (girdi: {
+    key: string;
+    scene: HeroScene;
+    title: string;
+    cta_to: string;
+    position: number;
+  }) => Promise<void>;
+}) {
+  const [acik, setAcik] = useState(false);
+  const [anahtar, setAnahtar] = useState('');
+  const [sahne, setSahne] = useState<HeroScene>('nebula');
+  const [baslik, setBaslik] = useState('');
+  const [adres, setAdres] = useState('/');
+
+  /* Sorunlar YAZARKEN gösteriliyor — `NavLinkRow`daki adres kutusuyla aynı
+     tercih: kaydedip veritabanı kısıtının metnini okumak yerine ne
+     beklendiği kutunun altında yazıyor. */
+  const anahtarSorunu = anahtar ? describeHeroKeyProblem(anahtar) : null;
+  const adresSorunu = describePathProblem(adres);
+  const eksik = !anahtar.trim() || !baslik.trim();
+  const gonderilebilir =
+    canWrite && !eksik && !anahtarSorunu && !adresSorunu;
+
+  async function gonder() {
+    if (!gonderilebilir) return;
+    await onEkle({
+      key: anahtar.trim(),
+      scene: sahne,
+      title: baslik.trim(),
+      cta_to: adres.trim(),
+      position: sonrakiSira,
+    });
+    /* Form yalnızca BAŞARIDA temizleniyor: `calistir` hatayı yukarıda
+       gösteriyor ve yönetici yazdıklarını kaybetmeden düzeltebiliyor. */
+    setAnahtar('');
+    setBaslik('');
+    setAdres('/');
+    setSahne('nebula');
+    setAcik(false);
+  }
+
+  if (!acik) {
+    return (
+      <div className="mt-3 border-t border-border pt-3">
+        <Button
+          size="sm"
+          variant="secondary"
+          disabled={!canWrite}
+          onClick={() => setAcik(true)}
+        >
+          Yeni slayt
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-3 rounded-card border border-border bg-surface-2 px-3 py-2.5">
+      <h3 className="mb-2 text-body-sm font-medium text-foreground">
+        Yeni slayt
+      </h3>
+
+      <div className="grid gap-2 sm:grid-cols-2">
+        <Alan etiket="Anahtar (sonradan değiştirilemez)">
+          <Input
+            value={anahtar}
+            maxLength={40}
+            placeholder="yaz-kampi"
+            disabled={!canWrite}
+            onChange={(e) => setAnahtar(e.target.value)}
+          />
+        </Alan>
+        <Alan etiket="Sahne (arka plan)">
+          <Select
+            value={sahne}
+            disabled={!canWrite}
+            onChange={(e) => setSahne(e.target.value as HeroScene)}
+          >
+            {HERO_SCENES.map((s) => (
+              <option key={s} value={s}>
+                {heroSceneLabels[s]}
+              </option>
+            ))}
+          </Select>
+        </Alan>
+        <Alan etiket="Başlık">
+          <Input
+            value={baslik}
+            maxLength={90}
+            disabled={!canWrite}
+            onChange={(e) => setBaslik(e.target.value)}
+          />
+        </Alan>
+        <Alan etiket="CTA adresi">
+          <Input
+            value={adres}
+            disabled={!canWrite}
+            onChange={(e) => setAdres(e.target.value)}
+          />
+        </Alan>
+      </div>
+
+      {(anahtarSorunu || adresSorunu) && (
+        <Alert tone="warning" variant="text" className="mt-1">
+          {anahtarSorunu ?? adresSorunu}
+        </Alert>
+      )}
+
+      <p className="mt-2 text-meta leading-relaxed text-faint">
+        Slayt <strong className="text-foreground">kapalı</strong> oluşturulur
+        ve {sonrakiSira}. sıraya eklenir; rozet, alt metin ve görsel
+        künyesini satırdan girdikten sonra “Açık” kutusuyla yayına alın.
+      </p>
+
+      <div className="mt-2 flex gap-2">
+        <Button size="sm" disabled={!gonderilebilir} onClick={() => void gonder()}>
+          Oluştur
+        </Button>
+        <Button size="sm" variant="ghost" onClick={() => setAcik(false)}>
+          Vazgeç
+        </Button>
+      </div>
+    </div>
   );
 }
 
@@ -1185,6 +1373,7 @@ function HeroSlideRowEditor({
   son,
   onTasi,
   onYaz,
+  onSil,
 }: {
   slide: HeroSlideRow;
   canWrite: boolean;
@@ -1192,7 +1381,15 @@ function HeroSlideRowEditor({
   son: boolean;
   onTasi: (yon: -1 | 1) => void;
   onYaz: (patch: HeroSlidePatch) => void;
+  onSil: () => void;
 }) {
+  /* İKİ BASAMAKLI SİLME — menü bağlantısında olmayan bir fren.
+     Bir slayt tek bir adres değil; başlık, alt metin, görsel künyesi ve
+     yayın penceresi taşıyor, hepsi tek tıkla giderdi. Geri alma artık
+     gerçekten çalışıyor (göç 20260810101000) ama geçmişte doğru satırı
+     bulmayı gerektiriyor; onay kutusu o aramayı hiç gerektirmiyor. */
+  const [silmeSoruldu, setSilmeSoruldu] = useState(false);
+
   return (
     <li className="rounded-card border border-border bg-surface-2 px-3 py-2.5">
       <div className="flex flex-wrap items-center gap-2">
@@ -1227,8 +1424,46 @@ function HeroSlideRowEditor({
           >
             ↓
           </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            aria-label={`${slide.title} slaydını sil`}
+            disabled={!canWrite}
+            onClick={() => setSilmeSoruldu(true)}
+          >
+            Sil
+          </Button>
         </div>
       </div>
+
+      {silmeSoruldu && (
+        <Alert tone="danger" className="mt-2">
+          <p className="text-body-sm">
+            <strong>{slide.title}</strong> slaydı silinsin mi? Başlık, alt
+            metin, görsel künyesi ve yayın penceresi birlikte gider.
+          </p>
+          <div className="mt-2 flex gap-2">
+            <Button
+              size="sm"
+              variant="danger"
+              disabled={!canWrite}
+              onClick={() => {
+                setSilmeSoruldu(false);
+                onSil();
+              }}
+            >
+              Sil
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setSilmeSoruldu(false)}
+            >
+              Vazgeç
+            </Button>
+          </div>
+        </Alert>
+      )}
 
       <div className="mt-2 grid gap-2 sm:grid-cols-2">
         <Alan etiket="Başlık">
@@ -1284,6 +1519,24 @@ function HeroSlideRowEditor({
           >
             <option value="left">Sola</option>
             <option value="center">Ortaya</option>
+          </Select>
+        </Alan>
+        {/* Sahne artık düzenlenebilir: liste kapalı olduğu için yanlış bir
+            değer yazılamıyor, kısıt da veritabanında duruyor. Görseli olan
+            slaytta sahne yalnızca görsel yüklenene kadar/altında görünür —
+            yine de kilitli tutmak, görseli kaldırınca eski arka planla
+            kalmak demekti. */}
+        <Alan etiket="Sahne (arka plan)">
+          <Select
+            value={slide.scene}
+            disabled={!canWrite}
+            onChange={(e) => onYaz({ scene: e.target.value as HeroScene })}
+          >
+            {HERO_SCENES.map((s) => (
+              <option key={s} value={s}>
+                {heroSceneLabels[s]}
+              </option>
+            ))}
           </Select>
         </Alan>
         <Alan etiket="Odak noktası (yatay % / dikey %)">

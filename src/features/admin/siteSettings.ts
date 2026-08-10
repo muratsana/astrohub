@@ -1,5 +1,6 @@
 import { getSupabase } from '@/services/supabase/client';
 import { sanitizeText } from '@/lib/sanitize';
+import type { HeroScene } from '@/components/media/HeroBackdrop';
 
 /**
  * SİTE AYARLARI — veri katmanı (§13.2, §13.3).
@@ -255,6 +256,8 @@ export async function deleteNavLink(id: string): Promise<void> {
 
 export interface HeroSlideRow {
   key: string;
+  /** Çizilen arka plan; `HeroScene` ile aynı beşli. */
+  scene: HeroScene;
   badge: string;
   title: string;
   subtitle: string;
@@ -287,14 +290,25 @@ export async function fetchHeroSlides(): Promise<HeroSlideRow[]> {
   const { data, error } = await supabase
     .from('hero_slides')
     .select(
-      'key, badge, title, subtitle, cta_label, cta_to, image_url, image_credit, image_licence, focal_x, focal_y, text_align, position, enabled, publish_from, publish_to'
+      'key, scene, badge, title, subtitle, cta_label, cta_to, image_url, image_credit, image_licence, focal_x, focal_y, text_align, position, enabled, publish_from, publish_to'
     )
     .order('position');
   if (error) throw new Error(error.message);
   return (data ?? []) as HeroSlideRow[];
 }
 
-/** Panelden düzenlenebilen alanlar. `key` ve `scene` yok — ikisi de kodla eşleşir. */
+/**
+ * Panelden düzenlenebilen alanlar.
+ *
+ * `key` YOK: anahtar slaydın kimliği, `DEFAULT_HERO_SLIDES` içindeki
+ * varsayılan rozetle eşleşiyor ve güncellemenin `.eq('key', …)` filtresi
+ * de ona bakıyor. Değiştirilmesi gereken bir anahtar, aslında yeni bir
+ * slayt demek — ekle ve sil artık var.
+ *
+ * `scene` VAR (eskiden yoktu): kodla eşleştiği doğru ama eşleşme sabit
+ * bir çift değil, beş seçenekli bir liste. Sahneyi kilitli tutmak,
+ * "yeni slaydın arka planı ne olacak" sorusunu cevapsız bırakırdı.
+ */
 export type HeroSlidePatch = Partial<
   Omit<HeroSlideRow, 'key'>
 >;
@@ -341,6 +355,99 @@ export async function updateHeroSlide(
   if (error) throw new Error(error.message);
   if (!data || data.length === 0)
     throw new Error('Slayt güncellenemedi — kayıt bulunamadı ya da yetkiniz yok.');
+}
+
+/**
+ * Anahtar biçimi — veritabanındaki `hero_slides_key_check` ile aynı kural.
+ *
+ * Buradaki kopya, hatayı Postgres'in `23514` metnine bırakmamak için var:
+ * yönetici "yeni kısıt ihlali" değil, ne yazması gerektiğini okur.
+ */
+export function describeHeroKeyProblem(key: string): string | null {
+  const v = key.trim();
+  if (!v) return 'Anahtar boş olamaz.';
+  if (!/^[a-z0-9][a-z0-9-]{1,39}$/.test(v))
+    return 'Anahtar 2–40 karakter olmalı; yalnızca küçük harf, rakam ve tire kullanın (örn. "yaz-kampi").';
+  return null;
+}
+
+/**
+ * Yeni hero slaydı.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * `position` ÇAĞIRAN TARAFTAN GELİYOR
+ *
+ * Sütunun varsayılanı yok (göç 20260810100000 bunu bilerek böyle
+ * bıraktı): varsayılan 0 olsaydı her yeni slayt listenin BAŞINA düşer,
+ * anasayfa yöneticinin daha doldurmadığı bir slaytla açılırdı. Sıradaki
+ * yeri bilen taraf listeyi zaten okumuş olan panel.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * YENİ SLAYT KAPALI DOĞUYOR
+ *
+ * `enabled: false` sabit, parametre değil. Hero anasayfanın ilk boyanan
+ * bloğu; slayt açık doğsaydı, yönetici başlığı yazar yazmaz yarım içerik
+ * yayına çıkardı. Açma ayrı ve bilinçli bir hareket olarak kalıyor —
+ * satırdaki "Açık" kutusu.
+ */
+export async function createHeroSlide(input: {
+  key: string;
+  scene: HeroScene;
+  title: string;
+  cta_to: string;
+  position: number;
+}): Promise<void> {
+  const anahtarSorunu = describeHeroKeyProblem(input.key);
+  if (anahtarSorunu) throw new Error(anahtarSorunu);
+
+  const adresSorunu = describePathProblem(input.cta_to);
+  if (adresSorunu) throw new Error(adresSorunu);
+
+  const title = sanitizeText(input.title, { maxLength: 90 });
+  if (!title) throw new Error('Başlık boş olamaz.');
+
+  const supabase = await client();
+  const { data, error } = await supabase
+    .from('hero_slides')
+    .insert({
+      key: input.key.trim(),
+      scene: input.scene,
+      title,
+      cta_to: input.cta_to.trim(),
+      position: input.position,
+      enabled: false,
+    })
+    .select('key');
+
+  if (error) {
+    /* Benzersizlik ihlalinin ham metni ("duplicate key value violates
+       unique constraint…") yöneticiye hiçbir şey anlatmıyor. */
+    if (error.code === '23505')
+      throw new Error(`"${input.key.trim()}" anahtarı zaten kullanılıyor.`);
+    throw new Error(error.message);
+  }
+  if (!data || data.length === 0)
+    throw new Error('Slayt eklenemedi — yetkiniz yok.');
+}
+
+/**
+ * Slayt siler.
+ *
+ * SON SLAYT SİLİNEBİLİR ve bu bir kayıp değil: tablo boşalınca
+ * `toHeroSlides` koddaki beş varsayılan slayda düşüyor, yani anasayfa
+ * tepesi kesik açılmıyor. Hero'yu tamamen kaldırmak isteyen yönetici
+ * slaytları silmez — `home_modules` içindeki `hero` modülünü kapatır.
+ */
+export async function deleteHeroSlide(key: string): Promise<void> {
+  const supabase = await client();
+  const { data, error } = await supabase
+    .from('hero_slides')
+    .delete()
+    .eq('key', key)
+    .select('key');
+  if (error) throw new Error(error.message);
+  if (!data || data.length === 0)
+    throw new Error('Slayt silinemedi — kayıt bulunamadı ya da yetkiniz yok.');
 }
 
 /* ── Feature flag'ler ────────────────────────────────────────────────── */

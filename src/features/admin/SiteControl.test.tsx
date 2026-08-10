@@ -1,7 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { SiteControl } from './SiteControl';
-import type { HomeModule, FeatureFlag, HistoryEntry } from './siteSettings';
+import type {
+  HomeModule,
+  FeatureFlag,
+  HistoryEntry,
+  HeroSlideRow,
+} from './siteSettings';
 
 /**
  * SİTE YÖNETİMİ SEKMESİ (§13.2, §13.3).
@@ -18,6 +23,8 @@ import type { HomeModule, FeatureFlag, HistoryEntry } from './siteSettings';
  *  4. YÜKSEK RİSKLİ anahtar gerekçesiz değişmemeli — düğme doğrudan
  *     yazmamalı, önce gerekçe sormalı.
  *  5. YETKİSİZ kullanıcıda yazma yüzeyi kapalı olmalı.
+ *  6. HERO EKLEME sıradaki konumu vermeli, silme ise tek tıkla
+ *     gerçekleşmemeli.
  */
 
 function modul(over: Partial<HomeModule> & { key: string }): HomeModule {
@@ -39,15 +46,41 @@ function modul(over: Partial<HomeModule> & { key: string }): HomeModule {
   };
 }
 
+function slayt(over: Partial<HeroSlideRow> & { key: string }): HeroSlideRow {
+  return {
+    scene: 'nebula',
+    badge: 'Rozet',
+    title: 'Başlık',
+    subtitle: '',
+    cta_label: 'Aç',
+    cta_to: '/galeri',
+    image_url: null,
+    image_credit: null,
+    image_licence: null,
+    focal_x: 50,
+    focal_y: 50,
+    text_align: 'left',
+    position: 1,
+    enabled: true,
+    publish_from: null,
+    publish_to: null,
+    ...over,
+  };
+}
+
 let moduller: HomeModule[] = [];
 let flags: FeatureFlag[] = [];
 let gecmis: HistoryEntry[] = [];
+let slaytlar: HeroSlideRow[] = [];
 
 const saveDraft = vi.fn().mockResolvedValue(undefined);
 const publish = vi.fn().mockResolvedValue(2);
 const discard = vi.fn().mockResolvedValue(2);
 const setFlag = vi.fn().mockResolvedValue(undefined);
 const rollback = vi.fn().mockResolvedValue(undefined);
+const heroEkle = vi.fn().mockResolvedValue(undefined);
+const heroSil = vi.fn().mockResolvedValue(undefined);
+const heroYaz = vi.fn().mockResolvedValue(undefined);
 
 vi.mock('./siteSettings', async () => {
   const actual =
@@ -62,6 +95,10 @@ vi.mock('./siteSettings', async () => {
     setFeatureFlag: (k: string, e: boolean, r?: string) => setFlag(k, e, r),
     fetchHistory: () => Promise.resolve(gecmis),
     rollbackSetting: (id: number, r?: string) => rollback(id, r),
+    fetchHeroSlides: () => Promise.resolve(slaytlar),
+    createHeroSlide: (g: unknown) => heroEkle(g),
+    deleteHeroSlide: (k: string) => heroSil(k),
+    updateHeroSlide: (k: string, p: unknown) => heroYaz(k, p),
   };
 });
 
@@ -73,6 +110,7 @@ beforeEach(() => {
   ];
   flags = [];
   gecmis = [];
+  slaytlar = [];
 });
 
 describe('ana sayfa modülleri', () => {
@@ -209,6 +247,105 @@ describe('özellik anahtarları', () => {
     await waitFor(() =>
       expect(setFlag).toHaveBeenCalledWith('radyo', false, undefined)
     );
+  });
+});
+
+describe('hero slaytları', () => {
+  async function formuAc() {
+    fireEvent.click(await screen.findByRole('button', { name: 'Yeni slayt' }));
+  }
+
+  it('yeni slaydı listenin SONUNA ekler', async () => {
+    slaytlar = [
+      slayt({ key: 'galeri', position: 1 }),
+      /* Sıra numaraları bitişik DEĞİL — "uzunluk + 1" hesaplasaydık 3
+         çıkardı ve `position` benzersiz olduğu için ekleme düşerdi. */
+      slayt({ key: 'saha', position: 7 }),
+    ];
+    render(<SiteControl canWrite />);
+    await formuAc();
+
+    fireEvent.change(screen.getByLabelText('Anahtar (sonradan değiştirilemez)'), {
+      target: { value: 'yaz-kampi' },
+    });
+    /* Satır düzenleyicilerinde de "Başlık" ve "Sahne" var; formdakiler
+       sonuncular. */
+    const basliklar = screen.getAllByLabelText('Başlık');
+    fireEvent.change(basliklar[basliklar.length - 1]!, {
+      target: { value: 'Yaz kampı' },
+    });
+    const sahneler = screen.getAllByLabelText('Sahne (arka plan)');
+    fireEvent.change(sahneler[sahneler.length - 1]!, {
+      target: { value: 'ridge' },
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Oluştur' }));
+
+    await waitFor(() => expect(heroEkle).toHaveBeenCalledTimes(1));
+    expect(heroEkle).toHaveBeenCalledWith({
+      key: 'yaz-kampi',
+      scene: 'ridge',
+      title: 'Yaz kampı',
+      cta_to: '/',
+      position: 8,
+    });
+  });
+
+  it('bozuk anahtarla oluşturmaya izin vermez', async () => {
+    render(<SiteControl canWrite />);
+    await formuAc();
+
+    fireEvent.change(screen.getByLabelText('Anahtar (sonradan değiştirilemez)'), {
+      target: { value: 'Yaz Kampı' },
+    });
+    const basliklar = screen.getAllByLabelText('Başlık');
+    fireEvent.change(basliklar[basliklar.length - 1]!, {
+      target: { value: 'Yaz kampı' },
+    });
+
+    /* Kural veritabanında da var (`hero_slides_key_check`); buradaki kapı
+       yöneticiye Postgres'in kısıt metnini değil ne yazması gerektiğini
+       gösteriyor. */
+    expect(screen.getByText(/yalnızca küçük harf, rakam ve tire/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Oluştur' })).toBeDisabled();
+    expect(heroEkle).not.toHaveBeenCalled();
+  });
+
+  it('silme tek tıkla gerçekleşmez, önce onay ister', async () => {
+    slaytlar = [slayt({ key: 'galeri', title: 'Galeri' })];
+    render(<SiteControl canWrite />);
+
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Galeri slaydını sil' })
+    );
+    /* İlk tık yalnızca soruyu açmalı: slayt başlık, alt metin, görsel
+       künyesi ve yayın penceresi taşıyor — hepsi tek tıkla gitmemeli. */
+    expect(heroSil).not.toHaveBeenCalled();
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Sil' }));
+    await waitFor(() => expect(heroSil).toHaveBeenCalledWith('galeri'));
+  });
+
+  it('sahne kapalı listeden yazılır', async () => {
+    slaytlar = [slayt({ key: 'galeri', scene: 'nebula' })];
+    render(<SiteControl canWrite />);
+
+    const sahne = await screen.findByLabelText('Sahne (arka plan)');
+    fireEvent.change(sahne, { target: { value: 'chart' } });
+
+    await waitFor(() =>
+      expect(heroYaz).toHaveBeenCalledWith('galeri', { scene: 'chart' })
+    );
+  });
+
+  it('yetkisiz kullanıcıda ekleme ve silme kapalı', async () => {
+    slaytlar = [slayt({ key: 'galeri', title: 'Galeri' })];
+    render(<SiteControl canWrite={false} />);
+
+    expect(await screen.findByRole('button', { name: 'Yeni slayt' })).toBeDisabled();
+    expect(
+      screen.getByRole('button', { name: 'Galeri slaydını sil' })
+    ).toBeDisabled();
   });
 });
 

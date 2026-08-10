@@ -47,15 +47,32 @@ export const DEFAULT_HERO_SLIDES: HeroSlideView[] = defaultHeroSlides.map(
   (s) => ({ ...s, focalX: 50, focalY: 50, textAlign: 'left' })
 );
 
-/* Kodda karşılığı olan sahneler. Bilinmeyen bir sahne adı `HeroBackdrop`u
-   boş bırakırdı; tabloya elle girilen bir değer hero'yu bozmasın. */
-const SCENES: HeroScene[] = [
+/**
+ * Kodda karşılığı olan sahneler. Bilinmeyen bir sahne adı `HeroBackdrop`u
+ * boş bırakırdı; tabloya elle girilen bir değer hero'yu bozmasın.
+ *
+ * DIŞA AÇIK, çünkü panel yeni slayt eklerken sahneyi bu listeden
+ * seçtiriyor: yönetici serbest metin yazabilseydi bir harf hatası
+ * (`rdge`) sessizce varsayılan sahneye düşerdi. Aynı beşli veritabanında
+ * `hero_slides_scene_check` olarak da duruyor; üç yerde (tip, liste,
+ * kısıt) olması tekrar değil — biri unutulursa diğeri yakalıyor.
+ */
+export const HERO_SCENES: HeroScene[] = [
   'nebula',
   'gathering',
   'ridge',
   'instrument',
   'chart',
 ];
+
+/** Sahnelerin panelde görünen adı — teknik anahtar yönetici için anlamsız. */
+export const heroSceneLabels: Record<HeroScene, string> = {
+  nebula: 'Bulutsu — derin gökyüzü',
+  gathering: 'Buluşma — teleskop siluetleri',
+  ridge: 'Sırt — dağ sırtı ve Samanyolu',
+  instrument: 'Nişangâh — ölçü ızgarası',
+  chart: 'Harita — takımyıldız çizgileri',
+};
 
 /**
  * Ham satırları çizilecek slaytlara çevirir.
@@ -116,7 +133,7 @@ function normalize(row: Record<string, unknown>): Sirali | null {
     subtitle: metin(row.subtitle),
     ctaLabel: metin(row.cta_label) || 'Aç',
     ctaTo,
-    scene: SCENES.includes(row.scene as HeroScene)
+    scene: HERO_SCENES.includes(row.scene as HeroScene)
       ? (row.scene as HeroScene)
       : (varsayilan?.scene ?? 'nebula'),
     tint: /^\d{1,3},\d{1,3},\d{1,3}$/.test(metin(row.tint))
