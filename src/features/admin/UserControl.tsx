@@ -144,6 +144,8 @@ export function UserControl() {
 
   const sayfaSayisi = Math.max(1, Math.ceil(total / USER_PAGE_SIZE));
   const sayfa = query.page ?? 0;
+  const visibleCount = users?.length ?? 0;
+  const limitedCount = users?.filter((u) => !isWriteAllowed(u)).length ?? 0;
 
   async function setPrimaryStatus(
     userId: string,
@@ -171,19 +173,39 @@ export function UserControl() {
           : 'okunuyor…'
       }
     >
-      <p className="mb-3 text-meta leading-relaxed text-muted-foreground">
-        Yetki veritabanında zorlanıyor: bu ekrandaki düğmeler yalnızca
-        yöneticinin çağırabildiği işlemleri gösteriyor.{' '}
+      <div className="mb-4 grid gap-2 sm:grid-cols-4">
+        {[
+          ['Toplam', total.toLocaleString('tr-TR'), 'Kayıt'],
+          ['Bu sayfa', visibleCount.toLocaleString('tr-TR'), 'Görünen'],
+          ['Kısıtlı', limitedCount.toLocaleString('tr-TR'), 'Yazamaz'],
+          ['KVKK', requests.length.toLocaleString('tr-TR'), 'Silme talebi'],
+        ].map(([label, value, hint]) => (
+          <div
+            key={label}
+            className="rounded-card border border-border bg-background/35 px-3 py-2.5"
+          >
+            <p className="text-meta text-faint">{label}</p>
+            <p className="tabular mt-1 font-display text-xl font-bold text-foreground">
+              {value}
+            </p>
+            <p className="mt-1 text-meta text-muted-foreground">{hint}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="mb-4 rounded-card border border-cold/20 bg-cold/8 px-3 py-2.5 text-meta leading-relaxed text-muted-foreground">
+        Yetki işlemleri veritabanında zorlanır. Panel yalnızca yöneticinin
+        çağırabildiği kontrolleri gösterir;{' '}
         <strong className="text-foreground">
-          E-posta adresleri panelde görünmez
-        </strong>{' '}
-        — kimlik tablosu API'ye hiç açılmadı.
-      </p>
+          e-posta adresleri panelde görünmez
+        </strong>
+        .
+      </div>
 
       {error && <Alert className="mb-3">{error}</Alert>}
 
       <form
-        className="mb-3 flex flex-wrap items-end gap-2"
+        className="mb-4 grid gap-2 rounded-card border border-border bg-surface-2/70 p-3 md:grid-cols-[minmax(14rem,1fr)_repeat(4,minmax(8rem,auto))_auto_auto_auto]"
         onSubmit={(e) => {
           e.preventDefault();
           setFilter({ search: searchDraft });
@@ -265,9 +287,11 @@ export function UserControl() {
           </Select>
         </label>
 
-        <Button size="sm" type="submit" disabled={busy}>
-          Uygula
-        </Button>
+        <div className="flex items-end">
+          <Button size="sm" type="submit" disabled={busy}>
+            Uygula
+          </Button>
+        </div>
         <Button
           size="sm"
           variant="ghost"
@@ -311,80 +335,123 @@ export function UserControl() {
         </p>
       )}
 
-      <ul>
+      <ul className="grid gap-2">
         {(users ?? []).map((u) => {
           const isSelf = user?.id === u.id;
           const expanded = open === u.id;
+          const primaryRole = u.roles.includes('admin')
+            ? 'Yönetici'
+            : u.roles.includes('moderator')
+              ? 'Moderatör'
+              : 'Üye';
           return (
             <li
               key={u.id}
-              className="border-b border-border py-2 last:border-0"
+              className={cn(
+                'overflow-hidden rounded-card border bg-surface-1 transition-colors',
+                expanded
+                  ? 'border-primary/55 shadow-overlay'
+                  : 'border-border hover:border-border-strong'
+              )}
             >
-              <div className="flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setOpen(expanded ? null : u.id)}
-                  aria-expanded={expanded}
-                  className="min-w-0 flex-1 text-left"
-                >
-                  <span className="block truncate text-caption font-medium text-foreground">
-                    @{u.username}
-                    {u.displayName && (
-                      <span className="text-muted-foreground">
-                        {' '}
-                        · {u.displayName}
-                      </span>
-                    )}
-                    {isSelf && (
-                      <span className="ml-2 text-meta text-primary">(sen)</span>
-                    )}
+              <button
+                type="button"
+                onClick={() => setOpen(expanded ? null : u.id)}
+                aria-expanded={expanded}
+                className="grid w-full gap-3 px-3 py-3 text-left transition-colors hover:bg-surface-2/60 md:grid-cols-[minmax(0,1fr)_9rem_8rem_9rem_auto]"
+              >
+                <span className="flex min-w-0 items-start gap-3">
+                  <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border bg-background text-caption font-bold uppercase text-primary">
+                    {(u.displayName || u.username).slice(0, 1)}
                   </span>
-                  <span className="tabular mt-0.5 block text-meta text-faint">
-                    {new Date(u.createdAt).toLocaleDateString('tr-TR')}
-                    {u.city && ` · ${u.city}`}
-                    {u.photoCount > 0 && ` · ${u.photoCount} fotoğraf`}
+                  <span className="min-w-0">
+                    <span className="block truncate text-body-sm font-semibold text-foreground">
+                      {u.displayName || `@${u.username}`}
+                      {isSelf && (
+                        <span className="ml-2 text-meta text-primary">
+                          sen
+                        </span>
+                      )}
+                    </span>
+                    <span className="mt-0.5 block truncate text-meta text-muted-foreground">
+                      @{u.username}
+                      {u.usernameCustomizedAt ? '' : ' · otomatik kullanıcı adı'}
+                    </span>
                   </span>
-                </button>
+                </span>
 
-                <span className="flex flex-wrap gap-1">
-                  {/* Durum rozeti YALNIZCA aktif olmayanlarda. Herkeste
-                      "Aktif" yazsaydı göz onu okumayı bırakır ve asıl
-                      önemli olan üç satır kalabalıkta kaybolurdu. */}
-                  {u.status !== 'active' && (
-                    <Badge tone={u.status === 'banned' ? 'danger' : 'warning'}>
-                      {accountStatusLabels[u.status]}
-                      {u.status === 'suspended' &&
-                        (isWriteAllowed(u)
-                          ? ' · süresi doldu'
-                          : u.suspendedUntil
-                            ? ` · ${new Date(u.suspendedUntil).toLocaleDateString('tr-TR')}`
-                            : ' · süresiz')}
-                    </Badge>
-                  )}
-                  {u.roles.length === 0 && <Badge>Üye</Badge>}
-                  {u.roles.map((r) => (
-                    <Badge
-                      key={r}
-                      tone={
-                        r === 'admin'
-                          ? 'danger'
-                          : r === 'moderator'
-                            ? 'warning'
-                            : 'muted'
-                      }
-                    >
-                      {roleLabels[r]}
-                    </Badge>
-                  ))}
+                <span className="text-meta">
+                  <span className="label block">Durum</span>
+                  <span
+                    className={cn(
+                      'mt-1 inline-flex rounded-card border px-1.5 py-0.5 font-medium',
+                      isWriteAllowed(u)
+                        ? 'border-success/35 text-success'
+                        : 'border-danger/35 text-danger'
+                    )}
+                  >
+                    {isWriteAllowed(u)
+                      ? accountStatusLabels[u.status]
+                      : u.status === 'suspended' && u.suspendedUntil
+                        ? `${accountStatusLabels[u.status]} · ${new Date(u.suspendedUntil).toLocaleDateString('tr-TR')}`
+                        : accountStatusLabels[u.status]}
+                  </span>
+                </span>
+
+                <span className="text-meta">
+                  <span className="label block">Rol</span>
+                  <span className="mt-1 block text-muted-foreground">
+                    {primaryRole}
+                  </span>
+                </span>
+
+                <span className="text-meta">
+                  <span className="label block">Aktivite</span>
+                  <span className="tabular mt-1 block text-muted-foreground">
+                    {u.photoCount} fotoğraf
+                    {u.city ? ` · ${u.city}` : ''}
+                  </span>
+                </span>
+
+                <span className="flex items-center gap-2 justify-self-start md:justify-self-end">
                   {u.membership !== 'none' && (
                     <Badge tone="cold">{membershipLabels[u.membership]}</Badge>
                   )}
+                  <span
+                    className={cn(
+                      'text-lg leading-none text-muted-foreground transition-transform',
+                      expanded && 'rotate-90 text-primary'
+                    )}
+                    aria-hidden="true"
+                  >
+                    ›
+                  </span>
                 </span>
-              </div>
+              </button>
 
               {expanded && (
-                <div className="mt-2 space-y-3 rounded-card border border-border bg-surface-2 p-3">
-                  <div>
+                <div className="space-y-4 border-t border-border bg-background/35 p-3">
+                  <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                    <UserMiniStat
+                      label="Kayıt"
+                      value={new Date(u.createdAt).toLocaleDateString('tr-TR')}
+                    />
+                    <UserMiniStat label="Şehir" value={u.city || '—'} />
+                    <UserMiniStat
+                      label="Son görülme"
+                      value={
+                        u.lastSeenAt
+                          ? new Date(u.lastSeenAt).toLocaleDateString('tr-TR')
+                          : '—'
+                      }
+                    />
+                    <UserMiniStat
+                      label="Üyelik"
+                      value={membershipLabels[u.membership]}
+                    />
+                  </div>
+
+                  <div className="rounded-card border border-border bg-surface-1 p-3">
                     <p className="label mb-1.5">Ana statü</p>
                     <div className="flex flex-wrap gap-1.5">
                       {[
@@ -432,7 +499,7 @@ export function UserControl() {
                     </p>
                   </div>
 
-                  <div>
+                  <div className="rounded-card border border-border bg-surface-1 p-3">
                     <p className="label mb-1.5">Roller</p>
                     <div className="flex flex-wrap gap-1.5">
                       {ROLES.map((r) => {
@@ -585,6 +652,17 @@ export function UserControl() {
         )}
       </div>
     </Panel>
+  );
+}
+
+function UserMiniStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-card border border-border bg-surface-1 px-3 py-2">
+      <p className="label">{label}</p>
+      <p className="tabular mt-1 truncate text-meta text-muted-foreground">
+        {value}
+      </p>
+    </div>
   );
 }
 
