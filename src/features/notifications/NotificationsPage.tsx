@@ -17,6 +17,7 @@ import {
   markNotificationRead,
   useNotifications,
   useUnreadCount,
+  NOTIFICATION_CATEGORIES,
   type NotificationCategory,
   type NotificationItem,
   type NotificationView,
@@ -35,13 +36,23 @@ import { NotificationPreferences } from './NotificationPreferences';
  * göstermek, "daha fazla" sayacını da yanlış yapardı.
  */
 
+/**
+ * Sekmeler SİCİLDEN türüyor, elle yazılmıyor.
+ *
+ * Burada daha önce altı elemanlı sabit bir dizi vardı ve kategori kümesi
+ * beşten ona çıktığında güncellenmedi: mesaj, galeri, forum ve moderasyon
+ * bildirimleri hiçbir sekmeye düşmüyor, yalnızca "Tümü" altında
+ * görünüyorlardı. Sekmeleri gezen kullanıcı, mesaj bildirimlerinin
+ * kaybolduğu sonucuna varırdı. Liste artık tercih ekranıyla aynı kaynaktan
+ * besleniyor; ikisinin ayrı ayrı unutulması mümkün değil.
+ *
+ * `sistem` sekmesi VAR ama tercih ekranında kutusu YOK — sicil bu ayrımı
+ * `toggleable` ile taşıyor. Kapatılamayan bildirim de okunuyor; süzmek
+ * ile susturmak farklı iki şey.
+ */
 const CATEGORY_TABS: { key: NotificationCategory | 'tumu'; label: string }[] = [
   { key: 'tumu', label: 'Tümü' },
-  { key: 'sosyal', label: 'Sosyal' },
-  { key: 'icerik', label: 'İçerik' },
-  { key: 'etkinlik', label: 'Etkinlik' },
-  { key: 'yayin', label: 'Yayın' },
-  { key: 'sistem', label: 'Sistem' },
+  ...NOTIFICATION_CATEGORIES.map(({ key, label }) => ({ key, label })),
 ];
 
 /**

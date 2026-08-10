@@ -337,66 +337,108 @@ function siteChannelEnabled(value: unknown): boolean {
 }
 
 /**
- * Kullanıcının kapatabileceği kategoriler.
+ * KATEGORİ SİCİLİ — TEK KAYNAK.
+ *
+ * İki yüzey bu listeden besleniyor: bildirim sayfasındaki süzme sekmeleri
+ * ve tercih ekranındaki anahtarlar. Daha önce iki ayrı liste vardı ve
+ * kategori kümesi beşten ona çıktığında sekmeler eskisinde kaldı: mesaj,
+ * galeri, forum ve moderasyon bildirimleri hiçbir sekmeye düşmüyordu,
+ * yalnızca "Tümü" altında görünüyorlardı. Tek liste, o sürüklenmenin
+ * tekrarlamasını imkânsız kılıyor — yeni kategori buraya yazılmadan
+ * hiçbir yüzeye giremiyor.
  *
  * BUGÜN GERÇEKTEN BİLDİRİM ÜRETEN kategoriler listeleniyor; küme
  * veritabanından ölçüldü (`app.notify` çağıran tetikleyicilerin ürettiği
  * türler). `ilan` kategorisi enum'da var ama onu yazan bir tetikleyici
- * henüz yok (FAZ 8'in konusu) — hiçbir şeyi değiştirmeyen bir kutu
- * göstermek, kullanıcıya kontrolü olduğu yalanını söylemek olurdu.
+ * henüz yok (FAZ 8'in konusu) — ne sekmesi ne kutusu var. Boş bir sekme
+ * ve hiçbir şeyi değiştirmeyen bir kutu, ikisi de kullanıcıya olmayan
+ * bir şeyin sözünü vermek olurdu.
  *
- * `sistem` LİSTEDE YOK ve bu bir eksik değil: üyelik bitişi, hesap
- * uyarısı, yöneticinin doğrudan mesajı kapatılamıyor — sunucu tarafı da
- * kapatmıyor. `moderasyon` ise ARTIK LİSTEDE: kendi şikâyetinin sonucunu
- * almak istememek meşru bir tercih ve sunucu bu kategoriyi kapatılabilir
- * sayıyor.
+ * ETİKET TEK: aynı kategori iki yüzeyde aynı kelimeyle anılıyor. Sekmeye
+ * "İçerik", kutuya "Gönderdiğin içerik" yazsaydık, aynı şeyin iki adı
+ * olurdu ve sekmenin başkasının içeriğini de kapsadığı sanılırdı.
  */
-export const TOGGLEABLE_CATEGORIES: {
+export const NOTIFICATION_CATEGORIES: {
   key: NotificationCategory;
   label: string;
-  hint: string;
+  /**
+   * Tercih kutusunun altındaki açıklama. Kapatılamayan kategoride yok:
+   * orada kutu da çizilmiyor.
+   */
+  hint?: string;
+  /**
+   * Kullanıcı bu kategoriyi kapatabiliyor mu. `sistem` kapatılamıyor —
+   * üyelik bitişi, hesap uyarısı, yöneticinin doğrudan mesajı. Sunucu
+   * tarafı da kapatmıyor (`app.notification_allowed`); kapatılamayan bir
+   * anahtarı ekranda kapatılabilir göstermek, çalışmayan bir düğme
+   * koymak olurdu. `moderasyon` ise kapatılabilir: kendi bildirdiğin
+   * içeriğin sonucunu istememek meşru bir tercih.
+   */
+  toggleable: boolean;
 }[] = [
   {
     key: 'mesaj',
     label: 'Mesaj',
     hint: 'Sana özel mesaj geldiğinde',
+    toggleable: true,
   },
   {
     key: 'sosyal',
     label: 'Takip',
     hint: 'Biri seni takip etmeye başladığında',
+    toggleable: true,
   },
   {
     key: 'galeri',
     label: 'Galeri',
     hint: 'Fotoğrafına yorum, yanıt, beğeni, puan ve öne çıkarma',
+    toggleable: true,
   },
   {
     key: 'forum',
     label: 'Forum',
     hint: 'Açtığın konuya yanıt yazıldığında',
+    toggleable: true,
   },
   {
     key: 'icerik',
     label: 'Gönderdiğin içerik',
     hint: 'Haber, yazı ve topluluk gönderin onaylandığında ya da reddedildiğinde',
+    toggleable: true,
   },
   {
     key: 'moderasyon',
     label: 'Moderasyon',
     hint: 'Bildirdiğin içerik hakkında verilen karar',
+    toggleable: true,
   },
   {
     key: 'etkinlik',
     label: 'Etkinlik',
     hint: 'Takip ettiğin etkinlikte değişiklik, iptal ve hatırlatma',
+    toggleable: true,
   },
   {
     key: 'yayin',
     label: 'Yayın',
     hint: 'Radyo ve TV yayını başladığında, yeni podcast bölümü',
+    toggleable: true,
   },
+  { key: 'sistem', label: 'Sistem', toggleable: false },
 ];
+
+/**
+ * Tercih ekranının çizdiği anahtarlar — sicilin kapatılabilir kısmı.
+ * `hint` burada zorunlu: kutusu olan her kategorinin altında ne olduğunu
+ * söyleyen bir cümle var.
+ */
+export const TOGGLEABLE_CATEGORIES: {
+  key: NotificationCategory;
+  label: string;
+  hint: string;
+}[] = NOTIFICATION_CATEGORIES.filter((c) => c.toggleable).map(
+  ({ key, label, hint }) => ({ key, label, hint: hint ?? '' })
+);
 
 export interface PreferenceState {
   /** Kategori → açık mı. Kayıt yoksa hepsi açık. */

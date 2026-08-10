@@ -2,7 +2,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, within, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { NotificationsPage } from './NotificationsPage';
-import type { NotificationItem } from '@/services/content/notifications';
+import {
+  NOTIFICATION_CATEGORIES,
+  type NotificationItem,
+} from '@/services/content/notifications';
 
 /**
  * BİLDİRİM MERKEZİ — OTURUM AÇIKKEN.
@@ -169,6 +172,51 @@ describe('bildirim listesi', () => {
     items = [];
     renderPage();
     expect(screen.getByText(/Henüz bildirimin yok/)).toBeInTheDocument();
+  });
+});
+
+/*
+ * SEKMELER SİCİLLE AYNI KALMALI.
+ *
+ * Bu testin doğduğu hata: kategori kümesi beşten ona çıktı, sekme dizisi
+ * elle yazılmış olduğu için eskisinde kaldı ve mesaj, galeri, forum,
+ * moderasyon bildirimleri hiçbir sekmeye düşmedi — yalnızca "Tümü"
+ * altında görünüyorlardı. Sessiz bir kayıptı: liste boş değildi, sekmeler
+ * eksikti.
+ *
+ * Sabit bir isim listesiyle karşılaştırmıyoruz; sicilin KENDİSİYLE
+ * karşılaştırıyoruz. Beklenen değeri elle yazsaydık, bu test de aynı
+ * unutulmaya açık ikinci bir liste olurdu.
+ */
+describe('kategori sekmeleri', () => {
+  it('sicildeki her kategori için bir sekme çiziliyor', () => {
+    items = [];
+    renderPage();
+    const sekmeler = within(
+      screen.getByRole('tablist', { name: 'Bildirim kategorisi' })
+    ).getAllByRole('tab');
+    expect(sekmeler.map((t) => t.textContent)).toEqual([
+      'Tümü',
+      ...NOTIFICATION_CATEGORIES.map((c) => c.label),
+    ]);
+  });
+
+  /*
+   * `sistem` sekmede VAR, tercih ekranında YOK. Süzmek ile susturmak
+   * farklı iki şey: kapatılamayan bildirim de okunuyor ve okunacaksa
+   * süzülebilmeli.
+   */
+  it('sistem sekmesi var ama kapatılabilir sayılmıyor', () => {
+    items = [];
+    renderPage();
+    expect(
+      within(
+        screen.getByRole('tablist', { name: 'Bildirim kategorisi' })
+      ).getByRole('tab', { name: 'Sistem' })
+    ).toBeInTheDocument();
+    expect(
+      NOTIFICATION_CATEGORIES.find((c) => c.key === 'sistem')?.toggleable
+    ).toBe(false);
   });
 });
 
