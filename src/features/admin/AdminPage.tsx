@@ -35,7 +35,6 @@ import {
   HomeIcon,
   ImageIcon,
   ListIcon,
-  PlayIcon,
   RadioIcon,
   SparkleIcon,
   TagIcon,
@@ -160,84 +159,183 @@ const routeAliases: Record<string, AdminSectionId> = {
 
 type StatTone = 'warning' | 'primary' | 'success' | 'cold';
 
-const STATIC_STATS = [
-  ['Açık şikayet', '—', 'Moderasyon bekliyor', 'warning'],
-  ['Açık destek', '—', 'Yanıt bekleyen talep', 'primary'],
-  ['Açık hata', '—', 'İstemci hata günlüğü', 'success'],
-] as const satisfies readonly (readonly [string, string, string, StatTone])[];
-
-function dashboardStats(data: DashboardStats | null) {
-  return [
-    [
-      'Onay bekleyen',
-      formatAdminCount(data?.moderasyonBekleyen),
-      'Kuyruktaki içerikler',
-      'warning',
-    ],
-    ...STATIC_STATS,
-    [
-      'Kullanıcı',
-      formatAdminCount(data?.kullaniciToplam),
-      'Toplam üye',
-      'cold',
-    ],
-    [
-      'İçerik',
-      formatAdminCount(data?.icerikYayinda),
-      'Yayındaki kayıt',
-      'primary',
-    ],
-  ] as const satisfies readonly (readonly [
-    string,
-    string,
-    string,
-    StatTone,
-  ])[];
+interface DashboardCard {
+  label: string;
+  value: string;
+  hint: string;
+  tone: StatTone;
+  href: string;
 }
 
-const trendRows = [
-  ['Yeni kullanıcı (30g)', '142', [8, 12, 9, 14, 18, 21, 20, 24]],
-  ['Yeni etkinlik (30g)', '15', [1, 2, 1, 3, 3, 4, 2, 5]],
-  ['Galeri yükleme (30g)', '86', [6, 8, 7, 11, 9, 15, 13, 17]],
-  ['Mesaj (30g)', '430', [18, 24, 28, 32, 44, 51, 47, 62]],
-] as const;
+function dashboardStats(data: DashboardStats | null): DashboardCard[] {
+  return [
+    {
+      label: 'Onay bekleyen',
+      value: formatAdminCount(data?.moderasyonBekleyen),
+      hint: 'Kuyruktaki içerikler',
+      tone: 'warning',
+      href: '/admin/onay-kuyrugu',
+    },
+    {
+      label: 'Bekleyen fotoğraf',
+      value: formatAdminCount(data?.fotografBekleyen),
+      hint: 'Fotoğraf inceleme',
+      tone: 'warning',
+      href: '/admin/onay-kuyrugu?record=photo',
+    },
+    {
+      label: 'Silme talebi',
+      value: formatAdminCount(data?.silmeTalebi),
+      hint: 'Hesap kapatma kuyruğu',
+      tone: 'primary',
+      href: '/admin/kullanicilar',
+    },
+    {
+      label: 'Askıdaki kullanıcı',
+      value: formatAdminCount(data?.kullaniciAskida),
+      hint: 'Kısıtlı hesap',
+      tone: 'success',
+      href: '/admin/kullanicilar',
+    },
+    {
+      label: 'Kullanıcı',
+      value: formatAdminCount(data?.kullaniciToplam),
+      hint: 'Toplam üye',
+      tone: 'cold',
+      href: '/admin/kullanicilar',
+    },
+    {
+      label: 'İçerik',
+      value: formatAdminCount(data?.icerikYayinda),
+      hint: 'Yayındaki kayıt',
+      tone: 'primary',
+      href: '/admin/icerik',
+    },
+  ];
+}
 
-const contentRows = [
-  ['Haftanın fotoğrafı', 'Yayın kuyruğu hazır', '06 görsel'],
-  ['Etkinlikler', 'Tarih aralıkları kontrol edildi', '15 kayıt'],
-  ['Forum', 'Başlık → konu akışı', '7 konu'],
-  ['Araçlar', 'Katalog ve hesaplayıcılar', '8 araç'],
-] as const;
+interface DashboardRow {
+  title: string;
+  text: string;
+  meta: string;
+  href: string;
+}
 
-const queueRows = [
-  ['Fotoğraf inceleme', '3 yeni yükleme', 'Öncelik yüksek'],
-  ['Topluluk başvurusu', '2 kayıt bekliyor', 'Belge kontrolü'],
-  ['Etkinlik önerisi', '5 taslak', 'Tarih / konum kontrolü'],
-  ['Kullanıcı bildirimi', '8 mesaj', 'Yanıt bekliyor'],
-] as const;
+function activityRows(data: DashboardStats | null): DashboardRow[] {
+  return [
+    {
+      title: 'Yeni kullanıcı (7g)',
+      text: 'Son 7 günde açılan hesap',
+      meta: formatAdminCount(data?.kullaniciYeni7g),
+      href: '/admin/kullanicilar',
+    },
+    {
+      title: 'Taslak içerik',
+      text: 'Yayına alınmamış içerik',
+      meta: formatAdminCount(data?.icerikTaslak),
+      href: '/admin/icerik',
+    },
+    {
+      title: 'Bugünkü audit',
+      text: 'Bugün kayda geçen işlem',
+      meta: formatAdminCount(data?.auditBugun),
+      href: '/admin/aktivite',
+    },
+    {
+      title: 'Askıdaki kullanıcı',
+      text: 'Kısıtlı ya da yasaklı hesap',
+      meta: formatAdminCount(data?.kullaniciAskida),
+      href: '/admin/kullanicilar',
+    },
+  ];
+}
 
-const timeline = [
-  ['09:10', 'Ana sayfa modülleri tarandı'],
-  ['10:25', 'Etkinlik tarih formatı güncellendi'],
-  ['13:40', 'Forum görünümü sadeleştirildi'],
-  ['16:00', 'Canlı yayın otomasyonu kontrol edildi'],
-] as const;
+function contentRows(data: DashboardStats | null): DashboardRow[] {
+  return [
+    {
+      title: 'Yayındaki içerik',
+      text: 'Haber, yazı, sözlük ve SSS kayıtları',
+      meta: formatAdminCount(data?.icerikYayinda),
+      href: '/admin/icerik',
+    },
+    {
+      title: 'Taslak içerik',
+      text: 'Yayına alınmayı bekleyen içerik',
+      meta: formatAdminCount(data?.icerikTaslak),
+      href: '/admin/icerik',
+    },
+    {
+      title: 'Bekleyen fotoğraf',
+      text: 'Fotoğraf moderasyon kuyruğu',
+      meta: formatAdminCount(data?.fotografBekleyen),
+      href: '/admin/onay-kuyrugu?record=photo',
+    },
+    {
+      title: 'Onay kuyruğu',
+      text: 'Moderasyon bekleyen tüm kayıtlar',
+      meta: formatAdminCount(data?.moderasyonBekleyen),
+      href: '/admin/onay-kuyrugu',
+    },
+  ];
+}
 
-const healthRows = [
-  ['Onay bekleyen fotoğraf', '3'],
-  ['Onay bekleyen etkinlik', '5'],
-  ['Açık şikayet', '6'],
-  ['Bugünkü yeni kullanıcı', '24'],
-  ['Son 7 gün yorum', '118'],
-  ['Görseli olmayan haber', '0'],
-] as const;
+function queueRows(data: DashboardStats | null): DashboardRow[] {
+  return [
+    {
+      title: 'Onay bekleyen',
+      text: 'İçerik moderasyon kuyruğu',
+      meta: formatAdminCount(data?.moderasyonBekleyen),
+      href: '/admin/onay-kuyrugu',
+    },
+    {
+      title: 'Fotoğraf inceleme',
+      text: 'Taslak fotoğraflar',
+      meta: formatAdminCount(data?.fotografBekleyen),
+      href: '/admin/onay-kuyrugu?record=photo',
+    },
+    {
+      title: 'Silme talebi',
+      text: 'Hesap kapatma istekleri',
+      meta: formatAdminCount(data?.silmeTalebi),
+      href: '/admin/kullanicilar',
+    },
+    {
+      title: 'Askıdaki kullanıcı',
+      text: 'Müdahale edilmiş hesaplar',
+      meta: formatAdminCount(data?.kullaniciAskida),
+      href: '/admin/kullanicilar',
+    },
+  ];
+}
 
-const topClicks = [
-  ['Etkinlik detayı', 'Ethem Hoca ile Gökyüzü Gözlem Şenliği', '126'],
-  ['Galeri', 'Haftanın fotoğrafı arşivi', '94'],
-  ['Araç', 'Gökyüzü Kataloğu', '88'],
-  ['Forum', 'Ekipmanlar', '52'],
-] as const;
+function healthRows(data: DashboardStats | null): DashboardRow[] {
+  return [
+    {
+      title: 'Toplam kullanıcı',
+      text: 'Kullanıcı yönetimi',
+      meta: formatAdminCount(data?.kullaniciToplam),
+      href: '/admin/kullanicilar',
+    },
+    {
+      title: 'Yeni kullanıcı (7g)',
+      text: 'Kayıt akışı',
+      meta: formatAdminCount(data?.kullaniciYeni7g),
+      href: '/admin/kullanicilar',
+    },
+    {
+      title: 'Yayındaki içerik',
+      text: 'Canlı içerik',
+      meta: formatAdminCount(data?.icerikYayinda),
+      href: '/admin/icerik',
+    },
+    {
+      title: 'Bugünkü audit',
+      text: 'Sistem aktivitesi',
+      meta: formatAdminCount(data?.auditBugun),
+      href: '/admin/aktivite',
+    },
+  ];
+}
 
 export function AdminPage() {
   const { user, configured, loading } = useAuth();
@@ -514,15 +612,25 @@ function Dashboard() {
   }, []);
 
   const stats = dashboardStats(data);
+  const liveActivityRows = activityRows(data);
+  const liveContentRows = contentRows(data);
+  const liveQueueRows = queueRows(data);
+  const liveHealthRows = healthRows(data);
+  const totalQueue =
+    (data?.moderasyonBekleyen ?? 0) +
+    (data?.fotografBekleyen ?? 0) +
+    (data?.silmeTalebi ?? 0) +
+    (data?.kullaniciAskida ?? 0);
 
   return (
     <>
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
-        {stats.map(([label, value, hint, tone]) => (
-          <div
+        {stats.map(({ label, value, hint, tone, href }) => (
+          <Link
             key={label}
+            to={href}
             className={cn(
-              'rounded-card border bg-surface-1 p-4 transition-transform hover:-translate-y-0.5',
+              'rounded-card border bg-surface-1 p-4 transition-transform hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary',
               tone === 'warning'
                 ? 'border-warning/35 bg-warning/10'
                 : 'border-border'
@@ -541,7 +649,7 @@ function Dashboard() {
               {value}
             </p>
             <p className="mt-2 text-meta text-faint">{hint}</p>
-          </div>
+          </Link>
         ))}
       </section>
       {error ? (
@@ -551,24 +659,22 @@ function Dashboard() {
       ) : null}
 
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {trendRows.map(([label, value, values]) => (
-          <article
-            key={label}
-            className="rounded-card border border-border bg-surface-1 p-4 transition-transform hover:-translate-y-0.5"
+        {liveActivityRows.map((row) => (
+          <Link
+            key={row.title}
+            to={row.href}
+            className="rounded-card border border-border bg-surface-1 p-4 transition-transform hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           >
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-meta text-muted-foreground">{label}</p>
+                <p className="text-meta text-muted-foreground">{row.title}</p>
                 <p className="mt-1 font-display text-2xl font-bold leading-none text-foreground">
-                  {value}
+                  {row.meta}
                 </p>
               </div>
-              <Sparkline values={values} />
             </div>
-            <p className="mt-3 text-meta text-success">
-              +12% son 7 gün vs önceki 7
-            </p>
-          </article>
+            <p className="mt-3 text-meta text-faint">{row.text}</p>
+          </Link>
         ))}
       </section>
 
@@ -581,25 +687,28 @@ function Dashboard() {
                 Yayın, vitrin ve katalog yüzeyleri
               </p>
             </div>
-            <Badge tone="primary">4 modül</Badge>
+            <Badge tone="primary">{liveContentRows.length} modül</Badge>
           </header>
           <div className="grid gap-px bg-border md:grid-cols-2">
-            {contentRows.map(([title, text, meta], index) => (
-              <article
-                key={title}
-                className="bg-surface-1 p-4 transition-colors hover:bg-surface-2"
+            {liveContentRows.map((row, index) => (
+              <Link
+                key={row.title}
+                to={row.href}
+                className="bg-surface-1 p-4 transition-colors hover:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-primary"
               >
                 <div className="flex items-start justify-between gap-3">
                   <IconTile index={index} />
-                  <Badge tone={index === 0 ? 'warning' : 'muted'}>{meta}</Badge>
+                  <Badge tone={index === 2 || index === 3 ? 'warning' : 'muted'}>
+                    {row.meta}
+                  </Badge>
                 </div>
                 <h3 className="mt-4 text-body-sm font-semibold text-foreground">
-                  {title}
+                  {row.title}
                 </h3>
                 <p className="mt-1 text-meta leading-relaxed text-muted-foreground">
-                  {text}
+                  {row.text}
                 </p>
-              </article>
+              </Link>
             ))}
           </div>
         </section>
@@ -610,20 +719,29 @@ function Dashboard() {
               <h2 className="label text-foreground">İş Kuyruğu</h2>
               <p className="mt-1 text-meta text-faint">Özet iş listesi</p>
             </div>
-            <Badge tone="warning">18 açık</Badge>
+            <Badge tone="warning">{formatAdminCount(totalQueue)} açık</Badge>
           </header>
           <ul className="divide-y divide-border">
-            {queueRows.map(([title, text, meta]) => (
-              <li key={title} className="px-4 py-3">
+            {liveQueueRows.map((row) => (
+              <li key={row.title}>
+                <Link
+                  to={row.href}
+                  className="block px-4 py-3 transition-colors hover:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-primary"
+                >
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-body-sm font-semibold text-foreground">
-                      {title}
+                      {row.title}
                     </p>
-                    <p className="mt-1 text-meta text-muted-foreground">{text}</p>
+                    <p className="mt-1 text-meta text-muted-foreground">
+                      {row.text}
+                    </p>
                   </div>
-                  <span className="tabular text-meta text-primary">{meta}</span>
+                  <span className="tabular text-meta text-primary">
+                    {row.meta}
+                  </span>
                 </div>
+                </Link>
               </li>
             ))}
           </ul>
@@ -636,16 +754,19 @@ function Dashboard() {
             <h2 className="label text-foreground">Sistem Sağlığı</h2>
           </header>
           <div className="grid gap-px bg-border sm:grid-cols-2">
-            {healthRows.map(([label, value]) => (
-              <div
-                key={label}
-                className="flex items-center justify-between gap-3 bg-surface-1 px-4 py-3"
+            {liveHealthRows.map((row) => (
+              <Link
+                key={row.title}
+                to={row.href}
+                className="flex items-center justify-between gap-3 bg-surface-1 px-4 py-3 transition-colors hover:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-primary"
               >
-                <span className="text-body-sm text-muted-foreground">{label}</span>
-                <span className="tabular text-body-sm font-semibold text-foreground">
-                  {value}
+                <span className="text-body-sm text-muted-foreground">
+                  {row.title}
                 </span>
-              </div>
+                <span className="tabular text-body-sm font-semibold text-foreground">
+                  {row.meta}
+                </span>
+              </Link>
             ))}
           </div>
         </section>
@@ -655,78 +776,28 @@ function Dashboard() {
             <h2 className="label text-foreground">Son Hareketler</h2>
           </header>
           <ol className="divide-y divide-border">
-            {timeline.map(([time, text]) => (
-              <li key={`${time}-${text}`} className="flex gap-3 px-4 py-3">
-                <span className="tabular text-meta text-primary">{time}</span>
-                <span className="text-meta leading-relaxed text-muted-foreground">
-                  {text}
-                </span>
+            {data?.sonHareketler.length ? (
+              data.sonHareketler.map((item) => (
+                <li
+                  key={`${item.zaman}-${item.eylem}-${item.hedef ?? ''}`}
+                  className="flex gap-3 px-4 py-3"
+                >
+                  <span className="tabular text-meta text-primary">
+                    {formatAdminTime(item.zaman)}
+                  </span>
+                  <span className="text-meta leading-relaxed text-muted-foreground">
+                    {item.eylem}
+                    {item.hedef ? ` · ${item.hedef}` : ''}
+                    {item.kim ? ` · @${item.kim}` : ''}
+                  </span>
+                </li>
+              ))
+            ) : (
+              <li className="px-4 py-3 text-meta text-muted-foreground">
+                Son hareket kaydı yok.
               </li>
-            ))}
+            )}
           </ol>
-        </section>
-      </div>
-
-      <div className="grid gap-4 xl:grid-cols-2">
-        <section className="rounded-card border border-border bg-surface-1">
-          <header className="flex items-center gap-2 border-b border-border px-4 py-3">
-            <SparkleIcon className="h-4 w-4 text-primary" />
-            <h2 className="label text-foreground">
-              Son 7 günün en çok tıklananları
-            </h2>
-          </header>
-          <ul className="divide-y divide-border">
-            {topClicks.map(([kind, title, count]) => (
-              <li
-                key={`${kind}-${title}`}
-                className="flex items-center justify-between gap-3 px-4 py-3"
-              >
-                <span className="min-w-0">
-                  <span className="block text-body-sm font-medium text-foreground">
-                    {kind}
-                  </span>
-                  <span className="block truncate text-meta text-muted-foreground">
-                    {title}
-                  </span>
-                </span>
-                <span className="tabular text-body-sm font-semibold text-foreground">
-                  {count}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        <section className="rounded-card border border-border bg-surface-1">
-          <header className="flex items-center gap-2 border-b border-border px-4 py-3">
-            <PlayIcon className="h-4 w-4 text-primary" />
-            <h2 className="label text-foreground">Zamanlanmış işler</h2>
-          </header>
-          <ul className="divide-y divide-border">
-            {[
-              ['nightly-content-sync', '02:15 · aktif', 'succeeded'],
-              ['event-reminder-digest', '09:00 · aktif', 'succeeded'],
-              ['broken-link-check', '12:00 · aktif', 'bilgi yok'],
-              ['catalog-refresh', 'haftalık · aktif', 'succeeded'],
-            ].map(([job, schedule, status]) => (
-              <li
-                key={job}
-                className="flex items-center justify-between gap-3 px-4 py-3"
-              >
-                <span className="min-w-0">
-                  <span className="block truncate text-body-sm font-medium text-foreground">
-                    {job}
-                  </span>
-                  <span className="block text-meta text-muted-foreground">
-                    {schedule}
-                  </span>
-                </span>
-                <Badge tone={status === 'succeeded' ? 'success' : 'muted'}>
-                  {status}
-                </Badge>
-              </li>
-            ))}
-          </ul>
         </section>
       </div>
     </>
@@ -773,38 +844,11 @@ function IconTile({ index }: { index: number }) {
   );
 }
 
-function Sparkline({ values }: { values: readonly number[] }) {
-  const width = 112;
-  const height = 34;
-  const max = Math.max(...values);
-  const min = Math.min(...values);
-  const range = max - min || 1;
-  const step = width / Math.max(1, values.length - 1);
-  const points = values.map((value, index) => {
-    const x = index * step;
-    const y = height - ((value - min) / range) * (height - 4) - 2;
-    return [x, y] as const;
+function formatAdminTime(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleTimeString('tr-TR', {
+    hour: '2-digit',
+    minute: '2-digit',
   });
-  const line = points
-    .map(([x, y], index) => `${index === 0 ? 'M' : 'L'}${x},${y}`)
-    .join(' ');
-  const last = points[points.length - 1];
-
-  return (
-    <svg
-      width={width}
-      height={height}
-      viewBox={`0 0 ${width} ${height}`}
-      className="overflow-visible text-primary"
-      aria-hidden
-    >
-      <path
-        d={`${line} L${width},${height} L0,${height} Z`}
-        fill="currentColor"
-        opacity="0.12"
-      />
-      <path d={line} fill="none" stroke="currentColor" strokeWidth="1.6" />
-      <circle cx={last[0]} cy={last[1]} r="2.5" fill="currentColor" />
-    </svg>
-  );
 }

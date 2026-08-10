@@ -22,6 +22,29 @@ vi.mock('./useRoles', () => ({
   }),
 }));
 
+vi.mock('./records', () => ({
+  fetchDashboard: () =>
+    Promise.resolve({
+      kullaniciToplam: 7,
+      kullaniciYeni7g: 2,
+      kullaniciAskida: 1,
+      moderasyonBekleyen: 3,
+      icerikTaslak: 4,
+      icerikYayinda: 5,
+      fotografBekleyen: 6,
+      silmeTalebi: 1,
+      auditBugun: 9,
+      sonHareketler: [
+        {
+          zaman: '2026-08-11T09:10:00Z',
+          eylem: 'content_update',
+          hedef: 'content_entries',
+          kim: 'admin',
+        },
+      ],
+    }),
+}));
+
 import { AdminPage } from './AdminPage';
 import { formatAdminCount } from './dashboard';
 
@@ -78,18 +101,27 @@ describe('StageHub tarzı admin GUI', () => {
     );
   });
 
-  it('StageHub dashboard bloklarını taşır', () => {
+  it('dashboard bloklarını canlı veriye bağlar ve ilgili sayfalara yollar', async () => {
     renderPanel();
     for (const heading of [
       'İçerik Akışı',
       'İş Kuyruğu',
       'Sistem Sağlığı',
       'Son Hareketler',
-      'Son 7 günün en çok tıklananları',
-      'Zamanlanmış işler',
     ]) {
       expect(screen.getByRole('heading', { name: heading })).toBeInTheDocument();
     }
+
+    expect(
+      screen.getByRole('link', {
+        name: /Onay bekleyen.*Kuyruktaki içerikler/s,
+      })
+    ).toHaveAttribute('href', '/admin/onay-kuyrugu');
+    expect(
+      screen.getByRole('link', {
+        name: /Yeni kullanıcı \(7g\).*Son 7 günde açılan hesap/s,
+      })
+    ).toHaveAttribute('href', '/admin/kullanicilar');
   });
 
   it('gerçek admin yüzeyinin yetki kontrollü olduğunu gösterir', () => {
