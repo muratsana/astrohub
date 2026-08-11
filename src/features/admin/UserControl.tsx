@@ -358,10 +358,10 @@ export function UserControl() {
                 type="button"
                 onClick={() => setOpen(expanded ? null : u.id)}
                 aria-expanded={expanded}
-                className="grid w-full gap-3 px-3 py-3 text-left transition-colors hover:bg-surface-2/60 md:grid-cols-[minmax(0,1fr)_9rem_8rem_9rem_auto]"
+                className="grid w-full items-center gap-3 px-3 py-2 text-left transition-colors hover:bg-surface-2/60 md:grid-cols-[minmax(16rem,1fr)_6rem_6rem_minmax(8rem,10rem)_auto]"
               >
-                <span className="flex min-w-0 items-start gap-3">
-                  <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border bg-background text-caption font-bold uppercase text-primary">
+                <span className="flex min-w-0 items-center gap-3">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border bg-background text-caption font-bold uppercase text-primary">
                     {(u.displayName || u.username).slice(0, 1)}
                   </span>
                   <span className="min-w-0">
@@ -380,11 +380,11 @@ export function UserControl() {
                   </span>
                 </span>
 
-                <span className="text-meta">
-                  <span className="label block">Durum</span>
+                <span className="flex items-center text-meta">
+                  <span className="sr-only">Durum: </span>
                   <span
                     className={cn(
-                      'mt-1 inline-flex rounded-card border px-1.5 py-0.5 font-medium',
+                      'inline-flex rounded-card border px-1.5 py-0.5 font-medium',
                       isWriteAllowed(u)
                         ? 'border-success/35 text-success'
                         : 'border-danger/35 text-danger'
@@ -398,19 +398,15 @@ export function UserControl() {
                   </span>
                 </span>
 
-                <span className="text-meta">
-                  <span className="label block">Rol</span>
-                  <span className="mt-1 block text-muted-foreground">
-                    {primaryRole}
-                  </span>
+                <span className="whitespace-nowrap text-meta text-muted-foreground">
+                  <span className="sr-only">Rol: </span>
+                  {primaryRole}
                 </span>
 
-                <span className="text-meta">
-                  <span className="label block">Aktivite</span>
-                  <span className="tabular mt-1 block text-muted-foreground">
-                    {u.photoCount} fotoğraf
-                    {u.city ? ` · ${u.city}` : ''}
-                  </span>
+                <span className="tabular truncate text-meta text-muted-foreground">
+                  <span className="sr-only">Aktivite: </span>
+                  {u.photoCount} fotoğraf
+                  {u.city ? ` · ${u.city}` : ''}
                 </span>
 
                 <span className="flex items-center gap-2 justify-self-start md:justify-self-end">
