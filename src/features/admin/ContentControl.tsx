@@ -568,7 +568,7 @@ function KindEditor({
         </div>
       </div>
 
-      <div className="grid min-h-[calc(100dvh-14rem)] gap-3 rounded-card border border-border bg-surface-1 p-3">
+      <div className="grid min-h-[calc(100dvh-14rem)] gap-3 rounded-card border border-border bg-surface-1 p-3 pb-24">
         <div className="grid gap-2.5 xl:grid-cols-[minmax(0,1fr)_360px]">
           <div className="space-y-2.5">
             <Field label="Başlık" htmlFor="c-title">
@@ -652,7 +652,12 @@ function KindEditor({
 
           <div className="space-y-2.5 rounded-card border border-border bg-background p-3">
             <div className="flex items-center justify-between gap-2">
-              <p className="label">Görsel</p>
+              <div>
+                <p className="label">Kapak görseli</p>
+                <p className="text-meta text-faint">
+                  İçeriğin liste, detay ve sosyal önizleme görseli.
+                </p>
+              </div>
               <Button
                 type="button"
                 size="sm"
@@ -693,7 +698,11 @@ function KindEditor({
                 Görsel yok
               </div>
             )}
-            <Field label="Görsel adresi" htmlFor="c-img">
+            <Field
+              label="Fotoğraf ekle / değiştir"
+              htmlFor="c-img"
+              hint="Dosya yükleme yerine izinli bir https görsel adresi kullanılır."
+            >
               <Input
                 id="c-img"
                 value={draft.imageUrl}
@@ -788,98 +797,99 @@ function KindEditor({
           </Field>
         </div>
 
-        <div>
-          <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
-            <div>
-              <p className="label">İçerik editörü</p>
-              <p className="text-meta text-faint">
-                Word benzeri editör: başlık, kalın, eğik, liste, alıntı ve
-                bağlantıyı doğrudan yazı içinde düzenleyin.
-              </p>
-            </div>
-            {!editing && (
-              <label className="cursor-pointer rounded-card border border-border px-2 py-1 text-meta text-cold hover:border-primary hover:text-primary">
-                {importing
-                  ? 'İçe aktarılıyor…'
-                  : 'Yeni içerik: HTML / Word / PDF içe aktar'}
-                <input
-                  type="file"
-                  accept=".html,.htm,.docx,.pdf,text/html,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                  disabled={!canWrite || importing}
-                  className="sr-only"
-                  onChange={async (event) => {
-                    const file = event.target.files?.[0];
-                    event.target.value = '';
-                    if (!file) return;
-                    setImporting(true);
-                    setImportWarnings([]);
-                    try {
-                      const result = await importContentFile(file);
-                      if (result.blocks.length === 0)
-                        throw new Error(
-                          'Belgede aktarılabilir metin bulunamadı.'
+        <div className="grid gap-3 xl:grid-cols-[minmax(0,1.15fr)_minmax(24rem,0.85fr)] xl:items-start">
+          <div className="min-w-0">
+            <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <p className="label">İçerik editörü</p>
+                <p className="text-meta text-faint">
+                  Word benzeri editör: başlık, kalın, eğik, liste, alıntı,
+                  bağlantı ve yazı içi görseli doğrudan içerikte düzenleyin.
+                </p>
+              </div>
+              {!editing && (
+                <label className="cursor-pointer rounded-card border border-border px-2 py-1 text-meta text-cold hover:border-primary hover:text-primary">
+                  {importing
+                    ? 'İçe aktarılıyor…'
+                    : 'Yeni içerik: HTML / Word / PDF içe aktar'}
+                  <input
+                    type="file"
+                    accept=".html,.htm,.docx,.pdf,text/html,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                    disabled={!canWrite || importing}
+                    className="sr-only"
+                    onChange={async (event) => {
+                      const file = event.target.files?.[0];
+                      event.target.value = '';
+                      if (!file) return;
+                      setImporting(true);
+                      setImportWarnings([]);
+                      try {
+                        const result = await importContentFile(file);
+                        if (result.blocks.length === 0)
+                          throw new Error(
+                            'Belgede aktarılabilir metin bulunamadı.'
+                          );
+                        const mevcut = draft.bodyBlocks;
+                        const eklendi = mevcut.length > 0;
+                        const blocks = eklendi
+                          ? [...mevcut, ...result.blocks]
+                          : result.blocks;
+                        setDraft((current) =>
+                          current
+                            ? {
+                                ...current,
+                                bodyBlocks: blocks,
+                                bodyText: blocksToText(blocks),
+                              }
+                            : current
                         );
-                      const mevcut = draft.bodyBlocks;
-                      const eklendi = mevcut.length > 0;
-                      const blocks = eklendi
-                        ? [...mevcut, ...result.blocks]
-                        : result.blocks;
-                      setDraft((current) =>
-                        current
-                          ? {
-                              ...current,
-                              bodyBlocks: blocks,
-                              bodyText: blocksToText(blocks),
-                            }
-                          : current
-                      );
-                      setImportWarnings([
-                        ...(eklendi
-                          ? [
-                              `${result.blocks.length} blok mevcut yeni içeriğin SONUNA eklendi; yazdıklarınız silinmedi.`,
-                            ]
-                          : []),
-                        ...result.warnings,
-                      ]);
-                    } catch (error) {
-                      setMessage(
-                        error instanceof Error
-                          ? error.message
-                          : 'Belge içe aktarılamadı.'
-                      );
-                    } finally {
-                      setImporting(false);
-                    }
-                  }}
-                />
-              </label>
+                        setImportWarnings([
+                          ...(eklendi
+                            ? [
+                                `${result.blocks.length} blok mevcut yeni içeriğin SONUNA eklendi; yazdıklarınız silinmedi.`,
+                              ]
+                            : []),
+                          ...result.warnings,
+                        ]);
+                      } catch (error) {
+                        setMessage(
+                          error instanceof Error
+                            ? error.message
+                            : 'Belge içe aktarılamadı.'
+                        );
+                      } finally {
+                        setImporting(false);
+                      }
+                    }}
+                  />
+                </label>
+              )}
+            </div>
+            <RichContentEditor
+              blocks={draft.bodyBlocks}
+              placeholder="İçeriği buraya yazın veya yeni içerikte HTML / Word / PDF içe aktarın."
+              onChange={(blocks) =>
+                setDraft((current) =>
+                  current
+                    ? {
+                        ...current,
+                        bodyBlocks: blocks,
+                        bodyText: blocksToText(blocks),
+                      }
+                    : current
+                )
+              }
+            />
+            {importWarnings.length > 0 && (
+              <ul className="mt-2 rounded-card border border-warning/40 bg-warning/5 px-3 py-2 text-meta leading-relaxed text-warning">
+                {importWarnings.map((warning, index) => (
+                  <li key={`${warning}-${index}`}>• {warning}</li>
+                ))}
+              </ul>
             )}
           </div>
-          <RichContentEditor
-            blocks={draft.bodyBlocks}
-            placeholder="İçeriği buraya yazın veya yeni içerikte HTML / Word / PDF içe aktarın."
-            onChange={(blocks) =>
-              setDraft((current) =>
-                current
-                  ? {
-                      ...current,
-                      bodyBlocks: blocks,
-                      bodyText: blocksToText(blocks),
-                    }
-                  : current
-              )
-            }
-          />
-          {importWarnings.length > 0 && (
-            <ul className="mt-2 rounded-card border border-warning/40 bg-warning/5 px-3 py-2 text-meta leading-relaxed text-warning">
-              {importWarnings.map((warning, index) => (
-                <li key={`${warning}-${index}`}>• {warning}</li>
-              ))}
-            </ul>
-          )}
-        </div>
 
-        <div className="rounded-card border border-border bg-background p-4">
+        <div className="min-w-0 rounded-card border border-border bg-background p-4 xl:sticky xl:top-20 xl:max-h-[calc(100dvh-7rem)] xl:overflow-y-auto">
           <p className="label mb-3">Canlı site önizlemesi</p>
           <article className="space-y-4">
             {draft.imageUrl && (
@@ -916,6 +926,7 @@ function KindEditor({
               </p>
             )}
           </article>
+        </div>
         </div>
 
         {problem && (

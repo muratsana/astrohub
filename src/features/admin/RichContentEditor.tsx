@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { type ContentBlock } from '@/domain/content/blocks';
+import { isAllowedImageHost } from '@/domain/content/imageHosts';
 import { cn } from '@/lib/cn';
 import { blocksToEditorHtml, editorHtmlToBlocks } from './richContentFormat';
 
@@ -41,6 +42,30 @@ export function RichContentEditor({
     exec('createLink', url);
   }
 
+  function addImage() {
+    const src = window.prompt('Görsel adresi (https://)');
+    if (!src) return;
+    if (!isAllowedImageHost(src)) {
+      window.alert('Bu görsel adresi izinli bir konaktan değil.');
+      return;
+    }
+    const alt = window.prompt('Görsel açıklaması (alt metin)');
+    if (!alt?.trim()) {
+      window.alert('Yazı içi görsel için açıklama zorunlu.');
+      return;
+    }
+    const caption = window.prompt('Alt yazı (isteğe bağlı)')?.trim();
+    const figcaption = caption
+      ? `<figcaption>${escapeHtml(caption)}</figcaption>`
+      : '';
+    exec(
+      'insertHTML',
+      `<figure><img src="${escapeAttr(src)}" alt="${escapeAttr(
+        alt.trim()
+      )}">${figcaption}</figure>`
+    );
+  }
+
   return (
     <div className="rounded-card border border-border bg-surface-2">
       <div className="flex flex-wrap items-center gap-1 border-b border-border p-1.5">
@@ -67,6 +92,7 @@ export function RichContentEditor({
           Numaralı
         </ToolbarButton>
         <ToolbarButton onClick={addLink}>Bağlantı</ToolbarButton>
+        <ToolbarButton onClick={addImage}>Görsel ekle</ToolbarButton>
         <Divider />
         <ToolbarButton onClick={() => exec('removeFormat')}>Temizle</ToolbarButton>
       </div>
@@ -91,6 +117,17 @@ export function RichContentEditor({
       />
     </div>
   );
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;');
+}
+
+function escapeAttr(value: string): string {
+  return escapeHtml(value).replaceAll('"', '&quot;');
 }
 
 function ToolbarButton({

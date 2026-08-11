@@ -28,4 +28,19 @@ describe('RichContentEditor dönüşümü', () => {
       { type: 'list', style: 'bullet', items: ['Bir', 'İki'] },
     ]);
   });
+
+  it('yazı içi görseli kayıt bloğuna çevirir', () => {
+    expect(
+      editorHtmlToBlocks(
+        '<figure><img src="https://upload.wikimedia.org/ornek.jpg" alt="Beta Pictoris diski"><figcaption>Beta Pictoris</figcaption></figure>'
+      )
+    ).toEqual([
+      {
+        type: 'image',
+        src: 'https://upload.wikimedia.org/ornek.jpg',
+        alt: 'Beta Pictoris diski',
+        caption: 'Beta Pictoris',
+      },
+    ]);
+  });
 });

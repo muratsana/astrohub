@@ -162,6 +162,9 @@ describe('ContentControl importer akışı', () => {
       screen.queryByText('Yeni içerik: HTML / Word / PDF içe aktar')
     ).not.toBeInTheDocument();
     expect(screen.getByText('İçerik editörü')).toBeInTheDocument();
+    expect(screen.getByText('Kapak görseli')).toBeInTheDocument();
+    expect(screen.getByText('Fotoğraf ekle / değiştir')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Görsel ekle' })).toBeInTheDocument();
   });
 
   it('veritabanı boşken canlı site tohum içeriklerini listeler', () => {
