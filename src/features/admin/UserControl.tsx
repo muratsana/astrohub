@@ -380,11 +380,11 @@ export function UserControl() {
                   </span>
                 </span>
 
-                <span className="flex items-center text-meta">
+                <span className="flex items-center text-meta md:justify-self-center">
                   <span className="sr-only">Durum: </span>
                   <span
                     className={cn(
-                      'inline-flex rounded-card border px-1.5 py-0.5 font-medium',
+                      'inline-flex min-w-12 justify-center rounded-card border px-1.5 py-0.5 font-medium',
                       isWriteAllowed(u)
                         ? 'border-success/35 text-success'
                         : 'border-danger/35 text-danger'
