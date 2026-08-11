@@ -257,7 +257,7 @@ export function RichContentEditor({
           Bağlantı
         </ToolbarButton>
         <ToolbarButton disabled={disabled} onClick={addImage}>
-          Görsel
+          Görsel ekle
         </ToolbarButton>
         <ToolbarButton
           disabled={disabled}
