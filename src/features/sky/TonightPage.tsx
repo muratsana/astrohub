@@ -32,6 +32,8 @@ import { altitudeCurve, usableWindow } from '@/domain/astronomy/sessionPlan';
 import { AltitudeChart } from './AltitudeChart';
 import { readCityParam, shareableCityId, withCityParam } from './locationShare';
 import { cn } from '@/lib/cn';
+import { SkyPreview } from '@/components/media/SkyPreview';
+import { CARD_RATIO } from '@/components/ui/cardRatios';
 
 /**
  * BU GECE GÖKYÜZÜNDE (§7.9).
@@ -366,6 +368,24 @@ export function TonightPage() {
                       title={target.catalog}
                       status={targetKindLabels[target.kind]}
                     >
+                      <div
+                        className={cn(
+                          '-mx-4 -mt-4 mb-3 overflow-hidden border-b border-border bg-surface-2',
+                          CARD_RATIO.wide
+                        )}
+                      >
+                        <SkyPreview
+                          seed={target.slug}
+                          kind={target.kind}
+                          raDeg={target.raDeg}
+                          decDeg={target.decDeg}
+                          arcmin={target.sizeArcmin}
+                          width={640}
+                          height={280}
+                          alt={`${target.catalog} — katalog görseli`}
+                          className="relative h-full w-full"
+                        />
+                      </div>
                       <Link
                         to={`/hedef/${target.slug}`}
                         className="text-body-sm font-medium text-foreground transition-colors hover:text-primary"
