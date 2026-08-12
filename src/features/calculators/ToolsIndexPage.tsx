@@ -222,30 +222,256 @@ function ToolVisual({
   path: string;
   Icon?: typeof GridIcon;
 }) {
-  const tone =
-    path.includes('katalog')
-      ? 'from-cold/25 via-primary/10 to-transparent'
-      : path.includes('isik')
-        ? 'from-success/20 via-primary/10 to-transparent'
-        : path.includes('kadraj')
-          ? 'from-primary/25 via-cold/10 to-transparent'
-          : 'from-primary/20 via-warning/10 to-transparent';
+  const visual = toolVisuals[path] ?? toolVisuals.default;
 
   return (
     <span
       aria-hidden
-      className={`relative mb-4 block h-28 overflow-hidden rounded-card border border-border bg-gradient-to-br ${tone}`}
+      className={`relative mb-4 block h-28 overflow-hidden rounded-card border border-border bg-gradient-to-br ${visual.tone}`}
     >
-      <span className="absolute inset-x-5 top-1/2 h-px bg-border-strong/70" />
-      <span className="absolute inset-y-4 left-1/2 w-px bg-border-strong/70" />
-      <span className="absolute -right-8 -top-8 h-32 w-32 rounded-full border border-border-strong/60" />
-      <span className="absolute -bottom-10 left-8 h-28 w-28 rounded-full border border-border/80" />
+      <svg
+        viewBox="0 0 360 112"
+        className="absolute inset-0 h-full w-full"
+        preserveAspectRatio="none"
+      >
+        <defs>
+          <radialGradient id={`${visual.id}-glow`} cx="72%" cy="30%" r="70%">
+            <stop offset="0%" stopColor="currentColor" stopOpacity="0.28" />
+            <stop offset="55%" stopColor="currentColor" stopOpacity="0.08" />
+            <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
+          </radialGradient>
+        </defs>
+        <rect width="360" height="112" fill={`url(#${visual.id}-glow)`} />
+        {visual.kind === 'tonight' && <TonightVisual />}
+        {visual.kind === 'planner' && <PlannerVisual />}
+        {visual.kind === 'calendar' && <CalendarVisual />}
+        {visual.kind === 'catalog' && <CatalogVisual />}
+        {visual.kind === 'framing' && <FramingVisual />}
+        {visual.kind === 'mosaic' && <MosaicVisual />}
+        {visual.kind === 'exposure' && <ExposureVisual />}
+        {visual.kind === 'pollution' && <PollutionVisual />}
+        {visual.kind === 'default' && <DefaultVisual />}
+      </svg>
       {Icon && (
         <span className="absolute left-4 top-4 grid h-10 w-10 place-items-center rounded-card border border-border bg-background/75 text-primary backdrop-blur-sm transition-colors group-hover:text-primary-hover">
           <Icon className="h-5 w-5" />
         </span>
       )}
-      <span className="absolute bottom-4 right-4 h-2 w-2 rounded-full border border-primary bg-primary" />
+      <span className="absolute bottom-4 right-4 h-2 w-2 rounded-full border border-primary bg-primary shadow-[0_0_18px_var(--color-primary)]" />
     </span>
+  );
+}
+
+const toolVisuals: Record<
+  string,
+  {
+    id: string;
+    kind:
+      | 'tonight'
+      | 'planner'
+      | 'calendar'
+      | 'catalog'
+      | 'framing'
+      | 'mosaic'
+      | 'exposure'
+      | 'pollution'
+      | 'default';
+    tone: string;
+  }
+> = {
+  '/bu-gece': {
+    id: 'tool-tonight',
+    kind: 'tonight',
+    tone: 'from-primary/20 via-warning/10 to-transparent text-primary',
+  },
+  '/bu-gece/plan': {
+    id: 'tool-planner',
+    kind: 'planner',
+    tone: 'from-primary/20 via-cold/10 to-transparent text-primary',
+  },
+  '/bu-gece/takvim': {
+    id: 'tool-calendar',
+    kind: 'calendar',
+    tone: 'from-warning/20 via-primary/10 to-transparent text-warning',
+  },
+  '/araclar/gokyuzu-katalogu': {
+    id: 'tool-catalog',
+    kind: 'catalog',
+    tone: 'from-cold/25 via-primary/10 to-transparent text-cold',
+  },
+  '/araclar/kadraj': {
+    id: 'tool-framing',
+    kind: 'framing',
+    tone: 'from-primary/25 via-cold/10 to-transparent text-primary',
+  },
+  '/araclar/kadraj/mozaik': {
+    id: 'tool-mosaic',
+    kind: 'mosaic',
+    tone: 'from-cold/20 via-primary/10 to-transparent text-cold',
+  },
+  '/araclar/poz-plani': {
+    id: 'tool-exposure',
+    kind: 'exposure',
+    tone: 'from-primary/20 via-warning/10 to-transparent text-warning',
+  },
+  '/araclar/isik-kirliligi': {
+    id: 'tool-pollution',
+    kind: 'pollution',
+    tone: 'from-success/20 via-primary/10 to-transparent text-success',
+  },
+  default: {
+    id: 'tool-default',
+    kind: 'default',
+    tone: 'from-primary/20 via-warning/10 to-transparent text-primary',
+  },
+};
+
+function TonightVisual() {
+  return (
+    <>
+      <path d="M34 82 C72 36 125 38 170 76 S270 104 330 42" stroke="currentColor" strokeOpacity=".28" strokeWidth="2" fill="none" />
+      <path d="M68 33a22 22 0 1 0 27 30 24 24 0 0 1-27-30Z" fill="currentColor" opacity=".9" />
+      <rect x="128" y="78" width="148" height="10" rx="5" fill="currentColor" opacity=".18" />
+      <rect x="170" y="78" width="72" height="10" rx="5" fill="currentColor" opacity=".72" />
+      <circle cx="296" cy="71" r="4" fill="currentColor" />
+      <circle cx="319" cy="35" r="2.4" fill="currentColor" opacity=".75" />
+      <circle cx="244" cy="31" r="2" fill="currentColor" opacity=".55" />
+    </>
+  );
+}
+
+function PlannerVisual() {
+  return (
+    <>
+      <path d="M64 72 C112 22 154 95 204 49 S276 28 318 74" stroke="currentColor" strokeOpacity=".58" strokeWidth="3" fill="none" strokeDasharray="7 9" />
+      {[64, 144, 220, 318].map((x, index) => (
+        <g key={x}>
+          <circle cx={x} cy={index % 2 ? 60 : 72} r="11" fill="var(--color-background)" stroke="currentColor" strokeWidth="2" />
+          <circle cx={x} cy={index % 2 ? 60 : 72} r="3" fill="currentColor" />
+        </g>
+      ))}
+      <path d="M42 31h70M42 45h46M248 31h70M272 45h46" stroke="currentColor" strokeOpacity=".18" strokeWidth="2" />
+    </>
+  );
+}
+
+function CalendarVisual() {
+  return (
+    <>
+      <rect x="66" y="22" width="220" height="68" rx="10" fill="var(--color-background)" fillOpacity=".42" stroke="currentColor" strokeOpacity=".35" />
+      <path d="M66 42h220M112 22v68M158 22v68M204 22v68M250 22v68" stroke="currentColor" strokeOpacity=".18" />
+      {[92, 138, 184, 230, 264].map((x, index) => (
+        <path
+          key={x}
+          d={index % 2 ? `M${x - 7} 67a9 9 0 1 0 13-11 10 10 0 0 1-13 11Z` : `M${x} 55a9 9 0 1 0 0 18 9 9 0 0 0 0-18Z`}
+          fill="currentColor"
+          opacity={index === 2 ? '.95' : '.42'}
+        />
+      ))}
+    </>
+  );
+}
+
+function CatalogVisual() {
+  return (
+    <>
+      <circle cx="176" cy="56" r="42" fill="none" stroke="currentColor" strokeOpacity=".22" />
+      <circle cx="176" cy="56" r="18" fill="none" stroke="currentColor" strokeOpacity=".38" />
+      <path d="m206 83 36 18" stroke="currentColor" strokeWidth="5" strokeLinecap="round" opacity=".7" />
+      {[
+        [72, 28, 2],
+        [112, 72, 3],
+        [158, 39, 2],
+        [190, 65, 2],
+        [258, 34, 3],
+        [302, 78, 2],
+        [322, 30, 2],
+      ].map(([cx, cy, r]) => (
+        <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r={r} fill="currentColor" opacity=".82" />
+      ))}
+    </>
+  );
+}
+
+function FramingVisual() {
+  return (
+    <>
+      <rect x="74" y="28" width="214" height="58" rx="5" fill="none" stroke="currentColor" strokeWidth="2.5" />
+      <rect x="124" y="40" width="114" height="34" rx="3" fill="none" stroke="currentColor" strokeOpacity=".4" />
+      <path d="M181 18v80M46 57h270" stroke="currentColor" strokeOpacity=".18" />
+      <circle cx="181" cy="57" r="22" fill="none" stroke="currentColor" strokeOpacity=".5" strokeDasharray="5 6" />
+      <path d="m79 32 24 24M286 32l-24 24M79 82l24-24M286 82l-24-24" stroke="currentColor" strokeOpacity=".38" />
+    </>
+  );
+}
+
+function MosaicVisual() {
+  return (
+    <>
+      {[0, 1, 2].map((row) =>
+        [0, 1, 2].map((col) => (
+          <rect
+            key={`${row}-${col}`}
+            x={92 + col * 58}
+            y={22 + row * 24}
+            width="68"
+            height="32"
+            rx="4"
+            fill="currentColor"
+            fillOpacity=".08"
+            stroke="currentColor"
+            strokeOpacity=".42"
+          />
+        ))
+      )}
+      <path d="M78 56h214M181 16v80" stroke="currentColor" strokeOpacity=".16" />
+      <circle cx="181" cy="56" r="7" fill="currentColor" opacity=".8" />
+    </>
+  );
+}
+
+function ExposureVisual() {
+  return (
+    <>
+      <path d="M58 84h244" stroke="currentColor" strokeOpacity=".18" strokeWidth="2" />
+      {[46, 68, 90, 112, 134].map((height, index) => (
+        <rect
+          key={height}
+          x={82 + index * 34}
+          y={84 - height}
+          width="20"
+          height={height}
+          rx="4"
+          fill="currentColor"
+          opacity={index === 3 ? '.78' : '.38'}
+        />
+      ))}
+      <path d="M238 69h70M238 52h48M238 35h62" stroke="currentColor" strokeOpacity=".46" strokeWidth="3" strokeLinecap="round" />
+      <circle cx="308" cy="69" r="4" fill="currentColor" />
+    </>
+  );
+}
+
+function PollutionVisual() {
+  return (
+    <>
+      <path d="M48 82 C92 32 144 94 194 44 S278 46 320 24" stroke="currentColor" strokeOpacity=".5" strokeWidth="2.5" fill="none" />
+      <path d="M62 90h58V54h26v36h28V66h24v24h106" fill="none" stroke="currentColor" strokeOpacity=".3" strokeWidth="3" />
+      <circle cx="112" cy="52" r="22" fill="currentColor" opacity=".16" />
+      <circle cx="112" cy="52" r="8" fill="currentColor" opacity=".65" />
+      <circle cx="286" cy="30" r="2.5" fill="currentColor" opacity=".9" />
+      <circle cx="306" cy="50" r="2" fill="currentColor" opacity=".65" />
+      <circle cx="250" cy="38" r="1.8" fill="currentColor" opacity=".55" />
+    </>
+  );
+}
+
+function DefaultVisual() {
+  return (
+    <>
+      <path d="M56 56h248M180 18v78" stroke="currentColor" strokeOpacity=".2" />
+      <circle cx="180" cy="56" r="36" fill="none" stroke="currentColor" strokeOpacity=".38" />
+      <circle cx="180" cy="56" r="5" fill="currentColor" />
+    </>
   );
 }
