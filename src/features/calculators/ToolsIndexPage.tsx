@@ -257,7 +257,7 @@ function ToolVisual({
           <Icon className="h-5 w-5" />
         </span>
       )}
-      <span className="absolute bottom-4 right-4 h-2 w-2 rounded-full border border-primary bg-primary shadow-[0_0_18px_var(--color-primary)]" />
+      <span className="absolute bottom-4 right-4 h-2 w-2 rounded-full border border-primary bg-primary ring-4 ring-primary/20" />
     </span>
   );
 }
