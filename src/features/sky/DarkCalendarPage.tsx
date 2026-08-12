@@ -160,6 +160,33 @@ export function DarkCalendarPage() {
           </div>
         </div>
 
+        <section className="mb-4 grid gap-2 sm:grid-cols-3">
+          <Readout
+            label="Bu ay toplam"
+            value={formatDuration(monthlyMoonless)}
+            hint="aysız astronomik karanlık"
+          />
+          <Readout
+            label="En iyi gece"
+            value={
+              best[0]
+                ? `${best[0].date.getDate()} ${MONTH_NAMES[best[0].date.getMonth()]}`
+                : '—'
+            }
+            hint={best[0] ? formatDuration(best[0].moonlessMinutes) : 'veri yok'}
+            tone="cold"
+          />
+          <Readout
+            label="Seçili gece"
+            value={
+              detail
+                ? `${detail.date.getDate()} ${MONTH_NAMES[detail.date.getMonth()]}`
+                : '—'
+            }
+            hint={detail ? `${detail.score}/100 puan` : 'takvimden gün seçin'}
+          />
+        </section>
+
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,0.65fr)]">
           {/* ───────── Takvim ───────── */}
           <Panel
@@ -191,11 +218,16 @@ export function DarkCalendarPage() {
               )}
             </div>
 
-            <p className="mt-3 px-1 text-meta leading-snug text-faint">
-              Aysız karanlık, güneşin −18° altında olduğu ve ayın ufkun altında
-              kaldığı sürenin kesişimidir. Hesap {location.label} koordinatına
-              göredir; konumu üst çubuktan değiştirebilirsiniz.
-            </p>
+            <div className="mt-3 grid gap-2 px-1 text-meta leading-snug text-faint sm:grid-cols-2">
+              <p>
+                Aysız karanlık, güneşin −18° altında olduğu ve ayın ufkun
+                altında kaldığı sürenin kesişimidir.
+              </p>
+              <p>
+                Hücredeki çubuk gece kalitesini gösterir; turuncu ne kadar
+                doluysa çekim penceresi o kadar uzundur.
+              </p>
+            </div>
           </Panel>
 
           {/* ───────── Yan sütun ───────── */}
@@ -366,6 +398,9 @@ function DayCell({
 }) {
   const intensity = Math.min(entry.moonlessMinutes / 360, 1);
   const hours = entry.moonlessMinutes / 60;
+  const moonPercent = Math.round(entry.moon.illumination * 100);
+  const isGood = entry.moonlessMinutes >= 300;
+  const isUsable = entry.moonlessMinutes >= 180;
 
   return (
     <button
@@ -374,31 +409,59 @@ function DayCell({
       aria-pressed={isSelected}
       aria-label={`${entry.date.getDate()} ${MONTH_NAMES[entry.date.getMonth()]}: ${formatDuration(entry.moonlessMinutes)} aysız karanlık, ay %${Math.round(entry.moon.illumination * 100)} aydınlık`}
       className={cn(
-        'relative flex aspect-square flex-col items-center justify-center gap-0.5 bg-surface-1 transition-colors',
-        'hover:outline hover:outline-1 hover:-outline-offset-1 hover:outline-primary',
-        isSelected && 'outline outline-1 -outline-offset-1 outline-primary'
+        'group relative flex aspect-square flex-col justify-between bg-surface-1 p-2 text-left transition-colors',
+        'hover:bg-surface-2 hover:outline hover:outline-1 hover:-outline-offset-1 hover:outline-primary',
+        isSelected && 'z-10 outline outline-1 -outline-offset-1 outline-primary'
       )}
       style={{
-        backgroundColor: `color-mix(in srgb, var(--color-primary) ${intensity * 22}%, var(--color-surface-1))`,
+        backgroundColor: `color-mix(in srgb, var(--color-primary) ${intensity * 18}%, var(--color-surface-1))`,
       }}
     >
-      <span
-        className={cn(
-          'tabular text-meta leading-none',
-          isToday ? 'font-bold text-primary' : 'text-foreground'
-        )}
-      >
-        {entry.date.getDate()}
+      <span className="flex items-start justify-between gap-2">
+        <span
+          className={cn(
+            'tabular text-body-sm leading-none',
+            isToday ? 'font-bold text-primary' : 'text-foreground'
+          )}
+        >
+          {entry.date.getDate()}
+        </span>
+        <span
+          aria-hidden
+          className="rounded-card border border-border bg-background/55 px-1.5 py-0.5 text-meta leading-none text-muted-foreground"
+          title={entry.moon.name}
+        >
+          {moonGlyph(entry.moon.illumination, entry.moon.waxing)} %{moonPercent}
+        </span>
       </span>
+
+      <span>
+        <span
+          className={cn(
+            'block tabular text-readout-sm font-bold leading-tight',
+            isGood
+              ? 'text-primary'
+              : isUsable
+                ? 'text-foreground'
+                : 'text-muted-foreground'
+          )}
+        >
+          {hours >= 0.1 ? `${hours.toFixed(1)}sa` : '—'}
+        </span>
+        <span className="label mt-0.5 block text-faint">aysız</span>
+      </span>
+
       <span
         aria-hidden
-        className="text-meta leading-none text-muted-foreground"
-        title={entry.moon.name}
+        className="block h-1.5 overflow-hidden rounded-full bg-background/60"
       >
-        {moonGlyph(entry.moon.illumination, entry.moon.waxing)}
-      </span>
-      <span className="tabular text-meta leading-none text-faint">
-        {hours >= 0.1 ? `${hours.toFixed(1)}sa` : '—'}
+        <span
+          className={cn(
+            'block h-full rounded-full',
+            isGood ? 'bg-primary' : isUsable ? 'bg-cold' : 'bg-muted-foreground'
+          )}
+          style={{ width: `${Math.max(6, intensity * 100)}%` }}
+        />
       </span>
     </button>
   );
