@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { ListingDetailPage } from './ListingDetailPage';
-import type { Listing } from './data';
+import { relatedListings, type Listing } from './data';
 
 /**
  * İLAN DETAY SAYFASI — "yol bulunamadı" hatası (plan FAZ 16.2).
@@ -101,5 +101,21 @@ describe('ilan detayı', () => {
     yukleniyor = false;
     ciz('olmayan-ilan');
     expect(screen.getByText(/Sayfa Bulunamadı/i)).toBeInTheDocument();
+  });
+});
+
+describe('benzer ilanlar', () => {
+  it('sadece kategori aynı diye alakasız ilan önermez', () => {
+    const enerjiSistemi = {
+      ...ORNEK,
+      slug: '200-ah-lifepo4-gunes-enerji-sistemi',
+      title: '200 Ah Lifepo4 Güneş Enerji Sistemi Komple Set',
+      description:
+        'Outdo Huawei Lifepo4 akü, Tommatech inverter, MPPT şarj kontrolcü ve güneş paneli girişi.',
+      category: 'optik-tup',
+      equipmentSlug: undefined,
+    } as Listing;
+
+    expect(relatedListings(enerjiSistemi)).toEqual([]);
   });
 });

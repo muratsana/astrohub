@@ -221,9 +221,60 @@ export function getListingBySlug(slug: string): Listing | undefined {
  * mi") için gereken bağlamı verir. İlan sayısı azken bu liste kısa kalır;
  * o zaman da gerçeği söylemiş oluruz — piyasada başka örnek yok.
  */
+const RELATED_STOPWORDS = new Set([
+  'bir',
+  've',
+  'ile',
+  'icin',
+  'için',
+  'ilk',
+  'sahibinden',
+  'satilik',
+  'satılık',
+  'temiz',
+  'komple',
+  'set',
+]);
+
+function listingTokens(listing: Listing): Set<string> {
+  return new Set(
+    `${listing.title} ${listing.description ?? ''}`
+      .toLocaleLowerCase('tr-TR')
+      .normalize('NFD')
+      .replace(/\p{Diacritic}/gu, '')
+      .split(/[^a-z0-9]+/i)
+      .filter((token) => token.length > 2 && !RELATED_STOPWORDS.has(token))
+  );
+}
+
+function relatedScore(source: Listing, candidate: Listing): number {
+  if (
+    source.equipmentSlug &&
+    candidate.equipmentSlug &&
+    source.equipmentSlug === candidate.equipmentSlug
+  ) {
+    return 100;
+  }
+
+  if (source.category !== candidate.category) return 0;
+
+  const sourceTokens = listingTokens(source);
+  const candidateTokens = listingTokens(candidate);
+  let overlap = 0;
+  for (const token of candidateTokens) {
+    if (sourceTokens.has(token)) overlap += 1;
+  }
+
+  return overlap;
+}
+
 export function relatedListings(listing: Listing, limit = 4): Listing[] {
   return listings
-    .filter((l) => l.category === listing.category && l.slug !== listing.slug)
+    .filter((l) => l.slug !== listing.slug)
+    .map((l) => ({ listing: l, score: relatedScore(listing, l) }))
+    .filter(({ score }) => score >= 2)
+    .sort((a, b) => b.score - a.score || b.listing.price - a.listing.price)
+    .map(({ listing: item }) => item)
     .slice(0, limit);
 }
 
