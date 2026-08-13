@@ -69,12 +69,19 @@ function loadImage(file: File): Promise<HTMLImageElement> {
   });
 }
 
-function canvasBlob(canvas: HTMLCanvasElement): Promise<Blob> {
+function keepsTransparency(file: File): boolean {
+  return file.type === 'image/png' || file.type === 'image/webp';
+}
+
+function canvasBlob(
+  canvas: HTMLCanvasElement,
+  mimeType: 'image/jpeg' | 'image/png'
+): Promise<Blob> {
   return new Promise((resolve, reject) => {
     canvas.toBlob(
       (blob) =>
         blob ? resolve(blob) : reject(new Error('Fotoğraf kırpılamadı.')),
-      'image/jpeg',
+      mimeType,
       0.88
     );
   });
@@ -95,9 +102,11 @@ async function cropPhoto(file: File, crop: PhotoCrop): Promise<File> {
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('Tarayıcı görsel işleme desteklemiyor.');
   ctx.drawImage(image, sx, sy, side, side, 0, 0, size, size);
-  const blob = await canvasBlob(canvas);
-  return new File([blob], `${file.name.replace(/\.[^.]+$/, '')}-kirpildi.jpg`, {
-    type: 'image/jpeg',
+  const outputType = keepsTransparency(file) ? 'image/png' : 'image/jpeg';
+  const extension = outputType === 'image/png' ? 'png' : 'jpg';
+  const blob = await canvasBlob(canvas, outputType);
+  return new File([blob], `${file.name.replace(/\.[^.]+$/, '')}-kirpildi.${extension}`, {
+    type: outputType,
     lastModified: Date.now(),
   });
 }
@@ -106,12 +115,20 @@ function PhotoFrame({ item }: { item: PhotoItem }) {
   const url = useObjectUrl(item.file);
 
   return (
-    <div className="relative aspect-square overflow-hidden rounded-card bg-background">
+    <div
+      className="relative aspect-square overflow-hidden rounded-card border border-border bg-background"
+      style={{
+        backgroundImage:
+          'linear-gradient(45deg, rgba(255,255,255,.08) 25%, transparent 25%), linear-gradient(-45deg, rgba(255,255,255,.08) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, rgba(255,255,255,.08) 75%), linear-gradient(-45deg, transparent 75%, rgba(255,255,255,.08) 75%)',
+        backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0',
+        backgroundSize: '20px 20px',
+      }}
+    >
       {url && (
         <img
           src={url}
           alt={`${item.file.name} önizlemesi`}
-          className="h-full w-full object-cover"
+          className="h-full w-full object-contain"
           style={{
             transform: `translate(${item.crop.x / 4}%, ${item.crop.y / 4}%) scale(${item.crop.zoom})`,
           }}

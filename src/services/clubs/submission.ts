@@ -113,7 +113,15 @@ export async function uploadClubPhotos(
   for (const [index, file] of files.entries()) {
     const format = checkImageFormat(await readHead(file), file.type);
     if (format.kind === 'reject') throw new Error(format.reason);
-    const resized = await renderResized(file, CLUB_PHOTO_MAX_EDGE);
+    const transparent = file.type === 'image/png' || file.type === 'image/webp';
+    const contentType = transparent ? 'image/png' : 'image/jpeg';
+    const extension = transparent ? 'png' : 'jpg';
+    const resized = await renderResized(
+      file,
+      CLUB_PHOTO_MAX_EDGE,
+      undefined,
+      contentType
+    );
     if (!resized) {
       throw new Error('Görsel işlenemedi. JPEG, PNG veya WebP deneyin.');
     }
@@ -125,10 +133,10 @@ export async function uploadClubPhotos(
 
     const path = `${userId}/${slug}/${index}-${Math.random()
       .toString(36)
-      .slice(2, 8)}.jpg`;
+      .slice(2, 8)}.${extension}`;
     const { error } = await supabase.storage
       .from('club-photos')
-      .upload(path, resized.blob, { contentType: 'image/jpeg', upsert: false });
+      .upload(path, resized.blob, { contentType, upsert: false });
     if (error) throw new Error(error.message);
     paths.push(path);
   }

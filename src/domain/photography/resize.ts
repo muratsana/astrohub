@@ -171,7 +171,8 @@ export async function chooseWithinBudget<T extends { bytes: number }>(
 export async function renderResized(
   file: File,
   maxEdge: number,
-  quality = JPEG_QUALITY
+  quality = JPEG_QUALITY,
+  mimeType = 'image/jpeg'
 ): Promise<{ blob: Blob; size: Size } | null> {
   if (typeof createImageBitmap !== 'function') return null;
 
@@ -203,7 +204,7 @@ export async function renderResized(
   bitmap.close();
 
   const blob = await new Promise<Blob | null>((resolve) =>
-    canvas.toBlob(resolve, 'image/jpeg', quality)
+    canvas.toBlob(resolve, mimeType, quality)
   );
 
   return blob ? { blob, size: target } : null;
