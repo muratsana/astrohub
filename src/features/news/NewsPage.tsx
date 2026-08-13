@@ -75,7 +75,7 @@ export function NewsPage() {
         imageUrl: item.image?.url,
         imageCredit: item.image?.credit,
         action: (
-          <AdminEditLink to={`/admin/content?kind=haber&slug=${item.slug}`} />
+          <AdminEditLink to={`/admin/icerik?kind=haber&slug=${item.slug}`} />
         ),
         footer: <p className="label">Kaynak · {item.source.name}</p>,
       })),

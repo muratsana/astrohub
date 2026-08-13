@@ -84,7 +84,7 @@ export function ArticlesPage() {
         tint: article.tint,
         imageUrl: article.image?.url,
         action: (
-          <AdminEditLink to={`/admin/content?kind=yazi&slug=${article.slug}`} />
+          <AdminEditLink to={`/admin/icerik?kind=yazi&slug=${article.slug}`} />
         ),
         footer: (
           <span className="tabular text-meta text-faint">{article.author}</span>

@@ -133,7 +133,7 @@ export function ArticleDetailPage() {
                 </dl>
                 <div className="mt-3">
                   <AdminEditLink
-                    to={`/admin/content?kind=yazi&slug=${article.slug}`}
+                    to={`/admin/icerik?kind=yazi&slug=${article.slug}`}
                   />
                 </div>
               </section>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ContentControl } from './ContentControl';
 import { RecordsControl } from './RecordsControl';
 import { ClubControl } from './ClubControl';
@@ -88,6 +88,10 @@ export function IcerikSekmeleri({
     SEKMELER[0]!;
 
   const [aktif, setAktif] = useState<Sekme>(baslangic);
+
+  useEffect(() => {
+    setAktif(baslangic);
+  }, [baslangic]);
 
   return (
     <div className="space-y-4">

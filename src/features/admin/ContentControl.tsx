@@ -1,5 +1,6 @@
 import { contentStatusLabels } from '@/domain/content/status';
 import { useEffect, useMemo, useState } from 'react';
+import type { DragEvent } from 'react';
 import { Panel } from '@/components/ui/Panel';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -244,6 +245,7 @@ function KindEditor({
   const [importing, setImporting] = useState(false);
   const [importWarnings, setImportWarnings] = useState<string[]>([]);
   const [openedSlug, setOpenedSlug] = useState<string | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const categories = categoryLabels(kind);
 
@@ -338,6 +340,27 @@ function KindEditor({
     } finally {
       setBusy(false);
     }
+  }
+
+  function extractDraggedUrl(event: DragEvent): string | null {
+    const uri = event.dataTransfer.getData('text/uri-list').trim();
+    if (uri) return uri.split('\n').find((line) => !line.startsWith('#')) ?? uri;
+    const plain = event.dataTransfer.getData('text/plain').trim();
+    if (plain.startsWith('http://') || plain.startsWith('https://')) return plain;
+    const html = event.dataTransfer.getData('text/html');
+    const src = html.match(/<img[^>]+src=["']([^"']+)["']/i)?.[1];
+    return src ?? null;
+  }
+
+  function applyDroppedCover(event: DragEvent) {
+    event.preventDefault();
+    const src = extractDraggedUrl(event);
+    if (!src) {
+      setMessage('Kapak görseli için bir https görsel adresi sürükleyin.');
+      return;
+    }
+    setDraft((d) => (d ? { ...d, imageUrl: src } : d));
+    setMessage('Kapak görseli güncellendi. Kredi ve lisans alanlarını kontrol edin.');
   }
 
   const problem = draft ? validateEntry(draft) : null;
@@ -558,6 +581,13 @@ function KindEditor({
           <Button
             type="button"
             variant="secondary"
+            onClick={() => setPreviewOpen(true)}
+          >
+            Canlı önizleme
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
             onClick={() => {
               setDraft(null);
               setEditing(null);
@@ -650,12 +680,17 @@ function KindEditor({
             </Field>
           </div>
 
-          <div className="space-y-2.5 rounded-card border border-border bg-background p-3">
+          <div
+            className="space-y-2.5 rounded-card border border-border bg-background p-3"
+            onDragOver={(event) => event.preventDefault()}
+            onDrop={applyDroppedCover}
+          >
             <div className="flex items-center justify-between gap-2">
               <div>
                 <p className="label">Kapak görseli</p>
                 <p className="text-meta text-faint">
-                  İçeriğin liste, detay ve sosyal önizleme görseli.
+                  İçeriğin liste, detay ve sosyal önizleme görseli. Görsel
+                  adresini buraya sürükleyip bırakabilirsiniz.
                 </p>
               </div>
               <Button
@@ -804,66 +839,66 @@ function KindEditor({
                 <p className="label">İçerik editörü</p>
                 <p className="text-meta text-faint">
                   Word benzeri editör: başlık, kalın, eğik, liste, alıntı,
-                  bağlantı ve yazı içi görseli doğrudan içerikte düzenleyin.
+                  bağlantı, tablo ve yazı içi görseli doğrudan içerikte
+                  düzenleyin. Görsel URL'lerini editöre sürükleyip
+                  bırakabilirsiniz.
                 </p>
               </div>
-              {!editing && (
-                <label className="cursor-pointer rounded-card border border-border px-2 py-1 text-meta text-cold hover:border-primary hover:text-primary">
-                  {importing
-                    ? 'İçe aktarılıyor…'
-                    : 'Yeni içerik: HTML / Word / PDF içe aktar'}
-                  <input
-                    type="file"
-                    accept=".html,.htm,.docx,.pdf,text/html,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                    disabled={!canWrite || importing}
-                    className="sr-only"
-                    onChange={async (event) => {
-                      const file = event.target.files?.[0];
-                      event.target.value = '';
-                      if (!file) return;
-                      setImporting(true);
-                      setImportWarnings([]);
-                      try {
-                        const result = await importContentFile(file);
-                        if (result.blocks.length === 0)
-                          throw new Error(
-                            'Belgede aktarılabilir metin bulunamadı.'
-                          );
-                        const mevcut = draft.bodyBlocks;
-                        const eklendi = mevcut.length > 0;
-                        const blocks = eklendi
-                          ? [...mevcut, ...result.blocks]
-                          : result.blocks;
-                        setDraft((current) =>
-                          current
-                            ? {
-                                ...current,
-                                bodyBlocks: blocks,
-                                bodyText: blocksToText(blocks),
-                              }
-                            : current
+              <label className="cursor-pointer rounded-card border border-border px-2 py-1 text-meta text-cold hover:border-primary hover:text-primary">
+                {importing
+                  ? 'İçe aktarılıyor…'
+                  : `${editing ? 'HTML / Word / PDF ekle' : 'Yeni içerik: HTML / Word / PDF içe aktar'}`}
+                <input
+                  type="file"
+                  accept=".html,.htm,.docx,.pdf,text/html,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                  disabled={!canWrite || importing}
+                  className="sr-only"
+                  onChange={async (event) => {
+                    const file = event.target.files?.[0];
+                    event.target.value = '';
+                    if (!file) return;
+                    setImporting(true);
+                    setImportWarnings([]);
+                    try {
+                      const result = await importContentFile(file);
+                      if (result.blocks.length === 0)
+                        throw new Error(
+                          'Belgede aktarılabilir metin bulunamadı.'
                         );
-                        setImportWarnings([
-                          ...(eklendi
-                            ? [
-                                `${result.blocks.length} blok mevcut yeni içeriğin SONUNA eklendi; yazdıklarınız silinmedi.`,
-                              ]
-                            : []),
-                          ...result.warnings,
-                        ]);
-                      } catch (error) {
-                        setMessage(
-                          error instanceof Error
-                            ? error.message
-                            : 'Belge içe aktarılamadı.'
-                        );
-                      } finally {
-                        setImporting(false);
-                      }
-                    }}
-                  />
-                </label>
-              )}
+                      const mevcut = draft.bodyBlocks;
+                      const eklendi = mevcut.length > 0;
+                      const blocks = eklendi
+                        ? [...mevcut, ...result.blocks]
+                        : result.blocks;
+                      setDraft((current) =>
+                        current
+                          ? {
+                              ...current,
+                              bodyBlocks: blocks,
+                              bodyText: blocksToText(blocks),
+                            }
+                          : current
+                      );
+                      setImportWarnings([
+                        ...(eklendi
+                          ? [
+                              `${result.blocks.length} blok mevcut içeriğin SONUNA eklendi; yazdıklarınız silinmedi.`,
+                            ]
+                          : []),
+                        ...result.warnings,
+                      ]);
+                    } catch (error) {
+                      setMessage(
+                        error instanceof Error
+                          ? error.message
+                          : 'Belge içe aktarılamadı.'
+                      );
+                    } finally {
+                      setImporting(false);
+                    }
+                  }}
+                />
+              </label>
             </div>
             <RichContentEditor
               blocks={draft.bodyBlocks}
@@ -889,44 +924,6 @@ function KindEditor({
             )}
           </div>
 
-        <div className="min-w-0 rounded-card border border-border bg-background p-4">
-          <p className="label mb-3">Canlı site önizlemesi</p>
-          <article className="space-y-4">
-            {draft.imageUrl && (
-              <figure className="space-y-1">
-                <img
-                  src={draft.imageUrl}
-                  alt=""
-                  className="max-h-[28rem] w-full rounded-card border border-border object-cover"
-                />
-                {(draft.imageCredit || draft.imageLicence) && (
-                  <figcaption className="text-meta text-faint">
-                    {[draft.imageCredit, draft.imageLicence]
-                      .filter(Boolean)
-                      .join(' · ')}
-                  </figcaption>
-                )}
-              </figure>
-            )}
-            <div>
-              <h1 className="type-page-sm text-foreground">
-                {draft.title || 'Başlıksız içerik'}
-              </h1>
-              {draft.summary && (
-                <p className="mt-2 text-body-sm leading-relaxed text-muted-foreground">
-                  {draft.summary}
-                </p>
-              )}
-            </div>
-            {draft.bodyBlocks.length > 0 ? (
-              <BlockRenderer blocks={draft.bodyBlocks} />
-            ) : (
-              <p className="py-8 text-center text-meta text-faint">
-                Önizleme için içerik yazın.
-              </p>
-            )}
-          </article>
-        </div>
         </div>
 
         {problem && (
@@ -938,6 +935,13 @@ function KindEditor({
         <div className="flex flex-wrap items-center gap-2">
           <Button onClick={save} disabled={!canWrite || busy || !!problem}>
             {busy ? 'Kaydediliyor…' : 'Kaydet'}
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => setPreviewOpen(true)}
+          >
+            Canlı önizleme
           </Button>
           <label className="inline-flex items-center gap-1.5 text-meta text-muted-foreground">
             <input
@@ -962,6 +966,78 @@ function KindEditor({
         {message && (
           <p className="text-meta text-muted-foreground">{message}</p>
         )}
+      </div>
+
+      {previewOpen && (
+        <ContentPreviewModal draft={draft} onClose={() => setPreviewOpen(false)} />
+      )}
+    </div>
+  );
+}
+
+function ContentPreviewModal({
+  draft,
+  onClose,
+}: {
+  draft: EntryDraft;
+  onClose: () => void;
+}) {
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Canlı site önizlemesi"
+      className="fixed inset-0 z-[80] bg-black/75 p-3 sm:p-6"
+    >
+      <div className="mx-auto flex max-h-[calc(100dvh-2rem)] max-w-5xl flex-col overflow-hidden rounded-card border border-border-strong bg-background shadow-overlay">
+        <div className="flex items-center justify-between gap-3 border-b border-border bg-surface-1 px-4 py-3">
+          <div>
+            <p className="label text-primary">Canlı site önizlemesi</p>
+            <p className="text-meta text-faint">
+              Kaydetmeden önce detay sayfası görünümü.
+            </p>
+          </div>
+          <Button type="button" variant="secondary" onClick={onClose}>
+            Kapat
+          </Button>
+        </div>
+        <div className="overflow-y-auto p-4 sm:p-6">
+          <article className="mx-auto max-w-3xl space-y-5">
+            {draft.imageUrl && (
+              <figure className="space-y-1">
+                <img
+                  src={draft.imageUrl}
+                  alt=""
+                  className="max-h-[32rem] w-full rounded-card border border-border object-cover"
+                />
+                {(draft.imageCredit || draft.imageLicence) && (
+                  <figcaption className="text-meta text-faint">
+                    {[draft.imageCredit, draft.imageLicence]
+                      .filter(Boolean)
+                      .join(' · ')}
+                  </figcaption>
+                )}
+              </figure>
+            )}
+            <div>
+              <h1 className="type-page-sm text-foreground">
+                {draft.title || 'Başlıksız içerik'}
+              </h1>
+              {draft.summary && (
+                <p className="mt-2 text-body-sm leading-relaxed text-muted-foreground">
+                  {draft.summary}
+                </p>
+              )}
+            </div>
+            {draft.bodyBlocks.length > 0 ? (
+              <BlockRenderer blocks={draft.bodyBlocks} />
+            ) : (
+              <p className="rounded-card border border-border bg-surface-1 py-10 text-center text-meta text-faint">
+                Önizleme için içerik yazın.
+              </p>
+            )}
+          </article>
+        </div>
       </div>
     </div>
   );

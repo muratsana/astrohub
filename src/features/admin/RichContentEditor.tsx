@@ -92,6 +92,42 @@ export function RichContentEditor({
 }: RichContentEditorProps) {
   const lastHtml = useRef('');
   const [initialHtml] = useState(() => blocksToEditorHtml(blocks));
+
+  function imageUrlFromDataTransfer(
+    dataTransfer: DataTransfer | null
+  ): string | null {
+    if (!dataTransfer) return null;
+    const uri = dataTransfer.getData('text/uri-list').trim();
+    if (uri) return uri.split('\n').find((line) => !line.startsWith('#')) ?? uri;
+    const plain = dataTransfer.getData('text/plain').trim();
+    if (plain.startsWith('http://') || plain.startsWith('https://')) return plain;
+    const html = dataTransfer.getData('text/html');
+    return html.match(/<img[^>]+src=["']([^"']+)["']/i)?.[1] ?? null;
+  }
+
+  function insertImageFromUrl(src: string): boolean {
+    if (!editor) return false;
+    if (!isAllowedImageHost(src)) {
+      window.alert('Bu görsel adresi izinli bir konaktan değil.');
+      return true;
+    }
+    const alt = window.prompt('Görsel açıklaması (alt metin)', 'İçerik görseli');
+    if (!alt?.trim()) {
+      window.alert('Yazı içi görsel için açıklama zorunlu.');
+      return true;
+    }
+    const caption = window.prompt('Alt yazı (isteğe bağlı)')?.trim() || null;
+    editor
+      .chain()
+      .focus()
+      .insertContent({
+        type: 'figureImage',
+        attrs: { src, alt: alt.trim(), caption },
+      })
+      .run();
+    return true;
+  }
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({ heading: { levels: [2, 3] } }),
@@ -163,24 +199,7 @@ export function RichContentEditor({
     if (!editor) return;
     const src = window.prompt('Görsel adresi (https://)');
     if (!src) return;
-    if (!isAllowedImageHost(src)) {
-      window.alert('Bu görsel adresi izinli bir konaktan değil.');
-      return;
-    }
-    const alt = window.prompt('Görsel açıklaması (alt metin)');
-    if (!alt?.trim()) {
-      window.alert('Yazı içi görsel için açıklama zorunlu.');
-      return;
-    }
-    const caption = window.prompt('Alt yazı (isteğe bağlı)')?.trim() || null;
-    editor
-      .chain()
-      .focus()
-      .insertContent({
-        type: 'figureImage',
-        attrs: { src, alt: alt.trim(), caption },
-      })
-      .run();
+    insertImageFromUrl(src);
   }
 
   const disabled = !editor;
@@ -327,7 +346,24 @@ export function RichContentEditor({
           </>
         ) : null}
       </div>
-      <EditorContent editor={editor} />
+      <div
+        onDropCapture={(event) => {
+          const src = imageUrlFromDataTransfer(event.dataTransfer);
+          if (!src) return;
+          event.preventDefault();
+          event.stopPropagation();
+          insertImageFromUrl(src);
+        }}
+        onPasteCapture={(event) => {
+          const src = imageUrlFromDataTransfer(event.clipboardData);
+          if (!src) return;
+          event.preventDefault();
+          event.stopPropagation();
+          insertImageFromUrl(src);
+        }}
+      >
+        <EditorContent editor={editor} />
+      </div>
     </div>
   );
 }
