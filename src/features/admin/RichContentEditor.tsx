@@ -119,7 +119,7 @@ export function RichContentEditor({
       attributes: {
         'data-placeholder': placeholder ?? '',
         class: cn(
-          'min-h-[34rem] w-full max-w-none overflow-y-auto bg-background px-4 py-3 text-body-sm leading-relaxed text-foreground outline-none',
+          'min-h-[65dvh] w-full max-w-none bg-background px-4 py-3 pb-28 text-body-sm leading-relaxed text-foreground outline-none',
           '[&_a]:text-primary [&_a]:underline',
           '[&_.is-editor-empty:first-child::before]:pointer-events-none [&_.is-editor-empty:first-child::before]:float-left [&_.is-editor-empty:first-child::before]:h-0 [&_.is-editor-empty:first-child::before]:text-faint [&_.is-editor-empty:first-child::before]:content-[attr(data-placeholder)]',
           '[&_blockquote]:border-l-2 [&_blockquote]:border-primary [&_blockquote]:pl-3 [&_blockquote]:text-muted-foreground',

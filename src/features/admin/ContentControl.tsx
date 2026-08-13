@@ -797,7 +797,7 @@ function KindEditor({
           </Field>
         </div>
 
-        <div className="grid gap-3 xl:grid-cols-[minmax(0,1.15fr)_minmax(24rem,0.85fr)] xl:items-start">
+        <div className="grid gap-3">
           <div className="min-w-0">
             <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
               <div>
@@ -889,7 +889,7 @@ function KindEditor({
             )}
           </div>
 
-        <div className="min-w-0 rounded-card border border-border bg-background p-4 xl:sticky xl:top-20 xl:max-h-[calc(100dvh-7rem)] xl:overflow-y-auto">
+        <div className="min-w-0 rounded-card border border-border bg-background p-4">
           <p className="label mb-3">Canlı site önizlemesi</p>
           <article className="space-y-4">
             {draft.imageUrl && (
