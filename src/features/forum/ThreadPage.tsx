@@ -32,7 +32,27 @@ export function ThreadPage() {
   const yorumlarAcik = useFlag('yorumlar_acik');
   const thread = catalog.items.find((t) => t.slug === slug);
 
-  if (!thread) return <NotFoundPage />;
+  if (!thread) {
+    if (catalog.status === 'loading') {
+      return (
+        <>
+          <PageMeta
+            title="Konu yükleniyor"
+            description="Forum konusu yükleniyor."
+            noIndex
+          />
+          <Container className="py-8 sm:py-10">
+            <Panel title="Konu yükleniyor">
+              <p role="status" className="text-body-sm text-muted-foreground">
+                Yeni konu veritabanından okunuyor…
+              </p>
+            </Panel>
+          </Container>
+        </>
+      );
+    }
+    return <NotFoundPage />;
+  }
 
   const info = forumCategories[thread.category];
   const openingPost: ForumPost = {

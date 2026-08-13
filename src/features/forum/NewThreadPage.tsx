@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -35,6 +36,7 @@ import { Alert } from '@/components/ui/Alert';
  */
 export function NewThreadPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { user } = useAuth();
 
   const [category, setCategory] = useState<string>(forumCategoryOrder[0]);
@@ -59,6 +61,7 @@ export function NewThreadPage() {
         labels,
         authorId: user.id,
       });
+      await queryClient.invalidateQueries({ queryKey: ['katalog', 'forum'] });
       navigate(`/forum/${slug}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Konu açılamadı');
