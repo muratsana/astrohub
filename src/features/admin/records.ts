@@ -3,6 +3,7 @@ import {
   contentStatusLabels,
   isContentStatus,
 } from '@/domain/content/status';
+import { events as eventsSeed } from '@/features/events/data';
 import { getSupabase } from '@/services/supabase/client';
 
 /**
@@ -62,6 +63,8 @@ export interface RecordRow {
   path: string | null;
   /** Soft delete anı (FAZ 3). Dolu ise kayıt public'te yok, geri alınabilir. */
   deletedAt: string | null;
+  /** Veritabanı satırı olmayan katalog tohumu; panelde görünür ama yazılamaz. */
+  readOnly?: boolean;
 }
 
 interface KindSpec {
@@ -150,17 +153,17 @@ export const RECORD_KINDS: Record<RecordKind, KindSpec> = {
   event: {
     label: 'Etkinlikler',
     table: 'events',
-    select: 'id, slug, title, status, created_at, deleted_at, city',
+    select: 'id, slug, title, status, starts_at, created_at, deleted_at, city',
     statusColumn: 'status',
     statuses: [...CONTENT_STATUSES],
     softDeletable: true,
-    orderColumn: 'created_at',
+    orderColumn: 'starts_at',
     map: (r) => ({
       id: String(r.id),
       title: s(r.title) ?? '(başlıksız)',
       subtitle: s(r.city),
       status: String(r.status ?? '—'),
-      createdAt: s(r.created_at),
+      createdAt: s(r.starts_at) ?? s(r.created_at),
       path: s(r.slug) ? `/etkinlik/${r.slug}` : null,
       deletedAt: s(r.deleted_at),
     }),
@@ -228,7 +231,48 @@ export async function fetchRecords(
 
   const { data, error } = await query;
   if (error) throw new Error(error.message);
-  return ((data ?? []) as unknown as Record<string, unknown>[]).map(spec.map);
+  const rows = ((data ?? []) as unknown as Record<string, unknown>[]).map(
+    spec.map
+  );
+  return kind === 'event' && !options.deleted ? mergeEventSeeds(rows, limit) : rows;
+}
+
+/**
+ * Public etkinlik kataloğu veritabanı + tohum kayıtlarından oluşuyor.
+ * Admin listesi yalnızca `events` tablosunu okuyunca Ethem Hoca gibi
+ * sitede görünen ama DB'de olmayan doğrulanmış katalog etkinlikleri
+ * panelde yokmuş gibi görünüyordu.
+ */
+export function mergeEventSeeds(rows: RecordRow[], limit: number): RecordRow[] {
+  const slugs = new Set(
+    rows
+      .map((row) => row.path?.split('/').pop())
+      .filter((slug): slug is string => Boolean(slug))
+  );
+
+  return [
+    ...rows,
+    ...eventsSeed
+      .filter((event) => !slugs.has(event.slug))
+      .map(
+        (event): RecordRow => ({
+          id: `seed:${event.slug}`,
+          title: event.title,
+          subtitle: event.city,
+          status: 'yayinda',
+          createdAt: event.startsAt,
+          path: `/etkinlik/${event.slug}`,
+          deletedAt: null,
+          readOnly: true,
+        })
+      ),
+  ]
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt ?? 0).getTime() -
+        new Date(a.createdAt ?? 0).getTime()
+    )
+    .slice(0, limit);
 }
 
 export async function setRecordStatus(

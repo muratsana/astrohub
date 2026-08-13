@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   RECORD_KINDS,
+  mergeEventSeeds,
   restoreRecord,
   setRecordStatus,
   softDeleteRecord,
@@ -40,6 +41,11 @@ describe('RECORD_KINDS · tanım bütünlüğü', () => {
     }
   });
 
+  it('etkinlik admin listesi başlangıç tarihine göre sıralanıyor', () => {
+    expect(RECORD_KINDS.event.select).toContain('starts_at');
+    expect(RECORD_KINDS.event.orderColumn).toBe('starts_at');
+  });
+
   it('durum sütunu olan türlerde değer listesi boş değil', () => {
     for (const k of KINDS) {
       const spec = RECORD_KINDS[k];
@@ -67,6 +73,45 @@ describe('RECORD_KINDS · tanım bütünlüğü', () => {
     for (const k of KINDS) {
       expect(RECORD_KINDS[k].label.length, k).toBeGreaterThan(0);
     }
+  });
+});
+
+describe('mergeEventSeeds · public katalogla admin listesi aynı', () => {
+  it('DBde olmayan Ethem Hoca etkinliğini yönetim listesine ekler', () => {
+    const rows = mergeEventSeeds([], 40);
+    const ethem = rows.find((row) =>
+      row.title.includes('Ethem Hoca ile Gökyüzü Gözlem Şenliği')
+    );
+
+    expect(ethem).toMatchObject({
+      subtitle: 'Denizli',
+      status: 'yayinda',
+      path: '/etkinlik/ethem-hoca-gokyuzu-gozlem-senligi-2026',
+      readOnly: true,
+    });
+  });
+
+  it('aynı slug DBden geldiyse tohumu ikinci kez eklemez', () => {
+    const rows = mergeEventSeeds(
+      [
+        {
+          id: 'db-1',
+          title: 'DB Ethem',
+          subtitle: 'Denizli',
+          status: 'yayinda',
+          createdAt: '2026-08-11T16:00:00+03:00',
+          path: '/etkinlik/ethem-hoca-gokyuzu-gozlem-senligi-2026',
+          deletedAt: null,
+        },
+      ],
+      40
+    );
+
+    expect(
+      rows.filter((row) =>
+        row.path?.endsWith('ethem-hoca-gokyuzu-gozlem-senligi-2026')
+      )
+    ).toHaveLength(1);
   });
 });
 

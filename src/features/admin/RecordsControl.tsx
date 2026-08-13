@@ -137,6 +137,7 @@ export function RecordsControl({
   }
 
   const spec = RECORD_KINDS[kind];
+  const hasReadOnlyRows = rows?.some((row) => row.readOnly) ?? false;
 
   return (
     <Panel title={title} status={rows ? `${rows.length} kayıt` : 'okunuyor…'}>
@@ -191,6 +192,14 @@ export function RecordsControl({
 
       {error && <Alert className="mb-3">{error}</Alert>}
 
+      {hasReadOnlyRows && !silinmisler && (
+        <Alert className="mb-3">
+          Bu listede sitede görünen katalog tohumu kayıtları da var. DB kaydı
+          olmayan satırlar görünürlük için listelenir; düzenleme, kaldırma ve
+          kalıcı silme yalnızca gerçek veritabanı kayıtlarında çalışır.
+        </Alert>
+      )}
+
       {rows && rows.length === 0 && !error && (
         <p className="py-4 text-center text-body-sm text-muted-foreground">
           {targetSlug && kind === initialKind
@@ -199,18 +208,21 @@ export function RecordsControl({
         </p>
       )}
 
-      <ul>
+      <ul className="divide-y divide-border">
         {(rows ?? []).map((row) => (
           <li
             key={row.id}
-            className="border-b border-border py-2 last:border-0"
+            className="py-2"
           >
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge tone={statusTone(row.status)}>
-                {recordStatusLabel(row.status)}
-              </Badge>
+            <div className="grid items-center gap-2 md:grid-cols-[7rem_minmax(0,1fr)_7rem_auto]">
+              <span className="flex items-center gap-1.5">
+                <Badge tone={statusTone(row.status)}>
+                  {recordStatusLabel(row.status)}
+                </Badge>
+                {row.readOnly && <Badge tone="muted">Katalog tohumu</Badge>}
+              </span>
 
-              <span className="min-w-0 flex-1 truncate text-caption text-foreground">
+              <span className="min-w-0 truncate text-caption text-foreground">
                 {row.path ? (
                   <Link to={row.path} className="hover:text-primary">
                     {row.title}
@@ -226,11 +238,19 @@ export function RecordsControl({
                 )}
               </span>
 
-              {row.createdAt && (
-                <span className="tabular hidden text-meta text-faint sm:block">
-                  {new Date(row.createdAt).toLocaleDateString('tr-TR')}
-                </span>
-              )}
+              <span className="tabular text-meta text-faint">
+                {row.createdAt
+                  ? new Date(row.createdAt).toLocaleDateString('tr-TR')
+                  : '—'}
+              </span>
+
+              <span className="flex flex-wrap justify-start gap-2 md:justify-end">
+                {row.readOnly ? (
+                  <span className="text-meta text-faint">
+                    DB kaydı yok — sadece sitedeki katalog kaydı
+                  </span>
+                ) : (
+                  <>
 
               {/* Durum değiştirme — türün kendi enum'u. */}
               {spec.statusColumn && (
@@ -308,9 +328,12 @@ export function RecordsControl({
               >
                 Kalıcı sil
               </Button>
+                  </>
+                )}
+              </span>
             </div>
 
-            {confirming === row.id && (
+            {!row.readOnly && confirming === row.id && (
               <div className="mt-2 flex flex-wrap items-center gap-2 rounded-card border border-warm/40 bg-warm/8 px-3 py-2">
                 <span className="flex-1 text-meta leading-relaxed text-warm">
                   <strong>{row.title}</strong> kalıcı olarak silinecek. Bağlı
