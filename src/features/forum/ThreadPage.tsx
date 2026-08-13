@@ -15,7 +15,7 @@ import {
   type ForumThread,
 } from './types';
 import { useAuth } from '@/features/auth/AuthContext';
-import { createReply, useForumThreads } from '@/services/content/forum';
+import { createReply, useForumThread } from '@/services/content/forum';
 import { useFlag } from '@/features/site/SiteConfigContext';
 import { FlagClosedNote } from '@/features/site/FlagClosedNote';
 import { cn } from '@/lib/cn';
@@ -27,13 +27,13 @@ import { RemovedNotice } from '@/features/admin/RemovedNotice';
 /** Konu detayı: açılış mesajı + yanıtlar + yanıt kutusu. */
 export function ThreadPage() {
   const { slug } = useParams<{ slug: string }>();
-  const catalog = useForumThreads();
+  const threadQuery = useForumThread(slug);
   /* Erken `return`dan ÖNCE: kanca çağrıları koşulsuz olmalı. */
   const yorumlarAcik = useFlag('yorumlar_acik');
-  const thread = catalog.items.find((t) => t.slug === slug);
+  const thread = threadQuery.data ?? null;
 
   if (!thread) {
-    if (catalog.status === 'loading') {
+    if (threadQuery.isLoading || threadQuery.isFetching) {
       return (
         <>
           <PageMeta
@@ -161,7 +161,10 @@ export function ThreadPage() {
                 Yorumlar şu an kapalı; yeni yanıt yazılamıyor.
               </FlagClosedNote>
             ) : (
-              <ReplyBox thread={thread} onSent={catalog.refresh} />
+              <ReplyBox
+                thread={thread}
+                onSent={() => void threadQuery.refetch()}
+              />
             )}
           </div>
 

@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { useQuery } from '@tanstack/react-query';
 import { getSupabase } from '@/services/supabase/client';
 import { slugify } from '@/lib/slug';
 import { forumThreads as forumSeed } from '@/features/forum/data';
@@ -166,6 +167,36 @@ async function fetchThreads(client: SupabaseClient): Promise<ForumThread[]> {
 
 export function useForumThreads(): ContentSelection<ForumThread> {
   return useCatalog('forum', forumSeed, fetchThreads);
+}
+
+async function fetchThreadBySlug(
+  client: SupabaseClient,
+  slug: string
+): Promise<ForumThread | null> {
+  const { data, error } = await client
+    .from('forum_threads')
+    .select(SELECT)
+    .eq('slug', slug)
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  return data ? mapThreadRow(data as unknown as ThreadRow) : null;
+}
+
+export function useForumThread(slug: string | undefined) {
+  return useQuery({
+    queryKey: ['forum-thread', slug],
+    enabled: Boolean(slug),
+    staleTime: 30 * 1000,
+    retry: 1,
+    queryFn: async () => {
+      const clientPromise = getSupabase();
+      if (!clientPromise || !slug) {
+        return forumSeed.find((thread) => thread.slug === slug) ?? null;
+      }
+      return fetchThreadBySlug(await clientPromise, slug);
+    },
+  });
 }
 
 /* ══════════════════════ Yazma ══════════════════════ */
