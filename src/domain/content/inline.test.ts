@@ -120,3 +120,52 @@ describe('hasInlineMarkup', () => {
     expect(hasInlineMarkup('3*4*5')).toBe(false);
   });
 });
+
+/**
+ * ALTI ÇİZİLİ — EN BÜYÜK RİSK YANLIŞ POZİTİF.
+ *
+ * `__` işareti bu dosyaya sonradan eklendi ve BUGÜNE KADAR YAZILMIŞ tüm
+ * içeriğin üstünde çalışacak. Kimse o metinleri altını çizmek niyetiyle
+ * yazmadı; `photo__id` gibi bir tanımlayıcı bir anda altı çizili yazıya
+ * dönseydi özellik eski içeriği bozmuş olurdu. Sınır kuralları yıldızla
+ * birebir aynı ve aşağıda tek tek ölçülüyor.
+ */
+describe('altı çizili', () => {
+  it('işaretlenen metni ayrı parça yapıyor', () => {
+    expect(parseInline('Bu __önemli__ bir not.')).toEqual([
+      { kind: 'text', text: 'Bu ' },
+      { kind: 'underline', text: 'önemli' },
+      { kind: 'text', text: ' bir not.' },
+    ]);
+  });
+
+  it('tanımlayıcının ortasındaki alt çizgiyi biçim saymıyor', () => {
+    expect(parseInline('photo__id__x')).toEqual([
+      { kind: 'text', text: 'photo__id__x' },
+    ]);
+  });
+
+  it('işaretin hemen içinde boşluk varsa biçim saymıyor', () => {
+    expect(parseInline('__ bosluk __')).toEqual([
+      { kind: 'text', text: '__ bosluk __' },
+    ]);
+  });
+
+  it('kalın işaretiyle çakışmıyor', () => {
+    expect(parseInline('**kalın** ve __altı__')).toEqual([
+      { kind: 'strong', text: 'kalın' },
+      { kind: 'text', text: ' ve ' },
+      { kind: 'underline', text: 'altı' },
+    ]);
+  });
+
+  it('özet metninde işaret sızdırmıyor', () => {
+    expect(stripInline('Bu __önemli__ nottur.')).toBe('Bu önemli nottur.');
+  });
+
+  it('tek alt çizgiye dokunmuyor', () => {
+    expect(parseInline('user_name alanı')).toEqual([
+      { kind: 'text', text: 'user_name alanı' },
+    ]);
+  });
+});

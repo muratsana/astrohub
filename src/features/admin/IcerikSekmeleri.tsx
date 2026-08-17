@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { ContentControl } from './ContentControl';
+import { EventControl } from './EventControl';
 import { RecordsControl } from './RecordsControl';
 import { ClubControl } from './ClubControl';
 import { CommentsControl } from './CommentsControl';
@@ -7,6 +8,18 @@ import { PhotoWeekAdminControl } from './PhotoWeekAdminControl';
 import type { EntryKind } from '@/services/content/entries';
 import type { RecordKind } from './records';
 import { cn } from '@/lib/cn';
+import { lazyWithRetry } from '@/lib/lazyWithRetry';
+
+/*
+ * REHBER EKRANI TEMBEL YÜKLENİYOR.
+ *
+ * `GuideControl` üç rehberin ÜRETİLMİŞ GÖVDESİNİ tohum olarak içe
+ * aktarıyor — toplam ~400 kB. Statik import admin paketini o kadar
+ * şişiriyordu; oysa içerik yalnızca bu sekme açıldığında gerekiyor.
+ */
+const GuideControl = lazyWithRetry(() =>
+  import('./GuideControl').then((m) => ({ default: m.GuideControl }))
+);
 
 /**
  * İÇERİK SEKMELERİ — her içerik türü için ayrı sekme (§6.4, FAZ 4.1).
@@ -45,7 +58,13 @@ type Sekme =
   | { id: RecordKind; tur: 'record'; etiket: string }
   | { id: 'topluluk'; tur: 'club'; etiket: string }
   | { id: 'yorum'; tur: 'comment'; etiket: string }
-  | { id: 'hafta'; tur: 'week'; etiket: string };
+  | { id: 'hafta'; tur: 'week'; etiket: string }
+  /* Etkinlik `record` değil: moderasyon değil TAM DÜZENLEME yüzeyi
+     alıyor. Ayrıntı `EventControl` başlığında. */
+  | { id: 'etkinlik'; tur: 'event'; etiket: string }
+  /* Uzun form rehberler: gövdeleri blok modeline sığmadığı için kendi
+     düzenleme yüzeyleri var. Ayrıntı `GuideControl` başlığında. */
+  | { id: 'rehber'; tur: 'guide'; etiket: string };
 
 /**
  * Sıra editoryal iş yüküne göre: en sık dokunulan tür başta.
@@ -58,10 +77,11 @@ const SEKMELER: Sekme[] = [
   { id: 'haber', tur: 'entry', etiket: 'Haberler' },
   { id: 'yazi', tur: 'entry', etiket: 'Yazılar' },
   { id: 'listing', tur: 'record', etiket: 'İlanlar' },
-  { id: 'event', tur: 'record', etiket: 'Etkinlikler' },
+  { id: 'etkinlik', tur: 'event', etiket: 'Etkinlikler' },
   { id: 'photo', tur: 'record', etiket: 'Fotoğraflar' },
   { id: 'site', tur: 'record', etiket: 'Gözlem noktaları' },
   { id: 'topluluk', tur: 'club', etiket: 'Topluluklar' },
+  { id: 'rehber', tur: 'guide', etiket: 'Rehberler' },
   { id: 'sozluk', tur: 'entry', etiket: 'Sözlük' },
   { id: 'sss', tur: 'entry', etiket: 'SSS' },
   { id: 'hafta', tur: 'week', etiket: 'Haftanın fotoğrafı' },
@@ -83,6 +103,9 @@ export function IcerikSekmeleri({
      bağlantısıyla gelen kullanıcı doğru sekmede başlamalı, yoksa
      bağlantı onu boş bir ekrana bırakır. */
   const baslangic =
+    (recordKind === 'event'
+      ? SEKMELER.find((s) => s.tur === 'event')
+      : undefined) ??
     SEKMELER.find((s) => s.tur === 'record' && s.id === recordKind) ??
     SEKMELER.find((s) => s.tur === 'entry' && s.id === contentKind) ??
     SEKMELER[0]!;
@@ -128,6 +151,20 @@ export function IcerikSekmeleri({
           initialKind={aktif.id}
           initialSlug={targetSlug}
         />
+      )}
+
+      {aktif.tur === 'guide' && (
+        <Suspense
+          fallback={
+            <p className="text-meta text-muted-foreground">Yükleniyor…</p>
+          }
+        >
+          <GuideControl canWrite={canWrite} />
+        </Suspense>
+      )}
+
+      {aktif.tur === 'event' && (
+        <EventControl canWrite={canWrite} targetSlug={targetSlug} />
       )}
 
       {aktif.tur === 'record' && (

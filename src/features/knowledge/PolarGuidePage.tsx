@@ -4,6 +4,7 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { ButtonLink } from '@/components/ui/Button';
 import { breadcrumbJsonLd, absoluteUrl } from '@/lib/seo';
+import { useGuideContent } from '@/services/content/guides';
 import {
   kutupSegments,
   kutupToc,
@@ -87,6 +88,9 @@ const TERIMLER: { terim: string; karsilik: string; aciklama: string }[] = [
 ];
 
 export function PolarGuidePage() {
+  /* Koddaki üretilmiş dosya TOHUM; panelden düzenlenmiş gövde varsa
+     o kazanıyor. Ayrıntı `services/content/guides.ts` başlığında. */
+  const guide = useGuideContent('kutup-hizalamasi', kutupToc, kutupSegments);
   const bodyRef = useRef<HTMLDivElement>(null);
   const [activeId, setActiveId] = useState(kutupToc[0]?.id ?? '');
 
@@ -171,7 +175,7 @@ export function PolarGuidePage() {
           >
             <p className="label mb-3 text-faint">İçindekiler</p>
             <ul className="space-y-px">
-              {kutupToc.map((entry) => (
+              {guide.toc.map((entry) => (
                 <li key={entry.id}>
                   <a
                     href={`#${entry.id}`}
@@ -245,16 +249,21 @@ export function PolarGuidePage() {
             </section>
 
             <article ref={bodyRef} className="dz-root">
-              {kutupSegments.map((segment, index) => {
+              {guide.segments.map((segment, index) => {
                 if (segment.kind === 'widget') {
-                  const Widget = WIDGETS[segment.id];
-                  return <Widget key={`w-${segment.id}`} />;
+                  /* Kimlik veritabanından da gelebiliyor; tanınmayan bir
+                     hesaplayıcı sayfayı düşürmek yerine atlanıyor. */
+                  const Widget = WIDGETS[segment.id as keyof typeof WIDGETS];
+                  return Widget ? <Widget key={`w-${segment.id}`} /> : null;
                 }
                 return (
                   <Fragment key={`h-${index}`}>
-                    {/* İçerik depoya işlenmiş sabit belge; üretici script
-                        her koşuda script etiketi ve olay niteliği
-                        olmadığını doğruluyor. */}
+                    {/* İçerik ya depoya işlenmiş tohumdan ya da panelden
+                        geliyor. Tohumu üretici betiği doğruluyor
+                        (`snr-icerik.mjs:388`), panelden geleni
+                        `parseGuideDocument` — aynı desen listesiyle.
+                        Doğrulamadan geçmeyen kayıt hiç çizilmiyor,
+                        tohuma düşülüyor. */}
                     <div dangerouslySetInnerHTML={{ __html: segment.html }} />
                   </Fragment>
                 );

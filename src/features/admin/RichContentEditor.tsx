@@ -6,7 +6,6 @@ import { Table } from '@tiptap/extension-table';
 import TableCell from '@tiptap/extension-table-cell';
 import TableHeader from '@tiptap/extension-table-header';
 import TableRow from '@tiptap/extension-table-row';
-import TextAlign from '@tiptap/extension-text-align';
 import Underline from '@tiptap/extension-underline';
 import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
@@ -85,6 +84,53 @@ const FigureImage = Node.create({
   },
 });
 
+/**
+ * BİLGİ / UYARI KUTUSU.
+ *
+ * Blok modelinde `callout` zaten vardı (`tone` + isteğe bağlı `title`) ama
+ * editöre `<blockquote>` olarak veriliyordu; geri okunurken `quote`'a
+ * düşüyor ve her kaydetmede iki alan siliniyordu. Kendi düğümü olmadan
+ * TipTap `<aside>` etiketini tanımaz ve büsbütün atardı.
+ *
+ * `content: 'paragraph+'` — gövde düz metin değil, normal paragraf: içine
+ * kalın/bağlantı yazılabiliyor ve satır içi işaretleme gidiş-dönüşte
+ * korunuyor. Başlık ise ÖZNİTELİK: gövdeye ikinci bir paragraf olarak
+ * konsaydı, başlıksız kutularda boş satır olarak görünürdü.
+ */
+const Callout = Node.create({
+  name: 'callout',
+  group: 'block',
+  content: 'paragraph+',
+  defining: true,
+
+  addAttributes() {
+    return {
+      tone: {
+        default: 'info',
+        parseHTML: (element) =>
+          element.getAttribute('data-tone') === 'warning' ? 'warning' : 'info',
+      },
+      title: {
+        default: null,
+        parseHTML: (element) => element.getAttribute('data-title') || null,
+      },
+    };
+  },
+
+  parseHTML() {
+    return [{ tag: 'aside[data-callout]' }];
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    const attrs: Record<string, string> = {
+      'data-callout': '',
+      'data-tone': (HTMLAttributes.tone as string) ?? 'info',
+    };
+    if (HTMLAttributes.title) attrs['data-title'] = HTMLAttributes.title as string;
+    return ['aside', mergeAttributes(attrs), 0];
+  },
+});
+
 export function RichContentEditor({
   blocks,
   onChange,
@@ -137,13 +183,13 @@ export function RichContentEditor({
         autolink: true,
         defaultProtocol: 'https',
       }),
-      TextAlign.configure({ types: ['heading', 'paragraph'] }),
       Placeholder.configure({
         placeholder: placeholder ?? '',
         emptyEditorClass: 'is-editor-empty',
       }),
       Image.configure({ inline: false, allowBase64: false }),
       FigureImage,
+      Callout,
       Table.configure({ resizable: true }),
       TableRow,
       TableHeader,
@@ -159,6 +205,10 @@ export function RichContentEditor({
           '[&_a]:text-primary [&_a]:underline',
           '[&_.is-editor-empty:first-child::before]:pointer-events-none [&_.is-editor-empty:first-child::before]:float-left [&_.is-editor-empty:first-child::before]:h-0 [&_.is-editor-empty:first-child::before]:text-faint [&_.is-editor-empty:first-child::before]:content-[attr(data-placeholder)]',
           '[&_blockquote]:border-l-2 [&_blockquote]:border-primary [&_blockquote]:pl-3 [&_blockquote]:text-muted-foreground',
+          '[&_aside]:my-3 [&_aside]:rounded-card [&_aside]:border [&_aside]:px-3 [&_aside]:py-2.5',
+          '[&_aside[data-tone=info]]:border-cold/40 [&_aside[data-tone=info]]:bg-cold/5',
+          '[&_aside[data-tone=warning]]:border-warning/45 [&_aside[data-tone=warning]]:bg-warning/5',
+          '[&_aside[data-title]]:before:mb-1 [&_aside[data-title]]:before:block [&_aside[data-title]]:before:text-meta [&_aside[data-title]]:before:font-semibold [&_aside[data-title]]:before:uppercase [&_aside[data-title]]:before:tracking-wide [&_aside[data-title]]:before:content-[attr(data-title)]',
           '[&_figcaption]:mt-1 [&_figcaption]:text-meta [&_figcaption]:text-muted-foreground',
           '[&_figure]:my-4 [&_img]:max-h-96 [&_img]:rounded-card [&_img]:border [&_img]:border-border',
           '[&_h2]:mt-5 [&_h2]:font-display [&_h2]:text-xl [&_h2]:font-bold',
@@ -193,6 +243,26 @@ export function RichContentEditor({
       return;
     }
     editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+  }
+
+  /**
+   * Kutuyu açar/kapatır. Zaten o tondaysa kutudan çıkarıyor; farklı
+   * tondaysa yalnızca tonu değiştiriyor (kullanıcı iki kere tıklayıp
+   * kutuyu kaybetmesin). Başlık isteğe bağlı: boş bırakılırsa öznitelik
+   * hiç yazılmıyor, böylece başlıksız kutu boş satır göstermiyor.
+   */
+  function toggleCallout(tone: 'info' | 'warning') {
+    if (!editor) return;
+    if (editor.isActive('callout', { tone })) {
+      editor.chain().focus().lift('callout').run();
+      return;
+    }
+    if (editor.isActive('callout')) {
+      editor.chain().focus().updateAttributes('callout', { tone }).run();
+      return;
+    }
+    const title = window.prompt('Kutu başlığı (isteğe bağlı)')?.trim() || null;
+    editor.chain().focus().wrapIn('callout', { tone, title }).run();
   }
 
   function addImage() {
@@ -257,6 +327,20 @@ export function RichContentEditor({
         >
           Alıntı
         </ToolbarButton>
+        <ToolbarButton
+          active={editor?.isActive('callout', { tone: 'info' })}
+          disabled={disabled}
+          onClick={() => toggleCallout('info')}
+        >
+          Bilgi kutusu
+        </ToolbarButton>
+        <ToolbarButton
+          active={editor?.isActive('callout', { tone: 'warning' })}
+          disabled={disabled}
+          onClick={() => toggleCallout('warning')}
+        >
+          Uyarı kutusu
+        </ToolbarButton>
         <Divider />
         <ToolbarButton
           active={editor?.isActive('bulletList')}
@@ -289,28 +373,6 @@ export function RichContentEditor({
           }
         >
           Tablo
-        </ToolbarButton>
-        <Divider />
-        <ToolbarButton
-          active={editor?.isActive({ textAlign: 'left' })}
-          disabled={disabled}
-          onClick={() => editor?.chain().focus().setTextAlign('left').run()}
-        >
-          Sol
-        </ToolbarButton>
-        <ToolbarButton
-          active={editor?.isActive({ textAlign: 'center' })}
-          disabled={disabled}
-          onClick={() => editor?.chain().focus().setTextAlign('center').run()}
-        >
-          Orta
-        </ToolbarButton>
-        <ToolbarButton
-          active={editor?.isActive({ textAlign: 'right' })}
-          disabled={disabled}
-          onClick={() => editor?.chain().focus().setTextAlign('right').run()}
-        >
-          Sağ
         </ToolbarButton>
         <Divider />
         <ToolbarButton

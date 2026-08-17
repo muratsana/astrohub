@@ -26,7 +26,7 @@ import { safeUrl } from '@/lib/url';
  *
  * ── SÖZDİZİMİ BİLEREK DAR ─────────────────────────────────────────────
  *
- *     **kalın**      *eğik*      [metin](/ic-yol)      [metin](https://…)
+ *     **kalın**   *eğik*   __altı çizili__   [metin](/ic-yol)   [metin](https://…)
  *
  * Markdown'ın tamamı değil. Başlık, liste ve alıntı zaten BLOK olarak
  * var; onları bir de metin içinde desteklemek aynı şeyin iki yolu
@@ -43,6 +43,8 @@ import { safeUrl } from '@/lib/url';
  *   · Açılış yıldızından ÖNCE ve kapanış yıldızından SONRA harf/rakam
  *     olamaz — "3*4*5" düz metin kalıyor.
  *   · İşaretin içinde ikinci bir yıldız olamaz.
+ *   · Altı çizili (`__metin__`) yıldızla AYNI üç kurala tabi: bu sayede
+ *     `photo__id` ya da `a__b` gibi tanımlayıcılar düz metin kalıyor.
  *   · Bağlantı hedefi ya `/` ile başlayan uygulama içi yol ya da
  *     `safeUrl`den geçen http(s) adresi olmalı; "[1]" ya da
  *     "[bkz](javascript:…)" olduğu gibi metin kalıyor.
@@ -57,6 +59,11 @@ export type InlineSpan =
   | { kind: 'strong'; text: string }
   | { kind: 'em'; text: string }
   /**
+   * Altı çizili. Editörde bir düğmesi vardı ama depolama karşılığı yoktu:
+   * yazılan biçim kaydedince sessizce kayboluyordu. Karşılığı burada.
+   */
+  | { kind: 'underline'; text: string }
+  /**
    * `href` uygulama içi yol (`/galeri`) ya da doğrulanmış http(s) adresi.
    * Hangisi olduğunu `external` söylüyor: içeride `<Link>`, dışarıda
    * `rel` taşıyan `<a>` gerekiyor ve bu kararı çizen taraf veremez —
@@ -69,7 +76,7 @@ export type InlineSpan =
  * ve önce yakalanmazsa yıldız kuralı bağlantıyı ortasından böler.
  */
 const PATTERN =
-  /\[([^\]\n]+)\]\(([^)\s]+)\)|\*\*([^*\n]+)\*\*|\*([^*\n]+)\*/g;
+  /\[([^\]\n]+)\]\(([^)\s]+)\)|\*\*([^*\n]+)\*\*|__([^_\n]+)__|\*([^*\n]+)\*/g;
 
 /** Harf ya da rakam — yıldız sınırında bunlara bakılıyor. */
 const WORD = /[\p{L}\p{N}]/u;
@@ -85,8 +92,11 @@ function internalPath(value: string): boolean {
   return value.startsWith('/') && !value.startsWith('//');
 }
 
-/** Yıldızlı işaretin sınırı gerçekten biçim mi, yoksa çarpma mı? */
-function starBoundary(source: string, start: number, end: number): boolean {
+/**
+ * İşaretin sınırı gerçekten biçim mi, yoksa çarpma / tanımlayıcı mı?
+ * Hem `*` hem `__` için aynı kural: iki yanında harf-rakam olmamalı.
+ */
+function markBoundary(source: string, start: number, end: number): boolean {
   const before = start > 0 ? source[start - 1] : '';
   const after = end < source.length ? source[end] : '';
   return !WORD.test(before || ' ') && !WORD.test(after || ' ');
@@ -119,7 +129,8 @@ export function parseInline(source: string): InlineSpan[] {
   PATTERN.lastIndex = 0;
   let match: RegExpExecArray | null;
   while ((match = PATTERN.exec(source)) !== null) {
-    const [whole, linkText, linkHref, strongText, emText] = match;
+    const [whole, linkText, linkHref, strongText, underlineText, emText] =
+      match;
     const start = match.index;
     const end = start + whole.length;
 
@@ -133,11 +144,15 @@ export function parseInline(source: string): InlineSpan[] {
         span = { kind: 'link', text: linkText, href: external, external: true };
       }
     } else if (strongText !== undefined) {
-      if (tightContent(strongText) && starBoundary(source, start, end)) {
+      if (tightContent(strongText) && markBoundary(source, start, end)) {
         span = { kind: 'strong', text: strongText };
       }
+    } else if (underlineText !== undefined) {
+      if (tightContent(underlineText) && markBoundary(source, start, end)) {
+        span = { kind: 'underline', text: underlineText };
+      }
     } else if (emText !== undefined) {
-      if (tightContent(emText) && starBoundary(source, start, end)) {
+      if (tightContent(emText) && markBoundary(source, start, end)) {
         span = { kind: 'em', text: emText };
       }
     }

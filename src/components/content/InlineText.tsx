@@ -43,6 +43,16 @@ export function InlineText({ text }: { text: string }) {
           );
         }
 
+        if (span.kind === 'underline') {
+          /* `underline` sınıfı bağlantıyla karışmasın diye ton farklı:
+             bağlantı `text-primary`, burası gövde rengini koruyor. */
+          return (
+            <u key={key} className="underline underline-offset-2">
+              {span.text}
+            </u>
+          );
+        }
+
         if (span.kind === 'link') {
           const className =
             'text-primary underline decoration-primary/40 underline-offset-2 hover:decoration-primary';

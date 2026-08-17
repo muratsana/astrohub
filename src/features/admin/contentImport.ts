@@ -1,5 +1,40 @@
 import { sanitizeText } from '@/lib/sanitize';
 import type { ContentBlock } from '@/domain/content/blocks';
+import { isAllowedImageHost } from '@/domain/content/imageHosts';
+import { htmlToInlineMarkdown } from './richContentFormat';
+
+/**
+ * DOSYADAN İÇERİK — NE DÜŞTÜYSE SÖYLENİR.
+ *
+ * ── ÖNCEKİ HALİNİN ÜÇ SESSİZ KAYBI ────────────────────────────────────
+ *
+ * 1. Yalnızca `body`nin DOĞRUDAN çocukları geziliyordu. Gövdesi tek bir
+ *    `<div>`/`<article>` içine sarılı bir dosya — yani dışarıdan gelen
+ *    HTML'in çoğu — TEK PARAGRAFA çöküyordu. Üstelik `div`/`section`/
+ *    `article` "beklenen" etiket listesinde olduğu için uyarı bile
+ *    üretilmiyordu. Uzun yazılarda sonuç 20.000 karakterlik paragraf
+ *    sınırına takılıp kaydetmeyi tamamen bozuyordu.
+ * 2. Metin `node.textContent` ile alınıyordu: kalın, eğik ve bağlantı
+ *    düz metne iniyordu.
+ * 3. `<img>` ve `<table>` işleyicisi yoktu. Görselin `textContent`i boş
+ *    olduğu için blok hiç üretilmiyor, tablo ise hücreleri birbirine
+ *    yapışmış tek paragraf oluyordu.
+ *
+ * ── YENİ KURAL ────────────────────────────────────────────────────────
+ *
+ * Ağaç ÖZYİNELEMELİ geziliyor; sarmalayıcı etiketler (`div`, `section`,
+ * `article`, `main`, `header`, `footer`) açılıp içindeki bloklar tek tek
+ * alınıyor. Satır içi biçim `htmlToInlineMarkdown` ile korunuyor — editör
+ * yolu da aynı fonksiyonu kullanıyor, yani dosyadan gelen metinle
+ * editörde yazılan metin aynı biçimleniyor.
+ *
+ * DÜŞEN HER ŞEY UYARIYA DÖNÜYOR. Bir blok atlanıyorsa kullanıcı bunu
+ * ekranda görüyor; sessizce kaybolmuyor. Kural şu: bir düğüm ne bloğa
+ * çevrilebiliyor ne de sarmalayıcıysa, ATILDIĞI SÖYLENİR.
+ *
+ * HAM HTML YİNE RENDER EDİLMİYOR. `DOMParser` ayrıştırıyor, çıktı kapalı
+ * blok modeline giriyor; `script`/`style` en başta eleniyor.
+ */
 
 export interface ImportResult {
   blocks: ContentBlock[];
@@ -10,37 +45,175 @@ function clean(value: string | null | undefined): string {
   return sanitizeText(value ?? '', { multiline: true });
 }
 
-/** Ham HTML hiçbir zaman render edilmez; yalnız DOM metni kapalı bloklara alınır. */
-export function htmlToBlocks(html: string): ImportResult {
-  const doc = new DOMParser().parseFromString(html, 'text/html');
-  const blocks: ContentBlock[] = [];
-  const warnings: string[] = [];
+/** İçindekiler bloğa çevrilmeden doğrudan açılan sarmalayıcılar. */
+const WRAPPERS = new Set([
+  'div', 'section', 'article', 'main', 'header', 'footer', 'aside',
+  'body', 'figure-group', 'nav',
+]);
 
-  for (const node of Array.from(doc.body.children)) {
-    const tag = node.tagName.toLowerCase();
-    if (tag === 'script' || tag === 'style') {
-      warnings.push(`<${tag}> güvenlik nedeniyle atlandı.`);
-      continue;
-    }
-    const value = clean(node.textContent);
-    if (!value) continue;
+/** Bloğa çevrilemeyen ve içeriği de anlamsız olan etiketler. */
+const IGNORED = new Set(['script', 'style', 'noscript', 'template', 'svg', 'form']);
 
-    if (tag === 'h1' || tag === 'h2' || tag === 'h3') {
-      blocks.push({ type: 'heading', level: tag === 'h3' ? 3 : 2, text: value.slice(0, 300) });
-    } else if (tag === 'blockquote') {
-      blocks.push({ type: 'quote', text: value });
-    } else if (tag === 'ul' || tag === 'ol') {
-      const items = Array.from(node.querySelectorAll(':scope > li')).map((item) => clean(item.textContent)).filter(Boolean);
-      if (items.length) blocks.push({ type: 'list', style: tag === 'ol' ? 'ordered' : 'bullet', items });
-    } else {
-      if (!['p', 'div', 'section', 'article'].includes(tag)) {
-        warnings.push(`<${tag}> paragraf olarak içe aktarıldı.`);
-      }
-      blocks.push({ type: 'paragraph', text: value });
-    }
+interface Ctx {
+  blocks: ContentBlock[];
+  warnings: string[];
+  /** Aynı uyarı yüz kere tekrarlanmasın. */
+  seen: Set<string>;
+}
+
+function warn(ctx: Ctx, message: string): void {
+  if (ctx.seen.has(message)) return;
+  ctx.seen.add(message);
+  ctx.warnings.push(message);
+}
+
+/** Sarmalayıcının içinde blok üretebilecek bir çocuk var mı? */
+function hasElementChild(element: Element): boolean {
+  return Array.from(element.children).some(
+    (child) => !IGNORED.has(child.tagName.toLowerCase())
+  );
+}
+
+function walk(element: Element, ctx: Ctx): void {
+  const tag = element.tagName.toLowerCase();
+
+  if (IGNORED.has(tag)) {
+    warn(ctx, `<${tag}> güvenlik nedeniyle atlandı.`);
+    return;
   }
 
-  return { blocks, warnings };
+  /* Sarmalayıcı: kendisi blok değil, çocukları blok. İçinde eleman yoksa
+     (yalnızca düz metin taşıyorsa) paragraf olarak alınıyor — yoksa metin
+     kaybolurdu. */
+  if (WRAPPERS.has(tag)) {
+    if (hasElementChild(element)) {
+      for (const child of Array.from(element.children)) walk(child, ctx);
+      return;
+    }
+    const loose = clean(htmlToInlineMarkdown(element));
+    if (loose) ctx.blocks.push({ type: 'paragraph', text: loose });
+    return;
+  }
+
+  if (tag === 'h1' || tag === 'h2' || tag === 'h3') {
+    const text = clean(htmlToInlineMarkdown(element)).slice(0, 300);
+    if (text) ctx.blocks.push({ type: 'heading', level: tag === 'h3' ? 3 : 2, text });
+    return;
+  }
+
+  /* Blok modelinde yalnızca 2. ve 3. seviye başlık var. Daha derin
+     başlıklar 3'e çekiliyor — paragrafa düşseydi belge yapısı tamamen
+     kaybolurdu. */
+  if (tag === 'h4' || tag === 'h5' || tag === 'h6') {
+    const text = clean(htmlToInlineMarkdown(element)).slice(0, 300);
+    if (!text) return;
+    warn(ctx, `<${tag}> "Başlık 3" olarak alındı — blok modelinde daha derin başlık yok.`);
+    ctx.blocks.push({ type: 'heading', level: 3, text });
+    return;
+  }
+
+  if (tag === 'blockquote') {
+    const text = clean(htmlToInlineMarkdown(element));
+    if (text) ctx.blocks.push({ type: 'quote', text });
+    return;
+  }
+
+  if (tag === 'ul' || tag === 'ol') {
+    const items = Array.from(element.querySelectorAll(':scope > li'))
+      .map((item) => clean(htmlToInlineMarkdown(item)))
+      .filter(Boolean);
+    if (!items.length) return;
+    if (element.querySelector(':scope > li > ul, :scope > li > ol')) {
+      warn(ctx, 'İç içe liste tek seviyeye indirildi.');
+    }
+    ctx.blocks.push({
+      type: 'list',
+      style: tag === 'ol' ? 'ordered' : 'bullet',
+      items: items.slice(0, 100),
+    });
+    if (items.length > 100) warn(ctx, 'Liste 100 maddeyle sınırlandı.');
+    return;
+  }
+
+  if (tag === 'figure' || tag === 'img') {
+    const img = tag === 'img' ? element : element.querySelector('img');
+    const src = img?.getAttribute('src')?.trim() ?? '';
+    const alt = clean(img?.getAttribute('alt') ?? '');
+    if (!src) {
+      warn(ctx, 'Adressiz bir görsel atlandı.');
+      return;
+    }
+    if (!isAllowedImageHost(src)) {
+      warn(ctx, `Görsel izinli bir konaktan değil, atlandı: ${src.slice(0, 80)}`);
+      return;
+    }
+    if (!alt) {
+      warn(ctx, `Görselin alt metni yok, atlandı: ${src.slice(0, 80)}`);
+      return;
+    }
+    const caption = clean(element.querySelector('figcaption')?.textContent ?? '');
+    ctx.blocks.push({ type: 'image', src, alt: alt.slice(0, 300), caption: caption || undefined });
+    return;
+  }
+
+  if (tag === 'table') {
+    const rows = Array.from(element.querySelectorAll('tr'))
+      .map((row) =>
+        Array.from(row.querySelectorAll('th,td')).map((cell) =>
+          clean(htmlToInlineMarkdown(cell)).slice(0, 500)
+        )
+      )
+      .filter((row) => row.some((cell) => cell.length > 0));
+    const [first, ...rest] = rows;
+    if (!first?.length) return;
+    const hasHeader = Boolean(element.querySelector('th'));
+    const caption = clean(element.querySelector('caption')?.textContent ?? '');
+    ctx.blocks.push({
+      type: 'table',
+      caption: caption || undefined,
+      header: hasHeader ? first : undefined,
+      rows: hasHeader ? (rest.length ? rest : [first.map(() => '')]) : [first, ...rest],
+    });
+    return;
+  }
+
+  /* Kod bloğu: blok modelinde karşılığı yok. Metni paragraf olarak
+     saklamak, atmaktan iyi — ama biçimin gittiği SÖYLENİYOR. */
+  if (tag === 'pre' || tag === 'code') {
+    const text = clean(element.textContent);
+    if (!text) return;
+    warn(ctx, 'Kod bloğu düz paragraf olarak alındı — blok modelinde kod türü yok.');
+    ctx.blocks.push({ type: 'paragraph', text });
+    return;
+  }
+
+  if (tag === 'hr') {
+    warn(ctx, 'Yatay ayraç atlandı — blok modelinde ayraç türü yok.');
+    return;
+  }
+
+  if (tag === 'p') {
+    const text = clean(htmlToInlineMarkdown(element));
+    if (text) ctx.blocks.push({ type: 'paragraph', text });
+    return;
+  }
+
+  const fallback = clean(htmlToInlineMarkdown(element));
+  if (!fallback) return;
+  warn(ctx, `<${tag}> paragraf olarak içe aktarıldı.`);
+  ctx.blocks.push({ type: 'paragraph', text: fallback });
+}
+
+/** Ham HTML hiçbir zaman render edilmez; DOM ayrıştırılıp kapalı bloklara alınır. */
+export function htmlToBlocks(html: string): ImportResult {
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  const ctx: Ctx = { blocks: [], warnings: [], seen: new Set() };
+  for (const node of Array.from(doc.body.children)) walk(node, ctx);
+  if (!ctx.blocks.length) {
+    const text = clean(doc.body.textContent);
+    if (text) ctx.blocks.push({ type: 'paragraph', text });
+  }
+  return { blocks: ctx.blocks, warnings: ctx.warnings };
 }
 
 export async function importDocx(file: File): Promise<ImportResult> {
