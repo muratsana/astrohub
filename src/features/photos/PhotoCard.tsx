@@ -26,13 +26,17 @@ export function PhotoCard({
   variant?: 'grid' | 'list';
 }) {
   const info = photoFamilies[familyOf(photo.type)];
+  /* Kart her zaman ızgara boyunda: küçük kopya varsa onu indir, yoksa tam
+     boya düş. Eskiden koşulsuz `url` kullanılıyordu ve 160–320 px'lik kutuya
+     2048 px'lik dosya iniyordu. */
+  const imageUrl = photo.image?.thumbUrl ?? photo.image?.url;
 
   return (
     <PhotoTile
       variant={variant}
       to={`/fotograf/${photo.slug}`}
       seed={photo.slug}
-      imageUrl={photo.image?.url}
+      imageUrl={imageUrl}
       tint={tintForPhoto(photo.target.catalog)}
       target={photo.target.catalog}
       title={photo.title}

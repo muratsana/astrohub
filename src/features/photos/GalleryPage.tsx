@@ -241,8 +241,9 @@ export function GalleryPage() {
                   <span
                     className="relative h-16 w-20 shrink-0 rounded-card border border-border bg-cover bg-center"
                     style={{
+                      /* 64×80 px'lik kutu: küçük kopya varsa o iner. */
                       backgroundImage: item.photo.image
-                        ? `url(${item.photo.image.url})`
+                        ? `url(${item.photo.image.thumbUrl ?? item.photo.image.url})`
                         : item.photo.gradient,
                     }}
                     aria-hidden

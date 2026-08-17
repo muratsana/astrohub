@@ -200,7 +200,20 @@ export interface AstroPhoto {
    * küçültülmüş kopyanın genel adresi buraya gelir. Yoksa ya da
    * yüklenemezse kart kendi yıldız alanını çizer.
    */
-  image?: { url: string; credit: string; licence: string };
+  image?: {
+    url: string;
+    /**
+     * Izgara/kart boyunda gösterilecek küçük kopya (`thumb_path`).
+     *
+     * Yükleme sırasında zaten üretiliyordu ama hiçbir yerde okunmuyordu:
+     * galeri ızgarası 160–320 px'lik bir kutuya `display_path`i (2048 px)
+     * indiriyordu. Tohum kayıtlarda ve küçük kopyası olmayan satırlarda
+     * `undefined` kalır; çağıran taraf `url`e düşer.
+     */
+    thumbUrl?: string;
+    credit: string;
+    licence: string;
+  };
   /** Paylaşım/indirme tercihleri. Orijinal dosya private bucket'ta kalır. */
   access?: {
     allowDownload: boolean;

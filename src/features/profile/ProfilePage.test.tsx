@@ -72,10 +72,53 @@ describe('ProfilePage', () => {
     expect(screen.getByRole('heading', { name: 'Murat Sana' })).toBeInTheDocument();
     expect(screen.getByText('Derin uzay fotoğrafları.')).toBeInTheDocument();
     expect(screen.getByText('Henüz yayınlanmış fotoğraf yok.')).toBeInTheDocument();
+    /* `safeUrl` adresi normalize ediyor: kök yola eğik çizgi ekleniyor. */
     expect(screen.getByRole('link', { name: 'Portfolyo' })).toHaveAttribute(
       'href',
-      'https://astrofoto.example'
+      'https://astrofoto.example/'
     );
+  });
+
+  /*
+   * G-1 — DEPOLANMIŞ XSS.
+   *
+   * `AccountPage` kaydederken `safeUrl` uyguluyor, ama bu bir güvenlik
+   * sınırı değil: `profiles` satırını sahibi doğrudan PostgREST üzerinden
+   * de güncelleyebilir. Sayfa okurken süzmezse `javascript:` şeması
+   * tıklandığında sitenin kendi kaynağında betik çalıştırırdı.
+   */
+  it('javascript: şemalı portfolyo adresini bağlantı olarak basmıyor', () => {
+    profileState.profile = {
+      id: 'u1',
+      username: 'murat',
+      displayName: 'Murat Sana',
+      bio: '',
+      city: null,
+      websiteUrl: 'javascript:alert(document.domain)',
+      avatarPath: null,
+      termsAcceptedAt: null,
+    };
+
+    renderProfile();
+
+    expect(screen.queryByRole('link', { name: 'Portfolyo' })).toBeNull();
+  });
+
+  it('data: şemalı adresi de reddediyor', () => {
+    profileState.profile = {
+      id: 'u1',
+      username: 'murat',
+      displayName: 'Murat Sana',
+      bio: '',
+      city: null,
+      websiteUrl: 'data:text/html,<script>alert(1)</script>',
+      avatarPath: null,
+      termsAcceptedAt: null,
+    };
+
+    renderProfile();
+
+    expect(screen.queryByRole('link', { name: 'Portfolyo' })).toBeNull();
   });
 
   it('profil avatarı varsa gösterir', () => {

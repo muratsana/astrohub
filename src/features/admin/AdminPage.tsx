@@ -18,6 +18,7 @@ import { BroadcastControl } from './BroadcastControl';
 import { RadioControl } from './RadioControl';
 import { TvControl } from './TvControl';
 import { ReminderControl } from './ReminderControl';
+import { ModerationQueueControl } from './ModerationQueueControl';
 import { CatalogControl } from './CatalogControl';
 import { EquipmentDataControl } from './EquipmentDataControl';
 import { SpecImportControl } from './SpecImportControl';
@@ -31,6 +32,7 @@ import {
   BellIcon,
   BookIcon,
   CalendarIcon,
+  ChatIcon,
   GridIcon,
   HomeIcon,
   ImageIcon,
@@ -47,6 +49,7 @@ type AdminSectionId =
   | 'kullanicilar'
   | 'icerik'
   | 'moderasyon'
+  | 'forum'
   | 'destek'
   | 'hata'
   | 'aktivite'
@@ -87,35 +90,29 @@ const navGroups: readonly {
         path: '/admin/moderasyon',
         icon: AlertIcon,
       },
+      /* Forum yönetimi (kategoriler, konular, iletiler) yazılmıştı ama menüde
+         girdisi yoktu ve `/admin/forum` takma adı da 'moderasyon'a gidiyordu:
+         ekrana hiçbir yoldan erişilemiyordu. */
+      { id: 'forum', label: 'Forum', path: '/admin/forum', icon: ChatIcon },
       { id: 'destek', label: 'Destek', path: '/admin/destek', icon: BellIcon },
     ],
   },
   {
     title: 'Sistem',
     items: [
-      {
-        id: 'hata',
-        label: 'Hata Günlükleri',
-        path: '/admin/hata-gunlukleri',
-        icon: AlertIcon,
-      },
+      /* MENÜDEN ÇIKARILAN ÜÇ GİRDİ — kimlikleri ve yolları duruyor.
+         'hata' ("Hata Günlükleri"), 'link' ("Link Sağlığı") ve 'eposta'
+         ("E-posta Sağlığı") kendi ekranlarına sahip değildi: sırasıyla
+         'aktivite' (denetim günlüğü), 'ayar' (site/katalog ayarları) ve
+         'destek' (hatırlatmalar) ile AYNI bileşeni çiziyorlardı. Etiketleri
+         yöneticiye var olmayan bir ekran vaat ediyordu. Kimlikler tip ve
+         gövde içinde korunuyor ki eski yer imleri ve `routeAliases`
+         çalışmaya devam etsin — yalnızca menüden kaldırıldılar. */
       {
         id: 'aktivite',
         label: 'Aktivite',
         path: '/admin/aktivite',
         icon: ListIcon,
-      },
-      {
-        id: 'link',
-        label: 'Link Sağlığı',
-        path: '/admin/link-sagligi',
-        icon: TagIcon,
-      },
-      {
-        id: 'eposta',
-        label: 'E-posta Sağlığı',
-        path: '/admin/e-posta-sagligi',
-        icon: BellIcon,
       },
       {
         id: 'duyuru',
@@ -145,7 +142,6 @@ const routeAliases: Record<string, AdminSectionId> = {
   '/admin/listings': 'icerik',
   '/admin/sites': 'icerik',
   '/admin/media': 'icerik',
-  '/admin/forum': 'moderasyon',
   '/admin/moderation': 'moderasyon',
   '/admin/users': 'kullanicilar',
   '/admin/broadcast': 'duyuru',
@@ -172,9 +168,12 @@ function dashboardStats(data: DashboardStats | null): DashboardCard[] {
     {
       label: 'Onay bekleyen',
       value: formatAdminCount(data?.moderasyonBekleyen),
-      hint: 'Kuyruktaki içerikler',
+      hint: 'Kuyruktaki şikâyetler',
       tone: 'warning',
-      href: '/admin/onay-kuyrugu',
+      /* Sayı `moderation_queue`dan geliyor (`admin_dashboard_rpc.sql:58`);
+         bağlantı da o tabloyu gösteren ekrana gitmeli. Eskiden içerik onay
+         ekranına gidiyordu: sayaç doğru, varış yeri yanlıştı. */
+      href: '/admin/moderasyon',
     },
     {
       label: 'Bekleyen fotoğraf',
@@ -283,9 +282,9 @@ function queueRows(data: DashboardStats | null): DashboardRow[] {
   return [
     {
       title: 'Onay bekleyen',
-      text: 'İçerik moderasyon kuyruğu',
+      text: 'Şikâyet kuyruğu',
       meta: formatAdminCount(data?.moderasyonBekleyen),
-      href: '/admin/onay-kuyrugu',
+      href: '/admin/moderasyon',
     },
     {
       title: 'Fotoğraf inceleme',
@@ -502,13 +501,20 @@ function AdminSection({
   recordKind?: RecordKind;
   targetSlug?: string;
 }) {
-  if (active === 'onay' || active === 'moderasyon') {
+  if (active === 'onay') {
     return (
       <div className="space-y-4">
         <RecordsControl kinds={['photo', 'listing', 'event', 'site']} />
         <CommentsControl />
       </div>
     );
+  }
+
+  /* İÇERİK ONAYI İLE ŞİKÂYET KUYRUĞU AYRI İŞLER.
+     İkisi de bu dalda birleşiktiyken "Moderasyon" menüsü içerik onay
+     ekranını açıyordu; `moderation_queue`'ya bakan hiçbir ekran yoktu. */
+  if (active === 'moderasyon') {
+    return <ModerationQueueControl />;
   }
 
   if (active === 'kullanicilar') {
@@ -576,13 +582,20 @@ function AdminSection({
     return <AuditControl />;
   }
 
-  return (
-    <div className="space-y-4">
-      <ForumCategories canWrite={isAdmin} />
-      <RecordsControl kinds={['thread']} title="Forum konuları" />
-      <CommentsControl kinds={['forumPost']} />
-    </div>
-  );
+  if (active === 'forum') {
+    return (
+      <div className="space-y-4">
+        <ForumCategories canWrite={isAdmin} />
+        <RecordsControl kinds={['thread']} title="Forum konuları" />
+        <CommentsControl kinds={['forumPost']} />
+      </div>
+    );
+  }
+
+  /* Buraya düşülmüyor: yukarıdaki dallar `AdminSectionId`in tamamını
+     karşılıyor. Forum ekranı eskiden BU konumdaydı — koşulsuz son dönüş
+     olduğu için de hiçbir kimlikle eşleşmiyordu; artık kendi dalında. */
+  return <Dashboard />;
 }
 
 function Dashboard() {

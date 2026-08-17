@@ -16,6 +16,7 @@ import { usePhotoCatalog } from '@/services/content/photos';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
 import { UserActions } from '@/features/social/UserActions';
+import { EXTERNAL_LINK_REL, safeUrl } from '@/lib/url';
 import {
   profileAvatarUrl,
   useProfileByUsername,
@@ -114,6 +115,13 @@ export function ProfilePage() {
       )
     ),
   ];
+  /* OKUMA TARAFI KAPISI (§15.4).
+     `AccountPage` kaydederken `safeUrl`den geçiriyor, ama bu bir güvenlik
+     sınırı değil: `profiles` satırını sahibi doğrudan PostgREST üzerinden de
+     güncelleyebilir, panel formunu hiç kullanmadan. Adres burada da
+     doğrulanmazsa `javascript:` şeması bu sayfada çalışırdı. Geçmeyen adres
+     bağlantı olarak hiç basılmıyor. */
+  const websiteUrl = safeUrl(profile?.websiteUrl);
   // Bortle bilgisi olmayan kayıtlar hesaba girmemeli; `Math.min` boş dizide
   // Infinity döner ve ekranda anlamsız bir değer belirir.
   const bortleValues = userPhotos
@@ -162,11 +170,11 @@ export function ProfilePage() {
               </div>
               <ProfileBadges userId={ownerId} />
               <div className="flex flex-wrap gap-2">
-                {profile?.websiteUrl && (
+                {websiteUrl && (
                   <a
-                    href={profile.websiteUrl}
+                    href={websiteUrl}
                     target="_blank"
-                    rel="noreferrer"
+                    rel={EXTERNAL_LINK_REL}
                     className="inline-flex h-8 shrink-0 items-center justify-center rounded-card border border-border-strong px-3.5 text-meta font-medium leading-none text-foreground transition-colors hover:border-primary hover:text-primary"
                   >
                     Portfolyo

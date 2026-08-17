@@ -245,6 +245,10 @@ export function mapPhotoRow(row: PhotoRow): AstroPhoto {
   const capturedAt = row.captured_at ?? row.published_at ?? '';
 
   const displayUrl = publicPhotoUrl(row.display_path ?? row.thumb_path);
+  /* Izgara için küçük kopya. `display_path`e düşmüyoruz: düşseydi alan yine
+     büyük dosyayı indirirdi ve `thumbUrl`ün varlığı "küçük kopya var"
+     anlamını yitirirdi. Yoksa çağıran taraf bilerek `url`e düşüyor. */
+  const thumbUrl = publicPhotoUrl(row.thumb_path) ?? undefined;
   const owner = row.profiles;
 
   return {
@@ -272,6 +276,7 @@ export function mapPhotoRow(row: PhotoRow): AstroPhoto {
     image: displayUrl
       ? {
           url: displayUrl,
+          thumbUrl,
           /* Kredi fotoğrafı çekene ait; lisans kullanıcının seçtiği. */
           credit:
             owner?.display_name ?? owner?.username ?? 'Astrohub kullanıcısı',

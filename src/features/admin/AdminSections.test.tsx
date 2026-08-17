@@ -56,17 +56,25 @@ function renderPanel(path = '/admin') {
   );
 }
 
+/*
+ * Menü on üç girdiden on bire indi ve bir yeni girdi kazandı.
+ *
+ * Çıkarılanlar — "Hata Günlükleri", "Link Sağlığı", "E-posta Sağlığı":
+ * üçünün de kendi ekranı yoktu, sırasıyla "Aktivite", "Ayarlar" ve
+ * "Destek" ile aynı bileşeni çiziyorlardı.
+ *
+ * Eklenen — "Forum": ekran yazılmıştı ama menüde girdisi olmadığı için
+ * hiçbir yoldan erişilemiyordu.
+ */
 const NAV = [
   'Genel Bakış',
   'Onay Kuyruğu',
   'Kullanıcılar',
   'İçerik',
   'Moderasyon',
+  'Forum',
   'Destek',
-  'Hata Günlükleri',
   'Aktivite',
-  'Link Sağlığı',
-  'E-posta Sağlığı',
   'Duyurular',
   'Sayfalar',
   'Ayarlar',
@@ -112,11 +120,14 @@ describe('StageHub tarzı admin GUI', () => {
       expect(screen.getByRole('heading', { name: heading })).toBeInTheDocument();
     }
 
+    /* Sayı `moderation_queue`dan geliyor, dolayısıyla bağlantı da o
+       tabloyu gösteren şikâyet kuyruğuna gitmeli — eskiden o tabloya hiç
+       dokunmayan içerik onay ekranına gidiyordu. */
     expect(
       screen.getByRole('link', {
-        name: /Onay bekleyen.*Kuyruktaki içerikler/s,
+        name: /Onay bekleyen.*Kuyruktaki şikâyetler/s,
       })
-    ).toHaveAttribute('href', '/admin/onay-kuyrugu');
+    ).toHaveAttribute('href', '/admin/moderasyon');
     expect(
       screen.getByRole('link', {
         name: /Yeni kullanıcı \(7g\).*Son 7 günde açılan hesap/s,
