@@ -29,7 +29,10 @@ import {
   useMyClubMemberships,
 } from '@/services/content/profileCommunities';
 import { useMyProfileStats } from '@/services/content/profileDashboard';
+import { isUsernameLocked } from '@/features/auth/accountSetup';
 import { AvatarEditor } from './AvatarEditor';
+import { PasswordPanel } from './PasswordPanel';
+import { DataExportPanel } from './DataExportPanel';
 
 type Tab = 'hesabim' | 'profilim';
 
@@ -108,6 +111,12 @@ export function AccountPage() {
   const emailVerified = Boolean(user?.email_confirmed_at || user?.confirmed_at);
   const problem = validateProfile(edit);
   const usernameChanged = !!profile && edit.username !== profile.username;
+  /*
+   * Kilit ARAYÜZDE anlatılıyor, RLS'te uygulanıyor
+   * (`app.profiles_username_kilidi`). Alanı kilitli göstermeseydik
+   * kullanıcı yazıp kaydeder ve ham bir veritabanı hatası görürdü.
+   */
+  const usernameLocked = isUsernameLocked(profile);
   const approvedMemberships = membershipsState.memberships.filter(
     (membership) => membership.status === 'approved'
   );
@@ -239,23 +248,43 @@ export function AccountPage() {
                 <Field
                   label="Kullanıcı adı"
                   htmlFor="p-username"
-                  hint="Profil adresinizin parçasıdır."
+                  hint={
+                    usernameLocked
+                      ? 'Seçildi ve kilitlendi — profil adresiniz artık sabit.'
+                      : 'Profil adresinizin parçasıdır. Yalnızca bir kez seçilir.'
+                  }
                 >
                   <Input
                     id="p-username"
                     value={edit.username}
                     maxLength={32}
+                    readOnly={usernameLocked}
+                    aria-readonly={usernameLocked}
                     onChange={(e) =>
                       setEdit((value) => ({ ...value, username: e.target.value }))
                     }
                   />
                 </Field>
 
-                {usernameChanged && (
-                  <p className="rounded-card border border-warning/40 bg-surface-2 px-2.5 py-2 text-meta leading-snug text-warning">
-                    Kullanıcı adını değiştirirseniz eski profil adresiniz{' '}
-                    <span className="tabular">/profil/{profile?.username}</span> çalışmaz.
+                {usernameLocked ? (
+                  <p className="rounded-card border border-border bg-surface-2 px-2.5 py-2 text-meta leading-snug text-muted-foreground">
+                    Kullanıcı adı bir kez seçilir ve değiştirilemez: profiliniz{' '}
+                    <span className="tabular">/profil/{profile?.username}</span>{' '}
+                    adresinde yayında ve bu bağlantı paylaşılmış olabilir.
+                    Düzeltilmesi gereken bir durum varsa{' '}
+                    <span className="text-foreground">iletişim</span> sayfasından
+                    yazın.
                   </p>
+                ) : (
+                  usernameChanged && (
+                    <p className="rounded-card border border-warning/40 bg-surface-2 px-2.5 py-2 text-meta leading-snug text-warning">
+                      Bu <strong>tek seferlik</strong> bir seçim: kaydettiğinizde
+                      kullanıcı adınız kilitlenir ve bir daha değiştirilemez.
+                      Profiliniz{' '}
+                      <span className="tabular">/profil/{edit.username}</span>{' '}
+                      adresinde yayınlanacak.
+                    </p>
+                  )
                 )}
 
                 <div className="grid gap-3 sm:grid-cols-2">
@@ -639,6 +668,10 @@ function AccountSidePanel({
           )}
         </div>
       </Panel>
+
+      <PasswordPanel />
+
+      <DataExportPanel />
 
       <Panel title="Hesabı sil">
         <p className="text-meta leading-relaxed text-muted-foreground">

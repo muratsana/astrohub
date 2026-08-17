@@ -8,6 +8,7 @@ import { Panel } from '@/components/ui/Panel';
 import { Readout } from '@/components/ui/Readout';
 import { Alert } from '@/components/ui/Alert';
 import { useAuth } from '@/features/auth/AuthContext';
+import { usePermissions } from '@/features/auth/usePermissions';
 import {
   formatQuotaLabel,
   remainingPhotoQuota,
@@ -158,8 +159,10 @@ function PanelRow({
  * bir yerleşime izin verilir (§6.6).
  *
  * Sayılar ve listeler oturum açmış kullanıcının GERÇEK kayıtlarından
- * geliyor; sınırlar domain kurallarından. Bekleyen tek şey üyelik
- * kademesi: T-504 kararı verilene kadar herkes `standart`.
+ * geliyor; kademe ve kota `izinlerim()` ile SUNUCUDAN. Bekleyen tek şey
+ * ödeme sağlayıcısı (T-504): kademeyi yükseltmenin bir yolu yok, ama
+ * kademenin kendisi artık uydurma değil — yönetici ve moderatör §3.2
+ * gereği premium görünüyor.
  */
 export function PanelPage() {
   const { user, configured } = useAuth();
@@ -272,8 +275,26 @@ export function PanelPage() {
    * çiziliyor; yükleme sırasında `0` göstermek de aynı yanlış cümleyi
    * kurardı.
    */
-  const tier: MembershipTier = 'standart';
-  const photoLimit = PHOTO_LIMITS[tier];
+  /*
+   * KADEME ARTIK SUNUCUDAN.
+   *
+   * Burada sabit `'standart'` yazıyordu ve gerekçesi ("üyelik sistemi
+   * yok") o gün doğruydu — ama arada `izinlerim()` yazıldı ve kademeyi,
+   * izinleri, kotaları TEK yanıtta veriyor. Buna rağmen bu panel hâlâ
+   * sabiti okuyordu: `tier_limits` tablosunda kotayı değiştiren bir
+   * yönetici, panelin gösterdiği sayının değişmediğini görürdü.
+   *
+   * Yönetici ve moderatör §3.2 gereği premium sayılıyor; sabit kademe
+   * onlara da "5 fotoğraf" diyordu — yanlış sayı.
+   *
+   * KOTA DA SUNUCUDAN, ama sabit yedekle: `izinlerim()` henüz dönmediyse
+   * ya da düştüyse `PHOTO_LIMITS` devreye giriyor. Yedeksiz bıraksaydık
+   * kota bilinmeyen bir anda sıfır görünür, panel de kullanıcıya "hiç
+   * hakkın yok" derdi.
+   */
+  const permissions = usePermissions();
+  const tier: MembershipTier = permissions.tier;
+  const photoLimit = permissions.kota('galeri_foto') ?? PHOTO_LIMITS[tier];
   const activePhotos = myPhotos.published;
   const quotaKnown = !myPhotos.loading && !myPhotos.error;
 
@@ -281,7 +302,7 @@ export function PanelPage() {
     {
       label: 'Fotoğraflarım',
       to: '/panel/fotograflar',
-      note: quotaKnown ? formatQuotaLabel(activePhotos, tier) : undefined,
+      note: quotaKnown ? formatQuotaLabel(activePhotos, tier, photoLimit) : undefined,
     },
     { label: 'Fotoğraf Yükle', to: '/galeri/yukle' },
     { label: "Setup'larım", to: '/panel/setuplar' },
@@ -362,10 +383,10 @@ export function PanelPage() {
         <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
           <Readout
             label="Fotoğraf kotası"
-            value={quotaKnown ? formatQuotaLabel(activePhotos, tier) : '…'}
+            value={quotaKnown ? formatQuotaLabel(activePhotos, tier, photoLimit) : '…'}
             hint={
               quotaKnown
-                ? `${remainingPhotoQuota({ activePublished: activePhotos, drafts: myPhotos.drafts, tier })} hak kaldı`
+                ? `${remainingPhotoQuota({ activePublished: activePhotos, drafts: myPhotos.drafts, tier, limit: photoLimit })} hak kaldı`
                 : 'okunuyor'
             }
           />
@@ -375,10 +396,23 @@ export function PanelPage() {
             hint="yayımlanmamış kayıt"
             tone="cold"
           />
+          {/*
+            Kademe GERÇEK, yükseltme yolu YOK — ikisi de yazıyor. Yalnızca
+            "Standart" yazıp susmak, kullanıcıya arayıp bulamayacağı bir
+            yükseltme düğmesi aratırdı.
+          */}
           <Readout
             label="Üyelik"
-            value="—"
-            hint="üyelik sistemi yakında"
+            value={
+              permissions.status === 'ready'
+                ? tier === 'premium'
+                  ? 'Premium'
+                  : 'Standart'
+                : '…'
+            }
+            hint={
+              tier === 'premium' ? 'rol kaynaklı' : 'ödeme sistemi yakında'
+            }
             tone="muted"
           />
           <Readout

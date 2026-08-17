@@ -49,6 +49,15 @@ export interface Profile {
    * bu durumda — arayüz girişten sonra onay ekranı gösteriyor.
    */
   termsAcceptedAt: string | null;
+  /**
+   * Kullanıcı adının SEÇİLDİĞİ an; `null` ise hâlâ kayıtta üretilen
+   * `user_xxxx` adı duruyor ya da hesap 0132 öncesinden kalma.
+   *
+   * Dolu olması adın KİLİTLİ olduğu anlamına geliyor: damga bir kez
+   * basılıyor ve `app.profiles_username_kilidi` sonraki değişikliği
+   * reddediyor. Arayüz bunu yalnızca anlatmak için okuyor.
+   */
+  usernameCustomizedAt: string | null;
 }
 
 interface ProfileRow {
@@ -62,6 +71,7 @@ interface ProfileRow {
   website_url: string | null;
   avatar_path: string | null;
   terms_accepted_at: string | null;
+  username_customized_at?: string | null;
   /* Üçü İSTEĞE BAĞLI: bu alanları yalnızca `SELECT` sabiti çekiyor ve
      `mapProfileRow` başka yerlerden de (daha dar seçimlerle) çağrılıyor.
      Zorunlu yapmak, alanı hiç istemeyen çağrıları derlemez hâle
@@ -83,6 +93,7 @@ export function mapProfileRow(row: ProfileRow): Profile {
     websiteUrl: row.website_url,
     avatarPath: row.avatar_path,
     termsAcceptedAt: row.terms_accepted_at,
+    usernameCustomizedAt: row.username_customized_at ?? null,
     accountStatus: row.account_status ?? 'active',
     suspendedUntil: row.suspended_until ?? null,
     statusReason: row.status_reason ?? null,
@@ -117,7 +128,7 @@ export function profileAvatarUrl(path: string | null | undefined): string | null
 
 const SELECT =
   'id, username, display_name, display_name_visible, bio, city, district, website_url, avatar_path, ' +
-  'terms_accepted_at, account_status, suspended_until, status_reason';
+  'terms_accepted_at, username_customized_at, account_status, suspended_until, status_reason';
 
 /**
  * Onayı kendi profil satırına yazar.
@@ -533,4 +544,59 @@ export async function deleteOwnAccount(): Promise<void> {
     body: {},
   });
   if (error) throw new Error(error.message);
+}
+
+/** Şifre en az bu kadar olmalı — Supabase projesi de aynı sınırı uyguluyor. */
+export const MIN_PASSWORD_LENGTH = 8;
+
+/**
+ * Oturum açmış kullanıcının şifresini değiştirir.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * BU EKRAN HİÇ YOKTU
+ *
+ * Hesap sayfasında e-posta, telefon, şehir, avatar ve HESAP SİLME
+ * vardı — şifre değiştirme yoktu. Şifresini değiştirmek isteyen
+ * kullanıcının tek yolu çıkış yapıp "şifremi unuttum" akışına girmekti,
+ * yani şifresini bilen birine şifresini unutmuş gibi davranmak.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * ESKİ ŞİFRE NEDEN SORULMUYOR
+ *
+ * Supabase'in `updateUser` çağrısı oturum jetonuyla çalışıyor ve eski
+ * şifreyi doğrulayacak bir uç sunmuyor. Elle doğrulamak için şifreyle
+ * yeniden `signInWithPassword` çağırmak gerekirdi; o çağrı başarısız
+ * olduğunda GoTrue deneme sayacını artırıyor ve kullanıcı kendi
+ * hesabını kilitleyebiliyor.
+ *
+ * Bunun yerine oturumun kendisi kanıt sayılıyor — ve gerçek koruma
+ * "her yerden çık" düğmesi: şifre değiştikten sonra diğer oturumları
+ * kapatmak, çalınmış bir jetonun işini bitiren şey.
+ */
+export async function changeOwnPassword(newPassword: string): Promise<void> {
+  if (newPassword.length < MIN_PASSWORD_LENGTH) {
+    throw new Error(`Şifre en az ${MIN_PASSWORD_LENGTH} karakter olmalı.`);
+  }
+  const supabase = await client();
+  const { error } = await supabase.auth.updateUser({ password: newPassword });
+  if (error) throw new Error(error.message);
+}
+
+/**
+ * KVKK m.11 — kullanıcının kendi verisini indirmesi.
+ *
+ * Yanıt `public.hesap_verilerim()` içinde kuruluyor ve kapsam kararı
+ * orada yazılı (özetle: kullanıcının ÜRETTİĞİ veri, başkasının verisi
+ * değil). Burada tek iş onu dosyaya çevirmek.
+ *
+ * Dönüş tipi `unknown`: gövde sunucuda kuruluyor ve alan listesi
+ * zamanla büyüyecek. Burada bir arayüz tanımlasaydık, sunucu yeni bir
+ * bölüm eklediğinde bu tip sessizce eksik kalırdı — ve JSON'u olduğu
+ * gibi yazan bir indiriciye o tipin hiçbir faydası yok.
+ */
+export async function exportMyData(): Promise<unknown> {
+  const supabase = await client();
+  const { data, error } = await supabase.rpc('hesap_verilerim');
+  if (error) throw new Error(error.message);
+  return data;
 }

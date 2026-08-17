@@ -43,6 +43,7 @@ function profile(termsAcceptedAt: string | null): Profile {
     city: null,
     district: null,
     websiteUrl: null,
+    usernameCustomizedAt: null,
     avatarPath: null,
     termsAcceptedAt,
     accountStatus: 'active',

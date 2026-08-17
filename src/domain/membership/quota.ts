@@ -88,10 +88,19 @@ export interface QuotaState {
   drafts: number;
   /** Verilmezse standart kabul edilir — en kısıtlı olan varsayılan olmalı. */
   tier?: MembershipTier;
+  /**
+   * Sunucudan gelen sınır (`izinlerim().kotalar.galeri_foto`).
+   *
+   * VERİLDİĞİNDE SABİTİ EZER. Kotanın gerçek kaynağı `tier_limits`
+   * tablosu; buradaki sabitler yalnızca sunucu cevabı gelmeden önceki
+   * yedek. İki kaynağı ayrı bırakmak, yöneticinin tablodan değiştirdiği
+   * kotanın arayüzde görünmemesi demekti.
+   */
+  limit?: number | null;
 }
 
 function limitOf(state: QuotaState): number {
-  return PHOTO_LIMITS[state.tier ?? 'standart'];
+  return state.limit ?? PHOTO_LIMITS[state.tier ?? 'standart'];
 }
 
 /** Yeni bir fotoğraf yayımlanabilir mi? */
@@ -112,9 +121,10 @@ export function remainingPhotoQuota(state: QuotaState): number {
 /** Panel için "2 / 5" biçiminde kota etiketi (§7.16). */
 export function formatQuotaLabel(
   activePublished: number,
-  tier: MembershipTier = 'standart'
+  tier: MembershipTier = 'standart',
+  limit?: number | null
 ): string {
-  return `${activePublished} / ${PHOTO_LIMITS[tier]}`;
+  return `${activePublished} / ${limit ?? PHOTO_LIMITS[tier]}`;
 }
 
 /**
