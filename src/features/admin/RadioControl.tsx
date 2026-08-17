@@ -3,6 +3,8 @@ import { Panel } from '@/components/ui/Panel';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
+import { Field } from '@/components/ui/Field';
+import { Input } from '@/components/ui/Input';
 import { getSupabase } from '@/services/supabase/client';
 import { weekdayName } from '@/features/radio/schedule';
 
@@ -96,12 +98,22 @@ function StationSection({ canWrite }: { canWrite: boolean }) {
     setError(null);
     try {
       const supabase = await client();
-      const { data } = await supabase
+      /*
+       * OKUMA HATASI "KURULMAMIŞ" DİYE SUNULMAZ.
+       *
+       * `error` okunmadığında başarısız bir sorgu `data`yı `undefined`
+       * bırakıyor ve aşağıdaki dal ekrana "Henüz istasyon tanımlı değil,
+       * AzuraCast kurun" yazıyordu. Yönetici için bu iki durum
+       * ayırt edilemez hâle geliyordu: gerçekten kurulmamış bir yayın
+       * ile okunamayan bir kayıt aynı ekranı veriyordu.
+       */
+      const { data, error: readError } = await supabase
         .from('radio_stations')
         .select('id, slug, name, stream_url, enabled, is_default, offline_note')
         .order('is_default', { ascending: false })
         .limit(1)
         .maybeSingle();
+      if (readError) throw new Error(readError.message);
 
       if (!data) {
         setStation(null);
@@ -120,13 +132,14 @@ function StationSection({ canWrite }: { canWrite: boolean }) {
         offlineNote: (row.offline_note as string | null) ?? null,
       });
 
-      const { data: h } = await supabase
+      const { data: h, error: healthError } = await supabase
         .from('radio_stream_health')
         .select('checked_at, is_live, listeners, now_playing, latency_ms, error')
         .eq('station_id', row.id as string)
         .order('checked_at', { ascending: false })
         .limit(1)
         .maybeSingle();
+      if (healthError) throw new Error(healthError.message);
 
       if (h) {
         const hr = h as Record<string, unknown>;
@@ -157,10 +170,19 @@ function StationSection({ canWrite }: { canWrite: boolean }) {
     setBusy(true);
     try {
       const supabase = await client();
-      await supabase
+      /*
+       * DÖNEN SATIR SAYILIYOR. PostgREST 0 satır etkilendiğinde hata
+       * döndürmüyor; `.select()` olmadan RLS reddettiğinde bu düğme
+       * "değişti" gibi davranıp hiçbir şey yazmıyordu.
+       */
+      const { data, error: writeError } = await supabase
         .from('radio_stations')
         .update({ enabled: !station.enabled })
-        .eq('id', station.id);
+        .eq('id', station.id)
+        .select('id');
+      if (writeError) throw new Error(writeError.message);
+      if (!data?.length)
+        throw new Error('İstasyon güncellenemedi: kayıt bulunamadı ya da yetkiniz yok.');
       await load();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Değiştirilemedi');
@@ -168,6 +190,165 @@ function StationSection({ canWrite }: { canWrite: boolean }) {
       setBusy(false);
     }
   }, [station, load]);
+
+  /*
+   * İSTASYON OLUŞTURMA/DÜZENLEME.
+   *
+   * ── Neden sonradan eklendi ──────────────────────────────────────────
+   *
+   * Kod tabanında `radio_stations` tablosuna yazan TEK yer aç/kapat
+   * düğmesiydi; `insert` hiçbir yerde yoktu, tohum da yoktu. Yani satır
+   * yalnızca Supabase Studio'dan elle girilebiliyordu ve silindiğinde
+   * panelden geri konulamıyordu — "kurulmamış" ekranı çıkmaz bir sokaktı.
+   *
+   * ── AzuraCast kurulmadan da kaydedilebiliyor ────────────────────────
+   *
+   * Eski metin "yayın sunucusu kurulmadan bu satır bir işe yaramaz"
+   * diyordu ve bu yarı doğru: yayın akışı olmadan `stream_url` boş
+   * kalır, ama istasyon adı, açıklaması ve çevrimdışı notu SİTEDE
+   * görünüyor. Kayıt önce açılıp adres sonra doldurulabilsin diye
+   * `stream_url` isteğe bağlı.
+   */
+  const [form, setForm] = useState<{
+    slug: string;
+    name: string;
+    streamUrl: string;
+    offlineNote: string;
+  } | null>(null);
+
+  const formAc = useCallback(() => {
+    setForm({
+      slug: station?.slug ?? 'astrohub-radyo',
+      name: station?.name ?? 'Astrohub Radyo',
+      streamUrl: station?.streamUrl ?? '',
+      offlineNote: station?.offlineNote ?? '',
+    });
+    setError(null);
+  }, [station]);
+
+  const formKaydet = useCallback(async () => {
+    if (!form) return;
+    const slug = form.slug.trim();
+    const name = form.name.trim();
+    const streamUrl = form.streamUrl.trim();
+
+    /* Kısıtların aynısı veritabanında da var (`0051:46,58`); buradaki
+       kapı yöneticiye ham kısıt adı yerine ne yapması gerektiğini
+       söylüyor. */
+    if (!/^[a-z0-9-]{3,60}$/.test(slug)) {
+      setError('Adres eki yalnızca küçük harf, rakam ve tire içerebilir (3-60 karakter).');
+      return;
+    }
+    if (name.length < 2) {
+      setError('İstasyon adı gerekli.');
+      return;
+    }
+    if (streamUrl && !streamUrl.startsWith('https://')) {
+      setError('Yayın adresi https:// ile başlamalı — http adres tarayıcıda sessizce engellenir.');
+      return;
+    }
+
+    setBusy(true);
+    setError(null);
+    try {
+      const supabase = await client();
+      const satir = {
+        slug,
+        name,
+        stream_url: streamUrl || null,
+        offline_note: form.offlineNote.trim() || null,
+      };
+
+      const { data, error: writeError } = station
+        ? await supabase
+            .from('radio_stations')
+            .update(satir)
+            .eq('id', station.id)
+            .select('id')
+        : await supabase
+            .from('radio_stations')
+            .insert({ ...satir, enabled: false, is_default: true })
+            .select('id');
+
+      if (writeError) throw new Error(writeError.message);
+      if (!data?.length)
+        throw new Error('İstasyon kaydedilemedi: yetkiniz olmayabilir.');
+
+      setForm(null);
+      await load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'İstasyon kaydedilemedi');
+    } finally {
+      setBusy(false);
+    }
+  }, [form, station, load]);
+
+  function formAlanlari() {
+    if (!form) return null;
+    return (
+      <div className="mt-3 space-y-3 rounded-card border border-border p-3">
+        <Field label="İstasyon adı" htmlFor="radyo-ad">
+          <Input
+            id="radyo-ad"
+            value={form.name}
+            disabled={busy}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+          />
+        </Field>
+        <Field
+          label="Adres eki"
+          htmlFor="radyo-slug"
+          hint={station ? 'Değiştirmek eski bağlantıları kırar.' : undefined}
+        >
+          <Input
+            id="radyo-slug"
+            value={form.slug}
+            disabled={busy}
+            onChange={(e) => setForm({ ...form, slug: e.target.value })}
+          />
+        </Field>
+        <Field
+          label="Yayın adresi"
+          htmlFor="radyo-akis"
+          hint="https:// ile başlamalı. Yayın sunucusu henüz kurulmadıysa boş bırakın."
+        >
+          <Input
+            id="radyo-akis"
+            value={form.streamUrl}
+            disabled={busy}
+            placeholder="https://yayin.astrohub.com.tr/radio.mp3"
+            onChange={(e) => setForm({ ...form, streamUrl: e.target.value })}
+          />
+        </Field>
+        <Field
+          label="Çevrimdışı notu"
+          htmlFor="radyo-not"
+          hint="Yayın kapalıyken dinleyiciye gösterilir."
+        >
+          <Input
+            id="radyo-not"
+            value={form.offlineNote}
+            disabled={busy}
+            onChange={(e) => setForm({ ...form, offlineNote: e.target.value })}
+          />
+        </Field>
+        <div className="flex flex-wrap gap-2">
+          <Button type="button" size="sm" disabled={busy} onClick={() => void formKaydet()}>
+            {busy ? 'Kaydediliyor…' : 'Kaydet'}
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            disabled={busy}
+            onClick={() => setForm(null)}
+          >
+            Vazgeç
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -177,9 +358,15 @@ function StationSection({ canWrite }: { canWrite: boolean }) {
     );
   }
 
-  /* İSTASYON SATIRI YOKSA KURULUM ADIMI GÖSTERİLİYOR. Boş bir form
-     açmak, yöneticiye "yayın sunucusu kurulmadan bu satırın bir işe
-     yaramayacağını" söylemezdi. */
+  /*
+   * İSTASYON SATIRI YOKSA KURULUM ADIMI GÖSTERİLİYOR.
+   *
+   * Eskiden bu ekran çıkmaz bir sokaktı: kodda `insert` yolu hiç yoktu,
+   * dolayısıyla satır ancak Supabase Studio'dan elle girilebiliyordu ve
+   * silindiğinde panelden geri konulamıyordu. Artık "İstasyon tanımla"
+   * düğmesi var; AzuraCast kurulumu hâlâ ayrı bir iş ve metin bunu
+   * söylemeye devam ediyor.
+   */
   if (!station) {
     return (
       <Panel title="İstasyon" status="kurulmamış" bodyClassName="p-4">
@@ -193,6 +380,26 @@ function StationSection({ canWrite }: { canWrite: boolean }) {
           Kurulum tamamlanana kadar site radyoyu çevrimdışı gösteriyor ve
           bu doğru davranış.
         </p>
+
+        {error && (
+          <Alert variant="text" className="mt-3">
+            {error}
+          </Alert>
+        )}
+
+        {form ? (
+          formAlanlari()
+        ) : (
+          <Button
+            type="button"
+            size="sm"
+            className="mt-3"
+            disabled={busy}
+            onClick={formAc}
+          >
+            İstasyon tanımla
+          </Button>
+        )}
       </Panel>
     );
   }
@@ -216,8 +423,21 @@ function StationSection({ canWrite }: { canWrite: boolean }) {
         </Alert>
       )}
 
+      {form && formAlanlari()}
+
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <span className="text-body text-foreground">{station.name}</span>
+        {!form && (
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            disabled={busy}
+            onClick={formAc}
+          >
+            Düzenle
+          </Button>
+        )}
         {canli ? (
           <Badge tone="success">Canlı</Badge>
         ) : health ? (

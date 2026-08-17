@@ -126,6 +126,9 @@ async function fetchPhotoActivity(
     )
     .in('user_id', followeeIds)
     .eq('status', 'yayinda')
+    /* Silinmiş kayıt takip akışında da görünmez — gerekçe
+       `softDeleteFilter.test.ts` başlığında. */
+    .is('deleted_at', null)
     .order('published_at', { ascending: false, nullsFirst: false })
     .limit(30);
 
@@ -154,6 +157,9 @@ async function fetchListingActivity(
     )
     .in('seller_id', followeeIds)
     .in('status', PUBLIC_LISTING_STATUSES)
+    /* Silinmiş kayıt takip akışında da görünmez — gerekçe
+       `softDeleteFilter.test.ts` başlığında. */
+    .is('deleted_at', null)
     .order('posted_at', { ascending: false, nullsFirst: false })
     .limit(30);
 

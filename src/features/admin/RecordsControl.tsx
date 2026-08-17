@@ -182,9 +182,24 @@ export function RecordsControl({
             {silinmisler ? '← Yayındakilere dön' : 'Silinmişler'}
           </Button>
           {silinmisler && (
+            /*
+             * METİN NEDEN "ZİYARETÇİYE" DİYOR.
+             *
+             * Önceki hâli "public'te görünmüyor" diyordu ve bu, metni
+             * OKUYAN kişi için yanlıştı: okuma politikaları
+             * `icerik_gorunur` yanında sahiplik ve rol dallarını da
+             * taşıyor, dolayısıyla silinmiş kayıt sahibine, yöneticiye ve
+             * moderatöre public sayfada görünmeye devam ediyordu — yani
+             * tam da bu paneli açan kişiye. Ziyaretçi için doğruydu,
+             * okuyucu için değil.
+             *
+             * İstemci sorgularına `deleted_at` süzgeci eklendi; artık
+             * ikisi için de doğru. Metin yine de kimin için konuştuğunu
+             * söylüyor, çünkü ayrım gerçek ve panelde görünmüyor.
+             */
             <span className="text-meta text-faint">
-              Bu kayıtlar public'te görünmüyor ama veritabanında duruyor —
-              geri alınabilirler.
+              Bu kayıtlar ziyaretçiye gösterilmiyor ama veritabanında
+              duruyor — geri alınabilirler.
             </span>
           )}
         </div>
@@ -378,9 +393,16 @@ export function RecordsControl({
  * ══════════════════════════════════════════════════════════════════════
  * SALT OKUNUR — VE BU BİR ARAYÜZ KARARI DEĞİL
  *
- * `audit_logs` üzerinde yalnızca INSERT politikası var; UPDATE ve DELETE
- * için politika HİÇ YOK, yani bu ekran düğme koysa bile veritabanı
- * reddederdi. Kaydın değiştirilemez olması denetimin tek anlamı.
+ * `audit_logs` üzerinde istemci için YALNIZCA `select` politikası var
+ * (`0007_moderation_and_audit.sql:163`). INSERT/UPDATE/DELETE politikası
+ * hiç yok, yani bu ekran düğme koysa bile veritabanı reddederdi.
+ *
+ * Kayıtlar iki yoldan düşüyor: tetikleyiciler ve `public.denetim_yaz`
+ * SECURITY DEFINER fonksiyonu (`20260815120000_denetim_yaz.sql`).
+ * İkisi de sunucu tarafı — istemci kendi izini uyduramıyor.
+ *
+ * NOT: Buradaki açıklama önceden "yalnızca INSERT politikası var"
+ * diyordu; yanlıştı ve tam tersi bir güven veriyordu.
  *
  * ══════════════════════════════════════════════════════════════════════
  * FİLTRE SEÇENEKLERİ KAYITTAN TÜRÜYOR
@@ -437,7 +459,7 @@ export function AuditControl() {
       status={rows ? `${rows.length} kayıt` : 'okunuyor…'}
     >
       <p className="mb-2 text-meta leading-relaxed text-muted-foreground">
-        Salt okunur. Tabloda yalnızca ekleme politikası var — bu kayıt
+        Salt okunur. İstemci için tabloda yalnızca okuma politikası var — bu kayıt
         panelden de, başka bir istemciden de değiştirilemez.
       </p>
 

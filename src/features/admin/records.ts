@@ -480,10 +480,11 @@ export async function fetchAuditLog(
   const actorIds = [...new Set(rows.map((r) => r.actor_id).filter(Boolean))] as string[];
   const adlar = new Map<string, string>();
   if (actorIds.length > 0) {
-    const { data: profiles } = await supabase
+    const { data: profiles, error: adHatasi } = await supabase
       .from('profiles')
       .select('id, username')
       .in('id', actorIds);
+    if (adHatasi) console.warn(`kullanıcı adları okunamadı: ${adHatasi.message}`);
     for (const p of (profiles ?? []) as { id: string; username: string }[]) {
       adlar.set(p.id, p.username);
     }

@@ -162,10 +162,11 @@ export async function fetchComments(
 
   const names = new Map<string, string>();
   if (ids.length > 0) {
-    const { data: profiles } = await supabase
+    const { data: profiles, error: adHatasi } = await supabase
       .from('profiles')
       .select('id, username')
       .in('id', ids);
+    if (adHatasi) console.warn(`kullanıcı adları okunamadı: ${adHatasi.message}`);
     for (const p of (profiles ?? []) as { id: string; username: string }[]) {
       names.set(p.id, p.username);
     }

@@ -532,10 +532,11 @@ export async function fetchDeletionRequests(): Promise<DeletionRequest[]> {
   }[];
   if (rows.length === 0) return [];
 
-  const { data: profiles } = await supabase
+  const { data: profiles, error: adHatasi } = await supabase
     .from('profiles')
     .select('id, username')
     .in('id', rows.map((r) => r.user_id));
+  if (adHatasi) console.warn(`kullanıcı adları okunamadı: ${adHatasi.message}`);
 
   const names = new Map(
     ((profiles ?? []) as { id: string; username: string }[]).map((p) => [
@@ -678,14 +679,22 @@ export async function exportUsersCsv(query: UserQuery = {}): Promise<void> {
   ]);
 
   const supabase = await client();
-  const { data: session } = await supabase.auth.getUser();
-  await supabase.from('audit_logs').insert({
-    actor_id: session.user?.id ?? null,
-    action: 'users.export',
-    target_type: 'profile',
-    target_id: null,
-    detail: { kayit: rows.length, filtre: query },
+  /*
+   * DENETİM KAYDI RPC ÜZERİNDEN.
+   *
+   * Doğrudan `insert` çağrısı kalıcı olarak 42501 ile düşüyordu:
+   * `audit_logs` için yazma politikası bilinçli olarak yok
+   * (`0007_moderation_and_audit.sql:167`). Dönüş değeri de okunmadığı
+   * için hata tamamen yutuluyordu — KVKK kapsamındaki bu dışa aktarım
+   * hiç iz bırakmıyordu. `denetim_yaz` 0007'nin tarif ettiği
+   * SECURITY DEFINER kapısı; aktörü `auth.uid()` ile kendisi koyuyor.
+   */
+  const { error: denetimHatasi } = await supabase.rpc('denetim_yaz', {
+    p_action: 'users.export',
+    p_target_type: 'profile',
+    p_detail: { kayit: rows.length, filtre: query },
   });
+  if (denetimHatasi) throw new Error(denetimHatasi.message);
 
   indirCsv(csv, csvFileName('kullanicilar'));
 }
@@ -921,20 +930,27 @@ export async function anonymizeUser(
   /* Kullanıcı adı ve durum değişikliği `profiles_audit_status`
      tetikleyicisinden zaten düşüyor; bu satır eylemin ADINI kayda
      geçiriyor — "username_change" ile "anonymize" aynı şey değil. */
-  await supabase.from('audit_logs').insert({
-    actor_id: session.user?.id ?? null,
-    action: 'user.anonymize',
-    target_type: 'profile',
-    target_id: userId,
-    detail: { yeni_ad: yeniAd, gerekce },
+  const { error: denetimHatasi } = await supabase.rpc('denetim_yaz', {
+    p_action: 'user.anonymize',
+    p_target_type: 'profile',
+    p_target_id: userId,
+    p_detail: { yeni_ad: yeniAd, gerekce },
   });
+  if (denetimHatasi) throw new Error(denetimHatasi.message);
 
-  /* Bekleyen silme talebi varsa kapatılıyor: talep karşılandı. */
-  await supabase
+  /*
+   * Bekleyen silme talebi varsa kapatılıyor: talep karşılandı.
+   *
+   * Hata kontrolü eklendi: kontrolsüzken kullanıcı anonimleşiyor ama
+   * talep `pending` kalabiliyordu — kuyruk hiç boşalmayan bir uyarıya
+   * dönüşür ve gerçek talepler onun içinde kaybolurdu.
+   */
+  const { error: talepHatasi } = await supabase
     .from('account_deletion_requests')
     .update({ status: 'anonymized' })
     .eq('user_id', userId)
     .eq('status', 'pending');
+  if (talepHatasi) throw new Error(talepHatasi.message);
 }
 
 /**
@@ -952,7 +968,6 @@ export async function cancelDeletionRequest(
   if (!gerekce) throw new Error('Gerekçe zorunlu.');
 
   const supabase = await client();
-  const { data: session } = await supabase.auth.getUser();
 
   const { error } = await supabase
     .from('account_deletion_requests')
@@ -960,11 +975,11 @@ export async function cancelDeletionRequest(
     .eq('id', requestId);
   if (error) throw new Error(error.message);
 
-  await supabase.from('audit_logs').insert({
-    actor_id: session.user?.id ?? null,
-    action: 'user.deletion_request_cancel',
-    target_type: 'account_deletion_request',
-    target_id: requestId,
-    detail: { gerekce },
+  const { error: denetimHatasi } = await supabase.rpc('denetim_yaz', {
+    p_action: 'user.deletion_request_cancel',
+    p_target_type: 'account_deletion_request',
+    p_target_id: requestId,
+    p_detail: { gerekce },
   });
+  if (denetimHatasi) throw new Error(denetimHatasi.message);
 }

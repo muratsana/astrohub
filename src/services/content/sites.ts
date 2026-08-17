@@ -135,6 +135,22 @@ async function fetchSites(client: SupabaseClient): Promise<ObservingSite[]> {
         'image_licence, source_urls, rating, review_count'
     )
     .eq('status', 'yayinda')
+    /*
+     * SİLİNMİŞ KAYIT PUBLIC LİSTEDE DURMAZ.
+     *
+     * RLS bunu tek başına halletmiyor ve bu bilinçli: okuma politikası
+     * `app.icerik_gorunur(status, deleted_at)` YANINDA sahiplik ve rol
+     * dallarını da taşıyor (`or seller_id = auth.uid() or app.is_admin()
+     * or app.has_role('moderator')`) — sahibi kendi taslağını, yönetici
+     * de her kaydı görebilsin diye. Sonuç olarak soft-delete edilmiş bir
+     * kayıt, SAHİBİNE ve YÖNETİCİYE public sayfada görünmeye devam
+     * ediyordu; panel ise aynı kayıt için "public'te görünmüyor" diyordu.
+     *
+     * Ziyaretçi için sızıntı yok (onda yalnızca `icerik_gorunur` dalı
+     * çalışıyor), ama sahibi hangi ilanın canlı hangisinin silinmiş
+     * olduğunu ayırt edemiyordu. Süzgeç bu yüzden sorguda.
+     */
+    .is('deleted_at', null)
     .order('name');
 
   if (error) throw new Error(error.message);

@@ -420,6 +420,22 @@ async function fetchPhotos(client: SupabaseClient): Promise<AstroPhoto[]> {
     .from('astro_photos')
     .select(SELECT)
     .eq('status', PUBLIC_PHOTO_STATUS)
+    /*
+     * SİLİNMİŞ KAYIT PUBLIC LİSTEDE DURMAZ.
+     *
+     * RLS bunu tek başına halletmiyor ve bu bilinçli: okuma politikası
+     * `app.icerik_gorunur(status, deleted_at)` YANINDA sahiplik ve rol
+     * dallarını da taşıyor (`or seller_id = auth.uid() or app.is_admin()
+     * or app.has_role('moderator')`) — sahibi kendi taslağını, yönetici
+     * de her kaydı görebilsin diye. Sonuç olarak soft-delete edilmiş bir
+     * kayıt, SAHİBİNE ve YÖNETİCİYE public sayfada görünmeye devam
+     * ediyordu; panel ise aynı kayıt için "public'te görünmüyor" diyordu.
+     *
+     * Ziyaretçi için sızıntı yok (onda yalnızca `icerik_gorunur` dalı
+     * çalışıyor), ama sahibi hangi ilanın canlı hangisinin silinmiş
+     * olduğunu ayırt edemiyordu. Süzgeç bu yüzden sorguda.
+     */
+    .is('deleted_at', null)
     .order('published_at', { ascending: false })
     /* Ana sayfa on karo, galeri sayfası filtreleme yapıyor. İki yüz kayıt
        ikisine de fazlasıyla yetiyor ve tarayıcıya bütün arşivi indirmiyor.

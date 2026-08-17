@@ -82,7 +82,12 @@ function ConnectionSection({ canWrite }: { canWrite: boolean }) {
     setError(null);
     try {
       const supabase = await client();
-      const { data } = await supabase.rpc('youtube_connection_status');
+      /* Okuma hatası "bağlı değil" diye sunulmaz — gerekçe
+         `RadioControl` içindeki aynı düzeltmede yazılı. */
+      const { data, error: statusError } = await supabase.rpc(
+        'youtube_connection_status'
+      );
+      if (statusError) throw new Error(statusError.message);
       const row = (data as Record<string, unknown>[] | null)?.[0];
 
       setStatus(
@@ -102,11 +107,12 @@ function ConnectionSection({ canWrite }: { canWrite: boolean }) {
       const bugun = new Date().toLocaleDateString('en-CA', {
         timeZone: 'America/Los_Angeles',
       });
-      const { data: k } = await supabase
+      const { data: k, error: quotaError } = await supabase
         .from('youtube_quota_log')
         .select('quota_date, units_used, calls')
         .eq('quota_date', bugun)
         .maybeSingle();
+      if (quotaError) throw new Error(quotaError.message);
 
       setQuota(
         k
@@ -239,11 +245,12 @@ function VideoSection({ canWrite }: { canWrite: boolean }) {
   const load = useCallback(async () => {
     try {
       const supabase = await client();
-      const { data } = await supabase
+      const { data, error: readError } = await supabase
         .from('tv_videos')
         .select('id, youtube_id, title, source, published, featured, published_at')
         .order('published_at', { ascending: false, nullsFirst: false })
         .limit(50);
+      if (readError) throw new Error(readError.message);
 
       setRows(
         ((data ?? []) as Record<string, unknown>[]).map((r) => ({
@@ -271,10 +278,14 @@ function VideoSection({ canWrite }: { canWrite: boolean }) {
       setBusy(row.id);
       try {
         const supabase = await client();
-        await supabase
+        const { data, error: writeError } = await supabase
           .from('tv_videos')
           .update({ published: !row.published })
-          .eq('id', row.id);
+          .eq('id', row.id)
+          .select('id');
+        if (writeError) throw new Error(writeError.message);
+        if (!data?.length)
+          throw new Error('Video güncellenemedi: kayıt bulunamadı ya da yetkiniz yok.');
         await load();
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Değiştirilemedi');
