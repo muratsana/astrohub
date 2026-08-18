@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/features/auth/AuthContext';
 import { ownerOriginalDownloadUrl } from '@/services/photos/originalDownload';
 import { indirmeAdi } from '@/domain/photography/indirmeAdi';
+import { logDownload } from '@/services/photos/downloadMetrics';
 import type { AstroPhoto } from './types';
 
 /**
@@ -45,6 +46,7 @@ export function OwnerOriginalDownload({ photo }: { photo: AstroPhoto }) {
       document.body.appendChild(a);
       a.click();
       a.remove();
+      logDownload('original', photo.id);
     } catch {
       setHata('İndirilemedi, yeniden deneyin.');
     } finally {

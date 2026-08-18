@@ -24,6 +24,7 @@ import { usePhotoCatalog } from '@/services/content/photos';
 import { useAlanCozumuIstegi } from '@/services/photos/solveRequest';
 import { useRoles } from '@/features/admin/useRoles';
 import { indirmeAdi } from '@/domain/photography/indirmeAdi';
+import { logDownload } from '@/services/photos/downloadMetrics';
 import { annotatedBlob } from './annotatedExport';
 import { cozumGeometrisi, useAlandakiCisimler } from '@/services/content/fieldObjects';
 import { useAlandakiYildizlar } from '@/services/content/fieldStars';
@@ -1126,6 +1127,7 @@ export function DownloadChip({ photo }: { photo: AstroPhoto }) {
           blob,
           indirmeAdi(['astrohub', photo.target.catalog, photo.title, 'alan-cozumlu'])
         );
+        logDownload('annotated', photo.id);
       } else {
         const yanit = await fetch(kaynak);
         if (!yanit.ok) throw new Error(String(yanit.status));
@@ -1133,6 +1135,7 @@ export function DownloadChip({ photo }: { photo: AstroPhoto }) {
           await yanit.blob(),
           indirmeAdi(['astrohub', photo.target.catalog, photo.title])
         );
+        logDownload('foto', photo.id);
       }
       setDurum('idle');
       setAcik(false);

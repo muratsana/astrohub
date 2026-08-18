@@ -18,6 +18,7 @@ import {
   useAlandakiCisimler,
 } from '@/services/content/fieldObjects';
 import { useAlandakiYildizlar } from '@/services/content/fieldStars';
+import { logDownload } from '@/services/photos/downloadMetrics';
 import type { AstroPhoto } from './types';
 
 /**
@@ -127,6 +128,7 @@ export function ShareKit({ photo }: { photo: AstroPhoto }) {
       new Blob([kunye], { type: 'text/plain;charset=utf-8' }),
       `astrohub-${photo.slug}-caption.txt`
     );
+    logDownload('caption', photo.id);
   }
 
   /*
@@ -165,6 +167,7 @@ export function ShareKit({ photo }: { photo: AstroPhoto }) {
       });
       if (!blob) throw new Error('Bu tarayıcı görseli işleyemedi.');
       kaydet(blob, `astrohub-${photo.slug}-${format}.jpg`);
+      logDownload(format, photo.id);
     } catch (e) {
       setGorselHata(e instanceof Error ? e.message : 'Görsel üretilemedi.');
     } finally {
@@ -197,6 +200,7 @@ export function ShareKit({ photo }: { photo: AstroPhoto }) {
         new Blob([buildZip(entries)], { type: 'application/zip' }),
         `astrohub-${photo.slug}-paylasim.zip`
       );
+      logDownload('zip', photo.id);
     } catch (e) {
       setGorselHata(e instanceof Error ? e.message : 'Paket üretilemedi.');
     } finally {
