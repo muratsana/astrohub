@@ -133,6 +133,39 @@ describe('mapPhotoRow', () => {
     expect(photo.exposures[0].exposureSeconds).toBe(300);
   });
 
+  it('çekim oturumlarını position sırasına göre okur (C02–C06)', () => {
+    const photo = mapPhotoRow(
+      row({
+        photo_capture_sessions: [
+          { id: 's2', starts_on: '2026-02-03', ends_on: null, position: 1 },
+          { id: 's1', starts_on: '2026-01-12', ends_on: '2026-01-18', position: 0 },
+        ],
+      })
+    );
+    expect(photo.captureSessions).toEqual([
+      { id: 's1', startsOn: '2026-01-12', endsOn: '2026-01-18' },
+      { id: 's2', startsOn: '2026-02-03', endsOn: null },
+    ]);
+  });
+
+  it('oturum tablosu boşsa captured_at\'ten tek örtük oturum türetir', () => {
+    const photo = mapPhotoRow(row({ photo_capture_sessions: [] }));
+    expect(photo.captureSessions).toEqual([
+      { id: `captured-${photo.id}`, startsOn: '2026-07-10', endsOn: null },
+    ]);
+  });
+
+  it('pozlamanın oturum bağını (session_id) taşır', () => {
+    const photo = mapPhotoRow(
+      row({
+        photo_exposures: [
+          { filter: 'L', frames: 30, exposure_seconds: '120', position: 0, session_id: 's1' },
+        ],
+      })
+    );
+    expect(photo.exposures[0].sessionId).toBe('s1');
+  });
+
   it('sürümleri position sırasına göre dizer', () => {
     const photo = mapPhotoRow(
       row({

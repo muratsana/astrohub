@@ -23,6 +23,13 @@ import {
   type FilterExposure,
 } from '@/domain/photography/integration';
 import {
+  enErkenGun,
+  oturumlariMetni,
+  oturumMetni,
+  oturumuDuzelt,
+  type CaptureSession,
+} from '@/domain/photography/captureSession';
+import {
   photoTypeLabels,
   PHOTO_LICENSE,
   type PhotoType,
@@ -95,7 +102,14 @@ interface WizardState {
   targetKind: TargetKind | 'hepsi';
   type: PhotoType;
   title: string;
-  capturedAt: string;
+  /**
+   * ÇEKİM OTURUMLARI (SEZONLAR) — bir fotoğraf birden çok gecede toplanır.
+   *
+   * Tek `capturedAt` tarihi yerine oturum listesi: her oturum tek gece ya
+   * da aralık (C02–C04). Boş liste "tarih girilmedi" demek. Yükleme
+   * sırasında en erken gün geriye dönük `captured_at`e yazılıyor.
+   */
+  captureSessions: CaptureSession[];
   /**
    * ÇEKİM KONUMU — il ve ilçe, ikisi de ZORUNLU.
    *
@@ -146,7 +160,7 @@ const initialState: WizardState = {
   targetKind: 'hepsi',
   type: 'deep-sky',
   title: '',
-  capturedAt: '',
+  captureSessions: [],
   city: '',
   district: '',
   optic: '',
@@ -166,6 +180,116 @@ const initialState: WizardState = {
   watermarkRequired: true,
   copyrightConfirmed: false,
 };
+
+/** Yeni çekim oturumu — istemci tarafı benzersiz kimlikle (C03). */
+function yeniOturum(startsOn = '', endsOn: string | null = null): CaptureSession {
+  const id =
+    typeof crypto !== 'undefined' && 'randomUUID' in crypto
+      ? crypto.randomUUID()
+      : `oturum-${Math.round(performance.now() * 1000)}`;
+  return { id, startsOn, endsOn };
+}
+
+/**
+ * ÇEKİM OTURUMLARI EDİTÖRÜ (C02–C04).
+ *
+ * Her oturum bir başlangıç günü ve "tarih aralığı" onay kutusu taşır:
+ * kutu kapalıysa tek gece, açıksa bitiş günü de sorulur. Kaç oturum
+ * olursa olsun eklenebilir (C03) — 14 gecelik bir projede 14 satır,
+ * tek gecelik bir karede tek satır.
+ */
+function CaptureSessionsEditor({
+  sessions,
+  onChange,
+}: {
+  sessions: CaptureSession[];
+  onChange: (sessions: CaptureSession[]) => void;
+}) {
+  function guncelle(id: string, alan: Partial<CaptureSession>) {
+    onChange(sessions.map((s) => (s.id === id ? { ...s, ...alan } : s)));
+  }
+
+  return (
+    <div className="space-y-2">
+      <span className="label text-foreground">Çekim tarihleri</span>
+      <p className="text-meta text-muted-foreground">
+        Tek gecede mi, birçok gecede mi topladınız? Her oturumu ayrı
+        ekleyin; bir oturum tek gece ya da tarih aralığı olabilir.
+      </p>
+
+      <div className="space-y-2">
+        {sessions.map((s, i) => {
+          const aralik = s.endsOn !== null;
+          return (
+            <div
+              key={s.id}
+              className="space-y-2 rounded-card border border-border bg-surface-2 p-3"
+            >
+              <div className="flex flex-wrap items-end gap-3">
+                <label className="grid gap-1 text-meta text-muted-foreground">
+                  Başlangıç
+                  <Input
+                    type="date"
+                    aria-label={`Oturum ${i + 1} başlangıç günü`}
+                    value={s.startsOn}
+                    onChange={(e) => guncelle(s.id, { startsOn: e.target.value })}
+                  />
+                </label>
+                {aralik && (
+                  <label className="grid gap-1 text-meta text-muted-foreground">
+                    Bitiş
+                    <Input
+                      type="date"
+                      aria-label={`Oturum ${i + 1} bitiş günü`}
+                      value={s.endsOn ?? ''}
+                      min={s.startsOn || undefined}
+                      onChange={(e) => guncelle(s.id, { endsOn: e.target.value })}
+                    />
+                  </label>
+                )}
+                <div className="flex items-end pb-0.5">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    aria-label={`Oturum ${i + 1} sil`}
+                    onClick={() =>
+                      onChange(sessions.filter((x) => x.id !== s.id))
+                    }
+                  >
+                    ✕
+                  </Button>
+                </div>
+              </div>
+              <label className="flex items-center gap-2 text-meta text-muted-foreground">
+                <input
+                  type="checkbox"
+                  checked={aralik}
+                  onChange={(e) =>
+                    guncelle(s.id, {
+                      // Aralığa geçince bitiş başlangıçla başlar; kapanınca
+                      // tekrar tek gece (bitiş yok).
+                      endsOn: e.target.checked ? s.startsOn || '' : null,
+                    })
+                  }
+                  className="h-4 w-4 rounded border-border bg-surface-1 accent-primary"
+                />
+                Tarih aralığı (birden çok gece)
+              </label>
+            </div>
+          );
+        })}
+      </div>
+
+      <Button
+        variant="secondary"
+        size="sm"
+        onClick={() => onChange([...sessions, yeniOturum()])}
+      >
+        {sessions.length === 0 ? '+ Çekim tarihi ekle' : '+ Gece / oturum ekle'}
+      </Button>
+    </div>
+  );
+}
 
 /**
  * Fotoğraf yükleme sihirbazı (§7.4) — 6 adım.
@@ -259,7 +383,12 @@ export function UploadWizardPage() {
           title: state.title || file.name,
           photoType: state.type,
           palette: state.palette,
-          capturedAt: state.capturedAt || undefined,
+          /* Geriye dönük tek tarih = en erken oturum günü; sezon bilmeyen
+             okuma yolları (galeri yılı, sıralama) bunu okuyor. */
+          capturedAt: enErkenGun(state.captureSessions) || undefined,
+          captureSessions: state.captureSessions
+            .map(oturumuDuzelt)
+            .filter((o) => o.startsOn),
           city: state.city,
           district: state.district,
           license: state.license,
@@ -422,10 +551,16 @@ export function UploadWizardPage() {
       setExifState('read');
 
       const camera = cameraLabel(parsed);
+      const exifGun = parsed.capturedAt?.slice(0, 10);
       patch({
         camera: state.camera || camera || '',
         optic: state.optic || parsed.lens || '',
-        capturedAt: state.capturedAt || parsed.capturedAt?.slice(0, 10) || '',
+        /* EXIF tarihi yalnızca hiç oturum yokken tek gecelik bir oturum
+           tohumluyor; kullanıcı zaten oturum girdiyse dokunulmuyor. */
+        captureSessions:
+          state.captureSessions.length === 0 && exifGun
+            ? [yeniOturum(exifGun)]
+            : state.captureSessions,
       });
     } catch {
       // Dosya okunamadı (izin, bozuk dosya) — akış durmaz.
@@ -727,14 +862,10 @@ export function UploadWizardPage() {
                 title="Çekim oturumu"
                 hint="Konum il ve ilçe düzeyinde kaydedilir; GPS koordinatı hiçbir zaman yayımlanmaz (§15.3)"
               />
-              <Field label="Çekim tarihi" htmlFor="w-date">
-                <Input
-                  id="w-date"
-                  type="date"
-                  value={state.capturedAt}
-                  onChange={(e) => patch({ capturedAt: e.target.value })}
-                />
-              </Field>
+              <CaptureSessionsEditor
+                sessions={state.captureSessions}
+                onChange={(captureSessions) => patch({ captureSessions })}
+              />
               <Field
                 label="Çekim konumu (il / ilçe)"
                 htmlFor="w-location"
@@ -881,10 +1012,8 @@ export function UploadWizardPage() {
 
               <div className="space-y-3">
                 {state.exposures.map((row, i) => (
-                  <div
-                    key={i}
-                    className="grid grid-cols-[1fr_1fr_1fr_auto] gap-3"
-                  >
+                  <div key={i} className="space-y-2">
+                    <div className="grid grid-cols-[1fr_1fr_1fr_auto] gap-3">
                     <Field label={i === 0 ? 'Filtre' : ''} htmlFor={`f-${i}`}>
                       <Input
                         id={`f-${i}`}
@@ -950,6 +1079,39 @@ export function UploadWizardPage() {
                         ✕
                       </Button>
                     </div>
+                    </div>
+                    {/*
+                      OTURUM SEÇİCİ YALNIZCA BİRDEN ÇOK OTURUM VARKEN (C05).
+                      Tek oturumda her poz zaten ona ait; seçici gereksiz
+                      gürültü olurdu. Boş seçim = "genel", pozu bir oturuma
+                      bağlamıyor.
+                    */}
+                    {state.captureSessions.length > 1 && (
+                      <label className="flex flex-wrap items-center gap-2 text-meta text-muted-foreground">
+                        Bu filtre hangi oturumda toplandı?
+                        <Select
+                          aria-label={`${row.filter || 'satır'} çekim oturumu`}
+                          value={row.sessionId ?? ''}
+                          onChange={(e) => {
+                            const next = [...state.exposures];
+                            next[i] = {
+                              ...row,
+                              sessionId: e.target.value || undefined,
+                            };
+                            patch({ exposures: next });
+                          }}
+                        >
+                          <option value="">Tüm oturumlar / genel</option>
+                          {state.captureSessions.map((s, j) => (
+                            <option key={s.id} value={s.id}>
+                              {s.startsOn
+                                ? oturumMetni(oturumuDuzelt(s))
+                                : `Oturum ${j + 1}`}
+                            </option>
+                          ))}
+                        </Select>
+                      </label>
+                    )}
                   </div>
                 ))}
               </div>
@@ -1067,7 +1229,12 @@ export function UploadWizardPage() {
                 <div className="flex flex-wrap gap-1.5">
                   <Badge tone="primary">{state.title || 'Başlıksız'}</Badge>
                   <Badge>{photoTypeLabels[state.type]}</Badge>
-                  {state.capturedAt && <Badge>{state.capturedAt}</Badge>}
+                  {state.captureSessions.length > 0 && (
+                    <Badge>
+                      {oturumlariMetni(state.captureSessions) ||
+                        `${state.captureSessions.length} oturum`}
+                    </Badge>
+                  )}
                   <Badge tone="cold">{formatIntegration(total)}</Badge>
                   <Badge>{state.license}</Badge>
                   <Badge tone={state.allowDownload ? 'cold' : 'muted'}>

@@ -11,6 +11,12 @@ export interface FilterExposure {
   frames: number;
   /** Tek kare pozlama süresi (saniye) */
   exposureSeconds: number;
+  /**
+   * Bu pozlamanın toplandığı çekim oturumu — istemci tarafı oturum
+   * kimliği (C05). Boşsa pozlama fotoğrafın geneline yazılıyor. Yalnızca
+   * arayüz ve yükleme için; entegrasyon hesabına girmiyor.
+   */
+  sessionId?: string;
 }
 
 /**

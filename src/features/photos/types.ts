@@ -3,6 +3,7 @@ import {
   type ContentStatus,
 } from '@/domain/content/status';
 import type { FilterExposure } from '@/domain/photography/integration';
+import type { CaptureSession } from '@/domain/photography/captureSession';
 import type { PhotoVersion } from '@/domain/photography/versions';
 
 /**
@@ -219,7 +220,16 @@ export interface AstroPhoto {
     allowDownload: boolean;
     watermarkRequired: boolean;
   };
-  capturedAt: string; // ISO tarih
+  capturedAt: string; // ISO tarih — geriye dönük tek tarih (en erken oturum)
+  /**
+   * Çekim oturumları (sezonlar). Bir fotoğraf birden çok gecede
+   * toplanabilir; her oturum tek gece ya da aralık (C02–C06). Eski
+   * kayıtlarda `captured_at`ten türetilen tek örtük oturum bulunur.
+   *
+   * İsteğe bağlı: tohum kayıtlar ve eski fixture'lar bu alanı taşımaz;
+   * çağıran taraf `captureSessions ?? []` ile `capturedAt`e düşüyor.
+   */
+  captureSessions?: CaptureSession[];
   location: {
     label: string; // "Saklıkent, Antalya" | "Antalya (bölge)"
     visibility: LocationVisibility;

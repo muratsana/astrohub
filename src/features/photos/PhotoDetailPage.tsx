@@ -15,6 +15,11 @@ import {
   totalIntegrationSeconds,
   exposureRowSeconds,
 } from '@/domain/photography/integration';
+import {
+  oturumlariMetni,
+  toplamGece,
+  type CaptureSession,
+} from '@/domain/photography/captureSession';
 import { usePhotoCatalog } from '@/services/content/photos';
 import { useAlanCozumuIstegi } from '@/services/photos/solveRequest';
 import { useRoles } from '@/features/admin/useRoles';
@@ -373,17 +378,37 @@ function PhotoDetail({
 
 /* ── Sekme içerikleri ── */
 
+/**
+ * Çekim oturumlarını okunur biçime çevirir (C06). Kayıtta oturum varsa
+ * onlar; yoksa eski tek `capturedAt` tarihinden tek örtük oturum türetilir
+ * — tohum ve eski kayıtlar da çalışmaya devam etsin.
+ */
+function fotografOturumlari(photo: AstroPhoto): CaptureSession[] {
+  if (photo.captureSessions && photo.captureSessions.length > 0) {
+    return photo.captureSessions;
+  }
+  const gun = photo.capturedAt?.slice(0, 10);
+  return gun ? [{ id: `captured-${photo.slug}`, startsOn: gun, endsOn: null }] : [];
+}
+
 function CaptureTab({ photo }: { photo: AstroPhoto }) {
+  const oturumlar = fotografOturumlari(photo);
+  const tarihMetni = oturumlariMetni(oturumlar) || '—';
+  const geceSayisi = toplamGece(oturumlar);
+  const cokOturum = oturumlar.length > 1;
+
   return (
     <DL
       rows={[
         ['Astronomik hedef', `${photo.target.name} (${photo.target.catalog})`],
         ['Takımyıldız', photo.target.constellation],
         ['Fotoğraf türü', photoTypeLabels[photo.type]],
-        [
-          'Çekim tarihi',
-          new Date(photo.capturedAt).toLocaleDateString('tr-TR'),
-        ],
+        [cokOturum ? 'Çekim tarihleri' : 'Çekim tarihi', tarihMetni],
+        /* Birden çok gece/oturum varsa toplam gece emeği ayrı bir satır;
+           tek gecede gereksiz ("1 gece" demek anlamsız). */
+        ...(geceSayisi > 1
+          ? ([['Çekim geceleri', `${geceSayisi} gece`]] as [string, string][])
+          : []),
         [
           'Toplam entegrasyon',
           formatIntegration(totalIntegrationSeconds(photo.exposures)),

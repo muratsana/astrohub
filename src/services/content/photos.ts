@@ -48,6 +48,14 @@ interface ExposureRow {
   frames: number;
   exposure_seconds: number | string;
   position: number | null;
+  session_id?: string | null;
+}
+
+interface CaptureSessionRow {
+  id: string;
+  starts_on: string;
+  ends_on: string | null;
+  position: number | null;
 }
 
 interface VersionRow {
@@ -116,6 +124,7 @@ interface PhotoRow {
     constellation: string | null;
   } | null;
   photo_exposures: ExposureRow[] | null;
+  photo_capture_sessions?: CaptureSessionRow[] | null;
   photo_versions: VersionRow[] | null;
   photo_of_week_rounds?: Array<{
     iso_year: number;
@@ -334,7 +343,26 @@ export function mapPhotoRow(row: PhotoRow): AstroPhoto {
         filter: e.filter,
         frames: e.frames,
         exposureSeconds: num(e.exposure_seconds) ?? 0,
+        sessionId: e.session_id ?? undefined,
       })),
+    /* Çekim oturumları (sezonlar). Tablo boşsa `captured_at`ten tek bir
+       örtük oturum türetiliyor — eski kayıtlar da "tek gece" gibi okunur. */
+    captureSessions: (() => {
+      const satirlar = [...(row.photo_capture_sessions ?? [])].sort(
+        (a, b) => (a.position ?? 0) - (b.position ?? 0)
+      );
+      if (satirlar.length > 0) {
+        return satirlar.map((s) => ({
+          id: s.id,
+          startsOn: s.starts_on,
+          endsOn: s.ends_on,
+        }));
+      }
+      const tekTarih = row.captured_at ?? undefined;
+      return tekTarih
+        ? [{ id: `captured-${row.id}`, startsOn: tekTarih, endsOn: null }]
+        : [];
+    })(),
     palette: (PALETTES.includes(row.palette as ProcessingPalette)
       ? row.palette
       : 'RGB') as ProcessingPalette,
@@ -397,7 +425,8 @@ const SELECT =
      "more than one relationship was found" diyerek sorguyu reddediyor. */
   'profiles!astro_photos_user_id_profiles_fkey(username, display_name), ' +
   'celestial_objects(name, catalog, constellation), ' +
-  'photo_exposures(filter, frames, exposure_seconds, position), ' +
+  'photo_exposures(filter, frames, exposure_seconds, position, session_id), ' +
+  'photo_capture_sessions(id, starts_on, ends_on, position), ' +
   'photo_of_week_rounds!photo_of_week_rounds_winner_photo_id_fkey(iso_year, iso_week, status), ' +
   'photo_versions(id, label, kind, note, palette, published_at, position, storage_path)';
 

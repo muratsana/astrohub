@@ -98,7 +98,26 @@ export interface UploadInput {
   setupId?: string | null;
   /** Hedefin okunabilir adı — katalog bağı kurulamasa da künye eksik kalmasın. */
   targetLabel?: string | null;
-  exposures?: { filter: string; frames: number; exposureSeconds: number }[];
+  exposures?: {
+    filter: string;
+    frames: number;
+    exposureSeconds: number;
+    /** İstemci tarafı oturum kimliği; captureSessions'taki bir id (C05). */
+    sessionId?: string;
+  }[];
+  /**
+   * ÇEKİM OTURUMLARI (SEZONLAR) — bir fotoğraf birden çok gecede toplanır.
+   *
+   * Her oturum bir başlangıç günü ve isteğe bağlı bitiş günü (`YYYY-MM-DD`)
+   * taşır. `id` istemci tarafı; DB'ye yazılınca gerçek satır kimliğiyle
+   * eşleniyor ve pozlamaların `session_id`si o eşlemeden dolduruluyor.
+   * Boş liste = yalnızca eski tek tarih (`capturedAt`) davranışı (C02–C05).
+   */
+  captureSessions?: {
+    id: string;
+    startsOn: string;
+    endsOn: string | null;
+  }[];
   /**
    * Dosyadan okunan künye.
    *
@@ -475,6 +494,43 @@ export async function uploadPhoto(
      * Ama sessizce de yutulmuyor: kullanıcı girdiği veriyi kaybettiğini
      * bilmeli, `exposuresSaved` ile arayüze taşınıyor.
      */
+    /*
+     * ÇEKİM OTURUMLARI ÖNCE — pozlamalar onların kimliğine bağlanıyor.
+     *
+     * İstemci tarafı `id` DB'ye yazılınca gerçek satır kimliğiyle
+     * değişiyor; bu eşleme (`oturumEslemesi`) pozlamaların `session_id`sini
+     * dolduruyor. Oturum yazımı da pozlama gibi geri-alma yığınını
+     * TETİKLEMİYOR: künyenin bir ayrıntısı, yüklenmiş fotoğrafın tamamını
+     * silmeye değmez — ama sessizce de yutulmuyor.
+     */
+    const oturumEslemesi = new Map<string, string>();
+    if (input.captureSessions && input.captureSessions.length > 0) {
+      const gecerli = input.captureSessions.filter((s) => s.startsOn);
+      const oturumSatirlari = gecerli.map((s, index) => ({
+        photo_id: photoId,
+        starts_on: s.startsOn,
+        ends_on: s.endsOn && s.endsOn !== s.startsOn ? s.endsOn : null,
+        position: index,
+      }));
+
+      if (oturumSatirlari.length > 0) {
+        const { data, error } = await supabase
+          .from('photo_capture_sessions')
+          .insert(oturumSatirlari)
+          .select('id');
+        if (error || !data) {
+          console.error('çekim oturumları kaydedilemedi', error);
+        } else {
+          // insert sırası korunuyor: dönen id'ler gönderilen satırlarla
+          // aynı sırada — istemci id'siyle eşleniyor.
+          data.forEach((satir, i) => {
+            const clientId = gecerli[i]?.id;
+            if (clientId) oturumEslemesi.set(clientId, satir.id);
+          });
+        }
+      }
+    }
+
     let exposuresSaved = true;
     if (input.exposures && input.exposures.length > 0) {
       const rows = input.exposures
@@ -485,6 +541,7 @@ export async function uploadPhoto(
           frames: e.frames,
           exposure_seconds: e.exposureSeconds,
           position: index,
+          session_id: e.sessionId ? oturumEslemesi.get(e.sessionId) ?? null : null,
         }));
 
       if (rows.length > 0) {

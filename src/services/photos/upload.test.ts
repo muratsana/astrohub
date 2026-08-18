@@ -26,6 +26,11 @@ const state = {
   photoInsert: null as Record<string, unknown> | null,
   exposureError: null as { message: string } | null,
   updateError: null as { message: string } | null,
+  /** Son yazılan pozlama satırları — session_id bağını görmek için. */
+  exposureInsert: null as Record<string, unknown>[] | null,
+  /** Son yazılan çekim oturumu satırları. */
+  sessionInsert: null as Record<string, unknown>[] | null,
+  sessionError: null as { message: string } | null,
 };
 
 const PHOTO_ID = 'photo-1';
@@ -41,6 +46,23 @@ function tableApi(table: string) {
             single: async () => ({ data: { id: PHOTO_ID }, error: null }),
           }),
         };
+      }
+      if (table === 'photo_capture_sessions') {
+        const satirlar = rows as Record<string, unknown>[];
+        state.sessionInsert = satirlar;
+        return {
+          // insert(...).select('id') — dönen id'ler gönderilen sırayla.
+          select: async () => ({
+            data: state.sessionError
+              ? null
+              : satirlar.map((_r, i) => ({ id: `sess-${i}` })),
+            error: state.sessionError,
+          }),
+        };
+      }
+      if (table === 'photo_exposures') {
+        state.exposureInsert = rows as Record<string, unknown>[];
+        return Promise.resolve({ error: state.exposureError });
       }
       void rows;
       return Promise.resolve({ error: state.exposureError });
@@ -145,6 +167,9 @@ beforeEach(() => {
   state.photoInsert = null;
   state.exposureError = null;
   state.updateError = null;
+  state.exposureInsert = null;
+  state.sessionInsert = null;
+  state.sessionError = null;
 });
 
 describe('uploadPhoto — başarılı akış', () => {
@@ -273,6 +298,64 @@ describe('uploadPhoto — poz künyesi', () => {
       exposures: [{ filter: 'L', frames: 30, exposureSeconds: 120 }],
     });
     expect(result.exposuresSaved).toBe(true);
+  });
+});
+
+describe('uploadPhoto — çekim oturumları (C02–C05)', () => {
+  it('oturumları yazar ve captured_at en erken güne eşitlenir', async () => {
+    await uploadPhoto({
+      ...input,
+      capturedAt: '2026-01-12',
+      captureSessions: [
+        { id: 'c1', startsOn: '2026-01-12', endsOn: '2026-01-18' },
+        { id: 'c2', startsOn: '2026-02-03', endsOn: null },
+      ],
+    });
+    expect(state.sessionInsert).toHaveLength(2);
+    expect(state.sessionInsert?.[0]).toMatchObject({
+      photo_id: PHOTO_ID,
+      starts_on: '2026-01-12',
+      ends_on: '2026-01-18',
+      position: 0,
+    });
+    // Tek gece: ends_on null.
+    expect(state.sessionInsert?.[1]).toMatchObject({
+      starts_on: '2026-02-03',
+      ends_on: null,
+    });
+  });
+
+  it('pozlama satırı istemci oturum kimliğinden DB kimliğine bağlanır (C05)', async () => {
+    await uploadPhoto({
+      ...input,
+      captureSessions: [
+        { id: 'c1', startsOn: '2026-01-12', endsOn: null },
+        { id: 'c2', startsOn: '2026-02-03', endsOn: null },
+      ],
+      exposures: [
+        { filter: 'L', frames: 30, exposureSeconds: 120, sessionId: 'c2' },
+        { filter: 'R', frames: 20, exposureSeconds: 120 },
+      ],
+    });
+    // c2 ikinci oturum → 'sess-1'; bağsız satır null.
+    expect(state.exposureInsert?.[0]).toMatchObject({
+      filter: 'L',
+      session_id: 'sess-1',
+    });
+    expect(state.exposureInsert?.[1].session_id).toBeNull();
+  });
+
+  it('oturum yazımı düşse bile fotoğraf ayakta kalır', async () => {
+    state.sessionError = { message: 'oturum yazılamadı' };
+    const result = await uploadPhoto({
+      ...input,
+      captureSessions: [{ id: 'c1', startsOn: '2026-01-12', endsOn: null }],
+      exposures: [{ filter: 'L', frames: 30, exposureSeconds: 120, sessionId: 'c1' }],
+    });
+    expect(result.photoId).toBe(PHOTO_ID);
+    expect(state.removed).toEqual([]);
+    // Eşleme kurulamadı → pozun session_id'si null, ama poz yine yazıldı.
+    expect(state.exposureInsert?.[0].session_id).toBeNull();
   });
 });
 
