@@ -62,6 +62,13 @@ const VIEWPORTS = [
 const SAYFALAR = [
   { ad: 'Ana sayfa', hash: '#/' },
   { ad: 'Galeri', hash: '#/galeri' },
+  /*
+   * Etkinlikler yakınlık listesi mobilde geniş bir tabloydu ve dar
+   * ekranda yatay kayıyordu (A14). Tablo artık yalnızca md ve üstünde;
+   * mobilde yığılmış kart. Bu sayfa kapıya, o yatay taşmanın geri
+   * dönmediğini her koşuda ölçmek için eklendi.
+   */
+  { ad: 'Etkinlikler', hash: '#/etkinlikler' },
 ];
 
 /*

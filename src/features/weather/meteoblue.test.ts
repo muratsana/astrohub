@@ -1,5 +1,10 @@
-import { describe, expect, it } from 'vitest';
-import { nearestIndex, parseMeteoblue, type MeteoblueRaw } from './meteoblue';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import {
+  fetchMeteoblue,
+  nearestIndex,
+  parseMeteoblue,
+  type MeteoblueRaw,
+} from './meteoblue';
 
 const NOW = new Date('2026-07-28T21:00:00Z');
 const UPPER = { wind200hPa: 120, wind500hPa: 45 };
@@ -123,5 +128,39 @@ describe('parseMeteoblue', () => {
 
   it('boş yanıtta null döner', () => {
     expect(parseMeteoblue({}, NOW, UPPER)).toBeNull();
+  });
+});
+
+describe('fetchMeteoblue — 503 zarif düşüş (A13)', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
+  });
+
+  it('vekil 503 dönerse null döner, hata fırlatmaz', async () => {
+    // Anahtar kredili ve gizli değişken; tanımsızsa vekil 503 veriyor.
+    // `fetchConditions` bu null'ı görüp Open-Meteo sonucuna düşüyor —
+    // yani 503 kullanıcıya bozuk panel değil, ikincil kaynak olarak
+    // yansımalı. Buradaki sözleşme: 503 → null, istisna yok.
+    vi.stubEnv('VITE_SUPABASE_URL', 'https://proje.supabase.co');
+    vi.stubEnv('VITE_SUPABASE_ANON_KEY', 'anon-key');
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response('meteoblue anahtarı yapılandırılmadı', { status: 503 })
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(fetchMeteoblue(41, 29, UPPER)).resolves.toBeNull();
+    expect(fetchMock).toHaveBeenCalledOnce();
+  });
+
+  it('vekil yapılandırılmamışsa istek hiç atılmaz', async () => {
+    // URL yoksa (test varsayılanı) ağ isteği yapılmadan null dönmeli;
+    // aksi halde her testte gerçek uç noktaya gidilirdi.
+    vi.stubEnv('VITE_SUPABASE_URL', '');
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(fetchMeteoblue(41, 29, UPPER)).resolves.toBeNull();
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

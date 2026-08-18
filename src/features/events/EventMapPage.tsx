@@ -81,6 +81,98 @@ function sortLocatedEvents(
   });
 }
 
+/**
+ * YAKINLIK LİSTESİNİN PAYLAŞILAN PARÇALARI.
+ *
+ * Aynı etkinlik iki düzende gösteriliyor: masaüstünde geniş tablo,
+ * mobilde yığılmış kart. Görsel, başlık/rozet ve aksiyon üçlüsünü tek
+ * yerde tutmak, birinde düzeltilen bir davranışın diğerinde eski
+ * kalmasını engelliyor — tıpkı avatar/kapak editöründe olduğu gibi.
+ */
+function EventThumbLink({ item }: { item: AstroEvent }) {
+  return (
+    <Link
+      to={`/etkinlik/${item.slug}`}
+      className="relative h-14 w-20 shrink-0 overflow-hidden rounded-card border border-border bg-surface-2"
+      aria-label={`${item.title} detayını aç`}
+    >
+      {item.image ? (
+        <RemoteImage
+          src={item.image.url}
+          alt={`${item.title} etkinlik görseli`}
+          seed={item.slug}
+          tint={item.gradient}
+          className="h-full w-full object-cover transition duration-300 hover:scale-105"
+          sizes="80px"
+        />
+      ) : (
+        <PhotoPlaceholder
+          gradient={item.gradient}
+          alt={`${item.title} etkinlik görseli`}
+          className="h-full w-full"
+        />
+      )}
+    </Link>
+  );
+}
+
+function EventTitleBadges({ item }: { item: AstroEvent }) {
+  return (
+    <div className="min-w-0">
+      <Link
+        to={`/etkinlik/${item.slug}`}
+        className="flex min-h-8 items-center truncate text-caption text-foreground transition-colors hover:text-primary"
+      >
+        {item.title}
+      </Link>
+      <p className="mt-1 line-clamp-1 text-body-sm text-muted-foreground">
+        {item.description}
+      </p>
+      <span className="mt-1.5 flex flex-wrap gap-1.5">
+        <Badge tone="primary">{eventTypeLabels[item.type]}</Badge>
+        <Badge tone={item.free ? 'success' : 'muted'}>
+          {item.free ? 'Ücretsiz' : 'Ücretli'}
+        </Badge>
+      </span>
+    </div>
+  );
+}
+
+function EventActions({
+  item,
+  active,
+  onFocus,
+}: {
+  item: AstroEvent;
+  active: string | null;
+  onFocus: (item: AstroEvent) => void;
+}) {
+  return (
+    <>
+      <Button
+        size="sm"
+        variant={active === item.slug ? 'primary' : 'secondary'}
+        onClick={() => onFocus(item)}
+      >
+        Haritada göster
+      </Button>
+      <ButtonLink to={`/etkinlik/${item.slug}`} size="sm" variant="ghost">
+        Görüntüle
+      </ButtonLink>
+      {item.contact && (
+        <ExternalButtonLink
+          href={item.contact.url}
+          size="sm"
+          variant="secondary"
+        >
+          İletişim
+        </ExternalButtonLink>
+      )}
+      <AdminEditLink to={`/admin/events?slug=${item.slug}`} />
+    </>
+  );
+}
+
 export function EventMapPage() {
   const navigate = useNavigate();
   const { location, permission, requestDeviceLocation } = useLocationContext();
@@ -447,136 +539,128 @@ export function EventMapPage() {
                   className="border-0 py-8"
                 />
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full min-w-[980px] border-collapse text-left">
-                    <thead className="border-b border-border text-meta text-muted-foreground">
-                      <tr>
-                        <th scope="col" className="px-0 py-2 pr-4 font-medium">
-                          Etkinlik
-                        </th>
-                        <SortableHeader onClick={() => changeSort('city')}>
-                          {sortLabel('city', 'İl')}
-                        </SortableHeader>
-                        <SortableHeader onClick={() => changeSort('startsAt')}>
-                          {sortLabel('startsAt', 'Başlangıç')}
-                        </SortableHeader>
-                        <SortableHeader onClick={() => changeSort('endsAt')}>
-                          {sortLabel('endsAt', 'Bitiş')}
-                        </SortableHeader>
-                        <SortableHeader onClick={() => changeSort('distance')}>
-                          {sortLabel('distance', 'Mesafe')}
-                        </SortableHeader>
-                        <th
-                          scope="col"
-                          className="py-2 pl-4 text-right font-medium"
-                        >
-                          İşlem
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {sortedLocated.map(({ item, distanceKm }) => (
-                        <tr
-                          key={item.slug}
-                          className={cn(
-                            'border-b border-border transition-colors last:border-0',
-                            active === item.slug && 'text-primary'
-                          )}
-                        >
-                          <td className="max-w-[390px] py-2.5 pr-4 align-top">
-                            <div className="flex items-start gap-3">
-                              <Link
-                                to={`/etkinlik/${item.slug}`}
-                                className="relative h-14 w-20 shrink-0 overflow-hidden rounded-card border border-border bg-surface-2"
-                                aria-label={`${item.title} detayını aç`}
-                              >
-                                {item.image ? (
-                                  <RemoteImage
-                                    src={item.image.url}
-                                    alt={`${item.title} etkinlik görseli`}
-                                    seed={item.slug}
-                                    tint={item.gradient}
-                                    className="h-full w-full object-cover transition duration-300 hover:scale-105"
-                                    sizes="80px"
-                                  />
-                                ) : (
-                                  <PhotoPlaceholder
-                                    gradient={item.gradient}
-                                    alt={`${item.title} etkinlik görseli`}
-                                    className="h-full w-full"
-                                  />
-                                )}
-                              </Link>
-                              <div className="min-w-0">
-                                <Link
-                                  to={`/etkinlik/${item.slug}`}
-                                  className="flex min-h-8 items-center truncate text-caption text-foreground transition-colors hover:text-primary"
-                                >
-                                  {item.title}
-                                </Link>
-                                <p className="mt-1 line-clamp-1 text-body-sm text-muted-foreground">
-                                  {item.description}
-                                </p>
-                                <span className="mt-1.5 flex flex-wrap gap-1.5">
-                                  <Badge tone="primary">
-                                    {eventTypeLabels[item.type]}
-                                  </Badge>
-                                  <Badge tone={item.free ? 'success' : 'muted'}>
-                                    {item.free ? 'Ücretsiz' : 'Ücretli'}
-                                  </Badge>
-                                </span>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="py-2.5 pr-4 align-top text-body-sm text-muted-foreground">
-                            {item.city}
-                          </td>
-                          <td className="tabular py-2.5 pr-4 align-top text-body-sm text-muted-foreground">
-                            {formatEventDate(item.startsAt)}
-                          </td>
-                          <td className="tabular py-2.5 pr-4 align-top text-body-sm text-muted-foreground">
-                            {formatEventDate(item.endsAt ?? item.startsAt)}
-                          </td>
-                          <td className="tabular py-2.5 pr-4 align-top text-body-sm text-cold">
-                            {formatLocalDistance(distanceKm)}
-                          </td>
-                          <td className="py-2.5 pl-4 align-top">
-                            <div className="flex justify-end gap-2">
-                              <Button
-                                size="sm"
-                                variant={
-                                  active === item.slug ? 'primary' : 'secondary'
-                                }
-                                onClick={() => focusEvent(item)}
-                              >
-                                Haritada göster
-                              </Button>
-                              <ButtonLink
-                                to={`/etkinlik/${item.slug}`}
-                                size="sm"
-                                variant="ghost"
-                              >
-                                Görüntüle
-                              </ButtonLink>
-                              {item.contact && (
-                                <ExternalButtonLink
-                                  href={item.contact.url}
-                                  size="sm"
-                                  variant="secondary"
-                                >
-                                  İletişim
-                                </ExternalButtonLink>
-                              )}
-                              <AdminEditLink
-                                to={`/admin/events?slug=${item.slug}`}
-                              />
-                            </div>
-                          </td>
+                <>
+                  {/*
+                   * MASAÜSTÜ: geniş tablo. `overflow-x-auto` sarmalayıcı
+                   * kalıyor ama artık yalnızca md ve üstünde görünüyor;
+                   * dar ekranda 980px'lik tablonun bir pencerede yatay
+                   * kaydırılması gerekiyordu (A14) — mobil o pencereyi
+                   * hiç görmüyor.
+                   */}
+                  <div className="hidden overflow-x-auto md:block">
+                    <table className="w-full min-w-[980px] border-collapse text-left">
+                      <thead className="border-b border-border text-meta text-muted-foreground">
+                        <tr>
+                          <th scope="col" className="px-0 py-2 pr-4 font-medium">
+                            Etkinlik
+                          </th>
+                          <SortableHeader onClick={() => changeSort('city')}>
+                            {sortLabel('city', 'İl')}
+                          </SortableHeader>
+                          <SortableHeader onClick={() => changeSort('startsAt')}>
+                            {sortLabel('startsAt', 'Başlangıç')}
+                          </SortableHeader>
+                          <SortableHeader onClick={() => changeSort('endsAt')}>
+                            {sortLabel('endsAt', 'Bitiş')}
+                          </SortableHeader>
+                          <SortableHeader onClick={() => changeSort('distance')}>
+                            {sortLabel('distance', 'Mesafe')}
+                          </SortableHeader>
+                          <th
+                            scope="col"
+                            className="py-2 pl-4 text-right font-medium"
+                          >
+                            İşlem
+                          </th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody>
+                        {sortedLocated.map(({ item, distanceKm }) => (
+                          <tr
+                            key={item.slug}
+                            className={cn(
+                              'border-b border-border transition-colors last:border-0',
+                              active === item.slug && 'text-primary'
+                            )}
+                          >
+                            <td className="max-w-[390px] py-2.5 pr-4 align-top">
+                              <div className="flex items-start gap-3">
+                                <EventThumbLink item={item} />
+                                <EventTitleBadges item={item} />
+                              </div>
+                            </td>
+                            <td className="py-2.5 pr-4 align-top text-body-sm text-muted-foreground">
+                              {item.city}
+                            </td>
+                            <td className="tabular py-2.5 pr-4 align-top text-body-sm text-muted-foreground">
+                              {formatEventDate(item.startsAt)}
+                            </td>
+                            <td className="tabular py-2.5 pr-4 align-top text-body-sm text-muted-foreground">
+                              {formatEventDate(item.endsAt ?? item.startsAt)}
+                            </td>
+                            <td className="tabular py-2.5 pr-4 align-top text-body-sm text-cold">
+                              {formatLocalDistance(distanceKm)}
+                            </td>
+                            <td className="py-2.5 pl-4 align-top">
+                              <div className="flex justify-end gap-2">
+                                <EventActions
+                                  item={item}
+                                  active={active}
+                                  onFocus={focusEvent}
+                                />
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/*
+                   * MOBİL: yığılmış kart. Aynı veriler tek sütuna diziliyor;
+                   * il/tarih/mesafe künye satırında, aksiyonlar altta sarıyor.
+                   * Yatay kaydırma yok — A14'ün istediği bu.
+                   */}
+                  <ul className="space-y-3 md:hidden">
+                    {sortedLocated.map(({ item, distanceKm }) => (
+                      <li
+                        key={item.slug}
+                        className={cn(
+                          'rounded-card border border-border p-3 transition-colors',
+                          active === item.slug && 'border-primary'
+                        )}
+                      >
+                        <div className="flex items-start gap-3">
+                          <EventThumbLink item={item} />
+                          <EventTitleBadges item={item} />
+                        </div>
+                        <dl className="tabular mt-2.5 flex flex-wrap gap-x-4 gap-y-1 text-body-sm text-muted-foreground">
+                          <div className="flex gap-1">
+                            <dt className="sr-only">İl</dt>
+                            <dd>{item.city}</dd>
+                          </div>
+                          <div className="flex gap-1">
+                            <dt className="sr-only">Başlangıç</dt>
+                            <dd>{formatEventDate(item.startsAt)}</dd>
+                          </div>
+                          <div className="flex gap-1">
+                            <dt className="sr-only">Mesafe</dt>
+                            <dd className="text-cold">
+                              {formatLocalDistance(distanceKm)}
+                            </dd>
+                          </div>
+                        </dl>
+                        <div className="mt-2.5 flex flex-wrap gap-2">
+                          <EventActions
+                            item={item}
+                            active={active}
+                            onFocus={focusEvent}
+                          />
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </>
               )}
             </Panel>
 
