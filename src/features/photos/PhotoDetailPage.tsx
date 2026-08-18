@@ -138,6 +138,31 @@ function PhotoDetail({
         ]}
       />
       <Container className="py-8 sm:py-10">
+        {/*
+          ══════════════════════════════════════════════════════════════
+          GERİ DÖNÜŞ ÜSTTE OLMALI (A03)
+
+          "← Galeriye dön" düğmesi vardı ama sayfanın EN ALTINDAydı:
+          fotoğrafın, yedi sekmenin, künyenin ve benzer fotoğrafların
+          ardından. Galeriden gelip "bu değilmiş" diyen kullanıcı onu
+          görmüyordu bile — geri dönmenin tek pratik yolu tarayıcının
+          kendi geri düğmesiydi ve mobilde o da her zaman elin altında
+          değil.
+
+          Alttaki düğme KALDIRILMADI: uzun sayfayı sonuna kadar okuyan
+          için orası da doğru yer. Aynı işi iki yerde sunmak burada
+          tekrar değil, iki farklı okuma anına cevap.
+        */}
+        <div className="mb-4">
+          <button
+            type="button"
+            onClick={geriDon}
+            className="inline-flex items-center gap-1.5 rounded-card border border-border-strong px-3 py-1.5 text-meta text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+          >
+            ← Galeriye dön
+          </button>
+        </div>
+
         <PhotoViewer photo={photo} />
 
         {/* Temel bilgi */}

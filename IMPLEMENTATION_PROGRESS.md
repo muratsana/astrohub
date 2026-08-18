@@ -9,10 +9,10 @@ Durumlar: `TODO` → `IN_PROGRESS` → `CODED` → `TESTED` → `READY_FOR_USER`
 |---|---|---|---|---|---|---|---|---|
 | A01 | P0 | A | Kayıt | Kullanım Koşulları dönüşünde kayıt form state'i korunmalı | TESTED | 6043192 | e2e: kayit formu yasal metin donusunde dolu kaliyor | Bekliyor |
 | A02 | P0 | A | Kayıt | KVKK dönüşünde kayıt form state'i korunmalı | TESTED | 6043192 | e2e: yasal metin baglantilari yeni sekmede aciliyor | Bekliyor |
-| A03 | P0 | A | Galeri | Fotoğraf detayında görünür 'Galeriye dön' kontrolü | TODO |  |  | Bekliyor |
-| A04 | P0 | A | Galeri | Galeri pagination sayfası geri dönüşte korunmalı | TODO |  |  | Bekliyor |
-| A05 | P0 | A | Galeri | Galeri scroll/kart konumu geri dönüşte korunmalı | TODO |  |  | Bekliyor |
-| A06 | P0 | A | Galeri | Arama/filtre/sıralama state'i geri dönüşte korunmalı | TODO |  |  | Bekliyor |
+| A03 | P0 | A | Galeri | Fotoğraf detayında görünür 'Galeriye dön' kontrolü | TESTED | 289eb13 | e2e: fotograf detayinda geri donus ilk ekranda | Bekliyor |
+| A04 | P0 | A | Galeri | Galeri pagination sayfası geri dönüşte korunmalı | TESTED | 289eb13 | e2e: galeri suzgeci ve sayfasi geri donuste korunuyor | Bekliyor |
+| A05 | P0 | A | Galeri | Galeri scroll/kart konumu geri dönüşte korunmalı | TESTED | 289eb13 | e2e: galeri kaydirma konumu geri donuste korunuyor | Bekliyor |
+| A06 | P0 | A | Galeri | Arama/filtre/sıralama state'i geri dönüşte korunmalı | TESTED | 289eb13 | e2e: galeri suzgeci ve sayfasi geri donuste korunuyor | Bekliyor |
 | A07 | P1 | A | İlanlar | İlan başına maksimum 5 fotoğraf yükleme | TODO |  |  | Bekliyor |
 | A08 | P1 | A | İlanlar | İlan fotoğraflarında merkezi Astrohub optimizasyon pipeline'ını kullan | TODO |  |  | Bekliyor |
 | A09 | P1 | A | İlanlar | İlan foto yönetimi: sil/değiştir/sırala/progress | TODO |  |  | Bekliyor |

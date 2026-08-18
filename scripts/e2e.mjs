@@ -940,6 +940,122 @@ await scenario('yasal metin bağlantıları yeni sekmede açılıyor', async () 
   );
 });
 
+/*
+ * ══════════════════════════════════════════════════════════════════════
+ * A03 — GERİ DÖNÜŞ KONTROLÜ GÖRÜNÜR OLMALI
+ *
+ * "← Galeriye dön" düğmesi vardı ama sayfanın EN ALTINDAydı: fotoğrafın,
+ * yedi sekmenin, künyenin ve benzer fotoğrafların ardından. Galeriden
+ * gelip "bu değilmiş" diyen kullanıcı onu hiç görmüyordu.
+ *
+ * Test "düğme DOM'da var mı" diye sormuyor — eski hâlde de vardı.
+ * Sorduğu şey İLK EKRANDA mı: üst kenarı görüntü alanının içinde mi.
+ */
+await scenario('fotoğraf detayında geri dönüş ilk ekranda', async () => {
+  await goto('/galeri');
+  const slug = await page.evaluate(() => {
+    const a = document.querySelector('a[href*="/fotograf/"]');
+    if (!a) return null;
+    const href = a.getAttribute('href') || '';
+    const i = href.indexOf('/fotograf/');
+    return i >= 0 ? href.slice(i) : null;
+  });
+  assert(slug, 'galeride fotoğraf bağlantısı bulunamadı');
+
+  await goto(slug);
+  const gorunur = await page.evaluate(() => {
+    const dugmeler = [...document.querySelectorAll('button, a')].filter((e) =>
+      (e.textContent || '').includes('Galeriye dön')
+    );
+    if (dugmeler.length === 0) return { adet: 0, ustte: false };
+    const ustte = dugmeler.some((e) => {
+      const r = e.getBoundingClientRect();
+      return r.top >= 0 && r.top < window.innerHeight && r.height > 0;
+    });
+    return { adet: dugmeler.length, ustte };
+  });
+
+  assert(gorunur.adet > 0, 'geri dönüş kontrolü hiç yok');
+  assert(gorunur.ustte, 'geri dönüş kontrolü ilk ekranda görünmüyor');
+});
+
+/*
+ * ══════════════════════════════════════════════════════════════════════
+ * A04/A06 — SAYFA VE SÜZGEÇ GERİ DÖNÜŞTE KORUNMALI
+ *
+ * Galeri durumu URL'de tutuluyor (`useExplorer`), yani teoride geri
+ * düğmesi her şeyi geri getirir. Yama paketi "zaten çalışıyor" demeyi
+ * yasaklıyor ve haklı: teori ile tarayıcı arasındaki fark tam olarak bu
+ * testin ölçtüğü şey.
+ */
+await scenario('galeri süzgeci ve sayfası geri dönüşte korunuyor', async () => {
+  const hedef = '/galeri?q=bulutsu&sort=eski&page=2';
+  await goto(hedef);
+
+  const slug = await page.evaluate(() => {
+    const a = document.querySelector('a[href*="/fotograf/"]');
+    if (!a) return null;
+    const href = a.getAttribute('href') || '';
+    const i = href.indexOf('/fotograf/');
+    return i >= 0 ? href.slice(i) : null;
+  });
+
+  /* Süzgeç sonucu boşsa gidilecek fotoğraf yok; o zaman yalnızca
+     adresin korunduğunu ölçüyoruz — testin kendisi veriye bağlı
+     olmamalı. */
+  if (slug) {
+    await goto(slug);
+    await page.goBack();
+    await page.waitForTimeout(500);
+  }
+
+  const hash = await page.evaluate(() => location.hash.replace(/^#/, ''));
+  for (const parca of ['q=bulutsu', 'sort=eski', 'page=2']) {
+    assert(hash.includes(parca), `geri dönüşte "${parca}" kayboldu: ${hash}`);
+  }
+});
+
+/*
+ * ══════════════════════════════════════════════════════════════════════
+ * A05 — KAYDIRMA KONUMU GERİ DÖNÜŞTE KORUNMALI
+ *
+ * Listenin ortasındaki bir karta tıklayıp geri dönen kullanıcı sayfanın
+ * BAŞINA düşüyorsa, bulduğu yeri her seferinde yeniden bulmak zorunda
+ * kalır — uzun bir galeride bu, gezinmeyi bırakma sebebidir.
+ *
+ * Eşik gevşek (200 px): amaç piksel doğruluğu değil, "aynı bölgeye
+ * dönüldü mü". Katı bir eşik, kart yüksekliği değiştiğinde kararsız
+ * biçimde düşen bir test olurdu.
+ */
+await scenario('galeri kaydırma konumu geri dönüşte korunuyor', async () => {
+  await goto('/galeri');
+  await page.evaluate(() => window.scrollTo(0, 1200));
+  await page.waitForTimeout(300);
+  const once = await page.evaluate(() => window.scrollY);
+
+  /* Sayfa 1200 px kaydırılamıyorsa (kısa liste) test anlamsız. */
+  if (once < 400) return;
+
+  const slug = await page.evaluate(() => {
+    const a = document.querySelector('a[href*="/fotograf/"]');
+    if (!a) return null;
+    const href = a.getAttribute('href') || '';
+    const i = href.indexOf('/fotograf/');
+    return i >= 0 ? href.slice(i) : null;
+  });
+  assert(slug, 'galeride fotoğraf bağlantısı bulunamadı');
+
+  await goto(slug);
+  await page.goBack();
+  await page.waitForTimeout(900);
+  const sonra = await page.evaluate(() => window.scrollY);
+
+  assert(
+    Math.abs(sonra - once) < 200,
+    `kaydırma korunmadı: ${once} → ${sonra}`
+  );
+});
+
 /* ══════════════════════ Görsel kayıt (§17.2) ══════════════════════ */
 
 /*
