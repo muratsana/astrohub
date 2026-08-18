@@ -33,6 +33,8 @@ const state = {
   sessionError: null as { message: string } | null,
   /** Depoya yapılan tüm yüklemeler — bucket yönlendirme ve upsert için. */
   uploads: [] as { bucket: string; path: string; upsert?: boolean }[],
+  /** astro_photos'a yazılan yol/kadraj güncellemesi. */
+  photoUpdate: null as Record<string, unknown> | null,
 };
 
 const PHOTO_ID = 'photo-1';
@@ -71,6 +73,8 @@ function tableApi(table: string) {
     },
     update(patch: unknown) {
       const yama = (patch ?? {}) as Record<string, unknown>;
+      /* Yol/kadraj yazan güncelleme (deleted_at olmayan) yakalanıyor. */
+      if (!('deleted_at' in yama)) state.photoUpdate = yama;
       return {
         eq: async (_column: string, value: string) => {
           /* Geri alma taslağı `deleted_at` yazarak kaldırıyor; normal
@@ -143,6 +147,17 @@ vi.mock('@/domain/photography/resize', async (importOriginal) => {
   };
 });
 
+/* Kadraj render'ı canvas istiyor; jsdom'da yok. Kadraj seçildiğinde
+   çağrıldığını ve blob döndürdüğünü taklit ediyoruz. */
+const KADRAJ = vi.hoisted(() => ({ cagrildi: 0, dussun: false }));
+vi.mock('@/domain/profile/avatar', () => ({
+  renderKadrajBlob: async () => {
+    KADRAJ.cagrildi += 1;
+    if (KADRAJ.dussun) throw new Error('kadraj render düştü');
+    return new Blob([new Uint8Array(500)]);
+  },
+}));
+
 import { uploadPhoto } from './upload';
 
 /** Geçerli JPEG başlığı taşıyan sahte dosya. */
@@ -179,6 +194,9 @@ beforeEach(() => {
   state.sessionInsert = null;
   state.sessionError = null;
   state.uploads = [];
+  state.photoUpdate = null;
+  KADRAJ.cagrildi = 0;
+  KADRAJ.dussun = false;
 });
 
 describe('uploadPhoto — başarılı akış', () => {
@@ -365,6 +383,41 @@ describe('uploadPhoto — çekim oturumları (C02–C05)', () => {
     expect(state.removed).toEqual([]);
     // Eşleme kurulamadı → pozun session_id'si null, ama poz yine yazıldı.
     expect(state.exposureInsert?.[0].session_id).toBeNull();
+  });
+});
+
+describe('uploadPhoto — kart (thumbnail) kadrajı (C07, C10)', () => {
+  it('kadraj seçilince kadrajdan render eder ve thumb_crop yazar', async () => {
+    await uploadPhoto({
+      ...input,
+      thumbCrop: { zoom: 1.4, panX: 0.2, panY: -0.1 },
+    });
+    expect(KADRAJ.cagrildi).toBe(1);
+    expect(state.photoUpdate?.thumb_crop).toEqual({
+      zoom: 1.4,
+      panX: 0.2,
+      panY: -0.1,
+    });
+  });
+
+  it('varsayılan kadrajda (zoom 1, pan 0) otomatik thumb, thumb_crop null', async () => {
+    await uploadPhoto({
+      ...input,
+      thumbCrop: { zoom: 1, panX: 0, panY: 0 },
+    });
+    expect(KADRAJ.cagrildi).toBe(0);
+    expect(state.photoUpdate?.thumb_crop).toBeNull();
+  });
+
+  it('kadraj render düşerse otomatik thumb\'a düşer, yükleme sürer', async () => {
+    KADRAJ.dussun = true;
+    const result = await uploadPhoto({
+      ...input,
+      thumbCrop: { zoom: 2, panX: 0.5, panY: 0.5 },
+    });
+    expect(result.photoId).toBe(PHOTO_ID);
+    // Kadraj render'ı düştü → thumb_crop yazılmadı.
+    expect(state.photoUpdate?.thumb_crop).toBeNull();
   });
 });
 

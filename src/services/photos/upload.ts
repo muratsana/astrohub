@@ -13,6 +13,7 @@ import {
   MAX_STORED_BYTES,
 } from '@/domain/membership/quota';
 import { checkImageFormat, readHead } from '@/domain/photography/fileType';
+import { renderKadrajBlob } from '@/domain/profile/avatar';
 import { sanitizeText } from '@/lib/sanitize';
 
 /**
@@ -118,6 +119,13 @@ export interface UploadInput {
     startsOn: string;
     endsOn: string | null;
   }[];
+  /**
+   * KART (thumbnail) KADRAJI — kare kartta görünecek bölge (C07, C10).
+   * {zoom, panX, panY} normalize. Verilmezse ya da varsayılansa
+   * (zoom 1, pan 0) thumb eskisi gibi otomatik ortalanıyor; verilirse
+   * kadrajdan kare bir kopya üretiliyor ve kadraj satıra yazılıyor.
+   */
+  thumbCrop?: { zoom: number; panX: number; panY: number };
   /**
    * Dosyadan okunan künye.
    *
@@ -347,7 +355,38 @@ export async function uploadPhoto(
     /* ── 2. Kopyalar ── */
     onProgress?.('kucultuluyor');
     const display = await renderResized(input.file, DISPLAY_MAX_EDGE);
-    const thumb = await renderResized(input.file, THUMB_MAX_EDGE);
+
+    /*
+     * THUMB: kadraj verildiyse ondan KARE bir kopya, verilmediyse eski
+     * otomatik-sığdır (C07). Varsayılan kadraj (zoom 1, pan 0) da "seçim
+     * yok" sayılıyor — o durumda kart CSS ile zaten ortalıyor, ayrıca
+     * kare üretip depolamak gereksiz. Kadraj render'ı düşerse otomatik
+     * sığdırmaya düşülüyor: kart kadrajı bir kolaylık, yüklemeyi bloke
+     * etmemeli.
+     */
+    const kadrajSecildi = Boolean(
+      input.thumbCrop &&
+        (input.thumbCrop.zoom !== 1 ||
+          input.thumbCrop.panX !== 0 ||
+          input.thumbCrop.panY !== 0)
+    );
+    let thumb = await (kadrajSecildi
+      ? renderKadrajBlob(input.file, input.thumbCrop!, {
+          width: THUMB_MAX_EDGE,
+          height: THUMB_MAX_EDGE,
+          maxBytes: 1_000_000,
+        })
+          .then((blob) => ({
+            blob,
+            size: { width: THUMB_MAX_EDGE, height: THUMB_MAX_EDGE },
+          }))
+          .catch(() => null)
+      : Promise.resolve(null));
+    let thumbKadrajYazilir = kadrajSecildi && thumb !== null;
+    if (!thumb) {
+      thumb = await renderResized(input.file, THUMB_MAX_EDGE);
+      thumbKadrajYazilir = false;
+    }
 
     if (!display || !thumb) {
       /*
@@ -488,6 +527,9 @@ export async function uploadPhoto(
         width: display.size.width,
         height: display.size.height,
         bytes: storedBytes,
+        /* Kadraj yalnızca gerçekten seçildiyse yazılıyor; otomatik thumb'da
+           null kalıyor (C10). Sonradan yeniden kadraj için kaynak. */
+        thumb_crop: thumbKadrajYazilir ? input.thumbCrop : null,
       })
       .eq('id', photoId);
 

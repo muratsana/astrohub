@@ -29,6 +29,8 @@ import {
   oturumuDuzelt,
   type CaptureSession,
 } from '@/domain/photography/captureSession';
+import { ThumbnailKadraj } from './ThumbnailKadraj';
+import { VARSAYILAN_KADRAJ, type Kadraj } from '@/domain/profile/kadraj';
 import {
   photoTypeLabels,
   PHOTO_LICENSE,
@@ -144,6 +146,11 @@ interface WizardState {
   effectiveFRatio?: number | null;
   pixelScaleArcsec?: number | null;
   exposures: FilterExposure[];
+  /**
+   * KART (thumbnail) KADRAJI — karede hangi kare bölge görünecek (C07,
+   * C10). {zoom, panX, panY} normalize; varsayılan = tam kare (otomatik).
+   */
+  thumbCrop: Kadraj;
   /** İşleme paleti — boş bırakılamaz, yayın adımına geçişi kilitliyor. */
   palette: ProcessingPalette | '';
   software: string;
@@ -167,6 +174,7 @@ const initialState: WizardState = {
   camera: '',
   mount: '',
   exposures: [{ filter: 'L', frames: 0, exposureSeconds: 0 }],
+  thumbCrop: VARSAYILAN_KADRAJ,
   palette: '',
   software: '',
   aiDeclared: false,
@@ -389,6 +397,7 @@ export function UploadWizardPage() {
           captureSessions: state.captureSessions
             .map(oturumuDuzelt)
             .filter((o) => o.startsOn),
+          thumbCrop: state.thumbCrop,
           city: state.city,
           district: state.district,
           license: state.license,
@@ -700,6 +709,31 @@ export function UploadWizardPage() {
                     arcsecPerPixel={state.pixelScaleArcsec}
                     value={crop}
                     onChange={setCrop}
+                  />
+                </div>
+              )}
+
+              {/*
+                KART KADRAJI — display kırpmasından AYRI (C07).
+
+                Display kırpması "fotoğrafın hangi kısmı yayımlanacak"
+                sorusu; kart kadrajı "kare kartta o fotoğrafın hangi
+                bölgesi görünecek" sorusu. İkisi farklı: geniş bir kareyi
+                tam yayımlayıp kartta merkezdeki galaksiyi göstermek
+                isteyebilirsiniz. Boş bırakılırsa kart otomatik ortalanır.
+              */}
+              {file && (
+                <div className="rounded-card border border-border bg-surface-2/40 p-3">
+                  <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-3">
+                    <h3 className="label text-foreground">Kart kadrajı</h3>
+                    <span className="text-meta text-faint">
+                      kare kartta ve ana sayfada görünecek bölge
+                    </span>
+                  </div>
+                  <ThumbnailKadraj
+                    file={file}
+                    kadraj={state.thumbCrop}
+                    onChange={(thumbCrop) => patch({ thumbCrop })}
                   />
                 </div>
               )}

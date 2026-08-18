@@ -107,6 +107,7 @@ interface PhotoRow {
   editors_pick?: boolean | null;
   display_path: string | null;
   thumb_path: string | null;
+  thumb_crop?: { zoom: number; panX: number; panY: number } | null;
   width: number | null;
   height: number | null;
   exif_camera?: string | null;
@@ -404,6 +405,9 @@ export function mapPhotoRow(row: PhotoRow): AstroPhoto {
        Sıra önemli: tahmin bir yedek, ana yol değil. */
     city: row.city ?? cityFromLabel(row.location_label),
     district: row.district ?? undefined,
+    /* Kart kadrajı — yalnızca kullanıcı seçtiyse dolu; yoksa kart CSS ile
+       ortalıyor (C10). Sonradan yeniden kadraj bu değerle açılıyor. */
+    thumbCrop: row.thumb_crop ?? undefined,
   };
 }
 
@@ -412,7 +416,7 @@ const SELECT =
   'target_label, city, district, location_label, location_visibility, bortle, sqm, license, ' +
   'allow_download, watermark_required, ' +
   'ai_declared, like_count, comment_count, rating_sum, rating_count, editors_pick, ' +
-  'display_path, thumb_path, setup_text, ' +
+  'display_path, thumb_path, thumb_crop, setup_text, ' +
   'width, height, exif_camera, exif_lens, exif_iso, exif_focal_mm, ' +
   'exif_aperture_f, exif_exposure_seconds, exif_gps_present, ' +
   'solve_status, solve_ra_deg, solve_dec_deg, solve_rotation_deg, ' +

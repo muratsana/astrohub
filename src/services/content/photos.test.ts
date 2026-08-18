@@ -155,6 +155,14 @@ describe('mapPhotoRow', () => {
     ]);
   });
 
+  it('kart kadrajını (thumb_crop) okur, yoksa undefined (C10)', () => {
+    const kadrajli = mapPhotoRow(
+      row({ thumb_crop: { zoom: 1.4, panX: 0.2, panY: -0.1 } })
+    );
+    expect(kadrajli.thumbCrop).toEqual({ zoom: 1.4, panX: 0.2, panY: -0.1 });
+    expect(mapPhotoRow(row({ thumb_crop: null })).thumbCrop).toBeUndefined();
+  });
+
   it('pozlamanın oturum bağını (session_id) taşır', () => {
     const photo = mapPhotoRow(
       row({

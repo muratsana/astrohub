@@ -220,6 +220,11 @@ export interface AstroPhoto {
     allowDownload: boolean;
     watermarkRequired: boolean;
   };
+  /**
+   * Kart (thumbnail) kadrajı — kare kartta görünecek bölge (C10).
+   * {zoom, panX, panY} normalize. Boşsa kart otomatik ortalanır.
+   */
+  thumbCrop?: { zoom: number; panX: number; panY: number };
   capturedAt: string; // ISO tarih — geriye dönük tek tarih (en erken oturum)
   /**
    * Çekim oturumları (sezonlar). Bir fotoğraf birden çok gecede
