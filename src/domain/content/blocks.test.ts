@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   blocksToParagraphs,
+  blocksToText,
+  ContentBlockSchema,
   parseContentBlocks,
   textToBlocks,
 } from './blocks';
@@ -163,5 +165,94 @@ describe('düz metne dökme — satır içi işaretler', () => {
         { type: 'list', style: 'bullet', items: ['*ilk* madde'] },
       ])
     ).toEqual(['Önemli bir duyuru', 'ilk madde']);
+  });
+});
+
+describe('mizanpaj blokları', () => {
+  const SRC =
+    'https://proje.supabase.co/storage/v1/object/public/photos/ay.jpg';
+
+  /*
+   * ESKİ KAYITLAR GEÇERLİ KALMALI. `align`/`width` zorunlu olsaydı,
+   * alan eklendiği anda yayındaki her görsel bloğu şemadan düşer ve o
+   * yazılar panelde düzenlenemez hâle gelirdi.
+   */
+  it('görselde hizalama ve genişlik isteğe bağlı', () => {
+    const eski = { type: 'image', src: SRC, alt: 'M31' };
+    expect(ContentBlockSchema.safeParse(eski).success).toBe(true);
+
+    const yeni = {
+      type: 'image',
+      src: SRC,
+      alt: 'M31',
+      align: 'right',
+      width: 'half',
+    };
+    expect(ContentBlockSchema.safeParse(yeni).success).toBe(true);
+  });
+
+  it('tanımsız hizalama reddediliyor', () => {
+    const blok = { type: 'image', src: SRC, alt: 'M31', align: 'justify' };
+    expect(ContentBlockSchema.safeParse(blok).success).toBe(false);
+  });
+
+  it('galeri en az iki görsel istiyor', () => {
+    const tek = {
+      type: 'gallery',
+      items: [{ src: SRC, alt: 'a' }],
+    };
+    expect(ContentBlockSchema.safeParse(tek).success).toBe(false);
+
+    const iki = {
+      type: 'gallery',
+      items: [
+        { src: SRC, alt: 'ham' },
+        { src: SRC, alt: 'işlenmiş' },
+      ],
+    };
+    expect(ContentBlockSchema.safeParse(iki).success).toBe(true);
+  });
+
+  /* `alt` tek görselde zorunlu; galeride gevşetmek erişilebilirliği
+     düşürmenin en kolay yolu olurdu. */
+  it('galeride alt metni zorunlu', () => {
+    const blok = {
+      type: 'gallery',
+      items: [
+        { src: SRC, alt: '' },
+        { src: SRC, alt: 'b' },
+      ],
+    };
+    expect(ContentBlockSchema.safeParse(blok).success).toBe(false);
+  });
+
+  it('iki sütun bloğu iki gövde istiyor', () => {
+    expect(
+      ContentBlockSchema.safeParse({ type: 'columns', left: 'a', right: 'b' })
+        .success
+    ).toBe(true);
+    expect(
+      ContentBlockSchema.safeParse({ type: 'columns', left: 'a' }).success
+    ).toBe(false);
+  });
+
+  /* Özet ve arama bu çıktıyı okuyor: yeni bloklar metinsiz kalırsa
+     içerikleri sitede hiç aranamaz olurdu. */
+  it('yeni blokların metni özete giriyor', () => {
+    const metin = blocksToText([
+      {
+        type: 'gallery',
+        caption: 'Üç aşama',
+        items: [
+          { src: SRC, alt: 'ham kare' },
+          { src: SRC, alt: 'işlenmiş kare' },
+        ],
+      },
+      { type: 'columns', leftTitle: 'Önce', left: 'gürültülü', right: 'temiz' },
+    ]);
+    expect(metin).toContain('Üç aşama');
+    expect(metin).toContain('ham kare');
+    expect(metin).toContain('Önce');
+    expect(metin).toContain('temiz');
   });
 });

@@ -65,6 +65,74 @@ export const ContentBlockSchema = z.discriminatedUnion('type', [
     alt: z.string().trim().min(1).max(300),
     caption: z.string().trim().max(300).optional(),
     credit: z.string().trim().max(160).optional(),
+    /*
+     * MİZANPAJ — hizalama ve genişlik.
+     *
+     * Editörde görsel yalnızca TAM GENİŞLİK çizilebiliyordu. Uzun bir
+     * rehberde her görselin sayfayı baştan sona kesmesi, metni sürekli
+     * bölüyor ve okuma akışını kırıyordu; yazarların istediği şey küçük
+     * bir şemayı kenara alıp metnin yanından akıtmaktı.
+     *
+     * DEĞERLER SAYI DEĞİL, İSİM. `width: 42` gibi serbest bir sayı,
+     * her yazının farklı bir ölçüde olması ve sitenin tipografik
+     * ızgarasının dağılması demekti. Üç adım, ızgarayla uyumlu.
+     *
+     * İKİSİ DE İSTEĞE BAĞLI: alan eklendiğinde var olan bloklar
+     * geçersiz olmamalı — `parse` eski kaydı reddetseydi yayındaki her
+     * yazı düzenlenemez hâle gelirdi. Verilmediğinde davranış eskisiyle
+     * aynı: ortalanmış, tam genişlik.
+     */
+    align: z.enum(['left', 'center', 'right']).optional(),
+    width: z.enum(['full', 'half', 'third']).optional(),
+  }),
+
+  /*
+   * GALERİ — yan yana birden çok görsel.
+   *
+   * Art arda konan tek tek görsel blokları alt alta diziliyor ve üç
+   * karelik bir karşılaştırma (ham · kalibre · işlenmiş) sayfayı üç
+   * ekran boyu uzatıyordu. Galeri onları tek ızgaraya alıyor.
+   *
+   * `alt` BURADA DA ZORUNLU, tek görselde olduğu gibi ve aynı gerekçeyle.
+   * Kolaylık olsun diye gevşetmek, galerinin erişilebilirliği düşürmenin
+   * en kolay yolu olmasına yol açardı.
+   *
+   * En fazla 12: daha fazlası ızgara değil, sayfalanması gereken bir
+   * albüm — ve albüm bu editörün işi değil, galerinin.
+   */
+  z.object({
+    type: z.literal('gallery'),
+    caption: z.string().trim().max(300).optional(),
+    columns: z.union([z.literal(2), z.literal(3)]).optional(),
+    items: z
+      .array(
+        z.object({
+          src: imageSrc,
+          alt: z.string().trim().min(1).max(300),
+          caption: z.string().trim().max(200).optional(),
+        })
+      )
+      .min(2)
+      .max(12),
+  }),
+
+  /*
+   * İKİ SÜTUN — yan yana iki metin bloğu.
+   *
+   * "Önce / sonra", "artı / eksi", "yanlış / doğru" karşılaştırmaları
+   * yazarlar tablo bloğuyla kurmaya çalışıyordu ve tablo bunun için
+   * yanlış araç: hücreler tek satırlık değer taşımak için dar, paragraf
+   * için değil.
+   *
+   * DAR EKRANDA ALT ALTA düşüyor (çizim tarafında); iki sütunu telefonda
+   * korumak, her sütunu okunamayacak kadar daraltmak olurdu.
+   */
+  z.object({
+    type: z.literal('columns'),
+    left: text.max(4_000),
+    right: text.max(4_000),
+    leftTitle: z.string().trim().max(120).optional(),
+    rightTitle: z.string().trim().max(120).optional(),
   }),
 
   /*
@@ -179,6 +247,26 @@ export function blocksToParagraphs(blocks: ContentBlock[]): string[] {
 
     /* Gömüde okunabilir tek şey başlık; kimlik metin değil. */
     if (block.type === 'embed') return [block.title];
+
+    /* Galeride okunabilir metin alt yazılar ve `alt` metinleridir;
+       `alt` de dahil çünkü arama ve özet için gerçek içerik taşıyor. */
+    if (block.type === 'gallery') {
+      return [
+        ...(block.caption ? [block.caption] : []),
+        ...block.items.flatMap((item) =>
+          [item.caption, item.alt].filter((v): v is string => !!v)
+        ),
+      ];
+    }
+
+    if (block.type === 'columns') {
+      return [
+        ...(block.leftTitle ? [block.leftTitle] : []),
+        stripInline(block.left),
+        ...(block.rightTitle ? [block.rightTitle] : []),
+        stripInline(block.right),
+      ];
+    }
 
     return [stripInline(block.text)];
   });
