@@ -18,6 +18,7 @@ import {
 import { usePhotoCatalog } from '@/services/content/photos';
 import { useAlanCozumuIstegi } from '@/services/photos/solveRequest';
 import { useRoles } from '@/features/admin/useRoles';
+import { YILDIZ_ATFI } from '@/services/content/fieldStars';
 import { useSavedPhoto } from '@/services/content/collections';
 import { usePhotoLike } from '@/services/content/engagement';
 import { PhotoComments } from './PhotoComments';
@@ -688,6 +689,10 @@ function PlateSolvePanel({
         bilgisinden bağımsızdır. Görüntünün üstündeki “Alan çözümü” düğmesi
         katalog etiketlerini açıyor.
       </p>
+      {/* ATIF ARAYÜZDE, YALNIZCA KODDA DEĞİL. Yıldız adları dış
+          kataloglardan geliyor ve kaynağını yazmak hem şart hem de
+          okuyana "bu ad nereden geliyor" sorusunun cevabını veriyor. */}
+      <p className="mt-1 text-meta text-faint">{YILDIZ_ATFI}</p>
       {dugme && <div className="mt-2">{dugme}</div>}
     </div>
   );

@@ -6,6 +6,10 @@ import {
   cozumGeometrisi,
   useAlandakiCisimler,
 } from '@/services/content/fieldObjects';
+import {
+  useAlandakiYildizlar,
+  yildizEtiketi,
+} from '@/services/content/fieldStars';
 import type { AstroPhoto } from './types';
 
 /**
@@ -261,6 +265,9 @@ function Lightbox({
  */
 const SOLVE_LINE = '#58a6ff';
 const SOLVE_TEXT = '#e6edf3';
+/* Yıldızlar nesnelerden ayrı bir renkte: aynı mavide çizilseydi
+   "bu etiket bir bulutsu mu yıldız mı" sorusu ekranda cevapsız kalırdı. */
+const SOLVE_STAR = '#f0c674';
 
 function PlateSolveOverlay({
   photo,
@@ -280,6 +287,13 @@ function PlateSolveOverlay({
   const geometri = useMemo(() => cozumGeometrisi(solve), [solve]);
   const { data: cisimlerHam } = useAlandakiCisimler(geometri, visible);
   const cisimler = cisimlerHam ?? [];
+  /*
+   * YILDIZLAR AYRI KAYNAKTAN. Nesne koni araması yıldızları eliyordu ve
+   * elemeyi kaldırmak da yetmezdi: katalogda konumsal bir yıldız listesi
+   * yoktu. Gerekçesi `fieldStars` başlığında yazılı.
+   */
+  const { data: yildizlarHam } = useAlandakiYildizlar(geometri, visible);
+  const yildizlar = yildizlarHam ?? [];
 
   /*
    * Ölçek çubuğunun uzunluğu ÖLÇÜDEN türetiliyor, sabit değil: alan
@@ -347,6 +361,49 @@ function PlateSolveOverlay({
           </g>
         </svg>
       </div>
+
+      {yildizlar.length > 0 && (
+        /*
+          YILDIZLAR NESNELERDEN SÖNÜK ÇİZİLİYOR. Nesne etiketi kadrajda
+          NE olduğunu söylüyor; yıldız etiketi çoğu zaman yalnızca bir
+          katalog numarası. İkisi aynı ağırlıkta çizilseydi on yıldız
+          numarası, tek bulutsu adını görünmez yapardı.
+
+          Katman nesnelerin ALTINDA: aynı noktaya düşen iki etiketten
+          okunması gereken nesne olanıdır.
+        */
+        <div className="absolute inset-0">
+          {yildizlar.map((y) => (
+            <div
+              key={y.hip}
+              className="absolute -translate-x-1/2 -translate-y-1/2"
+              style={{
+                left: `${Math.max(0, Math.min(100, y.nokta.x * 100))}%`,
+                top: `${Math.max(0, Math.min(100, y.nokta.y * 100))}%`,
+              }}
+            >
+              {/* Artı imi, daire değil: nesne işaretiyle karışmasın ve
+                  yıldızın kendisini kapatmasın. */}
+              <svg
+                viewBox="-6 -6 12 12"
+                className="size-3 opacity-80"
+                aria-hidden
+              >
+                <line x1="-5" y1="0" x2="-1.6" y2="0" stroke={SOLVE_STAR} strokeWidth="1" />
+                <line x1="1.6" y1="0" x2="5" y2="0" stroke={SOLVE_STAR} strokeWidth="1" />
+                <line x1="0" y1="-5" x2="0" y2="-1.6" stroke={SOLVE_STAR} strokeWidth="1" />
+                <line x1="0" y1="1.6" x2="0" y2="5" stroke={SOLVE_STAR} strokeWidth="1" />
+              </svg>
+              <span
+                className="tabular absolute left-3 top-1/2 -translate-y-1/2 whitespace-nowrap rounded bg-black/55 px-1 py-px text-[0.625rem] leading-tight backdrop-blur-[2px]"
+                style={{ color: SOLVE_STAR }}
+              >
+                {yildizEtiketi(y)}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
 
       {cisimler.length > 0 && (
         /*
