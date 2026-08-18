@@ -4,7 +4,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
 const BASE = 'https://astrohub.com.tr';
-const EMAIL = 'muratsana+astrohub-audit-20260818@gmail.com';
+const EMAIL = 'muratsana+astrohub-audit-run2-20260818@gmail.com';
 const PASSWORD = `Ah-${randomBytes(18).toString('base64url')}!9x`;
 const USERNAME = `audit_${Date.now().toString(36)}`;
 const OUT = path.resolve('audit-auth-artifacts');
@@ -29,39 +29,35 @@ const bad=[];
 page.on('response',r=>{if(r.status()>=400)bad.push({status:r.status(),method:r.request().method(),url:r.url(),page:page.url()})});
 page.on('pageerror',e=>add('medium','runtime',new URL(page.url()).pathname,'JavaScript sayfa hatası',e.message));
 
-// Kayıt
 await go(page,'/kayit');
 await page.locator('#email').fill(EMAIL); await page.locator('#password').fill(PASSWORD); await page.locator('#confirmPassword').fill(PASSWORD);
 const checks=page.locator('form input[type="checkbox"]'); for(let i=0;i<await checks.count();i++) await checks.nth(i).check();
 await page.getByRole('button',{name:/^Üye Ol$/i}).click(); await page.waitForTimeout(1500);
 console.log(`AUDIT_SIGNUP_SUBMITTED ${EMAIL}`);
 
-// E-posta doğrulanana kadar giriş dene
 let logged=false;
 for(let i=0;i<30&&!logged;i++){await page.waitForTimeout(i===0?8000:7000); await go(page,'/giris'); await page.locator('#email').fill(EMAIL); await page.locator('#password').fill(PASSWORD); await page.getByRole('button',{name:/^Giriş Yap$/i}).click(); await page.waitForTimeout(1200); logged=!new URL(page.url()).pathname.startsWith('/giris'); if(!logged)console.log(`AUDIT_WAIT_EMAIL_CONFIRMATION attempt=${i+1} email=${EMAIL}`)}
 if(!logged){add('critical','authentication','/giris','Test kullanıcısı giriş yapamadı'); writeFileSync(path.join(OUT,'report.json'),JSON.stringify({findings},null,2)); await browser.close(); process.exit(0)}
 console.log(`AUDIT_NORMAL_USER_LOGGED_IN ${EMAIL}`);
 
-// İlk giriş onboarding: kullanıcı adı + şehir. Burası gerçek kullanıcı yolunun parçası.
 await safe('Yeni kullanıcı profil tamamlama akışı tamamlanamadı', async()=>{
   const dialog=page.getByRole('dialog',{name:/Hesabınızı tamamlayın/i});
   if(await dialog.count()){
     await page.locator('#setup-username').fill(USERNAME);
     await page.locator('#setup-city').fill('Ankara');
-    await page.waitForTimeout(1000);
-    const province=page.getByRole('button',{name:/Ankara.*il geneli/i}).first();
-    if(await province.count()) await province.click(); else { const opt=page.locator('#setup-city').locator('xpath=..').getByRole('button').first(); if(await opt.count()) await opt.click(); }
+    const province=page.getByRole('button',{name:/^Ankara\s+il geneli$/i}).first();
+    await province.waitFor({state:'visible',timeout:10000});
+    await province.click();
     const save=page.getByRole('button',{name:/Kaydet ve devam et/i});
-    if(await save.isDisabled()) throw new Error('Profil tamamlama düğmesi kullanıcı adı ve şehir seçimine rağmen etkinleşmedi');
-    await save.click(); await page.waitForTimeout(1400);
-    if(await page.getByRole('dialog',{name:/Hesabınızı tamamlayın/i}).count()) throw new Error('Profil tamamlama ekranı kayıttan sonra kapanmadı');
+    await page.waitForFunction(()=>{const b=[...document.querySelectorAll('button')].find(x=>(x.textContent||'').includes('Kaydet ve devam et'));return !!b && !b.disabled;},{timeout:10000});
+    await save.click();
+    await dialog.waitFor({state:'detached',timeout:12000});
+    console.log(`AUDIT_PROFILE_SETUP_COMPLETE ${EMAIL}`);
   }
 });
 
-// Normal kullanıcı ekranları
 for(const route of ['/panel','/hesap','/bildirimler','/mesajlar','/galeri/yukle','/etkinlik/yeni','/saha/yeni']) { await safe(`Sayfa auditi başarısız: ${route}`,()=>pageAudit(page,route,390)); await safe(`Sayfa auditi başarısız: ${route}`,()=>pageAudit(page,route,1440)); }
 
-// Fotoğraf yükleme recovery; yayınlama yok.
 await safe('Fotoğraf yükleme ileri/geri recovery testi tamamlanamadı', async()=>{
   await page.setViewportSize({width:1280,height:900}); await go(page,'/galeri/yukle');
   const input=page.locator('#file-input'); if(!(await input.count())) throw new Error('file-input bulunamadı');
@@ -75,7 +71,6 @@ await safe('Fotoğraf yükleme ileri/geri recovery testi tamamlanamadı', async(
   const filename=await page.locator('#file-name').inputValue().catch(()=> ''); if(!filename)add('high','recovery','/galeri/yukle','Geri dönüşte seçilmiş dosya bilgisi kayboluyor');
 });
 
-// Validation sonrası alan korunması
 for(const route of ['/etkinlik/yeni','/saha/yeni']) await safe(`Form recovery testi: ${route}`,async()=>{await go(page,route);const inp=page.locator('input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"])').first();if(await inp.count()){await inp.fill('AUDIT STATE SHOULD SURVIVE');const submit=page.locator('form button[type="submit"]').last();if(await submit.count()){await submit.click();await page.waitForTimeout(350);if(await inp.inputValue().catch(()=> '')!=='AUDIT STATE SHOULD SURVIVE')add('high','recovery',route,'Doğrulama hatasından sonra girilmiş veri siliniyor')}}});
 
 console.log(`AUDIT_WAIT_ADMIN_ROLE ${EMAIL}`);
