@@ -13,6 +13,22 @@ export interface FilterExposure {
   exposureSeconds: number;
 }
 
+/**
+ * Yeni pozlama satırı — son satırın tekrar eden değerlerini taşır (C01).
+ *
+ * Astrofotoğrafçı çoğu filtreyi AYNI kare sayısı ve tek-kare pozuyla
+ * çekiyor (ör. LRGB'de her kanal 60×300 sn). Yeni satırı boş açmak, aynı
+ * iki sayıyı her filtre için elden yazdırıyordu. Filtre KOPYALANMIYOR:
+ * her satırın filtresi farklı; kopyalansaydı kullanıcı önce eskisini
+ * silip sonra yenisini yazacaktı — kolaylık değil, angarya olurdu.
+ */
+export function yeniPozSatiri(rows: FilterExposure[]): FilterExposure {
+  const son = rows[rows.length - 1];
+  return son
+    ? { filter: '', frames: son.frames, exposureSeconds: son.exposureSeconds }
+    : { filter: '', frames: 0, exposureSeconds: 0 };
+}
+
 /** Tek filtre satırının toplam süresi (saniye). */
 export function exposureRowSeconds(row: FilterExposure): number {
   if (row.frames < 0 || row.exposureSeconds < 0) {

@@ -19,6 +19,7 @@ import { Badge } from '@/components/ui/Badge';
 import {
   totalIntegrationSeconds,
   formatIntegration,
+  yeniPozSatiri,
   type FilterExposure,
 } from '@/domain/photography/integration';
 import {
@@ -959,7 +960,7 @@ export function UploadWizardPage() {
                   patch({
                     exposures: [
                       ...state.exposures,
-                      { filter: '', frames: 0, exposureSeconds: 0 },
+                      yeniPozSatiri(state.exposures),
                     ],
                   })
                 }
