@@ -54,7 +54,7 @@ Canlı pano: `docs/patch-2026-08-18/ilerleme.html`
 | B05 | P2 | B | Fotoğraf Detayı | İndirme dosya adları anlamlı ve sanitize olmalı | TESTED | 7fdded8 | vitest indirmeAdi.test.ts | Bekliyor |
 | B06 | P2 | B | Fotoğraf Detayı | Kaydet semantiğini netleştir | TESTED | 1d108cd | vitest SaveChip.test.tsx: Koleksiyona kaydet semantiği | Bekliyor |
 | B07 | P2 | B | Plate Solve | Plate solve sonrası takımyıldız otomatik türet | TODO |  |  | Bekliyor |
-| C01 | P1 | C | Fotoğraf Yükleme | Yeni filtre satırı son satırın tekrar eden değerlerini kopyalamalı | TODO |  |  | Bekliyor |
+| C01 | P1 | C | Fotoğraf Yükleme | Yeni filtre satırı son satırın tekrar eden değerlerini kopyalamalı | TESTED | f7ae111 | vitest integration.test.ts: yeniPozSatiri (3 senaryo) | Bekliyor |
 | C02 | P1 | C | Fotoğraf Yükleme | Tek tarih / tarih aralığı checkbox | TODO |  |  | Bekliyor |
 | C03 | P1 | C | Fotoğraf Yükleme | Bir fotoğrafa birden fazla çekim sezonu | TODO |  |  | Bekliyor |
 | C04 | P1 | C | Fotoğraf Yükleme | Her sezon tek tarih veya tarih aralığı taşıyabilmeli | TODO |  |  | Bekliyor |
