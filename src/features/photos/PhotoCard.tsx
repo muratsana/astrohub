@@ -83,11 +83,20 @@ export function PhotoCard({
                 Editör
               </Badge>
             )}
-            {photo.solve.durum === 'cozuldu' && (
-              <Badge tone="cold" className="bg-background/85">
-                ⌖ Çözüldü
-              </Badge>
-            )}
+            {/*
+              "ÇÖZÜLDÜ" ROZETİ KALDIRILDI.
+
+              Rozet, alan çözümünün İSTİSNA olduğu dönemde anlamlıydı:
+              az sayıda fotoğraf çözülmüştü ve rozet onları ayırıyordu.
+              Gönderim artık cron turunda kendiliğinden yapılıyor, yani
+              çözülmüş olmak kuralın kendisi. Her karoda duran bir rozet
+              hiçbir şeyi ayırt etmiyor, yalnızca fotoğrafın üstünü
+              kaplıyor.
+
+              Ölçümün kendisi kaybolmadı: imleç karoya geldiğinde
+              `SolveOverlay` RA, Dec, alan ve ölçeği gösteriyor — rozetin
+              söyleyemediği asıl bilgi zaten orada.
+            */}
             <RatingBadge rating={photo.rating} className="bg-background/85" />
           </>
         ) : undefined

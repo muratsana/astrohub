@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { useParams } from 'react-router';
 import { Container } from '@/components/ui/Container';
-import { Badge } from '@/components/ui/Badge';
 import { Breadcrumb, PageHeader } from '@/components/ui/PageHeader';
 import { Readout } from '@/components/ui/Readout';
 import { CardGrid } from '@/components/ui/CardGrid';
@@ -344,15 +343,19 @@ export function ProfilePage() {
               </p>
             )}
 
+            {/*
+              "ÇEKTİĞİ İLLER" ROZET ŞERİDİ KALDIRILDI.
+
+              Şerit, aynı ili üç farklı yazımla gösterme sorunundan
+              sonra il düzeyine indirilmişti ve teknik olarak doğruydu.
+              Ama düzeltilmiş hâliyle bile profilin en üstünde en az
+              bilgi taşıyan satırdı: fotoğrafların çekildiği iller zaten
+              her kaydın künyesinde yazıyor ve galeriden süzülebiliyor.
+
+              Kişinin kendi konumu duruyor — o bir beyan ve adının
+              yanında bir kez görünüyor.
+            */}
             <div className="mt-3 flex flex-wrap items-center gap-1.5">
-              {iller.length > 0 && (
-                <span className="text-meta text-muted-foreground">
-                  Çektiği iller:
-                </span>
-              )}
-              {iller.map((il) => (
-                <Badge key={il}>{il}</Badge>
-              ))}
               <ProfileBadges userId={ownerId} />
             </div>
           </div>

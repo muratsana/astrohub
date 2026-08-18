@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { adminEditPath } from '@/components/admin/adminEditPath';
 import { AdminEditLink } from '@/components/admin/AdminEditLink';
 import { useUpNavigation } from '@/app/useUpNavigation';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { framingLink } from '@/features/targets/useActiveTarget';
 import { Container } from '@/components/ui/Container';
@@ -19,6 +19,9 @@ import { usePhotoCatalog } from '@/services/content/photos';
 import { useAlanCozumuIstegi } from '@/services/photos/solveRequest';
 import { useRoles } from '@/features/admin/useRoles';
 import { indirmeAdi } from '@/domain/photography/indirmeAdi';
+import { annotatedBlob } from './annotatedExport';
+import { cozumGeometrisi, useAlandakiCisimler } from '@/services/content/fieldObjects';
+import { useAlandakiYildizlar } from '@/services/content/fieldStars';
 import { YILDIZ_ATFI } from '@/services/content/fieldStars';
 import { useSavedPhoto } from '@/services/content/collections';
 import { usePhotoLike } from '@/services/content/engagement';
@@ -26,7 +29,8 @@ import { PhotoComments } from './PhotoComments';
 import { PhotoComparison } from './PhotoComparison';
 import { PhotoViewer } from './PhotoViewer';
 import { BortleIndicator } from './BortleIndicator';
-import { RatingControl, RatingBadge, RatingChip } from './RatingControl';
+import { RatingBadge } from './RatingBadge';
+import { RatingChip } from './RatingChip';
 import { VersionHistory } from './VersionHistory';
 import { VersionUpload } from './VersionUpload';
 import { ReportButton } from '@/features/admin/ReportButton';
@@ -302,13 +306,17 @@ function PhotoDetail({
         </section>
 
         {/*
-          PUANLAMA SEKMELERİN ALTINDA, ÜSTÜNDE DEĞİL. Hüküm vermeden önce
-          künyeye bakılmalı: entegrasyon, ekipman ve gökyüzü görülmeden
-          verilen puan, yalnızca ilk izlenimi ölçer.
+          BÜYÜK PUANLAMA PANELİ KALDIRILDI.
+
+          Panel buradaydı ve gerekçesi vardı: "hüküm vermeden önce
+          künyeye bak". Ama görülmediği için kullanıcı "yıldız verme
+          düğmesi yok" diye bildirdi; düğme eylem şeridine taşındı ve o
+          andan sonra aynı iş sayfada İKİ KEZ duruyordu — üstte bir
+          düğme, aşağıda bir panel.
+
+          Ortalama ve oy sayısı kaybolmadı: `RatingBadge` başlığın
+          yanında duruyor, oy verme ise şeritteki düğmede.
         */}
-        <div className="mt-6">
-          <RatingControl photo={photo} />
-        </div>
 
         <section className="mt-8 border-t border-border pt-8">
           <SectionHeader
@@ -973,54 +981,103 @@ function ShareChip({ photo }: { photo: AstroPhoto }) {
 
 /**
  * ══════════════════════════════════════════════════════════════════════
- * İNDİR — DOSYA VERİYOR, SAYFA AÇMIYOR (A15)
+ * İNDİR — İKİ SEÇENEK, VE GERÇEKTEN DOSYA VERİYOR
  *
  * Düğme `<a href={...} download>` idi ve HİÇ İNDİRMİYORDU: `download`
  * niteliği FARKLI KAYNAKTAKİ adreslerde tarayıcı tarafından yok
- * sayılıyor. Görsel `supabase.co`da, sayfa `astrohub.com.tr`de — yani
- * tarayıcı indirmek yerine görselin kendisine GİDİYOR. Kullanıcı tam
- * ekran bir resimle baş başa kalıyor ve uygulamadan çıkmış oluyor;
- * "geri dönülmüyor" şikâyeti bundan.
+ * sayılıyor. Görsel depolama alan adında, sayfa astrohub.com.tr'de —
+ * yani tarayıcı indirmek yerine görselin kendisine GİDİYOR. Kullanıcı
+ * tam ekran bir resimle baş başa kalıyor ve uygulamadan çıkmış oluyor.
  *
- * Doğru yol dosyayı ALIP indirmek: içerik `fetch` ile çekiliyor, bir
- * blob adresine dönüyor ve o adres AYNI KAYNAKTA olduğu için `download`
- * niteliği çalışıyor. Yan kazanç, dosya adının kaydın kendisinden
- * türemesi — depolamadaki ad `display.jpg` ve indirme klasöründe on
- * tanesi yan yana duruyordu.
+ * Dosya artık `fetch` ile alınıp blob adresine çevriliyor; o adres AYNI
+ * KAYNAKTA olduğu için `download` çalışıyor ve ad kaydın kendisinden
+ * türüyor (depolamadaki ad `display.jpg`ti ve indirme klasöründe on
+ * tanesi yan yana duruyordu).
  *
- * HANGİ KOPYA İNDİRİLİYOR. Yayımlanan gösterim kopyası: en uzun kenarı
- * 2048 piksel. Kullanıcının yüklediği ham dosya gizli kovada ve
- * yalnızca sahibine açık; onu "en yüksek kalite" diye herkese sunmak
- * hem yanlış hem de politikaya aykırı olurdu. Düğme bu yüzden ne
- * verdiğini yazıyor.
+ * ══════════════════════════════════════════════════════════════════════
+ * NEDEN İKİ SEÇENEK
+ *
+ * Alan çözümlü kopya ayrı bir dosya: paylaşırken bazen ölçüm istiyorsun
+ * (nerede, hangi ölçekte), bazen yalnızca fotoğrafı. Tek dosyaya
+ * etiketleri gömmek ikinci ihtiyacı imkânsız kılardı.
+ *
+ * Açıklamalı kopya astrometry.net'ten indirilmiyor, BURADA çiziliyor.
+ * Gerekçesi `annotatedExport` başlığında: onların görüntüsü yalnızca
+ * kendi kataloğunu biliyor ve ekrandaki etiketlerle ayrışırdı.
+ *
+ * Çözüm yoksa ikinci seçenek kapalı ve sebebi yazılı — tıklanabilir
+ * görünüp hata veren bir seçenek, olmayandan kötü.
  */
 function DownloadChip({ photo }: { photo: AstroPhoto }) {
+  const [acik, setAcik] = useState(false);
   const [durum, setDurum] = useState<'idle' | 'busy' | 'error'>('idle');
+  const kapsayici = useRef<HTMLDivElement>(null);
+
+  const geometri = useMemo(() => cozumGeometrisi(photo.solve), [photo.solve]);
+  /* Katalog sorguları yalnızca menü AÇIKKEN kuruluyor: her fotoğraf
+     sayfasında peşin iki sorgu, indirmeyecek kullanıcı için boşuna. */
+  const { data: cisimler } = useAlandakiCisimler(geometri, acik);
+  const { data: yildizlar } = useAlandakiYildizlar(geometri, acik);
+
+  useEffect(() => {
+    if (!acik) return;
+    const disari = (e: MouseEvent) => {
+      if (!kapsayici.current?.contains(e.target as Node)) setAcik(false);
+    };
+    const esc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setAcik(false);
+    };
+    document.addEventListener('mousedown', disari);
+    document.addEventListener('keydown', esc);
+    return () => {
+      document.removeEventListener('mousedown', disari);
+      document.removeEventListener('keydown', esc);
+    };
+  }, [acik]);
 
   if (!photo.access?.allowDownload || !photo.image?.url) return null;
   const kaynak = photo.image.url;
+  const cozuldu = photo.solve.durum === 'cozuldu' && geometri !== null;
 
-  async function indir() {
+  function kaydet(blob: Blob, ad: string) {
+    const adres = URL.createObjectURL(blob);
+    const baglanti = document.createElement('a');
+    baglanti.href = adres;
+    baglanti.download = ad;
+    document.body.appendChild(baglanti);
+    baglanti.click();
+    baglanti.remove();
+    /* Adres hemen değil, tarayıcı indirmeyi başlattıktan sonra
+       bırakılıyor: aynı karede iptal etmek indirmeyi düşürüyor. */
+    setTimeout(() => URL.revokeObjectURL(adres), 10_000);
+  }
+
+  async function indir(annotated: boolean) {
     setDurum('busy');
     try {
-      const yanit = await fetch(kaynak);
-      if (!yanit.ok) throw new Error(String(yanit.status));
-      const blob = await yanit.blob();
-      const adres = URL.createObjectURL(blob);
-      const baglanti = document.createElement('a');
-      baglanti.href = adres;
-      baglanti.download = indirmeAdi([
-        'astrohub',
-        photo.target.catalog,
-        photo.title,
-      ]);
-      document.body.appendChild(baglanti);
-      baglanti.click();
-      baglanti.remove();
-      /* Adres hemen değil, tarayıcı indirmeyi başlattıktan sonra
-         bırakılıyor: aynı karede iptal etmek indirmeyi düşürüyor. */
-      setTimeout(() => URL.revokeObjectURL(adres), 10_000);
+      if (annotated) {
+        const blob = await annotatedBlob({
+          imageUrl: kaynak,
+          rotationDeg: photo.solve.rotationDeg,
+          fieldWidthDeg: photo.solve.fieldWidthDeg,
+          cisimler: cisimler ?? [],
+          yildizlar: yildizlar ?? [],
+          kunye: `astrohub.com.tr · ${photo.target.catalog} · @${photo.user.username}`,
+        });
+        kaydet(
+          blob,
+          indirmeAdi(['astrohub', photo.target.catalog, photo.title, 'alan-cozumlu'])
+        );
+      } else {
+        const yanit = await fetch(kaynak);
+        if (!yanit.ok) throw new Error(String(yanit.status));
+        kaydet(
+          await yanit.blob(),
+          indirmeAdi(['astrohub', photo.target.catalog, photo.title])
+        );
+      }
       setDurum('idle');
+      setAcik(false);
     } catch {
       setDurum('error');
       setTimeout(() => setDurum('idle'), 2500);
@@ -1028,19 +1085,57 @@ function DownloadChip({ photo }: { photo: AstroPhoto }) {
   }
 
   return (
-    <button
-      type="button"
-      disabled={durum === 'busy'}
-      onClick={() => void indir()}
-      title="Yayımlanan gösterim kopyası (en uzun kenar 2048 px), JPEG"
-      className="rounded-full border border-border bg-surface-1 px-3 py-1.5 text-muted-foreground transition-colors hover:border-border-strong hover:text-foreground disabled:opacity-60"
-    >
-      {durum === 'busy'
-        ? 'İndiriliyor…'
-        : durum === 'error'
-          ? 'İndirilemedi'
-          : 'İndir (JPEG)'}
-    </button>
+    <div className="relative" ref={kapsayici}>
+      <button
+        type="button"
+        aria-haspopup="menu"
+        aria-expanded={acik}
+        disabled={durum === 'busy'}
+        onClick={() => setAcik((a) => !a)}
+        className="rounded-full border border-border bg-surface-1 px-3 py-1.5 text-muted-foreground transition-colors hover:border-border-strong hover:text-foreground disabled:opacity-60"
+      >
+        {durum === 'busy'
+          ? 'Hazırlanıyor…'
+          : durum === 'error'
+            ? 'İndirilemedi'
+            : 'İndir'}
+      </button>
+
+      {acik && (
+        <div
+          role="menu"
+          className="absolute right-0 z-50 mt-1.5 w-64 rounded-card border border-border bg-surface-1 p-1"
+        >
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => void indir(false)}
+            className="block w-full rounded-card px-3 py-2 text-left text-body-sm text-foreground transition-colors hover:bg-surface-2"
+          >
+            Fotoğraf (JPEG)
+            <span className="block text-meta text-faint">
+              Yayımlanan kopya — en uzun kenar 2048 px
+            </span>
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            disabled={!cozuldu}
+            onClick={() => void indir(true)}
+            className="block w-full rounded-card px-3 py-2 text-left text-body-sm text-foreground transition-colors hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-55 disabled:hover:bg-transparent"
+          >
+            Alan çözümlü (JPEG)
+            <span className="block text-meta text-faint">
+              {cozuldu
+                ? 'Katalog etiketleri, ölçek çubuğu ve kuzey oku üstünde'
+                : photo.solve.durum === 'kuyrukta'
+                  ? 'Alan çözümü sırada — hazır olunca açılır'
+                  : 'Bu kare için alan çözümü yok'}
+            </span>
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
 

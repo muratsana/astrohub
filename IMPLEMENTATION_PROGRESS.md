@@ -47,11 +47,11 @@ Canlı pano: `docs/patch-2026-08-18/ilerleme.html`
 | A12 | P0 | A | Saha | observing_sites canlı HTTP 400 hatası giderilmeli | VERIFIED | d1802f9 | REST 200 / 15 kayit; vitest sites.select.test.ts | 18.08.2026 · kullanıcı canlıda kontrol etti |
 | A13 | P1 | A | Ana Sayfa / Hava | Meteoblue 503 için graceful fallback | TODO |  |  | Bekliyor |
 | A14 | P1 | A | Etkinlikler | Mobil etkinlik görünümünde yatay taşma kaldırılmalı | TODO |  |  | Bekliyor |
-| B01 | P1 | B | Fotoğraf Detayı | İndir butonu dropdown açmalı | TODO |  |  | Bekliyor |
+| B01 | P1 | B | Fotoğraf Detayı | İndir butonu dropdown açmalı | TESTED | 7fdded8 | vitest annotatedExport.test.ts | Bekliyor |
 | B02 | P1 | B | Fotoğraf Detayı | Orijinal / annotasyonsuz fotoğraf indirilebilmeli | TODO |  |  | Bekliyor |
-| B03 | P1 | B | Fotoğraf Detayı | Plate Solve Annotated fotoğraf ayrı indirilebilmeli | TODO |  |  | Bekliyor |
-| B04 | P1 | B | Fotoğraf Detayı | Annotated hazır değilse doğru durum | TODO |  |  | Bekliyor |
-| B05 | P2 | B | Fotoğraf Detayı | İndirme dosya adları anlamlı ve sanitize olmalı | TODO |  |  | Bekliyor |
+| B03 | P1 | B | Fotoğraf Detayı | Plate Solve Annotated fotoğraf ayrı indirilebilmeli | TESTED | 7fdded8 | vitest annotatedExport.test.ts | Bekliyor |
+| B04 | P1 | B | Fotoğraf Detayı | Annotated hazır değilse doğru durum | TESTED | 7fdded8 |  | Bekliyor |
+| B05 | P2 | B | Fotoğraf Detayı | İndirme dosya adları anlamlı ve sanitize olmalı | TESTED | 7fdded8 | vitest indirmeAdi.test.ts | Bekliyor |
 | B06 | P2 | B | Fotoğraf Detayı | Kaydet semantiğini netleştir | TODO |  |  | Bekliyor |
 | B07 | P2 | B | Plate Solve | Plate solve sonrası takımyıldız otomatik türet | TODO |  |  | Bekliyor |
 | C01 | P1 | C | Fotoğraf Yükleme | Yeni filtre satırı son satırın tekrar eden değerlerini kopyalamalı | TODO |  |  | Bekliyor |
@@ -79,7 +79,7 @@ Canlı pano: `docs/patch-2026-08-18/ilerleme.html`
 | D08 | P1 | D | Paylaşım Kiti | Tek tık Kopyala | TODO |  |  | Bekliyor |
 | D09 | P2 | D | Paylaşım Kiti | Künye TXT indirme | TODO |  |  | Bekliyor |
 | D10 | P2 | D | Paylaşım Kiti | Opsiyonel künye alanları | TODO |  |  | Bekliyor |
-| D11 | P2 | D | Paylaşım Kiti | Orijinal / annotated sosyal kaynak seçimi | TODO |  |  | Bekliyor |
+| D11 | P2 | D | Paylaşım Kiti | Orijinal / annotated sosyal kaynak seçimi | IN_PROGRESS |  |  | Bekliyor |
 | D12 | P2 | D | Paylaşım Kiti | Tek ZIP paylaşım paketi | TODO |  |  | Bekliyor |
 | D13 | P2 | D | Paylaşım Kiti | Opsiyonel watermark/@username | TODO |  |  | Bekliyor |
 | D14 | P1 | D | Gizlilik | Paylaşım kiti konum gizliliğine uymalı | TODO |  |  | Bekliyor |
@@ -99,9 +99,9 @@ Canlı pano: `docs/patch-2026-08-18/ilerleme.html`
 | F06 | P1 | F | Katalog | Diğer markalarda seri-gap analizi | TODO |  |  | Bekliyor |
 | F07 | P2 | F | Katalog | Katalog source/verification metadata | TODO |  |  | Bekliyor |
 | F08 | P0 | F | Katalog | Dedup migration backup/rollback | TODO |  |  | Bekliyor |
-| G01 | P2 | G | Fotoğraf Detayı | Puanlama panelini aksiyon satırına taşı | TESTED | 95b5782 |  | Bekliyor |
-| G02 | P2 | G | Fotoğraf Detayı | 1–10 puan popover | TESTED | 95b5782 |  | Bekliyor |
-| G03 | P2 | G | Fotoğraf Detayı | Puanlama erişilebilirliği | TODO |  |  | Bekliyor |
+| G01 | P2 | G | Fotoğraf Detayı | Puanlama panelini aksiyon satırına taşı | TESTED | 7fdded8 |  | Bekliyor |
+| G02 | P2 | G | Fotoğraf Detayı | 1–10 puan popover | TESTED | 7fdded8 |  | Bekliyor |
+| G03 | P2 | G | Fotoğraf Detayı | Puanlama erişilebilirliği | TESTED | 7fdded8 | vitest RatingChip.test.tsx | Bekliyor |
 | H01 | P0 | H | QA | Gerçek onboarding E2E | TODO |  |  | Bekliyor |
 | H02 | P0 | H | QA | Rol/persona matrisi | TODO |  |  | Bekliyor |
 | H03 | P1 | H | QA | Happy/error/recovery/refresh/cancel/retry matrisi | TODO |  |  | Bekliyor |
@@ -114,7 +114,7 @@ Canlı pano: `docs/patch-2026-08-18/ilerleme.html`
 | H10 | P0 | H | Git | Gereksiz branch temizliği | VERIFIED | 9ede6f2 | git diff main origin/codex -- <yollar>: yalnizca is akisi tetikleyicisi farki | 18.08.2026 · kullanıcı canlıda kontrol etti |
 | H11 | P1 | H | Git | Stale PR temizliği | TODO |  |  | Bekliyor |
 | H12 | P0 | H | Git | Main history güvenliği | VERIFIED | 9ede6f2 | git log --oneline: 24d4074..d192795 dogrusal | 18.08.2026 · kullanıcı canlıda kontrol etti |
-| H13 | P1 | H | Kod Temizliği | Dead code/debug/audit geçici dosya temizliği | TODO |  |  | Bekliyor |
+| H13 | P1 | H | Kod Temizliği | Dead code/debug/audit geçici dosya temizliği | IN_PROGRESS |  |  | Bekliyor |
 | H14 | P0 | H | Final QA | Tam canlı ürün auditi yeniden koş | TODO |  |  | Bekliyor |
 | H15 | P0 | H | Final QA | Kullanıcı doğrulama kapısı | TODO |  |  | Bekliyor |
 | X01 | P1 | Extra | Medya Mimarisi | Asset türev registry | TODO |  |  | Bekliyor |
