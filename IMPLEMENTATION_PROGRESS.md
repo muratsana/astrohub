@@ -48,11 +48,11 @@ Canlı pano: `docs/patch-2026-08-18/ilerleme.html`
 | A13 | P1 | A | Ana Sayfa / Hava | Meteoblue 503 için graceful fallback | TESTED | 9f8974e | vitest meteoblue.test.ts: 503 → null zarif düşüş | Bekliyor |
 | A14 | P1 | A | Etkinlikler | Mobil etkinlik görünümünde yatay taşma kaldırılmalı | TESTED | 9f8974e | check:viewports: Etkinlikler 3.sayfa, 11 çözünürlük taşmasız | Bekliyor |
 | B01 | P1 | B | Fotoğraf Detayı | İndir butonu dropdown açmalı | TESTED | 7fdded8 | vitest annotatedExport.test.ts | Bekliyor |
-| B02 | P1 | B | Fotoğraf Detayı | Orijinal / annotasyonsuz fotoğraf indirilebilmeli | TODO |  |  | Bekliyor |
+| B02 | P1 | B | Fotoğraf Detayı | Orijinal / annotasyonsuz fotoğraf indirilebilmeli | TESTED | 1d108cd | vitest DownloadChip.test.tsx: annotasyonsuz fetch + blob indirme | Bekliyor |
 | B03 | P1 | B | Fotoğraf Detayı | Plate Solve Annotated fotoğraf ayrı indirilebilmeli | TESTED | 7fdded8 | vitest annotatedExport.test.ts | Bekliyor |
 | B04 | P1 | B | Fotoğraf Detayı | Annotated hazır değilse doğru durum | TESTED | 7fdded8 |  | Bekliyor |
 | B05 | P2 | B | Fotoğraf Detayı | İndirme dosya adları anlamlı ve sanitize olmalı | TESTED | 7fdded8 | vitest indirmeAdi.test.ts | Bekliyor |
-| B06 | P2 | B | Fotoğraf Detayı | Kaydet semantiğini netleştir | TODO |  |  | Bekliyor |
+| B06 | P2 | B | Fotoğraf Detayı | Kaydet semantiğini netleştir | TESTED | 1d108cd | vitest SaveChip.test.tsx: Koleksiyona kaydet semantiği | Bekliyor |
 | B07 | P2 | B | Plate Solve | Plate solve sonrası takımyıldız otomatik türet | TODO |  |  | Bekliyor |
 | C01 | P1 | C | Fotoğraf Yükleme | Yeni filtre satırı son satırın tekrar eden değerlerini kopyalamalı | TODO |  |  | Bekliyor |
 | C02 | P1 | C | Fotoğraf Yükleme | Tek tarih / tarih aralığı checkbox | TODO |  |  | Bekliyor |
