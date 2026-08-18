@@ -118,8 +118,8 @@ Canlı pano: `docs/patch-2026-08-18/ilerleme.html`
 | H14 | P0 | H | Final QA | Tam canlı ürün auditi yeniden koş | TODO |  |  | Bekliyor |
 | H15 | P0 | H | Final QA | Kullanıcı doğrulama kapısı | TODO |  |  | Bekliyor |
 | X01 | P1 | Extra | Medya Mimarisi | Asset türev registry | TODO |  |  | Bekliyor |
-| X02 | P1 | Extra | Medya İşleme | Original asset immutable | TODO |  |  | Bekliyor |
-| X03 | P1 | Extra | Gizlilik | Public türevlerde EXIF/GPS sızıntısını önle | TODO |  |  | Bekliyor |
+| X02 | P1 | Extra | Medya İşleme | Original asset immutable | TESTED | e222c78 | vitest upload.test.ts: orijinal upsert:false | Bekliyor |
+| X03 | P1 | Extra | Gizlilik | Public türevlerde EXIF/GPS sızıntısını önle | TESTED | e222c78 | vitest upload.test.ts: public türev EXIF'siz, ham dosya gizli bucket | Bekliyor |
 | X04 | P2 | Extra | İndirme | İleride owner download izni politikası | TODO |  |  | Bekliyor |
 | X05 | P2 | Extra | Medya Temizliği | Social/thumbnail derivative TTL ve GC | TODO |  |  | Bekliyor |
 | X06 | P2 | Extra | Analitik | Export/download kullanım ölçümü | TODO |  |  | Bekliyor |
