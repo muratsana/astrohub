@@ -39,6 +39,7 @@ import { RatingChip } from './RatingChip';
 import { VersionHistory } from './VersionHistory';
 import { VersionUpload } from './VersionUpload';
 import { ThumbCropEditor } from './ThumbCropEditor';
+import { ShareKit } from './ShareKit';
 import { ReportButton } from '@/features/admin/ReportButton';
 import { exifHasValues, photoTypeLabels } from './types';
 import { formatExposure } from '@/domain/photography/exif';
@@ -312,6 +313,9 @@ function PhotoDetail({
 
           {/* Kart kadrajını sonradan düzenleme — sahibe (C09). */}
           <ThumbCropEditor photo={photo} onSaved={onRefresh} />
+
+          {/* Paylaşım kiti — sahibe (D01, D02). */}
+          <ShareKit photo={photo} />
         </section>
 
         {/*
