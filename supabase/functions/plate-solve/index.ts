@@ -47,6 +47,27 @@ import { createClient } from 'jsr:@supabase/supabase-js@2';
 const NOVA = 'https://nova.astrometry.net/api';
 
 /*
+ * ══════════════════════════════════════════════════════════════════════
+ * CORS — TARAYICIDAN ÇAĞRILAN HER FONKSİYONUN ŞARTI
+ *
+ * Bu fonksiyonda CORS başlıkları hiç yoktu ve `OPTIONS` ön uçuşu
+ * yanıtsız kalıyordu. Sonucu tarayıcıda şuydu: `functions.invoke`
+ * isteği daha sunucuya varmadan iptal ediliyor ve kullanıcı
+ * "Failed to send a request to the Edge Function" görüyordu.
+ *
+ * Bu, anahtar eksikliğinden BAĞIMSIZ ikinci bir arızaydı ve birincisi
+ * gölgelediği için fark edilmemişti: anahtar tanımlanınca ortaya çıktı.
+ * Projedeki diğer tarayıcıdan çağrılan fonksiyonlar (`hesap-sil`,
+ * `meteoblue`, `katalog-yukle`) aynı üç başlığı zaten taşıyor.
+ */
+const CORS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers':
+    'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+};
+
+/*
  * `Referer` BAŞLIĞI ZORUNLU — astrometry.net'in kendi API sayfasından:
  * programatik indirmelerde bu başlık istenmezse istek reddediliyor
  * (servis, tarayıcı dışı tarayıcıları böyle ayıklıyor). Değer de
@@ -79,32 +100,110 @@ async function resolveApiKey(
   return vaultKey;
 }
 
+/**
+ * YANITI ÖNCE METİN OLARAK AL, SONRA AYRIŞTIR.
+ *
+ * `response.json()` doğrudan çağrıldığında servis HTML döndürdüğünde
+ * ortaya çıkan hata `Unexpected token '<'` oluyor: hangi uç noktadan
+ * geldiği, HTTP kodunun ne olduğu, gövdede ne yazdığı belli değil. Bu
+ * tam olarak canlıda başımıza geldi ve altı fotoğraf o mesajla
+ * "başarısız" damgalandı; sebebi bulmak için tahmin yürütmek gerekti.
+ */
+async function novaJson(
+  nerede: string,
+  url: string,
+  init: RequestInit
+): Promise<Record<string, unknown>> {
+  const response = await fetch(url, init);
+  const govde = await response.text();
+  try {
+    return JSON.parse(govde) as Record<string, unknown>;
+  } catch {
+    throw new Error(
+      `${nerede}: yanıt JSON değil (HTTP ${response.status}) — ${govde
+        .replace(/\s+/g, ' ')
+        .slice(0, 160)}`
+    );
+  }
+}
+
 async function novaLogin(apiKey: string): Promise<string> {
-  const body = new URLSearchParams({
-    'request-json': JSON.stringify({ apikey: apiKey }),
-  });
-  const response = await fetch(`${NOVA}/login`, {
+  const data = await novaJson('oturum', `${NOVA}/login`, {
     method: 'POST',
     headers: {
       ...NOVA_HEADERS,
       'Content-Type': 'application/x-www-form-urlencoded',
     },
-    body,
+    body: new URLSearchParams({
+      'request-json': JSON.stringify({ apikey: apiKey }),
+    }),
   });
-  const data = await response.json();
   if (data?.status !== 'success' || !data?.session) {
     throw new Error(`astrometry.net oturumu açılamadı: ${data?.errormessage ?? ''}`);
   }
   return data.session as string;
 }
 
+/**
+ * ══════════════════════════════════════════════════════════════════════
+ * ÇÖZÜCÜYE VERİLEN ADRES 200 KARAKTERİ GEÇEMEZ
+ *
+ * astrometry.net gönderilen adresi Django'nun `URLField` alanında
+ * saklıyor ve o alanın varsayılan sınırı 200 karakter. Sınırın bir
+ * karakter üstünde adres gönderildiğinde servis JSON bile döndürmüyor:
+ * düz bir "Server Error (500)" HTML sayfası dönüyor. Ölçüldü — 200
+ * karakter geçiyor, 201 karakter 500 veriyor.
+ *
+ * İmzalı Supabase adresi ~350 karakter (yolun yanında bir de JWT
+ * taşıyor) ve bu yüzden HER gönderim sessizce 500 alıyordu. Anahtar
+ * eksikliğinin arkasında duran ikinci arıza buydu.
+ *
+ * ÇÖZÜM: `photos` kovası ZATEN AÇIK. Galeri görselleri bu adresten
+ * yayınlanıyor, yani imzalı adres oraya bir gizlilik katmıyordu —
+ * üstelik imzalı adres, taşıdığı jetonu dış servise vermek demekti.
+ * Açık adres hem kısa (~160 karakter) hem de daha az şey paylaşıyor.
+ *
+ * Özel kovada (gösterim kopyası yoksa orijinal) imzalama şart; orada
+ * adres sınırı aşarsa iş SESSİZCE değil, ne olduğunu söyleyen bir
+ * hatayla düşüyor.
+ */
+const MAX_URL_LENGTH = 200;
+
+async function cozucuAdresi(
+  admin: ReturnType<typeof createClient>,
+  bucket: string,
+  path: string
+): Promise<string> {
+  if (bucket === 'photos') {
+    const { data } = admin.storage.from(bucket).getPublicUrl(path);
+    const acik = data?.publicUrl;
+    if (acik && acik.length <= MAX_URL_LENGTH) return acik;
+  }
+
+  const { data: signed, error } = await admin.storage
+    .from(bucket)
+    .createSignedUrl(path, SIGNED_URL_TTL);
+  if (error || !signed?.signedUrl) {
+    throw new Error(error?.message ?? 'imzalı adres üretilemedi');
+  }
+  if (signed.signedUrl.length > MAX_URL_LENGTH) {
+    throw new Error(
+      `adres ${signed.signedUrl.length} karakter; astrometry.net ${MAX_URL_LENGTH} karakterden uzun adresi kabul etmiyor`
+    );
+  }
+  return signed.signedUrl;
+}
+
 Deno.serve(async (req: Request) => {
   const json = (status: number, body: unknown) =>
     new Response(JSON.stringify(body), {
       status,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...CORS, 'Content-Type': 'application/json' },
     });
 
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { status: 204, headers: CORS });
+  }
   if (req.method !== 'POST') return json(405, { hata: 'yalnızca POST' });
 
   let photoId: string | undefined;
@@ -207,26 +306,20 @@ Deno.serve(async (req: Request) => {
   if (!path) return json(422, { hata: 'çözülecek dosya yok' });
   const bucket = photo.display_path ? 'photos' : 'photo-originals';
 
-  const { data: signed, error: signError } = await admin.storage
-    .from(bucket)
-    .createSignedUrl(path, SIGNED_URL_TTL);
-  if (signError || !signed) {
-    return json(500, { hata: signError?.message ?? 'imzalı adres üretilemedi' });
-  }
-
   try {
+    const adres = await cozucuAdresi(admin, bucket, path);
     const session = await novaLogin(apiKey);
 
-    const response = await fetch(`${NOVA}/url_upload`, {
+    const data = await novaJson('gönderim', `${NOVA}/url_upload`, {
       method: 'POST',
       headers: {
-      ...NOVA_HEADERS,
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
+        ...NOVA_HEADERS,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
       body: new URLSearchParams({
         'request-json': JSON.stringify({
           session,
-          url: signed.signedUrl,
+          url: adres,
           // Sonuçlar herkese açık olmasın; yalnızca bizim hesabımızda.
           publicly_visible: 'n',
           allow_modifications: 'd',
@@ -235,9 +328,8 @@ Deno.serve(async (req: Request) => {
       }),
     });
 
-    const data = await response.json();
     if (data?.status !== 'success' || !data?.subid) {
-      throw new Error(data?.errormessage ?? 'gönderim reddedildi');
+      throw new Error(String(data?.errormessage ?? 'gönderim reddedildi'));
     }
 
     await admin

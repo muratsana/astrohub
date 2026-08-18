@@ -17,6 +17,7 @@ import {
 } from '@/domain/photography/integration';
 import { usePhotoCatalog } from '@/services/content/photos';
 import { useAlanCozumuIstegi } from '@/services/photos/solveRequest';
+import { useRoles } from '@/features/admin/useRoles';
 import { useSavedPhoto } from '@/services/content/collections';
 import { usePhotoLike } from '@/services/content/engagement';
 import { PhotoComments } from './PhotoComments';
@@ -530,12 +531,28 @@ function ExposureTab({ photo }: { photo: AstroPhoto }) {
 }
 
 function ProcessingTab({ photo }: { photo: AstroPhoto }) {
-  /* Sahiplik burada yeniden soruluyor, prop olarak geçirilmiyor: sekme
-     bileşenleri tek bir haritadan aynı imzayla çağrılıyor ve yalnızca
-     bu sekme için imzayı değiştirmek, diğer altı sekmeye kullanılmayan
-     bir parametre eklemek demekti. */
-  const { user } = useAuth();
-  const canManage = Boolean(user && photo.ownerId === user.id);
+  /*
+   * ══════════════════════════════════════════════════════════════════
+   * ÇÖZÜM DÜĞMESİ ARTIK SAHİBİNİN DEĞİL, YÖNETİCİNİN.
+   *
+   * Düğme fotoğrafın SAHİBİNE gösteriliyordu ve gerekçesi şuydu: çözüm
+   * yalnızca yükleme anında tetikleniyordu, o an kaçırılmışsa bir daha
+   * kimse tetiklemiyordu ve sahibinden başka isteyecek kimse yoktu.
+   *
+   * O gerekçe kalktı. Gönderim `plate-solve-poll` içindeki cron turuna
+   * taşındı: bekleyen her fotoğraf beş dakikada bir kendiliğinden
+   * gönderiliyor, yeni yükleme de eski birikmiş kayıt da. Sahibinin
+   * basacağı bir düğme, sistemin zaten yaptığı işi elle yaptırmaktan
+   * ibaret kaldı — ve basıldığında "kuyruğa alındı" demek dışında bir
+   * şey yapmıyordu.
+   *
+   * Yönetimde duruyor çünkü orada hâlâ bir işe yarıyor: üç denemede de
+   * çözülememiş bir kareyi elle zorlamak. Sunucu tarafı da aynı sınırı
+   * bağımsız uyguluyor (`plate-solve` kendi kimlik kontrolünü yapıyor);
+   * buradaki kontrol yalnızca arayüz.
+   */
+  const roles = useRoles();
+  const canManage = roles.isAdmin;
 
   return (
     <div className="space-y-4">
@@ -584,10 +601,10 @@ function ProcessingTab({ photo }: { photo: AstroPhoto }) {
  * açıkça söylüyor — iki satırı aynı listede yan yana koymak, ikisini
  * aynı güvenilirlikte gösterirdi.
  *
- * Dört durum, dört farklı cümle. "Yok" hâlinde SAHİBİNE bir düğme
- * gösteriliyor, başkasına hiçbir şey: çözüm istenmemiş bir fotoğrafta
- * boş bir kutu izleyiciye eksik bir şey varmış izlenimi verir, ama
- * sahibi tam olarak o eksiği kapatabilecek kişi.
+ * Dört durum, dört farklı cümle. "Yok" hâlinde YÖNETİCİYE bir düğme
+ * gösteriliyor, başkasına hiçbir şey: çözüm henüz gelmemiş bir
+ * fotoğrafta boş bir kutu izleyiciye eksik bir şey varmış izlenimi
+ * verirdi — oysa çözüm sırada ve kendiliğinden gelecek.
  */
 function PlateSolvePanel({
   solve,
@@ -746,18 +763,13 @@ function LocationTab({ photo }: { photo: AstroPhoto }) {
    * tam olarak bu değişikliğin ortadan kaldırdığı tahmini geri
    * getirirdi. Onlar kendi etiketleriyle görünüyor.
    *
-   * GÖRÜNÜRLÜK SATIRI YALNIZCA ESKİ KAYITLARDA. Yeni kayıtların hepsi
-   * il/ilçe düzeyinde; herkeste aynı olan bir değeri satır olarak
-   * yazmak, seçilebilir bir ayar olduğu izlenimi verirdi.
+   * GÖRÜNÜRLÜK SATIRI TAMAMEN KALKTI. Eski kayıtlarda "Konum
+   * görünürlüğü: Yaklaşık konum" diye bir satır yazıyordu ve okuyana
+   * hiçbir şey söylemiyordu: konumun kendisi zaten üstteki satırda ne
+   * kadar açıksa o kadar yazılı, hangi seviyede saklandığı ise
+   * yükleyenin verdiği bir karar — izleyicinin işi değil.
    */
   const yapisal = Boolean(photo.city && photo.district);
-
-  const visibilityLabel = {
-    exact: 'Tam koordinat',
-    approximate: 'Yaklaşık konum',
-    region: 'İl/ilçe düzeyi',
-    hidden: 'Gizli',
-  }[loc.visibility];
 
   return (
     <div className="space-y-4">
@@ -768,10 +780,7 @@ function LocationTab({ photo }: { photo: AstroPhoto }) {
                 ['İl', photo.city],
                 ['İlçe', photo.district!],
               ]
-            : [
-                ['Lokasyon', loc.label],
-                ['Konum görünürlüğü', visibilityLabel],
-              ]
+            : [['Lokasyon', loc.label]]
         }
       />
       <BortleIndicator
