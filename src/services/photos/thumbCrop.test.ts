@@ -60,10 +60,23 @@ function file() {
   return new File([new Uint8Array(8)], 'k.jpg', { type: 'image/jpeg' });
 }
 
-describe('versionedThumbPath (C11)', () => {
-  it('zaman damgalı, kullanıcı ve fotoğraf altında', () => {
-    expect(versionedThumbPath('u1', 'p1', 1700000000000)).toBe(
-      'u1/p1/thumb-1700000000000.jpg'
+describe('versionedThumbPath (C11 versiyon + C14 idempotent)', () => {
+  const k = (zoom: number, panX: number, panY: number) => ({ zoom, panX, panY });
+
+  it('kadraja bağlı, kullanıcı ve fotoğraf altında', () => {
+    const yol = versionedThumbPath('u1', 'p1', k(1.3, 0.1, -0.2));
+    expect(yol).toMatch(/^u1\/p1\/thumb-[a-z0-9]+\.jpg$/);
+  });
+
+  it('aynı kadraj → aynı yol (idempotent, C14)', () => {
+    expect(versionedThumbPath('u1', 'p1', k(1.3, 0.1, -0.2))).toBe(
+      versionedThumbPath('u1', 'p1', k(1.3, 0.1, -0.2))
+    );
+  });
+
+  it('farklı kadraj → farklı yol (önbellek kırılır, C11)', () => {
+    expect(versionedThumbPath('u1', 'p1', k(1.3, 0.1, -0.2))).not.toBe(
+      versionedThumbPath('u1', 'p1', k(1.4, 0.1, -0.2))
     );
   });
 });
@@ -81,40 +94,56 @@ describe('thumbPathFromUrl', () => {
 });
 
 describe('updateThumbCrop (C09, C11, C12)', () => {
-  it('versiyonlu yol yazar, satırı bağlar, eski thumb\'ı siler', async () => {
+  it('kadraja bağlı yol yazar, satırı bağlar, eski thumb\'ı siler', async () => {
     const kadraj = { zoom: 1.3, panX: 0.1, panY: -0.2 };
+    const yeni = versionedThumbPath('u1', 'p1', kadraj);
     const sonuc = await updateThumbCrop({
       photoId: 'p1',
       userId: 'u1',
       sourceFile: file(),
       kadraj,
       oldThumbPath: 'u1/p1/thumb.jpg',
-      now: 1700000000000,
     });
 
-    const yeni = 'u1/p1/thumb-1700000000000.jpg';
     expect(sonuc.thumbPath).toBe(yeni);
-    // C11: yeni yola, üstüne yazmadan (upsert:false).
-    expect(kayit.uploads).toEqual([{ path: yeni, upsert: false }]);
+    // C14: kadraja bağlı yola idempotent yazma (upsert:true).
+    expect(kayit.uploads).toEqual([{ path: yeni, upsert: true }]);
     // C09: satır yeni yola ve kadraja bağlandı.
     expect(kayit.updated).toEqual({ thumb_path: yeni, thumb_crop: kadraj });
     // C12: eski türev silindi, yeni asla değil.
     expect(kayit.removed).toEqual(['u1/p1/thumb.jpg']);
   });
 
+  it('aynı kadraj (yol değişmiyor) → hiç iş yapmadan döner (idempotent, C14)', async () => {
+    const kadraj = { zoom: 1.3, panX: 0.1, panY: -0.2 };
+    const yol = versionedThumbPath('u1', 'p1', kadraj);
+    const sonuc = await updateThumbCrop({
+      photoId: 'p1',
+      userId: 'u1',
+      sourceFile: file(),
+      kadraj,
+      oldThumbPath: yol,
+    });
+    expect(sonuc.thumbPath).toBe(yol);
+    expect(kayit.uploads).toEqual([]);
+    expect(kayit.updated).toBeNull();
+    expect(kayit.removed).toEqual([]);
+  });
+
   it('satır güncellenemezse yeni nesneyi geri alır', async () => {
     kayit.updateError = { message: 'db düştü' };
+    const kadraj = { zoom: 2, panX: 0, panY: 0 };
+    const yeni = versionedThumbPath('u1', 'p1', kadraj);
     await expect(
       updateThumbCrop({
         photoId: 'p1',
         userId: 'u1',
         sourceFile: file(),
-        kadraj: { zoom: 1, panX: 0, panY: 0 },
+        kadraj,
         oldThumbPath: 'u1/p1/thumb.jpg',
-        now: 1,
       })
     ).rejects.toThrow('db düştü');
     // Yeni nesne temizlendi, eski dosyaya DOKUNULMADI.
-    expect(kayit.removed).toEqual(['u1/p1/thumb-1.jpg']);
+    expect(kayit.removed).toEqual([yeni]);
   });
 });

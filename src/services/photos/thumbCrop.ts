@@ -25,13 +25,33 @@ import type { Kadraj } from '@/domain/profile/kadraj';
  * yaşam döngüsü temizliği topluyor.
  */
 
-/** Versiyonlu kart thumbnail yolu — zaman damgalı (C11). */
+/**
+ * Kadraja bağlı kısa, deterministik damga (C14).
+ *
+ * Aynı kadraj → aynı damga → aynı yol: üretim idempotent, aynı kadrajı
+ * ikinci kez kaydetmek yeni bir dosya doğurmuyor. Farklı kadraj → farklı
+ * yol: önbellek kırılıyor (C11). djb2 türevi bir karma; çakışma bu küçük
+ * girdi uzayında pratikte olmuyor ve bir önbellek anahtarı için yeterli.
+ */
+export function cropDamgasi(kadraj: Kadraj): string {
+  const metin = `${kadraj.zoom.toFixed(4)}:${kadraj.panX.toFixed(4)}:${kadraj.panY.toFixed(4)}`;
+  let h = 5381;
+  for (let i = 0; i < metin.length; i += 1) {
+    h = (h * 33) ^ metin.charCodeAt(i);
+  }
+  return (h >>> 0).toString(36);
+}
+
+/**
+ * Kadraja bağlı kart thumbnail yolu (C11 versiyon + C14 idempotent).
+ * Aynı fotoğraf + aynı kadraj her zaman aynı yolu verir.
+ */
 export function versionedThumbPath(
   userId: string,
   photoId: string,
-  now = Date.now()
+  kadraj: Kadraj
 ): string {
-  return `${userId}/${photoId}/thumb-${now}.jpg`;
+  return `${userId}/${photoId}/thumb-${cropDamgasi(kadraj)}.jpg`;
 }
 
 export interface UpdateThumbCropInput {
@@ -42,7 +62,6 @@ export interface UpdateThumbCropInput {
   kadraj: Kadraj;
   /** Silinecek eski thumb yolu (varsa). */
   oldThumbPath: string | null;
-  now?: number;
 }
 
 async function client() {
@@ -57,6 +76,18 @@ async function client() {
 export async function updateThumbCrop(
   input: UpdateThumbCropInput
 ): Promise<{ thumbPath: string }> {
+  const yeniYol = versionedThumbPath(
+    input.userId,
+    input.photoId,
+    input.kadraj
+  );
+
+  /* İDEMPOTENT (C14): kadraj değişmediyse yol da aynı; render, yükleme ve
+     silme atlanıyor. Aynı kadrajı ikinci kez kaydetmek boşa iş olmuyor. */
+  if (yeniYol === input.oldThumbPath) {
+    return { thumbPath: yeniYol };
+  }
+
   const blob = await renderKadrajBlob(input.sourceFile, input.kadraj, {
     width: THUMB_MAX_EDGE,
     height: THUMB_MAX_EDGE,
@@ -64,11 +95,12 @@ export async function updateThumbCrop(
   });
 
   const supabase = await client();
-  const yeniYol = versionedThumbPath(input.userId, input.photoId, input.now);
 
+  /* upsert:true — kadraja bağlı yol deterministik; aynı içerik zaten
+     oradaysa üstüne aynısını yazmak zararsız (idempotent üretim, C14). */
   const { error: yukleme } = await supabase.storage
     .from('photos')
-    .upload(yeniYol, blob, { contentType: 'image/jpeg', upsert: false });
+    .upload(yeniYol, blob, { contentType: 'image/jpeg', upsert: true });
   if (yukleme) throw new Error(yukleme.message);
 
   const { error: guncelle } = await supabase

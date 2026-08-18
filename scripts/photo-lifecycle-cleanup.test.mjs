@@ -78,6 +78,34 @@ describe('photo lifecycle cleanup plan', () => {
     });
   });
 
+  it('yeniden kadraj sonrası boşta kalan eski versiyonlu thumb\'ı süpürür (C13)', () => {
+    // Kullanıcı kadrajı değiştirdi: satır yeni thumb-<yeni>.jpg'ye bağlı,
+    // eski thumb-<eski>.jpg artık referans değil → 24 saat sonra orphan.
+    const plan = planPhotoLifecycleCleanup({
+      now,
+      photos: [
+        {
+          id: 'p',
+          status: 'published',
+          created_at: '2026-08-01T10:00:00Z',
+          display_path: 'u/p/display.jpg',
+          thumb_path: 'u/p/thumb-yeni.jpg',
+          original_path: null,
+        },
+      ],
+      objectsByBucket: {
+        photos: [
+          { path: 'u/p/display.jpg', updated_at: '2026-08-01T10:00:00Z' },
+          { path: 'u/p/thumb-yeni.jpg', updated_at: '2026-08-01T10:00:00Z' },
+          { path: 'u/p/thumb-eski.jpg', updated_at: '2026-08-01T10:00:00Z' },
+        ],
+        'photo-originals': [],
+      },
+    });
+    // Güncel thumb korunuyor, eski versiyon süpürülüyor.
+    expect(plan.orphanObjects.photos).toEqual(['u/p/thumb-eski.jpg']);
+  });
+
   it('storage silme limitine göre parçalara böler', () => {
     expect(chunked(['a', 'b', 'c'], 2)).toEqual([['a', 'b'], ['c']]);
   });
