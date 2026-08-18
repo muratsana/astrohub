@@ -1,0 +1,43 @@
+name: Live Product UX Audit
+
+# ELLE TETIKLENIYOR, OTOMATIK DEGIL.
+#
+# Bu is CANLI siteye kosuyor ve kimlikli surumu her kosuda gercek bir
+# kullanici hesabi ACIYOR. `pull_request` tetigi acikken, o dosyalara
+# dokunan her PR uretim veritabanina bir hesap daha birakiyordu ve
+# kimse bunu istemedi. Denetim degerli, ama ne zaman kosacagina insan
+# karar vermeli.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Audit live Astrohub as a real browser user
+        env:
+          AUDIT_BASE_URL: https://astrohub.com.tr
+          AUDIT_TEST_EMAIL: ${{ secrets.AUDIT_TEST_EMAIL }}
+          AUDIT_TEST_PASSWORD: ${{ secrets.AUDIT_TEST_PASSWORD }}
+        run: node scripts/live-product-audit.mjs
+      - name: Diagnose responsive overflow and failing endpoints
+        run: node scripts/live-diagnostics.mjs
+      - name: Upload audit evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-product-ux-audit
+          path: audit-artifacts/
+          retention-days: 14
+          if-no-files-found: warn

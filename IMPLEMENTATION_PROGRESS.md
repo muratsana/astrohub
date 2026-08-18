@@ -85,7 +85,7 @@ Durumlar: `TODO` → `IN_PROGRESS` → `CODED` → `TESTED` → `READY_FOR_USER`
 | H07 | P1 | H | İlerleme | Zorunlu status akışı | CODED | c9e50e5 | scripts/patch-tracker.mjs DURUMLAR | Bekliyor |
 | H08 | P1 | H | İlerleme | Commit/test evidence zorunlu | TODO |  |  | Bekliyor |
 | H09 | P0 | H | Git | Tüm uygulama doğrudan main | IN_PROGRESS | c9e50e5 |  | Bekliyor |
-| H10 | P0 | H | Git | Gereksiz branch temizliği | TODO |  |  | Bekliyor |
+| H10 | P0 | H | Git | Gereksiz branch temizliği | IN_PROGRESS |  |  | Bekliyor |
 | H11 | P1 | H | Git | Stale PR temizliği | TODO |  |  | Bekliyor |
 | H12 | P0 | H | Git | Main history güvenliği | TODO |  |  | Bekliyor |
 | H13 | P1 | H | Kod Temizliği | Dead code/debug/audit geçici dosya temizliği | TODO |  |  | Bekliyor |

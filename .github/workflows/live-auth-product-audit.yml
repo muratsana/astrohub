@@ -1,0 +1,37 @@
+name: Live Authenticated Product UX Audit
+
+# ELLE TETIKLENIYOR, OTOMATIK DEGIL.
+#
+# Bu is CANLI siteye kosuyor ve kimlikli surumu her kosuda gercek bir
+# kullanici hesabi ACIYOR. `pull_request` tetigi acikken, o dosyalara
+# dokunan her PR uretim veritabanina bir hesap daha birakiyordu ve
+# kimse bunu istemedi. Denetim degerli, ama ne zaman kosacagina insan
+# karar vermeli.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit-auth:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Run authenticated normal-user then admin audit
+        run: node scripts/live-auth-product-audit.mjs
+      - name: Upload authenticated audit evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-auth-product-ux-audit
+          path: audit-auth-artifacts/
+          retention-days: 14
+          if-no-files-found: warn
