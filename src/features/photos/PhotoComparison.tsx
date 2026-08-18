@@ -3,7 +3,7 @@ import { Link } from 'react-router';
 import { Panel } from '@/components/ui/Panel';
 import { Select } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
-import { PhotoPlaceholder } from '@/components/media/PhotoPlaceholder';
+import { RemoteImage } from '@/components/media/RemoteImage';
 import {
   comparePhotos,
   differenceCount,
@@ -65,11 +65,16 @@ export function PhotoComparison({ photo }: { photo: AstroPhoto }) {
       <div className="space-y-2">
         <div className="grid grid-cols-2 gap-2">
           <figure className="m-0">
-            <PhotoPlaceholder
-              gradient={photo.gradient}
-              alt={photo.title}
-              className="aspect-[4/3] w-full border border-border"
-            />
+            {/* Gerçek thumbnail — yoksa RemoteImage yıldız alanına düşer (A11). */}
+            <div className="aspect-[4/3] w-full overflow-hidden border border-border">
+              <RemoteImage
+                src={photo.image?.thumbUrl ?? photo.image?.url}
+                alt={photo.title}
+                seed={photo.slug}
+                tint={photo.gradient}
+                sizes="(max-width: 640px) 45vw, 220px"
+              />
+            </div>
             <figcaption className="mt-1 truncate text-meta text-foreground">
               <span className="label mr-1.5">A</span>
               {photo.title}
@@ -77,11 +82,15 @@ export function PhotoComparison({ photo }: { photo: AstroPhoto }) {
           </figure>
 
           <figure className="m-0">
-            <PhotoPlaceholder
-              gradient={other.gradient}
-              alt={other.title}
-              className="aspect-[4/3] w-full border border-border"
-            />
+            <div className="aspect-[4/3] w-full overflow-hidden border border-border">
+              <RemoteImage
+                src={other.image?.thumbUrl ?? other.image?.url}
+                alt={other.title}
+                seed={other.slug}
+                tint={other.gradient}
+                sizes="(max-width: 640px) 45vw, 220px"
+              />
+            </div>
             <figcaption className="mt-1 truncate text-meta text-foreground">
               <span className="label mr-1.5">B</span>
               <Link

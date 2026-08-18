@@ -7,7 +7,7 @@ import { Link, useParams } from 'react-router';
 import { framingLink } from '@/features/targets/useActiveTarget';
 import { Container } from '@/components/ui/Container';
 import { Button } from '@/components/ui/Button';
-import { PhotoPlaceholder } from '@/components/media/PhotoPlaceholder';
+import { RemoteImage } from '@/components/media/RemoteImage';
 import { PlaceholderPage } from '@/components/PlaceholderPage';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import {
@@ -348,11 +348,17 @@ function PhotoDetail({
               {related.map((p) => (
                 <li key={p.slug}>
                   <Link to={`/fotograf/${p.slug}`} className="group block">
-                    <PhotoPlaceholder
-                      gradient={p.gradient}
-                      alt={p.title}
-                      className="aspect-[4/3] w-full border border-border transition-transform duration-300 group-hover:scale-[1.03]"
-                    />
+                    {/* Gerçek thumbnail; yoksa RemoteImage yıldız alanı çizer (A10). */}
+                    <div className="aspect-[4/3] w-full overflow-hidden border border-border">
+                      <RemoteImage
+                        src={p.image?.thumbUrl ?? p.image?.url}
+                        alt={p.title}
+                        seed={p.slug}
+                        tint={p.gradient}
+                        sizes="(max-width: 1024px) 45vw, 22vw"
+                        className="transition-transform duration-300 group-hover:scale-[1.03]"
+                      />
+                    </div>
                     <p className="mt-2 truncate text-sm font-medium text-foreground">
                       {p.target.catalog} · {p.title}
                     </p>
