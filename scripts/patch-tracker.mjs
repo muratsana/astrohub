@@ -109,6 +109,18 @@ function guncelle(id, durum, { commit, evidence, note, onay }) {
       'VERIFIED için --kullanici-onayi "<kim, ne zaman>" gerekir; bu betik kendi başına doğrulama yazmaz.'
     );
   }
+  /*
+   * KANIT ZORUNLU (H08). CODED/TESTED bir iddia: "kod yazıldı" / "testi
+   * geçti". İddia commit ve kanıt olmadan tabloya girerse pano yalan
+   * söyler — hangi commit'te, hangi testle geçtiği yazılmadan bir madde
+   * "yapıldı" sayılamaz. VERIFIED'ın --kullanici-onayi şartıyla aynı
+   * mantık, bir basamak aşağıda.
+   */
+  if ((durum === 'CODED' || durum === 'TESTED') && (!commit || !evidence)) {
+    throw new Error(
+      `${durum} için --commit ve --evidence zorunlu (H08): kanıtsız bir "yapıldı" doğrulanamaz.`
+    );
+  }
   if (!DURUMLAR.includes(durum)) {
     throw new Error(`Geçersiz durum: ${durum}. Geçerli: ${DURUMLAR.join(', ')}`);
   }
