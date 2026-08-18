@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router';
+import { framingLink } from '@/features/targets/useActiveTarget';
 import { Container } from '@/components/ui/Container';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { NightViews } from './NightViews';
@@ -391,6 +392,16 @@ export function TonightPage() {
                         className="text-body-sm font-medium text-foreground transition-colors hover:text-primary"
                       >
                         {target.name}
+                      </Link>
+                      {/* Bu gece görünen hedeften doğrudan kadraja:
+                          "yükseliyor" ile "kadrajıma sığıyor" arasındaki
+                          adım, kullanıcının aracı bulup hedefi baştan
+                          aramasıyla geçiyordu. */}
+                      <Link
+                        to={framingLink(target.slug)}
+                        className="ml-2 text-meta text-muted-foreground transition-colors hover:text-primary"
+                      >
+                        kadrajda gör →
                       </Link>
 
                       <div className="mt-2">

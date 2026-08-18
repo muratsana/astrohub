@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
+import { framingLink } from '@/features/targets/useActiveTarget';
 import { Container } from '@/components/ui/Container';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
@@ -312,8 +313,23 @@ export function SkyCatalogPage() {
               <div className="mt-5">
                 <CardGrid view="grid">
                   {satirlar.map((n) => (
-                    <li key={n.slug}>
+                    <li key={n.slug} className="flex flex-col">
                       <NesneKarti nesne={n} />
+                      {/*
+                        KADRAJ BAĞLANTISI KARTIN DIŞINDA.
+
+                        Kartın tamamı zaten bir `<a>`; içine ikinci bir
+                        bağlantı koymak geçersiz HTML olurdu ve tıklama
+                        iki hedefe birden giderdi. Kardeş öge olarak
+                        duruyor: kart hedefin detayına, bu bağlantı
+                        doğrudan kadraj aracına götürüyor.
+                      */}
+                      <Link
+                        to={framingLink(n.slug)}
+                        className="mt-1 self-start text-meta text-muted-foreground transition-colors hover:text-primary"
+                      >
+                        Kadrajda gör →
+                      </Link>
                     </li>
                   ))}
                 </CardGrid>
