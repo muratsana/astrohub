@@ -1,123 +1,48 @@
 import { describe, expect, it } from 'vitest';
 import {
-  avatarCropAfterDrag,
-  avatarCropAfterZoom,
-  avatarSourceRect,
-  avatarStageFit,
+  AVATAR_HEDEF,
+  BANNER_ASPECT,
+  BANNER_HEDEF,
   avatarStoragePath,
-  cleanAvatarCrop,
+  bannerStoragePath,
 } from './avatar';
 
-describe('avatar crop', () => {
-  it('landscape görselde kare FOVu yatay eksende kaydırır', () => {
-    expect(
-      avatarSourceRect({ width: 4000, height: 2000 }, { zoom: 1, panX: 1, panY: 0 })
-    ).toEqual({ x: 2000, y: 0, size: 2000 });
-  });
-
-  it('zoom arttıkça kaynak karesi küçülür', () => {
-    expect(
-      avatarSourceRect({ width: 3000, height: 3000 }, { zoom: 3, panX: 0, panY: 0 })
-    ).toEqual({ x: 1000, y: 1000, size: 1000 });
-  });
-
-  it('geçersiz kontrolleri güvenli aralığa çeker', () => {
-    expect(cleanAvatarCrop({ zoom: 99, panX: -4, panY: Number.NaN })).toEqual({
-      zoom: 4,
-      panX: -1,
-      panY: 0,
-    });
-  });
-});
-
-describe('avatarStoragePath', () => {
-  it('sahipliği yolun ilk klasöründe tutar', () => {
-    expect(avatarStoragePath('u1', 123)).toBe('u1/avatar-123.jpg');
-  });
-});
-
 /**
- * DOĞRUDAN KADRAJ — SAHNE GEOMETRİSİ.
- *
- * Bu üç fonksiyon tuvalde sürükleme ve yakınlaştırmanın altında duruyor;
- * hatası "fotoğraf parmağın altından kayıyor" şeklinde görünür ve
- * gözle ayıklanması zordur. Saf oldukları için burada tarayıcısız
- * ölçülüyorlar.
+ * Kadraj hesabının kendisi `kadraj.test.ts` içinde ölçülüyor; burada
+ * kalan şey depolama yolu ve hedef ölçüler — ikisi de sessizce
+ * bozulabilecek türden.
  */
-describe('avatarStageFit', () => {
-  it('yatay fotoğrafı sığdırıp dikeyde ortalar', () => {
-    expect(avatarStageFit({ width: 4000, height: 2000 }, 320)).toEqual({
-      scale: 0.08,
-      offsetX: 0,
-      offsetY: 80,
-    });
+describe('depolama yolu', () => {
+  /* Sahiplik yolun İLK klasöründe: depolama politikası
+     `(storage.foldername(name))[1] = auth.uid()` diyor. Yolun başına
+     başka bir şey gelirse kullanıcı kendi dosyasını yazamaz. */
+  it('sahipliği yolun ilk klasöründe tutuyor', () => {
+    expect(avatarStoragePath('u1', 123)).toBe('u1/avatar-123.jpg');
+    expect(bannerStoragePath('u1', 123)).toBe('u1/banner-123.jpg');
   });
 
-  it('kare fotoğrafta boşluk bırakmaz', () => {
-    expect(avatarStageFit({ width: 1000, height: 1000 }, 320)).toEqual({
-      scale: 0.32,
-      offsetX: 0,
-      offsetY: 0,
-    });
-  });
-});
-
-describe('avatarCropAfterDrag', () => {
-  it('sürükleme kadar kayar ve sürüklenen yönde kalır', () => {
-    /* 4000×2000'de zoom 1 => kare 2000, gidilecek yatay yer 2000 px,
-       yarısı 1000. 500 px sağa sürüklemek panX'i 0.5 yapar. */
-    const next = avatarCropAfterDrag(
-      { width: 4000, height: 2000 },
-      { zoom: 1, panX: 0, panY: 0 },
-      500,
-      0
-    );
-    expect(next.panX).toBeCloseTo(0.5, 5);
-    expect(next.panY).toBe(0);
+  /* Avatar ve kapak AYNI kovada duruyor; adları çakışırsa biri
+     diğerinin üstüne yazardı. */
+  it('avatar ve kapak farklı ad alıyor', () => {
+    expect(avatarStoragePath('u1', 5)).not.toBe(bannerStoragePath('u1', 5));
   });
 
-  it('kenara dayandığında taşmıyor', () => {
-    const next = avatarCropAfterDrag(
-      { width: 4000, height: 2000 },
-      { zoom: 1, panX: 0.9, panY: 0 },
-      99999,
-      0
-    );
-    expect(next.panX).toBe(1);
-  });
-
-  /*
-   * KARE FOTOĞRAFTA ZOOM 1: gidilecek yer YOK. Bölen sıfır olduğu için
-   * korumasız bir hesap `Infinity` üretir, `cleanAvatarCrop` onu sonlu
-   * bulmayıp 0'a çeker ve kadraj sessizce sıfırlanırdı.
-   */
-  it('gidilecek yer yokken kadrajı bozmuyor', () => {
-    const next = avatarCropAfterDrag(
-      { width: 1000, height: 1000 },
-      { zoom: 1, panX: 0, panY: 0 },
-      120,
-      -80
-    );
-    expect(next).toEqual({ zoom: 1, panX: 0, panY: 0 });
+  /* Zaman damgası olmasaydı aynı ada üstüne yazılır, tarayıcı ve CDN
+     önbelleğinde eski görsel kalırdı. */
+  it('zaman damgası yolu değiştiriyor', () => {
+    expect(avatarStoragePath('u1', 1)).not.toBe(avatarStoragePath('u1', 2));
   });
 });
 
-describe('avatarCropAfterZoom', () => {
-  it('oranı uygular', () => {
-    expect(avatarCropAfterZoom({ zoom: 2, panX: 0, panY: 0 }, 1.5).zoom).toBeCloseTo(3);
+describe('hedef ölçüler', () => {
+  it('avatar kare, kapak 3:1', () => {
+    expect(AVATAR_HEDEF.width).toBe(AVATAR_HEDEF.height);
+    expect(BANNER_ASPECT).toBe(3);
+    expect(BANNER_HEDEF.width / BANNER_HEDEF.height).toBe(BANNER_ASPECT);
   });
 
-  it('sınırların dışına çıkmıyor', () => {
-    expect(avatarCropAfterZoom({ zoom: 3, panX: 0, panY: 0 }, 10).zoom).toBe(4);
-    expect(avatarCropAfterZoom({ zoom: 1.2, panX: 0, panY: 0 }, 0.01).zoom).toBe(1);
-  });
-
-  /* Geçersiz oran (0, negatif, NaN) kadrajı SIFIRLAMAMALI: kıstırma
-     ilk karede iki parmağın mesafesi henüz ölçülmemişken 0 üretebilir. */
-  it('geçersiz oranı yok sayıyor', () => {
-    expect(avatarCropAfterZoom({ zoom: 2.5, panX: 0, panY: 0 }, 0).zoom).toBe(2.5);
-    expect(
-      avatarCropAfterZoom({ zoom: 2.5, panX: 0, panY: 0 }, Number.NaN).zoom
-    ).toBe(2.5);
+  it('ikisi de 5 MB sınırında', () => {
+    expect(AVATAR_HEDEF.maxBytes).toBe(5 * 1024 * 1024);
+    expect(BANNER_HEDEF.maxBytes).toBe(5 * 1024 * 1024);
   });
 });

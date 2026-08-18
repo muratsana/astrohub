@@ -18,6 +18,10 @@ vi.mock('@/services/content/photos', () => ({
 vi.mock('@/services/content/profile', () => ({
   profileAvatarUrl: (path: string | null | undefined) =>
     path ? `https://cdn.example/${path}` : null,
+  /* Kapak da aynı kovadan geliyor; ikisi tek üreticiden türüyor
+     (bkz. 20260818220000) ve taklidi de öyle davranmalı. */
+  profileBannerUrl: (path: string | null | undefined) =>
+    path ? `https://cdn.example/${path}` : null,
   usePublicProfileContact: () => ({ contact: null, loading: false }),
   useProfileByUsername: () => ({
     ...profileState,
@@ -27,6 +31,20 @@ vi.mock('@/services/content/profile', () => ({
 
 vi.mock('@/features/social/UserActions', () => ({
   UserActions: () => null,
+}));
+
+/* Takip sayaçları başlıkta duruyor; sayfa artık `useFollow`u kendisi
+   çağırıyor ve taklit olmadan ağ katmanına iniyordu. */
+vi.mock('@/services/content/social', () => ({
+  useFollow: () => ({
+    following: false,
+    followers: 0,
+    followingCount: 0,
+    canFollow: false,
+    busy: false,
+    error: null,
+    toggle: vi.fn(),
+  }),
 }));
 
 /*

@@ -45,6 +45,7 @@ function profile(termsAcceptedAt: string | null): Profile {
     websiteUrl: null,
     usernameCustomizedAt: null,
     avatarPath: null,
+    bannerPath: null,
     termsAcceptedAt,
     accountStatus: 'active',
     suspendedUntil: null,

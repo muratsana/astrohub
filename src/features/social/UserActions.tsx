@@ -8,6 +8,7 @@ import {
   unblockUser,
   useFollow,
   useIsBlocked,
+  type FollowState,
 } from '@/services/content/social';
 import { MessageButton } from './MessageButton';
 
@@ -30,12 +31,26 @@ import { MessageButton } from './MessageButton';
 export function UserActions({
   targetUserId,
   displayName,
+  follow: disaridan,
 }: {
   targetUserId: string | undefined;
   displayName: string;
+  /**
+   * Takip durumu dışarıdan verilebilir.
+   *
+   * Profil sayfası takipçi sayısını başlıkta gösteriyor ve bunun için
+   * `useFollow`u zaten çağırıyor. Buranın ikinci kez çağırması, her
+   * profil açılışında aynı iki sayımı boşuna tekrarlamak olurdu.
+   */
+  follow?: FollowState;
 }) {
   const { user } = useAuth();
-  const follow = useFollow(targetUserId);
+  /* Dışarıdan durum geldiyse kendi sorgumuzu KURMUYORUZ: `undefined`
+     hedefle çağrılan kanca ağa hiç çıkmıyor. Kancayı koşullu çağırmak
+     React kurallarını çiğnerdi; hedefi boşaltmak aynı sonucu kurallara
+     uyarak veriyor. */
+  const kendi = useFollow(disaridan ? undefined : targetUserId);
+  const follow = disaridan ?? kendi;
   const { blocked, refresh: refreshBlock } = useIsBlocked(targetUserId);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);

@@ -2,7 +2,10 @@ import { useCallback, useEffect, useState } from 'react';
 import { getSupabase, isSupabaseConfigured } from '@/services/supabase/client';
 import { sanitizeText, sanitizeUsername } from '@/lib/sanitize';
 import { safeUrl } from '@/lib/url';
-import { avatarStoragePath } from '@/domain/profile/avatar';
+import {
+  avatarStoragePath,
+  bannerStoragePath,
+} from '@/domain/profile/avatar';
 
 /**
  * PROFİL — hesabın kendi kaydı.
@@ -33,6 +36,8 @@ export interface Profile {
   district: string | null;
   websiteUrl: string | null;
   avatarPath: string | null;
+  /** Public profil kapak görseli — avatarla aynı kovada, farklı önekle. */
+  bannerPath: string | null;
   /**
    * Hesabın yazma yetkisi. BU ALAN BİR GÜVENLİK KONTROLÜ DEĞİL — yaptırım
    * RLS'te (`app.is_account_active`). Buradaki değer yalnızca kullanıcıya
@@ -70,6 +75,7 @@ interface ProfileRow {
   district?: string | null;
   website_url: string | null;
   avatar_path: string | null;
+  banner_path?: string | null;
   terms_accepted_at: string | null;
   username_customized_at?: string | null;
   /* Üçü İSTEĞE BAĞLI: bu alanları yalnızca `SELECT` sabiti çekiyor ve
@@ -92,6 +98,7 @@ export function mapProfileRow(row: ProfileRow): Profile {
     district: row.district ?? null,
     websiteUrl: row.website_url,
     avatarPath: row.avatar_path,
+    bannerPath: row.banner_path ?? null,
     termsAcceptedAt: row.terms_accepted_at,
     usernameCustomizedAt: row.username_customized_at ?? null,
     accountStatus: row.account_status ?? 'active',
@@ -119,16 +126,39 @@ export function canWrite(profile: Profile | null): boolean {
   );
 }
 
-export function profileAvatarUrl(path: string | null | undefined): string | null {
+/**
+ * Kovadaki bir dosyanın açık adresi.
+ *
+ * Avatar ve kapak AYNI kovada duruyor (gerekçesi 20260818220000'de):
+ * ikinci bir kova, birebir aynı politika setinin ikinci bir kopyası
+ * olurdu. Bu yüzden tek üretici ikisine de bakıyor.
+ */
+function avatarKovaUrl(path: string | null | undefined): string | null {
   if (!path) return null;
   const base = import.meta.env.VITE_SUPABASE_URL?.trim();
   if (!base) return null;
   return `${base}/storage/v1/object/public/avatars/${path}`;
 }
 
+export function profileAvatarUrl(path: string | null | undefined): string | null {
+  return avatarKovaUrl(path);
+}
+
+export function profileBannerUrl(path: string | null | undefined): string | null {
+  return avatarKovaUrl(path);
+}
+
+/*
+ * SEÇİM TEK PARÇA BİR DİZE, BİRLEŞTİRME DEĞİL.
+ *
+ * PostgREST tipleri seçimi SABİT dize olarak okuyor; birleştirilmiş
+ * dizede satır tipi çözülemiyor ve kayıtlar sessizce genel bir tipe
+ * düşüyor. Bunun bedeli `/saha` sayfasında görüldü: dizede tabloda
+ * olmayan dört kolon vardı, tip çözülmediği için derleme hiçbir şey
+ * söylemedi ve sayfa canlıda 400 aldı (bkz. 20260818210000).
+ */
 const SELECT =
-  'id, username, display_name, display_name_visible, bio, city, district, website_url, avatar_path, ' +
-  'terms_accepted_at, username_customized_at, account_status, suspended_until, status_reason';
+  'id, username, display_name, display_name_visible, bio, city, district, website_url, avatar_path, banner_path, terms_accepted_at, username_customized_at, account_status, suspended_until, status_reason';
 
 /**
  * Onayı kendi profil satırına yazar.
@@ -484,13 +514,34 @@ export async function updateProfileContact(
   if (error) throw new Error(error.message);
 }
 
-export async function uploadProfileAvatar(
+/**
+ * ══════════════════════════════════════════════════════════════════════
+ * GÖRSEL YÜKLEME SIRASI — ÖNCE YÜKLE, SONRA İŞARET ET, EN SON SİL
+ *
+ * Sıra bilinçli ve her adımın bir gerekçesi var:
+ *
+ *   1. Yeni dosya depolamaya yazılır. Burada düşerse profil hiç
+ *      değişmemiştir; kullanıcı eski görselini kaybetmez.
+ *   2. Profil satırı yeni yola çevrilir. Burada düşerse yeni dosya
+ *      GERİ ALINIR — aksi hâlde depolamada hiçbir kaydın işaret
+ *      etmediği bir öksüz kalırdı.
+ *   3. Eski dosya en son silinir. Önce silmek, ikinci adım düştüğünde
+ *      kullanıcıyı görselsiz bırakırdı.
+ *
+ * Avatar ve kapak aynı fonksiyondan geçiyor: farkları yalnızca hangi
+ * kolonun güncellendiği. İki kopya, birinde düzeltilen sıralamanın
+ * diğerinde eski kalmasına davetiye olurdu.
+ */
+type GorselAlani = 'avatar_path' | 'banner_path';
+
+async function profilGorseliYukle(
   userId: string,
   blob: Blob,
+  path: string,
+  alan: GorselAlani,
   previousPath: string | null | undefined
 ): Promise<void> {
   const supabase = await client();
-  const path = avatarStoragePath(userId);
   const { error: uploadError } = await supabase.storage
     .from('avatars')
     .upload(path, blob, {
@@ -502,7 +553,7 @@ export async function uploadProfileAvatar(
 
   const { error: profileError } = await supabase
     .from('profiles')
-    .update({ avatar_path: path, updated_at: new Date().toISOString() })
+    .update({ [alan]: path, updated_at: new Date().toISOString() })
     .eq('id', userId);
 
   if (profileError) {
@@ -515,20 +566,65 @@ export async function uploadProfileAvatar(
   }
 }
 
-export async function removeProfileAvatar(
+async function profilGorseliSil(
   userId: string,
-  path: string | null | undefined
+  path: string | null | undefined,
+  alan: GorselAlani
 ): Promise<void> {
   const supabase = await client();
   const { error } = await supabase
     .from('profiles')
-    .update({ avatar_path: null, updated_at: new Date().toISOString() })
+    .update({ [alan]: null, updated_at: new Date().toISOString() })
     .eq('id', userId);
   if (error) throw new Error(error.message);
 
+  /* Kayıt temizlendikten SONRA dosya siliniyor: ters sırada silme
+     başarısız olursa profil var olmayan bir dosyayı gösterirdi. */
   if (path) {
     await supabase.storage.from('avatars').remove([path]);
   }
+}
+
+export function uploadProfileAvatar(
+  userId: string,
+  blob: Blob,
+  previousPath: string | null | undefined
+): Promise<void> {
+  return profilGorseliYukle(
+    userId,
+    blob,
+    avatarStoragePath(userId),
+    'avatar_path',
+    previousPath
+  );
+}
+
+export function removeProfileAvatar(
+  userId: string,
+  path: string | null | undefined
+): Promise<void> {
+  return profilGorseliSil(userId, path, 'avatar_path');
+}
+
+export function uploadProfileBanner(
+  userId: string,
+  blob: Blob,
+  previousPath: string | null | undefined
+): Promise<void> {
+  return profilGorseliYukle(
+    userId,
+    blob,
+    bannerStoragePath(userId),
+    'banner_path',
+    previousPath
+  );
+}
+
+export function removeProfileBanner(
+  userId: string,
+  path: string | null | undefined
+): Promise<void> {
+  return profilGorseliSil(userId, path, 'banner_path');
 }
 
 /**

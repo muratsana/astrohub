@@ -12,6 +12,45 @@ import { cn } from '@/lib/cn';
  * Yapı: üstte isteğe bağlı kırıntı yolu, solda başlık + açıklama, sağda
  * eylem(ler). Altta hairline — modülün "başlık şeridi".
  */
+/**
+ * KIRINTI YOLU — `PageHeader`tan ayrı da kullanılabiliyor.
+ *
+ * Profil sayfası kendi başlık bloğunu çiziyor (kapak görseli + üstüne
+ * binen avatar) ama kırıntı yolunu kaybetmemeli. Aynı işaretlemeyi
+ * ikinci kez yazmak, iki yerde iki farklı boşluk değeriyle bitecek
+ * türden bir tekrar olurdu.
+ */
+export function Breadcrumb({
+  items,
+  className,
+}: {
+  items?: { label: string; to?: string }[];
+  className?: string;
+}) {
+  if (!items || items.length === 0) return null;
+  return (
+    <nav aria-label="Kırıntı yolu" className={cn('mb-2.5', className)}>
+      <ol className="flex flex-wrap items-center gap-1.5 text-meta tracking-[0.03em] text-faint">
+        {items.map((crumb, i) => (
+          <li key={`${crumb.label}-${i}`} className="flex items-center gap-1.5">
+            {i > 0 && <span aria-hidden>/</span>}
+            {crumb.to ? (
+              <Link
+                to={crumb.to}
+                className="inline-block py-1 transition-colors hover:text-foreground"
+              >
+                {crumb.label}
+              </Link>
+            ) : (
+              <span className="text-muted-foreground">{crumb.label}</span>
+            )}
+          </li>
+        ))}
+      </ol>
+    </nav>
+  );
+}
+
 export function PageHeader({
   title,
   description,
@@ -37,27 +76,7 @@ export function PageHeader({
         className
       )}
     >
-      {breadcrumb && breadcrumb.length > 0 && (
-        <nav aria-label="Kırıntı yolu" className="mb-2.5">
-          <ol className="flex flex-wrap items-center gap-1.5 text-meta tracking-[0.03em] text-faint">
-            {breadcrumb.map((crumb, i) => (
-              <li key={`${crumb.label}-${i}`} className="flex items-center gap-1.5">
-                {i > 0 && <span aria-hidden>/</span>}
-                {crumb.to ? (
-                  <Link
-                    to={crumb.to}
-                    className="inline-block py-1 transition-colors hover:text-foreground"
-                  >
-                    {crumb.label}
-                  </Link>
-                ) : (
-                  <span className="text-muted-foreground">{crumb.label}</span>
-                )}
-              </li>
-            ))}
-          </ol>
-        </nav>
-      )}
+      <Breadcrumb items={breadcrumb} />
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">

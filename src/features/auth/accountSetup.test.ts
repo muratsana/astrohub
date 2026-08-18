@@ -18,6 +18,7 @@ function profile(over: Partial<Profile> = {}): Profile {
     district: null,
     websiteUrl: null,
     avatarPath: null,
+    bannerPath: null,
     accountStatus: 'active',
     suspendedUntil: null,
     statusReason: null,

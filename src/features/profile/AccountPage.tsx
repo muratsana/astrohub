@@ -32,7 +32,7 @@ import { useMyProfileStats } from '@/services/content/profileDashboard';
 import { isUsernameLocked } from '@/features/auth/accountSetup';
 import { MyEquipmentPanel } from '@/features/equipment/MyEquipmentPanel';
 import { PreferencesPanel } from '@/features/preferences/PreferencesPanel';
-import { AvatarEditor } from './AvatarEditor';
+import { AvatarEditor, BannerEditor } from './AvatarEditor';
 import { PasswordPanel } from './PasswordPanel';
 import { DataExportPanel } from './DataExportPanel';
 
@@ -552,6 +552,12 @@ export function AccountPage() {
         ) : (
           <div className="grid gap-4">
             <AvatarEditor userId={user?.id} profile={profile} onDone={refresh} />
+
+            {/* Kapak, profil fotoğrafının hemen ardında: ikisi public
+                profilde de yan yana duruyor ve burada ayrı yerlere
+                dağıtmak, birini düzenleyip diğerini unutmayı
+                kolaylaştırırdı. */}
+            <BannerEditor userId={user?.id} profile={profile} onDone={refresh} />
 
             <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-6">
               <Readout label="Fotoğrafları" value={statsState.stats.photoCount} />

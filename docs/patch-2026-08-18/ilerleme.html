@@ -157,14 +157,14 @@ footer p { margin: 0 0 5px; }
       sonda onların üstüne oturan özellikler. Bu sayfa
       <code class="mono">PROGRESS_TRACKER.csv</code>'den üretiliyor.
     </p>
-    <div class="serit"><span class="serit-parca durum-VERIFIED" style="flex:12" title="Doğrulandı: 12"></span><span class="serit-parca durum-TESTED" style="flex:1" title="Test edildi: 1"></span><span class="serit-parca durum-CODED" style="flex:3" title="Kodlandı: 3"></span><span class="serit-parca durum-IN_PROGRESS" style="flex:4" title="Sürüyor: 4"></span><span class="serit-parca durum-TODO" style="flex:75" title="Sırada: 75"></span></div>
+    <div class="serit"><span class="serit-parca durum-VERIFIED" style="flex:12" title="Doğrulandı: 12"></span><span class="serit-parca durum-TESTED" style="flex:5" title="Test edildi: 5"></span><span class="serit-parca durum-CODED" style="flex:3" title="Kodlandı: 3"></span><span class="serit-parca durum-IN_PROGRESS" style="flex:3" title="Sürüyor: 3"></span><span class="serit-parca durum-TODO" style="flex:72" title="Sırada: 72"></span></div>
     <div class="ozetler">
       <button class="ozet durum-VERIFIED" data-filtre="VERIFIED" type="button">
         <span class="ozet-sayi mono">12</span>
         <span class="ozet-ad">Doğrulandı</span>
       </button>
       <button class="ozet durum-TESTED" data-filtre="TESTED" type="button">
-        <span class="ozet-sayi mono">1</span>
+        <span class="ozet-sayi mono">5</span>
         <span class="ozet-ad">Test edildi</span>
       </button>
       <button class="ozet durum-CODED" data-filtre="CODED" type="button">
@@ -172,11 +172,11 @@ footer p { margin: 0 0 5px; }
         <span class="ozet-ad">Kodlandı</span>
       </button>
       <button class="ozet durum-IN_PROGRESS" data-filtre="IN_PROGRESS" type="button">
-        <span class="ozet-sayi mono">4</span>
+        <span class="ozet-sayi mono">3</span>
         <span class="ozet-ad">Sürüyor</span>
       </button>
       <button class="ozet durum-TODO" data-filtre="TODO" type="button">
-        <span class="ozet-sayi mono">75</span>
+        <span class="ozet-sayi mono">72</span>
         <span class="ozet-ad">Sırada</span>
       </button></div>
   </header>
@@ -430,8 +430,8 @@ footer p { margin: 0 0 5px; }
           <p>Üst çubuk, oturum, public profil</p>
         </div>
         <div class="faz-olcu">
-          <span class="faz-oran mono">4<span class="bolu">/</span>12</span>
-          <div class="faz-cubuk"><span style="width:33%"></span></div>
+          <span class="faz-oran mono">8<span class="bolu">/</span>12</span>
+          <div class="faz-cubuk"><span style="width:67%"></span></div>
         </div>
       </header>
       <div class="tablo-sar">
@@ -484,16 +484,16 @@ footer p { margin: 0 0 5px; }
           <td><span class="rozet durum-VERIFIED">Doğrulandı</span></td>
           <td class="mono kanit"><code>2fcadac</code><span class="kanit-metin">vitest: cikis gercekten oturumu kapatiyor</span></td>
         </tr>
-        <tr data-durum="IN_PROGRESS" data-oncelik="P1">
+        <tr data-durum="TESTED" data-oncelik="P1">
           <td class="mono">E05</td>
           <td><span class="oncelik o-P1">P1</span></td>
           <td class="modul">Public Profil</td>
           <td class="is">
             <span class="is-baslik">LinkedIn benzeri public profil üst alanı</span>
-            <span class="is-not">Referans AstroBin profili ORNEK olarak verildi, birebir kopya degil: alinacaklar kapak gorseli, uzerine binen avatar ve istatistik satiri. Sekme/bolum duzeni Astrohub'in kendi tasarimi kaliyor.</span>
+            <span class="is-not">Kapak + ustune binen avatar + sayac seridi; sekme duzeni Astrohub'in kendi tasarimi</span>
           </td>
-          <td><span class="rozet durum-IN_PROGRESS">Sürüyor</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>e3f2c48</code><span class="kanit-metin">vitest ProfilePage.test.tsx; npm run test:all</span></td>
         </tr>
         <tr data-durum="TODO" data-oncelik="P1">
           <td class="mono">E06</td>
@@ -539,38 +539,38 @@ footer p { margin: 0 0 5px; }
           <td><span class="rozet durum-TESTED">Test edildi</span></td>
           <td class="mono kanit"><code>07af5a2</code><span class="kanit-metin">vitest: public profil girisi menude yok</span></td>
         </tr>
-        <tr data-durum="TODO" data-oncelik="P1">
+        <tr data-durum="TESTED" data-oncelik="P1">
           <td class="mono">E10</td>
           <td><span class="oncelik o-P1">P1</span></td>
           <td class="modul">Public Profil</td>
           <td class="is">
             <span class="is-baslik">Kapak görseli (banner) yükleme</span>
-            
+            <span class="is-not">banner_path kolonu, avatars kovasinda banner- oneki, 1500x500 (3:1)</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>e3f2c48</code><span class="kanit-metin">vitest domain/profile; npm run test:all</span></td>
         </tr>
-        <tr data-durum="TODO" data-oncelik="P1">
+        <tr data-durum="TESTED" data-oncelik="P1">
           <td class="mono">E11</td>
           <td><span class="oncelik o-P1">P1</span></td>
           <td class="modul">Public Profil</td>
           <td class="is">
             <span class="is-baslik">Kapak ve avatar için ortak kadraj editörü</span>
-            
+            <span class="is-not">KadrajEditoru: surukleme, tekerlek, kistirma ve kaydiricilar; avatar 1:1, kapak 3:1 ayni bilesen</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>e3f2c48</code><span class="kanit-metin">vitest kadraj.test.ts (12 senaryo)</span></td>
         </tr>
-        <tr data-durum="TODO" data-oncelik="P1">
+        <tr data-durum="TESTED" data-oncelik="P1">
           <td class="mono">E12</td>
           <td><span class="oncelik o-P1">P1</span></td>
           <td class="modul">Public Profil</td>
           <td class="is">
             <span class="is-baslik">Kapak ve avatar silinebilmeli</span>
-            
+            <span class="is-not">Avatar ve kapak icin ayni silme yolu; kayit once, dosya sonra</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>e3f2c48</code><span class="kanit-metin">profilGorseliSil tek yol</span></td>
         </tr></tbody>
         </table>
       </div>

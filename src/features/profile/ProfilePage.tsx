@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useParams } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { Badge } from '@/components/ui/Badge';
-import { PageHeader } from '@/components/ui/PageHeader';
+import { Breadcrumb, PageHeader } from '@/components/ui/PageHeader';
 import { Readout } from '@/components/ui/Readout';
 import { CardGrid } from '@/components/ui/CardGrid';
 import { PhotoCard } from '@/features/photos/PhotoCard';
@@ -19,9 +19,12 @@ import { UserActions } from '@/features/social/UserActions';
 import { EXTERNAL_LINK_REL, safeUrl } from '@/lib/url';
 import {
   profileAvatarUrl,
+  profileBannerUrl,
   useProfileByUsername,
   usePublicProfileContact,
 } from '@/services/content/profile';
+import { gradientFromSeed } from '@/components/media/tints';
+import { useFollow } from '@/services/content/social';
 import { ProfileBadges } from './ProfileBadges';
 import { ProfileShowcase } from './ProfileShowcase';
 
@@ -48,6 +51,23 @@ export function ProfilePage() {
     () => photos.filter((p) => p.user.username === username),
     [photos, username]
   );
+
+  /*
+   * SAHİP KİMLİĞİ VE TAKİP SAYAÇLARI ERKEN DÖNÜŞLERDEN ÖNCE.
+   *
+   * Kancalar her boyamada aynı sırada çağrılmak zorunda; aşağıdaki
+   * "profil bulunamadı" dalları bir kancayı atlarsa React sırayı
+   * kaybeder. Kimliği burada türetmek, sayacı da buraya çekmeyi
+   * mümkün kılıyor.
+   *
+   * Sayaçlar BAŞLIKTA gösteriliyor, eylem şeridinde değil:
+   * `UserActions` kendi profilinde hiç çizilmiyor (kendini takip etmek
+   * anlamsız) ve sayaçlar onun içinde kalsaydı kullanıcı KENDİ takipçi
+   * sayısını hiçbir yerde göremezdi. Aynı durum eylem şeridine de
+   * veriliyor ki iki sorgu ikinci kez kurulmasın.
+   */
+  const ownerId = profile?.id ?? userPhotos.find((p) => p.ownerId)?.ownerId;
+  const follow = useFollow(ownerId);
 
   if (!username) {
     return (
@@ -85,9 +105,7 @@ export function ProfilePage() {
       ? username
       : (profile?.displayName ?? seedUser?.displayName ?? username);
   const avatarUrl = profileAvatarUrl(profile?.avatarPath);
-  /* Tohum kayıtlarda `ownerId` yok; eylem şeridi o durumda kendini
-     gizliyor (bkz. UserActions). */
-  const ownerId = profile?.id ?? userPhotos.find((p) => p.ownerId)?.ownerId;
+  const bannerUrl = profileBannerUrl(profile?.bannerPath);
   const totalSeconds = userPhotos.reduce(
     (sum, p) => sum + totalIntegrationSeconds(p.exposures),
     0
@@ -141,36 +159,74 @@ export function ProfilePage() {
         ])}
       />
       <Container className="py-8 sm:py-10">
-        <PageHeader
-          breadcrumb={[
+        <Breadcrumb
+          items={[
             { label: 'Ana Sayfa', to: '/' },
             { label: 'Astrofotoğrafçılar', to: '/kesfet' },
             { label: displayName },
           ]}
-          title={displayName}
-          meta={`@${username}`}
-          description={
-            profile?.bio ??
-            (cities.length > 0
-              ? `${cities.join(', ')} çevresinden ${userPhotos.length} kayıt.`
-              : 'Henüz yayınlanmış fotoğraf yok.')
-          }
-          actions={
-            <div className="flex flex-col items-start gap-2 sm:items-end">
-              {avatarUrl && (
-                <img
-                  src={avatarUrl}
-                  alt={`${displayName} profil fotoğrafı`}
-                  className="h-20 w-20 rounded-full border border-border object-cover"
-                />
-              )}
-              <div className="flex flex-wrap gap-1.5">
-                {cities.map((city) => (
-                  <Badge key={city}>{city}</Badge>
-                ))}
+        />
+
+        {/*
+          ══════════════════════════════════════════════════════════════
+          KİMLİK ALANI: KAPAK + ÜSTÜNE BİNEN AVATAR + SAYAÇLAR (E05)
+
+          Profil başlığı sıradan bir sayfa başlığıydı: solda ad, sağda
+          küçük bir yuvarlak fotoğraf. Astrofotoğraf sitesinde kimliği
+          taşıyan şey metin değil KARE — kullanıcının kendi çektiği bir
+          görüntü, adının arkasında.
+
+          Kapak yoksa boş bir kutu değil, kullanıcı adından türeyen
+          sabit bir gradyan çiziliyor: boş gri bir bant "bir şey
+          eksik" der, gradyan "burası böyle" der.
+
+          Avatar kapağın üstüne BİNİYOR ve halkası sayfa zeminiyle aynı
+          renkte. Kapağın içine oturtmak fotoğrafın bir köşesini yer,
+          altına almak ikisini birbirinden kopuk iki öğe yapardı.
+        */}
+        <header className="mb-6 overflow-hidden rounded-card border border-border bg-surface-1">
+          <div className="relative h-32 w-full sm:h-44 lg:h-52">
+            {bannerUrl ? (
+              <img
+                src={bannerUrl}
+                alt=""
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <div
+                aria-hidden
+                className="h-full w-full"
+                style={{ background: gradientFromSeed(username) }}
+              />
+            )}
+          </div>
+
+          <div className="px-4 pb-4 sm:px-6 sm:pb-5">
+            <div className="-mt-10 flex flex-wrap items-end gap-x-4 gap-y-3 sm:-mt-12">
+              <div className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-full border-4 border-surface-1 bg-surface-2 sm:h-24 sm:w-24">
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt={`${displayName} profil fotoğrafı`}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <span className="text-h3 text-muted-foreground">
+                    {displayName.slice(0, 1).toUpperCase()}
+                  </span>
+                )}
               </div>
-              <ProfileBadges userId={ownerId} />
-              <div className="flex flex-wrap gap-2">
+
+              <div className="min-w-0 flex-1">
+                <h1 className="type-page truncate text-foreground">
+                  {displayName}
+                </h1>
+                <p className="tabular truncate text-meta text-muted-foreground">
+                  @{username}
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
                 {websiteUrl && (
                   <a
                     href={websiteUrl}
@@ -189,17 +245,18 @@ export function ProfilePage() {
                     Telefon
                   </a>
                 )}
-                <UserActions targetUserId={ownerId} displayName={displayName} />
+                <UserActions
+                  targetUserId={ownerId}
+                  displayName={displayName}
+                  follow={follow}
+                />
                 {/*
-                  PROFİL ŞİKÂYETİ. Hedef kullanıcı KİMLİĞİ, kullanıcı adı
-                  değil: ad değiştirilebiliyor (FAZ 2'de panelden, ileride
-                  kullanıcının kendisi) ve değiştiği anda şikâyet kaydı
-                  kime ait olduğunu kaybederdi.
-                */}
-                {/*
-                  Kimlik yoksa düğme HİÇ çizilmiyor. Tohum profillerin
-                  veritabanı satırı yok; kullanıcı adını kimlik yerine
-                  koymak, moderatörün açamayacağı bir kayıt üretirdi.
+                  PROFİL ŞİKÂYETİ hedef KİMLİĞİYLE gidiyor, kullanıcı adıyla
+                  değil: ad değiştirilebiliyor ve değiştiği anda şikâyet
+                  kaydı kime ait olduğunu kaybederdi. Kimlik yoksa düğme hiç
+                  çizilmiyor — tohum profillerin veritabanı satırı yok ve
+                  kullanıcı adını kimlik yerine koymak, moderatörün
+                  açamayacağı bir kayıt üretirdi.
                 */}
                 {ownerId && (
                   <ReportButton
@@ -211,8 +268,40 @@ export function ProfilePage() {
                 )}
               </div>
             </div>
-          }
-        />
+
+            {/*
+              SAYAÇ ŞERİDİ. Profilin "kim bu" sorusuna verdiği ilk cevap:
+              kaç kare, ne kadar entegrasyon, kaç takipçi. Üçü de zaten
+              hesaplanıyordu ama sayfanın altına dağılmıştı.
+            */}
+            <dl className="mt-4 flex flex-wrap gap-x-6 gap-y-2 border-t border-border pt-3 text-meta">
+              <ProfilSayaci etiket="fotoğraf" deger={userPhotos.length} />
+              <ProfilSayaci
+                etiket="entegrasyon"
+                deger={formatIntegration(totalSeconds)}
+              />
+              <ProfilSayaci etiket="takipçi" deger={follow.followers} />
+              <ProfilSayaci
+                etiket="takip edilen"
+                deger={follow.followingCount}
+              />
+            </dl>
+
+            {(profile?.bio || cities.length > 0) && (
+              <p className="mt-3 max-w-[65ch] text-body-sm text-muted-foreground">
+                {profile?.bio ??
+                  `${cities.join(', ')} çevresinden ${userPhotos.length} kayıt.`}
+              </p>
+            )}
+
+            <div className="mt-3 flex flex-wrap items-center gap-1.5">
+              {cities.map((city) => (
+                <Badge key={city}>{city}</Badge>
+              ))}
+              <ProfileBadges userId={ownerId} />
+            </div>
+          </div>
+        </header>
 
         <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
           <Readout label="Fotoğraf" value={userPhotos.length} />
@@ -261,5 +350,28 @@ export function ProfilePage() {
         <ProfileShowcase userId={ownerId} username={username} />
       </Container>
     </>
+  );
+}
+
+/**
+ * Tek bir sayaç: değer önde, etiket arkada.
+ *
+ * `<dl>` içinde `<dt>`/`<dd>` sırası anlamsal olarak etiket-değer;
+ * görsel sıra ise değer-etiket. İkisini çakıştırmak yerine
+ * `flex-row-reverse` kullanılıyor — ekran okuyucu doğru sırayı,
+ * göz alışık olduğu sırayı görüyor.
+ */
+function ProfilSayaci({
+  etiket,
+  deger,
+}: {
+  etiket: string;
+  deger: number | string;
+}) {
+  return (
+    <div className="flex flex-row-reverse items-baseline gap-1.5">
+      <dt className="text-muted-foreground">{etiket}</dt>
+      <dd className="tabular font-medium text-foreground">{deger}</dd>
+    </div>
   );
 }

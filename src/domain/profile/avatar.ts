@@ -1,150 +1,72 @@
+import {
+  kadrajiTemizle,
+  kaynakDikdortgen,
+  type Kadraj,
+} from './kadraj';
+
+export type { Kadraj } from './kadraj';
+export {
+  EN_AZ_ZOOM,
+  EN_COK_ZOOM,
+  VARSAYILAN_KADRAJ,
+  kadrajiTemizle,
+  kaynakDikdortgen,
+  sahneOturmasi,
+  suruklediktenSonra,
+  yakinlastiktanSonra,
+  type KaynakDikdortgen,
+  type SahneOturmasi,
+} from './kadraj';
+
+/**
+ * PROFİL GÖRSELLERİ — AVATAR VE KAPAK.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * İKİ GÖRSEL, TEK BORU HATTI
+ *
+ * Avatar kare, kapak geniş bant. Farkları yalnızca hedef ölçüde;
+ * kırpma, yeniden kodlama ve boyut küçültme mantığı aynı. Ayrı iki
+ * fonksiyon yazmak, birinde düzeltilen bir hatanın diğerinde kalmasına
+ * davetiye olurdu — kalite basamakları tam olarak böyle ayrışır.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * KAPAK NEDEN 1500×500
+ *
+ * Profil kapağı ekranın tam genişliğinde duruyor ve içinde okunacak bir
+ * şey yok; 1500 piksel geniş ekranda da yeterli, mobilde zaten
+ * küçültülüyor. 3:1 oran, dikey bir fotoğraftan bant çıkarırken bile
+ * kullanılabilir bir alan bırakıyor — 4:1 çoğu kadrajı yok ediyordu.
+ */
+
 export const AVATAR_SIZE = 1024;
 export const AVATAR_MAX_BYTES = 5 * 1024 * 1024;
 
-/**
- * FOV SINIRLARI TEK YERDE.
- *
- * Aynı iki sayı hem `cleanAvatarCrop`ta hem kaydırıcıda hem de tekerlek
- * ile yakınlaştırmada geçiyordu. Üçü ayrı yazıldığında biri değişip
- * diğerleri kaldığında ortaya "kaydırıcı 5'e çıkıyor ama görüntü 4'te
- * duruyor" gibi sessiz bir uyuşmazlık çıkardı.
- */
-export const AVATAR_MIN_ZOOM = 1;
-export const AVATAR_MAX_ZOOM = 4;
+export const BANNER_WIDTH = 1500;
+export const BANNER_HEIGHT = 500;
+export const BANNER_ASPECT = BANNER_WIDTH / BANNER_HEIGHT;
+export const BANNER_MAX_BYTES = 5 * 1024 * 1024;
 
-export interface AvatarCrop {
-  /** 1 = en geniş kare FOV, 4 = yakın kırpma. */
-  zoom: number;
-  /** -1 sol, 1 sağ. Kullanılamayan eksende etkisizdir. */
-  panX: number;
-  /** -1 üst, 1 alt. Kullanılamayan eksende etkisizdir. */
-  panY: number;
+/** Geriye dönük ad — kadraj tipi artık `Kadraj`. */
+export type AvatarCrop = Kadraj;
+export const DEFAULT_AVATAR_CROP: Kadraj = { zoom: 1, panX: 0, panY: 0 };
+
+export interface HedefOlcu {
+  width: number;
+  height: number;
+  maxBytes: number;
 }
 
-export const DEFAULT_AVATAR_CROP: AvatarCrop = {
-  zoom: 1,
-  panX: 0,
-  panY: 0,
+export const AVATAR_HEDEF: HedefOlcu = {
+  width: AVATAR_SIZE,
+  height: AVATAR_SIZE,
+  maxBytes: AVATAR_MAX_BYTES,
 };
 
-export interface SourceRect {
-  x: number;
-  y: number;
-  size: number;
-}
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, value));
-}
-
-export function cleanAvatarCrop(crop: AvatarCrop): AvatarCrop {
-  return {
-    zoom: clamp(
-      Number.isFinite(crop.zoom) ? crop.zoom : AVATAR_MIN_ZOOM,
-      AVATAR_MIN_ZOOM,
-      AVATAR_MAX_ZOOM
-    ),
-    panX: clamp(Number.isFinite(crop.panX) ? crop.panX : 0, -1, 1),
-    panY: clamp(Number.isFinite(crop.panY) ? crop.panY : 0, -1, 1),
-  };
-}
-
-export function avatarSourceRect(
-  source: { width: number; height: number },
-  crop: AvatarCrop
-): SourceRect {
-  const safe = cleanAvatarCrop(crop);
-  const base = Math.max(1, Math.min(source.width, source.height));
-  const size = Math.max(1, base / safe.zoom);
-
-  const maxX = Math.max(0, source.width - size);
-  const maxY = Math.max(0, source.height - size);
-  const centerX = source.width / 2 + safe.panX * (maxX / 2);
-  const centerY = source.height / 2 + safe.panY * (maxY / 2);
-
-  return {
-    x: clamp(centerX - size / 2, 0, maxX),
-    y: clamp(centerY - size / 2, 0, maxY),
-    size,
-  };
-}
-
-/**
- * ══════════════════════════════════════════════════════════════════════
- * SAHNE GEOMETRİSİ — DOĞRUDAN ELLE KADRAJ İÇİN
- *
- * Kadraj yalnızca kaydırıcılarla yapılıyordu ve kaydırıcı, sonucu
- * gösteriyordu; SEÇİMİ göstermiyordu. Kullanıcı 144 pikselik yuvarlak
- * önizlemede yalnızca içeride kalanı görüyor, dışarıda ne bıraktığını
- * göremiyordu — "biraz sola" demek için kaydırıcıyı deneme yanılmayla
- * itmek gerekiyordu.
- *
- * Buradaki iki fonksiyon fotoğrafın TAMAMINI bir kare sahneye sığdırıp
- * seçim çerçevesini onun üstünde göstermeyi mümkün kılıyor: sahne
- * pikseli ile kaynak pikseli arasındaki dönüşüm tek yerde duruyor ve
- * saf olduğu için testi de tarayıcısız yazılabiliyor.
- */
-export interface StageFit {
-  /** Kaynak pikselden sahne pikseline çarpan. */
-  scale: number;
-  /** Sahnede fotoğrafın sol üst köşesi (kısa kenarda boşluk kalır). */
-  offsetX: number;
-  offsetY: number;
-}
-
-export function avatarStageFit(
-  source: { width: number; height: number },
-  stage: number
-): StageFit {
-  const width = Math.max(1, source.width);
-  const height = Math.max(1, source.height);
-  const scale = Math.min(stage / width, stage / height);
-  return {
-    scale,
-    offsetX: (stage - width * scale) / 2,
-    offsetY: (stage - height * scale) / 2,
-  };
-}
-
-/**
- * Seçim çerçevesinin KAYNAK PİKSEL cinsinden kaydırılması.
- *
- * `panX`/`panY` -1..1 aralığında bir ORAN; sürükleme ise piksel. Dönüşüm
- * `avatarSourceRect`in tersi: orada `x`, `panX * (maxX / 2)` kadar
- * kayıyordu, burada aynı bölen kullanılıyor.
- *
- * `maxX` sıfırken (kare fotoğrafta zoom 1) o eksende gidilecek yer yok;
- * bölme yapılmıyor, değer olduğu gibi kalıyor. Aksi hâlde sonsuz çıkar
- * ve `cleanAvatarCrop` onu sessizce 0'a çekip kadrajı sıfırlardı.
- */
-export function avatarCropAfterDrag(
-  source: { width: number; height: number },
-  crop: AvatarCrop,
-  dx: number,
-  dy: number
-): AvatarCrop {
-  const safe = cleanAvatarCrop(crop);
-  const base = Math.max(1, Math.min(source.width, source.height));
-  const size = Math.max(1, base / safe.zoom);
-  const halfX = Math.max(0, source.width - size) / 2;
-  const halfY = Math.max(0, source.height - size) / 2;
-
-  return cleanAvatarCrop({
-    zoom: safe.zoom,
-    panX: halfX > 0 ? safe.panX + dx / halfX : safe.panX,
-    panY: halfY > 0 ? safe.panY + dy / halfY : safe.panY,
-  });
-}
-
-/** Tekerlek ya da kıstırma oranını FOV değerine çeviriyor. */
-export function avatarCropAfterZoom(
-  crop: AvatarCrop,
-  factor: number
-): AvatarCrop {
-  const safe = cleanAvatarCrop(crop);
-  const oran = Number.isFinite(factor) && factor > 0 ? factor : 1;
-  return cleanAvatarCrop({ ...safe, zoom: safe.zoom * oran });
-}
+export const BANNER_HEDEF: HedefOlcu = {
+  width: BANNER_WIDTH,
+  height: BANNER_HEIGHT,
+  maxBytes: BANNER_MAX_BYTES,
+};
 
 function canvasBlob(
   canvas: HTMLCanvasElement,
@@ -153,12 +75,22 @@ function canvasBlob(
   return new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', quality));
 }
 
-export async function renderAvatarBlob(
+/**
+ * Seçili kadrajı hedef ölçüde JPEG'e çevirir.
+ *
+ * KALİTE BASAMAKLI DENENİYOR. Tek bir kalite değeri seçmek iki yönde de
+ * yanlış: yüksek tutulursa gürültülü bir astrofotoğraf 5 MB sınırını
+ * aşıyor, düşük tutulursa temiz bir kare gereksiz yere bozuluyor.
+ * Basamaklar önce kaliteyi, sonra çözünürlüğü düşürüyor — çünkü hafif
+ * bir sıkıştırma kaybı, küçülmüş bir görselden daha az fark ediliyor.
+ */
+export async function renderKadrajBlob(
   file: File,
-  crop: AvatarCrop
+  kadraj: Kadraj,
+  hedef: HedefOlcu
 ): Promise<Blob> {
   if (typeof createImageBitmap !== 'function') {
-    throw new Error('Bu tarayıcı profil fotoğrafını işleyemiyor.');
+    throw new Error('Bu tarayıcı görseli işleyemiyor.');
   }
 
   let bitmap: ImageBitmap;
@@ -168,55 +100,79 @@ export async function renderAvatarBlob(
     throw new Error('Fotoğraf okunamadı. JPEG, PNG veya WebP seçin.');
   }
 
-  const source = { width: bitmap.width, height: bitmap.height };
-  const rect = avatarSourceRect(source, crop);
+  const enBoy = hedef.width / hedef.height;
+  const dik = kaynakDikdortgen(
+    { width: bitmap.width, height: bitmap.height },
+    kadrajiTemizle(kadraj),
+    enBoy
+  );
+
   const canvas = document.createElement('canvas');
   const context = canvas.getContext('2d');
   if (!context) {
     bitmap.close();
-    throw new Error('Fotoğraf işleme başlatılamadı.');
+    throw new Error('Görsel işleme başlatılamadı.');
   }
 
-  const attempts = [
-    { size: AVATAR_SIZE, quality: 0.9 },
-    { size: AVATAR_SIZE, quality: 0.82 },
-    { size: AVATAR_SIZE, quality: 0.72 },
-    { size: 768, quality: 0.76 },
-    { size: 512, quality: 0.78 },
+  const basamaklar = [
+    { olcek: 1, quality: 0.9 },
+    { olcek: 1, quality: 0.82 },
+    { olcek: 1, quality: 0.72 },
+    { olcek: 0.75, quality: 0.76 },
+    { olcek: 0.5, quality: 0.78 },
   ];
 
-  let smallest: Blob | null = null;
+  let enKucuk: Blob | null = null;
   try {
-    for (const attempt of attempts) {
-      canvas.width = attempt.size;
-      canvas.height = attempt.size;
+    for (const basamak of basamaklar) {
+      canvas.width = Math.round(hedef.width * basamak.olcek);
+      canvas.height = Math.round(hedef.height * basamak.olcek);
       context.imageSmoothingEnabled = true;
       context.imageSmoothingQuality = 'high';
       context.drawImage(
         bitmap,
-        rect.x,
-        rect.y,
-        rect.size,
-        rect.size,
+        dik.x,
+        dik.y,
+        dik.width,
+        dik.height,
         0,
         0,
-        attempt.size,
-        attempt.size
+        canvas.width,
+        canvas.height
       );
 
-      const blob = await canvasBlob(canvas, attempt.quality);
+      const blob = await canvasBlob(canvas, basamak.quality);
       if (!blob) continue;
-      if (!smallest || blob.size < smallest.size) smallest = blob;
-      if (blob.size <= AVATAR_MAX_BYTES) return blob;
+      if (!enKucuk || blob.size < enKucuk.size) enKucuk = blob;
+      if (blob.size <= hedef.maxBytes) return blob;
     }
   } finally {
     bitmap.close();
   }
 
-  if (smallest && smallest.size <= AVATAR_MAX_BYTES) return smallest;
-  throw new Error('Fotoğraf 5 MB sınırına indirilemedi.');
+  if (enKucuk && enKucuk.size <= hedef.maxBytes) return enKucuk;
+  throw new Error('Görsel 5 MB sınırına indirilemedi.');
 }
 
+/** Avatar için kısayol — çağıranların çoğu bunu kullanıyor. */
+export function renderAvatarBlob(file: File, kadraj: Kadraj): Promise<Blob> {
+  return renderKadrajBlob(file, kadraj, AVATAR_HEDEF);
+}
+
+export function renderBannerBlob(file: File, kadraj: Kadraj): Promise<Blob> {
+  return renderKadrajBlob(file, kadraj, BANNER_HEDEF);
+}
+
+/*
+ * Yol ZAMAN DAMGALI: aynı ada üstüne yazmak, tarayıcı ve CDN
+ * önbelleğinde eski görselin kalmasına yol açıyor — kullanıcı
+ * "değiştirdim ama eskisi duruyor" diyor. Yeni ad, eski dosya
+ * silinene kadar ikisinin bir arada yaşamasına da izin veriyor.
+ */
 export function avatarStoragePath(userId: string, now = Date.now()): string {
   return `${userId}/avatar-${now}.jpg`;
+}
+
+export function bannerStoragePath(userId: string, now = Date.now()): string {
+  return `${userId}/banner-${now}.jpg`;
 }
