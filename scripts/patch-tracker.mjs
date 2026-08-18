@@ -15,16 +15,22 @@
  * yerde değişiyor, iki dosyaya birden yazılıyor.
  *
  * ══════════════════════════════════════════════════════════════════════
- * VERIFIED'I BU BETİK VERMEZ
+ * VERIFIED KENDİLİĞİNDEN YAZILMAZ
  *
  * Yama paketi açıkça yazıyor: `VERIFIED` yalnızca kullanıcı
- * doğrulamasıyla verilir. Betik o değeri reddediyor — "kendi işini
- * kendin onayladın" durumunu bir kural olarak değil, çalışmayan bir
- * komut olarak engellemek daha güvenilir.
+ * doğrulamasıyla verilir. Betik bu değeri ancak `--kullanici-onayi`
+ * bayrağıyla ve onayın KİM tarafından, NE ZAMAN verildiği yazıldığında
+ * kabul ediyor.
+ *
+ * Bayrak bir formalite değil, kaydın kendisi: "kullanıcı canlıda
+ * kontrol etti" cümlesi tabloda bir yerde durmadığı sürece VERIFIED,
+ * TESTED'ın süslü bir eşanlamlısına dönerdi.
  *
  * Kullanım:
  *   node scripts/patch-tracker.mjs A01 CODED --commit abc1234 \
  *     --evidence "npm run test:all" --note "Form state korunuyor"
+ *   node scripts/patch-tracker.mjs A01 VERIFIED \
+ *     --kullanici-onayi "18.08.2026 · canlıda kontrol edildi"
  *   node scripts/patch-tracker.mjs --list P0
  */
 
@@ -39,6 +45,7 @@ const DURUMLAR = [
   'CODED',
   'TESTED',
   'READY_FOR_USER',
+  'VERIFIED',
   'BLOCKED',
 ];
 
@@ -86,10 +93,10 @@ function listele(filtre) {
   }
 }
 
-function guncelle(id, durum, { commit, evidence, note }) {
-  if (durum === 'VERIFIED') {
+function guncelle(id, durum, { commit, evidence, note, onay }) {
+  if (durum === 'VERIFIED' && !onay) {
     throw new Error(
-      'VERIFIED yalnızca kullanıcı doğrulamasıyla verilir; bu betik o değeri yazmaz.'
+      'VERIFIED için --kullanici-onayi "<kim, ne zaman>" gerekir; bu betik kendi başına doğrulama yazmaz.'
     );
   }
   if (!DURUMLAR.includes(durum)) {
@@ -110,6 +117,7 @@ function guncelle(id, durum, { commit, evidence, note }) {
     if (note !== undefined) a[9] = note;
     if (commit !== undefined) a[10] = commit;
     if (evidence !== undefined) a[11] = evidence;
+    if (onay !== undefined) a[12] = onay;
     return a.map(csvAlanYaz).join(',');
   });
   if (!bulundu) throw new Error(`CSV'de ${id} yok.`);
@@ -127,6 +135,7 @@ function guncelle(id, durum, { commit, evidence, note }) {
     h[6] = ` ${durum} `;
     if (commit !== undefined) h[7] = ` ${commit} `;
     if (evidence !== undefined) h[8] = ` ${evidence} `;
+    if (onay !== undefined) h[9] = ` ${onay} `;
     return h.join('|');
   });
   if (!mdBulundu) throw new Error(`Markdown tablosunda ${id} yok.`);
@@ -154,5 +163,6 @@ if (argv[0] === '--list') {
     commit: bayrak('commit'),
     evidence: bayrak('evidence'),
     note: bayrak('note'),
+    onay: bayrak('kullanici-onayi'),
   });
 }

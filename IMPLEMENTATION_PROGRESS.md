@@ -3,22 +3,48 @@
 **Source of truth:** Bu dosya ve `PROGRESS_TRACKER.csv` main dalında her atomik commit ile güncellenir.
 
 Durumlar: `TODO` → `IN_PROGRESS` → `CODED` → `TESTED` → `READY_FOR_USER` → `VERIFIED`; ayrıca `BLOCKED`.
-`VERIFIED` yalnız kullanıcı onayıyla verilir.
+`VERIFIED` yalnız kullanıcı onayıyla verilir — `scripts/patch-tracker.mjs` bu değeri
+`--kullanici-onayi` bayrağı olmadan yazmayı reddediyor.
+
+## Fazlar
+
+91 madde on bir faza bölündü. Sıra **sprint harflerine göre değil, bağımlılığa göre**:
+sprint "hangi denetim oturumunda bulundu" demek, "hangi sırayla yapılacak" demek değil.
+Önce canlıda kırık olanlar, sonra üzerine iş bina edilecek veri modeli ve medya
+mimarisi, en sonda onların üstüne oturan özellikler — paylaşım kiti thumbnail
+kadrajını kullanıyor, künye çekim sezonlarını kullanıyor.
+
+| Faz | Kapsam | Maddeler |
+|---|---|---|
+| 01 | Zemin — takip tablosu, git hijyeni | H05–H12 |
+| 02 | Canlıda kırık olanlar | A01–A06, A12–A14, X07 |
+| 03 | Hesap ve kimlik | E01–E08 |
+| 04 | Çekim sezonları (veri modeli) | C01–C06 |
+| 05 | Medya mimarisi | C10–C14, X01–X03, X05 |
+| 06 | Thumbnail kadrajı | C07–C09, C15 |
+| 07 | Fotoğraf indirme | B01–B07 |
+| 08 | Paylaşım kiti | D01–D14 |
+| 09 | Ekipman ve katalog | F01–F08 |
+| 10 | İlanlar ve kalan arayüz | A07–A11, G01–G03 |
+| 11 | QA ve kapanış | H01–H04, H13–H15, X04, X06 |
+
+Canlı pano: `docs/patch-2026-08-18/ilerleme.html`
+(`node scripts/patch-progress-artifact.mjs` ile CSV'den üretilir).
 
 | ID | Öncelik | Sprint | Modül | İş | Durum | Commit | Test/Kanıt | Kullanıcı doğrulaması |
 |---|---|---|---|---|---|---|---|---|
-| A01 | P0 | A | Kayıt | Kullanım Koşulları dönüşünde kayıt form state'i korunmalı | TESTED | 6043192 | e2e: kayit formu yasal metin donusunde dolu kaliyor | Bekliyor |
-| A02 | P0 | A | Kayıt | KVKK dönüşünde kayıt form state'i korunmalı | TESTED | 6043192 | e2e: yasal metin baglantilari yeni sekmede aciliyor | Bekliyor |
-| A03 | P0 | A | Galeri | Fotoğraf detayında görünür 'Galeriye dön' kontrolü | TESTED | 289eb13 | e2e: fotograf detayinda geri donus ilk ekranda | Bekliyor |
-| A04 | P0 | A | Galeri | Galeri pagination sayfası geri dönüşte korunmalı | TESTED | 289eb13 | e2e: galeri suzgeci ve sayfasi geri donuste korunuyor | Bekliyor |
-| A05 | P0 | A | Galeri | Galeri scroll/kart konumu geri dönüşte korunmalı | TESTED | 289eb13 | e2e: galeri kaydirma konumu geri donuste korunuyor | Bekliyor |
-| A06 | P0 | A | Galeri | Arama/filtre/sıralama state'i geri dönüşte korunmalı | TESTED | 289eb13 | e2e: galeri suzgeci ve sayfasi geri donuste korunuyor | Bekliyor |
+| A01 | P0 | A | Kayıt | Kullanım Koşulları dönüşünde kayıt form state'i korunmalı | VERIFIED | 6043192 | e2e: kayit formu yasal metin donusunde dolu kaliyor | 18.08.2026 · kullanıcı canlıda kontrol etti |
+| A02 | P0 | A | Kayıt | KVKK dönüşünde kayıt form state'i korunmalı | VERIFIED | 6043192 | e2e: yasal metin baglantilari yeni sekmede aciliyor | 18.08.2026 · kullanıcı canlıda kontrol etti |
+| A03 | P0 | A | Galeri | Fotoğraf detayında görünür 'Galeriye dön' kontrolü | VERIFIED | 289eb13 | e2e: fotograf detayinda geri donus ilk ekranda | 18.08.2026 · kullanıcı canlıda kontrol etti |
+| A04 | P0 | A | Galeri | Galeri pagination sayfası geri dönüşte korunmalı | VERIFIED | 289eb13 | e2e: galeri suzgeci ve sayfasi geri donuste korunuyor | 18.08.2026 · kullanıcı canlıda kontrol etti |
+| A05 | P0 | A | Galeri | Galeri scroll/kart konumu geri dönüşte korunmalı | VERIFIED | 289eb13 | e2e: galeri kaydirma konumu geri donuste korunuyor | 18.08.2026 · kullanıcı canlıda kontrol etti |
+| A06 | P0 | A | Galeri | Arama/filtre/sıralama state'i geri dönüşte korunmalı | VERIFIED | 289eb13 | e2e: galeri suzgeci ve sayfasi geri donuste korunuyor | 18.08.2026 · kullanıcı canlıda kontrol etti |
 | A07 | P1 | A | İlanlar | İlan başına maksimum 5 fotoğraf yükleme | TODO |  |  | Bekliyor |
 | A08 | P1 | A | İlanlar | İlan fotoğraflarında merkezi Astrohub optimizasyon pipeline'ını kullan | TODO |  |  | Bekliyor |
 | A09 | P1 | A | İlanlar | İlan foto yönetimi: sil/değiştir/sırala/progress | TODO |  |  | Bekliyor |
 | A10 | P1 | A | Fotoğraf Detayı | Benzer Fotoğraflar gerçek thumbnail göstermeli | TODO |  |  | Bekliyor |
 | A11 | P1 | A | Fotoğraf Detayı | Teknik Karşılaştırma gerçek thumbnail göstermeli | TODO |  |  | Bekliyor |
-| A12 | P0 | A | Saha | observing_sites canlı HTTP 400 hatası giderilmeli | TESTED | d1802f9 | REST 200 / 15 kayit; vitest sites.select.test.ts | Bekliyor |
+| A12 | P0 | A | Saha | observing_sites canlı HTTP 400 hatası giderilmeli | VERIFIED | d1802f9 | REST 200 / 15 kayit; vitest sites.select.test.ts | 18.08.2026 · kullanıcı canlıda kontrol etti |
 | A13 | P1 | A | Ana Sayfa / Hava | Meteoblue 503 için graceful fallback | TODO |  |  | Bekliyor |
 | A14 | P1 | A | Etkinlikler | Mobil etkinlik görünümünde yatay taşma kaldırılmalı | TODO |  |  | Bekliyor |
 | B01 | P1 | B | Fotoğraf Detayı | İndir butonu dropdown açmalı | TODO |  |  | Bekliyor |
@@ -58,9 +84,9 @@ Durumlar: `TODO` → `IN_PROGRESS` → `CODED` → `TESTED` → `READY_FOR_USER`
 | D13 | P2 | D | Paylaşım Kiti | Opsiyonel watermark/@username | TODO |  |  | Bekliyor |
 | D14 | P1 | D | Gizlilik | Paylaşım kiti konum gizliliğine uymalı | TODO |  |  | Bekliyor |
 | E01 | P2 | E | Hesabım | E-posta doğrulama kutusunu sadeleştir | TODO |  |  | Bekliyor |
-| E02 | P1 | E | Navbar | Sağ üstte avatar + kullanıcı adı | TESTED | 2fcadac | vitest AccountMenu.test.tsx | Bekliyor |
-| E03 | P0 | E | Navbar | Navbar kullanıcı menüsünde 'Çıkış yap' | TESTED | 2fcadac | vitest AccountMenu.test.tsx | Bekliyor |
-| E04 | P0 | E | Navbar | Logout gerçek oturumu temizlemeli | TESTED | 2fcadac | vitest: cikis gercekten oturumu kapatiyor | Bekliyor |
+| E02 | P1 | E | Navbar | Sağ üstte avatar + kullanıcı adı | VERIFIED | 2fcadac | vitest AccountMenu.test.tsx | 18.08.2026 · kullanıcı canlıda kontrol etti |
+| E03 | P0 | E | Navbar | Navbar kullanıcı menüsünde 'Çıkış yap' | VERIFIED | 2fcadac | vitest AccountMenu.test.tsx | 18.08.2026 · kullanıcı canlıda kontrol etti |
+| E04 | P0 | E | Navbar | Logout gerçek oturumu temizlemeli | VERIFIED | 2fcadac | vitest: cikis gercekten oturumu kapatiyor | 18.08.2026 · kullanıcı canlıda kontrol etti |
 | E05 | P1 | E | Public Profil | LinkedIn benzeri public profil üst alanı | TODO |  |  | Bekliyor |
 | E06 | P1 | E | Public Profil | Profil içerik bölümleri accordion/collapsible | TODO |  |  | Bekliyor |
 | E07 | P2 | E | Public Profil | Bölüm deep-link / hash | TODO |  |  | Bekliyor |
@@ -85,9 +111,9 @@ Durumlar: `TODO` → `IN_PROGRESS` → `CODED` → `TESTED` → `READY_FOR_USER`
 | H07 | P1 | H | İlerleme | Zorunlu status akışı | CODED | c9e50e5 | scripts/patch-tracker.mjs DURUMLAR | Bekliyor |
 | H08 | P1 | H | İlerleme | Commit/test evidence zorunlu | TODO |  |  | Bekliyor |
 | H09 | P0 | H | Git | Tüm uygulama doğrudan main | IN_PROGRESS | c9e50e5 |  | Bekliyor |
-| H10 | P0 | H | Git | Gereksiz branch temizliği | BLOCKED | 9ede6f2 | git diff main origin/codex -- <yollar>: yalnizca is akisi tetikleyicisi farki | Bekliyor |
+| H10 | P0 | H | Git | Gereksiz branch temizliği | VERIFIED | 9ede6f2 | git diff main origin/codex -- <yollar>: yalnizca is akisi tetikleyicisi farki | 18.08.2026 · kullanıcı canlıda kontrol etti |
 | H11 | P1 | H | Git | Stale PR temizliği | TODO |  |  | Bekliyor |
-| H12 | P0 | H | Git | Main history güvenliği | TESTED | 9ede6f2 | git log --oneline: 24d4074..d192795 dogrusal | Bekliyor |
+| H12 | P0 | H | Git | Main history güvenliği | VERIFIED | 9ede6f2 | git log --oneline: 24d4074..d192795 dogrusal | 18.08.2026 · kullanıcı canlıda kontrol etti |
 | H13 | P1 | H | Kod Temizliği | Dead code/debug/audit geçici dosya temizliği | TODO |  |  | Bekliyor |
 | H14 | P0 | H | Final QA | Tam canlı ürün auditi yeniden koş | TODO |  |  | Bekliyor |
 | H15 | P0 | H | Final QA | Kullanıcı doğrulama kapısı | TODO |  |  | Bekliyor |
@@ -97,4 +123,4 @@ Durumlar: `TODO` → `IN_PROGRESS` → `CODED` → `TESTED` → `READY_FOR_USER`
 | X04 | P2 | Extra | İndirme | İleride owner download izni politikası | TODO |  |  | Bekliyor |
 | X05 | P2 | Extra | Medya Temizliği | Social/thumbnail derivative TTL ve GC | TODO |  |  | Bekliyor |
 | X06 | P2 | Extra | Analitik | Export/download kullanım ölçümü | TODO |  |  | Bekliyor |
-| X07 | P1 | Extra | Uzun Formlar | Draft/autosave standardı | TODO |  |  | Bekliyor |
+| X07 | P1 | Extra | Uzun Formlar | Draft/autosave standardı | IN_PROGRESS |  | src/lib/formDraft.ts + formDraft.test.ts | Bekliyor |

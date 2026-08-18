@@ -1,0 +1,1445 @@
+<title>Astrohub Yama Panosu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/*
+  Renkler Astrohub'ın kendi belirteçlerinden alındı (src/index.css).
+  Pano ürünün parçası gibi görünmeli; ayrı bir palet, aynı işin iki
+  farklı yerde iki farklı kimlikle anlatılması olurdu.
+*/
+:root {
+  --ground: #ecefea;
+  --yuzey: #e2e6e0;
+  --yuzey-2: #d4dad3;
+  --metin: #12181a;
+  --sonuk: #465151;
+  --cizgi: rgba(18, 24, 26, 0.16);
+  --cizgi-guclu: rgba(18, 24, 26, 0.34);
+  --vurgu: #9b5000;
+  --soguk: #1c5b7a;
+  --iyi: #12704a;
+  --uyari: #875c0d;
+  --kotu: #a93325;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #090c0e;
+    --yuzey: #0d1114;
+    --yuzey-2: #131a1e;
+    --metin: #e6ebe8;
+    --sonuk: #93a0a3;
+    --cizgi: rgba(230, 235, 232, 0.13);
+    --cizgi-guclu: rgba(230, 235, 232, 0.28);
+    --vurgu: #ff9d2e;
+    --soguk: #6ea8c7;
+    --iyi: #4bbd85;
+    --uyari: #e0a132;
+    --kotu: #e2604f;
+  }
+}
+:root[data-theme="dark"] {
+  --ground: #090c0e;
+  --yuzey: #0d1114;
+  --yuzey-2: #131a1e;
+  --metin: #e6ebe8;
+  --sonuk: #93a0a3;
+  --cizgi: rgba(230, 235, 232, 0.13);
+  --cizgi-guclu: rgba(230, 235, 232, 0.28);
+  --vurgu: #ff9d2e;
+  --soguk: #6ea8c7;
+  --iyi: #4bbd85;
+  --uyari: #e0a132;
+  --kotu: #e2604f;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--metin);
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+.mono {
+  font-family: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  font-variant-numeric: tabular-nums;
+}
+.kabuk { max-width: 1180px; margin: 0 auto; padding: 40px 24px 96px; }
+
+header.tepe { display: flex; flex-direction: column; gap: 6px; margin-bottom: 28px; }
+.goz { font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--vurgu); font-weight: 600; }
+h1 { font-size: clamp(26px, 4vw, 38px); line-height: 1.15; margin: 0; text-wrap: balance; letter-spacing: -.02em; }
+.alt { color: var(--sonuk); max-width: 64ch; margin: 0; }
+
+.serit { display: flex; height: 10px; border-radius: 999px; overflow: hidden; margin: 22px 0 14px; background: var(--yuzey-2); }
+.serit-parca { display: block; min-width: 3px; }
+
+.ozetler { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 34px; }
+.ozet {
+  display: flex; align-items: baseline; gap: 7px;
+  border: 1px solid var(--cizgi); background: var(--yuzey);
+  color: var(--metin); border-radius: 10px; padding: 7px 12px;
+  cursor: pointer; font: inherit; transition: border-color .15s, transform .15s;
+}
+.ozet:hover { border-color: var(--cizgi-guclu); }
+.ozet:focus-visible { outline: 2px solid var(--vurgu); outline-offset: 2px; }
+.ozet[aria-pressed="true"] { border-color: currentColor; }
+.ozet-sayi { font-size: 17px; font-weight: 600; }
+.ozet-ad { font-size: 12.5px; color: var(--sonuk); }
+
+.faz { margin-bottom: 40px; border-top: 1px solid var(--cizgi); padding-top: 20px; }
+.faz-basi { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; justify-content: space-between; margin-bottom: 14px; }
+.faz-no { font-size: 11px; letter-spacing: .12em; color: var(--sonuk); }
+.faz h2 { font-size: 20px; margin: 2px 0 2px; letter-spacing: -.01em; }
+.faz-kimlik p { margin: 0; color: var(--sonuk); font-size: 13.5px; }
+.faz-olcu { display: flex; align-items: center; gap: 12px; min-width: 190px; }
+.faz-oran { font-size: 14px; color: var(--sonuk); }
+.faz-oran .bolu { opacity: .45; padding: 0 2px; }
+.faz-cubuk { flex: 1; height: 5px; border-radius: 999px; background: var(--yuzey-2); overflow: hidden; }
+.faz-cubuk span { display: block; height: 100%; background: var(--iyi); }
+
+.tablo-sar { overflow-x: auto; border: 1px solid var(--cizgi); border-radius: 12px; background: var(--yuzey); }
+table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+th {
+  text-align: left; font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--sonuk); font-weight: 600; padding: 10px 12px; border-bottom: 1px solid var(--cizgi);
+  white-space: nowrap;
+}
+td { padding: 10px 12px; border-bottom: 1px solid var(--cizgi); vertical-align: top; }
+tbody tr:last-child td { border-bottom: 0; }
+tbody tr[hidden] { display: none; }
+.modul { color: var(--sonuk); white-space: nowrap; }
+.is { min-width: 300px; }
+.is-baslik { display: block; }
+.is-not { display: block; color: var(--sonuk); font-size: 12px; margin-top: 3px; }
+.kanit { white-space: nowrap; }
+.kanit code { font-size: 12px; }
+.kanit-metin { display: block; color: var(--sonuk); font-size: 11.5px; white-space: normal; max-width: 34ch; margin-top: 3px; }
+.bos { color: var(--sonuk); opacity: .5; }
+
+.oncelik { font-size: 11px; font-weight: 600; letter-spacing: .04em; padding: 2px 6px; border-radius: 5px; border: 1px solid var(--cizgi-guclu); }
+.o-P0 { color: var(--kotu); border-color: color-mix(in srgb, var(--kotu) 45%, transparent); }
+.o-P1 { color: var(--uyari); border-color: color-mix(in srgb, var(--uyari) 45%, transparent); }
+.o-P2 { color: var(--sonuk); }
+
+.rozet { display: inline-block; font-size: 11.5px; font-weight: 500; padding: 3px 8px; border-radius: 999px; white-space: nowrap; border: 1px solid; }
+.durum-VERIFIED { color: var(--iyi); border-color: color-mix(in srgb, var(--iyi) 45%, transparent); background: color-mix(in srgb, var(--iyi) 12%, transparent); }
+.durum-TESTED { color: var(--soguk); border-color: color-mix(in srgb, var(--soguk) 45%, transparent); background: color-mix(in srgb, var(--soguk) 12%, transparent); }
+.durum-CODED { color: var(--vurgu); border-color: color-mix(in srgb, var(--vurgu) 45%, transparent); background: color-mix(in srgb, var(--vurgu) 12%, transparent); }
+.durum-READY_FOR_USER { color: var(--vurgu); border-color: color-mix(in srgb, var(--vurgu) 45%, transparent); }
+.durum-IN_PROGRESS { color: var(--uyari); border-color: color-mix(in srgb, var(--uyari) 45%, transparent); background: color-mix(in srgb, var(--uyari) 12%, transparent); }
+.durum-BLOCKED { color: var(--kotu); border-color: color-mix(in srgb, var(--kotu) 45%, transparent); background: color-mix(in srgb, var(--kotu) 12%, transparent); }
+.durum-TODO { color: var(--sonuk); border-color: var(--cizgi-guclu); }
+
+span.serit-parca.durum-VERIFIED { background: var(--iyi); }
+span.serit-parca.durum-TESTED { background: var(--soguk); }
+span.serit-parca.durum-CODED { background: var(--vurgu); }
+span.serit-parca.durum-READY_FOR_USER { background: color-mix(in srgb, var(--vurgu) 60%, transparent); }
+span.serit-parca.durum-IN_PROGRESS { background: var(--uyari); }
+span.serit-parca.durum-BLOCKED { background: var(--kotu); }
+span.serit-parca.durum-TODO { background: var(--yuzey-2); border-right: 1px solid var(--cizgi); }
+
+footer { margin-top: 44px; padding-top: 18px; border-top: 1px solid var(--cizgi); color: var(--sonuk); font-size: 12.5px; }
+footer p { margin: 0 0 5px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="kabuk">
+  <header class="tepe">
+    <span class="goz">18 Ağustos 2026 yama paketi</span>
+    <h1>Astrohub Yama Panosu</h1>
+    <p class="alt">
+      91 madde, on bir faza bölündü. Sıra bağımlılığa göre: önce canlıda kırık
+      olanlar, sonra üzerine iş bina edilecek veri modeli ve medya mimarisi, en
+      sonda onların üstüne oturan özellikler. Bu sayfa
+      <code class="mono">PROGRESS_TRACKER.csv</code>'den üretiliyor.
+    </p>
+    <div class="serit"><span class="serit-parca durum-VERIFIED" style="flex:12" title="Doğrulandı: 12"></span><span class="serit-parca durum-CODED" style="flex:3" title="Kodlandı: 3"></span><span class="serit-parca durum-IN_PROGRESS" style="flex:3" title="Sürüyor: 3"></span><span class="serit-parca durum-TODO" style="flex:73" title="Sırada: 73"></span></div>
+    <div class="ozetler">
+      <button class="ozet durum-VERIFIED" data-filtre="VERIFIED" type="button">
+        <span class="ozet-sayi mono">12</span>
+        <span class="ozet-ad">Doğrulandı</span>
+      </button>
+      <button class="ozet durum-CODED" data-filtre="CODED" type="button">
+        <span class="ozet-sayi mono">3</span>
+        <span class="ozet-ad">Kodlandı</span>
+      </button>
+      <button class="ozet durum-IN_PROGRESS" data-filtre="IN_PROGRESS" type="button">
+        <span class="ozet-sayi mono">3</span>
+        <span class="ozet-ad">Sürüyor</span>
+      </button>
+      <button class="ozet durum-TODO" data-filtre="TODO" type="button">
+        <span class="ozet-sayi mono">73</span>
+        <span class="ozet-ad">Sırada</span>
+      </button></div>
+  </header>
+
+  
+    <section class="faz" id="faz-1">
+      <header class="faz-basi">
+        <div class="faz-kimlik">
+          <span class="faz-no mono">FAZ 01</span>
+          <h2>Zemin</h2>
+          <p>Takip tablosu, git hijyeni, dal temizliği</p>
+        </div>
+        <div class="faz-olcu">
+          <span class="faz-oran mono">2<span class="bolu">/</span>8</span>
+          <div class="faz-cubuk"><span style="width:25%"></span></div>
+        </div>
+      </header>
+      <div class="tablo-sar">
+        <table>
+          <thead>
+            <tr><th>ID</th><th>Öncelik</th><th>Modül</th><th>İş</th><th>Durum</th><th>Kanıt</th></tr>
+          </thead>
+          <tbody>
+        <tr data-durum="CODED" data-oncelik="P0">
+          <td class="mono">H05</td>
+          <td><span class="oncelik o-P0">P0</span></td>
+          <td class="modul">İlerleme</td>
+          <td class="is">
+            <span class="is-baslik">IMPLEMENTATION_PROGRESS.md canlı takip kaynağı</span>
+            <span class="is-not">Depo köküne alındı; scripts/patch-tracker.mjs iki dosyayı birden yazıyor</span>
+          </td>
+          <td><span class="rozet durum-CODED">Kodlandı</span></td>
+          <td class="mono kanit"><code>c9e50e5</code><span class="kanit-metin">node scripts/patch-tracker.mjs --list P0</span></td>
+        </tr>
+        <tr data-durum="CODED" data-oncelik="P0">
+          <td class="mono">H06</td>
+          <td><span class="oncelik o-P0">P0</span></td>
+          <td class="modul">İlerleme</td>
+          <td class="is">
+            <span class="is-baslik">PROGRESS_TRACKER.csv canlı agent tablosu</span>
+            <span class="is-not">CSV aynı betikten güncelleniyor; ayrışma yapısal olarak engellendi</span>
+          </td>
+          <td><span class="rozet durum-CODED">Kodlandı</span></td>
+          <td class="mono kanit"><code>c9e50e5</code><span class="kanit-metin">node scripts/patch-tracker.mjs --list P0</span></td>
+        </tr>
+        <tr data-durum="CODED" data-oncelik="P1">
+          <td class="mono">H07</td>
+          <td><span class="oncelik o-P1">P1</span></td>
+          <td class="modul">İlerleme</td>
+          <td class="is">
+            <span class="is-baslik">Zorunlu status akışı</span>
+            <span class="is-not">Betik geçersiz durumu ve VERIFIED'ı reddediyor</span>
+          </td>
+          <td><span class="rozet durum-CODED">Kodlandı</span></td>
+          <td class="mono kanit"><code>c9e50e5</code><span class="kanit-metin">scripts/patch-tracker.mjs DURUMLAR</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P1">
+          <td class="mono">H08</td>
+          <td><span class="oncelik o-P1">P1</span></td>
+          <td class="modul">İlerleme</td>
+          <td class="is">
+            <span class="is-baslik">Commit/test evidence zorunlu</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="IN_PROGRESS" data-oncelik="P0">
+          <td class="mono">H09</td>
+          <td><span class="oncelik o-P0">P0</span></td>
+          <td class="modul">Git</td>
+          <td class="is">
+            <span class="is-baslik">Tüm uygulama doğrudan main</span>
+            <span class="is-not">Tüm patch çalışması doğrudan main üzerinde</span>
+          </td>
+          <td><span class="rozet durum-IN_PROGRESS">Sürüyor</span></td>
+          <td class="mono kanit"><code>c9e50e5</code></td>
+        </tr>
+        <tr data-durum="VERIFIED" data-oncelik="P0">
+          <td class="mono">H10</td>
+          <td><span class="oncelik o-P0">P0</span></td>
+          <td class="modul">Git</td>
+          <td class="is">
+            <span class="is-baslik">Gereksiz branch temizliği</span>
+            <span class="is-not">Icerik main'e tasindi; uzak dallari kullanici elle sildi</span>
+          </td>
+          <td><span class="rozet durum-VERIFIED">Doğrulandı</span></td>
+          <td class="mono kanit"><code>9ede6f2</code><span class="kanit-metin">git diff main origin/codex -- &lt;yollar&gt;: yalnizca is akisi tetikleyicisi farki</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P1">
+          <td class="mono">H11</td>
+          <td><span class="oncelik o-P1">P1</span></td>
+          <td class="modul">Git</td>
+          <td class="is">
+            <span class="is-baslik">Stale PR temizliği</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="VERIFIED" data-oncelik="P0">
+          <td class="mono">H12</td>
+          <td><span class="oncelik o-P0">P0</span></td>
+          <td class="modul">Git</td>
+          <td class="is">
+            <span class="is-baslik">Main history güvenliği</span>
+            <span class="is-not">Force-push yok, rebase yok; main yalnizca ileri sardi</span>
+          </td>
+          <td><span class="rozet durum-VERIFIED">Doğrulandı</span></td>
+          <td class="mono kanit"><code>9ede6f2</code><span class="kanit-metin">git log --oneline: 24d4074..d192795 dogrusal</span></td>
+        </tr></tbody>
+        </table>
+      </div>
+    </section>
+    <section class="faz" id="faz-2">
+      <header class="faz-basi">
+        <div class="faz-kimlik">
+          <span class="faz-no mono">FAZ 02</span>
+          <h2>Canlıda kırık olanlar</h2>
+          <p>Kullanıcının bugün çarptığı hatalar</p>
+        </div>
+        <div class="faz-olcu">
+          <span class="faz-oran mono">7<span class="bolu">/</span>10</span>
+          <div class="faz-cubuk"><span style="width:70%"></span></div>
+        </div>
+      </header>
+      <div class="tablo-sar">
+        <table>
+          <thead>
+            <tr><th>ID</th><th>Öncelik</th><th>Modül</th><th>İş</th><th>Durum</th><th>Kanıt</th></tr>
+          </thead>
+          <tbody>
+        <tr data-durum="VERIFIED" data-oncelik="P0">
+          <td class="mono">A01</td>
+          <td><span class="oncelik o-P0">P0</span></td>
+          <td class="modul">Kayıt</td>
+          <td class="is">
+            <span class="is-baslik">Kullanım Koşulları dönüşünde kayıt form state'i korunmalı</span>
+            <span class="is-not">Taslak + yeni sekme; sifre bilerek saklanmiyor</span>
+          </td>
+          <td><span class="rozet durum-VERIFIED">Doğrulandı</span></td>
+          <td class="mono kanit"><code>6043192</code><span class="kanit-metin">e2e: kayit formu yasal metin donusunde dolu kaliyor</span></td>
+        </tr>
+        <tr data-durum="VERIFIED" data-oncelik="P0">
+          <td class="mono">A02</td>
+          <td><span class="oncelik o-P0">P0</span></td>
+          <td class="modul">Kayıt</td>
+          <td class="is">
+            <span class="is-baslik">KVKK dönüşünde kayıt form state'i korunmalı</span>
+            <span class="is-not">Ayni cozum KVKK baglantisini da kapsiyor</span>
+          </td>
+          <td><span class="rozet durum-VERIFIED">Doğrulandı</span></td>
+          <td class="mono kanit"><code>6043192</code><span class="kanit-metin">e2e: yasal metin baglantilari yeni sekmede aciliyor</span></td>
+        </tr>
+        <tr data-durum="VERIFIED" data-oncelik="P0">
+          <td class="mono">A03</td>
+          <td><span class="oncelik o-P0">P0</span></td>
+          <td class="modul">Galeri</td>
+          <td class="is">
+            <span class="is-baslik">Fotoğraf detayında görünür 'Galeriye dön' kontrolü</span>
+            <span class="is-not">Ust kisimda gorunur geri donus; alttaki korundu</span>
+          </td>
+          <td><span class="rozet durum-VERIFIED">Doğrulandı</span></td>
+          <td class="mono kanit"><code>289eb13</code><span class="kanit-metin">e2e: fotograf detayinda geri donus ilk ekranda</span></td>
+        </tr>
+        <tr data-durum="VERIFIED" data-oncelik="P0">
+          <td class="mono">A04</td>
+          <td><span class="oncelik o-P0">P0</span></td>
+          <td class="modul">Galeri</td>
+          <td class="is">
+            <span class="is-baslik">Galeri pagination sayfası geri dönüşte korunmalı</span>
+            <span class="is-not">Durum zaten URL'de (useExplorer); tarayicida dogrulandi ve kilitlendi</span>
+          </td>
+          <td><span class="rozet durum-VERIFIED">Doğrulandı</span></td>
+          <td class="mono kanit"><code>289eb13</code><span class="kanit-metin">e2e: galeri suzgeci ve sayfasi geri donuste korunuyor</span></td>
+        </tr>
+        <tr data-durum="VERIFIED" data-oncelik="P0">
+          <td class="mono">A05</td>
+          <td><span class="oncelik o-P0">P0</span></td>
+          <td class="modul">Galeri</td>
+          <td class="is">
+            <span class="is-baslik">Galeri scroll/kart konumu geri dönüşte korunmalı</span>
+            <span class="is-not">ScrollRestoration calisiyor; olculdu</span>
+          </td>
+          <td><span class="rozet durum-VERIFIED">Doğrulandı</span></td>
+          <td class="mono kanit"><code>289eb13</code><span class="kanit-metin">e2e: galeri kaydirma konumu geri donuste korunuyor</span></td>
+        </tr>
+        <tr data-durum="VERIFIED" data-oncelik="P0">
+          <td class="mono">A06</td>
+          <td><span class="oncelik o-P0">P0</span></td>
+          <td class="modul">Galeri</td>
+          <td class="is">
+            <span class="is-baslik">Arama/filtre/sıralama state'i geri dönüşte korunmalı</span>
+            <span class="is-not">q/sort/page geri donuste korunuyor</span>
+          </td>
+          <td><span class="rozet durum-VERIFIED">Doğrulandı</span></td>
+          <td class="mono kanit"><code>289eb13</code><span class="kanit-metin">e2e: galeri suzgeci ve sayfasi geri donuste korunuyor</span></td>
+        </tr>
+        <tr data-durum="VERIFIED" data-oncelik="P0">
+          <td class="mono">A12</td>
+          <td><span class="oncelik o-P0">P0</span></td>
+          <td class="modul">Saha</td>
+          <td class="is">
+            <span class="is-baslik">observing_sites canlı HTTP 400 hatası giderilmeli</span>
+            <span class="is-not">Dort eksik kolon eklendi, secim dizesi duzeltildi, 15 saha veritabanina tasindi</span>
+          </td>
+          <td><span class="rozet durum-VERIFIED">Doğrulandı</span></td>
+          <td class="mono kanit"><code>d1802f9</code><span class="kanit-metin">REST 200 / 15 kayit; vitest sites.select.test.ts</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P1">
+          <td class="mono">A13</td>
+          <td><span class="oncelik o-P1">P1</span></td>
+          <td class="modul">Ana Sayfa / Hava</td>
+          <td class="is">
+            <span class="is-baslik">Meteoblue 503 için graceful fallback</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P1">
+          <td class="mono">A14</td>
+          <td><span class="oncelik o-P1">P1</span></td>
+          <td class="modul">Etkinlikler</td>
+          <td class="is">
+            <span class="is-baslik">Mobil etkinlik görünümünde yatay taşma kaldırılmalı</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="IN_PROGRESS" data-oncelik="P1">
+          <td class="mono">X07</td>
+          <td><span class="oncelik o-P1">P1</span></td>
+          <td class="modul">Uzun Formlar</td>
+          <td class="is">
+            <span class="is-baslik">Draft/autosave standardı</span>
+            <span class="is-not">formDraft modulu yazildi ve kayit formunda kullaniliyor; diger uzun formlara yayilacak</span>
+          </td>
+          <td><span class="rozet durum-IN_PROGRESS">Sürüyor</span></td>
+          <td class="mono kanit"><span class="bos">—</span><span class="kanit-metin">src/lib/formDraft.ts + formDraft.test.ts</span></td>
+        </tr></tbody>
+        </table>
+      </div>
+    </section>
+    <section class="faz" id="faz-3">
+      <header class="faz-basi">
+        <div class="faz-kimlik">
+          <span class="faz-no mono">FAZ 03</span>
+          <h2>Hesap ve kimlik</h2>
+          <p>Üst çubuk, oturum, public profil</p>
+        </div>
+        <div class="faz-olcu">
+          <span class="faz-oran mono">3<span class="bolu">/</span>8</span>
+          <div class="faz-cubuk"><span style="width:38%"></span></div>
+        </div>
+      </header>
+      <div class="tablo-sar">
+        <table>
+          <thead>
+            <tr><th>ID</th><th>Öncelik</th><th>Modül</th><th>İş</th><th>Durum</th><th>Kanıt</th></tr>
+          </thead>
+          <tbody>
+        <tr data-durum="TODO" data-oncelik="P2">
+          <td class="mono">E01</td>
+          <td><span class="oncelik o-P2">P2</span></td>
+          <td class="modul">Hesabım</td>
+          <td class="is">
+            <span class="is-baslik">E-posta doğrulama kutusunu sadeleştir</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="VERIFIED" data-oncelik="P1">
+          <td class="mono">E02</td>
+          <td><span class="oncelik o-P1">P1</span></td>
+          <td class="modul">Navbar</td>
+          <td class="is">
+            <span class="is-baslik">Sağ üstte avatar + kullanıcı adı</span>
+            <span class="is-not">Tetikleyicide avatar + kullanici adi; ad yoksa eski etiket</span>
+          </td>
+          <td><span class="rozet durum-VERIFIED">Doğrulandı</span></td>
+          <td class="mono kanit"><code>2fcadac</code><span class="kanit-metin">vitest AccountMenu.test.tsx</span></td>
+        </tr>
+        <tr data-durum="VERIFIED" data-oncelik="P0">
+          <td class="mono">E03</td>
+          <td><span class="oncelik o-P0">P0</span></td>
+          <td class="modul">Navbar</td>
+          <td class="is">
+            <span class="is-baslik">Navbar kullanıcı menüsünde 'Çıkış yap'</span>
+            <span class="is-not">Menude ayrilmis 'Cikis yap' dugmesi</span>
+          </td>
+          <td><span class="rozet durum-VERIFIED">Doğrulandı</span></td>
+          <td class="mono kanit"><code>2fcadac</code><span class="kanit-metin">vitest AccountMenu.test.tsx</span></td>
+        </tr>
+        <tr data-durum="VERIFIED" data-oncelik="P0">
+          <td class="mono">E04</td>
+          <td><span class="oncelik o-P0">P0</span></td>
+          <td class="modul">Navbar</td>
+          <td class="is">
+            <span class="is-baslik">Logout gerçek oturumu temizlemeli</span>
+            <span class="is-not">signOut cagriliyor ve ana sayfaya yonlendiriliyor</span>
+          </td>
+          <td><span class="rozet durum-VERIFIED">Doğrulandı</span></td>
+          <td class="mono kanit"><code>2fcadac</code><span class="kanit-metin">vitest: cikis gercekten oturumu kapatiyor</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P1">
+          <td class="mono">E05</td>
+          <td><span class="oncelik o-P1">P1</span></td>
+          <td class="modul">Public Profil</td>
+          <td class="is">
+            <span class="is-baslik">LinkedIn benzeri public profil üst alanı</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P1">
+          <td class="mono">E06</td>
+          <td><span class="oncelik o-P1">P1</span></td>
+          <td class="modul">Public Profil</td>
+          <td class="is">
+            <span class="is-baslik">Profil içerik bölümleri accordion/collapsible</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P2">
+          <td class="mono">E07</td>
+          <td><span class="oncelik o-P2">P2</span></td>
+          <td class="modul">Public Profil</td>
+          <td class="is">
+            <span class="is-baslik">Bölüm deep-link / hash</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P1">
+          <td class="mono">E08</td>
+          <td><span class="oncelik o-P1">P1</span></td>
+          <td class="modul">Public Profil</td>
+          <td class="is">
+            <span class="is-baslik">Public profil responsive</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr></tbody>
+        </table>
+      </div>
+    </section>
+    <section class="faz" id="faz-4">
+      <header class="faz-basi">
+        <div class="faz-kimlik">
+          <span class="faz-no mono">FAZ 04</span>
+          <h2>Çekim sezonları</h2>
+          <p>Künyenin veri modeli — üstüne iş bina edilecek</p>
+        </div>
+        <div class="faz-olcu">
+          <span class="faz-oran mono">0<span class="bolu">/</span>6</span>
+          <div class="faz-cubuk"><span style="width:0%"></span></div>
+        </div>
+      </header>
+      <div class="tablo-sar">
+        <table>
+          <thead>
+            <tr><th>ID</th><th>Öncelik</th><th>Modül</th><th>İş</th><th>Durum</th><th>Kanıt</th></tr>
+          </thead>
+          <tbody>
+        <tr data-durum="TODO" data-oncelik="P1">
+          <td class="mono">C01</td>
+          <td><span class="oncelik o-P1">P1</span></td>
+          <td class="modul">Fotoğraf Yükleme</td>
+          <td class="is">
+            <span class="is-baslik">Yeni filtre satırı son satırın tekrar eden değerlerini kopyalamalı</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P1">
+          <td class="mono">C02</td>
+          <td><span class="oncelik o-P1">P1</span></td>
+          <td class="modul">Fotoğraf Yükleme</td>
+          <td class="is">
+            <span class="is-baslik">Tek tarih / tarih aralığı checkbox</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P1">
+          <td class="mono">C03</td>
+          <td><span class="oncelik o-P1">P1</span></td>
+          <td class="modul">Fotoğraf Yükleme</td>
+          <td class="is">
+            <span class="is-baslik">Bir fotoğrafa birden fazla çekim sezonu</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P1">
+          <td class="mono">C04</td>
+          <td><span class="oncelik o-P1">P1</span></td>
+          <td class="modul">Fotoğraf Yükleme</td>
+          <td class="is">
+            <span class="is-baslik">Her sezon tek tarih veya tarih aralığı taşıyabilmeli</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P1">
+          <td class="mono">C05</td>
+          <td><span class="oncelik o-P1">P1</span></td>
+          <td class="modul">Fotoğraf Metadata</td>
+          <td class="is">
+            <span class="is-baslik">Exposure satırlarını sezonla ilişkilendir</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P2">
+          <td class="mono">C06</td>
+          <td><span class="oncelik o-P2">P2</span></td>
+          <td class="modul">Fotoğraf Künyesi</td>
+          <td class="is">
+            <span class="is-baslik">Çok sezonlu tarihleri okunabilir göster</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr></tbody>
+        </table>
+      </div>
+    </section>
+    <section class="faz" id="faz-5">
+      <header class="faz-basi">
+        <div class="faz-kimlik">
+          <span class="faz-no mono">FAZ 05</span>
+          <h2>Medya mimarisi</h2>
+          <p>Türev registry, immutable orijinal, EXIF, GC</p>
+        </div>
+        <div class="faz-olcu">
+          <span class="faz-oran mono">0<span class="bolu">/</span>9</span>
+          <div class="faz-cubuk"><span style="width:0%"></span></div>
+        </div>
+      </header>
+      <div class="tablo-sar">
+        <table>
+          <thead>
+            <tr><th>ID</th><th>Öncelik</th><th>Modül</th><th>İş</th><th>Durum</th><th>Kanıt</th></tr>
+          </thead>
+          <tbody>
+        <tr data-durum="TODO" data-oncelik="P1">
+          <td class="mono">C10</td>
+          <td><span class="oncelik o-P1">P1</span></td>
+          <td class="modul">Medya Mimarisi</td>
+          <td class="is">
+            <span class="is-baslik">Thumbnail crop state normalize parametre olarak saklanmalı</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P1">
+          <td class="mono">C11</td>
+          <td><span class="oncelik o-P1">P1</span></td>
+          <td class="modul">Medya Mimarisi</td>
+          <td class="is">
+            <span class="is-baslik">Thumbnail türevleri storage'da ve versiyonlu tutulmalı</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P0">
+          <td class="mono">C12</td>
+          <td><span class="oncelik o-P0">P0</span></td>
+          <td class="modul">Medya Temizliği</td>
+          <td class="is">
+            <span class="is-baslik">Thumbnail yeniden düzenlenince eski türev güvenli silinmeli</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P1">
+          <td class="mono">C13</td>
+          <td><span class="oncelik o-P1">P1</span></td>
+          <td class="modul">Medya Temizliği</td>
+          <td class="is">
+            <span class="is-baslik">Orphan thumbnail garbage collector</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P1">
+          <td class="mono">C14</td>
+          <td><span class="oncelik o-P1">P1</span></td>
+          <td class="modul">Medya İşleme</td>
+          <td class="is">
+            <span class="is-baslik">Thumbnail üretimi idempotent ve content/crop version bağlı olmalı</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P1">
+          <td class="mono">X01</td>
+          <td><span class="oncelik o-P1">P1</span></td>
+          <td class="modul">Medya Mimarisi</td>
+          <td class="is">
+            <span class="is-baslik">Asset türev registry</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P1">
+          <td class="mono">X02</td>
+          <td><span class="oncelik o-P1">P1</span></td>
+          <td class="modul">Medya İşleme</td>
+          <td class="is">
+            <span class="is-baslik">Original asset immutable</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P1">
+          <td class="mono">X03</td>
+          <td><span class="oncelik o-P1">P1</span></td>
+          <td class="modul">Gizlilik</td>
+          <td class="is">
+            <span class="is-baslik">Public türevlerde EXIF/GPS sızıntısını önle</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P2">
+          <td class="mono">X05</td>
+          <td><span class="oncelik o-P2">P2</span></td>
+          <td class="modul">Medya Temizliği</td>
+          <td class="is">
+            <span class="is-baslik">Social/thumbnail derivative TTL ve GC</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr></tbody>
+        </table>
+      </div>
+    </section>
+    <section class="faz" id="faz-6">
+      <header class="faz-basi">
+        <div class="faz-kimlik">
+          <span class="faz-no mono">FAZ 06</span>
+          <h2>Thumbnail kadrajı</h2>
+          <p>Kadraj editörü — medya mimarisinin üstüne oturuyor</p>
+        </div>
+        <div class="faz-olcu">
+          <span class="faz-oran mono">0<span class="bolu">/</span>4</span>
+          <div class="faz-cubuk"><span style="width:0%"></span></div>
+        </div>
+      </header>
+      <div class="tablo-sar">
+        <table>
+          <thead>
+            <tr><th>ID</th><th>Öncelik</th><th>Modül</th><th>İş</th><th>Durum</th><th>Kanıt</th></tr>
+          </thead>
+          <tbody>
+        <tr data-durum="TODO" data-oncelik="P1">
+          <td class="mono">C07</td>
+          <td><span class="oncelik o-P1">P1</span></td>
+          <td class="modul">Fotoğraf Yükleme</td>
+          <td class="is">
+            <span class="is-baslik">Thumbnail/Kart kadraj editörü upload akışında olmalı</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P1">
+          <td class="mono">C08</td>
+          <td><span class="oncelik o-P1">P1</span></td>
+          <td class="modul">Fotoğraf Yükleme</td>
+          <td class="is">
+            <span class="is-baslik">Thumbnail editöründe ana sayfa ve kart önizlemeleri</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P1">
+          <td class="mono">C09</td>
+          <td><span class="oncelik o-P1">P1</span></td>
+          <td class="modul">Fotoğraf Detayı / Owner</td>
+          <td class="is">
+            <span class="is-baslik">Thumbnail kadrajı yüklemeden sonra da düzenlenebilmeli</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P2">
+          <td class="mono">C15</td>
+          <td><span class="oncelik o-P2">P2</span></td>
+          <td class="modul">Thumbnail UX</td>
+          <td class="is">
+            <span class="is-baslik">Crop editörü mouse/touch/keyboard erişilebilir olmalı</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr></tbody>
+        </table>
+      </div>
+    </section>
+    <section class="faz" id="faz-7">
+      <header class="faz-basi">
+        <div class="faz-kimlik">
+          <span class="faz-no mono">FAZ 07</span>
+          <h2>Fotoğraf indirme</h2>
+          <p>İndir menüsü, annotated çıktı, dosya adları</p>
+        </div>
+        <div class="faz-olcu">
+          <span class="faz-oran mono">0<span class="bolu">/</span>7</span>
+          <div class="faz-cubuk"><span style="width:0%"></span></div>
+        </div>
+      </header>
+      <div class="tablo-sar">
+        <table>
+          <thead>
+            <tr><th>ID</th><th>Öncelik</th><th>Modül</th><th>İş</th><th>Durum</th><th>Kanıt</th></tr>
+          </thead>
+          <tbody>
+        <tr data-durum="TODO" data-oncelik="P1">
+          <td class="mono">B01</td>
+          <td><span class="oncelik o-P1">P1</span></td>
+          <td class="modul">Fotoğraf Detayı</td>
+          <td class="is">
+            <span class="is-baslik">İndir butonu dropdown açmalı</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P1">
+          <td class="mono">B02</td>
+          <td><span class="oncelik o-P1">P1</span></td>
+          <td class="modul">Fotoğraf Detayı</td>
+          <td class="is">
+            <span class="is-baslik">Orijinal / annotasyonsuz fotoğraf indirilebilmeli</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P1">
+          <td class="mono">B03</td>
+          <td><span class="oncelik o-P1">P1</span></td>
+          <td class="modul">Fotoğraf Detayı</td>
+          <td class="is">
+            <span class="is-baslik">Plate Solve Annotated fotoğraf ayrı indirilebilmeli</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P1">
+          <td class="mono">B04</td>
+          <td><span class="oncelik o-P1">P1</span></td>
+          <td class="modul">Fotoğraf Detayı</td>
+          <td class="is">
+            <span class="is-baslik">Annotated hazır değilse doğru durum</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P2">
+          <td class="mono">B05</td>
+          <td><span class="oncelik o-P2">P2</span></td>
+          <td class="modul">Fotoğraf Detayı</td>
+          <td class="is">
+            <span class="is-baslik">İndirme dosya adları anlamlı ve sanitize olmalı</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P2">
+          <td class="mono">B06</td>
+          <td><span class="oncelik o-P2">P2</span></td>
+          <td class="modul">Fotoğraf Detayı</td>
+          <td class="is">
+            <span class="is-baslik">Kaydet semantiğini netleştir</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P2">
+          <td class="mono">B07</td>
+          <td><span class="oncelik o-P2">P2</span></td>
+          <td class="modul">Plate Solve</td>
+          <td class="is">
+            <span class="is-baslik">Plate solve sonrası takımyıldız otomatik türet</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr></tbody>
+        </table>
+      </div>
+    </section>
+    <section class="faz" id="faz-8">
+      <header class="faz-basi">
+        <div class="faz-kimlik">
+          <span class="faz-no mono">FAZ 08</span>
+          <h2>Paylaşım kiti</h2>
+          <p>Instagram çıktıları — kadraj ve sezon verisini kullanıyor</p>
+        </div>
+        <div class="faz-olcu">
+          <span class="faz-oran mono">0<span class="bolu">/</span>14</span>
+          <div class="faz-cubuk"><span style="width:0%"></span></div>
+        </div>
+      </header>
+      <div class="tablo-sar">
+        <table>
+          <thead>
+            <tr><th>ID</th><th>Öncelik</th><th>Modül</th><th>İş</th><th>Durum</th><th>Kanıt</th></tr>
+          </thead>
+          <tbody>
+        <tr data-durum="TODO" data-oncelik="P0">
+          <td class="mono">D01</td>
+          <td><span class="oncelik o-P0">P0</span></td>
+          <td class="modul">Paylaşım Kiti</td>
+          <td class="is">
+            <span class="is-baslik">Paylaşım kiti yalnız fotoğraf sahibine açık</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P1">
+          <td class="mono">D02</td>
+          <td><span class="oncelik o-P1">P1</span></td>
+          <td class="modul">Paylaşım Kiti</td>
+          <td class="is">
+            <span class="is-baslik">Owner için 'Paylaşım kiti hazırla' aksiyonu</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P1">
+          <td class="mono">D03</td>
+          <td><span class="oncelik o-P1">P1</span></td>
+          <td class="modul">Paylaşım Kiti</td>
+          <td class="is">
+            <span class="is-baslik">Instagram gönderi çıktısı otomatik üret</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P1">
+          <td class="mono">D04</td>
+          <td><span class="oncelik o-P1">P1</span></td>
+          <td class="modul">Paylaşım Kiti</td>
+          <td class="is">
+            <span class="is-baslik">Instagram hikâye çıktısı otomatik üret</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P1">
+          <td class="mono">D05</td>
+          <td><span class="oncelik o-P1">P1</span></td>
+          <td class="modul">Paylaşım Kiti</td>
+          <td class="is">
+            <span class="is-baslik">Sosyal resize kadrajı astrofotoğrafı bozmasın</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P1">
+          <td class="mono">D06</td>
+          <td><span class="oncelik o-P1">P1</span></td>
+          <td class="modul">Paylaşım Kiti</td>
+          <td class="is">
+            <span class="is-baslik">Instagram künye metni üret</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P1">
+          <td class="mono">D07</td>
+          <td><span class="oncelik o-P1">P1</span></td>
+          <td class="modul">Paylaşım Kiti</td>
+          <td class="is">
+            <span class="is-baslik">Künye çok sezonlu tarihleri desteklesin</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P1">
+          <td class="mono">D08</td>
+          <td><span class="oncelik o-P1">P1</span></td>
+          <td class="modul">Paylaşım Kiti</td>
+          <td class="is">
+            <span class="is-baslik">Tek tık Kopyala</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P2">
+          <td class="mono">D09</td>
+          <td><span class="oncelik o-P2">P2</span></td>
+          <td class="modul">Paylaşım Kiti</td>
+          <td class="is">
+            <span class="is-baslik">Künye TXT indirme</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P2">
+          <td class="mono">D10</td>
+          <td><span class="oncelik o-P2">P2</span></td>
+          <td class="modul">Paylaşım Kiti</td>
+          <td class="is">
+            <span class="is-baslik">Opsiyonel künye alanları</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P2">
+          <td class="mono">D11</td>
+          <td><span class="oncelik o-P2">P2</span></td>
+          <td class="modul">Paylaşım Kiti</td>
+          <td class="is">
+            <span class="is-baslik">Orijinal / annotated sosyal kaynak seçimi</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P2">
+          <td class="mono">D12</td>
+          <td><span class="oncelik o-P2">P2</span></td>
+          <td class="modul">Paylaşım Kiti</td>
+          <td class="is">
+            <span class="is-baslik">Tek ZIP paylaşım paketi</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P2">
+          <td class="mono">D13</td>
+          <td><span class="oncelik o-P2">P2</span></td>
+          <td class="modul">Paylaşım Kiti</td>
+          <td class="is">
+            <span class="is-baslik">Opsiyonel watermark/@username</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P1">
+          <td class="mono">D14</td>
+          <td><span class="oncelik o-P1">P1</span></td>
+          <td class="modul">Gizlilik</td>
+          <td class="is">
+            <span class="is-baslik">Paylaşım kiti konum gizliliğine uymalı</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr></tbody>
+        </table>
+      </div>
+    </section>
+    <section class="faz" id="faz-9">
+      <header class="faz-basi">
+        <div class="faz-kimlik">
+          <span class="faz-no mono">FAZ 09</span>
+          <h2>Ekipman ve katalog</h2>
+          <p>Setup düzenleme, canonical merge, dedup migration</p>
+        </div>
+        <div class="faz-olcu">
+          <span class="faz-oran mono">0<span class="bolu">/</span>8</span>
+          <div class="faz-cubuk"><span style="width:0%"></span></div>
+        </div>
+      </header>
+      <div class="tablo-sar">
+        <table>
+          <thead>
+            <tr><th>ID</th><th>Öncelik</th><th>Modül</th><th>İş</th><th>Durum</th><th>Kanıt</th></tr>
+          </thead>
+          <tbody>
+        <tr data-durum="TODO" data-oncelik="P1">
+          <td class="mono">F01</td>
+          <td><span class="oncelik o-P1">P1</span></td>
+          <td class="modul">Ekipmanlarım</td>
+          <td class="is">
+            <span class="is-baslik">Kayıtlı setup'ı sonradan Düzenle</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P1">
+          <td class="mono">F02</td>
+          <td><span class="oncelik o-P1">P1</span></td>
+          <td class="modul">Ekipmanlarım</td>
+          <td class="is">
+            <span class="is-baslik">Birden fazla filtre desteği</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P1">
+          <td class="mono">F03</td>
+          <td><span class="oncelik o-P1">P1</span></td>
+          <td class="modul">Katalog</td>
+          <td class="is">
+            <span class="is-baslik">Ekipman mükerrerlerini canonical merge ile temizle</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P1">
+          <td class="mono">F04</td>
+          <td><span class="oncelik o-P1">P1</span></td>
+          <td class="modul">Katalog</td>
+          <td class="is">
+            <span class="is-baslik">Canonical model + variant + alias</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P1">
+          <td class="mono">F05</td>
+          <td><span class="oncelik o-P1">P1</span></td>
+          <td class="modul">Katalog</td>
+          <td class="is">
+            <span class="is-baslik">PrimaLuceLab EAGLE legacy/aktif seri kapsamı</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P1">
+          <td class="mono">F06</td>
+          <td><span class="oncelik o-P1">P1</span></td>
+          <td class="modul">Katalog</td>
+          <td class="is">
+            <span class="is-baslik">Diğer markalarda seri-gap analizi</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P2">
+          <td class="mono">F07</td>
+          <td><span class="oncelik o-P2">P2</span></td>
+          <td class="modul">Katalog</td>
+          <td class="is">
+            <span class="is-baslik">Katalog source/verification metadata</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P0">
+          <td class="mono">F08</td>
+          <td><span class="oncelik o-P0">P0</span></td>
+          <td class="modul">Katalog</td>
+          <td class="is">
+            <span class="is-baslik">Dedup migration backup/rollback</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr></tbody>
+        </table>
+      </div>
+    </section>
+    <section class="faz" id="faz-10">
+      <header class="faz-basi">
+        <div class="faz-kimlik">
+          <span class="faz-no mono">FAZ 10</span>
+          <h2>İlanlar ve kalan arayüz</h2>
+          <p>İlan fotoğrafları, benzer fotoğraf kartları, puanlama</p>
+        </div>
+        <div class="faz-olcu">
+          <span class="faz-oran mono">0<span class="bolu">/</span>8</span>
+          <div class="faz-cubuk"><span style="width:0%"></span></div>
+        </div>
+      </header>
+      <div class="tablo-sar">
+        <table>
+          <thead>
+            <tr><th>ID</th><th>Öncelik</th><th>Modül</th><th>İş</th><th>Durum</th><th>Kanıt</th></tr>
+          </thead>
+          <tbody>
+        <tr data-durum="TODO" data-oncelik="P1">
+          <td class="mono">A07</td>
+          <td><span class="oncelik o-P1">P1</span></td>
+          <td class="modul">İlanlar</td>
+          <td class="is">
+            <span class="is-baslik">İlan başına maksimum 5 fotoğraf yükleme</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P1">
+          <td class="mono">A08</td>
+          <td><span class="oncelik o-P1">P1</span></td>
+          <td class="modul">İlanlar</td>
+          <td class="is">
+            <span class="is-baslik">İlan fotoğraflarında merkezi Astrohub optimizasyon pipeline'ını kullan</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P1">
+          <td class="mono">A09</td>
+          <td><span class="oncelik o-P1">P1</span></td>
+          <td class="modul">İlanlar</td>
+          <td class="is">
+            <span class="is-baslik">İlan foto yönetimi: sil/değiştir/sırala/progress</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P1">
+          <td class="mono">A10</td>
+          <td><span class="oncelik o-P1">P1</span></td>
+          <td class="modul">Fotoğraf Detayı</td>
+          <td class="is">
+            <span class="is-baslik">Benzer Fotoğraflar gerçek thumbnail göstermeli</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P1">
+          <td class="mono">A11</td>
+          <td><span class="oncelik o-P1">P1</span></td>
+          <td class="modul">Fotoğraf Detayı</td>
+          <td class="is">
+            <span class="is-baslik">Teknik Karşılaştırma gerçek thumbnail göstermeli</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P2">
+          <td class="mono">G01</td>
+          <td><span class="oncelik o-P2">P2</span></td>
+          <td class="modul">Fotoğraf Detayı</td>
+          <td class="is">
+            <span class="is-baslik">Puanlama panelini aksiyon satırına taşı</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P2">
+          <td class="mono">G02</td>
+          <td><span class="oncelik o-P2">P2</span></td>
+          <td class="modul">Fotoğraf Detayı</td>
+          <td class="is">
+            <span class="is-baslik">1–10 puan popover</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P2">
+          <td class="mono">G03</td>
+          <td><span class="oncelik o-P2">P2</span></td>
+          <td class="modul">Fotoğraf Detayı</td>
+          <td class="is">
+            <span class="is-baslik">Puanlama erişilebilirliği</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr></tbody>
+        </table>
+      </div>
+    </section>
+    <section class="faz" id="faz-11">
+      <header class="faz-basi">
+        <div class="faz-kimlik">
+          <span class="faz-no mono">FAZ 11</span>
+          <h2>QA ve kapanış</h2>
+          <p>Persona matrisi, canlı audit, kullanıcı doğrulaması</p>
+        </div>
+        <div class="faz-olcu">
+          <span class="faz-oran mono">0<span class="bolu">/</span>9</span>
+          <div class="faz-cubuk"><span style="width:0%"></span></div>
+        </div>
+      </header>
+      <div class="tablo-sar">
+        <table>
+          <thead>
+            <tr><th>ID</th><th>Öncelik</th><th>Modül</th><th>İş</th><th>Durum</th><th>Kanıt</th></tr>
+          </thead>
+          <tbody>
+        <tr data-durum="TODO" data-oncelik="P0">
+          <td class="mono">H01</td>
+          <td><span class="oncelik o-P0">P0</span></td>
+          <td class="modul">QA</td>
+          <td class="is">
+            <span class="is-baslik">Gerçek onboarding E2E</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P0">
+          <td class="mono">H02</td>
+          <td><span class="oncelik o-P0">P0</span></td>
+          <td class="modul">QA</td>
+          <td class="is">
+            <span class="is-baslik">Rol/persona matrisi</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P1">
+          <td class="mono">H03</td>
+          <td><span class="oncelik o-P1">P1</span></td>
+          <td class="modul">QA</td>
+          <td class="is">
+            <span class="is-baslik">Happy/error/recovery/refresh/cancel/retry matrisi</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="IN_PROGRESS" data-oncelik="P0">
+          <td class="mono">H04</td>
+          <td><span class="oncelik o-P0">P0</span></td>
+          <td class="modul">QA</td>
+          <td class="is">
+            <span class="is-baslik">Her bug regresyon testine dönüşmeli</span>
+            <span class="is-not">Duzeltilen her madde regresyon testine donusturuluyor (A01/A02/A03-A06/A12/E02-E04)</span>
+          </td>
+          <td><span class="rozet durum-IN_PROGRESS">Sürüyor</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P1">
+          <td class="mono">H13</td>
+          <td><span class="oncelik o-P1">P1</span></td>
+          <td class="modul">Kod Temizliği</td>
+          <td class="is">
+            <span class="is-baslik">Dead code/debug/audit geçici dosya temizliği</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P0">
+          <td class="mono">H14</td>
+          <td><span class="oncelik o-P0">P0</span></td>
+          <td class="modul">Final QA</td>
+          <td class="is">
+            <span class="is-baslik">Tam canlı ürün auditi yeniden koş</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P0">
+          <td class="mono">H15</td>
+          <td><span class="oncelik o-P0">P0</span></td>
+          <td class="modul">Final QA</td>
+          <td class="is">
+            <span class="is-baslik">Kullanıcı doğrulama kapısı</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P2">
+          <td class="mono">X04</td>
+          <td><span class="oncelik o-P2">P2</span></td>
+          <td class="modul">İndirme</td>
+          <td class="is">
+            <span class="is-baslik">İleride owner download izni politikası</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P2">
+          <td class="mono">X06</td>
+          <td><span class="oncelik o-P2">P2</span></td>
+          <td class="modul">Analitik</td>
+          <td class="is">
+            <span class="is-baslik">Export/download kullanım ölçümü</span>
+            
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr></tbody>
+        </table>
+      </div>
+    </section>
+
+  <footer>
+    <p><strong>Doğrulandı</strong> durumunu yalnızca kullanıcı verir; takip betiği bu değeri kendi başına yazmayı reddediyor.</p>
+    <p><strong>Test edildi</strong>: kod yazıldı, regresyon testi eklendi ve <code class="mono">npm run test:all</code> geçti.</p>
+    <p>Kaynak: <code class="mono">PROGRESS_TRACKER.csv</code> · <code class="mono">IMPLEMENTATION_PROGRESS.md</code></p>
+  </footer>
+</div>
+
+<script>
+  /* Durum kutuları süzgeç: bir duruma basınca yalnızca o durumdaki
+     satırlar kalıyor, tekrar basınca süzgeç kalkıyor. */
+  const kutular = document.querySelectorAll('.ozet');
+  let etkin = null;
+  function uygula() {
+    for (const tr of document.querySelectorAll('tbody tr')) {
+      tr.hidden = etkin !== null && tr.dataset.durum !== etkin;
+    }
+    for (const k of kutular) {
+      k.setAttribute('aria-pressed', String(k.dataset.filtre === etkin));
+    }
+    for (const faz of document.querySelectorAll('.faz')) {
+      const gorunur = faz.querySelectorAll('tbody tr:not([hidden])').length;
+      faz.hidden = gorunur === 0;
+    }
+  }
+  for (const k of kutular) {
+    k.setAttribute('aria-pressed', 'false');
+    k.addEventListener('click', () => {
+      etkin = etkin === k.dataset.filtre ? null : k.dataset.filtre;
+      uygula();
+    });
+  }
+</script>
