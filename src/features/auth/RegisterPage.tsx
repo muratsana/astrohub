@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useNavigate } from 'react-router';
@@ -13,15 +13,10 @@ import { captchaEnabled } from './captchaConfig';
 import { SocialAuth } from './GoogleButton';
 import { Alert } from '@/components/ui/Alert';
 import { useFlag } from '@/features/site/SiteConfigContext';
-import {
-  gizliAlanlariAyikla,
-  taslakOku,
-  taslakSil,
-  taslakYaz,
-} from '@/lib/formDraft';
+import { useFormDraft } from '@/lib/useFormDraft';
 import { FlagClosedNote } from '@/features/site/FlagClosedNote';
 
-/** Taslak anahtarı — tek yerde, iki `useEffect` de aynısını kullanıyor. */
+/** Taslak anahtarı — `useFormDraft` standardına verilen kimlik (X07). */
 const TASLAK_ANAHTARI = 'kayit';
 
 export function RegisterPage() {
@@ -58,23 +53,12 @@ export function RegisterPage() {
    * formdan hiç ayrılmamak — yasal metinler artık yeni sekmede açılıyor;
    * taslak, o yolun dışından gelen dönüşler için ikinci emniyet.
    */
-  useEffect(() => {
-    const taslak = taslakOku<RegisterValues>(TASLAK_ANAHTARI);
-    if (taslak) reset(taslak as RegisterValues, { keepDefaultValues: true });
-  }, [reset]);
-
-  useEffect(() => {
-    const abone = watch((degerler) => {
-      taslakYaz(
-        TASLAK_ANAHTARI,
-        gizliAlanlariAyikla(degerler as Record<string, unknown>, [
-          'password',
-          'confirmPassword',
-        ])
-      );
-    });
-    return () => abone.unsubscribe();
-  }, [watch]);
+  const { clear: taslagiTemizle } = useFormDraft<RegisterValues>({
+    key: TASLAK_ANAHTARI,
+    watch,
+    reset,
+    exclude: ['password', 'confirmPassword'],
+  });
 
   async function onSubmit(values: RegisterValues) {
     setFormError(null);
@@ -104,7 +88,7 @@ export function RegisterPage() {
       return;
     }
     /* Kayıt başarılı: taslağın yaşaması için sebep kalmadı. */
-    taslakSil(TASLAK_ANAHTARI);
+    taslagiTemizle();
     setDone(true);
     setTimeout(() => navigate('/panel'), 1200);
   }
