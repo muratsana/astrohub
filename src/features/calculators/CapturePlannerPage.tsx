@@ -1,4 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router';
+import { useTargetBySlug } from '@/services/content/targets';
 import { Container } from '@/components/ui/Container';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Panel } from '@/components/ui/Panel';
@@ -84,6 +86,24 @@ export function CapturePlannerPage() {
 
   /* Filtre–hedef uyumu ve gökyüzü koşulları (§14.2). */
   const [tur, setTur] = useState<TargetKind>('emisyon-bulutsusu');
+
+  /*
+   * DEVRETME (`?hedef=`) — bu araç TÜR soruyor, tek hedef değil.
+   *
+   * Kadrajdan gelen kullanıcı burada obje türünü elle seçmek zorundaydı
+   * ve bu, az önce seçtiği hedefin zaten cevapladığı bir soruydu. Gelen
+   * hedefin türü kutuya yazılıyor; kullanıcı sonrasında değiştirebiliyor
+   * (galaksi kadrajında dar bant denemek isteyebilir).
+   *
+   * Adresteki hedef DEĞİŞİRSE yeniden yazılıyor ama kullanıcının elle
+   * yaptığı seçim korunuyor: efekt yalnızca çözülen hedefe bağlı.
+   */
+  const [adresParams] = useSearchParams();
+  const gelenHedef = useTargetBySlug(adresParams.get('hedef') ?? undefined);
+
+  useEffect(() => {
+    if (gelenHedef.target) setTur(gelenHedef.target.kind);
+  }, [gelenHedef.target]);
   const [ayOran, setAyOran] = useState(30);
   const [ayVar, setAyVar] = useState(true);
   const [ayUzaklik, setAyUzaklik] = useState(60);

@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { ClubJoinButton } from './ClubJoinButton';
 import { Link, useParams } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -294,6 +295,17 @@ export function ClubDetailPage() {
                     }
                   />
                 )}
+                {/*
+                  KATILMA İSTEĞİ, dış bağlantıdan ÖNCE: site içinde
+                  kalan yol her toplulukta çalışıyor, dış form yalnızca
+                  onu tanımlamış topluluklarda var.
+                */}
+                <SpecRow
+                  label="Katılım"
+                  value={
+                    <ClubJoinButton clubSlug={club.slug} clubName={club.name} />
+                  }
+                />
                 {club.joinUrl && (
                   <SpecRow
                     label="Üyelik"

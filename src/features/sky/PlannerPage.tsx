@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router';
+import { useEffect, useMemo, useState, useCallback } from 'react';
+import { Link, useSearchParams } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { NightViews } from './NightViews';
@@ -16,7 +16,12 @@ import {
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
 import { useLocationContext } from '@/features/location/LocationContext';
-import { targets, targetKindLabels } from '@/features/targets/data';
+import {
+  targets,
+  targetKindLabels,
+  type CelestialTarget,
+} from '@/features/targets/data';
+import { useTargetBySlug } from '@/services/content/targets';
 import {
   astronomicalNight,
   moonPhase,
@@ -109,6 +114,71 @@ export function PlannerPage() {
       .map((t) => ({ slug: t.slug, minutes: 90 }));
   });
   const [pick, setPick] = useState('');
+
+  /*
+   * BAŞKA BİR ARAÇTAN GELEN HEDEF (`?hedef=`).
+   *
+   * Kadrajda bir hedefe bakan kullanıcının sonraki sorusu çoğu zaman
+   * "bu gece ne kadar süre yükselir" oluyor ve o soruya giden yol,
+   * hedefi burada baştan aratıyordu. Artık devretme bağlantısı hedefi
+   * taşıyor.
+   *
+   * PAKETLENMİŞ LİSTEDE OLMAYAN HEDEF DE PLANLANABİLİYOR: katalog
+   * 16.663 obje taşıyor ve yalnızca 230'unu kabul eden bir planlayıcı,
+   * devretmenin çoğu zaman sessizce hiçbir şey yapmaması demekti.
+   * Sunucudan gelen kayıt `ekstra` listesine giriyor ve arama
+   * fonksiyonu iki kaynağa birden bakıyor.
+   */
+  const [params] = useSearchParams();
+  const gelen = useTargetBySlug(params.get('hedef') ?? undefined);
+  const [ekstra, setEkstra] = useState<CelestialTarget[]>([]);
+
+  useEffect(() => {
+    const hedef = gelen.target;
+    if (!hedef) return;
+    /* Koordinatı olmayan hedef (Ay, meteor yağmuru) planlanamıyor:
+       yükseklik eğrisi sabit koordinat istiyor. */
+    if (hedef.raDeg === null || hedef.decDeg === null) return;
+
+    setEkstra((mevcut) =>
+      targets.some((t) => t.slug === hedef.slug) ||
+      mevcut.some((t) => t.slug === hedef.slug)
+        ? mevcut
+        : [...mevcut, hedef]
+    );
+    setSelection((mevcut) =>
+      mevcut.some((entry) => entry.slug === hedef.slug)
+        ? mevcut
+        : [...mevcut, { slug: hedef.slug, minutes: 90 }]
+    );
+    /* Devretmeyle gelen hedef bir SEÇİM: favori listesi artık bunun
+       üstüne yazmamalı. */
+    setDokunuldu(true);
+  }, [gelen.target]);
+
+  /*
+   * Hedef çözücü — paketlenmiş liste ve devretmeyle gelenler.
+   * `targets.find` doğrudan çağrılmıyor: dört ayrı yerde çağrılıyordu ve
+   * biri güncellenmeden kalsaydı o ekranda devredilen hedef sessizce
+   * kaybolurdu.
+   */
+  const bul = useCallback(
+    (slug: string): CelestialTarget | undefined =>
+      targets.find((t) => t.slug === slug) ??
+      ekstra.find((t) => t.slug === slug),
+    [ekstra]
+  );
+
+  /*
+   * Koordinat: ham derece varsa o, yoksa metinden ayrıştırma.
+   * `parseRa` de derece döndürüyor, yani iki yol aynı birimde.
+   */
+  const koordinat = useCallback((target: CelestialTarget) => {
+    if (target.raDeg !== null && target.decDeg !== null) {
+      return { ra: target.raDeg, dec: target.decDeg };
+    }
+    return { ra: parseRa(target.ra), dec: parseDec(target.dec) };
+  }, []);
   /* Favoriler ağdan geliyor; geldiklerinde seçimi BİR KEZ değiştiriyoruz.
      `dokunuldu` olmadan her yüklemede kullanıcının eklediği hedefler
      silinirdi — favori listesi geç gelen bir yanıt olduğu için bu,
@@ -152,9 +222,9 @@ export function PlannerPage() {
 
     const requests: PlanRequest[] = selection
       .map(({ slug, minutes }) => {
-        const target = targets.find((t) => t.slug === slug);
+        const target = bul(slug);
         if (!target) return null;
-        const coords = { ra: parseRa(target.ra), dec: parseDec(target.dec) };
+        const coords = koordinat(target);
         if (Number.isNaN(coords.ra) || Number.isNaN(coords.dec)) return null;
         return { id: slug, coords, requestedMinutes: minutes };
       })
@@ -167,15 +237,15 @@ export function PlannerPage() {
       location.longitude,
       minAltitude
     );
-  }, [selection, night.window, location.latitude, location.longitude, minAltitude]);
+  }, [selection, night.window, location.latitude, location.longitude, minAltitude, bul, koordinat]);
 
   const curves = useMemo(() => {
     if (!night.window) return new Map<string, ReturnType<typeof altitudeCurve>>();
     const map = new Map<string, ReturnType<typeof altitudeCurve>>();
     for (const { slug } of selection) {
-      const target = targets.find((t) => t.slug === slug);
+      const target = bul(slug);
       if (!target) continue;
-      const coords = { ra: parseRa(target.ra), dec: parseDec(target.dec) };
+      const coords = koordinat(target);
       if (Number.isNaN(coords.ra) || Number.isNaN(coords.dec)) continue;
       map.set(
         slug,
@@ -183,7 +253,7 @@ export function PlannerPage() {
       );
     }
     return map;
-  }, [selection, night.window, location.latitude, location.longitude]);
+  }, [selection, night.window, location.latitude, location.longitude, bul, koordinat]);
 
   const addTarget = (slug: string) => {
     if (!slug || selection.some((s) => s.slug === slug)) return;
