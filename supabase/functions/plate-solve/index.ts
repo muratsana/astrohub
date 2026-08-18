@@ -116,8 +116,30 @@ Deno.serve(async (req: Request) => {
 
   if (error) return json(500, { hata: error.message });
   if (!photo) return json(404, { hata: 'fotoğraf bulunamadı' });
+
+  /*
+   * SAHİBİ YA DA YÖNETİM.
+   *
+   * Önceden yalnızca sahip çözüm isteyebiliyordu ve bunun bir bedeli
+   * vardı: `ASTROMETRY_API_KEY` sonradan tanımlandığında, o güne kadar
+   * yüklenmiş fotoğrafların hiçbiri çözülemiyordu — her sahibin tek tek
+   * kendi fotoğrafına girip düğmeye basması gerekiyordu ve çoğu bunu
+   * hiç yapmayacaktı.
+   *
+   * Yönetim muafiyeti bu birikmiş kuyruğu tek hareketle boşaltmak için.
+   * Rol SERVİS ROLÜYLE sorulmuyor: çağıranın kendi kimliğiyle
+   * `user_roles` okunuyor, yani "ben adminim" diyen bir gövdeye
+   * güvenilmiyor.
+   */
   if (photo.user_id !== user.user.id) {
-    return json(403, { hata: 'bu fotoğraf sizin değil' });
+    const { data: roller } = await asUser
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.user.id);
+    const yetkili = (roller ?? []).some(
+      (r: { role: string }) => r.role === 'admin' || r.role === 'moderator'
+    );
+    if (!yetkili) return json(403, { hata: 'bu fotoğraf sizin değil' });
   }
   // Zaten kuyruktaysa ikinci kez göndermiyoruz: astrometry.net kuyruğunu
   // aynı işle doldurmanın kimseye faydası yok.

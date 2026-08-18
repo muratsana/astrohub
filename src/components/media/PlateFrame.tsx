@@ -20,6 +20,12 @@ export function PlateFrame({
   badge,
   /** Sağ üst köşedeki ikincil işaret (editör seçimi vb.). */
   flag,
+  /**
+   * Görselin ÜSTÜNE binen katman — imleç geldiğinde açılan ölçüm paneli
+   * gibi. Rozetlerden ayrı bir yuva çünkü konumunu kendisi belirliyor:
+   * rozetler köşelere sabit, katman kadrajın tamamını kullanabilir.
+   */
+  overlay,
   ratio = 'aspect-[4/3]',
   className,
 }: {
@@ -27,6 +33,7 @@ export function PlateFrame({
   fieldOfView?: string;
   badge?: ReactNode;
   flag?: ReactNode;
+  overlay?: ReactNode;
   ratio?: string;
   className?: string;
 }) {
@@ -49,6 +56,8 @@ export function PlateFrame({
         aria-hidden
         className="ticks-y pointer-events-none absolute inset-x-0 bottom-0 h-[5px]"
       />
+
+      {overlay}
 
       {badge && <span className="absolute left-1.5 top-2">{badge}</span>}
 

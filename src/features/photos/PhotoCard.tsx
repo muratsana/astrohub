@@ -1,4 +1,5 @@
 import { Badge } from '@/components/ui/Badge';
+import { SolveOverlay } from './SolveOverlay';
 import { PhotoTile } from '@/components/media/PhotoTile';
 import { formatIntegration } from '@/domain/photography/integration';
 import { photoIntegrationSeconds } from './filtering';
@@ -57,6 +58,15 @@ export function PhotoCard({
        * görünür kılıyor. Yalnızca çözülmüş kayıtlarda var — "sırada"
        * ya da "başarısız" bir liste kartında anlatılacak şey değil.
        */
+      /*
+        ÖLÇÜMLER İMLEÇ GELİNCE KARONUN ÜSTÜNDE.
+
+        Rozet "çözüldü" diyor ama değeri söylemiyordu; koordinat, kadraj
+        ve ölçek için her karta tek tek girmek gerekiyordu. Katman
+        yalnızca çözülmüş kayıtta çiziliyor ve kartın bağlantısını
+        yutmuyor (gerekçe `SolveOverlay` başlığında).
+      */
+      overlay={<SolveOverlay solve={photo.solve} />}
       flag={
         photo.solve.durum === 'cozuldu' ||
         photo.editorsPick ||

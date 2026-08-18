@@ -120,6 +120,7 @@ export function ContentCardMedia({
   variant = 'grid',
   badge,
   flag,
+  overlay,
   fieldOfView,
   children,
   className,
@@ -128,6 +129,7 @@ export function ContentCardMedia({
   variant?: ContentCardVariant;
   badge?: ReactNode;
   flag?: ReactNode;
+  overlay?: ReactNode;
   fieldOfView?: string;
   children: ReactNode;
   className?: string;
@@ -137,6 +139,7 @@ export function ContentCardMedia({
       ratio={CARD_RATIO[ratio]}
       badge={badge}
       flag={flag}
+      overlay={overlay}
       fieldOfView={fieldOfView}
       className={cn(
         variant === 'grid'

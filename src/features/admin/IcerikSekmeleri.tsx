@@ -1,4 +1,5 @@
 import { Suspense, useEffect, useState } from 'react';
+import { PlateSolveControl } from './PlateSolveControl';
 import { ContentControl } from './ContentControl';
 import { EventControl } from './EventControl';
 import { RecordsControl } from './RecordsControl';
@@ -166,6 +167,11 @@ export function IcerikSekmeleri({
       {aktif.tur === 'event' && (
         <EventControl canWrite={canWrite} targetSlug={targetSlug} />
       )}
+
+      {/* Alan çözümü kuyruğu FOTOĞRAF sekmesinde: çözüm fotoğrafa ait
+          bir ölçüm ve yöneticinin onu arayacağı yer, fotoğrafları
+          yönettiği yer. */}
+      {aktif.id === 'photo' && <PlateSolveControl />}
 
       {aktif.tur === 'record' && (
         <RecordsControl

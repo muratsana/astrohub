@@ -43,6 +43,8 @@ export interface PhotoTileProps {
   family?: { label: string; className: string };
   /** Editör seçimi gibi ikincil işaret. */
   flag?: ReactNode;
+  /** Görselin üstünde açılan katman (ör. alan çözümü ölçümleri). */
+  overlay?: ReactNode;
   variant?: 'grid' | 'list';
   className?: string;
 }
@@ -61,6 +63,7 @@ export function PhotoTile({
   fieldOfView,
   family,
   flag,
+  overlay,
   variant = 'grid',
   className,
 }: PhotoTileProps) {
@@ -133,6 +136,7 @@ export function PhotoTile({
         fieldOfView={fieldOfView}
         badge={family ? <FamilyBadge {...family} /> : undefined}
         flag={flag}
+        overlay={overlay}
       >
         <RemoteImage src={imageUrl} alt={target} seed={seed} tint={tint} />
       </ContentCardMedia>
