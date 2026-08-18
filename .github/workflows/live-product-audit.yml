@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'scripts/live-product-audit.mjs'
+      - 'scripts/live-diagnostics.mjs'
       - '.github/workflows/live-product-audit.yml'
   workflow_dispatch:
 
@@ -28,6 +29,8 @@ jobs:
           AUDIT_TEST_EMAIL: ${{ secrets.AUDIT_TEST_EMAIL }}
           AUDIT_TEST_PASSWORD: ${{ secrets.AUDIT_TEST_PASSWORD }}
         run: node scripts/live-product-audit.mjs
+      - name: Diagnose responsive overflow and failing endpoints
+        run: node scripts/live-diagnostics.mjs
       - name: Upload audit evidence
         if: always()
         uses: actions/upload-artifact@v4
