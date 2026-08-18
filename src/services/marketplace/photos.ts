@@ -28,8 +28,12 @@ import { listingPhotoUrl } from './photoUrl';
 /** İlan fotoğrafında en uzun kenar. */
 export const LISTING_MAX_EDGE = 1600;
 
-/** İlan başına üst sınır — asıl kural tetikleyicide (0038). */
-export const LISTING_PHOTO_LIMIT = 8;
+/**
+ * İlan başına üst sınır (A07). Asıl kural veritabanı tetikleyicisinde —
+ * istemci sabiti onunla AYNI olmak zorunda, yoksa arayüz izin verip
+ * tetikleyici reddeder. İkisi 20260819010000 migration'ında 5'e indirildi.
+ */
+export const LISTING_PHOTO_LIMIT = 5;
 
 export interface ListingPhoto {
   id: string;
@@ -157,6 +161,24 @@ export async function uploadListingPhoto(
     width: resized.size.width,
     height: resized.size.height,
   };
+}
+
+/**
+ * Fotoğrafları verilen sıraya göre yeniden konumlandırır (A09 sırala).
+ *
+ * `orderedIds` kapaktan sona istenen sıra; her satırın `position`ı
+ * indeksine eşitleniyor. Sıra kolonu benzersiz değil (yalnızca dizin),
+ * bu yüzden ara adımda çakışma olmuyor — tek tek güncellenebiliyor.
+ */
+export async function reorderListingPhotos(orderedIds: string[]): Promise<void> {
+  const supabase = await client();
+  for (let i = 0; i < orderedIds.length; i += 1) {
+    const { error } = await supabase
+      .from('listing_photos')
+      .update({ position: i })
+      .eq('id', orderedIds[i]);
+    if (error) throw new Error(error.message);
+  }
 }
 
 /** Fotoğrafı hem tablodan hem kovadan siler. */

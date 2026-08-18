@@ -5,6 +5,7 @@ import { useAuth } from '@/features/auth/AuthContext';
 import {
   deleteListingPhoto,
   fetchListingPhotos,
+  reorderListingPhotos,
   uploadListingPhoto,
   LISTING_PHOTO_LIMIT,
   type ListingPhoto,
@@ -45,6 +46,10 @@ export function ListingPhotos({ listing }: { listing: Listing }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  /* Değiştir akışı: hangi fotoğrafın yerine yükleneceğini tutuyor. Boşsa
+     dosya seçici yeni fotoğraf ekliyor. */
+  const replaceRef = useRef<HTMLInputElement>(null);
+  const [replaceTarget, setReplaceTarget] = useState<ListingPhoto | null>(null);
 
   const isOwner = Boolean(user && listing.sellerId && user.id === listing.sellerId);
 
@@ -105,6 +110,51 @@ export function ListingPhotos({ listing }: { listing: Listing }) {
       load();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Fotoğraf silinemedi');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  /* SIRALAMA (A09): seçili fotoğrafı bir yön kaydırır. Kapak (0. sıra)
+     ilan kartında ve galeride ilk görünen; sıralama o yüzden önemli. */
+  async function move(delta: number) {
+    const hedef = active + delta;
+    if (hedef < 0 || hedef >= photos.length) return;
+    const yeni = [...photos];
+    [yeni[active], yeni[hedef]] = [yeni[hedef], yeni[active]];
+    setPhotos(yeni);
+    setActive(hedef);
+    setBusy(true);
+    setError(null);
+    try {
+      await reorderListingPhotos(yeni.map((p) => p.id));
+      load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Sıra kaydedilemedi');
+      load();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  /* DEĞİŞTİR (A09): eski fotoğrafın yerine yenisini koyar. Önce yeni
+     yükleniyor, sonra eski siliniyor — ters sırada bir yükleme hatası
+     fotoğrafı büsbütün kaybettirirdi. */
+  async function replaceWith(target: ListingPhoto, file: File) {
+    if (!listing.id || !user) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await uploadListingPhoto({
+        listingId: listing.id,
+        userId: user.id,
+        file,
+        position: target.position,
+      });
+      await deleteListingPhoto(target.id, target.url);
+      load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Fotoğraf değiştirilemedi');
     } finally {
       setBusy(false);
     }
@@ -206,14 +256,61 @@ export function ListingPhotos({ listing }: { listing: Listing }) {
           </Button>
 
           {current && (
-            <Button
-              size="sm"
-              variant="ghost"
-              disabled={busy}
-              onClick={() => void remove(current)}
-            >
-              Bu fotoğrafı sil
-            </Button>
+            <>
+              <input
+                ref={replaceRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file && replaceTarget) void replaceWith(replaceTarget, file);
+                  setReplaceTarget(null);
+                  e.target.value = '';
+                }}
+              />
+              {photos.length > 1 && (
+                <span className="flex items-center gap-1" role="group" aria-label="Sıra">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    disabled={busy || active === 0}
+                    aria-label="Sola al"
+                    onClick={() => void move(-1)}
+                  >
+                    ◀
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    disabled={busy || active === photos.length - 1}
+                    aria-label="Sağa al"
+                    onClick={() => void move(1)}
+                  >
+                    ▶
+                  </Button>
+                </span>
+              )}
+              <Button
+                size="sm"
+                variant="ghost"
+                disabled={busy}
+                onClick={() => {
+                  setReplaceTarget(current);
+                  replaceRef.current?.click();
+                }}
+              >
+                Değiştir
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                disabled={busy}
+                onClick={() => void remove(current)}
+              >
+                Bu fotoğrafı sil
+              </Button>
+            </>
           )}
 
           <span className="text-meta text-faint">
