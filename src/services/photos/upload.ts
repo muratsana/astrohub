@@ -445,11 +445,21 @@ export async function uploadPhoto(
       'original',
       archiveExtension
     );
+    /*
+     * ORİJİNAL DEĞİŞMEZ — upsert: false (X02).
+     *
+     * Yol kayda özgü (`<user>/<photoId>/original.jpg`) ve her yükleme yeni
+     * bir photoId doğuruyor; dolayısıyla aynı yola ikinci bir yazma normal
+     * akışta olmuyor. `upsert: false` bunu bir DAVRANIŞ değil bir GARANTİ
+     * yapıyor: arşiv kopyası bir kez yazılır, bir daha üzerine yazılamaz.
+     * Türevler (display/thumb) yeniden üretilebilir; orijinal üretilemez —
+     * bir kez bozulursa geri dönüşü yok, bu yüzden yazma da tek yönlü.
+     */
     const { error: originalError } = await supabase.storage
       .from('photo-originals')
       .upload(originalPath, archiveBody, {
         contentType: archiveType,
-        upsert: true,
+        upsert: false,
       });
 
     if (!originalError) {

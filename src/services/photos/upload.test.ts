@@ -31,6 +31,8 @@ const state = {
   /** Son yazılan çekim oturumu satırları. */
   sessionInsert: null as Record<string, unknown>[] | null,
   sessionError: null as { message: string } | null,
+  /** Depoya yapılan tüm yüklemeler — bucket yönlendirme ve upsert için. */
+  uploads: [] as { bucket: string; path: string; upsert?: boolean }[],
 };
 
 const PHOTO_ID = 'photo-1';
@@ -95,10 +97,16 @@ const supabase = {
   from: (table: string) => tableApi(table),
   storage: {
     from: (bucket: string) => ({
-      upload: async (path: string) =>
-        state.uploadFails.has(path)
+      upload: async (
+        path: string,
+        _body: unknown,
+        options?: { upsert?: boolean; contentType?: string }
+      ) => {
+        state.uploads.push({ bucket, path, upsert: options?.upsert });
+        return state.uploadFails.has(path)
           ? { error: { message: `yüklenemedi: ${path}` } }
-          : { error: null },
+          : { error: null };
+      },
       remove: async (paths: string[]) => {
         state.removed.push({ bucket, paths });
         return { error: null };
@@ -170,6 +178,7 @@ beforeEach(() => {
   state.exposureInsert = null;
   state.sessionInsert = null;
   state.sessionError = null;
+  state.uploads = [];
 });
 
 describe('uploadPhoto — başarılı akış', () => {
@@ -356,6 +365,33 @@ describe('uploadPhoto — çekim oturumları (C02–C05)', () => {
     expect(state.removed).toEqual([]);
     // Eşleme kurulamadı → pozun session_id'si null, ama poz yine yazıldı.
     expect(state.exposureInsert?.[0].session_id).toBeNull();
+  });
+});
+
+describe('uploadPhoto — orijinal değişmez ve türev sızıntısı yok (X02, X03)', () => {
+  it('orijinal arşiv upsert:false ile yazılır (X02 değişmezlik)', async () => {
+    await uploadPhoto({ ...input });
+    const orijinal = state.uploads.find((u) => u.bucket === 'photo-originals');
+    expect(orijinal).toBeTruthy();
+    expect(orijinal?.upsert).toBe(false);
+  });
+
+  it('gösterim/thumb public bucket\'a, ham dosya yalnız gizli bucket\'a (X03)', async () => {
+    await uploadPhoto({ ...input });
+    // Public türevler (canvas'tan üretilmiş, EXIF'siz) 'photos' bucket'ında.
+    const publicYollar = state.uploads
+      .filter((u) => u.bucket === 'photos')
+      .map((u) => u.path);
+    expect(publicYollar.some((p) => p.endsWith('display.jpg'))).toBe(true);
+    expect(publicYollar.some((p) => p.endsWith('thumb.jpg'))).toBe(true);
+    // EXIF/GPS taşıyabilen ham dosya YALNIZCA gizli bucket'ta.
+    const gizli = state.uploads.filter((u) => u.bucket === 'photo-originals');
+    expect(gizli).toHaveLength(1);
+    expect(
+      state.uploads.some(
+        (u) => u.bucket === 'photos' && u.path.includes('original')
+      )
+    ).toBe(false);
   });
 });
 
