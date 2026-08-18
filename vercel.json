@@ -109,6 +109,10 @@
       "destination": "/app.html"
     },
     {
+      "source": "/astrofotografcilar",
+      "destination": "/app.html"
+    },
+    {
       "source": "/aydin-astronomi-etkinlikleri",
       "destination": "/app.html"
     },

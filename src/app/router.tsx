@@ -169,6 +169,17 @@ export const appRoutes = [
         ),
       },
       {
+        /* Dizin, profil rotasının ÜSTÜNDE: ikisi de kök seviyede tek
+           parçalı adresler ve okuyanın sırayı görmesi kolay olsun. */
+        path: 'astrofotografcilar',
+        element: route(
+          named(
+            () => import('@/features/profile/PhotographersPage'),
+            'PhotographersPage'
+          )
+        ),
+      },
+      {
         path: 'profil/:username',
         element: route(
           named(() => import('@/features/profile/ProfilePage'), 'ProfilePage')

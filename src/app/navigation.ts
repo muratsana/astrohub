@@ -429,6 +429,14 @@ export const siteMap: NavGroup[] = [
     title: 'Hesap',
     items: [
       {
+        /* Dizin "Hesap" grubunda değil ama en yakın komşusu profil; üst
+           menüde topluluk tarafına ait. */
+        label: 'Astrofotoğrafçılar',
+        to: '/astrofotografcilar',
+        description: 'Şehre ve ekipmana göre gözlemci bul',
+        keywords: ['kullanıcı', 'astrofotoğrafçı', 'dizin', 'bul', 'takip'],
+      },
+      {
         label: 'Hesabım',
         to: '/hesap',
         description: 'Profil bilgileri ve hesap ayarları',
