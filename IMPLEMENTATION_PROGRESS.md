@@ -99,8 +99,8 @@ Canlı pano: `docs/patch-2026-08-18/ilerleme.html`
 | F06 | P1 | F | Katalog | Diğer markalarda seri-gap analizi | TODO |  |  | Bekliyor |
 | F07 | P2 | F | Katalog | Katalog source/verification metadata | TODO |  |  | Bekliyor |
 | F08 | P0 | F | Katalog | Dedup migration backup/rollback | TODO |  |  | Bekliyor |
-| G01 | P2 | G | Fotoğraf Detayı | Puanlama panelini aksiyon satırına taşı | TODO |  |  | Bekliyor |
-| G02 | P2 | G | Fotoğraf Detayı | 1–10 puan popover | TODO |  |  | Bekliyor |
+| G01 | P2 | G | Fotoğraf Detayı | Puanlama panelini aksiyon satırına taşı | TESTED | 95b5782 |  | Bekliyor |
+| G02 | P2 | G | Fotoğraf Detayı | 1–10 puan popover | TESTED | 95b5782 |  | Bekliyor |
 | G03 | P2 | G | Fotoğraf Detayı | Puanlama erişilebilirliği | TODO |  |  | Bekliyor |
 | H01 | P0 | H | QA | Gerçek onboarding E2E | TODO |  |  | Bekliyor |
 | H02 | P0 | H | QA | Rol/persona matrisi | TODO |  |  | Bekliyor |
@@ -128,5 +128,5 @@ Canlı pano: `docs/patch-2026-08-18/ilerleme.html`
 | E10 | P1 | E | Public Profil | Kapak görseli (banner) yükleme | TESTED | e3f2c48 | vitest domain/profile; npm run test:all | Bekliyor |
 | E11 | P1 | E | Public Profil | Kapak ve avatar için ortak kadraj editörü | TESTED | 65be33d | vitest kadraj.test.ts: kadraj boslugu (3 senaryo) | Bekliyor |
 | E12 | P1 | E | Public Profil | Kapak ve avatar silinebilmeli | TESTED | e3f2c48 | profilGorseliSil tek yol | Bekliyor |
-| A15 | P0 | A | Galeri | İndir düğmesi doğrudan en yüksek kaliteli JPEG vermeli | TODO |  |  | Bekliyor |
-| A16 | P0 | A | Moderasyon | Kaldırılan içeriği geri getirme düğmesi görünmüyor | TODO |  |  | Bekliyor |
+| A15 | P0 | A | Galeri | İndir düğmesi doğrudan en yüksek kaliteli JPEG vermeli | TESTED | 95b5782 | vitest indirmeAdi.test.ts (5 senaryo) | Bekliyor |
+| A16 | P0 | A | Moderasyon | Kaldırılan içeriği geri getirme düğmesi görünmüyor | TESTED | 95b5782 |  | Bekliyor |

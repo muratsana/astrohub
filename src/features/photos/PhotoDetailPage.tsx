@@ -18,6 +18,7 @@ import {
 import { usePhotoCatalog } from '@/services/content/photos';
 import { useAlanCozumuIstegi } from '@/services/photos/solveRequest';
 import { useRoles } from '@/features/admin/useRoles';
+import { indirmeAdi } from '@/domain/photography/indirmeAdi';
 import { YILDIZ_ATFI } from '@/services/content/fieldStars';
 import { useSavedPhoto } from '@/services/content/collections';
 import { usePhotoLike } from '@/services/content/engagement';
@@ -25,7 +26,7 @@ import { PhotoComments } from './PhotoComments';
 import { PhotoComparison } from './PhotoComparison';
 import { PhotoViewer } from './PhotoViewer';
 import { BortleIndicator } from './BortleIndicator';
-import { RatingControl, RatingBadge } from './RatingControl';
+import { RatingControl, RatingBadge, RatingChip } from './RatingControl';
 import { VersionHistory } from './VersionHistory';
 import { VersionUpload } from './VersionUpload';
 import { ReportButton } from '@/features/admin/ReportButton';
@@ -206,6 +207,9 @@ function PhotoDetail({
 
           <div className="tabular flex shrink-0 items-center gap-2 text-sm">
             <RatingBadge rating={photo.rating} />
+            {/* Puan verme eylem şeridinde: aşağıdaki panel görülmüyordu
+                ve "yıldız verme düğmesi yok" diye bildirildi (G01). */}
+            <RatingChip photo={photo} />
             <LikeChip photo={photo} />
             <ActionChip>💬 {photo.comments}</ActionChip>
             <SaveChip photo={photo} />
@@ -967,17 +971,76 @@ function ShareChip({ photo }: { photo: AstroPhoto }) {
   );
 }
 
+/**
+ * ══════════════════════════════════════════════════════════════════════
+ * İNDİR — DOSYA VERİYOR, SAYFA AÇMIYOR (A15)
+ *
+ * Düğme `<a href={...} download>` idi ve HİÇ İNDİRMİYORDU: `download`
+ * niteliği FARKLI KAYNAKTAKİ adreslerde tarayıcı tarafından yok
+ * sayılıyor. Görsel `supabase.co`da, sayfa `astrohub.com.tr`de — yani
+ * tarayıcı indirmek yerine görselin kendisine GİDİYOR. Kullanıcı tam
+ * ekran bir resimle baş başa kalıyor ve uygulamadan çıkmış oluyor;
+ * "geri dönülmüyor" şikâyeti bundan.
+ *
+ * Doğru yol dosyayı ALIP indirmek: içerik `fetch` ile çekiliyor, bir
+ * blob adresine dönüyor ve o adres AYNI KAYNAKTA olduğu için `download`
+ * niteliği çalışıyor. Yan kazanç, dosya adının kaydın kendisinden
+ * türemesi — depolamadaki ad `display.jpg` ve indirme klasöründe on
+ * tanesi yan yana duruyordu.
+ *
+ * HANGİ KOPYA İNDİRİLİYOR. Yayımlanan gösterim kopyası: en uzun kenarı
+ * 2048 piksel. Kullanıcının yüklediği ham dosya gizli kovada ve
+ * yalnızca sahibine açık; onu "en yüksek kalite" diye herkese sunmak
+ * hem yanlış hem de politikaya aykırı olurdu. Düğme bu yüzden ne
+ * verdiğini yazıyor.
+ */
 function DownloadChip({ photo }: { photo: AstroPhoto }) {
+  const [durum, setDurum] = useState<'idle' | 'busy' | 'error'>('idle');
+
   if (!photo.access?.allowDownload || !photo.image?.url) return null;
+  const kaynak = photo.image.url;
+
+  async function indir() {
+    setDurum('busy');
+    try {
+      const yanit = await fetch(kaynak);
+      if (!yanit.ok) throw new Error(String(yanit.status));
+      const blob = await yanit.blob();
+      const adres = URL.createObjectURL(blob);
+      const baglanti = document.createElement('a');
+      baglanti.href = adres;
+      baglanti.download = indirmeAdi([
+        'astrohub',
+        photo.target.catalog,
+        photo.title,
+      ]);
+      document.body.appendChild(baglanti);
+      baglanti.click();
+      baglanti.remove();
+      /* Adres hemen değil, tarayıcı indirmeyi başlattıktan sonra
+         bırakılıyor: aynı karede iptal etmek indirmeyi düşürüyor. */
+      setTimeout(() => URL.revokeObjectURL(adres), 10_000);
+      setDurum('idle');
+    } catch {
+      setDurum('error');
+      setTimeout(() => setDurum('idle'), 2500);
+    }
+  }
 
   return (
-    <a
-      href={photo.image.url}
-      download
-      className="rounded-full border border-border bg-surface-1 px-3 py-1.5 text-muted-foreground transition-colors hover:border-border-strong hover:text-foreground"
+    <button
+      type="button"
+      disabled={durum === 'busy'}
+      onClick={() => void indir()}
+      title="Yayımlanan gösterim kopyası (en uzun kenar 2048 px), JPEG"
+      className="rounded-full border border-border bg-surface-1 px-3 py-1.5 text-muted-foreground transition-colors hover:border-border-strong hover:text-foreground disabled:opacity-60"
     >
-      İndir
-    </a>
+      {durum === 'busy'
+        ? 'İndiriliyor…'
+        : durum === 'error'
+          ? 'İndirilemedi'
+          : 'İndir (JPEG)'}
+    </button>
   );
 }
 

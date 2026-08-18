@@ -157,14 +157,14 @@ footer p { margin: 0 0 5px; }
       sonda onların üstüne oturan özellikler. Bu sayfa
       <code class="mono">PROGRESS_TRACKER.csv</code>'den üretiliyor.
     </p>
-    <div class="serit"><span class="serit-parca durum-VERIFIED" style="flex:12" title="Doğrulandı: 12"></span><span class="serit-parca durum-TESTED" style="flex:5" title="Test edildi: 5"></span><span class="serit-parca durum-CODED" style="flex:3" title="Kodlandı: 3"></span><span class="serit-parca durum-IN_PROGRESS" style="flex:3" title="Sürüyor: 3"></span><span class="serit-parca durum-TODO" style="flex:74" title="Sırada: 74"></span></div>
+    <div class="serit"><span class="serit-parca durum-VERIFIED" style="flex:12" title="Doğrulandı: 12"></span><span class="serit-parca durum-TESTED" style="flex:9" title="Test edildi: 9"></span><span class="serit-parca durum-CODED" style="flex:3" title="Kodlandı: 3"></span><span class="serit-parca durum-IN_PROGRESS" style="flex:3" title="Sürüyor: 3"></span><span class="serit-parca durum-TODO" style="flex:70" title="Sırada: 70"></span></div>
     <div class="ozetler">
       <button class="ozet durum-VERIFIED" data-filtre="VERIFIED" type="button">
         <span class="ozet-sayi mono">12</span>
         <span class="ozet-ad">Doğrulandı</span>
       </button>
       <button class="ozet durum-TESTED" data-filtre="TESTED" type="button">
-        <span class="ozet-sayi mono">5</span>
+        <span class="ozet-sayi mono">9</span>
         <span class="ozet-ad">Test edildi</span>
       </button>
       <button class="ozet durum-CODED" data-filtre="CODED" type="button">
@@ -176,7 +176,7 @@ footer p { margin: 0 0 5px; }
         <span class="ozet-ad">Sürüyor</span>
       </button>
       <button class="ozet durum-TODO" data-filtre="TODO" type="button">
-        <span class="ozet-sayi mono">74</span>
+        <span class="ozet-sayi mono">70</span>
         <span class="ozet-ad">Sırada</span>
       </button></div>
   </header>
@@ -299,8 +299,8 @@ footer p { margin: 0 0 5px; }
           <p>Kullanıcının bugün çarptığı hatalar</p>
         </div>
         <div class="faz-olcu">
-          <span class="faz-oran mono">7<span class="bolu">/</span>12</span>
-          <div class="faz-cubuk"><span style="width:58%"></span></div>
+          <span class="faz-oran mono">9<span class="bolu">/</span>12</span>
+          <div class="faz-cubuk"><span style="width:75%"></span></div>
         </div>
       </header>
       <div class="tablo-sar">
@@ -408,27 +408,27 @@ footer p { margin: 0 0 5px; }
           <td><span class="rozet durum-TODO">Sırada</span></td>
           <td class="mono kanit"><span class="bos">—</span></td>
         </tr>
-        <tr data-durum="TODO" data-oncelik="P0">
+        <tr data-durum="TESTED" data-oncelik="P0">
           <td class="mono">A15</td>
           <td><span class="oncelik o-P0">P0</span></td>
           <td class="modul">Galeri</td>
           <td class="is">
             <span class="is-baslik">İndir düğmesi doğrudan en yüksek kaliteli JPEG vermeli</span>
-            <span class="is-not">Kullanici raporu 18.08.2026</span>
+            <span class="is-not">download niteligi capraz kaynakta yok sayiliyordu; dosya fetch+blob ile aliniyor ve adi kayittan tureniyor</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>95b5782</code><span class="kanit-metin">vitest indirmeAdi.test.ts (5 senaryo)</span></td>
         </tr>
-        <tr data-durum="TODO" data-oncelik="P0">
+        <tr data-durum="TESTED" data-oncelik="P0">
           <td class="mono">A16</td>
           <td><span class="oncelik o-P0">P0</span></td>
           <td class="modul">Moderasyon</td>
           <td class="is">
             <span class="is-baslik">Kaldırılan içeriği geri getirme düğmesi görünmüyor</span>
-            <span class="is-not">Kullanici raporu 18.08.2026</span>
+            <span class="is-not">Serit iki yone de calisiyor: icerik yayindaysa kaldirma, kaldirilmissa geri alma; kuyruk-icerik uyusmazligi da yaziliyor</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>95b5782</code></td>
         </tr>
         <tr data-durum="IN_PROGRESS" data-oncelik="P1">
           <td class="mono">X07</td>
@@ -1259,8 +1259,8 @@ footer p { margin: 0 0 5px; }
           <p>İlan fotoğrafları, benzer fotoğraf kartları, puanlama</p>
         </div>
         <div class="faz-olcu">
-          <span class="faz-oran mono">0<span class="bolu">/</span>8</span>
-          <div class="faz-cubuk"><span style="width:0%"></span></div>
+          <span class="faz-oran mono">2<span class="bolu">/</span>8</span>
+          <div class="faz-cubuk"><span style="width:25%"></span></div>
         </div>
       </header>
       <div class="tablo-sar">
@@ -1324,27 +1324,27 @@ footer p { margin: 0 0 5px; }
           <td><span class="rozet durum-TODO">Sırada</span></td>
           <td class="mono kanit"><span class="bos">—</span></td>
         </tr>
-        <tr data-durum="TODO" data-oncelik="P2">
+        <tr data-durum="TESTED" data-oncelik="P2">
           <td class="mono">G01</td>
           <td><span class="oncelik o-P2">P2</span></td>
           <td class="modul">Fotoğraf Detayı</td>
           <td class="is">
             <span class="is-baslik">Puanlama panelini aksiyon satırına taşı</span>
-            <span class="is-not">Kullanici hatirlatti: fotografa yildiz verme dugmesi hala yok</span>
+            <span class="is-not">Kompakt puan dugmesi eylem seridinde; panel yerinde ve ikisi ayni duruma yaziyor</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>95b5782</code></td>
         </tr>
-        <tr data-durum="TODO" data-oncelik="P2">
+        <tr data-durum="TESTED" data-oncelik="P2">
           <td class="mono">G02</td>
           <td><span class="oncelik o-P2">P2</span></td>
           <td class="modul">Fotoğraf Detayı</td>
           <td class="is">
             <span class="is-baslik">1–10 puan popover</span>
-            
+            <span class="is-not">1-10 acilir kutu; Esc ve disari tiklama ile kapaniyor</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>95b5782</code></td>
         </tr>
         <tr data-durum="TODO" data-oncelik="P2">
           <td class="mono">G03</td>

@@ -585,6 +585,45 @@ function IcerikDurumu({
     }
   }
 
+  /*
+   * ŞERİT İKİ YÖNE DE ÇALIŞIYOR.
+   *
+   * Önce yalnızca geri alma vardı ve kullanıcı haklı olarak "kaldırılan
+   * içeriği geri getirme düğmesi yok" dedi. Bakınca sebep şuydu: onun
+   * kaydında içerik hiç kaldırılmamıştı — kuyruk "Kaldırıldı" yazıyor
+   * ama fotoğraf yayındaydı, dolayısıyla geri alacak bir şey de yoktu
+   * ve şerit ona hiçbir eylem sunmuyordu.
+   *
+   * Kuyruk kaydı eski akıştan kapanmış olabiliyor (iki adımlı hüküm
+   * paneli sonradan geldi). O kayıtlarda karar verilmiş ama içeriğe
+   * dokunulmamış. Moderatörün elinde tek şey bir rozetti.
+   *
+   * Artık içerik yayındaysa kaldırma, kaldırılmışsa geri alma düğmesi
+   * çiziliyor — kayıt kapalı olsa da. Kararın kendisi kuyrukta,
+   * içeriğin durumu burada ve ikisi ayrışabildiği için ikisi de
+   * yönetilebilir olmalı.
+   */
+  async function kaldir() {
+    setCalisiyor(true);
+    hataYaz(null);
+    try {
+      await removeContent(item.target_type, item.target_id);
+      setDurum({ found: true, removed: true });
+      yenile();
+    } catch (e) {
+      hataYaz(e instanceof Error ? e.message : 'Kaldırılamadı.');
+    } finally {
+      setCalisiyor(false);
+    }
+  }
+
+  /* Kuyruk "kaldırıldı" diyor ama içerik yayında: eski akıştan kapanmış
+     kayıtların izi. Sessiz bırakmak, ekranın olmamış bir şeyi olmuş
+     gibi göstermesi demekti — bu panelin düzeltmek için var olduğu
+     durumun ta kendisi. */
+  const kaldirildiIddiasi =
+    item.status === 'rejected' && item.target_type !== 'club_deletion';
+
   if (!durum) return null;
 
   if (!durum.found) {
@@ -600,7 +639,7 @@ function IcerikDurumu({
       <Badge tone={durum.removed ? 'danger' : 'success'}>
         {durum.removed ? 'İçerik yayından kaldırıldı' : 'İçerik yayında'}
       </Badge>
-      {durum.removed && (
+      {durum.removed ? (
         <>
           <Button
             size="sm"
@@ -613,6 +652,23 @@ function IcerikDurumu({
           <span className="text-meta text-faint">
             Şikâyet haksız çıktıysa içerik metniyle birlikte geri gelir.
           </span>
+        </>
+      ) : (
+        <>
+          <Button
+            size="sm"
+            variant="danger"
+            disabled={busy || calisiyor}
+            onClick={() => void kaldir()}
+          >
+            {calisiyor ? 'Kaldırılıyor…' : 'Yayından kaldır'}
+          </Button>
+          {kaldirildiIddiasi && (
+            <span className="text-meta text-warning">
+              Kayıt “kaldırıldı” diyor ama içerik hâlâ yayında — eski
+              akıştan kapanmış olabilir.
+            </span>
+          )}
         </>
       )}
     </div>
