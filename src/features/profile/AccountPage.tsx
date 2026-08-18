@@ -31,16 +31,18 @@ import {
 import { useMyProfileStats } from '@/services/content/profileDashboard';
 import { isUsernameLocked } from '@/features/auth/accountSetup';
 import { MyEquipmentPanel } from '@/features/equipment/MyEquipmentPanel';
+import { PreferencesPanel } from '@/features/preferences/PreferencesPanel';
 import { AvatarEditor } from './AvatarEditor';
 import { PasswordPanel } from './PasswordPanel';
 import { DataExportPanel } from './DataExportPanel';
 
-type Tab = 'hesabim' | 'profilim' | 'ekipmanlarim';
+type Tab = 'hesabim' | 'profilim' | 'ekipmanlarim' | 'tercihler';
 
 const TAB_LABELS: Record<Tab, string> = {
   hesabim: 'Hesabım',
   profilim: 'Profilim',
   ekipmanlarim: 'Ekipmanlarım',
+  tercihler: 'Tercihler',
 };
 
 /*
@@ -53,6 +55,7 @@ const TAB_LABELS: Record<Tab, string> = {
 function tabFromQuery(value: string | null): Tab {
   if (value === 'profilim') return 'profilim';
   if (value === 'ekipmanlarim') return 'ekipmanlarim';
+  if (value === 'tercihler') return 'tercihler';
   return 'hesabim';
 }
 
@@ -518,6 +521,8 @@ export function AccountPage() {
           </div>
         ) : activeTab === 'ekipmanlarim' ? (
           <MyEquipmentPanel />
+        ) : activeTab === 'tercihler' ? (
+          <PreferencesPanel />
         ) : (
           <div className="grid gap-4">
             <AvatarEditor userId={user?.id} profile={profile} onDone={refresh} />

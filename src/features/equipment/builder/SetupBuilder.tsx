@@ -22,6 +22,7 @@ import { ModelPicker } from './ModelPicker';
 import { AnalysisPanel } from './AnalysisPanel';
 import type { EquipmentModel } from '../data';
 import { visibilityLabels, type SetupVisibility } from '@/features/setups/store';
+import { useDefaultEquipmentVisibility } from '@/features/preferences/equipmentVisibility';
 
 /**
  * SETUP BUILDER.
@@ -71,8 +72,14 @@ export function SetupBuilder({
   const [name, setName] = useState(initialName);
   const [description, setDescription] = useState('');
   const [purpose, setPurpose] = useState('');
-  /* Varsayılan görünür: gerekçe `saveSetup` içinde. */
-  const [visibility, setVisibility] = useState<SetupVisibility>('profilde');
+  /*
+   * Varsayılan görünür (gerekçe `saveSetup` içinde) ama kullanıcı bunu
+   * hesabından değiştirebiliyor: her ekipmanda aynı seçimi tekrar
+   * yapmak zorunda kalmasın (bkz. `useDefaultEquipmentVisibility`).
+   */
+  const [varsayilanGorunurluk] = useDefaultEquipmentVisibility();
+  const [visibility, setVisibility] = useState<SetupVisibility | null>(null);
+  const etkinGorunurluk = visibility ?? varsayilanGorunurluk;
   const [saved, setSaved] = useState(false);
 
   const bySlug = useMemo(
@@ -243,7 +250,7 @@ export function SetupBuilder({
                 <Field label="Görünürlük" htmlFor="sb-visibility">
                   <Select
                     id="sb-visibility"
-                    value={visibility}
+                    value={etkinGorunurluk}
                     onChange={(e) =>
                       setVisibility(e.target.value as SetupVisibility)
                     }
@@ -271,7 +278,7 @@ export function SetupBuilder({
                 <Button
                   disabled={filled === 0 || name.trim().length === 0}
                   onClick={() => {
-                    onSave({ name, description, purpose, visibility });
+                    onSave({ name, description, purpose, visibility: etkinGorunurluk });
                     setSaved(true);
                   }}
                 >

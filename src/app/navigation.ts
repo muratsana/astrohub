@@ -452,6 +452,12 @@ export const siteMap: NavGroup[] = [
         keywords: ['setup', 'ekipman', 'teleskop', 'kamera', 'montür'],
       },
       {
+        label: 'Tercihler',
+        to: '/hesap?sekme=tercihler',
+        description: 'Görünürlük, bildirim ve görünüm ayarları',
+        keywords: ['ayar', 'tercih', 'bildirim', 'görünürlük'],
+      },
+      {
         label: 'Üye Paneli',
         to: '/panel',
         description: 'Fotoğraflar, kota, üyelik',
