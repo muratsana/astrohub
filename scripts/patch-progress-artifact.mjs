@@ -40,7 +40,8 @@ const FAZLAR = [
     /* X07 (uzun form taslak standardı) buraya ait: A01/A02'yi çözen
        `formDraft` modülü tam olarak o standardın kendisi. Ayrı bir faza
        koymak, aynı işi iki yerde anlatmak olurdu. */
-    ids: ['A01', 'A02', 'A03', 'A04', 'A05', 'A06', 'A12', 'A13', 'A14', 'X07'],
+    ids: ['A01', 'A02', 'A03', 'A04', 'A05', 'A06', 'A12', 'A13', 'A14', 'A15',
+      'A16', 'X07'],
   },
   {
     ad: 'Hesap ve kimlik',

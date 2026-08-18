@@ -157,7 +157,7 @@ footer p { margin: 0 0 5px; }
       sonda onların üstüne oturan özellikler. Bu sayfa
       <code class="mono">PROGRESS_TRACKER.csv</code>'den üretiliyor.
     </p>
-    <div class="serit"><span class="serit-parca durum-VERIFIED" style="flex:12" title="Doğrulandı: 12"></span><span class="serit-parca durum-TESTED" style="flex:5" title="Test edildi: 5"></span><span class="serit-parca durum-CODED" style="flex:3" title="Kodlandı: 3"></span><span class="serit-parca durum-IN_PROGRESS" style="flex:3" title="Sürüyor: 3"></span><span class="serit-parca durum-TODO" style="flex:72" title="Sırada: 72"></span></div>
+    <div class="serit"><span class="serit-parca durum-VERIFIED" style="flex:12" title="Doğrulandı: 12"></span><span class="serit-parca durum-TESTED" style="flex:5" title="Test edildi: 5"></span><span class="serit-parca durum-CODED" style="flex:3" title="Kodlandı: 3"></span><span class="serit-parca durum-IN_PROGRESS" style="flex:3" title="Sürüyor: 3"></span><span class="serit-parca durum-TODO" style="flex:74" title="Sırada: 74"></span></div>
     <div class="ozetler">
       <button class="ozet durum-VERIFIED" data-filtre="VERIFIED" type="button">
         <span class="ozet-sayi mono">12</span>
@@ -176,7 +176,7 @@ footer p { margin: 0 0 5px; }
         <span class="ozet-ad">Sürüyor</span>
       </button>
       <button class="ozet durum-TODO" data-filtre="TODO" type="button">
-        <span class="ozet-sayi mono">72</span>
+        <span class="ozet-sayi mono">74</span>
         <span class="ozet-ad">Sırada</span>
       </button></div>
   </header>
@@ -299,8 +299,8 @@ footer p { margin: 0 0 5px; }
           <p>Kullanıcının bugün çarptığı hatalar</p>
         </div>
         <div class="faz-olcu">
-          <span class="faz-oran mono">7<span class="bolu">/</span>10</span>
-          <div class="faz-cubuk"><span style="width:70%"></span></div>
+          <span class="faz-oran mono">7<span class="bolu">/</span>12</span>
+          <div class="faz-cubuk"><span style="width:58%"></span></div>
         </div>
       </header>
       <div class="tablo-sar">
@@ -408,6 +408,28 @@ footer p { margin: 0 0 5px; }
           <td><span class="rozet durum-TODO">Sırada</span></td>
           <td class="mono kanit"><span class="bos">—</span></td>
         </tr>
+        <tr data-durum="TODO" data-oncelik="P0">
+          <td class="mono">A15</td>
+          <td><span class="oncelik o-P0">P0</span></td>
+          <td class="modul">Galeri</td>
+          <td class="is">
+            <span class="is-baslik">İndir düğmesi doğrudan en yüksek kaliteli JPEG vermeli</span>
+            <span class="is-not">Kullanici raporu 18.08.2026</span>
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
+        <tr data-durum="TODO" data-oncelik="P0">
+          <td class="mono">A16</td>
+          <td><span class="oncelik o-P0">P0</span></td>
+          <td class="modul">Moderasyon</td>
+          <td class="is">
+            <span class="is-baslik">Kaldırılan içeriği geri getirme düğmesi görünmüyor</span>
+            <span class="is-not">Kullanici raporu 18.08.2026</span>
+          </td>
+          <td><span class="rozet durum-TODO">Sırada</span></td>
+          <td class="mono kanit"><span class="bos">—</span></td>
+        </tr>
         <tr data-durum="IN_PROGRESS" data-oncelik="P1">
           <td class="mono">X07</td>
           <td><span class="oncelik o-P1">P1</span></td>
@@ -493,7 +515,7 @@ footer p { margin: 0 0 5px; }
             <span class="is-not">Kapak + ustune binen avatar + sayac seridi; sekme duzeni Astrohub'in kendi tasarimi</span>
           </td>
           <td><span class="rozet durum-TESTED">Test edildi</span></td>
-          <td class="mono kanit"><code>e3f2c48</code><span class="kanit-metin">vitest ProfilePage.test.tsx; npm run test:all</span></td>
+          <td class="mono kanit"><code>65be33d</code><span class="kanit-metin">vitest ProfilePage.test.tsx; npm run test:all</span></td>
         </tr>
         <tr data-durum="TODO" data-oncelik="P1">
           <td class="mono">E06</td>
@@ -556,10 +578,10 @@ footer p { margin: 0 0 5px; }
           <td class="modul">Public Profil</td>
           <td class="is">
             <span class="is-baslik">Kapak ve avatar için ortak kadraj editörü</span>
-            <span class="is-not">KadrajEditoru: surukleme, tekerlek, kistirma ve kaydiricilar; avatar 1:1, kapak 3:1 ayni bilesen</span>
+            <span class="is-not">Yer olmayan eksen kilitleniyor ve sebebi yaziliyor; olu kaydirici bozuk kaydiricidir</span>
           </td>
           <td><span class="rozet durum-TESTED">Test edildi</span></td>
-          <td class="mono kanit"><code>e3f2c48</code><span class="kanit-metin">vitest kadraj.test.ts (12 senaryo)</span></td>
+          <td class="mono kanit"><code>65be33d</code><span class="kanit-metin">vitest kadraj.test.ts: kadraj boslugu (3 senaryo)</span></td>
         </tr>
         <tr data-durum="TESTED" data-oncelik="P1">
           <td class="mono">E12</td>
@@ -1308,7 +1330,7 @@ footer p { margin: 0 0 5px; }
           <td class="modul">Fotoğraf Detayı</td>
           <td class="is">
             <span class="is-baslik">Puanlama panelini aksiyon satırına taşı</span>
-            
+            <span class="is-not">Kullanici hatirlatti: fotografa yildiz verme dugmesi hala yok</span>
           </td>
           <td><span class="rozet durum-TODO">Sırada</span></td>
           <td class="mono kanit"><span class="bos">—</span></td>

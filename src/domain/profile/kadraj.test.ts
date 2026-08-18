@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  kadrajBoslugu,
   kadrajiTemizle,
   kaynakDikdortgen,
   sahneOturmasi,
@@ -133,5 +134,34 @@ describe('yakınlaştırma ve temizleme', () => {
       panX: -1,
       panY: 0,
     });
+  });
+});
+
+/**
+ * "YATAY KADRAJ ÇALIŞMIYOR" — şikâyet haklıydı, hesap doğruydu.
+ *
+ * 3:1 bir kapak, 2:1 bir fotoğraftan en geniş hâlinde alınırken
+ * fotoğrafın tüm genişliğini kaplıyor; yatayda gidilecek yer yok.
+ * Kaydırıcı hareket ediyor, görüntü kıpırdamıyordu. Arayüzün o ekseni
+ * kilitleyebilmesi için önce boşluğu ölçebilmesi gerekiyordu.
+ */
+describe('kadraj boşluğu', () => {
+  it('geniş kapakta yatay boşluk sıfır, dikeyde var', () => {
+    const b = kadrajBoslugu({ width: 4000, height: 2000 }, { zoom: 1, panX: 0, panY: 0 }, 3);
+    expect(b.x).toBe(0);
+    expect(b.y).toBeGreaterThan(0);
+  });
+
+  /* Yakınlaştırma yatayda yer AÇIYOR: arayüzün kullanıcıya söylediği
+     çözüm tam olarak bu ve testi onu doğruluyor. */
+  it('yakınlaştırınca yatayda yer açılıyor', () => {
+    const b = kadrajBoslugu({ width: 4000, height: 2000 }, { zoom: 2, panX: 0, panY: 0 }, 3);
+    expect(b.x).toBeGreaterThan(0);
+  });
+
+  it('kare kadrajda yatay boşluk var, dikeyde yok', () => {
+    const b = kadrajBoslugu({ width: 4000, height: 2000 }, { zoom: 1, panX: 0, panY: 0 }, 1);
+    expect(b.x).toBe(2000);
+    expect(b.y).toBe(0);
   });
 });

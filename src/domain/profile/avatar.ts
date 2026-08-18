@@ -7,6 +7,7 @@ import {
 export type { Kadraj } from './kadraj';
 export {
   EN_AZ_ZOOM,
+  kadrajBoslugu,
   EN_COK_ZOOM,
   VARSAYILAN_KADRAJ,
   kadrajiTemizle,

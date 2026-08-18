@@ -24,6 +24,8 @@ import {
   usePublicProfileContact,
 } from '@/services/content/profile';
 import { gradientFromSeed } from '@/components/media/tints';
+import { cekimIlleri } from '@/domain/profile/cekimIlleri';
+import { cities as turkiyeIlleri } from '@/features/location/cities';
 import { useFollow } from '@/services/content/social';
 import { ProfileBadges } from './ProfileBadges';
 import { ProfileShowcase } from './ProfileShowcase';
@@ -127,13 +129,26 @@ export function ProfilePage() {
       : profile.city
     : null;
 
-  const cities = [
-    ...new Set(
-      [kendiKonumu, ...userPhotos.map((p) => p.city)].filter(
-        (city): city is string => Boolean(city)
-      )
-    ),
-  ];
+  /*
+   * ══════════════════════════════════════════════════════════════════
+   * ROZET ŞERİDİ YALNIZCA ÇEKİM İLLERİ
+   *
+   * Şerit şöyle görünüyordu:
+   *   [Çankaya, Ankara] [Denizli] [Ankara] [Gölbaşı Ankara]
+   * Dördü de doğruydu ve ÜÇÜ aynı ili söylüyordu.
+   *
+   * Sebep tek listede iki farklı şeyin toplanmasıydı: kişinin kendi
+   * beyan ettiği yer (ilçesiyle) ve fotoğraflarının çekildiği yerler.
+   * Üstüne eski kayıtlarda `city` serbest metin olduğu için "Gölbaşı
+   * Ankara" gibi birleşik değerler de var.
+   *
+   * Kendi konumu artık adın altında bir kez yazılıyor — o bir BEYAN,
+   * kimliğin parçası. Şerit ise bir ÖZET: "bu kişi nerelerden çekiyor".
+   */
+  const iller = cekimIlleri(
+    userPhotos.map((p) => p.city),
+    turkiyeIlleri.map((il) => il.name)
+  );
   /* OKUMA TARAFI KAPISI (§15.4).
      `AccountPage` kaydederken `safeUrl`den geçiriyor, ama bu bir güvenlik
      sınırı değil: `profiles` satırını sahibi doğrudan PostgREST üzerinden de
@@ -184,22 +199,51 @@ export function ProfilePage() {
           renkte. Kapağın içine oturtmak fotoğrafın bir köşesini yer,
           altına almak ikisini birbirinden kopuk iki öğe yapardı.
         */}
-        <header className="mb-6 overflow-hidden rounded-card border border-border bg-surface-1">
-          <div className="relative h-32 w-full sm:h-44 lg:h-52">
+        <header className="relative mb-6 overflow-hidden rounded-card border border-border bg-surface-1">
+          {/*
+            ══════════════════════════════════════════════════════════════
+            KAPAK BÜTÜN BLOĞUN ARKA PLANI
+
+            Önce kapak yalnızca üstte bir şerittı ve altındaki kimlik
+            satırı ayrı bir kutuydu; ikisi tek bir alan gibi
+            görünmüyordu. Şimdi görsel bloğun TAMAMINI kaplıyor ve
+            avatar, ad, sayaçlar onun ÜSTÜNDE duruyor.
+
+            KATMAN SIRASI BİR HATAYA MAL OLDU. Kapak `relative` bir
+            kutudaydı; konumlandırılmış öğeler konumlandırılmamış
+            kardeşlerinin ÜSTÜNE boyanıyor ve avatar kapağın arkasında
+            kalıyordu — ekranda yarısı kesik görünüyordu. Arka plan
+            katmanı artık `absolute`, içerik katmanı `relative`: sıra
+            tesadüfe değil, açık bir karara bağlı.
+
+            PERDE OKUNABİLİRLİK İÇİN. Sayaçlar ve biyografi doğrudan
+            fotoğrafın üstünde okunmaz; aşağı indikçe koyulaşan bir
+            geçiş, üstte fotoğrafı açık bırakırken altta metni zemine
+            oturtuyor. Renk temanın kendi belirtecinden geliyor, yani
+            üç temada da doğru.
+          */}
+          <div aria-hidden className="absolute inset-0">
             {bannerUrl ? (
-              <img
-                src={bannerUrl}
-                alt=""
-                className="h-full w-full object-cover"
-              />
+              <img src={bannerUrl} alt="" className="h-full w-full object-cover" />
             ) : (
               <div
-                aria-hidden
                 className="h-full w-full"
                 style={{ background: gradientFromSeed(username) }}
               />
             )}
+            <div
+              className="absolute inset-0"
+              style={{
+                background:
+                  'linear-gradient(to bottom, color-mix(in srgb, var(--color-surface-1) 8%, transparent) 0%, color-mix(in srgb, var(--color-surface-1) 62%, transparent) 46%, color-mix(in srgb, var(--color-surface-1) 94%, transparent) 100%)',
+              }}
+            />
           </div>
+
+          <div className="relative">
+            {/* Kapağın açıkta kalan bandı: buraya içerik gelmiyor,
+                yalnızca yükseklik veriyor. */}
+            <div className="h-32 w-full sm:h-44 lg:h-52" />
 
           <div className="px-4 pb-4 sm:px-6 sm:pb-5">
             <div className="-mt-10 flex flex-wrap items-end gap-x-4 gap-y-3 sm:-mt-12">
@@ -223,6 +267,12 @@ export function ProfilePage() {
                 </h1>
                 <p className="tabular truncate text-meta text-muted-foreground">
                   @{username}
+                  {kendiKonumu && (
+                    <>
+                      {' · '}
+                      <span className="not-tabular">{kendiKonumu}</span>
+                    </>
+                  )}
                 </p>
               </div>
 
@@ -287,19 +337,25 @@ export function ProfilePage() {
               />
             </dl>
 
-            {(profile?.bio || cities.length > 0) && (
+            {(profile?.bio || iller.length > 0) && (
               <p className="mt-3 max-w-[65ch] text-body-sm text-muted-foreground">
                 {profile?.bio ??
-                  `${cities.join(', ')} çevresinden ${userPhotos.length} kayıt.`}
+                  `${iller.join(', ')} çevresinden ${userPhotos.length} kayıt.`}
               </p>
             )}
 
             <div className="mt-3 flex flex-wrap items-center gap-1.5">
-              {cities.map((city) => (
-                <Badge key={city}>{city}</Badge>
+              {iller.length > 0 && (
+                <span className="text-meta text-muted-foreground">
+                  Çektiği iller:
+                </span>
+              )}
+              {iller.map((il) => (
+                <Badge key={il}>{il}</Badge>
               ))}
               <ProfileBadges userId={ownerId} />
             </div>
+          </div>
           </div>
         </header>
 

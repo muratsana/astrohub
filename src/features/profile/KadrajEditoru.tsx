@@ -5,6 +5,7 @@ import {
   EN_AZ_ZOOM,
   EN_COK_ZOOM,
   VARSAYILAN_KADRAJ,
+  kadrajBoslugu,
   kaynakDikdortgen,
   renderKadrajBlob,
   sahneOturmasi,
@@ -116,6 +117,23 @@ export function KadrajEditoru({
   const kistirma = useRef<number | null>(null);
 
   const sahneYukseklik = Math.round(SAHNE_GENISLIK / enBoy);
+
+  /*
+   * ══════════════════════════════════════════════════════════════════
+   * GİDİLECEK YER OLMAYAN EKSEN KİLİTLENİYOR
+   *
+   * "Yatay kadraj çalışmıyor" şikâyeti geldi ve haklıydı — ama hata
+   * hesapta değil, arayüzün sustuğu yerdeydi. 3:1 bir kapak, 2:1 bir
+   * fotoğraftan en geniş hâlinde alınırken fotoğrafın TÜM GENİŞLİĞİNİ
+   * kaplıyor: yatayda gidilecek yer sıfır. Kaydırıcı yine de hareket
+   * ediyor, görüntü hiç kıpırdamıyordu.
+   *
+   * Ölü bir kontrol, bozuk bir kontroldür. Artık o eksen kapalı ve
+   * nedeni yazılı: yakınlaştırınca yer açılıyor.
+   */
+  const bosluk = boyut ? kadrajBoslugu(boyut, kadraj, enBoy) : { x: 1, y: 1 };
+  const yatayKilitli = bosluk.x <= 0.5;
+  const dikeyKilitli = bosluk.y <= 0.5;
 
   const kadrajiYaz = useCallback(
     (sonraki: Kadraj | ((onceki: Kadraj) => Kadraj)) => {
@@ -371,6 +389,7 @@ export function KadrajEditoru({
               min={-1}
               max={1}
               step={0.01}
+              kilitli={yatayKilitli}
               onChange={(panX) => kadrajiYaz((k) => ({ ...k, panX }))}
             />
             <KadrajKaydirici
@@ -379,8 +398,19 @@ export function KadrajEditoru({
               min={-1}
               max={1}
               step={0.01}
+              kilitli={dikeyKilitli}
               onChange={(panY) => kadrajiYaz((k) => ({ ...k, panY }))}
             />
+
+            {(yatayKilitli || dikeyKilitli) && (
+              <p className="text-meta leading-snug text-warning">
+                {yatayKilitli && dikeyKilitli
+                  ? 'Bu fotoğraf seçilen orana tam oturuyor; kaydırmak için önce yakınlaştırın.'
+                  : yatayKilitli
+                    ? 'Bu en geniş kadrajda fotoğrafın tamamı yatayda kullanılıyor — sağa sola kaydırmak için yakınlaştırın.'
+                    : 'Bu en geniş kadrajda fotoğrafın tamamı dikeyde kullanılıyor — yukarı aşağı kaydırmak için yakınlaştırın.'}
+              </p>
+            )}
 
             <div className="flex flex-wrap gap-2">
               <Button size="sm" disabled={busy || !hazir} onClick={() => void kaydet()}>
@@ -419,6 +449,7 @@ function KadrajKaydirici({
   min,
   max,
   step,
+  kilitli = false,
   onChange,
 }: {
   label: string;
@@ -426,12 +457,17 @@ function KadrajKaydirici({
   min: number;
   max: number;
   step: number;
+  /** O eksende gidilecek yer yok; kaydırıcı kapalı ve sebebi yazılı. */
+  kilitli?: boolean;
   onChange: (value: number) => void;
 }) {
   return (
-    <label className="grid gap-1 text-meta">
+    <label className={`grid gap-1 text-meta ${kilitli ? 'opacity-55' : ''}`}>
       <span className="flex items-center justify-between gap-3 text-muted-foreground">
-        {label}
+        <span>
+          {label}
+          {kilitli && <span className="ml-1.5 text-faint">· yer yok</span>}
+        </span>
         <span className="tabular text-foreground">
           {label.startsWith('FOV') ? `${value.toFixed(2)}×` : value.toFixed(2)}
         </span>
@@ -442,8 +478,9 @@ function KadrajKaydirici({
         max={max}
         step={step}
         value={value}
+        disabled={kilitli}
         onChange={(event) => onChange(Number(event.target.value))}
-        className="w-full accent-primary"
+        className="w-full accent-primary disabled:cursor-not-allowed"
       />
     </label>
   );

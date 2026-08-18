@@ -148,3 +148,31 @@ export function yakinlastiktanSonra(kadraj: Kadraj, oran: number): Kadraj {
   const carpan = Number.isFinite(oran) && oran > 0 ? oran : 1;
   return kadrajiTemizle({ ...guvenli, zoom: guvenli.zoom * carpan });
 }
+
+/**
+ * ══════════════════════════════════════════════════════════════════════
+ * HANGİ EKSENDE GİDİLECEK YER VAR
+ *
+ * "Yatay kadraj çalışmıyor" şikâyetinin cevabı burada ve şikâyet
+ * haklıydı — ama hata hesapta değil, arayüzün sustuğu yerdeydi.
+ *
+ * 3:1 bir kapak, 2:1 bir fotoğraftan en geniş hâlinde alınırken
+ * fotoğrafın TÜM GENİŞLİĞİNİ kaplıyor: yatayda gidilecek yer sıfır.
+ * Kaydırıcı yine de hareket ediyor, görüntü hiç kıpırdamıyordu. Ölü bir
+ * kontrol, bozuk bir kontroldür.
+ *
+ * Bu fonksiyon boşluğu kaynak piksel cinsinden veriyor; arayüz sıfır
+ * gördüğü ekseni kilitliyor ve nedenini yazıyor: yakınlaştırınca o
+ * eksende yer açılıyor.
+ */
+export function kadrajBoslugu(
+  kaynak: { width: number; height: number },
+  kadraj: Kadraj,
+  enBoy: number
+): { x: number; y: number } {
+  const dik = kaynakDikdortgen(kaynak, kadraj, enBoy);
+  return {
+    x: Math.max(0, Math.max(1, kaynak.width) - dik.width),
+    y: Math.max(0, Math.max(1, kaynak.height) - dik.height),
+  };
+}

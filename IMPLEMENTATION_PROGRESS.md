@@ -87,7 +87,7 @@ Canlı pano: `docs/patch-2026-08-18/ilerleme.html`
 | E02 | P1 | E | Navbar | Sağ üstte avatar + kullanıcı adı | VERIFIED | 2fcadac | vitest AccountMenu.test.tsx | 18.08.2026 · kullanıcı canlıda kontrol etti |
 | E03 | P0 | E | Navbar | Navbar kullanıcı menüsünde 'Çıkış yap' | VERIFIED | 2fcadac | vitest AccountMenu.test.tsx | 18.08.2026 · kullanıcı canlıda kontrol etti |
 | E04 | P0 | E | Navbar | Logout gerçek oturumu temizlemeli | VERIFIED | 2fcadac | vitest: cikis gercekten oturumu kapatiyor | 18.08.2026 · kullanıcı canlıda kontrol etti |
-| E05 | P1 | E | Public Profil | LinkedIn benzeri public profil üst alanı | TESTED | e3f2c48 | vitest ProfilePage.test.tsx; npm run test:all | Bekliyor |
+| E05 | P1 | E | Public Profil | LinkedIn benzeri public profil üst alanı | TESTED | 65be33d | vitest ProfilePage.test.tsx; npm run test:all | Bekliyor |
 | E06 | P1 | E | Public Profil | Profil içerik bölümleri accordion/collapsible | TODO |  |  | Bekliyor |
 | E07 | P2 | E | Public Profil | Bölüm deep-link / hash | TODO |  |  | Bekliyor |
 | E08 | P1 | E | Public Profil | Public profil responsive | TODO |  |  | Bekliyor |
@@ -126,5 +126,7 @@ Canlı pano: `docs/patch-2026-08-18/ilerleme.html`
 | X07 | P1 | Extra | Uzun Formlar | Draft/autosave standardı | IN_PROGRESS |  | src/lib/formDraft.ts + formDraft.test.ts | Bekliyor |
 | E09 | P1 | E | Navbar | Menüden 'Public profilim' girişini kaldır | TESTED | 07af5a2 | vitest: public profil girisi menude yok | Bekliyor |
 | E10 | P1 | E | Public Profil | Kapak görseli (banner) yükleme | TESTED | e3f2c48 | vitest domain/profile; npm run test:all | Bekliyor |
-| E11 | P1 | E | Public Profil | Kapak ve avatar için ortak kadraj editörü | TESTED | e3f2c48 | vitest kadraj.test.ts (12 senaryo) | Bekliyor |
+| E11 | P1 | E | Public Profil | Kapak ve avatar için ortak kadraj editörü | TESTED | 65be33d | vitest kadraj.test.ts: kadraj boslugu (3 senaryo) | Bekliyor |
 | E12 | P1 | E | Public Profil | Kapak ve avatar silinebilmeli | TESTED | e3f2c48 | profilGorseliSil tek yol | Bekliyor |
+| A15 | P0 | A | Galeri | İndir düğmesi doğrudan en yüksek kaliteli JPEG vermeli | TODO |  |  | Bekliyor |
+| A16 | P0 | A | Moderasyon | Kaldırılan içeriği geri getirme düğmesi görünmüyor | TODO |  |  | Bekliyor |
