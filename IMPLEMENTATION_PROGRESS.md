@@ -131,3 +131,5 @@ Canlı pano: `docs/patch-2026-08-18/ilerleme.html`
 | A15 | P0 | A | Galeri | İndir düğmesi doğrudan en yüksek kaliteli JPEG vermeli | TESTED | 95b5782 | vitest indirmeAdi.test.ts (5 senaryo) | Bekliyor |
 | A16 | P0 | A | Moderasyon | Kaldırılan içeriği geri getirme düğmesi görünmüyor | TESTED | 95b5782 |  | Bekliyor |
 | A17 | P0 | A | Alan Çözümü | Etiketler fotoğrafın dışına taşmamalı | TESTED | 136f0fc | vitest plateProjection.test.ts: kadrajIcinde (4 senaryo) | Bekliyor |
+| A18 | P1 | A | Hesap | Şehir seçimi zorunlu olmalı | TESTED | bfe779b | vitest profile.test.ts: sehirsiz profili reddediyor; canli: 5 bildirim | Bekliyor |
+| A19 | P1 | A | Performans | profile.ts hesap yonetimi yolunu paylasilan pakete sokuyor | TODO |  |  | Bekliyor |

@@ -41,7 +41,7 @@ const FAZLAR = [
        `formDraft` modülü tam olarak o standardın kendisi. Ayrı bir faza
        koymak, aynı işi iki yerde anlatmak olurdu. */
     ids: ['A01', 'A02', 'A03', 'A04', 'A05', 'A06', 'A12', 'A13', 'A14', 'A15',
-      'A16', 'X07'],
+      'A16', 'A17', 'A18', 'A19', 'X07'],
   },
   {
     ad: 'Hesap ve kimlik',

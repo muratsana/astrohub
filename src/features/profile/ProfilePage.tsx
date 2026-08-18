@@ -23,8 +23,6 @@ import {
   usePublicProfileContact,
 } from '@/services/content/profile';
 import { gradientFromSeed } from '@/components/media/tints';
-import { cekimIlleri } from '@/domain/profile/cekimIlleri';
-import { cities as turkiyeIlleri } from '@/features/location/cities';
 import { useFollow } from '@/services/content/social';
 import { ProfileBadges } from './ProfileBadges';
 import { ProfileShowcase } from './ProfileShowcase';
@@ -129,25 +127,17 @@ export function ProfilePage() {
     : null;
 
   /*
-   * ══════════════════════════════════════════════════════════════════
-   * ROZET ŞERİDİ YALNIZCA ÇEKİM İLLERİ
+   * ŞEHİR LİSTESİ KALDIRILDI.
    *
-   * Şerit şöyle görünüyordu:
-   *   [Çankaya, Ankara] [Denizli] [Ankara] [Gölbaşı Ankara]
-   * Dördü de doğruydu ve ÜÇÜ aynı ili söylüyordu.
+   * Rozet şeridi "aynı ili üç farklı yazımla gösteriyor" şikâyetinden
+   * sonra il düzeyine indirilmiş, ardından tamamen kaldırılmıştı.
+   * Geriye yalnızca biyografi yoksa basılan bir cümle kalmıştı ve o
+   * cümle için 81 ilin tamamını içeren bir tabloyu paketlemek —
+   * üstelik ilk rota bütçesi 200 kB'de dururken — orantısızdı.
    *
-   * Sebep tek listede iki farklı şeyin toplanmasıydı: kişinin kendi
-   * beyan ettiği yer (ilçesiyle) ve fotoğraflarının çekildiği yerler.
-   * Üstüne eski kayıtlarda `city` serbest metin olduğu için "Gölbaşı
-   * Ankara" gibi birleşik değerler de var.
-   *
-   * Kendi konumu artık adın altında bir kez yazılıyor — o bir BEYAN,
-   * kimliğin parçası. Şerit ise bir ÖZET: "bu kişi nerelerden çekiyor".
+   * Kişinin kendi konumu duruyor: o bir beyan ve adının yanında
+   * bir kez görünüyor.
    */
-  const iller = cekimIlleri(
-    userPhotos.map((p) => p.city),
-    turkiyeIlleri.map((il) => il.name)
-  );
   /* OKUMA TARAFI KAPISI (§15.4).
      `AccountPage` kaydederken `safeUrl`den geçiriyor, ama bu bir güvenlik
      sınırı değil: `profiles` satırını sahibi doğrudan PostgREST üzerinden de
@@ -336,10 +326,9 @@ export function ProfilePage() {
               />
             </dl>
 
-            {(profile?.bio || iller.length > 0) && (
+            {(profile?.bio || userPhotos.length > 0) && (
               <p className="mt-3 max-w-[65ch] text-body-sm text-muted-foreground">
-                {profile?.bio ??
-                  `${iller.join(', ')} çevresinden ${userPhotos.length} kayıt.`}
+                {profile?.bio ?? `${userPhotos.length} yayımlanmış kayıt.`}
               </p>
             )}
 

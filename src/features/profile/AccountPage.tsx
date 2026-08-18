@@ -346,7 +346,13 @@ export function AccountPage() {
                   <Field
                     label="Şehir"
                     htmlFor="p-location"
-                    hint="İl / ilçe seçilir."
+                    /* ZORUNLU OLDUĞU FORMDA YAZIYOR. Kaydete basınca
+                       öğrenilen bir zorunluluk, kullanıcıyı formu
+                       ikinci kez doldurmaya gönderir. */
+                    hint="İl / ilçe seçilir. Zorunlu — konuma bağlı bölümler şehre göre hesaplanıyor."
+                    error={
+                      edit.city.trim() ? undefined : 'Şehir seçilmeli.'
+                    }
                   >
                     <LocationTypeahead
                       id="p-location"

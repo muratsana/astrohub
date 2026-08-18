@@ -325,6 +325,26 @@ export function validateProfile(edit: ProfileEdit): string | null {
   if (sanitizeText(edit.bio, { multiline: true }).length > 400) {
     return 'Hakkında metni 400 karakteri aşamaz.';
   }
+  /*
+   * ŞEHİR ZORUNLU.
+   *
+   * Sitenin yarısı konuma bağlı: bu gece gökyüzünde, karanlık pencere,
+   * yakındaki gözlem noktaları, şehir sayfaları, etkinlik yakınlığı.
+   * Şehri olmayan hesap bu ekranların hepsinde boşluk görüyor ve çoğu
+   * bunun sebebini kendi profilinde aramıyor.
+   *
+   * Kurulum kapısı yeni hesaplarda zaten istiyordu; buradaki kontrol
+   * SONRADAN boşaltılmasını engelliyor. Veritabanı tarafında da bir
+   * kilit var (`app.profiles_il_kilidi`) çünkü profil satırı bu formu
+   * hiç kullanmadan da güncellenebiliyor — bu kontrol kullanıcıya
+   * anlaşılır bir cümle söylemek için, sınır orada.
+   */
+  if (!edit.city.trim()) {
+    /* Mesaj KISA: gerekçenin tamamı yukarıdaki yorumda ve formun
+       ipucunda. Uzun metin paylaşılan pakete giriyor ve bu modül ilk
+       rotada — bütçe kapısı 200 kB'de duruyor. */
+    return 'Şehir zorunlu.';
+  }
   /* Adres alanı `safeUrl`den geçiyor: `javascript:` şeması taşıyan bir
      bağlantı profil sayfasında tıklanabilir hâle gelirdi (§15.4). */
   if (edit.websiteUrl.trim() && !safeUrl(edit.websiteUrl.trim())) {

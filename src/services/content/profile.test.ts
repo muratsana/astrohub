@@ -16,6 +16,22 @@ describe('validateProfile', () => {
     expect(validateProfile(base)).toBeNull();
   });
 
+  /*
+   * ŞEHİR ZORUNLU. Sitenin yarısı konuma bağlı: bu gece gökyüzünde,
+   * karanlık pencere, yakındaki gözlem noktaları, etkinlik yakınlığı.
+   * Şehri olmayan hesap bu ekranların hepsinde boşluk görüyor ve çoğu
+   * bunun sebebini kendi profilinde aramıyor.
+   *
+   * Kurulum kapısı yeni hesapta zaten istiyor; buradaki kontrol
+   * SONRADAN boşaltılmasını engelliyor. Gerçek sınır veritabanında
+   * (`app.profiles_il_kilidi`) çünkü profil satırı bu form hiç
+   * kullanılmadan da güncellenebiliyor.
+   */
+  it('şehirsiz profili reddeder', () => {
+    expect(validateProfile({ ...base, city: '' })).toMatch(/Şehir zorunlu/);
+    expect(validateProfile({ ...base, city: '   ' })).toMatch(/Şehir zorunlu/);
+  });
+
   it('kısa kullanıcı adını reddeder', () => {
     expect(validateProfile({ ...base, username: 'ab' })).toMatch(/en az 3/);
   });
