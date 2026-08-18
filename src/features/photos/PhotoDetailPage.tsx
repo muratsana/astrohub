@@ -895,12 +895,27 @@ function LikeChip({ photo }: { photo: AstroPhoto }) {
  * (kaydı olmayan bir kaydı saklamak anlamsız), tıpkı beğenide olduğu
  * gibi.
  */
-function SaveChip({ photo }: { photo: AstroPhoto }) {
+export function SaveChip({ photo }: { photo: AstroPhoto }) {
   const save = useSavedPhoto(photo.id);
 
   if (!save.canSave) {
-    return <ActionChip>Kaydet</ActionChip>;
+    return <ActionChip>Koleksiyona kaydet</ActionChip>;
   }
+
+  /*
+   * KAYDET = KOLEKSİYONA EKLE, cihaza indirmek DEĞİL (B06).
+   *
+   * "Kaydet" tek başına iki şeyi çağrıştırıyordu: dosyayı bilgisayara
+   * indirmek mi, yoksa "sonra bakarım" listesine eklemek mi. İndirme
+   * artık ayrı bir menüde ("İndir"); bu düğme yalnızca koleksiyon.
+   * Ayrım metnin kendisinde: buton "Koleksiyona kaydet", kaydedilince
+   * "Koleksiyonda". Erişilebilir ad ve başlık da aynı sözcüğü kullanıyor
+   * ki ekran okuyucuda da indirmeyle karışmasın.
+   */
+  const etiket = save.saved ? 'Koleksiyonda' : 'Koleksiyona kaydet';
+  const erisimAdi = save.saved
+    ? 'Koleksiyondan çıkar'
+    : 'Koleksiyona kaydet';
 
   return (
     <button
@@ -908,8 +923,8 @@ function SaveChip({ photo }: { photo: AstroPhoto }) {
       onClick={() => void save.toggle()}
       disabled={save.busy}
       aria-pressed={save.saved}
-      aria-label={save.saved ? 'Kaydı kaldır' : 'Kaydet'}
-      title={save.error ?? undefined}
+      aria-label={erisimAdi}
+      title={save.error ?? erisimAdi}
       className={cn(
         'rounded-full border px-3 py-1.5 transition-colors',
         save.saved
@@ -917,7 +932,7 @@ function SaveChip({ photo }: { photo: AstroPhoto }) {
           : 'border-border bg-surface-1 text-muted-foreground hover:border-border-strong hover:text-foreground'
       )}
     >
-      {save.saved ? 'Kaydedildi' : 'Kaydet'}
+      {etiket}
     </button>
   );
 }
@@ -1008,7 +1023,7 @@ function ShareChip({ photo }: { photo: AstroPhoto }) {
  * Çözüm yoksa ikinci seçenek kapalı ve sebebi yazılı — tıklanabilir
  * görünüp hata veren bir seçenek, olmayandan kötü.
  */
-function DownloadChip({ photo }: { photo: AstroPhoto }) {
+export function DownloadChip({ photo }: { photo: AstroPhoto }) {
   const [acik, setAcik] = useState(false);
   const [durum, setDurum] = useState<'idle' | 'busy' | 'error'>('idle');
   const kapsayici = useRef<HTMLDivElement>(null);
