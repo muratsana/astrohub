@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useNavigate } from 'react-router';
@@ -13,7 +13,16 @@ import { captchaEnabled } from './captchaConfig';
 import { SocialAuth } from './GoogleButton';
 import { Alert } from '@/components/ui/Alert';
 import { useFlag } from '@/features/site/SiteConfigContext';
+import {
+  gizliAlanlariAyikla,
+  taslakOku,
+  taslakSil,
+  taslakYaz,
+} from '@/lib/formDraft';
 import { FlagClosedNote } from '@/features/site/FlagClosedNote';
+
+/** Taslak anahtarı — tek yerde, iki `useEffect` de aynısını kullanıyor. */
+const TASLAK_ANAHTARI = 'kayit';
 
 export function RegisterPage() {
   const { signUp } = useAuth();
@@ -30,8 +39,42 @@ export function RegisterPage() {
   const {
     register,
     handleSubmit,
+    reset,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<RegisterValues>({ resolver: zodResolver(registerSchema) });
+
+  /*
+   * ══════════════════════════════════════════════════════════════════
+   * TASLAK — YASAL METNE GİDİP GERİ DÖNENİN FORMU BOŞ KALMASIN
+   *
+   * "Kullanım Koşulları"na tıklayıp geri dönen kullanıcı boş bir form
+   * buluyordu: istemci yönlendirici sayfayı terk etmiyor, React formu
+   * söküyor ve alanlar sökülürken yok oluyor. Tarayıcının geri-ileri
+   * önbelleği burada devreye girmiyor çünkü ortada sayfa yüklemesi yok.
+   *
+   * ŞİFRE TASLAĞA YAZILMIYOR ve gerekçesi `formDraft` başlığında:
+   * `sessionStorage` aynı kaynaktaki her betiğe açık. Asıl çözüm zaten
+   * formdan hiç ayrılmamak — yasal metinler artık yeni sekmede açılıyor;
+   * taslak, o yolun dışından gelen dönüşler için ikinci emniyet.
+   */
+  useEffect(() => {
+    const taslak = taslakOku<RegisterValues>(TASLAK_ANAHTARI);
+    if (taslak) reset(taslak as RegisterValues, { keepDefaultValues: true });
+  }, [reset]);
+
+  useEffect(() => {
+    const abone = watch((degerler) => {
+      taslakYaz(
+        TASLAK_ANAHTARI,
+        gizliAlanlariAyikla(degerler as Record<string, unknown>, [
+          'password',
+          'confirmPassword',
+        ])
+      );
+    });
+    return () => abone.unsubscribe();
+  }, [watch]);
 
   async function onSubmit(values: RegisterValues) {
     setFormError(null);
@@ -60,6 +103,8 @@ export function RegisterPage() {
       captchaRef.current?.reset();
       return;
     }
+    /* Kayıt başarılı: taslağın yaşaması için sebep kalmadı. */
+    taslakSil(TASLAK_ANAHTARI);
     setDone(true);
     setTimeout(() => navigate('/panel'), 1200);
   }
@@ -160,7 +205,16 @@ export function RegisterPage() {
               {...register('acceptTerms')}
             />
             <span>
-              <Link to="/kullanim-kosullari" className="text-link hover:underline">
+              {/* YENİ SEKME. Aynı sekmede açılınca form sökülüyor ve
+                  geri dönen kullanıcı yazdıklarını kaybediyordu. Yeni
+                  sekme bu kaybı mümkün olmaktan çıkarıyor: form hiç
+                  terk edilmiyor. */}
+              <Link
+                to="/kullanim-kosullari"
+                target="_blank"
+                rel="noreferrer"
+                className="text-link hover:underline"
+              >
                 Kullanım Koşulları
               </Link>
               ’nı okudum, onaylıyorum. Yüklediğim fotoğrafları Astrohub’ın
@@ -179,7 +233,12 @@ export function RegisterPage() {
               {...register('acceptPrivacy')}
             />
             <span>
-              <Link to="/kvkk" className="text-link hover:underline">
+              <Link
+                to="/kvkk"
+                target="_blank"
+                rel="noreferrer"
+                className="text-link hover:underline"
+              >
                 KVKK Aydınlatma Metni
               </Link>
               ’ni okudum, kişisel verilerimin metinde açıklandığı şekilde

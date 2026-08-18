@@ -7,8 +7,8 @@ Durumlar: `TODO` → `IN_PROGRESS` → `CODED` → `TESTED` → `READY_FOR_USER`
 
 | ID | Öncelik | Sprint | Modül | İş | Durum | Commit | Test/Kanıt | Kullanıcı doğrulaması |
 |---|---|---|---|---|---|---|---|---|
-| A01 | P0 | A | Kayıt | Kullanım Koşulları dönüşünde kayıt form state'i korunmalı | TODO |  |  | Bekliyor |
-| A02 | P0 | A | Kayıt | KVKK dönüşünde kayıt form state'i korunmalı | TODO |  |  | Bekliyor |
+| A01 | P0 | A | Kayıt | Kullanım Koşulları dönüşünde kayıt form state'i korunmalı | TESTED | 6043192 | e2e: kayit formu yasal metin donusunde dolu kaliyor | Bekliyor |
+| A02 | P0 | A | Kayıt | KVKK dönüşünde kayıt form state'i korunmalı | TESTED | 6043192 | e2e: yasal metin baglantilari yeni sekmede aciliyor | Bekliyor |
 | A03 | P0 | A | Galeri | Fotoğraf detayında görünür 'Galeriye dön' kontrolü | TODO |  |  | Bekliyor |
 | A04 | P0 | A | Galeri | Galeri pagination sayfası geri dönüşte korunmalı | TODO |  |  | Bekliyor |
 | A05 | P0 | A | Galeri | Galeri scroll/kart konumu geri dönüşte korunmalı | TODO |  |  | Bekliyor |

@@ -871,6 +871,75 @@ await scenario('üst çubukta her genişlikte gezinme girişi var', async () => 
   );
 });
 
+/*
+ * ══════════════════════════════════════════════════════════════════════
+ * A01/A02 REGRESYONU — YASAL METİNDEN DÖNÜNCE FORM BOŞALMASIN
+ *
+ * Kayıt formunu dolduran kullanıcı "Kullanım Koşulları"na tıklayıp geri
+ * döndüğünde BOŞ bir form buluyordu: istemci yönlendirici sayfayı terk
+ * etmiyor, React formu söküyor ve alanlar sökülürken yok oluyor.
+ *
+ * ŞİFRE BİLEREK KONTROL EDİLMİYOR. Taslak şifreyi saklamıyor ve bu bir
+ * eksiklik değil bir karar: `sessionStorage` aynı kaynaktaki her betiğe
+ * açık (gerekçenin tamamı `src/lib/formDraft.ts` başlığında). Testin
+ * şifreyi de beklemesi, o kararı sessizce geri almaya davet olurdu.
+ */
+await scenario('kayıt formu yasal metin dönüşünde dolu kalıyor', async () => {
+  await goto('/kayit');
+
+  const eposta = 'regresyon-a01@astrohub.com.tr';
+  await page.fill('#email', eposta);
+  const kutular = page.locator('form input[type="checkbox"]');
+  const adet = await kutular.count();
+  for (let i = 0; i < adet; i += 1) await kutular.nth(i).check();
+
+  /* Bağlantı yeni sekmede açılıyor; burada aynı sekmede gezinip geri
+     dönerek taslağın İKİNCİ emniyet olarak çalıştığı ölçülüyor. */
+  await goto('/kullanim-kosullari');
+  await goto('/kayit');
+
+  const durum = await page.evaluate(() => {
+    const eposta = document.querySelector('#email');
+    const kutular = [
+      ...document.querySelectorAll('form input[type="checkbox"]'),
+    ];
+    return {
+      eposta: eposta ? eposta.value : '',
+      isaretli: kutular.filter((k) => k.checked).length,
+      toplam: kutular.length,
+    };
+  });
+
+  assert(
+    durum.eposta === eposta,
+    `e-posta korunmadı: "${durum.eposta}" (beklenen "${eposta}")`
+  );
+  assert(
+    durum.toplam > 0 && durum.isaretli === durum.toplam,
+    `onay kutuları korunmadı: ${durum.isaretli}/${durum.toplam}`
+  );
+});
+
+/*
+ * Aynı maddenin ikinci yarısı: yasal metinler YENİ SEKMEDE açılmalı.
+ * Asıl çözüm taslak değil, formdan hiç ayrılmamak — bağlantı bir gün
+ * sessizce aynı sekmeye dönerse taslak hâlâ çalışır ama şifre yine
+ * kaybolur ve kimse fark etmez.
+ */
+await scenario('yasal metin bağlantıları yeni sekmede açılıyor', async () => {
+  await goto('/kayit');
+  const hedefler = await page.evaluate(() =>
+    [...document.querySelectorAll('form a[href*="kullanim-kosullari"], form a[href*="kvkk"]')].map(
+      (a) => a.getAttribute('target')
+    )
+  );
+  assert(hedefler.length === 2, `beklenen iki bağlantı, bulunan ${hedefler.length}`);
+  assert(
+    hedefler.every((t) => t === '_blank'),
+    `bağlantılar aynı sekmede açılıyor: ${JSON.stringify(hedefler)}`
+  );
+});
+
 /* ══════════════════════ Görsel kayıt (§17.2) ══════════════════════ */
 
 /*
