@@ -71,17 +71,17 @@ Canlı pano: `docs/patch-2026-08-18/ilerleme.html`
 | C15 | P2 | C | Thumbnail UX | Crop editörü mouse/touch/keyboard erişilebilir olmalı | TESTED | 95ac47b | vitest ThumbnailKadraj/upload/photos; migration thumb_crop; build+bütçe yeşil | Bekliyor |
 | D01 | P0 | D | Paylaşım Kiti | Paylaşım kiti yalnız fotoğraf sahibine açık | TESTED | 2a3bfc2 | vitest shareCaption + ShareKit; owner gate, çok sezon, gizlilik, kopyala/indir | Bekliyor |
 | D02 | P1 | D | Paylaşım Kiti | Owner için 'Paylaşım kiti hazırla' aksiyonu | TESTED | 2a3bfc2 | vitest shareCaption + ShareKit; owner gate, çok sezon, gizlilik, kopyala/indir | Bekliyor |
-| D03 | P1 | D | Paylaşım Kiti | Instagram gönderi çıktısı otomatik üret | TODO |  |  | Bekliyor |
-| D04 | P1 | D | Paylaşım Kiti | Instagram hikâye çıktısı otomatik üret | TODO |  |  | Bekliyor |
-| D05 | P1 | D | Paylaşım Kiti | Sosyal resize kadrajı astrofotoğrafı bozmasın | TODO |  |  | Bekliyor |
+| D03 | P1 | D | Paylaşım Kiti | Instagram gönderi çıktısı otomatik üret | TESTED | 8bc69de | vitest ShareKit: feed görseli üretiliyor | Bekliyor |
+| D04 | P1 | D | Paylaşım Kiti | Instagram hikâye çıktısı otomatik üret | TESTED | 8bc69de | vitest ShareKit: story görseli üretiliyor | Bekliyor |
+| D05 | P1 | D | Paylaşım Kiti | Sosyal resize kadrajı astrofotoğrafı bozmasın | TESTED | 8bc69de | vitest shareImage: contain oran koruma (4) | Bekliyor |
 | D06 | P1 | D | Paylaşım Kiti | Instagram künye metni üret | TESTED | 2a3bfc2 | vitest shareCaption + ShareKit; owner gate, çok sezon, gizlilik, kopyala/indir | Bekliyor |
 | D07 | P1 | D | Paylaşım Kiti | Künye çok sezonlu tarihleri desteklesin | TESTED | 2a3bfc2 | vitest shareCaption + ShareKit; owner gate, çok sezon, gizlilik, kopyala/indir | Bekliyor |
 | D08 | P1 | D | Paylaşım Kiti | Tek tık Kopyala | TESTED | 2a3bfc2 | vitest shareCaption + ShareKit; owner gate, çok sezon, gizlilik, kopyala/indir | Bekliyor |
 | D09 | P2 | D | Paylaşım Kiti | Künye TXT indirme | TESTED | 2a3bfc2 | vitest shareCaption + ShareKit; owner gate, çok sezon, gizlilik, kopyala/indir | Bekliyor |
 | D10 | P2 | D | Paylaşım Kiti | Opsiyonel künye alanları | TESTED | 2a3bfc2 | vitest shareCaption + ShareKit; owner gate, çok sezon, gizlilik, kopyala/indir | Bekliyor |
-| D11 | P2 | D | Paylaşım Kiti | Orijinal / annotated sosyal kaynak seçimi | IN_PROGRESS |  |  | Bekliyor |
-| D12 | P2 | D | Paylaşım Kiti | Tek ZIP paylaşım paketi | TODO |  |  | Bekliyor |
-| D13 | P2 | D | Paylaşım Kiti | Opsiyonel watermark/@username | TODO |  |  | Bekliyor |
+| D11 | P2 | D | Paylaşım Kiti | Orijinal / annotated sosyal kaynak seçimi | TESTED | 8bc69de | vitest ShareKit: çözülünce annotated kaynak seçilebilir | Bekliyor |
+| D12 | P2 | D | Paylaşım Kiti | Tek ZIP paylaşım paketi | TESTED | 8bc69de | vitest zip (4) + ShareKit ZIP indirme | Bekliyor |
+| D13 | P2 | D | Paylaşım Kiti | Opsiyonel watermark/@username | TESTED | 8bc69de | vitest ShareKit: watermark toggle format çağrısını değiştiriyor | Bekliyor |
 | D14 | P1 | D | Gizlilik | Paylaşım kiti konum gizliliğine uymalı | TESTED | 2a3bfc2 | vitest shareCaption + ShareKit; owner gate, çok sezon, gizlilik, kopyala/indir | Bekliyor |
 | E01 | P2 | E | Hesabım | E-posta doğrulama kutusunu sadeleştir | TESTED | 869f024 | typecheck+lint+test:all yeşil; kutu kaldırıldı, inline rozet | Bekliyor |
 | E02 | P1 | E | Navbar | Sağ üstte avatar + kullanıcı adı | VERIFIED | 2fcadac | vitest AccountMenu.test.tsx | 18.08.2026 · kullanıcı canlıda kontrol etti |
