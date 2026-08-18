@@ -38,6 +38,7 @@ import { RatingBadge } from './RatingBadge';
 import { RatingChip } from './RatingChip';
 import { VersionHistory } from './VersionHistory';
 import { VersionUpload } from './VersionUpload';
+import { ThumbCropEditor } from './ThumbCropEditor';
 import { ReportButton } from '@/features/admin/ReportButton';
 import { exifHasValues, photoTypeLabels } from './types';
 import { formatExposure } from '@/domain/photography/exif';
@@ -308,6 +309,9 @@ function PhotoDetail({
           <div className="mt-4">
             <VersionUpload photo={photo} onUploaded={onRefresh} />
           </div>
+
+          {/* Kart kadrajını sonradan düzenleme — sahibe (C09). */}
+          <ThumbCropEditor photo={photo} onSaved={onRefresh} />
         </section>
 
         {/*
