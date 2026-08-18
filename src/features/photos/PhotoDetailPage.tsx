@@ -1,4 +1,6 @@
 import type { ReactNode } from 'react';
+import { adminEditPath } from '@/components/admin/adminEditPath';
+import { AdminEditLink } from '@/components/admin/AdminEditLink';
 import { useUpNavigation } from '@/app/useUpNavigation';
 import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router';
@@ -187,6 +189,10 @@ function PhotoDetail({
               targetId={photo.slug}
               targetPath={`/fotograf/${photo.slug}`}
             />
+            {/* Fotoğraf detayında yönetim bağlantısı YOKTU: yanlış
+                yazılmış bir başlığı gören yönetici, kaydı panelde elle
+                aramak zorundaydı. */}
+            <AdminEditLink to={adminEditPath('photo', photo.slug)} />
           </div>
         </div>
 

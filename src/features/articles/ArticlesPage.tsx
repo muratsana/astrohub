@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { entryEditPath } from '@/components/admin/adminEditPath';
 import { Container } from '@/components/ui/Container';
 import { FilterCell, filterControlClass } from '@/components/ui/FilterBar';
 import { Input, Select } from '@/components/ui/Input';
@@ -84,7 +85,7 @@ export function ArticlesPage() {
         tint: article.tint,
         imageUrl: article.image?.url,
         action: (
-          <AdminEditLink to={`/admin/icerik?kind=yazi&slug=${article.slug}`} />
+          <AdminEditLink to={entryEditPath('yazi', article.slug)} />
         ),
         footer: (
           <span className="tabular text-meta text-faint">{article.author}</span>

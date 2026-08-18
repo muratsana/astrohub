@@ -1,4 +1,5 @@
 import { UpLink } from '@/components/ui/UpLink';
+import { entryEditPath } from '@/components/admin/adminEditPath';
 import { Link, useParams } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { ReadingLayout } from '@/components/ui/ReadingLayout';
@@ -132,9 +133,7 @@ export function ArticleDetailPage() {
                   </div>
                 </dl>
                 <div className="mt-3">
-                  <AdminEditLink
-                    to={`/admin/icerik?kind=yazi&slug=${article.slug}`}
-                  />
+                  <AdminEditLink to={entryEditPath('yazi', article.slug)} />
                 </div>
               </section>
 

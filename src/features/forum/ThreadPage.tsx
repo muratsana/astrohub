@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { adminEditPath } from '@/components/admin/adminEditPath';
+import { AdminEditLink } from '@/components/admin/AdminEditLink';
 import { Link, useParams } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -121,6 +123,9 @@ export function ThreadPage() {
                   targetPath={`/forum/${thread.slug}`}
                 />
               )}
+              {/* Konu başlığını ya da gövdesini düzeltmenin panelden
+                  geçen bir yolu vardı ama buradan görünmüyordu. */}
+              <AdminEditLink to={adminEditPath('thread', thread.slug)} />
             </span>
           }
         />

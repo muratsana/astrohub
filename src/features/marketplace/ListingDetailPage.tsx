@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { adminEditPath } from '@/components/admin/adminEditPath';
 import { Link, useParams } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -118,7 +119,7 @@ export function ListingDetailPage() {
           meta={`${listing.city} · ${postedAt}`}
           actions={
             <>
-              <AdminEditLink to={`/admin/listings?slug=${listing.slug}`} />
+              <AdminEditLink to={adminEditPath('listing', listing.slug)} />
               <Badge tone={conditionTone[listing.condition]}>
                 {listing.condition}
               </Badge>

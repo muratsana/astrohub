@@ -1,4 +1,5 @@
 import { useUpNavigation } from '@/app/useUpNavigation';
+import { adminEditPath } from '@/components/admin/adminEditPath';
 import { useParams } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { Badge } from '@/components/ui/Badge';
@@ -104,7 +105,7 @@ export function SiteDetailPage() {
               )}
               <Badge>Güney ufku: {site.southHorizon}</Badge>
               <Badge>{site.bestMonths}</Badge>
-              <AdminEditLink to={`/admin/sites?slug=${site.slug}`} />
+              <AdminEditLink to={adminEditPath('site', site.slug)} />
             </div>
 
             <p className="mt-4 max-w-2xl leading-relaxed text-muted-foreground">

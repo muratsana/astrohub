@@ -586,7 +586,15 @@ function AdminSection({
     return (
       <div className="space-y-4">
         <ForumCategories canWrite={isAdmin} />
-        <RecordsControl kinds={['thread']} title="Forum konuları" />
+        {/* `targetSlug` GEÇİRİLİYOR: forum konusundan panele gelen derin
+            bağlantı (`/admin/forum?slug=…`) doğru kaydı açmalı; slug
+            yoksa liste normal davranıyor. */}
+        <RecordsControl
+          kinds={['thread']}
+          title="Forum konuları"
+          initialKind="thread"
+          targetSlug={targetSlug}
+        />
         <CommentsControl kinds={['forumPost']} />
       </div>
     );
