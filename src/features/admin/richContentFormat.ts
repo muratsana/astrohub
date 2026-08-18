@@ -57,7 +57,15 @@ function blockToHtml(block: ContentBlock): string {
     const caption = block.caption
       ? `<figcaption>${escapeHtml(block.caption)}</figcaption>`
       : '';
-    return `<figure>${image}${caption}</figure>`;
+    /*
+     * MİZANPAJ `data-*` İLE TAŞINIYOR — callout'un `data-tone`u ile aynı
+     * desen. Öznitelik yazılmasaydı editörde bir kez kaydedilen görsel
+     * hizasını kaybederdi: HTML'e inen bilgi geri okunmadığında sessizce
+     * kayboluyor ve yazar sebebini anlamıyor.
+     */
+    const align = block.align ? ` data-align="${escapeAttr(block.align)}"` : '';
+    const width = block.width ? ` data-width="${escapeAttr(block.width)}"` : '';
+    return `<figure${align}${width}>${image}${caption}</figure>`;
   }
   if (block.type === 'table') {
     const header = block.header
@@ -76,6 +84,52 @@ function blockToHtml(block: ContentBlock): string {
   }
   if (block.type === 'embed') {
     return `<p>${escapeHtml(block.title)} — https://www.youtube.com/watch?v=${escapeAttr(block.videoId)}</p>`;
+  }
+  /*
+   * GALERİ VE İKİ SÜTUN, editörün HTML gövdesinde DÜZ karşılıklarına
+   * iniyor: zengin editör `contenteditable` üstünde çalışıyor ve orada
+   * ızgara kurmak, kullanıcının imleçle bozabileceği bir yapı üretirdi.
+   * Blok modeli yapıyı koruyor; editör onu düzenlenebilir bir metin
+   * olarak gösteriyor.
+   */
+  /*
+   * GALERİ VE İKİ SÜTUN — yapıları KORUNARAK gidip geliyor.
+   *
+   * İlk yazımda ikisi de düz paragraflara iniyordu ve bu, editörde bir
+   * kez kaydedilen galerinin tek tek görsellere dağılması demekti: yazar
+   * bir virgül düzeltip kaydettiğinde ızgarasını kaybediyordu. Sessiz
+   * veri kaybı, eksik özellikten kötü.
+   *
+   * Desen `aside[data-callout]` ile aynı: yapı gerçek HTML, kimlik
+   * `data-*` özniteliğinde. `contenteditable` içinde kullanıcı bunu
+   * bozabilir — callout için de geçerli olan ve kabul edilmiş bir risk;
+   * bozulduğunda blok kendi türünü kaybediyor ama İÇERİK duruyor.
+   */
+  if (block.type === 'gallery') {
+    const items = block.items
+      .map((item) => {
+        const caption = item.caption
+          ? `<figcaption>${escapeHtml(item.caption)}</figcaption>`
+          : '';
+        return `<figure><img src="${escapeAttr(item.src)}" alt="${escapeAttr(item.alt)}">${caption}</figure>`;
+      })
+      .join('');
+    const caption = block.caption
+      ? `<figcaption>${escapeHtml(block.caption)}</figcaption>`
+      : '';
+    const cols = block.columns ? ` data-cols="${block.columns}"` : '';
+    return `<figure data-gallery="1"${cols}>${items}${caption}</figure>`;
+  }
+  if (block.type === 'columns') {
+    const side = (
+      title: string | undefined,
+      body: string,
+      name: 'left' | 'right'
+    ) => {
+      const heading = title ? `<h3>${escapeHtml(title)}</h3>` : '';
+      return `<section data-side="${name}">${heading}<p>${inlineToHtml(body)}</p></section>`;
+    };
+    return `<div data-columns="1">${side(block.leftTitle, block.left, 'left')}${side(block.rightTitle, block.right, 'right')}</div>`;
   }
   return `<p>${inlineToHtml(block.text)}</p>`;
 }
@@ -116,13 +170,96 @@ function elementToBlocks(element: Element): ContentBlock[] {
       ? [{ type: 'list', style: tag === 'ol' ? 'ordered' : 'bullet', items }]
       : [];
   }
+  /*
+   * GALERİ, DÜZ GÖRSELDEN ÖNCE bakılıyor: galeri de bir `<figure>` ve
+   * sıra ters olsaydı ilk görselini alıp gerisini atardı.
+   */
+  if (tag === 'figure' && element.hasAttribute('data-gallery')) {
+    const items = Array.from(element.querySelectorAll(':scope > figure'))
+      .map((item) => {
+        const img = item.querySelector('img');
+        return {
+          src: img?.getAttribute('src')?.trim() ?? '',
+          alt: img?.getAttribute('alt')?.trim() ?? '',
+          caption: item.querySelector('figcaption')?.textContent?.trim() || undefined,
+        };
+      })
+      .filter((item) => isAllowedImageHost(item.src) && item.alt);
+
+    /* İki görselin altına düşen galeri, galeri değil: şema da bunu
+       reddediyor. Tek görsel kalırsa onu düz görsel bloğu olarak
+       kurtarıyoruz — atmak, yazarın yüklediği kareyi silmek olurdu. */
+    if (items.length === 1) {
+      return [{ type: 'image', src: items[0].src, alt: items[0].alt }];
+    }
+    if (items.length === 0) return [];
+
+    const cols = element.getAttribute('data-cols');
+    return [
+      {
+        type: 'gallery',
+        items,
+        caption:
+          element.querySelector(':scope > figcaption')?.textContent?.trim() ||
+          undefined,
+        ...(cols === '2' || cols === '3' ? { columns: Number(cols) as 2 | 3 } : {}),
+      },
+    ];
+  }
+
+  if (tag === 'div' && element.hasAttribute('data-columns')) {
+    const side = (name: 'left' | 'right') => {
+      const node = element.querySelector(`:scope > section[data-side="${name}"]`);
+      if (!node) return { title: undefined, body: '' };
+      const heading = node.querySelector('h3');
+      const title = heading?.textContent?.trim() || undefined;
+      heading?.remove();
+      return { title, body: htmlToInlineMarkdown(node).trim() };
+    };
+    const left = side('left');
+    const right = side('right');
+    /* Bir taraf boşsa iki sütun anlamsız; kalan taraf paragrafa
+       düşüyor ve metin kaybolmuyor. */
+    if (!left.body && !right.body) return [];
+    if (!left.body || !right.body) {
+      return [{ type: 'paragraph', text: left.body || right.body }];
+    }
+    return [
+      {
+        type: 'columns',
+        left: left.body,
+        right: right.body,
+        ...(left.title ? { leftTitle: left.title } : {}),
+        ...(right.title ? { rightTitle: right.title } : {}),
+      },
+    ];
+  }
+
   if (tag === 'figure' || tag === 'img') {
     const img = tag === 'img' ? element : element.querySelector('img');
     const src = img?.getAttribute('src')?.trim() ?? '';
     const alt = img?.getAttribute('alt')?.trim() ?? '';
     if (!isAllowedImageHost(src) || !alt) return [];
     const caption = element.querySelector('figcaption')?.textContent?.trim();
-    return [{ type: 'image', src, alt, caption: caption || undefined }];
+    const align = element.getAttribute('data-align');
+    const width = element.getAttribute('data-width');
+    return [
+      {
+        type: 'image',
+        src,
+        alt,
+        caption: caption || undefined,
+        /* Tanımsız değer YAZILMIYOR: elle düzenlenmiş bir HTML'den gelen
+           `data-align="justify"` şemayı düşürür ve tek bir bozuk
+           öznitelik yüzünden yazının tamamı kaydedilemez olurdu. */
+        ...(align === 'left' || align === 'center' || align === 'right'
+          ? { align }
+          : {}),
+        ...(width === 'full' || width === 'half' || width === 'third'
+          ? { width }
+          : {}),
+      },
+    ];
   }
   if (tag === 'table') {
     const rows = Array.from(element.querySelectorAll('tr')).map((row) =>

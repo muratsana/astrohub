@@ -8,6 +8,7 @@ import { Panel } from '@/components/ui/Panel';
 import { Readout } from '@/components/ui/Readout';
 import { Alert } from '@/components/ui/Alert';
 import { useAuth } from '@/features/auth/AuthContext';
+import { usePermissions } from '@/features/auth/usePermissions';
 import {
   formatQuotaLabel,
   remainingPhotoQuota,
@@ -17,7 +18,6 @@ import {
 } from '@/domain/membership/quota';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { Badge, type BadgeTone } from '@/components/ui/Badge';
-import { listSetups } from '@/features/setups/storage';
 import { useSavedPhotos } from '@/services/content/collections';
 import {
   isListingPubliclyVisible,
@@ -158,17 +158,14 @@ function PanelRow({
  * bir yerleşime izin verilir (§6.6).
  *
  * Sayılar ve listeler oturum açmış kullanıcının GERÇEK kayıtlarından
- * geliyor; sınırlar domain kurallarından. Bekleyen tek şey üyelik
- * kademesi: T-504 kararı verilene kadar herkes `standart`.
+ * geliyor; kademe ve kota `izinlerim()` ile SUNUCUDAN. Bekleyen tek şey
+ * ödeme sağlayıcısı (T-504): kademeyi yükseltmenin bir yolu yok, ama
+ * kademenin kendisi artık uydurma değil — yönetici ve moderatör §3.2
+ * gereği premium görünüyor.
  */
 export function PanelPage() {
   const { user, configured } = useAuth();
   const { section } = useParams<{ section?: string }>();
-  /*
-   * Setup listesi her render'da değil, bölüm açıldığında okunuyor: liste
-   * `localStorage`'dan gelir ve panelin diğer bölümlerinde gereksiz.
-   */
-  const setups = section === 'setuplar' ? listSetups() : [];
   /*
    * Kimlik yalnızca ilgili bölüm açıkken veriliyor: kanca `undefined`
    * kullanıcıyla sorgu atmıyor. Panelin her ziyaretinde ilan çekmek,
@@ -272,8 +269,26 @@ export function PanelPage() {
    * çiziliyor; yükleme sırasında `0` göstermek de aynı yanlış cümleyi
    * kurardı.
    */
-  const tier: MembershipTier = 'standart';
-  const photoLimit = PHOTO_LIMITS[tier];
+  /*
+   * KADEME ARTIK SUNUCUDAN.
+   *
+   * Burada sabit `'standart'` yazıyordu ve gerekçesi ("üyelik sistemi
+   * yok") o gün doğruydu — ama arada `izinlerim()` yazıldı ve kademeyi,
+   * izinleri, kotaları TEK yanıtta veriyor. Buna rağmen bu panel hâlâ
+   * sabiti okuyordu: `tier_limits` tablosunda kotayı değiştiren bir
+   * yönetici, panelin gösterdiği sayının değişmediğini görürdü.
+   *
+   * Yönetici ve moderatör §3.2 gereği premium sayılıyor; sabit kademe
+   * onlara da "5 fotoğraf" diyordu — yanlış sayı.
+   *
+   * KOTA DA SUNUCUDAN, ama sabit yedekle: `izinlerim()` henüz dönmediyse
+   * ya da düştüyse `PHOTO_LIMITS` devreye giriyor. Yedeksiz bıraksaydık
+   * kota bilinmeyen bir anda sıfır görünür, panel de kullanıcıya "hiç
+   * hakkın yok" derdi.
+   */
+  const permissions = usePermissions();
+  const tier: MembershipTier = permissions.tier;
+  const photoLimit = permissions.kota('galeri_foto') ?? PHOTO_LIMITS[tier];
   const activePhotos = myPhotos.published;
   const quotaKnown = !myPhotos.loading && !myPhotos.error;
 
@@ -281,10 +296,12 @@ export function PanelPage() {
     {
       label: 'Fotoğraflarım',
       to: '/panel/fotograflar',
-      note: quotaKnown ? formatQuotaLabel(activePhotos, tier) : undefined,
+      note: quotaKnown ? formatQuotaLabel(activePhotos, tier, photoLimit) : undefined,
     },
     { label: 'Fotoğraf Yükle', to: '/galeri/yukle' },
-    { label: "Setup'larım", to: '/panel/setuplar' },
+    /* Ekipman artık hesabın altında tek bir yerde (bkz.
+       `MyEquipmentPanel`); panel oraya işaret ediyor. */
+    { label: 'Ekipmanlarım', to: '/hesap?sekme=ekipmanlarim' },
     /*
      * "PLANLARIM" DEĞİL "PLANLAYICI".
      *
@@ -362,10 +379,10 @@ export function PanelPage() {
         <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
           <Readout
             label="Fotoğraf kotası"
-            value={quotaKnown ? formatQuotaLabel(activePhotos, tier) : '…'}
+            value={quotaKnown ? formatQuotaLabel(activePhotos, tier, photoLimit) : '…'}
             hint={
               quotaKnown
-                ? `${remainingPhotoQuota({ activePublished: activePhotos, drafts: myPhotos.drafts, tier })} hak kaldı`
+                ? `${remainingPhotoQuota({ activePublished: activePhotos, drafts: myPhotos.drafts, tier, limit: photoLimit })} hak kaldı`
                 : 'okunuyor'
             }
           />
@@ -375,10 +392,23 @@ export function PanelPage() {
             hint="yayımlanmamış kayıt"
             tone="cold"
           />
+          {/*
+            Kademe GERÇEK, yükseltme yolu YOK — ikisi de yazıyor. Yalnızca
+            "Standart" yazıp susmak, kullanıcıya arayıp bulamayacağı bir
+            yükseltme düğmesi aratırdı.
+          */}
           <Readout
             label="Üyelik"
-            value="—"
-            hint="üyelik sistemi yakında"
+            value={
+              permissions.status === 'ready'
+                ? tier === 'premium'
+                  ? 'Premium'
+                  : 'Standart'
+                : '…'
+            }
+            hint={
+              tier === 'premium' ? 'rol kaynaklı' : 'ödeme sistemi yakında'
+            }
             tone="muted"
           />
           <Readout
@@ -544,48 +574,23 @@ export function PanelPage() {
         )}
 
         {section === 'setuplar' && (
-          <Panel
-            title="Kayıtlı setup'lar"
-            status={`${setups.length} kayıt`}
-            className="mb-4"
-          >
-            {setups.length === 0 ? (
-              <p className="py-3 text-meta leading-relaxed text-muted-foreground">
-                Henüz kayıtlı setup yok. Uyumluluk aracında bir zincir kurup
-                kaydettiğinizde burada listelenir.{' '}
-                <Link to="/araclar/kadraj" className="text-primary">
-                  Setup kur →
-                </Link>
-              </p>
-            ) : (
-              <ul>
-                {setups.map((setup) => (
-                  <li key={setup.id} className="border-b border-border last:border-0">
-                    <Link
-                      to={`/setup/${setup.id}`}
-                      className="group flex items-baseline justify-between gap-3 py-2.5"
-                    >
-                      <span className="min-w-0">
-                        <span className="block truncate text-caption text-foreground group-hover:text-primary">
-                          {setup.name}
-                        </span>
-                        <span className="mt-0.5 block truncate text-meta text-muted-foreground">
-                          {setup.input.optic.name} · {setup.input.camera.name}
-                        </span>
-                      </span>
-                      <span className="tabular shrink-0 text-meta text-faint">
-                        {new Date(setup.savedAt).toLocaleDateString('tr-TR')}
-                      </span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
-            <p className="mt-2 text-meta leading-snug text-faint">
-              Setup'lar hesap sistemi gelene kadar bu tarayıcıda saklanır.
-              Paylaşmak için setup sayfasındaki bağlantıyı kopyalayın — bağlantı
-              değerleri kendi içinde taşır.
+          <Panel title="Kayıtlı ekipmanlar" className="mb-4">
+            {/*
+              BÖLÜM TAŞINDI, SİLİNMEDİ.
+
+              Ekipman kayıtları üç ayrı yerde duruyordu: burası, katalog
+              sayfasının iki sekmesi ve envanter. Hepsi hesabın altındaki
+              tek sayfada birleşti. Bu adres, paylaşılmış ya da yer imine
+              alınmış bağlantılar için duruyor — kullanıcıyı 404'e
+              düşürmek yerine yeni yerine gönderiyor.
+            */}
+            <p className="py-3 text-meta leading-relaxed text-muted-foreground">
+              Kayıtlı ekipmanlarınız artık hesabınızda. Kadraj aracından
+              kaydettiğiniz eski kayıtlar da orada listeleniyor.
             </p>
+            <ButtonLink to="/hesap?sekme=ekipmanlarim" size="sm">
+              Ekipmanlarım’a git
+            </ButtonLink>
           </Panel>
         )}
 

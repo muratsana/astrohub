@@ -22,6 +22,7 @@ import { ModelPicker } from './ModelPicker';
 import { AnalysisPanel } from './AnalysisPanel';
 import type { EquipmentModel } from '../data';
 import { visibilityLabels, type SetupVisibility } from '@/features/setups/store';
+import { useDefaultEquipmentVisibility } from '@/features/preferences/equipmentVisibility';
 
 /**
  * SETUP BUILDER.
@@ -71,7 +72,14 @@ export function SetupBuilder({
   const [name, setName] = useState(initialName);
   const [description, setDescription] = useState('');
   const [purpose, setPurpose] = useState('');
-  const [visibility, setVisibility] = useState<SetupVisibility>('ozel');
+  /*
+   * Varsayılan görünür (gerekçe `saveSetup` içinde) ama kullanıcı bunu
+   * hesabından değiştirebiliyor: her ekipmanda aynı seçimi tekrar
+   * yapmak zorunda kalmasın (bkz. `useDefaultEquipmentVisibility`).
+   */
+  const [varsayilanGorunurluk] = useDefaultEquipmentVisibility();
+  const [visibility, setVisibility] = useState<SetupVisibility | null>(null);
+  const etkinGorunurluk = visibility ?? varsayilanGorunurluk;
   const [saved, setSaved] = useState(false);
 
   const bySlug = useMemo(
@@ -217,7 +225,7 @@ export function SetupBuilder({
         {onSave && (
           <Panel title="Setup’ı kaydet">
             <div className="space-y-3">
-              <Field label="Setup adı" htmlFor="sb-name">
+              <Field label="Ekipman adı" htmlFor="sb-name">
                 <Input
                   id="sb-name"
                   placeholder="ör. Yayla Geniş Alan Setup"
@@ -242,7 +250,7 @@ export function SetupBuilder({
                 <Field label="Görünürlük" htmlFor="sb-visibility">
                   <Select
                     id="sb-visibility"
-                    value={visibility}
+                    value={etkinGorunurluk}
                     onChange={(e) =>
                       setVisibility(e.target.value as SetupVisibility)
                     }
@@ -270,7 +278,7 @@ export function SetupBuilder({
                 <Button
                   disabled={filled === 0 || name.trim().length === 0}
                   onClick={() => {
-                    onSave({ name, description, purpose, visibility });
+                    onSave({ name, description, purpose, visibility: etkinGorunurluk });
                     setSaved(true);
                   }}
                 >
@@ -278,7 +286,7 @@ export function SetupBuilder({
                 </Button>
                 {saved && (
                   <span role="status" className="text-body-sm text-success">
-                    Kaydedildi — “Setup’larım” sekmesinde.
+                    Kaydedildi — “Ekipmanlarım” listesinde.
                   </span>
                 )}
                 {name.trim().length === 0 && filled > 0 && (

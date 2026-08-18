@@ -1,5 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Container } from '@/components/ui/Container';
+import { TargetPicker } from '@/features/targets/TargetPicker';
+import { useActiveTarget } from '@/features/targets/useActiveTarget';
+import type { TargetKind } from '@/domain/targets/derive';
 import { Input, Select } from '@/components/ui/Input';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { FramingViews } from '@/features/simulator/FramingViews';
@@ -24,7 +27,6 @@ import {
   nightsNeeded,
   parseAngularSizeArcmin,
 } from '@/domain/astronomy/mosaic';
-import { targets } from '@/features/targets/data';
 import { useCalculatorPresets } from './presets';
 import { PresetSelect } from './PresetSelect';
 
@@ -45,12 +47,6 @@ import { PresetSelect } from './PresetSelect';
 type Orientation = 'auto' | 'yatay' | 'dikey';
 
 /** Katalogdan seçilebilen, açısal boyutu ayrıştırılabilen hedefler. */
-const catalogTargets = targets
-  .map((t) => ({ target: t, size: parseAngularSizeArcmin(t.angularSize) }))
-  .filter((entry): entry is { target: (typeof targets)[number]; size: NonNullable<ReturnType<typeof parseAngularSizeArcmin>> } =>
-    entry.size !== null
-  );
-
 export function MosaicPlannerPage() {
   // Optik + kamera
   const presets = useCalculatorPresets();
@@ -77,6 +73,24 @@ export function MosaicPlannerPage() {
 
   const [targetWidth, setTargetWidth] = useState(178);
   const [targetHeight, setTargetHeight] = useState(63);
+
+  /*
+   * Adresten gelen hedefin boyutu kutulara YAZILIYOR, kutuların yerine
+   * geçmiyor. Kullanıcı katalog ölçüsünü beğenmezse elle
+   * değiştirebilmeli: mozaik planlamak çoğu zaman "katalog 178′ diyor
+   * ama ben 200′lük bir alan taramak istiyorum" demektir.
+   */
+  const activeTarget = useActiveTarget();
+  const [targetKind, setTargetKind] = useState<TargetKind | 'hepsi'>('hepsi');
+
+  useEffect(() => {
+    const t = activeTarget.target;
+    if (!t) return;
+    const size = parseAngularSizeArcmin(t.angularSize);
+    if (!size) return;
+    setTargetWidth(Number(size.widthArcmin.toFixed(1)));
+    setTargetHeight(Number(size.heightArcmin.toFixed(1)));
+  }, [activeTarget.target]);
   const [overlapPercent, setOverlapPercent] = useState(15);
   const [orientation, setOrientation] = useState<Orientation>('auto');
   const [showMargin, setShowMargin] = useState(true);
@@ -158,28 +172,23 @@ export function MosaicPlannerPage() {
           <div className="space-y-4">
             <Panel title="Hedef">
               <FilterBar columns={2} className="mb-3">
+                {/*
+                  HEDEF ARTIK TÜM KATALOGDAN VE ADRESTEN.
+
+                  Burada 182 kayıtlık paketlenmiş listeden bir `<select>`
+                  vardı. Mozaik tam olarak KADRAJA SIĞMAYAN hedefler için
+                  bir araç ve kadraj aracından buraya gelen kullanıcı
+                  hedefini baştan arıyordu — üstelik listede çoğu zaman
+                  bulamıyordu. Seçim `?hedef=` ile taşınıyor.
+                */}
                 <FilterCell label="Katalogdan seç" htmlFor="mosaic-target">
-                  <Select
-                    id="mosaic-target"
-                    defaultValue=""
-                    className={filterControlClass}
-                    onChange={(e) => {
-                      const entry = catalogTargets[Number(e.target.value)];
-                      if (!entry) return;
-                      setTargetWidth(Number(entry.size.widthArcmin.toFixed(1)));
-                      setTargetHeight(Number(entry.size.heightArcmin.toFixed(1)));
-                    }}
-                  >
-                    <option value="" disabled>
-                      Hedef seç…
-                    </option>
-                    {catalogTargets.map((entry, i) => (
-                      <option key={entry.target.slug} value={i}>
-                        {entry.target.catalog} — {entry.target.name} (
-                        {entry.target.angularSize})
-                      </option>
-                    ))}
-                  </Select>
+                  <TargetPicker
+                    value={activeTarget.slug ?? ''}
+                    onChange={(t) => activeTarget.setSlug(t?.slug ?? null)}
+                    kind={targetKind}
+                    onKindChange={setTargetKind}
+                    selectClassName={filterControlClass}
+                  />
                 </FilterCell>
                 <FilterCell label="Örtüşme (%)" htmlFor="mosaic-overlap">
                   <Input

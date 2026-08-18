@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { adminEditPath } from '@/components/admin/adminEditPath';
 import { Link, useNavigate } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -610,7 +611,7 @@ export function EventMapPage() {
                           İletişim
                         </ExternalButtonLink>
                       )}
-                      <AdminEditLink to={`/admin/events?slug=${item.slug}`} />
+                      <AdminEditLink to={adminEditPath('event', item.slug)} />
                     </li>
                   ))}
                 </ul>

@@ -4,6 +4,7 @@ import { Panel } from '@/components/ui/Panel';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Input, Select } from '@/components/ui/Input';
+import { Field } from '@/components/ui/Field';
 import { Alert } from '@/components/ui/Alert';
 import {
   deleteRecord,
@@ -11,8 +12,10 @@ import {
   softDeleteRecord,
   fetchAuditFacets,
   fetchAuditLog,
+  fetchRecordDetail,
   fetchRecords,
   setRecordStatus,
+  updateRecord,
   setThreadLocked,
   RECORD_KINDS,
   type AuditQuery,
@@ -92,6 +95,9 @@ export function RecordsControl({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState<string | null>(null);
+  /* Açık düzenleme formunun kayıt kimliği; aynı anda yalnızca bir tane
+     — iki form açıkken hangi kaydı düzenlediğini kaybetmek kolay. */
+  const [editing, setEditing] = useState<string | null>(null);
   /*
    * SİLİNMİŞLER AYRI GÖRÜNÜM (FAZ 3, plan görev 5).
    *
@@ -106,6 +112,7 @@ export function RecordsControl({
       setRows(null);
       setError(null);
       setConfirming(null);
+      setEditing(null);
       const slug = k === initialKind ? targetSlug : null;
       fetchRecords(k, slug ? 1 : 40, slug, { deleted })
         .then(setRows)
@@ -333,6 +340,21 @@ export function RecordsControl({
                 </Button>
               )}
 
+              {/* Düzenleme, türün tanımladığı alanlar varsa açılıyor —
+                  gerekçe `EditField` başlığında. */}
+              {spec.editFields.length > 0 && (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  disabled={busy}
+                  onClick={() =>
+                    setEditing(editing === row.id ? null : row.id)
+                  }
+                >
+                  {editing === row.id ? 'Kapat' : 'Düzenle'}
+                </Button>
+              )}
+
               <Button
                 size="sm"
                 variant="ghost"
@@ -347,6 +369,16 @@ export function RecordsControl({
                 )}
               </span>
             </div>
+
+            {!row.readOnly && editing === row.id && (
+              <RecordEditor
+                kind={kind}
+                id={row.id}
+                title={row.title}
+                onClose={() => setEditing(null)}
+                onSaved={() => load(kind, silinmisler)}
+              />
+            )}
 
             {!row.readOnly && confirming === row.id && (
               <div className="mt-2 flex flex-wrap items-center gap-2 rounded-card border border-warm/40 bg-warm/8 px-3 py-2">
@@ -377,6 +409,159 @@ export function RecordsControl({
         ))}
       </ul>
     </Panel>
+  );
+}
+
+
+/**
+ * JENERİK KAYIT DÜZENLEYİCİ.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * NEDEN TEK FORM, BEŞ TÜR
+ *
+ * Alanlar tür tanımlayıcısından geliyor (`RECORD_KINDS[kind].editFields`),
+ * bu dosyadan değil. Beş tür için beş ayrı form yazsaydık dördü zamanla
+ * eskir, yeni bir tür eklemek yeni bir ekran demek olurdu. Şimdi yeni
+ * tür eklemek birkaç satır tanım.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * DEĞERLER FORM AÇILINCA ÇEKİLİYOR
+ *
+ * Liste sorgusu düzenlenebilir alanları taşımıyor: 40 satırlık bir
+ * listede her kaydın 4.000 karakterlik açıklamasını indirmek,
+ * kullanıcının açmayacağı veri için bant genişliği harcamak olurdu.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * UYARI HATA DEĞİL
+ *
+ * `updateRecord` denetim izi ya da bildirim atılamadığında `warning`
+ * dönüyor ama yazma başarılı sayılıyor. Form bunu ayrı bir tonda
+ * gösteriyor: "kaydedilmedi" demek yanlış olurdu, sessiz geçmek de —
+ * yönetici sahibinin haberdar edilmediğini bilmeli.
+ */
+function RecordEditor({
+  kind,
+  id,
+  title,
+  onClose,
+  onSaved,
+}: {
+  kind: RecordKind;
+  id: string;
+  title: string;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const spec = RECORD_KINDS[kind];
+  const [values, setValues] = useState<Record<string, string> | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [warning, setWarning] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    setValues(null);
+    setError(null);
+    fetchRecordDetail(kind, id)
+      .then((v) => {
+        if (active) setValues(v);
+      })
+      .catch((e: unknown) => {
+        if (active) {
+          setError(e instanceof Error ? e.message : 'Kayıt okunamadı');
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [kind, id]);
+
+  async function save() {
+    if (!values) return;
+    setBusy(true);
+    setError(null);
+    setWarning(null);
+    try {
+      const sonuc = await updateRecord(kind, id, values);
+      setWarning(sonuc.warning);
+      onSaved();
+      /* Uyarı varsa form AÇIK kalıyor: yönetici mesajı okumadan ekranın
+         kapanması, uyarıyı hiç göstermemekle aynı şey. */
+      if (!sonuc.warning) onClose();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Kaydedilemedi');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="mt-2 rounded-card border border-border-strong bg-surface-2 p-3">
+      <p className="mb-2 text-meta text-muted-foreground">
+        <strong className="text-foreground">{title}</strong> düzenleniyor.
+        Değişiklik denetim kaydına yazılır ve içerik sahibine bildirim
+        gönderilir.
+      </p>
+
+      {error && (
+        <p className="mb-2 text-meta leading-snug text-danger">{error}</p>
+      )}
+      {warning && (
+        <p className="mb-2 text-meta leading-snug text-warning">
+          Kaydedildi, ancak: {warning}.
+        </p>
+      )}
+
+      {!values ? (
+        <p className="text-meta text-muted-foreground">Alanlar yükleniyor…</p>
+      ) : (
+        <div className="grid gap-3">
+          {spec.editFields.map((field) => (
+            <Field
+              key={field.column}
+              label={field.label}
+              htmlFor={`edit-${id}-${field.column}`}
+              hint={field.hint}
+            >
+              {field.type === 'multiline' ? (
+                /* Paylaşılan bir `Textarea` bileşeni yok; panelin geri
+                   kalanı da (EventControl, ClubControl) düz `textarea`
+                   ve aynı sınıfları kullanıyor. */
+                <textarea
+                  id={`edit-${id}-${field.column}`}
+                  rows={4}
+                  maxLength={field.maxLength}
+                  value={values[field.column] ?? ''}
+                  onChange={(e) =>
+                    setValues({ ...values, [field.column]: e.target.value })
+                  }
+                  className="w-full rounded-card border border-border bg-surface-1 px-2.5 py-2 text-body-sm leading-relaxed text-foreground outline-none focus:border-primary"
+                />
+              ) : (
+                <Input
+                  id={`edit-${id}-${field.column}`}
+                  type={field.type === 'number' ? 'number' : 'text'}
+                  maxLength={field.maxLength}
+                  value={values[field.column] ?? ''}
+                  onChange={(e) =>
+                    setValues({ ...values, [field.column]: e.target.value })
+                  }
+                />
+              )}
+            </Field>
+          ))}
+
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" disabled={busy} onClick={() => void save()}>
+              {busy ? 'Kaydediliyor…' : 'Kaydet'}
+            </Button>
+            <Button size="sm" variant="ghost" disabled={busy} onClick={onClose}>
+              Vazgeç
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 

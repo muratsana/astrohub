@@ -24,6 +24,15 @@ export interface InventoryStore {
   error: string | null;
   durable: boolean;
   toggle: (slug: string) => Promise<void>;
+  /**
+   * Verilen modelleri envantere EKLER — hiçbirini çıkarmaz.
+   *
+   * `toggle` burada kullanılamaz: adı üstünde, zaten sahip olunan bir
+   * modeli çağırdığınızda onu envanterden ÇIKARIR. Ekipmanını kurup
+   * kaydeden kullanıcının elindeki teleskobu sessizce silmek, tam olarak
+   * bunun olacağı yerdi.
+   */
+  ensureOwned: (slugs: string[]) => Promise<void>;
 }
 
 /**
@@ -169,5 +178,62 @@ export function useInventory(): InventoryStore {
     [userId]
   );
 
-  return { owned, syncing, error, durable: userId !== null, toggle };
+  /*
+   * EKİPMAN KURULDUĞUNDA ENVANTER KENDİLİĞİNDEN DOLUYOR.
+   *
+   * Eskiden envanter ayrı bir sekmede elle işaretleniyordu ve kimse
+   * doldurmuyordu: canlıda dört satır vardı. Oysa kullanıcı ekipmanını
+   * kurarken hangi modellere sahip olduğunu ZATEN söylüyor — yuvalara
+   * onları koyuyor. Aynı bilgiyi ikinci kez istemek, ikincisinin boş
+   * kalmasıyla sonuçlandı.
+   *
+   * Yalnızca EKLİYOR. Yuvadan çıkarılan model envanterde kalıyor:
+   * kullanıcı ekipmanını değiştirmiş olabilir ama eski teleskobu hâlâ
+   * elinde olabilir. Sahipliği bırakmak ayrı bir karar ve o karar
+   * listeden "Çıkar" ile veriliyor.
+   */
+  const ensureOwned = useCallback(
+    async (slugs: string[]) => {
+      const mevcut = listOwned();
+      const eksik = [...new Set(slugs.filter((s) => s && !mevcut.includes(s)))];
+      if (eksik.length === 0) return;
+
+      replaceOwned([...mevcut, ...eksik]);
+      setOwned(listOwned());
+
+      if (!userId) return;
+      try {
+        const promise = getSupabase();
+        if (!promise) return;
+        const supabase = await promise;
+
+        const ids = await resolveIds(eksik);
+        const rows = eksik
+          .map((slug) => ids.get(slug))
+          .filter((id): id is string => !!id)
+          .map((model_id) => ({ user_id: userId, model_id }));
+        /* Katalogda karşılığı olmayanlar yerelde kalıyor — `toggle` ile
+           aynı gerekçe. */
+        if (rows.length === 0) return;
+
+        const { error: writeError } = await supabase
+          .from('user_equipment')
+          .upsert(rows, { onConflict: 'user_id,model_id' });
+        if (writeError) throw new Error(writeError.message);
+        setError(null);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Envanter kaydedilemedi');
+      }
+    },
+    [userId]
+  );
+
+  return {
+    owned,
+    syncing,
+    error,
+    durable: userId !== null,
+    toggle,
+    ensureOwned,
+  };
 }

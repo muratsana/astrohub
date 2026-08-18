@@ -11,6 +11,36 @@ import { InlineText } from './InlineText';
  * duruyor (gerekçe `domain/content/inline.ts` başında). Buradaki hiçbir
  * yol `dangerouslySetInnerHTML` kullanmıyor.
  */
+/**
+ * GÖRSEL GENİŞLİĞİ — üç adım, serbest sayı değil.
+ *
+ * `width: 42` gibi serbest bir değer her yazının farklı bir ölçüde
+ * olması ve sitenin tipografik ızgarasının dağılması demekti. Üç adım
+ * ızgarayla uyumlu ve dar ekranda hepsi tam genişliğe düşüyor: yarım
+ * genişlikte bir görsel telefonda okunmuyor.
+ */
+function imageWidthClass(width: 'full' | 'half' | 'third' | undefined): string {
+  if (width === 'half') return 'sm:max-w-[50%]';
+  if (width === 'third') return 'sm:max-w-[33%]';
+  return '';
+}
+
+/**
+ * HİZALAMA — `mx-auto` ve arkadaşları.
+ *
+ * Metin KAYDIRMA (float) bilerek yok: kayan görsel, uzunluğu bilinmeyen
+ * bir paragrafın yanında listeleri ve başlıkları da sarmaya başlıyor ve
+ * dar ekranda düzeni tamamen bozuyor. Hizalama aynı ihtiyacın (görseli
+ * kenara almak) kırılgan olmayan karşılığı.
+ */
+function imageAlignClass(
+  align: 'left' | 'center' | 'right' | undefined
+): string {
+  if (align === 'left') return 'mr-auto';
+  if (align === 'right') return 'ml-auto';
+  return 'mx-auto';
+}
+
 export function BlockRenderer({
   blocks,
   className,
@@ -92,7 +122,10 @@ export function BlockRenderer({
          */
         if (block.type === 'image') {
           return (
-            <figure key={key} className="space-y-1.5">
+            <figure
+              key={key}
+              className={cn('space-y-1.5', imageWidthClass(block.width), imageAlignClass(block.align))}
+            >
               <img
                 src={block.src}
                 alt={block.alt}
@@ -201,6 +234,76 @@ export function BlockRenderer({
                 {block.title}
               </figcaption>
             </figure>
+          );
+        }
+
+        /*
+         * GALERİ. Dar ekranda TEK SÜTUN: iki görseli telefonda yan yana
+         * sıkıştırmak, ikisini de tanınmaz hâle getirirdi.
+         */
+        if (block.type === 'gallery') {
+          return (
+            <figure key={key} className="space-y-1.5">
+              <ul
+                className={cn(
+                  'grid gap-2 sm:grid-cols-2',
+                  block.columns === 3 && 'lg:grid-cols-3'
+                )}
+              >
+                {block.items.map((item, index) => (
+                  <li key={`${item.src}-${index}`}>
+                    <img
+                      src={item.src}
+                      alt={item.alt}
+                      loading="lazy"
+                      decoding="async"
+                      className="h-full w-full rounded-card border border-border object-cover"
+                    />
+                    {item.caption && (
+                      <span className="mt-1 block text-meta text-faint">
+                        {item.caption}
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+              {block.caption && (
+                <figcaption className="text-meta text-faint">
+                  {block.caption}
+                </figcaption>
+              )}
+            </figure>
+          );
+        }
+
+        /*
+         * İKİ SÜTUN. Yine dar ekranda alt alta; `sm` eşiğinin altında
+         * iki sütun okunabilir genişliğin altına iner.
+         */
+        if (block.type === 'columns') {
+          return (
+            <div key={key} className="grid gap-3 sm:grid-cols-2">
+              <div>
+                {block.leftTitle && (
+                  <h3 className="label mb-1 text-foreground">
+                    {block.leftTitle}
+                  </h3>
+                )}
+                <p>
+                  <InlineText text={block.left} />
+                </p>
+              </div>
+              <div>
+                {block.rightTitle && (
+                  <h3 className="label mb-1 text-foreground">
+                    {block.rightTitle}
+                  </h3>
+                )}
+                <p>
+                  <InlineText text={block.right} />
+                </p>
+              </div>
+            </div>
           );
         }
 

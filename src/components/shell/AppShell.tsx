@@ -1,6 +1,7 @@
 import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { Outlet, ScrollRestoration } from 'react-router';
 import { ConsentGate } from '@/features/auth/ConsentGate';
+import { ProfileSetupGate } from '@/features/auth/ProfileSetupGate';
 import { Topbar } from './Topbar';
 import { Footer } from './Footer';
 import { MobileNav } from './MobileNav';
@@ -9,6 +10,7 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { isPreviewEditorEnabled } from '@/features/preview-editor/PreviewEditorContext';
 import { AnnouncementBar } from '@/features/site/AnnouncementBar';
 import { AccountStatusNotice } from '@/features/auth/AccountStatusNotice';
+import { EmailVerificationNotice } from '@/features/auth/EmailVerificationNotice';
 import { MaintenanceGate } from '@/features/site/MaintenanceGate';
 import { RadioDock } from '@/features/radio/RadioDock';
 
@@ -125,6 +127,15 @@ export function AppShell() {
           <AccountStatusNotice />
         </ErrorBoundary>
 
+        {/*
+          Askı şeridinin ALTINDA: ikisi birden görünürse önce hesabın
+          askıda olduğunu okumalı — doğrulama linkine tıklamak askıyı
+          kaldırmayacak ve sırayı ters kurmak boşuna bir umut verirdi.
+        */}
+        <ErrorBoundary label="EmailVerificationNotice">
+          <EmailVerificationNotice />
+        </ErrorBoundary>
+
         <div className="sticky top-0 z-[var(--z-sticky)] bg-background/95 backdrop-blur-md">
           <Topbar onOpenNav={openNav} />
         </div>
@@ -179,6 +190,18 @@ export function AppShell() {
         <ErrorBoundary label="ConsentGate">
           <Suspense fallback={null}>
             <ConsentGate />
+          </Suspense>
+        </ErrorBoundary>
+
+        {/*
+          KURULUM KAPISI onay kapısından SONRA: bileşen zaten onay
+          alınmamışsa kendini çizmiyor, ama sıralamayı burada da korumak
+          iki modalın hangi durumda hangisinin görüneceğini okunur
+          kılıyor.
+        */}
+        <ErrorBoundary label="ProfileSetupGate">
+          <Suspense fallback={null}>
+            <ProfileSetupGate />
           </Suspense>
         </ErrorBoundary>
 

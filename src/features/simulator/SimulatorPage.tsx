@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router';
 import { Badge } from '@/components/ui/Badge';
 import { Button, ButtonLink } from '@/components/ui/Button';
@@ -14,7 +14,9 @@ import { ActiveSetupBar } from '@/features/setups/ActiveSetupBar';
 import { useSetupPrefill } from '@/features/setups/useSetupPrefill';
 import { computeOptics } from '@/domain/astronomy/optics';
 import { parseAngularSizeArcmin } from '@/domain/astronomy/mosaic';
-import { fixedTargets, targets } from '@/features/targets/data';
+import { TargetPicker } from '@/features/targets/TargetPicker';
+import { toolLink, useActiveTarget } from '@/features/targets/useActiveTarget';
+import type { TargetKind } from '@/domain/targets/derive';
 import { breadcrumbJsonLd } from '@/lib/seo';
 import { PresetSelect } from '@/features/calculators/PresetSelect';
 import { useCalculatorPresets } from '@/features/calculators/presets';
@@ -23,15 +25,6 @@ import {
   saveArchivePlans,
   type ArchivePlan,
 } from './bridge';
-
-const framedTargets = fixedTargets
-  .map((target) => ({ target, size: parseAngularSizeArcmin(target.angularSize) }))
-  .filter(
-    (entry): entry is {
-      target: (typeof targets)[number];
-      size: { widthArcmin: number; heightArcmin: number };
-    } => entry.size !== null
-  );
 
 export function SimulatorPage() {
   const presets = useCalculatorPresets();
@@ -60,15 +53,47 @@ export function SimulatorPage() {
     if (slots['guide-scope']) setGuideSlug(slots['guide-scope']);
   });
 
-  const [targetSlug, setTargetSlug] = useState(
-    framedTargets.find((entry) => entry.target.slug === 'm31-andromeda')?.target
-      .slug ?? framedTargets[0]?.target.slug ?? ''
-  );
+  /*
+   * HEDEF ARTIK TÜM KATALOGDAN, ADRESTEN OKUNUYOR.
+   *
+   * Burada 182 kayıtlık paketlenmiş listeden kurulu bir `<select>` vardı
+   * ve iki ayrı sorunu birden taşıyordu:
+   *
+   *   1. Kataloğun 16.663 objesinin ezici çoğunluğu bu araçta HİÇ
+   *      seçilemiyordu. Kullanıcı gökyüzü kataloğunda Sh2-101'i bulup
+   *      "acaba kadrajıma sığar mı" diye buraya geldiğinde onu listede
+   *      bulamıyordu.
+   *   2. Seçim adreste taşınmıyordu: kadrajı paylaşmak imkânsızdı ve
+   *      başka bir araca geçen kullanıcı hedefi baştan arıyordu.
+   *
+   * Şimdi seçim `?hedef=<slug>` ile geliyor (bkz. `useActiveTarget`) ve
+   * arama sunucu tarafında (`TargetPicker`).
+   */
+  const activeTarget = useActiveTarget();
+  const [targetKind, setTargetKind] = useState<TargetKind | 'hepsi'>('hepsi');
+
+  /* Adreste hedef yoksa bilinen bir başlangıç: boş kadraj, aracın ne
+     yaptığını anlatmayan bir ilk ekran olurdu. */
+  useEffect(() => {
+    if (!activeTarget.slug && !activeTarget.loading) {
+      activeTarget.setSlug('m31-andromeda');
+    }
+  }, [activeTarget]);
   const [plannedHours, setPlannedHours] = useState(12);
   const [completedHours, setCompletedHours] = useState(0);
   const [plans, setPlans] = useState<ArchivePlan[]>(() => loadArchivePlans());
 
-  const selected = framedTargets.find((entry) => entry.target.slug === targetSlug);
+  /*
+   * Açısal boyutu OLMAYAN hedef kadrajda çizilemiyor: katalogda boyutu
+   * boş bırakılmış kayıtlar var ve onlar için uydurma bir elips çizmek,
+   * kullanıcıya olmayan bir ölçü göstermek olurdu.
+   */
+  const selected = useMemo(() => {
+    const t = activeTarget.target;
+    if (!t) return undefined;
+    const size = parseAngularSizeArcmin(t.angularSize);
+    return size ? { target: t, size } : undefined;
+  }, [activeTarget.target]);
   const valid =
     focalLength > 0 &&
     aperture > 0 &&
@@ -135,7 +160,7 @@ export function SimulatorPage() {
     <>
       <PageMeta
         title="Simülatör"
-        description="Görüş alanı, pixel scale ve kadraj önizlemesi — hedefin setup\u2019ına sığıp sığmadığını gösterir."
+        description="Görüş alanı, pixel scale ve kadraj önizlemesi — hedefin ekipmanınıza sığıp sığmadığını gösterir."
         jsonLd={breadcrumbJsonLd([
           { name: 'Ana Sayfa', path: '/' },
           { name: 'Simülatör', path: '/araclar/kadraj' },
@@ -150,11 +175,32 @@ export function SimulatorPage() {
             { label: 'Kadraj' },
           ]}
           title="Kadraj ve Pixel Scale"
-          description="Hedef bu setup\u2019a sığıyor mu? Görüş alanı, örnekleme ve kadraj önizlemesi. Uyumluluk kontrolü Ekipman modülünde, montür bağlantısı Mount Bridge sayfasında."
+          description="Hedef ekipmanınıza sığıyor mu? Görüş alanı, örnekleme ve kadraj önizlemesi. Uyumluluk kontrolü Ekipman modülünde, montür bağlantısı Mount Bridge sayfasında."
           actions={
-            <ButtonLink to="/arsivim" size="sm" variant="secondary">
-              Arşivim
-            </ButtonLink>
+            <div className="flex flex-wrap gap-2">
+              {/*
+                DEVRETME: hedef seçimi kaybolmadan mozaiğe geçiş.
+
+                Kadraja sığmayan bir hedef gören kullanıcının bir sonraki
+                sorusu her zaman "kaç panel gerekir" oluyor. O soruya
+                giden yol, hedefi ikinci kez aratmadan geçmeli — adres
+                seçimi taşıyor (bkz. `toolLink`).
+              */}
+              {activeTarget.slug && (
+                <ButtonLink
+                  to={toolLink('/araclar/kadraj/mozaik', {
+                    hedef: activeTarget.slug,
+                  })}
+                  size="sm"
+                  variant="secondary"
+                >
+                  Mozaik planlayıcıya aktar
+                </ButtonLink>
+              )}
+              <ButtonLink to="/arsivim" size="sm" variant="secondary">
+                Arşivim
+              </ButtonLink>
+            </div>
           }
         />
 
@@ -201,19 +247,22 @@ export function SimulatorPage() {
                     setSensorHeight(p.sensorHeight);
                   }}
                 />
-                <Field label="Katalog hedefi" htmlFor="sim-target">
-                  <Select
-                    id="sim-target"
-                    value={targetSlug}
-                    onChange={(event) => setTargetSlug(event.target.value)}
-                  >
-                    {framedTargets.map((entry) => (
-                      <option key={entry.target.slug} value={entry.target.slug}>
-                        {entry.target.catalog} · {entry.target.name}
-                      </option>
-                    ))}
-                  </Select>
-                </Field>
+                <TargetPicker
+                  value={activeTarget.slug ?? ''}
+                  onChange={(target) => activeTarget.setSlug(target?.slug ?? null)}
+                  kind={targetKind}
+                  onKindChange={setTargetKind}
+                  selectClassName="h-10 text-body-sm"
+                />
+
+                {/* Hedef seçili ama boyutu yoksa kadraj çizilemiyor;
+                    sessizce boş bırakmak yerine sebebini söylüyoruz. */}
+                {activeTarget.target && !selected && (
+                  <p className="text-meta leading-snug text-warning">
+                    {activeTarget.target.catalog} için katalogda açısal boyut
+                    kayıtlı değil; kadraj önizlemesi çizilemiyor.
+                  </p>
+                )}
                 <Field label="Reducer / Barlow" htmlFor="sim-reducer">
                   <Select
                     id="sim-reducer"

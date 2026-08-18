@@ -2,14 +2,16 @@ import { useUpNavigation } from '@/app/useUpNavigation';
 import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { Container } from '@/components/ui/Container';
+import { SkyPreview } from '@/components/media/SkyPreview';
+import { framingLink } from './useActiveTarget';
 import { Badge } from '@/components/ui/Badge';
 import { Button, ButtonLink } from '@/components/ui/Button';
 import { SectionHeader } from '@/components/ui/SectionHeader';
-import { PhotoPlaceholder } from '@/components/media/PhotoPlaceholder';
 import { RemoteImage } from '@/components/media/RemoteImage';
 import { PlaceholderPage } from '@/components/PlaceholderPage';
 import { usePhotoCatalog } from '@/services/content/photos';
-import { getTargetBySlug, targetKindLabels } from './data';
+import { targetKindLabels } from './data';
+import { useTargetBySlug } from '@/services/content/targets';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
 import { FavoriteTargetButton } from './FavoriteTargetButton';
@@ -25,7 +27,15 @@ export function TargetDetailPage() {
   const { slug } = useParams<{ slug: string }>();
   /* Geri dönüş: geldiği yer varsa oraya, yoksa üst rotaya (FAZ 11). */
   const { geriDon } = useUpNavigation();
-  const target = slug ? getTargetBySlug(slug) : undefined;
+  /*
+   * HEDEF İKİ KAYNAKTAN çözülüyor: paketlenmiş liste ve veritabanı.
+   * Yalnızca paketlenmiş listeye bakan eski sürüm, gökyüzü kataloğunun
+   * (16.663 obje) ezici çoğunluğunu "bulunamadı" ekranına düşürüyordu —
+   * üstelik kartın kendisi tıklanabilir olduğu için hata kullanıcıya
+   * kendi yaptığı bir yanlış gibi görünüyordu. Gerekçe
+   * `useTargetBySlug` başlığında.
+   */
+  const { target, loading: targetLoading } = useTargetBySlug(slug);
   const [copiedCoord, setCopiedCoord] = useState<string | null>(null);
 
   const photos = usePhotoCatalog().items;
@@ -43,6 +53,16 @@ export function TargetDetailPage() {
   );
   const heroPhoto = targetPhotos.find((p) => p.image?.url);
   const fallbackImage = target ? deepSkyImages[target.slug] : undefined;
+
+  /* Sunucudan gelen kayıt beklenirken "bulunamadı" YAZILMIYOR: bir
+     saniyeliğine yanlış cevap vermek, hiç cevap vermemekten kötü. */
+  if (!target && targetLoading) {
+    return (
+      <Container className="py-10">
+        <p className="text-body-sm text-muted-foreground">Hedef yükleniyor…</p>
+      </Container>
+    );
+  }
 
   if (!target) {
     return (
@@ -93,11 +113,35 @@ export function TargetDetailPage() {
                 priority
               />
             ) : (
-              <PhotoPlaceholder
-                gradient={target.gradient}
-                alt={`${target.name} (${target.catalog})`}
+              /*
+                GERÇEK GÖKYÜZÜ KESİTİ, DÜZ GRADYAN DEĞİL.
+                
+                Burada `PhotoPlaceholder` vardı: renk geçişli boş bir
+                kutu. Kullanıcı fotoğrafı olmayan ve paketlenmiş tohum
+                görselinde de bulunmayan her hedef — yani kataloğun
+                16.663 kaydının neredeyse tamamı — bu kutuyu görüyordu.
+                
+                Oysa gökyüzü kataloğu kartları aynı hedefler için ÇOKTAN
+                gerçek DSS kesiti çiziyor (`SkyPreview`): görüntü
+                koordinattan türetiliyor, katalogda saklanan bir dosya
+                gerekmiyor. Yani kayıp bir veri değil, kullanılmayan bir
+                bileşendi — kart gerçek gökyüzünü gösterirken detay
+                sayfası boş bir gradyan gösteriyordu.
+                
+                `SkyPreview` koordinatı olmayan hedeflerde (Ay, Jüpiter,
+                meteor yağmuru) ve CDS erişilemediğinde kendi yıldız
+                alanı katmanına düşüyor; kırık görsel çıkmıyor.
+              */
+              <SkyPreview
+                seed={target.slug}
+                kind={target.kind}
+                raDeg={target.raDeg}
+                decDeg={target.decDeg}
+                arcmin={target.sizeArcmin}
+                width={960}
+                height={720}
+                alt={`${target.name} (${target.catalog}) — gökyüzü tarama görüntüsü`}
                 className="h-full w-full"
-                rounded="rounded-none"
               />
             )}
           </div>
@@ -121,6 +165,21 @@ export function TargetDetailPage() {
             {/* Favori / gözlem listesi (§14.1) — oturum yoksa hiç
                 çizilmiyor, gerekçe bileşenin başlığında. */}
             <FavoriteTargetButton slug={target.slug} />
+
+            {/*
+              HEDEF ZİNCİRİNİN İLK HALKASI.
+
+              Detay sayfasından kadraj aracına giden bir yol yoktu:
+              "bu hedef benim ekipmanıma sığar mı" sorusu, sitenin en sık
+              sorulan sorusu olmasına rağmen kullanıcıyı aracı bulup
+              hedefi orada baştan aramaya zorluyordu. Bağlantı hedefi
+              adreste taşıyor, yani araç doğrudan bu hedefle açılıyor.
+            */}
+            <div className="mt-3">
+              <ButtonLink to={framingLink(target.slug)} size="sm" variant="secondary">
+                Kadrajda gör →
+              </ButtonLink>
+            </div>
 
             <p className="mt-4 leading-relaxed text-muted-foreground">
               {target.description}

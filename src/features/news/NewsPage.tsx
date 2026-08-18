@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { entryEditPath } from '@/components/admin/adminEditPath';
 import { Container } from '@/components/ui/Container';
 import { FilterCell, filterControlClass } from '@/components/ui/FilterBar';
 import { Input, Select } from '@/components/ui/Input';
@@ -75,7 +76,7 @@ export function NewsPage() {
         imageUrl: item.image?.url,
         imageCredit: item.image?.credit,
         action: (
-          <AdminEditLink to={`/admin/icerik?kind=haber&slug=${item.slug}`} />
+          <AdminEditLink to={entryEditPath('haber', item.slug)} />
         ),
         footer: <p className="label">Kaynak · {item.source.name}</p>,
       })),

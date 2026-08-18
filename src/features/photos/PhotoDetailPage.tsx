@@ -1,7 +1,10 @@
 import type { ReactNode } from 'react';
+import { adminEditPath } from '@/components/admin/adminEditPath';
+import { AdminEditLink } from '@/components/admin/AdminEditLink';
 import { useUpNavigation } from '@/app/useUpNavigation';
 import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router';
+import { framingLink } from '@/features/targets/useActiveTarget';
 import { Container } from '@/components/ui/Container';
 import { Button } from '@/components/ui/Button';
 import { PhotoPlaceholder } from '@/components/media/PhotoPlaceholder';
@@ -148,6 +151,16 @@ function PhotoDetail({
               )}{' '}
               · {photoTypeLabels[photo.type]}
             </p>
+            {/* Fotoğraftan kadraja: "bunu ben de çekebilir miyim"
+                sorusunun cevabı bir tık uzakta olmalı. */}
+            {targetSlug && (
+              <Link
+                to={framingLink(targetSlug)}
+                className="mt-1 inline-block text-meta text-muted-foreground transition-colors hover:text-primary"
+              >
+                Bu hedefi kadrajımda gör →
+              </Link>
+            )}
             <h1 className="mt-1 type-page text-foreground">{photo.title}</h1>
             <p className="tabular mt-2 text-sm text-muted-foreground">
               <Link
@@ -176,6 +189,10 @@ function PhotoDetail({
               targetId={photo.slug}
               targetPath={`/fotograf/${photo.slug}`}
             />
+            {/* Fotoğraf detayında yönetim bağlantısı YOKTU: yanlış
+                yazılmış bir başlığı gören yönetici, kaydı panelde elle
+                aramak zorundaydı. */}
+            <AdminEditLink to={adminEditPath('photo', photo.slug)} />
           </div>
         </div>
 

@@ -406,7 +406,7 @@ export const siteMap: NavGroup[] = [
     title: 'Referans',
     items: [
       {
-        label: 'Ekipman Veritabanı',
+        label: 'Ekipman Kataloğu',
         to: '/ekipman',
         description: 'Teleskop, montür, kamera, filtre, reducer, barlow',
         keywords: ['teleskop', 'montür', 'kamera', 'filtre', 'ekipman'],
@@ -429,10 +429,33 @@ export const siteMap: NavGroup[] = [
     title: 'Hesap',
     items: [
       {
+        /* Dizin "Hesap" grubunda değil ama en yakın komşusu profil; üst
+           menüde topluluk tarafına ait. */
+        label: 'Astrofotoğrafçılar',
+        to: '/astrofotografcilar',
+        description: 'Şehre ve ekipmana göre gözlemci bul',
+        keywords: ['kullanıcı', 'astrofotoğrafçı', 'dizin', 'bul', 'takip'],
+      },
+      {
         label: 'Hesabım',
         to: '/hesap',
         description: 'Profil bilgileri ve hesap ayarları',
         keywords: ['profil', 'hesap', 'ayar', 'kullanıcı adı'],
+      },
+      {
+        /* Ekipman modülünün üç kişisel sekmesi buraya birleşti
+           (bkz. `MyEquipmentPanel`); aranabilir olması için katalogla
+           karışan anahtar kelimeler de burada. */
+        label: 'Ekipmanlarım',
+        to: '/hesap?sekme=ekipmanlarim',
+        description: 'Kurduğun ekipmanlar, görünürlük ve envanter',
+        keywords: ['setup', 'ekipman', 'teleskop', 'kamera', 'montür'],
+      },
+      {
+        label: 'Tercihler',
+        to: '/hesap?sekme=tercihler',
+        description: 'Görünürlük, bildirim ve görünüm ayarları',
+        keywords: ['ayar', 'tercih', 'bildirim', 'görünürlük'],
       },
       {
         label: 'Üye Paneli',

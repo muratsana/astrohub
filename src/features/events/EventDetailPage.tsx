@@ -1,4 +1,5 @@
 import { useUpNavigation } from '@/app/useUpNavigation';
+import { adminEditPath } from '@/components/admin/adminEditPath';
 import { useParams } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { Badge } from '@/components/ui/Badge';
@@ -110,7 +111,7 @@ export function EventDetailPage() {
                   <Badge tone="cold">Astrofoto odaklı</Badge>
                 )}
               </span>
-              <AdminEditLink to={`/admin/events?slug=${event.slug}`} />
+              <AdminEditLink to={adminEditPath('event', event.slug)} />
             </div>
 
             <h1 className="mt-3 type-page text-foreground">{event.title}</h1>

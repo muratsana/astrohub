@@ -109,6 +109,10 @@
       "destination": "/app.html"
     },
     {
+      "source": "/astrofotografcilar",
+      "destination": "/app.html"
+    },
+    {
       "source": "/aydin-astronomi-etkinlikleri",
       "destination": "/app.html"
     },
@@ -226,6 +230,10 @@
     },
     {
       "source": "/ekipman/karsilastir",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/ekipmanim/:id",
       "destination": "/app.html"
     },
     {

@@ -67,6 +67,34 @@ export interface RecordRow {
   readOnly?: boolean;
 }
 
+/**
+ * DÜZENLENEBİLİR ALAN TANIMI.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * PANELDE DÜZENLEME YOKTU
+ *
+ * Kayıt ekranı durumu değiştirebiliyor, kilitleyebiliyor, kaldırıp geri
+ * getirebiliyordu — ama tek bir ALANI düzenleyemiyordu. Yönetici yanlış
+ * yazılmış bir ilan başlığını ya da fotoğraf açıklamasını göremediği
+ * için düzeltemiyor, tek çare kaydı tümden kaldırmak oluyordu.
+ *
+ * Alanlar tür tanımlayıcısında duruyor, formda değil: form JENERİK ve
+ * yeni bir tür eklemek yeni bir ekran değil, birkaç satır tanım demek.
+ * Aksi hâlde beş tür için beş form yazılır, dördü zamanla eskirdi.
+ *
+ * BEYAZ LİSTE OLMASI ASIL GÜVENLİK DEĞİL — yaptırım RLS'te. Ama liste,
+ * panelin `status` ya da `user_id` gibi bir kolonu kazara yazmasını
+ * engelliyor: jenerik bir form ne verilirse onu gönderir.
+ */
+export interface EditField {
+  column: string;
+  label: string;
+  /** `text` tek satır, `multiline` çok satır, `number` sayısal. */
+  type: 'text' | 'multiline' | 'number';
+  hint?: string;
+  maxLength?: number;
+}
+
 interface KindSpec {
   label: string;
   table: string;
@@ -85,6 +113,17 @@ interface KindSpec {
   softDeletable: boolean;
   orderColumn: string;
   map: (row: Record<string, unknown>) => RecordRow;
+  /** Panelden düzenlenebilen alanlar; boşsa düzenleme açılmıyor. */
+  editFields: EditField[];
+  /**
+   * Kaydın SAHİBİNİ tutan kolon.
+   *
+   * Bildirim için gerekli: yöneticinin düzenlediği içeriğin sahibi bunu
+   * öğrenmeli. Sessiz düzenleme, kullanıcının kendi yazdığını sandığı
+   * bir metnin değişmiş olması demek — ve bunu fark ettiğinde güveni
+   * kaybolan taraf biz oluruz.
+   */
+  ownerColumn: string | null;
 }
 
 const s = (v: unknown): string | null =>
@@ -112,6 +151,23 @@ export const RECORD_KINDS: Record<RecordKind, KindSpec> = {
       path: s(r.slug) ? `/fotograf/${r.slug}` : null,
       deletedAt: s(r.deleted_at),
     }),
+    ownerColumn: 'user_id',
+    editFields: [
+      { column: 'title', label: 'Başlık', type: 'text', maxLength: 120 },
+      {
+        column: 'description',
+        label: 'Açıklama',
+        type: 'multiline',
+        maxLength: 2000,
+      },
+      {
+        column: 'target_label',
+        label: 'Hedef etiketi',
+        type: 'text',
+        hint: 'Katalog bağı ayrı; bu yalnızca gösterilen metin.',
+        maxLength: 120,
+      },
+    ],
   },
   listing: {
     label: 'İlanlar',
@@ -130,6 +186,18 @@ export const RECORD_KINDS: Record<RecordKind, KindSpec> = {
       path: s(r.slug) ? `/ilan/${r.slug}` : null,
       deletedAt: s(r.deleted_at),
     }),
+    ownerColumn: 'seller_id',
+    editFields: [
+      { column: 'title', label: 'Başlık', type: 'text', maxLength: 120 },
+      {
+        column: 'description',
+        label: 'Açıklama',
+        type: 'multiline',
+        maxLength: 4000,
+      },
+      { column: 'price', label: 'Fiyat', type: 'number' },
+      { column: 'city', label: 'Şehir', type: 'text', maxLength: 60 },
+    ],
   },
   thread: {
     label: 'Forum konuları',
@@ -149,6 +217,17 @@ export const RECORD_KINDS: Record<RecordKind, KindSpec> = {
       path: s(r.slug) ? `/forum/${r.slug}` : null,
       deletedAt: null,
     }),
+    ownerColumn: 'author_id',
+    editFields: [
+      { column: 'title', label: 'Başlık', type: 'text', maxLength: 160 },
+      {
+        column: 'body',
+        label: 'Gövde',
+        type: 'multiline',
+        hint: 'Moderasyon düzeltmesi; sahibine bildirim gider.',
+        maxLength: 8000,
+      },
+    ],
   },
   event: {
     label: 'Etkinlikler',
@@ -167,6 +246,24 @@ export const RECORD_KINDS: Record<RecordKind, KindSpec> = {
       path: s(r.slug) ? `/etkinlik/${r.slug}` : null,
       deletedAt: s(r.deleted_at),
     }),
+    ownerColumn: 'organizer_id',
+    editFields: [
+      { column: 'title', label: 'Başlık', type: 'text', maxLength: 160 },
+      {
+        column: 'description',
+        label: 'Açıklama',
+        type: 'multiline',
+        maxLength: 4000,
+      },
+      { column: 'city', label: 'Şehir', type: 'text', maxLength: 60 },
+      { column: 'venue', label: 'Mekân', type: 'text', maxLength: 160 },
+      {
+        column: 'rules',
+        label: 'Katılım kuralları',
+        type: 'multiline',
+        maxLength: 2000,
+      },
+    ],
   },
   site: {
     label: 'Gözlem noktaları',
@@ -187,6 +284,24 @@ export const RECORD_KINDS: Record<RecordKind, KindSpec> = {
       path: s(r.slug) ? `/saha/${r.slug}` : null,
       deletedAt: s(r.deleted_at),
     }),
+    ownerColumn: 'submitted_by',
+    editFields: [
+      { column: 'name', label: 'Ad', type: 'text', maxLength: 120 },
+      { column: 'region', label: 'Bölge', type: 'text', maxLength: 120 },
+      {
+        column: 'description',
+        label: 'Açıklama',
+        type: 'multiline',
+        maxLength: 4000,
+      },
+      {
+        column: 'warnings',
+        label: 'Uyarılar',
+        type: 'multiline',
+        hint: 'Yol, güvenlik, izin — ziyaretçinin önceden bilmesi gerekenler.',
+        maxLength: 2000,
+      },
+    ],
   },
 };
 
@@ -296,6 +411,173 @@ export async function setRecordStatus(
     .update({ [spec.statusColumn]: status })
     .eq('id', id);
   if (error) throw new Error(error.message);
+}
+
+/**
+ * Düzenlenebilir alanların MEVCUT değerleri.
+ *
+ * Liste sorgusu bunları çekmiyor — 200 satırlık bir listede her kaydın
+ * 4.000 karakterlik açıklamasını indirmek, kullanıcının açmayacağı veri
+ * için bant genişliği harcamak olurdu. Form açıldığında tek kayıt
+ * çekiliyor.
+ */
+export async function fetchRecordDetail(
+  kind: RecordKind,
+  id: string
+): Promise<Record<string, string>> {
+  const spec = RECORD_KINDS[kind];
+  if (spec.editFields.length === 0) {
+    throw new Error(`${spec.label} bu ekrandan düzenlenemiyor.`);
+  }
+
+  const supabase = await client();
+  const { data, error } = await supabase
+    .from(spec.table)
+    .select(spec.editFields.map((f) => f.column).join(', '))
+    .eq('id', id)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error('Kayıt bulunamadı.');
+
+  const row = data as unknown as Record<string, unknown>;
+  const values: Record<string, string> = {};
+  for (const field of spec.editFields) {
+    const raw = row[field.column];
+    /* `null` boş dizeye çevriliyor: form kutusuna "null" yazmak yerine
+       boş göstermek doğru, ve geri yazarken boş dize yeniden `null`
+       oluyor (bkz. `updateRecord`). */
+    values[field.column] = raw === null || raw === undefined ? '' : String(raw);
+  }
+  return values;
+}
+
+/**
+ * KAYIT ALANLARINI GÜNCELLER — iz bırakarak ve sahibine söyleyerek.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * ÜÇ İŞ, TEK ÇAĞRI
+ *
+ *   1. Yazma. Yalnızca tür tanımındaki alanlar; jenerik form ne
+ *      gönderirse göndersin, beyaz liste dışı kolon yazılmıyor.
+ *   2. DENETİM İZİ (`denetim_yaz`). Hangi alanın ne olduğu detayda
+ *      duruyor. İzsiz düzenleme, bir kullanıcının metninin sessizce
+ *      değişmesi demek — ve sonradan "ben böyle yazmamıştım" dendiğinde
+ *      elimizde cevap olmaz.
+ *   3. SAHİBİNE BİLDİRİM. Kararı veren siz oldunuz: yönetici düzenlemesi
+ *      görünür olmalı. Sahibi kendi içeriğinin değiştiğini bizden
+ *      öğrenmeli, tesadüfen değil.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * SIRA VE HATA DAVRANIŞI
+ *
+ * Yazma başarısızsa iz de bildirim de atılmıyor — olmayan bir
+ * değişikliğin izini bırakmak, günlüğü yalancı yapar.
+ *
+ * İz ya da bildirim başarısızsa YAZMA GERİ ALINMIYOR ve hata da
+ * yutulmuyor: çağıran tarafa "kaydedildi ama iz/bildirim atılamadı"
+ * diye dönüyor. Kaydı geri almak, başarılı bir düzenlemeyi yan bir
+ * sistemin arızası yüzünden iptal etmek olurdu.
+ */
+export async function updateRecord(
+  kind: RecordKind,
+  id: string,
+  values: Record<string, string>
+): Promise<{ warning: string | null }> {
+  const spec = RECORD_KINDS[kind];
+  if (spec.editFields.length === 0) {
+    throw new Error(`${spec.label} bu ekrandan düzenlenemiyor.`);
+  }
+
+  const payload: Record<string, string | number | null> = {};
+  for (const field of spec.editFields) {
+    if (!(field.column in values)) continue;
+    const raw = values[field.column].trim();
+
+    if (field.type === 'number') {
+      if (raw === '') {
+        payload[field.column] = null;
+        continue;
+      }
+      const sayi = Number(raw);
+      if (!Number.isFinite(sayi)) {
+        throw new Error(`${field.label} sayı olmalı.`);
+      }
+      payload[field.column] = sayi;
+      continue;
+    }
+
+    if (field.maxLength && raw.length > field.maxLength) {
+      throw new Error(
+        `${field.label} en fazla ${field.maxLength} karakter olabilir.`
+      );
+    }
+    /* Boş dize `null` olarak yazılıyor: "girilmemiş" ile "boş bırakılmış"
+       arasındaki farkı korumak, sayfaların "—" gösterebilmesini
+       sağlıyor. */
+    payload[field.column] = raw === '' ? null : raw;
+  }
+
+  if (Object.keys(payload).length === 0) {
+    throw new Error('Değiştirilecek alan yok.');
+  }
+
+  const supabase = await client();
+
+  /* Sahibi ÖNCE okunuyor: güncellemeden sonra okusaydık ve sahip kolonu
+     bir tetikleyiciyle değişseydi yanlış kişiye bildirim giderdi. */
+  let ownerId: string | null = null;
+  let sahipHatasi: string | null = null;
+  if (spec.ownerColumn) {
+    const { data: sahip, error: sahipError } = await supabase
+      .from(spec.table)
+      .select(spec.ownerColumn)
+      .eq('id', id)
+      .maybeSingle();
+    /*
+     * Hata YUTULMUYOR ama yazmayı da DURDURMUYOR: sahibi okuyamamak
+     * düzenlemenin kendisini geçersiz kılmaz, yalnızca bildirimi
+     * engeller. Aşağıdaki uyarı listesine giriyor, böylece yönetici
+     * sahibinin haberdar edilmediğini biliyor.
+     */
+    if (sahipError) sahipHatasi = sahipError.message;
+    const deger = (sahip as Record<string, unknown> | null)?.[spec.ownerColumn];
+    ownerId = typeof deger === 'string' ? deger : null;
+  }
+
+  const { data, error } = await supabase
+    .from(spec.table)
+    .update(payload)
+    .eq('id', id)
+    .select('id');
+  if (error) throw new Error(error.message);
+  if (!data || data.length === 0) {
+    throw new Error('Kayıt güncellenemedi — bulunamadı ya da yetki yok.');
+  }
+
+  const uyarilar: string[] = [];
+  if (sahipHatasi) uyarilar.push(`içerik sahibi okunamadı (${sahipHatasi})`);
+
+  const { error: izError } = await supabase.rpc('denetim_yaz', {
+    p_action: 'content.edit',
+    p_target_type: kind,
+    p_target_id: id,
+    p_detail: { alanlar: Object.keys(payload) },
+  });
+  if (izError) uyarilar.push('denetim kaydı yazılamadı');
+
+  if (ownerId) {
+    const { error: bildirimError } = await supabase.rpc('notify_user', {
+      recipient: ownerId,
+      title: `${spec.label} içeriğiniz düzenlendi`,
+      body: `Yönetim şu alanları güncelledi: ${Object.keys(payload).join(', ')}.`,
+      url: null,
+    });
+    if (bildirimError) uyarilar.push('sahibine bildirim gönderilemedi');
+  }
+
+  return {
+    warning: uyarilar.length > 0 ? uyarilar.join(' · ') : null,
+  };
 }
 
 /** Forum konusunu kilitler/açar — foruma özgü tek eylem. */

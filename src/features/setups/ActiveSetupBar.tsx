@@ -50,10 +50,10 @@ export function ActiveSetupBar({ className }: { className?: string }) {
         className={`text-meta leading-relaxed text-muted-foreground ${className ?? ''}`}
       >
         Değerleri elle girebilir ya da{' '}
-        <Link to="/ekipman" className="text-primary hover:underline">
-          bir setup kurup kaydedebilirsiniz
+        <Link to="/hesap?sekme=ekipmanlarim" className="text-primary hover:underline">
+          bir ekipman kurup kaydedebilirsiniz
         </Link>{' '}
-        — kaydedilen setup bütün araçlarda hazır gelir.
+        — kaydedilen ekipman bütün araçlarda hazır gelir.
       </p>
     );
   }
@@ -63,13 +63,13 @@ export function ActiveSetupBar({ className }: { className?: string }) {
       className={`flex flex-wrap items-center gap-x-4 gap-y-2 border-y border-border py-2.5 ${className ?? ''}`}
     >
       <label className="flex items-center gap-2">
-        <span className="label shrink-0 text-faint">Aktif setup</span>
+        <span className="label shrink-0 text-faint">Aktif ekipman</span>
         <Select
           value={setup?.id ?? ''}
           onChange={(event) => setActiveId(event.target.value || null)}
           width="auto"
           className="h-8 min-w-[12rem] text-meta"
-          aria-label="Araçlarda kullanılacak setup"
+          aria-label="Araçlarda kullanılacak ekipman"
         >
           <option value="">Seçilmedi — elle gir</option>
           {options.map((option) => (
@@ -97,10 +97,10 @@ export function ActiveSetupBar({ className }: { className?: string }) {
       {syncing && <span className="text-meta text-faint">eşitleniyor…</span>}
 
       <Link
-        to="/ekipman?sekme=setuplarim"
+        to="/hesap?sekme=ekipmanlarim"
         className="ml-auto shrink-0 text-meta text-muted-foreground transition-colors hover:text-primary"
       >
-        Setup&apos;ları yönet →
+        Ekipmanlarımı yönet →
       </Link>
     </div>
   );

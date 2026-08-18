@@ -87,6 +87,11 @@ export const staticEntries: SitemapEntry[] = [
   { path: '/sss', priority: 0.5, changefreq: 'monthly' },
   { path: '/ilanlar', priority: 0.7, changefreq: 'daily' },
   { path: '/topluluklar', priority: 0.6, changefreq: 'monthly' },
+  /* Kullanıcı dizini: kulüp dizini gibi indekslenebilir — "Ankara
+     astrofotoğrafçı" araması buraya düşmeli. Kartlar oturum
+     gerektirmiyor, yalnızca kullanıcının kendi paylaştığı alanları
+     gösteriyor. */
+  { path: '/astrofotografcilar', priority: 0.6, changefreq: 'weekly' },
   { path: '/tesisler', priority: 0.6, changefreq: 'monthly' },
   { path: '/hakkinda', priority: 0.4, changefreq: 'yearly' },
   { path: '/iletisim', priority: 0.3, changefreq: 'yearly' },

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
+import { FollowLists } from '@/features/profile/ProfileShowcase';
 import { useAuth } from '@/features/auth/AuthContext';
 import {
   blockUser,
@@ -95,10 +96,18 @@ export function UserActions({
         SAYAÇLAR AYNI KANCADAN, AYRI BİR BİLEŞENDEN DEĞİL. Başlığa koymak
         için ikinci bir `useFollow` çağırmak, aynı sayfada aynı iki sorguyu
         (sayaç RPC'si + takip durumu) iki kez çalıştırmak olurdu.
+
+        SAYAÇLAR ARTIK TIKLANABİLİR. Düz metin olduklarında kullanıcı "12
+        takipçi" görüyor ve kimler olduğunu öğrenemiyordu — sayı bir
+        çıkmazdı. Liste yalnızca açıldığında çekiliyor.
       */}
-      <p className="mt-2 text-meta text-muted-foreground tabular-nums">
-        {follow.followers} takipçi · {follow.followingCount} takip
-      </p>
+      <div className="mt-2">
+        <FollowLists
+          userId={targetUserId}
+          followers={follow.followers}
+          following={follow.followingCount}
+        />
+      </div>
 
       {blocked && (
         <p className="mt-1 text-meta leading-relaxed text-muted-foreground">

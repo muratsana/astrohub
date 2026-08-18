@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { isSupabaseConfigured } from '@/services/supabase/client';
+import { getSupabase, isSupabaseConfigured } from '@/services/supabase/client';
 import {
+  getTargetBySlug,
   targets as targetSeed,
   type CelestialTarget,
 } from '@/features/targets/data';
@@ -258,6 +259,63 @@ export function useCatalogSearch(
       isSupabaseConfigured &&
       q.trim().length >= 2 &&
       (query.isFetching || gecikmis !== q),
+  };
+}
+
+/**
+ * TEK HEDEF — önce tohum, sonra veritabanı.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * KATALOĞUN ON ALTIDA ON BEŞİ AÇILMIYORDU
+ *
+ * `/hedef/:slug` sayfası hedefi YALNIZCA paketlenmiş listeden çözüyordu
+ * (`getTargetBySlug`, 230 kayıt). Gökyüzü kataloğu ise 16.663 objenin
+ * her birini `/hedef/<slug>` adresine bağlıyor.
+ *
+ * Yani katalogda gezen kullanıcı bir karta tıkladığında, kaydın
+ * paketlenmiş listeye girecek kadar ünlü olup olmamasına göre ya detay
+ * sayfasını ya da "Bu hedef katalogda yok" ekranını görüyordu. İkinci
+ * ihtimal ezici çoğunluktu ve kartın kendisi tıklanabilir olduğu için
+ * hata kullanıcıya kendi yaptığı bir yanlış gibi görünüyordu.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * NEDEN İKİ KAYNAK
+ *
+ * Tohum liste ANINDA cevap veriyor: en bilinen hedeflerde ağ turu yok ve
+ * prerender sırasında da çalışıyor (statik HTML'de M 31 sayfası dolu
+ * çıkıyor). Veritabanı gerisini kapsıyor. Sıra bu yüzden tohum → sunucu.
+ */
+export function useTargetBySlug(slug: string | undefined): {
+  target: CelestialTarget | undefined;
+  loading: boolean;
+} {
+  const tohum = slug ? getTargetBySlug(slug) : undefined;
+
+  const query = useQuery({
+    queryKey: ['hedef-slug', slug],
+    /* Tohumda varsa sorgu HİÇ açılmıyor: aynı kaydı ikinci kez çekmek,
+       gösterilen sayfayı değiştirmeyen bir istek olurdu. */
+    enabled: isSupabaseConfigured && !!slug && !tohum,
+    staleTime: 10 * 60 * 1000,
+    retry: 1,
+    queryFn: async () => {
+      const promise = getSupabase();
+      if (!promise) return null;
+      const client = await promise;
+      const { data, error } = await client
+        .from('celestial_objects')
+        .select(SELECT)
+        .eq('slug', slug as string)
+        .maybeSingle();
+      if (error) throw new Error(error.message);
+      return data ? mapTargetRow(data as unknown as TargetRow) : null;
+    },
+  });
+
+  return {
+    target: tohum ?? query.data ?? undefined,
+    /* Tohumda bulunduysa yükleme YOK: sayfa hemen çizilmeli. */
+    loading: !tohum && query.isLoading,
   };
 }
 

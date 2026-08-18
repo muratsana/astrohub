@@ -169,6 +169,17 @@ export const appRoutes = [
         ),
       },
       {
+        /* Dizin, profil rotasının ÜSTÜNDE: ikisi de kök seviyede tek
+           parçalı adresler ve okuyanın sırayı görmesi kolay olsun. */
+        path: 'astrofotografcilar',
+        element: route(
+          named(
+            () => import('@/features/profile/PhotographersPage'),
+            'PhotographersPage'
+          )
+        ),
+      },
+      {
         path: 'profil/:username',
         element: route(
           named(() => import('@/features/profile/ProfilePage'), 'ProfilePage')
@@ -677,13 +688,24 @@ export const appRoutes = [
         ),
       },
       {
-        path: 'setup/:id',
+        /*
+         * "Setup" adı kullanıcı arayüzünden kalktı (bkz.
+         * `MyEquipmentPanel`); adres de hizalandı. Eski yol kalıcı
+         * yönlendirmeyle duruyor: paylaşılmış `/setup/<uuid>`
+         * bağlantıları dışarıda ve onları kırmak, kullanıcının
+         * paylaştığı ekipmanı yok etmek olurdu.
+         */
+        path: 'ekipmanim/:id',
         element: route(
           named(
             () => import('@/features/setups/SetupDetailPage'),
             'SetupDetailPage'
           )
         ),
+      },
+      {
+        path: 'setup/:id',
+        element: <RedirectParam to="/ekipmanim/:id" param="id" />,
       },
 
       /* ═════════════ HESAP VE YÖNETİM ═════════════ */
