@@ -83,14 +83,14 @@ Canlı pano: `docs/patch-2026-08-18/ilerleme.html`
 | D12 | P2 | D | Paylaşım Kiti | Tek ZIP paylaşım paketi | TODO |  |  | Bekliyor |
 | D13 | P2 | D | Paylaşım Kiti | Opsiyonel watermark/@username | TODO |  |  | Bekliyor |
 | D14 | P1 | D | Gizlilik | Paylaşım kiti konum gizliliğine uymalı | TODO |  |  | Bekliyor |
-| E01 | P2 | E | Hesabım | E-posta doğrulama kutusunu sadeleştir | TODO |  |  | Bekliyor |
+| E01 | P2 | E | Hesabım | E-posta doğrulama kutusunu sadeleştir | TESTED | 869f024 | typecheck+lint+test:all yeşil; kutu kaldırıldı, inline rozet | Bekliyor |
 | E02 | P1 | E | Navbar | Sağ üstte avatar + kullanıcı adı | VERIFIED | 2fcadac | vitest AccountMenu.test.tsx | 18.08.2026 · kullanıcı canlıda kontrol etti |
 | E03 | P0 | E | Navbar | Navbar kullanıcı menüsünde 'Çıkış yap' | VERIFIED | 2fcadac | vitest AccountMenu.test.tsx | 18.08.2026 · kullanıcı canlıda kontrol etti |
 | E04 | P0 | E | Navbar | Logout gerçek oturumu temizlemeli | VERIFIED | 2fcadac | vitest: cikis gercekten oturumu kapatiyor | 18.08.2026 · kullanıcı canlıda kontrol etti |
 | E05 | P1 | E | Public Profil | LinkedIn benzeri public profil üst alanı | TESTED | 65be33d | vitest ProfilePage.test.tsx; npm run test:all | Bekliyor |
-| E06 | P1 | E | Public Profil | Profil içerik bölümleri accordion/collapsible | TODO |  |  | Bekliyor |
-| E07 | P2 | E | Public Profil | Bölüm deep-link / hash | TODO |  |  | Bekliyor |
-| E08 | P1 | E | Public Profil | Public profil responsive | TODO |  |  | Bekliyor |
+| E06 | P1 | E | Public Profil | Profil içerik bölümleri accordion/collapsible | TESTED | 869f024 | vitest Panel.test.tsx: collapsible <details>/<summary>, defaultOpen | Bekliyor |
+| E07 | P2 | E | Public Profil | Bölüm deep-link / hash | TESTED | 869f024 | vitest ProfilePage.test.tsx: hash ile bölüme scrollIntoView | Bekliyor |
+| E08 | P1 | E | Public Profil | Public profil responsive | TESTED | 869f024 | check:a11y 5 rota; preview profil/hesap 320px docW 320 taşmasız; collapsible mobilde tek sütun | Bekliyor |
 | F01 | P1 | F | Ekipmanlarım | Kayıtlı setup'ı sonradan Düzenle | TODO |  |  | Bekliyor |
 | F02 | P1 | F | Ekipmanlarım | Birden fazla filtre desteği | TODO |  |  | Bekliyor |
 | F03 | P1 | F | Katalog | Ekipman mükerrerlerini canonical merge ile temizle | TODO |  |  | Bekliyor |
