@@ -55,11 +55,11 @@ Canlı pano: `docs/patch-2026-08-18/ilerleme.html`
 | B06 | P2 | B | Fotoğraf Detayı | Kaydet semantiğini netleştir | TESTED | 1d108cd | vitest SaveChip.test.tsx: Koleksiyona kaydet semantiği | Bekliyor |
 | B07 | P2 | B | Plate Solve | Plate solve sonrası takımyıldız otomatik türet | TODO |  |  | Bekliyor |
 | C01 | P1 | C | Fotoğraf Yükleme | Yeni filtre satırı son satırın tekrar eden değerlerini kopyalamalı | TESTED | f7ae111 | vitest integration.test.ts: yeniPozSatiri (3 senaryo) | Bekliyor |
-| C02 | P1 | C | Fotoğraf Yükleme | Tek tarih / tarih aralığı checkbox | TODO |  |  | Bekliyor |
-| C03 | P1 | C | Fotoğraf Yükleme | Bir fotoğrafa birden fazla çekim sezonu | TODO |  |  | Bekliyor |
-| C04 | P1 | C | Fotoğraf Yükleme | Her sezon tek tarih veya tarih aralığı taşıyabilmeli | TODO |  |  | Bekliyor |
-| C05 | P1 | C | Fotoğraf Metadata | Exposure satırlarını sezonla ilişkilendir | TODO |  |  | Bekliyor |
-| C06 | P2 | C | Fotoğraf Künyesi | Çok sezonlu tarihleri okunabilir göster | TODO |  |  | Bekliyor |
+| C02 | P1 | C | Fotoğraf Yükleme | Tek tarih / tarih aralığı checkbox | TESTED | a50b6b9 | vitest captureSession/upload/photos; typecheck+build+budgets yeşil | Bekliyor |
+| C03 | P1 | C | Fotoğraf Yükleme | Bir fotoğrafa birden fazla çekim sezonu | TESTED | a50b6b9 | vitest captureSession/upload/photos; typecheck+build+budgets yeşil | Bekliyor |
+| C04 | P1 | C | Fotoğraf Yükleme | Her sezon tek tarih veya tarih aralığı taşıyabilmeli | TESTED | a50b6b9 | vitest captureSession/upload/photos; typecheck+build+budgets yeşil | Bekliyor |
+| C05 | P1 | C | Fotoğraf Metadata | Exposure satırlarını sezonla ilişkilendir | TESTED | a50b6b9 | vitest captureSession/upload/photos; typecheck+build+budgets yeşil | Bekliyor |
+| C06 | P2 | C | Fotoğraf Künyesi | Çok sezonlu tarihleri okunabilir göster | TESTED | a50b6b9 | vitest captureSession/upload/photos; typecheck+build+budgets yeşil | Bekliyor |
 | C07 | P1 | C | Fotoğraf Yükleme | Thumbnail/Kart kadraj editörü upload akışında olmalı | TODO |  |  | Bekliyor |
 | C08 | P1 | C | Fotoğraf Yükleme | Thumbnail editöründe ana sayfa ve kart önizlemeleri | TODO |  |  | Bekliyor |
 | C09 | P1 | C | Fotoğraf Detayı / Owner | Thumbnail kadrajı yüklemeden sonra da düzenlenebilmeli | TODO |  |  | Bekliyor |
