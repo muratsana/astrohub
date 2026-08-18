@@ -388,21 +388,39 @@ export function AccountPage() {
                   Gerçek ad soyad public profilde görünsün.
                 </label>
 
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <Field
-                    label="E-posta"
-                    htmlFor="p-email"
-                    hint="Zorunlu alan. Doğrulanmadan hesap aktif sayılmaz."
-                  >
-                    <Input id="p-email" value={user?.email ?? ''} readOnly />
-                  </Field>
-                  <div className="rounded-card border border-border bg-surface-2 px-3 py-2">
-                    <span className="label">E-posta durumu</span>
-                    <p className={emailVerified ? 'text-success' : 'text-warning'}>
+                {/*
+                 * E-POSTA DURUMU ARTIK ALANIN İÇİNDE (E01).
+                 *
+                 * Önce ayrı bir çerçeveli "E-posta durumu" kutusu vardı ve
+                 * aynı bilgi üç yerde birden duruyordu: bu kutu, sağdaki
+                 * "Hesap" özet listesi ve sitenin üstündeki doğrulama şeridi.
+                 * Kutu kaldırıldı; durum, ait olduğu yerde — e-posta
+                 * kutucuğunun yanında kompakt bir rozet olarak — kaldı.
+                 */}
+                <Field
+                  label="E-posta"
+                  htmlFor="p-email"
+                  hint="Zorunlu alan. Doğrulanmadan hesap aktif sayılmaz."
+                >
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id="p-email"
+                      value={user?.email ?? ''}
+                      readOnly
+                      className="flex-1"
+                    />
+                    <span
+                      className={
+                        'shrink-0 rounded-full px-2.5 py-1 text-meta ' +
+                        (emailVerified
+                          ? 'bg-success/12 text-success'
+                          : 'bg-warning/12 text-warning')
+                      }
+                    >
                       {emailVerified ? 'Doğrulandı' : 'Doğrulanmadı'}
-                    </p>
+                    </span>
                   </div>
-                </div>
+                </Field>
 
                 <Field
                   label="Telefon numarası"

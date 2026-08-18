@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthProvider } from '@/features/auth/AuthContext';
@@ -157,5 +157,37 @@ describe('ProfilePage', () => {
       'src',
       'https://cdn.example/u1/avatar.jpg'
     );
+  });
+
+  /*
+   * E07 — DEEP-LINK. /profil/ad#fotograflar açıldığında sayfa o bölüme
+   * kaydırmalı. jsdom yerleşimi ölçmediği için `scrollIntoView` yok;
+   * tanımlayıp hangi id'ye çağrıldığını yakalıyoruz. Ölçülen şey:
+   * effect hash'i okuyup doğru çapayı buluyor mu.
+   */
+  it('hash ile ilgili bölüme kaydırır (E07)', async () => {
+    profileState.profile = {
+      id: 'u1',
+      username: 'murat',
+      displayName: 'Murat Sana',
+      bio: null,
+      city: null,
+      websiteUrl: null,
+      avatarPath: null,
+      termsAcceptedAt: null,
+    };
+
+    const kaydirilan: string[] = [];
+    Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
+      configurable: true,
+      writable: true,
+      value: function (this: HTMLElement) {
+        kaydirilan.push(this.id);
+      },
+    });
+
+    renderProfile('/profil/murat#fotograflar');
+
+    await waitFor(() => expect(kaydirilan).toContain('fotograflar'));
   });
 });

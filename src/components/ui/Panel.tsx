@@ -14,6 +14,9 @@ export function Panel({
   children,
   className,
   bodyClassName,
+  id,
+  collapsible = false,
+  defaultOpen = true,
 }: {
   title?: string;
   /**
@@ -35,14 +38,55 @@ export function Panel({
   children: ReactNode;
   className?: string;
   bodyClassName?: string;
+  /**
+   * Bölüm çapası. Verilirse `<section>`/`<details>` bu id'yi taşır ve
+   * `scroll-mt-20` ile sabit üst çubuğun altında kalmadan hedeflenebilir
+   * — deep-link (URL hash) için (E07).
+   */
+  id?: string;
+  /**
+   * Native `<details>` ile aç/kapa. Header bir `<summary>` olur; JS'siz,
+   * klavye ve ekran okuyucu uyumlu çalışır (FaqPage'in kabul ettiği yol).
+   */
+  collapsible?: boolean;
+  /** Collapsible panelin ilk hâli. Varsayılan açık — içerik gizlenmesin. */
+  defaultOpen?: boolean;
 }) {
+  const cerceve = cn(
+    'rounded-card border border-border bg-surface-1',
+    id && 'scroll-mt-20',
+    className
+  );
+
+  if (collapsible && (title || status)) {
+    return (
+      <details id={id} open={defaultOpen} className={cn('group', cerceve)}>
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 border-b border-border px-4 py-2.5 marker:content-none [&::-webkit-details-marker]:hidden">
+          <span className="flex items-center gap-2">
+            {/* Ok, açık/kapalı durumla dönüyor; salt görsel. */}
+            <span
+              aria-hidden
+              className="text-meta text-muted-foreground transition-transform group-open:rotate-90"
+            >
+              ▸
+            </span>
+            {title && (
+              <Heading className="label text-foreground">{title}</Heading>
+            )}
+          </span>
+          {status && (
+            <span className="tabular text-meta text-muted-foreground">
+              {status}
+            </span>
+          )}
+        </summary>
+        <div className={cn('px-4 py-4', bodyClassName)}>{children}</div>
+      </details>
+    );
+  }
+
   return (
-    <section
-      className={cn(
-        'rounded-card border border-border bg-surface-1',
-        className
-      )}
-    >
+    <section id={id} className={cerceve}>
       {(title || status) && (
         <header className="flex items-center justify-between gap-3 border-b border-border px-4 py-2.5">
           {title && <Heading className="label text-foreground">{title}</Heading>}

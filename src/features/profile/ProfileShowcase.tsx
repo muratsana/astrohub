@@ -63,7 +63,7 @@ function EquipmentList({ items }: { items: ShowcaseSetup[] }) {
   const catalog = useEquipmentCatalog();
 
   return (
-    <Panel title="Ekipmanlar" status={String(items.length)}>
+    <Panel title="Ekipmanlar" status={String(items.length)} collapsible id="ekipmanlar">
       <ul className="grid gap-2 sm:grid-cols-2">
         {items.map((setup) => {
           const parts = (Object.entries(setup.slots) as [SlotId, string][])
@@ -117,7 +117,7 @@ function ListingsSection({ userId }: { userId: string | undefined }) {
   if (loading || items.length === 0) return null;
 
   return (
-    <Panel title="İlanlar" status={String(items.length)}>
+    <Panel title="İlanlar" status={String(items.length)} collapsible id="ilanlar">
       <ul>
         {items.map((listing) => (
           <li
@@ -165,7 +165,7 @@ function EntriesSection({ userId }: { userId: string | undefined }) {
   if (loading || items.length === 0) return null;
 
   return (
-    <Panel title="Yazılar" status={String(items.length)}>
+    <Panel title="Yazılar" status={String(items.length)} collapsible id="yazilar">
       <ul>
         {items.map((entry) => (
           <li key={entry.slug} className="border-b border-border last:border-0">
@@ -202,7 +202,7 @@ function ThreadsSection({
   if (loading || items.length === 0) return null;
 
   return (
-    <Panel title="Forum konuları" status={String(items.length)}>
+    <Panel title="Forum konuları" status={String(items.length)} collapsible id="forum">
       <ul>
         {items.map((thread) => (
           <li key={thread.slug} className="border-b border-border last:border-0">

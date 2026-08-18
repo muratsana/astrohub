@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import { useParams } from 'react-router';
+import { useEffect, useMemo } from 'react';
+import { useLocation, useParams } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { Breadcrumb, PageHeader } from '@/components/ui/PageHeader';
 import { Readout } from '@/components/ui/Readout';
@@ -67,6 +67,29 @@ export function ProfilePage() {
    */
   const ownerId = profile?.id ?? userPhotos.find((p) => p.ownerId)?.ownerId;
   const follow = useFollow(ownerId);
+
+  /*
+   * DEEP-LINK: /profil/ad#ekipmanlar bölüme kaydırır (E07).
+   *
+   * Bölümler veri geldikçe çiziliyor ve boşsa hiç çizilmiyor; bu yüzden
+   * effect yalnızca mount'ta değil, içerik değiştikçe de deniyor. Hedef
+   * bir `<details>` ise önce açılıyor — kapalı bir bölüme kaydırmak
+   * kullanıcıyı boş bir başlığa bırakırdı. Küçük gecikme, aynı karede
+   * henüz yerleşmemiş düğümü beklemek için. Hook'lar erken return'lerin
+   * ÜSTÜNDE: sıra her render'da aynı kalmalı.
+   */
+  const { hash } = useLocation();
+  useEffect(() => {
+    const hedefId = hash.replace(/^#/, '');
+    if (!hedefId) return;
+    const zaman = setTimeout(() => {
+      const el = document.getElementById(decodeURIComponent(hedefId));
+      if (!el) return;
+      if (el instanceof HTMLDetailsElement) el.open = true;
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 120);
+    return () => clearTimeout(zaman);
+  }, [hash, profile, userPhotos.length]);
 
   if (!username) {
     return (
@@ -373,7 +396,9 @@ export function ProfilePage() {
           />
         </div>
 
-        <h2 className="label mb-2">Fotoğraflar</h2>
+        <h2 id="fotograflar" className="label mb-2 scroll-mt-20">
+          Fotoğraflar
+        </h2>
         {userPhotos.length > 0 ? (
           <CardGrid view="grid" className="mb-6">
             {userPhotos.map((photo) => (
