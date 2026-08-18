@@ -123,7 +123,7 @@ Canlı pano: `docs/patch-2026-08-18/ilerleme.html`
 | X04 | P2 | Extra | İndirme | İleride owner download izni politikası | TODO |  |  | Bekliyor |
 | X05 | P2 | Extra | Medya Temizliği | Social/thumbnail derivative TTL ve GC | TODO |  |  | Bekliyor |
 | X06 | P2 | Extra | Analitik | Export/download kullanım ölçümü | TODO |  |  | Bekliyor |
-| X07 | P1 | Extra | Uzun Formlar | Draft/autosave standardı | IN_PROGRESS |  | src/lib/formDraft.ts + formDraft.test.ts | Bekliyor |
+| X07 | P1 | Extra | Uzun Formlar | Draft/autosave standardı | TESTED | fb44905 | vitest useFormDraft.test: mount/autosave/clear; RegisterPage hook'a geçti | Bekliyor |
 | E09 | P1 | E | Navbar | Menüden 'Public profilim' girişini kaldır | TESTED | 07af5a2 | vitest: public profil girisi menude yok | Bekliyor |
 | E10 | P1 | E | Public Profil | Kapak görseli (banner) yükleme | TESTED | e3f2c48 | vitest domain/profile; npm run test:all | Bekliyor |
 | E11 | P1 | E | Public Profil | Kapak ve avatar için ortak kadraj editörü | TESTED | 65be33d | vitest kadraj.test.ts: kadraj boslugu (3 senaryo) | Bekliyor |
