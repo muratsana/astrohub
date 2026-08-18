@@ -79,15 +79,15 @@ Durumlar: `TODO` → `IN_PROGRESS` → `CODED` → `TESTED` → `READY_FOR_USER`
 | H01 | P0 | H | QA | Gerçek onboarding E2E | TODO |  |  | Bekliyor |
 | H02 | P0 | H | QA | Rol/persona matrisi | TODO |  |  | Bekliyor |
 | H03 | P1 | H | QA | Happy/error/recovery/refresh/cancel/retry matrisi | TODO |  |  | Bekliyor |
-| H04 | P0 | H | QA | Her bug regresyon testine dönüşmeli | TODO |  |  | Bekliyor |
+| H04 | P0 | H | QA | Her bug regresyon testine dönüşmeli | IN_PROGRESS |  |  | Bekliyor |
 | H05 | P0 | H | İlerleme | IMPLEMENTATION_PROGRESS.md canlı takip kaynağı | CODED | c9e50e5 | node scripts/patch-tracker.mjs --list P0 | Bekliyor |
 | H06 | P0 | H | İlerleme | PROGRESS_TRACKER.csv canlı agent tablosu | CODED | c9e50e5 | node scripts/patch-tracker.mjs --list P0 | Bekliyor |
 | H07 | P1 | H | İlerleme | Zorunlu status akışı | CODED | c9e50e5 | scripts/patch-tracker.mjs DURUMLAR | Bekliyor |
 | H08 | P1 | H | İlerleme | Commit/test evidence zorunlu | TODO |  |  | Bekliyor |
 | H09 | P0 | H | Git | Tüm uygulama doğrudan main | IN_PROGRESS | c9e50e5 |  | Bekliyor |
-| H10 | P0 | H | Git | Gereksiz branch temizliği | IN_PROGRESS |  |  | Bekliyor |
+| H10 | P0 | H | Git | Gereksiz branch temizliği | BLOCKED | 9ede6f2 | git diff main origin/codex -- <yollar>: yalnizca is akisi tetikleyicisi farki | Bekliyor |
 | H11 | P1 | H | Git | Stale PR temizliği | TODO |  |  | Bekliyor |
-| H12 | P0 | H | Git | Main history güvenliği | TODO |  |  | Bekliyor |
+| H12 | P0 | H | Git | Main history güvenliği | TESTED | 9ede6f2 | git log --oneline: 24d4074..d192795 dogrusal | Bekliyor |
 | H13 | P1 | H | Kod Temizliği | Dead code/debug/audit geçici dosya temizliği | TODO |  |  | Bekliyor |
 | H14 | P0 | H | Final QA | Tam canlı ürün auditi yeniden koş | TODO |  |  | Bekliyor |
 | H15 | P0 | H | Final QA | Kullanıcı doğrulama kapısı | TODO |  |  | Bekliyor |
