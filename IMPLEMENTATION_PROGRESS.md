@@ -42,8 +42,8 @@ Canlı pano: `docs/patch-2026-08-18/ilerleme.html`
 | A07 | P1 | A | İlanlar | İlan başına maksimum 5 fotoğraf yükleme | TODO |  |  | Bekliyor |
 | A08 | P1 | A | İlanlar | İlan fotoğraflarında merkezi Astrohub optimizasyon pipeline'ını kullan | TODO |  |  | Bekliyor |
 | A09 | P1 | A | İlanlar | İlan foto yönetimi: sil/değiştir/sırala/progress | TODO |  |  | Bekliyor |
-| A10 | P1 | A | Fotoğraf Detayı | Benzer Fotoğraflar gerçek thumbnail göstermeli | TODO |  |  | Bekliyor |
-| A11 | P1 | A | Fotoğraf Detayı | Teknik Karşılaştırma gerçek thumbnail göstermeli | TODO |  |  | Bekliyor |
+| A10 | P1 | A | Fotoğraf Detayı | Benzer Fotoğraflar gerçek thumbnail göstermeli | TESTED | 6a54608 | RemoteImage thumbUrl; PhotoComparison.test aynı mekanizma; build yeşil | Bekliyor |
+| A11 | P1 | A | Fotoğraf Detayı | Teknik Karşılaştırma gerçek thumbnail göstermeli | TESTED | 6a54608 | vitest PhotoComparison.test.tsx: A/B gerçek thumbnail src | Bekliyor |
 | A12 | P0 | A | Saha | observing_sites canlı HTTP 400 hatası giderilmeli | VERIFIED | d1802f9 | REST 200 / 15 kayit; vitest sites.select.test.ts | 18.08.2026 · kullanıcı canlıda kontrol etti |
 | A13 | P1 | A | Ana Sayfa / Hava | Meteoblue 503 için graceful fallback | TESTED | 9f8974e | vitest meteoblue.test.ts: 503 → null zarif düşüş | Bekliyor |
 | A14 | P1 | A | Etkinlikler | Mobil etkinlik görünümünde yatay taşma kaldırılmalı | TESTED | 9f8974e | check:viewports: Etkinlikler 3.sayfa, 11 çözünürlük taşmasız | Bekliyor |
