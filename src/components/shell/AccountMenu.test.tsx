@@ -76,12 +76,15 @@ describe('kullanıcı menüsü', () => {
     expect(navigate).toHaveBeenCalledWith('/');
   });
 
-  /* Public profil bağlantısı kullanıcı adı olmadan çizilemez: `/profil/`
-     diye bir rota yok ve boş adrese götüren menü girişi, çalışmayan bir
-     düğmeden farksız. */
-  it('kullanıcı adı yokken public profil bağlantısı çizilmiyor', async () => {
-    ciz({});
-    fireEvent.click(screen.getByRole('button', { name: /Hesabım/ }));
+  /*
+   * PUBLIC PROFİL GİRİŞİ MENÜDE OLMAMALI (E09). Aynı yere `Hesabım >
+   * Profilim` sekmesindeki düğmeden gidiliyor; menüde ikinci bir satır
+   * kalabalık ediyordu. Test bunu kilitliyor: giriş bir gün geri
+   * eklenirse burada düşer.
+   */
+  it('public profil girişi menüde yok', () => {
+    ciz({ username: 'muratsana' });
+    fireEvent.click(screen.getByRole('button', { name: /muratsana/ }));
     expect(screen.queryByRole('menuitem', { name: 'Public profilim' })).toBeNull();
   });
 

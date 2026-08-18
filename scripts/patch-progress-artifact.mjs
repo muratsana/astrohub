@@ -45,7 +45,10 @@ const FAZLAR = [
   {
     ad: 'Hesap ve kimlik',
     ozet: 'Üst çubuk, oturum, public profil',
-    ids: ['E01', 'E02', 'E03', 'E04', 'E05', 'E06', 'E07', 'E08'],
+    ids: [
+      'E01', 'E02', 'E03', 'E04', 'E05', 'E06', 'E07', 'E08',
+      'E09', 'E10', 'E11', 'E12',
+    ],
   },
   {
     ad: 'Çekim sezonları',

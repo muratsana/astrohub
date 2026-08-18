@@ -32,6 +32,16 @@
  *   node scripts/patch-tracker.mjs A01 VERIFIED \
  *     --kullanici-onayi "18.08.2026 · canlıda kontrol edildi"
  *   node scripts/patch-tracker.mjs --list P0
+ *   node scripts/patch-tracker.mjs --ekle E09 P1 E Navbar "İş başlığı" "Detay" "Kabul kriteri"
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * YENİ MADDE DE AYNI KAPIDAN GİRİYOR
+ *
+ * Yama paketi 91 maddeyle geldi ama iş listesi donmuş değil: kullanıcı
+ * çalışma sürerken yeni istek veriyor. O istekleri yalnızca sohbete
+ * yazmak, tablonun "canlı doğruluk kaynağı" olma iddiasını sessizce
+ * bitirirdi — pano 91 maddeyi tamamlanmış gösterirken yapılacak beş iş
+ * daha olurdu.
  */
 
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -144,8 +154,56 @@ function guncelle(id, durum, { commit, evidence, note, onay }) {
   console.log(`${id} → ${durum}${commit ? ` (${commit})` : ''}`);
 }
 
+/**
+ * Yeni madde ekler. Var olan ID'yi EZMİYOR: kazara aynı kimliği ikinci
+ * kez eklemek, tabloda iki farklı işi aynı satırda birleştirirdi.
+ */
+function ekle(id, oncelik, sprint, modul, is, detay, kriter) {
+  const csvHam = oku(CSV);
+  const bom = csvHam.startsWith('﻿') ? '﻿' : '';
+  const csvSatirlar = csvHam.replace(/^﻿/, '').split('\n');
+  if (csvSatirlar.some((r) => csvSatiriAyristir(r)[0] === id)) {
+    throw new Error(`${id} zaten var.`);
+  }
+
+  const alanlar = [
+    id, oncelik, sprint, modul, is, detay, kriter,
+    'Kullanıcı isteği', 'TODO', '', '', '', 'Bekliyor',
+  ];
+  /* Dosya sonundaki boş satır korunuyor: CSV'yi satır sonu olmadan
+     bırakmak, bir sonraki eklemede iki kaydı birleştirir. */
+  const son = csvSatirlar[csvSatirlar.length - 1] === '' ? csvSatirlar.pop() : null;
+  csvSatirlar.push(alanlar.map(csvAlanYaz).join(','));
+  if (son !== null) csvSatirlar.push(son);
+  writeFileSync(CSV, bom + csvSatirlar.join('\n'));
+
+  const mdSatirlar = oku(MD).split('\n');
+  let sonTablo = -1;
+  for (let i = 0; i < mdSatirlar.length; i += 1) {
+    if (/^\| [A-Z]\d+ \|/.test(mdSatirlar[i])) sonTablo = i;
+  }
+  if (sonTablo < 0) throw new Error('Markdown tablosu bulunamadı.');
+  mdSatirlar.splice(
+    sonTablo + 1,
+    0,
+    `| ${id} | ${oncelik} | ${sprint} | ${modul} | ${is} | TODO |  |  | Bekliyor |`
+  );
+  writeFileSync(MD, mdSatirlar.join('\n'));
+
+  console.log(`${id} eklendi · ${oncelik} · ${modul} · ${is}`);
+}
+
 const argv = process.argv.slice(2);
-if (argv[0] === '--list') {
+if (argv[0] === '--ekle') {
+  const [, id, oncelik, sprint, modul, is, detay, kriter] = argv;
+  if (!id || !oncelik || !sprint || !modul || !is) {
+    console.error(
+      'Kullanım: patch-tracker.mjs --ekle <ID> <P0|P1|P2> <Sprint> <Modül> "<İş>" "<Detay>" "<Kriter>"'
+    );
+    process.exit(1);
+  }
+  ekle(id, oncelik, sprint, modul, is, detay ?? '', kriter ?? '');
+} else if (argv[0] === '--list') {
   listele(argv[1]);
 } else {
   const [id, durum] = argv;
