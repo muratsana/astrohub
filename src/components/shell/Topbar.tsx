@@ -5,7 +5,7 @@ import { Container } from '@/components/ui/Container';
 import { MenuIcon, UserIcon } from '@/components/ui/icons';
 import { useMenu } from '@/features/site/SiteConfigContext';
 import { useAuth } from '@/features/auth/AuthContext';
-import { useMyProfile } from '@/services/content/profile';
+import { useMyProfile, profileAvatarUrl } from '@/services/content/profile';
 import { AccountMenu } from './AccountMenu';
 import { ThemeToggle } from '@/features/theme/ThemeToggle';
 import { RadioToggle } from '@/features/radio/RadioToggle';
@@ -290,7 +290,10 @@ export function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
             */}
             <span className="hidden items-center gap-2 sm:flex">
               {loading ? null : user ? (
-                <AccountMenu username={profile?.username} />
+                <AccountMenu
+                  username={profile?.username}
+                  avatarUrl={profileAvatarUrl(profile?.avatarPath)}
+                />
               ) : (
                 <>
                   <ButtonLink to="/giris" size="sm" variant="secondary">

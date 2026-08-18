@@ -58,9 +58,9 @@ Durumlar: `TODO` → `IN_PROGRESS` → `CODED` → `TESTED` → `READY_FOR_USER`
 | D13 | P2 | D | Paylaşım Kiti | Opsiyonel watermark/@username | TODO |  |  | Bekliyor |
 | D14 | P1 | D | Gizlilik | Paylaşım kiti konum gizliliğine uymalı | TODO |  |  | Bekliyor |
 | E01 | P2 | E | Hesabım | E-posta doğrulama kutusunu sadeleştir | TODO |  |  | Bekliyor |
-| E02 | P1 | E | Navbar | Sağ üstte avatar + kullanıcı adı | TODO |  |  | Bekliyor |
-| E03 | P0 | E | Navbar | Navbar kullanıcı menüsünde 'Çıkış yap' | TODO |  |  | Bekliyor |
-| E04 | P0 | E | Navbar | Logout gerçek oturumu temizlemeli | TODO |  |  | Bekliyor |
+| E02 | P1 | E | Navbar | Sağ üstte avatar + kullanıcı adı | TESTED | 2fcadac | vitest AccountMenu.test.tsx | Bekliyor |
+| E03 | P0 | E | Navbar | Navbar kullanıcı menüsünde 'Çıkış yap' | TESTED | 2fcadac | vitest AccountMenu.test.tsx | Bekliyor |
+| E04 | P0 | E | Navbar | Logout gerçek oturumu temizlemeli | TESTED | 2fcadac | vitest: cikis gercekten oturumu kapatiyor | Bekliyor |
 | E05 | P1 | E | Public Profil | LinkedIn benzeri public profil üst alanı | TODO |  |  | Bekliyor |
 | E06 | P1 | E | Public Profil | Profil içerik bölümleri accordion/collapsible | TODO |  |  | Bekliyor |
 | E07 | P2 | E | Public Profil | Bölüm deep-link / hash | TODO |  |  | Bekliyor |

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { useRoles } from '@/features/admin/useRoles';
+import { useAuth } from '@/features/auth/AuthContext';
 import { UserIcon } from '@/components/ui/icons';
 import { cn } from '@/lib/cn';
 
@@ -30,10 +31,39 @@ import { cn } from '@/lib/cn';
  * bir menüden beklenen davranış. Odak yönetimi de gerekiyordu: menü
  * kapanınca odak tetikleyiciye dönmeli, yoksa klavye kullanıcısı sayfanın
  * başına savruluyor.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * ÇIKIŞ BURADAYDI, YOKTU (E03)
+ *
+ * Menüde "Çıkış yap" hiç yoktu. Çıkmak isteyen kullanıcının tek yolu
+ * `/hesap` sayfasına girip aşağı inmekti — yani en sık aranan hesap
+ * işlemi, en derindeki yerdeydi. Ortak bir bilgisayarda oturumunu
+ * kapatmak isteyen biri için bu bir kolaylık meselesi değil.
+ *
+ * Çıkış diğer girişlerden AYRILMIŞ çiziliyor ve bir bağlantı değil
+ * düğme: bir yere GİTMİYOR, bir şey YAPIYOR. Aynı görünümde bırakmak,
+ * "Mesajlarım"a gitmek isterken oturumu kapatmayı kolaylaştırırdı.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * TETİKLEYİCİ ARTIK "HESABIM" DEMİYOR (E02)
+ *
+ * Kimin oturumunun açık olduğu üst çubukta hiçbir yerde yazmıyordu.
+ * Ortak cihazda hangi hesapla gezildiğini görmenin tek yolu menüye
+ * girmekti. Artık kullanıcı adı ve varsa profil fotoğrafı görünüyor;
+ * kullanıcı adı henüz seçilmemişse eski etikete düşülüyor.
  */
-export function AccountMenu({ username }: { username?: string | null }) {
+export function AccountMenu({
+  username,
+  avatarUrl,
+}: {
+  username?: string | null;
+  avatarUrl?: string | null;
+}) {
   const { canAccessAdmin } = useRoles();
+  const { signOut } = useAuth();
+  const navigate = useNavigate();
   const [acik, setAcik] = useState(false);
+  const [cikiliyor, setCikiliyor] = useState(false);
   const kapsayici = useRef<HTMLDivElement>(null);
   const tetik = useRef<HTMLButtonElement>(null);
 
@@ -61,12 +91,32 @@ export function AccountMenu({ username }: { username?: string | null }) {
      diye bir rota yok ve boş adrese götüren bir menü girişi, çalışmayan
      bir düğmeden farksız. */
   const girisler = [
+    ...(username
+      ? [{ to: `/profil/${username}`, label: 'Public profilim' }]
+      : []),
     { to: '/hesap', label: 'Hesabım' },
     ...(username ? [{ to: '/hesap?sekme=profilim', label: 'Profilim' }] : []),
     { to: '/hesap?sekme=ekipmanlarim', label: 'Ekipmanlarım' },
     { to: '/mesajlar', label: 'Mesajlarım' },
     ...(canAccessAdmin ? [{ to: '/admin', label: 'Yönetim' }] : []),
   ];
+
+  async function cikisYap() {
+    setCikiliyor(true);
+    try {
+      await signOut();
+      setAcik(false);
+      /*
+       * ANA SAYFAYA GİDİLİYOR. Oturum kapandıktan sonra bulunulan
+       * sayfada kalmak, kullanıcıyı yetkisi kalmamış bir ekranda
+       * bırakmak demek: `/hesap` ya da `/mesajlar` çıkışın hemen
+       * ardından boşalır ve ekran "bir şeyler bozuldu" gibi görünür.
+       */
+      navigate('/');
+    } finally {
+      setCikiliyor(false);
+    }
+  }
 
   return (
     <div className="relative" ref={kapsayici}>
@@ -82,8 +132,20 @@ export function AccountMenu({ username }: { username?: string | null }) {
           acik && 'border-primary text-primary'
         )}
       >
-        <UserIcon className="h-4 w-4" />
-        Hesabım
+        {avatarUrl ? (
+          <img
+            src={avatarUrl}
+            alt=""
+            className="h-5 w-5 shrink-0 rounded-full object-cover"
+          />
+        ) : (
+          <UserIcon className="h-4 w-4" />
+        )}
+        {/* Uzun kullanıcı adı üst çubuğu itmesin: kısaltılıyor ama
+            tamamı `title` ile erişilebilir kalıyor. */}
+        <span className="max-w-[9rem] truncate" title={username ?? undefined}>
+          {username ?? 'Hesabım'}
+        </span>
       </button>
 
       {acik && (
@@ -102,6 +164,17 @@ export function AccountMenu({ username }: { username?: string | null }) {
               {g.label}
             </Link>
           ))}
+
+          <div className="my-1 border-t border-border" />
+          <button
+            type="button"
+            role="menuitem"
+            disabled={cikiliyor}
+            onClick={() => void cikisYap()}
+            className="block w-full px-3 py-2 text-left text-body-sm text-foreground transition-colors hover:bg-surface-2 hover:text-danger disabled:opacity-60"
+          >
+            {cikiliyor ? 'Çıkılıyor…' : 'Çıkış yap'}
+          </button>
         </div>
       )}
     </div>
