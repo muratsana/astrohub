@@ -1,0 +1,34 @@
+name: Live Authenticated Product UX Audit
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/live-auth-product-audit.mjs'
+      - '.github/workflows/live-auth-product-audit.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit-auth:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Run authenticated normal-user then admin audit
+        run: node scripts/live-auth-product-audit.mjs
+      - name: Upload authenticated audit evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-auth-product-ux-audit
+          path: audit-auth-artifacts/
+          retention-days: 14
+          if-no-files-found: warn
