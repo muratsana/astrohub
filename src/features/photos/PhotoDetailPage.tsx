@@ -40,6 +40,7 @@ import { VersionHistory } from './VersionHistory';
 import { VersionUpload } from './VersionUpload';
 import { ThumbCropEditor } from './ThumbCropEditor';
 import { ShareKit } from './ShareKit';
+import { OwnerOriginalDownload } from './OwnerOriginalDownload';
 import { ReportButton } from '@/features/admin/ReportButton';
 import { exifHasValues, photoTypeLabels } from './types';
 import { formatExposure } from '@/domain/photography/exif';
@@ -316,6 +317,9 @@ function PhotoDetail({
 
           {/* Paylaşım kiti — sahibe (D01, D02). */}
           <ShareKit photo={photo} />
+
+          {/* Orijinal dosya indirme — sahibe, indirme tercihinden bağımsız (X04). */}
+          <OwnerOriginalDownload photo={photo} />
         </section>
 
         {/*
