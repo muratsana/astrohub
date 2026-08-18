@@ -111,19 +111,28 @@ export async function annotatedBlob(params: AnnotatedParams): Promise<Blob> {
   ctx.lineTo(w / 2 + kisa * 0.05, h / 2);
   ctx.stroke();
 
-  /** Etiketi okunur kılan koyu zemin: yıldız alanının üstünde yazı kaybolur. */
+  /**
+   * Etiketi okunur kılan koyu zemin: yıldız alanının üstünde yazı
+   * kaybolur.
+   *
+   * KENARDA SOLA DÖNÜYOR. Sağ kenara yakın bir işaretin etiketi sağda
+   * kalsaydı görüntünün DIŞINA taşardı — ekranda düzeltilen hatanın
+   * dosyada tekrarı olurdu.
+   */
   const etiketBas = (metin: string, x: number, y: number, renk: string) => {
     const genislik = ctx.measureText(metin).width;
     const dolgu = yaziBoyu * 0.3;
+    const solda = x + genislik + dolgu * 2 > w;
+    const basX = solda ? x - genislik - isaret * 4.8 : x;
     ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
     ctx.fillRect(
-      x - dolgu,
+      basX - dolgu,
       y - yaziBoyu * 0.62,
       genislik + dolgu * 2,
       yaziBoyu * 1.24
     );
     ctx.fillStyle = renk;
-    ctx.fillText(metin, x, y);
+    ctx.fillText(metin, basX, y);
   };
 
   /* Yıldızlar önce: nesne etiketleri onların üstünde kalmalı. */

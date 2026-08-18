@@ -125,15 +125,37 @@ describe('gokyuzundenKadraja', () => {
   });
 });
 
+/**
+ * KADRAJIN DIŞINA ETİKET BASILAMAZ.
+ *
+ * Sabit %6'lık bir pay vardı ve canlıda fotoğrafın DIŞINDA, siyah
+ * alanda "M 52", "NGC 7635", "IC 1470" etiketleri belirdi. Alan çözümü
+ * bir ÖLÇÜM; kadrajın dışına taşan bir etiket o ölçümün güvenilirliğini
+ * bitirir.
+ */
 describe('kadrajIcinde', () => {
-  it('kenarın hemen dışını payla kabul eder', () => {
-    expect(kadrajIcinde({ x: 1.03, y: 0.5 })).toBe(true);
-    expect(kadrajIcinde({ x: -0.03, y: 0.5 })).toBe(true);
+  it('içerideki noktayı alır', () => {
+    expect(kadrajIcinde({ x: 0.5, y: 0.5 })).toBe(true);
+    expect(kadrajIcinde({ x: 0, y: 1 })).toBe(true);
   });
 
-  it('uzaktakini almaz', () => {
-    expect(kadrajIcinde({ x: 1.4, y: 0.5 })).toBe(false);
-    expect(kadrajIcinde({ x: 0.5, y: -0.5 })).toBe(false);
+  /* Varsayılan pay SIFIR: merkezi dışarıdaysa cisim karede değildir. */
+  it('kenarın dışını varsayılan olarak almaz', () => {
+    expect(kadrajIcinde({ x: 1.03, y: 0.5 })).toBe(false);
+    expect(kadrajIcinde({ x: -0.03, y: 0.5 })).toBe(false);
+  });
+
+  /* Payı yalnızca cismin kendi açısal boyutunu bilen çağıran veriyor:
+     kenardaki büyük bir bulutsunun merkezi dışarıda kalabilir ama
+     kendisi karede görünür. */
+  it('açıkça verilen payı uygular', () => {
+    expect(kadrajIcinde({ x: 1.03, y: 0.5 }, 0.05)).toBe(true);
+    expect(kadrajIcinde({ x: 1.2, y: 0.5 }, 0.05)).toBe(false);
+  });
+
+  it('uzaktakini hiçbir payla almaz', () => {
+    expect(kadrajIcinde({ x: 1.4, y: 0.5 }, 0.06)).toBe(false);
+    expect(kadrajIcinde({ x: 0.5, y: -0.5 }, 0.06)).toBe(false);
   });
 });
 

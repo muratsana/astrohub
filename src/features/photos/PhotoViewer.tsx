@@ -54,28 +54,56 @@ export function PhotoViewer({ photo }: { photo: AstroPhoto }) {
     <>
       <div className="relative overflow-hidden rounded-card border border-border bg-surface-2">
         {url ? (
-          <button
-            type="button"
-            onClick={() => setLightbox(true)}
-            aria-label={`${alt} — büyüt`}
-            className="block w-full cursor-zoom-in"
-          >
-            <img
-              src={url}
-              alt={alt}
-              /*
-               * `object-contain` ve serbest yükseklik: astrofotoğraflar
-               * 16:9 değil. Kadraj panoramik de olabilir kare de; sabit
-               * bir en-boy oranı ya siyah bant bırakır ya kadrajı keser.
-               * Kesmek bir astrofotoğrafta kabul edilemez — kadraj
-               * eserin parçası.
-               */
-              className="max-h-[78vh] w-full bg-black object-contain"
-              /* İlk ekranda görünen tek büyük görsel: LCP adayı. */
-              fetchPriority="high"
-              decoding="async"
-            />
-          </button>
+          /*
+            ══════════════════════════════════════════════════════════════
+            AÇIKLAMA KATMANI GÖRSELİN KUTUSUNDA, KAPSAYICININ DEĞİL
+
+            Katman `absolute inset-0` ile DIŞ kutuyu kaplıyordu; görsel
+            ise `object-contain` ile o kutunun içinde ortalanıyordu.
+            Dikey bir astrofotoğrafta bu ikisi aynı şey değil: kutunun
+            solunda ve sağında siyah bantlar kalıyor ve yüzde ile
+            yerleştirilen etiketler o BOŞLUĞA düşüyordu.
+
+            Sonuç yalnızca çirkin değil, YANLIŞTI: fotoğrafın dışında
+            "M 52", "NGC 7635" yazan bir katman, orada olmayan bir şeyi
+            ölçülmüş gibi gösteriyor. Alan çözümü bir ölçüm; kadrajın
+            dışına taşan bir etiket o ölçümün güvenilirliğini bitirir.
+
+            Düzeltme yerleşimde: görsel artık `object-contain` ile
+            esnetilmiyor, kendi doğal oranında duruyor (`max-h`/`max-w`)
+            ve katman onun KARDEŞİ olarak aynı kutuyu paylaşıyor. Yüzde
+            hesabı böylece doğrudan piksele oturuyor.
+          */
+          <div className="flex w-full justify-center bg-black">
+            <div className="relative overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setLightbox(true)}
+                aria-label={`${alt} — büyüt`}
+                className="block cursor-zoom-in"
+              >
+                <img
+                  src={url}
+                  alt={alt}
+                  /*
+                   * Serbest oran: astrofotoğraflar 16:9 değil. Kadraj
+                   * panoramik de olabilir kare de; sabit bir en-boy
+                   * oranı ya siyah bant bırakır ya kadrajı keser.
+                   * Kesmek bir astrofotoğrafta kabul edilemez — kadraj
+                   * eserin parçası.
+                   */
+                  className="block max-h-[78vh] max-w-full"
+                  /* İlk ekranda görünen tek büyük görsel: LCP adayı. */
+                  fetchPriority="high"
+                  decoding="async"
+                />
+              </button>
+
+              {canAnnotate && (
+                <PlateSolveOverlay photo={photo} visible={solved} />
+              )}
+            </div>
+          </div>
         ) : (
           <PhotoPlaceholder
             gradient={photo.gradient}
@@ -83,10 +111,6 @@ export function PhotoViewer({ photo }: { photo: AstroPhoto }) {
             rounded="rounded-none"
             className="aspect-[16/9] w-full sm:aspect-[2/1]"
           />
-        )}
-
-        {canAnnotate && url && (
-          <PlateSolveOverlay photo={photo} visible={solved} />
         )}
 
         <div className="pointer-events-none absolute inset-x-0 bottom-0 flex flex-wrap items-end justify-between gap-2 p-3">
@@ -395,7 +419,11 @@ function PlateSolveOverlay({
                 <line x1="0" y1="1.6" x2="0" y2="5" stroke={SOLVE_STAR} strokeWidth="1" />
               </svg>
               <span
-                className="tabular absolute left-3 top-1/2 -translate-y-1/2 whitespace-nowrap rounded bg-black/55 px-1 py-px text-[0.625rem] leading-tight backdrop-blur-[2px]"
+                className={
+                  y.nokta.x > 0.78
+                    ? 'tabular absolute right-3 top-1/2 -translate-y-1/2 whitespace-nowrap rounded bg-black/55 px-1 py-px text-[0.625rem] leading-tight backdrop-blur-[2px]'
+                    : 'tabular absolute left-3 top-1/2 -translate-y-1/2 whitespace-nowrap rounded bg-black/55 px-1 py-px text-[0.625rem] leading-tight backdrop-blur-[2px]'
+                }
                 style={{ color: SOLVE_STAR }}
               >
                 {yildizEtiketi(y)}
@@ -425,8 +453,15 @@ function PlateSolveOverlay({
                 className="block size-2 rounded-full border"
                 style={{ borderColor: SOLVE_LINE }}
               />
+              {/* Sağ kenardaki etiket SOLA dönüyor: sağda kalsaydı
+                  kadrajın dışına taşar ve kırpılırdı — düzeltilen
+                  hatanın küçük bir tekrarı olurdu. */}
               <span
-                className="tabular absolute left-3 top-1/2 -translate-y-1/2 whitespace-nowrap rounded bg-black/65 px-1.5 py-0.5 text-meta leading-tight backdrop-blur-[2px]"
+                className={
+                  c.nokta.x > 0.78
+                    ? 'tabular absolute right-3 top-1/2 -translate-y-1/2 whitespace-nowrap rounded bg-black/65 px-1.5 py-0.5 text-meta leading-tight backdrop-blur-[2px]'
+                    : 'tabular absolute left-3 top-1/2 -translate-y-1/2 whitespace-nowrap rounded bg-black/65 px-1.5 py-0.5 text-meta leading-tight backdrop-blur-[2px]'
+                }
                 style={{ color: SOLVE_TEXT }}
               >
                 {c.katalog}

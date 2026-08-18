@@ -130,3 +130,4 @@ Canlı pano: `docs/patch-2026-08-18/ilerleme.html`
 | E12 | P1 | E | Public Profil | Kapak ve avatar silinebilmeli | TESTED | e3f2c48 | profilGorseliSil tek yol | Bekliyor |
 | A15 | P0 | A | Galeri | İndir düğmesi doğrudan en yüksek kaliteli JPEG vermeli | TESTED | 95b5782 | vitest indirmeAdi.test.ts (5 senaryo) | Bekliyor |
 | A16 | P0 | A | Moderasyon | Kaldırılan içeriği geri getirme düğmesi görünmüyor | TESTED | 95b5782 |  | Bekliyor |
+| A17 | P0 | A | Alan Çözümü | Etiketler fotoğrafın dışına taşmamalı | TESTED | 136f0fc | vitest plateProjection.test.ts: kadrajIcinde (4 senaryo) | Bekliyor |

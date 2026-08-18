@@ -100,7 +100,26 @@ export async function alandakiCisimler(
     if (ra === null || dec === null) continue;
 
     const nokta = gokyuzundenKadraja(cozum, ra, dec);
-    if (!nokta || !kadrajIcinde(nokta)) continue;
+    /*
+     * PAY CİSMİN KENDİ BOYUTUNDAN GELİYOR.
+     *
+     * Kadrajın hemen kenarındaki büyük bir bulutsunun MERKEZİ dışarıda
+     * kalabilir ama kendisi karede görünür; onu isimsiz bırakmak yanlış
+     * olurdu. Ama pay sabit verilemez: sabit bir pay, kadrajda hiç
+     * olmayan küçük cisimleri de etiketlemeye başlıyordu ve canlıda
+     * fotoğrafın DIŞINDA etiketler belirdi.
+     *
+     * Doğru pay cismin yarıçapı kadar: yarım açısal boyut, kadraj
+     * genişliğine oranlanıyor. Boyutu bilinmeyen kayıtta pay YOK —
+     * bilmediğimiz bir büyüklüğü tahmin etmek, tam da düzelttiğimiz
+     * hatayı geri getirirdi.
+     */
+    const boyut = sayi(ham.size_major_arcmin);
+    const pay =
+      boyut && cozum.fieldWidthDeg > 0
+        ? Math.min(0.5, boyut / 60 / 2 / cozum.fieldWidthDeg)
+        : 0;
+    if (!nokta || !kadrajIcinde(nokta, pay)) continue;
 
     cisimler.push({
       id: ham.id,

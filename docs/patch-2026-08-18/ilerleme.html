@@ -157,14 +157,14 @@ footer p { margin: 0 0 5px; }
       sonda onların üstüne oturan özellikler. Bu sayfa
       <code class="mono">PROGRESS_TRACKER.csv</code>'den üretiliyor.
     </p>
-    <div class="serit"><span class="serit-parca durum-VERIFIED" style="flex:12" title="Doğrulandı: 12"></span><span class="serit-parca durum-TESTED" style="flex:14" title="Test edildi: 14"></span><span class="serit-parca durum-CODED" style="flex:3" title="Kodlandı: 3"></span><span class="serit-parca durum-IN_PROGRESS" style="flex:5" title="Sürüyor: 5"></span><span class="serit-parca durum-TODO" style="flex:63" title="Sırada: 63"></span></div>
+    <div class="serit"><span class="serit-parca durum-VERIFIED" style="flex:12" title="Doğrulandı: 12"></span><span class="serit-parca durum-TESTED" style="flex:15" title="Test edildi: 15"></span><span class="serit-parca durum-CODED" style="flex:3" title="Kodlandı: 3"></span><span class="serit-parca durum-IN_PROGRESS" style="flex:5" title="Sürüyor: 5"></span><span class="serit-parca durum-TODO" style="flex:63" title="Sırada: 63"></span></div>
     <div class="ozetler">
       <button class="ozet durum-VERIFIED" data-filtre="VERIFIED" type="button">
         <span class="ozet-sayi mono">12</span>
         <span class="ozet-ad">Doğrulandı</span>
       </button>
       <button class="ozet durum-TESTED" data-filtre="TESTED" type="button">
-        <span class="ozet-sayi mono">14</span>
+        <span class="ozet-sayi mono">15</span>
         <span class="ozet-ad">Test edildi</span>
       </button>
       <button class="ozet durum-CODED" data-filtre="CODED" type="button">
@@ -1476,6 +1476,38 @@ footer p { margin: 0 0 5px; }
           </td>
           <td><span class="rozet durum-TODO">Sırada</span></td>
           <td class="mono kanit"><span class="bos">—</span></td>
+        </tr></tbody>
+        </table>
+      </div>
+    </section>
+    <section class="faz" id="faz-12">
+      <header class="faz-basi">
+        <div class="faz-kimlik">
+          <span class="faz-no mono">FAZ 12</span>
+          <h2>Fazlara yerleşmemiş</h2>
+          <p>Faz tablosuna eklenmesi gereken maddeler</p>
+        </div>
+        <div class="faz-olcu">
+          <span class="faz-oran mono">1<span class="bolu">/</span>1</span>
+          <div class="faz-cubuk"><span style="width:100%"></span></div>
+        </div>
+      </header>
+      <div class="tablo-sar">
+        <table>
+          <thead>
+            <tr><th>ID</th><th>Öncelik</th><th>Modül</th><th>İş</th><th>Durum</th><th>Kanıt</th></tr>
+          </thead>
+          <tbody>
+        <tr data-durum="TESTED" data-oncelik="P0">
+          <td class="mono">A17</td>
+          <td><span class="oncelik o-P0">P0</span></td>
+          <td class="modul">Alan Çözümü</td>
+          <td class="is">
+            <span class="is-baslik">Etiketler fotoğrafın dışına taşmamalı</span>
+            <span class="is-not">Katman gorselin kutusunda; pay cismin acisal boyutundan; kenardaki etiket ice donuyor</span>
+          </td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>136f0fc</code><span class="kanit-metin">vitest plateProjection.test.ts: kadrajIcinde (4 senaryo)</span></td>
         </tr></tbody>
         </table>
       </div>

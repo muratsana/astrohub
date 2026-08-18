@@ -154,15 +154,28 @@ export function gokyuzundenKadraja(
 }
 
 /**
- * Nokta kadrajın içinde mi — küçük bir paya izin vererek.
+ * Nokta kadrajın içinde mi.
  *
- * Pay neden var: kadrajın hemen kenarındaki büyük bir bulutsunun
- * MERKEZİ dışarıda kalabilir ama kendisi karede görünür. Etiketi
- * tamamen düşürmek, fotoğrafta apaçık duran cismi isimsiz bırakırdı.
- * Pay dar (%6) — daha genişi kadrajda hiç olmayan cisimleri de
- * etiketlemeye başlar.
+ * ══════════════════════════════════════════════════════════════════════
+ * PAY ARTIK VARSAYILAN OLARAK SIFIR
+ *
+ * Sabit %6'lık bir pay vardı ve gerekçesi şuydu: kadrajın hemen
+ * kenarındaki büyük bir bulutsunun MERKEZİ dışarıda kalabilir ama
+ * kendisi karede görünür.
+ *
+ * Gerekçe doğruydu, uygulaması yanlıştı. Pay her cisme aynı şekilde
+ * veriliyordu — bir yıldıza da, boyutu hiç bilinmeyen bir kayda da.
+ * Sonuç canlıda görüldü: fotoğrafın DIŞINDA, siyah alanda "M 52",
+ * "NGC 7635", "IC 1470" etiketleri belirdi. Alan çözümü bir ÖLÇÜM;
+ * kadrajın dışına taşan bir etiket o ölçümün güvenilirliğini bitirir.
+ *
+ * Varsayılan artık sıfır: merkezi dışarıdaysa cisim karede değildir.
+ * Payı yalnızca cismin KENDİ AÇISAL BOYUTUNU bilen çağıran veriyor
+ * (bkz. `fieldObjects`), çünkü payın ne kadar olacağını yalnızca o
+ * bilebilir. Noktasal kaynaklarda (yıldız) pay hiç yok — bir yıldızın
+ * merkezi dışarıdaysa yıldız da dışarıdadır.
  */
-export function kadrajIcinde(nokta: KadrajNoktasi, pay = 0.06): boolean {
+export function kadrajIcinde(nokta: KadrajNoktasi, pay = 0): boolean {
   return (
     nokta.x >= -pay && nokta.x <= 1 + pay && nokta.y >= -pay && nokta.y <= 1 + pay
   );
