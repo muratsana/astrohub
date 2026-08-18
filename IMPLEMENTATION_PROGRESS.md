@@ -62,10 +62,10 @@ Canlı pano: `docs/patch-2026-08-18/ilerleme.html`
 | C06 | P2 | C | Fotoğraf Künyesi | Çok sezonlu tarihleri okunabilir göster | TESTED | a50b6b9 | vitest captureSession/upload/photos; typecheck+build+budgets yeşil | Bekliyor |
 | C07 | P1 | C | Fotoğraf Yükleme | Thumbnail/Kart kadraj editörü upload akışında olmalı | TESTED | 95ac47b | vitest ThumbnailKadraj/upload/photos; migration thumb_crop; build+bütçe yeşil | Bekliyor |
 | C08 | P1 | C | Fotoğraf Yükleme | Thumbnail editöründe ana sayfa ve kart önizlemeleri | TESTED | 95ac47b | vitest ThumbnailKadraj/upload/photos; migration thumb_crop; build+bütçe yeşil | Bekliyor |
-| C09 | P1 | C | Fotoğraf Detayı / Owner | Thumbnail kadrajı yüklemeden sonra da düzenlenebilmeli | TODO |  |  | Bekliyor |
+| C09 | P1 | C | Fotoğraf Detayı / Owner | Thumbnail kadrajı yüklemeden sonra da düzenlenebilmeli | TESTED | b9acbef | vitest thumbCrop.test; detay sayfası sahip editörü | Bekliyor |
 | C10 | P1 | C | Medya Mimarisi | Thumbnail crop state normalize parametre olarak saklanmalı | TESTED | 95ac47b | vitest ThumbnailKadraj/upload/photos; migration thumb_crop; build+bütçe yeşil | Bekliyor |
-| C11 | P1 | C | Medya Mimarisi | Thumbnail türevleri storage'da ve versiyonlu tutulmalı | TODO |  |  | Bekliyor |
-| C12 | P0 | C | Medya Temizliği | Thumbnail yeniden düzenlenince eski türev güvenli silinmeli | TODO |  |  | Bekliyor |
+| C11 | P1 | C | Medya Mimarisi | Thumbnail türevleri storage'da ve versiyonlu tutulmalı | TESTED | b9acbef | vitest thumbCrop.test: versionedThumbPath zaman damgalı | Bekliyor |
+| C12 | P0 | C | Medya Temizliği | Thumbnail yeniden düzenlenince eski türev güvenli silinmeli | TESTED | b9acbef | vitest thumbCrop.test: eski türev güvenli silme + geri alma | Bekliyor |
 | C13 | P1 | C | Medya Temizliği | Orphan thumbnail garbage collector | TODO |  |  | Bekliyor |
 | C14 | P1 | C | Medya İşleme | Thumbnail üretimi idempotent ve content/crop version bağlı olmalı | TODO |  |  | Bekliyor |
 | C15 | P2 | C | Thumbnail UX | Crop editörü mouse/touch/keyboard erişilebilir olmalı | TESTED | 95ac47b | vitest ThumbnailKadraj/upload/photos; migration thumb_crop; build+bütçe yeşil | Bekliyor |
