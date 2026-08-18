@@ -66,8 +66,8 @@ Canlı pano: `docs/patch-2026-08-18/ilerleme.html`
 | C10 | P1 | C | Medya Mimarisi | Thumbnail crop state normalize parametre olarak saklanmalı | TESTED | 95ac47b | vitest ThumbnailKadraj/upload/photos; migration thumb_crop; build+bütçe yeşil | Bekliyor |
 | C11 | P1 | C | Medya Mimarisi | Thumbnail türevleri storage'da ve versiyonlu tutulmalı | TESTED | b9acbef | vitest thumbCrop.test: versionedThumbPath zaman damgalı | Bekliyor |
 | C12 | P0 | C | Medya Temizliği | Thumbnail yeniden düzenlenince eski türev güvenli silinmeli | TESTED | b9acbef | vitest thumbCrop.test: eski türev güvenli silme + geri alma | Bekliyor |
-| C13 | P1 | C | Medya Temizliği | Orphan thumbnail garbage collector | TODO |  |  | Bekliyor |
-| C14 | P1 | C | Medya İşleme | Thumbnail üretimi idempotent ve content/crop version bağlı olmalı | TODO |  |  | Bekliyor |
+| C13 | P1 | C | Medya Temizliği | Orphan thumbnail garbage collector | TESTED | 539c193 | vitest photo-lifecycle-cleanup: eski versiyonlu thumb orphan süpürülüyor | Bekliyor |
+| C14 | P1 | C | Medya İşleme | Thumbnail üretimi idempotent ve content/crop version bağlı olmalı | TESTED | 539c193 | vitest thumbCrop: kadraja bağlı yol, idempotent no-op | Bekliyor |
 | C15 | P2 | C | Thumbnail UX | Crop editörü mouse/touch/keyboard erişilebilir olmalı | TESTED | 95ac47b | vitest ThumbnailKadraj/upload/photos; migration thumb_crop; build+bütçe yeşil | Bekliyor |
 | D01 | P0 | D | Paylaşım Kiti | Paylaşım kiti yalnız fotoğraf sahibine açık | TODO |  |  | Bekliyor |
 | D02 | P1 | D | Paylaşım Kiti | Owner için 'Paylaşım kiti hazırla' aksiyonu | TODO |  |  | Bekliyor |
