@@ -7,6 +7,7 @@ import {
   isResolved,
   removeContent,
   resolveItem,
+  restoreContent,
   sendModerationFeedback,
   targetLabels,
   statusLabels,
@@ -100,20 +101,33 @@ describe('içerik kaldırma — hedef eşlemesi', () => {
   });
 
   /*
-   * Geri kalanlar bilerek dışarıda. Fotoğraf/ilan/etkinlik/gözlem noktası
-   * kendi panelinden durum değişikliğiyle kaldırılıyor; profil hesaba
-   * dokunmak demek; özel mesajı moderatör okuyamıyor bile.
+   * FOTOĞRAF, İLAN, ETKİNLİK VE SAHA ARTIK BURADAN DA KALDIRILABİLİYOR.
+   *
+   * Önceki karar bunları dışarıda bırakıyordu: "kendi panelinden durum
+   * değişikliğiyle kaldırılıyor". Gerekçe tutarlıydı ama sonucu canlıda
+   * şu oldu — telif şikâyeti "Kaldırıldı" durumuna geçti, kaldırma
+   * düğmesi fotoğraf için hiç çizilmediği için fotoğraf yayında kaldı ve
+   * ekran olmamış bir şeyi olmuş gibi gösterdi.
+   *
+   * Şikâyeti değerlendiren kişi kararını da aynı yerde uygulayabilmeli;
+   * başka bir panele geçmesi gereken bir akış, o adımın atlanacağı
+   * akıştır.
    */
-  it('diğer hedeflerde içerik bu ekrandan kaldırılmıyor', () => {
-    const disarida: ModerationTarget[] = [
-      'photo',
-      'listing',
-      'event',
-      'site',
-      'profile',
-      'message',
-    ];
-    for (const t of disarida) expect(canRemoveContent(t), t).toBe(false);
+  it('şikâyet edilebilen içerik türleri buradan kaldırılabiliyor', () => {
+    const icerde: ModerationTarget[] = ['photo', 'listing', 'event', 'site'];
+    for (const t of icerde) expect(canRemoveContent(t), t).toBe(true);
+  });
+
+  /*
+   * İKİSİ HÂLÂ DIŞARIDA VE ÖYLE KALMALI: profil kaldırmak hesaba
+   * dokunmak demek (askı/yasak ayrı bir akış), özel mesajı moderatör
+   * okuyamıyor bile — okuyamadığı bir şeyi silmesi için düğme koymak
+   * yanlış olurdu.
+   */
+  it('profil ve özel mesaj bu ekrandan kaldırılmıyor', () => {
+    for (const t of ['profile', 'message'] as ModerationTarget[]) {
+      expect(canRemoveContent(t), t).toBe(false);
+    }
   });
 
   /*
@@ -123,7 +137,15 @@ describe('içerik kaldırma — hedef eşlemesi', () => {
    * bu sefer kodun içinde.
    */
   it('kaldırılamayan hedefte hata veriyor', async () => {
-    await expect(removeContent('photo', 'x')).rejects.toThrow(/panel/i);
+    /* Profil kaldırılabilir hedef değil; sessizce başarılı dönmek
+       moderatöre yapmadığı bir işi yapmış gibi göstermek olurdu. */
+    await expect(removeContent('profile', 'x')).rejects.toThrow(/kaldırılamıyor/i);
+  });
+
+  /* Geri alma da aynı kapıdan geçiyor: kaldırılamayan bir hedefi geri
+     almak da anlamsız. */
+  it('geri alma da kaldırılamayan hedefte reddediliyor', async () => {
+    await expect(restoreContent('message', 'x')).rejects.toThrow(/geri alınamıyor/i);
   });
 
   /*
@@ -131,6 +153,7 @@ describe('içerik kaldırma — hedef eşlemesi', () => {
    */
   it('yapılandırma yokken sessizce başarılı dönmüyor', async () => {
     await expect(removeContent('comment', 'x')).rejects.toThrow();
+    await expect(restoreContent('comment', 'x')).rejects.toThrow();
   });
 });
 

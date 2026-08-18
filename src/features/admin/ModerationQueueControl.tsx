@@ -5,8 +5,12 @@ import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
 import { useAuth } from '@/features/auth/AuthContext';
 import { cn } from '@/lib/cn';
+import { Input } from '@/components/ui/Input';
 import {
   canRemoveContent,
+  fetchContentState,
+  restoreContent,
+  VARSAYILAN_KALDIRMA_GEREKCESI,
   decideClubDeletion,
   durumEtiketi,
   fetchQueue,
@@ -120,6 +124,10 @@ export function ModerationQueueControl() {
     );
   };
 
+  /* Açık hüküm panelinin kayıt kimliği; aynı anda tek karar veriliyor. */
+  const [hukum, setHukum] = useState<string | null>(null);
+  const tazele = useCallback(() => void load(tab), [load, tab]);
+
   const items = result?.items ?? [];
   const counts = result?.counts;
 
@@ -171,6 +179,34 @@ export function ModerationQueueControl() {
                 <span className="text-meta text-muted">
                   {durumEtiketi(item)} · {formatDate(item.created_at)}
                 </span>
+                {/*
+                  ŞİKÂYETÇİ GÖRÜNÜYOR.
+
+                  `reported_by` kolonu doluyordu ama hiçbir yerde
+                  gösterilmiyordu: aynı kişinin aynı kullanıcıyı beşinci
+                  kez bildirmesiyle ilk kez bildirmesi ekranda aynı
+                  görünüyordu. Kötü niyetli bildirimi görmenin tek yolu
+                  şikâyetçiyi görmek.
+                */}
+                <span className="ml-auto text-meta text-faint">
+                  {item.reporter_username ? (
+                    <>
+                      Şikâyet eden:{' '}
+                      <a
+                        href={`/profil/${item.reporter_username}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary underline"
+                      >
+                        {item.reporter_username}
+                      </a>
+                    </>
+                  ) : item.reported_by ? (
+                    'Şikâyet eden: profili silinmiş kullanıcı'
+                  ) : (
+                    'Şikâyet eden: oturumsuz bildirim'
+                  )}
+                </span>
               </div>
 
               {/* Şikâyet notu TAM gösteriliyor: kırpılmış bir gerekçeyle
@@ -194,6 +230,49 @@ export function ModerationQueueControl() {
                 <p className="mb-2 text-meta text-muted">
                   Karar notu: {item.resolution_note}
                 </p>
+              )}
+
+              {/* İçeriğin GERÇEK durumu ve geri alma — kapanmış kayıtta
+                  da duruyor, çünkü şikâyetin haksız olduğu sonradan
+                  anlaşılabiliyor. */}
+              {canRemoveContent(item.target_type) && (
+                <IcerikDurumu
+                  item={item}
+                  busy={busy}
+                  yenile={tazele}
+                  hataYaz={setError}
+                />
+              )}
+
+              {/* Haklı bulma ikinci soruyu açıyor: içerik ne olsun? */}
+              {!isResolved(item.status) && hukum === item.id && (
+                <HukumPaneli
+                  item={item}
+                  busy={busy}
+                  onKapat={() => setHukum(null)}
+                  onKarar={(kaldir, gerekce) =>
+                    void run(async () => {
+                      if (kaldir) {
+                        await removeContent(
+                          item.target_type,
+                          item.target_id,
+                          gerekce
+                        );
+                      }
+                      if (!user?.id) throw new Error('Oturum bulunamadı.');
+                      await resolveItem(
+                        item.id,
+                        'rejected',
+                        user.id,
+                        kaldir
+                          ? `Şikâyet haklı — içerik yayından kaldırıldı. ${gerekce}`.trim()
+                          : 'Şikâyet haklı — içerik yayında bırakıldı.',
+                        item.target_type
+                      );
+                      setHukum(null);
+                    })
+                  }
+                />
               )}
 
               {!isResolved(item.status) && (
@@ -231,10 +310,27 @@ export function ModerationQueueControl() {
                     </>
                   ) : (
                     <>
+                      {/*
+                        "ŞİKÂYET HAKLI" ARTIK TEK BAŞINA KARAR DEĞİL.
+
+                        Eskiden bu düğme kaydı `rejected` yapıyordu ve
+                        durum etiketi "Kaldırıldı" diye görünüyordu — ama
+                        içeriğe DOKUNMUYORDU. Canlıda tam olarak bu oldu:
+                        telif şikâyeti "Kaldırıldı" yazıyordu, fotoğraf
+                        yayında duruyordu. Kaldırma düğmesi fotoğraf için
+                        zaten hiç çizilmiyordu.
+
+                        Şimdi haklı bulmak ikinci soruyu açıyor: içerik
+                        yayından kalksın mı, kalsın mı. Karar ne olursa
+                        olsun ikisi birlikte yazılıyor, yani etiket ile
+                        gerçek bir daha ayrışmıyor.
+                      */}
                       <Button
                         size="sm"
                         disabled={busy}
-                        onClick={() => karar(item, 'rejected')}
+                        onClick={() =>
+                          setHukum(hukum === item.id ? null : item.id)
+                        }
                       >
                         Şikâyet haklı
                       </Button>
@@ -274,24 +370,6 @@ export function ModerationQueueControl() {
                         Arşivle
                       </Button>
                     </>
-                  )}
-
-                  {canRemoveContent(item.target_type) && (
-                    /* Kuyruğu kapatmak içeriği kaldırmıyor; kaldırma
-                       ayrı bir eylem ve yalnızca uygulanabildiği
-                       hedeflerde çıkıyor. */
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      disabled={busy}
-                      onClick={() =>
-                        void run(() =>
-                          removeContent(item.target_type, item.target_id)
-                        )
-                      }
-                    >
-                      İçeriği kaldır
-                    </Button>
                   )}
 
                   <Button
@@ -345,5 +423,198 @@ export function ModerationQueueControl() {
         })}
       </ul>
     </Panel>
+  );
+}
+
+
+/**
+ * HÜKÜM PANELİ — "şikâyet haklı" dedikten sonraki ikinci soru.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * NEDEN İKİ ADIM
+ *
+ * Haklı bulmak ile içeriği kaldırmak AYNI KARAR DEĞİL. Telif şikâyeti
+ * haklı olabilir ve doğru çözüm kaynağı eklemek olabilir; hakaret
+ * şikâyeti haklı olabilir ve içerik yine de kalabilir çünkü tartışmanın
+ * bağlamı ona bağlı. Tek düğmenin ikisini birden yapması, moderatörün
+ * veremeyeceği bir kararı onun yerine vermek olurdu.
+ *
+ * Tersi de yaşandı: düğme yalnızca kaydı kapatıyor, içeriğe hiç
+ * dokunmuyordu — ve durum etiketi "Kaldırıldı" diyordu. Ekran, olmamış
+ * bir şeyi olmuş gibi gösteriyordu.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * GEREKÇE KULLANICININ OKUYACAĞI METİN
+ *
+ * Moderatörün kendine yazdığı not değil: kaldırılan içeriğin YERİNE bu
+ * cümle geçiyor. Bu yüzden ayrı bir alan ve varsayılanı hazır — boş
+ * bırakılan bir gerekçe, tartışma tablolarında veritabanı kısıtına
+ * takılıp ham hata verirdi.
+ */
+function HukumPaneli({
+  item,
+  busy,
+  onKapat,
+  onKarar,
+}: {
+  item: ModerationItem;
+  busy: boolean;
+  onKapat: () => void;
+  onKarar: (kaldir: boolean, gerekce: string) => void;
+}) {
+  const [gerekce, setGerekce] = useState(VARSAYILAN_KALDIRMA_GEREKCESI);
+
+  return (
+    <div className="mb-2 rounded-card border border-warning/45 bg-warning/8 p-3">
+      <p className="text-body-sm font-medium text-foreground">
+        Şikâyeti haklı buldunuz. İçerik ne olsun?
+      </p>
+      <p className="mt-1 text-meta leading-relaxed text-muted-foreground">
+        Haklı bulmak içeriği kendiliğinden kaldırmıyor — kararı siz
+        veriyorsunuz. İki seçenek de kayda yazılıyor.
+      </p>
+
+      <div className="mt-3">
+        <label
+          className="label block"
+          htmlFor={`gerekce-${item.id}`}
+        >
+          Kaldırma gerekçesi
+        </label>
+        <p className="mb-1 text-meta leading-snug text-faint">
+          Kaldırırsanız içeriğin yerinde bu cümle görünecek. Yayında
+          bırakırsanız kullanılmıyor.
+        </p>
+        <Input
+          id={`gerekce-${item.id}`}
+          value={gerekce}
+          maxLength={300}
+          onChange={(e) => setGerekce(e.target.value)}
+        />
+      </div>
+
+      <div className="mt-3 flex flex-wrap gap-2">
+        <Button
+          size="sm"
+          variant="danger"
+          disabled={busy || !gerekce.trim()}
+          onClick={() => onKarar(true, gerekce.trim())}
+        >
+          Yayından kaldır
+        </Button>
+        <Button
+          size="sm"
+          variant="secondary"
+          disabled={busy}
+          onClick={() => onKarar(false, '')}
+        >
+          Yayında tut
+        </Button>
+        <Button size="sm" variant="ghost" disabled={busy} onClick={onKapat}>
+          Vazgeç
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * İÇERİĞİN GERÇEK DURUMU VE GERİ ALMA.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * KUYRUK DURUMU İLE İÇERİK DURUMU AYRI ŞEYLER
+ *
+ * Kayıt "Kaldırıldı" olabilir ve içerik yayında olabilir; tersi de
+ * mümkün. Moderatör bunu hiçbir yerden göremiyordu ve ekrana güvenip
+ * yanlış karar veriyordu. Bu şerit hedefin tablosuna bakıp gerçeği
+ * söylüyor.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * GERİ ALMA KAPANMIŞ KAYITTA DA DURUYOR
+ *
+ * Şikâyetin haksız olduğu çoğu zaman SONRADAN anlaşılıyor — itiraz
+ * gelince, kaynak bulununca. Geri almayı yalnızca açık kayıtlarda
+ * sunmak, kararı verildikten sonra düzeltilemez yapardı. Tartışma
+ * içeriğinde gövde arşivden geri geliyor (`app.tartisma_kaldirma`).
+ */
+function IcerikDurumu({
+  item,
+  busy,
+  yenile,
+  hataYaz,
+}: {
+  item: ModerationItem;
+  busy: boolean;
+  yenile: () => void;
+  hataYaz: (mesaj: string | null) => void;
+}) {
+  const [durum, setDurum] = useState<{ found: boolean; removed: boolean } | null>(
+    null
+  );
+  const [calisiyor, setCalisiyor] = useState(false);
+
+  const oku = useCallback(() => {
+    let aktif = true;
+    fetchContentState(item.target_type, item.target_id)
+      .then((d) => {
+        if (aktif) setDurum(d);
+      })
+      .catch(() => {
+        /* Okunamayan durum, kararı engellemiyor: şerit "bilinmiyor"
+           diyor ve düğmeler gizleniyor — yanlış düğme göstermektense. */
+        if (aktif) setDurum(null);
+      });
+    return () => {
+      aktif = false;
+    };
+  }, [item.target_type, item.target_id]);
+
+  useEffect(oku, [oku]);
+
+  async function geriAl() {
+    setCalisiyor(true);
+    hataYaz(null);
+    try {
+      await restoreContent(item.target_type, item.target_id);
+      setDurum({ found: true, removed: false });
+      yenile();
+    } catch (e) {
+      hataYaz(e instanceof Error ? e.message : 'Geri alınamadı.');
+    } finally {
+      setCalisiyor(false);
+    }
+  }
+
+  if (!durum) return null;
+
+  if (!durum.found) {
+    return (
+      <p className="mb-2 text-meta text-faint">
+        Şikâyet edilen kayıt bulunamadı — kalıcı olarak silinmiş olabilir.
+      </p>
+    );
+  }
+
+  return (
+    <div className="mb-2 flex flex-wrap items-center gap-2">
+      <Badge tone={durum.removed ? 'danger' : 'success'}>
+        {durum.removed ? 'İçerik yayından kaldırıldı' : 'İçerik yayında'}
+      </Badge>
+      {durum.removed && (
+        <>
+          <Button
+            size="sm"
+            variant="secondary"
+            disabled={busy || calisiyor}
+            onClick={() => void geriAl()}
+          >
+            {calisiyor ? 'Geri alınıyor…' : 'Yayına geri al'}
+          </Button>
+          <span className="text-meta text-faint">
+            Şikâyet haksız çıktıysa içerik metniyle birlikte geri gelir.
+          </span>
+        </>
+      )}
+    </div>
   );
 }

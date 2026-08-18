@@ -141,6 +141,20 @@ export interface ModerationItem {
   created_at: string;
   resolved_at: string | null;
   resolution_note: string | null;
+  /**
+   * ŞİKÂYETİ KİM AÇTI.
+   *
+   * Kolon 0007'den beri dolduruluyordu ama sorgu onu hiç çekmiyordu:
+   * moderatör kimin şikâyet ettiğini göremiyordu. Bu, tekrar eden
+   * şikâyetçiyi ve kötü niyetli bildirimi görünmez yapıyordu — aynı
+   * kişinin aynı kullanıcıyı beşinci kez bildirmesiyle ilk kez
+   * bildirmesi ekranda aynı görünüyordu.
+   *
+   * Oturumsuz bildirim mümkün olduğu için `null` olabiliyor.
+   */
+  reported_by: string | null;
+  /** Şikâyetçinin kullanıcı adı; profili silinmişse null. */
+  reporter_username: string | null;
 }
 
 export interface QueueResult {
@@ -168,10 +182,44 @@ export interface QueueResult {
  *     kuyruk düğmesinin arkasına saklanacak bir iş değil.
  *   · `message` — moderatör `messages` tablosunu okuyamıyor bile.
  */
-const REMOVABLE: Partial<Record<ModerationTarget, string>> = {
-  comment: 'photo_comments',
-  forum_thread: 'forum_threads',
-  forum_post: 'forum_posts',
+/**
+ * KALDIRILABİLİR HEDEFLER — tablo, kimlik kolonu ve gerekçe desteği.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * ÖNCEDEN YALNIZCA TABLO ADI VARDI VE ÜÇ HEDEF TANIYORDU
+ *
+ * Fotoğraf listede YOKTU. Sonuç, kuyruğun kullanıcıya yalan söylemesiydi:
+ * moderatör "Şikâyet haklı" diyor, kayıt "Kaldırıldı" durumuna geçiyor,
+ * ama fotoğrafı kaldıracak düğme hiç çizilmiyordu (`canRemoveContent`
+ * false). Canlıda tam olarak bu oldu — telif şikâyeti "Kaldırıldı"
+ * görünüyor, fotoğraf yayında duruyordu.
+ *
+ * İki alan eklendi çünkü tablolar birbirinin aynı değil:
+ *
+ *   · `idColumn` — şikâyet düğmesi fotoğraf ve ilanda SLUG gönderiyor,
+ *     forumda kimlik. `eq('id', slug)` sessizce sıfır satır günceller ve
+ *     PostgREST bunu hata saymaz: düğme çalışmış gibi görünür, hiçbir şey
+ *     olmazdı.
+ *   · `reason` — `removal_reason` kolonu yalnızca tartışma tablolarında
+ *     var. Fotoğrafa yazmaya kalkmak "column does not exist" ile
+ *     düşerdi.
+ */
+interface RemovableSpec {
+  table: string;
+  /** Şikâyet kaydındaki `target_id` bu kolonla eşleşiyor. */
+  idColumn: 'id' | 'slug';
+  /** Tabloda `removal_reason` var mı? */
+  reason: boolean;
+}
+
+const REMOVABLE: Partial<Record<ModerationTarget, RemovableSpec>> = {
+  photo: { table: 'astro_photos', idColumn: 'slug', reason: false },
+  comment: { table: 'photo_comments', idColumn: 'id', reason: true },
+  forum_thread: { table: 'forum_threads', idColumn: 'id', reason: true },
+  forum_post: { table: 'forum_posts', idColumn: 'id', reason: true },
+  listing: { table: 'listings', idColumn: 'slug', reason: false },
+  site: { table: 'observing_sites', idColumn: 'slug', reason: false },
+  event: { table: 'events', idColumn: 'slug', reason: false },
 };
 
 /** Kuyruktaki karar, içeriği de kaldırabiliyor mu? */
@@ -204,8 +252,8 @@ export async function removeContent(
   targetId: string,
   reason: string = VARSAYILAN_KALDIRMA_GEREKCESI
 ): Promise<void> {
-  const table = REMOVABLE[target];
-  if (!table) {
+  const spec = REMOVABLE[target];
+  if (!spec) {
     throw new Error(
       `${targetLabels[target]} bu ekrandan kaldırılamıyor; ilgili içerik panelinden yürütün.`
     );
@@ -215,15 +263,110 @@ export async function removeContent(
   if (!clientPromise) throw new Error('Supabase yapılandırılmamış');
 
   const client = await clientPromise;
-  const { error } = await client
-    .from(table)
+  const { data, error } = await client
+    .from(spec.table)
     .update({
       deleted_at: new Date().toISOString(),
-      removal_reason: reason.trim() || VARSAYILAN_KALDIRMA_GEREKCESI,
+      ...(spec.reason
+        ? { removal_reason: reason.trim() || VARSAYILAN_KALDIRMA_GEREKCESI }
+        : {}),
     })
-    .eq('id', targetId);
+    .eq(spec.idColumn, targetId)
+    .select(spec.idColumn);
 
   if (error) throw new Error(error.message);
+  /*
+   * SIFIR SATIR HATA SAYILIYOR. PostgREST "hiçbir şey eşleşmedi"yi hata
+   * döndürmez; `select` olmadan bu çağrı, yanlış kimlik kolonuyla ya da
+   * RLS reddiyle hiçbir şey yapmadan başarılı görünürdü — moderatör
+   * içeriği kaldırdığını sanıp yayında bırakırdı.
+   */
+  if (!data || data.length === 0) {
+    throw new Error(
+      'İçerik kaldırılamadı — kayıt bulunamadı ya da yetkiniz yok.'
+    );
+  }
+}
+
+/**
+ * KALDIRILMIŞ İÇERİĞİ YAYINA GERİ ALIR.
+ *
+ * Şikâyet sonradan haksız çıkabiliyor ve o durumda geri dönüş yolu
+ * yoktu: moderasyon kaydında yalnızca kaldırma düğmesi vardı, geri alma
+ * kayıt panelinin başka bir köşesindeydi ve şikâyetle bağı yoktu.
+ *
+ * Gövde arşivden geri geliyor: tartışma tablolarında `deleted_at`
+ * boşaltıldığında `app.tartisma_kaldirma` tetikleyicisi metni
+ * `removed_content`ten geri yazıyor ve arşiv satırını siliyor. Fotoğraf
+ * ve ilanda gövde hiç taşınmıyor, yalnızca bayrak kalkıyor.
+ */
+export async function restoreContent(
+  target: ModerationTarget,
+  targetId: string
+): Promise<void> {
+  const spec = REMOVABLE[target];
+  if (!spec) {
+    throw new Error(`${targetLabels[target]} bu ekrandan geri alınamıyor.`);
+  }
+
+  const clientPromise = getSupabase();
+  if (!clientPromise) throw new Error('Supabase yapılandırılmamış');
+
+  const client = await clientPromise;
+  const { data, error } = await client
+    .from(spec.table)
+    .update({
+      deleted_at: null,
+      ...(spec.reason ? { removal_reason: null } : {}),
+    })
+    .eq(spec.idColumn, targetId)
+    .select(spec.idColumn);
+
+  if (error) throw new Error(error.message);
+  if (!data || data.length === 0) {
+    throw new Error(
+      'İçerik geri alınamadı — kayıt bulunamadı ya da yetkiniz yok.'
+    );
+  }
+}
+
+export interface ContentState {
+  /** Kayıt bulundu mu? Bulunamadıysa kaldırma/geri alma da anlamsız. */
+  found: boolean;
+  removed: boolean;
+}
+
+/**
+ * Şikâyet edilen içerik ŞU AN yayında mı?
+ *
+ * Kuyruk durumu ile içeriğin durumu AYRI şeyler ve ayrıştıklarında
+ * moderatör bunu göremiyordu. Bu okuma, karar düğmelerinin doğrusunu
+ * göstermesini sağlıyor: yayındaysa "yayından kaldır", kaldırılmışsa
+ * "yayına geri al".
+ */
+export async function fetchContentState(
+  target: ModerationTarget,
+  targetId: string
+): Promise<ContentState> {
+  const spec = REMOVABLE[target];
+  if (!spec) return { found: false, removed: false };
+
+  const clientPromise = getSupabase();
+  if (!clientPromise) throw new Error('Supabase yapılandırılmamış');
+
+  const client = await clientPromise;
+  const { data, error } = await client
+    .from(spec.table)
+    .select(`${spec.idColumn}, deleted_at`)
+    .eq(spec.idColumn, targetId)
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  if (!data) return { found: false, removed: false };
+  return {
+    found: true,
+    removed: (data as { deleted_at: string | null }).deleted_at !== null,
+  };
 }
 
 /** Kuyruğu okur. Yetkisiz kullanıcıda boş liste döner (RLS). */
@@ -238,8 +381,10 @@ export async function fetchQueue(
   const client = await clientPromise;
   let query = client
     .from('moderation_queue')
+    /* Sütun listesi TEK PARÇA dize: birleştirilmiş bir ifade PostgREST'in
+       tip çıkarımını düşürüyor ve satırlar `unknown` olarak geliyor. */
     .select(
-      'id, target_type, target_id, target_path, status, reason, note, created_at, resolved_at, resolution_note'
+      'id, target_type, target_id, target_path, status, reason, note, created_at, resolved_at, resolution_note, reported_by'
     )
     .order('created_at', { ascending: false })
     .limit(100);
@@ -249,7 +394,42 @@ export async function fetchQueue(
   const { data, error } = await query;
   if (error) throw new Error(error.message);
 
-  const items = (data ?? []) as ModerationItem[];
+  const rows = (data ?? []) as Omit<ModerationItem, 'reporter_username'>[];
+
+  /*
+   * ŞİKÂYETÇİ ADLARI AYRI SORGUDA.
+   *
+   * `reported_by` yabancı anahtarı `auth.users`a bakıyor, `profiles`a
+   * değil — dolayısıyla PostgREST gömme ifadesi (`profiles!...`) bu
+   * ilişkiyi çözemiyor. Kuyruk en fazla yüz satır olduğu için tek ek
+   * sorgu yetiyor; satır başına sorgu atmak yüz istek demekti.
+   */
+  const ids = [
+    ...new Set(
+      rows.map((r) => r.reported_by).filter((v): v is string => !!v)
+    ),
+  ];
+
+  const adlar = new Map<string, string>();
+  if (ids.length > 0) {
+    const { data: profiller, error: profilHatasi } = await client
+      .from('profiles')
+      .select('id, username')
+      .in('id', ids);
+    /* Hata YUTULMUYOR ama kuyruğu da düşürmüyor: ad okunamadıysa
+       şikâyetler yine listelenmeli, yalnızca "kim" sütunu boş kalır. */
+    if (profilHatasi) throw new Error(profilHatasi.message);
+    for (const p of (profiller ?? []) as { id: string; username: string }[]) {
+      adlar.set(p.id, p.username);
+    }
+  }
+
+  const items: ModerationItem[] = rows.map((row) => ({
+    ...row,
+    reporter_username: row.reported_by
+      ? (adlar.get(row.reported_by) ?? null)
+      : null,
+  }));
   return { items, counts: countByStatus(items) };
 }
 

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Field } from '@/components/ui/Field';
 import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Input';
 import { useAuth } from '@/features/auth/AuthContext';
@@ -21,6 +22,9 @@ import { Alert } from '@/components/ui/Alert';
  * kimin şikâyet ettiğini çıkarmasına kapı açar. Arayüz bu yüzden "iletildi"
  * der ve orada durur — sahte bir durum takibi göstermez.
  */
+/** Şikâyet açıklamasının en az uzunluğu — gerekçesi bileşen içinde. */
+export const MIN_ACIKLAMA = 120;
+
 export function ReportButton({
   targetType,
   targetId,
@@ -52,6 +56,22 @@ export function ReportButton({
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState<ModerationReason>('spam');
   const [note, setNote] = useState(prefillNote ?? '');
+  /*
+   * AÇIKLAMA ARTIK ZORUNLU.
+   *
+   * İsteğe bağlıydı ve boş bırakılıyordu: moderatörün elinde yalnızca
+   * "telif ihlali" gibi bir etiket kalıyor, kararı verebilmek için
+   * içeriği kendi başına yorumlamak zorunda kalıyordu. Bir tıkla
+   * gönderilebilen şikâyet, kötüye kullanımı da ucuzlatıyor.
+   *
+   * Eşik 120 karakter: "bu fotoğraf çalıntı" cümlesi 20 karakter ve
+   * hiçbir şey anlatmıyor; 120 karakter, hangi kuralın nerede
+   * çiğnendiğini yazmaya yetecek en kısa metin. Üst sınır 2000'de
+   * kalıyor.
+   */
+  const aciklamaUzunluk = note.trim().length;
+  const aciklamaYeterli = aciklamaUzunluk >= MIN_ACIKLAMA;
+  const eksikKarakter = Math.max(0, MIN_ACIKLAMA - aciklamaUzunluk);
   const [state, setState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
   const [error, setError] = useState<string | null>(null);
 
@@ -61,6 +81,21 @@ export function ReportButton({
     setError(null);
 
     try {
+      /*
+       * TEMİZLENMİŞ METİN ÖLÇÜLÜYOR, ham girdi değil.
+       *
+       * `sanitizeText` etiketleri ve görünmez karakterleri atıyor; 120
+       * karakterlik bir `<b>` yığını istemcide geçip sunucuda kısıta
+       * takılırdı. Ölçüyü kaydedilecek metin üzerinden almak, iki
+       * tarafın aynı şeyi saymasını sağlıyor.
+       */
+      const temiz = sanitizeText(note, { multiline: true, maxLength: 2000 });
+      if (temiz.trim().length < MIN_ACIKLAMA) {
+        throw new Error(
+          `Açıklama en az ${MIN_ACIKLAMA} karakter olmalı — moderatörün kararı buna dayanıyor.`
+        );
+      }
+
       const clientPromise = getSupabase();
       if (!clientPromise) throw new Error('Veritabanı bağlantısı yok');
       const client = await clientPromise;
@@ -72,7 +107,7 @@ export function ReportButton({
         reason,
         // Serbest metin doğrudan moderatöre gidiyor; etiket ve görünmez
         // karakterler burada temizlenir (§15.4).
-        note: sanitizeText(note, { multiline: true, maxLength: 2000 }),
+        note: temiz,
         reported_by: user.id,
         status: 'pending',
       });
@@ -139,34 +174,66 @@ export function ReportButton({
         </p>
       ) : (
         <>
-          <label htmlFor="report-reason" className="label block">
-            Gerekçe
-          </label>
-          <Select
-            id="report-reason"
-            value={reason}
-            onChange={(e) => setReason(e.target.value as ModerationReason)}
-            className="mb-2 h-8 text-meta"
-          >
-            {Object.entries(reasonLabels).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </Select>
+          {/*
+            ETİKETLER `Field` İLE.
 
-          <label htmlFor="report-note" className="label block">
-            Açıklama (isteğe bağlı)
-          </label>
-          <textarea
-            id="report-note"
-            rows={3}
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            maxLength={2000}
-            placeholder="Moderatörün hızlı karar verebilmesi için somut yazın."
-            className="mb-2 w-full resize-y rounded-card border border-border bg-surface-2 px-2.5 py-2 text-meta leading-relaxed text-foreground outline-none placeholder:text-faint focus:border-primary"
-          />
+            Elle yazılan `<label className="label block">` etiketi kutuya
+            SIFIR mesafede bırakıyordu — `.label` sınıfının alt boşluğu
+            yok — ve etiket, altındaki kutunun kenarına biniyordu.
+            Boşluğu buraya elle eklemek aynı hatayı üçüncü bir yerde
+            tekrar etmek olurdu; `Field` bu aralığı uygulamanın her
+            yerinde zaten doğru veriyor.
+          */}
+          <div className="mb-3 grid gap-3">
+            <Field label="Gerekçe" htmlFor="report-reason">
+              <Select
+                id="report-reason"
+                value={reason}
+                onChange={(e) => setReason(e.target.value as ModerationReason)}
+                className="h-9 text-meta"
+              >
+                {Object.entries(reasonLabels).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+
+            <Field
+              label="Açıklama"
+              htmlFor="report-note"
+              hint={`Ne olduğunu somut yazın — en az ${MIN_ACIKLAMA} karakter.`}
+              error={
+                note.trim().length > 0 && !aciklamaYeterli
+                  ? `${eksikKarakter} karakter daha gerekiyor.`
+                  : undefined
+              }
+            >
+              <textarea
+                id="report-note"
+                rows={4}
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                maxLength={2000}
+                aria-describedby="report-note-sayac"
+                placeholder="Hangi kural çiğnendi, nerede? Örnek: telif ihlalinde özgün eserin adresi."
+                className="w-full resize-y rounded-card border border-border bg-surface-2 px-2.5 py-2 text-meta leading-relaxed text-foreground outline-none placeholder:text-faint focus:border-primary"
+              />
+            </Field>
+
+            {/* Sayaç ayrı satırda ve canlı: kullanıcı düğmenin neden
+                kapalı olduğunu aramamalı. */}
+            <p
+              id="report-note-sayac"
+              className={cn(
+                'tabular text-meta',
+                aciklamaYeterli ? 'text-success' : 'text-faint'
+              )}
+            >
+              {note.trim().length} / {MIN_ACIKLAMA} karakter
+            </p>
+          </div>
 
           {error && (
             <Alert variant="text" className="mb-2">
@@ -183,7 +250,7 @@ export function ReportButton({
         {configured && user && (
           <Button
             size="sm"
-            disabled={state === 'sending'}
+            disabled={state === 'sending' || !aciklamaYeterli}
             onClick={() => void submit()}
           >
             {state === 'sending' ? 'Gönderiliyor…' : 'Gönder'}
