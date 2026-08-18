@@ -122,7 +122,7 @@ Canlı pano: `docs/patch-2026-08-18/ilerleme.html`
 | X03 | P1 | Extra | Gizlilik | Public türevlerde EXIF/GPS sızıntısını önle | TESTED | e222c78 | vitest upload.test.ts: public türev EXIF'siz, ham dosya gizli bucket | Bekliyor |
 | X04 | P2 | Extra | İndirme | İleride owner download izni politikası | TESTED | e04bcb3 | vitest originalDownload.test: imzalı adres + RLS null; owner UI | Bekliyor |
 | X05 | P2 | Extra | Medya Temizliği | Social/thumbnail derivative TTL ve GC | TODO |  |  | Bekliyor |
-| X06 | P2 | Extra | Analitik | Export/download kullanım ölçümü | TODO |  |  | Bekliyor |
+| X06 | P2 | Extra | Analitik | Export/download kullanım ölçümü | TESTED | 176c15e | vitest downloadMetrics.test; migration download_events; 4 indirme noktası bağlı | Bekliyor |
 | X07 | P1 | Extra | Uzun Formlar | Draft/autosave standardı | TESTED | fb44905 | vitest useFormDraft.test: mount/autosave/clear; RegisterPage hook'a geçti | Bekliyor |
 | E09 | P1 | E | Navbar | Menüden 'Public profilim' girişini kaldır | TESTED | 07af5a2 | vitest: public profil girisi menude yok | Bekliyor |
 | E10 | P1 | E | Public Profil | Kapak görseli (banner) yükleme | TESTED | e3f2c48 | vitest domain/profile; npm run test:all | Bekliyor |
