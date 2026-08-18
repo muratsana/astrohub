@@ -39,9 +39,9 @@ Canlı pano: `docs/patch-2026-08-18/ilerleme.html`
 | A04 | P0 | A | Galeri | Galeri pagination sayfası geri dönüşte korunmalı | VERIFIED | 289eb13 | e2e: galeri suzgeci ve sayfasi geri donuste korunuyor | 18.08.2026 · kullanıcı canlıda kontrol etti |
 | A05 | P0 | A | Galeri | Galeri scroll/kart konumu geri dönüşte korunmalı | VERIFIED | 289eb13 | e2e: galeri kaydirma konumu geri donuste korunuyor | 18.08.2026 · kullanıcı canlıda kontrol etti |
 | A06 | P0 | A | Galeri | Arama/filtre/sıralama state'i geri dönüşte korunmalı | VERIFIED | 289eb13 | e2e: galeri suzgeci ve sayfasi geri donuste korunuyor | 18.08.2026 · kullanıcı canlıda kontrol etti |
-| A07 | P1 | A | İlanlar | İlan başına maksimum 5 fotoğraf yükleme | TODO |  |  | Bekliyor |
-| A08 | P1 | A | İlanlar | İlan fotoğraflarında merkezi Astrohub optimizasyon pipeline'ını kullan | TODO |  |  | Bekliyor |
-| A09 | P1 | A | İlanlar | İlan foto yönetimi: sil/değiştir/sırala/progress | TODO |  |  | Bekliyor |
+| A07 | P1 | A | İlanlar | İlan başına maksimum 5 fotoğraf yükleme | TESTED | 7737eda | vitest photos.test: LISTING_PHOTO_LIMIT=5; migration trigger 5 | Bekliyor |
+| A08 | P1 | A | İlanlar | İlan fotoğraflarında merkezi Astrohub optimizasyon pipeline'ını kullan | TESTED | 7737eda | uploadListingPhoto renderResized+checkImageFormat kullanıyor | Bekliyor |
+| A09 | P1 | A | İlanlar | İlan foto yönetimi: sil/değiştir/sırala/progress | TESTED | 7737eda | vitest reorderListingPhotos; sil/değiştir/sırala/progress UI | Bekliyor |
 | A10 | P1 | A | Fotoğraf Detayı | Benzer Fotoğraflar gerçek thumbnail göstermeli | TESTED | 6a54608 | RemoteImage thumbUrl; PhotoComparison.test aynı mekanizma; build yeşil | Bekliyor |
 | A11 | P1 | A | Fotoğraf Detayı | Teknik Karşılaştırma gerçek thumbnail göstermeli | TESTED | 6a54608 | vitest PhotoComparison.test.tsx: A/B gerçek thumbnail src | Bekliyor |
 | A12 | P0 | A | Saha | observing_sites canlı HTTP 400 hatası giderilmeli | VERIFIED | d1802f9 | REST 200 / 15 kayit; vitest sites.select.test.ts | 18.08.2026 · kullanıcı canlıda kontrol etti |
