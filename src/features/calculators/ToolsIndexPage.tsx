@@ -55,7 +55,7 @@ const GROUPS: { title: string; hint: string; paths: string[] }[] = [
   },
   {
     title: 'Kadraj',
-    hint: 'Hedef bu setup’a sığıyor mu',
+    hint: 'Hedef bu ekipmana sığıyor mu',
     paths: ['/araclar/kadraj', '/araclar/kadraj/mozaik'],
   },
   {
@@ -73,10 +73,10 @@ const GROUPS: { title: string; hint: string; paths: string[] }[] = [
  */
 const REFERENCE: { label: string; to: string; description: string }[] = [
   {
-    label: 'Ekipman ve Setup',
-    to: '/ekipman',
+    label: 'Ekipmanlarım',
+    to: '/hesap?sekme=ekipmanlarim',
     description:
-      'Setup’ını burada kur ve kaydet — bütün araçlar onu okur.',
+      'Ekipmanını kur ve kaydet — bütün araçlar onu okur.',
   },
 ];
 

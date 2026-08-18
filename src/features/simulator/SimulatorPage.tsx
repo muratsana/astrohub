@@ -135,7 +135,7 @@ export function SimulatorPage() {
     <>
       <PageMeta
         title="Simülatör"
-        description="Görüş alanı, pixel scale ve kadraj önizlemesi — hedefin setup\u2019ına sığıp sığmadığını gösterir."
+        description="Görüş alanı, pixel scale ve kadraj önizlemesi — hedefin ekipmanınıza sığıp sığmadığını gösterir."
         jsonLd={breadcrumbJsonLd([
           { name: 'Ana Sayfa', path: '/' },
           { name: 'Simülatör', path: '/araclar/kadraj' },

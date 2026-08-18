@@ -229,6 +229,10 @@
       "destination": "/app.html"
     },
     {
+      "source": "/ekipmanim/:id",
+      "destination": "/app.html"
+    },
+    {
       "source": "/elazig-astronomi-etkinlikleri",
       "destination": "/app.html"
     },

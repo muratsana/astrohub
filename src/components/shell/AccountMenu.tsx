@@ -63,6 +63,7 @@ export function AccountMenu({ username }: { username?: string | null }) {
   const girisler = [
     { to: '/hesap', label: 'Hesabım' },
     ...(username ? [{ to: '/hesap?sekme=profilim', label: 'Profilim' }] : []),
+    { to: '/hesap?sekme=ekipmanlarim', label: 'Ekipmanlarım' },
     { to: '/mesajlar', label: 'Mesajlarım' },
     ...(canAccessAdmin ? [{ to: '/admin', label: 'Yönetim' }] : []),
   ];

@@ -677,13 +677,24 @@ export const appRoutes = [
         ),
       },
       {
-        path: 'setup/:id',
+        /*
+         * "Setup" adı kullanıcı arayüzünden kalktı (bkz.
+         * `MyEquipmentPanel`); adres de hizalandı. Eski yol kalıcı
+         * yönlendirmeyle duruyor: paylaşılmış `/setup/<uuid>`
+         * bağlantıları dışarıda ve onları kırmak, kullanıcının
+         * paylaştığı ekipmanı yok etmek olurdu.
+         */
+        path: 'ekipmanim/:id',
         element: route(
           named(
             () => import('@/features/setups/SetupDetailPage'),
             'SetupDetailPage'
           )
         ),
+      },
+      {
+        path: 'setup/:id',
+        element: <RedirectParam to="/ekipmanim/:id" param="id" />,
       },
 
       /* ═════════════ HESAP VE YÖNETİM ═════════════ */

@@ -43,7 +43,7 @@ export function PrivacyPage() {
               </>,
               <>
                 <strong>İçerik verileri:</strong> yüklediğiniz astrofotoğraflar,
-                çekim günlüğü kayıtları, ekipman/setup bilgileri, yorumlar.
+                çekim günlüğü kayıtları, ekipman bilgileri, yorumlar.
               </>,
               <>
                 <strong>Konum verileri:</strong> fotoğraf ve gözlem noktalarına

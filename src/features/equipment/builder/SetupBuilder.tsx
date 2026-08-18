@@ -71,7 +71,8 @@ export function SetupBuilder({
   const [name, setName] = useState(initialName);
   const [description, setDescription] = useState('');
   const [purpose, setPurpose] = useState('');
-  const [visibility, setVisibility] = useState<SetupVisibility>('ozel');
+  /* Varsayılan görünür: gerekçe `saveSetup` içinde. */
+  const [visibility, setVisibility] = useState<SetupVisibility>('profilde');
   const [saved, setSaved] = useState(false);
 
   const bySlug = useMemo(
@@ -217,7 +218,7 @@ export function SetupBuilder({
         {onSave && (
           <Panel title="Setup’ı kaydet">
             <div className="space-y-3">
-              <Field label="Setup adı" htmlFor="sb-name">
+              <Field label="Ekipman adı" htmlFor="sb-name">
                 <Input
                   id="sb-name"
                   placeholder="ör. Yayla Geniş Alan Setup"
@@ -278,7 +279,7 @@ export function SetupBuilder({
                 </Button>
                 {saved && (
                   <span role="status" className="text-body-sm text-success">
-                    Kaydedildi — “Setup’larım” sekmesinde.
+                    Kaydedildi — “Ekipmanlarım” listesinde.
                   </span>
                 )}
                 {name.trim().length === 0 && filled > 0 && (

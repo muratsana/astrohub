@@ -30,19 +30,30 @@ import {
 } from '@/services/content/profileCommunities';
 import { useMyProfileStats } from '@/services/content/profileDashboard';
 import { isUsernameLocked } from '@/features/auth/accountSetup';
+import { MyEquipmentPanel } from '@/features/equipment/MyEquipmentPanel';
 import { AvatarEditor } from './AvatarEditor';
 import { PasswordPanel } from './PasswordPanel';
 import { DataExportPanel } from './DataExportPanel';
 
-type Tab = 'hesabim' | 'profilim';
+type Tab = 'hesabim' | 'profilim' | 'ekipmanlarim';
 
 const TAB_LABELS: Record<Tab, string> = {
   hesabim: 'Hesabım',
   profilim: 'Profilim',
+  ekipmanlarim: 'Ekipmanlarım',
 };
 
+/*
+ * EKİPMAN SEKMESİ BURAYA TAŞINDI (`/ekipman`ın üçüncü sekmesindeydi).
+ *
+ * Kişisel veri, herkese açık bir katalog sayfasının içinde duruyordu ve
+ * kimse bulamıyordu: canlıda bir tek kayıtlı ekipman vardı. Gerekçenin
+ * tamamı `MyEquipmentPanel` başlığında.
+ */
 function tabFromQuery(value: string | null): Tab {
-  return value === 'profilim' ? 'profilim' : 'hesabim';
+  if (value === 'profilim') return 'profilim';
+  if (value === 'ekipmanlarim') return 'ekipmanlarim';
+  return 'hesabim';
 }
 
 export function AccountPage() {
@@ -505,6 +516,8 @@ export function AccountPage() {
               onDelete={() => void deleteAccount()}
             />
           </div>
+        ) : activeTab === 'ekipmanlarim' ? (
+          <MyEquipmentPanel />
         ) : (
           <div className="grid gap-4">
             <AvatarEditor userId={user?.id} profile={profile} onDone={refresh} />

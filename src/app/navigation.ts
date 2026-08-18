@@ -406,7 +406,7 @@ export const siteMap: NavGroup[] = [
     title: 'Referans',
     items: [
       {
-        label: 'Ekipman Veritabanı',
+        label: 'Ekipman Kataloğu',
         to: '/ekipman',
         description: 'Teleskop, montür, kamera, filtre, reducer, barlow',
         keywords: ['teleskop', 'montür', 'kamera', 'filtre', 'ekipman'],
@@ -433,6 +433,15 @@ export const siteMap: NavGroup[] = [
         to: '/hesap',
         description: 'Profil bilgileri ve hesap ayarları',
         keywords: ['profil', 'hesap', 'ayar', 'kullanıcı adı'],
+      },
+      {
+        /* Ekipman modülünün üç kişisel sekmesi buraya birleşti
+           (bkz. `MyEquipmentPanel`); aranabilir olması için katalogla
+           karışan anahtar kelimeler de burada. */
+        label: 'Ekipmanlarım',
+        to: '/hesap?sekme=ekipmanlarim',
+        description: 'Kurduğun ekipmanlar, görünürlük ve envanter',
+        keywords: ['setup', 'ekipman', 'teleskop', 'kamera', 'montür'],
       },
       {
         label: 'Üye Paneli',

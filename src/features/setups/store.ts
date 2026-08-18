@@ -112,7 +112,20 @@ export function saveSetup(input: SaveInput, now: string): SavedSetup {
     name: input.name.trim() || 'Adsız setup',
     description: input.description?.trim() || undefined,
     purpose: input.purpose?.trim() || undefined,
-    visibility: input.visibility ?? existing?.visibility ?? 'ozel',
+    /*
+     * VARSAYILAN "PROFİLDE" — eskiden "ozel"di.
+     *
+     * Ekipman, profil vitrininin çekirdeği: "hangi teleskopla çekilmiş"
+     * sorusu bu sitede en çok sorulan şey. Varsayılan gizli olduğunda
+     * kimse görünürlüğü açmıyordu ve profiller boş duruyordu.
+     *
+     * Gizlemek isteyen kullanıcı hâlâ tek seçimle gizleyebiliyor;
+     * seçici hem kurulum formunda hem her kartın üstünde duruyor.
+     * Zaten kaydedilmiş kayıtlar DOKUNULMADAN kalıyor — kullanıcının
+     * bilerek "özel" yaptığı bir ekipmanı bir sürüm yükseltmesiyle
+     * yayına almak, ona sormadan verisini açmak olurdu.
+     */
+    visibility: input.visibility ?? existing?.visibility ?? 'profilde',
     isDefault: existing?.isDefault,
     draft: input.draft,
     createdAt: existing?.createdAt ?? now,

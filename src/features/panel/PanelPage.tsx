@@ -18,7 +18,6 @@ import {
 } from '@/domain/membership/quota';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { Badge, type BadgeTone } from '@/components/ui/Badge';
-import { listSetups } from '@/features/setups/storage';
 import { useSavedPhotos } from '@/services/content/collections';
 import {
   isListingPubliclyVisible,
@@ -168,11 +167,6 @@ export function PanelPage() {
   const { user, configured } = useAuth();
   const { section } = useParams<{ section?: string }>();
   /*
-   * Setup listesi her render'da değil, bölüm açıldığında okunuyor: liste
-   * `localStorage`'dan gelir ve panelin diğer bölümlerinde gereksiz.
-   */
-  const setups = section === 'setuplar' ? listSetups() : [];
-  /*
    * Kimlik yalnızca ilgili bölüm açıkken veriliyor: kanca `undefined`
    * kullanıcıyla sorgu atmıyor. Panelin her ziyaretinde ilan çekmek,
    * kullanıcının bakmadığı bir liste için istek harcamak olurdu.
@@ -305,7 +299,9 @@ export function PanelPage() {
       note: quotaKnown ? formatQuotaLabel(activePhotos, tier, photoLimit) : undefined,
     },
     { label: 'Fotoğraf Yükle', to: '/galeri/yukle' },
-    { label: "Setup'larım", to: '/panel/setuplar' },
+    /* Ekipman artık hesabın altında tek bir yerde (bkz.
+       `MyEquipmentPanel`); panel oraya işaret ediyor. */
+    { label: 'Ekipmanlarım', to: '/hesap?sekme=ekipmanlarim' },
     /*
      * "PLANLARIM" DEĞİL "PLANLAYICI".
      *
@@ -578,48 +574,23 @@ export function PanelPage() {
         )}
 
         {section === 'setuplar' && (
-          <Panel
-            title="Kayıtlı setup'lar"
-            status={`${setups.length} kayıt`}
-            className="mb-4"
-          >
-            {setups.length === 0 ? (
-              <p className="py-3 text-meta leading-relaxed text-muted-foreground">
-                Henüz kayıtlı setup yok. Uyumluluk aracında bir zincir kurup
-                kaydettiğinizde burada listelenir.{' '}
-                <Link to="/araclar/kadraj" className="text-primary">
-                  Setup kur →
-                </Link>
-              </p>
-            ) : (
-              <ul>
-                {setups.map((setup) => (
-                  <li key={setup.id} className="border-b border-border last:border-0">
-                    <Link
-                      to={`/setup/${setup.id}`}
-                      className="group flex items-baseline justify-between gap-3 py-2.5"
-                    >
-                      <span className="min-w-0">
-                        <span className="block truncate text-caption text-foreground group-hover:text-primary">
-                          {setup.name}
-                        </span>
-                        <span className="mt-0.5 block truncate text-meta text-muted-foreground">
-                          {setup.input.optic.name} · {setup.input.camera.name}
-                        </span>
-                      </span>
-                      <span className="tabular shrink-0 text-meta text-faint">
-                        {new Date(setup.savedAt).toLocaleDateString('tr-TR')}
-                      </span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
-            <p className="mt-2 text-meta leading-snug text-faint">
-              Setup'lar hesap sistemi gelene kadar bu tarayıcıda saklanır.
-              Paylaşmak için setup sayfasındaki bağlantıyı kopyalayın — bağlantı
-              değerleri kendi içinde taşır.
+          <Panel title="Kayıtlı ekipmanlar" className="mb-4">
+            {/*
+              BÖLÜM TAŞINDI, SİLİNMEDİ.
+
+              Ekipman kayıtları üç ayrı yerde duruyordu: burası, katalog
+              sayfasının iki sekmesi ve envanter. Hepsi hesabın altındaki
+              tek sayfada birleşti. Bu adres, paylaşılmış ya da yer imine
+              alınmış bağlantılar için duruyor — kullanıcıyı 404'e
+              düşürmek yerine yeni yerine gönderiyor.
+            */}
+            <p className="py-3 text-meta leading-relaxed text-muted-foreground">
+              Kayıtlı ekipmanlarınız artık hesabınızda. Kadraj aracından
+              kaydettiğiniz eski kayıtlar da orada listeleniyor.
             </p>
+            <ButtonLink to="/hesap?sekme=ekipmanlarim" size="sm">
+              Ekipmanlarım’a git
+            </ButtonLink>
           </Panel>
         )}
 

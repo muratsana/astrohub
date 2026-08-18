@@ -88,18 +88,18 @@ export function SetupDetailPage() {
   if (!setup || !report) {
     return (
       <>
-        <PageMeta title="Setup bulunamadı" noIndex />
+        <PageMeta title="Ekipman bulunamadı" noIndex />
         <Container className="py-8 sm:py-10">
           <PageHeader
             breadcrumb={[
               { label: 'Ana Sayfa', to: '/' },
-              { label: 'Setup' },
+              { label: 'Ekipman' },
             ]}
-            title="Setup bulunamadı"
+            title="Ekipman bulunamadı"
           />
           <EmptyState
             message="Bu setup bu cihazda kayıtlı değil"
-            hint="Setup'lar hesap sistemi gelene kadar tarayıcınızda saklanıyor. Başkasının paylaştığı bir bağlantıysa, bağlantının kodlanmış setup verisini (?d=…) içermesi gerekir."
+            hint="Kayıtlı ekipmanlarınız hesabınızda ve bu tarayıcıda saklanıyor. Başkasının paylaştığı bir bağlantıysa, bağlantının kodlanmış ekipman verisini (?d=…) içermesi gerekir."
             action={
               <ButtonLink to="/araclar/kadraj" size="sm">
                 Yeni Setup Kur
@@ -118,7 +118,7 @@ export function SetupDetailPage() {
   return (
     <>
       <PageMeta
-        title={`${setup.name} — Setup`}
+        title={`${setup.name} — Ekipman`}
         description={`${setup.input.optic.name} + ${setup.input.camera.name} kombinasyonunun uyumluluk raporu: yük, backfocus, örnekleme ve guide kontrolü.`}
         noIndex
       />
@@ -308,8 +308,8 @@ export function SetupDetailPage() {
                 >
                   Düzenle
                 </ButtonLink>
-                <ButtonLink to="/panel/setuplar" size="sm" variant="ghost">
-                  Kayıtlı setup'lar
+                <ButtonLink to="/hesap?sekme=ekipmanlarim" size="sm" variant="ghost">
+                  Ekipmanlarım
                 </ButtonLink>
               </div>
             </Panel>
