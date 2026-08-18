@@ -90,8 +90,20 @@ async function goto(route) {
    */
   await page.waitForFunction(
     (r) => {
+      /*
+       * YOL KARŞILAŞTIRILIYOR, SORGU DİZESİ DEĞİL.
+       *
+       * Birebir eşitlik arıyordu ve araçlar seçimlerini adreste taşımaya
+       * başlayınca (`?hedef=`, `?ekipman=`) koşul hiçbir zaman
+       * sağlanmıyordu: sayfa açılıyor, aktif hedefini adrese yazıyor ve
+       * bekleme on saniye sonra zaman aşımına düşüyordu. Test aracın
+       * hangi rotada olduğunu sormak istiyor, hangi hedefi seçtiğini
+       * değil.
+       */
       const hash = location.hash.replace(/^#/, '') || '/';
-      if (hash !== r) return false;
+      const path = hash.split('?')[0] || '/';
+      const beklenen = r.split('?')[0] || '/';
+      if (path !== beklenen) return false;
       if (document.querySelector('[data-route-loading]')) return false;
       return document.querySelector('h1') !== null;
     },
@@ -246,11 +258,14 @@ await scenario(
  * Senaryo hesabın gerçekten yaşadığı yere taşındı — kadrajda koşmaya
  * devam etseydi, kaldırılmış bir paneli arıyor olurdu.
  */
-await scenario('ekipman modülü backfocus zincirini raporlar', async () => {
-  await goto('/ekipman');
+await scenario('ekipman kurucu backfocus zincirini raporlar', async () => {
+  await goto('/hesap?sekme=ekipmanlarim');
+  await page.waitForSelector('button:has-text("Yeni ekipman kur")');
+  await page.click('button:has-text("Yeni ekipman kur")');
 
   /* Ara halka alanı builder'ın "Kullanıcı değerleri" panelinde; zincir
      bileşen seçilmeden de girdiyi kabul ediyor ve eksik veriyi söylüyor. */
+  await page.waitForSelector('#sb-spacer');
   await page.fill('#sb-spacer', '30');
   await page.waitForTimeout(400);
   const text = await page.evaluate(() => document.body.innerText);
@@ -478,13 +493,19 @@ await scenario(
 
 /* ══════════════════════ Setup planlayıcı ══════════════════════ */
 
-await scenario('ekipman modülü setup builder ile açılır', async () => {
-  // Varsayılan sekme katalog değil builder olmalı: modül bir ürün listesi
-  // değil planlama aracı.
-  await goto('/ekipman');
+await scenario('ekipman kurucu hesabın altında ve oturumsuz açılıyor', async () => {
+  /*
+   * Kurucu `/ekipman`ın varsayılan sekmesiydi; kişisel veri olduğu için
+   * hesabın altına taşındı. OTURUM GEREKTİRMİYOR ve bu bilinçli: setup
+   * kurmak için kaydolmak gerekmiyor, kayıt tarayıcıda duruyor.
+   */
+  await goto('/hesap?sekme=ekipmanlarim');
+
+  await page.waitForSelector('button:has-text("Yeni ekipman kur")');
+  await page.click('button:has-text("Yeni ekipman kur")');
+  await page.waitForSelector('#sb-spacer');
 
   const text = await page.evaluate(() => document.body.innerText);
-  assert(includesTr(text, 'setup oluştur'), 'builder sekmesi yok');
   assert(includesTr(text, 'temel bileşenler'), 'bileşen grupları çizilmedi');
   assert(includesTr(text, 'genel durum'), 'analiz paneli yok');
 
@@ -492,8 +513,17 @@ await scenario('ekipman modülü setup builder ile açılır', async () => {
   assert(includesTr(text, 'veri yetersiz'), 'eksik veri durumu bildirilmedi');
 });
 
-await scenario('katalog sekmesi listeyi tek seferde dökmez', async () => {
-  await goto('/ekipman?sekme=katalog');
+await scenario('/ekipman artık yalnızca katalog', async () => {
+  await goto('/ekipman');
+  const text = await page.evaluate(() => document.body.innerText);
+  assert(includesTr(text, 'ekipman kataloğu'), 'katalog başlığı yok');
+  /* Kişisel sekmeler taşındı; burada durmaları aynı veriyi iki yerden
+     yönetmek olurdu. */
+  assert(!includesTr(text, 'setup oluştur'), 'builder sekmesi hâlâ duruyor');
+});
+
+await scenario('katalog listeyi tek seferde dökmez', async () => {
+  await goto('/ekipman');
 
   const text = await page.evaluate(() => document.body.innerText);
   assert(includesTr(text, 'bir kategori seçin'), 'kategori seçimi istenmiyor');

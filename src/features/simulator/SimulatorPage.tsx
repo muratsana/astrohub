@@ -16,6 +16,7 @@ import { computeOptics } from '@/domain/astronomy/optics';
 import { parseAngularSizeArcmin } from '@/domain/astronomy/mosaic';
 import { TargetPicker } from '@/features/targets/TargetPicker';
 import { toolLink, useActiveTarget } from '@/features/targets/useActiveTarget';
+import { useActiveSetup } from '@/features/setups/ActiveSetupContext';
 import type { TargetKind } from '@/domain/targets/derive';
 import { breadcrumbJsonLd } from '@/lib/seo';
 import { PresetSelect } from '@/features/calculators/PresetSelect';
@@ -70,6 +71,7 @@ export function SimulatorPage() {
    * arama sunucu tarafında (`TargetPicker`).
    */
   const activeTarget = useActiveTarget();
+  const { setup: aktifEkipman } = useActiveSetup();
   const [targetKind, setTargetKind] = useState<TargetKind | 'hepsi'>('hepsi');
 
   /* Adreste hedef yoksa bilinen bir başlangıç: boş kadraj, aracın ne
@@ -190,11 +192,45 @@ export function SimulatorPage() {
                 <ButtonLink
                   to={toolLink('/araclar/kadraj/mozaik', {
                     hedef: activeTarget.slug,
+                    /* Ekipman da taşınıyor: mozaik panel sayısını
+                       kadrajdan hesaplıyor ve farklı bir ekipmanla
+                       açılan mozaik, kullanıcının az önce baktığı
+                       kadrajın cevabı olmaz. */
+                    ekipman: aktifEkipman?.id,
                   })}
                   size="sm"
                   variant="secondary"
                 >
                   Mozaik planlayıcıya aktar
+                </ButtonLink>
+              )}
+              {/*
+                ÜÇ DEVRETME, ÜÇ AYRI SORU.
+
+                Kadrajda hedefine bakan kullanıcının sonraki sorusu üçten
+                biri oluyor: "sığmıyor, kaç panel gerekir" (mozaik), "bu
+                gece ne kadar yükselir" (gece planı), "hangi filtreyle
+                kaç poz" (poz planı). Üçü de hedefi baştan aratıyordu.
+              */}
+              {activeTarget.slug && (
+                <ButtonLink
+                  to={toolLink('/bu-gece/plan', { hedef: activeTarget.slug })}
+                  size="sm"
+                  variant="secondary"
+                >
+                  Gece planına ekle
+                </ButtonLink>
+              )}
+              {activeTarget.slug && (
+                <ButtonLink
+                  to={toolLink('/araclar/poz-plani', {
+                    hedef: activeTarget.slug,
+                    ekipman: aktifEkipman?.id,
+                  })}
+                  size="sm"
+                  variant="secondary"
+                >
+                  Poz planına aktar
                 </ButtonLink>
               )}
               <ButtonLink to="/arsivim" size="sm" variant="secondary">

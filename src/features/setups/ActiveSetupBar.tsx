@@ -1,6 +1,7 @@
 import { Link } from 'react-router';
 import { Select } from '@/components/ui/Input';
 import { useActiveSetup } from './ActiveSetupContext';
+import { useSetupUrlSync } from './useSetupUrlSync';
 import { useEquipmentCatalog } from '@/services/content/equipment';
 import { SLOT_LABELS, type SlotId } from '@/domain/setup/types';
 
@@ -25,6 +26,9 @@ import { SLOT_LABELS, type SlotId } from '@/domain/setup/types';
  */
 export function ActiveSetupBar({ className }: { className?: string }) {
   const { setup, setActiveId, options, syncing } = useActiveSetup();
+  /* Seçim adresle eşitleniyor: şerit araç sayfalarının hepsinde
+     duruyor, yani devretme bağlantısının indiği her yerde. */
+  useSetupUrlSync();
   const catalog = useEquipmentCatalog();
 
   /* Şeritte üç ana parça görünüyor; gerisi setup sayfasında. Optik

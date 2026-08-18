@@ -33,6 +33,19 @@ const FigureImage = Node.create({
       src: { default: null },
       alt: { default: '' },
       caption: { default: null },
+      /* Mizanpaj öznitelikleri: blok modelindeki `align`/`width` ile
+         birebir. Düğümde tutulmasaydı TipTap `data-*` özniteliklerini
+         atardı ve editörde bir kez kaydedilen görsel hizasını
+         kaybederdi — `richContentFormat` tarafında korunması tek başına
+         yetmiyor. */
+      align: {
+        default: null,
+        parseHTML: (element) => element.getAttribute('data-align') || null,
+      },
+      width: {
+        default: null,
+        parseHTML: (element) => element.getAttribute('data-width') || null,
+      },
     };
   },
 
@@ -42,12 +55,18 @@ const FigureImage = Node.create({
         tag: 'figure',
         getAttrs: (node) => {
           if (!(node instanceof HTMLElement)) return false;
+          /* GALERİ DE BİR `<figure>`. Bu kural onu da yakalarsa galeri
+             ilk görseline indirgenir ve gerisi atılır; galerinin kendi
+             düğümü devralsın diye burada açıkça reddediliyor. */
+          if (node.hasAttribute('data-gallery')) return false;
           const img = node.querySelector('img');
           if (!img) return false;
           return {
             src: img.getAttribute('src'),
             alt: img.getAttribute('alt') ?? '',
             caption: node.querySelector('figcaption')?.textContent?.trim() || null,
+            align: node.getAttribute('data-align') || null,
+            width: node.getAttribute('data-width') || null,
           };
         },
       },
@@ -69,9 +88,12 @@ const FigureImage = Node.create({
     const caption = HTMLAttributes.caption
       ? ['figcaption', {}, HTMLAttributes.caption]
       : null;
+    const attrs: Record<string, string> = {};
+    if (HTMLAttributes.align) attrs['data-align'] = HTMLAttributes.align as string;
+    if (HTMLAttributes.width) attrs['data-width'] = HTMLAttributes.width as string;
     return [
       'figure',
-      {},
+      mergeAttributes(attrs),
       [
         'img',
         mergeAttributes({
@@ -81,6 +103,142 @@ const FigureImage = Node.create({
       ],
       ...(caption ? [caption] : []),
     ];
+  },
+});
+
+interface GalleryItem {
+  src: string;
+  alt: string;
+  caption?: string;
+}
+
+/**
+ * GALERİ DÜĞÜMÜ.
+ *
+ * Blok modelinde `gallery` vardı, çizim tarafı onu çiziyordu ve HTML
+ * gidiş-dönüşü yapısını koruyordu — ama editörde KARŞILIĞI YOKTU. Yani
+ * blok yalnızca içe aktarma ya da API ile girebiliyordu; yazar kendi
+ * galerisini kuramıyordu.
+ *
+ * ATOM: içi düzenlenmiyor, tek parça seçiliyor. Görsellerin arasına
+ * imleç koyup metin yazılabilseydi, ızgara yapısı kullanıcının
+ * farkında olmadan bozulabilirdi. Değişiklik araç çubuğundan yapılıyor.
+ *
+ * Öğeler ÖZNİTELİKTE duruyor, alt düğüm olarak değil: alt düğüm olsaydı
+ * her görsel ayrı bir `figureImage` olur ve atom kuralı anlamsızlaşırdı.
+ */
+const Gallery = Node.create({
+  name: 'gallery',
+  group: 'block',
+  atom: true,
+  draggable: true,
+
+  addAttributes() {
+    return {
+      items: {
+        default: [] as GalleryItem[],
+        parseHTML: (element) =>
+          Array.from(element.querySelectorAll(':scope > figure')).map((item) => {
+            const img = item.querySelector('img');
+            return {
+              src: img?.getAttribute('src') ?? '',
+              alt: img?.getAttribute('alt') ?? '',
+              caption:
+                item.querySelector('figcaption')?.textContent?.trim() || undefined,
+            };
+          }),
+      },
+      columns: {
+        default: null,
+        parseHTML: (element) => {
+          const raw = element.getAttribute('data-cols');
+          return raw === '2' || raw === '3' ? Number(raw) : null;
+        },
+      },
+      caption: {
+        default: null,
+        parseHTML: (element) =>
+          element.querySelector(':scope > figcaption')?.textContent?.trim() || null,
+      },
+    };
+  },
+
+  parseHTML() {
+    /* `priority` ŞART: `figureImage` de `figure` yakalıyor ve öntanımlı
+       öncelikte hangisinin kazanacağı tanım sırasına kalırdı. */
+    return [{ tag: 'figure[data-gallery]', priority: 60 }];
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    const items = (HTMLAttributes.items ?? []) as GalleryItem[];
+    const attrs: Record<string, string> = { 'data-gallery': '1' };
+    if (HTMLAttributes.columns) {
+      attrs['data-cols'] = String(HTMLAttributes.columns);
+    }
+    const children: unknown[] = items.map((item) => [
+      'figure',
+      {},
+      ['img', mergeAttributes({ src: item.src, alt: item.alt })],
+      ...(item.caption ? [['figcaption', {}, item.caption]] : []),
+    ]);
+    if (HTMLAttributes.caption) {
+      children.push(['figcaption', {}, HTMLAttributes.caption]);
+    }
+    return ['figure', mergeAttributes(attrs), ...children] as never;
+  },
+});
+
+/**
+ * İKİ SÜTUN — atom DEĞİL, gerçekten düzenlenebilir.
+ *
+ * Galeriden farkı: sütunların içeriği METİN ve metin editörde
+ * yazılabilmeli. Atom yapsaydık yazar "önce/sonra" karşılaştırmasını
+ * pencere kutucuklarıyla doldurmak zorunda kalırdı.
+ *
+ * `content: 'columnSection columnSection'` — tam olarak iki taraf. Serbest
+ * bıraksaydık üç sütunlu bir yapı kurulabilir, blok modeli onu
+ * karşılamadığı için kaydetmede sessizce yarısı düşerdi.
+ */
+const ColumnSection = Node.create({
+  name: 'columnSection',
+  content: 'block+',
+  defining: true,
+
+  addAttributes() {
+    return {
+      side: {
+        default: 'left',
+        parseHTML: (element) =>
+          element.getAttribute('data-side') === 'right' ? 'right' : 'left',
+      },
+    };
+  },
+
+  parseHTML() {
+    return [{ tag: 'section[data-side]' }];
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    return [
+      'section',
+      mergeAttributes({ 'data-side': (HTMLAttributes.side as string) ?? 'left' }),
+      0,
+    ];
+  },
+});
+
+const ColumnsBlock = Node.create({
+  name: 'columnsBlock',
+  group: 'block',
+  content: 'columnSection columnSection',
+  defining: true,
+
+  parseHTML() {
+    return [{ tag: 'div[data-columns]' }];
+  },
+
+  renderHTML() {
+    return ['div', mergeAttributes({ 'data-columns': '1' }), 0];
   },
 });
 
@@ -189,6 +347,9 @@ export function RichContentEditor({
       }),
       Image.configure({ inline: false, allowBase64: false }),
       FigureImage,
+      Gallery,
+      ColumnsBlock,
+      ColumnSection,
       Callout,
       Table.configure({ resizable: true }),
       TableRow,
@@ -270,6 +431,88 @@ export function RichContentEditor({
     const src = window.prompt('Görsel adresi (https://)');
     if (!src) return;
     insertImageFromUrl(src);
+  }
+
+  /**
+   * Galeri kurma — adres ve alt metni sırayla soruyor.
+   *
+   * `alt` HER GÖRSEL İÇİN İSTENİYOR ve boş bırakılırsa o görsel
+   * eklenmiyor. Kolaylık olsun diye atlanabilir yapmak, galerinin
+   * erişilebilirliği düşürmenin en kolay yolu olurdu — şema da zaten
+   * reddediyor, yani boş geçilen görsel kaydetmede sessizce düşerdi.
+   *
+   * Pencere kutucuğu ideal değil ama editörün geri kalanı (bağlantı,
+   * görsel, kutu başlığı) da böyle çalışıyor; buraya farklı bir etkileşim
+   * getirmek tek başına tutarsızlık olurdu.
+   */
+  function addGallery() {
+    if (!editor) return;
+    const items: GalleryItem[] = [];
+
+    for (let i = 0; i < 12; i += 1) {
+      const src = window.prompt(
+        `${i + 1}. görselin adresi (https://) — bitirmek için boş bırakın`
+      );
+      if (!src?.trim()) break;
+      if (!isAllowedImageHost(src.trim())) {
+        window.alert('Bu adres izinli bir görsel konağından değil.');
+        break;
+      }
+      const alt = window.prompt(`${i + 1}. görselin alt metni (zorunlu)`);
+      if (!alt?.trim()) {
+        window.alert('Alt metni olmayan görsel galeriye eklenemiyor.');
+        break;
+      }
+      items.push({ src: src.trim(), alt: alt.trim() });
+    }
+
+    /* İki görselin altı galeri değil; şema da bunu reddediyor. Kullanıcıyı
+       kaydetmede hata almaya bırakmak yerine burada söylüyoruz. */
+    if (items.length < 2) {
+      if (items.length === 1) {
+        window.alert('Galeri en az iki görsel istiyor; tek görsel eklendi.');
+        insertImageFromUrl(items[0].src);
+      }
+      return;
+    }
+
+    const caption = window.prompt('Galeri açıklaması (isteğe bağlı)')?.trim();
+    editor
+      .chain()
+      .focus()
+      .insertContent({
+        type: 'gallery',
+        attrs: {
+          items,
+          columns: items.length >= 3 ? 3 : 2,
+          caption: caption || null,
+        },
+      })
+      .run();
+  }
+
+  /** İki sütunlu karşılaştırma — içi editörde yazılıyor. */
+  function addColumns() {
+    if (!editor) return;
+    const bos = (side: 'left' | 'right') => ({
+      type: 'columnSection',
+      attrs: { side },
+      content: [{ type: 'paragraph' }],
+    });
+    editor
+      .chain()
+      .focus()
+      .insertContent({
+        type: 'columnsBlock',
+        content: [bos('left'), bos('right')],
+      })
+      .run();
+  }
+
+  /** Seçili görselin hizası ve genişliği. */
+  function setImageLayout(attrs: { align?: string | null; width?: string | null }) {
+    if (!editor) return;
+    editor.chain().focus().updateAttributes('figureImage', attrs).run();
   }
 
   const disabled = !editor;
@@ -362,6 +605,16 @@ export function RichContentEditor({
         <ToolbarButton disabled={disabled} onClick={addImage}>
           Görsel ekle
         </ToolbarButton>
+        <ToolbarButton disabled={disabled} onClick={addGallery}>
+          Galeri
+        </ToolbarButton>
+        <ToolbarButton
+          active={editor?.isActive('columnsBlock')}
+          disabled={disabled}
+          onClick={addColumns}
+        >
+          İki sütun
+        </ToolbarButton>
         <ToolbarButton
           disabled={disabled}
           onClick={() =>
@@ -393,6 +646,56 @@ export function RichContentEditor({
         >
           Temizle
         </ToolbarButton>
+        {/*
+          MİZANPAJ ŞERİDİ YALNIZCA GÖRSEL SEÇİLİYKEN.
+
+          Araç çubuğu zaten on dört düğme taşıyor; hizalama ve genişlik
+          her zaman görünseydi, kullanıcıların çoğunun hiç kullanmayacağı
+          altı düğme daha eklenirdi. Tablo düğmeleri de aynı desende.
+        */}
+        {editor?.isActive('figureImage') ? (
+          <>
+            <Divider />
+            {(
+              [
+                ['left', 'Sola'],
+                ['center', 'Ortaya'],
+                ['right', 'Sağa'],
+              ] as const
+            ).map(([value, label]) => (
+              <ToolbarButton
+                key={value}
+                active={editor.getAttributes('figureImage').align === value}
+                onClick={() => setImageLayout({ align: value })}
+              >
+                {label}
+              </ToolbarButton>
+            ))}
+            <Divider />
+            {(
+              [
+                ['full', 'Tam'],
+                ['half', 'Yarım'],
+                ['third', '⅓'],
+              ] as const
+            ).map(([value, label]) => (
+              <ToolbarButton
+                key={value}
+                active={
+                  (editor.getAttributes('figureImage').width ?? 'full') === value
+                }
+                /* "Tam" seçildiğinde öznitelik SİLİNİYOR, 'full' yazılmıyor:
+                   varsayılan davranışı açıkça yazmak, blok modelinde
+                   gereksiz alan biriktirir. */
+                onClick={() =>
+                  setImageLayout({ width: value === 'full' ? null : value })
+                }
+              >
+                {label}
+              </ToolbarButton>
+            ))}
+          </>
+        ) : null}
         {editor?.isActive('table') ? (
           <>
             <Divider />

@@ -110,14 +110,40 @@ export function AccountPage() {
     setPhoneVisible(contactState.contact.phoneVisible);
   }, [contactState.contact.phoneNumber, contactState.contact.phoneVisible]);
 
-  if (!authLoading && !user) {
+  /*
+   * OTURUMSUZ ZİYARETÇİ HESAP BİLGİLERİNİ GÖREMİYOR — AMA EKİPMAN
+   * KURUCUYU KULLANABİLİYOR.
+   *
+   * Kurucu `/ekipman` altındayken hesap gerektirmiyordu ve bu bilinçli
+   * bir karardı: setup kurmak için kaydolmak gerekmiyor, kayıt
+   * tarayıcıda duruyor ve giriş yapılınca hesaba taşınıyor (bkz.
+   * `store.ts` ve `SyncNotice`). Modül hesabın altına taşınırken bu
+   * kapı yanlışlıkla kapanmıştı: aracı denemek isteyen ziyaretçi
+   * "giriş yapın" ekranına düşüyordu.
+   *
+   * Şimdi yalnızca hesap ve profil sekmeleri oturum istiyor; ekipman ve
+   * tercihler sekmeleri ziyaretçiye açık ve ikisi de verinin nerede
+   * durduğunu kendisi söylüyor.
+   */
+  const oturumsuzAcik: Tab[] = ['ekipmanlarim', 'tercihler'];
+  if (!authLoading && !user && !oturumsuzAcik.includes(activeTab)) {
     return (
       <Container className="py-10">
         <PageHeader
           title="Hesabım"
           description="Profil bilgilerinizi görmek için giriş yapın."
         />
-        <ButtonLink to="/giris">Giriş yap</ButtonLink>
+        <div className="flex flex-wrap gap-2">
+          <ButtonLink to="/giris">Giriş yap</ButtonLink>
+          {/* Ziyaretçi için çalışan yol açıkta bırakılıyor: araca gelen
+              kullanıcıyı kayıt duvarına çarptırmak yerine içeri alıyoruz. */}
+          <ButtonLink
+            to="/hesap?sekme=ekipmanlarim"
+            variant="secondary"
+          >
+            Ekipman kurucuyu aç
+          </ButtonLink>
+        </div>
       </Container>
     );
   }
