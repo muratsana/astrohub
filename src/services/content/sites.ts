@@ -57,6 +57,30 @@ interface SiteRow {
   review_count: number;
 }
 
+/**
+ * ══════════════════════════════════════════════════════════════════════
+ * LİSTE SEÇİMİ — TEK PARÇA DİZE VE DIŞA AÇIK
+ *
+ * Bu dize canlıda `/saha` sayfasının tamamını devre dışı bıraktı.
+ * İçinde tabloda OLMAYAN dört kolon vardı (`image_url`, `image_credit`,
+ * `image_licence`, `source_urls`) ve PostgREST tek bir eksik kolonda
+ * sorgunun tamamını 400'e düşürüyor. Katalog katmanı hatada tohum
+ * veriye çekildiği için sayfa DOLU görünüyordu — yani veritabanındaki
+ * gerçek sahalar aylarca kimseye gösterilmedi ve ortada bir hata
+ * mesajı da yoktu.
+ *
+ * İki karar buradan çıktı:
+ *
+ *   · Dize BİRLEŞTİRİLMİYOR. PostgREST tipleri seçimi sabit dize olarak
+ *     okuyor; `'a, ' + 'b'` yazıldığında satır tipi çözülemiyor ve geri
+ *     dönen kayıtlar sessizce genel bir tipe düşüyor. Tip çözülseydi bu
+ *     hata derlemede yakalanırdı.
+ *   · Dize DIŞA AÇIK. Böylece testi, istediği kolonların eşleyicinin
+ *     bildiği alanlarla örtüştüğünü doğrulayabiliyor.
+ */
+export const SITE_SELECT =
+  'slug, name, region, approx_latitude, approx_longitude, altitude_m, bortle, sqm, road_access, south_horizon, best_months, has_water, has_toilet, has_electricity, has_cell_signal, has_tent_area, caravan_ok, description, warnings, image_url, image_credit, image_licence, source_urls, rating, review_count';
+
 function deriveSiteType(row: SiteRow): SiteType {
   const raw = (row as { site_type?: unknown }).site_type;
   if (typeof raw === 'string' && raw in siteTypeLabels) return raw as SiteType;
@@ -127,13 +151,7 @@ export function mapSiteRow(row: SiteRow): ObservingSite {
 async function fetchSites(client: SupabaseClient): Promise<ObservingSite[]> {
   const { data, error } = await client
     .from('observing_sites')
-    .select(
-      'slug, name, region, approx_latitude, approx_longitude, altitude_m, ' +
-        'bortle, sqm, road_access, south_horizon, best_months, has_water, ' +
-        'has_toilet, has_electricity, has_cell_signal, has_tent_area, ' +
-        'caravan_ok, description, warnings, image_url, image_credit, ' +
-        'image_licence, source_urls, rating, review_count'
-    )
+    .select(SITE_SELECT)
     .eq('status', 'yayinda')
     /*
      * SİLİNMİŞ KAYIT PUBLIC LİSTEDE DURMAZ.

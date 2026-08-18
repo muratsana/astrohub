@@ -18,7 +18,7 @@ Durumlar: `TODO` → `IN_PROGRESS` → `CODED` → `TESTED` → `READY_FOR_USER`
 | A09 | P1 | A | İlanlar | İlan foto yönetimi: sil/değiştir/sırala/progress | TODO |  |  | Bekliyor |
 | A10 | P1 | A | Fotoğraf Detayı | Benzer Fotoğraflar gerçek thumbnail göstermeli | TODO |  |  | Bekliyor |
 | A11 | P1 | A | Fotoğraf Detayı | Teknik Karşılaştırma gerçek thumbnail göstermeli | TODO |  |  | Bekliyor |
-| A12 | P0 | A | Saha | observing_sites canlı HTTP 400 hatası giderilmeli | TODO |  |  | Bekliyor |
+| A12 | P0 | A | Saha | observing_sites canlı HTTP 400 hatası giderilmeli | TESTED | d1802f9 | REST 200 / 15 kayit; vitest sites.select.test.ts | Bekliyor |
 | A13 | P1 | A | Ana Sayfa / Hava | Meteoblue 503 için graceful fallback | TODO |  |  | Bekliyor |
 | A14 | P1 | A | Etkinlikler | Mobil etkinlik görünümünde yatay taşma kaldırılmalı | TODO |  |  | Bekliyor |
 | B01 | P1 | B | Fotoğraf Detayı | İndir butonu dropdown açmalı | TODO |  |  | Bekliyor |
