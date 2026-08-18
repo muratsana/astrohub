@@ -23,6 +23,7 @@ import {
   usePublicProfileContact,
 } from '@/services/content/profile';
 import { ProfileBadges } from './ProfileBadges';
+import { ProfileShowcase } from './ProfileShowcase';
 
 /**
  * Kullanıcı profili (§7.15). Kamuya açık kısım fotoğraf kayıtlarından
@@ -251,12 +252,13 @@ export function ProfilePage() {
         )}
 
         {/*
-          "Takip etme, mesaj gönderme ve koleksiyonlar hesap sistemiyle
-          birlikte açılacak" cümlesi kaldırıldı: ilk ikisi artık başlıktaki
-          eylem şeridinde çalışıyor. Koleksiyonlar hâlâ yok ve tek başına
-          bir sayfa dibi vaadi olmayı hak etmiyor — geldiğinde kendi
-          bölümüyle gelecek.
+          VİTRİN: ekipman, ilan, yazı ve forum konuları.
+
+          Bu sayfa yalnızca fotoğraf ızgarasıydı; kullanıcının sitedeki
+          geri kalan üretimi profilinden bulunamıyordu. Bölümler boşsa
+          hiç çizilmiyor — gerekçe `ProfileShowcase` başlığında.
         */}
+        <ProfileShowcase userId={ownerId} username={username} />
       </Container>
     </>
   );
