@@ -110,7 +110,7 @@ Canlı pano: `docs/patch-2026-08-18/ilerleme.html`
 | H06 | P0 | H | İlerleme | PROGRESS_TRACKER.csv canlı agent tablosu | CODED | c9e50e5 | node scripts/patch-tracker.mjs --list P0 | Bekliyor |
 | H07 | P1 | H | İlerleme | Zorunlu status akışı | CODED | c9e50e5 | scripts/patch-tracker.mjs DURUMLAR | Bekliyor |
 | H08 | P1 | H | İlerleme | Commit/test evidence zorunlu | TESTED | 0f7e03f | node patch-tracker.mjs: kanıtsız TESTED reddediliyor (guard) | Bekliyor |
-| H09 | P0 | H | Git | Tüm uygulama doğrudan main | IN_PROGRESS | c9e50e5 |  | Bekliyor |
+| H09 | P0 | H | Git | Tüm uygulama doğrudan main | TESTED | b3d401a | git log origin/main: bu oturumun tüm commit'leri doğrudan main'de, dal açılmadı | Bekliyor |
 | H10 | P0 | H | Git | Gereksiz branch temizliği | VERIFIED | 9ede6f2 | git diff main origin/codex -- <yollar>: yalnizca is akisi tetikleyicisi farki | 18.08.2026 · kullanıcı canlıda kontrol etti |
 | H11 | P1 | H | Git | Stale PR temizliği | TODO |  |  | Bekliyor |
 | H12 | P0 | H | Git | Main history güvenliği | VERIFIED | 9ede6f2 | git log --oneline: 24d4074..d192795 dogrusal | 18.08.2026 · kullanıcı canlıda kontrol etti |
