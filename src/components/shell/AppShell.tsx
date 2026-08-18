@@ -1,7 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { Outlet, ScrollRestoration } from 'react-router';
 import { ConsentGate } from '@/features/auth/ConsentGate';
-import { ProfileSetupGate } from '@/features/auth/ProfileSetupGate';
 import { Topbar } from './Topbar';
 import { Footer } from './Footer';
 import { MobileNav } from './MobileNav';
@@ -13,6 +12,29 @@ import { AccountStatusNotice } from '@/features/auth/AccountStatusNotice';
 import { EmailVerificationNotice } from '@/features/auth/EmailVerificationNotice';
 import { MaintenanceGate } from '@/features/site/MaintenanceGate';
 import { RadioDock } from '@/features/radio/RadioDock';
+
+/**
+ * ══════════════════════════════════════════════════════════════════════
+ * KURULUM KAPISI TEMBEL — MODÜL HERKESE İNMESİN
+ *
+ * Kapı yalnızca profili eksik kullanıcıya ÇİZİLİYOR ama doğrudan içe
+ * aktarıldığı sürece modül HERKESE iniyordu: oturumsuz ziyaretçiye de,
+ * profili tamam olan kullanıcıya da.
+ *
+ * Bedeli ölçüldü ve küçük değil. Kapı `LocationTypeahead`i, o
+ * `provinces`i, o da 81 ili plakası ve koordinatıyla taşıyan
+ * `cities.ts`yi çekiyor — hepsi ilk rota paketinde. İlk rota JS bütçesi
+ * 200 kB'de duruyordu ve toplam tam 200.0'a dayanmıştı.
+ *
+ * `Suspense` sarmalayıcısı zaten yerindeydi; eksik olan tek şey
+ * bölmenin kendisiydi. Yedek `null`: kapı bir modal ve yüklenirken
+ * ekranda bir iskelet göstermek, olmayan bir şeyi bekletmek olurdu.
+ */
+const ProfileSetupGate = lazy(() =>
+  import('@/features/auth/ProfileSetupGate').then((m) => ({
+    default: m.ProfileSetupGate,
+  }))
+);
 
 /**
  * UYGULAMA KABUĞU — Rasathane Terminali.
