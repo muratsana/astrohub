@@ -1,0 +1,38 @@
+name: Live Product UX Audit
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/live-product-audit.mjs'
+      - '.github/workflows/live-product-audit.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Audit live Astrohub as a real browser user
+        env:
+          AUDIT_BASE_URL: https://astrohub.com.tr
+          AUDIT_TEST_EMAIL: ${{ secrets.AUDIT_TEST_EMAIL }}
+          AUDIT_TEST_PASSWORD: ${{ secrets.AUDIT_TEST_PASSWORD }}
+        run: node scripts/live-product-audit.mjs
+      - name: Upload audit evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-product-ux-audit
+          path: audit-artifacts/
+          retention-days: 14
+          if-no-files-found: warn
