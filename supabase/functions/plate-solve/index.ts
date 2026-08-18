@@ -29,6 +29,19 @@ import { createClient } from 'jsr:@supabase/supabase-js@2';
  *
  * ANAHTAR YAPILANDIRILMAMIŞSA sessizce ve BAŞARIYLA dönüyor: plate
  * solve isteğe bağlı bir eklenti, yokluğu yükleme akışını düşürmemeli.
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * ANAHTAR İKİ YERDEN OKUNUYOR — ÖNCE ORTAM, SONRA VAULT
+ *
+ * Ortam değişkeni STANDART yol ve önceliği hep onda. Vault yedeği,
+ * Dashboard erişimi olmayan bir ortamdan (CI, uzak oturum) anahtarın
+ * yine de tanımlanabilmesi için; proje aynı özelliğin iki sırrını
+ * (`plate_solve_poll_url`, `plate_solve_poll_secret`) zaten orada
+ * tutuyor.
+ *
+ * Sıra ters olsaydı Dashboard'dan girilen yeni anahtar sessizce yok
+ * sayılır ve "anahtarı değiştirdim ama eskisi kullanılıyor" gibi
+ * bulunması zor bir durum çıkardı.
  */
 
 const NOVA = 'https://nova.astrometry.net/api';
@@ -43,13 +56,32 @@ const NOVA = 'https://nova.astrometry.net/api';
  * birinde unutulursa hata "yetkisiz" gibi görünüp saatlerce aranırdı.
  */
 const NOVA_HEADERS = { Referer: 'https://nova.astrometry.net/api/login' };
-const API_KEY = Deno.env.get('ASTROMETRY_API_KEY');
+const ENV_KEY = Deno.env.get('ASTROMETRY_API_KEY');
 /** İmzalı adresin ömrü — kuyruk uzasa da çözücü indirebilmeli. */
 const SIGNED_URL_TTL = 3600;
 
-async function novaLogin(): Promise<string> {
+/*
+ * Vault okuması ÖRNEK ÖMRÜ BOYUNCA önbelleklenir: aynı sıcak örnek
+ * onlarca isteğe bakıyor ve her birinde veritabanına gitmek gereksiz.
+ * `undefined` "henüz sorulmadı", `null` "sorduk, yok" demek — ikisini
+ * ayırmak, olmayan bir anahtarı her istekte yeniden sormayı önlüyor.
+ */
+let vaultKey: string | null | undefined;
+
+async function resolveApiKey(
+  admin: ReturnType<typeof createClient>
+): Promise<string | null> {
+  if (ENV_KEY) return ENV_KEY;
+  if (vaultKey !== undefined) return vaultKey;
+
+  const { data, error } = await admin.rpc('astrometry_anahtari');
+  vaultKey = !error && typeof data === 'string' && data.trim() ? data : null;
+  return vaultKey;
+}
+
+async function novaLogin(apiKey: string): Promise<string> {
   const body = new URLSearchParams({
-    'request-json': JSON.stringify({ apikey: API_KEY }),
+    'request-json': JSON.stringify({ apikey: apiKey }),
   });
   const response = await fetch(`${NOVA}/login`, {
     method: 'POST',
@@ -74,13 +106,6 @@ Deno.serve(async (req: Request) => {
     });
 
   if (req.method !== 'POST') return json(405, { hata: 'yalnızca POST' });
-
-  if (!API_KEY) {
-    return json(200, {
-      durum: 'yok',
-      aciklama: 'ASTROMETRY_API_KEY tanımlı değil; plate solve atlandı.',
-    });
-  }
 
   let photoId: string | undefined;
   try {
@@ -153,6 +178,22 @@ Deno.serve(async (req: Request) => {
   );
 
   /*
+   * ANAHTAR KONTROLÜ ARTIK YETKİDEN SONRA.
+   *
+   * Eskiden en başta duruyordu ve anahtar yokken oturumsuz bir çağrı
+   * bile 200 alıyordu. Sıra değişti çünkü Vault okuması servis rolü
+   * istiyor; yan faydası, yetkisiz çağrının artık 401 alması.
+   */
+  const apiKey = await resolveApiKey(admin);
+  if (!apiKey) {
+    return json(200, {
+      durum: 'yok',
+      aciklama:
+        'astrometry.net anahtarı tanımlı değil (ne ASTROMETRY_API_KEY ne Vault); plate solve atlandı.',
+    });
+  }
+
+  /*
    * ORİJİNAL DEĞİL, GÖSTERİM KOPYASI GÖNDERİLİYOR.
    *
    * Çözüm için yıldız KONUMLARI yeterli; 6 MB'lık orijinali dış bir
@@ -174,7 +215,7 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const session = await novaLogin();
+    const session = await novaLogin(apiKey);
 
     const response = await fetch(`${NOVA}/url_upload`, {
       method: 'POST',
