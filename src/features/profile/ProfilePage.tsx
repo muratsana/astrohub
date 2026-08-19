@@ -211,7 +211,7 @@ export function ProfilePage() {
           renkte. Kapağın içine oturtmak fotoğrafın bir köşesini yer,
           altına almak ikisini birbirinden kopuk iki öğe yapardı.
         */}
-        <header className="relative mb-6 overflow-hidden rounded-card border border-border bg-surface-1">
+        <header className="relative mb-6 rounded-card border border-border bg-surface-1">
           {/*
             ══════════════════════════════════════════════════════════════
             KAPAK BÜTÜN BLOĞUN ARKA PLANI
@@ -234,9 +234,16 @@ export function ProfilePage() {
             oturtuyor. Renk temanın kendi belirtecinden geliyor, yani
             üç temada da doğru.
           */}
-          <div aria-hidden className="absolute inset-0">
+          <div
+            aria-hidden
+            className="absolute inset-0 overflow-hidden rounded-card"
+          >
             {bannerUrl ? (
-              <img src={bannerUrl} alt="" className="h-full w-full object-cover" />
+              <img
+                src={bannerUrl}
+                alt=""
+                className="h-full w-full object-cover"
+              />
             ) : (
               <div
                 className="h-full w-full"
@@ -257,105 +264,108 @@ export function ProfilePage() {
                 yalnızca yükseklik veriyor. */}
             <div className="h-32 w-full sm:h-44 lg:h-52" />
 
-          <div className="px-4 pb-4 sm:px-6 sm:pb-5">
-            <div className="-mt-10 flex flex-wrap items-end gap-x-4 gap-y-3 sm:-mt-12">
-              <div className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-full border-4 border-surface-1 bg-surface-2 sm:h-24 sm:w-24">
-                {avatarUrl ? (
-                  <img
-                    src={avatarUrl}
-                    alt={`${displayName} profil fotoğrafı`}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <span className="text-h3 text-muted-foreground">
-                    {displayName.slice(0, 1).toUpperCase()}
-                  </span>
-                )}
-              </div>
+            <div className="px-4 pb-4 sm:px-6 sm:pb-5">
+              <div className="-mt-10 grid gap-4 sm:-mt-12 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+                <div className="flex min-w-0 items-end gap-4">
+                  <div className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-full border-4 border-surface-1 bg-surface-2 sm:h-24 sm:w-24">
+                    {avatarUrl ? (
+                      <img
+                        src={avatarUrl}
+                        alt={`${displayName} profil fotoğrafı`}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-h3 text-muted-foreground">
+                        {displayName.slice(0, 1).toUpperCase()}
+                      </span>
+                    )}
+                  </div>
 
-              <div className="min-w-0 flex-1">
-                <h1 className="type-page truncate text-foreground">
-                  {displayName}
-                </h1>
-                <p className="tabular truncate text-meta text-muted-foreground">
-                  @{username}
-                  {kendiKonumu && (
-                    <>
-                      {' · '}
-                      <span className="not-tabular">{kendiKonumu}</span>
-                    </>
+                  <div className="min-w-0 pb-1">
+                    <h1 className="type-page truncate text-foreground">
+                      {displayName}
+                    </h1>
+                    <p className="tabular truncate text-meta text-muted-foreground">
+                      @{username}
+                      {kendiKonumu && (
+                        <>
+                          {' · '}
+                          <span className="not-tabular">{kendiKonumu}</span>
+                        </>
+                      )}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex min-w-0 flex-wrap items-center gap-2 lg:justify-end">
+                  {websiteUrl && (
+                    <a
+                      href={websiteUrl}
+                      target="_blank"
+                      rel={EXTERNAL_LINK_REL}
+                      className="inline-flex h-8 shrink-0 items-center justify-center rounded-card border border-border-strong px-3.5 text-meta font-medium leading-none text-foreground transition-colors hover:border-primary hover:text-primary"
+                    >
+                      Portfolyo
+                    </a>
                   )}
-                </p>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-2">
-                {websiteUrl && (
-                  <a
-                    href={websiteUrl}
-                    target="_blank"
-                    rel={EXTERNAL_LINK_REL}
-                    className="inline-flex h-8 shrink-0 items-center justify-center rounded-card border border-border-strong px-3.5 text-meta font-medium leading-none text-foreground transition-colors hover:border-primary hover:text-primary"
-                  >
-                    Portfolyo
-                  </a>
-                )}
-                {publicContact.contact?.phoneNumber && (
-                  <a
-                    href={`tel:${publicContact.contact.phoneNumber.replace(/\s+/g, '')}`}
-                    className="inline-flex h-8 shrink-0 items-center justify-center rounded-card border border-border-strong px-3.5 text-meta font-medium leading-none text-foreground transition-colors hover:border-primary hover:text-primary"
-                  >
-                    Telefon
-                  </a>
-                )}
-                <UserActions
-                  targetUserId={ownerId}
-                  displayName={displayName}
-                  follow={follow}
-                />
-                {/*
-                  PROFİL ŞİKÂYETİ hedef KİMLİĞİYLE gidiyor, kullanıcı adıyla
-                  değil: ad değiştirilebiliyor ve değiştiği anda şikâyet
-                  kaydı kime ait olduğunu kaybederdi. Kimlik yoksa düğme hiç
-                  çizilmiyor — tohum profillerin veritabanı satırı yok ve
-                  kullanıcı adını kimlik yerine koymak, moderatörün
-                  açamayacağı bir kayıt üretirdi.
-                */}
-                {ownerId && (
-                  <ReportButton
-                    compact
-                    targetType="profile"
-                    targetId={ownerId}
-                    targetPath={`/profil/${username}`}
+                  {publicContact.contact?.phoneNumber && (
+                    <a
+                      href={`tel:${publicContact.contact.phoneNumber.replace(/\s+/g, '')}`}
+                      className="inline-flex h-8 shrink-0 items-center justify-center rounded-card border border-border-strong px-3.5 text-meta font-medium leading-none text-foreground transition-colors hover:border-primary hover:text-primary"
+                    >
+                      Telefon
+                    </a>
+                  )}
+                  <UserActions
+                    targetUserId={ownerId}
+                    displayName={displayName}
+                    follow={follow}
+                    showFollowLists={false}
                   />
-                )}
+                  {/*
+                    PROFİL ŞİKÂYETİ hedef KİMLİĞİYLE gidiyor, kullanıcı adıyla
+                    değil: ad değiştirilebiliyor ve değiştiği anda şikâyet
+                    kaydı kime ait olduğunu kaybederdi. Kimlik yoksa düğme hiç
+                    çizilmiyor — tohum profillerin veritabanı satırı yok ve
+                    kullanıcı adını kimlik yerine koymak, moderatörün
+                    açamayacağı bir kayıt üretirdi.
+                  */}
+                  {ownerId && (
+                    <ReportButton
+                      compact
+                      targetType="profile"
+                      targetId={ownerId}
+                      targetPath={`/profil/${username}`}
+                    />
+                  )}
+                </div>
               </div>
-            </div>
 
-            {/*
+              {/*
               SAYAÇ ŞERİDİ. Profilin "kim bu" sorusuna verdiği ilk cevap:
               kaç kare, ne kadar entegrasyon, kaç takipçi. Üçü de zaten
               hesaplanıyordu ama sayfanın altına dağılmıştı.
             */}
-            <dl className="mt-4 flex flex-wrap gap-x-6 gap-y-2 border-t border-border pt-3 text-meta">
-              <ProfilSayaci etiket="fotoğraf" deger={userPhotos.length} />
-              <ProfilSayaci
-                etiket="entegrasyon"
-                deger={formatIntegration(totalSeconds)}
-              />
-              <ProfilSayaci etiket="takipçi" deger={follow.followers} />
-              <ProfilSayaci
-                etiket="takip edilen"
-                deger={follow.followingCount}
-              />
-            </dl>
+              <dl className="mt-4 flex flex-wrap gap-x-6 gap-y-2 border-t border-border pt-3 text-meta">
+                <ProfilSayaci etiket="fotoğraf" deger={userPhotos.length} />
+                <ProfilSayaci
+                  etiket="entegrasyon"
+                  deger={formatIntegration(totalSeconds)}
+                />
+                <ProfilSayaci etiket="takipçi" deger={follow.followers} />
+                <ProfilSayaci
+                  etiket="takip edilen"
+                  deger={follow.followingCount}
+                />
+              </dl>
 
-            {(profile?.bio || userPhotos.length > 0) && (
-              <p className="mt-3 max-w-[65ch] text-body-sm text-muted-foreground">
-                {profile?.bio ?? `${userPhotos.length} yayımlanmış kayıt.`}
-              </p>
-            )}
+              {(profile?.bio || userPhotos.length > 0) && (
+                <p className="mt-3 max-w-[65ch] text-body-sm text-muted-foreground">
+                  {profile?.bio ?? `${userPhotos.length} yayımlanmış kayıt.`}
+                </p>
+              )}
 
-            {/*
+              {/*
               "ÇEKTİĞİ İLLER" ROZET ŞERİDİ KALDIRILDI.
 
               Şerit, aynı ili üç farklı yazımla gösterme sorunundan
@@ -367,10 +377,10 @@ export function ProfilePage() {
               Kişinin kendi konumu duruyor — o bir beyan ve adının
               yanında bir kez görünüyor.
             */}
-            <div className="mt-3 flex flex-wrap items-center gap-1.5">
-              <ProfileBadges userId={ownerId} />
+              <div className="mt-3 flex flex-wrap items-center gap-1.5">
+                <ProfileBadges userId={ownerId} />
+              </div>
             </div>
-          </div>
           </div>
         </header>
 
@@ -389,7 +399,9 @@ export function ProfilePage() {
           <Readout
             label="En karanlık saha"
             value={
-              bortleValues.length > 0 ? `Bortle ${Math.min(...bortleValues)}` : '—'
+              bortleValues.length > 0
+                ? `Bortle ${Math.min(...bortleValues)}`
+                : '—'
             }
             tone="muted"
             hint={bortleValues.length > 0 ? 'kayıtlardan' : 'kayıt yok'}

@@ -32,6 +32,7 @@ export function UserActions({
   targetUserId,
   displayName,
   follow: disaridan,
+  showFollowLists = true,
 }: {
   targetUserId: string | undefined;
   displayName: string;
@@ -43,6 +44,7 @@ export function UserActions({
    * profil açılışında aynı iki sayımı boşuna tekrarlamak olurdu.
    */
   follow?: FollowState;
+  showFollowLists?: boolean;
 }) {
   const { user } = useAuth();
   /* Dışarıdan durum geldiyse kendi sorgumuzu KURMUYORUZ: `undefined`
@@ -116,19 +118,20 @@ export function UserActions({
         takipçi" görüyor ve kimler olduğunu öğrenemiyordu — sayı bir
         çıkmazdı. Liste yalnızca açıldığında çekiliyor.
       */}
-      <div className="mt-2">
-        <FollowLists
-          userId={targetUserId}
-          followers={follow.followers}
-          following={follow.followingCount}
-        />
-      </div>
+      {showFollowLists && (
+        <div className="mt-2">
+          <FollowLists
+            userId={targetUserId}
+            followers={follow.followers}
+            following={follow.followingCount}
+          />
+        </div>
+      )}
 
       {blocked && (
         <p className="mt-1 text-meta leading-relaxed text-muted-foreground">
           {displayName} engellendi: birbirinize mesaj gönderemez ve takip
-          edemezsiniz. Engeli kaldırsan bile takip kendiliğinden geri
-          gelmez.
+          edemezsiniz. Engeli kaldırsan bile takip kendiliğinden geri gelmez.
         </p>
       )}
 
