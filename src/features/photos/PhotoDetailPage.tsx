@@ -1045,7 +1045,7 @@ export function SaveChip({ photo }: { photo: AstroPhoto }) {
       >
         {etiket}
       </summary>
-      <div className="absolute right-0 z-30 mt-2 w-[min(340px,calc(100vw-32px))] rounded-card border border-border bg-surface-1 p-3 text-left shadow-2xl shadow-black/30">
+      <div className="absolute right-0 z-30 mt-2 w-[min(340px,calc(100vw-32px))] rounded-card border border-border-strong bg-surface-1 p-3 text-left">
         <label
           htmlFor={`collection-${photo.id}`}
           className="label mb-1.5 block"
