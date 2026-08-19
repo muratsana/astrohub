@@ -21,9 +21,8 @@ import {
   validateListing,
   type NewListingInput,
 } from '@/services/content/listings';
-import { formatBytes } from '@/domain/membership/quota';
 import {
-  LISTING_PHOTO_BUDGET_BYTES,
+  LISTING_PHOTO_BUDGET_LABEL,
   LISTING_PHOTO_LIMIT,
 } from '@/services/marketplace/photos';
 import type { ListingCondition } from './data';
@@ -474,7 +473,7 @@ export function NewListingPage() {
                     </span>{' '}
                     ekleyebilirsiniz. Her fotoğraf{' '}
                     <span className="text-muted-foreground">
-                      {formatBytes(LISTING_PHOTO_BUDGET_BYTES)}
+                      {LISTING_PHOTO_BUDGET_LABEL}
                     </span>{' '}
                     sınırına otomatik optimize edilir; bu bütçeye sığmayan
                     dosyalarda daha düşük çözünürlük istenir.

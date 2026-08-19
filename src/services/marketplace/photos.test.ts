@@ -25,6 +25,7 @@ vi.mock('@/services/supabase/client', () => ({
 
 import {
   LISTING_PHOTO_BUDGET_BYTES,
+  LISTING_PHOTO_BUDGET_LABEL,
   LISTING_PHOTO_LIMIT,
   reorderListingPhotos,
 } from './photos';
@@ -40,6 +41,7 @@ describe('LISTING_PHOTO_LIMIT (A07)', () => {
 
   it('fotoğraf başına 5 MB bütçe kullanır', () => {
     expect(LISTING_PHOTO_BUDGET_BYTES).toBe(5 * 1024 * 1024);
+    expect(LISTING_PHOTO_BUDGET_LABEL).toBe('5 MB');
   });
 });
 

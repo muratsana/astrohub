@@ -7,11 +7,10 @@ import {
   fetchListingPhotos,
   reorderListingPhotos,
   uploadListingPhoto,
-  LISTING_PHOTO_BUDGET_BYTES,
+  LISTING_PHOTO_BUDGET_LABEL,
   LISTING_PHOTO_LIMIT,
   type ListingPhoto,
 } from '@/services/marketplace/photos';
-import { formatBytes } from '@/domain/membership/quota';
 import { PlateFrame } from '@/components/media/PlateFrame';
 import { StarField } from '@/components/media/StarField';
 import { tintFromSeed } from '@/components/media/tints';
@@ -323,7 +322,7 @@ export function ListingPhotos({ listing }: { listing: Listing }) {
 
           <span className="text-meta text-faint">
             {photos.length}/{LISTING_PHOTO_LIMIT} · fotoğraf başına{' '}
-            {formatBytes(LISTING_PHOTO_BUDGET_BYTES)}
+            {LISTING_PHOTO_BUDGET_LABEL}
           </span>
         </div>
       )}

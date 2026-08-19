@@ -33,6 +33,7 @@ export const LISTING_MAX_EDGE = 1600;
 
 /** İlan fotoğrafı başına depolama sınırı. */
 export const LISTING_PHOTO_BUDGET_BYTES = 5 * 1024 * 1024;
+export const LISTING_PHOTO_BUDGET_LABEL = '5 MB';
 
 /**
  * İlan başına üst sınır (A07). Asıl kural veritabanı tetikleyicisinde —
@@ -139,7 +140,7 @@ export async function uploadListingPhoto(
   }
   if (!resized.withinBudget) {
     throw new Error(
-      'Fotoğraf 5 MB sınırına sığacak şekilde optimize edilemedi. Daha düşük çözünürlüklü bir dosya deneyin.'
+      `Fotoğraf ${LISTING_PHOTO_BUDGET_LABEL} sınırına sığacak şekilde optimize edilemedi. Daha düşük çözünürlüklü bir dosya deneyin.`
     );
   }
 
