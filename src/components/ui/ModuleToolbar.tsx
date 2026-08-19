@@ -34,7 +34,7 @@ export function ModuleToolbar<M extends string = ViewMode>({
   view,
   extra,
   columns,
-  primaryFilters = 3,
+  primaryFilters = 99,
   showResultCount = true,
   className,
   filterClassName,
@@ -71,7 +71,7 @@ export function ModuleToolbar<M extends string = ViewMode>({
             primaryCount={primaryFilters}
             collapseQuery="(max-width: 1099px)"
             className={cn(
-              '!mb-0 [&>*]:!min-w-[8rem] [&>*]:!flex-none [&>*:first-child]:!min-w-[14rem] [&>*:first-child]:flex-1 [&_[role=tablist]]:!flex-nowrap [&_[role=tab]]:!whitespace-nowrap',
+              '!mb-0 flex-nowrap overflow-x-auto overscroll-x-contain pb-1 [scrollbar-width:thin] md:pb-0 [&>*]:!min-w-[8rem] [&>*]:!flex-none [&>*:first-child]:!min-w-[14rem] [&>*:first-child]:flex-1 [&_[role=tablist]]:!flex-nowrap [&_[role=tab]]:!whitespace-nowrap',
               filterClassName
             )}
           >

@@ -19,4 +19,28 @@ describe('listingsSpec', () => {
     expect(result.items.length).toBeGreaterThan(0);
     expect(result.items.every((listing) => listing.city === city)).toBe(true);
   });
+
+  it('teslim facet kargo ve elden teslim ilanlarını ayırır', () => {
+    const kargo = applyQuery(
+      listings,
+      {
+        ...EMPTY_QUERY,
+        facets: { teslim: ['kargo'] },
+        sort: listingsSpec.defaultSort,
+      },
+      listingsSpec
+    );
+    const elden = applyQuery(
+      listings,
+      {
+        ...EMPTY_QUERY,
+        facets: { teslim: ['elden'] },
+        sort: listingsSpec.defaultSort,
+      },
+      listingsSpec
+    );
+
+    expect(kargo.items.every((listing) => listing.shippingOk)).toBe(true);
+    expect(elden.items.every((listing) => !listing.shippingOk)).toBe(true);
+  });
 });

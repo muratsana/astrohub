@@ -42,6 +42,12 @@ export const listingsSpec: ExplorerSpec<Listing> = {
       valueOf: (l) => (l.hasInvoice ? 'evet' : null),
       labelOf: () => 'evet',
     },
+    {
+      param: 'teslim',
+      label: 'Teslim',
+      valueOf: (l) => (l.shippingOk ? 'kargo' : 'elden'),
+      labelOf: (v) => (v === 'kargo' ? 'Kargo var' : 'Elden teslim'),
+    },
     { param: 'durum', label: 'Durum', valueOf: (l) => l.condition },
   ],
 
@@ -70,8 +76,16 @@ export const listingsSpec: ExplorerSpec<Listing> = {
       label: 'En yeni',
       compare: (a, b) => b.postedAt.localeCompare(a.postedAt),
     },
-    { value: 'ucuz', label: 'En düşük fiyat', compare: byNumber((l) => l.price, 'asc') },
-    { value: 'pahali', label: 'En yüksek fiyat', compare: byNumber((l) => l.price) },
+    {
+      value: 'ucuz',
+      label: 'En düşük fiyat',
+      compare: byNumber((l) => l.price, 'asc'),
+    },
+    {
+      value: 'pahali',
+      label: 'En yüksek fiyat',
+      compare: byNumber((l) => l.price),
+    },
     {
       value: 'satici',
       label: 'Satıcı puanı',

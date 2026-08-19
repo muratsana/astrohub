@@ -29,7 +29,7 @@ import { useExplorer } from '@/features/explorer/useExplorer';
 import { DistrictFilterCell } from '@/features/explorer/DistrictFilterCell';
 import type { RangeValue } from '@/features/explorer/query';
 import { listingsSpec } from './listingsSpec';
-import type { Listing } from './data';
+import type { Listing, ListingCondition } from './data';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
 import { cities as turkeyCities } from '@/features/location/cities';
@@ -49,6 +49,14 @@ const categoryOptions = categories.map((c) => ({
   value: c,
   label: c === 'hepsi' ? 'Tümü' : equipmentCategoryLabels[c],
 }));
+
+const listingConditions: (ListingCondition | 'hepsi')[] = [
+  'hepsi',
+  'Sıfır gibi',
+  'Çok iyi',
+  'İyi',
+  'Yıpranmış',
+];
 
 /**
  * İKİNCİ EL PAZARYERİ (§7.13).
@@ -87,12 +95,21 @@ export function MarketplacePage() {
   const ex = useExplorer(catalog.items, listingsSpec);
   const result = ex.items;
   const category = ex.query.facets.kategori?.[0] ?? 'hepsi';
+  const city = ex.query.facets.sehir?.[0] ?? 'hepsi';
+  const condition = ex.query.facets.durum?.[0] ?? 'hepsi';
+  const delivery = ex.query.facets.teslim?.[0] ?? 'hepsi';
+  const invoice = ex.query.facets.faturali?.[0] ?? 'hepsi';
   const cities = turkeyCities.map((city) => city.name);
 
   /** Kategori sekmeleri tek seçim: bir sekme şeridi, çoklu liste değil. */
   const setCategory = (next: string) => {
     if (category !== 'hepsi') ex.toggleFacet('kategori', category);
     if (next !== 'hepsi' && next !== category) ex.toggleFacet('kategori', next);
+  };
+
+  const setSingleFacet = (param: string, current: string, next: string) => {
+    if (current !== 'hepsi') ex.toggleFacet(param, current);
+    if (next !== 'hepsi' && next !== current) ex.toggleFacet(param, next);
   };
 
   return (
@@ -142,15 +159,13 @@ export function MarketplacePage() {
             onChange: setView,
             modes: ['grid', 'list', 'table'],
           }}
-          primaryFilters={99}
-          filterClassName="flex-wrap"
           showResultCount={false}
         >
           <FilterCell
             label="Ara"
             htmlFor="listing-search"
             active={ex.searchInput.trim().length > 0}
-            className="min-w-[21rem] flex-[2_1_21rem]"
+            className="min-w-[17rem] flex-[2_1_17rem]"
           >
             <Input
               id="listing-search"
@@ -165,7 +180,7 @@ export function MarketplacePage() {
             label="Kategori"
             htmlFor="listing-category"
             active={category !== 'hepsi'}
-            className="min-w-[12rem]"
+            className="min-w-[10rem]"
           >
             <Select
               id="listing-category"
@@ -187,18 +202,13 @@ export function MarketplacePage() {
           <FilterCell
             label="Şehir"
             htmlFor="listing-city"
-            active={(ex.query.facets.sehir?.[0] ?? 'hepsi') !== 'hepsi'}
+            active={city !== 'hepsi'}
+            className="min-w-[10rem]"
           >
             <Select
               id="listing-city"
-              value={ex.query.facets.sehir?.[0] ?? 'hepsi'}
-              onChange={(e) => {
-                const mevcut = ex.query.facets.sehir?.[0];
-                if (mevcut) ex.toggleFacet('sehir', mevcut);
-                if (e.target.value !== 'hepsi') {
-                  ex.toggleFacet('sehir', e.target.value);
-                }
-              }}
+              value={city}
+              onChange={(e) => setSingleFacet('sehir', city, e.target.value)}
               className={filterControlClass}
             >
               <option value="hepsi">Tüm şehirler</option>
@@ -220,21 +230,57 @@ export function MarketplacePage() {
             }}
           />
           <FilterCell
+            label="Durum"
+            htmlFor="listing-condition"
+            active={condition !== 'hepsi'}
+            className="min-w-[9.5rem]"
+          >
+            <Select
+              id="listing-condition"
+              value={condition}
+              onChange={(e) =>
+                setSingleFacet('durum', condition, e.target.value)
+              }
+              className={filterControlClass}
+            >
+              {listingConditions.map((item) => (
+                <option key={item} value={item}>
+                  {item === 'hepsi' ? 'Tüm durumlar' : item}
+                </option>
+              ))}
+            </Select>
+          </FilterCell>
+          <FilterCell
+            label="Teslim"
+            htmlFor="listing-delivery"
+            active={delivery !== 'hepsi'}
+            className="min-w-[9.5rem]"
+          >
+            <Select
+              id="listing-delivery"
+              value={delivery}
+              onChange={(e) =>
+                setSingleFacet('teslim', delivery, e.target.value)
+              }
+              className={filterControlClass}
+            >
+              <option value="hepsi">Tüm teslim</option>
+              <option value="kargo">Kargo var</option>
+              <option value="elden">Elden teslim</option>
+            </Select>
+          </FilterCell>
+          <FilterCell
             label="Fatura"
             htmlFor="listing-invoice"
-            active={(ex.query.facets.faturali?.length ?? 0) > 0}
-            className="min-w-[11rem]"
+            active={invoice !== 'hepsi'}
+            className="min-w-[8.5rem]"
           >
             <Select
               id="listing-invoice"
-              value={ex.query.facets.faturali?.[0] ?? 'hepsi'}
-              onChange={(event) => {
-                const mevcut = ex.query.facets.faturali?.[0];
-                if (mevcut) ex.toggleFacet('faturali', mevcut);
-                if (event.target.value !== 'hepsi') {
-                  ex.toggleFacet('faturali', event.target.value);
-                }
-              }}
+              value={invoice}
+              onChange={(e) =>
+                setSingleFacet('faturali', invoice, e.target.value)
+              }
               className={filterControlClass}
             >
               <option value="hepsi">Tüm ilanlar</option>
@@ -347,7 +393,7 @@ function ListingPriceFilter({
     <FilterCell
       label="Fiyat"
       active={Boolean(value && (value.min !== null || value.max !== null))}
-      className="min-w-[16rem]"
+      className="min-w-[14rem]"
     >
       <span className="flex items-center gap-1.5">
         {input('min', min, setMin)}

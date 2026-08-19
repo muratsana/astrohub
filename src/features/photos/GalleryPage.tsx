@@ -270,8 +270,6 @@ export function GalleryPage() {
 
         {/* Filtre paneli */}
         <ModuleToolbar
-          primaryFilters={99}
-          filterClassName="flex-wrap"
           activeFilters={{
             chips: ex.chips,
             onRemove: ex.removeChip,
