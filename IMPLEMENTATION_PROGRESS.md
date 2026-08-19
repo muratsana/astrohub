@@ -91,14 +91,14 @@ Canlı pano: `docs/patch-2026-08-18/ilerleme.html`
 | E06 | P1 | E | Public Profil | Profil içerik bölümleri accordion/collapsible | TESTED | 869f024 | vitest Panel.test.tsx: collapsible <details>/<summary>, defaultOpen | Bekliyor |
 | E07 | P2 | E | Public Profil | Bölüm deep-link / hash | TESTED | 869f024 | vitest ProfilePage.test.tsx: hash ile bölüme scrollIntoView | Bekliyor |
 | E08 | P1 | E | Public Profil | Public profil responsive | TESTED | 869f024 | check:a11y 5 rota; preview profil/hesap 320px docW 320 taşmasız; collapsible mobilde tek sütun | Bekliyor |
-| F01 | P1 | F | Ekipmanlarım | Kayıtlı setup'ı sonradan Düzenle | TODO |  |  | Bekliyor |
-| F02 | P1 | F | Ekipmanlarım | Birden fazla filtre desteği | TODO |  |  | Bekliyor |
-| F03 | P1 | F | Katalog | Ekipman mükerrerlerini canonical merge ile temizle | TODO |  |  | Bekliyor |
-| F04 | P1 | F | Katalog | Canonical model + variant + alias | TODO |  |  | Bekliyor |
+| F01 | P1 | F | Ekipmanlarım | Kayıtlı setup'ı sonradan Düzenle | TESTED | fb2a5dc | vitest store/filters/seriesGap/catalogMerge; prod'da merge+rollback uçtan uca doğrulandı | Bekliyor |
+| F02 | P1 | F | Ekipmanlarım | Birden fazla filtre desteği | TESTED | fb2a5dc | vitest store/filters/seriesGap/catalogMerge; prod'da merge+rollback uçtan uca doğrulandı | Bekliyor |
+| F03 | P1 | F | Katalog | Ekipman mükerrerlerini canonical merge ile temizle | TESTED | fb2a5dc | vitest store/filters/seriesGap/catalogMerge; prod'da merge+rollback uçtan uca doğrulandı | Bekliyor |
+| F04 | P1 | F | Katalog | Canonical model + variant + alias | TESTED | fb2a5dc | vitest store/filters/seriesGap/catalogMerge; prod'da merge+rollback uçtan uca doğrulandı | Bekliyor |
 | F05 | P1 | F | Katalog | PrimaLuceLab EAGLE legacy/aktif seri kapsamı | TODO |  |  | Bekliyor |
-| F06 | P1 | F | Katalog | Diğer markalarda seri-gap analizi | TODO |  |  | Bekliyor |
-| F07 | P2 | F | Katalog | Katalog source/verification metadata | TODO |  |  | Bekliyor |
-| F08 | P0 | F | Katalog | Dedup migration backup/rollback | TODO |  |  | Bekliyor |
+| F06 | P1 | F | Katalog | Diğer markalarda seri-gap analizi | TESTED | fb2a5dc | vitest store/filters/seriesGap/catalogMerge; prod'da merge+rollback uçtan uca doğrulandı | Bekliyor |
+| F07 | P2 | F | Katalog | Katalog source/verification metadata | TESTED | fb2a5dc | vitest store/filters/seriesGap/catalogMerge; prod'da merge+rollback uçtan uca doğrulandı | Bekliyor |
+| F08 | P0 | F | Katalog | Dedup migration backup/rollback | TESTED | fb2a5dc | vitest store/filters/seriesGap/catalogMerge; prod'da merge+rollback uçtan uca doğrulandı | Bekliyor |
 | G01 | P2 | G | Fotoğraf Detayı | Puanlama panelini aksiyon satırına taşı | TESTED | 7fdded8 |  | Bekliyor |
 | G02 | P2 | G | Fotoğraf Detayı | 1–10 puan popover | TESTED | 7fdded8 |  | Bekliyor |
 | G03 | P2 | G | Fotoğraf Detayı | Puanlama erişilebilirliği | TESTED | 7fdded8 | vitest RatingChip.test.tsx | Bekliyor |
