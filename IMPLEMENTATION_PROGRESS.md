@@ -112,9 +112,9 @@ Canlı pano: `docs/patch-2026-08-18/ilerleme.html`
 | H08 | P1 | H | İlerleme | Commit/test evidence zorunlu | TESTED | 0f7e03f | node patch-tracker.mjs: kanıtsız TESTED reddediliyor (guard) | Bekliyor |
 | H09 | P0 | H | Git | Tüm uygulama doğrudan main | TESTED | b3d401a | git log origin/main: bu oturumun tüm commit'leri doğrudan main'de, dal açılmadı | Bekliyor |
 | H10 | P0 | H | Git | Gereksiz branch temizliği | VERIFIED | 9ede6f2 | git diff main origin/codex -- <yollar>: yalnizca is akisi tetikleyicisi farki | 18.08.2026 · kullanıcı canlıda kontrol etti |
-| H11 | P1 | H | Git | Stale PR temizliği | TODO |  |  | Bekliyor |
+| H11 | P1 | H | Git | Stale PR temizliği | TESTED | b096d4d | gh list_pull_requests: 0 açık PR; git ls-remote: yalnız main | Bekliyor |
 | H12 | P0 | H | Git | Main history güvenliği | VERIFIED | 9ede6f2 | git log --oneline: 24d4074..d192795 dogrusal | 18.08.2026 · kullanıcı canlıda kontrol etti |
-| H13 | P1 | H | Kod Temizliği | Dead code/debug/audit geçici dosya temizliği | IN_PROGRESS |  |  | Bekliyor |
+| H13 | P1 | H | Kod Temizliği | Dead code/debug/audit geçici dosya temizliği | TESTED | b096d4d | vitest deadCode.test: iki yönlü ölü kod sayacı; 6 ölü dosya silindi | Bekliyor |
 | H14 | P0 | H | Final QA | Tam canlı ürün auditi yeniden koş | TODO |  |  | Bekliyor |
 | H15 | P0 | H | Final QA | Kullanıcı doğrulama kapısı | TODO |  |  | Bekliyor |
 | X01 | P1 | Extra | Medya Mimarisi | Asset türev registry | TESTED | 1218a84 | vitest derivatives.test; asset_derivatives migration prod'da | Bekliyor |
