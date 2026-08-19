@@ -35,13 +35,16 @@ import { PreferencesPanel } from '@/features/preferences/PreferencesPanel';
 import { AvatarEditor, BannerEditor } from './AvatarEditor';
 import { PasswordPanel } from './PasswordPanel';
 import { DataExportPanel } from './DataExportPanel';
+import { CollectionsPanel } from './CollectionsPanel';
 
-type Tab = 'hesabim' | 'profilim' | 'ekipmanlarim' | 'tercihler';
+type Tab =
+  'hesabim' | 'profilim' | 'ekipmanlarim' | 'koleksiyonlarim' | 'tercihler';
 
 const TAB_LABELS: Record<Tab, string> = {
   hesabim: 'Hesabım',
   profilim: 'Profilim',
   ekipmanlarim: 'Ekipmanlarım',
+  koleksiyonlarim: 'Koleksiyonlarım',
   tercihler: 'Tercihler',
 };
 
@@ -55,6 +58,7 @@ const TAB_LABELS: Record<Tab, string> = {
 function tabFromQuery(value: string | null): Tab {
   if (value === 'profilim') return 'profilim';
   if (value === 'ekipmanlarim') return 'ekipmanlarim';
+  if (value === 'koleksiyonlarim') return 'koleksiyonlarim';
   if (value === 'tercihler') return 'tercihler';
   return 'hesabim';
 }
@@ -137,10 +141,7 @@ export function AccountPage() {
           <ButtonLink to="/giris">Giriş yap</ButtonLink>
           {/* Ziyaretçi için çalışan yol açıkta bırakılıyor: araca gelen
               kullanıcıyı kayıt duvarına çarptırmak yerine içeri alıyoruz. */}
-          <ButtonLink
-            to="/hesap?sekme=ekipmanlarim"
-            variant="secondary"
-          >
+          <ButtonLink to="/hesap?sekme=ekipmanlarim" variant="secondary">
             Ekipman kurucuyu aç
           </ButtonLink>
         </div>
@@ -194,7 +195,9 @@ export function AccountPage() {
       setSelectedClub('');
       setMessage('Topluluk üyelik isteği onaya gönderildi.');
     } catch (e) {
-      setFailure(e instanceof Error ? e.message : 'Topluluk isteği gönderilemedi.');
+      setFailure(
+        e instanceof Error ? e.message : 'Topluluk isteği gönderilemedi.'
+      );
     } finally {
       setClubBusy(false);
     }
@@ -229,7 +232,11 @@ export function AccountPage() {
 
   return (
     <>
-      <PageMeta title="Hesabım" description="Astrohub profil ayarları." noIndex />
+      <PageMeta
+        title="Hesabım"
+        description="Astrohub profil ayarları."
+        noIndex
+      />
 
       <Container className="py-8 sm:py-10">
         <PageHeader
@@ -238,7 +245,11 @@ export function AccountPage() {
           description="Hesap bilgileri ve public profil vitrini aynı modülde yönetilir."
           actions={
             profile ? (
-              <ButtonLink to={`/profil/${profile.username}`} size="sm" variant="secondary">
+              <ButtonLink
+                to={`/profil/${profile.username}`}
+                size="sm"
+                variant="secondary"
+              >
                 Public profili aç
               </ButtonLink>
             ) : undefined
@@ -263,7 +274,9 @@ export function AccountPage() {
         </div>
 
         {loading && (
-          <p className="mb-4 text-body-sm text-muted-foreground">Profil yükleniyor…</p>
+          <p className="mb-4 text-body-sm text-muted-foreground">
+            Profil yükleniyor…
+          </p>
         )}
         {error && (
           <p className="mb-4 rounded-card border border-danger/45 bg-surface-1 px-3 py-2 text-body-sm text-danger">
@@ -301,7 +314,10 @@ export function AccountPage() {
                     readOnly={usernameLocked}
                     aria-readonly={usernameLocked}
                     onChange={(e) =>
-                      setEdit((value) => ({ ...value, username: e.target.value }))
+                      setEdit((value) => ({
+                        ...value,
+                        username: e.target.value,
+                      }))
                     }
                   />
                 </Field>
@@ -312,15 +328,15 @@ export function AccountPage() {
                     <span className="tabular">/profil/{profile?.username}</span>{' '}
                     adresinde yayında ve bu bağlantı paylaşılmış olabilir.
                     Düzeltilmesi gereken bir durum varsa{' '}
-                    <span className="text-foreground">iletişim</span> sayfasından
-                    yazın.
+                    <span className="text-foreground">iletişim</span>{' '}
+                    sayfasından yazın.
                   </p>
                 ) : (
                   usernameChanged && (
                     <p className="rounded-card border border-warning/40 bg-surface-2 px-2.5 py-2 text-meta leading-snug text-warning">
-                      Bu <strong>tek seferlik</strong> bir seçim: kaydettiğinizde
-                      kullanıcı adınız kilitlenir ve bir daha değiştirilemez.
-                      Profiliniz{' '}
+                      Bu <strong>tek seferlik</strong> bir seçim:
+                      kaydettiğinizde kullanıcı adınız kilitlenir ve bir daha
+                      değiştirilemez. Profiliniz{' '}
                       <span className="tabular">/profil/{edit.username}</span>{' '}
                       adresinde yayınlanacak.
                     </p>
@@ -350,9 +366,7 @@ export function AccountPage() {
                        öğrenilen bir zorunluluk, kullanıcıyı formu
                        ikinci kez doldurmaya gönderir. */
                     hint="İl / ilçe seçilir. Zorunlu — konuma bağlı bölümler şehre göre hesaplanıyor."
-                    error={
-                      edit.city.trim() ? undefined : 'Şehir seçilmeli.'
-                    }
+                    error={edit.city.trim() ? undefined : 'Şehir seçilmeli.'}
                   >
                     <LocationTypeahead
                       id="p-location"
@@ -366,7 +380,11 @@ export function AccountPage() {
                         }))
                       }
                       onClear={() =>
-                        setEdit((value) => ({ ...value, city: '', district: '' }))
+                        setEdit((value) => ({
+                          ...value,
+                          city: '',
+                          district: '',
+                        }))
                       }
                       allowProvinceOnly
                     />
@@ -514,11 +532,17 @@ export function AccountPage() {
                 {membershipsState.memberships.length > 0 && (
                   <div className="flex flex-wrap gap-2">
                     {membershipsState.memberships.map((membership) => {
-                      const club = clubs.find((item) => item.slug === membership.clubSlug);
+                      const club = clubs.find(
+                        (item) => item.slug === membership.clubSlug
+                      );
                       return (
                         <Badge
                           key={membership.clubSlug}
-                          tone={membership.status === 'approved' ? 'success' : 'warning'}
+                          tone={
+                            membership.status === 'approved'
+                              ? 'success'
+                              : 'warning'
+                          }
                         >
                           {club?.name ?? membership.clubSlug} ·{' '}
                           {membership.status === 'approved'
@@ -571,28 +595,50 @@ export function AccountPage() {
           </div>
         ) : activeTab === 'ekipmanlarim' ? (
           <MyEquipmentPanel />
+        ) : activeTab === 'koleksiyonlarim' ? (
+          <CollectionsPanel />
         ) : activeTab === 'tercihler' ? (
           <PreferencesPanel />
         ) : (
           <div className="grid gap-4">
-            <AvatarEditor userId={user?.id} profile={profile} onDone={refresh} />
+            <AvatarEditor
+              userId={user?.id}
+              profile={profile}
+              onDone={refresh}
+            />
 
             {/* Kapak, profil fotoğrafının hemen ardında: ikisi public
                 profilde de yan yana duruyor ve burada ayrı yerlere
                 dağıtmak, birini düzenleyip diğerini unutmayı
                 kolaylaştırırdı. */}
-            <BannerEditor userId={user?.id} profile={profile} onDone={refresh} />
+            <BannerEditor
+              userId={user?.id}
+              profile={profile}
+              onDone={refresh}
+            />
 
             <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-6">
-              <Readout label="Fotoğrafları" value={statsState.stats.photoCount} />
-              <Readout label="Ekipmanları" value={statsState.stats.equipmentCount} />
+              <Readout
+                label="Fotoğrafları"
+                value={statsState.stats.photoCount}
+              />
+              <Readout
+                label="Ekipmanları"
+                value={statsState.stats.equipmentCount}
+              />
               <Readout
                 label="Toplam entegrasyon"
                 value={formatIntegration(statsState.stats.integrationSeconds)}
                 tone="cold"
               />
-              <Readout label="Beğeni sayısı" value={statsState.stats.likeCount} />
-              <Readout label="Toplulukları" value={approvedMemberships.length} />
+              <Readout
+                label="Beğeni sayısı"
+                value={statsState.stats.likeCount}
+              />
+              <Readout
+                label="Toplulukları"
+                value={approvedMemberships.length}
+              />
               <Readout label="İlanları" value={statsState.stats.listingCount} />
             </div>
 
@@ -604,13 +650,24 @@ export function AccountPage() {
 
             <Panel title="Fotoğrafları">
               {statsState.loading ? (
-                <p className="text-body-sm text-muted-foreground">Fotoğraflar yükleniyor…</p>
+                <p className="text-body-sm text-muted-foreground">
+                  Fotoğraflar yükleniyor…
+                </p>
               ) : statsState.stats.photos.length > 0 ? (
                 <ul className="divide-y divide-border">
                   {statsState.stats.photos.slice(0, 12).map((photo) => (
-                    <li key={photo.id} className="flex items-center justify-between gap-3 py-2">
-                      <span className="text-body-sm text-foreground">{photo.title}</span>
-                      <ButtonLink to={`/fotograf/${photo.slug}`} size="sm" variant="ghost">
+                    <li
+                      key={photo.id}
+                      className="flex items-center justify-between gap-3 py-2"
+                    >
+                      <span className="text-body-sm text-foreground">
+                        {photo.title}
+                      </span>
+                      <ButtonLink
+                        to={`/fotograf/${photo.slug}`}
+                        size="sm"
+                        variant="ghost"
+                      >
                         Aç
                       </ButtonLink>
                     </li>
@@ -627,7 +684,9 @@ export function AccountPage() {
               {approvedMemberships.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
                   {approvedMemberships.map((membership) => {
-                    const club = clubs.find((item) => item.slug === membership.clubSlug);
+                    const club = clubs.find(
+                      (item) => item.slug === membership.clubSlug
+                    );
                     return (
                       <ButtonLink
                         key={membership.clubSlug}
@@ -705,7 +764,10 @@ function AccountSidePanel({
               roles.length > 0 ? (
                 <span className="flex flex-wrap gap-1">
                   {roles.map((role) => (
-                    <Badge key={role} tone={role === 'admin' ? 'primary' : 'cold'}>
+                    <Badge
+                      key={role}
+                      tone={role === 'admin' ? 'primary' : 'cold'}
+                    >
                       {roleLabels[role as keyof typeof roleLabels] ?? role}
                     </Badge>
                   ))}
@@ -728,10 +790,20 @@ function AccountSidePanel({
           </Button>
           {revokeArmed ? (
             <>
-              <Button size="sm" variant="danger" disabled={revokeBusy} onClick={onRevoke}>
+              <Button
+                size="sm"
+                variant="danger"
+                disabled={revokeBusy}
+                onClick={onRevoke}
+              >
                 {revokeBusy ? 'Kapatılıyor…' : 'Onayla — hepsini kapat'}
               </Button>
-              <Button size="sm" variant="ghost" disabled={revokeBusy} onClick={onCancelRevoke}>
+              <Button
+                size="sm"
+                variant="ghost"
+                disabled={revokeBusy}
+                onClick={onCancelRevoke}
+              >
                 Vazgeç
               </Button>
             </>
@@ -749,8 +821,8 @@ function AccountSidePanel({
 
       <Panel title="Hesabı sil">
         <p className="text-meta leading-relaxed text-muted-foreground">
-          Hesabınızı silerseniz profiliniz, oturumunuz ve hesabınıza bağlı kişisel
-          veriler kalıcı olarak kaldırılır. Bu işlem geri alınamaz.
+          Hesabınızı silerseniz profiliniz, oturumunuz ve hesabınıza bağlı
+          kişisel veriler kalıcı olarak kaldırılır. Bu işlem geri alınamaz.
         </p>
         {deleteArmed ? (
           <div className="mt-3 rounded-card border border-danger/45 bg-danger/10 p-3">
@@ -758,16 +830,31 @@ function AccountSidePanel({
               Hesabınızı kalıcı olarak silmek istediğinizden emin misiniz?
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
-              <Button size="sm" variant="danger" disabled={deleteBusy} onClick={onDelete}>
+              <Button
+                size="sm"
+                variant="danger"
+                disabled={deleteBusy}
+                onClick={onDelete}
+              >
                 {deleteBusy ? 'Siliniyor…' : 'Evet, kalıcı olarak sil'}
               </Button>
-              <Button size="sm" variant="ghost" disabled={deleteBusy} onClick={onCancelDelete}>
+              <Button
+                size="sm"
+                variant="ghost"
+                disabled={deleteBusy}
+                onClick={onCancelDelete}
+              >
                 Vazgeç
               </Button>
             </div>
           </div>
         ) : (
-          <Button className="mt-3" size="sm" variant="danger" onClick={onArmDelete}>
+          <Button
+            className="mt-3"
+            size="sm"
+            variant="danger"
+            onClick={onArmDelete}
+          >
             Hesabımı sil
           </Button>
         )}
@@ -775,4 +862,3 @@ function AccountSidePanel({
     </div>
   );
 }
-

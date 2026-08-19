@@ -88,11 +88,11 @@ export function AccountMenu({
   }, [acik]);
 
   /*
-   * PROFİL VE EKİPMAN BURADA DEĞİL.
+   * PROFİL, EKİPMAN VE KOLEKSİYON BURADA DEĞİL.
    *
-   * İkisi de `Hesabım` altındaki sekmelerde duruyor. Dropdown yalnız
-   * üst seviye hesap, mesaj ve yönetim yollarını göstermeli; aynı modüle
-   * iki farklı kısa yol menüyü gereksiz kalabalık yapıyor.
+   * Hepsi `Hesabım` altındaki sekmelerde duruyor. Dropdown yalnız üst
+   * seviye hesap, mesaj ve yönetim yollarını göstermeli; aynı modüle iki
+   * farklı kısa yol menüyü gereksiz kalabalık yapıyor.
    */
   const girisler = [
     { to: '/hesap', label: 'Hesabım' },

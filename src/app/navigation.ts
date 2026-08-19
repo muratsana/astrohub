@@ -165,8 +165,7 @@ export const siteMap: NavGroup[] = [
       {
         label: 'Astrofotoğrafta SNR',
         to: '/yazilar/snr-rehberi',
-        description:
-          'Sinyal, gürültü ve süre — simülatörlü uzun rehber',
+        description: 'Sinyal, gürültü ve süre — simülatörlü uzun rehber',
         keywords: [
           'snr',
           'sinyal gürültü',
@@ -415,7 +414,15 @@ export const siteMap: NavGroup[] = [
         label: 'Mount Bridge',
         to: '/ekipman/bridge',
         description: 'ASCOM montür bağlantısı ve capture akışı',
-        keywords: ['ascom', 'bridge', 'montür', 'mount', 'capture', 'nina', 'phd2'],
+        keywords: [
+          'ascom',
+          'bridge',
+          'montür',
+          'mount',
+          'capture',
+          'nina',
+          'phd2',
+        ],
       },
       {
         label: 'Ekipman Karşılaştırma',
@@ -452,6 +459,12 @@ export const siteMap: NavGroup[] = [
         keywords: ['setup', 'ekipman', 'teleskop', 'kamera', 'montür'],
       },
       {
+        label: 'Koleksiyonlarım',
+        to: '/hesap?sekme=koleksiyonlarim',
+        description: 'Fotoğraf koleksiyonları ve kayıtlı seçkiler',
+        keywords: ['koleksiyon', 'kaydedilenler', 'favori', 'fotoğraf'],
+      },
+      {
         label: 'Tercihler',
         to: '/hesap?sekme=tercihler',
         description: 'Görünürlük, bildirim ve görünüm ayarları',
@@ -472,7 +485,13 @@ export const siteMap: NavGroup[] = [
         label: 'Arşivim',
         to: '/arsivim',
         description: 'Kişisel hedef planları ve entegrasyon ilerlemesi',
-        keywords: ['arşivim', 'hedef planı', 'entegrasyon', 'capture', 'sequence'],
+        keywords: [
+          'arşivim',
+          'hedef planı',
+          'entegrasyon',
+          'capture',
+          'sequence',
+        ],
       },
       {
         label: 'Üyelik ve Premium',

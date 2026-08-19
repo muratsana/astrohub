@@ -35,10 +35,7 @@ import {
   listingStatusLabels,
   type ListingStatus,
 } from '@/features/marketplace/data';
-import {
-  photoStatusLabels,
-  type PhotoStatus,
-} from '@/features/photos/types';
+import { photoStatusLabels, type PhotoStatus } from '@/features/photos/types';
 import { useJuryBallot } from '@/services/content/photoOfWeek';
 import { JuryPanel } from './JuryPanel';
 
@@ -296,7 +293,9 @@ export function PanelPage() {
     {
       label: 'Fotoğraflarım',
       to: '/panel/fotograflar',
-      note: quotaKnown ? formatQuotaLabel(activePhotos, tier, photoLimit) : undefined,
+      note: quotaKnown
+        ? formatQuotaLabel(activePhotos, tier, photoLimit)
+        : undefined,
     },
     { label: 'Fotoğraf Yükle', to: '/galeri/yukle' },
     /* Ekipman artık hesabın altında tek bir yerde (bkz.
@@ -319,7 +318,13 @@ export function PanelPage() {
     { label: 'İlanlarım', to: '/panel/ilanlar' },
     { label: 'Gönderilerim', to: '/panel/gonderilerim' },
     ...(jury.active || section === 'juri'
-      ? [{ label: 'Jüri Oylaması', to: '/panel/juri', note: jury.round ? 'açık tur var' : undefined }]
+      ? [
+          {
+            label: 'Jüri Oylaması',
+            to: '/panel/juri',
+            note: jury.round ? 'açık tur var' : undefined,
+          },
+        ]
       : []),
     /*
      * "ÜYELİK VE ÖDEME" KALDIRILDI, GİZLENMEDİ.
@@ -379,7 +384,11 @@ export function PanelPage() {
         <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
           <Readout
             label="Fotoğraf kotası"
-            value={quotaKnown ? formatQuotaLabel(activePhotos, tier, photoLimit) : '…'}
+            value={
+              quotaKnown
+                ? formatQuotaLabel(activePhotos, tier, photoLimit)
+                : '…'
+            }
             hint={
               quotaKnown
                 ? `${remainingPhotoQuota({ activePublished: activePhotos, drafts: myPhotos.drafts, tier, limit: photoLimit })} hak kaldı`
@@ -388,7 +397,9 @@ export function PanelPage() {
           />
           <Readout
             label="Taslak"
-            value={quotaKnown ? `${myPhotos.drafts} / ${MAX_DRAFT_PHOTOS}` : '…'}
+            value={
+              quotaKnown ? `${myPhotos.drafts} / ${MAX_DRAFT_PHOTOS}` : '…'
+            }
             hint="yayımlanmamış kayıt"
             tone="cold"
           />
@@ -406,9 +417,7 @@ export function PanelPage() {
                   : 'Standart'
                 : '…'
             }
-            hint={
-              tier === 'premium' ? 'rol kaynaklı' : 'ödeme sistemi yakında'
-            }
+            hint={tier === 'premium' ? 'rol kaynaklı' : 'ödeme sistemi yakında'}
             tone="muted"
           />
           <Readout
@@ -535,9 +544,8 @@ export function PanelPage() {
                       <div className="mb-2.5 flex flex-wrap items-center gap-2 rounded-card border border-warm/40 bg-warm/8 px-3 py-2">
                         <span className="flex-1 text-meta leading-relaxed text-warm">
                           <strong>{photo.title}</strong> kalıcı olarak
-                          silinecek: görsel dosyaları, işleme sürümleri ve
-                          kayda gelmiş beğeni, yorum, puan da gider. Geri
-                          alınamaz.
+                          silinecek: görsel dosyaları, işleme sürümleri ve kayda
+                          gelmiş beğeni, yorum, puan da gider. Geri alınamaz.
                         </span>
                         <Button
                           size="sm"
@@ -597,7 +605,9 @@ export function PanelPage() {
         {section === 'kaydedilenler' && (
           <Panel
             title="Kaydedilenler"
-            status={saved.loading ? 'yükleniyor…' : `${saved.items.length} kayıt`}
+            status={
+              saved.loading ? 'yükleniyor…' : `${saved.items.length} kayıt`
+            }
             className="mb-4"
           >
             {saved.error ? (
@@ -630,8 +640,15 @@ export function PanelPage() {
             {/* Koleksiyon gizli ve bunu SÖYLÜYOR: kullanıcı kaydettiği
                 şeyin kimseye görünmediğini bilmeli. */}
             <p className="mt-2 text-meta leading-snug text-faint">
-              Kaydedilenler listeniz size özeldir; kimse göremez. Adlandırılmış
-              koleksiyonlar (birden çok liste) sonraki turda açılacak.
+              Kaydedilenler listeniz size özeldir; koleksiyonları{' '}
+              <ButtonLink
+                to="/hesap?sekme=koleksiyonlarim"
+                size="sm"
+                variant="ghost"
+              >
+                Hesabım
+              </ButtonLink>{' '}
+              altında yönetebilirsiniz.
             </p>
           </Panel>
         )}
@@ -729,7 +746,11 @@ export function PanelPage() {
         {section === 'ilanlar' && (
           <Panel
             title="İlanlarım"
-            status={myListings.loading ? 'yükleniyor…' : `${myListings.listings.length} ilan`}
+            status={
+              myListings.loading
+                ? 'yükleniyor…'
+                : `${myListings.listings.length} ilan`
+            }
             className="mb-4"
           >
             {myListings.error ? (
@@ -754,7 +775,10 @@ export function PanelPage() {
                   <PanelRow
                     key={listing.slug}
                     to={
-                      isListingPubliclyVisible(listing.status, listing.saleState)
+                      isListingPubliclyVisible(
+                        listing.status,
+                        listing.saleState
+                      )
                         ? `/ilan/${listing.slug}`
                         : undefined
                     }

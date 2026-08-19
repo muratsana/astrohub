@@ -22,10 +22,17 @@ const foto = photos[0];
 
 function ciz(state: Partial<SavedState>) {
   KAYDET_HALI.value = {
+    collectionId: null,
+    collectionName: null,
+    collections: [],
     saved: false,
     canSave: true,
+    loading: false,
     busy: false,
     error: null,
+    moveTo: vi.fn(),
+    remove: vi.fn(),
+    createAndMove: vi.fn(),
     toggle: vi.fn(),
     ...state,
   };
@@ -37,20 +44,23 @@ function ciz(state: Partial<SavedState>) {
 }
 
 describe('SaveChip — koleksiyon semantiği (B06)', () => {
-  it('kaydedilmemişken "Koleksiyona kaydet" yazar', () => {
+  it('kaydedilmemişken "Koleksiyona ekle" yazar', () => {
     ciz({ saved: false });
-    expect(
-      screen.getByRole('button', { name: 'Koleksiyona kaydet' })
-    ).toBeTruthy();
+    expect(screen.getByText('Koleksiyona ekle')).toBeTruthy();
     // İndirmeyle karışacak sade "Kaydet" düğmesi olmamalı.
     expect(screen.queryByRole('button', { name: 'Kaydet' })).toBeNull();
   });
 
-  it('kaydedilmişken "Koleksiyonda" gösterir, aria "Koleksiyondan çıkar"', () => {
-    ciz({ saved: true });
-    const btn = screen.getByRole('button', { name: 'Koleksiyondan çıkar' });
-    expect(btn.textContent).toBe('Koleksiyonda');
-    expect(btn.getAttribute('aria-pressed')).toBe('true');
+  it('kaydedilmişken koleksiyon adını gösterir', () => {
+    ciz({
+      saved: true,
+      collectionId: 'c-1',
+      collectionName: 'Kuyrukluyıldızlar',
+    });
+    expect(screen.getByText('Koleksiyonda: Kuyrukluyıldızlar')).toBeTruthy();
+    expect(
+      screen.getByLabelText('Koleksiyon değiştir: Kuyrukluyıldızlar')
+    ).toBeTruthy();
   });
 
   it('giriş yapılmamışsa düz metin de koleksiyon der', () => {

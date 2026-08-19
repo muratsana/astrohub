@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { FormEvent, ReactNode } from 'react';
 import { useUpNavigation } from '@/app/useUpNavigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router';
@@ -1005,41 +1005,128 @@ function LikeChip({ photo }: { photo: AstroPhoto }) {
  */
 export function SaveChip({ photo }: { photo: AstroPhoto }) {
   const save = useSavedPhoto(photo.id);
+  const [newCollectionName, setNewCollectionName] = useState('');
 
   if (!save.canSave) {
     return <ActionChip>Koleksiyona kaydet</ActionChip>;
   }
 
   /*
-   * KAYDET = KOLEKSİYONA EKLE, cihaza indirmek DEĞİL (B06).
-   *
-   * "Kaydet" tek başına iki şeyi çağrıştırıyordu: dosyayı bilgisayara
-   * indirmek mi, yoksa "sonra bakarım" listesine eklemek mi. İndirme
-   * artık ayrı bir menüde ("İndir"); bu düğme yalnızca koleksiyon.
-   * Ayrım metnin kendisinde: buton "Koleksiyona kaydet", kaydedilince
-   * "Koleksiyonda". Erişilebilir ad ve başlık da aynı sözcüğü kullanıyor
-   * ki ekran okuyucuda da indirmeyle karışmasın.
+   * KAYDET = KOLEKSİYONA EKLE, cihaza indirmek DEĞİL (B06). Artık tek
+   * "Kaydedilenler" listesi yok: kullanıcı hangi koleksiyona gideceğini
+   * burada seçer, yönetimi Hesabım altında yapar.
    */
-  const etiket = save.saved ? 'Koleksiyonda' : 'Koleksiyona kaydet';
-  const erisimAdi = save.saved ? 'Koleksiyondan çıkar' : 'Koleksiyona kaydet';
+  const etiket = save.saved
+    ? `Koleksiyonda: ${save.collectionName ?? 'seçili'}`
+    : 'Koleksiyona ekle';
+  const erisimAdi = save.saved
+    ? `Koleksiyon değiştir: ${save.collectionName ?? 'seçili'}`
+    : 'Koleksiyona ekle';
+
+  async function create(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const name = newCollectionName.trim();
+    if (!name) return;
+    await save.createAndMove(name);
+    setNewCollectionName('');
+  }
 
   return (
-    <button
-      type="button"
-      onClick={() => void save.toggle()}
-      disabled={save.busy}
-      aria-pressed={save.saved}
-      aria-label={erisimAdi}
-      title={save.error ?? erisimAdi}
-      className={cn(
-        'rounded-full border px-3 py-1.5 transition-colors',
-        save.saved
-          ? 'border-primary/60 bg-primary/10 text-primary'
-          : 'border-border bg-surface-1 text-muted-foreground hover:border-border-strong hover:text-foreground'
-      )}
-    >
-      {etiket}
-    </button>
+    <details className="group relative">
+      <summary
+        aria-label={erisimAdi}
+        title={save.error ?? erisimAdi}
+        className={cn(
+          'flex cursor-pointer list-none items-center rounded-full border px-3 py-1.5 transition-colors marker:content-none [&::-webkit-details-marker]:hidden',
+          save.saved
+            ? 'border-primary/60 bg-primary/10 text-primary'
+            : 'border-border bg-surface-1 text-muted-foreground hover:border-border-strong hover:text-foreground'
+        )}
+      >
+        {etiket}
+      </summary>
+      <div className="absolute right-0 z-30 mt-2 w-[min(340px,calc(100vw-32px))] rounded-card border border-border bg-surface-1 p-3 text-left shadow-2xl shadow-black/30">
+        <label
+          htmlFor={`collection-${photo.id}`}
+          className="label mb-1.5 block"
+        >
+          Koleksiyon
+        </label>
+        <select
+          id={`collection-${photo.id}`}
+          value={save.collectionId ?? ''}
+          disabled={save.busy || save.loading || save.collections.length === 0}
+          onChange={(event) => {
+            if (event.target.value) void save.moveTo(event.target.value);
+          }}
+          className="h-10 w-full rounded-card border border-border bg-surface-2 px-2.5 text-meta text-foreground outline-none focus:border-primary"
+        >
+          <option value="">
+            {save.collections.length === 0
+              ? 'Önce koleksiyon oluştur'
+              : 'Koleksiyon seç'}
+          </option>
+          {save.collections.map((collection) => (
+            <option key={collection.id} value={collection.id}>
+              {collection.name}
+            </option>
+          ))}
+        </select>
+
+        <form
+          onSubmit={(event) => void create(event)}
+          className="mt-3 grid gap-2"
+        >
+          <label htmlFor={`collection-new-${photo.id}`} className="label block">
+            Yeni koleksiyon
+          </label>
+          <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+            <input
+              id={`collection-new-${photo.id}`}
+              value={newCollectionName}
+              maxLength={60}
+              placeholder="Kuyrukluyıldızlar"
+              onChange={(event) => setNewCollectionName(event.target.value)}
+              className="h-9 rounded-card border border-border bg-surface-2 px-2.5 text-meta text-foreground outline-none focus:border-primary"
+            />
+            <Button
+              type="submit"
+              size="sm"
+              disabled={save.busy || !newCollectionName.trim()}
+            >
+              Ekle
+            </Button>
+          </div>
+        </form>
+
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-border pt-3">
+          <ButtonLink
+            to="/hesap?sekme=koleksiyonlarim"
+            size="sm"
+            variant="ghost"
+          >
+            Yönet
+          </ButtonLink>
+          {save.saved && (
+            <Button
+              type="button"
+              size="sm"
+              variant="danger"
+              disabled={save.busy}
+              onClick={() => void save.remove()}
+            >
+              Kaldır
+            </Button>
+          )}
+        </div>
+
+        {save.error && (
+          <p className="mt-2 text-meta leading-snug text-danger">
+            {save.error}
+          </p>
+        )}
+      </div>
+    </details>
   );
 }
 
