@@ -53,7 +53,7 @@ Canlı pano: `docs/patch-2026-08-18/ilerleme.html`
 | B04 | P1 | B | Fotoğraf Detayı | Annotated hazır değilse doğru durum | TESTED | 7fdded8 |  | Bekliyor |
 | B05 | P2 | B | Fotoğraf Detayı | İndirme dosya adları anlamlı ve sanitize olmalı | TESTED | 7fdded8 | vitest indirmeAdi.test.ts | Bekliyor |
 | B06 | P2 | B | Fotoğraf Detayı | Kaydet semantiğini netleştir | TESTED | 1d108cd | vitest SaveChip.test.tsx: Koleksiyona kaydet semantiği | Bekliyor |
-| B07 | P2 | B | Plate Solve | Plate solve sonrası takımyıldız otomatik türet | TODO |  |  | Bekliyor |
+| B07 | P2 | B | Plate Solve | Plate solve sonrası takımyıldız otomatik türet | TESTED | 434e05e | vitest constellation.test (6); canlı: %91 isabet (300 örnek), M42/M31/M51/M45 doğru | Bekliyor |
 | C01 | P1 | C | Fotoğraf Yükleme | Yeni filtre satırı son satırın tekrar eden değerlerini kopyalamalı | TESTED | f7ae111 | vitest integration.test.ts: yeniPozSatiri (3 senaryo) | Bekliyor |
 | C02 | P1 | C | Fotoğraf Yükleme | Tek tarih / tarih aralığı checkbox | TESTED | a50b6b9 | vitest captureSession/upload/photos; typecheck+build+budgets yeşil | Bekliyor |
 | C03 | P1 | C | Fotoğraf Yükleme | Bir fotoğrafa birden fazla çekim sezonu | TESTED | a50b6b9 | vitest captureSession/upload/photos; typecheck+build+budgets yeşil | Bekliyor |
@@ -115,7 +115,7 @@ Canlı pano: `docs/patch-2026-08-18/ilerleme.html`
 | H11 | P1 | H | Git | Stale PR temizliği | TESTED | b096d4d | gh list_pull_requests: 0 açık PR; git ls-remote: yalnız main | Bekliyor |
 | H12 | P0 | H | Git | Main history güvenliği | VERIFIED | 9ede6f2 | git log --oneline: 24d4074..d192795 dogrusal | 18.08.2026 · kullanıcı canlıda kontrol etti |
 | H13 | P1 | H | Kod Temizliği | Dead code/debug/audit geçici dosya temizliği | TESTED | b096d4d | vitest deadCode.test: iki yönlü ölü kod sayacı; 6 ölü dosya silindi | Bekliyor |
-| H14 | P0 | H | Final QA | Tam canlı ürün auditi yeniden koş | TODO |  |  | Bekliyor |
+| H14 | P0 | H | Final QA | Tam canlı ürün auditi yeniden koş | TESTED | 434e05e | npm run test:all: 2715 test + 42 e2e + 9 kapı yeşil; Supabase güvenlik denetimi ERROR 2→1 | Bekliyor |
 | H15 | P0 | H | Final QA | Kullanıcı doğrulama kapısı | TODO |  |  | Bekliyor |
 | X01 | P1 | Extra | Medya Mimarisi | Asset türev registry | TESTED | 1218a84 | vitest derivatives.test; asset_derivatives migration prod'da | Bekliyor |
 | X02 | P1 | Extra | Medya İşleme | Original asset immutable | TESTED | e222c78 | vitest upload.test.ts: orijinal upsert:false | Bekliyor |
