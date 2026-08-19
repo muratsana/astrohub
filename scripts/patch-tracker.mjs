@@ -45,11 +45,12 @@
  */
 
 import { readFileSync, writeFileSync } from 'node:fs';
+import { pathToFileURL } from 'node:url';
 
 const MD = 'IMPLEMENTATION_PROGRESS.md';
 const CSV = 'PROGRESS_TRACKER.csv';
 
-const DURUMLAR = [
+export const DURUMLAR = [
   'TODO',
   'IN_PROGRESS',
   'CODED',
@@ -63,7 +64,7 @@ const DURUMLAR = [
    Kendi ayrıştırıcımız RFC 4180'in ihtiyacımız olan kısmını uyguluyor:
    çift tırnakla kaçış ve alan içi virgül. Hazır bir bağımlılık eklemek
    tek dosyalık bir iş için fazlaydı. */
-function csvSatiriAyristir(satir) {
+export function csvSatiriAyristir(satir) {
   const alanlar = [];
   let alan = '';
   let tirnakta = false;
@@ -86,7 +87,7 @@ function csvSatiriAyristir(satir) {
   return alanlar;
 }
 
-function csvAlanYaz(deger) {
+export function csvAlanYaz(deger) {
   return /[",\n]/.test(deger) ? `"${deger.replace(/"/g, '""')}"` : deger;
 }
 
@@ -103,7 +104,7 @@ function listele(filtre) {
   }
 }
 
-function guncelle(id, durum, { commit, evidence, note, onay }) {
+export function guncelle(id, durum, { commit, evidence, note, onay }) {
   if (durum === 'VERIFIED' && !onay) {
     throw new Error(
       'VERIFIED için --kullanici-onayi "<kim, ne zaman>" gerekir; bu betik kendi başına doğrulama yazmaz.'
@@ -205,7 +206,15 @@ function ekle(id, oncelik, sprint, modul, is, detay, kriter) {
   console.log(`${id} eklendi · ${oncelik} · ${modul} · ${is}`);
 }
 
-const argv = process.argv.slice(2);
+/* CLI yalnızca dosya DOĞRUDAN çalıştırıldığında koşuyor; testler
+   fonksiyonları import edebilsin diye. */
+const dogrudanCalistirildi =
+  process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+
+const argv = dogrudanCalistirildi ? process.argv.slice(2) : [];
+if (!dogrudanCalistirildi) {
+  // Test ortamı: yalnızca dışa aktarımlar kullanılıyor.
+} else
 if (argv[0] === '--ekle') {
   const [, id, oncelik, sprint, modul, is, detay, kriter] = argv;
   if (!id || !oncelik || !sprint || !modul || !is) {
