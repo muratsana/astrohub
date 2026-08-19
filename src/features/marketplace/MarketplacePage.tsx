@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Container } from '@/components/ui/Container';
 import { Input, Select } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
@@ -9,12 +10,7 @@ import { ModuleToolbar } from '@/components/ui/ModuleToolbar';
 import { CatalogSourceNote } from '@/components/ui/CatalogSourceNote';
 import { useStoredChoice, type ListView } from '@/components/ui/useViewMode';
 import { DataTable, type Column } from '@/components/ui/DataTable';
-import {
-  FilterCell,
-  FilterToggle,
-  filterControlClass,
-} from '@/components/ui/FilterBar';
-import { RangeFilter } from '@/components/ui/RangeFilter';
+import { FilterCell, filterControlClass } from '@/components/ui/FilterBar';
 import {
   ContentCard,
   ContentCardBody,
@@ -31,6 +27,7 @@ import {
 import { useListings } from '@/services/content/listings';
 import { useExplorer } from '@/features/explorer/useExplorer';
 import { DistrictFilterCell } from '@/features/explorer/DistrictFilterCell';
+import type { RangeValue } from '@/features/explorer/query';
 import { listingsSpec } from './listingsSpec';
 import type { Listing } from './data';
 import { PageMeta } from '@/components/seo/PageMeta';
@@ -183,10 +180,7 @@ export function MarketplacePage() {
               ))}
             </Select>
           </FilterCell>
-          {/* Fiyat ARALIK, facet değil: her ilan kendi fiyatının
-              kutucuğunu açsaydı süzgeç kayıt sayısı kadar uzardı. */}
-          <RangeFilter
-            spec={listingsSpec.ranges![0]}
+          <ListingPriceFilter
             value={ex.query.ranges.fiyat}
             onChange={(next) => ex.setRange('fiyat', next)}
           />
@@ -225,12 +219,28 @@ export function MarketplacePage() {
               if (next) ex.toggleFacet('ilce', next);
             }}
           />
-          <FilterToggle
-            id="listing-invoice"
-            label="Yalnızca faturalı"
-            checked={(ex.query.facets.faturali?.length ?? 0) > 0}
-            onChange={() => ex.toggleFacet('faturali', 'evet')}
-          />
+          <FilterCell
+            label="Fatura"
+            htmlFor="listing-invoice"
+            active={(ex.query.facets.faturali?.length ?? 0) > 0}
+            className="min-w-[11rem]"
+          >
+            <Select
+              id="listing-invoice"
+              value={ex.query.facets.faturali?.[0] ?? 'hepsi'}
+              onChange={(event) => {
+                const mevcut = ex.query.facets.faturali?.[0];
+                if (mevcut) ex.toggleFacet('faturali', mevcut);
+                if (event.target.value !== 'hepsi') {
+                  ex.toggleFacet('faturali', event.target.value);
+                }
+              }}
+              className={filterControlClass}
+            >
+              <option value="hepsi">Tüm ilanlar</option>
+              <option value="evet">Faturalı</option>
+            </Select>
+          </FilterCell>
           {/* "Doğrulanmış satıcı" süzgeci kalktı: ilan yalnızca kayıtlı
               kullanıcıdan açılıyor, yani süzgeç herkesi geçiriyordu. */}
         </ModuleToolbar>
@@ -277,6 +287,76 @@ export function MarketplacePage() {
         </p>
       </Container>
     </>
+  );
+}
+
+function ListingPriceFilter({
+  value,
+  onChange,
+}: {
+  value: RangeValue | undefined;
+  onChange: (next: Partial<RangeValue>) => void;
+}) {
+  const toText = (n: number | null | undefined) =>
+    n === null || n === undefined ? '' : String(n);
+  const [min, setMin] = useState(() => toText(value?.min));
+  const [max, setMax] = useState(() => toText(value?.max));
+
+  useEffect(() => setMin(toText(value?.min)), [value?.min]);
+  useEffect(() => setMax(toText(value?.max)), [value?.max]);
+
+  const parse = (raw: string): number | null => {
+    const trimmed = raw.trim();
+    if (!trimmed) return null;
+    const parsed = Number(trimmed);
+    return Number.isFinite(parsed) ? parsed : null;
+  };
+
+  const apply = (edge: 'min' | 'max', raw: string) =>
+    onChange({ [edge]: parse(raw), includeEmpty: false });
+
+  const input = (
+    edge: 'min' | 'max',
+    current: string,
+    setCurrent: (value: string) => void
+  ) => (
+    <span className="flex min-w-0 flex-1 items-center gap-1">
+      <input
+        type="number"
+        inputMode="numeric"
+        step={500}
+        value={current}
+        aria-label={`Fiyat ${edge === 'min' ? 'en az' : 'en çok'}`}
+        placeholder={edge === 'min' ? 'en az' : 'en çok'}
+        onChange={(event) => setCurrent(event.target.value)}
+        onBlur={(event) => apply(edge, event.target.value)}
+        onKeyDown={(event) => {
+          if (event.key !== 'Enter') return;
+          event.preventDefault();
+          apply(edge, (event.target as HTMLInputElement).value);
+        }}
+        className={`${filterControlClass} min-w-0 font-sans`}
+      />
+      <span aria-hidden className="shrink-0 text-meta text-faint">
+        ₺
+      </span>
+    </span>
+  );
+
+  return (
+    <FilterCell
+      label="Fiyat"
+      active={Boolean(value && (value.min !== null || value.max !== null))}
+      className="min-w-[16rem]"
+    >
+      <span className="flex items-center gap-1.5">
+        {input('min', min, setMin)}
+        <span aria-hidden className="shrink-0 text-meta text-faint">
+          –
+        </span>
+        {input('max', max, setMax)}
+      </span>
+    </FilterCell>
   );
 }
 
