@@ -188,12 +188,43 @@ const CATALOG_SELECT =
   'prism_size_mm, production_status, release_year, discontinued_year, ' +
   'sources, verified_at, data_confidence';
 
+/** `canonical_model_id` henüz yok mu (şema kodun gerisinde)? */
+function kanonikKolonuYok(error: { code?: string; message?: string }): boolean {
+  if (['42703', 'PGRST204', 'PGRST200'].includes(error.code ?? '')) return true;
+  return /canonical_model_id|schema cache|does not exist/i.test(
+    error.message ?? ''
+  );
+}
+
+/*
+ * BİRLEŞTİRİLMİŞ MÜKERRERLER LİSTEDE GÖRÜNMEZ (F03).
+ *
+ * `canonical_model_id` dolu bir satır, başka bir kayda birleştirilmiş
+ * mükerrerdir: referansları kanoniğe taşındı, eski slug'ı alias olarak
+ * yaşıyor. Satır silinmiyor (künye ve geri alma için duruyor) ama
+ * seçim listelerinde iki kez aynı ürünü göstermek, birleştirmenin
+ * amacını boşa çıkarırdı.
+ *
+ * Kolon yoksa (şema geride) süzgeç uygulanmıyor — galeri deneyiminde
+ * öğrenildiği gibi, eksik bir kolon bütün kataloğu düşürmemeli.
+ */
 async function fetchEquipment(client: SupabaseClient): Promise<EquipmentModel[]> {
   const { data, error } = await client
     .from('equipment_models')
     .select(CATALOG_SELECT)
+    .is('canonical_model_id', null)
     .order('category_id')
     .order('model');
+
+  if (error && kanonikKolonuYok(error)) {
+    const yedek = await client
+      .from('equipment_models')
+      .select(CATALOG_SELECT)
+      .order('category_id')
+      .order('model');
+    if (yedek.error) throw new Error(yedek.error.message);
+    return (yedek.data as unknown as EquipmentRow[]).map(mapEquipmentRow);
+  }
 
   if (error) throw new Error(error.message);
   return (data as unknown as EquipmentRow[]).map(mapEquipmentRow);
@@ -313,6 +344,8 @@ export async function fetchCatalogPage(
   let request = client
     .from('equipment_models')
     .select(CATALOG_SELECT, { count: 'exact' })
+    /* Birleştirilmiş mükerrerler gözat listesinde de görünmez (F03). */
+    .is('canonical_model_id', null)
     .order('category_id')
     .order('model')
     .range(page * pageSize, page * pageSize + pageSize - 1);

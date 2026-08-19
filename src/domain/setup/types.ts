@@ -83,6 +83,23 @@ export const REQUIRED_SLOTS: SlotId[] = ['montur', 'optik', 'kamera'];
 export interface SetupDraft {
   /** Yuva → katalog slug'ı. Boş yuva anahtarı taşımaz. */
   slots: Partial<Record<SlotId, string>>;
+  /**
+   * EK FİLTRELER — çarktaki diğer filtreler (F02).
+   *
+   * ══════════════════════════════════════════════════════════════════
+   * NEDEN AYRI BİR LİSTE, İKİNCİ BİR YUVA DEĞİL
+   *
+   * Astrofotoğrafçı çarkında beş yedi filtre taşıyor ama optik yolda
+   * AYNI ANDA BİR tane var. Backfocus, ışık yolu ve uyumluluk hesabı bu
+   * yüzden `slots.filtre`ye (takılı olan) bağlı kalmalı — ek filtreler
+   * o hesaba girmiyor, girseydi her filtre kalınlığı üst üste eklenip
+   * uydurma bir backfocus çıkardı.
+   *
+   * Liste künyede, profil vitrininde ve "hangi filtrelerim var"
+   * sorusunda kullanılıyor. Yokluğu eski kayıtlarla uyumlu: alan
+   * isteğe bağlı, boş liste "yalnızca takılı filtre" demek.
+   */
+  extraFilters?: string[];
   /** Kullanıcının eklediği ara halka toplamı, mm. */
   spacerMm: number;
   /** Katalogda olmayan parçaların toplam ağırlığı, kg. */
@@ -212,4 +229,18 @@ export function noData(
     assumptions: [reason],
     confidence: 'veri-yok',
   };
+}
+
+/**
+ * Kurulumdaki BÜTÜN filtreler — takılı olan önce, sonra çarktakiler (F02).
+ *
+ * Tekrarlar ayıklanıyor: kullanıcı takılı filtreyi ek listeye de eklerse
+ * künyede iki kez görünmemeli. Sıra anlamlı — ilk eleman optik yoldaki.
+ */
+export function tumFiltreler(draft: SetupDraft): string[] {
+  const takili = draft.slots.filtre;
+  const hepsi = [takili, ...(draft.extraFilters ?? [])].filter(
+    (s): s is string => Boolean(s)
+  );
+  return [...new Set(hepsi)];
 }

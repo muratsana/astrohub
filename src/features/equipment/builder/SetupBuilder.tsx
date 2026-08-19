@@ -58,6 +58,17 @@ export interface SetupBuilderProps {
   }) => void;
   saveLabel?: string;
   initialName?: string;
+  /**
+   * DÜZENLEME İÇİN BAŞLANGIÇ KÜNYESİ (F01).
+   *
+   * Kayıtlı bir ekipmanı düzenlerken form boş açılmamalı: kullanıcı
+   * yalnızca montürü değiştirmek istese bile adı, amacı ve açıklamayı
+   * yeniden yazmak zorunda kalırdı. Verilmezse (yeni kurulum) alanlar
+   * boş başlıyor — eski davranış birebir korunuyor.
+   */
+  initialDescription?: string;
+  initialPurpose?: string;
+  initialVisibility?: SetupVisibility;
 }
 
 export function SetupBuilder({
@@ -66,19 +77,24 @@ export function SetupBuilder({
   onSave,
   saveLabel = 'Setup’ı kaydet',
   initialName = '',
+  initialDescription = '',
+  initialPurpose = '',
+  initialVisibility,
 }: SetupBuilderProps) {
   const catalog = useEquipmentCatalog();
 
   const [name, setName] = useState(initialName);
-  const [description, setDescription] = useState('');
-  const [purpose, setPurpose] = useState('');
+  const [description, setDescription] = useState(initialDescription);
+  const [purpose, setPurpose] = useState(initialPurpose);
   /*
    * Varsayılan görünür (gerekçe `saveSetup` içinde) ama kullanıcı bunu
    * hesabından değiştirebiliyor: her ekipmanda aynı seçimi tekrar
    * yapmak zorunda kalmasın (bkz. `useDefaultEquipmentVisibility`).
    */
   const [varsayilanGorunurluk] = useDefaultEquipmentVisibility();
-  const [visibility, setVisibility] = useState<SetupVisibility | null>(null);
+  const [visibility, setVisibility] = useState<SetupVisibility | null>(
+    initialVisibility ?? null
+  );
   const etkinGorunurluk = visibility ?? varsayilanGorunurluk;
   const [saved, setSaved] = useState(false);
 
@@ -156,6 +172,70 @@ export function SetupBuilder({
             </ul>
           </Panel>
         ))}
+
+        {/*
+          ÇARKTAKİ DİĞER FİLTRELER (F02).
+
+          Optik yolda aynı anda tek filtre var ve backfocus onu hesaba
+          katıyor; burada seçilenler hesaba GİRMİYOR, künyede ve profilde
+          "hangi filtrelerim var" sorusunu cevaplıyor. Bu yüzden ayrı bir
+          panel: kullanıcı ikisini karıştırmasın.
+        */}
+        <Panel title="Çarktaki diğer filtreler">
+          <p className="mb-2 text-meta leading-snug text-muted-foreground">
+            Filtre çarkınızda taşıdığınız diğer filtreler. Optik hesaba
+            girmezler (yolda aynı anda tek filtre vardır); künyede ve
+            profilinizde görünürler.
+          </p>
+          <ul className="grid gap-2 sm:grid-cols-2">
+            {(draft.extraFilters ?? []).map((slug, i) => (
+              <li key={`${slug}-${i}`} className="flex items-end gap-2">
+                <div className="min-w-0 flex-1">
+                  <ModelPicker
+                    label={`Filtre ${i + 2}`}
+                    categories={SLOT_CATEGORIES.filtre}
+                    catalog={catalog.items}
+                    value={bySlug.get(slug)}
+                    onChange={(model: EquipmentModel | undefined) => {
+                      const next = [...(draft.extraFilters ?? [])];
+                      if (model) next[i] = model.slug;
+                      else next.splice(i, 1);
+                      onChange({ ...draft, extraFilters: next });
+                    }}
+                  />
+                </div>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  aria-label={`Filtre ${i + 2} satırını kaldır`}
+                  onClick={() =>
+                    onChange({
+                      ...draft,
+                      extraFilters: (draft.extraFilters ?? []).filter(
+                        (_, j) => j !== i
+                      ),
+                    })
+                  }
+                >
+                  ✕
+                </Button>
+              </li>
+            ))}
+          </ul>
+          <Button
+            size="sm"
+            variant="secondary"
+            className="mt-2"
+            onClick={() =>
+              onChange({
+                ...draft,
+                extraFilters: [...(draft.extraFilters ?? []), ''],
+              })
+            }
+          >
+            + Filtre ekle
+          </Button>
+        </Panel>
 
         <Panel title="Kullanıcı değerleri">
           <div className="grid gap-3 sm:grid-cols-3">

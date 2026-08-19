@@ -213,6 +213,12 @@ function EquipmentCard({
 }) {
   const catalog = useEquipmentCatalog();
   const [gorunurlukYaziliyor, setGorunurlukYaziliyor] = useState(false);
+  /* Düzenleme kartın İÇİNDE açılıyor (F01): ayrı bir sayfaya gitmek,
+     kullanıcıyı listeden koparıp geri dönüş yolu aratırdı. */
+  const [duzenleniyor, setDuzenleniyor] = useState(false);
+  const [duzenlemeTaslagi, setDuzenlemeTaslagi] = useState<SetupDraft>(
+    setup.draft
+  );
 
   const parts = (Object.entries(setup.draft.slots) as [SlotId, string][])
     .map(([slot, slug]) => {
@@ -243,6 +249,56 @@ function EquipmentCard({
       draft: setup.draft,
     });
     setGorunurlukYaziliyor(false);
+  }
+
+  /*
+   * DÜZENLEME AYNI KAYDA YAZIYOR (F01).
+   *
+   * `store.save` id verildiğinde var olan kaydı güncelliyor: kimlik,
+   * oluşturma tarihi ve varsayılan bayrağı korunuyor. Bu düğme olmadan
+   * bir montürü değiştirmenin tek yolu kaydı silip yeniden kurmaktı —
+   * paylaşım bağlantısı ve varsayılan seçimi de o sırada kayboluyordu.
+   */
+  async function duzenlemeyiKaydet(meta: {
+    name: string;
+    description: string;
+    purpose: string;
+    visibility: SetupVisibility;
+  }) {
+    await store.save({ id: setup.id, ...meta, draft: duzenlemeTaslagi });
+    setDuzenleniyor(false);
+  }
+
+  if (duzenleniyor) {
+    return (
+      <div className="flex h-full flex-col rounded-card border border-primary/60 bg-surface-1 p-3">
+        <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
+          <h3 className="text-body-sm font-medium text-foreground">
+            {setup.name} · düzenleniyor
+          </h3>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              setDuzenlemeTaslagi(setup.draft);
+              setDuzenleniyor(false);
+            }}
+          >
+            Vazgeç
+          </Button>
+        </div>
+        <SetupBuilder
+          draft={duzenlemeTaslagi}
+          onChange={setDuzenlemeTaslagi}
+          onSave={(meta) => void duzenlemeyiKaydet(meta)}
+          saveLabel="Değişiklikleri kaydet"
+          initialName={setup.name}
+          initialDescription={setup.description ?? ''}
+          initialPurpose={setup.purpose ?? ''}
+          initialVisibility={setup.visibility}
+        />
+      </div>
+    );
   }
 
   return (
@@ -297,6 +353,16 @@ function EquipmentCard({
       </div>
 
       <div className="mt-auto flex flex-wrap gap-1.5 pt-2.5">
+        <Button
+          size="sm"
+          variant="secondary"
+          onClick={() => {
+            setDuzenlemeTaslagi(setup.draft);
+            setDuzenleniyor(true);
+          }}
+        >
+          Düzenle
+        </Button>
         {!setup.isDefault && (
           <Button
             size="sm"
