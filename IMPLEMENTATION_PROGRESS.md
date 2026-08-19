@@ -116,7 +116,7 @@ Canlı pano: `docs/patch-2026-08-18/ilerleme.html`
 | H12 | P0 | H | Git | Main history güvenliği | VERIFIED | 9ede6f2 | git log --oneline: 24d4074..d192795 dogrusal | 18.08.2026 · kullanıcı canlıda kontrol etti |
 | H13 | P1 | H | Kod Temizliği | Dead code/debug/audit geçici dosya temizliği | TESTED | b096d4d | vitest deadCode.test: iki yönlü ölü kod sayacı; 6 ölü dosya silindi | Bekliyor |
 | H14 | P0 | H | Final QA | Tam canlı ürün auditi yeniden koş | TESTED | 434e05e | npm run test:all: 2715 test + 42 e2e + 9 kapı yeşil; Supabase güvenlik denetimi ERROR 2→1 | Bekliyor |
-| H15 | P0 | H | Final QA | Kullanıcı doğrulama kapısı | TODO |  |  | Bekliyor |
+| H15 | P0 | H | Final QA | Kullanıcı doğrulama kapısı | TESTED | 3511ffa | vitest scripts/patch-tracker.test.mjs (10 test): onaysız VERIFIED reddediliyor, reddedilen çağrı CSV+MD'ye dokunmuyor, kanıtsız TESTED reddediliyor, geçersiz durum reddediliyor | Bekliyor |
 | X01 | P1 | Extra | Medya Mimarisi | Asset türev registry | TESTED | 1218a84 | vitest derivatives.test; asset_derivatives migration prod'da | Bekliyor |
 | X02 | P1 | Extra | Medya İşleme | Original asset immutable | TESTED | e222c78 | vitest upload.test.ts: orijinal upsert:false | Bekliyor |
 | X03 | P1 | Extra | Gizlilik | Public türevlerde EXIF/GPS sızıntısını önle | TESTED | e222c78 | vitest upload.test.ts: public türev EXIF'siz, ham dosya gizli bucket | Bekliyor |

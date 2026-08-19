@@ -157,19 +157,15 @@ footer p { margin: 0 0 5px; }
       sonda onların üstüne oturan özellikler. Bu sayfa
       <code class="mono">PROGRESS_TRACKER.csv</code>'den üretiliyor.
     </p>
-    <div class="serit"><span class="serit-parca durum-VERIFIED" style="flex:12" title="Doğrulandı: 12"></span><span class="serit-parca durum-TESTED" style="flex:86" title="Test edildi: 86"></span><span class="serit-parca durum-TODO" style="flex:2" title="Sırada: 2"></span></div>
+    <div class="serit"><span class="serit-parca durum-VERIFIED" style="flex:12" title="Doğrulandı: 12"></span><span class="serit-parca durum-TESTED" style="flex:88" title="Test edildi: 88"></span></div>
     <div class="ozetler">
       <button class="ozet durum-VERIFIED" data-filtre="VERIFIED" type="button">
         <span class="ozet-sayi mono">12</span>
         <span class="ozet-ad">Doğrulandı</span>
       </button>
       <button class="ozet durum-TESTED" data-filtre="TESTED" type="button">
-        <span class="ozet-sayi mono">86</span>
+        <span class="ozet-sayi mono">88</span>
         <span class="ozet-ad">Test edildi</span>
-      </button>
-      <button class="ozet durum-TODO" data-filtre="TODO" type="button">
-        <span class="ozet-sayi mono">2</span>
-        <span class="ozet-ad">Sırada</span>
       </button></div>
   </header>
 
@@ -1175,8 +1171,8 @@ footer p { margin: 0 0 5px; }
           <p>Setup düzenleme, canonical merge, dedup migration</p>
         </div>
         <div class="faz-olcu">
-          <span class="faz-oran mono">7<span class="bolu">/</span>8</span>
-          <div class="faz-cubuk"><span style="width:88%"></span></div>
+          <span class="faz-oran mono">8<span class="bolu">/</span>8</span>
+          <div class="faz-cubuk"><span style="width:100%"></span></div>
         </div>
       </header>
       <div class="tablo-sar">
@@ -1229,16 +1225,16 @@ footer p { margin: 0 0 5px; }
           <td><span class="rozet durum-TESTED">Test edildi</span></td>
           <td class="mono kanit"><code>fb2a5dc</code><span class="kanit-metin">vitest store/filters/seriesGap/catalogMerge; prod'da merge+rollback uçtan uca doğrulandı</span></td>
         </tr>
-        <tr data-durum="TODO" data-oncelik="P1">
+        <tr data-durum="TESTED" data-oncelik="P1">
           <td class="mono">F05</td>
           <td><span class="oncelik o-P1">P1</span></td>
           <td class="modul">Katalog</td>
           <td class="is">
             <span class="is-baslik">PrimaLuceLab EAGLE legacy/aktif seri kapsamı</span>
-            
+            <span class="is-not">Seri primalucelab.com (satıştaki EAGLE6/S/PRO/XTM), primalucelabusa.com (DISCONTINUED etiketli eski nesiller) ve primalucelab.com/info/downloads.html (arşiv yazılım paketleri) üzerinden çıkarıldı. 16 otantik model eklendi, hepsinde sources+verified_at+data_confidence dolu. release_year/discontinued_year kaynak söylemediği için boş bırakıldı. Sürümü belirsiz eski 'Eagle 5' kaydı bir kullanıcının künyesinde olduğu için SİLİNMEDİ; inceleme-gerekli işaretlenip not eklendi.</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>f9bba06</code><span class="kanit-metin">src/domain/catalog/eagleSeries.test.ts (6 test) + canlı sorgu: model ilike '%eagle%' → 17 kayıt, hepsi production_status ve sources dolu</span></td>
         </tr>
         <tr data-durum="TESTED" data-oncelik="P1">
           <td class="mono">F06</td>
@@ -1393,8 +1389,8 @@ footer p { margin: 0 0 5px; }
           <p>Persona matrisi, canlı audit, kullanıcı doğrulaması</p>
         </div>
         <div class="faz-olcu">
-          <span class="faz-oran mono">8<span class="bolu">/</span>9</span>
-          <div class="faz-cubuk"><span style="width:89%"></span></div>
+          <span class="faz-oran mono">9<span class="bolu">/</span>9</span>
+          <div class="faz-cubuk"><span style="width:100%"></span></div>
         </div>
       </header>
       <div class="tablo-sar">
@@ -1469,16 +1465,16 @@ footer p { margin: 0 0 5px; }
           <td><span class="rozet durum-TESTED">Test edildi</span></td>
           <td class="mono kanit"><code>434e05e</code><span class="kanit-metin">npm run test:all: 2715 test + 42 e2e + 9 kapı yeşil; Supabase güvenlik denetimi ERROR 2→1</span></td>
         </tr>
-        <tr data-durum="TODO" data-oncelik="P0">
+        <tr data-durum="TESTED" data-oncelik="P0">
           <td class="mono">H15</td>
           <td><span class="oncelik o-P0">P0</span></td>
           <td class="modul">Final QA</td>
           <td class="is">
             <span class="is-baslik">Kullanıcı doğrulama kapısı</span>
-            
+            <span class="is-not">Kapı yapısal: patch-tracker.mjs --kullanici-onayi olmadan VERIFIED yazamıyor. Bu madde kapının kendisini kapatıyor; 100 maddenin VERIFIED işareti kullanıcının kendi doğrulamasıyla verilecek.</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>3511ffa</code><span class="kanit-metin">vitest scripts/patch-tracker.test.mjs (10 test): onaysız VERIFIED reddediliyor, reddedilen çağrı CSV+MD'ye dokunmuyor, kanıtsız TESTED reddediliyor, geçersiz durum reddediliyor</span></td>
         </tr>
         <tr data-durum="TESTED" data-oncelik="P2">
           <td class="mono">X04</td>
