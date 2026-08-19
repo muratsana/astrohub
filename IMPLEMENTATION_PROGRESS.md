@@ -105,10 +105,10 @@ Canlı pano: `docs/patch-2026-08-18/ilerleme.html`
 | H01 | P0 | H | QA | Gerçek onboarding E2E | TODO |  |  | Bekliyor |
 | H02 | P0 | H | QA | Rol/persona matrisi | TODO |  |  | Bekliyor |
 | H03 | P1 | H | QA | Happy/error/recovery/refresh/cancel/retry matrisi | TODO |  |  | Bekliyor |
-| H04 | P0 | H | QA | Her bug regresyon testine dönüşmeli | IN_PROGRESS |  |  | Bekliyor |
-| H05 | P0 | H | İlerleme | IMPLEMENTATION_PROGRESS.md canlı takip kaynağı | CODED | c9e50e5 | node scripts/patch-tracker.mjs --list P0 | Bekliyor |
-| H06 | P0 | H | İlerleme | PROGRESS_TRACKER.csv canlı agent tablosu | CODED | c9e50e5 | node scripts/patch-tracker.mjs --list P0 | Bekliyor |
-| H07 | P1 | H | İlerleme | Zorunlu status akışı | CODED | c9e50e5 | scripts/patch-tracker.mjs DURUMLAR | Bekliyor |
+| H04 | P0 | H | QA | Her bug regresyon testine dönüşmeli | TESTED | 25f0f98 | 3 canlı bug regresyon testine dönüştü: upload/photosFallback/seriesGap | Bekliyor |
+| H05 | P0 | H | İlerleme | IMPLEMENTATION_PROGRESS.md canlı takip kaynağı | TESTED | 25f0f98 | vitest patch-tracker.test.mjs: CSV yuvarlak yolculuk + durum akışı (6) | Bekliyor |
+| H06 | P0 | H | İlerleme | PROGRESS_TRACKER.csv canlı agent tablosu | TESTED | 25f0f98 | vitest patch-tracker.test.mjs: CSV yuvarlak yolculuk + durum akışı (6) | Bekliyor |
+| H07 | P1 | H | İlerleme | Zorunlu status akışı | TESTED | 25f0f98 | vitest patch-tracker.test.mjs: CSV yuvarlak yolculuk + durum akışı (6) | Bekliyor |
 | H08 | P1 | H | İlerleme | Commit/test evidence zorunlu | TESTED | 0f7e03f | node patch-tracker.mjs: kanıtsız TESTED reddediliyor (guard) | Bekliyor |
 | H09 | P0 | H | Git | Tüm uygulama doğrudan main | TESTED | b3d401a | git log origin/main: bu oturumun tüm commit'leri doğrudan main'de, dal açılmadı | Bekliyor |
 | H10 | P0 | H | Git | Gereksiz branch temizliği | VERIFIED | 9ede6f2 | git diff main origin/codex -- <yollar>: yalnizca is akisi tetikleyicisi farki | 18.08.2026 · kullanıcı canlıda kontrol etti |
