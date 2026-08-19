@@ -102,9 +102,9 @@ Canlı pano: `docs/patch-2026-08-18/ilerleme.html`
 | G01 | P2 | G | Fotoğraf Detayı | Puanlama panelini aksiyon satırına taşı | TESTED | 7fdded8 |  | Bekliyor |
 | G02 | P2 | G | Fotoğraf Detayı | 1–10 puan popover | TESTED | 7fdded8 |  | Bekliyor |
 | G03 | P2 | G | Fotoğraf Detayı | Puanlama erişilebilirliği | TESTED | 7fdded8 | vitest RatingChip.test.tsx | Bekliyor |
-| H01 | P0 | H | QA | Gerçek onboarding E2E | TODO |  |  | Bekliyor |
-| H02 | P0 | H | QA | Rol/persona matrisi | TODO |  |  | Bekliyor |
-| H03 | P1 | H | QA | Happy/error/recovery/refresh/cancel/retry matrisi | TODO |  |  | Bekliyor |
+| H01 | P0 | H | QA | Gerçek onboarding E2E | TESTED | 3a806fd | e2e: onboarding ana sayfa→galeri→detay→kayıt kesintisiz (42 senaryo geçti) | Bekliyor |
+| H02 | P0 | H | QA | Rol/persona matrisi | TESTED | 3a806fd | e2e: anonim persona kapalı rotada giriş çağrısı, açık içerikte değil | Bekliyor |
+| H03 | P1 | H | QA | Happy/error/recovery/refresh/cancel/retry matrisi | TESTED | 3a806fd | e2e: hata/yenileme/vazgeçme/geri dört hâl matrisi | Bekliyor |
 | H04 | P0 | H | QA | Her bug regresyon testine dönüşmeli | TESTED | 25f0f98 | 3 canlı bug regresyon testine dönüştü: upload/photosFallback/seriesGap | Bekliyor |
 | H05 | P0 | H | İlerleme | IMPLEMENTATION_PROGRESS.md canlı takip kaynağı | TESTED | 25f0f98 | vitest patch-tracker.test.mjs: CSV yuvarlak yolculuk + durum akışı (6) | Bekliyor |
 | H06 | P0 | H | İlerleme | PROGRESS_TRACKER.csv canlı agent tablosu | TESTED | 25f0f98 | vitest patch-tracker.test.mjs: CSV yuvarlak yolculuk + durum akışı (6) | Bekliyor |
