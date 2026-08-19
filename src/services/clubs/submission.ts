@@ -1,6 +1,11 @@
 import { renderResized } from '@/domain/photography/resize';
 import { checkImageFormat, readHead } from '@/domain/photography/fileType';
 import { formatBytes } from '@/domain/membership/quota';
+import {
+  blocksToText,
+  textToBlocks,
+  type ContentBlock,
+} from '@/domain/content/blocks';
 import { sanitizeText } from '@/lib/sanitize';
 import { getSupabase } from '@/services/supabase/client';
 import { threadSlug, slugSuffix } from '@/services/content/forum';
@@ -11,11 +16,11 @@ import {
   type ClubTopic,
 } from '@/features/clubs/data';
 
-export const CLUB_PHOTO_LIMIT = 3;
-export const CLUB_PHOTO_MAX_BYTES = 2 * 1024 * 1024;
+export const CLUB_PHOTO_LIMIT = 5;
+export const CLUB_PHOTO_MAX_BYTES = 5 * 1024 * 1024;
 export const CLUB_PHOTO_MAX_EDGE = 1400;
 
-const KINDS: ClubKind[] = ['dernek', 'universite', 'gozlem-grubu'];
+const KINDS: ClubKind[] = ['dernek', 'universite', 'gozlem-grubu', 'topluluk'];
 
 export interface ClubDraft {
   userId?: string;
@@ -28,10 +33,12 @@ export interface ClubDraft {
   place: string;
   topics: ClubTopic[];
   summary: string;
+  bodyBlocks: ContentBlock[];
   contactEmail: string;
   website: string;
   socialUrl: string;
   whatsappUrl: string;
+  telegramUrl: string;
   publicEvents: boolean;
   sharedEquipment: boolean;
   sourceName?: string;
@@ -47,6 +54,8 @@ const https = (v: string) => !v || /^https:\/\/[A-Za-z0-9.-]+(\/\S*)?$/.test(v);
 const email = (v: string) => /^[^@\s]+@[^@\s]+\.[A-Za-z]{2,}$/.test(v);
 const whatsapp = (v: string) =>
   !v || /^https:\/\/(chat\.whatsapp\.com|wa\.me)\/\S+$/.test(v);
+const telegram = (v: string) =>
+  !v || /^https:\/\/(t\.me|telegram\.me)\/\S+$/.test(v);
 
 function today(): string {
   return new Date().toISOString().slice(0, 10);
@@ -82,12 +91,12 @@ export function validateClubDraft(
   if (!whatsapp(draft.whatsappUrl.trim())) {
     return 'WhatsApp bağlantısı `https://chat.whatsapp.com/...` biçiminde olmalı.';
   }
+  if (!telegram(draft.telegramUrl.trim())) {
+    return 'Telegram bağlantısı `https://t.me/...` biçiminde olmalı.';
+  }
   if (photos.length > CLUB_PHOTO_LIMIT)
-    return 'En fazla 3 fotoğraf eklenebilir.';
+    return `En fazla ${CLUB_PHOTO_LIMIT} fotoğraf eklenebilir.`;
   for (const file of photos) {
-    if (file.size > CLUB_PHOTO_MAX_BYTES) {
-      return `Her fotoğraf en fazla ${formatBytes(CLUB_PHOTO_MAX_BYTES)} olmalı.`;
-    }
     if (!/^image\/(jpeg|png|webp)$/.test(file.type)) {
       return 'Fotoğraflar JPEG, PNG veya WebP olmalı.';
     }
@@ -158,6 +167,10 @@ export async function createClubRecord(
   const slug = threadSlug(name, slugSuffix());
   const topics = uniqueTopics(input.topics);
   const activities = topics.map((topic) => clubTopicLabels[topic]);
+  const bodyBlocks = input.bodyBlocks.length > 0
+    ? input.bodyBlocks
+    : textToBlocks(input.summary);
+  const summary = blocksToText(bodyBlocks) || input.summary;
   const photoPaths = await uploadClubPhotos(input.userId, slug, input.photos);
   const supabase = await client();
 
@@ -174,13 +187,15 @@ export async function createClubRecord(
     place: sanitizeText(input.place || input.city, { maxLength: 160 }),
     topics,
     activities,
-    summary: sanitizeText(input.summary, { multiline: true, maxLength: 4000 }),
+    summary: sanitizeText(summary, { multiline: true, maxLength: 4000 }),
+    body_blocks: bodyBlocks,
     public_events: input.publicEvents,
     shared_equipment: input.sharedEquipment,
     website: input.website.trim() || null,
     contact_email: input.contactEmail.trim(),
     social_url: input.socialUrl.trim() || null,
     whatsapp_url: input.whatsappUrl.trim() || null,
+    telegram_url: input.telegramUrl.trim() || null,
     photo_paths: photoPaths,
     source_name:
       sanitizeText(input.sourceName, { maxLength: 120 }) ||

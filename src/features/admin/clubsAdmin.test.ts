@@ -20,6 +20,7 @@ const gecerli: ClubInfoDraft = {
   topics: ['amator-astronomi'],
   summary:
     'Ankara çevresinde halka açık gözlem etkinlikleri düzenleyen topluluk.',
+  bodyBlocks: [],
   website: '',
   contactEmail: 'bilgi@ornek.org.tr',
   joinUrl: '',
@@ -27,6 +28,7 @@ const gecerli: ClubInfoDraft = {
   infoCheckedOn: '',
   socialUrl: '',
   whatsappUrl: '',
+  telegramUrl: '',
   publicEvents: true,
   sharedEquipment: false,
 };
@@ -57,6 +59,9 @@ describe('describeClubInfoProblem', () => {
     expect(
       describeClubInfoProblem({ ...gecerli, joinUrl: 'javascript:alert(1)' })
     ).toMatch(/https/);
+    expect(
+      describeClubInfoProblem({ ...gecerli, telegramUrl: 'http://t.me/ornek' })
+    ).toMatch(/Telegram/);
   });
 
   it('biçimsiz e-posta reddediliyor', () => {
@@ -89,16 +94,18 @@ describe('describeClubInfoProblem', () => {
     ).toBeNull();
   });
 
-  it('mevcut görsellerle birlikte toplam 3 sınırını koruyor', () => {
+  it('mevcut görsellerle birlikte toplam 5 sınırını koruyor', () => {
     expect(
       describeClubInfoProblem(
         gecerli,
         [
           { size: 120_000, type: 'image/jpeg' },
           { size: 130_000, type: 'image/webp' },
+          { size: 140_000, type: 'image/png' },
+          { size: 150_000, type: 'image/jpeg' },
         ],
         2
       )
-    ).toMatch(/en fazla 3/);
+    ).toMatch(/en fazla 5/);
   });
 });

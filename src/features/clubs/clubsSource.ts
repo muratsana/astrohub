@@ -1,5 +1,9 @@
 import type { ContentStatus } from '@/domain/content/status';
 import { useEffect, useMemo, useState } from 'react';
+import {
+  parseContentBlocks,
+  type ContentBlock,
+} from '@/domain/content/blocks';
 import { getSupabase, isSupabaseConfigured } from '@/services/supabase/client';
 import { clubPhotoUrl } from '@/services/clubs/photoUrl';
 import {
@@ -58,23 +62,26 @@ export interface ClubView extends AstronomyClub {
    * `source.lastVerifiedAt` ile karıştırılmamalı: o BİLGİNİN tazeliği.
    */
   verifiedAt: string | null;
+  bodyBlocks: ContentBlock[];
   contactEmail?: string;
   joinUrl?: string;
   status?: ContentStatus;
 }
 
-const KINDS: ClubKind[] = ['dernek', 'universite', 'gozlem-grubu'];
+const KINDS: ClubKind[] = ['dernek', 'universite', 'gozlem-grubu', 'topluluk'];
 
 /** Koddaki kayıtlar, doğrulanmamış hâlleriyle — yedek liste. */
 export const DEFAULT_CLUBS: ClubView[] = seedClubs.map((c) => ({
   ...c,
   verifiedAt: null,
+  bodyBlocks: parseContentBlocks([], [c.summary]),
 }));
 
 const SELECT =
   'slug, name, kind, city, district, founded_on, place, founded_year, member_count, summary, ' +
+  'body_blocks, ' +
   'topics, activities, public_events, shared_equipment, website, contact_email, ' +
-  'join_url, social_url, whatsapp_url, photo_paths, organizer_name, source_name, ' +
+  'join_url, social_url, whatsapp_url, telegram_url, photo_paths, organizer_name, source_name, ' +
   'info_checked_on, verified_at, listed, status';
 
 /**
@@ -125,7 +132,9 @@ function normalize(row: Record<string, unknown>): ClubView | null {
   const katilim = metin(row.join_url);
   const sosyal = metin(row.social_url);
   const whatsapp = metin(row.whatsapp_url);
+  const telegram = metin(row.telegram_url);
   const topics = konuListesi(row.topics);
+  const summary = metin(row.summary);
   const photoPaths = Array.isArray(row.photo_paths)
     ? row.photo_paths.map(metin).filter(Boolean).slice(0, 3)
     : [];
@@ -148,7 +157,8 @@ function normalize(row: Record<string, unknown>): ClubView | null {
     ...(metin(row.place) ? { place: metin(row.place) } : {}),
     ...(yil !== null ? { foundedYear: yil } : {}),
     ...(uye !== null ? { memberCount: uye } : {}),
-    summary: metin(row.summary),
+    summary,
+    bodyBlocks: parseContentBlocks(row.body_blocks, summary ? [summary] : []),
     ...(topics.length > 0 ? { topics } : {}),
     activities: Array.isArray(row.activities)
       ? row.activities.map(metin).filter(Boolean)
@@ -159,6 +169,7 @@ function normalize(row: Record<string, unknown>): ClubView | null {
     ...(guvenliAdres(katilim) ? { joinUrl: katilim } : {}),
     ...(guvenliAdres(sosyal) ? { socialUrl: sosyal } : {}),
     ...(guvenliWhatsapp(whatsapp) ? { whatsappUrl: whatsapp } : {}),
+    ...(guvenliTelegram(telegram) ? { telegramUrl: telegram } : {}),
     ...(photos.length > 0 ? { photos } : {}),
     ...(metin(row.contact_email)
       ? { contactEmail: metin(row.contact_email) }
@@ -211,6 +222,10 @@ function guvenliAdres(url: string): boolean {
 
 function guvenliWhatsapp(url: string): boolean {
   return /^https:\/\/(chat\.whatsapp\.com|wa\.me)\/[^\s]+$/.test(url);
+}
+
+function guvenliTelegram(url: string): boolean {
+  return /^https:\/\/(t\.me|telegram\.me)\/[^\s]+$/.test(url);
 }
 
 export interface ClubsResult {

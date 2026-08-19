@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { Suspense, lazy, useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { LocationTypeahead } from '@/components/ui/LocationTypeahead';
@@ -37,14 +37,26 @@ import { PasswordPanel } from './PasswordPanel';
 import { DataExportPanel } from './DataExportPanel';
 import { CollectionsPanel } from './CollectionsPanel';
 
+const ClubManagementPanel = lazy(() =>
+  import('./ClubManagementPanel').then((module) => ({
+    default: module.ClubManagementPanel,
+  }))
+);
+
 type Tab =
-  'hesabim' | 'profilim' | 'ekipmanlarim' | 'koleksiyonlarim' | 'tercihler';
+  | 'hesabim'
+  | 'profilim'
+  | 'ekipmanlarim'
+  | 'koleksiyonlarim'
+  | 'kulup-yonetimi'
+  | 'tercihler';
 
 const TAB_LABELS: Record<Tab, string> = {
   hesabim: 'Hesabım',
   profilim: 'Profilim',
   ekipmanlarim: 'Ekipmanlarım',
   koleksiyonlarim: 'Koleksiyonlarım',
+  'kulup-yonetimi': 'Kulüp Yönetimi',
   tercihler: 'Tercihler',
 };
 
@@ -59,6 +71,7 @@ function tabFromQuery(value: string | null): Tab {
   if (value === 'profilim') return 'profilim';
   if (value === 'ekipmanlarim') return 'ekipmanlarim';
   if (value === 'koleksiyonlarim') return 'koleksiyonlarim';
+  if (value === 'kulup-yonetimi') return 'kulup-yonetimi';
   if (value === 'tercihler') return 'tercihler';
   return 'hesabim';
 }
@@ -597,6 +610,18 @@ export function AccountPage() {
           <MyEquipmentPanel />
         ) : activeTab === 'koleksiyonlarim' ? (
           <CollectionsPanel />
+        ) : activeTab === 'kulup-yonetimi' ? (
+          <Suspense
+            fallback={
+              <Panel title="Kulüp Yönetimi">
+                <p className="text-body-sm text-muted-foreground">
+                  Kulüp yönetimi yükleniyor…
+                </p>
+              </Panel>
+            }
+          >
+            <ClubManagementPanel userId={user?.id} />
+          </Suspense>
         ) : activeTab === 'tercihler' ? (
           <PreferencesPanel />
         ) : (

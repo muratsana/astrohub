@@ -13,12 +13,13 @@
  * ziyaretçinin boşuna yola çıkması demek.
  */
 
-export type ClubKind = 'dernek' | 'universite' | 'gozlem-grubu';
+export type ClubKind = 'dernek' | 'universite' | 'gozlem-grubu' | 'topluluk';
 
 export const clubKindLabels: Record<ClubKind, string> = {
   dernek: 'Dernek',
   universite: 'Üniversite Kulübü',
   'gozlem-grubu': 'Gözlem Grubu',
+  topluluk: 'Topluluk',
 };
 
 export type ClubTopic =
@@ -79,6 +80,7 @@ export interface AstronomyClub {
   website?: string;
   socialUrl?: string;
   whatsappUrl?: string;
+  telegramUrl?: string;
   photos?: ClubPhoto[];
   /** Etkinlik verisindeki organizatör adı — kayıtlar bununla eşleşir. */
   organizerName?: string;

@@ -10,6 +10,7 @@ import { NotFoundPage } from '@/components/NotFoundPage';
 import { ExternalLink } from '@/components/ExternalLink';
 import { RemoteImage } from '@/components/media/RemoteImage';
 import { PageMeta } from '@/components/seo/PageMeta';
+import { BlockRenderer } from '@/components/content/BlockRenderer';
 import { breadcrumbJsonLd, absoluteUrl } from '@/lib/seo';
 import { events } from '@/features/events/data';
 import { eventTypeLabels } from '@/features/events/types';
@@ -126,6 +127,12 @@ export function ClubDetailPage() {
 
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
           <div className="space-y-4">
+            {club.bodyBlocks.length > 0 && (
+              <Panel title="Kulüp İçeriği">
+                <BlockRenderer blocks={club.bodyBlocks} />
+              </Panel>
+            )}
+
             {club.photos && club.photos.length > 0 && (
               <Panel title="Fotoğraflar" status={`${club.photos.length}`}>
                 <div className="grid gap-2 sm:grid-cols-3">
@@ -321,6 +328,16 @@ export function ClubDetailPage() {
                     label="WhatsApp"
                     value={
                       <ExternalLink href={club.whatsappUrl} showHost>
+                        Grup bağlantısı
+                      </ExternalLink>
+                    }
+                  />
+                )}
+                {club.telegramUrl && (
+                  <SpecRow
+                    label="Telegram"
+                    value={
+                      <ExternalLink href={club.telegramUrl} showHost>
                         Grup bağlantısı
                       </ExternalLink>
                     }

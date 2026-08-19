@@ -20,6 +20,8 @@ interface RichContentEditorProps {
   blocks: ContentBlock[];
   onChange: (blocks: ContentBlock[]) => void;
   placeholder?: string;
+  minHeightClassName?: string;
+  editorClassName?: string;
 }
 
 const FigureImage = Node.create({
@@ -293,6 +295,8 @@ export function RichContentEditor({
   blocks,
   onChange,
   placeholder,
+  minHeightClassName,
+  editorClassName,
 }: RichContentEditorProps) {
   const lastHtml = useRef('');
   const [initialHtml] = useState(() => blocksToEditorHtml(blocks));
@@ -362,7 +366,8 @@ export function RichContentEditor({
       attributes: {
         'data-placeholder': placeholder ?? '',
         class: cn(
-          'min-h-[65dvh] w-full max-w-none bg-background px-4 py-3 pb-28 text-body-sm leading-relaxed text-foreground outline-none',
+          minHeightClassName ?? 'min-h-[65dvh]',
+          'w-full max-w-none bg-background px-4 py-3 pb-28 text-body-sm leading-relaxed text-foreground outline-none',
           '[&_a]:text-primary [&_a]:underline',
           '[&_.is-editor-empty:first-child::before]:pointer-events-none [&_.is-editor-empty:first-child::before]:float-left [&_.is-editor-empty:first-child::before]:h-0 [&_.is-editor-empty:first-child::before]:text-faint [&_.is-editor-empty:first-child::before]:content-[attr(data-placeholder)]',
           '[&_blockquote]:border-l-2 [&_blockquote]:border-primary [&_blockquote]:pl-3 [&_blockquote]:text-muted-foreground',
@@ -375,7 +380,8 @@ export function RichContentEditor({
           '[&_h2]:mt-5 [&_h2]:font-display [&_h2]:text-xl [&_h2]:font-bold',
           '[&_h3]:mt-4 [&_h3]:font-semibold',
           '[&_ol]:list-decimal [&_ol]:pl-6 [&_ul]:list-disc [&_ul]:pl-6',
-          '[&_table]:my-3 [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-border [&_td]:px-2 [&_td]:py-1 [&_th]:border [&_th]:border-border [&_th]:px-2 [&_th]:py-1'
+          '[&_table]:my-3 [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-border [&_td]:px-2 [&_td]:py-1 [&_th]:border [&_th]:border-border [&_th]:px-2 [&_th]:py-1',
+          editorClassName
         ),
       },
     },

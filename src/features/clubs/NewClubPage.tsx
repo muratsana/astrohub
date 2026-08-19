@@ -9,7 +9,9 @@ import { Input, Select } from '@/components/ui/Input';
 import { Button, ButtonLink } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
 import { PageMeta } from '@/components/seo/PageMeta';
+import { blocksToText } from '@/domain/content/blocks';
 import { useAuth } from '@/features/auth/AuthContext';
+import { RichContentEditor } from '@/features/admin/RichContentEditor';
 import { LocationTypeahead } from '@/components/ui/LocationTypeahead';
 import {
   clubKindLabels,
@@ -208,7 +210,7 @@ function ClubPhotoPicker({
         </span>
         <span className="max-w-md text-meta text-muted-foreground">
           Logo, afiş veya grup görseli yükleyin. En fazla {CLUB_PHOTO_LIMIT}{' '}
-          görsel, dosya başına {formatBytes(CLUB_PHOTO_MAX_BYTES)}.
+          görsel; büyük dosyalar yüklemeden önce {formatBytes(CLUB_PHOTO_MAX_BYTES)} sınırına optimize edilir.
         </span>
       </label>
       <input
@@ -367,10 +369,12 @@ function blankDraft(): ClubDraft {
     place: '',
     topics: [],
     summary: '',
+    bodyBlocks: [],
     contactEmail: '',
     website: '',
     socialUrl: '',
     whatsappUrl: '',
+    telegramUrl: '',
     publicEvents: true,
     sharedEquipment: false,
   };
@@ -435,7 +439,7 @@ export function NewClubPage() {
             { label: 'Topluluğunu ekle' },
           ]}
           title="Topluluğunu Ekle"
-          description="Gönderimler admin onayından sonra topluluk dizininde yayımlanır. Maksimum 3 logo, afiş veya grup fotoğrafı eklenebilir."
+          description="Gönderimler admin onayından sonra topluluk dizininde yayımlanır. Maksimum 5 logo, afiş veya grup fotoğrafı eklenebilir."
         />
 
         <Panel title={done ? 'Gönderim alındı' : 'Topluluk bilgileri'}>
@@ -560,9 +564,21 @@ export function NewClubPage() {
                   />
                 </Field>
                 <Field
+                  label="Telegram grubu"
+                  htmlFor="club-telegram"
+                  hint="Opsiyonel"
+                >
+                  <Input
+                    id="club-telegram"
+                    placeholder="https://t.me/..."
+                    value={draft.telegramUrl}
+                    onChange={(e) => set('telegramUrl', e.target.value)}
+                  />
+                </Field>
+                <Field
                   label="Logo / grup fotoğrafı"
                   htmlFor="club-photos"
-                  hint={`En fazla ${CLUB_PHOTO_LIMIT} görsel · JPEG, PNG veya WebP`}
+                  hint={`En fazla ${CLUB_PHOTO_LIMIT} görsel · dosya başına ${formatBytes(CLUB_PHOTO_MAX_BYTES)} · JPEG, PNG veya WebP`}
                 >
                   <ClubPhotoPicker
                     items={photoItems}
@@ -591,13 +607,29 @@ export function NewClubPage() {
                 </div>
 
                 <div className="sm:col-span-2">
-                  <Field label="Açıklama" htmlFor="club-summary">
-                    <textarea
-                      id="club-summary"
-                      value={draft.summary}
-                      onChange={(e) => set('summary', e.target.value)}
-                      className="min-h-32 w-full rounded-card border border-border bg-surface-1 px-3 py-2 text-body-sm text-foreground placeholder:text-faint focus:border-primary focus:bg-surface-2"
-                    />
+                  <Field
+                    label="Kulüp içeriği"
+                    htmlFor="club-summary"
+                    hint="Başlık, liste, bağlantı, tablo, görsel, galeri ve bilgi kutusu eklenebilir."
+                  >
+                    <div id="club-summary">
+                      <RichContentEditor
+                        blocks={draft.bodyBlocks}
+                        onChange={(blocks) =>
+                          setDraft((value) => ({
+                            ...value,
+                            bodyBlocks: blocks,
+                            summary: blocksToText(blocks),
+                          }))
+                        }
+                        placeholder="Kulübün amacı, toplantı düzeni, ekipmanları, katılım koşulları ve iletişim bilgileri..."
+                        minHeightClassName="min-h-72"
+                        editorClassName="pb-12"
+                      />
+                    </div>
+                    <p className="mt-2 text-meta text-muted-foreground">
+                      Özet otomatik üretilir: {draft.summary.length} karakter
+                    </p>
                   </Field>
                 </div>
                 <div className="flex flex-wrap gap-3 text-body-sm text-muted-foreground sm:col-span-2">

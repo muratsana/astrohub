@@ -20,6 +20,13 @@ const silmeSql = readFileSync(
   ),
   'utf8'
 );
+const portalSql = readFileSync(
+  resolve(
+    process.cwd(),
+    'supabase/migrations/20260819220000_topluluk_portali.sql'
+  ),
+  'utf8'
+);
 
 describe('mock topluluk temizliği', () => {
   it('kod tarafında yedek/mock topluluk kalmadı', () => {
@@ -32,6 +39,17 @@ describe('mock topluluk temizliği', () => {
     expect(silmeSql).toContain('deleted_at = coalesce(deleted_at, now())');
     expect(silmeSql).toContain('listed = false');
   });
+
+  it('canlıda eklenmiş mevcut tüm topluluklar yeni migration ile kaldırılıyor', () => {
+    expect(portalSql).toContain('update public.clubs');
+    expect(portalSql).toContain('where deleted_at is null');
+    expect(portalSql).toContain('listed = false');
+    expect(portalSql).toContain('deleted_at = coalesce(deleted_at, now())');
+    expect(portalSql).toContain("'topluluk'");
+    expect(portalSql).toContain('clubs_telegram_url_check');
+    expect(portalSql).toContain('cardinality(photo_paths) <= 5');
+    expect(portalSql).toContain('5242880');
+  });
 });
 
 describe('toClubs', () => {
@@ -43,12 +61,14 @@ describe('toClubs', () => {
     founded_year: 2010,
     member_count: 40,
     summary: 'Özet',
+    body_blocks: [],
     activities: ['Gözlem gecesi'],
     public_events: true,
     shared_equipment: false,
     website: 'https://ornek.org.tr',
     contact_email: 'bilgi@ornek.org.tr',
     join_url: 'https://ornek.org.tr/katil',
+    telegram_url: 'https://t.me/ornek',
     organizer_name: 'Örnek Kulüp',
     source_name: 'Dernek duyurusu',
     info_checked_on: '2026-07-10',
@@ -114,6 +134,12 @@ describe('toClubs', () => {
 
   it('bilinmeyen tür gözlem grubuna düşüyor', () => {
     expect(toClubs([row({ kind: 'uydurma' })])[0]!.kind).toBe('gozlem-grubu');
+  });
+
+  it('topluluk türü ve Telegram bağlantısı okunuyor', () => {
+    const c = toClubs([row({ kind: 'topluluk' })])[0]!;
+    expect(c.kind).toBe('topluluk');
+    expect(c.telegramUrl).toBe('https://t.me/ornek');
   });
 
   it('`null` üye sayısı 0 sayılmıyor', () => {

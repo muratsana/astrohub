@@ -397,6 +397,18 @@ function ClubForm({
         />
       </Field>
       <Field
+        label="Telegram grubu"
+        htmlFor={`${idPrefix}-telegram`}
+        hint="Opsiyonel"
+      >
+        <Input
+          id={`${idPrefix}-telegram`}
+          placeholder="https://t.me/..."
+          value={draft.telegramUrl}
+          onChange={(e) => set('telegramUrl', e.target.value)}
+        />
+      </Field>
+      <Field
         label="Katılım bağlantısı"
         htmlFor={`${idPrefix}-join`}
         hint="Opsiyonel"

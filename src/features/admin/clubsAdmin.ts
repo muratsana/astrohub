@@ -1,4 +1,9 @@
 import type { ContentStatus } from '@/domain/content/status';
+import {
+  parseContentBlocks,
+  textToBlocks,
+  type ContentBlock,
+} from '@/domain/content/blocks';
 import { sanitizeText } from '@/lib/sanitize';
 import { getSupabase } from '@/services/supabase/client';
 import {
@@ -22,6 +27,7 @@ export interface AdminClub {
   place: string | null;
   topics: ClubTopic[];
   summary: string;
+  bodyBlocks: ContentBlock[];
   publicEvents: boolean;
   sharedEquipment: boolean;
   website: string | null;
@@ -29,6 +35,7 @@ export interface AdminClub {
   joinUrl: string | null;
   socialUrl: string | null;
   whatsappUrl: string | null;
+  telegramUrl: string | null;
   photoPaths: string[];
   sourceName: string | null;
   infoCheckedOn: string | null;
@@ -49,8 +56,8 @@ async function client() {
 }
 
 const SELECT =
-  'slug, name, kind, city, founded_on, place, topics, summary, public_events, ' +
-  'shared_equipment, website, contact_email, join_url, social_url, whatsapp_url, ' +
+  'slug, name, kind, city, founded_on, place, topics, summary, body_blocks, public_events, ' +
+  'shared_equipment, website, contact_email, join_url, social_url, whatsapp_url, telegram_url, ' +
   'photo_paths, source_name, info_checked_on, verified_at, listed, status, submitted_by';
 
 interface Row {
@@ -62,6 +69,7 @@ interface Row {
   place: string | null;
   topics: string[] | null;
   summary: string;
+  body_blocks: unknown;
   public_events: boolean;
   shared_equipment: boolean;
   website: string | null;
@@ -69,6 +77,7 @@ interface Row {
   join_url: string | null;
   social_url: string | null;
   whatsapp_url: string | null;
+  telegram_url: string | null;
   photo_paths: string[] | null;
   source_name: string | null;
   info_checked_on: string | null;
@@ -96,6 +105,7 @@ function toAdminClub(r: Row): AdminClub {
     place: r.place,
     topics: topics(r.topics),
     summary: r.summary,
+    bodyBlocks: parseContentBlocks(r.body_blocks, r.summary ? [r.summary] : []),
     publicEvents: r.public_events,
     sharedEquipment: r.shared_equipment,
     website: r.website,
@@ -103,6 +113,7 @@ function toAdminClub(r: Row): AdminClub {
     joinUrl: r.join_url,
     socialUrl: r.social_url,
     whatsappUrl: r.whatsapp_url,
+    telegramUrl: r.telegram_url,
     photoPaths: r.photo_paths ?? [],
     sourceName: r.source_name,
     infoCheckedOn: r.info_checked_on,
@@ -122,10 +133,12 @@ export function draftFromClub(club: AdminClub): ClubInfoDraft {
     place: club.place ?? '',
     topics: club.topics,
     summary: club.summary,
+    bodyBlocks: club.bodyBlocks,
     contactEmail: club.contactEmail ?? '',
     website: club.website ?? '',
     socialUrl: club.socialUrl ?? '',
     whatsappUrl: club.whatsappUrl ?? '',
+    telegramUrl: club.telegramUrl ?? '',
     joinUrl: club.joinUrl ?? '',
     publicEvents: club.publicEvents,
     sharedEquipment: club.sharedEquipment,
@@ -143,10 +156,12 @@ export function emptyClubDraft(): ClubInfoDraft {
     place: '',
     topics: [],
     summary: '',
+    bodyBlocks: [],
     contactEmail: '',
     website: '',
     socialUrl: '',
     whatsappUrl: '',
+    telegramUrl: '',
     joinUrl: '',
     publicEvents: true,
     sharedEquipment: false,
@@ -170,6 +185,12 @@ export function describeClubInfoProblem(
     !/^https:\/\/[A-Za-z0-9.-]+(\/\S*)?$/.test(draft.joinUrl)
   ) {
     return 'Katılım bağlantısı `https://` ile başlamalı.';
+  }
+  if (
+    draft.telegramUrl &&
+    !/^https:\/\/(t\.me|telegram\.me)\/\S+$/.test(draft.telegramUrl)
+  ) {
+    return 'Telegram bağlantısı `https://t.me/...` biçiminde olmalı.';
   }
   if (draft.infoCheckedOn && !/^\d{4}-\d{2}-\d{2}$/.test(draft.infoCheckedOn)) {
     return 'Kontrol tarihi YYYY-AA-GG biçiminde olmalı.';
@@ -228,6 +249,8 @@ export async function saveClubInfo(
   if (sorun) throw new Error(sorun);
 
   const supabase = await client();
+  const bodyBlocks =
+    draft.bodyBlocks.length > 0 ? draft.bodyBlocks : textToBlocks(draft.summary);
   const uploaded =
     photos.length > 0
       ? await uploadClubPhotos(await reviewerId(), slug, photos)
@@ -247,6 +270,7 @@ export async function saveClubInfo(
         multiline: true,
         maxLength: 4000,
       }),
+      body_blocks: bodyBlocks,
       public_events: draft.publicEvents,
       shared_equipment: draft.sharedEquipment,
       website: draft.website.trim() || null,
@@ -254,6 +278,7 @@ export async function saveClubInfo(
       join_url: draft.joinUrl.trim() || null,
       social_url: draft.socialUrl.trim() || null,
       whatsapp_url: draft.whatsappUrl.trim() || null,
+      telegram_url: draft.telegramUrl.trim() || null,
       photo_paths:
         uploaded.length > 0
           ? [...existingPhotoPaths, ...uploaded].slice(0, CLUB_PHOTO_LIMIT)
