@@ -52,17 +52,31 @@ function statements(sql: string): Statement[] {
  *
  * Naif `split(',')` işe yaramaz: değerlerin içinde virgül var (jsonb
  * nesneleri, diziler, Türkçe cümleler). Tırnak durumu takip ediliyor ve
- * SQL'in kaçış kuralı (`''`) gözetiliyor.
+ * SQL'in iki kaçış kuralı da gözetiliyor:
+ *
+ *   `'…''…'`   sıradan literal, tek tırnak ikilenerek kaçırılıyor
+ *   `E'…\\'…'`  KAÇIŞ LİTERALİ, ters bölü kaçışı geçerli
+ *
+ * İkincisi teoriden değil: `quote_nullable` bir değerde ters bölü görünce
+ * `E'…'` üretiyor ve katalogda böyle satırlar var (JSON içindeki `\\"`
+ * yüzünden). Ters bölü kaçışı bilinmezse `\\'` kapanış tırnağı sanılır ve
+ * satır yanlış bölünür — kolon sayısı testi de sessizce yanlış geçerdi.
  */
 function splitValues(row: string): string[] {
   const line = row.trim().replace(/,$/, '').slice(1, -1);
   const values: string[] = [];
   let current = '';
   let inQuote = false;
+  let escaped = false;
 
   for (let i = 0; i < line.length; i++) {
     const ch = line[i];
     if (inQuote) {
+      if (escaped && ch === '\\') {
+        current += ch + (line[i + 1] ?? '');
+        i++;
+        continue;
+      }
       if (ch === "'" && line[i + 1] === "'") {
         current += "''";
         i++;
@@ -72,6 +86,7 @@ function splitValues(row: string): string[] {
       current += ch;
     } else if (ch === "'") {
       inQuote = true;
+      escaped = current.endsWith('E');
       current += ch;
     } else if (ch === ',') {
       values.push(current.trim());
@@ -141,8 +156,14 @@ describe.each(FILES)('%s', (file) => {
         for (const { name, index } of indexes) {
           const value = values[index];
           if (value === 'NULL') continue;
+          /*
+           * `E'` öneki de geçerli: ters bölü taşıyan bir dizi elemanında
+           * (örneğin tırnaklı bir alıntı) `quote_nullable` kaçış literali
+           * üretiyor. Aranan şey önek değil, içeriğin `{…}` olması.
+           */
+          const govde = value.startsWith("E'") ? value.slice(1) : value;
           expect(
-            value.startsWith("'{") && value.endsWith("}'"),
+            govde.startsWith("'{") && govde.endsWith("}'"),
             `${block.table}.${name} = ${value.slice(0, 40)} — dizi '{…}' olmalı`
           ).toBe(true);
         }

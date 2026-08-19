@@ -74,7 +74,8 @@ export const equipment: EquipmentModel[] = [
       '5.5 kg tüp, 13 kg sınıfı montür ister.',
     ],
     connections: { output: 'M54x0.75' },
-    optics: { imageCircleMm: 44, requiredBackfocusMm: 55 },
+    /* Üretici FRA600 için 66 mm görüntü çemberi veriyor (44 mm yanlıştı). */
+    optics: { imageCircleMm: 66, requiredBackfocusMm: 55 },
     productionStatus: 'guncel',
     confidence: 'tek-kaynak',
   },
@@ -156,11 +157,16 @@ export const equipment: EquipmentModel[] = [
     confidence: 'tek-kaynak',
   },
   {
-    slug: 'gso-rc8',
+    slug: 'gso-rc-8',
     brand: 'GSO',
-    model: 'RC8 Ritchey-Chrétien',
+    model: 'GSO 8" F/8 RC scope',
     category: 'optik-tup',
-    specs: { 'Açıklık': '203 mm', 'Odak': '1624 mm', 'f/': '8', 'Tip': 'Ritchey-Chrétien', 'Ağırlık': '8.2 kg', 'Backfocus': '55 mm' },
+    /*
+     * Ölçüler üreticinin kendi sayfasından (gs-telescope.com, 19.08.2026):
+     * 200 mm açıklık, 1600 mm odak. Burada uzun süre 203/1624 yazıyordu —
+     * inçten çevrilmiş, üreticinin vermediği bir sayı.
+     */
+    specs: { 'Açıklık': '200 mm', 'Odak': '1600 mm', 'f/': '8', 'Tip': 'Ritchey-Chrétien', 'Ağırlık': '8.2 kg', 'Backfocus': '55 mm' },
     priceHint: 'Orta segment',
     summary:
       'Profesyonel gözlemevlerinin optik tasarımının ekonomik sürümü; koma yok, ama kolimasyon disiplini ister.',

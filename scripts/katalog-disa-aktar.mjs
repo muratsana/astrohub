@@ -63,7 +63,31 @@ const SKIP_COLUMNS = ['created_at', 'updated_at'];
 const KATALOG = [
   { table: 'equipment_categories', pk: ['id'], order: 'id collate "C"', heading: 'Ekipman kategorileri' },
   { table: 'equipment_brands', pk: ['id'], order: 'id collate "C"', heading: 'Markalar' },
-  { table: 'equipment_models', pk: ['id'], order: 'slug collate "C"', heading: 'Modeller (piyasa kataloğu + teknik veri)' },
+  {
+    table: 'equipment_models',
+    pk: ['id'],
+    order: 'slug collate "C"',
+    heading: 'Modeller (piyasa kataloğu + teknik veri)',
+    /*
+     * ONAYLANMAMIŞ KAYITLAR DIŞARIDA.
+     *
+     * `approved = false` bir kullanıcının gönderdiği, henüz denetlenmemiş
+     * öneridir: referans verisi değil, bekleyen bir iş. İkisi de bu dosyaya
+     * girmemesi için sebep — ama asıl sebep üçüncüsü: satır `submitted_by`
+     * ile birlikte geliyor, yani gerçek bir kullanıcının kimliği depoya
+     * commit edilmiş olurdu.
+     */
+    where: 'approved',
+    /*
+     * KULLANICI KİMLİĞİ DEPOYA GİRMEZ.
+     *
+     * `submitted_by` gerçek bir kullanıcının UUID'si ve `auth.users`'a
+     * yabancı anahtarla bağlı. İki ayrı sebeple burada boşaltılıyor:
+     * kimliği commit etmemek ve temiz bir kurulumu kırmamak — taze bir
+     * veritabanında o kullanıcı yok, satır yabancı anahtar hatasıyla düşer.
+     */
+    blank: ['submitted_by'],
+  },
   { table: 'celestial_objects', pk: ['id'], order: 'slug collate "C"', heading: 'Gök cisimleri' },
   { table: 'catalog_identifiers', pk: ['object_id', 'code'], order: 'object_id::text collate "C", code collate "C"', heading: 'Katalog kodları (M31, NGC 224 …)' },
 ];
@@ -98,7 +122,7 @@ async function columnsOf(table) {
   return (await query(sql)).split('\n').map((s) => s.trim()).filter(Boolean);
 }
 
-async function renderTable({ table, pk, order, heading }) {
+async function renderTable({ table, pk, order, heading, where, blank = [] }) {
   const columns = await columnsOf(table);
 
   /*
@@ -114,12 +138,16 @@ async function renderTable({ table, pk, order, heading }) {
    * `{"a": 1}`, zaman damgası ISO. Ne yazdıysa onu geri okuyabiliyor.
    */
   const valueList = columns
-    .map((c) => `quote_nullable(t.${c}::text)`)
+    .map((c) =>
+      blank.includes(c)
+        ? 'quote_nullable(null::text)'
+        : `quote_nullable(t.${c}::text)`
+    )
     .join(", ', ', ");
 
   const rowsSql = `
     select '  (' || concat(${valueList}) || ')'
-    from public.${table} t order by ${order}`;
+    from public.${table} t ${where ? `where ${where}` : ''} order by ${order}`;
 
   const rows = (await query(rowsSql)).split('\n').filter((line) => line.trim());
 
