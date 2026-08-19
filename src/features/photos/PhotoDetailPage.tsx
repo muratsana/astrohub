@@ -5,6 +5,7 @@ import { Link, useParams } from 'react-router';
 import { framingLink } from '@/features/targets/useActiveTarget';
 import { Container } from '@/components/ui/Container';
 import { Button, ButtonLink } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/Badge';
 import { RemoteImage } from '@/components/media/RemoteImage';
 import { PlaceholderPage } from '@/components/PlaceholderPage';
 import { SectionHeader } from '@/components/ui/SectionHeader';
@@ -46,6 +47,8 @@ import { ShareKit } from './ShareKit';
 import { OwnerOriginalDownload } from './OwnerOriginalDownload';
 import { ReportButton } from '@/features/admin/ReportButton';
 import { exifHasValues, photoTypeLabels } from './types';
+import { familyOf, photoFamilies } from './families';
+import { photoTargetHeading } from './photoHeading';
 import { formatExposure } from '@/domain/photography/exif';
 import type { AstroPhoto } from './types';
 import { cn } from '@/lib/cn';
@@ -110,6 +113,8 @@ function PhotoDetail({
   const canEditPhoto = Boolean(
     photo.id && (roles.isAdmin || (user && photo.ownerId === user.id))
   );
+  const family = photoFamilies[familyOf(photo.type)];
+  const targetHeading = photoTargetHeading(photo);
   const targetSlug = targets.find(
     (target) =>
       target.catalog === photo.target.catalog ||
@@ -188,16 +193,26 @@ function PhotoDetail({
         {/* Temel bilgi */}
         <div className="mt-6 flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0">
-            <p className="text-sm font-medium text-primary">
+            <div className="flex flex-wrap items-center gap-2">
               {targetSlug ? (
-                <Link to={`/hedef/${targetSlug}`} className="hover:underline">
-                  {photo.target.catalog}
+                <Link
+                  to={`/hedef/${targetSlug}`}
+                  className="text-sm font-semibold text-primary transition-colors hover:text-primary/80 hover:underline"
+                >
+                  {targetHeading}
                 </Link>
               ) : (
-                photo.target.catalog
-              )}{' '}
-              · {photoTypeLabels[photo.type]}
-            </p>
+                <span className="text-sm font-semibold text-primary">
+                  {targetHeading}
+                </span>
+              )}
+              <Badge
+                tone={family.tone}
+                className={cn('bg-surface-1/80', family.className)}
+              >
+                {family.label}
+              </Badge>
+            </div>
             {/* Fotoğraftan kadraja: "bunu ben de çekebilir miyim"
                 sorusunun cevabı bir tık uzakta olmalı. */}
             {targetSlug && (
