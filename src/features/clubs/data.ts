@@ -13,8 +13,6 @@
  * ziyaretçinin boşuna yola çıkması demek.
  */
 
-import { commonsImage } from '../../lib/commons';
-
 export type ClubKind = 'dernek' | 'universite' | 'gozlem-grubu';
 
 export const clubKindLabels: Record<ClubKind, string> = {
@@ -50,10 +48,6 @@ export interface ClubPhoto {
   url: string;
   alt: string;
 }
-
-const cover = (fileName: string, alt: string): ClubPhoto[] => [
-  { url: commonsImage(fileName, 900), alt },
-];
 
 export interface AstronomyClub {
   slug: string;
@@ -91,136 +85,7 @@ export interface AstronomyClub {
   source: { name: string; lastVerifiedAt: string };
 }
 
-export const clubs: AstronomyClub[] = [
-  {
-    slug: 'antalya-astronomi-dernegi',
-    name: 'Antalya Astronomi Derneği',
-    kind: 'dernek',
-    city: 'Antalya',
-    foundedYear: 2009,
-    memberCount: 180,
-    summary:
-      'Saklıkent ve Bakırlıtepe çevresinde düzenli gözlem etkinlikleri yapan, halka açık gözlem geceleriyle bilinen dernek. Meteor yağmuru kampları yıllık takvimin sabiti.',
-    activities: [
-      'Aylık halka açık gözlem gecesi',
-      'Meteor yağmuru kampları',
-      'Okul ziyaretleri ve teleskop tanıtımı',
-    ],
-    publicEvents: true,
-    sharedEquipment: true,
-    organizerName: 'Antalya Astronomi Derneği',
-    photos: cover(
-      'TUG_full_site.jpg',
-      'Antalya astronomi topluluğu için gözlemevi ve gece gökyüzü kapak görseli'
-    ),
-    source: { name: 'Dernek duyuruları', lastVerifiedAt: '2026-07-10' },
-  },
-  {
-    slug: 'ege-universitesi-astronomi-kulubu',
-    name: 'Ege Üniversitesi Astronomi Kulübü',
-    kind: 'universite',
-    city: 'İzmir',
-    foundedYear: 1998,
-    summary:
-      'Kampüs içinde güneş gözlemleri ve dönem boyunca süren temel astronomi seminerleri düzenler. H-alfa güneş teleskobu kulüp envanterindedir.',
-    activities: [
-      'H-alfa güneş gözlemi',
-      'Dönemlik astronomi semineri',
-      'Gözlem gezileri',
-    ],
-    publicEvents: true,
-    sharedEquipment: true,
-    organizerName: 'Ege Üniversitesi Astronomi Kulübü',
-    photos: cover(
-      'North America Nebula (NGC7000) in Hubble Palette.jpg',
-      'Ege Üniversitesi Astronomi Kulübü astrofotoğraf kapak görseli'
-    ),
-    source: { name: 'Kulüp duyurusu', lastVerifiedAt: '2026-07-01' },
-  },
-  {
-    slug: 'ankara-astrofotograf-grubu',
-    name: 'Ankara Astrofotoğraf Grubu',
-    kind: 'gozlem-grubu',
-    city: 'Ankara',
-    summary:
-      'Görüntü işleme atölyeleri ve Çamlıdere çevresinde ortak çekim geceleri düzenleyen, astrofotoğrafa odaklı topluluk.',
-    activities: [
-      'Görüntü işleme atölyesi',
-      'Ortak çekim geceleri',
-      'Ekipman ödünç havuzu',
-    ],
-    publicEvents: true,
-    sharedEquipment: false,
-    organizerName: 'Ankara Astrofotoğraf Grubu',
-    photos: cover(
-      'Andromeda galaxy.jpg',
-      'Ankara Astrofotoğraf Grubu derin uzay kapak görseli'
-    ),
-    source: { name: 'Topluluk paylaşımı', lastVerifiedAt: '2026-07-15' },
-  },
-  {
-    slug: 'bursa-astronomi-dernegi',
-    name: 'Bursa Astronomi Derneği',
-    kind: 'dernek',
-    city: 'Bursa',
-    foundedYear: 2013,
-    memberCount: 95,
-    summary:
-      'Uludağ Sarıalan mevkiinde büyük katılımlı gözlem şenlikleri düzenler; ekipmanı olmayan katılımcılar için teleskop istasyonları kurar.',
-    activities: ['Gözlem şenliği', 'Teleskop istasyonu', 'Çocuk atölyeleri'],
-    publicEvents: true,
-    sharedEquipment: true,
-    organizerName: 'Bursa Astronomi Derneği',
-    photos: cover(
-      'Rosette Nebula NGC 2237 - C49.png',
-      'Bursa Astronomi Derneği gözlem ve astrofotoğraf kapak görseli'
-    ),
-    source: { name: 'Dernek duyurusu', lastVerifiedAt: '2026-07-19' },
-  },
-  {
-    slug: 'erciyes-astronomi-kulubu',
-    name: 'Erciyes Astronomi Kulübü',
-    kind: 'universite',
-    city: 'Kayseri',
-    foundedYear: 2011,
-    summary:
-      'Erciyes yaylasındaki yüksek rakım ve kuru kış havasını kullanan kış gözlem kamplarıyla tanınır.',
-    activities: [
-      'Kış gözlem kampı',
-      'Meteor sayımı',
-      'Gökyüzü tanıtım geceleri',
-    ],
-    publicEvents: true,
-    sharedEquipment: false,
-    organizerName: 'Erciyes Astronomi Kulübü',
-    photos: cover(
-      'NGC 6302 Hubble 2009.full.jpg',
-      'Erciyes Astronomi Kulübü derin uzay kapak görseli'
-    ),
-    source: { name: 'Kulüp duyurusu', lastVerifiedAt: '2026-07-18' },
-  },
-  {
-    slug: 'kapadokya-gokbilim-toplulugu',
-    name: 'Kapadokya Gökbilim Topluluğu',
-    kind: 'gozlem-grubu',
-    city: 'Nevşehir',
-    summary:
-      'Peribacaları çevresindeki düşük ışık kirliliğini turizmle birleştiren gözlem geceleri ve astrofoto atölyeleri düzenler.',
-    activities: [
-      'Gözlem gecesi',
-      'Astrofoto atölyesi',
-      'Rehberli gökyüzü turu',
-    ],
-    publicEvents: true,
-    sharedEquipment: true,
-    organizerName: 'Kapadokya Gökbilim Topluluğu',
-    photos: cover(
-      'NGC 6888.png',
-      'Kapadokya Gökbilim Topluluğu astrofotoğraf kapak görseli'
-    ),
-    source: { name: 'Organizatör bildirimi', lastVerifiedAt: '2026-07-20' },
-  },
-];
+export const clubs: AstronomyClub[] = [];
 
 export function getClubBySlug(slug: string): AstronomyClub | undefined {
   return clubs.find((c) => c.slug === slug);
