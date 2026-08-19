@@ -19,6 +19,7 @@ const state = {
   removed: [] as { bucket: string; paths: string[] }[],
   /** Kalıcı silme — FAZ 3'ten sonra geri alma yolunda BEKLENMİYOR. */
   deletedRows: [] as string[],
+  deletedByTable: [] as { table: string; column: string; value: string }[],
   /** Geri almanın taslağı kaldırma biçimi: `deleted_at` yazması. */
   softDeletedRows: [] as string[],
   insertedRows: 0,
@@ -70,7 +71,10 @@ function tableApi(table: string) {
       if (table === 'photo_exposures') {
         const satirlar = rows as Record<string, unknown>[];
         /* Şema geride: `session_id` taşıyan insert reddediliyor. */
-        if (state.sessionIdKolonuYok && satirlar.some((r) => 'session_id' in r)) {
+        if (
+          state.sessionIdKolonuYok &&
+          satirlar.some((r) => 'session_id' in r)
+        ) {
           return Promise.resolve({
             error: {
               code: 'PGRST204',
@@ -113,8 +117,9 @@ function tableApi(table: string) {
     },
     delete() {
       return {
-        eq: async (_column: string, value: string) => {
+        eq: async (column: string, value: string) => {
           state.deletedRows.push(value);
+          state.deletedByTable.push({ table, column, value });
           return { error: null };
         },
       };
@@ -155,9 +160,8 @@ vi.mock('@/services/supabase/client', () => ({
  * yolların üretimi de akışın parçası.
  */
 vi.mock('@/domain/photography/resize', async (importOriginal) => {
-  const actual = await importOriginal<
-    typeof import('@/domain/photography/resize')
-  >();
+  const actual =
+    await importOriginal<typeof import('@/domain/photography/resize')>();
   return {
     ...actual,
     renderResized: async (_file: File, maxEdge: number) => ({
@@ -183,7 +187,7 @@ vi.mock('@/domain/profile/avatar', () => ({
   },
 }));
 
-import { uploadPhoto } from './upload';
+import { updatePhotoMetadata, uploadPhoto } from './upload';
 
 /** Geçerli JPEG başlığı taşıyan sahte dosya. */
 function jpegFile(name = 'gece.jpg', extra = 4096): File {
@@ -210,6 +214,7 @@ beforeEach(() => {
   state.uploadFails = new Set();
   state.removed = [];
   state.deletedRows = [];
+  state.deletedByTable = [];
   state.softDeletedRows = [];
   state.insertedRows = 0;
   state.photoInsert = null;
@@ -239,7 +244,10 @@ describe('uploadPhoto — başarılı akış', () => {
   });
 
   it('saklanan baytları bildirir — seçilen dosyanın boyunu değil', async () => {
-    const result = await uploadPhoto({ ...input, file: jpegFile('a.jpg', 50_000) });
+    const result = await uploadPhoto({
+      ...input,
+      file: jpegFile('a.jpg', 50_000),
+    });
     // 1000 (display) + 1000 (thumb) + 50.000 (arşiv, bütçe altında olduğu
     // için dosyanın kendisi) — seçilen dosyanın boyu tek başına değil.
     expect(result.storedBytes).toBe(52_000);
@@ -314,9 +322,13 @@ describe('uploadPhoto — biçim denetimi', () => {
    * açılmış oluyordu.
    */
   it('görüntü olmayan dosyada hiç satır açmaz', async () => {
-    const pdf = new File([new Uint8Array([0x25, 0x50, 0x44, 0x46, 0, 0, 0, 0])], 'gece.jpg', {
-      type: 'image/jpeg',
-    });
+    const pdf = new File(
+      [new Uint8Array([0x25, 0x50, 0x44, 0x46, 0, 0, 0, 0])],
+      'gece.jpg',
+      {
+        type: 'image/jpeg',
+      }
+    );
 
     await expect(uploadPhoto({ ...input, file: pdf })).rejects.toThrow(
       /içeriği görüntü değil/
@@ -404,7 +416,9 @@ describe('uploadPhoto — çekim oturumları (C02–C05)', () => {
     const result = await uploadPhoto({
       ...input,
       captureSessions: [{ id: 'c1', startsOn: '2026-01-12', endsOn: null }],
-      exposures: [{ filter: 'L', frames: 30, exposureSeconds: 120, sessionId: 'c1' }],
+      exposures: [
+        { filter: 'L', frames: 30, exposureSeconds: 120, sessionId: 'c1' },
+      ],
     });
     expect(result.photoId).toBe(PHOTO_ID);
     expect(state.removed).toEqual([]);
@@ -436,7 +450,7 @@ describe('uploadPhoto — kart (thumbnail) kadrajı (C07, C10)', () => {
     expect(state.photoUpdate?.thumb_crop).toBeNull();
   });
 
-  it('kadraj render düşerse otomatik thumb\'a düşer, yükleme sürer', async () => {
+  it("kadraj render düşerse otomatik thumb'a düşer, yükleme sürer", async () => {
     KADRAJ.dussun = true;
     const result = await uploadPhoto({
       ...input,
@@ -488,7 +502,10 @@ describe('uploadPhoto — şema kodun gerisindeyken yükleme kırılmaz', () => 
     });
 
     expect(result.exposuresSaved).toBe(true);
-    expect(state.exposureInsert?.[0]).toMatchObject({ filter: 'L', frames: 30 });
+    expect(state.exposureInsert?.[0]).toMatchObject({
+      filter: 'L',
+      frames: 30,
+    });
     expect('session_id' in (state.exposureInsert?.[0] ?? {})).toBe(false);
   });
 });
@@ -501,7 +518,7 @@ describe('uploadPhoto — orijinal değişmez ve türev sızıntısı yok (X02, 
     expect(orijinal?.upsert).toBe(false);
   });
 
-  it('gösterim/thumb public bucket\'a, ham dosya yalnız gizli bucket\'a (X03)', async () => {
+  it("gösterim/thumb public bucket'a, ham dosya yalnız gizli bucket'a (X03)", async () => {
     await uploadPhoto({ ...input });
     // Public türevler (canvas'tan üretilmiş, EXIF'siz) 'photos' bucket'ında.
     const publicYollar = state.uploads
@@ -567,5 +584,116 @@ describe('uploadPhoto — indirme tercihleri', () => {
 
     expect(state.photoInsert?.allow_download).toBe(true);
     expect(state.photoInsert?.watermark_required).toBe(false);
+  });
+});
+
+describe('updatePhotoMetadata — mevcut fotoğraf düzenleme', () => {
+  it('görsel yollarına dokunmadan fotoğraf künyesini günceller', async () => {
+    await updatePhotoMetadata({
+      photoId: PHOTO_ID,
+      title: 'Yeni Başlık',
+      photoType: 'deep-sky',
+      palette: 'LRGB',
+      capturedAt: '2026-08-01',
+      city: 'Denizli',
+      district: 'Beyağaç',
+      copyrightConfirmed: true,
+      license: 'Hakları sahibinde',
+      allowDownload: true,
+      watermarkRequired: false,
+      aiDeclared: true,
+      targetLabel: 'NGC 5907 — Splinter Galaxy',
+      setup: {
+        Optik: '130mm APO',
+        Kamera: 'ZWO ASI2600MM Pro',
+      },
+      thumbCrop: { zoom: 1.4, panX: 0.1, panY: -0.2 },
+      exposures: [{ filter: 'L', frames: 22, exposureSeconds: 180 }],
+    });
+
+    expect(state.uploads).toEqual([]);
+    expect(state.photoUpdate).toMatchObject({
+      title: 'Yeni Başlık',
+      photo_type: 'deep-sky',
+      palette: 'LRGB',
+      captured_at: '2026-08-01',
+      city: 'Denizli',
+      district: 'Beyağaç',
+      location_label: 'Beyağaç / Denizli',
+      allow_download: true,
+      watermark_required: false,
+      ai_declared: true,
+      target_label: 'NGC 5907 — Splinter Galaxy',
+      setup_text: {
+        Optik: '130mm APO',
+        Kamera: 'ZWO ASI2600MM Pro',
+      },
+      thumb_crop: { zoom: 1.4, panX: 0.1, panY: -0.2 },
+    });
+    expect(state.photoUpdate).not.toHaveProperty('display_path');
+    expect(state.photoUpdate).not.toHaveProperty('thumb_path');
+    expect(state.photoUpdate).not.toHaveProperty('original_path');
+  });
+
+  it('eski oturum ve pozlamaları temizleyip yeni satırları aynı kayda yazar', async () => {
+    await updatePhotoMetadata({
+      photoId: PHOTO_ID,
+      title: 'Gece',
+      photoType: 'deep-sky',
+      palette: 'RGB',
+      copyrightConfirmed: true,
+      captureSessions: [
+        { id: 'c1', startsOn: '2026-08-01', endsOn: null },
+        { id: 'c2', startsOn: '2026-08-05', endsOn: '2026-08-07' },
+      ],
+      exposures: [
+        { filter: 'L', frames: 20, exposureSeconds: 180, sessionId: 'c2' },
+      ],
+    });
+
+    expect(state.deletedByTable).toEqual([
+      { table: 'photo_exposures', column: 'photo_id', value: PHOTO_ID },
+      { table: 'photo_capture_sessions', column: 'photo_id', value: PHOTO_ID },
+    ]);
+    expect(state.sessionInsert).toEqual([
+      {
+        photo_id: PHOTO_ID,
+        starts_on: '2026-08-01',
+        ends_on: null,
+        position: 0,
+      },
+      {
+        photo_id: PHOTO_ID,
+        starts_on: '2026-08-05',
+        ends_on: '2026-08-07',
+        position: 1,
+      },
+    ]);
+    expect(state.exposureInsert).toEqual([
+      {
+        photo_id: PHOTO_ID,
+        filter: 'L',
+        frames: 20,
+        exposure_seconds: 180,
+        position: 0,
+        session_id: 'sess-1',
+      },
+    ]);
+  });
+
+  it('thumb_crop kolonu yoksa metadata kaydını kadrajsız tekrar dener', async () => {
+    state.thumbCropKolonuYok = true;
+
+    await updatePhotoMetadata({
+      photoId: PHOTO_ID,
+      title: 'Gece',
+      photoType: 'deep-sky',
+      palette: 'RGB',
+      copyrightConfirmed: true,
+      thumbCrop: { zoom: 1.2, panX: 0, panY: 0 },
+    });
+
+    expect(state.photoUpdate).toMatchObject({ title: 'Gece' });
+    expect('thumb_crop' in (state.photoUpdate ?? {})).toBe(false);
   });
 });

@@ -1,6 +1,6 @@
 import { useFilterSuggestions } from '@/services/content/filterSuggestions';
-import { useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router';
 import { useAuth } from '@/features/auth/AuthContext';
 import { EquipmentPicker } from '@/features/equipment/EquipmentPicker';
 import { useEquipmentCatalog } from '@/services/content/equipment';
@@ -8,6 +8,7 @@ import {
   uploadPhoto,
   publishPhoto,
   requestPlateSolve,
+  updatePhotoMetadata,
 } from '@/services/photos/upload';
 import { checkUploadSize, formatBytes } from '@/domain/membership/quota';
 import { Container } from '@/components/ui/Container';
@@ -20,7 +21,6 @@ import {
   totalIntegrationSeconds,
   formatIntegration,
   yeniPozSatiri,
-  type FilterExposure,
 } from '@/domain/photography/integration';
 import {
   enErkenGun,
@@ -30,18 +30,17 @@ import {
   type CaptureSession,
 } from '@/domain/photography/captureSession';
 import { ThumbnailKadraj } from './ThumbnailKadraj';
-import { VARSAYILAN_KADRAJ, type Kadraj } from '@/domain/profile/kadraj';
 import {
   photoTypeLabels,
-  PHOTO_LICENSE,
   type PhotoType,
   type ProcessingPalette,
 } from '@/features/photos/types';
+import { usePhotoCatalog } from '@/services/content/photos';
 import { TargetPicker } from '@/features/targets/TargetPicker';
 import { SetupSelect } from './SetupSelect';
 import { getTargetBySlug } from '@/features/targets/data';
 import { resolveTargetId } from '@/services/content/targets';
-import { kindToPhotoType, type TargetKind } from '@/domain/targets/derive';
+import { kindToPhotoType } from '@/domain/targets/derive';
 import { guessTargetFromFilename } from '@/features/targets/codeGuess';
 import { cn } from '@/lib/cn';
 import { PageMeta } from '@/components/seo/PageMeta';
@@ -60,6 +59,11 @@ import {
   FULL_FRAME,
   type CropRect,
 } from '@/domain/photography/crop';
+import {
+  initialState,
+  wizardStateFromPhoto,
+  type WizardState,
+} from './uploadWizardEditState';
 
 /**
  * İşleme paleti seçenekleri — `ProcessingPalette` ile birebir.
@@ -97,100 +101,11 @@ function isPhotoType(value: string): value is PhotoType {
 const selectClass =
   'h-11 w-full rounded-card border border-border bg-surface-1 px-3 text-sm text-foreground focus:border-primary/60';
 
-interface WizardState {
-  fileName: string;
-  targetSlug: string;
-  /** Seçim listesini daraltan obje tipi; hedef seçimini kaydetmez. */
-  targetKind: TargetKind | 'hepsi';
-  type: PhotoType;
-  title: string;
-  /**
-   * ÇEKİM OTURUMLARI (SEZONLAR) — bir fotoğraf birden çok gecede toplanır.
-   *
-   * Tek `capturedAt` tarihi yerine oturum listesi: her oturum tek gece ya
-   * da aralık (C02–C04). Boş liste "tarih girilmedi" demek. Yükleme
-   * sırasında en erken gün geriye dönük `captured_at`e yazılıyor.
-   */
-  captureSessions: CaptureSession[];
-  /**
-   * ÇEKİM KONUMU — il ve ilçe, ikisi de ZORUNLU.
-   *
-   * Önceden tek bir serbest metin alanı vardı ("Saklıkent, Antalya")
-   * ve galeri şehir süzgeci o metni virgülden bölüp son parçayı şehir
-   * sayıyordu. "evin balkonu" yazan biri "Evin Balkonu" adında bir
-   * şehir üretiyordu; süzgeç hiçbir zaman güvenilir olmadı.
-   *
-   * Görünürlük seçeneği de kalktı. "Tam koordinat" seçeneği bir
-   * gizlilik denetimi gibi duruyordu ama gerçekte yaptığı şey, EXIF'ten
-   * okunan ham enlem-boylamın etikete yazılabilmesiydi — yani bir
-   * denetim değil, bir sızıntı kapısı. İl/ilçe düzeyi kullanıcının
-   * gözlem yerini zaten açığa çıkarmıyor.
-   */
-  city: string;
-  district: string;
-  optic: string;
-  camera: string;
-  mount: string;
-  /* Katalog bağı — seçim yapıldıysa model slug'ı. Serbest metin girildiyse
-     boş kalır ve künyede yalnızca metin saklanır. */
-  opticSlug?: string;
-  cameraSlug?: string;
-  mountSlug?: string;
-  /* Künye setup'tan dolduğunda bağ da kuruluyor; künye alanları yine
-     fotoğrafın kendi kaydında saklanıyor ki setup sonradan değişirse
-     eski fotoğrafın künyesi bozulmasın. */
-  setupId?: string;
-  setupFilter?: string;
-  setupGuide?: string;
-  effectiveFocalMm?: number | null;
-  effectiveFRatio?: number | null;
-  pixelScaleArcsec?: number | null;
-  exposures: FilterExposure[];
-  /**
-   * KART (thumbnail) KADRAJI — karede hangi kare bölge görünecek (C07,
-   * C10). {zoom, panX, panY} normalize; varsayılan = tam kare (otomatik).
-   */
-  thumbCrop: Kadraj;
-  /** İşleme paleti — boş bırakılamaz, yayın adımına geçişi kilitliyor. */
-  palette: ProcessingPalette | '';
-  software: string;
-  aiDeclared: boolean;
-  license: string;
-  allowDownload: boolean;
-  watermarkRequired: boolean;
-  copyrightConfirmed: boolean;
-}
-
-const initialState: WizardState = {
-  fileName: '',
-  targetSlug: '',
-  targetKind: 'hepsi',
-  type: 'deep-sky',
-  title: '',
-  captureSessions: [],
-  city: '',
-  district: '',
-  optic: '',
-  camera: '',
-  mount: '',
-  exposures: [{ filter: 'L', frames: 0, exposureSeconds: 0 }],
-  thumbCrop: VARSAYILAN_KADRAJ,
-  palette: '',
-  software: '',
-  aiDeclared: false,
-  /*
-   * Lisans artık seçilmiyor — kullanım şartlarındaki tek kural geçerli.
-   * Alan durumda kalıyor çünkü künyede ve fotoğraf sayfasında
-   * gösteriliyor; değeri tek yerden geliyor.
-   */
-  license: PHOTO_LICENSE,
-  allowDownload: false,
-  watermarkRequired: true,
-  copyrightConfirmed: false,
-};
-
 /** Yeni çekim oturumu — istemci tarafı benzersiz kimlikle (C03). */
-function yeniOturum(startsOn = '', endsOn: string | null = null): CaptureSession {
+function yeniOturum(
+  startsOn = '',
+  endsOn: string | null = null
+): CaptureSession {
   const id =
     typeof crypto !== 'undefined' && 'randomUUID' in crypto
       ? crypto.randomUUID()
@@ -221,8 +136,8 @@ function CaptureSessionsEditor({
     <div className="space-y-2">
       <span className="label text-foreground">Çekim tarihleri</span>
       <p className="text-meta text-muted-foreground">
-        Tek gecede mi, birçok gecede mi topladınız? Her oturumu ayrı
-        ekleyin; bir oturum tek gece ya da tarih aralığı olabilir.
+        Tek gecede mi, birçok gecede mi topladınız? Her oturumu ayrı ekleyin;
+        bir oturum tek gece ya da tarih aralığı olabilir.
       </p>
 
       <div className="space-y-2">
@@ -240,7 +155,9 @@ function CaptureSessionsEditor({
                     type="date"
                     aria-label={`Oturum ${i + 1} başlangıç günü`}
                     value={s.startsOn}
-                    onChange={(e) => guncelle(s.id, { startsOn: e.target.value })}
+                    onChange={(e) =>
+                      guncelle(s.id, { startsOn: e.target.value })
+                    }
                   />
                 </label>
                 {aralik && (
@@ -251,7 +168,9 @@ function CaptureSessionsEditor({
                       aria-label={`Oturum ${i + 1} bitiş günü`}
                       value={s.endsOn ?? ''}
                       min={s.startsOn || undefined}
-                      onChange={(e) => guncelle(s.id, { endsOn: e.target.value })}
+                      onChange={(e) =>
+                        guncelle(s.id, { endsOn: e.target.value })
+                      }
                     />
                   </label>
                 )}
@@ -323,21 +242,33 @@ export function UploadWizardPage() {
    */
   const [crop, setCrop] = useState<CropRect>(FULL_FRAME);
   const [exif, setExif] = useState<ExifData | null>(null);
-  const [exifState, setExifState] = useState<'idle' | 'reading' | 'read' | 'none'>(
-    'idle'
-  );
+  const [exifState, setExifState] = useState<
+    'idle' | 'reading' | 'read' | 'none'
+  >('idle');
   const [step, setStep] = useState(0);
   const [state, setState] = useState<WizardState>(initialState);
 
   /* Seçilen dosyanın kendisi — özet ekranında ve yüklemede gerekiyor. */
   const [file, setFile] = useState<File | null>(null);
   const [publishState, setPublishState] = useState<
-    'idle' | 'hazirlaniyor' | 'kucultuluyor' | 'yukleniyor' | 'kaydediliyor' | 'bitti'
+    | 'idle'
+    | 'hazirlaniyor'
+    | 'kucultuluyor'
+    | 'yukleniyor'
+    | 'kaydediliyor'
+    | 'bitti'
   >('idle');
   const [publishError, setPublishError] = useState<string | null>(null);
 
   const { user, configured } = useAuth();
   const equipmentCatalog = useEquipmentCatalog();
+  const [params] = useSearchParams();
+  const editSlug = params.get('duzenle');
+  const photoCatalog = usePhotoCatalog();
+  const editingPhoto = editSlug
+    ? photoCatalog.items.find((photo) => photo.slug === editSlug)
+    : undefined;
+  const loadedEditSlug = useRef<string | null>(null);
 
   /**
    * Seçilen slug'ın veritabanı kimliğini bulur.
@@ -369,10 +300,66 @@ export function UploadWizardPage() {
    * güvence eklemez.
    */
   async function submit() {
-    if (!file || !user) return;
+    if ((!file && !editingPhoto) || !user) return;
     setPublishError(null);
 
     try {
+      if (editingPhoto) {
+        if (!editingPhoto.id) throw new Error('Fotoğraf kaydı bulunamadı.');
+        setPublishState('kaydediliyor');
+        await updatePhotoMetadata({
+          photoId: editingPhoto.id,
+          title: state.title || editingPhoto.title,
+          photoType: state.type,
+          palette: state.palette,
+          capturedAt: enErkenGun(state.captureSessions) || undefined,
+          captureSessions: state.captureSessions
+            .map(oturumuDuzelt)
+            .filter((o) => o.startsOn),
+          thumbCrop: state.thumbCrop,
+          city: state.city,
+          district: state.district,
+          license: state.license,
+          allowDownload: state.allowDownload,
+          watermarkRequired: state.watermarkRequired,
+          aiDeclared: state.aiDeclared,
+          copyrightConfirmed: state.copyrightConfirmed,
+          objectId: await resolveTargetId(state.targetSlug),
+          targetLabel: selectedTarget
+            ? `${selectedTarget.catalog} — ${selectedTarget.name}`
+            : editingPhoto.target.catalog
+              ? `${editingPhoto.target.catalog} — ${editingPhoto.target.name}`
+              : null,
+          opticId: equipmentId(state.opticSlug),
+          cameraId: equipmentId(state.cameraSlug),
+          mountId: equipmentId(state.mountSlug),
+          setupId: state.setupId ?? null,
+          setup: {
+            Optik: state.optic,
+            Kamera: state.camera,
+            Montür: state.mount,
+            ...(state.setupFilter ? { Filtre: state.setupFilter } : {}),
+            ...(state.setupGuide ? { Guide: state.setupGuide } : {}),
+            ...(state.effectiveFocalMm != null
+              ? { 'Etkin odak': `${Math.round(state.effectiveFocalMm)} mm` }
+              : {}),
+            ...(state.effectiveFRatio != null
+              ? { 'Etkin f/': `f/${state.effectiveFRatio.toFixed(1)}` }
+              : {}),
+            ...(state.pixelScaleArcsec != null
+              ? { 'Piksel ölçeği': `${state.pixelScaleArcsec.toFixed(2)} ″/px` }
+              : {}),
+            Yazılım: state.software,
+          },
+          exposures: state.exposures,
+        });
+        setPublishState('bitti');
+        photoCatalog.refresh();
+        navigate(`/fotograf/${editingPhoto.slug}`);
+        return;
+      }
+
+      if (!file) return;
       /*
        * KIRPMA GÖNDERİM ANINDA, TEK SEFERDE UYGULANIYOR.
        *
@@ -498,6 +485,20 @@ export function UploadWizardPage() {
     setState((s) => ({ ...s, ...p }));
   }
 
+  useEffect(() => {
+    if (!editingPhoto) {
+      loadedEditSlug.current = null;
+      return;
+    }
+    if (loadedEditSlug.current === editingPhoto.slug) return;
+    loadedEditSlug.current = editingPhoto.slug;
+    setState(wizardStateFromPhoto(editingPhoto));
+    setCrop(FULL_FRAME);
+    setExif(null);
+    setExifState('idle');
+    setStep(1);
+  }, [editingPhoto]);
+
   /**
    * Seçilen dosyanın EXIF'ini okur ve boş künye alanlarını doldurur.
    *
@@ -527,7 +528,9 @@ export function UploadWizardPage() {
      * Elle seçilmiş bir hedef EZİLMİYOR: kullanıcı önce hedefi seçip
      * sonra dosyayı değiştirdiyse, onun seçimi daha isabetli.
      */
-    const guessed = state.targetSlug ? null : guessTargetFromFilename(file.name);
+    const guessed = state.targetSlug
+      ? null
+      : guessTargetFromFilename(file.name);
 
     patch({
       fileName: file.name,
@@ -585,7 +588,7 @@ export function UploadWizardPage() {
   const canNext = useMemo(() => {
     switch (step) {
       case 0:
-        return state.fileName.trim().length > 0;
+        return state.fileName.trim().length > 0 || Boolean(editingPhoto);
       case 1:
         return state.title.trim().length > 0;
       case 2:
@@ -604,22 +607,28 @@ export function UploadWizardPage() {
       default:
         return true;
     }
-  }, [step, state]);
+  }, [step, state, editingPhoto]);
 
   return (
     <>
       <PageMeta
-        title="Fotoğraf Yükle"
-        description="Astrofotoğrafınızı hedef, setup, pozlama ve işleme verisiyle birlikte yayımlayın."
+        title={editingPhoto ? 'Fotoğraf Düzenle' : 'Fotoğraf Yükle'}
+        description={
+          editingPhoto
+            ? 'Astrofotoğraf künyesini mevcut görseli koruyarak düzenleyin.'
+            : 'Astrofotoğrafınızı hedef, setup, pozlama ve işleme verisiyle birlikte yayımlayın.'
+        }
         noIndex
       />
       <Container className="py-8 sm:py-10">
         <header className="mb-8">
           <h1 className="type-page text-foreground">
-            Fotoğraf Yükle
+            {editingPhoto ? 'Fotoğraf Düzenle' : 'Fotoğraf Yükle'}
           </h1>
           <p className="mt-2 max-w-xl text-muted-foreground">
-            6 adımda teknik verileriyle birlikte astrofotoğrafını yayımla.
+            {editingPhoto
+              ? 'Mevcut görsel korunur; teknik künye alanlarını baştan düzenleyebilirsiniz.'
+              : '6 adımda teknik verileriyle birlikte astrofotoğrafını yayımla.'}
           </p>
         </header>
 
@@ -659,27 +668,52 @@ export function UploadWizardPage() {
               />
 
               <label
-                htmlFor="file-input"
-                className="flex aspect-[3/1] cursor-pointer flex-col items-center justify-center rounded-card border-2 border-dashed border-border bg-surface-2/40 text-center transition-colors hover:border-primary/40"
+                htmlFor={editingPhoto ? undefined : 'file-input'}
+                className={cn(
+                  'flex aspect-[3/1] flex-col items-center justify-center overflow-hidden rounded-card border-2 border-dashed border-border bg-surface-2/40 text-center transition-colors',
+                  editingPhoto
+                    ? 'cursor-default'
+                    : 'cursor-pointer hover:border-primary/40'
+                )}
               >
-                <p className="text-sm font-medium text-foreground">
-                  {state.fileName || 'Dosya seçmek için tıklayın'}
-                </p>
-                <p className="mt-1 px-4 text-xs leading-relaxed text-muted-foreground">
-                  Dosya <span className="text-foreground">cihazınızdan
-                  çıkmaz</span>: künye alanlarını doldurmak için EXIF bilgisi
-                  tarayıcıda okunur. Sunucuya yükleme, depolama altyapısı
-                  bağlandığında açılacak.
-                </p>
+                {editingPhoto?.image ? (
+                  <img
+                    src={editingPhoto.image.thumbUrl ?? editingPhoto.image.url}
+                    alt={editingPhoto.title}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <>
+                    <p className="text-sm font-medium text-foreground">
+                      {state.fileName || 'Dosya seçmek için tıklayın'}
+                    </p>
+                    <p className="mt-1 px-4 text-xs leading-relaxed text-muted-foreground">
+                      Dosya{' '}
+                      <span className="text-foreground">
+                        cihazınızdan çıkmaz
+                      </span>
+                      : künye alanlarını doldurmak için EXIF bilgisi tarayıcıda
+                      okunur. Sunucuya yükleme, depolama altyapısı bağlandığında
+                      açılacak.
+                    </p>
+                  </>
+                )}
               </label>
 
-              <input
-                id="file-input"
-                type="file"
-                accept="image/jpeg,image/png,image/webp,image/avif"
-                className="sr-only"
-                onChange={(event) => void handleFile(event.target.files?.[0])}
-              />
+              {editingPhoto ? (
+                <p className="rounded-card border border-border bg-surface-1 px-3 py-2.5 text-body-sm leading-relaxed text-muted-foreground">
+                  Mevcut fotoğraf korunacak. Bu düzenleme yalnızca başlık,
+                  hedef, konum, setup, pozlama ve yayın künyesini günceller.
+                </p>
+              ) : (
+                <input
+                  id="file-input"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/avif"
+                  className="sr-only"
+                  onChange={(event) => void handleFile(event.target.files?.[0])}
+                />
+              )}
 
               {/*
                 KIRPMA DOSYA ADIMINDA, AYRI BİR ADIMDA DEĞİL.
@@ -771,12 +805,18 @@ export function UploadWizardPage() {
                     />
                     <ExifRow
                       label="Diyafram"
-                      value={exif.fNumber ? `f/${exif.fNumber.toFixed(1)}` : undefined}
+                      value={
+                        exif.fNumber
+                          ? `f/${exif.fNumber.toFixed(1)}`
+                          : undefined
+                      }
                     />
                     <ExifRow label="ISO" value={exif.iso?.toString()} />
                     <ExifRow
                       label="Odak"
-                      value={exif.focalLength ? `${exif.focalLength} mm` : undefined}
+                      value={
+                        exif.focalLength ? `${exif.focalLength} mm` : undefined
+                      }
                     />
                     <ExifRow
                       label="Çekim zamanı"
@@ -806,9 +846,8 @@ export function UploadWizardPage() {
                       */}
                       <p className="text-body-sm leading-relaxed text-warning">
                         Bu dosya <strong>GPS koordinatı taşıyor</strong>.
-                        Koordinat sunucuya gönderilmiyor ve
-                        yayımlanmıyor; yalnızca haberiniz olsun diye
-                        bildiriyoruz.
+                        Koordinat sunucuya gönderilmiyor ve yayımlanmıyor;
+                        yalnızca haberiniz olsun diye bildiriyoruz.
                       </p>
                     </div>
                   )}
@@ -924,10 +963,10 @@ export function UploadWizardPage() {
                 />
               </Field>
               <p className="text-meta leading-relaxed text-muted-foreground">
-                Konum bu tek alandan ibaret. Gözlem yerinizin tam
-                koordinatı ne soruluyor ne de saklanıyor — il/ilçe hem
-                galeri süzgeci hem ışık kirliliği tahmini için yeterli,
-                hem de nerede gözlem yaptığınızı açığa çıkarmıyor.
+                Konum bu tek alandan ibaret. Gözlem yerinizin tam koordinatı ne
+                soruluyor ne de saklanıyor — il/ilçe hem galeri süzgeci hem ışık
+                kirliliği tahmini için yeterli, hem de nerede gözlem yaptığınızı
+                açığa çıkarmıyor.
               </p>
             </div>
           )}
@@ -979,7 +1018,9 @@ export function UploadWizardPage() {
                   label="Kamera"
                   placeholder="ör. ASI2600MM Pro"
                   value={{ slug: state.cameraSlug, text: state.camera }}
-                  onChange={(v) => patch({ cameraSlug: v.slug, camera: v.text })}
+                  onChange={(v) =>
+                    patch({ cameraSlug: v.slug, camera: v.text })
+                  }
                 />
                 <EquipmentPicker
                   category="montur"
@@ -1048,71 +1089,74 @@ export function UploadWizardPage() {
                 {state.exposures.map((row, i) => (
                   <div key={i} className="space-y-2">
                     <div className="grid grid-cols-[1fr_1fr_1fr_auto] gap-3">
-                    <Field label={i === 0 ? 'Filtre' : ''} htmlFor={`f-${i}`}>
-                      <Input
-                        id={`f-${i}`}
-                        list="filtre-onerileri"
-                        placeholder="L, Hα, OIII…"
-                        value={row.filter}
-                        onChange={(e) => {
-                          const next = [...state.exposures];
-                          next[i] = { ...row, filter: e.target.value };
-                          patch({ exposures: next });
-                        }}
-                      />
-                    </Field>
-                    <Field
-                      label={i === 0 ? 'Kare sayısı' : ''}
-                      htmlFor={`n-${i}`}
-                    >
-                      <Input
-                        id={`n-${i}`}
-                        type="number"
-                        min={0}
-                        value={row.frames}
-                        onChange={(e) => {
-                          const next = [...state.exposures];
-                          next[i] = { ...row, frames: Number(e.target.value) };
-                          patch({ exposures: next });
-                        }}
-                      />
-                    </Field>
-                    <Field
-                      label={i === 0 ? 'Pozlama (sn)' : ''}
-                      htmlFor={`s-${i}`}
-                    >
-                      <Input
-                        id={`s-${i}`}
-                        type="number"
-                        min={0}
-                        value={row.exposureSeconds}
-                        onChange={(e) => {
-                          const next = [...state.exposures];
-                          next[i] = {
-                            ...row,
-                            exposureSeconds: Number(e.target.value),
-                          };
-                          patch({ exposures: next });
-                        }}
-                      />
-                    </Field>
-                    <div className="flex items-end pb-0.5">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        aria-label={`${row.filter} satırını sil`}
-                        disabled={state.exposures.length === 1}
-                        onClick={() =>
-                          patch({
-                            exposures: state.exposures.filter(
-                              (_, j) => j !== i
-                            ),
-                          })
-                        }
+                      <Field label={i === 0 ? 'Filtre' : ''} htmlFor={`f-${i}`}>
+                        <Input
+                          id={`f-${i}`}
+                          list="filtre-onerileri"
+                          placeholder="L, Hα, OIII…"
+                          value={row.filter}
+                          onChange={(e) => {
+                            const next = [...state.exposures];
+                            next[i] = { ...row, filter: e.target.value };
+                            patch({ exposures: next });
+                          }}
+                        />
+                      </Field>
+                      <Field
+                        label={i === 0 ? 'Kare sayısı' : ''}
+                        htmlFor={`n-${i}`}
                       >
-                        ✕
-                      </Button>
-                    </div>
+                        <Input
+                          id={`n-${i}`}
+                          type="number"
+                          min={0}
+                          value={row.frames}
+                          onChange={(e) => {
+                            const next = [...state.exposures];
+                            next[i] = {
+                              ...row,
+                              frames: Number(e.target.value),
+                            };
+                            patch({ exposures: next });
+                          }}
+                        />
+                      </Field>
+                      <Field
+                        label={i === 0 ? 'Pozlama (sn)' : ''}
+                        htmlFor={`s-${i}`}
+                      >
+                        <Input
+                          id={`s-${i}`}
+                          type="number"
+                          min={0}
+                          value={row.exposureSeconds}
+                          onChange={(e) => {
+                            const next = [...state.exposures];
+                            next[i] = {
+                              ...row,
+                              exposureSeconds: Number(e.target.value),
+                            };
+                            patch({ exposures: next });
+                          }}
+                        />
+                      </Field>
+                      <div className="flex items-end pb-0.5">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          aria-label={`${row.filter} satırını sil`}
+                          disabled={state.exposures.length === 1}
+                          onClick={() =>
+                            patch({
+                              exposures: state.exposures.filter(
+                                (_, j) => j !== i
+                              ),
+                            })
+                          }
+                        >
+                          ✕
+                        </Button>
+                      </div>
                     </div>
                     {/*
                       OTURUM SEÇİCİ YALNIZCA BİRDEN ÇOK OTURUM VARKEN (C05).
@@ -1274,9 +1318,12 @@ export function UploadWizardPage() {
                   <Badge tone={state.allowDownload ? 'cold' : 'muted'}>
                     {state.allowDownload ? 'İndirme açık' : 'İndirme kapalı'}
                   </Badge>
-                  {state.watermarkRequired && <Badge>Kaynak/filigran şartı</Badge>}
+                  {state.watermarkRequired && (
+                    <Badge>Kaynak/filigran şartı</Badge>
+                  )}
                   {state.aiDeclared && <Badge tone="cold">AI beyanlı</Badge>}
                   {file && <Badge tone="muted">{formatBytes(file.size)}</Badge>}
+                  {editingPhoto && <Badge tone="muted">mevcut görsel</Badge>}
                 </div>
 
                 {/*
@@ -1303,11 +1350,7 @@ export function UploadWizardPage() {
                   </p>
                 )}
 
-                {publishError && (
-                  <Alert className="mt-3">
-                    {publishError}
-                  </Alert>
-                )}
+                {publishError && <Alert className="mt-3">{publishError}</Alert>}
               </div>
             </div>
           )}
@@ -1329,7 +1372,7 @@ export function UploadWizardPage() {
               <Button
                 onClick={() => void submit()}
                 disabled={
-                  !file ||
+                  (!file && !editingPhoto) ||
                   !state.copyrightConfirmed ||
                   !configured ||
                   !user ||
@@ -1345,7 +1388,11 @@ export function UploadWizardPage() {
                         : undefined
                 }
               >
-                {publishState === 'idle' ? 'Yayımla' : progressLabel(publishState)}
+                {publishState === 'idle'
+                  ? editingPhoto
+                    ? 'Kaydet'
+                    : 'Yayımla'
+                  : progressLabel(publishState)}
               </Button>
             )}
           </div>
@@ -1405,7 +1452,9 @@ function ExifRow({ label, value }: { label: string; value?: string }) {
   return (
     <div className="flex items-baseline justify-between gap-3 border-b border-border py-1.5 last:border-0">
       <dt className="label shrink-0">{label}</dt>
-      <dd className="tabular text-right text-body-sm text-foreground">{value}</dd>
+      <dd className="tabular text-right text-body-sm text-foreground">
+        {value}
+      </dd>
     </div>
   );
 }

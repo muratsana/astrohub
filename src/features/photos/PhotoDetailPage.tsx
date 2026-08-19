@@ -1,12 +1,10 @@
 import type { ReactNode } from 'react';
-import { adminEditPath } from '@/components/admin/adminEditPath';
-import { AdminEditLink } from '@/components/admin/AdminEditLink';
 import { useUpNavigation } from '@/app/useUpNavigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { framingLink } from '@/features/targets/useActiveTarget';
 import { Container } from '@/components/ui/Container';
-import { Button } from '@/components/ui/Button';
+import { Button, ButtonLink } from '@/components/ui/Button';
 import { RemoteImage } from '@/components/media/RemoteImage';
 import { PlaceholderPage } from '@/components/PlaceholderPage';
 import { SectionHeader } from '@/components/ui/SectionHeader';
@@ -27,7 +25,10 @@ import { indirmeAdi } from '@/domain/photography/indirmeAdi';
 import { logDownload } from '@/services/photos/downloadMetrics';
 import { guessConstellation } from '@/services/photos/constellation';
 import { annotatedBlob } from './annotatedExport';
-import { cozumGeometrisi, useAlandakiCisimler } from '@/services/content/fieldObjects';
+import {
+  cozumGeometrisi,
+  useAlandakiCisimler,
+} from '@/services/content/fieldObjects';
 import { useAlandakiYildizlar } from '@/services/content/fieldStars';
 import { YILDIZ_ATFI } from '@/services/content/fieldStars';
 import { useSavedPhoto } from '@/services/content/collections';
@@ -103,8 +104,12 @@ function PhotoDetail({
   /* Geri dönüş: geldiği yer varsa oraya, yoksa üst rotaya (FAZ 11). */
   const { geriDon } = useUpNavigation();
   const { user } = useAuth();
+  const roles = useRoles();
   const [tab, setTab] = useState<TabId>('cekim');
   const integration = totalIntegrationSeconds(photo.exposures);
+  const canEditPhoto = Boolean(
+    photo.id && (roles.isAdmin || (user && photo.ownerId === user.id))
+  );
   const targetSlug = targets.find(
     (target) =>
       target.catalog === photo.target.catalog ||
@@ -234,10 +239,15 @@ function PhotoDetail({
               targetId={photo.slug}
               targetPath={`/fotograf/${photo.slug}`}
             />
-            {/* Fotoğraf detayında yönetim bağlantısı YOKTU: yanlış
-                yazılmış bir başlığı gören yönetici, kaydı panelde elle
-                aramak zorundaydı. */}
-            <AdminEditLink to={adminEditPath('photo', photo.slug)} />
+            {canEditPhoto && (
+              <ButtonLink
+                to={`/galeri/yukle?duzenle=${encodeURIComponent(photo.slug)}`}
+                size="sm"
+                variant="secondary"
+              >
+                Düzenle
+              </ButtonLink>
+            )}
           </div>
         </div>
 
@@ -408,7 +418,9 @@ function fotografOturumlari(photo: AstroPhoto): CaptureSession[] {
     return photo.captureSessions;
   }
   const gun = photo.capturedAt?.slice(0, 10);
-  return gun ? [{ id: `captured-${photo.slug}`, startsOn: gun, endsOn: null }] : [];
+  return gun
+    ? [{ id: `captured-${photo.slug}`, startsOn: gun, endsOn: null }]
+    : [];
 }
 
 function CaptureTab({ photo }: { photo: AstroPhoto }) {
@@ -500,8 +512,14 @@ function EquipmentTab({ photo }: { photo: AstroPhoto }) {
     <div className="space-y-6">
       <DL
         rows={[
-          ['Optik', <EkipmanBaglantisi key="o" param="optik" value={s.optic} />],
-          ['Kamera', <EkipmanBaglantisi key="k" param="kamera" value={s.camera} />],
+          [
+            'Optik',
+            <EkipmanBaglantisi key="o" param="optik" value={s.optic} />,
+          ],
+          [
+            'Kamera',
+            <EkipmanBaglantisi key="k" param="kamera" value={s.camera} />,
+          ],
           ['Montür', s.mount],
           ['Guiding', s.guiding ?? '—'],
           ['Filtreler', s.filters ?? '—'],
@@ -988,9 +1006,7 @@ export function SaveChip({ photo }: { photo: AstroPhoto }) {
    * ki ekran okuyucuda da indirmeyle karışmasın.
    */
   const etiket = save.saved ? 'Koleksiyonda' : 'Koleksiyona kaydet';
-  const erisimAdi = save.saved
-    ? 'Koleksiyondan çıkar'
-    : 'Koleksiyona kaydet';
+  const erisimAdi = save.saved ? 'Koleksiyondan çıkar' : 'Koleksiyona kaydet';
 
   return (
     <button
@@ -1156,7 +1172,12 @@ export function DownloadChip({ photo }: { photo: AstroPhoto }) {
         });
         kaydet(
           blob,
-          indirmeAdi(['astrohub', photo.target.catalog, photo.title, 'alan-cozumlu'])
+          indirmeAdi([
+            'astrohub',
+            photo.target.catalog,
+            photo.title,
+            'alan-cozumlu',
+          ])
         );
         logDownload('annotated', photo.id);
       } else {

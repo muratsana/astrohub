@@ -28,7 +28,9 @@ function semaEksikHatasi(error: { code?: string; message?: string }): boolean {
   if (['42703', '42P01', 'PGRST204', 'PGRST200'].includes(error.code ?? '')) {
     return true;
   }
-  return /could not find|does not exist|schema cache/i.test(error.message ?? '');
+  return /could not find|does not exist|schema cache/i.test(
+    error.message ?? ''
+  );
 }
 
 /**
@@ -170,10 +172,7 @@ export interface UploadInput {
  * kullanıcının fotoğrafı, dosyasındaki bozuk bir ISO alanı yüzünden
  * kaydedilemezdi. Burada eleniyor, künyede o satır boş kalıyor.
  */
-function exifNumber(
-  value: number | undefined,
-  max: number
-): number | null {
+function exifNumber(value: number | undefined, max: number): number | null {
   if (value === undefined || !Number.isFinite(value)) return null;
   if (value <= 0 || value > max) return null;
   return value;
@@ -196,6 +195,40 @@ export interface UploadResult {
 
 export type UploadProgress =
   'hazirlaniyor' | 'kucultuluyor' | 'yukleniyor' | 'kaydediliyor';
+
+export interface PhotoMetadataInput {
+  photoId: string;
+  title: string;
+  photoType: string;
+  palette: string;
+  capturedAt?: string;
+  city?: string;
+  district?: string;
+  license?: string;
+  allowDownload?: boolean;
+  watermarkRequired?: boolean;
+  aiDeclared?: boolean;
+  copyrightConfirmed: boolean;
+  setup?: Record<string, string>;
+  opticId?: string | null;
+  cameraId?: string | null;
+  mountId?: string | null;
+  objectId?: string | null;
+  setupId?: string | null;
+  targetLabel?: string | null;
+  exposures?: {
+    filter: string;
+    frames: number;
+    exposureSeconds: number;
+    sessionId?: string;
+  }[];
+  captureSessions?: {
+    id: string;
+    startsOn: string;
+    endsOn: string | null;
+  }[];
+  thumbCrop?: { zoom: number; panX: number; panY: number };
+}
 
 async function client() {
   const promise = getSupabase();
@@ -381,9 +414,9 @@ export async function uploadPhoto(
      */
     const kadrajSecildi = Boolean(
       input.thumbCrop &&
-        (input.thumbCrop.zoom !== 1 ||
-          input.thumbCrop.panX !== 0 ||
-          input.thumbCrop.panY !== 0)
+      (input.thumbCrop.zoom !== 1 ||
+        input.thumbCrop.panX !== 0 ||
+        input.thumbCrop.panY !== 0)
     );
     let thumb = await (kadrajSecildi
       ? renderKadrajBlob(input.file, input.thumbCrop!, {
@@ -656,7 +689,9 @@ export async function uploadPhoto(
           frames: e.frames,
           exposure_seconds: e.exposureSeconds,
           position: index,
-          session_id: e.sessionId ? oturumEslemesi.get(e.sessionId) ?? null : null,
+          session_id: e.sessionId
+            ? (oturumEslemesi.get(e.sessionId) ?? null)
+            : null,
         }));
 
       if (rows.length > 0) {
@@ -694,6 +729,123 @@ export async function uploadPhoto(
       exposuresSaved,
     };
   }
+}
+
+export async function updatePhotoMetadata(
+  input: PhotoMetadataInput
+): Promise<void> {
+  const supabase = await client();
+
+  const yama = {
+    title: sanitizeText(input.title, { maxLength: 160 }),
+    photo_type: input.photoType,
+    palette: input.palette,
+    object_id: input.objectId ?? null,
+    setup_id: input.setupId ?? null,
+    target_label: input.targetLabel
+      ? sanitizeText(input.targetLabel, { maxLength: 160 })
+      : null,
+    captured_at: input.capturedAt || null,
+    city: input.city || null,
+    district: input.district || null,
+    location_label:
+      input.city && input.district
+        ? `${input.district} / ${input.city}`
+        : input.city || null,
+    location_visibility: 'region',
+    license: input.license ?? 'Tüm hakları saklıdır',
+    allow_download: input.allowDownload ?? false,
+    watermark_required: input.watermarkRequired ?? true,
+    ai_declared: input.aiDeclared ?? false,
+    copyright_confirmed: input.copyrightConfirmed,
+    optic_id: input.opticId ?? null,
+    camera_id: input.cameraId ?? null,
+    mount_id: input.mountId ?? null,
+    setup_text: input.setup ?? {},
+    thumb_crop:
+      input.thumbCrop &&
+      (input.thumbCrop.zoom !== 1 ||
+        input.thumbCrop.panX !== 0 ||
+        input.thumbCrop.panY !== 0)
+        ? input.thumbCrop
+        : null,
+  };
+
+  let { error } = await supabase
+    .from('astro_photos')
+    .update(yama)
+    .eq('id', input.photoId);
+
+  if (error && semaEksikHatasi(error)) {
+    const { thumb_crop: _atlanan, ...cekirdek } = yama;
+    void _atlanan;
+    ({ error } = await supabase
+      .from('astro_photos')
+      .update(cekirdek)
+      .eq('id', input.photoId));
+  }
+  if (error) throw new Error(error.message);
+
+  const { error: exposureDeleteError } = await supabase
+    .from('photo_exposures')
+    .delete()
+    .eq('photo_id', input.photoId);
+  if (exposureDeleteError) throw new Error(exposureDeleteError.message);
+
+  const { error: sessionDeleteError } = await supabase
+    .from('photo_capture_sessions')
+    .delete()
+    .eq('photo_id', input.photoId);
+  if (sessionDeleteError) throw new Error(sessionDeleteError.message);
+
+  const oturumEslemesi = new Map<string, string>();
+  const gecerliOturumlar = (input.captureSessions ?? []).filter(
+    (s) => s.startsOn
+  );
+  if (gecerliOturumlar.length > 0) {
+    const { data, error: sessionError } = await supabase
+      .from('photo_capture_sessions')
+      .insert(
+        gecerliOturumlar.map((s, index) => ({
+          photo_id: input.photoId,
+          starts_on: s.startsOn,
+          ends_on: s.endsOn && s.endsOn !== s.startsOn ? s.endsOn : null,
+          position: index,
+        }))
+      )
+      .select('id');
+    if (sessionError) throw new Error(sessionError.message);
+    data?.forEach((satir, i) => {
+      const clientId = gecerliOturumlar[i]?.id;
+      if (clientId) oturumEslemesi.set(clientId, satir.id);
+    });
+  }
+
+  const pozlar = (input.exposures ?? [])
+    .filter((e) => e.frames > 0 && e.exposureSeconds > 0)
+    .map((e, index) => ({
+      photo_id: input.photoId,
+      filter: e.filter,
+      frames: e.frames,
+      exposure_seconds: e.exposureSeconds,
+      position: index,
+      session_id: e.sessionId
+        ? (oturumEslemesi.get(e.sessionId) ?? null)
+        : null,
+    }));
+
+  if (pozlar.length === 0) return;
+
+  let pozSonucu = await supabase.from('photo_exposures').insert(pozlar);
+  if (pozSonucu.error && semaEksikHatasi(pozSonucu.error)) {
+    pozSonucu = await supabase.from('photo_exposures').insert(
+      pozlar.map(({ session_id: _atlanan, ...kalan }) => {
+        void _atlanan;
+        return kalan;
+      })
+    );
+  }
+  if (pozSonucu.error) throw new Error(pozSonucu.error.message);
 }
 
 /**
