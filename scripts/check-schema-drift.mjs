@@ -67,6 +67,21 @@ const BEKLENEN = [
     kod: 'download_events',
     migration: /create table if not exists public\.download_events/i,
   },
+  {
+    ad: 'asset_derivatives tablosu',
+    kod: 'asset_derivatives',
+    migration: /create table if not exists public\.asset_derivatives/i,
+  },
+  {
+    ad: 'equipment_models.canonical_model_id',
+    kod: 'canonical_model_id',
+    migration: /alter table public\.equipment_models[\s\S]*?canonical_model_id/i,
+  },
+  {
+    ad: 'equipment_merge_log tablosu',
+    kod: 'equipment_merge_log',
+    migration: /create table if not exists public\.equipment_merge_log/i,
+  },
 ];
 
 function dosyalariTopla(kok, uzantilar) {

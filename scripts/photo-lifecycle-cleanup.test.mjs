@@ -106,6 +106,60 @@ describe('photo lifecycle cleanup plan', () => {
     expect(plan.orphanObjects.photos).toEqual(['u/p/thumb-eski.jpg']);
   });
 
+  /**
+   * TÜREV TTL (X05). Sosyal çıktılar (feed/story) yeniden üretilebilir;
+   * süresi dolduğunda GC topluyor. Referanslı olan türev, süresi dolsa
+   * bile silinmiyor — süre "artık gerekmiyor" değil "yeniden
+   * üretilebilir" demek.
+   */
+  it('süresi dolmuş türevi siler, süresi dolmamışı ve referanslıyı korur', () => {
+    const plan = planPhotoLifecycleCleanup({
+      now,
+      photos: [
+        {
+          id: 'p',
+          status: 'published',
+          created_at: '2026-08-01T10:00:00Z',
+          display_path: 'u/p/display.jpg',
+          thumb_path: 'u/p/thumb-abc.jpg',
+          original_path: null,
+        },
+      ],
+      derivatives: [
+        // Süresi dolmuş sosyal çıktı → silinir.
+        {
+          storage_path: 'u/p/feed-1.jpg',
+          bucket: 'photos',
+          expires_at: '2026-08-02T00:00:00Z',
+        },
+        // Süresi dolmamış → korunur.
+        {
+          storage_path: 'u/p/story-1.jpg',
+          bucket: 'photos',
+          expires_at: '2026-09-01T00:00:00Z',
+        },
+        // Kalıcı (expires_at yok) → korunur.
+        { storage_path: 'u/p/display.jpg', bucket: 'photos', expires_at: null },
+        // Süresi dolmuş AMA hâlâ satırın thumb_path'i → korunur.
+        {
+          storage_path: 'u/p/thumb-abc.jpg',
+          bucket: 'photos',
+          expires_at: '2026-08-02T00:00:00Z',
+        },
+      ],
+      objectsByBucket: {
+        photos: [
+          { path: 'u/p/display.jpg', updated_at: '2026-08-01T10:00:00Z' },
+          { path: 'u/p/thumb-abc.jpg', updated_at: '2026-08-01T10:00:00Z' },
+        ],
+        'photo-originals': [],
+      },
+    });
+
+    expect(plan.orphanObjects.photos).toEqual(['u/p/feed-1.jpg']);
+    expect(plan.expiredDerivativeCount).toBe(1);
+  });
+
   it('storage silme limitine göre parçalara böler', () => {
     expect(chunked(['a', 'b', 'c'], 2)).toEqual([['a', 'b'], ['c']]);
   });

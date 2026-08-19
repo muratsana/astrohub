@@ -2,6 +2,7 @@ import { getSupabase } from '@/services/supabase/client';
 import { renderKadrajBlob } from '@/domain/profile/avatar';
 import { THUMB_MAX_EDGE } from '@/domain/photography/resize';
 import { publicPhotoUrl } from './publicUrl';
+import { recordDerivative } from './derivatives';
 import type { Kadraj } from '@/domain/profile/kadraj';
 
 /**
@@ -127,6 +128,19 @@ export async function updateThumbCrop(
       console.error('eski thumb silinemedi', cause);
     }
   }
+
+  /* TÜREV REGİSTRY (X01): hangi kadrajdan üretildiği `contentKey` ile
+     kaydediliyor — aynı damga ikinci kez üretilmeye gerek olmadığını
+     söylüyor. Thumb kalıcı (expiresAt yok): kart onu doğrudan gösteriyor. */
+  recordDerivative({
+    photoId: input.photoId,
+    kind: 'thumb',
+    storagePath: yeniYol,
+    contentKey: cropDamgasi(input.kadraj),
+    bytes: blob.size,
+    width: THUMB_MAX_EDGE,
+    height: THUMB_MAX_EDGE,
+  });
 
   return { thumbPath: yeniYol };
 }

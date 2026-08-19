@@ -14,6 +14,7 @@ import {
 } from '@/domain/membership/quota';
 import { checkImageFormat, readHead } from '@/domain/photography/fileType';
 import { renderKadrajBlob } from '@/domain/profile/avatar';
+import { recordDerivative } from './derivatives';
 import { sanitizeText } from '@/lib/sanitize';
 
 /**
@@ -575,6 +576,27 @@ export async function uploadPhoto(
     }
 
     if (updateError) throw new Error(updateError.message);
+
+    /*
+     * TÜREV REGİSTRY (X01). Display ve thumb KALICI türevler — kart ve
+     * detay sayfası onları doğrudan gösteriyor, bir ömürleri yok. Kayıt
+     * ikincil: yazılamazsa yükleme etkilenmiyor.
+     */
+    recordDerivative({
+      photoId,
+      kind: 'display',
+      storagePath: displayPath,
+      bytes: display.blob.size,
+      width: display.size.width,
+      height: display.size.height,
+    });
+    recordDerivative({
+      photoId,
+      kind: 'thumb',
+      storagePath: thumbPath,
+      contentKey: thumbKadrajYazilir ? 'kadrajli' : 'otomatik',
+      bytes: thumb.blob.size,
+    });
 
     /*
      * POZ BİLGİLERİ FOTOĞRAFI GÖTÜRMEZ.

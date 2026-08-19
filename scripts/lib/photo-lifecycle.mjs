@@ -33,9 +33,30 @@ export function chunked(values, size = STORAGE_REMOVE_LIMIT) {
   return chunks;
 }
 
+/**
+ * SÜRESİ DOLMUŞ TÜREVLER (X05).
+ *
+ * Sosyal çıktılar (feed/story) ve yeniden üretilebilir thumbnail'lar
+ * kalıcı olmak zorunda değil: kullanıcı bir kez indiriyor, dosya
+ * depoda yıllarca duruyor. Registry'de (`asset_derivatives`) `expires_at`
+ * dolduğunda GC onları topluyor. `expires_at` null olan türev kalıcıdır
+ * — display ve thumb böyle.
+ *
+ * Kayıt hâlâ REFERANSLIYSA silinmiyor: satır güncel `thumb_path`e
+ * işaret ediyorsa süresi dolmuş olsa bile canlıdır. Süre, "artık
+ * gerekmiyor" değil "yeniden üretilebilir" demek.
+ */
+export function expiredDerivatives(derivatives, referenced, now = new Date()) {
+  return derivatives
+    .filter((d) => d.expires_at && new Date(d.expires_at).getTime() <= now.getTime())
+    .filter((d) => !referenced.has(d.storage_path))
+    .map((d) => ({ bucket: d.bucket ?? 'photos', path: d.storage_path }));
+}
+
 export function planPhotoLifecycleCleanup({
   photos,
   versions = [],
+  derivatives = [],
   objectsByBucket,
   now = new Date(),
   incompleteDraftAgeHours = 24,
@@ -65,5 +86,19 @@ export function planPhotoLifecycleCleanup({
       .sort();
   }
 
-  return { incompleteDraftIds, orphanObjects };
+  /* Süresi dolmuş türevler orphan listesine katılıyor: ikisi de aynı
+     silme çağrısıyla temizleniyor ve tekrarlar ayıklanıyor. */
+  const suresiDolmus = expiredDerivatives(derivatives, referenced, now);
+  for (const { bucket, path } of suresiDolmus) {
+    if (!PHOTO_BUCKETS.includes(bucket)) continue;
+    if (!orphanObjects[bucket].includes(path)) orphanObjects[bucket].push(path);
+  }
+  for (const bucket of PHOTO_BUCKETS) orphanObjects[bucket].sort();
+
+  return {
+    incompleteDraftIds,
+    orphanObjects,
+    /* Kaç silmenin TTL'den geldiği — raporda ayrı görünsün. */
+    expiredDerivativeCount: suresiDolmus.length,
+  };
 }
