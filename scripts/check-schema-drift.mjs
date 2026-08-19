@@ -78,6 +78,11 @@ const BEKLENEN = [
     migration: /alter table public\.equipment_models[\s\S]*?canonical_model_id/i,
   },
   {
+    ad: 'takimyildiz_tahmini fonksiyonu',
+    kod: 'takimyildiz_tahmini',
+    migration: /create or replace function public\.takimyildiz_tahmini/i,
+  },
+  {
     ad: 'equipment_merge_log tablosu',
     kod: 'equipment_merge_log',
     migration: /create table if not exists public\.equipment_merge_log/i,

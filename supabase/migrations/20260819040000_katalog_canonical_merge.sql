@@ -322,3 +322,18 @@ revoke all on function public.merge_equipment_models(text, text) from public, an
 revoke all on function public.unmerge_equipment_model(uuid) from public, anon;
 grant execute on function public.merge_equipment_models(text, text) to authenticated;
 grant execute on function public.unmerge_equipment_model(uuid) to authenticated;
+
+/*
+ * VIEW ÇAĞIRANIN YETKİSİYLE ÇALIŞIYOR.
+ *
+ * Varsayılan davranış (SECURITY DEFINER) view'ı tanımlayanın haklarıyla
+ * çalıştırıyor ve RLS'i baypas ediyor; Supabase güvenlik denetimi bunu
+ * ERROR olarak bildirdi. `security_invoker` ile view, sorgulayan
+ * kullanıcının yetkisini kullanıyor.
+ *
+ * Ham mükerrer listesi ayrıca anon'a kapalı: ürün ekibinin çalışma
+ * listesi, ziyaretçinin göreceği bir şey değil.
+ */
+alter view public.equipment_duplicate_candidates set (security_invoker = true);
+revoke all on public.equipment_duplicate_candidates from anon;
+grant select on public.equipment_duplicate_candidates to authenticated;

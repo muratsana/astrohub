@@ -25,6 +25,7 @@ import { useAlanCozumuIstegi } from '@/services/photos/solveRequest';
 import { useRoles } from '@/features/admin/useRoles';
 import { indirmeAdi } from '@/domain/photography/indirmeAdi';
 import { logDownload } from '@/services/photos/downloadMetrics';
+import { guessConstellation } from '@/services/photos/constellation';
 import { annotatedBlob } from './annotatedExport';
 import { cozumGeometrisi, useAlandakiCisimler } from '@/services/content/fieldObjects';
 import { useAlandakiYildizlar } from '@/services/content/fieldStars';
@@ -416,11 +417,41 @@ function CaptureTab({ photo }: { photo: AstroPhoto }) {
   const geceSayisi = toplamGece(oturumlar);
   const cokOturum = oturumlar.length > 1;
 
+  /*
+   * TAKIMYILDIZ BOŞSA ÇÖZÜMDEN TÜRETİLİYOR (B07).
+   *
+   * Yalnızca alan BOŞKEN ve alan çözümü VARKEN soruluyor: kullanıcının
+   * kendi beyanı hiçbir zaman ezilmiyor. Sonuç "tahmin" etiketiyle
+   * gösteriliyor — ölçülen isabet %91 ve bu, bir künye alanını sessizce
+   * doldurmak için yeterli değil.
+   */
+  const [tahmin, setTahmin] = useState<string | null>(null);
+  const raDeg = photo.solve.raDeg;
+  const decDeg = photo.solve.decDeg;
+  const takimyildizBos = !photo.target.constellation;
+
+  useEffect(() => {
+    if (!takimyildizBos || raDeg == null || decDeg == null) return;
+    let canli = true;
+    void guessConstellation(raDeg, decDeg).then((sonuc) => {
+      if (canli && sonuc) setTahmin(sonuc.name);
+    });
+    return () => {
+      canli = false;
+    };
+  }, [takimyildizBos, raDeg, decDeg]);
+
+  const takimyildiz = photo.target.constellation
+    ? photo.target.constellation
+    : tahmin
+      ? `${tahmin} (alan çözümünden tahmin)`
+      : '';
+
   return (
     <DL
       rows={[
         ['Astronomik hedef', `${photo.target.name} (${photo.target.catalog})`],
-        ['Takımyıldız', photo.target.constellation],
+        ['Takımyıldız', takimyildiz],
         ['Fotoğraf türü', photoTypeLabels[photo.type]],
         [cokOturum ? 'Çekim tarihleri' : 'Çekim tarihi', tarihMetni],
         /* Birden çok gece/oturum varsa toplam gece emeği ayrı bir satır;
