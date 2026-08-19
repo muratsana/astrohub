@@ -28,9 +28,8 @@ vi.mock('@/features/admin/useRoles', () => ({
 }));
 
 vi.mock('react-router', async () => {
-  const gercek = await vi.importActual<typeof import('react-router')>(
-    'react-router'
-  );
+  const gercek =
+    await vi.importActual<typeof import('react-router')>('react-router');
   return { ...gercek, useNavigate: () => navigate };
 });
 
@@ -76,16 +75,15 @@ describe('kullanıcı menüsü', () => {
     expect(navigate).toHaveBeenCalledWith('/');
   });
 
-  /*
-   * PUBLIC PROFİL GİRİŞİ MENÜDE OLMAMALI (E09). Aynı yere `Hesabım >
-   * Profilim` sekmesindeki düğmeden gidiliyor; menüde ikinci bir satır
-   * kalabalık ediyordu. Test bunu kilitliyor: giriş bir gün geri
-   * eklenirse burada düşer.
-   */
-  it('public profil girişi menüde yok', () => {
+  it('profil ve ekipman alt sekmeleri dropdown menüsünde yok', () => {
     ciz({ username: 'muratsana' });
     fireEvent.click(screen.getByRole('button', { name: /muratsana/ }));
-    expect(screen.queryByRole('menuitem', { name: 'Public profilim' })).toBeNull();
+    expect(screen.getByRole('menuitem', { name: 'Hesabım' })).toBeTruthy();
+    expect(screen.queryByRole('menuitem', { name: 'Profilim' })).toBeNull();
+    expect(screen.queryByRole('menuitem', { name: 'Ekipmanlarım' })).toBeNull();
+    expect(
+      screen.queryByRole('menuitem', { name: 'Public profilim' })
+    ).toBeNull();
   });
 
   it('yönetim girişi yalnızca yetkiliye görünüyor', async () => {

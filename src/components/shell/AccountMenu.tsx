@@ -87,21 +87,15 @@ export function AccountMenu({
     };
   }, [acik]);
 
-  /* Profil bağlantısı kullanıcı adı YOKSA hiç çizilmiyor: `/profil/`
-     diye bir rota yok ve boş adrese götüren bir menü girişi, çalışmayan
-     bir düğmeden farksız. */
   /*
-   * "PUBLIC PROFİLİM" BURADA DEĞİL (E09).
+   * PROFİL VE EKİPMAN BURADA DEĞİL.
    *
-   * Bir süre menüde durdu ve kalabalık etti: aynı yere `Hesabım >
-   * Profilim` sekmesindeki "Public profili aç" düğmesinden de
-   * gidiliyor. Menü kısa olduğu sürece işe yarıyor; her yol için bir
-   * satır eklendiğinde aranan giriş kaybolur.
+   * İkisi de `Hesabım` altındaki sekmelerde duruyor. Dropdown yalnız
+   * üst seviye hesap, mesaj ve yönetim yollarını göstermeli; aynı modüle
+   * iki farklı kısa yol menüyü gereksiz kalabalık yapıyor.
    */
   const girisler = [
     { to: '/hesap', label: 'Hesabım' },
-    ...(username ? [{ to: '/hesap?sekme=profilim', label: 'Profilim' }] : []),
-    { to: '/hesap?sekme=ekipmanlarim', label: 'Ekipmanlarım' },
     { to: '/mesajlar', label: 'Mesajlarım' },
     ...(canAccessAdmin ? [{ to: '/admin', label: 'Yönetim' }] : []),
   ];
