@@ -44,20 +44,29 @@ describe('RadioDock', () => {
     vi.clearAllMocks();
   });
 
-  it('normal kullanıcıya yalnız dinleme kontrolünü gösteriyor', () => {
+  it('normal kullanıcıya alt oynatıcıyı göstermiyor', () => {
     render(
       <MemoryRouter>
         <RadioDock />
       </MemoryRouter>
     );
 
-    expect(screen.getByText('Gece Akışı')).toBeInTheDocument();
-    expect(screen.getByText('Astrohub')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Canlı yayını duraklat' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Önceki parça' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Sonraki parça' })).not.toBeInTheDocument();
-    expect(screen.queryByLabelText('Radyo ses seviyesi')).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Radyo oynatıcısını gizle' })).not.toBeInTheDocument();
+    expect(screen.queryByText('Gece Akışı')).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Canlı yayını duraklat' })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Önceki parça' })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Sonraki parça' })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByLabelText('Radyo ses seviyesi')
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Radyo oynatıcısını gizle' })
+    ).not.toBeInTheDocument();
   });
 
   it('admin kullanıcıya gelişmiş yayın kontrollerini gösteriyor', () => {
@@ -69,9 +78,15 @@ describe('RadioDock', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByRole('button', { name: 'Önceki parça' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Sonraki parça' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Günlük karışık sırayı kapat' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Önceki parça' })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Sonraki parça' })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Günlük karışık sırayı kapat' })
+    ).toBeInTheDocument();
     expect(screen.getByLabelText('Radyo ses seviyesi')).toHaveValue('0.6');
   });
 
@@ -83,7 +98,9 @@ describe('RadioDock', () => {
         <RadioDock />
       </MemoryRouter>
     );
-    fireEvent.click(screen.getByRole('button', { name: 'Radyo oynatıcısını gizle' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Radyo oynatıcısını gizle' })
+    );
     expect(actions.hideDock).toHaveBeenCalledOnce();
   });
 });

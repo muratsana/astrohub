@@ -40,6 +40,9 @@ export function RadioDock() {
     hideDock,
   } = useRadio();
 
+  // Alt oynatıcı yönetim aracıdır; dinleyici için üst bardaki Radyo düğmesi yeter.
+  if (!isAdmin) return null;
+
   // Yayın yoksa rıhtım hiç
   // görünmez: boş bir oynatıcı şeridi ekranın altını yer, hiçbir şey vermez.
   if (!dockVisible || !hasBroadcast) return null;
@@ -67,20 +70,14 @@ export function RadioDock() {
           )}
         </button>
 
-        {isAdmin ? (
-          <Link
-            to="/radyo"
-            className="min-w-0 flex-1 transition-colors hover:text-primary"
-          >
-            <TrackLabel source={source} currentTrack={currentTrack} />
-          </Link>
-        ) : (
-          <div className="min-w-0 flex-1">
-            <TrackLabel source={source} currentTrack={currentTrack} />
-          </div>
-        )}
+        <Link
+          to="/radyo"
+          className="min-w-0 flex-1 transition-colors hover:text-primary"
+        >
+          <TrackLabel source={source} currentTrack={currentTrack} />
+        </Link>
 
-        {isAdmin && canSkip && (
+        {canSkip && (
           <div className="hidden items-center gap-1 sm:flex">
             <button
               type="button"
@@ -101,7 +98,7 @@ export function RadioDock() {
           </div>
         )}
 
-        {isAdmin && source === 'kasa' && (
+        {source === 'kasa' && (
           <button
             type="button"
             onClick={toggleShuffle}
@@ -123,33 +120,29 @@ export function RadioDock() {
           </button>
         )}
 
-        {isAdmin && (
-          <label className="hidden items-center gap-2 lg:flex">
-            <VolumeIcon className="h-4 w-4 text-muted-foreground" />
-            <span className="sr-only">Radyo ses seviyesi</span>
-            <input
-              type="range"
-              min="0"
-              max="1"
-              step="0.05"
-              value={volume}
-              onChange={(event) => setVolume(Number(event.target.value))}
-              aria-label="Radyo ses seviyesi"
-              className="w-24 accent-primary"
-            />
-          </label>
-        )}
+        <label className="hidden items-center gap-2 lg:flex">
+          <VolumeIcon className="h-4 w-4 text-muted-foreground" />
+          <span className="sr-only">Radyo ses seviyesi</span>
+          <input
+            type="range"
+            min="0"
+            max="1"
+            step="0.05"
+            value={volume}
+            onChange={(event) => setVolume(Number(event.target.value))}
+            aria-label="Radyo ses seviyesi"
+            className="w-24 accent-primary"
+          />
+        </label>
 
-        {isAdmin && (
-          <button
-            type="button"
-            onClick={hideDock}
-            aria-label="Radyo oynatıcısını gizle"
-            className="grid h-9 w-9 shrink-0 place-items-center rounded-card text-muted-foreground transition-colors hover:bg-surface-2 hover:text-foreground"
-          >
-            <CloseIcon className="h-3.5 w-3.5" />
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={hideDock}
+          aria-label="Radyo oynatıcısını gizle"
+          className="grid h-9 w-9 shrink-0 place-items-center rounded-card text-muted-foreground transition-colors hover:bg-surface-2 hover:text-foreground"
+        >
+          <CloseIcon className="h-3.5 w-3.5" />
+        </button>
       </div>
     </div>
   );
@@ -167,7 +160,7 @@ function TrackLabel({
       <span className="block truncate text-meta font-medium text-success">
         {source === 'canli'
           ? 'Canlı yayın'
-          : currentTrack?.title ?? 'Astrohub Radyo'}
+          : (currentTrack?.title ?? 'Astrohub Radyo')}
       </span>
       {source === 'kasa' && currentTrack?.artist && (
         <span className="hidden truncate text-[0.66rem] text-muted-foreground sm:block">
