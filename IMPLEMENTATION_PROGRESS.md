@@ -117,11 +117,11 @@ Canlı pano: `docs/patch-2026-08-18/ilerleme.html`
 | H13 | P1 | H | Kod Temizliği | Dead code/debug/audit geçici dosya temizliği | IN_PROGRESS |  |  | Bekliyor |
 | H14 | P0 | H | Final QA | Tam canlı ürün auditi yeniden koş | TODO |  |  | Bekliyor |
 | H15 | P0 | H | Final QA | Kullanıcı doğrulama kapısı | TODO |  |  | Bekliyor |
-| X01 | P1 | Extra | Medya Mimarisi | Asset türev registry | TODO |  |  | Bekliyor |
+| X01 | P1 | Extra | Medya Mimarisi | Asset türev registry | TESTED | 1218a84 | vitest derivatives.test; asset_derivatives migration prod'da | Bekliyor |
 | X02 | P1 | Extra | Medya İşleme | Original asset immutable | TESTED | e222c78 | vitest upload.test.ts: orijinal upsert:false | Bekliyor |
 | X03 | P1 | Extra | Gizlilik | Public türevlerde EXIF/GPS sızıntısını önle | TESTED | e222c78 | vitest upload.test.ts: public türev EXIF'siz, ham dosya gizli bucket | Bekliyor |
 | X04 | P2 | Extra | İndirme | İleride owner download izni politikası | TESTED | e04bcb3 | vitest originalDownload.test: imzalı adres + RLS null; owner UI | Bekliyor |
-| X05 | P2 | Extra | Medya Temizliği | Social/thumbnail derivative TTL ve GC | TODO |  |  | Bekliyor |
+| X05 | P2 | Extra | Medya Temizliği | Social/thumbnail derivative TTL ve GC | TESTED | 1218a84 | vitest photo-lifecycle: süresi dolmuş türev toplanıyor, referanslı korunuyor | Bekliyor |
 | X06 | P2 | Extra | Analitik | Export/download kullanım ölçümü | TESTED | 176c15e | vitest downloadMetrics.test; migration download_events; 4 indirme noktası bağlı | Bekliyor |
 | X07 | P1 | Extra | Uzun Formlar | Draft/autosave standardı | TESTED | fb44905 | vitest useFormDraft.test: mount/autosave/clear; RegisterPage hook'a geçti | Bekliyor |
 | E09 | P1 | E | Navbar | Menüden 'Public profilim' girişini kaldır | TESTED | 07af5a2 | vitest: public profil girisi menude yok | Bekliyor |
