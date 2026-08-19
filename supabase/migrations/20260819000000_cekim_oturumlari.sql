@@ -50,14 +50,28 @@ create index if not exists photo_exposures_session_idx
 -- ══════════════════════════════════════════════════════════════════════
 alter table public.photo_capture_sessions enable row level security;
 
+/*
+ * GÖRÜNÜRLÜK `app.icerik_gorunur` İLE — ham enum karşılaştırmasıyla değil.
+ *
+ * `astro_photos.status` artık `app.content_status` (Türkçe değerler:
+ * taslak/yayinda/arsivlendi…). Politikayı `p.status = 'published'` diye
+ * yazmak canlıda "invalid input value for enum" ile düşüyordu. Ortak
+ * yardımcı hem doğru değerleri hem soft-delete'i (deleted_at) biliyor;
+ * `photo_exposures` politikaları da bunu kullanıyor — aynı kaydın iki
+ * alt tablosu farklı görünürlük kuralı taşımamalı.
+ */
 drop policy if exists photo_capture_sessions_read on public.photo_capture_sessions;
 create policy photo_capture_sessions_read on public.photo_capture_sessions
   for select using (
     exists (
       select 1 from public.astro_photos p
-      where p.id = photo_id
-        and (p.status = 'published' or p.user_id = auth.uid()
-             or app.is_admin() or app.has_role('moderator'))
+      where p.id = photo_capture_sessions.photo_id
+        and (
+          app.icerik_gorunur(p.status::text, p.deleted_at)
+          or p.user_id = (select auth.uid())
+          or app.is_admin()
+          or app.has_role('moderator')
+        )
     )
   );
 
@@ -67,12 +81,18 @@ create policy photo_capture_sessions_write_own on public.photo_capture_sessions
   using (
     exists (
       select 1 from public.astro_photos p
-      where p.id = photo_id and p.user_id = auth.uid()
+      where p.id = photo_capture_sessions.photo_id
+        and p.user_id = (select auth.uid())
     )
   )
   with check (
     exists (
       select 1 from public.astro_photos p
-      where p.id = photo_id and p.user_id = auth.uid()
+      where p.id = photo_capture_sessions.photo_id
+        and p.user_id = (select auth.uid())
     )
   );
+
+/* PostgREST bu tabloyu okuyabilsin; RLS zaten satır düzeyini kısıtlıyor. */
+grant select on public.photo_capture_sessions to anon, authenticated;
+grant insert, update, delete on public.photo_capture_sessions to authenticated;

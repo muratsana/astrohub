@@ -40,3 +40,7 @@ create policy download_events_insert on public.download_events
 drop policy if exists download_events_read on public.download_events;
 create policy download_events_read on public.download_events
   for select using (app.is_admin());
+
+/* PostgREST yetkisi: RLS satırı, grant tabloyu açıyor — ikisi de gerekli. */
+grant insert on public.download_events to anon, authenticated;
+grant select on public.download_events to authenticated;

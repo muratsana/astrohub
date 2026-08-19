@@ -17,6 +17,20 @@ import { renderKadrajBlob } from '@/domain/profile/avatar';
 import { sanitizeText } from '@/lib/sanitize';
 
 /**
+ * Eksik kolon/tablo hatası mı — yani şema kodun gerisinde mi?
+ *
+ * Yeni bir alan kodda kullanılmaya başlanıp migration henüz uygulanmadığında
+ * PostgREST bütün isteği reddediyor. Çağıran taraf bunu ayırt edip isteğe
+ * bağlı alanı düşürerek devam edebilsin diye ayrı bir yardımcı.
+ */
+function semaEksikHatasi(error: { code?: string; message?: string }): boolean {
+  if (['42703', '42P01', 'PGRST204', 'PGRST200'].includes(error.code ?? '')) {
+    return true;
+  }
+  return /could not find|does not exist|schema cache/i.test(error.message ?? '');
+}
+
+/**
  * FOTOĞRAF YÜKLEME AKIŞI.
  *
  * Sıra bilinçli: önce satır, sonra dosyalar, sonra satırın yollarla
@@ -518,20 +532,47 @@ export async function uploadPhoto(
       display.blob.size +
       thumb.blob.size;
 
-    const { error: updateError } = await supabase
+    /*
+     * YOLLAR ÇEKİRDEK, KADRAJ İSTEĞE BAĞLI.
+     *
+     * `thumb_crop` yeni bir kolon; migration henüz uygulanmadıysa
+     * PostgREST bütün güncellemeyi reddediyor ve YÜKLEME KIRILIYORDU —
+     * dosyalar depoya yazılmış, satır yolsuz kalmış olurdu. Bu bir kez
+     * canlıda yaşandı ("Could not find the 'thumb_crop' column").
+     *
+     * Yollar olmadan kayıt işe yaramaz, kadraj olmadan yalnızca kart
+     * otomatik ortalanır. Bu yüzden önce kadrajla deneniyor; şema onu
+     * bilmiyorsa kadrajsız yeniden yazılıyor ve yükleme tamamlanıyor.
+     */
+    const cekirdekYama = {
+      display_path: displayPath,
+      thumb_path: thumbPath,
+      original_path: originalError ? null : originalPath,
+      width: display.size.width,
+      height: display.size.height,
+      bytes: storedBytes,
+    };
+
+    let { error: updateError } = await supabase
       .from('astro_photos')
       .update({
-        display_path: displayPath,
-        thumb_path: thumbPath,
-        original_path: originalError ? null : originalPath,
-        width: display.size.width,
-        height: display.size.height,
-        bytes: storedBytes,
+        ...cekirdekYama,
         /* Kadraj yalnızca gerçekten seçildiyse yazılıyor; otomatik thumb'da
            null kalıyor (C10). Sonradan yeniden kadraj için kaynak. */
         thumb_crop: thumbKadrajYazilir ? input.thumbCrop : null,
       })
       .eq('id', photoId);
+
+    if (updateError && semaEksikHatasi(updateError)) {
+      console.warn(
+        'thumb_crop kolonu yok, kadrajsız kaydediliyor:',
+        updateError.message
+      );
+      ({ error: updateError } = await supabase
+        .from('astro_photos')
+        .update(cekirdekYama)
+        .eq('id', photoId));
+    }
 
     if (updateError) throw new Error(updateError.message);
 
@@ -597,7 +638,19 @@ export async function uploadPhoto(
         }));
 
       if (rows.length > 0) {
-        const { error } = await supabase.from('photo_exposures').insert(rows);
+        let { error } = await supabase.from('photo_exposures').insert(rows);
+        /* `session_id` yeni bir kolon; şema bilmiyorsa pozlar oturum bağı
+           OLMADAN yazılıyor — künyenin tamamını kaybetmektense bağı
+           kaybetmek yeğ. */
+        if (error && semaEksikHatasi(error)) {
+          console.warn('session_id kolonu yok, pozlar bağsız yazılıyor');
+          ({ error } = await supabase.from('photo_exposures').insert(
+            rows.map(({ session_id: _atlanan, ...kalan }) => {
+              void _atlanan;
+              return kalan;
+            })
+          ));
+        }
         if (error) {
           console.error('poz bilgileri kaydedilemedi', error);
           exposuresSaved = false;

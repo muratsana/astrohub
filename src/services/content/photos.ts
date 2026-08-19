@@ -453,7 +453,45 @@ export function isPhotoPubliclyVisible(status: PhotoStatus): boolean {
   return status === PUBLIC_PHOTO_STATUS;
 }
 
-async function fetchPhotos(client: SupabaseClient): Promise<AstroPhoto[]> {
+/**
+ * ŞEMA GERİDE KALIRSA GALERİ ÖLMESİN.
+ *
+ * Yeni bir kolon/tablo (ör. `thumb_crop`, `photo_capture_sessions`) kodda
+ * kullanılmaya başlanıp migration henüz uygulanmadıysa PostgREST bütün
+ * sorguyu reddediyordu ve galeri "bağlantı kurulamadı" diyordu — eksik
+ * olan tek bir isteğe bağlı alan yüzünden sayfanın tamamı. Bu bir kez
+ * canlıda yaşandı.
+ *
+ * Çekirdek alanlar (`CORE_SELECT`) her sürümde var olanlar; yeni alanlar
+ * onun üstüne ekleniyor. İlk deneme yeni alanlarla, şema eksikse ikinci
+ * deneme çekirdekle: kadraj ve oturumlar boş kalır ama galeri açılır.
+ */
+const YENI_ALANLAR = [
+  'thumb_crop, ',
+  'photo_capture_sessions(id, starts_on, ends_on, position), ',
+];
+
+const CORE_SELECT = YENI_ALANLAR.reduce(
+  (secim, alan) => secim.replace(alan, ''),
+  SELECT
+).replace(
+  'photo_exposures(filter, frames, exposure_seconds, position, session_id)',
+  'photo_exposures(filter, frames, exposure_seconds, position)'
+);
+
+/** Eksik kolon/tablo hatası mı (şema kodun gerisinde)? */
+function semaEksik(error: { code?: string; message?: string } | null): boolean {
+  if (!error) return false;
+  /* 42703: undefined_column (Postgres) · PGRST204/PGRST200: PostgREST'in
+     şema önbelleğinde kolon/ilişki yok. */
+  if (['42703', 'PGRST204', 'PGRST200'].includes(error.code ?? '')) return true;
+  const mesaj = error.message ?? '';
+  return /could not find|does not exist|schema cache/i.test(mesaj);
+}
+
+export async function fetchPhotos(
+  client: SupabaseClient
+): Promise<AstroPhoto[]> {
   const { data, error } = await client
     .from('astro_photos')
     .select(SELECT)
@@ -480,7 +518,25 @@ async function fetchPhotos(client: SupabaseClient): Promise<AstroPhoto[]> {
        Sunucu taraflı sayfalama katalog büyüdüğünde gerekecek. */
     .limit(200);
 
-  if (error) throw new Error(error.message);
+  if (error) {
+    if (!semaEksik(error)) throw new Error(error.message);
+    /* Şema henüz yeni alanları bilmiyor: çekirdekle yeniden dene. Kadraj
+       ve oturumlar bu turda boş kalır (kart otomatik ortalar, tarih
+       `captured_at`ten türer) ama galeri açılır. */
+    console.warn(
+      'Fotoğraf şeması eksik alan bildirdi, çekirdek alanlarla yeniden deneniyor:',
+      error.message
+    );
+    const yedek = await client
+      .from('astro_photos')
+      .select(CORE_SELECT)
+      .eq('status', PUBLIC_PHOTO_STATUS)
+      .is('deleted_at', null)
+      .order('published_at', { ascending: false })
+      .limit(200);
+    if (yedek.error) throw new Error(yedek.error.message);
+    return (yedek.data as unknown as PhotoRow[]).map(mapPhotoRow);
+  }
   return (data as unknown as PhotoRow[]).map(mapPhotoRow);
 }
 

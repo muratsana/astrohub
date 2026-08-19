@@ -35,6 +35,9 @@ const state = {
   uploads: [] as { bucket: string; path: string; upsert?: boolean }[],
   /** astro_photos'a yazılan yol/kadraj güncellemesi. */
   photoUpdate: null as Record<string, unknown> | null,
+  /** Şema kodun gerisinde: yeni kolonlar henüz yok (canlı olay). */
+  thumbCropKolonuYok: false,
+  sessionIdKolonuYok: false,
 };
 
 const PHOTO_ID = 'photo-1';
@@ -65,7 +68,18 @@ function tableApi(table: string) {
         };
       }
       if (table === 'photo_exposures') {
-        state.exposureInsert = rows as Record<string, unknown>[];
+        const satirlar = rows as Record<string, unknown>[];
+        /* Şema geride: `session_id` taşıyan insert reddediliyor. */
+        if (state.sessionIdKolonuYok && satirlar.some((r) => 'session_id' in r)) {
+          return Promise.resolve({
+            error: {
+              code: 'PGRST204',
+              message:
+                "Could not find the 'session_id' column of 'photo_exposures' in the schema cache",
+            },
+          });
+        }
+        state.exposureInsert = satirlar;
         return Promise.resolve({ error: state.exposureError });
       }
       void rows;
@@ -77,6 +91,17 @@ function tableApi(table: string) {
       if (!('deleted_at' in yama)) state.photoUpdate = yama;
       return {
         eq: async (_column: string, value: string) => {
+          /* Şema geride kaldığında PostgREST'in verdiği hata taklit
+             ediliyor: `thumb_crop` taşıyan güncelleme reddediliyor. */
+          if (state.thumbCropKolonuYok && 'thumb_crop' in yama) {
+            return {
+              error: {
+                code: 'PGRST204',
+                message:
+                  "Could not find the 'thumb_crop' column of 'astro_photos' in the schema cache",
+              },
+            };
+          }
           /* Geri alma taslağı `deleted_at` yazarak kaldırıyor; normal
              akıştaki güncellemelerden bu alanla ayrılıyor. */
           if ('deleted_at' in yama && yama.deleted_at !== null) {
@@ -195,6 +220,8 @@ beforeEach(() => {
   state.sessionError = null;
   state.uploads = [];
   state.photoUpdate = null;
+  state.thumbCropKolonuYok = false;
+  state.sessionIdKolonuYok = false;
   KADRAJ.cagrildi = 0;
   KADRAJ.dussun = false;
 });
@@ -418,6 +445,51 @@ describe('uploadPhoto — kart (thumbnail) kadrajı (C07, C10)', () => {
     expect(result.photoId).toBe(PHOTO_ID);
     // Kadraj render'ı düştü → thumb_crop yazılmadı.
     expect(state.photoUpdate?.thumb_crop).toBeNull();
+  });
+});
+
+describe('uploadPhoto — şema kodun gerisindeyken yükleme kırılmaz', () => {
+  /*
+   * CANLI OLAY: `thumb_crop` kolonu koda girdi ama migration prod'a
+   * uygulanmamıştı. PostgREST bütün güncellemeyi reddetti ve YÜKLEME
+   * TAMAMEN KIRILDI — dosyalar depoya yazılmış, satır yolsuz kalmıştı
+   * ("Could not find the 'thumb_crop' column ... in the schema cache").
+   *
+   * Yollar olmadan kayıt işe yaramaz; kadraj olmadan yalnızca kart
+   * otomatik ortalanır. Kadraj bu yüzden feda edilebilir, yollar değil.
+   */
+  it('thumb_crop kolonu yoksa kadrajsız kaydeder, yükleme tamamlanır', async () => {
+    state.thumbCropKolonuYok = true;
+    const result = await uploadPhoto({
+      ...input,
+      thumbCrop: { zoom: 1.4, panX: 0.2, panY: -0.1 },
+    });
+
+    expect(result.photoId).toBe(PHOTO_ID);
+    // Yollar yazıldı, kadraj düşürüldü.
+    expect(state.photoUpdate).toMatchObject({
+      display_path: DISPLAY,
+      thumb_path: THUMB,
+    });
+    expect('thumb_crop' in (state.photoUpdate ?? {})).toBe(false);
+    // Geri alma tetiklenmedi: dosyalar duruyor.
+    expect(state.removed).toEqual([]);
+    expect(state.softDeletedRows).toEqual([]);
+  });
+
+  it('session_id kolonu yoksa pozlar bağsız yazılır, künye kaybolmaz', async () => {
+    state.sessionIdKolonuYok = true;
+    const result = await uploadPhoto({
+      ...input,
+      captureSessions: [{ id: 'c1', startsOn: '2026-01-12', endsOn: null }],
+      exposures: [
+        { filter: 'L', frames: 30, exposureSeconds: 120, sessionId: 'c1' },
+      ],
+    });
+
+    expect(result.exposuresSaved).toBe(true);
+    expect(state.exposureInsert?.[0]).toMatchObject({ filter: 'L', frames: 30 });
+    expect('session_id' in (state.exposureInsert?.[0] ?? {})).toBe(false);
   });
 });
 
