@@ -347,13 +347,7 @@ export function HeroSection() {
                 slide.textAlign === 'center' && 'mx-auto text-center'
               )}
             >
-              <Editable slide={slide} field="badge" className="w-fit">
-                <span className="inline-block rounded-card bg-primary px-2.5 py-1 text-meta font-medium tracking-[0.04em] text-primary-foreground">
-                  {slide.badge}
-                </span>
-              </Editable>
-
-              <Editable slide={slide} field="title" className="mt-4 block">
+              <Editable slide={slide} field="title" className="block">
                 {/*
                   Büyük harf CSS ile değil, `tr-TR` yerel ayarıyla JS'te
                   yapılıyor: `text-transform` sayfanın `lang` bilgisine

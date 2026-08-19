@@ -64,6 +64,12 @@ afterEach(() => {
 });
 
 describe('dokunma kaydırması', () => {
+  it('slayt kategori rozetini hero üzerinde göstermiyor', () => {
+    wrap();
+    expect(screen.queryByText(defaultHeroSlides[0].badge)).toBeNull();
+    expect(screen.getByRole('link', { name: /galeriye bak/i })).toBeTruthy();
+  });
+
   it('sola kaydırınca sonraki slayta geçiyor', () => {
     const { container } = wrap();
     const bolge = container.querySelector('section')!;
