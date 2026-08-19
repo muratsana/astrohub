@@ -63,7 +63,6 @@ const GECEN = [
    * Alaka motora eklendi; sabitleme `forumSpec` içinde her
    * karşılaştırıcıyı saran bir yardımcıyla korundu.
    */
-  'features/targets/TargetsPage.tsx',
   'features/forum/ForumPage.tsx',
 ];
 
