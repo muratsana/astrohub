@@ -48,6 +48,12 @@ export interface CollectionPhoto {
   slug: string;
   title: string;
   thumbPath: string | null;
+  username: string;
+  displayName: string;
+  palette: string;
+  filters: string;
+  fovWidthDeg: number | null;
+  fovHeightDeg: number | null;
   addedAt: string;
 }
 
@@ -466,6 +472,20 @@ interface RawPhoto {
   slug: string;
   title: string;
   thumb_path: string | null;
+  palette?: string | null;
+  solve_field_width_deg?: number | string | null;
+  solve_field_height_deg?: number | string | null;
+  setup_text?: Record<string, unknown> | null;
+  profiles?:
+    | { username: string; display_name: string | null }
+    | { username: string; display_name: string | null }[]
+    | null;
+  photo_exposures?: RawExposure[] | null;
+}
+
+interface RawExposure {
+  filter: string | null;
+  position?: number | null;
 }
 
 function one<T>(value: T | T[] | null | undefined): T | null {
@@ -490,6 +510,36 @@ function mapCollection(row: RawCollection): CollectionSummary {
   };
 }
 
+function textFromSetup(
+  bag: Record<string, unknown> | null | undefined,
+  ...keys: string[]
+): string | null {
+  for (const key of keys) {
+    const value = bag?.[key];
+    if (typeof value === 'string' && value.trim()) return value.trim();
+  }
+  return null;
+}
+
+function num(value: number | string | null | undefined): number | null {
+  if (value === null || value === undefined) return null;
+  const parsed = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function photoFilters(photo: RawPhoto): string {
+  const filters = [
+    ...new Set(
+      [...(photo.photo_exposures ?? [])]
+        .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
+        .map((row) => row.filter?.trim())
+        .filter((filter): filter is string => Boolean(filter))
+    ),
+  ];
+  if (filters.length > 0) return filters.join(', ');
+  return textFromSetup(photo.setup_text, 'filter', 'filters', 'Filtre') ?? '';
+}
+
 function mapManagerCollection(row: RawCollection): PhotoCollection {
   return {
     ...mapCollection(row),
@@ -500,10 +550,21 @@ function mapManagerCollection(row: RawCollection): PhotoCollection {
           entry.photo !== null
       )
       .map(({ item, photo }) => ({
+        ...(() => {
+          const owner = one(photo.profiles);
+          return {
+            username: owner?.username ?? 'bilinmiyor',
+            displayName: owner?.display_name ?? owner?.username ?? 'Bilinmiyor',
+          };
+        })(),
         photoId: item.photo_id,
         slug: photo.slug,
         title: photo.title,
         thumbPath: photo.thumb_path,
+        palette: photo.palette ?? '—',
+        filters: photoFilters(photo) || '—',
+        fovWidthDeg: num(photo.solve_field_width_deg),
+        fovHeightDeg: num(photo.solve_field_height_deg),
         addedAt: item.added_at,
       }))
       .sort((a, b) => b.addedAt.localeCompare(a.addedAt)),
@@ -535,7 +596,7 @@ export function useCollectionsManager(): CollectionsManagerState {
         const { data, error: readError } = await supabase
           .from('collections')
           .select(
-            'id, name, slug, is_public, created_at, updated_at, collection_items(photo_id, added_at, astro_photos(slug, title, thumb_path))'
+            'id, name, slug, is_public, created_at, updated_at, collection_items(photo_id, added_at, astro_photos(slug, title, thumb_path, palette, solve_field_width_deg, solve_field_height_deg, setup_text, profiles!astro_photos_user_id_profiles_fkey(username, display_name), photo_exposures(filter, position)))'
           )
           .eq('user_id', user.id)
           .order('created_at', { ascending: true });

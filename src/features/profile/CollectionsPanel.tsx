@@ -1,19 +1,39 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { DataTable, type Column } from '@/components/ui/DataTable';
 import { Field } from '@/components/ui/Field';
 import { Input } from '@/components/ui/Input';
 import { Panel } from '@/components/ui/Panel';
 import {
   useCollectionsManager,
+  type CollectionPhoto,
   type PhotoCollection,
 } from '@/services/content/collections';
+
+type CollectionPhotoSort =
+  | 'eklenme'
+  | 'baslik'
+  | 'baslik-desc'
+  | 'kullanici'
+  | 'kullanici-desc'
+  | 'palet'
+  | 'palet-desc'
+  | 'fov'
+  | 'fov-desc'
+  | 'filtre'
+  | 'filtre-desc';
+
+type CollectionPhotoRow = CollectionPhoto & { collectionId: string };
 
 export function CollectionsPanel() {
   const store = useCollectionsManager();
   const [newName, setNewName] = useState('');
   const [editing, setEditing] = useState<Record<string, string>>({});
+  const [sort, setSort] = useState<CollectionPhotoSort>('eklenme');
+  const setCollectionSort = (value: string) =>
+    setSort(value as CollectionPhotoSort);
 
   async function create() {
     const id = await store.create(newName);
@@ -31,6 +51,92 @@ export function CollectionsPanel() {
       return next;
     });
   }
+
+  const columns = useMemo<Column<CollectionPhotoRow>[]>(
+    () => [
+      {
+        key: 'baslik',
+        header: 'Fotoğraf',
+        cell: (photo) => photo.title,
+        alwaysVisible: true,
+        sort: { asc: 'baslik', desc: 'baslik-desc' },
+      },
+      {
+        key: 'kullanici',
+        header: 'Çeken',
+        cell: (photo) => (
+          <Link
+            to={`/profil/${photo.username}`}
+            className="font-medium text-foreground transition-colors hover:text-primary hover:underline"
+          >
+            @{photo.username}
+          </Link>
+        ),
+        sort: { asc: 'kullanici', desc: 'kullanici-desc' },
+      },
+      {
+        key: 'palet',
+        header: 'Palet',
+        cell: (photo) => photo.palette,
+        sort: { asc: 'palet', desc: 'palet-desc' },
+      },
+      {
+        key: 'fov',
+        header: 'FOV',
+        cell: formatFov,
+        sort: { asc: 'fov', desc: 'fov-desc' },
+      },
+      {
+        key: 'filtre',
+        header: 'Filtreler',
+        cell: (photo) => photo.filters,
+        sort: { asc: 'filtre', desc: 'filtre-desc' },
+      },
+      {
+        key: 'eklenme',
+        header: 'Eklenme',
+        cell: (photo) => new Date(photo.addedAt).toLocaleDateString('tr-TR'),
+        sort: { desc: 'eklenme' },
+      },
+      {
+        key: 'tasi',
+        header: 'Koleksiyon',
+        cell: (photo) => (
+          <select
+            aria-label={`${photo.title} fotoğrafını taşı`}
+            value={photo.collectionId}
+            disabled={store.busy}
+            onChange={(event) =>
+              void store.movePhoto(photo.photoId, event.target.value)
+            }
+            className="h-9 w-full min-w-40 rounded-card border border-border bg-surface-1 px-2 text-meta text-foreground outline-none focus:border-primary"
+          >
+            {store.collections.map((option) => (
+              <option key={option.id} value={option.id}>
+                {option.name}
+              </option>
+            ))}
+          </select>
+        ),
+      },
+      {
+        key: 'islem',
+        header: 'İşlem',
+        cell: (photo) => (
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            disabled={store.busy}
+            onClick={() => void store.removePhoto(photo.photoId)}
+          >
+            Kaldır
+          </Button>
+        ),
+      },
+    ],
+    [store]
+  );
 
   if (!store.canManage) {
     return (
@@ -160,55 +266,21 @@ export function CollectionsPanel() {
                     Bu koleksiyon boş.
                   </p>
                 ) : (
-                  <ul className="mt-3 divide-y divide-border rounded-card border border-border bg-surface-2">
-                    {collection.photos.map((photo) => (
-                      <li
-                        key={photo.photoId}
-                        className="grid gap-2 px-3 py-2 sm:grid-cols-[minmax(0,1fr)_220px_auto]"
-                      >
-                        <div className="min-w-0">
-                          <Link
-                            to={`/fotograf/${photo.slug}`}
-                            className="block truncate text-body-sm font-medium text-foreground hover:text-primary hover:underline"
-                          >
-                            {photo.title}
-                          </Link>
-                          <p className="text-meta text-muted-foreground">
-                            {new Date(photo.addedAt).toLocaleDateString(
-                              'tr-TR'
-                            )}
-                          </p>
-                        </div>
-                        <select
-                          aria-label={`${photo.title} fotoğrafını taşı`}
-                          value={collection.id}
-                          disabled={store.busy}
-                          onChange={(event) =>
-                            void store.movePhoto(
-                              photo.photoId,
-                              event.target.value
-                            )
-                          }
-                          className="h-9 rounded-card border border-border bg-surface-1 px-2 text-meta text-foreground outline-none focus:border-primary"
-                        >
-                          {store.collections.map((option) => (
-                            <option key={option.id} value={option.id}>
-                              {option.name}
-                            </option>
-                          ))}
-                        </select>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="ghost"
-                          disabled={store.busy}
-                          onClick={() => void store.removePhoto(photo.photoId)}
-                        >
-                          Kaldır
-                        </Button>
-                      </li>
-                    ))}
-                  </ul>
+                  <DataTable
+                    className="mt-3"
+                    caption={`${collection.name} fotoğrafları`}
+                    columns={columns}
+                    rows={sortPhotos(
+                      collection.photos.map((photo) => ({
+                        ...photo,
+                        collectionId: collection.id,
+                      })),
+                      sort
+                    )}
+                    rowKey={(photo) => photo.photoId}
+                    rowHref={(photo) => `/fotograf/${photo.slug}`}
+                    sort={{ value: sort, onChange: setCollectionSort }}
+                  />
                 )}
               </section>
             ))}
@@ -217,4 +289,47 @@ export function CollectionsPanel() {
       </div>
     </Panel>
   );
+}
+
+function sortPhotos(
+  photos: CollectionPhotoRow[],
+  sort: CollectionPhotoSort
+): CollectionPhotoRow[] {
+  const rows = [...photos];
+  const cmpText = (a: string, b: string) => a.localeCompare(b, 'tr');
+  const fov = (photo: CollectionPhotoRow) =>
+    (photo.fovWidthDeg ?? 0) * (photo.fovHeightDeg ?? 0);
+
+  return rows.sort((a, b) => {
+    switch (sort) {
+      case 'baslik':
+        return cmpText(a.title, b.title);
+      case 'baslik-desc':
+        return cmpText(b.title, a.title);
+      case 'kullanici':
+        return cmpText(a.username, b.username);
+      case 'kullanici-desc':
+        return cmpText(b.username, a.username);
+      case 'palet':
+        return cmpText(a.palette, b.palette);
+      case 'palet-desc':
+        return cmpText(b.palette, a.palette);
+      case 'fov':
+        return fov(a) - fov(b);
+      case 'fov-desc':
+        return fov(b) - fov(a);
+      case 'filtre':
+        return cmpText(a.filters, b.filters);
+      case 'filtre-desc':
+        return cmpText(b.filters, a.filters);
+      case 'eklenme':
+      default:
+        return b.addedAt.localeCompare(a.addedAt) || cmpText(a.title, b.title);
+    }
+  });
+}
+
+function formatFov(photo: CollectionPhoto): string {
+  if (!photo.fovWidthDeg || !photo.fovHeightDeg) return '—';
+  return `${photo.fovWidthDeg.toFixed(2)}° × ${photo.fovHeightDeg.toFixed(2)}°`;
 }
