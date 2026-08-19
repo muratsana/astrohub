@@ -1,5 +1,8 @@
 import { getSupabase } from '@/services/supabase/client';
-import { renderResized } from '@/domain/photography/resize';
+import {
+  encodeWithinBudget,
+  type EncodeAttempt,
+} from '@/domain/photography/resize';
 import { checkImageFormat, readHead } from '@/domain/photography/fileType';
 import { listingPhotoUrl } from './photoUrl';
 
@@ -9,8 +12,8 @@ import { listingPhotoUrl } from './photoUrl';
  * ══════════════════════════════════════════════════════════════════════
  * NEDEN ASTROFOTOĞRAF BORU HATTININ AYNISI DEĞİL
  *
- * İki akış aynı `renderResized` ve `checkImageFormat` işlevlerini
- * kullanıyor ama üç yerde AYRILIYOR ve üçü de bilinçli:
+ * İki akış aynı format denetimini ve canvas tabanlı küçültmeyi kullanıyor
+ * ama üç yerde AYRILIYOR ve üçü de bilinçli:
  *
  *   1. ARŞİV KOPYASI YOK. Astrofotoğrafta ham dosya gizli kovaya da
  *      yazılıyor çünkü eser o. İlan fotoğrafı bir kanıt belgesi;
@@ -28,12 +31,23 @@ import { listingPhotoUrl } from './photoUrl';
 /** İlan fotoğrafında en uzun kenar. */
 export const LISTING_MAX_EDGE = 1600;
 
+/** İlan fotoğrafı başına depolama sınırı. */
+export const LISTING_PHOTO_BUDGET_BYTES = 5 * 1024 * 1024;
+
 /**
  * İlan başına üst sınır (A07). Asıl kural veritabanı tetikleyicisinde —
  * istemci sabiti onunla AYNI olmak zorunda, yoksa arayüz izin verip
  * tetikleyici reddeder. İkisi 20260819010000 migration'ında 5'e indirildi.
  */
 export const LISTING_PHOTO_LIMIT = 5;
+
+const LISTING_PHOTO_LADDER = [
+  { maxEdge: LISTING_MAX_EDGE, quality: 0.82 },
+  { maxEdge: LISTING_MAX_EDGE, quality: 0.74 },
+  { maxEdge: 1400, quality: 0.72 },
+  { maxEdge: 1200, quality: 0.68 },
+  { maxEdge: 1000, quality: 0.64 },
+] as const satisfies readonly EncodeAttempt[];
 
 export interface ListingPhoto {
   id: string;
@@ -111,12 +125,21 @@ export async function uploadListingPhoto(
   const format = checkImageFormat(await readHead(input.file), input.file.type);
   if (format.kind === 'reject') throw new Error(format.reason);
 
-  const resized = await renderResized(input.file, LISTING_MAX_EDGE);
+  const resized = await encodeWithinBudget(
+    input.file,
+    LISTING_PHOTO_BUDGET_BYTES,
+    LISTING_PHOTO_LADDER
+  );
   if (!resized) {
     throw new Error(
       format.kind === 'risky'
         ? format.reason
         : 'Görsel bu tarayıcıda işlenemedi. JPEG ya da PNG deneyin.'
+    );
+  }
+  if (!resized.withinBudget) {
+    throw new Error(
+      'Fotoğraf 5 MB sınırına sığacak şekilde optimize edilemedi. Daha düşük çözünürlüklü bir dosya deneyin.'
     );
   }
 
@@ -170,7 +193,9 @@ export async function uploadListingPhoto(
  * indeksine eşitleniyor. Sıra kolonu benzersiz değil (yalnızca dizin),
  * bu yüzden ara adımda çakışma olmuyor — tek tek güncellenebiliyor.
  */
-export async function reorderListingPhotos(orderedIds: string[]): Promise<void> {
+export async function reorderListingPhotos(
+  orderedIds: string[]
+): Promise<void> {
   const supabase = await client();
   for (let i = 0; i < orderedIds.length; i += 1) {
     const { error } = await supabase
@@ -198,7 +223,9 @@ export async function deleteListingPhoto(
   if (at < 0) return;
 
   try {
-    await supabase.storage.from('listings').remove([url.slice(at + marker.length)]);
+    await supabase.storage
+      .from('listings')
+      .remove([url.slice(at + marker.length)]);
   } catch (cause) {
     console.error('ilan görseli silinemedi', cause);
   }

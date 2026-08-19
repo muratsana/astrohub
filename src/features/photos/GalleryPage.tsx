@@ -4,7 +4,6 @@ import { Container } from '@/components/ui/Container';
 import { ButtonLink } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Input, Select } from '@/components/ui/Input';
-import { PageHeader } from '@/components/ui/PageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
 import {
   FilterCell,
@@ -138,15 +137,16 @@ export function GalleryPage() {
       />
 
       <Container className="py-8 sm:py-10">
-        <PageHeader
-          title="Fotoğraf Galerisi"
-          description="Topluluğun astrofotoğraf arşivi. Her kayıt hedefi, setup'ı, filtresi ve gökyüzü koşullarıyla birlikte saklanır."
-          actions={
-            <ButtonLink to="/galeri/yukle" size="sm">
-              Fotoğraf Yükle
-            </ButtonLink>
-          }
-        />
+        <header className="mb-5 border-b border-border pb-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <h1 className="type-page text-foreground">Fotoğraf Galerisi</h1>
+            <div className="w-fit rounded-card border border-border-strong bg-surface-1 p-1">
+              <ButtonLink to="/galeri/yukle" size="sm">
+                Fotoğraf Yükle
+              </ButtonLink>
+            </div>
+          </div>
+        </header>
 
         {/*
           HAFTANIN FOTOĞRAFI — düzen artık `FeaturedPanel`'den geliyor.
@@ -270,6 +270,8 @@ export function GalleryPage() {
 
         {/* Filtre paneli */}
         <ModuleToolbar
+          primaryFilters={99}
+          filterClassName="flex-wrap"
           activeFilters={{
             chips: ex.chips,
             onRemove: ex.removeChip,
@@ -525,9 +527,7 @@ function WeeklyPhotoKunye({ photo }: { photo: AstroPhoto }) {
       {pozlar.length > 0 && (
         <div className="overflow-x-auto">
           <table className="w-full min-w-[18rem] border-collapse text-left">
-            <caption className="sr-only">
-              Filtre bazlı pozlama dökümü
-            </caption>
+            <caption className="sr-only">Filtre bazlı pozlama dökümü</caption>
             <thead>
               <tr className="text-meta text-faint">
                 <th scope="col" className="pb-1 pr-3 font-medium">
@@ -596,7 +596,6 @@ function WeeklyPhotoKunye({ photo }: { photo: AstroPhoto }) {
     </div>
   );
 }
-
 
 function formatPhotoDate(value: string): string {
   const [year, month, day] = value.slice(0, 10).split('-');

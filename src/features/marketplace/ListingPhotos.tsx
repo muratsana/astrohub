@@ -7,9 +7,11 @@ import {
   fetchListingPhotos,
   reorderListingPhotos,
   uploadListingPhoto,
+  LISTING_PHOTO_BUDGET_BYTES,
   LISTING_PHOTO_LIMIT,
   type ListingPhoto,
 } from '@/services/marketplace/photos';
+import { formatBytes } from '@/domain/membership/quota';
 import { PlateFrame } from '@/components/media/PlateFrame';
 import { StarField } from '@/components/media/StarField';
 import { tintFromSeed } from '@/components/media/tints';
@@ -51,7 +53,9 @@ export function ListingPhotos({ listing }: { listing: Listing }) {
   const replaceRef = useRef<HTMLInputElement>(null);
   const [replaceTarget, setReplaceTarget] = useState<ListingPhoto | null>(null);
 
-  const isOwner = Boolean(user && listing.sellerId && user.id === listing.sellerId);
+  const isOwner = Boolean(
+    user && listing.sellerId && user.id === listing.sellerId
+  );
 
   const load = useCallback(() => {
     if (!listing.id) return;
@@ -77,7 +81,9 @@ export function ListingPhotos({ listing }: { listing: Listing }) {
       Math.max(0, LISTING_PHOTO_LIMIT - photos.length)
     );
     if (liste.length === 0) {
-      setError(`Bir ilana en fazla ${LISTING_PHOTO_LIMIT} fotoğraf eklenebilir.`);
+      setError(
+        `Bir ilana en fazla ${LISTING_PHOTO_LIMIT} fotoğraf eklenebilir.`
+      );
       return;
     }
 
@@ -217,10 +223,7 @@ export function ListingPhotos({ listing }: { listing: Listing }) {
       ) : (
         <>
           <PlateFrame>
-            <StarField
-              seed={listing.slug}
-              tint={tintFromSeed(listing.slug)}
-            />
+            <StarField seed={listing.slug} tint={tintFromSeed(listing.slug)} />
           </PlateFrame>
           <p className="text-meta leading-snug text-faint">
             {isOwner
@@ -264,13 +267,18 @@ export function ListingPhotos({ listing }: { listing: Listing }) {
                 className="hidden"
                 onChange={(e) => {
                   const file = e.target.files?.[0];
-                  if (file && replaceTarget) void replaceWith(replaceTarget, file);
+                  if (file && replaceTarget)
+                    void replaceWith(replaceTarget, file);
                   setReplaceTarget(null);
                   e.target.value = '';
                 }}
               />
               {photos.length > 1 && (
-                <span className="flex items-center gap-1" role="group" aria-label="Sıra">
+                <span
+                  className="flex items-center gap-1"
+                  role="group"
+                  aria-label="Sıra"
+                >
                   <Button
                     size="sm"
                     variant="ghost"
@@ -314,7 +322,8 @@ export function ListingPhotos({ listing }: { listing: Listing }) {
           )}
 
           <span className="text-meta text-faint">
-            {photos.length}/{LISTING_PHOTO_LIMIT}
+            {photos.length}/{LISTING_PHOTO_LIMIT} · fotoğraf başına{' '}
+            {formatBytes(LISTING_PHOTO_BUDGET_BYTES)}
           </span>
         </div>
       )}

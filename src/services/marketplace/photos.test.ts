@@ -24,6 +24,7 @@ vi.mock('@/services/supabase/client', () => ({
 }));
 
 import {
+  LISTING_PHOTO_BUDGET_BYTES,
   LISTING_PHOTO_LIMIT,
   reorderListingPhotos,
 } from './photos';
@@ -36,10 +37,14 @@ describe('LISTING_PHOTO_LIMIT (A07)', () => {
   it('ilan başına en fazla 5', () => {
     expect(LISTING_PHOTO_LIMIT).toBe(5);
   });
+
+  it('fotoğraf başına 5 MB bütçe kullanır', () => {
+    expect(LISTING_PHOTO_BUDGET_BYTES).toBe(5 * 1024 * 1024);
+  });
 });
 
 describe('reorderListingPhotos (A09)', () => {
-  it('her fotoğrafın position\'ını yeni sıradaki indeksine yazar', async () => {
+  it("her fotoğrafın position'ını yeni sıradaki indeksine yazar", async () => {
     await reorderListingPhotos(['c', 'a', 'b']);
     expect(updates).toEqual([
       { id: 'c', position: 0 },

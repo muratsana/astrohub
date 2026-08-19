@@ -75,8 +75,7 @@ const REFERENCE: { label: string; to: string; description: string }[] = [
   {
     label: 'Ekipmanlarım',
     to: '/hesap?sekme=ekipmanlarim',
-    description:
-      'Ekipmanını kur ve kaydet — bütün araçlar onu okur.',
+    description: 'Ekipmanını kur ve kaydet — bütün araçlar onu okur.',
   },
 ];
 
@@ -144,7 +143,9 @@ export function ToolsIndexPage() {
               <div className="mb-3 flex flex-wrap items-baseline gap-x-3 border-b border-border pb-2">
                 <h2 className="type-section text-foreground">{group.title}</h2>
                 {group.hint && (
-                  <p className="text-meta text-muted-foreground">{group.hint}</p>
+                  <p className="text-meta text-muted-foreground">
+                    {group.hint}
+                  </p>
                 )}
               </div>
 
@@ -155,7 +156,7 @@ export function ToolsIndexPage() {
                     <li key={tool.to + tool.label}>
                       <Link
                         to={tool.to}
-                        className="group flex h-full flex-col rounded-card border border-border bg-surface-1 p-4 transition-colors hover:border-primary/50 hover:bg-surface-2"
+                        className="group flex h-full flex-col rounded-card border border-border bg-surface-1 p-3 transition-[border-color,background-color,transform] hover:-translate-y-0.5 hover:border-primary/50 hover:bg-surface-2 sm:p-4"
                       >
                         <ToolVisual path={tool.to} Icon={Icon} />
                         <span className="flex items-baseline gap-2">
@@ -215,24 +216,18 @@ export function ToolsIndexPage() {
   );
 }
 
-function ToolVisual({
-  path,
-  Icon,
-}: {
-  path: string;
-  Icon?: typeof GridIcon;
-}) {
+function ToolVisual({ path, Icon }: { path: string; Icon?: typeof GridIcon }) {
   const visual = toolVisuals[path] ?? toolVisuals.default;
 
   return (
     <span
       aria-hidden
-      className={`relative mb-4 block h-28 overflow-hidden rounded-card border border-border bg-gradient-to-br ${visual.tone}`}
+      className={`relative mb-4 block h-32 overflow-hidden rounded-card border border-border-strong bg-gradient-to-br ${visual.tone}`}
     >
       <svg
         viewBox="0 0 360 112"
         className="absolute inset-0 h-full w-full"
-        preserveAspectRatio="none"
+        preserveAspectRatio="xMidYMid slice"
       >
         <defs>
           <radialGradient id={`${visual.id}-glow`} cx="72%" cy="30%" r="70%">
@@ -240,8 +235,58 @@ function ToolVisual({
             <stop offset="55%" stopColor="currentColor" stopOpacity="0.08" />
             <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
           </radialGradient>
+          <linearGradient id={`${visual.id}-wash`} x1="0" x2="1" y1="0" y2="1">
+            <stop
+              offset="0%"
+              stopColor="var(--color-background)"
+              stopOpacity="0.25"
+            />
+            <stop offset="52%" stopColor="currentColor" stopOpacity="0.09" />
+            <stop
+              offset="100%"
+              stopColor="var(--color-background)"
+              stopOpacity="0.45"
+            />
+          </linearGradient>
+          <pattern
+            id={`${visual.id}-grid`}
+            width="36"
+            height="28"
+            patternUnits="userSpaceOnUse"
+          >
+            <path
+              d="M36 0H0V28"
+              fill="none"
+              stroke="currentColor"
+              strokeOpacity="0.08"
+            />
+          </pattern>
         </defs>
+        <rect width="360" height="112" fill={`url(#${visual.id}-wash)`} />
+        <rect width="360" height="112" fill={`url(#${visual.id}-grid)`} />
         <rect width="360" height="112" fill={`url(#${visual.id}-glow)`} />
+        <path
+          d="M0 86 C58 72 102 92 158 79 S260 57 360 75 V112 H0Z"
+          fill="var(--color-background)"
+          fillOpacity=".23"
+        />
+        {[
+          [34, 21, 1.2],
+          [78, 41, 1.6],
+          [122, 18, 1.1],
+          [266, 22, 1.7],
+          [318, 50, 1.2],
+          [338, 18, 1],
+        ].map(([cx, cy, r]) => (
+          <circle
+            key={`${cx}-${cy}`}
+            cx={cx}
+            cy={cy}
+            r={r}
+            fill="currentColor"
+            opacity=".5"
+          />
+        ))}
         {visual.kind === 'tonight' && <TonightVisual />}
         {visual.kind === 'planner' && <PlannerVisual />}
         {visual.kind === 'calendar' && <CalendarVisual />}
@@ -253,11 +298,11 @@ function ToolVisual({
         {visual.kind === 'default' && <DefaultVisual />}
       </svg>
       {Icon && (
-        <span className="absolute left-4 top-4 grid h-10 w-10 place-items-center rounded-card border border-border bg-background/75 text-primary backdrop-blur-sm transition-colors group-hover:text-primary-hover">
+        <span className="absolute left-4 top-4 grid h-10 w-10 place-items-center rounded-card border border-border bg-background/80 text-primary backdrop-blur-sm transition-colors group-hover:text-primary-hover">
           <Icon className="h-5 w-5" />
         </span>
       )}
-      <span className="absolute bottom-4 right-4 h-2 w-2 rounded-full border border-primary bg-primary ring-4 ring-primary/20" />
+      <span className="absolute bottom-4 right-4 h-2.5 w-2.5 rounded-full border border-primary bg-primary ring-4 ring-primary/20" />
     </span>
   );
 }
@@ -329,10 +374,36 @@ const toolVisuals: Record<
 function TonightVisual() {
   return (
     <>
-      <path d="M34 82 C72 36 125 38 170 76 S270 104 330 42" stroke="currentColor" strokeOpacity=".28" strokeWidth="2" fill="none" />
-      <path d="M68 33a22 22 0 1 0 27 30 24 24 0 0 1-27-30Z" fill="currentColor" opacity=".9" />
-      <rect x="128" y="78" width="148" height="10" rx="5" fill="currentColor" opacity=".18" />
-      <rect x="170" y="78" width="72" height="10" rx="5" fill="currentColor" opacity=".72" />
+      <path
+        d="M34 82 C72 36 125 38 170 76 S270 104 330 42"
+        stroke="currentColor"
+        strokeOpacity=".28"
+        strokeWidth="2"
+        fill="none"
+      />
+      <path
+        d="M68 33a22 22 0 1 0 27 30 24 24 0 0 1-27-30Z"
+        fill="currentColor"
+        opacity=".9"
+      />
+      <rect
+        x="128"
+        y="78"
+        width="148"
+        height="10"
+        rx="5"
+        fill="currentColor"
+        opacity=".18"
+      />
+      <rect
+        x="170"
+        y="78"
+        width="72"
+        height="10"
+        rx="5"
+        fill="currentColor"
+        opacity=".72"
+      />
       <circle cx="296" cy="71" r="4" fill="currentColor" />
       <circle cx="319" cy="35" r="2.4" fill="currentColor" opacity=".75" />
       <circle cx="244" cy="31" r="2" fill="currentColor" opacity=".55" />
@@ -343,14 +414,33 @@ function TonightVisual() {
 function PlannerVisual() {
   return (
     <>
-      <path d="M64 72 C112 22 154 95 204 49 S276 28 318 74" stroke="currentColor" strokeOpacity=".58" strokeWidth="3" fill="none" strokeDasharray="7 9" />
+      <path
+        d="M64 72 C112 22 154 95 204 49 S276 28 318 74"
+        stroke="currentColor"
+        strokeOpacity=".58"
+        strokeWidth="3"
+        fill="none"
+        strokeDasharray="7 9"
+      />
       {[64, 144, 220, 318].map((x, index) => (
         <g key={x}>
-          <circle cx={x} cy={index % 2 ? 60 : 72} r="11" fill="var(--color-background)" stroke="currentColor" strokeWidth="2" />
+          <circle
+            cx={x}
+            cy={index % 2 ? 60 : 72}
+            r="11"
+            fill="var(--color-background)"
+            stroke="currentColor"
+            strokeWidth="2"
+          />
           <circle cx={x} cy={index % 2 ? 60 : 72} r="3" fill="currentColor" />
         </g>
       ))}
-      <path d="M42 31h70M42 45h46M248 31h70M272 45h46" stroke="currentColor" strokeOpacity=".18" strokeWidth="2" />
+      <path
+        d="M42 31h70M42 45h46M248 31h70M272 45h46"
+        stroke="currentColor"
+        strokeOpacity=".18"
+        strokeWidth="2"
+      />
     </>
   );
 }
@@ -358,12 +448,30 @@ function PlannerVisual() {
 function CalendarVisual() {
   return (
     <>
-      <rect x="66" y="22" width="220" height="68" rx="10" fill="var(--color-background)" fillOpacity=".42" stroke="currentColor" strokeOpacity=".35" />
-      <path d="M66 42h220M112 22v68M158 22v68M204 22v68M250 22v68" stroke="currentColor" strokeOpacity=".18" />
+      <rect
+        x="66"
+        y="22"
+        width="220"
+        height="68"
+        rx="10"
+        fill="var(--color-background)"
+        fillOpacity=".42"
+        stroke="currentColor"
+        strokeOpacity=".35"
+      />
+      <path
+        d="M66 42h220M112 22v68M158 22v68M204 22v68M250 22v68"
+        stroke="currentColor"
+        strokeOpacity=".18"
+      />
       {[92, 138, 184, 230, 264].map((x, index) => (
         <path
           key={x}
-          d={index % 2 ? `M${x - 7} 67a9 9 0 1 0 13-11 10 10 0 0 1-13 11Z` : `M${x} 55a9 9 0 1 0 0 18 9 9 0 0 0 0-18Z`}
+          d={
+            index % 2
+              ? `M${x - 7} 67a9 9 0 1 0 13-11 10 10 0 0 1-13 11Z`
+              : `M${x} 55a9 9 0 1 0 0 18 9 9 0 0 0 0-18Z`
+          }
           fill="currentColor"
           opacity={index === 2 ? '.95' : '.42'}
         />
@@ -375,9 +483,29 @@ function CalendarVisual() {
 function CatalogVisual() {
   return (
     <>
-      <circle cx="176" cy="56" r="42" fill="none" stroke="currentColor" strokeOpacity=".22" />
-      <circle cx="176" cy="56" r="18" fill="none" stroke="currentColor" strokeOpacity=".38" />
-      <path d="m206 83 36 18" stroke="currentColor" strokeWidth="5" strokeLinecap="round" opacity=".7" />
+      <circle
+        cx="176"
+        cy="56"
+        r="42"
+        fill="none"
+        stroke="currentColor"
+        strokeOpacity=".22"
+      />
+      <circle
+        cx="176"
+        cy="56"
+        r="18"
+        fill="none"
+        stroke="currentColor"
+        strokeOpacity=".38"
+      />
+      <path
+        d="m206 83 36 18"
+        stroke="currentColor"
+        strokeWidth="5"
+        strokeLinecap="round"
+        opacity=".7"
+      />
       {[
         [72, 28, 2],
         [112, 72, 3],
@@ -387,7 +515,14 @@ function CatalogVisual() {
         [302, 78, 2],
         [322, 30, 2],
       ].map(([cx, cy, r]) => (
-        <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r={r} fill="currentColor" opacity=".82" />
+        <circle
+          key={`${cx}-${cy}`}
+          cx={cx}
+          cy={cy}
+          r={r}
+          fill="currentColor"
+          opacity=".82"
+        />
       ))}
     </>
   );
@@ -396,11 +531,45 @@ function CatalogVisual() {
 function FramingVisual() {
   return (
     <>
-      <rect x="74" y="28" width="214" height="58" rx="5" fill="none" stroke="currentColor" strokeWidth="2.5" />
-      <rect x="124" y="40" width="114" height="34" rx="3" fill="none" stroke="currentColor" strokeOpacity=".4" />
-      <path d="M181 18v80M46 57h270" stroke="currentColor" strokeOpacity=".18" />
-      <circle cx="181" cy="57" r="22" fill="none" stroke="currentColor" strokeOpacity=".5" strokeDasharray="5 6" />
-      <path d="m79 32 24 24M286 32l-24 24M79 82l24-24M286 82l-24-24" stroke="currentColor" strokeOpacity=".38" />
+      <rect
+        x="74"
+        y="28"
+        width="214"
+        height="58"
+        rx="5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.5"
+      />
+      <rect
+        x="124"
+        y="40"
+        width="114"
+        height="34"
+        rx="3"
+        fill="none"
+        stroke="currentColor"
+        strokeOpacity=".4"
+      />
+      <path
+        d="M181 18v80M46 57h270"
+        stroke="currentColor"
+        strokeOpacity=".18"
+      />
+      <circle
+        cx="181"
+        cy="57"
+        r="22"
+        fill="none"
+        stroke="currentColor"
+        strokeOpacity=".5"
+        strokeDasharray="5 6"
+      />
+      <path
+        d="m79 32 24 24M286 32l-24 24M79 82l24-24M286 82l-24-24"
+        stroke="currentColor"
+        strokeOpacity=".38"
+      />
     </>
   );
 }
@@ -424,7 +593,11 @@ function MosaicVisual() {
           />
         ))
       )}
-      <path d="M78 56h214M181 16v80" stroke="currentColor" strokeOpacity=".16" />
+      <path
+        d="M78 56h214M181 16v80"
+        stroke="currentColor"
+        strokeOpacity=".16"
+      />
       <circle cx="181" cy="56" r="7" fill="currentColor" opacity=".8" />
     </>
   );
@@ -433,7 +606,12 @@ function MosaicVisual() {
 function ExposureVisual() {
   return (
     <>
-      <path d="M58 84h244" stroke="currentColor" strokeOpacity=".18" strokeWidth="2" />
+      <path
+        d="M58 84h244"
+        stroke="currentColor"
+        strokeOpacity=".18"
+        strokeWidth="2"
+      />
       {[46, 68, 90, 112, 134].map((height, index) => (
         <rect
           key={height}
@@ -446,7 +624,13 @@ function ExposureVisual() {
           opacity={index === 3 ? '.78' : '.38'}
         />
       ))}
-      <path d="M238 69h70M238 52h48M238 35h62" stroke="currentColor" strokeOpacity=".46" strokeWidth="3" strokeLinecap="round" />
+      <path
+        d="M238 69h70M238 52h48M238 35h62"
+        stroke="currentColor"
+        strokeOpacity=".46"
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
       <circle cx="308" cy="69" r="4" fill="currentColor" />
     </>
   );
@@ -455,8 +639,20 @@ function ExposureVisual() {
 function PollutionVisual() {
   return (
     <>
-      <path d="M48 82 C92 32 144 94 194 44 S278 46 320 24" stroke="currentColor" strokeOpacity=".5" strokeWidth="2.5" fill="none" />
-      <path d="M62 90h58V54h26v36h28V66h24v24h106" fill="none" stroke="currentColor" strokeOpacity=".3" strokeWidth="3" />
+      <path
+        d="M48 82 C92 32 144 94 194 44 S278 46 320 24"
+        stroke="currentColor"
+        strokeOpacity=".5"
+        strokeWidth="2.5"
+        fill="none"
+      />
+      <path
+        d="M62 90h58V54h26v36h28V66h24v24h106"
+        fill="none"
+        stroke="currentColor"
+        strokeOpacity=".3"
+        strokeWidth="3"
+      />
       <circle cx="112" cy="52" r="22" fill="currentColor" opacity=".16" />
       <circle cx="112" cy="52" r="8" fill="currentColor" opacity=".65" />
       <circle cx="286" cy="30" r="2.5" fill="currentColor" opacity=".9" />
@@ -470,7 +666,14 @@ function DefaultVisual() {
   return (
     <>
       <path d="M56 56h248M180 18v78" stroke="currentColor" strokeOpacity=".2" />
-      <circle cx="180" cy="56" r="36" fill="none" stroke="currentColor" strokeOpacity=".38" />
+      <circle
+        cx="180"
+        cy="56"
+        r="36"
+        fill="none"
+        stroke="currentColor"
+        strokeOpacity=".38"
+      />
       <circle cx="180" cy="56" r="5" fill="currentColor" />
     </>
   );

@@ -21,6 +21,11 @@ import {
   validateListing,
   type NewListingInput,
 } from '@/services/content/listings';
+import { formatBytes } from '@/domain/membership/quota';
+import {
+  LISTING_PHOTO_BUDGET_BYTES,
+  LISTING_PHOTO_LIMIT,
+} from '@/services/marketplace/photos';
 import type { ListingCondition } from './data';
 import { sanitizeText } from '@/lib/sanitize';
 import { useFlag } from '@/features/site/SiteConfigContext';
@@ -222,8 +227,8 @@ export function NewListingPage() {
         {!ilanlarAcik ? (
           <div className="grid gap-3">
             <FlagClosedNote>
-              Yeni ilan yayımlama şu an kapalı; mevcut ilanlar durmaya
-              devam ediyor.
+              Yeni ilan yayımlama şu an kapalı; mevcut ilanlar durmaya devam
+              ediyor.
             </FlagClosedNote>
             <div>
               <ButtonLink to="/ilanlar" variant="secondary" size="sm">
@@ -232,124 +237,129 @@ export function NewListingPage() {
             </div>
           </div>
         ) : (
-        <>
-        {!user && (
-          <p className="mb-4 rounded-card border border-cold/40 bg-surface-1 px-3 py-2.5 text-body-sm leading-relaxed text-muted-foreground">
-            İlan yayımlamak için giriş yapmanız gerekiyor. Formu şimdi
-            doldurabilirsiniz — <span className="text-foreground">yazdıklarınız
-            kaybolmaz</span>, yayımla düğmesi sizi girişe yönlendirir.
-          </p>
-        )}
+          <>
+            {!user && (
+              <p className="mb-4 rounded-card border border-cold/40 bg-surface-1 px-3 py-2.5 text-body-sm leading-relaxed text-muted-foreground">
+                İlan yayımlamak için giriş yapmanız gerekiyor. Formu şimdi
+                doldurabilirsiniz —{' '}
+                <span className="text-foreground">yazdıklarınız kaybolmaz</span>
+                , yayımla düğmesi sizi girişe yönlendirir.
+              </p>
+            )}
 
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,340px)]">
-          <div className="grid gap-4">
-            <Panel title="Ürün">
-              <div className="grid gap-3">
-                <Field
-                  label="Başlık"
-                  htmlFor="l-title"
-                  hint="Marka ve model yazın — arama başlıkta yapılıyor."
-                >
-                  <Input
-                    id="l-title"
-                    value={title}
-                    maxLength={160}
-                    placeholder="Sky-Watcher Esprit 100ED + alan düzleştirici"
-                    onChange={(e) => setTitle(e.target.value)}
-                  />
-                </Field>
+            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,340px)]">
+              <div className="grid gap-4">
+                <Panel title="Ürün">
+                  <div className="grid gap-3">
+                    <Field
+                      label="Başlık"
+                      htmlFor="l-title"
+                      hint="Marka ve model yazın — arama başlıkta yapılıyor."
+                    >
+                      <Input
+                        id="l-title"
+                        value={title}
+                        maxLength={160}
+                        placeholder="Sky-Watcher Esprit 100ED + alan düzleştirici"
+                        onChange={(e) => setTitle(e.target.value)}
+                      />
+                    </Field>
 
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <Field label="Kategori" htmlFor="l-category">
-                    <Select
-                      id="l-category"
-                      value={category}
-                      onChange={(e) => {
-                        setCategory(e.target.value as EquipmentCategory);
-                        /* Kategori değişince model seçimi geçersiz
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <Field label="Kategori" htmlFor="l-category">
+                        <Select
+                          id="l-category"
+                          value={category}
+                          onChange={(e) => {
+                            setCategory(e.target.value as EquipmentCategory);
+                            /* Kategori değişince model seçimi geçersiz
                            kalır; sessizce taşımak, ilanın yanlış
                            künyeyle çıkmasına yol açardı. */
-                        setEquipmentSlug('');
-                      }}
+                            setEquipmentSlug('');
+                          }}
+                        >
+                          {categoryOrder.map((c) => (
+                            <option key={c} value={c}>
+                              {equipmentCategoryLabels[c]}
+                            </option>
+                          ))}
+                        </Select>
+                      </Field>
+
+                      <Field
+                        label="Katalog modeli"
+                        htmlFor="l-model"
+                        hint="İsteğe bağlı — seçilirse ilanda teknik künye görünür."
+                      >
+                        <Select
+                          id="l-model"
+                          value={equipmentSlug}
+                          onChange={(e) => setEquipmentSlug(e.target.value)}
+                        >
+                          <option value="">
+                            Katalogda yok / seçmek istemiyorum
+                          </option>
+                          {models.map((m) => (
+                            <option key={m.slug} value={m.slug}>
+                              {m.brand} {m.model}
+                            </option>
+                          ))}
+                        </Select>
+                      </Field>
+                    </div>
+
+                    <Field
+                      label="Açıklama"
+                      htmlFor="l-desc"
+                      hint="Kullanım süresi, kusurlar ve neden satıldığı. Bunlar yazılmazsa aynı sorular mesaj olarak gelir."
                     >
-                      {categoryOrder.map((c) => (
-                        <option key={c} value={c}>
-                          {equipmentCategoryLabels[c]}
-                        </option>
-                      ))}
-                    </Select>
-                  </Field>
+                      <textarea
+                        id="l-desc"
+                        value={description}
+                        rows={7}
+                        onChange={(e) => setDescription(e.target.value)}
+                        placeholder={
+                          '2023 yılında alındı, yaklaşık 40 gece kullanıldı.\nOptikte çizik yok, tüpte taşımadan kalan hafif bir iz var.\nDaha uzun odağa geçtiğim için satıyorum.'
+                        }
+                        className="w-full resize-y rounded-card border border-border bg-surface-2 px-2.5 py-2 text-meta leading-relaxed text-foreground outline-none transition-colors focus:border-primary"
+                      />
+                    </Field>
 
-                  <Field
-                    label="Katalog modeli"
-                    htmlFor="l-model"
-                    hint="İsteğe bağlı — seçilirse ilanda teknik künye görünür."
-                  >
-                    <Select
-                      id="l-model"
-                      value={equipmentSlug}
-                      onChange={(e) => setEquipmentSlug(e.target.value)}
+                    <Field
+                      label="Pakette neler var"
+                      htmlFor="l-includes"
+                      hint="Her satıra bir parça."
                     >
-                      <option value="">Katalogda yok / seçmek istemiyorum</option>
-                      {models.map((m) => (
-                        <option key={m.slug} value={m.slug}>
-                          {m.brand} {m.model}
-                        </option>
-                      ))}
-                    </Select>
-                  </Field>
-                </div>
+                      <textarea
+                        id="l-includes"
+                        value={includes}
+                        rows={4}
+                        onChange={(e) => setIncludes(e.target.value)}
+                        placeholder={
+                          'Orijinal kutu\nAlan düzleştirici\n2" uzatma tüpü'
+                        }
+                        className="w-full resize-y rounded-card border border-border bg-surface-2 px-2.5 py-2 text-meta leading-relaxed text-foreground outline-none transition-colors focus:border-primary"
+                      />
+                    </Field>
+                  </div>
+                </Panel>
 
-                <Field
-                  label="Açıklama"
-                  htmlFor="l-desc"
-                  hint="Kullanım süresi, kusurlar ve neden satıldığı. Bunlar yazılmazsa aynı sorular mesaj olarak gelir."
-                >
-                  <textarea
-                    id="l-desc"
-                    value={description}
-                    rows={7}
-                    onChange={(e) => setDescription(e.target.value)}
-                    placeholder={
-                      '2023 yılında alındı, yaklaşık 40 gece kullanıldı.\nOptikte çizik yok, tüpte taşımadan kalan hafif bir iz var.\nDaha uzun odağa geçtiğim için satıyorum.'
-                    }
-                    className="w-full resize-y rounded-card border border-border bg-surface-2 px-2.5 py-2 text-meta leading-relaxed text-foreground outline-none transition-colors focus:border-primary"
-                  />
-                </Field>
+                <Panel title="Fiyat ve teslim">
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <Field label="Fiyat (₺)" htmlFor="l-price">
+                      <Input
+                        id="l-price"
+                        inputMode="numeric"
+                        value={price}
+                        placeholder="48500"
+                        onChange={(e) =>
+                          setPrice(e.target.value.replace(/[^\d.,]/g, ''))
+                        }
+                      />
+                    </Field>
 
-                <Field
-                  label="Pakette neler var"
-                  htmlFor="l-includes"
-                  hint="Her satıra bir parça."
-                >
-                  <textarea
-                    id="l-includes"
-                    value={includes}
-                    rows={4}
-                    onChange={(e) => setIncludes(e.target.value)}
-                    placeholder={'Orijinal kutu\nAlan düzleştirici\n2" uzatma tüpü'}
-                    className="w-full resize-y rounded-card border border-border bg-surface-2 px-2.5 py-2 text-meta leading-relaxed text-foreground outline-none transition-colors focus:border-primary"
-                  />
-                </Field>
-              </div>
-            </Panel>
-
-            <Panel title="Fiyat ve teslim">
-              <div className="grid gap-3 sm:grid-cols-3">
-                <Field label="Fiyat (₺)" htmlFor="l-price">
-                  <Input
-                    id="l-price"
-                    inputMode="numeric"
-                    value={price}
-                    placeholder="48500"
-                    onChange={(e) =>
-                      setPrice(e.target.value.replace(/[^\d.,]/g, ''))
-                    }
-                  />
-                </Field>
-
-                <Field label="Konum (il / ilçe)" htmlFor="l-location">
-                  {/*
+                    <Field label="Konum (il / ilçe)" htmlFor="l-location">
+                      {/*
                     TEK KUTU. Önce il sonra ilçe soran iki açılır liste
                     vardı; "Gölbaşı" yazmak isteyen biri önce onun hangi
                     ilde olduğunu hatırlamak zorunda kalıyordu.
@@ -358,134 +368,143 @@ export function NewListingPage() {
                     teleskopun ilçesi alıcıyı ilgilendirmiyor ve ilçe bu
                     formda hiçbir zaman zorunlu değildi.
                   */}
-                  <LocationTypeahead
-                    id="l-location"
-                    city={city}
-                    district={district}
-                    onSelect={(secim) => {
-                      setCity(secim.city);
-                      setDistrict(secim.district);
-                    }}
-                    onClear={() => {
-                      setCity('');
-                      setDistrict('');
-                    }}
-                    allowProvinceOnly
-                  />
-                </Field>
+                      <LocationTypeahead
+                        id="l-location"
+                        city={city}
+                        district={district}
+                        onSelect={(secim) => {
+                          setCity(secim.city);
+                          setDistrict(secim.district);
+                        }}
+                        onClear={() => {
+                          setCity('');
+                          setDistrict('');
+                        }}
+                        allowProvinceOnly
+                      />
+                    </Field>
 
-                <Field label="Durum" htmlFor="l-condition">
-                  <Select
-                    id="l-condition"
-                    value={condition}
-                    onChange={(e) =>
-                      setCondition(e.target.value as ListingCondition)
-                    }
-                  >
-                    {CONDITIONS.map((c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
-                    ))}
-                  </Select>
-                </Field>
+                    <Field label="Durum" htmlFor="l-condition">
+                      <Select
+                        id="l-condition"
+                        value={condition}
+                        onChange={(e) =>
+                          setCondition(e.target.value as ListingCondition)
+                        }
+                      >
+                        {CONDITIONS.map((c) => (
+                          <option key={c} value={c}>
+                            {c}
+                          </option>
+                        ))}
+                      </Select>
+                    </Field>
+                  </div>
+
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <Toggle
+                      id="l-invoice"
+                      label="Faturası var"
+                      checked={hasInvoice}
+                      onChange={setHasInvoice}
+                    />
+                    <Toggle
+                      id="l-shipping"
+                      label="Kargo gönderebilirim"
+                      checked={shippingOk}
+                      onChange={setShippingOk}
+                    />
+                    <Toggle
+                      id="l-negotiable"
+                      label="Pazarlık payı var"
+                      checked={negotiable}
+                      onChange={setNegotiable}
+                    />
+                  </div>
+                </Panel>
               </div>
 
-              <div className="mt-3 flex flex-wrap gap-2">
-                <Toggle
-                  id="l-invoice"
-                  label="Faturası var"
-                  checked={hasInvoice}
-                  onChange={setHasInvoice}
-                />
-                <Toggle
-                  id="l-shipping"
-                  label="Kargo gönderebilirim"
-                  checked={shippingOk}
-                  onChange={setShippingOk}
-                />
-                <Toggle
-                  id="l-negotiable"
-                  label="Pazarlık payı var"
-                  checked={negotiable}
-                  onChange={setNegotiable}
-                />
-              </div>
-            </Panel>
-          </div>
+              {/* Yayımlama sütunu — sayfayı kaydırmadan durum görünür. */}
+              <div className="lg:sticky lg:top-[calc(var(--spacing-shell)+1rem)] lg:self-start">
+                <Panel title="Yayımla">
+                  <p className="mb-3 text-body-sm leading-relaxed text-muted-foreground">
+                    İlan hemen yayına girer ve pazaryeri listesinde görünür.
+                    Sattığınızda ilan sayfanızdan "satıldı" olarak
+                    işaretleyebilirsiniz.
+                  </p>
 
-          {/* Yayımlama sütunu — sayfayı kaydırmadan durum görünür. */}
-          <div className="lg:sticky lg:top-[calc(var(--spacing-shell)+1rem)] lg:self-start">
-            <Panel title="Yayımla">
-              <p className="mb-3 text-body-sm leading-relaxed text-muted-foreground">
-                İlan hemen yayına girer ve pazaryeri listesinde görünür.
-                Sattığınızda ilan sayfanızdan "satıldı" olarak
-                işaretleyebilirsiniz.
-              </p>
-
-              {/*
+                  {/*
                 Eksikler tek tek değil, sırayla gösteriliyor: aynı anda
                 beş kırmızı satır göstermek formu bir sınav kâğıdına
                 çeviriyor. `validateListing` zaten ilk engeli döndürüyor.
               */}
-              {problem ? (
-                <p className="mb-3 rounded-card border border-warning/40 bg-surface-2 px-2.5 py-2 text-meta leading-snug text-warning">
-                  {problem}
-                </p>
-              ) : (
-                <p className="mb-3 rounded-card border border-success/40 bg-surface-2 px-2.5 py-2 text-meta leading-snug text-success">
-                  İlan yayımlanmaya hazır.
-                </p>
-              )}
+                  {problem ? (
+                    <p className="mb-3 rounded-card border border-warning/40 bg-surface-2 px-2.5 py-2 text-meta leading-snug text-warning">
+                      {problem}
+                    </p>
+                  ) : (
+                    <p className="mb-3 rounded-card border border-success/40 bg-surface-2 px-2.5 py-2 text-meta leading-snug text-success">
+                      İlan yayımlanmaya hazır.
+                    </p>
+                  )}
 
-              {error && (
-                <p className="mb-3 rounded-card border border-danger/45 bg-surface-2 px-2.5 py-2 text-meta leading-snug text-danger">
-                  {error}
-                </p>
-              )}
+                  {error && (
+                    <p className="mb-3 rounded-card border border-danger/45 bg-surface-2 px-2.5 py-2 text-meta leading-snug text-danger">
+                      {error}
+                    </p>
+                  )}
 
-              <div className="flex flex-wrap gap-2">
-                <Button onClick={submit} disabled={busy || !!problem}>
-                  {busy ? 'Yayımlanıyor…' : user ? 'İlanı yayımla' : 'Giriş yap'}
-                </Button>
-                <ButtonLink to="/ilanlar" variant="ghost">
-                  Vazgeç
-                </ButtonLink>
-              </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Button onClick={submit} disabled={busy || !!problem}>
+                      {busy
+                        ? 'Yayımlanıyor…'
+                        : user
+                          ? 'İlanı yayımla'
+                          : 'Giriş yap'}
+                    </Button>
+                    <ButtonLink to="/ilanlar" variant="ghost">
+                      Vazgeç
+                    </ButtonLink>
+                  </div>
 
-              {/* Fotoğraf yok ve bu gizlenmiyor. */}
-              <p className="mt-3 border-t border-border pt-3 text-meta leading-relaxed text-faint">
-                <span className="text-muted-foreground">Fotoğraf yükleme
-                henüz açık değil.</span>{' '}
-                İlan kartında ürün tipine göre bir yer tutucu görünür;
-                medya altyapısı devreye girdiğinde ilanınıza fotoğraf
-                ekleyebileceksiniz. Alıcı fotoğraf isterse mesajla
-                paylaşabilirsiniz.
-              </p>
-            </Panel>
+                  <p className="mt-3 border-t border-border pt-3 text-meta leading-relaxed text-faint">
+                    İlan yayımlandıktan sonra detay sayfasından en fazla{' '}
+                    <span className="text-muted-foreground">
+                      {LISTING_PHOTO_LIMIT} fotoğraf
+                    </span>{' '}
+                    ekleyebilirsiniz. Her fotoğraf{' '}
+                    <span className="text-muted-foreground">
+                      {formatBytes(LISTING_PHOTO_BUDGET_BYTES)}
+                    </span>{' '}
+                    sınırına otomatik optimize edilir; bu bütçeye sığmayan
+                    dosyalarda daha düşük çözünürlük istenir.
+                  </p>
+                </Panel>
 
-            {/* Önizleme: yayımlanacak künyenin aynısı. */}
-            <div className="mt-4 rounded-card border border-border bg-surface-1 p-3">
-              <p className="label mb-2">Önizleme</p>
-              <p className="line-clamp-2 text-caption font-medium leading-snug text-foreground">
-                {sanitizeText(title, { maxLength: 160 }) || 'Başlık'}
-              </p>
-              <p className="tabular mt-1.5 font-display text-readout-sm font-bold leading-none text-primary">
-                {Number.isFinite(input.price) && input.price > 0
-                  ? `${input.price.toLocaleString('tr-TR')} ₺`
-                  : '— ₺'}
-              </p>
-              <p className="tabular mt-1 truncate text-meta text-muted-foreground">
-                {city || 'Şehir'} · {condition}
-              </p>
-              <div className="mt-2 flex flex-wrap gap-1">
-                <Badge tone="muted">{equipmentCategoryLabels[category]}</Badge>
-                {negotiable && <Badge tone="cold">Pazarlık payı</Badge>}
+                {/* Önizleme: yayımlanacak künyenin aynısı. */}
+                <div className="mt-4 rounded-card border border-border bg-surface-1 p-3">
+                  <p className="label mb-2">Önizleme</p>
+                  <p className="line-clamp-2 text-caption font-medium leading-snug text-foreground">
+                    {sanitizeText(title, { maxLength: 160 }) || 'Başlık'}
+                  </p>
+                  <p className="tabular mt-1.5 font-display text-readout-sm font-bold leading-none text-primary">
+                    {Number.isFinite(input.price) && input.price > 0
+                      ? `${input.price.toLocaleString('tr-TR')} ₺`
+                      : '— ₺'}
+                  </p>
+                  <p className="tabular mt-1 truncate text-meta text-muted-foreground">
+                    {city || 'Şehir'} · {condition}
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    <Badge tone="muted">
+                      {equipmentCategoryLabels[category]}
+                    </Badge>
+                    {negotiable && <Badge tone="cold">Pazarlık payı</Badge>}
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-        </>
+          </>
         )}
       </Container>
     </>
