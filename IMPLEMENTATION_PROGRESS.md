@@ -95,7 +95,7 @@ Canlı pano: `docs/patch-2026-08-18/ilerleme.html`
 | F02 | P1 | F | Ekipmanlarım | Birden fazla filtre desteği | TESTED | fb2a5dc | vitest store/filters/seriesGap/catalogMerge; prod'da merge+rollback uçtan uca doğrulandı | Bekliyor |
 | F03 | P1 | F | Katalog | Ekipman mükerrerlerini canonical merge ile temizle | TESTED | fb2a5dc | vitest store/filters/seriesGap/catalogMerge; prod'da merge+rollback uçtan uca doğrulandı | Bekliyor |
 | F04 | P1 | F | Katalog | Canonical model + variant + alias | TESTED | fb2a5dc | vitest store/filters/seriesGap/catalogMerge; prod'da merge+rollback uçtan uca doğrulandı | Bekliyor |
-| F05 | P1 | F | Katalog | PrimaLuceLab EAGLE legacy/aktif seri kapsamı | TODO |  |  | Bekliyor |
+| F05 | P1 | F | Katalog | PrimaLuceLab EAGLE legacy/aktif seri kapsamı | TESTED | f9bba06 | src/domain/catalog/eagleSeries.test.ts (6 test) + canlı sorgu: model ilike '%eagle%' → 17 kayıt, hepsi production_status ve sources dolu | Bekliyor |
 | F06 | P1 | F | Katalog | Diğer markalarda seri-gap analizi | TESTED | fb2a5dc | vitest store/filters/seriesGap/catalogMerge; prod'da merge+rollback uçtan uca doğrulandı | Bekliyor |
 | F07 | P2 | F | Katalog | Katalog source/verification metadata | TESTED | fb2a5dc | vitest store/filters/seriesGap/catalogMerge; prod'da merge+rollback uçtan uca doğrulandı | Bekliyor |
 | F08 | P0 | F | Katalog | Dedup migration backup/rollback | TESTED | fb2a5dc | vitest store/filters/seriesGap/catalogMerge; prod'da merge+rollback uçtan uca doğrulandı | Bekliyor |

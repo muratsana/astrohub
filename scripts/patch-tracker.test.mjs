@@ -1,8 +1,10 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
   DURUMLAR,
   csvAlanYaz,
   csvSatiriAyristir,
+  guncelle,
 } from './patch-tracker.mjs';
 
 /**
@@ -61,5 +63,53 @@ describe('durum akışı (H07)', () => {
     expect(DURUMLAR.indexOf('TESTED')).toBeLessThan(
       DURUMLAR.indexOf('VERIFIED')
     );
+  });
+});
+
+/**
+ * KULLANICI DOĞRULAMA KAPISI (H15).
+ *
+ * ══════════════════════════════════════════════════════════════════════
+ * NEDEN BU KAPI VAR
+ *
+ * `VERIFIED` "kullanıcı kendi gözüyle gördü" demek. Bir ajanın kendi
+ * işini VERIFIED yazması, panoyu ilerleme tablosu olmaktan çıkarıp
+ * kendi kendine verilmiş bir nota çevirirdi — ve tablo o andan sonra
+ * hiçbir şeyin kanıtı olmaz.
+ *
+ * Kapı YAPISAL: betik `--kullanici-onayi` olmadan VERIFIED yazamıyor.
+ * Aşağıdaki testler kapının gerçekten kapalı olduğunu ve reddedilen bir
+ * çağrının dosyalara HİÇ dokunmadığını sabitliyor — yarısı yazılmış bir
+ * güncelleme, iki dosyayı birbirinden ayırırdı.
+ */
+describe('kullanıcı doğrulama kapısı (H15)', () => {
+  const oku = () => ({
+    csv: readFileSync('PROGRESS_TRACKER.csv', 'utf8'),
+    md: readFileSync('IMPLEMENTATION_PROGRESS.md', 'utf8'),
+  });
+
+  it('onaysız VERIFIED reddediliyor', () => {
+    expect(() => guncelle('H15', 'VERIFIED', {})).toThrow(/kullanici-onayi/);
+  });
+
+  it('reddedilen çağrı iki dosyaya da dokunmuyor', () => {
+    const once = oku();
+    expect(() => guncelle('H15', 'VERIFIED', {})).toThrow();
+    expect(oku()).toEqual(once);
+  });
+
+  it('kanıtsız TESTED de reddediliyor (H08) — kapı tek basamak değil', () => {
+    const once = oku();
+    expect(() => guncelle('H15', 'TESTED', { commit: 'abc1234' })).toThrow(
+      /--commit ve --evidence/
+    );
+    expect(() => guncelle('H15', 'TESTED', { evidence: 'vitest' })).toThrow(
+      /--commit ve --evidence/
+    );
+    expect(oku()).toEqual(once);
+  });
+
+  it('tanınmayan durum yazılamıyor', () => {
+    expect(() => guncelle('H15', 'BITTI', {})).toThrow(/Geçersiz durum/);
   });
 });
