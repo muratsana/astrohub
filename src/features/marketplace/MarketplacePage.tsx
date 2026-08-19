@@ -145,7 +145,9 @@ export function MarketplacePage() {
             onChange: setView,
             modes: ['grid', 'list', 'table'],
           }}
-          primaryFilters={2}
+          primaryFilters={99}
+          filterClassName="flex-wrap"
+          showResultCount={false}
         >
           <FilterCell
             label="Ara"
