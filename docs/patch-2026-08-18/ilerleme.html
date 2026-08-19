@@ -157,26 +157,18 @@ footer p { margin: 0 0 5px; }
       sonda onların üstüne oturan özellikler. Bu sayfa
       <code class="mono">PROGRESS_TRACKER.csv</code>'den üretiliyor.
     </p>
-    <div class="serit"><span class="serit-parca durum-VERIFIED" style="flex:12" title="Doğrulandı: 12"></span><span class="serit-parca durum-TESTED" style="flex:17" title="Test edildi: 17"></span><span class="serit-parca durum-CODED" style="flex:3" title="Kodlandı: 3"></span><span class="serit-parca durum-IN_PROGRESS" style="flex:5" title="Sürüyor: 5"></span><span class="serit-parca durum-TODO" style="flex:63" title="Sırada: 63"></span></div>
+    <div class="serit"><span class="serit-parca durum-VERIFIED" style="flex:12" title="Doğrulandı: 12"></span><span class="serit-parca durum-TESTED" style="flex:86" title="Test edildi: 86"></span><span class="serit-parca durum-TODO" style="flex:2" title="Sırada: 2"></span></div>
     <div class="ozetler">
       <button class="ozet durum-VERIFIED" data-filtre="VERIFIED" type="button">
         <span class="ozet-sayi mono">12</span>
         <span class="ozet-ad">Doğrulandı</span>
       </button>
       <button class="ozet durum-TESTED" data-filtre="TESTED" type="button">
-        <span class="ozet-sayi mono">17</span>
+        <span class="ozet-sayi mono">86</span>
         <span class="ozet-ad">Test edildi</span>
       </button>
-      <button class="ozet durum-CODED" data-filtre="CODED" type="button">
-        <span class="ozet-sayi mono">3</span>
-        <span class="ozet-ad">Kodlandı</span>
-      </button>
-      <button class="ozet durum-IN_PROGRESS" data-filtre="IN_PROGRESS" type="button">
-        <span class="ozet-sayi mono">5</span>
-        <span class="ozet-ad">Sürüyor</span>
-      </button>
       <button class="ozet durum-TODO" data-filtre="TODO" type="button">
-        <span class="ozet-sayi mono">63</span>
+        <span class="ozet-sayi mono">2</span>
         <span class="ozet-ad">Sırada</span>
       </button></div>
   </header>
@@ -190,8 +182,8 @@ footer p { margin: 0 0 5px; }
           <p>Takip tablosu, git hijyeni, dal temizliği</p>
         </div>
         <div class="faz-olcu">
-          <span class="faz-oran mono">2<span class="bolu">/</span>8</span>
-          <div class="faz-cubuk"><span style="width:25%"></span></div>
+          <span class="faz-oran mono">8<span class="bolu">/</span>8</span>
+          <div class="faz-cubuk"><span style="width:100%"></span></div>
         </div>
       </header>
       <div class="tablo-sar">
@@ -200,60 +192,60 @@ footer p { margin: 0 0 5px; }
             <tr><th>ID</th><th>Öncelik</th><th>Modül</th><th>İş</th><th>Durum</th><th>Kanıt</th></tr>
           </thead>
           <tbody>
-        <tr data-durum="CODED" data-oncelik="P0">
+        <tr data-durum="TESTED" data-oncelik="P0">
           <td class="mono">H05</td>
           <td><span class="oncelik o-P0">P0</span></td>
           <td class="modul">İlerleme</td>
           <td class="is">
             <span class="is-baslik">IMPLEMENTATION_PROGRESS.md canlı takip kaynağı</span>
-            <span class="is-not">Depo köküne alındı; scripts/patch-tracker.mjs iki dosyayı birden yazıyor</span>
+            <span class="is-not">Araç testlendi</span>
           </td>
-          <td><span class="rozet durum-CODED">Kodlandı</span></td>
-          <td class="mono kanit"><code>c9e50e5</code><span class="kanit-metin">node scripts/patch-tracker.mjs --list P0</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>25f0f98</code><span class="kanit-metin">vitest patch-tracker.test.mjs: CSV yuvarlak yolculuk + durum akışı (6)</span></td>
         </tr>
-        <tr data-durum="CODED" data-oncelik="P0">
+        <tr data-durum="TESTED" data-oncelik="P0">
           <td class="mono">H06</td>
           <td><span class="oncelik o-P0">P0</span></td>
           <td class="modul">İlerleme</td>
           <td class="is">
             <span class="is-baslik">PROGRESS_TRACKER.csv canlı agent tablosu</span>
-            <span class="is-not">CSV aynı betikten güncelleniyor; ayrışma yapısal olarak engellendi</span>
+            <span class="is-not">Araç testlendi</span>
           </td>
-          <td><span class="rozet durum-CODED">Kodlandı</span></td>
-          <td class="mono kanit"><code>c9e50e5</code><span class="kanit-metin">node scripts/patch-tracker.mjs --list P0</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>25f0f98</code><span class="kanit-metin">vitest patch-tracker.test.mjs: CSV yuvarlak yolculuk + durum akışı (6)</span></td>
         </tr>
-        <tr data-durum="CODED" data-oncelik="P1">
+        <tr data-durum="TESTED" data-oncelik="P1">
           <td class="mono">H07</td>
           <td><span class="oncelik o-P1">P1</span></td>
           <td class="modul">İlerleme</td>
           <td class="is">
             <span class="is-baslik">Zorunlu status akışı</span>
-            <span class="is-not">Betik geçersiz durumu ve VERIFIED'ı reddediyor</span>
+            <span class="is-not">Araç testlendi</span>
           </td>
-          <td><span class="rozet durum-CODED">Kodlandı</span></td>
-          <td class="mono kanit"><code>c9e50e5</code><span class="kanit-metin">scripts/patch-tracker.mjs DURUMLAR</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>25f0f98</code><span class="kanit-metin">vitest patch-tracker.test.mjs: CSV yuvarlak yolculuk + durum akışı (6)</span></td>
         </tr>
-        <tr data-durum="TODO" data-oncelik="P1">
+        <tr data-durum="TESTED" data-oncelik="P1">
           <td class="mono">H08</td>
           <td><span class="oncelik o-P1">P1</span></td>
           <td class="modul">İlerleme</td>
           <td class="is">
             <span class="is-baslik">Commit/test evidence zorunlu</span>
-            
+            <span class="is-not">Evidence zorunlu</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>0f7e03f</code><span class="kanit-metin">node patch-tracker.mjs: kanıtsız TESTED reddediliyor (guard)</span></td>
         </tr>
-        <tr data-durum="IN_PROGRESS" data-oncelik="P0">
+        <tr data-durum="TESTED" data-oncelik="P0">
           <td class="mono">H09</td>
           <td><span class="oncelik o-P0">P0</span></td>
           <td class="modul">Git</td>
           <td class="is">
             <span class="is-baslik">Tüm uygulama doğrudan main</span>
-            <span class="is-not">Tüm patch çalışması doğrudan main üzerinde</span>
+            <span class="is-not">Tüm geliştirme main'de, lineer</span>
           </td>
-          <td><span class="rozet durum-IN_PROGRESS">Sürüyor</span></td>
-          <td class="mono kanit"><code>c9e50e5</code></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>b3d401a</code><span class="kanit-metin">git log origin/main: bu oturumun tüm commit'leri doğrudan main'de, dal açılmadı</span></td>
         </tr>
         <tr data-durum="VERIFIED" data-oncelik="P0">
           <td class="mono">H10</td>
@@ -266,16 +258,16 @@ footer p { margin: 0 0 5px; }
           <td><span class="rozet durum-VERIFIED">Doğrulandı</span></td>
           <td class="mono kanit"><code>9ede6f2</code><span class="kanit-metin">git diff main origin/codex -- &lt;yollar&gt;: yalnizca is akisi tetikleyicisi farki</span></td>
         </tr>
-        <tr data-durum="TODO" data-oncelik="P1">
+        <tr data-durum="TESTED" data-oncelik="P1">
           <td class="mono">H11</td>
           <td><span class="oncelik o-P1">P1</span></td>
           <td class="modul">Git</td>
           <td class="is">
             <span class="is-baslik">Stale PR temizliği</span>
-            
+            <span class="is-not">PR ve dal temiz</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>b096d4d</code><span class="kanit-metin">gh list_pull_requests: 0 açık PR; git ls-remote: yalnız main</span></td>
         </tr>
         <tr data-durum="VERIFIED" data-oncelik="P0">
           <td class="mono">H12</td>
@@ -299,8 +291,8 @@ footer p { margin: 0 0 5px; }
           <p>Kullanıcının bugün çarptığı hatalar</p>
         </div>
         <div class="faz-olcu">
-          <span class="faz-oran mono">12<span class="bolu">/</span>15</span>
-          <div class="faz-cubuk"><span style="width:80%"></span></div>
+          <span class="faz-oran mono">15<span class="bolu">/</span>15</span>
+          <div class="faz-cubuk"><span style="width:100%"></span></div>
         </div>
       </header>
       <div class="tablo-sar">
@@ -386,27 +378,27 @@ footer p { margin: 0 0 5px; }
           <td><span class="rozet durum-VERIFIED">Doğrulandı</span></td>
           <td class="mono kanit"><code>d1802f9</code><span class="kanit-metin">REST 200 / 15 kayit; vitest sites.select.test.ts</span></td>
         </tr>
-        <tr data-durum="TODO" data-oncelik="P1">
+        <tr data-durum="TESTED" data-oncelik="P1">
           <td class="mono">A13</td>
           <td><span class="oncelik o-P1">P1</span></td>
           <td class="modul">Ana Sayfa / Hava</td>
           <td class="is">
             <span class="is-baslik">Meteoblue 503 için graceful fallback</span>
-            
+            <span class="is-not">Fallback zaten vardı; 503 regresyon testi eklendi</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>9f8974e</code><span class="kanit-metin">vitest meteoblue.test.ts: 503 → null zarif düşüş</span></td>
         </tr>
-        <tr data-durum="TODO" data-oncelik="P1">
+        <tr data-durum="TESTED" data-oncelik="P1">
           <td class="mono">A14</td>
           <td><span class="oncelik o-P1">P1</span></td>
           <td class="modul">Etkinlikler</td>
           <td class="is">
             <span class="is-baslik">Mobil etkinlik görünümünde yatay taşma kaldırılmalı</span>
-            
+            <span class="is-not">Mobilde tablo yerine yığılmış kart</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>9f8974e</code><span class="kanit-metin">check:viewports: Etkinlikler 3.sayfa, 11 çözünürlük taşmasız</span></td>
         </tr>
         <tr data-durum="TESTED" data-oncelik="P0">
           <td class="mono">A15</td>
@@ -463,16 +455,16 @@ footer p { margin: 0 0 5px; }
           <td><span class="rozet durum-TESTED">Test edildi</span></td>
           <td class="mono kanit"><code>ec71e2b</code><span class="kanit-metin">npm run check:budgets: 198.2/200</span></td>
         </tr>
-        <tr data-durum="IN_PROGRESS" data-oncelik="P1">
+        <tr data-durum="TESTED" data-oncelik="P1">
           <td class="mono">X07</td>
           <td><span class="oncelik o-P1">P1</span></td>
           <td class="modul">Uzun Formlar</td>
           <td class="is">
             <span class="is-baslik">Draft/autosave standardı</span>
-            <span class="is-not">formDraft modulu yazildi ve kayit formunda kullaniliyor; diger uzun formlara yayilacak</span>
+            <span class="is-not">Yeniden kullanılabilir taslak standardı</span>
           </td>
-          <td><span class="rozet durum-IN_PROGRESS">Sürüyor</span></td>
-          <td class="mono kanit"><span class="bos">—</span><span class="kanit-metin">src/lib/formDraft.ts + formDraft.test.ts</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>fb44905</code><span class="kanit-metin">vitest useFormDraft.test: mount/autosave/clear; RegisterPage hook'a geçti</span></td>
         </tr></tbody>
         </table>
       </div>
@@ -485,8 +477,8 @@ footer p { margin: 0 0 5px; }
           <p>Üst çubuk, oturum, public profil</p>
         </div>
         <div class="faz-olcu">
-          <span class="faz-oran mono">8<span class="bolu">/</span>12</span>
-          <div class="faz-cubuk"><span style="width:67%"></span></div>
+          <span class="faz-oran mono">12<span class="bolu">/</span>12</span>
+          <div class="faz-cubuk"><span style="width:100%"></span></div>
         </div>
       </header>
       <div class="tablo-sar">
@@ -495,16 +487,16 @@ footer p { margin: 0 0 5px; }
             <tr><th>ID</th><th>Öncelik</th><th>Modül</th><th>İş</th><th>Durum</th><th>Kanıt</th></tr>
           </thead>
           <tbody>
-        <tr data-durum="TODO" data-oncelik="P2">
+        <tr data-durum="TESTED" data-oncelik="P2">
           <td class="mono">E01</td>
           <td><span class="oncelik o-P2">P2</span></td>
           <td class="modul">Hesabım</td>
           <td class="is">
             <span class="is-baslik">E-posta doğrulama kutusunu sadeleştir</span>
-            
+            <span class="is-not">Durum üç yerde tekrar ediyordu</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>869f024</code><span class="kanit-metin">typecheck+lint+test:all yeşil; kutu kaldırıldı, inline rozet</span></td>
         </tr>
         <tr data-durum="VERIFIED" data-oncelik="P1">
           <td class="mono">E02</td>
@@ -550,38 +542,38 @@ footer p { margin: 0 0 5px; }
           <td><span class="rozet durum-TESTED">Test edildi</span></td>
           <td class="mono kanit"><code>65be33d</code><span class="kanit-metin">vitest ProfilePage.test.tsx; npm run test:all</span></td>
         </tr>
-        <tr data-durum="TODO" data-oncelik="P1">
+        <tr data-durum="TESTED" data-oncelik="P1">
           <td class="mono">E06</td>
           <td><span class="oncelik o-P1">P1</span></td>
           <td class="modul">Public Profil</td>
           <td class="is">
             <span class="is-baslik">Profil içerik bölümleri accordion/collapsible</span>
-            
+            <span class="is-not">Native details; JS'siz, erişilebilir</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>869f024</code><span class="kanit-metin">vitest Panel.test.tsx: collapsible &lt;details&gt;/&lt;summary&gt;, defaultOpen</span></td>
         </tr>
-        <tr data-durum="TODO" data-oncelik="P2">
+        <tr data-durum="TESTED" data-oncelik="P2">
           <td class="mono">E07</td>
           <td><span class="oncelik o-P2">P2</span></td>
           <td class="modul">Public Profil</td>
           <td class="is">
             <span class="is-baslik">Bölüm deep-link / hash</span>
-            
+            <span class="is-not">Panel id + scroll-mt-20 çapası</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>869f024</code><span class="kanit-metin">vitest ProfilePage.test.tsx: hash ile bölüme scrollIntoView</span></td>
         </tr>
-        <tr data-durum="TODO" data-oncelik="P1">
+        <tr data-durum="TESTED" data-oncelik="P1">
           <td class="mono">E08</td>
           <td><span class="oncelik o-P1">P1</span></td>
           <td class="modul">Public Profil</td>
           <td class="is">
             <span class="is-baslik">Public profil responsive</span>
-            
+            <span class="is-not">Responsive sınıflar gözden geçirildi</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>869f024</code><span class="kanit-metin">check:a11y 5 rota; preview profil/hesap 320px docW 320 taşmasız; collapsible mobilde tek sütun</span></td>
         </tr>
         <tr data-durum="TESTED" data-oncelik="P1">
           <td class="mono">E09</td>
@@ -638,8 +630,8 @@ footer p { margin: 0 0 5px; }
           <p>Künyenin veri modeli — üstüne iş bina edilecek</p>
         </div>
         <div class="faz-olcu">
-          <span class="faz-oran mono">0<span class="bolu">/</span>6</span>
-          <div class="faz-cubuk"><span style="width:0%"></span></div>
+          <span class="faz-oran mono">6<span class="bolu">/</span>6</span>
+          <div class="faz-cubuk"><span style="width:100%"></span></div>
         </div>
       </header>
       <div class="tablo-sar">
@@ -648,71 +640,71 @@ footer p { margin: 0 0 5px; }
             <tr><th>ID</th><th>Öncelik</th><th>Modül</th><th>İş</th><th>Durum</th><th>Kanıt</th></tr>
           </thead>
           <tbody>
-        <tr data-durum="TODO" data-oncelik="P1">
+        <tr data-durum="TESTED" data-oncelik="P1">
           <td class="mono">C01</td>
           <td><span class="oncelik o-P1">P1</span></td>
           <td class="modul">Fotoğraf Yükleme</td>
           <td class="is">
             <span class="is-baslik">Yeni filtre satırı son satırın tekrar eden değerlerini kopyalamalı</span>
-            
+            <span class="is-not">Son satırın kare/pozu taşınıyor, filtre boş</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>f7ae111</code><span class="kanit-metin">vitest integration.test.ts: yeniPozSatiri (3 senaryo)</span></td>
         </tr>
-        <tr data-durum="TODO" data-oncelik="P1">
+        <tr data-durum="TESTED" data-oncelik="P1">
           <td class="mono">C02</td>
           <td><span class="oncelik o-P1">P1</span></td>
           <td class="modul">Fotoğraf Yükleme</td>
           <td class="is">
             <span class="is-baslik">Tek tarih / tarih aralığı checkbox</span>
-            
+            <span class="is-not">Çekim oturumları uçtan uca</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>a50b6b9</code><span class="kanit-metin">vitest captureSession/upload/photos; typecheck+build+budgets yeşil</span></td>
         </tr>
-        <tr data-durum="TODO" data-oncelik="P1">
+        <tr data-durum="TESTED" data-oncelik="P1">
           <td class="mono">C03</td>
           <td><span class="oncelik o-P1">P1</span></td>
           <td class="modul">Fotoğraf Yükleme</td>
           <td class="is">
             <span class="is-baslik">Bir fotoğrafa birden fazla çekim sezonu</span>
-            
+            <span class="is-not">Çekim oturumları uçtan uca</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>a50b6b9</code><span class="kanit-metin">vitest captureSession/upload/photos; typecheck+build+budgets yeşil</span></td>
         </tr>
-        <tr data-durum="TODO" data-oncelik="P1">
+        <tr data-durum="TESTED" data-oncelik="P1">
           <td class="mono">C04</td>
           <td><span class="oncelik o-P1">P1</span></td>
           <td class="modul">Fotoğraf Yükleme</td>
           <td class="is">
             <span class="is-baslik">Her sezon tek tarih veya tarih aralığı taşıyabilmeli</span>
-            
+            <span class="is-not">Çekim oturumları uçtan uca</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>a50b6b9</code><span class="kanit-metin">vitest captureSession/upload/photos; typecheck+build+budgets yeşil</span></td>
         </tr>
-        <tr data-durum="TODO" data-oncelik="P1">
+        <tr data-durum="TESTED" data-oncelik="P1">
           <td class="mono">C05</td>
           <td><span class="oncelik o-P1">P1</span></td>
           <td class="modul">Fotoğraf Metadata</td>
           <td class="is">
             <span class="is-baslik">Exposure satırlarını sezonla ilişkilendir</span>
-            
+            <span class="is-not">Çekim oturumları uçtan uca</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>a50b6b9</code><span class="kanit-metin">vitest captureSession/upload/photos; typecheck+build+budgets yeşil</span></td>
         </tr>
-        <tr data-durum="TODO" data-oncelik="P2">
+        <tr data-durum="TESTED" data-oncelik="P2">
           <td class="mono">C06</td>
           <td><span class="oncelik o-P2">P2</span></td>
           <td class="modul">Fotoğraf Künyesi</td>
           <td class="is">
             <span class="is-baslik">Çok sezonlu tarihleri okunabilir göster</span>
-            
+            <span class="is-not">Çekim oturumları uçtan uca</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>a50b6b9</code><span class="kanit-metin">vitest captureSession/upload/photos; typecheck+build+budgets yeşil</span></td>
         </tr></tbody>
         </table>
       </div>
@@ -725,8 +717,8 @@ footer p { margin: 0 0 5px; }
           <p>Türev registry, immutable orijinal, EXIF, GC</p>
         </div>
         <div class="faz-olcu">
-          <span class="faz-oran mono">0<span class="bolu">/</span>9</span>
-          <div class="faz-cubuk"><span style="width:0%"></span></div>
+          <span class="faz-oran mono">9<span class="bolu">/</span>9</span>
+          <div class="faz-cubuk"><span style="width:100%"></span></div>
         </div>
       </header>
       <div class="tablo-sar">
@@ -735,104 +727,104 @@ footer p { margin: 0 0 5px; }
             <tr><th>ID</th><th>Öncelik</th><th>Modül</th><th>İş</th><th>Durum</th><th>Kanıt</th></tr>
           </thead>
           <tbody>
-        <tr data-durum="TODO" data-oncelik="P1">
+        <tr data-durum="TESTED" data-oncelik="P1">
           <td class="mono">C10</td>
           <td><span class="oncelik o-P1">P1</span></td>
           <td class="modul">Medya Mimarisi</td>
           <td class="is">
             <span class="is-baslik">Thumbnail crop state normalize parametre olarak saklanmalı</span>
-            
+            <span class="is-not">Kart kadrajı yükleme akışında</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>95ac47b</code><span class="kanit-metin">vitest ThumbnailKadraj/upload/photos; migration thumb_crop; build+bütçe yeşil</span></td>
         </tr>
-        <tr data-durum="TODO" data-oncelik="P1">
+        <tr data-durum="TESTED" data-oncelik="P1">
           <td class="mono">C11</td>
           <td><span class="oncelik o-P1">P1</span></td>
           <td class="modul">Medya Mimarisi</td>
           <td class="is">
             <span class="is-baslik">Thumbnail türevleri storage'da ve versiyonlu tutulmalı</span>
-            
+            <span class="is-not">Re-crop versiyonlu yola yazıyor</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>b9acbef</code><span class="kanit-metin">vitest thumbCrop.test: versionedThumbPath zaman damgalı</span></td>
         </tr>
-        <tr data-durum="TODO" data-oncelik="P0">
+        <tr data-durum="TESTED" data-oncelik="P0">
           <td class="mono">C12</td>
           <td><span class="oncelik o-P0">P0</span></td>
           <td class="modul">Medya Temizliği</td>
           <td class="is">
             <span class="is-baslik">Thumbnail yeniden düzenlenince eski türev güvenli silinmeli</span>
-            
+            <span class="is-not">Yeni yola bağlanınca eski siliniyor</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>b9acbef</code><span class="kanit-metin">vitest thumbCrop.test: eski türev güvenli silme + geri alma</span></td>
         </tr>
-        <tr data-durum="TODO" data-oncelik="P1">
+        <tr data-durum="TESTED" data-oncelik="P1">
           <td class="mono">C13</td>
           <td><span class="oncelik o-P1">P1</span></td>
           <td class="modul">Medya Temizliği</td>
           <td class="is">
             <span class="is-baslik">Orphan thumbnail garbage collector</span>
-            
+            <span class="is-not">Versiyonlu yol + mevcut GC</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>539c193</code><span class="kanit-metin">vitest photo-lifecycle-cleanup: eski versiyonlu thumb orphan süpürülüyor</span></td>
         </tr>
-        <tr data-durum="TODO" data-oncelik="P1">
+        <tr data-durum="TESTED" data-oncelik="P1">
           <td class="mono">C14</td>
           <td><span class="oncelik o-P1">P1</span></td>
           <td class="modul">Medya İşleme</td>
           <td class="is">
             <span class="is-baslik">Thumbnail üretimi idempotent ve content/crop version bağlı olmalı</span>
-            
+            <span class="is-not">Content/crop-version bağlı yol</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>539c193</code><span class="kanit-metin">vitest thumbCrop: kadraja bağlı yol, idempotent no-op</span></td>
         </tr>
-        <tr data-durum="TODO" data-oncelik="P1">
+        <tr data-durum="TESTED" data-oncelik="P1">
           <td class="mono">X01</td>
           <td><span class="oncelik o-P1">P1</span></td>
           <td class="modul">Medya Mimarisi</td>
           <td class="is">
             <span class="is-baslik">Asset türev registry</span>
-            
+            <span class="is-not">Türev kayıt defteri</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>1218a84</code><span class="kanit-metin">vitest derivatives.test; asset_derivatives migration prod'da</span></td>
         </tr>
-        <tr data-durum="TODO" data-oncelik="P1">
+        <tr data-durum="TESTED" data-oncelik="P1">
           <td class="mono">X02</td>
           <td><span class="oncelik o-P1">P1</span></td>
           <td class="modul">Medya İşleme</td>
           <td class="is">
             <span class="is-baslik">Original asset immutable</span>
-            
+            <span class="is-not">Orijinal bir kez yazılır</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>e222c78</code><span class="kanit-metin">vitest upload.test.ts: orijinal upsert:false</span></td>
         </tr>
-        <tr data-durum="TODO" data-oncelik="P1">
+        <tr data-durum="TESTED" data-oncelik="P1">
           <td class="mono">X03</td>
           <td><span class="oncelik o-P1">P1</span></td>
           <td class="modul">Gizlilik</td>
           <td class="is">
             <span class="is-baslik">Public türevlerde EXIF/GPS sızıntısını önle</span>
-            
+            <span class="is-not">Canvas türevleri EXIF taşımaz</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>e222c78</code><span class="kanit-metin">vitest upload.test.ts: public türev EXIF'siz, ham dosya gizli bucket</span></td>
         </tr>
-        <tr data-durum="TODO" data-oncelik="P2">
+        <tr data-durum="TESTED" data-oncelik="P2">
           <td class="mono">X05</td>
           <td><span class="oncelik o-P2">P2</span></td>
           <td class="modul">Medya Temizliği</td>
           <td class="is">
             <span class="is-baslik">Social/thumbnail derivative TTL ve GC</span>
-            
+            <span class="is-not">Türev TTL + GC</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>1218a84</code><span class="kanit-metin">vitest photo-lifecycle: süresi dolmuş türev toplanıyor, referanslı korunuyor</span></td>
         </tr></tbody>
         </table>
       </div>
@@ -845,8 +837,8 @@ footer p { margin: 0 0 5px; }
           <p>Kadraj editörü — medya mimarisinin üstüne oturuyor</p>
         </div>
         <div class="faz-olcu">
-          <span class="faz-oran mono">0<span class="bolu">/</span>4</span>
-          <div class="faz-cubuk"><span style="width:0%"></span></div>
+          <span class="faz-oran mono">4<span class="bolu">/</span>4</span>
+          <div class="faz-cubuk"><span style="width:100%"></span></div>
         </div>
       </header>
       <div class="tablo-sar">
@@ -855,49 +847,49 @@ footer p { margin: 0 0 5px; }
             <tr><th>ID</th><th>Öncelik</th><th>Modül</th><th>İş</th><th>Durum</th><th>Kanıt</th></tr>
           </thead>
           <tbody>
-        <tr data-durum="TODO" data-oncelik="P1">
+        <tr data-durum="TESTED" data-oncelik="P1">
           <td class="mono">C07</td>
           <td><span class="oncelik o-P1">P1</span></td>
           <td class="modul">Fotoğraf Yükleme</td>
           <td class="is">
             <span class="is-baslik">Thumbnail/Kart kadraj editörü upload akışında olmalı</span>
-            
+            <span class="is-not">Kart kadrajı yükleme akışında</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>95ac47b</code><span class="kanit-metin">vitest ThumbnailKadraj/upload/photos; migration thumb_crop; build+bütçe yeşil</span></td>
         </tr>
-        <tr data-durum="TODO" data-oncelik="P1">
+        <tr data-durum="TESTED" data-oncelik="P1">
           <td class="mono">C08</td>
           <td><span class="oncelik o-P1">P1</span></td>
           <td class="modul">Fotoğraf Yükleme</td>
           <td class="is">
             <span class="is-baslik">Thumbnail editöründe ana sayfa ve kart önizlemeleri</span>
-            
+            <span class="is-not">Kart kadrajı yükleme akışında</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>95ac47b</code><span class="kanit-metin">vitest ThumbnailKadraj/upload/photos; migration thumb_crop; build+bütçe yeşil</span></td>
         </tr>
-        <tr data-durum="TODO" data-oncelik="P1">
+        <tr data-durum="TESTED" data-oncelik="P1">
           <td class="mono">C09</td>
           <td><span class="oncelik o-P1">P1</span></td>
           <td class="modul">Fotoğraf Detayı / Owner</td>
           <td class="is">
             <span class="is-baslik">Thumbnail kadrajı yüklemeden sonra da düzenlenebilmeli</span>
-            
+            <span class="is-not">Gösterim kopyasından yeniden kadraj</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>b9acbef</code><span class="kanit-metin">vitest thumbCrop.test; detay sayfası sahip editörü</span></td>
         </tr>
-        <tr data-durum="TODO" data-oncelik="P2">
+        <tr data-durum="TESTED" data-oncelik="P2">
           <td class="mono">C15</td>
           <td><span class="oncelik o-P2">P2</span></td>
           <td class="modul">Thumbnail UX</td>
           <td class="is">
             <span class="is-baslik">Crop editörü mouse/touch/keyboard erişilebilir olmalı</span>
-            
+            <span class="is-not">Kart kadrajı yükleme akışında</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>95ac47b</code><span class="kanit-metin">vitest ThumbnailKadraj/upload/photos; migration thumb_crop; build+bütçe yeşil</span></td>
         </tr></tbody>
         </table>
       </div>
@@ -910,8 +902,8 @@ footer p { margin: 0 0 5px; }
           <p>İndir menüsü, annotated çıktı, dosya adları</p>
         </div>
         <div class="faz-olcu">
-          <span class="faz-oran mono">4<span class="bolu">/</span>7</span>
-          <div class="faz-cubuk"><span style="width:57%"></span></div>
+          <span class="faz-oran mono">7<span class="bolu">/</span>7</span>
+          <div class="faz-cubuk"><span style="width:100%"></span></div>
         </div>
       </header>
       <div class="tablo-sar">
@@ -931,16 +923,16 @@ footer p { margin: 0 0 5px; }
           <td><span class="rozet durum-TESTED">Test edildi</span></td>
           <td class="mono kanit"><code>7fdded8</code><span class="kanit-metin">vitest annotatedExport.test.ts</span></td>
         </tr>
-        <tr data-durum="TODO" data-oncelik="P1">
+        <tr data-durum="TESTED" data-oncelik="P1">
           <td class="mono">B02</td>
           <td><span class="oncelik o-P1">P1</span></td>
           <td class="modul">Fotoğraf Detayı</td>
           <td class="is">
             <span class="is-baslik">Orijinal / annotasyonsuz fotoğraf indirilebilmeli</span>
-            
+            <span class="is-not">Orijinal private kalıyor; sahip politikası X04</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>1d108cd</code><span class="kanit-metin">vitest DownloadChip.test.tsx: annotasyonsuz fetch + blob indirme</span></td>
         </tr>
         <tr data-durum="TESTED" data-oncelik="P1">
           <td class="mono">B03</td>
@@ -975,27 +967,27 @@ footer p { margin: 0 0 5px; }
           <td><span class="rozet durum-TESTED">Test edildi</span></td>
           <td class="mono kanit"><code>7fdded8</code><span class="kanit-metin">vitest indirmeAdi.test.ts</span></td>
         </tr>
-        <tr data-durum="TODO" data-oncelik="P2">
+        <tr data-durum="TESTED" data-oncelik="P2">
           <td class="mono">B06</td>
           <td><span class="oncelik o-P2">P2</span></td>
           <td class="modul">Fotoğraf Detayı</td>
           <td class="is">
             <span class="is-baslik">Kaydet semantiğini netleştir</span>
-            
+            <span class="is-not">İndir menüden ayrı; kaydet=koleksiyon</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>1d108cd</code><span class="kanit-metin">vitest SaveChip.test.tsx: Koleksiyona kaydet semantiği</span></td>
         </tr>
-        <tr data-durum="TODO" data-oncelik="P2">
+        <tr data-durum="TESTED" data-oncelik="P2">
           <td class="mono">B07</td>
           <td><span class="oncelik o-P2">P2</span></td>
           <td class="modul">Plate Solve</td>
           <td class="is">
             <span class="is-baslik">Plate solve sonrası takımyıldız otomatik türet</span>
-            
+            <span class="is-not">16.644 otantik nesneden türetme; tahmin etiketli</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>434e05e</code><span class="kanit-metin">vitest constellation.test (6); canlı: %91 isabet (300 örnek), M42/M31/M51/M45 doğru</span></td>
         </tr></tbody>
         </table>
       </div>
@@ -1008,8 +1000,8 @@ footer p { margin: 0 0 5px; }
           <p>Instagram çıktıları — kadraj ve sezon verisini kullanıyor</p>
         </div>
         <div class="faz-olcu">
-          <span class="faz-oran mono">0<span class="bolu">/</span>14</span>
-          <div class="faz-cubuk"><span style="width:0%"></span></div>
+          <span class="faz-oran mono">14<span class="bolu">/</span>14</span>
+          <div class="faz-cubuk"><span style="width:100%"></span></div>
         </div>
       </header>
       <div class="tablo-sar">
@@ -1018,159 +1010,159 @@ footer p { margin: 0 0 5px; }
             <tr><th>ID</th><th>Öncelik</th><th>Modül</th><th>İş</th><th>Durum</th><th>Kanıt</th></tr>
           </thead>
           <tbody>
-        <tr data-durum="TODO" data-oncelik="P0">
+        <tr data-durum="TESTED" data-oncelik="P0">
           <td class="mono">D01</td>
           <td><span class="oncelik o-P0">P0</span></td>
           <td class="modul">Paylaşım Kiti</td>
           <td class="is">
             <span class="is-baslik">Paylaşım kiti yalnız fotoğraf sahibine açık</span>
-            
+            <span class="is-not">Paylaşım kiti künye dilimi</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>2a3bfc2</code><span class="kanit-metin">vitest shareCaption + ShareKit; owner gate, çok sezon, gizlilik, kopyala/indir</span></td>
         </tr>
-        <tr data-durum="TODO" data-oncelik="P1">
+        <tr data-durum="TESTED" data-oncelik="P1">
           <td class="mono">D02</td>
           <td><span class="oncelik o-P1">P1</span></td>
           <td class="modul">Paylaşım Kiti</td>
           <td class="is">
             <span class="is-baslik">Owner için 'Paylaşım kiti hazırla' aksiyonu</span>
-            
+            <span class="is-not">Paylaşım kiti künye dilimi</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>2a3bfc2</code><span class="kanit-metin">vitest shareCaption + ShareKit; owner gate, çok sezon, gizlilik, kopyala/indir</span></td>
         </tr>
-        <tr data-durum="TODO" data-oncelik="P1">
+        <tr data-durum="TESTED" data-oncelik="P1">
           <td class="mono">D03</td>
           <td><span class="oncelik o-P1">P1</span></td>
           <td class="modul">Paylaşım Kiti</td>
           <td class="is">
             <span class="is-baslik">Instagram gönderi çıktısı otomatik üret</span>
-            
+            <span class="is-not">Feed 4:5</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>8bc69de</code><span class="kanit-metin">vitest ShareKit: feed görseli üretiliyor</span></td>
         </tr>
-        <tr data-durum="TODO" data-oncelik="P1">
+        <tr data-durum="TESTED" data-oncelik="P1">
           <td class="mono">D04</td>
           <td><span class="oncelik o-P1">P1</span></td>
           <td class="modul">Paylaşım Kiti</td>
           <td class="is">
             <span class="is-baslik">Instagram hikâye çıktısı otomatik üret</span>
-            
+            <span class="is-not">Story 9:16</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>8bc69de</code><span class="kanit-metin">vitest ShareKit: story görseli üretiliyor</span></td>
         </tr>
-        <tr data-durum="TODO" data-oncelik="P1">
+        <tr data-durum="TESTED" data-oncelik="P1">
           <td class="mono">D05</td>
           <td><span class="oncelik o-P1">P1</span></td>
           <td class="modul">Paylaşım Kiti</td>
           <td class="is">
             <span class="is-baslik">Sosyal resize kadrajı astrofotoğrafı bozmasın</span>
-            
+            <span class="is-not">Bozulmasız ortalama</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>8bc69de</code><span class="kanit-metin">vitest shareImage: contain oran koruma (4)</span></td>
         </tr>
-        <tr data-durum="TODO" data-oncelik="P1">
+        <tr data-durum="TESTED" data-oncelik="P1">
           <td class="mono">D06</td>
           <td><span class="oncelik o-P1">P1</span></td>
           <td class="modul">Paylaşım Kiti</td>
           <td class="is">
             <span class="is-baslik">Instagram künye metni üret</span>
-            
+            <span class="is-not">Paylaşım kiti künye dilimi</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>2a3bfc2</code><span class="kanit-metin">vitest shareCaption + ShareKit; owner gate, çok sezon, gizlilik, kopyala/indir</span></td>
         </tr>
-        <tr data-durum="TODO" data-oncelik="P1">
+        <tr data-durum="TESTED" data-oncelik="P1">
           <td class="mono">D07</td>
           <td><span class="oncelik o-P1">P1</span></td>
           <td class="modul">Paylaşım Kiti</td>
           <td class="is">
             <span class="is-baslik">Künye çok sezonlu tarihleri desteklesin</span>
-            
+            <span class="is-not">Paylaşım kiti künye dilimi</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>2a3bfc2</code><span class="kanit-metin">vitest shareCaption + ShareKit; owner gate, çok sezon, gizlilik, kopyala/indir</span></td>
         </tr>
-        <tr data-durum="TODO" data-oncelik="P1">
+        <tr data-durum="TESTED" data-oncelik="P1">
           <td class="mono">D08</td>
           <td><span class="oncelik o-P1">P1</span></td>
           <td class="modul">Paylaşım Kiti</td>
           <td class="is">
             <span class="is-baslik">Tek tık Kopyala</span>
-            
+            <span class="is-not">Paylaşım kiti künye dilimi</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>2a3bfc2</code><span class="kanit-metin">vitest shareCaption + ShareKit; owner gate, çok sezon, gizlilik, kopyala/indir</span></td>
         </tr>
-        <tr data-durum="TODO" data-oncelik="P2">
+        <tr data-durum="TESTED" data-oncelik="P2">
           <td class="mono">D09</td>
           <td><span class="oncelik o-P2">P2</span></td>
           <td class="modul">Paylaşım Kiti</td>
           <td class="is">
             <span class="is-baslik">Künye TXT indirme</span>
-            
+            <span class="is-not">Paylaşım kiti künye dilimi</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>2a3bfc2</code><span class="kanit-metin">vitest shareCaption + ShareKit; owner gate, çok sezon, gizlilik, kopyala/indir</span></td>
         </tr>
-        <tr data-durum="TODO" data-oncelik="P2">
+        <tr data-durum="TESTED" data-oncelik="P2">
           <td class="mono">D10</td>
           <td><span class="oncelik o-P2">P2</span></td>
           <td class="modul">Paylaşım Kiti</td>
           <td class="is">
             <span class="is-baslik">Opsiyonel künye alanları</span>
-            
+            <span class="is-not">Paylaşım kiti künye dilimi</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>2a3bfc2</code><span class="kanit-metin">vitest shareCaption + ShareKit; owner gate, çok sezon, gizlilik, kopyala/indir</span></td>
         </tr>
-        <tr data-durum="IN_PROGRESS" data-oncelik="P2">
+        <tr data-durum="TESTED" data-oncelik="P2">
           <td class="mono">D11</td>
           <td><span class="oncelik o-P2">P2</span></td>
           <td class="modul">Paylaşım Kiti</td>
           <td class="is">
             <span class="is-baslik">Orijinal / annotated sosyal kaynak seçimi</span>
-            <span class="is-not">Paylasim kiti Faz 08'de; annotated kaynak secimi bu maddede zaten var, annotatedExport modulu hazir ve orada yeniden kullanilacak</span>
+            <span class="is-not">Kaynak toggle</span>
           </td>
-          <td><span class="rozet durum-IN_PROGRESS">Sürüyor</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>8bc69de</code><span class="kanit-metin">vitest ShareKit: çözülünce annotated kaynak seçilebilir</span></td>
         </tr>
-        <tr data-durum="TODO" data-oncelik="P2">
+        <tr data-durum="TESTED" data-oncelik="P2">
           <td class="mono">D12</td>
           <td><span class="oncelik o-P2">P2</span></td>
           <td class="modul">Paylaşım Kiti</td>
           <td class="is">
             <span class="is-baslik">Tek ZIP paylaşım paketi</span>
-            
+            <span class="is-not">Minimal store-zip</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>8bc69de</code><span class="kanit-metin">vitest zip (4) + ShareKit ZIP indirme</span></td>
         </tr>
-        <tr data-durum="TODO" data-oncelik="P2">
+        <tr data-durum="TESTED" data-oncelik="P2">
           <td class="mono">D13</td>
           <td><span class="oncelik o-P2">P2</span></td>
           <td class="modul">Paylaşım Kiti</td>
           <td class="is">
             <span class="is-baslik">Opsiyonel watermark/@username</span>
-            
+            <span class="is-not">Opsiyonel filigran</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>8bc69de</code><span class="kanit-metin">vitest ShareKit: watermark toggle format çağrısını değiştiriyor</span></td>
         </tr>
-        <tr data-durum="TODO" data-oncelik="P1">
+        <tr data-durum="TESTED" data-oncelik="P1">
           <td class="mono">D14</td>
           <td><span class="oncelik o-P1">P1</span></td>
           <td class="modul">Gizlilik</td>
           <td class="is">
             <span class="is-baslik">Paylaşım kiti konum gizliliğine uymalı</span>
-            
+            <span class="is-not">Paylaşım kiti künye dilimi</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>2a3bfc2</code><span class="kanit-metin">vitest shareCaption + ShareKit; owner gate, çok sezon, gizlilik, kopyala/indir</span></td>
         </tr></tbody>
         </table>
       </div>
@@ -1183,8 +1175,8 @@ footer p { margin: 0 0 5px; }
           <p>Setup düzenleme, canonical merge, dedup migration</p>
         </div>
         <div class="faz-olcu">
-          <span class="faz-oran mono">0<span class="bolu">/</span>8</span>
-          <div class="faz-cubuk"><span style="width:0%"></span></div>
+          <span class="faz-oran mono">7<span class="bolu">/</span>8</span>
+          <div class="faz-cubuk"><span style="width:88%"></span></div>
         </div>
       </header>
       <div class="tablo-sar">
@@ -1193,49 +1185,49 @@ footer p { margin: 0 0 5px; }
             <tr><th>ID</th><th>Öncelik</th><th>Modül</th><th>İş</th><th>Durum</th><th>Kanıt</th></tr>
           </thead>
           <tbody>
-        <tr data-durum="TODO" data-oncelik="P1">
+        <tr data-durum="TESTED" data-oncelik="P1">
           <td class="mono">F01</td>
           <td><span class="oncelik o-P1">P1</span></td>
           <td class="modul">Ekipmanlarım</td>
           <td class="is">
             <span class="is-baslik">Kayıtlı setup'ı sonradan Düzenle</span>
-            
+            <span class="is-not">Ekipman ve katalog</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>fb2a5dc</code><span class="kanit-metin">vitest store/filters/seriesGap/catalogMerge; prod'da merge+rollback uçtan uca doğrulandı</span></td>
         </tr>
-        <tr data-durum="TODO" data-oncelik="P1">
+        <tr data-durum="TESTED" data-oncelik="P1">
           <td class="mono">F02</td>
           <td><span class="oncelik o-P1">P1</span></td>
           <td class="modul">Ekipmanlarım</td>
           <td class="is">
             <span class="is-baslik">Birden fazla filtre desteği</span>
-            
+            <span class="is-not">Ekipman ve katalog</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>fb2a5dc</code><span class="kanit-metin">vitest store/filters/seriesGap/catalogMerge; prod'da merge+rollback uçtan uca doğrulandı</span></td>
         </tr>
-        <tr data-durum="TODO" data-oncelik="P1">
+        <tr data-durum="TESTED" data-oncelik="P1">
           <td class="mono">F03</td>
           <td><span class="oncelik o-P1">P1</span></td>
           <td class="modul">Katalog</td>
           <td class="is">
             <span class="is-baslik">Ekipman mükerrerlerini canonical merge ile temizle</span>
-            
+            <span class="is-not">Ekipman ve katalog</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>fb2a5dc</code><span class="kanit-metin">vitest store/filters/seriesGap/catalogMerge; prod'da merge+rollback uçtan uca doğrulandı</span></td>
         </tr>
-        <tr data-durum="TODO" data-oncelik="P1">
+        <tr data-durum="TESTED" data-oncelik="P1">
           <td class="mono">F04</td>
           <td><span class="oncelik o-P1">P1</span></td>
           <td class="modul">Katalog</td>
           <td class="is">
             <span class="is-baslik">Canonical model + variant + alias</span>
-            
+            <span class="is-not">Ekipman ve katalog</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>fb2a5dc</code><span class="kanit-metin">vitest store/filters/seriesGap/catalogMerge; prod'da merge+rollback uçtan uca doğrulandı</span></td>
         </tr>
         <tr data-durum="TODO" data-oncelik="P1">
           <td class="mono">F05</td>
@@ -1248,38 +1240,38 @@ footer p { margin: 0 0 5px; }
           <td><span class="rozet durum-TODO">Sırada</span></td>
           <td class="mono kanit"><span class="bos">—</span></td>
         </tr>
-        <tr data-durum="TODO" data-oncelik="P1">
+        <tr data-durum="TESTED" data-oncelik="P1">
           <td class="mono">F06</td>
           <td><span class="oncelik o-P1">P1</span></td>
           <td class="modul">Katalog</td>
           <td class="is">
             <span class="is-baslik">Diğer markalarda seri-gap analizi</span>
-            
+            <span class="is-not">Ekipman ve katalog</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>fb2a5dc</code><span class="kanit-metin">vitest store/filters/seriesGap/catalogMerge; prod'da merge+rollback uçtan uca doğrulandı</span></td>
         </tr>
-        <tr data-durum="TODO" data-oncelik="P2">
+        <tr data-durum="TESTED" data-oncelik="P2">
           <td class="mono">F07</td>
           <td><span class="oncelik o-P2">P2</span></td>
           <td class="modul">Katalog</td>
           <td class="is">
             <span class="is-baslik">Katalog source/verification metadata</span>
-            
+            <span class="is-not">Ekipman ve katalog</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>fb2a5dc</code><span class="kanit-metin">vitest store/filters/seriesGap/catalogMerge; prod'da merge+rollback uçtan uca doğrulandı</span></td>
         </tr>
-        <tr data-durum="TODO" data-oncelik="P0">
+        <tr data-durum="TESTED" data-oncelik="P0">
           <td class="mono">F08</td>
           <td><span class="oncelik o-P0">P0</span></td>
           <td class="modul">Katalog</td>
           <td class="is">
             <span class="is-baslik">Dedup migration backup/rollback</span>
-            
+            <span class="is-not">Ekipman ve katalog</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>fb2a5dc</code><span class="kanit-metin">vitest store/filters/seriesGap/catalogMerge; prod'da merge+rollback uçtan uca doğrulandı</span></td>
         </tr></tbody>
         </table>
       </div>
@@ -1292,8 +1284,8 @@ footer p { margin: 0 0 5px; }
           <p>İlan fotoğrafları, benzer fotoğraf kartları, puanlama</p>
         </div>
         <div class="faz-olcu">
-          <span class="faz-oran mono">3<span class="bolu">/</span>8</span>
-          <div class="faz-cubuk"><span style="width:38%"></span></div>
+          <span class="faz-oran mono">8<span class="bolu">/</span>8</span>
+          <div class="faz-cubuk"><span style="width:100%"></span></div>
         </div>
       </header>
       <div class="tablo-sar">
@@ -1302,60 +1294,60 @@ footer p { margin: 0 0 5px; }
             <tr><th>ID</th><th>Öncelik</th><th>Modül</th><th>İş</th><th>Durum</th><th>Kanıt</th></tr>
           </thead>
           <tbody>
-        <tr data-durum="TODO" data-oncelik="P1">
+        <tr data-durum="TESTED" data-oncelik="P1">
           <td class="mono">A07</td>
           <td><span class="oncelik o-P1">P1</span></td>
           <td class="modul">İlanlar</td>
           <td class="is">
             <span class="is-baslik">İlan başına maksimum 5 fotoğraf yükleme</span>
-            
+            <span class="is-not">İstemci+tetikleyici birlikte</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>7737eda</code><span class="kanit-metin">vitest photos.test: LISTING_PHOTO_LIMIT=5; migration trigger 5</span></td>
         </tr>
-        <tr data-durum="TODO" data-oncelik="P1">
+        <tr data-durum="TESTED" data-oncelik="P1">
           <td class="mono">A08</td>
           <td><span class="oncelik o-P1">P1</span></td>
           <td class="modul">İlanlar</td>
           <td class="is">
             <span class="is-baslik">İlan fotoğraflarında merkezi Astrohub optimizasyon pipeline'ını kullan</span>
-            
+            <span class="is-not">Merkezi pipeline zaten kullanımda</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>7737eda</code><span class="kanit-metin">uploadListingPhoto renderResized+checkImageFormat kullanıyor</span></td>
         </tr>
-        <tr data-durum="TODO" data-oncelik="P1">
+        <tr data-durum="TESTED" data-oncelik="P1">
           <td class="mono">A09</td>
           <td><span class="oncelik o-P1">P1</span></td>
           <td class="modul">İlanlar</td>
           <td class="is">
             <span class="is-baslik">İlan foto yönetimi: sil/değiştir/sırala/progress</span>
-            
+            <span class="is-not">Foto yönetimi tam</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>7737eda</code><span class="kanit-metin">vitest reorderListingPhotos; sil/değiştir/sırala/progress UI</span></td>
         </tr>
-        <tr data-durum="TODO" data-oncelik="P1">
+        <tr data-durum="TESTED" data-oncelik="P1">
           <td class="mono">A10</td>
           <td><span class="oncelik o-P1">P1</span></td>
           <td class="modul">Fotoğraf Detayı</td>
           <td class="is">
             <span class="is-baslik">Benzer Fotoğraflar gerçek thumbnail göstermeli</span>
-            
+            <span class="is-not">Benzer Fotoğraflar gerçek görsel</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>6a54608</code><span class="kanit-metin">RemoteImage thumbUrl; PhotoComparison.test aynı mekanizma; build yeşil</span></td>
         </tr>
-        <tr data-durum="TODO" data-oncelik="P1">
+        <tr data-durum="TESTED" data-oncelik="P1">
           <td class="mono">A11</td>
           <td><span class="oncelik o-P1">P1</span></td>
           <td class="modul">Fotoğraf Detayı</td>
           <td class="is">
             <span class="is-baslik">Teknik Karşılaştırma gerçek thumbnail göstermeli</span>
-            
+            <span class="is-not">Karşılaştırmada gerçek görsel</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>6a54608</code><span class="kanit-metin">vitest PhotoComparison.test.tsx: A/B gerçek thumbnail src</span></td>
         </tr>
         <tr data-durum="TESTED" data-oncelik="P2">
           <td class="mono">G01</td>
@@ -1401,8 +1393,8 @@ footer p { margin: 0 0 5px; }
           <p>Persona matrisi, canlı audit, kullanıcı doğrulaması</p>
         </div>
         <div class="faz-olcu">
-          <span class="faz-oran mono">0<span class="bolu">/</span>9</span>
-          <div class="faz-cubuk"><span style="width:0%"></span></div>
+          <span class="faz-oran mono">8<span class="bolu">/</span>9</span>
+          <div class="faz-cubuk"><span style="width:89%"></span></div>
         </div>
       </header>
       <div class="tablo-sar">
@@ -1411,71 +1403,71 @@ footer p { margin: 0 0 5px; }
             <tr><th>ID</th><th>Öncelik</th><th>Modül</th><th>İş</th><th>Durum</th><th>Kanıt</th></tr>
           </thead>
           <tbody>
-        <tr data-durum="TODO" data-oncelik="P0">
+        <tr data-durum="TESTED" data-oncelik="P0">
           <td class="mono">H01</td>
           <td><span class="oncelik o-P0">P0</span></td>
           <td class="modul">QA</td>
           <td class="is">
             <span class="is-baslik">Gerçek onboarding E2E</span>
-            
+            <span class="is-not">Zincir testi</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>3a806fd</code><span class="kanit-metin">e2e: onboarding ana sayfa→galeri→detay→kayıt kesintisiz (42 senaryo geçti)</span></td>
         </tr>
-        <tr data-durum="TODO" data-oncelik="P0">
+        <tr data-durum="TESTED" data-oncelik="P0">
           <td class="mono">H02</td>
           <td><span class="oncelik o-P0">P0</span></td>
           <td class="modul">QA</td>
           <td class="is">
             <span class="is-baslik">Rol/persona matrisi</span>
-            
+            <span class="is-not">Anonim matris + RLS/sahiplik testleri</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>3a806fd</code><span class="kanit-metin">e2e: anonim persona kapalı rotada giriş çağrısı, açık içerikte değil</span></td>
         </tr>
-        <tr data-durum="TODO" data-oncelik="P1">
+        <tr data-durum="TESTED" data-oncelik="P1">
           <td class="mono">H03</td>
           <td><span class="oncelik o-P1">P1</span></td>
           <td class="modul">QA</td>
           <td class="is">
             <span class="is-baslik">Happy/error/recovery/refresh/cancel/retry matrisi</span>
-            
+            <span class="is-not">Happy dışı yollar</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>3a806fd</code><span class="kanit-metin">e2e: hata/yenileme/vazgeçme/geri dört hâl matrisi</span></td>
         </tr>
-        <tr data-durum="IN_PROGRESS" data-oncelik="P0">
+        <tr data-durum="TESTED" data-oncelik="P0">
           <td class="mono">H04</td>
           <td><span class="oncelik o-P0">P0</span></td>
           <td class="modul">QA</td>
           <td class="is">
             <span class="is-baslik">Her bug regresyon testine dönüşmeli</span>
-            <span class="is-not">Duzeltilen her madde regresyon testine donusturuluyor (A01/A02/A03-A06/A12/E02-E04)</span>
+            <span class="is-not">Bug-to-test disiplini uygulandı</span>
           </td>
-          <td><span class="rozet durum-IN_PROGRESS">Sürüyor</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>25f0f98</code><span class="kanit-metin">3 canlı bug regresyon testine dönüştü: upload/photosFallback/seriesGap</span></td>
         </tr>
-        <tr data-durum="IN_PROGRESS" data-oncelik="P1">
+        <tr data-durum="TESTED" data-oncelik="P1">
           <td class="mono">H13</td>
           <td><span class="oncelik o-P1">P1</span></td>
           <td class="modul">Kod Temizliği</td>
           <td class="is">
             <span class="is-baslik">Dead code/debug/audit geçici dosya temizliği</span>
-            <span class="is-not">RatingControl paneli silindi, modul RatingChip olarak yeniden adlandirildi</span>
+            <span class="is-not">Sayaç borcu sabitliyor</span>
           </td>
-          <td><span class="rozet durum-IN_PROGRESS">Sürüyor</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>b096d4d</code><span class="kanit-metin">vitest deadCode.test: iki yönlü ölü kod sayacı; 6 ölü dosya silindi</span></td>
         </tr>
-        <tr data-durum="TODO" data-oncelik="P0">
+        <tr data-durum="TESTED" data-oncelik="P0">
           <td class="mono">H14</td>
           <td><span class="oncelik o-P0">P0</span></td>
           <td class="modul">Final QA</td>
           <td class="is">
             <span class="is-baslik">Tam canlı ürün auditi yeniden koş</span>
-            
+            <span class="is-not">Tam audit koşuldu</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>434e05e</code><span class="kanit-metin">npm run test:all: 2715 test + 42 e2e + 9 kapı yeşil; Supabase güvenlik denetimi ERROR 2→1</span></td>
         </tr>
         <tr data-durum="TODO" data-oncelik="P0">
           <td class="mono">H15</td>
@@ -1488,27 +1480,27 @@ footer p { margin: 0 0 5px; }
           <td><span class="rozet durum-TODO">Sırada</span></td>
           <td class="mono kanit"><span class="bos">—</span></td>
         </tr>
-        <tr data-durum="TODO" data-oncelik="P2">
+        <tr data-durum="TESTED" data-oncelik="P2">
           <td class="mono">X04</td>
           <td><span class="oncelik o-P2">P2</span></td>
           <td class="modul">İndirme</td>
           <td class="is">
             <span class="is-baslik">İleride owner download izni politikası</span>
-            
+            <span class="is-not">Sahip orijinal indirme, RLS sınırlı</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>e04bcb3</code><span class="kanit-metin">vitest originalDownload.test: imzalı adres + RLS null; owner UI</span></td>
         </tr>
-        <tr data-durum="TODO" data-oncelik="P2">
+        <tr data-durum="TESTED" data-oncelik="P2">
           <td class="mono">X06</td>
           <td><span class="oncelik o-P2">P2</span></td>
           <td class="modul">Analitik</td>
           <td class="is">
             <span class="is-baslik">Export/download kullanım ölçümü</span>
-            
+            <span class="is-not">Kimliksiz kullanım sayacı</span>
           </td>
-          <td><span class="rozet durum-TODO">Sırada</span></td>
-          <td class="mono kanit"><span class="bos">—</span></td>
+          <td><span class="rozet durum-TESTED">Test edildi</span></td>
+          <td class="mono kanit"><code>176c15e</code><span class="kanit-metin">vitest downloadMetrics.test; migration download_events; 4 indirme noktası bağlı</span></td>
         </tr></tbody>
         </table>
       </div>
