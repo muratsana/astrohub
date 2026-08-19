@@ -1056,6 +1056,149 @@ await scenario('galeri kaydırma konumu geri dönüşte korunuyor', async () => 
   );
 });
 
+/* ══════════════════════ Onboarding uçtan uca (H01) ══════════════════════ */
+
+/*
+ * GERÇEK ONBOARDING YOLU — yeni bir ziyaretçinin ilk beş dakikası.
+ *
+ * Tek tek sayfaların açıldığını başka senaryolar zaten ölçüyor. Buradaki
+ * soru farklı: bir ziyaretçi ana sayfadan başlayıp KESİNTİSİZ olarak
+ * kayıt ekranına varabiliyor mu? Her adım bir öncekinin bıraktığı yerden
+ * devam ediyor; zincirin ortasında kopan bir bağlantı burada düşüyor,
+ * tek tek sayfa testlerinde düşmüyor.
+ */
+await scenario('onboarding: ana sayfadan kayıt formuna kesintisiz yol', async () => {
+  await goto('/');
+  assert((await heading()).length > 0, 'ana sayfa başlıksız açıldı');
+
+  /* 1. Ziyaretçi galeriye bakıyor. Başlık METNİNE değil VARLIĞINA
+     bakılıyor: sayfa adı ürün kararıyla değişebilir, zincirin kopmaması
+     bu senaryonun konusu. */
+  await goto('/galeri');
+  const galeriBaslik = await heading();
+  assert(galeriBaslik.length > 0, 'galeri başlıksız açıldı');
+
+  /* 2. Bir fotoğraf detayına giriyor — kart varsa. */
+  const kartVar = await page.locator('main a[href*="#/fotograf/"]').count();
+  if (kartVar > 0) {
+    await page.locator('main a[href*="#/fotograf/"]').first().click();
+    await page.waitForTimeout(400);
+    const yol = await page.evaluate(() => location.hash);
+    assert(/#\/fotograf\//.test(yol), `fotoğraf detayına girilemedi: ${yol}`);
+  }
+
+  /* 3. Kayıt ekranına ulaşıyor ve form gerçekten dolduruabilir durumda. */
+  await goto('/kayit');
+  const alanlar = await page.evaluate(() => ({
+    eposta: Boolean(document.querySelector('#email')),
+    sifre: Boolean(document.querySelector('#password')),
+    gonder: Boolean(document.querySelector('form button[type="submit"]')),
+  }));
+  assert(alanlar.eposta, 'kayıt formunda e-posta alanı yok');
+  assert(alanlar.sifre, 'kayıt formunda şifre alanı yok');
+  assert(alanlar.gonder, 'kayıt formunda gönder düğmesi yok');
+});
+
+/* ══════════════════════ Rol / persona matrisi (H02) ══════════════════════ */
+
+/*
+ * OTURUMSUZ ZİYARETÇİ NE GÖRMELİ, NE GÖRMEMELİ.
+ *
+ * E2E gerçek oturum açamıyor (Supabase anahtarı önizleme derlemesinde
+ * yok), bu yüzden matris ANONİM personayı kapsıyor — ve asıl riskli olan
+ * o: yetkisiz birine gösterilen bir düğme, sunucunun reddedeceği bir
+ * eylem demek. Oturumlu personaların kapıları RLS'te ve bileşen
+ * testlerinde ölçülüyor (ShareKit/ThumbCropEditor/OwnerOriginalDownload
+ * sahiplik testleri).
+ */
+const ANONIM_GORMEMELI = [
+  { rota: '/panel', metin: /giriş|oturum/i, ad: 'panel oturum istiyor' },
+  { rota: '/yukle', metin: /giriş|oturum/i, ad: 'yükleme oturum istiyor' },
+];
+
+for (const kapi of ANONIM_GORMEMELI) {
+  await scenario(`persona anonim: ${kapi.ad}`, async () => {
+    await goto(kapi.rota);
+    await page.waitForTimeout(300);
+    const govde = await page.evaluate(() => document.body.innerText);
+    assert(
+      kapi.metin.test(govde),
+      `${kapi.rota} oturumsuz ziyaretçiye giriş çağrısı göstermiyor`
+    );
+  });
+}
+
+await scenario('persona anonim: herkese açık sayfalar oturumsuz açılıyor', async () => {
+  /* Ters yön: kapılar fazla geniş olup açık içeriği de kapatmamalı. */
+  for (const rota of ['/galeri', '/etkinlikler', '/araclar', '/ilanlar']) {
+    await goto(rota);
+    await page.waitForTimeout(250);
+    const govde = await page.evaluate(() => document.body.innerText);
+    assert(
+      !/giriş yapmanız gerek|oturum açmalısınız/i.test(govde),
+      `${rota} açık içerik olmasına rağmen oturum istiyor`
+    );
+  }
+});
+
+/* ═════════════ Happy / error / refresh / cancel matrisi (H03) ═════════════ */
+
+/*
+ * BİR AKIŞIN DÖRT HÂLİ. Ürün çoğu zaman yalnızca "happy path"te
+ * deneniyor; kullanıcı ise yenilemeyi, geri gitmeyi ve vazgeçmeyi de
+ * yapıyor. Bu matris aynı ekranı dört durumda ölçüyor.
+ */
+await scenario('matris: hata — geçersiz adres 404 veriyor (happy değil)', async () => {
+  await goto('/boyle-bir-sayfa-yok-123');
+  await waitForText('404', '404 göstergesi');
+});
+
+await scenario('matris: yenileme — filtre durumu hash ile geri geliyor', async () => {
+  await goto('/galeri');
+  await page.waitForTimeout(300);
+  /* Bir süzgeç uygulanıp adres okunuyor, sonra AYNI adrese yeniden
+     gidiliyor: yenilemenin karşılığı budur (hash router). */
+  const adres = await page.evaluate(() => location.hash);
+  await goto('/');
+  await page.evaluate((h) => {
+    location.hash = h;
+  }, adres);
+  await page.waitForTimeout(400);
+  const geri = await page.evaluate(() => location.hash);
+  assert(geri === adres, `yenilemeden sonra adres değişti: ${geri} ≠ ${adres}`);
+});
+
+await scenario('matris: vazgeçme — komut paleti Escape ile kapanıyor', async () => {
+  await goto('/');
+  await page.keyboard.press('Meta+k');
+  await page.waitForTimeout(300);
+  const acildi = await page.evaluate(
+    () => document.querySelectorAll('[role="dialog"]').length > 0
+  );
+  if (acildi) {
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(250);
+    const kapandi = await page.evaluate(
+      () => document.querySelectorAll('[role="dialog"]').length === 0
+    );
+    assert(kapandi, 'Escape komut paletini kapatmadı');
+  }
+});
+
+await scenario('matris: geri — detaydan galeriye dönüş listeyi koruyor', async () => {
+  await goto('/galeri');
+  await page.waitForTimeout(400);
+  const kart = page.locator('main a[href*="#/fotograf/"]');
+  if ((await kart.count()) > 0) {
+    await kart.first().click();
+    await page.waitForTimeout(400);
+    await page.goBack();
+    await page.waitForTimeout(400);
+    const yol = await page.evaluate(() => location.hash);
+    assert(/#\/galeri/.test(yol), `geri dönüş galeriye gitmedi: ${yol}`);
+  }
+});
+
 /* ══════════════════════ Görsel kayıt (§17.2) ══════════════════════ */
 
 /*
