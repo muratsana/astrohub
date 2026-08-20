@@ -9,6 +9,7 @@ import { useFlag } from '@/features/site/SiteConfigContext';
 import { FlagClosedNote } from '@/features/site/FlagClosedNote';
 import { ReportButton } from '@/features/admin/ReportButton';
 import { RemovedNotice } from '@/features/admin/RemovedNotice';
+import { profileAvatarUrl } from '@/services/content/profile';
 
 /**
  * FOTOĞRAF YORUMLARI.
@@ -38,7 +39,9 @@ export function PhotoComments({ photo }: { photo: AstroPhoto }) {
   return (
     <Panel
       title="Yorumlar"
-      status={thread.loading ? 'yükleniyor…' : `${thread.comments.length} yorum`}
+      status={
+        thread.loading ? 'yükleniyor…' : `${thread.comments.length} yorum`
+      }
     >
       {thread.comments.length === 0 && !thread.loading && (
         <p className="py-3 text-center text-body-sm text-muted-foreground">
@@ -48,61 +51,13 @@ export function PhotoComments({ photo }: { photo: AstroPhoto }) {
 
       <ul>
         {thread.comments.map((comment) => (
-          <li
+          <CommentItem
             key={comment.id}
-            className="border-b border-border py-2.5 last:border-0"
-          >
-            <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-              <Link
-                to={`/profil/${comment.author.username}`}
-                className="text-meta font-medium text-foreground hover:text-primary"
-              >
-                {comment.author.displayName}
-              </Link>
-              <span className="tabular text-meta text-faint">
-                {new Date(comment.createdAt).toLocaleDateString('tr-TR')}
-              </span>
-              {/* Kaldırılmış yorumda ne "Sil" ne şikâyet var: silinecek
-                  metin kalmadı, şikâyet edilecek olan da. Satırın eylem
-                  yeri boş kalıyor — kaldırma kutusu zaten durumu
-                  söylüyor. */}
-              {comment.removalReason ? null : comment.author.username ===
-                thread.currentUsername ? (
-                <button
-                  type="button"
-                  onClick={() => void thread.remove(comment.id)}
-                  className="ml-auto text-meta text-faint transition-colors hover:text-danger"
-                >
-                  Sil
-                </button>
-              ) : (
-                /*
-                  ŞİKÂYET KENDİ YORUMUNDA GÖRÜNMÜYOR. Kendi yorumunu
-                  şikâyet etmek bir işe yaramıyor ve satırdaki tek eylem
-                  yeri "Sil" ile paylaşılıyor — ikisi birden gösterilseydi
-                  kullanıcı kendi yorumunu şikâyet edip moderatörü boşuna
-                  meşgul edebilirdi.
-
-                  Yorumun kendi adresi yok; moderatör fotoğrafın sayfasına
-                  gidiyor ve yorumu orada görüyor.
-                */
-                <ReportButton
-                  compact
-                  targetType="comment"
-                  targetId={comment.id}
-                  targetPath={`/fotograf/${photo.slug}`}
-                  className="ml-auto"
-                />
-              )}
-            </div>
-            {comment.removalReason ? (
-              <RemovedNotice reason={comment.removalReason} className="mt-1" />
-            ) : (
-              <p className="mt-1 whitespace-pre-line text-body-sm leading-relaxed text-muted-foreground">
-                {comment.body}
-              </p>
-            )}
-          </li>
+            comment={comment}
+            currentUsername={thread.currentUsername}
+            photoSlug={photo.slug}
+            onRemove={thread.remove}
+          />
         ))}
       </ul>
 
@@ -153,4 +108,115 @@ export function PhotoComments({ photo }: { photo: AstroPhoto }) {
       )}
     </Panel>
   );
+}
+
+type Comment = ReturnType<typeof usePhotoComments>['comments'][number];
+
+function CommentItem({
+  comment,
+  currentUsername,
+  photoSlug,
+  onRemove,
+}: {
+  comment: Comment;
+  currentUsername: string | null;
+  photoSlug: string;
+  onRemove: (id: string) => Promise<void>;
+}) {
+  const avatarUrl = profileAvatarUrl(comment.author.avatarPath);
+  const initial = comment.author.displayName
+    .slice(0, 1)
+    .toLocaleUpperCase('tr-TR');
+
+  return (
+    <li className="border-b border-border py-3 last:border-0">
+      <div className="grid grid-cols-[2.25rem_minmax(0,1fr)] gap-3">
+        <Link
+          to={`/profil/${comment.author.username}`}
+          className="mt-0.5 block h-9 w-9 overflow-hidden rounded-full border border-border bg-surface-2"
+          aria-label={`${comment.author.displayName} profilini aç`}
+        >
+          {avatarUrl ? (
+            <img
+              src={avatarUrl}
+              alt=""
+              loading="lazy"
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <span
+              aria-hidden
+              className="grid h-full w-full place-items-center text-body-sm font-medium text-muted-foreground"
+            >
+              {initial}
+            </span>
+          )}
+        </Link>
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+            <Link
+              to={`/profil/${comment.author.username}`}
+              className="text-meta font-medium text-foreground hover:text-primary"
+            >
+              {comment.author.displayName}
+            </Link>
+            <time
+              dateTime={comment.createdAt}
+              className="tabular text-meta text-faint"
+            >
+              {formatCommentDateTime(comment.createdAt)}
+            </time>
+            {/* Kaldırılmış yorumda ne "Sil" ne şikâyet var: silinecek
+                metin kalmadı, şikâyet edilecek olan da. Satırın eylem
+                yeri boş kalıyor — kaldırma kutusu zaten durumu söylüyor. */}
+            {comment.removalReason ? null : comment.author.username ===
+              currentUsername ? (
+              <button
+                type="button"
+                onClick={() => void onRemove(comment.id)}
+                className="ml-auto text-meta text-faint transition-colors hover:text-danger"
+              >
+                Sil
+              </button>
+            ) : (
+              /*
+                ŞİKÂYET KENDİ YORUMUNDA GÖRÜNMÜYOR. Kendi yorumunu
+                şikâyet etmek bir işe yaramıyor ve satırdaki tek eylem
+                yeri "Sil" ile paylaşılıyor — ikisi birden gösterilseydi
+                kullanıcı kendi yorumunu şikâyet edip moderatörü boşuna
+                meşgul edebilirdi.
+
+                Yorumun kendi adresi yok; moderatör fotoğrafın sayfasına
+                gidiyor ve yorumu orada görüyor.
+              */
+              <ReportButton
+                compact
+                targetType="comment"
+                targetId={comment.id}
+                targetPath={`/fotograf/${photoSlug}`}
+                className="ml-auto"
+              />
+            )}
+          </div>
+          {comment.removalReason ? (
+            <RemovedNotice reason={comment.removalReason} className="mt-1" />
+          ) : (
+            <p className="mt-1 whitespace-pre-line text-body-sm leading-relaxed text-muted-foreground">
+              {comment.body}
+            </p>
+          )}
+        </div>
+      </div>
+    </li>
+  );
+}
+
+function formatCommentDateTime(value: string): string {
+  return new Date(value).toLocaleString('tr-TR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 }

@@ -137,7 +137,7 @@ export interface PhotoComment {
   id: string;
   body: string;
   createdAt: string;
-  author: { username: string; displayName: string };
+  author: { username: string; displayName: string; avatarPath: string | null };
   /**
    * Moderasyon kaldırdıysa gösterilecek gerekçe; doluysa `body` boştur.
    *
@@ -153,7 +153,11 @@ interface CommentRow {
   body: string;
   created_at: string;
   removal_reason: string | null;
-  profiles: { username: string; display_name: string | null } | null;
+  profiles: {
+    username: string;
+    display_name: string | null;
+    avatar_path: string | null;
+  } | null;
 }
 
 export interface CommentThread {
@@ -188,7 +192,7 @@ export function usePhotoComments(photoId: string | undefined): CommentThread {
         .from('photo_comments')
         .select(
           'id, body, created_at, removal_reason, ' +
-            'profiles!photo_comments_user_id_profiles_fkey(username, display_name)'
+            'profiles!photo_comments_user_id_profiles_fkey(username, display_name, avatar_path)'
         )
         .eq('photo_id', photoId)
         .order('created_at', { ascending: true });
@@ -210,6 +214,7 @@ export function usePhotoComments(photoId: string | undefined): CommentThread {
               row.profiles?.display_name ??
               row.profiles?.username ??
               'Bilinmiyor',
+            avatarPath: row.profiles?.avatar_path ?? null,
           },
         }))
       );
@@ -242,7 +247,10 @@ export function usePhotoComments(photoId: string | undefined): CommentThread {
           .select('username')
           .eq('id', user.id)
           .maybeSingle();
-        if (active) setCurrentUsername((data as { username: string } | null)?.username ?? null);
+        if (active)
+          setCurrentUsername(
+            (data as { username: string } | null)?.username ?? null
+          );
       } catch {
         /* Profil okunamazsa silme düğmesi gizli kalır — güvenli taraf. */
       }
