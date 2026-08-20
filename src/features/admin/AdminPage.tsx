@@ -161,6 +161,7 @@ interface DashboardCard {
   hint: string;
   tone: StatTone;
   href: string;
+  icon: typeof HomeIcon;
 }
 
 function dashboardStats(data: DashboardStats | null): DashboardCard[] {
@@ -170,6 +171,7 @@ function dashboardStats(data: DashboardStats | null): DashboardCard[] {
       value: formatAdminCount(data?.moderasyonBekleyen),
       hint: 'Kuyruktaki şikâyetler',
       tone: 'warning',
+      icon: AlertIcon,
       /* Sayı `moderation_queue`dan geliyor (`admin_dashboard_rpc.sql:58`);
          bağlantı da o tabloyu gösteren ekrana gitmeli. Eskiden içerik onay
          ekranına gidiyordu: sayaç doğru, varış yeri yanlıştı. */
@@ -180,6 +182,7 @@ function dashboardStats(data: DashboardStats | null): DashboardCard[] {
       value: formatAdminCount(data?.fotografBekleyen),
       hint: 'Fotoğraf inceleme',
       tone: 'warning',
+      icon: ImageIcon,
       href: '/admin/onay-kuyrugu?record=photo',
     },
     {
@@ -187,6 +190,7 @@ function dashboardStats(data: DashboardStats | null): DashboardCard[] {
       value: formatAdminCount(data?.silmeTalebi),
       hint: 'Hesap kapatma kuyruğu',
       tone: 'primary',
+      icon: UsersIcon,
       href: '/admin/kullanicilar',
     },
     {
@@ -194,6 +198,7 @@ function dashboardStats(data: DashboardStats | null): DashboardCard[] {
       value: formatAdminCount(data?.kullaniciAskida),
       hint: 'Kısıtlı hesap',
       tone: 'success',
+      icon: UsersIcon,
       href: '/admin/kullanicilar',
     },
     {
@@ -201,6 +206,7 @@ function dashboardStats(data: DashboardStats | null): DashboardCard[] {
       value: formatAdminCount(data?.kullaniciToplam),
       hint: 'Toplam üye',
       tone: 'cold',
+      icon: UsersIcon,
       href: '/admin/kullanicilar',
     },
     {
@@ -208,6 +214,7 @@ function dashboardStats(data: DashboardStats | null): DashboardCard[] {
       value: formatAdminCount(data?.icerikYayinda),
       hint: 'Yayındaki kayıt',
       tone: 'primary',
+      icon: BookIcon,
       href: '/admin/icerik',
     },
   ];
@@ -355,33 +362,35 @@ export function AdminPage() {
         noIndex
       />
       <Container className="max-w-admin py-6 sm:py-8">
-        <div className="grid gap-4 lg:grid-cols-[17rem_minmax(0,1fr)]">
-          <aside className="rounded-card border border-border-strong bg-surface-1/90 p-3 shadow-overlay lg:sticky lg:top-20 lg:self-start">
-            <div className="border-b border-border px-2 pb-4">
-              <div className="flex items-center gap-2">
-                <span className="flex h-9 w-9 items-center justify-center rounded-card border border-primary/45 bg-primary/10 text-primary">
+        <div className="grid gap-5 lg:grid-cols-[16rem_minmax(0,1fr)]">
+          <aside className="overflow-hidden rounded-card border border-border-strong bg-surface-1 shadow-overlay lg:sticky lg:top-20 lg:self-start">
+            <div className="border-b border-border px-4 py-4">
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-card border border-primary/35 bg-background text-primary">
                   <SparkleIcon className="h-4 w-4" />
                 </span>
-                <div>
-                  <p className="font-display text-caption font-bold tracking-[0.16em] text-foreground">
+                <div className="min-w-0">
+                  <p className="truncate font-display text-caption font-bold tracking-[0.14em] text-foreground">
                     ASTROHUB
                   </p>
-                  <p className="text-meta text-faint">Admin Console</p>
+                  <p className="text-meta text-muted-foreground">
+                    Yönetim paneli
+                  </p>
                 </div>
               </div>
               <Badge
                 tone={roles.isAdmin ? 'primary' : 'warning'}
-                className="mt-3"
+                className="mt-4"
               >
                 {roles.isAdmin ? 'Yönetici' : 'Yetki kontrollü'}
               </Badge>
             </div>
 
-            <nav aria-label="Yönetim bölümleri" className="mt-4 space-y-5">
+            <nav aria-label="Yönetim bölümleri" className="space-y-5 p-3">
               {navGroups.map((group, groupIndex) => (
                 <div key={group.title ?? groupIndex}>
                   {group.title ? (
-                    <p className="mb-2 px-3 text-[0.64rem] font-semibold uppercase tracking-[0.08em] text-faint">
+                    <p className="mb-2 px-2 text-[0.64rem] font-semibold uppercase tracking-[0.08em] text-faint">
                       {group.title}
                     </p>
                   ) : null}
@@ -395,14 +404,21 @@ export function AdminPage() {
                             to={item.path}
                             aria-current={selected ? 'page' : undefined}
                             className={cn(
-                              'flex items-center gap-3 rounded-card px-3 py-2 text-body-sm font-medium transition-colors',
+                              'grid grid-cols-[1.35rem_minmax(0,1fr)_0.4rem] items-center gap-2 rounded-card px-2.5 py-2.5 text-body-sm font-medium transition-colors',
                               selected
-                                ? 'bg-primary/10 text-primary'
-                                : 'text-muted-foreground hover:bg-surface-2 hover:text-foreground'
+                                ? 'bg-surface-2 text-foreground'
+                                : 'text-muted-foreground hover:bg-surface-2/70 hover:text-foreground'
                             )}
                           >
                             <Icon className="h-[18px] w-[18px] shrink-0" />
                             <span className="truncate">{item.label}</span>
+                            <span
+                              aria-hidden="true"
+                              className={cn(
+                                'h-1.5 w-1.5 rounded-full',
+                                selected ? 'bg-primary' : 'bg-transparent'
+                              )}
+                            />
                           </Link>
                         </li>
                       );
@@ -618,61 +634,92 @@ function Dashboard() {
     (data?.fotografBekleyen ?? 0) +
     (data?.silmeTalebi ?? 0) +
     (data?.kullaniciAskida ?? 0);
+  const priorityStats = stats.slice(0, 4);
+  const platformStats = stats.slice(4);
+  const latestActivity = data?.sonHareketler[0];
 
   return (
     <>
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
-        {stats.map(({ label, value, hint, tone, href }) => (
-          <Link
-            key={label}
-            to={href}
-            className={cn(
-              'rounded-card border bg-surface-1 p-4 transition-transform hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary',
-              tone === 'warning'
-                ? 'border-warning/35 bg-warning/10'
-                : 'border-border'
-            )}
-          >
-            <p className="label">{label}</p>
-            <p
-              className={cn(
-                'tabular mt-2 font-display text-2xl font-bold leading-none',
-                tone === 'success' && 'text-success',
-                tone === 'primary' && 'text-primary',
-                tone === 'cold' && 'text-cold',
-                tone === 'warning' && 'text-warning'
-              )}
-            >
-              {value}
+      <section className="rounded-card border border-border-strong bg-surface-1 px-4 py-4 sm:px-5">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+          <div>
+            <p className="label text-primary">Yönetim Paneli</p>
+            <h1 className="mt-1 font-display text-2xl font-bold leading-tight text-foreground sm:text-3xl">
+              Genel Bakış
+            </h1>
+            <p className="mt-2 max-w-2xl text-body-sm leading-relaxed text-muted-foreground">
+              Kritik kuyrukları, yayın durumunu ve son yönetim hareketlerini tek
+              ekrandan takip edin.
             </p>
-            <p className="mt-2 text-meta text-faint">{hint}</p>
-          </Link>
-        ))}
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2 xl:w-[24rem]">
+            <div className="rounded-card border border-border bg-background px-3 py-2">
+              <p className="text-meta text-faint">Açık iş</p>
+              <p className="tabular mt-1 font-display text-xl font-bold text-warning">
+                {formatAdminCount(totalQueue)}
+              </p>
+            </div>
+            <div className="rounded-card border border-border bg-background px-3 py-2">
+              <p className="text-meta text-faint">Son hareket</p>
+              <p className="tabular mt-1 truncate text-body-sm font-semibold text-foreground">
+                {latestActivity ? formatAdminTime(latestActivity.zaman) : '—'}
+              </p>
+            </div>
+          </div>
+        </div>
       </section>
+
       {error ? (
-        <p className="text-meta text-warning" role="status">
+        <p
+          className="rounded-card border border-warning/30 bg-warning/10 px-3 py-2 text-meta text-warning"
+          role="status"
+        >
           Canlı dashboard verisi alınamadı: {error}
         </p>
       ) : null}
 
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {liveActivityRows.map((row) => (
-          <Link
-            key={row.title}
-            to={row.href}
-            className="rounded-card border border-border bg-surface-1 p-4 transition-transform hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-meta text-muted-foreground">{row.title}</p>
-                <p className="mt-1 font-display text-2xl font-bold leading-none text-foreground">
-                  {row.meta}
-                </p>
-              </div>
+      <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]">
+        <div className="rounded-card border border-border bg-surface-1">
+          <header className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
+            <div>
+              <h2 className="label text-foreground">Öncelikli İşler</h2>
+              <p className="mt-1 text-meta text-faint">
+                Müdahale bekleyen alanlar
+              </p>
             </div>
-            <p className="mt-3 text-meta text-faint">{row.text}</p>
-          </Link>
-        ))}
+            <Badge tone={totalQueue > 0 ? 'warning' : 'success'}>
+              {formatAdminCount(totalQueue)} açık
+            </Badge>
+          </header>
+          <div className="grid gap-px bg-border md:grid-cols-2 xl:grid-cols-4">
+            {priorityStats.map((stat) => (
+              <DashboardStatLink key={stat.label} stat={stat} />
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-card border border-border bg-surface-1">
+          <header className="border-b border-border px-4 py-3">
+            <h2 className="label text-foreground">Platform</h2>
+            <p className="mt-1 text-meta text-faint">Canlı temel metrikler</p>
+          </header>
+          <div className="grid gap-px bg-border sm:grid-cols-2 xl:grid-cols-1">
+            {platformStats.map((stat) => (
+              <DashboardStatLink key={stat.label} stat={stat} compact />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="rounded-card border border-border bg-surface-1">
+        <header className="border-b border-border px-4 py-3">
+          <h2 className="label text-foreground">Kısa Göstergeler</h2>
+        </header>
+        <div className="grid gap-px bg-border sm:grid-cols-2 xl:grid-cols-4">
+          {liveActivityRows.map((row) => (
+            <DashboardRowLink key={row.title} row={row} />
+          ))}
+        </div>
       </section>
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(22rem,0.85fr)]">
@@ -800,6 +847,75 @@ function Dashboard() {
         </section>
       </div>
     </>
+  );
+}
+
+function DashboardStatLink({
+  stat,
+  compact = false,
+}: {
+  stat: DashboardCard;
+  compact?: boolean;
+}) {
+  const Icon = stat.icon;
+  return (
+    <Link
+      to={stat.href}
+      className="group bg-surface-1 p-4 transition-colors hover:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-primary"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <span
+          className={cn(
+            'flex h-9 w-9 items-center justify-center rounded-card border bg-background',
+            stat.tone === 'warning' && 'border-warning/35 text-warning',
+            stat.tone === 'primary' && 'border-primary/35 text-primary',
+            stat.tone === 'success' && 'border-success/35 text-success',
+            stat.tone === 'cold' && 'border-cold/35 text-cold'
+          )}
+        >
+          <Icon className="h-4 w-4" />
+        </span>
+        <span
+          className={cn(
+            'tabular font-display font-bold leading-none',
+            compact ? 'text-xl' : 'text-2xl',
+            stat.tone === 'warning' && 'text-warning',
+            stat.tone === 'primary' && 'text-primary',
+            stat.tone === 'success' && 'text-success',
+            stat.tone === 'cold' && 'text-cold'
+          )}
+        >
+          {stat.value}
+        </span>
+      </div>
+      <h3 className="mt-4 text-body-sm font-semibold text-foreground">
+        {stat.label}
+      </h3>
+      <p className="mt-1 text-meta leading-relaxed text-muted-foreground">
+        {stat.hint}
+      </p>
+    </Link>
+  );
+}
+
+function DashboardRowLink({ row }: { row: DashboardRow }) {
+  return (
+    <Link
+      to={row.href}
+      className="flex min-h-24 flex-col justify-between bg-surface-1 p-4 transition-colors hover:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-primary"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <h3 className="text-body-sm font-semibold text-foreground">
+          {row.title}
+        </h3>
+        <span className="tabular font-display text-xl font-bold leading-none text-primary">
+          {row.meta}
+        </span>
+      </div>
+      <p className="mt-3 text-meta leading-relaxed text-muted-foreground">
+        {row.text}
+      </p>
+    </Link>
   );
 }
 
