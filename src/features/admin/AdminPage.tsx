@@ -644,7 +644,7 @@ function Dashboard() {
         <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div>
             <p className="label text-primary">Yönetim Paneli</p>
-            <h1 className="mt-1 font-display text-2xl font-bold leading-tight text-foreground sm:text-3xl">
+            <h1 className="type-page-sm mt-1 text-foreground">
               Genel Bakış
             </h1>
             <p className="mt-2 max-w-2xl text-body-sm leading-relaxed text-muted-foreground">
