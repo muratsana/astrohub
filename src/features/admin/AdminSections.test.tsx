@@ -98,7 +98,9 @@ describe('StageHub tarzı admin GUI', () => {
       'aria-current',
       'page'
     );
-    expect(screen.getByText('Platformun anlık nabzı')).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'İçerik Akışı' })
+    ).toBeInTheDocument();
   });
 
   it('eski admin içerik adresleri yeni İçerik sekmesine düşer', () => {
@@ -117,7 +119,9 @@ describe('StageHub tarzı admin GUI', () => {
       'Sistem Sağlığı',
       'Son Hareketler',
     ]) {
-      expect(screen.getByRole('heading', { name: heading })).toBeInTheDocument();
+      expect(
+        screen.getByRole('heading', { name: heading })
+      ).toBeInTheDocument();
     }
 
     /* Sayı `moderation_queue`dan geliyor, dolayısıyla bağlantı da o
@@ -138,8 +142,15 @@ describe('StageHub tarzı admin GUI', () => {
   it('gerçek admin yüzeyinin yetki kontrollü olduğunu gösterir', () => {
     renderPanel();
     expect(screen.getByText(/Yönetici/i)).toBeInTheDocument();
-    expect(screen.getByText(/mevcut AstroHub kontrollerine bağlıdır/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Rapor al' })).toBeDisabled();
+    expect(
+      screen.queryByText('Platformun anlık nabzı')
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Komut paleti ⌘K' })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Rapor al' })
+    ).not.toBeInTheDocument();
   });
 
   it('dashboard sayaçlarını Türkçe biçimler ve boşta sahte sayı basmaz', () => {

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router';
 import { Badge } from '@/components/ui/Badge';
-import { Button, ButtonLink } from '@/components/ui/Button';
+import { ButtonLink } from '@/components/ui/Button';
 import { Container } from '@/components/ui/Container';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { PageMeta } from '@/components/seo/PageMeta';
@@ -414,30 +414,6 @@ export function AdminPage() {
           </aside>
 
           <main className="min-w-0 space-y-4">
-            <header className="rounded-card border border-border-strong bg-[radial-gradient(circle_at_top_right,rgba(255,160,38,0.18),transparent_34%),linear-gradient(135deg,var(--surface-1),var(--background))] p-5 shadow-overlay">
-              <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-                <div>
-                  <p className="label text-primary">Yönetim Paneli</p>
-                  <h1 className="type-page mt-2 max-w-3xl font-display font-bold text-foreground">
-                    Platformun anlık nabzı
-                  </h1>
-                  <p className="mt-3 max-w-2xl text-body-sm leading-relaxed text-muted-foreground">
-                    StageHub admin düzeninden uyarlanan kabuk; kullanıcı,
-                    içerik, moderasyon, yayın ve sistem yüzeyleri mevcut
-                    AstroHub kontrollerine bağlıdır.
-                  </p>
-                </div>
-                <div className="flex shrink-0 flex-wrap gap-2">
-                  <Button type="button" size="sm" variant="secondary" disabled>
-                    Komut paleti ⌘K
-                  </Button>
-                  <Button type="button" size="sm" disabled>
-                    Rapor al
-                  </Button>
-                </div>
-              </div>
-            </header>
-
             {!ready ? (
               <EmptyState
                 message="Veritabanı bağlantısı yapılandırılmamış"
@@ -719,7 +695,9 @@ function Dashboard() {
               >
                 <div className="flex items-start justify-between gap-3">
                   <IconTile index={index} />
-                  <Badge tone={index === 2 || index === 3 ? 'warning' : 'muted'}>
+                  <Badge
+                    tone={index === 2 || index === 3 ? 'warning' : 'muted'}
+                  >
                     {row.meta}
                   </Badge>
                 </div>
@@ -749,19 +727,19 @@ function Dashboard() {
                   to={row.href}
                   className="block px-4 py-3 transition-colors hover:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-primary"
                 >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-body-sm font-semibold text-foreground">
-                      {row.title}
-                    </p>
-                    <p className="mt-1 text-meta text-muted-foreground">
-                      {row.text}
-                    </p>
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-body-sm font-semibold text-foreground">
+                        {row.title}
+                      </p>
+                      <p className="mt-1 text-meta text-muted-foreground">
+                        {row.text}
+                      </p>
+                    </div>
+                    <span className="tabular text-meta text-primary">
+                      {row.meta}
+                    </span>
                   </div>
-                  <span className="tabular text-meta text-primary">
-                    {row.meta}
-                  </span>
-                </div>
                 </Link>
               </li>
             ))}

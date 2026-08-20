@@ -5,6 +5,7 @@ import {
   validateAudioFile,
   validateBroadcast,
   validateTrack,
+  validateTrackIdentity,
 } from './broadcastAdmin';
 
 const base = {
@@ -53,7 +54,11 @@ describe('validateBroadcast', () => {
     ).toBeNull();
 
     expect(
-      validateBroadcast({ ...base, refKind: 'channel', youtubeId: 'dQw4w9WgXcQ' })
+      validateBroadcast({
+        ...base,
+        refKind: 'channel',
+        youtubeId: 'dQw4w9WgXcQ',
+      })
     ).toContain('UC ile başlar');
   });
 
@@ -114,7 +119,25 @@ describe('validateTrack', () => {
 
   it('boş başlığı reddeder', () => {
     expect(
-      validateTrack({ title: '  ', artist: '', source: 'mp3', path: 'a.mp3', note: '' })
+      validateTrack({
+        title: '  ',
+        artist: '',
+        source: 'mp3',
+        path: 'a.mp3',
+        note: '',
+      })
+    ).toContain('Başlık');
+  });
+});
+
+describe('validateTrackIdentity', () => {
+  it('liste içi düzenlemede parça adını zorunlu tutar', () => {
+    expect(
+      validateTrackIdentity({ title: 'Night Drift', artist: 'AstroHub' })
+    ).toBeNull();
+
+    expect(
+      validateTrackIdentity({ title: '  ', artist: 'AstroHub' })
     ).toContain('Başlık');
   });
 });
@@ -192,8 +215,8 @@ describe('validateAudioFile', () => {
   });
 
   it('ses olmayan türü reddediyor', () => {
-    expect(validateAudioFile(dosya('a.pdf', 'application/pdf', 1024))).toContain(
-      'yüklenebilir'
-    );
+    expect(
+      validateAudioFile(dosya('a.pdf', 'application/pdf', 1024))
+    ).toContain('yüklenebilir');
   });
 });

@@ -3,7 +3,11 @@ import { Panel } from '@/components/ui/Panel';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Input, Select } from '@/components/ui/Input';
-import { broadcastKindLabels, type BroadcastKind, type YoutubeRef } from '@/features/tv/types';
+import {
+  broadcastKindLabels,
+  type BroadcastKind,
+  type YoutubeRef,
+} from '@/features/tv/types';
 import {
   fetchBroadcasts,
   createBroadcast,
@@ -15,6 +19,8 @@ import {
   fetchTracks,
   createTrack,
   validateTrack,
+  validateTrackIdentity,
+  updateTrackIdentity,
   setTrackPublished,
   deleteRadioTrackWithFile,
   saveTrackOrder,
@@ -124,11 +130,7 @@ function TvControl() {
         alan oynatıcıyı başka bir siteye çeviremez.
       </p>
 
-      {error && (
-        <Alert className="mb-3">
-          {error}
-        </Alert>
-      )}
+      {error && <Alert className="mb-3">{error}</Alert>}
 
       {items && items.length > 0 && (
         <ul className="mb-3">
@@ -280,8 +282,8 @@ function TvControl() {
           </div>
 
           <p className="text-meta leading-snug text-faint">
-            Kayıt taslak olarak eklenir. Yayına almak ayrı bir adımdır —
-            yanlış bir kimlik anında izleyiciye kırık oynatıcı göstermesin.
+            Kayıt taslak olarak eklenir. Yayına almak ayrı bir adımdır — yanlış
+            bir kimlik anında izleyiciye kırık oynatıcı göstermesin.
           </p>
         </div>
       ) : (
@@ -306,6 +308,11 @@ function RadioControl() {
   const [source, setSource] = useState<'mp3' | 'spotify'>('mp3');
   const [path, setPath] = useState('');
   const [dragging, setDragging] = useState<string | null>(null);
+  const [editing, setEditing] = useState<{
+    id: string;
+    title: string;
+    artist: string;
+  } | null>(null);
 
   const load = useCallback(() => {
     setError(null);
@@ -348,6 +355,24 @@ function RadioControl() {
     });
   }
 
+  async function saveIdentity(trackId: string) {
+    if (!editing || editing.id !== trackId) return;
+    const input = {
+      title: editing.title,
+      artist: editing.artist,
+    };
+    const problem = validateTrackIdentity(input);
+    if (problem) {
+      setError(problem);
+      return;
+    }
+
+    await run(async () => {
+      await updateTrackIdentity(trackId, input);
+      setEditing(null);
+    });
+  }
+
   async function reorder(fromId: string, toId: string) {
     if (!items || fromId === toId || busy) return;
     const from = items.findIndex((item) => item.id === fromId);
@@ -384,8 +409,8 @@ function RadioControl() {
       status={items ? `${items.length} kayıt` : 'okunuyor…'}
     >
       <p className="mb-3 text-meta leading-relaxed text-muted-foreground">
-        Radyo sitenin kendi yayınıdır; listeyi editör hazırlar. Yayın
-        kesintisiz döngüde çalar — son parça bitince baştan başlar.
+        Radyo sitenin kendi yayınıdır; listeyi editör hazırlar. Yayın kesintisiz
+        döngüde çalar — son parça bitince baştan başlar.
       </p>
 
       {/* Kasa: dosyalar buradan yükleniyor, yol elle yazılmıyor. */}
@@ -393,18 +418,14 @@ function RadioControl() {
         <RadioVault onUploaded={load} />
       </div>
 
-      {error && (
-        <Alert className="mb-3">
-          {error}
-        </Alert>
-      )}
+      {error && <Alert className="mb-3">{error}</Alert>}
 
       {items && items.length > 0 && (
         <ul className="mb-3">
           {items.map((track) => (
             <li
               key={track.id}
-              draggable={!busy}
+              draggable={!busy && editing?.id !== track.id}
               onDragStart={() => setDragging(track.id)}
               onDragEnd={() => setDragging(null)}
               onDragOver={(event) => event.preventDefault()}
@@ -438,12 +459,90 @@ function RadioControl() {
               </Badge>
               {!track.published && <Badge tone="warning">Taslak</Badge>}
 
-              <span className="min-w-0 flex-1 truncate text-meta text-foreground">
-                {track.title}
-                {track.artist && (
-                  <span className="text-muted-foreground"> · {track.artist}</span>
-                )}
-              </span>
+              {editing?.id === track.id ? (
+                <>
+                  <div className="grid min-w-[14rem] flex-1 gap-1.5 sm:grid-cols-2">
+                    <Input
+                      aria-label="Parça adı"
+                      value={editing.title}
+                      onChange={(event) =>
+                        setEditing((current) =>
+                          current?.id === track.id
+                            ? { ...current, title: event.target.value }
+                            : current
+                        )
+                      }
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter') {
+                          event.preventDefault();
+                          void saveIdentity(track.id);
+                        }
+                        if (event.key === 'Escape') setEditing(null);
+                      }}
+                      className="h-8 text-meta"
+                    />
+                    <Input
+                      aria-label="Sanatçı"
+                      placeholder="Sanatçı"
+                      value={editing.artist}
+                      onChange={(event) =>
+                        setEditing((current) =>
+                          current?.id === track.id
+                            ? { ...current, artist: event.target.value }
+                            : current
+                        )
+                      }
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter') {
+                          event.preventDefault();
+                          void saveIdentity(track.id);
+                        }
+                        if (event.key === 'Escape') setEditing(null);
+                      }}
+                      className="h-8 text-meta"
+                    />
+                  </div>
+                  <Button
+                    size="sm"
+                    disabled={busy}
+                    onClick={() => void saveIdentity(track.id)}
+                  >
+                    Kaydet
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    disabled={busy}
+                    onClick={() => setEditing(null)}
+                  >
+                    Vazgeç
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <span className="min-w-0 flex-1 truncate text-meta text-foreground">
+                    {track.title}
+                    <span className="text-muted-foreground">
+                      {' '}
+                      · {track.artist || 'Bilinmiyor'}
+                    </span>
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    disabled={busy}
+                    onClick={() =>
+                      setEditing({
+                        id: track.id,
+                        title: track.title,
+                        artist: track.artist || '',
+                      })
+                    }
+                  >
+                    Düzenle
+                  </Button>
+                </>
+              )}
 
               <Button
                 aria-label={`${track.title} parçasını yukarı taşı`}
@@ -481,11 +580,7 @@ function RadioControl() {
                 disabled={busy}
                 onClick={() =>
                   void run(() =>
-                    deleteRadioTrackWithFile(
-                      track.id,
-                      track.source,
-                      track.path
-                    )
+                    deleteRadioTrackWithFile(track.id, track.source, track.path)
                   )
                 }
               >

@@ -1,5 +1,9 @@
 import { getSupabase } from '@/services/supabase/client';
-import { isValidYoutubeId, type BroadcastKind, type YoutubeRef } from '@/features/tv/types';
+import {
+  isValidYoutubeId,
+  type BroadcastKind,
+  type YoutubeRef,
+} from '@/features/tv/types';
 import { sanitizeText } from '@/lib/sanitize';
 
 /**
@@ -220,6 +224,11 @@ export interface NewTrack {
   note: string;
 }
 
+export interface TrackIdentity {
+  title: string;
+  artist: string;
+}
+
 /**
  * Radyo kaydı doğrulaması.
  *
@@ -231,7 +240,9 @@ export interface NewTrack {
 export function validateTrack(input: NewTrack): string | null {
   if (input.title.trim().length < 1) return 'Başlık boş olamaz.';
   if (input.source === 'spotify') {
-    if (!/^https:\/\/open\.spotify\.com\/track\/[A-Za-z0-9]+/.test(input.path)) {
+    if (
+      !/^https:\/\/open\.spotify\.com\/track\/[A-Za-z0-9]+/.test(input.path)
+    ) {
       return 'Spotify bağlantısı https://open.spotify.com/track/… biçiminde olmalı.';
     }
   } else if (/^https?:\/\//i.test(input.path)) {
@@ -239,6 +250,11 @@ export function validateTrack(input: NewTrack): string | null {
   } else if (input.path.trim().length === 0) {
     return 'Dosya yolu boş olamaz.';
   }
+  return null;
+}
+
+export function validateTrackIdentity(input: TrackIdentity): string | null {
+  if (input.title.trim().length < 1) return 'Başlık boş olamaz.';
   return null;
 }
 
@@ -252,6 +268,22 @@ export async function createTrack(input: NewTrack): Promise<void> {
     note: sanitizeText(input.note, { maxLength: 500 }) || null,
     published: false,
   });
+
+  if (error) throw new Error(error.message);
+}
+
+export async function updateTrackIdentity(
+  id: string,
+  input: TrackIdentity
+): Promise<void> {
+  const supabase = await client();
+  const { error } = await supabase
+    .from('radio_tracks')
+    .update({
+      title: sanitizeText(input.title, { maxLength: 200 }),
+      artist: sanitizeText(input.artist, { maxLength: 200 }) || 'Bilinmiyor',
+    })
+    .eq('id', id);
 
   if (error) throw new Error(error.message);
 }
@@ -289,7 +321,15 @@ const RADIO_MIME = ['audio/mpeg', 'audio/mp3', 'audio/ogg', 'audio/aac'];
  */
 export function radioObjectPath(fileName: string, suffix: string): string {
   const harfler: Record<string, string> = {
-    ç: 'c', ğ: 'g', ı: 'i', ö: 'o', ş: 's', ü: 'u', â: 'a', î: 'i', û: 'u',
+    ç: 'c',
+    ğ: 'g',
+    ı: 'i',
+    ö: 'o',
+    ş: 's',
+    ü: 'u',
+    â: 'a',
+    î: 'i',
+    û: 'u',
   };
 
   const nokta = fileName.lastIndexOf('.');
@@ -319,7 +359,10 @@ export function radioObjectPath(fileName: string, suffix: string): string {
  */
 export function readAudioDuration(file: File): Promise<number | null> {
   return new Promise((resolve) => {
-    if (typeof Audio === 'undefined' || typeof URL.createObjectURL !== 'function') {
+    if (
+      typeof Audio === 'undefined' ||
+      typeof URL.createObjectURL !== 'function'
+    ) {
       resolve(null);
       return;
     }
@@ -339,7 +382,9 @@ export function readAudioDuration(file: File): Promise<number | null> {
 
     audio.addEventListener('loadedmetadata', () => {
       clearTimeout(zamanlayici);
-      kapat(Number.isFinite(audio.duration) ? Math.round(audio.duration) : null);
+      kapat(
+        Number.isFinite(audio.duration) ? Math.round(audio.duration) : null
+      );
     });
     audio.addEventListener('error', () => {
       clearTimeout(zamanlayici);
@@ -424,7 +469,9 @@ export async function uploadRadioTrack(
     title: sanitizeText(meta.title?.trim() || varsayilanBaslik, {
       maxLength: 200,
     }),
-    artist: sanitizeText(meta.artist?.trim() || 'Bilinmiyor', { maxLength: 200 }),
+    artist: sanitizeText(meta.artist?.trim() || 'Bilinmiyor', {
+      maxLength: 200,
+    }),
     source: 'mp3',
     path,
     duration_sec: durationSec,
