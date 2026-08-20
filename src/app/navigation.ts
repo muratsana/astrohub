@@ -336,12 +336,6 @@ export const siteMap: NavGroup[] = [
         keywords: ['tonight', 'gece', 'karanlık', 'efemeris'],
       },
       {
-        label: 'Gözlem ve Çekim Planlayıcı',
-        to: '/bu-gece/plan',
-        description: 'Gece planı ve hedef sırası',
-        keywords: ['plan', 'gece planı'],
-      },
-      {
         label: 'Poz ve Entegrasyon Planlayıcı',
         to: '/araclar/poz-plani',
         description: 'Hedef süreyi kare sayısına, geceye ve depolamaya çevirir',

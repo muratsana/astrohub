@@ -204,23 +204,7 @@ export function SimulatorPage() {
                   Mozaik planlayıcıya aktar
                 </ButtonLink>
               )}
-              {/*
-                ÜÇ DEVRETME, ÜÇ AYRI SORU.
-
-                Kadrajda hedefine bakan kullanıcının sonraki sorusu üçten
-                biri oluyor: "sığmıyor, kaç panel gerekir" (mozaik), "bu
-                gece ne kadar yükselir" (gece planı), "hangi filtreyle
-                kaç poz" (poz planı). Üçü de hedefi baştan aratıyordu.
-              */}
-              {activeTarget.slug && (
-                <ButtonLink
-                  to={toolLink('/bu-gece/plan', { hedef: activeTarget.slug })}
-                  size="sm"
-                  variant="secondary"
-                >
-                  Gece planına ekle
-                </ButtonLink>
-              )}
+              {/* Kadrajdan sonraki iki doğal aktarım: panel sayısı ve poz planı. */}
               {activeTarget.slug && (
                 <ButtonLink
                   to={toolLink('/araclar/poz-plani', {

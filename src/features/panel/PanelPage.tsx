@@ -301,17 +301,6 @@ export function PanelPage() {
     /* Ekipman artık hesabın altında tek bir yerde (bkz.
        `MyEquipmentPanel`); panel oraya işaret ediyor. */
     { label: 'Ekipmanlarım', to: '/hesap?sekme=ekipmanlarim' },
-    /*
-     * "PLANLARIM" DEĞİL "PLANLAYICI".
-     *
-     * Planlayıcı çalışan bir araç ama planı KAYDETMİYOR (bkz.
-     * `PlannerPage`: hesaplama tarayıcıda, çıktı yazdırılabilir bir
-     * sayfa gibi). "Planlarım" demek, geri dönünce planını bulacağını
-     * söylemekti; kullanıcı dönüp boş sayfa buluyordu. Kaydedilen plan
-     * ayrı bir iş (gece oturumu günlüğü, Faz 7 MUST-03) — o gelene
-     * kadar bağlantı ne olduğunu söylüyor.
-     */
-    { label: 'Planlayıcı', to: '/bu-gece/plan' },
     { label: 'Etkinliklerim', to: '/etkinlikler' },
     { label: 'Kaydedilenler', to: '/panel/kaydedilenler' },
     { label: 'Kayıtlı Noktalar', to: '/saha' },

@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Container } from '@/components/ui/Container';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { NightViews } from './NightViews';
 import { Panel } from '@/components/ui/Panel';
 import { Button } from '@/components/ui/Button';
 import { Readout } from '@/components/ui/Readout';
@@ -12,6 +11,7 @@ import {
   upcomingShowers,
 } from '@/domain/astronomy/meteorShowers';
 import { useLocationContext } from '@/features/location/LocationContext';
+import { LocationPicker } from '@/features/location/LocationPicker';
 import {
   monthNights,
   calendarWeeks,
@@ -107,11 +107,9 @@ export function DarkCalendarPage() {
             { label: 'Karanlık Takvimi' },
           ]}
           title="Ay ve Karanlık Takvimi"
-          description="Her gece için astronomik karanlık penceresi ve ayın o pencereyi ne kadar paylaştığı. Renk yoğunluğu aysız karanlık süreyi gösterir — koyu hücre iyi gecedir."
-          meta={location.label}
+          description="Her gece için astronomik karanlık penceresi ve ayın o pencereyi ne kadar paylaştığı. Karanlık geceler siyah zeminde, ay etkisi yüksek geceler açık zeminde görünür."
+          actions={<LocationPicker variant="panel" />}
         />
-
-        <NightViews />
 
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
@@ -146,17 +144,19 @@ export function DarkCalendarPage() {
           </div>
 
           <div className="flex items-center gap-2 text-meta tracking-[0.03em] text-faint">
-            <span>az</span>
+            <span>aylı</span>
             <span aria-hidden className="flex">
-              {[0.15, 0.35, 0.55, 0.75, 1].map((o) => (
+              {[0, 0.25, 0.5, 0.75, 1].map((o) => (
                 <span
                   key={o}
                   className="h-3 w-4 border-l border-surface-1 first:border-0"
-                  style={{ backgroundColor: `color-mix(in srgb, var(--color-primary) ${o * 100}%, transparent)` }}
+                  style={{
+                    backgroundColor: `color-mix(in srgb, #f8fafc ${(1 - o) * 82}%, #020617 ${35 + o * 55}%)`,
+                  }}
                 />
               ))}
             </span>
-            <span>çok aysız karanlık</span>
+            <span>karanlık</span>
           </div>
         </div>
 
@@ -224,8 +224,8 @@ export function DarkCalendarPage() {
                 altında kaldığı sürenin kesişimidir.
               </p>
               <p>
-                Hücredeki çubuk gece kalitesini gösterir; turuncu ne kadar
-                doluysa çekim penceresi o kadar uzundur.
+                Hücre zemini ay etkisini ters ölçekte gösterir; siyaha yaklaşan
+                geceler daha karanlık, beyaza yaklaşan geceler daha aydınlıktır.
               </p>
             </div>
           </Panel>
@@ -381,7 +381,7 @@ export function DarkCalendarPage() {
 /**
  * Takvim hücresi.
  *
- * Renk yoğunluğu aysız karanlık süreyle orantılıdır (6 saat = tam yoğunluk).
+ * Zemin rengi ters ölçeklidir: uzun aysız süre siyaha, ay etkisi beyaza gider.
  * Renk tek başına anlam taşımaz (§6.7): süre hücrenin içinde yazılı ve
  * `aria-label` tam cümleyi okur.
  */
@@ -399,6 +399,11 @@ function DayCell({
   const intensity = Math.min(entry.moonlessMinutes / 360, 1);
   const hours = entry.moonlessMinutes / 60;
   const moonPercent = Math.round(entry.moon.illumination * 100);
+  const moonWash = Math.min(
+    entry.moon.illumination * (1 - intensity * 0.65) + (1 - intensity) * 0.2,
+    1
+  );
+  const isMoonlit = moonWash > 0.45 && intensity < 0.55;
   const isGood = entry.moonlessMinutes >= 300;
   const isUsable = entry.moonlessMinutes >= 180;
 
@@ -407,28 +412,39 @@ function DayCell({
       type="button"
       onClick={onSelect}
       aria-pressed={isSelected}
-      aria-label={`${entry.date.getDate()} ${MONTH_NAMES[entry.date.getMonth()]}: ${formatDuration(entry.moonlessMinutes)} aysız karanlık, ay %${Math.round(entry.moon.illumination * 100)} aydınlık`}
+      aria-label={`${entry.date.getDate()} ${MONTH_NAMES[entry.date.getMonth()]}: aysız süre ${formatDuration(entry.moonlessMinutes)}, ay %${Math.round(entry.moon.illumination * 100)} aydınlık`}
       className={cn(
         'group relative flex aspect-square flex-col justify-between bg-surface-1 p-2 text-left transition-colors',
         'hover:bg-surface-2 hover:outline hover:outline-1 hover:-outline-offset-1 hover:outline-primary',
         isSelected && 'z-10 outline outline-1 -outline-offset-1 outline-primary'
       )}
       style={{
-        backgroundColor: `color-mix(in srgb, var(--color-primary) ${intensity * 18}%, var(--color-surface-1))`,
+        backgroundColor: isMoonlit
+          ? `color-mix(in srgb, #f8fafc ${40 + moonWash * 45}%, var(--color-surface-1))`
+          : `color-mix(in srgb, #020617 ${35 + intensity * 55}%, var(--color-surface-1))`,
       }}
     >
       <span className="flex items-start justify-between gap-2">
         <span
           className={cn(
             'tabular text-body-sm leading-none',
-            isToday ? 'font-bold text-primary' : 'text-foreground'
+            isToday
+              ? 'font-bold text-primary'
+              : isMoonlit
+                ? 'text-slate-950'
+                : 'text-foreground'
           )}
         >
           {entry.date.getDate()}
         </span>
         <span
           aria-hidden
-          className="rounded-card border border-border bg-background/55 px-1.5 py-0.5 text-meta leading-none text-muted-foreground"
+          className={cn(
+            'rounded-card border px-1.5 py-0.5 text-meta leading-none',
+            isMoonlit
+              ? 'border-slate-300 bg-white/75 text-slate-700'
+              : 'border-border bg-background/55 text-muted-foreground'
+          )}
           title={entry.moon.name}
         >
           {moonGlyph(entry.moon.illumination, entry.moon.waxing)} %{moonPercent}
@@ -442,23 +458,43 @@ function DayCell({
             isGood
               ? 'text-primary'
               : isUsable
-                ? 'text-foreground'
-                : 'text-muted-foreground'
+                ? isMoonlit
+                  ? 'text-slate-950'
+                  : 'text-foreground'
+                : isMoonlit
+                  ? 'text-slate-600'
+                  : 'text-muted-foreground'
           )}
         >
           {hours >= 0.1 ? `${hours.toFixed(1)}sa` : '—'}
         </span>
-        <span className="label mt-0.5 block text-faint">aysız</span>
+        <span
+          className={cn(
+            'label mt-0.5 block',
+            isMoonlit ? 'text-slate-600' : 'text-faint'
+          )}
+        >
+          Aysız süre
+        </span>
       </span>
 
       <span
         aria-hidden
-        className="block h-1.5 overflow-hidden rounded-full bg-background/60"
+        className={cn(
+          'block h-1.5 overflow-hidden rounded-full',
+          isMoonlit ? 'bg-slate-200/85' : 'bg-background/60'
+        )}
       >
         <span
           className={cn(
             'block h-full rounded-full',
-            isGood ? 'bg-primary' : isUsable ? 'bg-cold' : 'bg-muted-foreground'
+            isGood
+              ? 'bg-primary'
+              : isUsable
+                ? 'bg-cold'
+                : isMoonlit
+                  ? 'bg-slate-500'
+                  : 'bg-muted-foreground'
           )}
           style={{ width: `${Math.max(6, intensity * 100)}%` }}
         />

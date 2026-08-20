@@ -528,14 +528,8 @@ export const appRoutes = [
         element: <RedirectTo to="/ekipman" />,
       },
       /*
-        GECE MODÜLÜ — üç görünüm tek önek altında (denetim §3.6).
-
-        Sayfalar tek bir bileşende BİRLEŞTİRİLMEDİ: üçü toplam 1370 satır
-        ve her biri kendi ağır hesabını (yükseklik eğrisi, ay fazı ızgarası,
-        plan sıralaması) taşıyor. Tek rotaya toplamak, "bu gece ne var"
-        sorusuna gelen kullanıcıya üçünün paketini birden indirtirdi.
-        Ayrı rota + ortak görünüm şeridi hem tembel yüklemeyi hem de tek
-        modül hissini koruyor.
+        GECE MODÜLÜ. Planlayıcı uygulamadan kaldırıldı; eski plan adresleri
+        kullanıcıyı ana gece ekranına düşürür.
       */
       {
         path: 'bu-gece',
@@ -545,9 +539,7 @@ export const appRoutes = [
       },
       {
         path: 'bu-gece/plan',
-        element: route(
-          named(() => import('@/features/sky/PlannerPage'), 'PlannerPage')
-        ),
+        element: <RedirectTo to="/bu-gece" />,
       },
       {
         path: 'bu-gece/takvim',
@@ -558,11 +550,9 @@ export const appRoutes = [
           )
         ),
       },
-      /* Eski adresler: paylaşılan plan bağlantısı sorguda yaşıyor,
-         bu yüzden sorguyu koruyan yönlendirme. */
       {
         path: 'planlayici',
-        element: <RedirectKeepQuery to="/bu-gece/plan" />,
+        element: <RedirectTo to="/bu-gece" />,
       },
       {
         path: 'araclar/takvim',

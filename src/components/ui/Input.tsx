@@ -20,10 +20,9 @@ const fieldClasses = cn(
  * genişlik sınıfı da nitelikte kalıyor ve kazananı sınıf sırası değil,
  * derlenmiş CSS dosyasındaki sıra belirliyor. Pratikte `w-full` kazandı.
  *
- * Bunun bedeli ölçüldü: `/planlayici` "Seçilen hedefler" panelinde 80px
- * beklenen girdi 497px oldu, `shrink-0` ile birlikte satırın tamamını
- * yedi, yanındaki hedef adı sıfır genişliğe çöktü ve uyarı metni girdinin
- * üstüne bindi. Panel okunmaz hâldeydi (denetim §2.1).
+ * Bunun bedeli dar filtre satırlarında ölçüldü: 80px beklenen girdi 497px
+ * oldu, `shrink-0` ile birlikte satırın tamamını yedi, yanındaki metin
+ * sıfır genişliğe çöktü ve uyarı metni girdinin üstüne bindi.
  *
  * Satır içi stil sınıf sırasından etkilenmez, dolayısıyla burası
  * güvenilir tek yol. `className` ile genişlik vermeyi denemeyin —

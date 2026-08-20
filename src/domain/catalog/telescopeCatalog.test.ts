@@ -31,7 +31,10 @@ import { describe, expect, it } from 'vitest';
  *    biri geri gelirse test düşüyor.
  */
 
-const SEED = readFileSync('supabase/seed/01_katalog.sql', 'utf8');
+const SEED = readFileSync('supabase/seed/01_katalog.sql', 'utf8').replace(
+  /\r\n?/g,
+  '\n'
+);
 
 interface ModelSatiri {
   slug: string;

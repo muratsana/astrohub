@@ -3,16 +3,16 @@ import { Link } from 'react-router';
 import { framingLink } from '@/features/targets/useActiveTarget';
 import { Container } from '@/components/ui/Container';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { NightViews } from './NightViews';
 import { Panel } from '@/components/ui/Panel';
 import { Readout } from '@/components/ui/Readout';
 import { Badge } from '@/components/ui/Badge';
-import { Button, ButtonLink } from '@/components/ui/Button';
+import { ButtonLink } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Select } from '@/components/ui/Input';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
 import { useLocationContext } from '@/features/location/LocationContext';
+import { LocationPicker } from '@/features/location/LocationPicker';
 import { useSkyConditions } from '@/features/weather/useSkyConditions';
 import { seeingLabel, observingVerdict } from '@/features/weather/seeing';
 import { dewRisk } from '@/features/weather/openMeteo';
@@ -31,7 +31,7 @@ import { moonlessDarkMinutes } from '@/domain/astronomy/nightCalendar';
 import { zonedMidnight } from '@/domain/time/zonedDay';
 import { altitudeCurve, usableWindow } from '@/domain/astronomy/sessionPlan';
 import { AltitudeChart } from './AltitudeChart';
-import { readCityParam, shareableCityId, withCityParam } from './locationShare';
+import { readCityParam } from './locationShare';
 import { cn } from '@/lib/cn';
 import { SkyPreview } from '@/components/media/SkyPreview';
 import { CARD_RATIO } from '@/components/ui/cardRatios';
@@ -57,7 +57,6 @@ export function TonightPage() {
   const conditions = useSkyConditions();
   const [sort, setSort] = useState<SortKey>('pencere');
   const [kind, setKind] = useState<TargetKind | 'hepsi'>('hepsi');
-  const [kopyalandi, setKopyalandi] = useState(false);
 
   /*
    * ADRESTEKİ ŞEHİR BİR KEZ UYGULANIYOR (§3.4 "URL ile paylaşılabilir
@@ -81,20 +80,6 @@ export function TonightPage() {
     adresUygulandi.current = true;
     if (slug !== location.cityId) setCity(slug);
   }, [provinces, location.cityId, setCity]);
-
-  const paylasilabilir = shareableCityId(location);
-
-  function paylas() {
-    const adres = withCityParam(
-      `${window.location.pathname}${window.location.search}${window.location.hash}`,
-      paylasilabilir
-    );
-    window.history.replaceState(null, '', adres);
-    void navigator.clipboard
-      ?.writeText(`${window.location.origin}${adres}`)
-      .then(() => setKopyalandi(true))
-      .catch(() => setKopyalandi(false));
-  }
 
   // Gün, gözlem konumunun takvimine göre anahtarlanır (ASTRO-01) —
   // tarayıcısı başka dilimde olan kullanıcı yanlış geceyi hesaplamasın.
@@ -206,6 +191,7 @@ export function TonightPage() {
           description={`${dateLabel} · ${location.label}. Hedefler ${MIN_ALTITUDE}° üstünde kaldıkları süreye göre sıralanır — zirve yüksekliği tek başına iyi bir ölçüt değildir.`}
           actions={
             <>
+              <LocationPicker variant="panel" />
               {verdict && (
                 <Badge
                   tone={
@@ -221,28 +207,9 @@ export function TonightPage() {
                   {verdict.label}
                 </Badge>
               )}
-              {/* KONUM PAYLAŞIMI (§3.4). Cihaz konumunda düğme
-                  ÇALIŞMIYOR ve sebebi yazılı — kullanıcının nerede
-                  gözlem yaptığını bağlantıya koymak §14.4'ün korumaya
-                  çalıştığı şey. */}
-              <Button
-                size="sm"
-                variant="ghost"
-                disabled={!paylasilabilir}
-                title={
-                  paylasilabilir
-                    ? `${location.label} için bağlantı`
-                    : 'Cihaz konumu paylaşılmıyor — bağlantıya koyulacak olan sizin bulunduğunuz nokta olurdu. Şehir seçerseniz paylaşılabilir.'
-                }
-                onClick={paylas}
-              >
-                {kopyalandi ? 'Kopyalandı' : 'Bağlantıyı kopyala'}
-              </Button>
             </>
           }
         />
-
-        <NightViews />
 
         <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
           <Readout
@@ -361,7 +328,7 @@ export function TonightPage() {
                 hint="Filtreyi genişletin ya da tüm katalogdan başka bir tür seçin."
               />
             ) : (
-              <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 [&>li]:h-full">
+              <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 [&>li]:h-full">
                 {visible.map(({ target, usable, curve }) => (
                   <li key={target.slug}>
                     <Panel

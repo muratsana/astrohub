@@ -52,7 +52,6 @@ export const staticEntries: SitemapEntry[] = [
   { path: '/haberler', priority: 0.9, changefreq: 'daily' },
   { path: '/araclar/isik-kirliligi', priority: 0.6, changefreq: 'monthly' },
   { path: '/bu-gece', priority: 0.6, changefreq: 'daily' },
-  { path: '/bu-gece/plan', priority: 0.5, changefreq: 'monthly' },
   { path: '/ekipman', priority: 0.7, changefreq: 'weekly' },
   { path: '/araclar', priority: 0.7, changefreq: 'monthly' },
   { path: '/araclar/kadraj', priority: 0.7, changefreq: 'monthly' },

@@ -12,7 +12,6 @@ import {
   MapIcon,
   MoonIcon,
   MosaicIcon,
-  RouteIcon,
   SparkleIcon,
 } from '@/components/ui/icons';
 
@@ -46,7 +45,7 @@ const GROUPS: { title: string; hint: string; paths: string[] }[] = [
   {
     title: 'Gece',
     hint: 'Ne zaman, hangi hedef, ne kadar karanlık',
-    paths: ['/bu-gece', '/bu-gece/plan', '/bu-gece/takvim'],
+    paths: ['/bu-gece', '/bu-gece/takvim'],
   },
   {
     title: 'Katalog',
@@ -109,7 +108,6 @@ const toolIcons: Record<string, typeof GridIcon> = {
   '/araclar/kadraj': FrameIcon,
   '/araclar/isik-kirliligi': MapIcon,
   '/bu-gece': MoonIcon,
-  '/bu-gece/plan': RouteIcon,
   '/araclar/poz-plani': CalculatorIcon,
   '/araclar/kadraj/mozaik': MosaicIcon,
   '/bu-gece/takvim': CalendarIcon,
@@ -288,7 +286,6 @@ function ToolVisual({ path, Icon }: { path: string; Icon?: typeof GridIcon }) {
           />
         ))}
         {visual.kind === 'tonight' && <TonightVisual />}
-        {visual.kind === 'planner' && <PlannerVisual />}
         {visual.kind === 'calendar' && <CalendarVisual />}
         {visual.kind === 'catalog' && <CatalogVisual />}
         {visual.kind === 'framing' && <FramingVisual />}
@@ -313,7 +310,6 @@ const toolVisuals: Record<
     id: string;
     kind:
       | 'tonight'
-      | 'planner'
       | 'calendar'
       | 'catalog'
       | 'framing'
@@ -328,11 +324,6 @@ const toolVisuals: Record<
     id: 'tool-tonight',
     kind: 'tonight',
     tone: 'from-primary/20 via-warning/10 to-transparent text-primary',
-  },
-  '/bu-gece/plan': {
-    id: 'tool-planner',
-    kind: 'planner',
-    tone: 'from-primary/20 via-cold/10 to-transparent text-primary',
   },
   '/bu-gece/takvim': {
     id: 'tool-calendar',
@@ -407,40 +398,6 @@ function TonightVisual() {
       <circle cx="296" cy="71" r="4" fill="currentColor" />
       <circle cx="319" cy="35" r="2.4" fill="currentColor" opacity=".75" />
       <circle cx="244" cy="31" r="2" fill="currentColor" opacity=".55" />
-    </>
-  );
-}
-
-function PlannerVisual() {
-  return (
-    <>
-      <path
-        d="M64 72 C112 22 154 95 204 49 S276 28 318 74"
-        stroke="currentColor"
-        strokeOpacity=".58"
-        strokeWidth="3"
-        fill="none"
-        strokeDasharray="7 9"
-      />
-      {[64, 144, 220, 318].map((x, index) => (
-        <g key={x}>
-          <circle
-            cx={x}
-            cy={index % 2 ? 60 : 72}
-            r="11"
-            fill="var(--color-background)"
-            stroke="currentColor"
-            strokeWidth="2"
-          />
-          <circle cx={x} cy={index % 2 ? 60 : 72} r="3" fill="currentColor" />
-        </g>
-      ))}
-      <path
-        d="M42 31h70M42 45h46M248 31h70M272 45h46"
-        stroke="currentColor"
-        strokeOpacity=".18"
-        strokeWidth="2"
-      />
     </>
   );
 }

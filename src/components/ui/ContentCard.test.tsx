@@ -37,7 +37,7 @@ function tsxFiles(dir: string, out: string[] = []): string[] {
 }
 
 const sources = tsxFiles(src).map((path) => ({
-  path: relative(src, path),
+  path: relative(src, path).replace(/\\/g, '/'),
   text: readFileSync(path, 'utf8'),
 }));
 

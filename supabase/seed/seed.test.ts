@@ -20,7 +20,7 @@ import path from 'node:path';
 const SEED_DIR = path.join(process.cwd(), 'supabase/seed');
 
 function read(file: string): string {
-  return readFileSync(path.join(SEED_DIR, file), 'utf8');
+  return readFileSync(path.join(SEED_DIR, file), 'utf8').replace(/\r\n?/g, '\n');
 }
 
 interface Statement {

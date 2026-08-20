@@ -20,10 +20,8 @@ export function RedirectTo({ to }: { to: string }) {
 /**
  * Sorgu dizesini KORUYARAK yönlendirir.
  *
- * `RedirectTo` yalnızca yolu taşır; paylaşılan bir plan bağlantısında
- * (`/planlayici?h=m31-andromeda:90&y=30`) bu, planın kendisini silmek
- * demekti — kullanıcı boş bir planlayıcıya düşerdi. Adres değişen ama
- * durumu sorguda taşıyan rotalarda bu sürüm kullanılmalı.
+ * `RedirectTo` yalnızca yolu taşır; adres değişen ama durumu sorguda taşıyan
+ * rotalarda bu sürüm kullanılmalı.
  */
 export function RedirectKeepQuery({ to }: { to: string }) {
   const { search, hash } = useLocation();

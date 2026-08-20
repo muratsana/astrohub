@@ -25,8 +25,8 @@ import { cn } from '@/lib/cn';
  * görünmezdi.
  *
  * Kural: varsayılan YALNIZCA adres çubuğu boşken uygulanıyor. Açık bir
- * sorgu her zaman kazanır. `planShare` ve `?sehir=` ile aynı hiyerarşi:
- * ADRES → KİŞİSEL TERCİH → VARSAYILAN.
+ * sorgu her zaman kazanır. `?sehir=` ile aynı hiyerarşi: ADRES → KİŞİSEL
+ * TERCİH → VARSAYILAN.
  *
  * ══════════════════════════════════════════════════════════════════════
  * BİR KEZ — `useRef` KİLİDİ

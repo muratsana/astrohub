@@ -41,3 +41,44 @@ if (
     configurable: true,
   });
 }
+
+if (typeof HTMLCanvasElement !== 'undefined') {
+  const context2d = {
+    imageSmoothingEnabled: true,
+    imageSmoothingQuality: 'low',
+    beginPath() {},
+    clearRect() {},
+    closePath() {},
+    createLinearGradient() {
+      return { addColorStop() {} };
+    },
+    drawImage() {},
+    fill() {},
+    fillRect() {},
+    fillText() {},
+    getImageData() {
+      return { data: new Uint8ClampedArray(), height: 0, width: 0 };
+    },
+    lineTo() {},
+    measureText(text: string) {
+      return { width: text.length * 8 };
+    },
+    moveTo() {},
+    putImageData() {},
+    restore() {},
+    rotate() {},
+    save() {},
+    scale() {},
+    setLineDash() {},
+    stroke() {},
+    strokeText() {},
+    translate() {},
+  } as unknown as CanvasRenderingContext2D;
+
+  Object.defineProperty(HTMLCanvasElement.prototype, 'getContext', {
+    value(contextId: string) {
+      return contextId === '2d' ? context2d : null;
+    },
+    configurable: true,
+  });
+}

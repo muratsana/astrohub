@@ -19,7 +19,7 @@
 import { JSDOM } from 'jsdom';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { composePage, outputFileFor } from './prerender-lib.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -64,7 +64,7 @@ globalThis.matchMedia = window.matchMedia;
 /* ── Render ──────────────────────────────────────────────────────── */
 
 const { renderRoute, prerenderPaths, sitemapXml } = await import(
-  path.join(root, 'dist-ssr', 'entry-prerender.js')
+  pathToFileURL(path.join(root, 'dist-ssr', 'entry-prerender.js')).href
 );
 
 const template = readFileSync(path.join(distDir, 'index.html'), 'utf8');
