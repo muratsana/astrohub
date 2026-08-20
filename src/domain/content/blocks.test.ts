@@ -9,22 +9,26 @@ import {
 
 describe('içerik blokları', () => {
   it('geçerli blokları korur', () => {
-    const blocks = [{ type: 'heading' as const, level: 2 as const, text: 'Başlık' }];
+    const blocks = [
+      { type: 'heading' as const, level: 2 as const, text: 'Başlık' },
+    ];
     expect(parseContentBlocks(blocks)).toEqual(blocks);
   });
 
   it('bozuk veya boş json veride eski paragraflara düşer', () => {
-    expect(parseContentBlocks([{ type: 'script', text: 'x' }], ['Eski'])).toEqual([
-      { type: 'paragraph', text: 'Eski' },
-    ]);
+    expect(
+      parseContentBlocks([{ type: 'script', text: 'x' }], ['Eski'])
+    ).toEqual([{ type: 'paragraph', text: 'Eski' }]);
     expect(parseContentBlocks([], ['Eski'])).toHaveLength(1);
   });
 
   it('blokları eski istemci için düz metne çevirir', () => {
-    expect(blocksToParagraphs([
-      { type: 'heading', level: 2, text: 'Başlık' },
-      { type: 'list', style: 'bullet', items: ['Bir', 'İki'] },
-    ])).toEqual(['Başlık', 'Bir', 'İki']);
+    expect(
+      blocksToParagraphs([
+        { type: 'heading', level: 2, text: 'Başlık' },
+        { type: 'list', style: 'bullet', items: ['Bir', 'İki'] },
+      ])
+    ).toEqual(['Başlık', 'Bir', 'İki']);
   });
 
   it('boş satırla ayrılan metni paragraflara dönüştürür', () => {
@@ -59,7 +63,9 @@ describe('görsel bloğu', () => {
    */
   it('CSP’nin tanımadığı konağı düşürür', () => {
     expect(
-      parseContentBlocks([{ ...gorsel, src: 'https://rastgele.example/ay.jpg' }])
+      parseContentBlocks([
+        { ...gorsel, src: 'https://rastgele.example/ay.jpg' },
+      ])
     ).toEqual([]);
   });
 
@@ -76,11 +82,31 @@ describe('görsel bloğu', () => {
   /* `hero_slides` ile aynı kural: şemasız ve http adresler dışarıda. */
   it('http ve şemasız adresi düşürür', () => {
     expect(
-      parseContentBlocks([{ ...gorsel, src: 'http://proje.supabase.co/ay.jpg' }])
+      parseContentBlocks([
+        { ...gorsel, src: 'http://proje.supabase.co/ay.jpg' },
+      ])
     ).toEqual([]);
     expect(
       parseContentBlocks([{ ...gorsel, src: '//proje.supabase.co/ay.jpg' }])
     ).toEqual([]);
+  });
+
+  it('sitenin statik yazı görsellerini kabul eder', () => {
+    expect(
+      parseContentBlocks([
+        {
+          type: 'image',
+          src: '/gorseller/teknik/acik-odak.svg',
+          alt: 'Açıklık ve odak uzaklığı şeması',
+        },
+      ])
+    ).toEqual([
+      {
+        type: 'image',
+        src: '/gorseller/teknik/acik-odak.svg',
+        alt: 'Açıklık ve odak uzaklığı şeması',
+      },
+    ]);
   });
 
   /* Yedeğe düşen okur görselin yerinde bir iz görmeli. */
@@ -236,6 +262,20 @@ describe('mizanpaj blokları', () => {
     ).toBe(false);
   });
 
+  it('araç bloğu yalnızca site içi bağlantı kabul ediyor', () => {
+    const blok = {
+      type: 'tool',
+      title: 'Kadraj aracı',
+      text: 'Kurulumunuzun görüş alanını hesaplayın.',
+      href: '/araclar/kadraj',
+    };
+    expect(ContentBlockSchema.safeParse(blok).success).toBe(true);
+    expect(
+      ContentBlockSchema.safeParse({ ...blok, href: 'https://example.com' })
+        .success
+    ).toBe(false);
+  });
+
   /* Özet ve arama bu çıktıyı okuyor: yeni bloklar metinsiz kalırsa
      içerikleri sitede hiç aranamaz olurdu. */
   it('yeni blokların metni özete giriyor', () => {
@@ -249,10 +289,17 @@ describe('mizanpaj blokları', () => {
         ],
       },
       { type: 'columns', leftTitle: 'Önce', left: 'gürültülü', right: 'temiz' },
+      {
+        type: 'tool',
+        title: 'Kadraj aracı',
+        text: 'Görüş alanını hesaplayın.',
+        href: '/araclar/kadraj',
+      },
     ]);
     expect(metin).toContain('Üç aşama');
     expect(metin).toContain('ham kare');
     expect(metin).toContain('Önce');
     expect(metin).toContain('temiz');
+    expect(metin).toContain('Kadraj aracı');
   });
 });

@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 520" role="img" aria-labelledby="title desc">
+  <title id="title">F-oranı miti şeması</title>
+  <desc id="desc">Aynı açıklıkta odak kısaldığında toplam fotonun değişmediğini, sinyalin daha az piksele yayıldığını gösterir.</desc>
+  <rect width="1200" height="520" rx="28" fill="#0a1014"/>
+  <g transform="translate(95 90)">
+    <rect width="430" height="270" rx="20" fill="#111827" stroke="#334155"/>
+    <rect x="610" width="430" height="270" rx="20" fill="#111827" stroke="#334155"/>
+    <text x="0" y="-28" fill="#e2e8f0" font-family="Inter, Arial, sans-serif" font-size="26" font-weight="700">Aynı açıklık</text>
+    <text x="610" y="-28" fill="#e2e8f0" font-family="Inter, Arial, sans-serif" font-size="26" font-weight="700">Kısa odak</text>
+    <g opacity=".35" stroke="#475569">
+      <path d="M52 20v230M104 20v230M156 20v230M208 20v230M260 20v230M312 20v230M364 20v230"/>
+      <path d="M20 54h390M20 108h390M20 162h390M20 216h390"/>
+      <path d="M662 20v230M714 20v230M766 20v230M818 20v230M870 20v230M922 20v230M974 20v230"/>
+      <path d="M630 54h390M630 108h390M630 162h390M630 216h390"/>
+    </g>
+    <ellipse cx="215" cy="135" rx="150" ry="82" fill="#f59e0b" opacity=".12"/>
+    <ellipse cx="215" cy="135" rx="98" ry="52" fill="#f59e0b" opacity=".2"/>
+    <ellipse cx="215" cy="135" rx="52" ry="28" fill="#fbbf24" opacity=".65"/>
+    <ellipse cx="825" cy="135" rx="86" ry="46" fill="#22d3ee" opacity=".2"/>
+    <ellipse cx="825" cy="135" rx="52" ry="28" fill="#38bdf8" opacity=".45"/>
+    <ellipse cx="825" cy="135" rx="29" ry="16" fill="#e0f2fe" opacity=".9"/>
+    <path d="M535 135h60" stroke="#94a3b8" stroke-width="4" stroke-linecap="round"/>
+    <path d="M578 118l17 17-17 17" fill="none" stroke="#94a3b8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="70" y="398" fill="#fbbf24" font-family="Inter, Arial, sans-serif" font-size="23" font-weight="700">Toplam foton aynı</text>
+    <text x="650" y="398" fill="#67e8f9" font-family="Inter, Arial, sans-serif" font-size="23" font-weight="700">Piksel başına sinyal artar</text>
+    <text x="70" y="430" fill="#8fb7c7" font-family="Inter, Arial, sans-serif" font-size="18">Işık daha fazla piksele yayılır.</text>
+    <text x="650" y="430" fill="#8fb7c7" font-family="Inter, Arial, sans-serif" font-size="18">Aynı ışık daha küçük alana sıkışır.</text>
+  </g>
+</svg>

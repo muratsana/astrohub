@@ -7,12 +7,13 @@ import { isValidYoutubeId } from '@/features/tv/types';
 const text = z.string().trim().min(1).max(20_000);
 
 /**
- * GÖRSEL ADRESİ MUTLAK, `https` VE CSP'NİN TANIDIĞI BİR KONAKTAN.
+ * GÖRSEL ADRESİ CSP'NİN TANIDIĞI BİR KAYNAKTAN.
  *
- * İlk iki kural `hero_slides` ile aynı (`heroSlides.ts` · `guvenliAdres`):
- * şemasız (`//baska-site`) ve `http` adresler dışarıda. Uygulama içi yol
- * da kabul edilmiyor — içerik görselleri depolama kovasından geliyor ve o
- * kovanın herkese açık adresi zaten mutlak.
+ * Dış adreslerde ilk iki kural `hero_slides` ile aynı (`heroSlides.ts` ·
+ * `guvenliAdres`): şemasız (`//baska-site`) ve `http` adresler dışarıda.
+ * Sitenin kendi teknik şemaları ise `/gorseller/` altında duruyor; bunları
+ * depolamaya yüklemek yerine sürümlemek, yazıdaki şekil ile kodun birlikte
+ * değişmesini sağlıyor.
  *
  * Üçüncü kuralın gerekçesi `imageHosts.ts` başında: `img-src` bir beyaz
  * liste ve dışarıdaki konak üretimde SESSİZCE yüklenmiyor. Doğrulamayı
@@ -22,6 +23,12 @@ const imageSrc = z
   .string()
   .trim()
   .refine(isAllowedImageHost, 'Görsel adresi izinli bir konaktan olmalı');
+
+const internalHref = z
+  .string()
+  .trim()
+  .regex(/^\/(?!\/).*/, 'Araç bağlantısı site içi bir yol olmalı')
+  .max(300);
 
 /** Tablo hücresi. Boş hücre geçerli: tablolarda boşluk anlam taşır. */
 const cell = z.string().trim().max(500);
@@ -135,6 +142,14 @@ export const ContentBlockSchema = z.discriminatedUnion('type', [
     rightTitle: z.string().trim().max(120).optional(),
   }),
 
+  z.object({
+    type: z.literal('tool'),
+    title: z.string().trim().min(1).max(160),
+    text: text.max(1_000),
+    href: internalHref,
+    action: z.string().trim().min(1).max(80).optional(),
+  }),
+
   /*
    * TABLO — satırlar dikdörtgen olmak ZORUNDA DEĞİL.
    *
@@ -241,7 +256,9 @@ export function blocksToParagraphs(blocks: ContentBlock[]): string[] {
       const satirlar = [...(block.header ? [block.header] : []), ...block.rows];
       return [
         ...(block.caption ? [block.caption] : []),
-        ...satirlar.map((row) => row.filter(Boolean).join(' · ')).filter(Boolean),
+        ...satirlar
+          .map((row) => row.filter(Boolean).join(' · '))
+          .filter(Boolean),
       ];
     }
 
@@ -266,6 +283,10 @@ export function blocksToParagraphs(blocks: ContentBlock[]): string[] {
         ...(block.rightTitle ? [block.rightTitle] : []),
         stripInline(block.right),
       ];
+    }
+
+    if (block.type === 'tool') {
+      return [block.title, stripInline(block.text), block.action ?? 'Aracı aç'];
     }
 
     return [stripInline(block.text)];

@@ -1,4 +1,5 @@
 import type { ContentBlock } from '@/domain/content/blocks';
+import { Link } from 'react-router';
 import { youtubeEmbedUrl } from '@/features/tv/types';
 import { cn } from '@/lib/cn';
 import { InlineText } from './InlineText';
@@ -114,6 +115,32 @@ export function BlockRenderer({
           );
         }
 
+        if (block.type === 'tool') {
+          return (
+            <aside
+              key={key}
+              data-content-tool
+              className="grid gap-3 rounded-card border border-primary/45 bg-primary/5 px-4 py-3 sm:grid-cols-[1fr_auto] sm:items-center"
+            >
+              <div className="min-w-0">
+                <p className="label text-primary">Etkileşimli araç</p>
+                <h3 className="mt-1 font-display text-lg font-bold leading-tight text-foreground">
+                  <InlineText text={block.title} />
+                </h3>
+                <p className="mt-1 text-caption leading-relaxed">
+                  <InlineText text={block.text} />
+                </p>
+              </div>
+              <Link
+                to={block.href}
+                className="inline-flex h-9 shrink-0 items-center justify-center rounded-card border border-primary/60 px-3 text-caption font-semibold text-primary transition-colors hover:bg-primary/10"
+              >
+                {block.action ?? 'Aracı aç'} →
+              </Link>
+            </aside>
+          );
+        }
+
         /*
          * GÖRSEL. `loading="lazy"` ve `decoding="async"`: yazının ortasındaki
          * görsel ilk boyamayı bekletmemeli. Yükseklik bilinmediği için
@@ -124,7 +151,11 @@ export function BlockRenderer({
           return (
             <figure
               key={key}
-              className={cn('space-y-1.5', imageWidthClass(block.width), imageAlignClass(block.align))}
+              className={cn(
+                'space-y-1.5',
+                imageWidthClass(block.width),
+                imageAlignClass(block.align)
+              )}
             >
               <img
                 src={block.src}
@@ -193,7 +224,10 @@ export function BlockRenderer({
                 )}
                 <tbody>
                   {block.rows.map((row, rowIndex) => (
-                    <tr key={rowIndex} className="border-b border-border last:border-0">
+                    <tr
+                      key={rowIndex}
+                      className="border-b border-border last:border-0"
+                    >
                       {doldur(row).map((hucre, i) => (
                         <td key={i} className="px-3 py-2 align-top">
                           {hucre}

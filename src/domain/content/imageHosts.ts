@@ -15,6 +15,9 @@
  * çekmek, o sessiz kırılmayı KAYDETME ANINDA görünür bir hataya
  * çeviriyor.
  *
+ * `/gorseller/` özel durumu dış adres değil, sürümlenen statik içeriktir.
+ * CSP'deki `'self'` ile aynı izin alanındadır ve yalnızca bu klasör açılır.
+ *
  * ── LİSTE NEDEN `img-src`İN TAMAMI DEĞİL ──────────────────────────────
  *
  * `img-src` harita karolarını ve DSS önizleme servisini de içeriyor;
@@ -30,6 +33,8 @@
  * ayrışmasını yakalıyor.
  */
 export const CONTENT_IMAGE_HOSTS = [
+  /* Sitenin kendi statik içerik görselleri. */
+  "'self'",
   /* Sitenin kendi depolaması — yüklenen her görselin normal yolu. */
   'https://*.supabase.co',
   'https://commons.wikimedia.org',
@@ -47,6 +52,8 @@ export const CONTENT_IMAGE_HOSTS = [
  * adresi kabul ederdi.
  */
 export function isAllowedImageHost(src: string): boolean {
+  if (src.startsWith('/gorseller/') && !src.includes('..')) return true;
+
   let host: string;
   try {
     const url = new URL(src);

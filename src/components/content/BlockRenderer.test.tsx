@@ -105,6 +105,24 @@ describe('video', () => {
   });
 });
 
+describe('araç bloğu', () => {
+  it('site içi aracı bağlantılı kart olarak çizer', () => {
+    ciz([
+      {
+        type: 'tool',
+        title: 'Kadraj ve Pixel Scale',
+        text: 'Kurulumunuzun görüş alanını hesaplayın.',
+        href: '/araclar/kadraj',
+      },
+    ]);
+    expect(screen.getByText('Etkileşimli araç')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Aracı aç →' })).toHaveAttribute(
+      'href',
+      '/araclar/kadraj'
+    );
+  });
+});
+
 describe('satır içi biçim', () => {
   it('paragrafta kalın ve eğik çizer', () => {
     ciz([{ type: 'paragraph', text: '**kalın** ve *eğik*' }]);

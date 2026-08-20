@@ -670,10 +670,12 @@ export const technicalSeriesArticles: Article[] = [
         text: '**Odak oranı** ise bu ikisinin oranıdır. Türetilmiş bir sayıdır; kendi başına bir fiziksel nicelik değildir.',
       },
       {
-        type: 'callout',
-        tone: 'info',
-        text: 'Kaynak pakette acik-odak adlı şekil/şema yer tutucusu vardı.',
-        title: 'Şekil: Acik Odak',
+        type: 'image',
+        src: '/gorseller/teknik/acik-odak.svg',
+        alt: 'Açıklık, odak uzaklığı ve sensör düzlemi ilişkisini gösteren optik şema',
+        caption:
+          'Açıklık foton toplar; odak uzaklığı aynı ışığın sensör düzleminde ne kadar yayıldığını belirler.',
+        credit: 'Astrohub',
       },
       {
         type: 'heading',
@@ -723,10 +725,12 @@ export const technicalSeriesArticles: Article[] = [
         text: 'Pratik cevap: **2 ile 3,5 arasında bir yere düşün ve dert etmeyin.** Bu aralığın içinde kalan her değer çalışır; aralığın dışına çıkmak ise gerçek bir bedel getirir.',
       },
       {
-        type: 'callout',
-        tone: 'info',
-        text: 'Kaynak pakette ornekleme adlı şekil/şema yer tutucusu vardı.',
-        title: 'Şekil: Ornekleme',
+        type: 'image',
+        src: '/gorseller/teknik/ornekleme.svg',
+        alt: 'Yetersiz, dengeli ve aşırı örneklenmiş yıldız profilini karşılaştıran piksel ızgaraları',
+        caption:
+          'Seeing ile belirlenen yıldız profili birkaç piksele yayılmalı; çok az piksel ayrıntıyı, çok fazla piksel sinyali boşa harcar.',
+        credit: 'Astrohub',
       },
       {
         type: 'callout',
@@ -735,10 +739,11 @@ export const technicalSeriesArticles: Article[] = [
         title: 'Kırınım sınırını unutun',
       },
       {
-        type: 'callout',
-        tone: 'info',
-        text: 'Kaynak pakette kurulum adlı hesaplayıcı/etkileşimli araç yer tutucusu vardı. İçerik editöründe düzenlenebilir not olarak korunuyor.',
-        title: 'Etkileşimli araç: Kurulum',
+        type: 'tool',
+        title: 'Kadraj ve Pixel Scale aracı',
+        text: 'Odak uzaklığı, sensör boyutu ve piksel boyutunu girerek görüş alanınızı ve piksel ölçeğinizi kendi ekipmanınızla hesaplayın.',
+        href: '/araclar/kadraj',
+        action: 'Kadraj aracını aç',
       },
       {
         type: 'heading',
@@ -793,10 +798,12 @@ export const technicalSeriesArticles: Article[] = [
         text: 'Astrofotoğrafta ise durum farklıdır. Teleskop değiştirdiğinizde **kadrajınız da değişir**. Ve asıl kritik nokta: hedefin gökyüzündeki gerçek boyutu sabittir.',
       },
       {
-        type: 'callout',
-        tone: 'info',
-        text: 'Kaynak pakette foran-miti adlı şekil/şema yer tutucusu vardı.',
-        title: 'Şekil: Foran Miti',
+        type: 'image',
+        src: '/gorseller/teknik/foran-miti.svg',
+        alt: 'Aynı açıklıkta farklı odak uzaklıklarının piksel başına sinyali nasıl değiştirdiğini gösteren şema',
+        caption:
+          'F-oranı toplam foton üretmez; aynı açıklıkta kısa odak, yakalanan ışığı daha az piksele toplar.',
+        credit: 'Astrohub',
       },
       {
         type: 'callout',
@@ -824,10 +831,11 @@ export const technicalSeriesArticles: Article[] = [
         title: "Öyleyse RASA'lar neden hızlı?",
       },
       {
-        type: 'callout',
-        tone: 'info',
-        text: 'Kaynak pakette karsilastir adlı hesaplayıcı/etkileşimli araç yer tutucusu vardı. İçerik editöründe düzenlenebilir not olarak korunuyor.',
-        title: 'Etkileşimli araç: Karsilastir',
+        type: 'tool',
+        title: 'Kurulum karşılaştırmasını simülatörde test edin',
+        text: 'Aynı hedefi farklı odak uzaklığı ve sensörlerle açarak kadraj, piksel ölçeği ve hedef yerleşimini yan yana değerlendirin.',
+        href: '/araclar/kadraj',
+        action: 'Simülatörü aç',
       },
       {
         type: 'heading',

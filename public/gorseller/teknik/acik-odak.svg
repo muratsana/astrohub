@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 520" role="img" aria-labelledby="title desc">
+  <title id="title">Açıklık ve odak uzaklığı şeması</title>
+  <desc id="desc">Açıklıktan geçen paralel ışınların odak düzleminde birleşmesini gösteren optik şema.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#111827"/>
+      <stop offset="1" stop-color="#071014"/>
+    </linearGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7dd3fc" stop-opacity=".9"/>
+      <stop offset=".5" stop-color="#e0f2fe" stop-opacity=".3"/>
+      <stop offset="1" stop-color="#38bdf8" stop-opacity=".85"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="520" rx="28" fill="url(#bg)"/>
+  <g opacity=".45" stroke="#334155" stroke-width="1">
+    <path d="M80 110h1040M80 260h1040M80 410h1040"/>
+    <path d="M180 70v380M360 70v380M540 70v380M720 70v380M900 70v380"/>
+  </g>
+  <g stroke-linecap="round" stroke-width="4">
+    <path d="M110 135C330 135 520 135 680 260" stroke="#f59e0b"/>
+    <path d="M110 260h570" stroke="#f59e0b"/>
+    <path d="M110 385C330 385 520 385 680 260" stroke="#f59e0b"/>
+    <path d="M700 260c150 0 250 0 390 0" stroke="#67e8f9" stroke-dasharray="10 14"/>
+  </g>
+  <path d="M430 90c-52 86-52 254 0 340c39-48 61-107 61-170S469 138 430 90Z" fill="url(#glass)" stroke="#bae6fd" stroke-width="3"/>
+  <line x1="430" y1="90" x2="430" y2="430" stroke="#e2e8f0" stroke-width="3"/>
+  <line x1="430" y1="450" x2="680" y2="450" stroke="#f59e0b" stroke-width="3"/>
+  <line x1="110" y1="455" x2="430" y2="455" stroke="#94a3b8" stroke-width="3"/>
+  <path d="M110 455h320M430 450h250" stroke-linecap="round"/>
+  <circle cx="680" cy="260" r="10" fill="#f97316"/>
+  <rect x="700" y="105" width="18" height="310" rx="9" fill="#94a3b8"/>
+  <text x="110" y="86" fill="#cbd5e1" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="700">Paralel ışın</text>
+  <text x="455" y="80" fill="#e0f2fe" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="700">Açıklık</text>
+  <text x="514" y="486" fill="#fbbf24" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="700">Odak uzaklığı</text>
+  <text x="736" y="96" fill="#cbd5e1" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="700">Sensör düzlemi</text>
+</svg>

@@ -43,9 +43,7 @@ function blockToHtml(block: ContentBlock): string {
    * `<aside>` çiziyor, yani editördeki görüntü yayındakine yakın.
    */
   if (block.type === 'callout') {
-    const title = block.title
-      ? ` data-title="${escapeAttr(block.title)}"`
-      : '';
+    const title = block.title ? ` data-title="${escapeAttr(block.title)}"` : '';
     return `<aside data-callout data-tone="${block.tone}"${title}><p>${inlineToHtml(block.text)}</p></aside>`;
   }
   if (block.type === 'list') {
@@ -131,6 +129,10 @@ function blockToHtml(block: ContentBlock): string {
     };
     return `<div data-columns="1">${side(block.leftTitle, block.left, 'left')}${side(block.rightTitle, block.right, 'right')}</div>`;
   }
+  if (block.type === 'tool') {
+    const action = block.action ?? 'Aracı aç';
+    return `<aside data-tool data-href="${escapeAttr(block.href)}" data-action="${escapeAttr(action)}"><h3>${escapeHtml(block.title)}</h3><p>${inlineToHtml(block.text)}</p><p><a href="${escapeAttr(block.href)}">${escapeHtml(action)}</a></p></aside>`;
+  }
   return `<p>${inlineToHtml(block.text)}</p>`;
 }
 
@@ -151,10 +153,44 @@ function elementToBlocks(element: Element): ContentBlock[] {
   }
   /* `<aside data-callout>` alıntıdan ÖNCE bakılıyor: iç içe geçme
      ihtimali yok ama sıra niyeti belgeliyor — callout kendi türüdür. */
+  if (tag === 'aside' && element.hasAttribute('data-tool')) {
+    const clone = element.cloneNode(true) as Element;
+    const heading = clone.querySelector('h1,h2,h3');
+    const title = heading?.textContent?.trim();
+    heading?.remove();
+
+    const anchor = clone.querySelector('a[href]');
+    const rawHref =
+      anchor?.getAttribute('href')?.trim() ||
+      clone.getAttribute('data-href')?.trim() ||
+      '';
+    const href = internalPath(rawHref);
+    const action =
+      anchor?.textContent?.trim() ||
+      clone.getAttribute('data-action')?.trim() ||
+      undefined;
+    const linkWrapper = anchor?.closest('p');
+    if (linkWrapper) linkWrapper.remove();
+    else anchor?.remove();
+
+    const text = htmlToInlineMarkdown(clone).trim();
+    if (!title || !href || !text) return [];
+    return [
+      {
+        type: 'tool',
+        title,
+        text,
+        href,
+        ...(action ? { action } : {}),
+      },
+    ];
+  }
+
   if (tag === 'aside' && element.hasAttribute('data-callout')) {
     const text = htmlToInlineMarkdown(element).trim();
     if (!text) return [];
-    const tone = element.getAttribute('data-tone') === 'warning' ? 'warning' : 'info';
+    const tone =
+      element.getAttribute('data-tone') === 'warning' ? 'warning' : 'info';
     const title = element.getAttribute('data-title')?.trim();
     return [{ type: 'callout', tone, text, ...(title ? { title } : {}) }];
   }
@@ -181,7 +217,8 @@ function elementToBlocks(element: Element): ContentBlock[] {
         return {
           src: img?.getAttribute('src')?.trim() ?? '',
           alt: img?.getAttribute('alt')?.trim() ?? '',
-          caption: item.querySelector('figcaption')?.textContent?.trim() || undefined,
+          caption:
+            item.querySelector('figcaption')?.textContent?.trim() || undefined,
         };
       })
       .filter((item) => isAllowedImageHost(item.src) && item.alt);
@@ -202,14 +239,18 @@ function elementToBlocks(element: Element): ContentBlock[] {
         caption:
           element.querySelector(':scope > figcaption')?.textContent?.trim() ||
           undefined,
-        ...(cols === '2' || cols === '3' ? { columns: Number(cols) as 2 | 3 } : {}),
+        ...(cols === '2' || cols === '3'
+          ? { columns: Number(cols) as 2 | 3 }
+          : {}),
       },
     ];
   }
 
   if (tag === 'div' && element.hasAttribute('data-columns')) {
     const side = (name: 'left' | 'right') => {
-      const node = element.querySelector(`:scope > section[data-side="${name}"]`);
+      const node = element.querySelector(
+        `:scope > section[data-side="${name}"]`
+      );
       if (!node) return { title: undefined, body: '' };
       const heading = node.querySelector('h3');
       const title = heading?.textContent?.trim() || undefined;
@@ -275,7 +316,8 @@ function elementToBlocks(element: Element): ContentBlock[] {
     return [
       {
         type: 'table',
-        caption: element.querySelector('caption')?.textContent?.trim() || undefined,
+        caption:
+          element.querySelector('caption')?.textContent?.trim() || undefined,
         header: hasHeader ? first : undefined,
         rows: hasHeader
           ? rest.length
@@ -306,7 +348,8 @@ function elementToBlocks(element: Element): ContentBlock[] {
 function inlineToHtml(text: string): string {
   return parseInline(text)
     .map((span) => {
-      if (span.kind === 'strong') return `<strong>${escapeHtml(span.text)}</strong>`;
+      if (span.kind === 'strong')
+        return `<strong>${escapeHtml(span.text)}</strong>`;
       if (span.kind === 'em') return `<em>${escapeHtml(span.text)}</em>`;
       if (span.kind === 'underline') return `<u>${escapeHtml(span.text)}</u>`;
       if (span.kind === 'link') {
@@ -347,6 +390,11 @@ function cleanHref(value: string): string | null {
   const trimmed = value.trim();
   if (trimmed.startsWith('/') && !trimmed.startsWith('//')) return trimmed;
   return safeUrl(trimmed);
+}
+
+function internalPath(value: string): string | null {
+  const trimmed = value.trim();
+  return trimmed.startsWith('/') && !trimmed.startsWith('//') ? trimmed : null;
 }
 
 function escapeHtml(value: string): string {

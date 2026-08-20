@@ -56,12 +56,27 @@ describe('gidiş-dönüş bütünlüğü', () => {
     const blocks: ContentBlock[] = [{ type: 'quote', text: 'Alıntı.' }];
     expect(roundTrip(blocks)).toEqual(blocks);
   });
+
+  it('araç kartı başlık, açıklama ve bağlantısını koruyor', () => {
+    const blocks: ContentBlock[] = [
+      {
+        type: 'tool',
+        title: 'Kadraj ve Pixel Scale',
+        text: 'Kurulumunuzun görüş alanını hesaplayın.',
+        href: '/araclar/kadraj',
+        action: 'Kadrajı aç',
+      },
+    ];
+    expect(roundTrip(blocks)).toEqual(blocks);
+  });
 });
 
 describe('callout ayrıştırma', () => {
   it('bilinmeyen tonu bilgi kutusuna düşürüyor', () => {
     expect(
-      editorHtmlToBlocks('<aside data-callout data-tone="uydurma"><p>Not</p></aside>')
+      editorHtmlToBlocks(
+        '<aside data-callout data-tone="uydurma"><p>Not</p></aside>'
+      )
     ).toEqual([{ type: 'callout', tone: 'info', text: 'Not' }]);
   });
 

@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 520" role="img" aria-labelledby="title desc">
+  <title id="title">Yıldız profili örnekleme şeması</title>
+  <desc id="desc">Aynı yıldız profilinin az, dengeli ve aşırı örneklenmiş piksel ızgaralarında nasıl kaydedildiğini gösterir.</desc>
+  <rect width="1200" height="520" rx="28" fill="#081014"/>
+  <g transform="translate(70 80)">
+    <g>
+      <rect width="300" height="300" rx="16" fill="#111827" stroke="#334155"/>
+      <g stroke="#334155">
+        <path d="M100 0v300M200 0v300M0 100h300M0 200h300"/>
+      </g>
+      <circle cx="150" cy="150" r="78" fill="#f59e0b" opacity=".16"/>
+      <circle cx="150" cy="150" r="42" fill="#fbbf24" opacity=".35"/>
+      <circle cx="150" cy="150" r="15" fill="#fde68a"/>
+      <text x="0" y="350" fill="#e2e8f0" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="700">Yetersiz</text>
+      <text x="0" y="382" fill="#8fb7c7" font-family="Inter, Arial, sans-serif" font-size="18">~1 px / FWHM</text>
+    </g>
+    <g transform="translate(380 0)">
+      <rect width="300" height="300" rx="16" fill="#111827" stroke="#334155"/>
+      <g stroke="#334155">
+        <path d="M60 0v300M120 0v300M180 0v300M240 0v300M0 60h300M0 120h300M0 180h300M0 240h300"/>
+      </g>
+      <circle cx="150" cy="150" r="76" fill="#22d3ee" opacity=".13"/>
+      <circle cx="150" cy="150" r="46" fill="#38bdf8" opacity=".35"/>
+      <circle cx="150" cy="150" r="16" fill="#e0f2fe"/>
+      <text x="0" y="350" fill="#e2e8f0" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="700">Dengeli</text>
+      <text x="0" y="382" fill="#8fb7c7" font-family="Inter, Arial, sans-serif" font-size="18">2–3,5 px / FWHM</text>
+    </g>
+    <g transform="translate(760 0)">
+      <rect width="300" height="300" rx="16" fill="#111827" stroke="#334155"/>
+      <g stroke="#334155">
+        <path d="M30 0v300M60 0v300M90 0v300M120 0v300M150 0v300M180 0v300M210 0v300M240 0v300M270 0v300"/>
+        <path d="M0 30h300M0 60h300M0 90h300M0 120h300M0 150h300M0 180h300M0 210h300M0 240h300M0 270h300"/>
+      </g>
+      <circle cx="150" cy="150" r="78" fill="#a78bfa" opacity=".11"/>
+      <circle cx="150" cy="150" r="48" fill="#c4b5fd" opacity=".28"/>
+      <circle cx="150" cy="150" r="17" fill="#ede9fe"/>
+      <text x="0" y="350" fill="#e2e8f0" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="700">Aşırı</text>
+      <text x="0" y="382" fill="#8fb7c7" font-family="Inter, Arial, sans-serif" font-size="18">5+ px / FWHM</text>
+    </g>
+  </g>
+</svg>

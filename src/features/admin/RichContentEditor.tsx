@@ -66,7 +66,8 @@ const FigureImage = Node.create({
           return {
             src: img.getAttribute('src'),
             alt: img.getAttribute('alt') ?? '',
-            caption: node.querySelector('figcaption')?.textContent?.trim() || null,
+            caption:
+              node.querySelector('figcaption')?.textContent?.trim() || null,
             align: node.getAttribute('data-align') || null,
             width: node.getAttribute('data-width') || null,
           };
@@ -91,8 +92,10 @@ const FigureImage = Node.create({
       ? ['figcaption', {}, HTMLAttributes.caption]
       : null;
     const attrs: Record<string, string> = {};
-    if (HTMLAttributes.align) attrs['data-align'] = HTMLAttributes.align as string;
-    if (HTMLAttributes.width) attrs['data-width'] = HTMLAttributes.width as string;
+    if (HTMLAttributes.align)
+      attrs['data-align'] = HTMLAttributes.align as string;
+    if (HTMLAttributes.width)
+      attrs['data-width'] = HTMLAttributes.width as string;
     return [
       'figure',
       mergeAttributes(attrs),
@@ -140,15 +143,18 @@ const Gallery = Node.create({
       items: {
         default: [] as GalleryItem[],
         parseHTML: (element) =>
-          Array.from(element.querySelectorAll(':scope > figure')).map((item) => {
-            const img = item.querySelector('img');
-            return {
-              src: img?.getAttribute('src') ?? '',
-              alt: img?.getAttribute('alt') ?? '',
-              caption:
-                item.querySelector('figcaption')?.textContent?.trim() || undefined,
-            };
-          }),
+          Array.from(element.querySelectorAll(':scope > figure')).map(
+            (item) => {
+              const img = item.querySelector('img');
+              return {
+                src: img?.getAttribute('src') ?? '',
+                alt: img?.getAttribute('alt') ?? '',
+                caption:
+                  item.querySelector('figcaption')?.textContent?.trim() ||
+                  undefined,
+              };
+            }
+          ),
       },
       columns: {
         default: null,
@@ -160,7 +166,8 @@ const Gallery = Node.create({
       caption: {
         default: null,
         parseHTML: (element) =>
-          element.querySelector(':scope > figcaption')?.textContent?.trim() || null,
+          element.querySelector(':scope > figcaption')?.textContent?.trim() ||
+          null,
       },
     };
   },
@@ -223,7 +230,9 @@ const ColumnSection = Node.create({
   renderHTML({ HTMLAttributes }) {
     return [
       'section',
-      mergeAttributes({ 'data-side': (HTMLAttributes.side as string) ?? 'left' }),
+      mergeAttributes({
+        'data-side': (HTMLAttributes.side as string) ?? 'left',
+      }),
       0,
     ];
   },
@@ -286,8 +295,24 @@ const Callout = Node.create({
       'data-callout': '',
       'data-tone': (HTMLAttributes.tone as string) ?? 'info',
     };
-    if (HTMLAttributes.title) attrs['data-title'] = HTMLAttributes.title as string;
+    if (HTMLAttributes.title)
+      attrs['data-title'] = HTMLAttributes.title as string;
     return ['aside', mergeAttributes(attrs), 0];
+  },
+});
+
+const ToolCard = Node.create({
+  name: 'toolCard',
+  group: 'block',
+  content: 'heading paragraph+',
+  defining: true,
+
+  parseHTML() {
+    return [{ tag: 'aside[data-tool]' }];
+  },
+
+  renderHTML() {
+    return ['aside', mergeAttributes({ 'data-tool': '' }), 0];
   },
 });
 
@@ -306,9 +331,11 @@ export function RichContentEditor({
   ): string | null {
     if (!dataTransfer) return null;
     const uri = dataTransfer.getData('text/uri-list').trim();
-    if (uri) return uri.split('\n').find((line) => !line.startsWith('#')) ?? uri;
+    if (uri)
+      return uri.split('\n').find((line) => !line.startsWith('#')) ?? uri;
     const plain = dataTransfer.getData('text/plain').trim();
-    if (plain.startsWith('http://') || plain.startsWith('https://')) return plain;
+    if (plain.startsWith('http://') || plain.startsWith('https://'))
+      return plain;
     const html = dataTransfer.getData('text/html');
     return html.match(/<img[^>]+src=["']([^"']+)["']/i)?.[1] ?? null;
   }
@@ -319,7 +346,10 @@ export function RichContentEditor({
       window.alert('Bu görsel adresi izinli bir konaktan değil.');
       return true;
     }
-    const alt = window.prompt('Görsel açıklaması (alt metin)', 'İçerik görseli');
+    const alt = window.prompt(
+      'Görsel açıklaması (alt metin)',
+      'İçerik görseli'
+    );
     if (!alt?.trim()) {
       window.alert('Yazı içi görsel için açıklama zorunlu.');
       return true;
@@ -355,6 +385,7 @@ export function RichContentEditor({
       ColumnsBlock,
       ColumnSection,
       Callout,
+      ToolCard,
       Table.configure({ resizable: true }),
       TableRow,
       TableHeader,
@@ -374,6 +405,7 @@ export function RichContentEditor({
           '[&_aside]:my-3 [&_aside]:rounded-card [&_aside]:border [&_aside]:px-3 [&_aside]:py-2.5',
           '[&_aside[data-tone=info]]:border-cold/40 [&_aside[data-tone=info]]:bg-cold/5',
           '[&_aside[data-tone=warning]]:border-warning/45 [&_aside[data-tone=warning]]:bg-warning/5',
+          '[&_aside[data-tool]]:border-primary/45 [&_aside[data-tool]]:bg-primary/5',
           '[&_aside[data-title]]:before:mb-1 [&_aside[data-title]]:before:block [&_aside[data-title]]:before:text-meta [&_aside[data-title]]:before:font-semibold [&_aside[data-title]]:before:uppercase [&_aside[data-title]]:before:tracking-wide [&_aside[data-title]]:before:content-[attr(data-title)]',
           '[&_figcaption]:mt-1 [&_figcaption]:text-meta [&_figcaption]:text-muted-foreground',
           '[&_figure]:my-4 [&_img]:max-h-96 [&_img]:rounded-card [&_img]:border [&_img]:border-border',
@@ -515,8 +547,66 @@ export function RichContentEditor({
       .run();
   }
 
+  function addToolCard() {
+    if (!editor) return;
+    const href = window.prompt(
+      'Araç bağlantısı (/araclar/...)',
+      '/araclar/kadraj'
+    );
+    if (
+      !href?.trim() ||
+      !href.trim().startsWith('/') ||
+      href.trim().startsWith('//')
+    ) {
+      window.alert('Araç bağlantısı site içi bir yol olmalı.');
+      return;
+    }
+    const title = window
+      .prompt('Araç başlığı', 'Kadraj ve Pixel Scale')
+      ?.trim();
+    if (!title) return;
+    const text =
+      window
+        .prompt(
+          'Açıklama',
+          'Kurulumunuzun görüş alanını ve piksel ölçeğini hesaplayın.'
+        )
+        ?.trim() || 'Aracı açıp değeri kendi ekipmanınıza göre hesaplayın.';
+    const action =
+      window.prompt('Bağlantı metni', 'Aracı aç')?.trim() || 'Aracı aç';
+
+    editor
+      .chain()
+      .focus()
+      .insertContent({
+        type: 'toolCard',
+        content: [
+          {
+            type: 'heading',
+            attrs: { level: 3 },
+            content: [{ type: 'text', text: title }],
+          },
+          { type: 'paragraph', content: [{ type: 'text', text }] },
+          {
+            type: 'paragraph',
+            content: [
+              {
+                type: 'text',
+                text: action,
+                marks: [{ type: 'link', attrs: { href: href.trim() } }],
+              },
+            ],
+          },
+        ],
+      })
+      .run();
+  }
+
   /** Seçili görselin hizası ve genişliği. */
-  function setImageLayout(attrs: { align?: string | null; width?: string | null }) {
+  function setImageLayout(attrs: {
+    align?: string | null;
+    width?: string | null;
+  }) {
     if (!editor) return;
     editor.chain().focus().updateAttributes('figureImage', attrs).run();
   }
@@ -558,14 +648,18 @@ export function RichContentEditor({
         <ToolbarButton
           active={editor?.isActive('heading', { level: 2 })}
           disabled={disabled}
-          onClick={() => editor?.chain().focus().toggleHeading({ level: 2 }).run()}
+          onClick={() =>
+            editor?.chain().focus().toggleHeading({ level: 2 }).run()
+          }
         >
           Başlık 2
         </ToolbarButton>
         <ToolbarButton
           active={editor?.isActive('heading', { level: 3 })}
           disabled={disabled}
-          onClick={() => editor?.chain().focus().toggleHeading({ level: 3 }).run()}
+          onClick={() =>
+            editor?.chain().focus().toggleHeading({ level: 3 }).run()
+          }
         >
           Başlık 3
         </ToolbarButton>
@@ -622,6 +716,13 @@ export function RichContentEditor({
           İki sütun
         </ToolbarButton>
         <ToolbarButton
+          active={editor?.isActive('toolCard')}
+          disabled={disabled}
+          onClick={addToolCard}
+        >
+          Araç kartı
+        </ToolbarButton>
+        <ToolbarButton
           disabled={disabled}
           onClick={() =>
             editor
@@ -648,7 +749,9 @@ export function RichContentEditor({
         </ToolbarButton>
         <ToolbarButton
           disabled={disabled}
-          onClick={() => editor?.chain().focus().unsetAllMarks().clearNodes().run()}
+          onClick={() =>
+            editor?.chain().focus().unsetAllMarks().clearNodes().run()
+          }
         >
           Temizle
         </ToolbarButton>
@@ -688,7 +791,8 @@ export function RichContentEditor({
               <ToolbarButton
                 key={value}
                 active={
-                  (editor.getAttributes('figureImage').width ?? 'full') === value
+                  (editor.getAttributes('figureImage').width ?? 'full') ===
+                  value
                 }
                 /* "Tam" seçildiğinde öznitelik SİLİNİYOR, 'full' yazılmıyor:
                    varsayılan davranışı açıkça yazmak, blok modelinde
@@ -705,13 +809,19 @@ export function RichContentEditor({
         {editor?.isActive('table') ? (
           <>
             <Divider />
-            <ToolbarButton onClick={() => editor.chain().focus().addColumnAfter().run()}>
+            <ToolbarButton
+              onClick={() => editor.chain().focus().addColumnAfter().run()}
+            >
               Sütun +
             </ToolbarButton>
-            <ToolbarButton onClick={() => editor.chain().focus().addRowAfter().run()}>
+            <ToolbarButton
+              onClick={() => editor.chain().focus().addRowAfter().run()}
+            >
               Satır +
             </ToolbarButton>
-            <ToolbarButton onClick={() => editor.chain().focus().deleteTable().run()}>
+            <ToolbarButton
+              onClick={() => editor.chain().focus().deleteTable().run()}
+            >
               Tablo sil
             </ToolbarButton>
           </>
