@@ -197,8 +197,8 @@ export function TonightPanel() {
           ve kullanıcı sebebini aramak zorunda kalırdı.
         */}
         <div className="overflow-hidden rounded-card border border-border-strong bg-border">
-          <div className="bg-background p-3 sm:p-4">
-            <div className="grid gap-3 xl:grid-cols-[minmax(220px,280px)_minmax(0,1fr)] xl:items-center">
+          <div className="bg-background p-3">
+            <div className="grid gap-3 xl:grid-cols-[308px_minmax(0,1fr)] xl:items-center">
               <div
                 className="min-w-0"
                 title={
@@ -216,9 +216,9 @@ export function TonightPanel() {
                 <div
                   role="tablist"
                   aria-label="Gece tarihi seç"
-                  className="overflow-x-auto pb-1"
+                  className="overflow-x-auto"
                 >
-                  <div className="min-w-[560px]">
+                  <div className="min-w-[540px]">
                     <div className="grid grid-cols-7 gap-1.5">
                       {nightSteps.map((step) => (
                         <NightStepButton
@@ -332,7 +332,7 @@ function NightStepButton({
       }
       onClick={onSelect}
       className={cn(
-        'relative flex min-h-10 items-center justify-center gap-1.5 overflow-hidden rounded-card border px-2 pb-2 text-center text-meta font-medium transition-colors',
+        'relative flex min-h-9 items-center justify-center gap-1.5 overflow-hidden rounded-card border px-2 pb-2 text-center text-meta font-medium transition-colors',
         nightStepTone(preview?.total ?? null, selected, past)
       )}
     >

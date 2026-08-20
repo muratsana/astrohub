@@ -56,9 +56,9 @@ export function TimelineColumn({
   const dew = weather ? dewRisk(weather.temperature, weather.dewPoint) : null;
 
   return (
-    <div className="flex flex-col gap-5 p-5">
+    <div className="flex flex-col gap-4 p-4">
       <div className="grid gap-2">
-        <dl className="grid gap-3 min-[560px]:grid-cols-[minmax(13rem,1.35fr)_minmax(7rem,0.75fr)_minmax(8rem,0.9fr)]">
+        <dl className="grid gap-2.5 min-[560px]:grid-cols-[minmax(13rem,1.35fr)_minmax(7rem,0.75fr)_minmax(8rem,0.9fr)]">
           <SummaryMetric
             label="Karanlık penceresi"
             value={
@@ -116,7 +116,7 @@ export function TimelineColumn({
         markAt={markAt}
       />
 
-      <div className="grid gap-2.5 sm:grid-cols-2">
+      <div className="grid gap-2 sm:grid-cols-2">
         <ConditionCard
           label="Bulut örtüsü"
           value={weather ? `%${Math.round(weather.cloudCover)}` : '—'}
@@ -246,7 +246,7 @@ function ConditionCard({
    * çıkıp kardeşlere bakıyor. Araya bir `div` koymak o yolu kesiyordu.
    */
   return (
-    <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3.5 rounded-card border border-border bg-surface-2 px-3.5 py-3">
+    <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 rounded-card border border-border bg-surface-2 px-3 py-2.5">
       <p className="truncate text-meta font-medium text-muted-foreground">
         {label}
       </p>
@@ -255,7 +255,7 @@ function ConditionCard({
         {meter !== null && (
           <span
             aria-hidden
-            className="h-1 w-14 shrink-0 overflow-hidden rounded-full bg-surface-3"
+            className="h-1 w-12 shrink-0 overflow-hidden rounded-full bg-surface-3"
           >
             <span
               className={cn(

@@ -64,7 +64,7 @@ export function TargetsColumn({ ranked, timeZone, onMark }: Props) {
   };
 
   return (
-    <div className="flex h-full flex-col gap-3.5 p-5">
+    <div className="flex h-full flex-col gap-3 p-4">
       <div className="grid grid-cols-[1.5rem_minmax(0,1fr)_4.75rem_6rem] items-end gap-x-2.5">
         <h3 className="col-span-2 text-body-sm font-semibold text-foreground">
           Bu Gece Yüksek Objeler
@@ -103,7 +103,7 @@ export function TargetsColumn({ ranked, timeZone, onMark }: Props) {
 
       <Link
         to="/araclar/gokyuzu-katalogu"
-        className="mt-auto rounded-card border border-border px-3 py-2.5 text-center text-meta font-medium text-muted-foreground transition-colors hover:border-border-strong hover:text-foreground"
+        className="mt-auto rounded-card border border-border px-3 py-2 text-center text-meta font-medium text-muted-foreground transition-colors hover:border-border-strong hover:text-foreground"
       >
         Tüm katalog · <span className="num">{catalog.length}</span> nesne
       </Link>
@@ -184,7 +184,7 @@ function TargetRow({
         to={`/hedef/${target.slug}`}
         {...mark}
         className={cn(
-          'grid grid-cols-[1.5rem_minmax(0,1fr)_4.75rem_6rem] items-center gap-x-2.5 rounded-card border px-2 py-1.5 transition-colors',
+          'grid grid-cols-[1.5rem_minmax(0,1fr)_4.75rem_6rem] items-center gap-x-2.5 rounded-card border px-2 py-1 transition-colors',
           index === 0
             ? 'border-cold/25 bg-cold/8 hover:bg-cold/12'
             : 'border-transparent hover:bg-surface-2'

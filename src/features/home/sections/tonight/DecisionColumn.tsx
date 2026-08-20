@@ -116,13 +116,13 @@ export function DecisionColumn({
 
   return (
     <div
-      className="flex flex-col gap-4 bg-background p-5"
+      className="flex flex-col gap-3 bg-background p-4"
       style={{
         backgroundImage: `linear-gradient(165deg, color-mix(in srgb, ${glow} 10%, transparent), transparent 55%)`,
       }}
     >
       <div className="flex items-baseline justify-between gap-3">
-        <h2 className="label caps min-h-7 text-muted-foreground">Bu gece</h2>
+        <h2 className="label caps text-muted-foreground">Bu gece</h2>
         {conditions.data && (
           <span className="inline-flex items-center gap-1.5 text-meta text-faint">
             <span
@@ -171,9 +171,7 @@ export function DecisionColumn({
       {tab !== 'places' && activeScore && (
         <>
           <BortleIndicator value={bortle} />
-          <div aria-hidden className="h-px bg-border" />
-          <ReasonList pros={activeScore.pros} cons={activeScore.cons} />
-          <p className="mt-auto rounded-card border border-warning/25 bg-warning/8 px-3.5 py-2.5 text-meta leading-relaxed text-warning">
+          <p className="rounded-card border border-warning/25 bg-warning/8 px-3 py-2 text-meta leading-relaxed text-warning">
             {activeScore.recommendation}
           </p>
         </>
@@ -198,7 +196,7 @@ function DecisionTab({
       aria-selected={selected}
       onClick={onClick}
       className={cn(
-        'min-h-8 rounded-card px-2 text-center text-[0.68rem] font-semibold leading-tight transition-colors',
+        'min-h-7 rounded-card px-2 text-center text-[0.68rem] font-semibold leading-tight transition-colors',
         selected
           ? 'bg-primary text-primary-foreground'
           : 'text-muted-foreground hover:bg-surface-2 hover:text-foreground'
@@ -332,7 +330,7 @@ function ScoreBlock({
 
   return (
     <>
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3.5">
         {/*
           HALKA. `conic-gradient` yüzdesi doğrudan skor — ayrı bir görsel
           ölçek yok, çünkü iki ölçek tutmak ikisini birbirinden ayırmak
@@ -341,7 +339,7 @@ function ScoreBlock({
         */}
         <div
           aria-hidden
-          className="score-ring grid h-[78px] w-[78px] shrink-0 place-items-center rounded-full"
+          className="score-ring grid h-[70px] w-[70px] shrink-0 place-items-center rounded-full"
           style={
             {
               '--ring-fill': `${score.total}%`,
@@ -349,7 +347,7 @@ function ScoreBlock({
             } as React.CSSProperties
           }
         >
-          <div className="grid h-[62px] w-[62px] place-items-center rounded-full bg-background">
+          <div className="grid h-[56px] w-[56px] place-items-center rounded-full bg-background">
             <span
               className={cn(
                 'num text-readout-lg font-semibold leading-none',
@@ -387,7 +385,7 @@ function ScoreBlock({
         "Seeing" alt alta hizalanmazdı. `auto` sütun en uzun etikete
         göre kendini kuruyor — Türkçe metin uzadığında da bozulmuyor.
       */}
-      <dl className="grid grid-cols-[auto_1fr_auto] items-center gap-x-2.5 gap-y-2">
+      <dl className="grid grid-cols-[auto_1fr_auto] items-center gap-x-2.5 gap-y-1.5">
         {score.rows.map((row) => (
           <div key={row.key} className="contents">
             <dt className="text-meta text-muted-foreground">{row.label}</dt>
@@ -431,7 +429,7 @@ function BortleIndicator({ value }: { value: number | null }) {
     level <= 3 ? 'bg-success' : level <= 5 ? 'bg-warning' : 'bg-danger';
 
   return (
-    <div className="rounded-card border border-border bg-surface-1 px-3 py-2.5">
+    <div className="rounded-card border border-border bg-surface-1 px-3 py-2">
       <div className="mb-2 flex items-center justify-between gap-3">
         <span className="text-meta font-semibold text-muted-foreground">
           Bortle Skalası
@@ -511,38 +509,3 @@ function ScoreUnavailable({ conditions }: { conditions: SkyState }) {
   );
 }
 
-/**
- * Gerekçeler.
- *
- * `+` ve `−` işaretleri `aria-hidden` DEĞİL: ekran okuyucuda listenin
- * hangi yöne baktığı kayboluyor. Bunun yerine her satır kendi metnini
- * "artı" / "eksi" ile açıyor ve işaret görsel karşılığı.
- */
-function ReasonList({ pros, cons }: { pros: string[]; cons: string[] }) {
-  const rows = [
-    ...pros.map((text) => ({ text, positive: true })),
-    ...cons.map((text) => ({ text, positive: false })),
-  ];
-  if (rows.length === 0) return null;
-
-  return (
-    <ul className="flex flex-col gap-2.5">
-      {rows.map((row) => (
-        <li key={row.text} className="flex gap-2.5">
-          <span
-            className={cn(
-              'num shrink-0 text-meta font-semibold leading-relaxed',
-              row.positive ? 'text-success' : 'text-warning'
-            )}
-          >
-            <span className="sr-only">{row.positive ? 'Artı' : 'Eksi'}: </span>
-            <span aria-hidden>{row.positive ? '+' : '−'}</span>
-          </span>
-          <span className="text-meta leading-relaxed text-muted-foreground">
-            {row.text}
-          </span>
-        </li>
-      ))}
-    </ul>
-  );
-}
