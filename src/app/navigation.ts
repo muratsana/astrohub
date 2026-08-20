@@ -159,13 +159,13 @@ export const siteMap: NavGroup[] = [
       {
         label: 'Tüm Yazılar',
         to: '/yazilar',
-        description: 'Rehberler, eğitim yazıları, işleme dersleri',
+        description: 'Teknik astrofotoğraf serisi',
         keywords: ['makale', 'eğitim', 'rehber', 'ders', 'işleme'],
       },
       {
-        label: 'Astrofotoğrafta SNR',
-        to: '/yazilar/snr-rehberi',
-        description: 'Sinyal, gürültü ve süre — simülatörlü uzun rehber',
+        label: 'Gürültü, Gain ve Poz',
+        to: '/yazi/gurultu-gain-poz',
+        description: 'SNR, gain ve alt poz süresi',
         keywords: [
           'snr',
           'sinyal gürültü',
@@ -178,9 +178,8 @@ export const siteMap: NavGroup[] = [
       },
       {
         label: 'Astrofotoğrafçılıkta Drizzle',
-        to: '/yazilar/drizzle-rehberi',
-        description:
-          'Örnekleme, pixfrac ve PHD2 dithering — hesaplayıcılı uzun rehber',
+        to: '/yazi/drizzle',
+        description: 'Örnekleme, pixfrac ve dithering',
         keywords: [
           'drizzle',
           'dither',
@@ -195,9 +194,8 @@ export const siteMap: NavGroup[] = [
       },
       {
         label: 'Kutup Hizalaması',
-        to: '/yazilar/kutup-hizalamasi',
-        description:
-          'Sürüklenme, alan dönmesi ve PHD2 grafiği — simülatörlü uzun rehber',
+        to: '/yazi/kutup-hizalamasi',
+        description: 'Sürüklenme, alan dönmesi ve hizalama toleransı',
         keywords: [
           'kutup hizalaması',
           'polar align',

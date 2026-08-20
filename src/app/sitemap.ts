@@ -61,24 +61,6 @@ export const staticEntries: SitemapEntry[] = [
   { path: '/etkinlikler/takvim', priority: 0.7, changefreq: 'daily' },
   { path: '/cerezler', priority: 0.2, changefreq: 'yearly' },
   { path: '/yazilar', priority: 0.8, changefreq: 'weekly' },
-  {
-    path: '/yazilar/snr-rehberi',
-    priority: 0.7,
-    changefreq: 'yearly',
-    lastmod: '2026-08-06',
-  },
-  {
-    path: '/yazilar/kutup-hizalamasi',
-    priority: 0.7,
-    changefreq: 'yearly',
-    lastmod: '2026-08-06',
-  },
-  {
-    path: '/yazilar/drizzle-rehberi',
-    priority: 0.7,
-    changefreq: 'yearly',
-    lastmod: '2026-08-05',
-  },
   /* Sözlük ve SSS indekslenmeli: ikisi de arama motorundan gelen
      "X ne demek" / "kota nedir" sorularının doğal karşılığı. Gözlem
      günlüğü (`/gunluk`) BİLEREK LİSTEDE YOK — kişisel ve `noIndex`. */
@@ -162,11 +144,7 @@ export function contentEntries(): SitemapEntry[] {
       priority: 0.7,
       changefreq: 'weekly' as const,
     })),
-    /* Kendi adresi olan yazılar (`href` taşıyanlar) BURADA DEĞİL: onlar
-       yukarıdaki sabit listede kendi kanonik yollarıyla duruyor.
-       `/yazi/<slug>` bu kayıtlarda yalnızca bir yönlendirme ve sitemap'e
-       yönlendirme koymak, arama motoruna aynı belgeyi iki adresle
-       bildirmek olurdu. */
+    /* Yazı tohumları kanonik `/yazi/<slug>` adreslerinde durur. */
     ...articles
       .filter((a) => !a.href)
       .map((a) => ({

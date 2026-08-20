@@ -22,7 +22,7 @@ import { useExplorer } from '@/features/explorer/useExplorer';
 import { articlesSpec } from './articlesSpec';
 
 /**
- * YAZILAR — rehberler, eğitim yazıları ve işleme dersleri.
+ * YAZILAR — teknik astrofotoğraf serisi.
  *
  * Her yazının konusuyla ilgili bir kapak görseli var: liste önce
  * görselsizdi ve "tipografi yeter" diye savunulmuştu, ama aynı sayfada
@@ -84,9 +84,7 @@ export function ArticlesPage() {
         meta: article.duration,
         tint: article.tint,
         imageUrl: article.image?.url,
-        action: (
-          <AdminEditLink to={entryEditPath('yazi', article.slug)} />
-        ),
+        action: <AdminEditLink to={entryEditPath('yazi', article.slug)} />,
         footer: (
           <span className="tabular text-meta text-faint">{article.author}</span>
         ),
@@ -98,7 +96,7 @@ export function ArticlesPage() {
     <>
       <PageMeta
         title="Yazılar"
-        description="Astronomi ve astrofotoğrafçılık rehberleri: setup kurulumu, kalibrasyon, narrowband işleme, guiding ve gökyüzü kalitesi ölçümü."
+        description="Astrofotoğrafçılık teknik serisi: gürültü, gain, odak, filtreler, ışık kirliliği, guiding, kutup hizalaması ve drizzle."
         jsonLd={breadcrumbJsonLd([
           { name: 'Ana Sayfa', path: '/' },
           { name: 'Yazılar', path: '/yazilar' },
@@ -109,9 +107,9 @@ export function ArticlesPage() {
         <header className="mb-5 border-b border-border pb-5">
           <h1 className="type-page text-foreground">Yazılar</h1>
           <p className="mt-2 max-w-[70ch] text-meta leading-relaxed text-muted-foreground">
-            Rehberler, işleme dersleri, teknik incelemeler ve saha notları. Her
-            yazı bir prosedür gibi kurulur: ne yapılır, neden yapılır, ne zaman
-            işe yaramaz.
+            Zip paketindeki teknik seri ayrı yazılar olarak içe aktarıldı. Her
+            yazı gürültü, optik, filtre, gökyüzü kalitesi ya da takip gibi tek
+            bir problemi derli toplu ele alır.
           </p>
         </header>
 

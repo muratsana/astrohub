@@ -717,10 +717,6 @@
       "destination": "/app.html"
     },
     {
-      "source": "/yazi/kutup-hizalamasi",
-      "destination": "/app.html"
-    },
-    {
       "source": "/yazi/snr-rehberi",
       "destination": "/app.html"
     },

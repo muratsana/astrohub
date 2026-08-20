@@ -180,13 +180,18 @@ export function TonightPage() {
         description="Bu gece için astronomik karanlık penceresi, ay durumu, hava koşulları ve gözlenebilir hedeflerin yükseklik eğrileri."
         jsonLd={breadcrumbJsonLd([
           { name: 'Ana Sayfa', path: '/' },
+          { name: 'Araçlar', path: '/araclar' },
           { name: 'Bu Gece', path: '/bu-gece' },
         ])}
       />
 
       <Container className="py-8 sm:py-10">
         <PageHeader
-          breadcrumb={[{ label: 'Ana Sayfa', to: '/' }, { label: 'Bu Gece' }]}
+          breadcrumb={[
+            { label: 'Ana Sayfa', to: '/' },
+            { label: 'Araçlar', to: '/araclar' },
+            { label: 'Bu Gece' },
+          ]}
           title="Bu Gece Gökyüzünde"
           description={`${dateLabel} · ${location.label}. Hedefler ${MIN_ALTITUDE}° üstünde kaldıkları süreye göre sıralanır — zirve yüksekliği tek başına iyi bir ölçüt değildir.`}
           actions={

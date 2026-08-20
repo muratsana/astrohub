@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { PlateSolveControl } from './PlateSolveControl';
 import { ContentControl } from './ContentControl';
 import { EventControl } from './EventControl';
@@ -9,18 +9,6 @@ import { PhotoWeekAdminControl } from './PhotoWeekAdminControl';
 import type { EntryKind } from '@/services/content/entries';
 import type { RecordKind } from './records';
 import { cn } from '@/lib/cn';
-import { lazyWithRetry } from '@/lib/lazyWithRetry';
-
-/*
- * REHBER EKRANI TEMBEL YÜKLENİYOR.
- *
- * `GuideControl` üç rehberin ÜRETİLMİŞ GÖVDESİNİ tohum olarak içe
- * aktarıyor — toplam ~400 kB. Statik import admin paketini o kadar
- * şişiriyordu; oysa içerik yalnızca bu sekme açıldığında gerekiyor.
- */
-const GuideControl = lazyWithRetry(() =>
-  import('./GuideControl').then((m) => ({ default: m.GuideControl }))
-);
 
 /**
  * İÇERİK SEKMELERİ — her içerik türü için ayrı sekme (§6.4, FAZ 4.1).
@@ -62,10 +50,7 @@ type Sekme =
   | { id: 'hafta'; tur: 'week'; etiket: string }
   /* Etkinlik `record` değil: moderasyon değil TAM DÜZENLEME yüzeyi
      alıyor. Ayrıntı `EventControl` başlığında. */
-  | { id: 'etkinlik'; tur: 'event'; etiket: string }
-  /* Uzun form rehberler: gövdeleri blok modeline sığmadığı için kendi
-     düzenleme yüzeyleri var. Ayrıntı `GuideControl` başlığında. */
-  | { id: 'rehber'; tur: 'guide'; etiket: string };
+  | { id: 'etkinlik'; tur: 'event'; etiket: string };
 
 /**
  * Sıra editoryal iş yüküne göre: en sık dokunulan tür başta.
@@ -82,7 +67,6 @@ const SEKMELER: Sekme[] = [
   { id: 'photo', tur: 'record', etiket: 'Fotoğraflar' },
   { id: 'site', tur: 'record', etiket: 'Gözlem noktaları' },
   { id: 'topluluk', tur: 'club', etiket: 'Topluluklar' },
-  { id: 'rehber', tur: 'guide', etiket: 'Rehberler' },
   { id: 'sozluk', tur: 'entry', etiket: 'Sözlük' },
   { id: 'sss', tur: 'entry', etiket: 'SSS' },
   { id: 'hafta', tur: 'week', etiket: 'Haftanın fotoğrafı' },
@@ -152,16 +136,6 @@ export function IcerikSekmeleri({
           initialKind={aktif.id}
           initialSlug={targetSlug}
         />
-      )}
-
-      {aktif.tur === 'guide' && (
-        <Suspense
-          fallback={
-            <p className="text-meta text-muted-foreground">Yükleniyor…</p>
-          }
-        >
-          <GuideControl canWrite={canWrite} />
-        </Suspense>
       )}
 
       {aktif.tur === 'event' && (

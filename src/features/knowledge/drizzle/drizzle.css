@@ -499,7 +499,7 @@
 
 /*
  * JS ÇALIŞMADAN ÖNCE HEPSİ AÇIK. Paneller varsayılan olarak görünür;
- * `DrizzleGuidePage` sekmeleri bağladığında kapsayıcıya `data-dz-tabs`
+ * Eski drizzle rehberi sekmeleri bağladığında kapsayıcıya `data-dz-tabs`
  * yazıyor ve gizleme kuralı ancak o zaman devreye giriyor. Tersi olsaydı
  * (varsayılan gizli) JS'in çalışmadığı ya da geciktiği durumda beş
  * yazılım bölümünden dördü kaybolurdu — arama motoru da göremezdi.

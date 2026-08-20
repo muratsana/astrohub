@@ -191,7 +191,10 @@ export const appRoutes = [
       {
         path: 'akis',
         element: route(
-          named(() => import('@/features/activity/ActivityPage'), 'ActivityPage')
+          named(
+            () => import('@/features/activity/ActivityPage'),
+            'ActivityPage'
+          )
         ),
       },
 
@@ -287,44 +290,25 @@ export const appRoutes = [
           )
         ),
       },
-      /* Rehberin künyesi yazılar listesinde duruyor ve kart doğrudan kendi
-         sayfasına gidiyor. Bu yönlendirme eski/derin bağlantılar için:
-         `/yazi/drizzle-rehberi` adresini paylaşan biri, gövdesi bilerek
-         boş bırakılmış künye kaydına değil rehberin kendisine düşsün. */
-      { path: 'yazi/drizzle-rehberi', element: <RedirectTo to="/yazilar/drizzle-rehberi" /> },
-      { path: 'yazi/snr-rehberi', element: <RedirectTo to="/yazilar/snr-rehberi" /> },
-      { path: 'yazi/kutup-hizalamasi', element: <RedirectTo to="/yazilar/kutup-hizalamasi" /> },
       {
-        /* Üçüncü uzun form rehber, ilk ikisiyle aynı gerekçe: 15 bölüm,
-           11 tablo, 13 şekil, canlı simülatör ve üç araç blok tabanlı
-           yazı modeline sığmıyor. Ayrıntı `PolarGuidePage` başlığında. */
-        path: 'yazilar/kutup-hizalamasi',
-        element: route(
-          named(
-            () => import('@/features/knowledge/PolarGuidePage'),
-            'PolarGuidePage'
-          )
-        ),
+        path: 'yazi/drizzle-rehberi',
+        element: <RedirectTo to="/yazi/drizzle" />,
       },
       {
-        /* Drizzle ile aynı gerekçe: 15 bölüm, 15 tablo, 7 infografik ve
-           dört interaktif araç blok tabanlı yazı modeline sığmıyor. */
-        path: 'yazilar/snr-rehberi',
-        element: route(
-          named(() => import('@/features/knowledge/SnrGuidePage'), 'SnrGuidePage')
-        ),
+        path: 'yazi/snr-rehberi',
+        element: <RedirectTo to="/yazi/gurultu-gain-poz" />,
       },
       {
-        /* Statik parça `yazi/:slug`ten AYRI bir dal: rehber, blok tabanlı
-           yazı modeline sığmayan (16 tablo, 11 infografik, 4 hesaplayıcı)
-           kendi sayfası. Ayrıntı `DrizzleGuidePage` başlığında. */
         path: 'yazilar/drizzle-rehberi',
-        element: route(
-          named(
-            () => import('@/features/knowledge/DrizzleGuidePage'),
-            'DrizzleGuidePage'
-          )
-        ),
+        element: <RedirectTo to="/yazi/drizzle" />,
+      },
+      {
+        path: 'yazilar/snr-rehberi',
+        element: <RedirectTo to="/yazi/gurultu-gain-poz" />,
+      },
+      {
+        path: 'yazilar/kutup-hizalamasi',
+        element: <RedirectTo to="/yazi/kutup-hizalamasi" />,
       },
       {
         path: 'yazi/:slug',
@@ -491,7 +475,10 @@ export const appRoutes = [
         ),
       },
       { path: 'araclar/fov', element: <RedirectTo to="/araclar/kadraj" /> },
-      { path: 'araclar/simulator', element: <RedirectTo to="/araclar/kadraj" /> },
+      {
+        path: 'araclar/simulator',
+        element: <RedirectTo to="/araclar/kadraj" />,
+      },
       // Tek kanonik çalışma alanı: FoV, pixel scale ve setup uyumluluk Simülatör'de birleşir.
       {
         path: 'araclar/pixel-scale',
@@ -661,10 +648,7 @@ export const appRoutes = [
            Gerekçe `BridgePage` başlığında. */
         path: 'ekipman/bridge',
         element: route(
-          named(
-            () => import('@/features/equipment/BridgePage'),
-            'BridgePage'
-          )
+          named(() => import('@/features/equipment/BridgePage'), 'BridgePage')
         ),
       },
       { path: 'ekipman/:category', element: equipmentPage() },
