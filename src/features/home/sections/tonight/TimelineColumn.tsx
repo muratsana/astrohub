@@ -98,15 +98,6 @@ export function TimelineColumn({
             }
           />
         </dl>
-
-        <p className="justify-self-start text-meta text-muted-foreground min-[560px]:justify-self-end">
-          <span className="text-faint">gece</span>{' '}
-          <span className="tabular font-medium">
-            {clock(timeline.from)}
-            <span className="mx-1 text-faint">→</span>
-            {clock(timeline.to)}
-          </span>
-        </p>
       </div>
 
       <NightTimelineChart
@@ -161,7 +152,9 @@ export function TimelineColumn({
           value={weather ? `${Math.round(weather.windSpeed)} km/sa` : '—'}
           /* 30 km/sa üstü pratikte gözlem dışı; ölçek oraya göre. */
           meter={
-            weather ? Math.min(1, Math.max(0, 1 - weather.windSpeed / 30)) : null
+            weather
+              ? Math.min(1, Math.max(0, 1 - weather.windSpeed / 30))
+              : null
           }
         />
 
@@ -282,7 +275,6 @@ function ConditionCard({
           {value}
         </span>
       </span>
-
     </div>
   );
 }
@@ -326,7 +318,8 @@ function MoonPhaseStrip({
   moonTimes: RiseSet;
   timeZone: string;
 }) {
-  const clock = (date: Date | null) => (date ? formatClock(date, timeZone) : null);
+  const clock = (date: Date | null) =>
+    date ? formatClock(date, timeZone) : null;
   const movement = moonTimes.alwaysUp
     ? 'gece boyu ufkun üstünde'
     : moonTimes.alwaysDown

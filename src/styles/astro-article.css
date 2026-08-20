@@ -1,0 +1,1123 @@
+/* =========================================================================
+   Astrohub — yazı tasarım sistemi
+   -------------------------------------------------------------------------
+   Tek dosya. Tüm yazılar bunu paylaşır. Her kural `.ah` altına
+   kapsanmıştır ve her sınıf `ah-` ile öneklenmiştir; sitenizin
+   mevcut stilleriyle çakışmaz.
+
+   TEMA: Yazı kendi arka planını DAYATMAZ. Sitenizin arka planını kullanır
+   ve metin/çizgi/grafik renklerini temaya göre seçer. Üç sinyali de dinler:
+     1) @media (prefers-color-scheme)
+     2) [data-theme="dark"|"light"]  (herhangi bir üst öğede)
+     3) .dark / .light sınıfı        (Tailwind ve benzerleri)
+   Zorlamak isterseniz: <article class="ah" data-ah-theme="dark">
+   ========================================================================= */
+
+/* ---------- 1. Jetonlar: AÇIK tema varsayılan ---------- */
+.ah {
+  --ah-ink: #10151b; /* ana metin  */
+  --ah-ink-2: #47535f; /* ikincil    */
+  --ah-ink-3: #6d7883; /* üçüncül    */
+  --ah-hair: rgba(16, 21, 27, 0.13); /* ince çizgi */
+  --ah-rule: rgba(16, 21, 27, 0.22); /* kalın çizgi */
+  --ah-surface: rgba(16, 21, 27, 0.035); /* kutu zemini */
+  --ah-surface-2: rgba(16, 21, 27, 0.06); /* tablo başlığı */
+  --ah-inset: rgba(16, 21, 27, 0.05); /* grafik zemini */
+  --ah-code-bg: rgba(16, 21, 27, 0.06);
+  --ah-code-ink: #8a4b12;
+
+  --ah-a1: #1c62c4; /* mavi     — birincil */
+  --ah-a2: #b0511a; /* turuncu  — ikincil  */
+  --ah-a3: #0d7a58; /* yeşil    — olumlu   */
+  --ah-a4: #9a6b00; /* amber    — uyarı    */
+  --ah-a5: #a53a63; /* macenta  */
+  --ah-a6: #b6352f; /* kırmızı  — kritik   */
+
+  --ah-good: #0d7a58;
+  --ah-warn: #9a6b00;
+  --ah-crit: #b6352f;
+
+  --ah-sans: inherit;
+  --ah-mono:
+    ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+  --ah-measure: 68ch;
+  --ah-r: 12px;
+
+  color-scheme: light;
+  color: var(--ah-ink);
+  font-family: var(--ah-sans);
+  font-size: 17px;
+  line-height: 1.75;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* ---------- 2. KOYU tema jetonları ---------- */
+@media (prefers-color-scheme: dark) {
+  .ah:not([data-ah-theme='light']) {
+    --ah-ink: #e9eef4;
+    --ah-ink-2: #a7b3c0;
+    --ah-ink-3: #7d8b99;
+    --ah-hair: rgba(233, 238, 244, 0.14);
+    --ah-rule: rgba(233, 238, 244, 0.24);
+    --ah-surface: rgba(233, 238, 244, 0.045);
+    --ah-surface-2: rgba(233, 238, 244, 0.075);
+    --ah-inset: rgba(0, 0, 0, 0.28);
+    --ah-code-bg: rgba(233, 238, 244, 0.08);
+    --ah-code-ink: #e8c9a0;
+
+    --ah-a1: #62a8ff;
+    --ah-a2: #ff9257;
+    --ah-a3: #3ad4a0;
+    --ah-a4: #f2c14e;
+    --ah-a5: #f176a8;
+    --ah-a6: #ff7b72;
+
+    --ah-good: #3ad4a0;
+    --ah-warn: #f2c14e;
+    --ah-crit: #ff7b72;
+
+    color-scheme: dark;
+  }
+}
+
+/* Site açıkça koyu diyorsa (medya sorgusundan bağımsız) */
+[data-theme='dark'] .ah:not([data-ah-theme='light']),
+.dark .ah:not([data-ah-theme='light']),
+html.dark .ah:not([data-ah-theme='light']),
+.ah[data-ah-theme='dark'] {
+  --ah-ink: #e9eef4;
+  --ah-ink-2: #a7b3c0;
+  --ah-ink-3: #7d8b99;
+  --ah-hair: rgba(233, 238, 244, 0.14);
+  --ah-rule: rgba(233, 238, 244, 0.24);
+  --ah-surface: rgba(233, 238, 244, 0.045);
+  --ah-surface-2: rgba(233, 238, 244, 0.075);
+  --ah-inset: rgba(0, 0, 0, 0.28);
+  --ah-code-bg: rgba(233, 238, 244, 0.08);
+  --ah-code-ink: #e8c9a0;
+  --ah-a1: #62a8ff;
+  --ah-a2: #ff9257;
+  --ah-a3: #3ad4a0;
+  --ah-a4: #f2c14e;
+  --ah-a5: #f176a8;
+  --ah-a6: #ff7b72;
+  --ah-good: #3ad4a0;
+  --ah-warn: #f2c14e;
+  --ah-crit: #ff7b72;
+  color-scheme: dark;
+}
+
+/* Site açıkça açık diyorsa */
+[data-theme='light'] .ah:not([data-ah-theme='dark']),
+.light .ah:not([data-ah-theme='dark']),
+html.light .ah:not([data-ah-theme='dark']),
+.ah[data-ah-theme='light'] {
+  --ah-ink: #10151b;
+  --ah-ink-2: #47535f;
+  --ah-ink-3: #6d7883;
+  --ah-hair: rgba(16, 21, 27, 0.13);
+  --ah-rule: rgba(16, 21, 27, 0.22);
+  --ah-surface: rgba(16, 21, 27, 0.035);
+  --ah-surface-2: rgba(16, 21, 27, 0.06);
+  --ah-inset: rgba(16, 21, 27, 0.05);
+  --ah-code-bg: rgba(16, 21, 27, 0.06);
+  --ah-code-ink: #8a4b12;
+  --ah-a1: #1c62c4;
+  --ah-a2: #b0511a;
+  --ah-a3: #0d7a58;
+  --ah-a4: #9a6b00;
+  --ah-a5: #a53a63;
+  --ah-a6: #b6352f;
+  --ah-good: #0d7a58;
+  --ah-warn: #9a6b00;
+  --ah-crit: #b6352f;
+  color-scheme: light;
+}
+
+/* ---------- 3. Tipografi ---------- */
+.ah *,
+.ah *::before,
+.ah *::after {
+  box-sizing: border-box;
+}
+
+.ah > * {
+  max-width: var(--ah-measure);
+}
+.ah > .ah-wide {
+  max-width: none;
+}
+
+.ah h1 {
+  font-size: clamp(30px, 5vw, 42px);
+  line-height: 1.14;
+  letter-spacing: -0.022em;
+  font-weight: 750;
+  color: var(--ah-ink);
+  margin: 0 0 16px;
+}
+.ah h2 {
+  font-size: clamp(22px, 3vw, 27px);
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+  font-weight: 700;
+  color: var(--ah-ink);
+  margin: 64px 0 14px;
+  padding-top: 4px;
+  scroll-margin-top: 90px;
+}
+.ah h3 {
+  font-size: 19px;
+  line-height: 1.35;
+  font-weight: 650;
+  color: var(--ah-ink);
+  margin: 36px 0 10px;
+  scroll-margin-top: 90px;
+}
+.ah p {
+  margin: 0 0 20px;
+  color: var(--ah-ink-2);
+}
+.ah strong,
+.ah b {
+  color: var(--ah-ink);
+  font-weight: 650;
+}
+.ah em,
+.ah i {
+  color: var(--ah-ink);
+  font-style: italic;
+}
+.ah a {
+  color: var(--ah-a1);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+.ah a:hover {
+  text-decoration-thickness: 2px;
+}
+.ah ul,
+.ah ol {
+  margin: 0 0 20px;
+  padding-left: 24px;
+  color: var(--ah-ink-2);
+}
+.ah li {
+  margin: 0 0 9px;
+}
+.ah li::marker {
+  color: var(--ah-ink-3);
+}
+.ah code {
+  font-family: var(--ah-mono);
+  font-size: 0.875em;
+  background: var(--ah-code-bg);
+  color: var(--ah-code-ink);
+  padding: 2px 6px;
+  border-radius: 5px;
+}
+.ah hr {
+  border: 0;
+  border-top: 1px solid var(--ah-hair);
+  margin: 56px 0;
+}
+.ah small {
+  font-size: 0.82em;
+  color: var(--ah-ink-3);
+}
+
+/* Giriş paragrafı */
+.ah .ah-lead {
+  font-size: 20px;
+  line-height: 1.62;
+  color: var(--ah-ink-2);
+  margin: 0 0 26px;
+}
+
+/* Bölüm üstü küçük etiket */
+.ah .ah-kicker {
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--ah-a1);
+  margin: 0 0 10px;
+}
+
+/* ---------- 4. Not kutuları — tek stil, dört ton ---------- */
+.ah .ah-note {
+  border-left: 3px solid var(--ah-a1);
+  background: var(--ah-surface);
+  border-radius: 0 var(--ah-r) var(--ah-r) 0;
+  padding: 16px 20px;
+  margin: 26px 0;
+  font-size: 16px;
+  color: var(--ah-ink-2);
+}
+.ah .ah-note > *:first-child {
+  margin-top: 0;
+}
+.ah .ah-note > *:last-child {
+  margin-bottom: 0;
+}
+.ah .ah-note b.ah-t {
+  display: block;
+  color: var(--ah-a1);
+  font-weight: 700;
+  font-size: 13.5px;
+  letter-spacing: 0.01em;
+  margin-bottom: 5px;
+}
+.ah .ah-note.ah-warn {
+  border-left-color: var(--ah-warn);
+}
+.ah .ah-note.ah-warn b.ah-t {
+  color: var(--ah-warn);
+}
+.ah .ah-note.ah-good {
+  border-left-color: var(--ah-good);
+}
+.ah .ah-note.ah-good b.ah-t {
+  color: var(--ah-good);
+}
+.ah .ah-note.ah-crit {
+  border-left-color: var(--ah-crit);
+}
+.ah .ah-note.ah-crit b.ah-t {
+  color: var(--ah-crit);
+}
+
+/* ---------- 5. Özet kutusu ---------- */
+.ah .ah-tldr {
+  border: 1px solid var(--ah-hair);
+  border-radius: var(--ah-r);
+  background: var(--ah-surface);
+  padding: 22px 26px;
+  margin: 30px 0;
+}
+.ah .ah-tldr h3 {
+  margin: 0 0 12px;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ah-a1);
+  font-weight: 700;
+}
+.ah .ah-tldr ul {
+  margin: 0;
+  padding-left: 20px;
+}
+.ah .ah-tldr li {
+  margin-bottom: 10px;
+}
+.ah .ah-tldr li:last-child {
+  margin-bottom: 0;
+}
+
+/* ---------- 6. Formül ---------- */
+.ah .ah-eq {
+  border: 1px solid var(--ah-hair);
+  border-radius: var(--ah-r);
+  background: var(--ah-inset);
+  padding: 16px 20px;
+  margin: 24px 0;
+  font-family: var(--ah-mono);
+  font-size: 15px;
+  color: var(--ah-ink);
+  line-height: 1.95;
+  overflow-x: auto;
+}
+.ah .ah-eq .ah-hi {
+  color: var(--ah-a4);
+  font-weight: 600;
+}
+.ah .ah-eq .ah-c {
+  display: block;
+  margin-top: 8px;
+  font-family: var(--ah-sans);
+  font-size: 13.5px;
+  color: var(--ah-ink-3);
+  line-height: 1.6;
+}
+
+/* ---------- 7. Tablolar ---------- */
+.ah .ah-tw {
+  overflow-x: auto;
+  margin: 26px 0;
+  border: 1px solid var(--ah-hair);
+  border-radius: var(--ah-r);
+}
+.ah table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 14.5px;
+  min-width: 460px;
+}
+.ah th,
+.ah td {
+  padding: 11px 15px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--ah-hair);
+  line-height: 1.55;
+  color: var(--ah-ink-2);
+}
+.ah th {
+  color: var(--ah-ink);
+  font-weight: 650;
+  font-size: 11.5px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  background: var(--ah-surface-2);
+  white-space: nowrap;
+}
+.ah tr:last-child td {
+  border-bottom: 0;
+}
+.ah td.ah-n,
+.ah th.ah-n {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+.ah td strong {
+  color: var(--ah-ink);
+}
+.ah caption {
+  caption-side: bottom;
+  padding: 10px 15px;
+  font-size: 13px;
+  color: var(--ah-ink-3);
+  text-align: left;
+  line-height: 1.5;
+}
+
+/* Etiket rozetleri */
+.ah .ah-tag {
+  display: inline-block;
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 5px;
+  white-space: nowrap;
+  border: 1px solid currentColor;
+}
+.ah .ah-tag.ah-g {
+  color: var(--ah-good);
+}
+.ah .ah-tag.ah-y {
+  color: var(--ah-warn);
+}
+.ah .ah-tag.ah-r {
+  color: var(--ah-crit);
+}
+.ah .ah-tag.ah-b {
+  color: var(--ah-a1);
+}
+
+/* ---------- 8. Şekil ---------- */
+.ah figure.ah-fig {
+  margin: 32px 0;
+  padding: 0;
+  border: 1px solid var(--ah-hair);
+  border-radius: var(--ah-r);
+  background: var(--ah-surface);
+  overflow: hidden;
+}
+.ah figure.ah-fig > svg,
+.ah figure.ah-fig > .ah-figbody > svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.ah figure.ah-fig > .ah-figbody {
+  padding: 18px 18px 6px;
+}
+.ah figure.ah-fig figcaption {
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--ah-ink-3);
+  padding: 13px 18px 15px;
+  border-top: 1px solid var(--ah-hair);
+}
+.ah figure.ah-fig figcaption b {
+  color: var(--ah-ink-2);
+  font-weight: 650;
+}
+
+/* ---------- 9. Katlanır ayrıntı ---------- */
+.ah details.ah-more {
+  border: 1px solid var(--ah-hair);
+  border-radius: var(--ah-r);
+  background: var(--ah-surface);
+  margin: 22px 0;
+  overflow: hidden;
+}
+.ah details.ah-more > summary {
+  cursor: pointer;
+  padding: 13px 18px;
+  color: var(--ah-ink);
+  font-weight: 650;
+  font-size: 15px;
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+.ah details.ah-more > summary::-webkit-details-marker {
+  display: none;
+}
+.ah details.ah-more > summary::after {
+  content: '+';
+  color: var(--ah-a1);
+  font-size: 19px;
+  line-height: 1;
+}
+.ah details.ah-more[open] > summary::after {
+  content: '\2212';
+}
+.ah details.ah-more .ah-body {
+  padding: 0 18px 14px;
+  font-size: 15.5px;
+}
+.ah details.ah-more .ah-body > *:last-child {
+  margin-bottom: 0;
+}
+
+/* ---------- 10. İnteraktif araç ---------- */
+.ah .ah-tool {
+  border: 1px solid var(--ah-rule);
+  border-radius: 16px;
+  background: var(--ah-surface);
+  padding: 22px 24px;
+  margin: 34px 0;
+}
+.ah .ah-tool .ah-th {
+  margin-bottom: 18px;
+}
+.ah .ah-tool .ah-th b {
+  display: block;
+  color: var(--ah-ink);
+  font-size: 16.5px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.ah .ah-tool .ah-th span {
+  display: block;
+  font-size: 13.5px;
+  color: var(--ah-ink-3);
+  line-height: 1.55;
+  margin-top: 3px;
+}
+
+/* denetimler */
+.ah .ah-ctrls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 15px 18px;
+}
+.ah .ah-f > label {
+  display: block;
+  font-size: 12.5px;
+  color: var(--ah-ink-3);
+  font-weight: 600;
+  margin-bottom: 6px;
+  letter-spacing: 0.01em;
+  min-height: 2.6em;
+  line-height: 1.3;
+  display: flex;
+  align-items: flex-end;
+}
+.ah .ah-f select,
+.ah .ah-f input[type='number'] {
+  width: 100%;
+  background: var(--ah-inset);
+  color: var(--ah-ink);
+  border: 1px solid var(--ah-rule);
+  border-radius: 9px;
+  padding: 9px 11px;
+  font: inherit;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  appearance: auto;
+}
+.ah .ah-f select:focus,
+.ah .ah-f input:focus {
+  outline: 2px solid var(--ah-a1);
+  outline-offset: 1px;
+}
+.ah .ah-f .ah-rng {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.ah .ah-f input[type='range'] {
+  flex: 1;
+  min-width: 0;
+  accent-color: var(--ah-a1);
+  height: 4px;
+}
+.ah .ah-f .ah-v {
+  font-family: var(--ah-mono);
+  font-size: 13.5px;
+  color: var(--ah-a1);
+  min-width: 62px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* seçenek düğmeleri */
+.ah .ah-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+.ah .ah-pill {
+  font: inherit;
+  font-size: 12.5px;
+  line-height: 1.4;
+  border: 1px solid var(--ah-rule);
+  border-radius: 999px;
+  padding: 5px 13px;
+  color: var(--ah-ink-3);
+  background: transparent;
+  cursor: pointer;
+  user-select: none;
+  appearance: none;
+}
+.ah .ah-pill:hover {
+  color: var(--ah-ink);
+  border-color: var(--ah-ink-3);
+}
+.ah .ah-pill[aria-pressed='true'] {
+  border-color: var(--ah-a1);
+  color: var(--ah-a1);
+}
+
+/* grafik */
+.ah .ah-chart {
+  margin-top: 20px;
+  background: var(--ah-inset);
+  border: 1px solid var(--ah-hair);
+  border-radius: var(--ah-r);
+  padding: 12px 12px 6px;
+}
+.ah .ah-chart svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.ah .ah-chart canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+
+/* çıktı sayıları */
+.ah .ah-out {
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid var(--ah-hair);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
+  gap: 16px;
+}
+.ah .ah-stat .ah-k {
+  font-size: 11px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ah-ink-3);
+  font-weight: 650;
+}
+.ah .ah-stat .ah-val {
+  font-size: 25px;
+  color: var(--ah-ink);
+  font-weight: 700;
+  line-height: 1.2;
+  margin-top: 3px;
+  font-variant-numeric: tabular-nums;
+}
+.ah .ah-stat .ah-val small {
+  font-size: 14px;
+  color: var(--ah-ink-3);
+  font-weight: 500;
+}
+
+/* hüküm */
+.ah .ah-verdict {
+  margin-top: 18px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--ah-hair);
+  background: var(--ah-inset);
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--ah-ink-2);
+}
+.ah .ah-verdict p {
+  margin: 0 0 9px;
+}
+.ah .ah-verdict p:last-child {
+  margin: 0;
+}
+.ah .ah-verdict b.ah-hd {
+  display: block;
+  color: var(--ah-ink);
+  margin-bottom: 3px;
+}
+
+/* araç dipnotu */
+.ah .ah-tool > .ah-fine {
+  font-size: 12.5px;
+  color: var(--ah-ink-3);
+  line-height: 1.55;
+  margin: 14px 0 0;
+}
+
+/* renk örneği */
+.ah .ah-sw {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  border-radius: 3px;
+  margin-right: 7px;
+  vertical-align: baseline;
+}
+
+/* ---------- 11. Yazı üstü künye ---------- */
+.ah .ah-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 22px 0 30px;
+}
+.ah .ah-chip {
+  font-size: 12.5px;
+  color: var(--ah-ink-3);
+  border: 1px solid var(--ah-hair);
+  border-radius: 999px;
+  padding: 4px 12px;
+}
+.ah .ah-chip b {
+  color: var(--ah-ink-2);
+  font-weight: 650;
+}
+
+/* ---------- 12. Seri gezinme ---------- */
+.ah .ah-series {
+  margin: 56px 0 0;
+  padding-top: 26px;
+  border-top: 1px solid var(--ah-hair);
+}
+.ah .ah-series h3 {
+  margin: 0 0 14px;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ah-ink-3);
+  font-weight: 700;
+}
+.ah .ah-series ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  counter-reset: ah-s;
+}
+.ah .ah-series li {
+  margin: 0 0 2px;
+  counter-increment: ah-s;
+}
+.ah .ah-series a {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  padding: 9px 12px;
+  border-radius: 9px;
+  text-decoration: none;
+  color: var(--ah-ink-2);
+  font-size: 15px;
+}
+.ah .ah-series a:hover {
+  background: var(--ah-surface-2);
+  color: var(--ah-ink);
+}
+.ah .ah-series a::before {
+  content: counter(ah-s);
+  font-family: var(--ah-mono);
+  font-size: 12px;
+  color: var(--ah-ink-3);
+  min-width: 16px;
+}
+.ah .ah-series li[aria-current] a {
+  color: var(--ah-a1);
+  background: var(--ah-surface);
+}
+
+/* ---------- 13. İçindekiler (isteğe bağlı) ---------- */
+.ah-toc {
+  font-size: 14px;
+}
+.ah-toc h4 {
+  margin: 0 0 10px;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ah-ink-3);
+  font-weight: 700;
+}
+.ah-toc a {
+  display: block;
+  color: var(--ah-ink-3);
+  text-decoration: none;
+  padding: 5px 0 5px 13px;
+  border-left: 2px solid var(--ah-hair);
+  line-height: 1.45;
+}
+.ah-toc a:hover {
+  color: var(--ah-ink);
+}
+.ah-toc a[aria-current='true'] {
+  color: var(--ah-a1);
+  border-left-color: var(--ah-a1);
+}
+
+/* ---------- 14. Duyarlı ---------- */
+@media (max-width: 720px) {
+  .ah {
+    font-size: 16.5px;
+  }
+  .ah .ah-tool {
+    padding: 18px 16px;
+    border-radius: 13px;
+  }
+  .ah .ah-out {
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+    gap: 13px;
+  }
+  .ah .ah-stat .ah-val {
+    font-size: 22px;
+  }
+  .ah figure.ah-fig > .ah-figbody {
+    padding: 13px 13px 4px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ah * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* ---------- 15. Yazdırma ---------- */
+@media print {
+  .ah {
+    --ah-ink: #000;
+    --ah-ink-2: #222;
+    --ah-ink-3: #555;
+    --ah-hair: #bbb;
+    --ah-rule: #999;
+    --ah-surface: #fff;
+    --ah-surface-2: #f2f2f2;
+    --ah-inset: #fafafa;
+    font-size: 11pt;
+  }
+  .ah .ah-tool,
+  .ah figure.ah-fig,
+  .ah .ah-tw {
+    break-inside: avoid;
+  }
+  .ah .ah-pills,
+  .ah-toc {
+    display: none;
+  }
+}
+
+/* ---------- 16. Şekil içi panel ızgarası ---------- */
+.ah .ah-panelgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 14px;
+  align-items: start;
+}
+.ah .ah-panel {
+  text-align: center;
+  min-width: 0;
+}
+.ah .ah-panel canvas {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  display: block;
+  border-radius: 8px;
+  border: 1px solid var(--ah-hair);
+  image-rendering: auto;
+}
+.ah .ah-panel span {
+  display: block;
+  margin-top: 7px;
+  font-size: 12.5px;
+  color: var(--ah-ink-2);
+  font-weight: 650;
+}
+.ah .ah-panel i {
+  display: block;
+  font-style: normal;
+  font-size: 11.5px;
+  color: var(--ah-ink-3);
+  margin-top: 1px;
+  font-variant-numeric: tabular-nums;
+}
+/* iki sütunlu şekil gövdesi */
+.ah .ah-cols {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 18px;
+  align-items: start;
+}
+
+/* ---------- 16b. Fotoğraf şekilleri ---------- */
+.ah figure.ah-photo {
+  margin: 30px 0;
+}
+.ah figure.ah-photo img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 10px;
+  border: 1px solid var(--ah-hair);
+  background: #06080b;
+}
+.ah figure.ah-photo .ah-duo,
+.ah figure.ah-photo .ah-trio {
+  display: grid;
+  gap: 12px;
+}
+.ah figure.ah-photo .ah-duo {
+  grid-template-columns: 1fr 1fr;
+}
+.ah figure.ah-photo .ah-trio {
+  grid-template-columns: repeat(3, 1fr);
+}
+.ah figure.ah-photo .ah-shot b {
+  display: block;
+  margin-top: 8px;
+  font-size: 12.5px;
+  font-weight: 650;
+  color: var(--ah-ink);
+  text-align: center;
+}
+.ah figure.ah-photo .ah-shot i {
+  display: block;
+  font-size: 11.5px;
+  color: var(--ah-ink-3);
+  font-style: normal;
+  text-align: center;
+  margin-top: 2px;
+}
+.ah figure.ah-photo .ah-kredi {
+  display: block;
+  margin-top: 10px;
+  font-size: 11.5px;
+  color: var(--ah-ink-3);
+  text-align: right;
+}
+@media (max-width: 640px) {
+  .ah figure.ah-photo .ah-duo,
+  .ah figure.ah-photo .ah-trio {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- 17. İki yana yaslama ---------- */
+.ah p,
+.ah li,
+.ah .ah-lead,
+.ah figure.ah-fig figcaption,
+.ah figure.ah-photo figcaption,
+.ah .ah-verdict p,
+.ah details.ah-more .ah-body p,
+.ah .ah-tool > .ah-fine {
+  text-align: justify;
+  text-justify: inter-word;
+  hyphens: auto;
+  -webkit-hyphens: auto;
+  text-wrap: pretty;
+}
+/* Kısa satırlarda yaslama boşluk açar; bunlarda kapalı kalsın */
+.ah th,
+.ah td,
+.ah .ah-f > label,
+.ah .ah-stat,
+.ah .ah-panel span,
+.ah .ah-panel i,
+.ah .ah-chip,
+.ah caption,
+.ah .ah-series a {
+  text-align: inherit;
+  hyphens: manual;
+}
+.ah td.ah-n,
+.ah th.ah-n {
+  text-align: right;
+}
+
+/* ---------- 18. Astrohub sayfa ritmine uyarlama ----------
+   Paket HTML'si kendi başına da çalışabildiği için üstte daha kalın bir
+   makale dili taşıyor. Sitede ise yazı sayfası başlık ve künyeyi zaten
+   sağlıyor; burada kutu yoğunluğunu azaltıp okuma akışını öne alıyoruz. */
+.astrohub-html-block .ah {
+  --ah-measure: min(78ch, 100%);
+  --ah-r: 2px;
+  font-size: 15.5px;
+  line-height: 1.72;
+}
+
+.astrohub-html-block .ah > * {
+  max-width: var(--ah-measure);
+}
+
+.astrohub-html-block .ah > .ah-wide,
+.astrohub-html-block .ah .ah-tool,
+.astrohub-html-block .ah figure.ah-fig,
+.astrohub-html-block .ah figure.ah-photo,
+.astrohub-html-block .ah .ah-tw {
+  max-width: min(980px, 100%);
+}
+
+.astrohub-html-block .ah h1,
+.astrohub-html-block .ah h2,
+.astrohub-html-block .ah h3 {
+  letter-spacing: 0;
+}
+
+.astrohub-html-block .ah h2 {
+  margin: 40px 0 12px;
+  font-size: 22px;
+  line-height: 1.28;
+}
+
+.astrohub-html-block .ah h3 {
+  margin: 28px 0 9px;
+  font-size: 17px;
+}
+
+.astrohub-html-block .ah p {
+  margin-bottom: 16px;
+}
+
+.astrohub-html-block .ah .ah-lead {
+  font-size: inherit;
+  line-height: inherit;
+  margin-bottom: 18px;
+}
+
+.astrohub-html-block .ah .ah-note,
+.astrohub-html-block .ah .ah-tldr,
+.astrohub-html-block .ah .ah-eq {
+  margin: 20px 0;
+  border: 0;
+  border-left: 2px solid var(--ah-hair);
+  border-radius: 0;
+  background: transparent;
+  padding: 5px 0 5px 14px;
+}
+
+.astrohub-html-block .ah .ah-note {
+  font-size: inherit;
+}
+
+.astrohub-html-block .ah .ah-note b.ah-t,
+.astrohub-html-block .ah .ah-tldr h3 {
+  color: var(--ah-ink);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.astrohub-html-block .ah .ah-note.ah-warn,
+.astrohub-html-block .ah .ah-tldr,
+.astrohub-html-block .ah .ah-eq {
+  border-left-color: var(--ah-a2);
+}
+
+.astrohub-html-block .ah .ah-note.ah-good {
+  border-left-color: var(--ah-good);
+}
+
+.astrohub-html-block .ah .ah-note.ah-crit {
+  border-left-color: var(--ah-crit);
+}
+
+.astrohub-html-block .ah .ah-eq {
+  font-size: 13.5px;
+  line-height: 1.75;
+}
+
+.astrohub-html-block .ah .ah-tool,
+.astrohub-html-block .ah figure.ah-fig,
+.astrohub-html-block .ah .ah-tw {
+  border-color: var(--ah-hair);
+  border-radius: 2px;
+  background: transparent;
+}
+
+.astrohub-html-block .ah .ah-tool {
+  margin: 28px 0;
+  padding: 16px;
+}
+
+.astrohub-html-block .ah .ah-tool .ah-th {
+  margin-bottom: 12px;
+}
+
+.astrohub-html-block .ah figure.ah-fig {
+  margin: 26px 0;
+}
+
+.astrohub-html-block .ah figure.ah-fig > .ah-figbody {
+  padding: 14px 14px 4px;
+}
+
+.astrohub-html-block .ah figure.ah-fig figcaption {
+  padding: 10px 14px 12px;
+}
+
+.astrohub-html-block .ah .ah-tw {
+  margin: 22px 0;
+}
+
+.astrohub-html-block .ah th,
+.astrohub-html-block .ah td {
+  padding: 9px 12px;
+}
+
+.astrohub-html-block .ah p,
+.astrohub-html-block .ah li,
+.astrohub-html-block .ah .ah-lead,
+.astrohub-html-block .ah figure.ah-fig figcaption,
+.astrohub-html-block .ah figure.ah-photo figcaption,
+.astrohub-html-block .ah .ah-verdict p,
+.astrohub-html-block .ah details.ah-more .ah-body p,
+.astrohub-html-block .ah .ah-tool > .ah-fine {
+  text-align: left;
+  hyphens: manual;
+  -webkit-hyphens: manual;
+}
+
+@media (max-width: 720px) {
+  .astrohub-html-block .ah {
+    font-size: 15px;
+  }
+
+  .astrohub-html-block .ah h2 {
+    margin-top: 32px;
+    font-size: 20px;
+  }
+
+  .astrohub-html-block .ah .ah-tool {
+    padding: 14px;
+  }
+}

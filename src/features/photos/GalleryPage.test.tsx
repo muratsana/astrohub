@@ -59,14 +59,14 @@ async function ara(terim: string) {
   );
 }
 
-/** Kart bağlantılarını toplar (künye satırları da aynı bağlantının içinde). */
+/** Kartın fotoğraf detayına giden ana bağlantılarını toplar. */
 function photoLinks() {
   return screen
     .getAllByRole('link')
     .filter(
       (a) =>
         a.getAttribute('href')?.startsWith('/fotograf/') &&
-        a.className.includes('group')
+        a.className.includes('photo-tile-link')
     );
 }
 
@@ -125,9 +125,7 @@ describe('GalleryPage (§7.2)', () => {
     expect(within(weeklyHero!).getByText('Optik')).toBeInTheDocument();
     expect(within(weeklyHero!).getByText('Kamera')).toBeInTheDocument();
     expect(within(weeklyHero!).getByText('Montür')).toBeInTheDocument();
-    expect(
-      within(weeklyHero!).getByText('İşleme paleti')
-    ).toBeInTheDocument();
+    expect(within(weeklyHero!).getByText('İşleme paleti')).toBeInTheDocument();
 
     /* "Fotoğrafı aç" kaldırıldı: görsel ve başlık zaten aynı yere
        gidiyor, üçüncü bir düğme künyenin yerini yiyordu. */
@@ -135,7 +133,7 @@ describe('GalleryPage (§7.2)', () => {
       within(weeklyHero!).queryByRole('link', { name: /fotoğrafı aç/i })
     ).not.toBeInTheDocument();
     expect(
-      screen.getByRole('link', { name: `@${photos[0].user.username}` })
+      screen.getAllByRole('link', { name: `@${photos[0].user.username}` })[0]
     ).toHaveAttribute('href', `/profil/${photos[0].user.username}`);
     expect(
       within(weeklyImage).queryByText('32. Hafta')
@@ -199,7 +197,7 @@ describe('GalleryPage (§7.2)', () => {
     // Yön kararı: teknik veri hover'da açılmaz, kalıcıdır.
     // Her kayıtta üretici ve palet bulunur.
     for (const card of photoLinks()) {
-      expect(card).toHaveTextContent('@');
+      expect(card.closest('li')).toHaveTextContent('@');
     }
   });
 
@@ -245,7 +243,9 @@ describe('GalleryPage (§7.2)', () => {
     const card = photoLinks().find(
       (a) => a.getAttribute('href') === `/fotograf/${withBortle.slug}`
     );
-    expect(card).toHaveTextContent(`B${withBortle.location.bortle}`);
+    expect(card?.closest('li')).toHaveTextContent(
+      `B${withBortle.location.bortle}`
+    );
   });
 });
 

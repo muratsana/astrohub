@@ -1,7 +1,7 @@
 /**
  * Navigasyon haritası — Rasathane Terminali.
  *
- * Sekiz ana modül düz biçimde durur; üst menüde açılır menü **yoktur**.
+ * Ana modüller düz biçimde durur; üst menüde açılır menü **yoktur**.
  * Alt sayfalara ⌘K komut paletinden ve mobil çekmecedeki tam modül haritasından
  * ulaşılır. Terminal metaforuyla tutarlı: gezinme tıklanarak değil, yazılarak.
  *
@@ -29,7 +29,7 @@ export interface NavGroup {
 }
 
 /**
- * Üst menü — sekiz ana modül.
+ * Üst menü — ana modüller.
  *
  * Forum, sitenin "gece boyunca açık kalan" modülü: çekim aralarında
  * yazışmak için. TV ve Radyo metin girişi değil, üst çubukta durum
@@ -48,6 +48,7 @@ export const primaryNav: NavItem[] = [
   { label: 'Araçlar', to: '/araclar' },
   { label: 'Forum', to: '/forum' },
   { label: 'Saha', to: '/saha' },
+  { label: 'ALLSKY', to: '/allsky' },
 ];
 
 /**
@@ -390,6 +391,17 @@ export const siteMap: NavGroup[] = [
         to: '/tesisler',
         description: 'Ziyarete açık astronomi tesisleri',
         keywords: ['rasathane', 'planetaryum', 'gözlemevi', 'bilim merkezi'],
+      },
+    ],
+  },
+  {
+    title: 'ALLSKY',
+    items: [
+      {
+        label: 'ALLSKY Kameraları',
+        to: '/allsky',
+        description: 'Canlı all-sky kamera görüntüleri',
+        keywords: ['allsky', 'all-sky', 'kamera', 'canlı gökyüzü'],
       },
     ],
   },

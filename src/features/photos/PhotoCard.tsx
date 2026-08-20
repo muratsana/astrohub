@@ -46,18 +46,13 @@ export function PhotoCard({
       bortle={photo.location.bortle}
       username={photo.user.username}
       family={{ label: info.label, className: info.className }}
-      /*
-       * Rozet alanı üç işareti birden taşıyor: editör seçkisi, puan
-       * ortalaması ve alan çözümü. `RatingBadge` oy yokken kendini hiç
-       * çizmiyor, o yüzden yeni yüklenmiş bir kart boş bir rozetle
-       * kalabalıklaşmıyor.
-       *
-       * ALAN ÇÖZÜMÜ ROZETİ galeride bir şey söylüyor: bu karenin
-       * gökyüzündeki yeri ÖLÇÜLMÜŞ. Künyedeki hedef adı bir iddia,
-       * çözüm bir ölçüm; rozet ikisi arasındaki farkı liste düzeyinde
-       * görünür kılıyor. Yalnızca çözülmüş kayıtlarda var — "sırada"
-       * ya da "başarısız" bir liste kartında anlatılacak şey değil.
-       */
+      bodyBadges={
+        (photo.photoOfWeekWins?.length ?? 0) > 0 ? (
+          <Badge tone="success" className="bg-background/85">
+            {formatPhotoWeekLabel(photo.photoOfWeekWins!.at(-1)!).weekLabel}
+          </Badge>
+        ) : undefined
+      }
       /*
         ÖLÇÜMLER İMLEÇ GELİNCE KARONUN ÜSTÜNDE.
 
@@ -68,37 +63,8 @@ export function PhotoCard({
       */
       overlay={<SolveOverlay solve={photo.solve} />}
       flag={
-        photo.solve.durum === 'cozuldu' ||
-        photo.editorsPick ||
-        photo.rating.sayi > 0 ||
-        (photo.photoOfWeekWins?.length ?? 0) > 0 ? (
-          <>
-            {(photo.photoOfWeekWins?.length ?? 0) > 0 && (
-              <Badge tone="success" className="bg-background/85">
-                {formatPhotoWeekLabel(photo.photoOfWeekWins!.at(-1)!).weekLabel}
-              </Badge>
-            )}
-            {photo.editorsPick && (
-              <Badge tone="primary" className="bg-background/85">
-                Editör
-              </Badge>
-            )}
-            {/*
-              "ÇÖZÜLDÜ" ROZETİ KALDIRILDI.
-
-              Rozet, alan çözümünün İSTİSNA olduğu dönemde anlamlıydı:
-              az sayıda fotoğraf çözülmüştü ve rozet onları ayırıyordu.
-              Gönderim artık cron turunda kendiliğinden yapılıyor, yani
-              çözülmüş olmak kuralın kendisi. Her karoda duran bir rozet
-              hiçbir şeyi ayırt etmiyor, yalnızca fotoğrafın üstünü
-              kaplıyor.
-
-              Ölçümün kendisi kaybolmadı: imleç karoya geldiğinde
-              `SolveOverlay` RA, Dec, alan ve ölçeği gösteriyor — rozetin
-              söyleyemediği asıl bilgi zaten orada.
-            */}
-            <RatingBadge rating={photo.rating} className="bg-background/85" />
-          </>
+        photo.rating.sayi > 0 ? (
+          <RatingBadge rating={photo.rating} className="bg-background/85" />
         ) : undefined
       }
     />

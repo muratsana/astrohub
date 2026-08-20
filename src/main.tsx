@@ -5,6 +5,7 @@ import { RouterProvider } from 'react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { router } from '@/app/router';
 import { AuthProvider } from '@/features/auth/AuthContext';
+import { LivePresenceTracker } from '@/features/admin/livePresence';
 import { ThemeProvider } from '@/features/theme/ThemeContext';
 import { LocationProvider } from '@/features/location/LocationContext';
 import { PreviewEditorProvider } from '@/features/preview-editor/PreviewEditorContext';
@@ -43,6 +44,7 @@ createRoot(rootEl).render(
               gezinme yayını sıfırlardı.
             */}
             <RadioProvider>
+              <LivePresenceTracker />
               {/*
                 Site ayarları router'ın DIŞINDA: bakım kapısı ve duyuru
                 bandı kabuk seviyesinde yaşıyor, her rota değişiminde

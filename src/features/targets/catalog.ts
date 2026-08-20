@@ -193,7 +193,7 @@ export const deepSky: CatalogRow[] = [
   { code: 'NGC 7317', aliases: ['HCG 92'], kind: 'galaksi-grubu', constellation: 'Pegasus', ra: 22.6, dec: 33.966, mag: 13.0, size: '3', name: 'Stephan Beşlisi' },
   { code: 'NGC 5128', aliases: ['Caldwell 77'], kind: 'galaksi', constellation: 'Erboğa', ra: 13.424, dec: -43.019, mag: 6.8, size: '26x20', name: 'Centaurus A', note: "Türkiye'den çok alçak kalır; ufka yakın çekimde atmosferik dağılım düzeltici gerekir." },
   { code: 'NGC 2264', aliases: ['Caldwell 41'], kind: 'emisyon-bulutsusu', constellation: 'Tek Boynuzlu At', ra: 6.687, dec: 9.895, mag: 3.9, size: '20', name: 'Koni ve Noel Ağacı Kümesi' },
-  { code: 'NGC 6888', aliases: ['Caldwell 27'], kind: 'emisyon-bulutsusu', constellation: 'Kuğu', ra: 20.201, dec: 38.355, mag: 7.4, size: '18x12', name: 'Hilal Bulutsusu' },
+  { code: 'NGC 6888', aliases: ['Caldwell 27', 'Hilal Bulutsusu'], kind: 'emisyon-bulutsusu', constellation: 'Kuğu', ra: 20.201, dec: 38.355, mag: 7.4, size: '18x12', name: 'Crescent Nebula' },
   { code: 'NGC 7293', aliases: ['Caldwell 63'], kind: 'gezegenimsi-bulutsu', constellation: 'Kova', ra: 22.494, dec: -20.837, mag: 7.6, size: '16', name: 'Sarmal Bulutsusu' },
   { code: 'NGC 6302', aliases: ['Caldwell 69'], kind: 'gezegenimsi-bulutsu', constellation: 'Akrep', ra: 17.229, dec: -37.1, mag: 7.1, size: '3', name: 'Kelebek Bulutsusu', slug: 'ngc6302-kelebek', note: "Türkiye'den güney ufkuna yakın kalır; kısa gözlem penceresi ve temiz güney ufku ister." },
   { code: 'NGC 6543', aliases: ['Caldwell 6'], kind: 'gezegenimsi-bulutsu', constellation: 'Ejder', ra: 17.98, dec: 66.633, mag: 8.1, size: '0.3', name: 'Kedi Gözü Bulutsusu' },

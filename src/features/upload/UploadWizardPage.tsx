@@ -38,7 +38,7 @@ import {
 import { usePhotoCatalog } from '@/services/content/photos';
 import { TargetPicker } from '@/features/targets/TargetPicker';
 import { SetupSelect } from './SetupSelect';
-import { getTargetBySlug } from '@/features/targets/data';
+import { getTargetBySlug, type CelestialTarget } from '@/features/targets/data';
 import { resolveTargetId } from '@/services/content/targets';
 import { kindToPhotoType } from '@/domain/targets/derive';
 import { guessTargetFromFilename } from '@/features/targets/codeGuess';
@@ -55,6 +55,7 @@ import { CropTool } from './CropTool';
 import { slugify } from '@/lib/slug';
 import {
   applyCropToFile,
+  detectBlackBorderCrop,
   isFullFrame,
   FULL_FRAME,
   type CropRect,
@@ -245,12 +246,23 @@ export function UploadWizardPage() {
    * dikdörtgen ve gönderim anında bir kez uygulanıyor.
    */
   const [crop, setCrop] = useState<CropRect>(FULL_FRAME);
+  const [autoCrop, setAutoCrop] = useState<CropRect | null>(null);
+  const [autoCropState, setAutoCropState] = useState<
+    'idle' | 'detecting' | 'ready' | 'failed'
+  >('idle');
   const [exif, setExif] = useState<ExifData | null>(null);
   const [exifState, setExifState] = useState<
     'idle' | 'reading' | 'read' | 'none'
   >('idle');
   const [step, setStep] = useState(0);
   const [state, setState] = useState<WizardState>(initialState);
+  /*
+   * Sunucu katalog aramasından seçilen hedef paketlenmiş listede olmayabilir.
+   * Slug tek başına yetmez; yayımlarken kart başlığı ve hedef etiketi için
+   * seçilen satırın kendisini de tutuyoruz.
+   */
+  const [selectedRemoteTarget, setSelectedRemoteTarget] =
+    useState<CelestialTarget | null>(null);
 
   /* Seçilen dosyanın kendisi — özet ekranında ve yüklemede gerekiyor. */
   const [file, setFile] = useState<File | null>(null);
@@ -273,6 +285,7 @@ export function UploadWizardPage() {
     ? photoCatalog.items.find((photo) => photo.slug === editSlug)
     : undefined;
   const loadedEditSlug = useRef<string | null>(null);
+  const autoCropRun = useRef(0);
 
   /**
    * Seçilen slug'ın veritabanı kimliğini bulur.
@@ -288,10 +301,33 @@ export function UploadWizardPage() {
   }
   const navigate = useNavigate();
 
-  /* Seçili hedef künyeye etiket olarak da yazılıyor: veritabanı bağı
-     kurulamazsa (katalog henüz taşınmamışsa) fotoğrafın neyin fotoğrafı
-     olduğu bilgisi kaybolmasın. */
-  const selectedTarget = getTargetBySlug(state.targetSlug);
+  const localSelectedTarget = getTargetBySlug(state.targetSlug);
+  const selectedTarget =
+    localSelectedTarget ??
+    (selectedRemoteTarget?.slug === state.targetSlug
+      ? selectedRemoteTarget
+      : undefined);
+
+  function targetDisplayTitle(target: CelestialTarget): string {
+    return target.name.trim() || target.catalog;
+  }
+
+  function targetLabel(target: CelestialTarget): string {
+    return `${target.catalog} — ${target.name}`;
+  }
+
+  async function requiredTargetId(): Promise<string> {
+    if (!state.targetSlug || !selectedTarget) {
+      throw new Error('Fotoğraf eklemek için katalog kodu seçmelisiniz.');
+    }
+    const id = await resolveTargetId(state.targetSlug);
+    if (!id) {
+      throw new Error(
+        'Seçilen katalog kaydı veritabanında bulunamadı. Katalog kodunu listeden seçin.'
+      );
+    }
+    return id;
+  }
 
   const sizeVerdict = file ? checkUploadSize(file.size) : null;
 
@@ -311,9 +347,13 @@ export function UploadWizardPage() {
       if (editingPhoto) {
         if (!editingPhoto.id) throw new Error('Fotoğraf kaydı bulunamadı.');
         setPublishState('kaydediliyor');
+        const objectId = await requiredTargetId();
+        const title = selectedTarget
+          ? targetDisplayTitle(selectedTarget)
+          : state.title || editingPhoto.title;
         await updatePhotoMetadata({
           photoId: editingPhoto.id,
-          title: state.title || editingPhoto.title,
+          title,
           description: state.description,
           photoType: state.type,
           palette: state.palette,
@@ -329,12 +369,8 @@ export function UploadWizardPage() {
           watermarkRequired: state.watermarkRequired,
           aiDeclared: state.aiDeclared,
           copyrightConfirmed: state.copyrightConfirmed,
-          objectId: await resolveTargetId(state.targetSlug),
-          targetLabel: selectedTarget
-            ? `${selectedTarget.catalog} — ${selectedTarget.name}`
-            : editingPhoto.target.catalog
-              ? `${editingPhoto.target.catalog} — ${editingPhoto.target.name}`
-              : null,
+          objectId,
+          targetLabel: selectedTarget ? targetLabel(selectedTarget) : null,
           opticId: equipmentId(state.opticSlug),
           cameraId: equipmentId(state.cameraSlug),
           mountId: equipmentId(state.mountSlug),
@@ -365,6 +401,8 @@ export function UploadWizardPage() {
       }
 
       if (!file) return;
+      const objectId = await requiredTargetId();
+      const title = selectedTarget ? targetDisplayTitle(selectedTarget) : state.title;
       /*
        * KIRPMA GÖNDERİM ANINDA, TEK SEFERDE UYGULANIYOR.
        *
@@ -379,8 +417,8 @@ export function UploadWizardPage() {
         {
           file: gonderilecek,
           userId: user.id,
-          slug: slugifyPhoto(state.title || file.name),
-          title: state.title || file.name,
+          slug: slugifyPhoto(title),
+          title,
           description: state.description,
           photoType: state.type,
           palette: state.palette,
@@ -398,10 +436,8 @@ export function UploadWizardPage() {
           watermarkRequired: state.watermarkRequired,
           aiDeclared: state.aiDeclared,
           copyrightConfirmed: state.copyrightConfirmed,
-          objectId: await resolveTargetId(state.targetSlug),
-          targetLabel: selectedTarget
-            ? `${selectedTarget.catalog} — ${selectedTarget.name}`
-            : null,
+          objectId,
+          targetLabel: selectedTarget ? targetLabel(selectedTarget) : null,
           opticId: equipmentId(state.opticSlug),
           cameraId: equipmentId(state.cameraSlug),
           mountId: equipmentId(state.mountSlug),
@@ -499,7 +535,11 @@ export function UploadWizardPage() {
     if (loadedEditSlug.current === editingPhoto.slug) return;
     loadedEditSlug.current = editingPhoto.slug;
     setState(wizardStateFromPhoto(editingPhoto));
+    setSelectedRemoteTarget(null);
     setCrop(FULL_FRAME);
+    setAutoCrop(null);
+    setAutoCropState('idle');
+    autoCropRun.current += 1;
     setExif(null);
     setExifState('idle');
     setStep(1);
@@ -537,6 +577,7 @@ export function UploadWizardPage() {
     const guessed = state.targetSlug
       ? null
       : guessTargetFromFilename(file.name);
+    if (guessed) setSelectedRemoteTarget(null);
 
     patch({
       fileName: file.name,
@@ -544,7 +585,7 @@ export function UploadWizardPage() {
         ? {
             targetSlug: guessed.slug,
             targetKind: guessed.kind,
-            title: state.title || guessed.name,
+            title: targetDisplayTitle(guessed),
             type: isPhotoType(kindToPhotoType[guessed.kind])
               ? (kindToPhotoType[guessed.kind] as PhotoType)
               : state.type,
@@ -554,6 +595,21 @@ export function UploadWizardPage() {
     setExif(null);
     /* Yeni dosya, yeni kadraj: önceki seçim başka bir görüntüye aitti. */
     setCrop(FULL_FRAME);
+    setAutoCrop(null);
+    setAutoCropState('detecting');
+    const cropRun = (autoCropRun.current += 1);
+    void detectBlackBorderCrop(file)
+      .then((rect) => {
+        if (autoCropRun.current !== cropRun) return;
+        setAutoCrop(rect);
+        setCrop(rect);
+        setAutoCropState('ready');
+      })
+      .catch(() => {
+        if (autoCropRun.current !== cropRun) return;
+        setAutoCrop(FULL_FRAME);
+        setAutoCropState('failed');
+      });
     setExifState('reading');
 
     try {
@@ -596,7 +652,7 @@ export function UploadWizardPage() {
       case 0:
         return state.fileName.trim().length > 0 || Boolean(editingPhoto);
       case 1:
-        return state.title.trim().length > 0;
+        return Boolean(selectedTarget) && state.title.trim().length > 0;
       case 2:
         /* İl VE ilçe zorunlu. Konum artık künyenin isteğe bağlı bir
            süsü değil: galeri süzgeci, Bortle tahmini ve "yakınımdaki
@@ -613,7 +669,7 @@ export function UploadWizardPage() {
       default:
         return true;
     }
-  }, [step, state, editingPhoto]);
+  }, [step, state, editingPhoto, selectedTarget]);
 
   return (
     <>
@@ -749,6 +805,8 @@ export function UploadWizardPage() {
                     arcsecPerPixel={state.pixelScaleArcsec}
                     value={crop}
                     onChange={setCrop}
+                    autoCrop={autoCrop}
+                    autoCropState={autoCropState}
                   />
                 </div>
               )}
@@ -781,14 +839,6 @@ export function UploadWizardPage() {
               {exifState === 'reading' && (
                 <p className="text-meta text-muted-foreground" role="status">
                   EXIF okunuyor…
-                </p>
-              )}
-
-              {exifState === 'none' && state.fileName && (
-                <p className="rounded-card border border-border bg-surface-1 px-3 py-2.5 text-body-sm leading-relaxed text-muted-foreground">
-                  Dosyada EXIF bulunamadı. İşlenmiş astrofotoğraflarda bu
-                  normaldir — yığınlama yazılımları çıktıya kamera bilgisi
-                  yazmaz. Alanları elle doldurabilirsiniz.
                 </p>
               )}
 
@@ -875,7 +925,7 @@ export function UploadWizardPage() {
             <div className="space-y-5">
               <StepTitle
                 title="Obje ve kategori"
-                hint="Önce ne çektiğinizi seçin; katalog o türe göre daralır"
+                hint="Katalog kaydı zorunlu; başlık seçilen kaydın orijinal adından otomatik gelir"
               />
 
               <TargetPicker
@@ -884,6 +934,7 @@ export function UploadWizardPage() {
                 onKindChange={(targetKind) => patch({ targetKind })}
                 onChange={(target) => {
                   if (!target) {
+                    setSelectedRemoteTarget(null);
                     patch({ targetSlug: '' });
                     return;
                   }
@@ -898,9 +949,11 @@ export function UploadWizardPage() {
                    * eşlemede yoksa mevcut değer korunuyor.
                    */
                   const suggested = kindToPhotoType[target.kind];
+                  setSelectedRemoteTarget(target);
                   patch({
                     targetSlug: target.slug,
-                    title: state.title || target.name,
+                    targetKind: target.kind,
+                    title: targetDisplayTitle(target),
                     type: isPhotoType(suggested) ? suggested : state.type,
                   });
                 }}
@@ -919,17 +972,23 @@ export function UploadWizardPage() {
                   <Badge tone="primary">{photoTypeLabels[state.type]}</Badge>
                   <span className="text-meta text-faint">
                     {state.targetSlug
-                      ? 'obje türünden çıkarıldı'
-                      : 'obje seçilince güncellenir'}
+                      ? 'katalog kaydından çıkarıldı'
+                      : 'katalog kaydı seçilince güncellenir'}
                   </span>
                 </p>
               </div>
-              <Field label="Başlık" htmlFor="w-title">
+              <Field
+                label="Başlık"
+                htmlFor="w-title"
+                hint="Katalog kodundan otomatik gelir; kartlarda global/orijinal ad gösterilir"
+              >
                 <Input
                   id="w-title"
-                  placeholder="ör. At Başı ve Alev Bulutsusu"
+                  placeholder="Katalog kaydı seçilince otomatik dolar"
                   value={state.title}
-                  onChange={(e) => patch({ title: e.target.value })}
+                  readOnly
+                  aria-readonly
+                  className="bg-surface-2 text-muted-foreground"
                 />
               </Field>
               <Field

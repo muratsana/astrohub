@@ -123,6 +123,20 @@ describe('araç bloğu', () => {
   });
 });
 
+describe('ham HTML bloğu', () => {
+  it('paket yer tutucularını DOMda korur ama script etiketini basmaz', () => {
+    const { container } = ciz([
+      {
+        type: 'html',
+        html: '<div class="ah"><figure data-ah-fig="kare-sayisi"></figure><script>alert(1)</script></div>',
+        scriptSrc: '/astrohub/gurultu-gain-poz.js',
+      },
+    ]);
+    expect(container.querySelector('[data-ah-fig="kare-sayisi"]')).toBeTruthy();
+    expect(container.querySelector('script')).toBeNull();
+  });
+});
+
 describe('satır içi biçim', () => {
   it('paragrafta kalın ve eğik çizer', () => {
     ciz([{ type: 'paragraph', text: '**kalın** ve *eğik*' }]);

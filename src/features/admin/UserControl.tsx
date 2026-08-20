@@ -10,6 +10,7 @@ import {
 } from '@/services/content/membership';
 import { Alert } from '@/components/ui/Alert';
 import { useAuth } from '@/features/auth/AuthContext';
+import { profileAvatarUrl } from '@/services/content/profile';
 import {
   fetchUsers,
   fetchDeletionRequests,
@@ -193,15 +194,6 @@ export function UserControl() {
         ))}
       </div>
 
-      <div className="mb-4 rounded-card border border-cold/20 bg-cold/8 px-3 py-2.5 text-meta leading-relaxed text-muted-foreground">
-        Yetki işlemleri veritabanında zorlanır. Panel yalnızca yöneticinin
-        çağırabildiği kontrolleri gösterir;{' '}
-        <strong className="text-foreground">
-          e-posta adresleri panelde görünmez
-        </strong>
-        .
-      </div>
-
       {error && <Alert className="mb-3">{error}</Alert>}
 
       <form
@@ -344,6 +336,10 @@ export function UserControl() {
             : u.roles.includes('moderator')
               ? 'Moderatör'
               : 'Üye';
+          const avatarUrl = profileAvatarUrl(u.avatarPath);
+          const initial = (u.displayName || u.username)
+            .slice(0, 1)
+            .toLocaleUpperCase('tr-TR');
           return (
             <li
               key={u.id}
@@ -361,8 +357,19 @@ export function UserControl() {
                 className="grid w-full items-center gap-3 px-3 py-2 text-left transition-colors hover:bg-surface-2/60 md:grid-cols-[minmax(16rem,1fr)_6rem_6rem_minmax(8rem,10rem)_auto]"
               >
                 <span className="flex min-w-0 items-center gap-3">
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border bg-background text-caption font-bold uppercase text-primary">
-                    {(u.displayName || u.username).slice(0, 1)}
+                  <span className="relative flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border bg-background text-caption font-bold uppercase text-primary">
+                    <span>{initial}</span>
+                    {avatarUrl ? (
+                      <img
+                        src={avatarUrl}
+                        alt=""
+                        loading="lazy"
+                        className="absolute inset-0 h-full w-full object-cover"
+                        onError={(event) => {
+                          event.currentTarget.hidden = true;
+                        }}
+                      />
+                    ) : null}
                   </span>
                   <span className="min-w-0">
                     <span className="block truncate text-body-sm font-semibold text-foreground">

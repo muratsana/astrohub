@@ -1,0 +1,22 @@
+Bu klasöre yazılarda kullanılan fotoğraflar konulacak.
+
+Gereken dosyalar (hepsi 1600 piksel genişliğinde JPEG olarak hazırlandı):
+
+  crescent-ha.jpg     — NGC 6888, yalnızca H-alfa
+  crescent-hoo.jpg    — NGC 6888, HOO paleti
+  crescent-sho.jpg    — NGC 6888, SHO (Hubble) paleti
+  m31-osc.jpg         — M31, renkli kamera (QHY268C)
+  m31-lrgb.jpg        — M31, mono kamera LRGB
+  samanyolu.jpg       — Samanyolu, karanlık gökyüzü
+  iris.jpg            — NGC 7023 İris Bulutsusu
+  ngc5906.jpg         — NGC 5906 Splinter Galaksisi (yedek)
+
+Hazır kopyalar bilgisayarınızda şurada:
+
+  C:\Users\murat\OneDrive\Astrophotography\_astrohub_web\
+
+O klasörün içindekileri olduğu gibi buraya kopyalayın. Dosya adları birebir aynı olmalı.
+
+Yazılardaki referans yolu:  astrohub/img/<dosya>.jpg
+Sitenizde farklı bir yol kullanıyorsanız content/*.mdx ve standalone/*.html
+içindeki src="astrohub/img/..." satırlarını topluca değiştirin.

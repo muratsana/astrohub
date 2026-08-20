@@ -47,12 +47,27 @@ function clean(value: string | null | undefined): string {
 
 /** İçindekiler bloğa çevrilmeden doğrudan açılan sarmalayıcılar. */
 const WRAPPERS = new Set([
-  'div', 'section', 'article', 'main', 'header', 'footer', 'aside',
-  'body', 'figure-group', 'nav',
+  'div',
+  'section',
+  'article',
+  'main',
+  'header',
+  'footer',
+  'aside',
+  'body',
+  'figure-group',
+  'nav',
 ]);
 
 /** Bloğa çevrilemeyen ve içeriği de anlamsız olan etiketler. */
-const IGNORED = new Set(['script', 'style', 'noscript', 'template', 'svg', 'form']);
+const IGNORED = new Set([
+  'script',
+  'style',
+  'noscript',
+  'template',
+  'svg',
+  'form',
+]);
 
 interface Ctx {
   blocks: ContentBlock[];
@@ -97,7 +112,8 @@ function walk(element: Element, ctx: Ctx): void {
 
   if (tag === 'h1' || tag === 'h2' || tag === 'h3') {
     const text = clean(htmlToInlineMarkdown(element)).slice(0, 300);
-    if (text) ctx.blocks.push({ type: 'heading', level: tag === 'h3' ? 3 : 2, text });
+    if (text)
+      ctx.blocks.push({ type: 'heading', level: tag === 'h3' ? 3 : 2, text });
     return;
   }
 
@@ -107,7 +123,10 @@ function walk(element: Element, ctx: Ctx): void {
   if (tag === 'h4' || tag === 'h5' || tag === 'h6') {
     const text = clean(htmlToInlineMarkdown(element)).slice(0, 300);
     if (!text) return;
-    warn(ctx, `<${tag}> "Başlık 3" olarak alındı — blok modelinde daha derin başlık yok.`);
+    warn(
+      ctx,
+      `<${tag}> "Başlık 3" olarak alındı — blok modelinde daha derin başlık yok.`
+    );
     ctx.blocks.push({ type: 'heading', level: 3, text });
     return;
   }
@@ -144,15 +163,25 @@ function walk(element: Element, ctx: Ctx): void {
       return;
     }
     if (!isAllowedImageHost(src)) {
-      warn(ctx, `Görsel izinli bir konaktan değil, atlandı: ${src.slice(0, 80)}`);
+      warn(
+        ctx,
+        `Görsel izinli bir konaktan değil, atlandı: ${src.slice(0, 80)}`
+      );
       return;
     }
     if (!alt) {
       warn(ctx, `Görselin alt metni yok, atlandı: ${src.slice(0, 80)}`);
       return;
     }
-    const caption = clean(element.querySelector('figcaption')?.textContent ?? '');
-    ctx.blocks.push({ type: 'image', src, alt: alt.slice(0, 300), caption: caption || undefined });
+    const caption = clean(
+      element.querySelector('figcaption')?.textContent ?? ''
+    );
+    ctx.blocks.push({
+      type: 'image',
+      src,
+      alt: alt.slice(0, 300),
+      caption: caption || undefined,
+    });
     return;
   }
 
@@ -172,7 +201,11 @@ function walk(element: Element, ctx: Ctx): void {
       type: 'table',
       caption: caption || undefined,
       header: hasHeader ? first : undefined,
-      rows: hasHeader ? (rest.length ? rest : [first.map(() => '')]) : [first, ...rest],
+      rows: hasHeader
+        ? rest.length
+          ? rest
+          : [first.map(() => '')]
+        : [first, ...rest],
     });
     return;
   }
@@ -182,7 +215,10 @@ function walk(element: Element, ctx: Ctx): void {
   if (tag === 'pre' || tag === 'code') {
     const text = clean(element.textContent);
     if (!text) return;
-    warn(ctx, 'Kod bloğu düz paragraf olarak alındı — blok modelinde kod türü yok.');
+    warn(
+      ctx,
+      'Kod bloğu düz paragraf olarak alındı — blok modelinde kod türü yok.'
+    );
     ctx.blocks.push({ type: 'paragraph', text });
     return;
   }
@@ -218,7 +254,9 @@ export function htmlToBlocks(html: string): ImportResult {
 
 export async function importDocx(file: File): Promise<ImportResult> {
   const mammoth = await import('mammoth');
-  const result = await mammoth.convertToHtml({ arrayBuffer: await file.arrayBuffer() });
+  const result = await mammoth.convertToHtml({
+    arrayBuffer: await file.arrayBuffer(),
+  });
   const converted = htmlToBlocks(result.value);
   return {
     blocks: converted.blocks,
@@ -241,7 +279,9 @@ export async function importPdf(file: File): Promise<ImportResult> {
     'pdfjs-dist/build/pdf.worker.min.mjs',
     import.meta.url
   ).toString();
-  const document = await pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
+  const document = await pdfjs.getDocument({
+    data: new Uint8Array(await file.arrayBuffer()),
+  }).promise;
   const blocks: ContentBlock[] = [];
 
   for (let pageNo = 1; pageNo <= document.numPages; pageNo += 1) {
@@ -258,20 +298,32 @@ export async function importPdf(file: File): Promise<ImportResult> {
       rows.set(y, [...(rows.get(y) ?? []), item]);
     }
     const ordered = [...rows.entries()].sort((a, b) => b[0] - a[0]);
-    const medianHeight = items.map((item) => item.height).sort((a, b) => a - b)[Math.floor(items.length / 2)] ?? 12;
+    const medianHeight =
+      items.map((item) => item.height).sort((a, b) => a - b)[
+        Math.floor(items.length / 2)
+      ] ?? 12;
     for (const [, row] of ordered) {
-      const value = clean(row.sort((a, b) => a.transform[4] - b.transform[4]).map((item) => item.str).join(' '));
+      const value = clean(
+        row
+          .sort((a, b) => a.transform[4] - b.transform[4])
+          .map((item) => item.str)
+          .join(' ')
+      );
       if (!value) continue;
       const height = Math.max(...row.map((item) => item.height));
-      blocks.push(height > medianHeight * 1.35
-        ? { type: 'heading', level: 2, text: value.slice(0, 300) }
-        : { type: 'paragraph', text: value });
+      blocks.push(
+        height > medianHeight * 1.35
+          ? { type: 'heading', level: 2, text: value.slice(0, 300) }
+          : { type: 'paragraph', text: value }
+      );
     }
   }
 
   return {
     blocks,
-    warnings: ['PDF sunum biçimidir; başlıklar punto farkıyla tahmin edildi. Yayınlamadan önce blokları kontrol edin.'],
+    warnings: [
+      'PDF sunum biçimidir; başlıklar punto farkıyla tahmin edildi. Yayınlamadan önce blokları kontrol edin.',
+    ],
   };
 }
 
@@ -285,7 +337,32 @@ export async function importPdf(file: File): Promise<ImportResult> {
  * yalnızca DOM METNİ kapalı bloklara alınıyor, `script`/`style` atlanıyor.
  */
 export async function importHtml(file: File): Promise<ImportResult> {
-  return htmlToBlocks(await file.text());
+  const raw = await file.text();
+  const doc = new DOMParser().parseFromString(raw, 'text/html');
+  const article = doc.querySelector('article.ah');
+  const html = (article?.outerHTML ?? (doc.body.innerHTML || raw)).trim();
+  const slug = file.name
+    .replace(/\.(html?|HTML?)$/, '')
+    .toLocaleLowerCase('tr-TR')
+    .replace(/[^a-z0-9-]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  const scriptSrc =
+    slug && /\bdata-ah-(fig|tool)=/i.test(html)
+      ? `/astrohub/${slug}.js`
+      : undefined;
+
+  return {
+    blocks: [
+      {
+        type: 'html',
+        html,
+        ...(scriptSrc ? { scriptSrc } : {}),
+      },
+    ],
+    warnings: [
+      'HTML kaynak olarak korundu; şekil ve etkileşimli araç yer tutucuları parçalanmadı.',
+    ],
+  };
 }
 
 export async function importContentFile(file: File): Promise<ImportResult> {

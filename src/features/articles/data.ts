@@ -1,5 +1,5 @@
 import type { ContentBlock } from '@/domain/content/blocks';
-import { technicalSeriesArticles } from './technicalSeries';
+import { technicalSeriesArticles } from './technicalSeriesHtml';
 /**
  * Yazılar modülü — rehberler, eğitim yazıları ve işleme dersleri.
  *

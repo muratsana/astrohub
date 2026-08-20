@@ -1,4 +1,5 @@
 import type { ContentBlock } from '@/domain/content/blocks';
+import { useEffect, useMemo, useRef } from 'react';
 import { Link } from 'react-router';
 import { youtubeEmbedUrl } from '@/features/tv/types';
 import { cn } from '@/lib/cn';
@@ -139,6 +140,10 @@ export function BlockRenderer({
               </Link>
             </aside>
           );
+        }
+
+        if (block.type === 'html') {
+          return <HtmlBlock key={key} block={block} />;
         }
 
         /*
@@ -349,4 +354,48 @@ export function BlockRenderer({
       })}
     </div>
   );
+}
+
+function HtmlBlock({
+  block,
+}: {
+  block: Extract<ContentBlock, { type: 'html' }>;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const html = useMemo(() => sanitizeArticleHtml(block.html), [block.html]);
+
+  useEffect(() => {
+    if (!block.scriptSrc || !ref.current) return;
+    ref.current
+      .querySelectorAll('[data-ah-ready]')
+      .forEach((node) => node.removeAttribute('data-ah-ready'));
+
+    const script = document.createElement('script');
+    script.src = block.scriptSrc;
+    script.async = true;
+    script.dataset.astrohubArticleScript = block.scriptSrc;
+    document.body.appendChild(script);
+
+    return () => {
+      script.remove();
+    };
+  }, [block.scriptSrc, html]);
+
+  return (
+    <div
+      ref={ref}
+      className="astrohub-html-block"
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
+  );
+}
+
+function sanitizeArticleHtml(value: string): string {
+  return value
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '')
+    .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, '')
+    .replace(/<iframe\b[^>]*>[\s\S]*?<\/iframe>/gi, '')
+    .replace(/\son[a-z]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '')
+    .replace(/\s(href|src)\s*=\s*(["'])\s*javascript:[\s\S]*?\2/gi, '')
+    .replace(/\ssrc\s*=\s*(["'])astrohub\/img\//gi, ' src=$1/astrohub/img/');
 }

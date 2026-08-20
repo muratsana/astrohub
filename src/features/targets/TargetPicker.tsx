@@ -189,7 +189,7 @@ export function TargetPicker({
                   <p className="px-3 py-3 text-body-sm leading-relaxed text-muted-foreground">
                     {uzakYukleniyor
                       ? 'Katalogda aranıyor…'
-                      : 'Bu türde eşleşen kayıt yok. Katalogda olmayan bir hedef çektiyseniz seçimi boş bırakıp başlığa yazabilirsiniz — künye yine kaydedilir.'}
+                      : 'Bu türde eşleşen katalog kaydı yok. Fotoğraf eklemek için hedefi katalog kodundan listeden seçmelisiniz.'}
                   </p>
                 ) : (
                   <>

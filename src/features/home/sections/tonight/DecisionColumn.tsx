@@ -1,7 +1,8 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { Button } from '@/components/ui/Button';
-import { formatClock } from '@/domain/astronomy/ephemeris';
+import { formatClock, type MoonPhase } from '@/domain/astronomy/ephemeris';
 import type { NightScore, NightVerdict } from '@/domain/astronomy/nightScore';
+import { dewRisk } from '@/features/weather/openMeteo';
 import type { SkyState } from '@/features/weather/useSkyConditions';
 import { cn } from '@/lib/cn';
 import type { BestPlace } from './bestPlaces';
@@ -32,6 +33,7 @@ interface Props {
   bestPlacesDate: Date;
   onUseBestPlace?: (place: BestPlace) => void;
   bortle?: number | null;
+  moon?: MoonPhase | null;
   conditions: SkyState;
   locationLabel: string;
   dateLabel: string;
@@ -68,6 +70,7 @@ export function DecisionColumn({
   bestPlacesDate,
   onUseBestPlace,
   bortle = null,
+  moon = null,
   conditions,
   locationLabel,
   dateLabel,
@@ -161,6 +164,9 @@ export function DecisionColumn({
       ) : activeScore ? (
         <ScoreBlock
           score={activeScore}
+          bortle={bortle}
+          moon={moon}
+          conditions={conditions}
           locationLabel={locationLabel}
           dateLabel={dateLabel}
         />
@@ -169,12 +175,9 @@ export function DecisionColumn({
       )}
 
       {tab !== 'places' && activeScore && (
-        <>
-          <BortleIndicator value={bortle} />
-          <p className="rounded-card border border-warning/25 bg-warning/8 px-3 py-2 text-meta leading-relaxed text-warning">
-            {activeScore.recommendation}
-          </p>
-        </>
+        <p className="rounded-card border border-warning/25 bg-warning/8 px-3 py-2 text-meta leading-relaxed text-warning">
+          {activeScore.recommendation}
+        </p>
       )}
     </div>
   );
@@ -245,7 +248,8 @@ function BestPlacesBlock({
           </span>
         </div>
         <p className="mt-2 text-meta text-muted-foreground">
-          Öne çıkan: {best.bestProfile === 'dso' ? 'Derin Uzay' : 'Güneş Sistemi'} ·{' '}
+          Öne çıkan:{' '}
+          {best.bestProfile === 'dso' ? 'Derin Uzay' : 'Güneş Sistemi'} ·{' '}
           {best.weatherBased ? 'saatlik tahminle' : 'yer profiliyle'}
         </p>
         {onUseBestPlace && (
@@ -319,14 +323,21 @@ function durationText(minutes: number): string {
 
 function ScoreBlock({
   score,
+  bortle,
+  moon,
+  conditions,
   locationLabel,
   dateLabel,
 }: {
   score: NightScore;
+  bortle: number | null;
+  moon: MoonPhase | null;
+  conditions: SkyState;
   locationLabel: string;
   dateLabel: string;
 }) {
   const tone = VERDICT_TONE[score.verdict];
+  const rows = displayRows(score, bortle, moon, conditions);
 
   return (
     <>
@@ -386,7 +397,7 @@ function ScoreBlock({
         göre kendini kuruyor — Türkçe metin uzadığında da bozulmuyor.
       */}
       <dl className="grid grid-cols-[auto_1fr_auto] items-center gap-x-2.5 gap-y-1.5">
-        {score.rows.map((row) => (
+        {rows.map((row) => (
           <div key={row.key} className="contents">
             <dt className="text-meta text-muted-foreground">{row.label}</dt>
             <dd
@@ -402,12 +413,12 @@ function ScoreBlock({
                       ? 'bg-warning'
                       : 'bg-success'
                 )}
-                style={{ width: `${row.barValue ?? row.value ?? 0}%` }}
+                style={{ width: `${row.barValue ?? 0}%` }}
               />
             </dd>
             <dd
               className={cn(
-                'num min-w-[2.5ch] text-right text-meta',
+                'num min-w-[4.5ch] text-right text-meta',
                 row.value === null ? 'text-faint' : 'text-muted-foreground'
               )}
             >
@@ -420,45 +431,76 @@ function ScoreBlock({
   );
 }
 
-function BortleIndicator({ value }: { value: number | null }) {
-  if (value == null) return null;
+interface DisplayScoreRow {
+  key: string;
+  label: string;
+  value: ReactNode | null;
+  barValue: number | null;
+  tone: 'good' | 'warn';
+}
 
-  const level = Math.min(9, Math.max(1, Math.round(value)));
-  const filled = 10 - level;
-  const tone =
-    level <= 3 ? 'bg-success' : level <= 5 ? 'bg-warning' : 'bg-danger';
+function displayRows(
+  score: NightScore,
+  bortle: number | null,
+  moon: MoonPhase | null,
+  conditions: SkyState
+): DisplayScoreRow[] {
+  const weather = conditions.data;
+  const dew = weather ? dewRisk(weather.temperature, weather.dewPoint) : null;
+  const cloud = score.rows.find((row) => row.key === 'cloudCover') ?? null;
+  const seeing = score.rows.find((row) => row.key === 'seeing') ?? null;
+  const bortleLevel =
+    bortle == null ? null : Math.min(9, Math.max(1, Math.round(bortle)));
 
-  return (
-    <div className="rounded-card border border-border bg-surface-1 px-3 py-2">
-      <div className="mb-2 flex items-center justify-between gap-3">
-        <span className="text-meta font-semibold text-muted-foreground">
-          Bortle Skalası
-        </span>
-        <span className="num text-body-sm font-bold text-foreground">
-          {level}/9
-        </span>
-      </div>
-      <div
-        aria-label={`Bortle ${level}`}
-        className="flex h-5 items-center gap-1 rounded-card border border-border-strong bg-background p-1"
-      >
-        {Array.from({ length: 9 }, (_, index) => (
-          <span
-            key={index}
-            aria-hidden
-            className={cn(
-              'min-w-0 flex-1 rounded-sm',
-              index < filled ? cn('h-3.5', tone) : 'h-2 bg-surface-3'
-            )}
-          />
-        ))}
-        <span
-          aria-hidden
-          className="ml-0.5 h-2.5 w-1 shrink-0 rounded-sm bg-border-strong"
-        />
-      </div>
-    </div>
-  );
+  return [
+    rowFromScore(cloud),
+    rowFromScore(seeing),
+    {
+      key: 'bortle',
+      label: 'Bortle Skalası',
+      value: bortleLevel == null ? null : `${bortleLevel}/9`,
+      barValue: bortleLevel == null ? null : ((10 - bortleLevel) / 9) * 100,
+      tone: bortleLevel != null && bortleLevel > 5 ? 'warn' : 'good',
+    },
+    {
+      key: 'moon',
+      label: 'Ay evresi',
+      value: moon?.name ?? null,
+      barValue: moon ? (1 - moon.illumination) * 100 : null,
+      tone: moon && moon.illumination > 0.65 ? 'warn' : 'good',
+    },
+    {
+      key: 'wind',
+      label: 'Rüzgâr',
+      value: weather ? `${Math.round(weather.windSpeed)} km/sa` : null,
+      barValue: weather
+        ? Math.min(100, Math.max(0, (1 - weather.windSpeed / 30) * 100))
+        : null,
+      tone: weather && weather.windSpeed > 18 ? 'warn' : 'good',
+    },
+    {
+      key: 'dew',
+      label: 'Çiy durumu',
+      value: dew?.label ?? null,
+      barValue: weather
+        ? Math.min(
+            100,
+            Math.max(0, ((weather.temperature - weather.dewPoint) / 8) * 100)
+          )
+        : null,
+      tone: dew?.tone === 'danger' ? 'warn' : 'good',
+    },
+  ];
+}
+
+function rowFromScore(row: NightScore['rows'][number] | null): DisplayScoreRow {
+  return {
+    key: row?.key ?? 'unknown',
+    label: row?.label ?? '—',
+    value: row?.value ?? null,
+    barValue: row?.barValue ?? row?.value ?? null,
+    tone: row?.tone ?? 'warn',
+  };
 }
 
 /**
@@ -508,4 +550,3 @@ function ScoreUnavailable({ conditions }: { conditions: SkyState }) {
     </div>
   );
 }
-

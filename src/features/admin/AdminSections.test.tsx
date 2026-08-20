@@ -45,6 +45,15 @@ vi.mock('./records', () => ({
     }),
 }));
 
+vi.mock('./livePresence', () => ({
+  LivePresencePanel: () => (
+    <section>
+      <h2>Canlı Kullanıcılar</h2>
+      <p>2 aktif</p>
+    </section>
+  ),
+}));
+
 import { AdminPage } from './AdminPage';
 import { formatAdminCount } from './dashboard';
 
@@ -74,8 +83,10 @@ const NAV = [
   'Moderasyon',
   'Forum',
   'Destek',
+  'Haftanın Fotoğrafı',
   'Aktivite',
   'Duyurular',
+  'Allsky',
   'Sayfalar',
   'Ayarlar',
 ];
@@ -116,7 +127,7 @@ describe('StageHub tarzı admin GUI', () => {
     for (const heading of [
       'İçerik Akışı',
       'İş Kuyruğu',
-      'Sistem Sağlığı',
+      'Canlı Kullanıcılar',
       'Son Hareketler',
     ]) {
       expect(

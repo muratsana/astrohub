@@ -2,13 +2,13 @@ import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { DecisionColumn } from './DecisionColumn';
 import { nightScore, type NightScore } from '@/domain/astronomy/nightScore';
+import type { MoonPhase } from '@/domain/astronomy/ephemeris';
 import type { SkyState } from '@/features/weather/useSkyConditions';
 import type { SkyConditions } from '@/features/weather/openMeteo';
 
 vi.mock('./bestPlaces', async () => {
-  const actual = await vi.importActual<typeof import('./bestPlaces')>(
-    './bestPlaces'
-  );
+  const actual =
+    await vi.importActual<typeof import('./bestPlaces')>('./bestPlaces');
   return {
     ...actual,
     bestPlacesForNightWithWeather: vi.fn(
@@ -66,6 +66,13 @@ const SCORE = nightScore({
   moonIllumination: 0.12,
 });
 
+const MOON: MoonPhase = {
+  name: 'İlk Dördün',
+  illumination: 0.48,
+  age: 7.2,
+  waxing: true,
+};
+
 function renderColumn(
   score: NightScore | null = SCORE,
   conditions: SkyState = READY
@@ -75,6 +82,7 @@ function renderColumn(
       score={score}
       bestPlacesDate={new Date('2026-08-09T00:00:00+03:00')}
       bortle={3}
+      moon={MOON}
       conditions={conditions}
       locationLabel="Ankara"
       dateLabel="31 Temmuz Cuma"
@@ -91,19 +99,21 @@ describe('DecisionColumn · skor dolu', () => {
     expect(screen.getByText(/Ankara · 31 Temmuz Cuma/)).toBeInTheDocument();
   });
 
-  /*
-   * ASIL KURAL. Ekranda "78" yazarken altındaki dört çubuğun başka bir
-   * şey söylemesi, kullanıcının hangisine inanacağını bilememesi demek.
-   * Dördü de aynı fonksiyondan geliyor ve test bunu ekrandan okuyor.
-   */
-  it('kırılımın dört satırı da skorun ürettiği değerleri gösteriyor', () => {
+  it('birleşik skor satırlarını kullanıcıya ayrı metrikler olarak gösteriyor', () => {
     renderColumn();
-    for (const row of SCORE.rows) {
-      expect(screen.getByText(row.label)).toBeInTheDocument();
-      expect(
-        screen.getByText(row.value === null ? '—' : String(row.value))
-      ).toBeInTheDocument();
-    }
+
+    expect(screen.getByText('Bulut örtüsü')).toBeInTheDocument();
+    expect(screen.getByText('Seeing')).toBeInTheDocument();
+    expect(screen.getByText('Bortle Skalası')).toBeInTheDocument();
+    expect(screen.getByText('3/9')).toBeInTheDocument();
+    expect(screen.getByText('Ay evresi')).toBeInTheDocument();
+    expect(screen.getByText('İlk Dördün')).toBeInTheDocument();
+    expect(screen.getByText('Rüzgâr')).toBeInTheDocument();
+    expect(screen.getByText('6 km/sa')).toBeInTheDocument();
+    expect(screen.getByText('Çiy durumu')).toBeInTheDocument();
+    expect(screen.getByText('Kuru')).toBeInTheDocument();
+    expect(screen.queryByText('Karanlık/Ay')).not.toBeInTheDocument();
+    expect(screen.queryByText('Rüzgâr/Çiy')).not.toBeInTheDocument();
   });
 
   it('halkanın dolgu oranı skorun kendisi', () => {
@@ -115,18 +125,17 @@ describe('DecisionColumn · skor dolu', () => {
     );
   });
 
-  it('gerekçeleri ve öneriyi basıyor', () => {
+  it('öneriyi basıyor, kaldırılan artı eksi listesini geri getirmiyor', () => {
     renderColumn();
-    for (const text of [...SCORE.pros, ...SCORE.cons]) {
-      expect(screen.getByText(text)).toBeInTheDocument();
-    }
     expect(screen.getByText(SCORE.recommendation)).toBeInTheDocument();
+    expect(screen.queryByText(/^Artı:/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Eksi:/)).not.toBeInTheDocument();
   });
 
-  it('seçili konumun Bortle göstergesini basıyor', () => {
+  it('seçili konumun Bortle değerini metrik satırında basıyor', () => {
     renderColumn();
     expect(screen.getByText('Bortle Skalası')).toBeInTheDocument();
-    expect(screen.getByLabelText('Bortle 3')).toBeInTheDocument();
+    expect(screen.getByText('3/9')).toBeInTheDocument();
   });
 
   it('en iyi yerler listesindeki satırlar seçilebilir', async () => {
@@ -160,21 +169,6 @@ describe('DecisionColumn · skor dolu', () => {
     expect(
       screen.queryByText(/Open-Meteo|efemeris yerel hesap/)
     ).not.toBeInTheDocument();
-  });
-
-  /*
-   * Ekran okuyucuda "+ Üst atmosfer sakin" ile "− Jet akımı hareketli"
-   * arasındaki fark yalnızca bir işaret. İşaret metin olarak okunmazsa
-   * liste "iyi ve kötü sebepler" değil, düz bir sebepler listesi olur.
-   */
-  it('artı ve eksi işaretleri metin olarak da okunuyor', () => {
-    renderColumn();
-    if (SCORE.pros.length > 0) {
-      expect(screen.getAllByText(/^Artı:/).length).toBe(SCORE.pros.length);
-    }
-    if (SCORE.cons.length > 0) {
-      expect(screen.getAllByText(/^Eksi:/).length).toBe(SCORE.cons.length);
-    }
   });
 });
 

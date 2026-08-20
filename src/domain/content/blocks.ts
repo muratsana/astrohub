@@ -30,6 +30,15 @@ const internalHref = z
   .regex(/^\/(?!\/).*/, 'Araç bağlantısı site içi bir yol olmalı')
   .max(300);
 
+const articleScriptSrc = z
+  .string()
+  .trim()
+  .regex(
+    /^\/astrohub\/[a-z0-9-]+\.js$/,
+    'Yazı betiği yalnızca /astrohub/<slug>.js olabilir'
+  )
+  .max(120);
+
 /** Tablo hücresi. Boş hücre geçerli: tablolarda boşluk anlam taşır. */
 const cell = z.string().trim().max(500);
 
@@ -148,6 +157,12 @@ export const ContentBlockSchema = z.discriminatedUnion('type', [
     text: text.max(1_000),
     href: internalHref,
     action: z.string().trim().min(1).max(80).optional(),
+  }),
+
+  z.object({
+    type: z.literal('html'),
+    html: z.string().trim().min(1).max(250_000),
+    scriptSrc: articleScriptSrc.optional(),
   }),
 
   /*
@@ -287,6 +302,18 @@ export function blocksToParagraphs(blocks: ContentBlock[]): string[] {
 
     if (block.type === 'tool') {
       return [block.title, stripInline(block.text), block.action ?? 'Aracı aç'];
+    }
+
+    if (block.type === 'html') {
+      return [
+        stripInline(
+          block.html
+            .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, ' ')
+            .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, ' ')
+            .replace(/<[^>]+>/g, ' ')
+            .replace(/\s+/g, ' ')
+        ),
+      ];
     }
 
     return [stripInline(block.text)];

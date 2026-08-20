@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { Link } from 'react-router';
 import { RemoteImage } from './RemoteImage';
 import {
   ContentCard,
@@ -41,8 +42,10 @@ export interface PhotoTileProps {
   fieldOfView?: string;
   /** Tür ailesi rozeti (Derin Uzay, Güneş Sistemi…). */
   family?: { label: string; className: string };
-  /** Editör seçimi gibi ikincil işaret. */
+  /** Görselin üstünde kalacak tekil işaret; galeri kartlarında puan rozeti. */
   flag?: ReactNode;
+  /** Fotoğraf üstünden künye alanına taşınan ek rozetler. */
+  bodyBadges?: ReactNode;
   /** Görselin üstünde açılan katman (ör. alan çözümü ölçümleri). */
   overlay?: ReactNode;
   variant?: 'grid' | 'list';
@@ -63,21 +66,24 @@ export function PhotoTile({
   fieldOfView,
   family,
   flag,
+  bodyBadges,
   overlay,
   variant = 'grid',
   className,
 }: PhotoTileProps) {
   const meta = [palette, integration].filter(Boolean).join(' · ');
-  const origin = [
-    bortle ? `B${bortle}` : null,
-    username ? `@${username}` : null,
-  ]
-    .filter(Boolean)
-    .join(' · ');
+  const bortleLabel = bortle ? `B${bortle}` : null;
+  const profilePath = username ? `/profil/${username}` : null;
+  const cardLabel = title ? `${target} - ${title}` : target;
 
   if (variant === 'list') {
     return (
-      <ContentCard to={to} variant="list" className={className}>
+      <ContentCard variant="list" className={cn('relative', className)}>
+        <Link
+          to={to}
+          aria-label={cardLabel}
+          className="photo-tile-link absolute inset-0 z-10 rounded-card focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+        />
         <ContentCardMedia variant="list">
           <RemoteImage
             src={imageUrl}
@@ -106,14 +112,32 @@ export function PhotoTile({
 
         <span className="tabular hidden shrink-0 text-right text-meta sm:block">
           <span className="block text-cold">{meta || '—'}</span>
-          <span className="block text-muted-foreground">{origin || '—'}</span>
+          <span className="relative z-20 block text-muted-foreground">
+            {bortleLabel}
+            {bortleLabel && profilePath ? ' · ' : ''}
+            {profilePath ? (
+              <Link
+                to={profilePath}
+                className="hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+              >
+                @{username}
+              </Link>
+            ) : (
+              !bortleLabel && '—'
+            )}
+          </span>
         </span>
       </ContentCard>
     );
   }
 
   return (
-    <ContentCard to={to} className={className}>
+    <ContentCard className={cn('relative', className)}>
+      <Link
+        to={to}
+        aria-label={cardLabel}
+        className="photo-tile-link absolute inset-0 z-10 rounded-card focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+      />
       {/*
         ORAN KARE, 4:3 DEĞİL.
 
@@ -134,7 +158,6 @@ export function PhotoTile({
       <ContentCardMedia
         ratio="square"
         fieldOfView={fieldOfView}
-        badge={family ? <FamilyBadge {...family} /> : undefined}
         flag={flag}
         overlay={overlay}
       >
@@ -142,6 +165,12 @@ export function PhotoTile({
       </ContentCardMedia>
 
       <ContentCardBody>
+        {(family || bodyBadges) && (
+          <div className="mb-1 flex min-h-[21px] flex-wrap items-center gap-1.5 overflow-hidden">
+            {family && <FamilyBadge {...family} />}
+            {bodyBadges}
+          </div>
+        )}
         <ContentCardTitle>{target}</ContentCardTitle>
         {title && (
           <p className="truncate text-meta leading-snug text-muted-foreground">
@@ -151,7 +180,20 @@ export function PhotoTile({
         <ContentCardMeta tone="cold" className="mt-auto pt-1">
           {meta || '—'}
         </ContentCardMeta>
-        <ContentCardMeta>{origin || '—'}</ContentCardMeta>
+        <ContentCardMeta className="relative z-20">
+          {bortleLabel}
+          {bortleLabel && profilePath ? ' · ' : ''}
+          {profilePath ? (
+            <Link
+              to={profilePath}
+              className="hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+            >
+              @{username}
+            </Link>
+          ) : (
+            !bortleLabel && '—'
+          )}
+        </ContentCardMeta>
       </ContentCardBody>
     </ContentCard>
   );

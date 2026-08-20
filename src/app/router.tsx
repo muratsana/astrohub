@@ -5,7 +5,6 @@ import { HomePage } from '@/features/home/HomePage';
 import { NotFoundPage } from '@/components/NotFoundPage';
 import { RouteError } from '@/components/RouteError';
 import { RouteFallback } from '@/components/RouteFallback';
-import { PlaceholderPage } from '@/components/PlaceholderPage';
 import { RedirectTo, RedirectParam, RedirectKeepQuery } from './Redirect';
 import { lazyWithRetry } from '@/lib/lazyWithRetry';
 import { cityRoutePaths } from '@/features/city/routes';
@@ -599,11 +598,12 @@ export const appRoutes = [
       },
       {
         path: 'saha/istasyonlar',
-        element: (
-          <PlaceholderPage
-            title="Canlı SQM / All-Sky İstasyonları"
-            description="Sahaya kurulan SQM ve all-sky kameralardan canlı ölçüm akışı (§8.7). Donanım ve veri toplama altyapısı gerektirdiği için Faz 3'te devreye alınacak; o zamana kadar gözlem noktası kayıtlarındaki tek seferlik SQM ölçümleri kullanılıyor."
-          />
+        element: <RedirectTo to="/allsky" />,
+      },
+      {
+        path: 'allsky',
+        element: route(
+          named(() => import('@/features/allsky/AllskyPage'), 'AllskyPage')
         ),
       },
       {

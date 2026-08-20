@@ -12,6 +12,16 @@ import { articles, type Article } from './data';
  * kayıttır.
  */
 export function entryToArticle(e: ContentEntry): Article {
+  const seed = articles.find((item) => item.slug === e.slug);
+  const seedHtmlBlocks = seed?.bodyBlocks?.some(
+    (block) => block.type === 'html'
+  )
+    ? seed.bodyBlocks
+    : null;
+  const entryHasHtml = e.bodyBlocks.some((block) => block.type === 'html');
+  const bodyBlocks =
+    seedHtmlBlocks && !entryHasHtml ? seedHtmlBlocks : e.bodyBlocks;
+
   return {
     slug: e.slug,
     title: e.title,
@@ -21,8 +31,8 @@ export function entryToArticle(e: ContentEntry): Article {
     duration: e.duration ?? '',
     publishedAt: e.publishedAt,
     author: e.author ?? 'Astrohub',
-    body: e.body,
-    bodyBlocks: e.bodyBlocks,
+    body: seedHtmlBlocks && !entryHasHtml ? (seed?.body ?? e.body) : e.body,
+    bodyBlocks,
     tint: e.tint ?? '150,185,235',
     image: e.image ?? undefined,
   };

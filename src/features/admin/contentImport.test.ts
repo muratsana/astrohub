@@ -18,9 +18,13 @@ describe('htmlToBlocks', () => {
   });
 
   it('script çalıştırmaz ve bilinmeyen etiketi görünür uyarıyla paragrafa indirger', () => {
-    const result = htmlToBlocks('<custom>Metin</custom><script>alert(1)</script>');
+    const result = htmlToBlocks(
+      '<custom>Metin</custom><script>alert(1)</script>'
+    );
     expect(result.blocks).toEqual([{ type: 'paragraph', text: 'Metin' }]);
-    expect(result.warnings).toContain('<custom> paragraf olarak içe aktarıldı.');
+    expect(result.warnings).toContain(
+      '<custom> paragraf olarak içe aktarıldı.'
+    );
     expect(result.warnings).toContain('<script> güvenlik nedeniyle atlandı.');
   });
 });
@@ -28,10 +32,9 @@ describe('htmlToBlocks', () => {
 /**
  * DOSYA SEÇİMİ.
  *
- * `htmlToBlocks` en baştan beri vardı ama yalnızca Word dönüşümünün ara
- * adımıydı; kullanıcı `.html` dosyası SEÇEMİYORDU. Plan üç biçim istiyor
- * ve HTML üçünün en güvenlisi: dosya hiçbir zaman render edilmiyor,
- * `DOMParser` ile ayrıştırılıp yalnızca DOM metni alınıyor.
+ * `.html` dosyası artık kaynak olarak korunur. Paket yazılarındaki
+ * `data-ah-fig` ve `data-ah-tool` yer tutucuları kapalı bloklara
+ * çevrilirse interaktif araçlar kaybolur.
  */
 describe('importContentFile', () => {
   /*
@@ -49,13 +52,15 @@ describe('importContentFile', () => {
     } as unknown as File;
   }
 
-  it('html dosyasını blok olarak açar', async () => {
+  it('html dosyasını kaynak blok olarak açar', async () => {
     const sonuc = await importContentFile(
       dosya('yazi.html', '<h2>Başlık</h2><p>Gövde.</p>')
     );
     expect(sonuc.blocks).toEqual([
-      { type: 'heading', level: 2, text: 'Başlık' },
-      { type: 'paragraph', text: 'Gövde.' },
+      {
+        type: 'html',
+        html: '<h2>Başlık</h2><p>Gövde.</p>',
+      },
     ]);
   });
 
@@ -64,13 +69,20 @@ describe('importContentFile', () => {
     expect(sonuc.blocks).toHaveLength(1);
   });
 
-  /* İçe aktarılan dosya da render edilmiyor: betik atlanıyor. */
-  it('html içindeki betiği atlar', async () => {
+  it('astrohub makale gövdesini sayfanın tamamı yerine korur', async () => {
     const sonuc = await importContentFile(
-      dosya('kotu.html', '<p>Metin</p><script>alert(1)</script>')
+      dosya(
+        'gurultu-gain-poz.html',
+        '<html><body><nav>Menü</nav><article class="ah"><figure data-ah-fig="kare-sayisi"></figure></article></body></html>'
+      )
     );
-    expect(sonuc.blocks).toEqual([{ type: 'paragraph', text: 'Metin' }]);
-    expect(sonuc.warnings).toContain('<script> güvenlik nedeniyle atlandı.');
+    expect(sonuc.blocks).toEqual([
+      {
+        type: 'html',
+        html: '<article class="ah"><figure data-ah-fig="kare-sayisi"></figure></article>',
+        scriptSrc: '/astrohub/gurultu-gain-poz.js',
+      },
+    ]);
   });
 
   it('desteklenmeyen uzantıyı hangi biçimlerin geçtiğini söyleyerek reddeder', async () => {
@@ -111,7 +123,10 @@ describe('içe aktarmada sessiz kayıp', () => {
       '<p><strong>Kalın</strong> <em>eğik</em> <u>altı</u> <a href="/haber">bağlantı</a></p>'
     );
     expect(result.blocks).toEqual([
-      { type: 'paragraph', text: '**Kalın** *eğik* __altı__ [bağlantı](/haber)' },
+      {
+        type: 'paragraph',
+        text: '**Kalın** *eğik* __altı__ [bağlantı](/haber)',
+      },
     ]);
   });
 
@@ -130,13 +145,17 @@ describe('içe aktarmada sessiz kayıp', () => {
   });
 
   it('alt metni olmayan görseli atarken bunu SÖYLÜYOR', () => {
-    const result = htmlToBlocks('<img src="https://upload.wikimedia.org/x.jpg">');
+    const result = htmlToBlocks(
+      '<img src="https://upload.wikimedia.org/x.jpg">'
+    );
     expect(result.blocks).toEqual([]);
     expect(result.warnings.join(' ')).toMatch(/alt metni yok/i);
   });
 
   it('izinsiz konaktan gelen görseli atarken bunu SÖYLÜYOR', () => {
-    const result = htmlToBlocks('<img src="https://baska-site.example/x.jpg" alt="X">');
+    const result = htmlToBlocks(
+      '<img src="https://baska-site.example/x.jpg" alt="X">'
+    );
     expect(result.blocks).toEqual([]);
     expect(result.warnings.join(' ')).toMatch(/izinli bir konaktan değil/i);
   });

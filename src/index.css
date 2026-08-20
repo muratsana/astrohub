@@ -1,4 +1,5 @@
 @import './styles/fonts.css';
+@import './styles/astro-article.css';
 @import 'tailwindcss';
 
 /*
@@ -86,8 +87,8 @@
    */
   --font-display: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-mono: 'IBM Plex Mono', 'Inter', ui-monospace, 'SF Mono', Menlo,
-    monospace;
+  --font-mono:
+    'IBM Plex Mono', 'Inter', ui-monospace, 'SF Mono', Menlo, monospace;
 
   /*
    * ---- SEMANTİK PUNTO KADEMELERİ (§6.3 / QA GUI-01) ----

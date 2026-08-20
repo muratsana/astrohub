@@ -56,7 +56,8 @@ select v.menu, v.label, v.path, v.position
     ('header', 'İlanlar',     '/ilanlar',     6),
     ('header', 'Araçlar',     '/araclar',     7),
     ('header', 'Forum',       '/forum',       8),
-    ('header', 'Saha',        '/saha',        9)
+    ('header', 'Saha',        '/saha',        9),
+    ('header', 'ALLSKY',      '/allsky',      10)
   ) as v(menu, label, path, position)
  where not exists (
    select 1 from public.nav_links where menu = 'header'
@@ -90,7 +91,7 @@ do $$
 declare
   beklenen_header text[] := array[
     '/galeri','/etkinlikler','/topluluklar','/haberler','/yazilar','/ilanlar',
-    '/araclar','/forum','/saha'
+    '/araclar','/forum','/saha','/allsky'
   ];
   beklenen_footer text[] := array['/hakkinda','/sozluk','/sss','/kvkk','/kullanim-kosullari'];
   olculen text[];
@@ -119,5 +120,5 @@ begin
       beklenen_footer, olculen;
   end if;
 
-  raise notice '0062 ölçümü geçti: 9 üst menü + 5 footer bağlantısı kodla aynı.';
+  raise notice '0062 ölçümü geçti: 10 üst menü + 5 footer bağlantısı kodla aynı.';
 end $$;

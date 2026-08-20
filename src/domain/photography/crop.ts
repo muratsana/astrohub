@@ -42,14 +42,17 @@ export const FULL_FRAME: CropRect = { x: 0, y: 0, width: 1, height: 1 };
  * farklı: kare (mozaik parçaları), 3:2 (DSLR sensörü), 4:3 (çoğu CMOS
  * astro kamera) ve 16:9 (panoramik gece manzarası).
  */
-export const ASPECT_PRESETS: { id: string; label: string; ratio: number | null }[] =
-  [
-    { id: 'serbest', label: 'Serbest', ratio: null },
-    { id: 'kare', label: '1:1', ratio: 1 },
-    { id: 'dortuce', label: '4:3', ratio: 4 / 3 },
-    { id: 'uciki', label: '3:2', ratio: 3 / 2 },
-    { id: 'onaltidokuz', label: '16:9', ratio: 16 / 9 },
-  ];
+export const ASPECT_PRESETS: {
+  id: string;
+  label: string;
+  ratio: number | null;
+}[] = [
+  { id: 'serbest', label: 'Serbest', ratio: null },
+  { id: 'kare', label: '1:1', ratio: 1 },
+  { id: 'dortuce', label: '4:3', ratio: 4 / 3 },
+  { id: 'uciki', label: '3:2', ratio: 3 / 2 },
+  { id: 'onaltidokuz', label: '16:9', ratio: 16 / 9 },
+];
 
 function clamp01(value: number): number {
   return Math.min(1, Math.max(0, value));
@@ -138,7 +141,11 @@ export function croppedFieldDeg(
   source: { width: number; height: number },
   arcsecPerPixel: number | null | undefined
 ): { widthDeg: number; heightDeg: number } | null {
-  if (!arcsecPerPixel || !Number.isFinite(arcsecPerPixel) || arcsecPerPixel <= 0) {
+  if (
+    !arcsecPerPixel ||
+    !Number.isFinite(arcsecPerPixel) ||
+    arcsecPerPixel <= 0
+  ) {
     return null;
   }
   const px = croppedPixels(rect, source);
@@ -146,6 +153,148 @@ export function croppedFieldDeg(
     widthDeg: (px.width * arcsecPerPixel) / 3600,
     heightDeg: (px.height * arcsecPerPixel) / 3600,
   };
+}
+
+const SIYAH_KENAR_ESIGI = 8;
+const PARLAK_PIKSEL_ESIGI = 32;
+const EN_AZ_PARLAK_ORAN = 0.002;
+const ORNEK_SINIRI = 900;
+
+function luminance(r: number, g: number, b: number): number {
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+function aktifSatirMi(
+  data: Uint8ClampedArray,
+  width: number,
+  y: number
+): boolean {
+  const step = Math.max(1, Math.floor(width / ORNEK_SINIRI));
+  let toplam = 0;
+  let sayi = 0;
+  let parlak = 0;
+
+  for (let x = 0; x < width; x += step) {
+    const i = (y * width + x) * 4;
+    const l = luminance(data[i], data[i + 1], data[i + 2]);
+    toplam += l;
+    sayi += 1;
+    if (l >= PARLAK_PIKSEL_ESIGI) parlak += 1;
+  }
+
+  return toplam / sayi > SIYAH_KENAR_ESIGI || parlak / sayi > EN_AZ_PARLAK_ORAN;
+}
+
+function aktifSutunMu(
+  data: Uint8ClampedArray,
+  width: number,
+  height: number,
+  x: number
+): boolean {
+  const step = Math.max(1, Math.floor(height / ORNEK_SINIRI));
+  let toplam = 0;
+  let sayi = 0;
+  let parlak = 0;
+
+  for (let y = 0; y < height; y += step) {
+    const i = (y * width + x) * 4;
+    const l = luminance(data[i], data[i + 1], data[i + 2]);
+    toplam += l;
+    sayi += 1;
+    if (l >= PARLAK_PIKSEL_ESIGI) parlak += 1;
+  }
+
+  return toplam / sayi > SIYAH_KENAR_ESIGI || parlak / sayi > EN_AZ_PARLAK_ORAN;
+}
+
+/**
+ * Siyah kenarları otomatik bulur.
+ *
+ * Astrofotoğrafta fon zaten koyu olduğu için "ilk koyu pikseli kırp" gibi
+ * agresif bir kural kullanmıyoruz. Sadece tamamen siyaha yakın, satır/sütun
+ * ortalaması ve parlak piksel oranı birlikte düşük kalan sürekli kenar
+ * bantları atılıyor. Böylece gerçek karanlık gökyüzü korunurken işleme
+ * sonrası oluşan letterbox/pillarbox boşlukları temizleniyor.
+ */
+export function detectBlackBorderCropFromPixels(
+  data: Uint8ClampedArray,
+  width: number,
+  height: number
+): CropRect {
+  if (width <= 1 || height <= 1 || data.length < width * height * 4) {
+    return FULL_FRAME;
+  }
+
+  let left = 0;
+  while (left < width && !aktifSutunMu(data, width, height, left)) left += 1;
+
+  let right = width - 1;
+  while (right > left && !aktifSutunMu(data, width, height, right)) right -= 1;
+
+  let top = 0;
+  while (top < height && !aktifSatirMi(data, width, top)) top += 1;
+
+  let bottom = height - 1;
+  while (bottom > top && !aktifSatirMi(data, width, bottom)) bottom -= 1;
+
+  if (left >= right || top >= bottom) return FULL_FRAME;
+
+  const guvenlikPayi = 1;
+  left = Math.max(0, left - guvenlikPayi);
+  top = Math.max(0, top - guvenlikPayi);
+  right = Math.min(width - 1, right + guvenlikPayi);
+  bottom = Math.min(height - 1, bottom + guvenlikPayi);
+
+  const trimmedX = left + (width - 1 - right);
+  const trimmedY = top + (height - 1 - bottom);
+  const anlamliTrim = Math.max(2, Math.round(Math.min(width, height) * 0.003));
+  if (trimmedX < anlamliTrim && trimmedY < anlamliTrim) return FULL_FRAME;
+
+  const cropWidth = right - left + 1;
+  const cropHeight = bottom - top + 1;
+  const retainedArea = (cropWidth * cropHeight) / (width * height);
+  if (retainedArea < 0.35) return FULL_FRAME;
+
+  return clampRect({
+    x: left / width,
+    y: top / height,
+    width: cropWidth / width,
+    height: cropHeight / height,
+  });
+}
+
+/**
+ * Yüklenen görseli tarayıcıda örnekleyip siyah kenar kırpmasını hesaplar.
+ * Canvas yoksa tam kadraj döner; otomatik kırpma yüklemeyi bloke etmez.
+ */
+export async function detectBlackBorderCrop(file: File): Promise<CropRect> {
+  if (
+    typeof createImageBitmap !== 'function' ||
+    typeof document === 'undefined'
+  ) {
+    return FULL_FRAME;
+  }
+
+  const bitmap = await createImageBitmap(file);
+  try {
+    const canvas = document.createElement('canvas');
+    const scale = Math.min(1, 1600 / Math.max(bitmap.width, bitmap.height));
+    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    if (!ctx) return FULL_FRAME;
+
+    ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    const image = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    return detectBlackBorderCropFromPixels(
+      image.data,
+      image.width,
+      image.height
+    );
+  } finally {
+    bitmap.close?.();
+  }
 }
 
 /** Kırpma gerçekten bir şey değiştiriyor mu? */

@@ -49,6 +49,7 @@ export const staticEntries: SitemapEntry[] = [
   { path: '/araclar/gokyuzu-katalogu', priority: 0.8, changefreq: 'weekly' },
   { path: '/etkinlikler', priority: 0.9, changefreq: 'daily' },
   { path: '/saha', priority: 0.8, changefreq: 'weekly' },
+  { path: '/allsky', priority: 0.7, changefreq: 'daily' },
   { path: '/haberler', priority: 0.9, changefreq: 'daily' },
   { path: '/araclar/isik-kirliligi', priority: 0.6, changefreq: 'monthly' },
   { path: '/bu-gece', priority: 0.6, changefreq: 'daily' },

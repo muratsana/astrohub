@@ -69,6 +69,17 @@ describe('gidiş-dönüş bütünlüğü', () => {
     ];
     expect(roundTrip(blocks)).toEqual(blocks);
   });
+
+  it('ham HTML blok kaydetmede korunuyor', () => {
+    const blocks: ContentBlock[] = [
+      {
+        type: 'html',
+        html: '<div class="ah"><figure data-ah-fig="kare-sayisi"></figure></div>',
+        scriptSrc: '/astrohub/gurultu-gain-poz.js',
+      },
+    ];
+    expect(roundTrip(blocks)).toEqual(blocks);
+  });
 });
 
 describe('callout ayrıştırma', () => {

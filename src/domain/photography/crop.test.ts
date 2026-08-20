@@ -4,6 +4,7 @@ import {
   clampRect,
   croppedFieldDeg,
   croppedPixels,
+  detectBlackBorderCropFromPixels,
   isFullFrame,
   FULL_FRAME,
 } from './crop';
@@ -122,6 +123,43 @@ describe('croppedFieldDeg', () => {
     expect(croppedFieldDeg(FULL_FRAME, kaynak, null)).toBeNull();
     expect(croppedFieldDeg(FULL_FRAME, kaynak, 0)).toBeNull();
     expect(croppedFieldDeg(FULL_FRAME, kaynak, Number.NaN)).toBeNull();
+  });
+});
+
+describe('detectBlackBorderCropFromPixels', () => {
+  function image(
+    width: number,
+    height: number,
+    fill: (x: number, y: number) => number
+  ) {
+    const data = new Uint8ClampedArray(width * height * 4);
+    for (let y = 0; y < height; y += 1) {
+      for (let x = 0; x < width; x += 1) {
+        const i = (y * width + x) * 4;
+        const v = fill(x, y);
+        data[i] = v;
+        data[i + 1] = v;
+        data[i + 2] = v;
+        data[i + 3] = 255;
+      }
+    }
+    return data;
+  }
+
+  it('siyah kenar bantlarını otomatik kırpıyor', () => {
+    const data = image(100, 60, (x, y) =>
+      x < 10 || x >= 90 || y < 5 || y >= 55 ? 0 : 24
+    );
+    const r = detectBlackBorderCropFromPixels(data, 100, 60);
+    expect(r.x).toBeCloseTo(0.09, 2);
+    expect(r.y).toBeCloseTo(0.07, 2);
+    expect(r.width).toBeCloseTo(0.82, 2);
+    expect(r.height).toBeCloseTo(0.87, 2);
+  });
+
+  it('koyu ama gerçek gökyüzünü siyah boşluk sanmıyor', () => {
+    const data = image(100, 60, () => 18);
+    expect(detectBlackBorderCropFromPixels(data, 100, 60)).toEqual(FULL_FRAME);
   });
 });
 

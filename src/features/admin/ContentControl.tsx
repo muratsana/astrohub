@@ -34,6 +34,7 @@ import { BlockRenderer } from '@/components/content/BlockRenderer';
 import {
   blocksToText,
   paragraphsToBlocks,
+  type ContentBlock,
 } from '@/domain/content/blocks';
 import { importContentFile } from './contentImport';
 import { RichContentEditor } from './RichContentEditor';
@@ -172,13 +173,35 @@ function seedEntries(kind: EntryKind): ContentEntry[] {
   return [];
 }
 
+function hydrateSeedHtmlEntry(
+  kind: EntryKind,
+  entry: ContentEntry
+): ContentEntry {
+  if (
+    kind !== 'yazi' ||
+    entry.bodyBlocks.some((block) => block.type === 'html')
+  ) {
+    return entry;
+  }
+  const seed = articles.find((item) => item.slug === entry.slug);
+  if (!seed?.bodyBlocks?.some((block) => block.type === 'html')) return entry;
+  return {
+    ...entry,
+    body: seed.body,
+    bodyBlocks: seed.bodyBlocks,
+  };
+}
+
 function mergeAdminEntries(
   kind: EntryKind,
   dbEntries: ContentEntry[]
 ): ContentEntry[] {
-  const dbSlugs = new Set(dbEntries.map((entry) => entry.slug));
+  const hydratedDbEntries = dbEntries.map((entry) =>
+    hydrateSeedHtmlEntry(kind, entry)
+  );
+  const dbSlugs = new Set(hydratedDbEntries.map((entry) => entry.slug));
   return [
-    ...dbEntries,
+    ...hydratedDbEntries,
     ...seedEntries(kind).filter((entry) => !dbSlugs.has(entry.slug)),
   ].sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
 }
@@ -344,9 +367,11 @@ function KindEditor({
 
   function extractDraggedUrl(event: DragEvent): string | null {
     const uri = event.dataTransfer.getData('text/uri-list').trim();
-    if (uri) return uri.split('\n').find((line) => !line.startsWith('#')) ?? uri;
+    if (uri)
+      return uri.split('\n').find((line) => !line.startsWith('#')) ?? uri;
     const plain = event.dataTransfer.getData('text/plain').trim();
-    if (plain.startsWith('http://') || plain.startsWith('https://')) return plain;
+    if (plain.startsWith('http://') || plain.startsWith('https://'))
+      return plain;
     const html = event.dataTransfer.getData('text/html');
     const src = html.match(/<img[^>]+src=["']([^"']+)["']/i)?.[1];
     return src ?? null;
@@ -360,7 +385,9 @@ function KindEditor({
       return;
     }
     setDraft((d) => (d ? { ...d, imageUrl: src } : d));
-    setMessage('Kapak görseli güncellendi. Kredi ve lisans alanlarını kontrol edin.');
+    setMessage(
+      'Kapak görseli güncellendi. Kredi ve lisans alanlarını kontrol edin.'
+    );
   }
 
   const problem = draft ? validateEntry(draft) : null;
@@ -429,26 +456,26 @@ function KindEditor({
                     {/* İncelemedeki katkının iki cevabı var. */}
                     {isSeedEntry(entry) ? null : entry.status ===
                       'incelemede' ? (
-                        <>
-                          <button
-                            type="button"
-                            disabled={!canWrite || busy}
-                            onClick={() =>
-                              void durumUygula(() => approveEntry(entry.id))
-                            }
-                            className="text-meta text-cold hover:text-primary disabled:opacity-40"
-                          >
-                            Onayla ve yayınla
-                          </button>
-                          <button
-                            type="button"
-                            disabled={!canWrite || busy}
-                            onClick={() =>
-                              setReddedilen(
-                                reddedilen === entry.id ? null : entry.id
-                              )
-                            }
-                            className="text-meta text-danger hover:underline disabled:opacity-40"
+                      <>
+                        <button
+                          type="button"
+                          disabled={!canWrite || busy}
+                          onClick={() =>
+                            void durumUygula(() => approveEntry(entry.id))
+                          }
+                          className="text-meta text-cold hover:text-primary disabled:opacity-40"
+                        >
+                          Onayla ve yayınla
+                        </button>
+                        <button
+                          type="button"
+                          disabled={!canWrite || busy}
+                          onClick={() =>
+                            setReddedilen(
+                              reddedilen === entry.id ? null : entry.id
+                            )
+                          }
+                          className="text-meta text-danger hover:underline disabled:opacity-40"
                         >
                           Reddet
                         </button>
@@ -560,6 +587,37 @@ function KindEditor({
           <p className="mt-2 text-meta text-muted-foreground">{message}</p>
         )}
       </div>
+    );
+  }
+
+  const htmlBlockIndex = draft.bodyBlocks.findIndex(
+    (block) => block.type === 'html'
+  );
+  const htmlBlock =
+    htmlBlockIndex >= 0
+      ? (draft.bodyBlocks[htmlBlockIndex] as Extract<
+          ContentBlock,
+          { type: 'html' }
+        >)
+      : null;
+
+  function updateHtmlBlock(
+    patch: Partial<Extract<ContentBlock, { type: 'html' }>>
+  ) {
+    if (!htmlBlock) return;
+    setDraft((current) =>
+      current
+        ? (() => {
+            const blocks = current.bodyBlocks.map((block, index) =>
+              index === htmlBlockIndex ? { ...htmlBlock, ...patch } : block
+            );
+            return {
+              ...current,
+              bodyBlocks: blocks,
+              bodyText: blocksToText(blocks),
+            };
+          })()
+        : current
     );
   }
 
@@ -697,7 +755,9 @@ function KindEditor({
                 type="button"
                 size="sm"
                 variant="danger"
-                disabled={!draft.imageUrl && !draft.imageCredit && !draft.imageLicence}
+                disabled={
+                  !draft.imageUrl && !draft.imageCredit && !draft.imageLicence
+                }
                 onClick={() =>
                   setDraft((d) =>
                     d
@@ -743,9 +803,7 @@ function KindEditor({
                 value={draft.imageUrl}
                 placeholder="https://"
                 onChange={(e) =>
-                  setDraft((d) =>
-                    d ? { ...d, imageUrl: e.target.value } : d
-                  )
+                  setDraft((d) => (d ? { ...d, imageUrl: e.target.value } : d))
                 }
               />
             </Field>
@@ -787,9 +845,7 @@ function KindEditor({
               type="date"
               value={draft.publishedAt}
               onChange={(e) =>
-                setDraft((d) =>
-                  d ? { ...d, publishedAt: e.target.value } : d
-                )
+                setDraft((d) => (d ? { ...d, publishedAt: e.target.value } : d))
               }
             />
           </Field>
@@ -900,21 +956,57 @@ function KindEditor({
                 />
               </label>
             </div>
-            <RichContentEditor
-              blocks={draft.bodyBlocks}
-              placeholder="İçeriği buraya yazın veya yeni içerikte HTML / Word / PDF içe aktarın."
-              onChange={(blocks) =>
-                setDraft((current) =>
-                  current
-                    ? {
-                        ...current,
-                        bodyBlocks: blocks,
-                        bodyText: blocksToText(blocks),
+            {htmlBlock ? (
+              <div className="rounded-card border border-border bg-surface-2">
+                <div className="border-b border-border px-3 py-2">
+                  <p className="label text-foreground">HTML kaynak</p>
+                  <p className="mt-1 text-meta leading-relaxed text-faint">
+                    Paket yazıları burada ham HTML olarak tutulur. Şekil ve araç
+                    yer tutucuları korunur; etkileşim betiği yalnızca site
+                    içindeki /astrohub/*.js dosyasından çalışır.
+                  </p>
+                </div>
+                <div className="grid gap-2.5 p-3">
+                  <textarea
+                    value={htmlBlock.html}
+                    rows={24}
+                    spellCheck={false}
+                    onChange={(event) =>
+                      updateHtmlBlock({ html: event.target.value })
+                    }
+                    className="min-h-[65dvh] w-full resize-y rounded-card border border-border bg-background px-3 py-2 font-mono text-[12px] leading-relaxed text-foreground outline-none focus:border-primary"
+                  />
+                  <Field label="Etkileşim betiği" htmlFor="c-html-script">
+                    <Input
+                      id="c-html-script"
+                      value={htmlBlock.scriptSrc ?? ''}
+                      placeholder="/astrohub/gurultu-gain-poz.js"
+                      onChange={(event) =>
+                        updateHtmlBlock({
+                          scriptSrc: event.target.value.trim() || undefined,
+                        })
                       }
-                    : current
-                )
-              }
-            />
+                    />
+                  </Field>
+                </div>
+              </div>
+            ) : (
+              <RichContentEditor
+                blocks={draft.bodyBlocks}
+                placeholder="İçeriği buraya yazın veya yeni içerikte HTML / Word / PDF içe aktarın."
+                onChange={(blocks) =>
+                  setDraft((current) =>
+                    current
+                      ? {
+                          ...current,
+                          bodyBlocks: blocks,
+                          bodyText: blocksToText(blocks),
+                        }
+                      : current
+                  )
+                }
+              />
+            )}
             {importWarnings.length > 0 && (
               <ul className="mt-2 rounded-card border border-warning/40 bg-warning/5 px-3 py-2 text-meta leading-relaxed text-warning">
                 {importWarnings.map((warning, index) => (
@@ -923,7 +1015,6 @@ function KindEditor({
               </ul>
             )}
           </div>
-
         </div>
 
         {problem && (
@@ -969,7 +1060,10 @@ function KindEditor({
       </div>
 
       {previewOpen && (
-        <ContentPreviewModal draft={draft} onClose={() => setPreviewOpen(false)} />
+        <ContentPreviewModal
+          draft={draft}
+          onClose={() => setPreviewOpen(false)}
+        />
       )}
     </div>
   );

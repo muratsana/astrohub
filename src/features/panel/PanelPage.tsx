@@ -306,7 +306,7 @@ export function PanelPage() {
     { label: 'Kayıtlı Noktalar', to: '/saha' },
     { label: 'İlanlarım', to: '/panel/ilanlar' },
     { label: 'Gönderilerim', to: '/panel/gonderilerim' },
-    ...(jury.active || section === 'juri'
+    ...(permissions.isJury || jury.active || section === 'juri'
       ? [
           {
             label: 'Jüri Oylaması',

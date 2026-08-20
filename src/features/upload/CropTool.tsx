@@ -50,22 +50,30 @@ export function CropTool({
   arcsecPerPixel,
   value,
   onChange,
+  autoCrop,
+  autoCropState = 'idle',
 }: {
   file: File;
   /** Sihirbazın hesapladığı piksel ölçeği; yoksa alan satırı çizilmiyor. */
   arcsecPerPixel?: number | null;
   value: CropRect;
   onChange: (rect: CropRect) => void;
+  autoCrop?: CropRect | null;
+  autoCropState?: 'idle' | 'detecting' | 'ready' | 'failed';
 }) {
   const [url, setUrl] = useState<string | null>(null);
-  const [source, setSource] = useState<{ width: number; height: number } | null>(
-    null
-  );
-  const [preset, setPreset] = useState<string>('serbest');
+  const [source, setSource] = useState<{
+    width: number;
+    height: number;
+  } | null>(null);
+  const [preset, setPreset] = useState<string>('auto');
   const frameRef = useRef<HTMLDivElement>(null);
-  const dragRef = useRef<{ handle: Handle; startX: number; startY: number; rect: CropRect } | null>(
-    null
-  );
+  const dragRef = useRef<{
+    handle: Handle;
+    startX: number;
+    startY: number;
+    rect: CropRect;
+  } | null>(null);
 
   /* Nesne adresi bileşen ömrü boyunca yaşıyor ve sökülürken geri
      veriliyor; verilmezse her dosya seçiminde bellek sızar. */
@@ -96,6 +104,10 @@ export function CropTool({
     // eklenirse her sürükleme adımında yeniden oturtma tetiklenir.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ratio, source]);
+
+  useEffect(() => {
+    if (autoCrop) setPreset('auto');
+  }, [autoCrop]);
 
   const onPointerDown = (handle: Handle) => (e: ReactPointerEvent) => {
     e.preventDefault();
@@ -147,14 +159,30 @@ export function CropTool({
   };
 
   const px = source ? croppedPixels(value, source) : null;
-  const alan = source
-    ? croppedFieldDeg(value, source, arcsecPerPixel)
-    : null;
+  const alan = source ? croppedFieldDeg(value, source, arcsecPerPixel) : null;
 
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-1.5">
         <span className="label mr-1">En-boy</span>
+        <button
+          type="button"
+          aria-pressed={preset === 'auto'}
+          onClick={() => {
+            setPreset('auto');
+            onChange(autoCrop ?? FULL_FRAME);
+          }}
+          disabled={autoCropState === 'detecting'}
+          className={cn(
+            'h-8 rounded-card border px-2.5 text-meta font-medium transition-colors',
+            preset === 'auto'
+              ? 'border-primary bg-primary/10 text-primary'
+              : 'border-border text-muted-foreground hover:border-border-strong hover:text-foreground',
+            autoCropState === 'detecting' && 'opacity-60'
+          )}
+        >
+          {autoCropState === 'detecting' ? 'Algılanıyor' : 'Otomatik'}
+        </button>
         {ASPECT_PRESETS.map((p) => (
           <button
             key={p.id}
@@ -298,13 +326,6 @@ export function CropTool({
           </span>
         )}
       </div>
-
-      {!alan && (
-        <p className="text-meta text-faint">
-          Alan ölçüsü için ekipman adımında optik ve kamera seçilmeli —
-          piksel ölçeği oradan hesaplanıyor.
-        </p>
-      )}
     </div>
   );
 }

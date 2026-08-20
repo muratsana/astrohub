@@ -79,47 +79,52 @@ export function ArticleDetailPage() {
 
           <section
             aria-labelledby="yazi-kunye"
-            className="mt-6 rounded-card border border-border bg-surface-2"
+            className="mt-6 border-y border-border py-3"
           >
-            <div className="flex flex-col gap-3 border-b border-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-              <h2 id="yazi-kunye" className="label text-foreground">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+              <h2
+                id="yazi-kunye"
+                className="label shrink-0 text-foreground lg:w-20"
+              >
                 Künye
               </h2>
-              <AdminEditLink to={entryEditPath('yazi', article.slug)} />
+              <dl className="flex min-w-0 flex-1 flex-wrap items-center gap-x-5 gap-y-2">
+                <MetaItem label="Kategori">
+                  <Badge tone="cold">
+                    {articleCategoryLabels[article.category]}
+                  </Badge>
+                </MetaItem>
+                <MetaItem label="Seviye">
+                  <Badge
+                    tone={
+                      article.level === 'Başlangıç'
+                        ? 'success'
+                        : article.level === 'Orta'
+                          ? 'primary'
+                          : 'danger'
+                    }
+                  >
+                    {article.level}
+                  </Badge>
+                </MetaItem>
+                <MetaItem label="Okuma">
+                  <span className="tabular">{article.duration}</span>
+                </MetaItem>
+                <MetaItem label="Yazar">{article.author}</MetaItem>
+                <MetaItem label="Yayın">
+                  <span className="tabular">
+                    {new Date(article.publishedAt).toLocaleDateString('tr-TR', {
+                      day: '2-digit',
+                      month: 'long',
+                      year: 'numeric',
+                    })}
+                  </span>
+                </MetaItem>
+              </dl>
+              <div className="shrink-0">
+                <AdminEditLink to={entryEditPath('yazi', article.slug)} />
+              </div>
             </div>
-            <dl className="grid gap-px bg-border sm:grid-cols-2 lg:grid-cols-5">
-              <MetaItem label="Kategori">
-                <Badge tone="cold">
-                  {articleCategoryLabels[article.category]}
-                </Badge>
-              </MetaItem>
-              <MetaItem label="Seviye">
-                <Badge
-                  tone={
-                    article.level === 'Başlangıç'
-                      ? 'success'
-                      : article.level === 'Orta'
-                        ? 'primary'
-                        : 'danger'
-                  }
-                >
-                  {article.level}
-                </Badge>
-              </MetaItem>
-              <MetaItem label="Okuma">
-                <span className="tabular">{article.duration}</span>
-              </MetaItem>
-              <MetaItem label="Yazar">{article.author}</MetaItem>
-              <MetaItem label="Yayın">
-                <span className="tabular">
-                  {new Date(article.publishedAt).toLocaleDateString('tr-TR', {
-                    day: '2-digit',
-                    month: 'long',
-                    year: 'numeric',
-                  })}
-                </span>
-              </MetaItem>
-            </dl>
           </section>
 
           <BlockRenderer
@@ -172,9 +177,9 @@ export function ArticleDetailPage() {
 
 function MetaItem({ children, label }: { children: ReactNode; label: string }) {
   return (
-    <div className="bg-surface-2 px-4 py-3">
+    <div className="flex items-center gap-1.5 text-caption">
       <dt className="text-meta text-faint">{label}</dt>
-      <dd className="mt-1 text-caption text-foreground">{children}</dd>
+      <dd className="text-foreground">{children}</dd>
     </div>
   );
 }

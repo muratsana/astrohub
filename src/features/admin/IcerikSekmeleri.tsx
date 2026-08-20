@@ -5,7 +5,6 @@ import { EventControl } from './EventControl';
 import { RecordsControl } from './RecordsControl';
 import { ClubControl } from './ClubControl';
 import { CommentsControl } from './CommentsControl';
-import { PhotoWeekAdminControl } from './PhotoWeekAdminControl';
 import type { EntryKind } from '@/services/content/entries';
 import type { RecordKind } from './records';
 import { cn } from '@/lib/cn';
@@ -47,7 +46,6 @@ type Sekme =
   | { id: RecordKind; tur: 'record'; etiket: string }
   | { id: 'topluluk'; tur: 'club'; etiket: string }
   | { id: 'yorum'; tur: 'comment'; etiket: string }
-  | { id: 'hafta'; tur: 'week'; etiket: string }
   /* Etkinlik `record` değil: moderasyon değil TAM DÜZENLEME yüzeyi
      alıyor. Ayrıntı `EventControl` başlığında. */
   | { id: 'etkinlik'; tur: 'event'; etiket: string };
@@ -69,7 +67,6 @@ const SEKMELER: Sekme[] = [
   { id: 'topluluk', tur: 'club', etiket: 'Topluluklar' },
   { id: 'sozluk', tur: 'entry', etiket: 'Sözlük' },
   { id: 'sss', tur: 'entry', etiket: 'SSS' },
-  { id: 'hafta', tur: 'week', etiket: 'Haftanın fotoğrafı' },
   { id: 'yorum', tur: 'comment', etiket: 'Yorumlar' },
 ];
 
@@ -157,8 +154,6 @@ export function IcerikSekmeleri({
       )}
 
       {aktif.tur === 'club' && <ClubControl canWrite={canWrite} />}
-
-      {aktif.tur === 'week' && <PhotoWeekAdminControl canWrite={canWrite} />}
 
       {aktif.tur === 'comment' && (
         <CommentsControl kinds={['photoComment', 'siteReview']} />

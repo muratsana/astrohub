@@ -14,6 +14,13 @@ export interface JuryMemberAdmin {
   termEnd: string | null;
 }
 
+export interface PhotoWeekResult {
+  photoId: string;
+  totalScore: number;
+  voteCount: number;
+  averageScore: number;
+}
+
 export async function fetchJuryMembers(): Promise<JuryMemberAdmin[]> {
   const supabase = await client();
   const { data, error } = await supabase
@@ -90,6 +97,24 @@ export async function closePhotoWeekRound(roundId: string) {
   const supabase = await client();
   const { error } = await supabase.rpc('close_photo_of_week', { target_round: roundId });
   if (error) throw new Error(error.message);
+}
+
+export async function fetchPhotoWeekResults(roundId: string): Promise<PhotoWeekResult[]> {
+  const supabase = await client();
+  const { data, error } = await supabase.rpc('photo_of_week_results', { target_round: roundId });
+  if (error) throw new Error(error.message);
+  return ((data ?? []) as { photo_id: string; total_score: number; vote_count: number }[])
+    .map((row) => {
+      const voteCount = Number(row.vote_count);
+      const totalScore = Number(row.total_score);
+      return {
+        photoId: row.photo_id,
+        totalScore,
+        voteCount,
+        averageScore: voteCount > 0 ? totalScore / voteCount : 0,
+      };
+    })
+    .sort((a, b) => b.averageScore - a.averageScore || b.voteCount - a.voteCount || a.photoId.localeCompare(b.photoId));
 }
 
 export async function setEditorsPick(photoId: string, value: boolean) {

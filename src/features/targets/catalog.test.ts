@@ -98,6 +98,12 @@ describe('searchTargets', () => {
     expect(hit.slug).toBe('ngc2237-rozet');
   });
 
+  it('NGC 6888 için global adı gösterir, Türkçe adı alias olarak bulur', () => {
+    const target = searchTargets('NGC 6888')[0];
+    expect(target.name).toBe('Crescent Nebula');
+    expect(searchTargets('Hilal Bulutsusu')[0].slug).toBe(target.slug);
+  });
+
   it('boş sorguda liste döndürür, hata vermez', () => {
     expect(searchTargets('').length).toBeGreaterThan(0);
   });

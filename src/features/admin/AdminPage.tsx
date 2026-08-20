@@ -22,17 +22,21 @@ import { ModerationQueueControl } from './ModerationQueueControl';
 import { CatalogControl } from './CatalogControl';
 import { EquipmentDataControl } from './EquipmentDataControl';
 import { SpecImportControl } from './SpecImportControl';
+import { AllskyControl } from './AllskyControl';
+import { PhotoWeekAdminControl } from './PhotoWeekAdminControl';
 import { useRoles } from './useRoles';
 import type { EntryKind } from '@/services/content/entries';
 import { fetchDashboard, type DashboardStats } from './records';
 import type { RecordKind } from './records';
 import { formatAdminCount } from './dashboard';
+import { LivePresencePanel } from './livePresence';
 import {
   AlertIcon,
   BellIcon,
   BookIcon,
   CalendarIcon,
   ChatIcon,
+  EyeIcon,
   GridIcon,
   HomeIcon,
   ImageIcon,
@@ -55,6 +59,8 @@ type AdminSectionId =
   | 'aktivite'
   | 'link'
   | 'eposta'
+  | 'allsky'
+  | 'hafta'
   | 'duyuru'
   | 'sayfa'
   | 'ayar';
@@ -95,6 +101,12 @@ const navGroups: readonly {
          ekrana hiçbir yoldan erişilemiyordu. */
       { id: 'forum', label: 'Forum', path: '/admin/forum', icon: ChatIcon },
       { id: 'destek', label: 'Destek', path: '/admin/destek', icon: BellIcon },
+      {
+        id: 'hafta',
+        label: 'Haftanın Fotoğrafı',
+        path: '/admin/haftanin-fotografi',
+        icon: SparkleIcon,
+      },
     ],
   },
   {
@@ -119,6 +131,12 @@ const navGroups: readonly {
         label: 'Duyurular',
         path: '/admin/duyurular',
         icon: RadioIcon,
+      },
+      {
+        id: 'allsky',
+        label: 'Allsky',
+        path: '/admin/allsky',
+        icon: EyeIcon,
       },
       {
         id: 'sayfa',
@@ -147,6 +165,8 @@ const routeAliases: Record<string, AdminSectionId> = {
   '/admin/broadcast': 'duyuru',
   '/admin/radio': 'duyuru',
   '/admin/tv': 'duyuru',
+  '/admin/all-sky': 'allsky',
+  '/admin/weekly-photo': 'hafta',
   '/admin/notifications': 'eposta',
   '/admin/site-settings': 'ayar',
   '/admin/catalog': 'ayar',
@@ -208,14 +228,6 @@ function dashboardStats(data: DashboardStats | null): DashboardCard[] {
       tone: 'cold',
       icon: UsersIcon,
       href: '/admin/kullanicilar',
-    },
-    {
-      label: 'İçerik',
-      value: formatAdminCount(data?.icerikYayinda),
-      hint: 'Yayındaki kayıt',
-      tone: 'primary',
-      icon: BookIcon,
-      href: '/admin/icerik',
     },
   ];
 }
@@ -310,35 +322,6 @@ function queueRows(data: DashboardStats | null): DashboardRow[] {
       text: 'Müdahale edilmiş hesaplar',
       meta: formatAdminCount(data?.kullaniciAskida),
       href: '/admin/kullanicilar',
-    },
-  ];
-}
-
-function healthRows(data: DashboardStats | null): DashboardRow[] {
-  return [
-    {
-      title: 'Toplam kullanıcı',
-      text: 'Kullanıcı yönetimi',
-      meta: formatAdminCount(data?.kullaniciToplam),
-      href: '/admin/kullanicilar',
-    },
-    {
-      title: 'Yeni kullanıcı (7g)',
-      text: 'Kayıt akışı',
-      meta: formatAdminCount(data?.kullaniciYeni7g),
-      href: '/admin/kullanicilar',
-    },
-    {
-      title: 'Yayındaki içerik',
-      text: 'Canlı içerik',
-      meta: formatAdminCount(data?.icerikYayinda),
-      href: '/admin/icerik',
-    },
-    {
-      title: 'Bugünkü audit',
-      text: 'Sistem aktivitesi',
-      meta: formatAdminCount(data?.auditBugun),
-      href: '/admin/aktivite',
     },
   ];
 }
@@ -550,6 +533,14 @@ function AdminSection({
     );
   }
 
+  if (active === 'allsky') {
+    return <AllskyControl canWrite={isAdmin} />;
+  }
+
+  if (active === 'hafta') {
+    return <PhotoWeekAdminControl canWrite={isAdmin} />;
+  }
+
   if (active === 'sayfa') {
     return (
       <div className="space-y-4">
@@ -628,7 +619,6 @@ function Dashboard() {
   const liveActivityRows = activityRows(data);
   const liveContentRows = contentRows(data);
   const liveQueueRows = queueRows(data);
-  const liveHealthRows = healthRows(data);
   const totalQueue =
     (data?.moderasyonBekleyen ?? 0) +
     (data?.fotografBekleyen ?? 0) +
@@ -644,9 +634,7 @@ function Dashboard() {
         <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div>
             <p className="label text-primary">Yönetim Paneli</p>
-            <h1 className="type-page-sm mt-1 text-foreground">
-              Genel Bakış
-            </h1>
+            <h1 className="type-page-sm mt-1 text-foreground">Genel Bakış</h1>
             <p className="mt-2 max-w-2xl text-body-sm leading-relaxed text-muted-foreground">
               Kritik kuyrukları, yayın durumunu ve son yönetim hareketlerini tek
               ekrandan takip edin.
@@ -794,57 +782,9 @@ function Dashboard() {
         </section>
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-3">
-        <section className="rounded-card border border-border bg-surface-1 xl:col-span-2">
-          <header className="border-b border-border px-4 py-3">
-            <h2 className="label text-foreground">Sistem Sağlığı</h2>
-          </header>
-          <div className="grid gap-px bg-border sm:grid-cols-2">
-            {liveHealthRows.map((row) => (
-              <Link
-                key={row.title}
-                to={row.href}
-                className="flex items-center justify-between gap-3 bg-surface-1 px-4 py-3 transition-colors hover:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-primary"
-              >
-                <span className="text-body-sm text-muted-foreground">
-                  {row.title}
-                </span>
-                <span className="tabular text-body-sm font-semibold text-foreground">
-                  {row.meta}
-                </span>
-              </Link>
-            ))}
-          </div>
-        </section>
-
-        <section className="rounded-card border border-border bg-surface-1">
-          <header className="border-b border-border px-4 py-3">
-            <h2 className="label text-foreground">Son Hareketler</h2>
-          </header>
-          <ol className="divide-y divide-border">
-            {data?.sonHareketler.length ? (
-              data.sonHareketler.map((item) => (
-                <li
-                  key={`${item.zaman}-${item.eylem}-${item.hedef ?? ''}`}
-                  className="flex gap-3 px-4 py-3"
-                >
-                  <span className="tabular text-meta text-primary">
-                    {formatAdminTime(item.zaman)}
-                  </span>
-                  <span className="text-meta leading-relaxed text-muted-foreground">
-                    {item.eylem}
-                    {item.hedef ? ` · ${item.hedef}` : ''}
-                    {item.kim ? ` · @${item.kim}` : ''}
-                  </span>
-                </li>
-              ))
-            ) : (
-              <li className="px-4 py-3 text-meta text-muted-foreground">
-                Son hareket kaydı yok.
-              </li>
-            )}
-          </ol>
-        </section>
+      <div className="grid gap-4 xl:grid-cols-[24rem_minmax(0,1fr)]">
+        <LivePresencePanel />
+        <RecentActivityPanel items={data?.sonHareketler ?? []} />
       </div>
     </>
   );
@@ -919,6 +859,67 @@ function DashboardRowLink({ row }: { row: DashboardRow }) {
   );
 }
 
+function RecentActivityPanel({
+  items,
+}: {
+  items: DashboardStats['sonHareketler'];
+}) {
+  return (
+    <section className="rounded-card border border-border bg-surface-1">
+      <header className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
+        <div>
+          <h2 className="label text-foreground">Son Hareketler</h2>
+          <p className="mt-1 text-meta text-faint">
+            Denetim günlüğünden tarih ve saatli son işlemler
+          </p>
+        </div>
+        <Badge tone="primary">{formatAdminCount(items.length)} kayıt</Badge>
+      </header>
+      <ol className="divide-y divide-border">
+        {items.length ? (
+          items.map((item) => {
+            const zaman = formatAdminDateTime(item.zaman);
+            return (
+              <li
+                key={`${item.zaman}-${item.eylem}-${item.hedef ?? ''}-${item.kim ?? ''}`}
+                className="grid gap-3 px-4 py-3 md:grid-cols-[9rem_minmax(0,1fr)_9rem]"
+              >
+                <time
+                  dateTime={item.zaman}
+                  className="tabular text-meta leading-relaxed text-primary"
+                >
+                  {zaman.date}
+                  <span className="block font-semibold text-foreground">
+                    {zaman.time}
+                  </span>
+                </time>
+                <div className="min-w-0">
+                  <p className="truncate text-body-sm font-semibold text-foreground">
+                    {item.eylem}
+                  </p>
+                  <p className="mt-1 text-meta text-muted-foreground">
+                    {item.hedef || 'hedef yok'}
+                  </p>
+                </div>
+                <div className="min-w-0 text-left md:text-right">
+                  <p className="truncate text-meta font-semibold text-cold">
+                    {item.kim ? `@${item.kim}` : 'sistem'}
+                  </p>
+                  <p className="mt-1 text-meta text-faint">audit log</p>
+                </div>
+              </li>
+            );
+          })
+        ) : (
+          <li className="px-4 py-3 text-meta text-muted-foreground">
+            Son hareket kaydı yok.
+          </li>
+        )}
+      </ol>
+    </section>
+  );
+}
+
 function useActiveSection(pathname: string): AdminSectionId {
   const normalized = pathname.replace(/\/+$/, '') || '/admin';
   const exact = sections.find((item) => item.path === normalized);
@@ -966,4 +967,21 @@ function formatAdminTime(value: string): string {
     hour: '2-digit',
     minute: '2-digit',
   });
+}
+
+function formatAdminDateTime(value: string): { date: string; time: string } {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return { date: value, time: '—' };
+  return {
+    date: date.toLocaleDateString('tr-TR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    }),
+    time: date.toLocaleTimeString('tr-TR', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    }),
+  };
 }

@@ -264,6 +264,7 @@ export function TonightPanel() {
               bestPlacesDate={tonight.nightDate}
               onUseBestPlace={handleUseBestPlace}
               bortle={location.bortle ?? null}
+              moon={tonight.moon}
               conditions={tonight.conditions}
               locationLabel={tonight.locationLabel}
               dateLabel={tonight.dateLabel}

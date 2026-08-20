@@ -133,6 +133,12 @@ function blockToHtml(block: ContentBlock): string {
     const action = block.action ?? 'Aracı aç';
     return `<aside data-tool data-href="${escapeAttr(block.href)}" data-action="${escapeAttr(action)}"><h3>${escapeHtml(block.title)}</h3><p>${inlineToHtml(block.text)}</p><p><a href="${escapeAttr(block.href)}">${escapeHtml(action)}</a></p></aside>`;
   }
+  if (block.type === 'html') {
+    const script = block.scriptSrc
+      ? ` data-script-src="${escapeAttr(block.scriptSrc)}"`
+      : '';
+    return `<section data-raw-html${script}><pre>${escapeHtml(block.html)}</pre></section>`;
+  }
   return `<p>${inlineToHtml(block.text)}</p>`;
 }
 
@@ -182,6 +188,19 @@ function elementToBlocks(element: Element): ContentBlock[] {
         text,
         href,
         ...(action ? { action } : {}),
+      },
+    ];
+  }
+
+  if (tag === 'section' && element.hasAttribute('data-raw-html')) {
+    const html = element.querySelector('pre')?.textContent?.trim() ?? '';
+    const scriptSrc = element.getAttribute('data-script-src')?.trim();
+    if (!html) return [];
+    return [
+      {
+        type: 'html',
+        html,
+        ...(scriptSrc ? { scriptSrc } : {}),
       },
     ];
   }

@@ -110,7 +110,7 @@ export interface UploadInput {
   opticId?: string | null;
   cameraId?: string | null;
   mountId?: string | null;
-  /** Katalogdaki hedefin veritabanı kimliği; yoksa yalnızca etiket saklanır. */
+  /** Katalogdaki hedefin veritabanı kimliği; yeni fotoğrafta zorunlu. */
   objectId?: string | null;
   /** Çekimde kullanılan kayıtlı setup — künye ayrıca saklanır. */
   setupId?: string | null;
@@ -176,6 +176,14 @@ function exifNumber(value: number | undefined, max: number): number | null {
   if (value === undefined || !Number.isFinite(value)) return null;
   if (value <= 0 || value > max) return null;
   return value;
+}
+
+function requireObjectId(objectId: string | null | undefined): string {
+  const clean = sanitizeText(objectId, { maxLength: 80 });
+  if (!clean) {
+    throw new Error('Fotoğraf eklemek için katalog kodu seçmelisiniz.');
+  }
+  return clean;
 }
 
 export interface UploadResult {
@@ -249,6 +257,7 @@ export async function uploadPhoto(
 ): Promise<UploadResult> {
   const verdict = checkUploadSize(input.file.size);
   if (verdict.kind === 'reject') throw new Error(verdict.reason);
+  const objectId = requireObjectId(input.objectId);
 
   onProgress?.('hazirlaniyor');
 
@@ -344,7 +353,7 @@ export async function uploadPhoto(
         }),
         photo_type: input.photoType,
         palette: input.palette,
-        object_id: input.objectId ?? null,
+        object_id: objectId,
         setup_id: input.setupId ?? null,
         target_label: input.targetLabel
           ? sanitizeText(input.targetLabel, { maxLength: 160 })

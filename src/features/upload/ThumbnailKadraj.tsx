@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import type { RefObject } from 'react';
 import { Button } from '@/components/ui/Button';
 import {
   EN_AZ_ZOOM,
@@ -123,36 +124,43 @@ export function ThumbnailKadraj({
   }
 
   return (
-    <div className="grid gap-3 sm:grid-cols-[auto_1fr]">
-      <div className="flex items-start gap-3">
-        <figure className="m-0">
-          <canvas
-            ref={buyukRef}
-            width={BUYUK}
-            height={BUYUK}
-            className="rounded-card border border-border bg-surface-2"
-            style={{ width: BUYUK / 2, height: BUYUK / 2 }}
-            aria-label="Kart önizlemesi"
-          />
-          <figcaption className="mt-1 text-meta text-faint">Kartta</figcaption>
-        </figure>
-        <figure className="m-0">
-          {/* Ana sayfada kareler küçük görünüyor; bu, o boyutta önizleme. */}
-          <canvas
-            ref={kartRef}
-            width={KART}
-            height={KART}
-            className="rounded-card border border-border bg-surface-2"
-            style={{ width: KART / 2, height: KART / 2 }}
-            aria-label="Ana sayfa önizlemesi"
-          />
-          <figcaption className="mt-1 text-meta text-faint">Ana sayfa</figcaption>
-        </figure>
+    <div className="grid gap-4 rounded-card border border-border/70 bg-surface-1/60 p-3 md:grid-cols-[9rem_minmax(0,1fr)]">
+      <div className="grid grid-cols-2 gap-2 md:grid-cols-1">
+        <PreviewCanvas
+          label="Kart"
+          canvasRef={buyukRef}
+          width={BUYUK}
+          height={BUYUK}
+          cssSize={112}
+        />
+        <PreviewCanvas
+          label="Ana sayfa"
+          canvasRef={kartRef}
+          width={KART}
+          height={KART}
+          cssSize={56}
+        />
       </div>
 
-      <div className="space-y-2">
+      <div className="min-w-0 space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-2">
+          <div>
+            <p className="label text-foreground">Önizleme kadrajı</p>
+            <p className="text-meta text-muted-foreground">
+              Kare kartlarda görünecek bölge
+            </p>
+          </div>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => onChange(VARSAYILAN_KADRAJ)}
+          >
+            Kadrajı sıfırla
+          </Button>
+        </div>
         <Slider
           label="Yakınlaştırma"
+          valueLabel={`${temiz.zoom.toFixed(2)}×`}
           min={EN_AZ_ZOOM}
           max={EN_COK_ZOOM}
           step={0.02}
@@ -161,6 +169,7 @@ export function ThumbnailKadraj({
         />
         <Slider
           label="Yatay"
+          valueLabel={`${Math.round(temiz.panX * 100)}`}
           min={-1}
           max={1}
           step={0.02}
@@ -169,26 +178,49 @@ export function ThumbnailKadraj({
         />
         <Slider
           label="Dikey"
+          valueLabel={`${Math.round(temiz.panY * 100)}`}
           min={-1}
           max={1}
           step={0.02}
           value={temiz.panY}
           onChange={(panY) => set({ panY })}
         />
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={() => onChange(VARSAYILAN_KADRAJ)}
-        >
-          Kadrajı sıfırla
-        </Button>
       </div>
     </div>
   );
 }
 
+const PreviewCanvas = ({
+  label,
+  canvasRef,
+  width,
+  height,
+  cssSize,
+}: {
+  label: string;
+  canvasRef: RefObject<HTMLCanvasElement | null>;
+  width: number;
+  height: number;
+  cssSize: number;
+}) => (
+  <figure className="m-0 rounded-card border border-border bg-surface-2 p-2">
+    <canvas
+      ref={canvasRef}
+      width={width}
+      height={height}
+      className="rounded-card border border-border bg-background"
+      style={{ width: cssSize, height: cssSize }}
+      aria-label={`${label} önizlemesi`}
+    />
+    <figcaption className="mt-1 text-meta font-medium text-muted-foreground">
+      {label}
+    </figcaption>
+  </figure>
+);
+
 function Slider({
   label,
+  valueLabel,
   min,
   max,
   step,
@@ -196,6 +228,7 @@ function Slider({
   onChange,
 }: {
   label: string;
+  valueLabel: string;
   min: number;
   max: number;
   step: number;
@@ -203,17 +236,21 @@ function Slider({
   onChange: (value: number) => void;
 }) {
   return (
-    <label className="flex items-center gap-3 text-meta text-muted-foreground">
-      <span className="w-28 shrink-0">{label}</span>
+    <label className="grid grid-cols-[7.5rem_minmax(0,1fr)_3.5rem] items-center gap-3 text-meta text-muted-foreground">
+      <span className="font-medium text-foreground">{label}</span>
       <input
         type="range"
+        aria-label={label}
         min={min}
         max={max}
         step={step}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="h-1.5 flex-1 accent-primary"
+        className="h-1.5 min-w-0 accent-primary"
       />
+      <span className="rounded-card border border-border bg-surface-2 px-2 py-1 text-right font-mono text-[11px] text-foreground">
+        {valueLabel}
+      </span>
     </label>
   );
 }

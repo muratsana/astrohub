@@ -130,6 +130,7 @@ export interface AdminUser {
   id: string;
   username: string;
   displayName: string | null;
+  avatarPath: string | null;
   city: string | null;
   createdAt: string;
   roles: AppRole[];
@@ -173,6 +174,7 @@ interface ProfileRow {
   id: string;
   username: string;
   display_name: string | null;
+  avatar_path: string | null;
   city: string | null;
   created_at: string;
   account_status: AccountStatus;
@@ -280,7 +282,7 @@ export async function fetchUsers(query: UserQuery = {}): Promise<UserPage> {
   let sorgu = supabase
     .from('profiles')
     .select(
-      'id, username, display_name, city, created_at, account_status, ' +
+      'id, username, display_name, avatar_path, city, created_at, account_status, ' +
         'suspended_until, status_reason, admin_note, last_seen_at, username_customized_at',
       { count: 'exact' }
     )
@@ -355,6 +357,7 @@ export async function fetchUsers(query: UserQuery = {}): Promise<UserPage> {
     id: p.id,
     username: p.username,
     displayName: p.display_name,
+    avatarPath: p.avatar_path,
     city: p.city,
     createdAt: p.created_at,
     roles: roleMap.get(p.id) ?? [],

@@ -203,6 +203,8 @@ const input = {
   title: 'Gece',
   photoType: 'deep-sky',
   palette: 'RGB',
+  objectId: 'object-1',
+  targetLabel: 'M 31 — Andromeda Galaxy',
   copyrightConfirmed: true,
 };
 
@@ -316,6 +318,14 @@ describe('uploadPhoto — yarım kalan yükleme', () => {
 });
 
 describe('uploadPhoto — biçim denetimi', () => {
+  it('katalog kaydı olmadan hiç satır açmaz', async () => {
+    await expect(uploadPhoto({ ...input, objectId: null })).rejects.toThrow(
+      /katalog kodu/
+    );
+    expect(state.insertedRows).toBe(0);
+    expect(state.removed).toEqual([]);
+  });
+
   /*
    * Denetim satır AÇILMADAN önce: eskiden bu dosya akışın ortasında,
    * küçültme aşamasında patlıyordu ve o noktada zaten bir taslak satır
