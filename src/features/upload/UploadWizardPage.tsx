@@ -64,6 +64,10 @@ import {
   wizardStateFromPhoto,
   type WizardState,
 } from './uploadWizardEditState';
+import {
+  applySoftwareSuggestion,
+  softwareAutocompleteSuggestions,
+} from './softwareSuggestions';
 
 /**
  * İşleme paleti seçenekleri — `ProcessingPalette` ile birebir.
@@ -1223,11 +1227,9 @@ export function UploadWizardPage() {
                 hint="Önizleme ve onay"
               />
               <Field label="Kullanılan yazılımlar" htmlFor="w-sw">
-                <Input
-                  id="w-sw"
-                  placeholder="ör. PixInsight, Photoshop"
+                <SoftwareAutocomplete
                   value={state.software}
-                  onChange={(e) => patch({ software: e.target.value })}
+                  onChange={(software) => patch({ software })}
                 />
               </Field>
               {/*
@@ -1442,6 +1444,107 @@ function StepTitle({ title, hint }: { title: string; hint?: string }) {
     <div>
       <h2 className="type-section font-semibold text-foreground">{title}</h2>
       {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
+    </div>
+  );
+}
+
+function SoftwareAutocomplete({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const suggestions = useMemo(
+    () => softwareAutocompleteSuggestions(value),
+    [value]
+  );
+
+  useEffect(() => {
+    setActiveIndex(0);
+  }, [value]);
+
+  function choose(suggestion: string) {
+    onChange(applySoftwareSuggestion(value, suggestion));
+    setOpen(false);
+  }
+
+  return (
+    <div className="relative">
+      <Input
+        id="w-sw"
+        placeholder="ör. PixInsight, Photoshop"
+        value={value}
+        autoComplete="off"
+        role="combobox"
+        aria-autocomplete="list"
+        aria-expanded={open && suggestions.length > 0}
+        aria-controls="software-suggestions"
+        aria-activedescendant={
+          open && suggestions[activeIndex]
+            ? `software-suggestion-${activeIndex}`
+            : undefined
+        }
+        onFocus={() => setOpen(true)}
+        onBlur={() => {
+          window.setTimeout(() => setOpen(false), 120);
+        }}
+        onChange={(e) => {
+          onChange(e.target.value);
+          setOpen(true);
+        }}
+        onKeyDown={(e) => {
+          if (!open || suggestions.length === 0) return;
+          if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            setActiveIndex((index) => (index + 1) % suggestions.length);
+          }
+          if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            setActiveIndex(
+              (index) => (index - 1 + suggestions.length) % suggestions.length
+            );
+          }
+          if (e.key === 'Enter' || e.key === 'Tab') {
+            e.preventDefault();
+            choose(suggestions[activeIndex]);
+          }
+          if (e.key === 'Escape') {
+            setOpen(false);
+          }
+        }}
+      />
+      {open && suggestions.length > 0 && (
+        <div
+          id="software-suggestions"
+          role="listbox"
+          className="absolute z-20 mt-1 max-h-56 w-full overflow-y-auto rounded-card border border-border bg-surface-2 p-1 shadow-xl"
+        >
+          {suggestions.map((suggestion, index) => (
+            <button
+              key={suggestion}
+              id={`software-suggestion-${index}`}
+              type="button"
+              role="option"
+              aria-selected={activeIndex === index}
+              className={cn(
+                'flex w-full items-center justify-between rounded px-3 py-2 text-left text-body-sm text-foreground transition-colors',
+                activeIndex === index
+                  ? 'bg-primary/15 text-primary'
+                  : 'hover:bg-surface-3'
+              )}
+              onMouseDown={(e) => e.preventDefault()}
+              onMouseEnter={() => setActiveIndex(index)}
+              onClick={() => choose(suggestion)}
+            >
+              <span>{suggestion}</span>
+              <span className="text-meta text-muted-foreground">ekle</span>
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
