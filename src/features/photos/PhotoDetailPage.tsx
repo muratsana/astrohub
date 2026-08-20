@@ -49,6 +49,7 @@ import { ReportButton } from '@/features/admin/ReportButton';
 import { exifHasValues, photoTypeLabels } from './types';
 import { familyOf, photoFamilies } from './families';
 import { photoTargetHeading } from './photoHeading';
+import { photoWeekLabelFromDateString } from './weeklyPick';
 import { formatExposure } from '@/domain/photography/exif';
 import type { AstroPhoto } from './types';
 import { cn } from '@/lib/cn';
@@ -115,6 +116,9 @@ function PhotoDetail({
   );
   const family = photoFamilies[familyOf(photo.type)];
   const targetHeading = photoTargetHeading(photo);
+  const uploadWeek = photoWeekLabelFromDateString(
+    photo.publishedAt ?? photo.capturedAt
+  );
   const targetSlug = targets.find(
     (target) =>
       target.catalog === photo.target.catalog ||
@@ -212,6 +216,15 @@ function PhotoDetail({
               >
                 {family.label}
               </Badge>
+              {uploadWeek && (
+                <span
+                  title={`Yükleme haftası${uploadWeek.yearLabel ? ` · ${uploadWeek.yearLabel}` : ''}`}
+                >
+                  <Badge tone="success" className="bg-surface-1/80">
+                    {uploadWeek.weekLabel}
+                  </Badge>
+                </span>
+              )}
             </div>
             {/* Fotoğraftan kadraja: "bunu ben de çekebilir miyim"
                 sorusunun cevabı bir tık uzakta olmalı. */}

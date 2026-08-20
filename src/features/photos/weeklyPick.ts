@@ -35,6 +35,20 @@ export function isoWeekLabelFromDate(date: Date): string {
   return `${value.getUTCFullYear()}-${String(week).padStart(2, '0')}`;
 }
 
+export function photoWeekLabelFromDateString(
+  value: string | null | undefined
+): {
+  label: string;
+  weekLabel: string;
+  yearLabel: string | null;
+} | null {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  const label = isoWeekLabelFromDate(date);
+  return { label, ...formatPhotoWeekLabel(label) };
+}
+
 function withWeekWin(photo: AstroPhoto, label: string): AstroPhoto {
   return (photo.photoOfWeekWins ?? []).includes(label)
     ? photo

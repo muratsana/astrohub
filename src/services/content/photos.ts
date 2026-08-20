@@ -298,6 +298,7 @@ export function mapPhotoRow(row: PhotoRow): AstroPhoto {
       watermarkRequired: row.watermark_required ?? true,
     },
     capturedAt,
+    publishedAt: row.published_at ?? undefined,
     location: {
       label: row.location_label ?? 'Belirtilmemiş',
       visibility: (VISIBILITIES.includes(

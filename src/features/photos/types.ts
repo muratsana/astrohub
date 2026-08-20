@@ -227,6 +227,15 @@ export interface AstroPhoto {
   thumbCrop?: { zoom: number; panX: number; panY: number };
   capturedAt: string; // ISO tarih — geriye dönük tek tarih (en erken oturum)
   /**
+   * Yayına alınma/yükleme zamanı.
+   *
+   * Çekim tarihi gökyüzü verisinin ne zaman toplandığını söyler; haftalık
+   * seçki ve "bu kayıt hangi haftaya ait" rozeti ise kaydın yayınlandığı
+   * hafta üzerinden okunur. Eski/tohum kayıtlarda boş olabilir; arayüz
+   * gerektiğinde `capturedAt`e düşer.
+   */
+  publishedAt?: string;
+  /**
    * Çekim oturumları (sezonlar). Bir fotoğraf birden çok gecede
    * toplanabilir; her oturum tek gece ya da aralık (C02–C06). Eski
    * kayıtlarda `captured_at`ten türetilen tek örtük oturum bulunur.
