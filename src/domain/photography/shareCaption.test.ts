@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  shareCaption,
-  shareHashtags,
-  type CaptionInput,
-} from './shareCaption';
+import { shareCaption, shareHashtags, type CaptionInput } from './shareCaption';
 
 function girdi(over: Partial<CaptionInput> = {}): CaptionInput {
   return {
@@ -20,6 +16,7 @@ function girdi(over: Partial<CaptionInput> = {}): CaptionInput {
     setup: { optic: 'RC8', camera: 'ASI2600MM', mount: 'EQ6-R' },
     location: { label: 'Saklıkent, Antalya', visibility: 'region' },
     username: 'muratsana',
+    url: 'https://astrohub.com.tr/fotograf/orion',
     ...over,
   };
 }
@@ -33,6 +30,7 @@ describe('shareCaption (D06, D07, D10, D14)', () => {
     expect(metin).toContain('12–18 Oca 2026, 3 Şub 2026'); // D07 çok sezon
     expect(metin).toContain('RC8 · ASI2600MM · EQ6-R');
     expect(metin).toContain('Saklıkent, Antalya');
+    expect(metin).toContain('https://astrohub.com.tr/fotograf/orion');
     expect(metin).toContain('@muratsana');
   });
 

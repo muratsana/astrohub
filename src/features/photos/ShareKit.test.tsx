@@ -14,7 +14,10 @@ const GORSEL = vi.hoisted(() => ({
 }));
 vi.mock('@/domain/photography/shareImage', async (gercek) => ({
   ...(await gercek<typeof import('@/domain/photography/shareImage')>()),
-  renderShareImage: async (_src: Blob, opts: { format: string; watermark?: string }) => {
+  renderShareImage: async (
+    _src: Blob,
+    opts: { format: string; watermark?: string }
+  ) => {
     GORSEL.calls.push({ format: opts.format, watermark: opts.watermark });
     return new Blob(['jpg'], { type: 'image/jpeg' });
   },
@@ -43,7 +46,11 @@ function foto(over: Partial<AstroPhoto> = {}): AstroPhoto {
     ownerId: 'u1',
     slug: 'orion',
     title: 'Orion',
-    target: { name: 'Orion Bulutsusu', catalog: 'M 42', constellation: 'Orion' },
+    target: {
+      name: 'Orion Bulutsusu',
+      catalog: 'M 42',
+      constellation: 'Orion',
+    },
     type: 'deep-sky',
     user: { username: 'muratsana', displayName: 'Murat' },
     description: '',
@@ -92,15 +99,20 @@ describe('ShareKit (D01, D02, D08, D09, D10)', () => {
   it('sahibine hazırla açıp künye gösteriyor (D02, D06)', () => {
     AUTH.user = { id: 'u1' };
     render(<ShareKit photo={foto()} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Paylaşım kiti hazırla' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Paylaşım kiti hazırla' })
+    );
     expect(screen.getByText(/Orion Bulutsusu \(M 42\)/)).toBeTruthy();
     expect(screen.getByText(/RC8 · ASI2600MM · EQ6/)).toBeTruthy();
+    expect(screen.getByText(/\/fotograf\/orion/)).toBeTruthy();
   });
 
   it('ekipman kapatılınca künyeden çıkıyor (D10)', () => {
     AUTH.user = { id: 'u1' };
     render(<ShareKit photo={foto()} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Paylaşım kiti hazırla' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Paylaşım kiti hazırla' })
+    );
     fireEvent.click(screen.getByRole('checkbox', { name: 'Ekipman' }));
     expect(screen.queryByText(/RC8/)).toBeNull();
   });
@@ -110,10 +122,13 @@ describe('ShareKit (D01, D02, D08, D09, D10)', () => {
     const yaz = vi.fn().mockResolvedValue(undefined);
     vi.stubGlobal('navigator', { clipboard: { writeText: yaz } });
     render(<ShareKit photo={foto()} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Paylaşım kiti hazırla' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Paylaşım kiti hazırla' })
+    );
     fireEvent.click(screen.getByRole('button', { name: 'Künyeyi kopyala' }));
     expect(yaz).toHaveBeenCalledOnce();
     expect(yaz.mock.calls[0][0]).toContain('Orion Bulutsusu (M 42)');
+    expect(yaz.mock.calls[0][0]).toContain('/fotograf/orion');
   });
 
   it('caption.txt indiriyor (D09)', () => {
@@ -129,14 +144,19 @@ describe('ShareKit (D01, D02, D08, D09, D10)', () => {
       indirilen.push(this.download);
     });
     render(<ShareKit photo={foto()} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Paylaşım kiti hazırla' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Paylaşım kiti hazırla' })
+    );
     fireEvent.click(screen.getByRole('button', { name: 'caption.txt indir' }));
     expect(indirilen[0]).toBe('astrohub-orion-caption.txt');
   });
 
   it('feed görselini watermark ile üretip indiriyor (D03, D13)', async () => {
     AUTH.user = { id: 'u1' };
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(new Blob(['x']))));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(new Response(new Blob(['x'])))
+    );
     vi.stubGlobal('URL', {
       createObjectURL: vi.fn(() => 'blob:x'),
       revokeObjectURL: vi.fn(),
@@ -148,12 +168,17 @@ describe('ShareKit (D01, D02, D08, D09, D10)', () => {
       indirilen.push(this.download);
     });
     render(<ShareKit photo={fotoGorselli()} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Paylaşım kiti hazırla' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Paylaşım kiti hazırla' })
+    );
     fireEvent.click(screen.getByRole('button', { name: 'Feed görseli (4:5)' }));
 
     await screen.findByRole('button', { name: 'Feed görseli (4:5)' });
     await vi.waitFor(() => expect(GORSEL.calls.length).toBe(1));
-    expect(GORSEL.calls[0]).toEqual({ format: 'feed', watermark: '@muratsana' });
+    expect(GORSEL.calls[0]).toEqual({
+      format: 'feed',
+      watermark: '@muratsana',
+    });
     await vi.waitFor(() =>
       expect(indirilen).toContain('astrohub-orion-feed.jpg')
     );
@@ -161,25 +186,34 @@ describe('ShareKit (D01, D02, D08, D09, D10)', () => {
 
   it('watermark kapatılınca story görseli filigransız (D04, D13)', async () => {
     AUTH.user = { id: 'u1' };
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(new Blob(['x']))));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(new Response(new Blob(['x'])))
+    );
     vi.stubGlobal('URL', {
       createObjectURL: vi.fn(() => 'blob:x'),
       revokeObjectURL: vi.fn(),
     });
     vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
     render(<ShareKit photo={fotoGorselli()} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Paylaşım kiti hazırla' }));
     fireEvent.click(
-      screen.getByRole('checkbox', { name: /filigranı/ })
+      screen.getByRole('button', { name: 'Paylaşım kiti hazırla' })
     );
-    fireEvent.click(screen.getByRole('button', { name: 'Story görseli (9:16)' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: /filigranı/ }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Story görseli (9:16)' })
+    );
     await vi.waitFor(() => expect(GORSEL.calls.length).toBe(1));
     expect(GORSEL.calls[0]).toEqual({ format: 'story', watermark: undefined });
   });
 
   const solvedFoto = () =>
     foto({
-      image: { url: 'https://cdn.test/display.jpg', credit: 'x', licence: 'CC' },
+      image: {
+        url: 'https://cdn.test/display.jpg',
+        credit: 'x',
+        licence: 'CC',
+      },
       solve: {
         durum: 'cozuldu',
         rotationDeg: 0,
@@ -191,19 +225,26 @@ describe('ShareKit (D01, D02, D08, D09, D10)', () => {
     AUTH.user = { id: 'u1' };
     // Çözülmemiş: radio grubu yok.
     const { unmount } = render(<ShareKit photo={fotoGorselli()} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Paylaşım kiti hazırla' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Paylaşım kiti hazırla' })
+    );
     expect(screen.queryByRole('radiogroup', { name: 'Kaynak' })).toBeNull();
     unmount();
 
     // Çözülmüş: "Alan çözümlü" seçilince kaynak annotatedBlob'dan geliyor.
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(new Blob(['x']))));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(new Response(new Blob(['x'])))
+    );
     vi.stubGlobal('URL', {
       createObjectURL: vi.fn(() => 'blob:x'),
       revokeObjectURL: vi.fn(),
     });
     vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
     render(<ShareKit photo={solvedFoto()} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Paylaşım kiti hazırla' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Paylaşım kiti hazırla' })
+    );
     fireEvent.click(screen.getByRole('radio', { name: 'Alan çözümlü' }));
     fireEvent.click(screen.getByRole('button', { name: 'Feed görseli (4:5)' }));
     await vi.waitFor(() => expect(GORSEL.annotatedCagrildi).toBe(1));
@@ -211,7 +252,10 @@ describe('ShareKit (D01, D02, D08, D09, D10)', () => {
 
   it('tek ZIP paketi feed+story+caption indiriyor (D12)', async () => {
     AUTH.user = { id: 'u1' };
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(new Blob(['x']))));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(new Response(new Blob(['x'])))
+    );
     vi.stubGlobal('URL', {
       createObjectURL: vi.fn(() => 'blob:x'),
       revokeObjectURL: vi.fn(),
@@ -223,7 +267,9 @@ describe('ShareKit (D01, D02, D08, D09, D10)', () => {
       indirilen.push(this.download);
     });
     render(<ShareKit photo={fotoGorselli()} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Paylaşım kiti hazırla' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Paylaşım kiti hazırla' })
+    );
     fireEvent.click(screen.getByRole('button', { name: 'Tek ZIP indir' }));
     // Feed ve story üretildi, paket indirildi.
     await vi.waitFor(() => expect(GORSEL.calls.length).toBe(2));

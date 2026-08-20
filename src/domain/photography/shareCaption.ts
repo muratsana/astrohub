@@ -36,6 +36,7 @@ export interface CaptionInput {
   setup: { optic: string; camera: string; mount: string };
   location: { label: string; visibility: string };
   username: string;
+  url?: string;
 }
 
 export interface CaptionOptions {
@@ -107,8 +108,16 @@ export function shareCaption(
     if (ekipman) satirlar.push(`🔭 ${ekipman}`);
   }
 
-  if (o.location && input.location.visibility !== 'hidden' && input.location.label) {
+  if (
+    o.location &&
+    input.location.visibility !== 'hidden' &&
+    input.location.label
+  ) {
     satirlar.push(`📍 ${input.location.label}`);
+  }
+
+  if (input.url) {
+    satirlar.push(`🔗 ${input.url}`);
   }
 
   if (o.handle && input.username) {

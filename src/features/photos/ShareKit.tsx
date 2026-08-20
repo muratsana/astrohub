@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useAuth } from '@/features/auth/AuthContext';
+import { absoluteUrl } from '@/lib/seo';
 import {
   shareCaption,
   shareHashtags,
@@ -40,7 +41,9 @@ export function ShareKit({ photo }: { photo: AstroPhoto }) {
   const [not, setNot] = useState('');
   const [kopyalandi, setKopyalandi] = useState(false);
   const [filigran, setFiligran] = useState(true);
-  const [gorselBusy, setGorselBusy] = useState<ShareFormat | 'zip' | null>(null);
+  const [gorselBusy, setGorselBusy] = useState<ShareFormat | 'zip' | null>(
+    null
+  );
   const [gorselHata, setGorselHata] = useState<string | null>(null);
   /* Kaynak: yayımlanan fotoğraf mı, alan çözümlü kopya mı (D11). */
   const [kaynak, setKaynak] = useState<'foto' | 'annotated'>('foto');
@@ -73,6 +76,7 @@ export function ShareKit({ photo }: { photo: AstroPhoto }) {
           visibility: photo.location.visibility,
         },
         username: photo.user.username,
+        url: absoluteUrl(`/fotograf/${photo.slug}`),
       },
       { ...secenekler, note: not }
     );
@@ -185,8 +189,14 @@ export function ShareKit({ photo }: { photo: AstroPhoto }) {
     try {
       const kaynakVeri = await kaynakBlob();
       const watermark = filigran ? `@${photo.user.username}` : undefined;
-      const feed = await renderShareImage(kaynakVeri, { format: 'feed', watermark });
-      const story = await renderShareImage(kaynakVeri, { format: 'story', watermark });
+      const feed = await renderShareImage(kaynakVeri, {
+        format: 'feed',
+        watermark,
+      });
+      const story = await renderShareImage(kaynakVeri, {
+        format: 'story',
+        watermark,
+      });
       if (!feed || !story) throw new Error('Bu tarayıcı görseli işleyemedi.');
       const entries: ZipEntry[] = [
         { name: 'feed.jpg', data: await blobBytes(feed) },
@@ -243,7 +253,9 @@ export function ShareKit({ photo }: { photo: AstroPhoto }) {
           </div>
 
           <label className="block">
-            <span className="label mb-1 block text-foreground">Not (isteğe bağlı)</span>
+            <span className="label mb-1 block text-foreground">
+              Not (isteğe bağlı)
+            </span>
             <Input
               value={not}
               onChange={(e) => {
@@ -282,8 +294,8 @@ export function ShareKit({ photo }: { photo: AstroPhoto }) {
                 </label>
               </div>
               <p className="text-meta text-faint">
-                Fotoğraf bozulmadan koyu zemine ortalanır — feed 4:5,
-                story 9:16.
+                Fotoğraf bozulmadan koyu zemine ortalanır — feed 4:5, story
+                9:16.
               </p>
 
               {/* Kaynak seçimi yalnızca alan çözümü hazırsa (D11). */}
@@ -331,7 +343,9 @@ export function ShareKit({ photo }: { photo: AstroPhoto }) {
                   disabled={gorselBusy !== null}
                   onClick={() => void gorselIndir('story')}
                 >
-                  {gorselBusy === 'story' ? 'Üretiliyor…' : 'Story görseli (9:16)'}
+                  {gorselBusy === 'story'
+                    ? 'Üretiliyor…'
+                    : 'Story görseli (9:16)'}
                 </Button>
                 <Button
                   size="sm"
