@@ -1,17 +1,14 @@
-import { useMemo } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { ButtonLink } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Input, Select } from '@/components/ui/Input';
 import { EmptyState } from '@/components/ui/EmptyState';
-import {
-  FilterCell,
-  FilterToggle,
-  filterControlClass,
-} from '@/components/ui/FilterBar';
+import { filterControlClass } from '@/components/ui/FilterBar';
 import { CardGrid } from '@/components/ui/CardGrid';
-import { ModuleToolbar } from '@/components/ui/ModuleToolbar';
+import { ActiveFilters } from '@/components/ui/ActiveFilters';
+import { ViewToggle } from '@/components/ui/ViewToggle';
 import { CatalogSourceNote } from '@/components/ui/CatalogSourceNote';
 import { FeaturedPanel } from '@/components/ui/FeaturedPanel';
 import { RemoteImage } from '@/components/media/RemoteImage';
@@ -31,6 +28,7 @@ import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
 import { photoWeekArchive, selectWeeklyPhoto } from './weeklyPick';
 import { formatExposure } from '@/domain/photography/exif';
+import { cn } from '@/lib/cn';
 import {
   exposureRowSeconds,
   formatIntegration,
@@ -269,136 +267,161 @@ export function GalleryPage() {
         )}
 
         {/* Filtre paneli */}
-        <ModuleToolbar
-          activeFilters={{
-            chips: ex.chips,
-            onRemove: ex.removeChip,
-            onClearAll: ex.clearAll,
-          }}
-          result={{ current: ex.total, total: photos.length, noun: 'fotoğraf' }}
-          showResultCount={false}
-          sort={{
-            id: 'f-sort',
-            value: ex.query.sort,
-            onChange: ex.setSort,
-            options: gallerySpec.sorts.map((s) => ({
-              value: s.value,
-              label: s.label,
-            })),
-          }}
-          view={{ mode: view, onChange: setView }}
+        <section
+          aria-label="Liste araçları"
+          className="mb-4 rounded-card border border-border-strong bg-surface-1/70 p-2 shadow-overlay"
         >
-          <FilterCell
-            label="Ara"
-            htmlFor="gallery-search"
-            active={ex.searchInput.trim().length > 0}
-            className="min-w-[22rem] flex-[2_1_22rem]"
-          >
-            <Input
-              id="gallery-search"
-              type="search"
-              placeholder="Hedef, katalog (M31, NGC 7000) veya kullanıcı"
-              value={ex.searchInput}
-              onChange={(e) => ex.setSearch(e.target.value)}
-              className={filterControlClass}
-            />
-          </FilterCell>
-          <FilterCell
-            label="Tür"
-            htmlFor="gallery-family"
-            active={family !== 'hepsi'}
-            className="min-w-[12rem]"
-          >
-            <Select
-              id="gallery-family"
-              value={family}
-              onChange={(event) => {
-                const next = event.target.value;
-                /* Tek seçim davranışı korunuyor: aile sekmeleri bir sekme
-                   şeridi, çoklu seçim listesi değil. */
-                if (family !== 'hepsi') ex.toggleFacet('aile', family);
-                if (next !== 'hepsi' && next !== family)
-                  ex.toggleFacet('aile', next);
-              }}
-              className={filterControlClass}
+          <div className="flex flex-wrap items-stretch gap-2 xl:flex-nowrap">
+            <GalleryFilterShell
+              label="Ara"
+              htmlFor="gallery-search"
+              active={ex.searchInput.trim().length > 0}
+              className="min-w-[15rem] flex-[1_1_18rem] xl:w-[20rem] xl:flex-none"
             >
-              <option value="hepsi">Tüm türler</option>
-              {familyOrder.map((key) => (
-                <option key={key} value={key}>
-                  {photoFamilies[key].label}
-                </option>
-              ))}
-            </Select>
-          </FilterCell>
+              <Input
+                id="gallery-search"
+                type="search"
+                placeholder="Hedef, katalog veya kullanıcı"
+                value={ex.searchInput}
+                onChange={(e) => ex.setSearch(e.target.value)}
+                className={filterControlClass}
+              />
+            </GalleryFilterShell>
 
-          <FilterCell
-            label="Palet"
-            htmlFor="f-palette"
-            active={(ex.query.facets.palet?.[0] ?? 'hepsi') !== 'hepsi'}
-          >
-            <Select
-              id="f-palette"
-              value={ex.query.facets.palet?.[0] ?? 'hepsi'}
-              onChange={(e) => {
-                const mevcut = ex.query.facets.palet?.[0];
-                if (mevcut) ex.toggleFacet('palet', mevcut);
-                if (e.target.value !== 'hepsi') {
-                  ex.toggleFacet('palet', e.target.value);
-                }
-              }}
-              className={filterControlClass}
+            <GalleryFilterShell
+              label="Tür"
+              htmlFor="gallery-family"
+              active={family !== 'hepsi'}
+              className="min-w-[8.5rem] flex-1 xl:w-[9.5rem] xl:flex-none"
             >
-              {paletteOptions.map((p) => (
-                <option key={p} value={p}>
-                  {p === 'hepsi' ? 'Tüm paletler' : p}
-                </option>
-              ))}
-            </Select>
-          </FilterCell>
+              <Select
+                id="gallery-family"
+                value={family}
+                onChange={(event) => {
+                  const next = event.target.value;
+                  /* Tek seçim davranışı korunuyor: aile sekmeleri bir sekme
+                     şeridi, çoklu seçim listesi değil. */
+                  if (family !== 'hepsi') ex.toggleFacet('aile', family);
+                  if (next !== 'hepsi' && next !== family)
+                    ex.toggleFacet('aile', next);
+                }}
+                className={filterControlClass}
+              >
+                <option value="hepsi">Tüm türler</option>
+                {familyOrder.map((key) => (
+                  <option key={key} value={key}>
+                    {photoFamilies[key].label}
+                  </option>
+                ))}
+              </Select>
+            </GalleryFilterShell>
 
-          <FilterCell
-            label="Şehir"
-            htmlFor="f-city"
-            active={(ex.query.facets.sehir?.[0] ?? 'hepsi') !== 'hepsi'}
-          >
-            <Select
-              id="f-city"
-              value={ex.query.facets.sehir?.[0] ?? 'hepsi'}
-              onChange={(e) => {
-                const mevcut = ex.query.facets.sehir?.[0];
-                if (mevcut) ex.toggleFacet('sehir', mevcut);
-                if (e.target.value !== 'hepsi') {
-                  ex.toggleFacet('sehir', e.target.value);
-                }
-              }}
-              className={filterControlClass}
+            <GalleryFilterShell
+              label="Palet"
+              htmlFor="f-palette"
+              active={(ex.query.facets.palet?.[0] ?? 'hepsi') !== 'hepsi'}
+              className="min-w-[8rem] flex-1 xl:w-[8.5rem] xl:flex-none"
             >
-              <option value="hepsi">Tüm şehirler</option>
-              {cities.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </Select>
-          </FilterCell>
+              <Select
+                id="f-palette"
+                value={ex.query.facets.palet?.[0] ?? 'hepsi'}
+                onChange={(e) => {
+                  const mevcut = ex.query.facets.palet?.[0];
+                  if (mevcut) ex.toggleFacet('palet', mevcut);
+                  if (e.target.value !== 'hepsi') {
+                    ex.toggleFacet('palet', e.target.value);
+                  }
+                }}
+                className={filterControlClass}
+              >
+                {paletteOptions.map((p) => (
+                  <option key={p} value={p}>
+                    {p === 'hepsi' ? 'Tüm paletler' : p}
+                  </option>
+                ))}
+              </Select>
+            </GalleryFilterShell>
 
-          {kaydedilen.ready && (
-            <FilterToggle
-              id="f-saved"
-              label="Kaydettiklerim"
-              checked={kisiselAcik('kaydettiklerim')}
-              onChange={() => ex.toggleFacet('kaydettiklerim', 'evet')}
+            <GalleryFilterShell
+              label="Şehir"
+              htmlFor="f-city"
+              active={(ex.query.facets.sehir?.[0] ?? 'hepsi') !== 'hepsi'}
+              className="min-w-[8rem] flex-1 xl:w-[9rem] xl:flex-none"
+            >
+              <Select
+                id="f-city"
+                value={ex.query.facets.sehir?.[0] ?? 'hepsi'}
+                onChange={(e) => {
+                  const mevcut = ex.query.facets.sehir?.[0];
+                  if (mevcut) ex.toggleFacet('sehir', mevcut);
+                  if (e.target.value !== 'hepsi') {
+                    ex.toggleFacet('sehir', e.target.value);
+                  }
+                }}
+                className={filterControlClass}
+              >
+                <option value="hepsi">Tüm şehirler</option>
+                {cities.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </Select>
+            </GalleryFilterShell>
+
+            {kaydedilen.ready && (
+              <GalleryFilterToggle
+                id="f-saved"
+                label="Kaydettiklerim"
+                checked={kisiselAcik('kaydettiklerim')}
+                onChange={() => ex.toggleFacet('kaydettiklerim', 'evet')}
+              />
+            )}
+            {takipEdilen.ready && (
+              <GalleryFilterToggle
+                id="f-following"
+                label="Takip ettiklerim"
+                checked={kisiselAcik('takip')}
+                onChange={() => ex.toggleFacet('takip', 'evet')}
+              />
+            )}
+
+            <div className="inline-flex min-h-11 min-w-[9rem] flex-1 items-center overflow-hidden rounded-card border border-border-strong bg-surface-1 shadow-overlay transition-colors hover:border-foreground/25 hover:bg-surface-2 xl:w-[10rem] xl:flex-none">
+              <label
+                htmlFor="f-sort"
+                className="label hidden h-full items-center border-r border-border px-2.5 text-muted-foreground 2xl:inline-flex"
+              >
+                Sırala
+              </label>
+              <Select
+                id="f-sort"
+                value={ex.query.sort}
+                onChange={(e) => ex.setSort(e.target.value)}
+                className="h-8 min-w-0 flex-1 rounded-none border-0 bg-transparent px-2 pr-8 text-body-sm font-medium text-foreground focus:bg-transparent"
+              >
+                {gallerySpec.sorts.map((sort) => (
+                  <option key={sort.value} value={sort.value}>
+                    {sort.label}
+                  </option>
+                ))}
+              </Select>
+            </div>
+
+            <ViewToggle
+              mode={view}
+              onChange={setView}
+              className="ml-auto xl:ml-0"
             />
-          )}
-          {takipEdilen.ready && (
-            <FilterToggle
-              id="f-following"
-              label="Takip ettiklerim"
-              checked={kisiselAcik('takip')}
-              onChange={() => ex.toggleFacet('takip', 'evet')}
+          </div>
+
+          <div className="mt-2 [&>*]:mb-0">
+            <ActiveFilters
+              chips={ex.chips}
+              onRemove={ex.removeChip}
+              onClearAll={ex.clearAll}
             />
-          )}
-        </ModuleToolbar>
+          </div>
+        </section>
 
         {/* SESSİZ KIRPMA YOK. Küme sınıra dayandıysa süzgeç eksik
             cevap veriyor ve bunu söylemek zorunda — "kaydetmiştim ama
@@ -436,6 +459,74 @@ export function GalleryPage() {
         )}
       </Container>
     </>
+  );
+}
+
+function GalleryFilterShell({
+  label,
+  htmlFor,
+  active,
+  className,
+  children,
+}: {
+  label: string;
+  htmlFor: string;
+  active: boolean;
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div
+      className={cn(
+        'flex min-h-11 min-w-0 flex-col justify-center rounded-card border px-2.5 py-0.5 shadow-overlay',
+        'transition-colors hover:border-foreground/25 hover:bg-surface-2',
+        'has-[:focus-visible]:border-primary has-[:focus-visible]:bg-surface-2 has-[:focus-visible]:shadow-[0_0_0_1px_var(--color-primary)]',
+        active
+          ? 'border-primary/60 bg-primary/10'
+          : 'border-border-strong bg-surface-1',
+        className
+      )}
+    >
+      <label htmlFor={htmlFor} className="sr-only">
+        {label}
+      </label>
+      {children}
+    </div>
+  );
+}
+
+function GalleryFilterToggle({
+  id,
+  label,
+  checked,
+  onChange,
+}: {
+  id: string;
+  label: string;
+  checked: boolean;
+  onChange: () => void;
+}) {
+  return (
+    <label
+      htmlFor={id}
+      className={cn(
+        'inline-flex min-h-11 min-w-max cursor-pointer items-center gap-2 rounded-card border px-3 text-meta font-medium shadow-overlay',
+        'transition-colors hover:border-foreground/25 hover:bg-surface-2',
+        'has-[:focus-visible]:border-primary has-[:focus-visible]:bg-surface-2 has-[:focus-visible]:shadow-[0_0_0_1px_var(--color-primary)]',
+        checked
+          ? 'border-primary/60 bg-primary/10 text-foreground'
+          : 'border-border-strong bg-surface-1 text-muted-foreground'
+      )}
+    >
+      <input
+        id={id}
+        type="checkbox"
+        checked={checked}
+        onChange={onChange}
+        className="h-5 w-5 rounded border-border bg-surface-2 accent-primary"
+      />
+      <span className="whitespace-nowrap">{label}</span>
+    </label>
   );
 }
 
