@@ -17,6 +17,7 @@ export interface WizardState {
   targetKind: TargetKind | 'hepsi';
   type: PhotoType;
   title: string;
+  description: string;
   /**
    * ÇEKİM OTURUMLARI (SEZONLAR) — bir fotoğraf birden çok gecede toplanır.
    *
@@ -80,6 +81,7 @@ export const initialState: WizardState = {
   targetKind: 'hepsi',
   type: 'deep-sky',
   title: '',
+  description: '',
   captureSessions: [],
   city: '',
   district: '',
@@ -117,6 +119,7 @@ export function wizardStateFromPhoto(photo: AstroPhoto): WizardState {
     targetKind: hedef?.kind ?? 'hepsi',
     type: photo.type,
     title: photo.title,
+    description: photo.description,
     captureSessions:
       photo.captureSessions && photo.captureSessions.length > 0
         ? photo.captureSessions

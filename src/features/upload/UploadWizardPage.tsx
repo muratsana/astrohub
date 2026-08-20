@@ -314,6 +314,7 @@ export function UploadWizardPage() {
         await updatePhotoMetadata({
           photoId: editingPhoto.id,
           title: state.title || editingPhoto.title,
+          description: state.description,
           photoType: state.type,
           palette: state.palette,
           capturedAt: enErkenGun(state.captureSessions) || undefined,
@@ -380,6 +381,7 @@ export function UploadWizardPage() {
           userId: user.id,
           slug: slugifyPhoto(state.title || file.name),
           title: state.title || file.name,
+          description: state.description,
           photoType: state.type,
           palette: state.palette,
           /* Geriye dönük tek tarih = en erken oturum günü; sezon bilmeyen
@@ -928,6 +930,20 @@ export function UploadWizardPage() {
                   placeholder="ör. At Başı ve Alev Bulutsusu"
                   value={state.title}
                   onChange={(e) => patch({ title: e.target.value })}
+                />
+              </Field>
+              <Field
+                label="Açıklama"
+                htmlFor="w-description"
+                hint="İsteğe bağlı — çekim koşulları, işleme notu veya hedef hakkında kısa bilgi"
+              >
+                <textarea
+                  id="w-description"
+                  rows={5}
+                  value={state.description}
+                  onChange={(e) => patch({ description: e.target.value })}
+                  placeholder="Örn. Üç gecede toplandı; düşük ay ışığında RGB işlendi."
+                  className="w-full resize-y rounded-card border border-border bg-surface-1 px-3 py-2.5 text-body-sm leading-relaxed text-foreground outline-none transition-colors placeholder:text-faint focus:border-primary focus:bg-surface-2"
                 />
               </Field>
             </div>

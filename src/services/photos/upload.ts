@@ -199,6 +199,7 @@ export type UploadProgress =
 export interface PhotoMetadataInput {
   photoId: string;
   title: string;
+  description?: string;
   photoType: string;
   palette: string;
   capturedAt?: string;
@@ -738,6 +739,10 @@ export async function updatePhotoMetadata(
 
   const yama = {
     title: sanitizeText(input.title, { maxLength: 160 }),
+    description: sanitizeText(input.description ?? '', {
+      multiline: true,
+      maxLength: 5000,
+    }),
     photo_type: input.photoType,
     palette: input.palette,
     object_id: input.objectId ?? null,

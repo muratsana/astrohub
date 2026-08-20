@@ -15,7 +15,7 @@ const photo: AstroPhoto = {
   },
   type: 'deep-sky',
   user: { username: 'muratsana', displayName: 'Murat Sana' },
-  description: '',
+  description: 'İki gecelik LRGB denemesi.',
   gradient: 'from-slate-900 to-black',
   image: {
     url: 'https://example.com/display.jpg',
@@ -54,6 +54,7 @@ describe('wizardStateFromPhoto', () => {
     expect(state.targetSlug).toBe('m31-andromeda');
     expect(state.targetKind).toBe('galaksi');
     expect(state.title).toBe('Andromeda Galaxy');
+    expect(state.description).toBe(photo.description);
     expect(state.captureSessions).toEqual(photo.captureSessions);
     expect(state.city).toBe('Denizli');
     expect(state.district).toBe('Beyağaç');

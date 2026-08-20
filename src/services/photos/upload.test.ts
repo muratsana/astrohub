@@ -592,6 +592,7 @@ describe('updatePhotoMetadata — mevcut fotoğraf düzenleme', () => {
     await updatePhotoMetadata({
       photoId: PHOTO_ID,
       title: 'Yeni Başlık',
+      description: 'Yeni açıklama',
       photoType: 'deep-sky',
       palette: 'LRGB',
       capturedAt: '2026-08-01',
@@ -614,6 +615,7 @@ describe('updatePhotoMetadata — mevcut fotoğraf düzenleme', () => {
     expect(state.uploads).toEqual([]);
     expect(state.photoUpdate).toMatchObject({
       title: 'Yeni Başlık',
+      description: 'Yeni açıklama',
       photo_type: 'deep-sky',
       palette: 'LRGB',
       captured_at: '2026-08-01',
