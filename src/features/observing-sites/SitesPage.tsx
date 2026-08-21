@@ -354,6 +354,65 @@ export function SitesPage() {
                 </option>
               ))}
             </Select>
+
+            <span className="hidden h-8 w-px bg-border lg:block" aria-hidden />
+
+            <label htmlFor="site-base-mode" className="sr-only">
+              Harita altlığı
+            </label>
+            <Select
+              id="site-base-mode"
+              value={baseMode}
+              onChange={(event) =>
+                setBaseMode(event.target.value as BaseMode)
+              }
+              width="auto"
+              className="h-8 text-meta"
+            >
+              <option value="harita">Altlık: Harita</option>
+              <option value="uydu">Altlık: Uydu</option>
+            </Select>
+
+            <label htmlFor="site-layer-mode" className="sr-only">
+              Harita katmanı
+            </label>
+            <Select
+              id="site-layer-mode"
+              value={layerMode}
+              onChange={(event) =>
+                setLayerMode(event.target.value as LayerMode)
+              }
+              width="auto"
+              className="h-8 text-meta"
+            >
+              <option value="isik">Katman: Işık</option>
+              <option value="yok">Katman: Yok</option>
+            </Select>
+
+            {overlay && (
+              <label
+                htmlFor="site-opacity"
+                className="flex h-8 items-center gap-2 rounded-card border border-border bg-background px-2"
+              >
+                <span className="text-meta text-muted-foreground">
+                  Saydamlık
+                </span>
+                <input
+                  id="site-opacity"
+                  type="range"
+                  min={OPACITY_RANGE.min}
+                  max={OPACITY_RANGE.max}
+                  step={5}
+                  value={opacity}
+                  onChange={(event) => setOpacity(Number(event.target.value))}
+                  className="block w-20 accent-primary"
+                />
+              </label>
+            )}
+
+            <Button size="sm" variant="secondary" onClick={toggleMapScope}>
+              {showAll ? 'Tek pini göster' : 'Tümünü göster'}
+            </Button>
           </div>
         </div>
 
@@ -475,60 +534,6 @@ export function SitesPage() {
 
                 {live && (
                   <>
-                    <div className="absolute right-2 top-2 flex max-w-[calc(100%-1rem)] flex-wrap items-end gap-2 rounded-card border border-border-strong bg-background/90 px-2 py-1.5 shadow-card backdrop-blur-sm">
-                      <label className="grid gap-1">
-                        <span className="label">Altlık</span>
-                        <Select
-                          value={baseMode}
-                          onChange={(event) =>
-                            setBaseMode(event.target.value as BaseMode)
-                          }
-                          width="7rem"
-                          className="h-8 text-meta"
-                        >
-                          <option value="harita">Harita</option>
-                          <option value="uydu">Uydu</option>
-                        </Select>
-                      </label>
-                      <label className="grid gap-1">
-                        <span className="label">Katman</span>
-                        <Select
-                          value={layerMode}
-                          onChange={(event) =>
-                            setLayerMode(event.target.value as LayerMode)
-                          }
-                          width="7rem"
-                          className="h-8 text-meta"
-                        >
-                          <option value="isik">Işık</option>
-                          <option value="yok">Yok</option>
-                        </Select>
-                      </label>
-                      {overlay && (
-                        <label htmlFor="site-opacity" className="grid gap-1">
-                          <span className="label">Saydamlık</span>
-                          <input
-                            id="site-opacity"
-                            type="range"
-                            min={OPACITY_RANGE.min}
-                            max={OPACITY_RANGE.max}
-                            step={5}
-                            value={opacity}
-                            onChange={(event) =>
-                              setOpacity(Number(event.target.value))
-                            }
-                            className="block w-24 accent-primary"
-                          />
-                        </label>
-                      )}
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={toggleMapScope}
-                      >
-                        {showAll ? 'Tek pini göster' : 'Tümünü göster'}
-                      </Button>
-                    </div>
                     <div className="absolute bottom-7 right-2 flex flex-wrap justify-end gap-1.5">
                       <Button
                         size="sm"
