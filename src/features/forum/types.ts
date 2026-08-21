@@ -52,6 +52,7 @@ export interface ForumLabel {
 export interface ForumAuthor {
   username: string;
   displayName: string;
+  avatarPath?: string | null;
   /** Doğrulanmış organizatör / editör gibi işaretler. */
   badge?: string;
 }

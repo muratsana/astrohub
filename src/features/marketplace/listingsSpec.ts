@@ -1,6 +1,6 @@
 import { byNumber, byText, type ExplorerSpec } from '@/features/explorer/query';
 import { equipmentCategoryLabels } from '@/features/equipment/data';
-import type { Listing } from './data';
+import { formatListingPrice, type Listing } from './data';
 
 /**
  * PAZARYERİNİN DATA EXPLORER TANIMI (Faz 4).
@@ -65,8 +65,8 @@ export const listingsSpec: ExplorerSpec<Listing> = {
       label: 'Fiyat',
       valueOf: (l) => l.price,
       step: 500,
-      unit: '₺',
-      format: (n) => `${n.toLocaleString('tr-TR')} ₺`,
+      unit: '',
+      format: (n) => formatListingPrice(n),
     },
   ],
 

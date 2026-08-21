@@ -11,6 +11,7 @@ import {
 import { RemoteImage } from '@/components/media/RemoteImage';
 import { tintFromSeed } from '@/components/media/tints';
 import { equipmentCategoryLabels } from '@/features/equipment/taxonomy';
+import { formatListingPrice } from '@/features/marketplace/data';
 import { useRecentListings } from '@/services/content/recentListings';
 import { cn } from '@/lib/cn';
 
@@ -103,7 +104,7 @@ export function RecentListings({
                     {listing.title}
                   </ContentCardTitle>
                   <p className="tabular mt-1.5 font-display text-readout-sm font-bold leading-none text-primary">
-                    {listing.price.toLocaleString('tr-TR')} ₺
+                    {formatListingPrice(listing.price, listing.currency)}
                   </p>
                   <ContentCardMeta className="mt-auto pt-1">
                     {listing.city} · @{listing.seller.username} · ★{' '}

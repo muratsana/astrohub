@@ -202,7 +202,7 @@ describe('HomePage · bölümler', () => {
       .getAllByRole('link')
       .filter((el) => el.getAttribute('href')?.startsWith('/ilan/'));
     expect(links.length).toBeGreaterThan(0);
-    expect(within(links[0]).getByText(/₺$/)).toBeInTheDocument();
+    expect(within(links[0]).getByText(/TL$/)).toBeInTheDocument();
   });
 
   it('karanlık gökyüzü şeridi ana sayfadan çıkarıldı', () => {

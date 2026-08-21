@@ -29,10 +29,15 @@ import { useExplorer } from '@/features/explorer/useExplorer';
 import { DistrictFilterCell } from '@/features/explorer/DistrictFilterCell';
 import type { RangeValue } from '@/features/explorer/query';
 import { listingsSpec } from './listingsSpec';
-import type { Listing, ListingCondition } from './data';
+import {
+  formatListingPrice,
+  type Listing,
+  type ListingCondition,
+} from './data';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { breadcrumbJsonLd } from '@/lib/seo';
 import { cities as turkeyCities } from '@/features/location/cities';
+import { ProfileInlineLink } from '@/components/user/ProfileInlineLink';
 
 const categories: (EquipmentCategory | 'hepsi')[] = [
   'hepsi',
@@ -384,7 +389,7 @@ function ListingPriceFilter({
         className={`${filterControlClass} min-w-0 font-sans`}
       />
       <span aria-hidden className="shrink-0 text-meta text-faint">
-        ₺
+        TL
       </span>
     </span>
   );
@@ -425,7 +430,7 @@ const listingColumns: Column<Listing>[] = [
     key: 'fiyat',
     header: 'Fiyat',
     numeric: true,
-    cell: (l) => `${l.price.toLocaleString('tr-TR')} ₺`,
+    cell: (l) => formatListingPrice(l.price, l.currency),
     sort: { asc: 'ucuz', desc: 'pahali' },
   },
   { key: 'durum', header: 'Durum', cell: (l) => l.condition },
@@ -433,7 +438,7 @@ const listingColumns: Column<Listing>[] = [
   {
     key: 'satici',
     header: 'Satıcı',
-    cell: (l) => `@${l.seller.username}`,
+    cell: (l) => <ProfileInlineLink username={l.seller.username} />,
     sort: { desc: 'satici' },
   },
   {
@@ -477,7 +482,7 @@ function ListingCard({
           </ContentCardMeta>
         </div>
         <span className="tabular shrink-0 font-display text-body font-bold text-primary">
-          {listing.price.toLocaleString('tr-TR')} ₺
+          {formatListingPrice(listing.price, listing.currency)}
         </span>
         <Badge tone="muted" className="hidden shrink-0 sm:inline-flex">
           {equipmentCategoryLabels[listing.category]}
@@ -511,7 +516,7 @@ function ListingCard({
           {listing.title}
         </ContentCardTitle>
         <p className="tabular mt-1.5 font-display text-readout-sm font-bold leading-none text-primary">
-          {listing.price.toLocaleString('tr-TR')} ₺
+          {formatListingPrice(listing.price, listing.currency)}
         </p>
         <ContentCardMeta className="mt-auto pt-1">
           {listing.city} · @{listing.seller.username} · ★{' '}

@@ -1,9 +1,10 @@
-import { Link } from 'react-router';
+import { Link, useParams } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { Input } from '@/components/ui/Input';
 import { ButtonLink } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { NotFoundPage } from '@/components/NotFoundPage';
 import {
   FilterCell,
   filterControlClass,
@@ -21,27 +22,39 @@ import {
   forumLabelOrder,
   forumLabels,
   relativeTime,
+  type ForumCategoryId,
   type ForumThread,
 } from './types';
 import { cn } from '@/lib/cn';
 import { LabelChip } from './LabelChip';
 import { ChevronDownIcon } from '@/components/ui/icons';
+import { ProfileInlineLink } from '@/components/user/ProfileInlineLink';
 
 /**
  * FORUM ANA SAYFASI.
  *
- * Klasik forum "kategori tablosu + konu listesi" yerine tek bir konu akışı
- * ve üstte kategori filtresi tercih edildi. Sebep: kategori tablosu, içeriği
- * bir tık geriye iter ve boş kategoriler forumu ölü gösterir. Akış hep
- * doludur; kategori bir filtredir, bir kapı değil.
+ * Ana sayfa kategori kapısıdır; konu listeleri kategori alt sayfalarında
+ * açılır. Böylece başlıklar filtre gibi davranmaz, kullanıcı doğrudan ilgili
+ * forum bölümüne gider.
  *
  * YOĞUNLUK TERCİHİ SAKLANIYOR. Konu taramak ve konu okumak farklı işler:
  * biri başlık listesi ister, diğeri her satırda ne konuşulduğunu. Tercihi
  * her ziyarette yeniden yaptırmak, iki kullanımdan birini hep cezalandırır.
  */
 export function ForumPage() {
+  const params = useParams<{ category?: string }>();
   const threadCatalog = useForumThreads();
   const threads = threadCatalog.items;
+  const category = getForumCategoryId(params.category);
+
+  if (params.category && !category) {
+    return <NotFoundPage />;
+  }
+
+  const currentCategoryInfo = category ? forumCategories[category] : null;
+  const pageThreads = category
+    ? threads.filter((thread) => thread.category === category)
+    : threads;
 
   /*
    * ORTAK DATA EXPLORER (Faz 4).
@@ -51,7 +64,7 @@ export function ForumPage() {
    * duyuru ve kural konularını listenin ortasına gömerdi ve yeni gelen
    * kullanıcı forumun kurallarını hiç görmezdi.
    */
-  const ex = useExplorer(threads, forumSpec);
+  const ex = useExplorer(pageThreads, forumSpec);
 
   /*
    * GÖRÜNÜM TERCİHİ (FAZ 11).
@@ -67,36 +80,50 @@ export function ForumPage() {
    */
   const [view, setView] = useViewMode('forum', 'list');
   const result = ex.items;
-  const categories = ex.query.facets.kategori ?? [];
   const rozetler = ex.query.facets.rozet ?? [];
-  const sections = forumCategoryOrder
-    .map((id) => ({
-      id,
-      threads: result.filter((thread) => thread.category === id),
-    }))
-    .filter(
-      (section) =>
-        section.threads.length > 0 &&
-        (categories.length === 0 || categories.includes(section.id))
-    );
-  const categoryCounts = ex.counts('kategori');
+  const sections = category
+    ? [{ id: category, threads: result }]
+    : [];
   const labelCounts = ex.counts('rozet');
+  const title = currentCategoryInfo
+    ? `Forum · ${currentCategoryInfo.name}`
+    : 'Forum';
+  const description =
+    currentCategoryInfo?.description ??
+    'Astrofotoğraf ve gözlem forumu: ekipmanlar, yazılımlar, görüntü işleme, etkinlikler, topluluklar, bilimsel çalışmalar, radyo astronomi ve astro kampçılık.';
+  const path = category ? forumCategoryHref(category) : '/forum';
 
   return (
     <>
       <PageMeta
-        title="Forum"
-        description="Astrofotoğraf ve gözlem forumu: ekipmanlar, yazılımlar, görüntü işleme, etkinlikler, topluluklar, bilimsel çalışmalar, radyo astronomi ve astro kampçılık."
+        title={title}
+        description={description}
         jsonLd={breadcrumbJsonLd([
           { name: 'Ana Sayfa', path: '/' },
           { name: 'Forum', path: '/forum' },
+          ...(currentCategoryInfo
+            ? [{ name: currentCategoryInfo.name, path }]
+            : []),
         ])}
       />
 
       <Container className="py-8 sm:py-10">
         <PageHeader
-          title="Forum"
-          description="Soru sor, gözlem raporu paylaş, kurulum tartış. Ekipmanını ve koşullarını yazarsan daha hızlı yanıt alırsın."
+          title={currentCategoryInfo?.name ?? 'Forum'}
+          description={
+            currentCategoryInfo
+              ? `${currentCategoryInfo.description}. Bu başlıktaki konuları oku veya yeni bir konu aç.`
+              : 'Soru sor, gözlem raporu paylaş, kurulum tartış. Ekipmanını ve koşullarını yazarsan daha hızlı yanıt alırsın.'
+          }
+          breadcrumb={
+            currentCategoryInfo
+              ? [
+                  { label: 'Ana Sayfa', to: '/' },
+                  { label: 'Forum', to: '/forum' },
+                  { label: currentCategoryInfo.name },
+                ]
+              : undefined
+          }
           actions={
             <ButtonLink to="/forum/yeni" size="sm">
               Yeni Konu
@@ -104,75 +131,62 @@ export function ForumPage() {
           }
         />
 
-        <ModuleToolbar
-          columns={4}
-          activeFilters={{
-            chips: ex.chips,
-            onRemove: ex.removeChip,
-            onClearAll: ex.clearAll,
-          }}
-          result={{ current: ex.total, total: threads.length, noun: 'konu' }}
-          view={{ mode: view, onChange: setView }}
-          sort={{
-            id: 'forum-sort',
-            value: ex.query.sort,
-            onChange: ex.setSort,
-            options: forumSpec.sorts.map((s) => ({
-              value: s.value,
-              label: s.label,
-            })),
-          }}
-        >
-          <FilterCell
-            label="Ara"
-            htmlFor="forum-search"
-            active={ex.searchInput.trim().length > 0}
-            className="min-w-[20rem] flex-[2_1_20rem]"
-          >
-            <Input
-              id="forum-search"
-              type="search"
-              placeholder="Konu veya kullanıcı"
-              value={ex.searchInput}
-              onChange={(e) => ex.setSearch(e.target.value)}
-              className={filterControlClass}
-            />
-          </FilterCell>
-          <FilterCell
-            label="Kategori"
-            active={categories.length > 0}
-          >
-            <ForumFacetDropdown
-              allLabel="Tüm kategoriler"
-              selected={categories}
-              items={forumCategoryOrder.map((id) => ({
-                id,
-                name: forumCategories[id].name,
-                description: forumCategories[id].description,
-                count: categoryCounts.get(id) ?? 0,
-                className: forumCategoryTextClass(id),
-              }))}
-              onToggle={(id) => ex.toggleFacet('kategori', id)}
-            />
-          </FilterCell>
-          <FilterCell label="Rozet" active={rozetler.length > 0}>
-            <ForumFacetDropdown
-              allLabel="Tüm rozetler"
-              selected={rozetler}
-              items={forumLabelOrder.map((id) => ({
-                id,
-                name: forumLabels[id].name,
-                description: forumLabels[id].description,
-                count: labelCounts.get(id) ?? 0,
-              }))}
-              onToggle={(id) => ex.toggleFacet('rozet', id)}
-            />
-          </FilterCell>
-        </ModuleToolbar>
+        {!category && (
+          <ForumCategoryGrid threads={threads} currentCategory={category} />
+        )}
 
-        <ForumCategoryGrid threads={threads} activeCategories={categories} />
+        {category && (
+          <ModuleToolbar
+            columns={3}
+            activeFilters={{
+              chips: ex.chips,
+              onRemove: ex.removeChip,
+              onClearAll: ex.clearAll,
+            }}
+            result={{ current: ex.total, total: pageThreads.length, noun: 'konu' }}
+            view={{ mode: view, onChange: setView }}
+            sort={{
+              id: 'forum-sort',
+              value: ex.query.sort,
+              onChange: ex.setSort,
+              options: forumSpec.sorts.map((s) => ({
+                value: s.value,
+                label: s.label,
+              })),
+            }}
+          >
+            <FilterCell
+              label="Ara"
+              htmlFor="forum-search"
+              active={ex.searchInput.trim().length > 0}
+              className="min-w-[20rem] flex-[2_1_20rem]"
+            >
+              <Input
+                id="forum-search"
+                type="search"
+                placeholder="Konu veya kullanıcı"
+                value={ex.searchInput}
+                onChange={(e) => ex.setSearch(e.target.value)}
+                className={filterControlClass}
+              />
+            </FilterCell>
+            <FilterCell label="Rozet" active={rozetler.length > 0}>
+              <ForumFacetDropdown
+                allLabel="Tüm rozetler"
+                selected={rozetler}
+                items={forumLabelOrder.map((id) => ({
+                  id,
+                  name: forumLabels[id].name,
+                  description: forumLabels[id].description,
+                  count: labelCounts.get(id) ?? 0,
+                }))}
+                onToggle={(id) => ex.toggleFacet('rozet', id)}
+              />
+            </FilterCell>
+          </ModuleToolbar>
+        )}
 
-        {result.length === 0 ? (
+        {category && result.length === 0 ? (
           <EmptyState
             message="Eşleşen konu yok"
             hint="Farklı bir kategori seçmeyi ya da aramayı kısaltmayı deneyin."
@@ -182,12 +196,18 @@ export function ForumPage() {
               </ButtonLink>
             }
           />
-        ) : (
+        ) : category ? (
           <ForumThreadSections sections={sections} view={view} />
-        )}
+        ) : null}
       </Container>
     </>
   );
+}
+
+function getForumCategoryId(value: string | undefined): ForumCategoryId | null {
+  return value && forumCategoryOrder.includes(value as ForumCategoryId)
+    ? (value as ForumCategoryId)
+    : null;
 }
 
 type ForumFacetDropdownItem = {
@@ -278,10 +298,10 @@ function ForumFacetDropdown({
 
 function ForumCategoryGrid({
   threads,
-  activeCategories,
+  currentCategory,
 }: {
   threads: ForumThread[];
-  activeCategories: string[];
+  currentCategory: ForumCategoryId | null;
 }) {
   return (
     <nav
@@ -293,11 +313,11 @@ function ForumCategoryGrid({
         const categoryThreads = threads.filter(
           (thread) => thread.category === id
         );
-        const active = activeCategories.includes(id);
+        const active = currentCategory === id;
         return (
           <Link
             key={id}
-            to={forumCategoryToggleHref(id, activeCategories)}
+            to={forumCategoryHref(id)}
             aria-current={active ? 'page' : undefined}
             className={cn(
               'group flex items-center justify-between gap-4 py-3 transition-colors hover:bg-surface-1/55 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary',
@@ -327,11 +347,8 @@ function ForumCategoryGrid({
   );
 }
 
-function forumCategoryToggleHref(id: string, activeCategories: string[]) {
-  const next = activeCategories.includes(id)
-    ? activeCategories.filter((category) => category !== id)
-    : [...activeCategories, id];
-  return next.length === 0 ? '/forum' : `/forum?kategori=${next.join(',')}`;
+function forumCategoryHref(id: ForumCategoryId | string) {
+  return `/forum/kategori/${id}`;
 }
 
 function ForumThreadSections({
@@ -345,7 +362,7 @@ function ForumThreadSections({
     <div className="space-y-4">
       {sections.map(({ id, threads }) => {
         const info = forumCategories[id as keyof typeof forumCategories];
-        const categoryHref = `/forum?kategori=${id}`;
+        const categoryHref = forumCategoryHref(id);
         return (
           <section
             key={id}
@@ -458,10 +475,9 @@ function ForumThreadCard({
   const info = forumCategories[thread.category];
 
   return (
-    <Link
-      to={`/forum/${thread.slug}`}
+    <article
       className={cn(
-        'group min-w-0 bg-surface-1 px-3 py-3 transition-colors hover:bg-surface-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary',
+        'group min-w-0 bg-surface-1 px-3 py-3 transition-colors hover:bg-surface-2',
         view === 'list'
           ? 'grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]'
           : 'flex min-h-48 flex-col'
@@ -497,11 +513,17 @@ function ForumThreadCard({
           )}
         </div>
 
-        <h3 className="text-caption font-semibold text-foreground group-hover:text-primary">
-          {thread.title}
+        <h3 className="text-caption font-semibold text-foreground">
+          <Link
+            to={`/forum/${thread.slug}`}
+            className="transition-colors hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          >
+            {thread.title}
+          </Link>
         </h3>
         <p className="mt-1 text-meta text-muted-foreground">
-          @{thread.author.username} · {relativeTime(thread.lastActivityAt)}
+          <ProfileInlineLink username={thread.author.username} /> ·{' '}
+          {relativeTime(thread.lastActivityAt)}
         </p>
         <p
           className={cn(
@@ -532,7 +554,7 @@ function ForumThreadCard({
           </dd>
         </div>
       </dl>
-    </Link>
+    </article>
   );
 }
 

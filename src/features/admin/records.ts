@@ -4,6 +4,14 @@ import {
   isContentStatus,
 } from '@/domain/content/status';
 import { events as eventsSeed } from '@/features/events/data';
+import {
+  equipmentCategoryLabels,
+  equipmentCategoryOrder,
+} from '@/features/equipment/taxonomy';
+import {
+  listingCurrencies,
+  listingCurrencyLabels,
+} from '@/features/marketplace/data';
 import { getSupabase } from '@/services/supabase/client';
 
 /**
@@ -89,8 +97,9 @@ export interface RecordRow {
 export interface EditField {
   column: string;
   label: string;
-  /** `text` tek satır, `multiline` çok satır, `number` sayısal. */
-  type: 'text' | 'multiline' | 'number';
+  /** `text` tek satır, `multiline` çok satır, `number` sayısal, `select` kapalı seçenek. */
+  type: 'text' | 'multiline' | 'number' | 'select';
+  options?: { value: string; label: string }[];
   hint?: string;
   maxLength?: number;
 }
@@ -195,7 +204,25 @@ export const RECORD_KINDS: Record<RecordKind, KindSpec> = {
         type: 'multiline',
         maxLength: 4000,
       },
+      {
+        column: 'category_id',
+        label: 'Kategori',
+        type: 'select',
+        options: equipmentCategoryOrder.map((category) => ({
+          value: category,
+          label: equipmentCategoryLabels[category],
+        })),
+      },
       { column: 'price', label: 'Fiyat', type: 'number' },
+      {
+        column: 'currency',
+        label: 'Para birimi',
+        type: 'select',
+        options: listingCurrencies.map((currency) => ({
+          value: currency,
+          label: listingCurrencyLabels[currency],
+        })),
+      },
       { column: 'city', label: 'Şehir', type: 'text', maxLength: 60 },
     ],
   },
@@ -503,6 +530,14 @@ export async function updateRecord(
         throw new Error(`${field.label} sayı olmalı.`);
       }
       payload[field.column] = sayi;
+      continue;
+    }
+
+    if (field.type === 'select') {
+      if (!field.options?.some((option) => option.value === raw)) {
+        throw new Error(`${field.label} geçerli bir seçenek olmalı.`);
+      }
+      payload[field.column] = raw;
       continue;
     }
 

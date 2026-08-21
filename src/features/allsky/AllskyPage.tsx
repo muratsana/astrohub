@@ -97,7 +97,7 @@ export function AllskyPage() {
             hint="Admin panelinden ilk kamera kaydı eklenebilir."
           />
         ) : (
-          <ul className="grid gap-4 lg:grid-cols-2">
+          <ul className="grid gap-4">
             {cameras.map((camera) => (
               <li key={camera.id}>
                 <Panel
@@ -108,7 +108,7 @@ export function AllskyPage() {
                   <div
                     className={cn(
                       CARD_RATIO.wide,
-                      'overflow-hidden border-b border-border bg-background'
+                      'min-h-[420px] overflow-hidden border-b border-border bg-background md:min-h-[560px] xl:min-h-[640px]'
                     )}
                   >
                     <RemoteImage
@@ -116,11 +116,11 @@ export function AllskyPage() {
                       alt={`${camera.title} canlı allsky görüntüsü`}
                       seed={camera.slug}
                       tint="80,160,210"
-                      sizes="(min-width: 1024px) 50vw, 100vw"
+                      sizes="100vw"
                       className="object-contain"
                     />
                   </div>
-                  <div className="grid gap-4 p-4 md:grid-cols-[minmax(0,1fr)_12rem]">
+                  <div className="grid gap-4 p-4 md:grid-cols-[minmax(0,1fr)_16rem]">
                     <div className="min-w-0">
                       <div className="flex flex-wrap gap-2">
                         {camera.location ? (

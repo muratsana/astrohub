@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { adminEditPath } from '@/components/admin/adminEditPath';
 import { AdminEditLink } from '@/components/admin/AdminEditLink';
 import { Link, useParams } from 'react-router';
@@ -25,6 +25,8 @@ import { Alert } from '@/components/ui/Alert';
 import { LabelChip } from './LabelChip';
 import { ReportButton } from '@/features/admin/ReportButton';
 import { RemovedNotice } from '@/features/admin/RemovedNotice';
+import { profileAvatarUrl } from '@/services/content/profile';
+import { ProfileInlineLink } from '@/components/user/ProfileInlineLink';
 
 /** Konu detayı: açılış mesajı + yanıtlar + yanıt kutusu. */
 export function ThreadPage() {
@@ -176,7 +178,10 @@ export function ThreadPage() {
           <aside className="space-y-4">
             <Panel title="Konu bilgisi">
               <dl className="space-y-2 text-body-sm">
-                <Row label="Açan" value={`@${thread.author.username}`} />
+                <Row
+                  label="Açan"
+                  value={<ProfileInlineLink username={thread.author.username} />}
+                />
                 <Row label="Açılış" value={relativeTime(thread.createdAt)} />
                 <Row
                   label="Son etkinlik"
@@ -200,7 +205,7 @@ export function ThreadPage() {
   );
 }
 
-function Row({ label, value }: { label: string; value: string }) {
+function Row({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="flex items-baseline justify-between gap-3">
       <dt className="label shrink-0">{label}</dt>
@@ -222,21 +227,59 @@ function PostCard({
   return (
     <article
       className={cn(
-        'rounded-card border bg-surface-1',
-        post.solution ? 'border-success/45' : 'border-border'
+        'rounded-card border',
+        opening
+          ? 'border-primary/45 bg-primary/[0.055]'
+          : 'border-border bg-surface-1',
+        post.solution ? 'border-success/50' : ''
       )}
     >
-      <header className="flex flex-wrap items-center gap-2 border-b border-border px-3 py-2">
-        <span className="text-meta font-medium text-foreground">
-          {post.author.displayName}
-        </span>
-        <span className="tabular text-meta text-muted-foreground">
-          @{post.author.username}
-        </span>
-        {opening && <span className="text-meta text-faint">konuyu açan</span>}
-        <span className="tabular ml-auto text-meta text-faint">
-          {relativeTime(post.createdAt)}
-        </span>
+      <header
+        className={cn(
+          'flex gap-3 border-b px-3 py-3',
+          opening ? 'border-primary/25 bg-primary/[0.045]' : 'border-border'
+        )}
+      >
+        <ForumAvatar author={post.author} opening={opening} />
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <ProfileInlineLink
+              username={post.author.username}
+              className="text-body-sm font-semibold text-foreground"
+            >
+              {post.author.displayName}
+            </ProfileInlineLink>
+            <ProfileInlineLink
+              username={post.author.username}
+              className="tabular text-meta text-muted-foreground"
+            >
+              @{post.author.username}
+            </ProfileInlineLink>
+            <span
+              className={cn(
+                'rounded-card border px-2 py-0.5 text-meta font-medium',
+                opening
+                  ? 'border-primary/40 text-primary'
+                  : 'border-border text-faint'
+              )}
+            >
+              {opening ? 'İlk mesaj' : 'Cevap'}
+            </span>
+            {post.solution && (
+              <span className="rounded-card border border-success/45 px-2 py-0.5 text-meta font-medium text-success">
+                Çözüm
+              </span>
+            )}
+            <span className="tabular ml-auto text-meta text-faint">
+              {relativeTime(post.createdAt)}
+            </span>
+          </div>
+          {opening && (
+            <p className="mt-1 text-meta text-muted-foreground">
+              Konuyu açan mesaj
+            </p>
+          )}
+        </div>
         {/*
           Gönderinin kendi adresi yok; moderatör konuya gidiyor ve
           gönderiyi orada görüyor. Hedef KİMLİĞİ yine de gönderinin
@@ -264,11 +307,56 @@ function PostCard({
           `dangerouslySetInnerHTML` bilerek kullanılmıyor — zengin metin
           eklendiğinde önce sanitize katmanı gelecek (bkz. lib/sanitize.ts).
         */
-        <p className="whitespace-pre-line px-3 py-3 text-caption leading-[1.7] text-muted-foreground">
+        <p
+          className={cn(
+            'whitespace-pre-line px-3 py-3 text-caption leading-[1.7]',
+            opening ? 'text-foreground' : 'text-muted-foreground'
+          )}
+        >
           {post.body}
         </p>
       )}
     </article>
+  );
+}
+
+function ForumAvatar({
+  author,
+  opening,
+}: {
+  author: ForumPost['author'];
+  opening?: boolean;
+}) {
+  const url = profileAvatarUrl(author.avatarPath);
+  const initials = author.displayName
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join('')
+    .toLocaleUpperCase('tr-TR');
+
+  return (
+    <span
+      className={cn(
+        'flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border text-caption font-semibold',
+        opening
+          ? 'border-primary/55 bg-primary/15 text-primary'
+          : 'border-border bg-surface-2 text-muted-foreground'
+      )}
+      aria-hidden={url ? undefined : true}
+    >
+      {url ? (
+        <img
+          src={url}
+          alt={`${author.displayName} avatarı`}
+          className="h-full w-full object-cover"
+          loading="lazy"
+        />
+      ) : (
+        initials || author.username[0]?.toLocaleUpperCase('tr-TR') || '?'
+      )}
+    </span>
   );
 }
 

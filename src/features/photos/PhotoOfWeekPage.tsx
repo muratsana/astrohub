@@ -18,6 +18,7 @@ import {
 import { PhotoCard } from './PhotoCard';
 import { photoWeekArchive } from './weeklyPick';
 import type { AstroPhoto } from './types';
+import { ProfileInlineLink } from '@/components/user/ProfileInlineLink';
 
 export function PhotoOfWeekPage() {
   const { user } = useAuth();
@@ -114,7 +115,10 @@ export function PhotoOfWeekPage() {
                       </p>
                     )}
                     <h2 className="type-section mt-3 text-foreground">{current.photo.title}</h2>
-                    <p className="mt-2 text-body-sm text-muted-foreground">{current.photo.target.name} · @{current.photo.user.username}</p>
+                    <p className="mt-2 text-body-sm text-muted-foreground">
+                      {current.photo.target.name} ·{' '}
+                      <ProfileInlineLink username={current.photo.user.username} />
+                    </p>
                     <p className="mt-5 text-meta leading-relaxed text-faint">
                       Kazanan topluluk puanlarının ortalamasıyla belirlenir; eşitlikte daha çok oy alan fotoğraf öne geçer.
                     </p>

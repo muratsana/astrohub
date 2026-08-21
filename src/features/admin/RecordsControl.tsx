@@ -537,6 +537,20 @@ function RecordEditor({
                   }
                   className="w-full rounded-card border border-border bg-surface-1 px-2.5 py-2 text-body-sm leading-relaxed text-foreground outline-none focus:border-primary"
                 />
+              ) : field.type === 'select' ? (
+                <Select
+                  id={`edit-${id}-${field.column}`}
+                  value={values[field.column] ?? ''}
+                  onChange={(e) =>
+                    setValues({ ...values, [field.column]: e.target.value })
+                  }
+                >
+                  {(field.options ?? []).map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </Select>
               ) : (
                 <Input
                   id={`edit-${id}-${field.column}`}

@@ -58,7 +58,7 @@ export function PageMeta({
   const blocks = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
 
   const imageUrl = image
-    ? image.url.startsWith('https://')
+    ? /^https?:\/\//i.test(image.url)
       ? image.url
       : SITE_URL
         ? `${SITE_URL}${image.url}`

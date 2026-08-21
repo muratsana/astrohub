@@ -3,6 +3,7 @@ import {
   listings as listingsSeed,
   type Listing,
   type ListingCondition,
+  normalizeListingCurrency,
 } from '@/features/marketplace/data';
 import {
   equipmentCategoryOrder,
@@ -20,6 +21,7 @@ interface RecentListingRow {
   title: string;
   category_id: string;
   price: number | string;
+  currency: string | null;
   city: string;
   condition: string;
   posted_at: string | null;
@@ -63,6 +65,7 @@ function mapRecentListingRow(row: RecentListingRow): Listing {
       ? row.category_id
       : equipmentCategoryOrder[0]) as EquipmentCategory,
     price: num(row.price),
+    currency: normalizeListingCurrency(row.currency),
     city: row.city,
     condition: (CONDITIONS.includes(row.condition as ListingCondition)
       ? row.condition
@@ -81,7 +84,7 @@ function mapRecentListingRow(row: RecentListingRow): Listing {
 }
 
 const SELECT =
-  'id, seller_id, slug, title, category_id, price, city, condition, posted_at, ' +
+  'id, seller_id, slug, title, category_id, price, currency, city, condition, posted_at, ' +
   'profiles!listings_seller_id_profiles_fkey(username, display_name), ' +
   'listing_photos(storage_path, position)';
 

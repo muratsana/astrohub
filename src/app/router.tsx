@@ -333,6 +333,12 @@ export const appRoutes = [
         ),
       },
       {
+        path: 'forum/kategori/:category',
+        element: route(
+          named(() => import('@/features/forum/ForumPage'), 'ForumPage')
+        ),
+      },
+      {
         path: 'forum/:slug',
         element: route(
           named(() => import('@/features/forum/ThreadPage'), 'ThreadPage')

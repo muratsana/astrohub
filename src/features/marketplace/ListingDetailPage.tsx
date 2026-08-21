@@ -1,16 +1,16 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { adminEditPath } from '@/components/admin/adminEditPath';
 import { Link, useParams } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Panel, SpecList, SpecRow } from '@/components/ui/Panel';
 import { Badge } from '@/components/ui/Badge';
-import { ButtonLink } from '@/components/ui/Button';
+import { Button, ButtonLink } from '@/components/ui/Button';
 import { Readout } from '@/components/ui/Readout';
 import { ListingPhotos } from './ListingPhotos';
 import { NotFoundPage } from '@/components/NotFoundPage';
 import { PageMeta } from '@/components/seo/PageMeta';
-import { breadcrumbJsonLd } from '@/lib/seo';
+import { absoluteUrl, breadcrumbJsonLd } from '@/lib/seo';
 import {
   equipmentCategoryLabels,
   getEquipmentBySlug,
@@ -18,7 +18,7 @@ import {
 } from '@/features/equipment/data';
 import { ReportButton } from '@/features/admin/ReportButton';
 import { MessageButton } from '@/features/social/MessageButton';
-import { relatedListings, priceRange } from './data';
+import { formatListingPrice, relatedListings, priceRange } from './data';
 import { useListingBySlug } from '@/services/content/listings';
 import { AdminEditLink } from '@/components/admin/AdminEditLink';
 
@@ -92,19 +92,28 @@ export function ListingDetailPage() {
     month: 'long',
     year: 'numeric',
   });
+  const priceLabel = formatListingPrice(listing.price, listing.currency);
+  const listingPath = `/ilan/${listing.slug}`;
+  const listingUrl = absoluteUrl(listingPath);
+  const shareDescription =
+    listing.description?.trim() ||
+    `${listing.title} — ${listing.city}, ${priceLabel}. Astrohub ikinci el ilanı.`;
 
   return (
     <>
       <PageMeta
         title={listing.title}
-        description={
-          listing.description ??
-          `${listing.title} — ${listing.city}, ${listing.price.toLocaleString('tr-TR')} ₺. Astrohub ikinci el ilanı.`
+        description={shareDescription}
+        canonicalPath={listingPath}
+        image={
+          listing.imageUrl
+            ? { url: listing.imageUrl, alt: `${listing.title} ilan fotoğrafı` }
+            : undefined
         }
         jsonLd={breadcrumbJsonLd([
           { name: 'Ana Sayfa', path: '/' },
           { name: 'İlanlar', path: '/ilanlar' },
-          { name: listing.title, path: `/ilan/${listing.slug}` },
+          { name: listing.title, path: listingPath },
         ])}
       />
 
@@ -211,16 +220,14 @@ export function ListingDetailPage() {
               <div className="grid grid-cols-2 gap-2">
                 <Readout
                   label="İstenen"
-                  value={listing.price.toLocaleString('tr-TR')}
-                  unit="₺"
+                  value={priceLabel}
                 />
                 <Readout
                   label="Kategori medyanı"
                   value={range ? range.median.toLocaleString('tr-TR') : '—'}
-                  unit={range ? '₺' : undefined}
                   hint={
                     range
-                      ? `${range.min.toLocaleString('tr-TR')}–${range.max.toLocaleString('tr-TR')} ₺ aralığı`
+                      ? `${formatListingPrice(range.min)}–${formatListingPrice(range.max)} aralığı`
                       : 'karşılaştırılacak ikinci ilan yok'
                   }
                   tone="cold"
@@ -248,6 +255,11 @@ export function ListingDetailPage() {
                 <MessageButton
                   targetUserId={listing.sellerId}
                   label="Satıcıya Mesaj Gönder"
+                />
+                <ListingSharePanel
+                  title={listing.title}
+                  description={shareDescription}
+                  url={listingUrl}
                 />
                 <p className="text-meta leading-snug text-faint">
                   İletişimin platform içinde kalması, anlaşmazlıkta kaydın
@@ -350,7 +362,7 @@ export function ListingDetailPage() {
                           {item.title}
                         </span>
                         <span className="tabular shrink-0 text-body-sm text-primary">
-                          {item.price.toLocaleString('tr-TR')} ₺
+                          {formatListingPrice(item.price, item.currency)}
                         </span>
                       </Link>
                     </li>
@@ -362,5 +374,61 @@ export function ListingDetailPage() {
         </div>
       </Container>
     </>
+  );
+}
+
+function ListingSharePanel({
+  title,
+  description,
+  url,
+}: {
+  title: string;
+  description: string;
+  url: string;
+}) {
+  const [copied, setCopied] = useState(false);
+  const encodedUrl = encodeURIComponent(url);
+  const encodedText = encodeURIComponent(`${title}\n${description}\n${url}`);
+
+  async function share() {
+    setCopied(false);
+    if (navigator.share) {
+      await navigator.share({ title, text: description, url });
+      return;
+    }
+    await navigator.clipboard.writeText(url);
+    setCopied(true);
+  }
+
+  return (
+    <div className="rounded-card border border-border bg-surface-2 px-2.5 py-2">
+      <div className="flex flex-wrap items-center gap-2">
+        <Button size="sm" variant="secondary" onClick={() => void share()}>
+          {copied ? 'Link kopyalandı' : 'İlanı paylaş'}
+        </Button>
+        <a
+          href={`https://wa.me/?text=${encodedText}`}
+          target="_blank"
+          rel="noreferrer"
+          className="text-meta font-medium text-muted-foreground transition-colors hover:text-primary"
+        >
+          WhatsApp
+        </a>
+        <a
+          href={`https://t.me/share/url?url=${encodedUrl}&text=${encodeURIComponent(title)}`}
+          target="_blank"
+          rel="noreferrer"
+          className="text-meta font-medium text-muted-foreground transition-colors hover:text-primary"
+        >
+          Telegram
+        </a>
+        <a
+          href={`mailto:?subject=${encodeURIComponent(title)}&body=${encodedText}`}
+          className="text-meta font-medium text-muted-foreground transition-colors hover:text-primary"
+        >
+          E-posta
+        </a>
+      </div>
+    </div>
   );
 }

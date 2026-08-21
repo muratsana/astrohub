@@ -36,6 +36,7 @@ import type { ContentSelection } from './select';
 interface AuthorRow {
   username: string;
   display_name: string | null;
+  avatar_path?: string | null;
 }
 
 interface PostRow {
@@ -84,6 +85,7 @@ function author(row: AuthorRow | null) {
   return {
     username: row?.username ?? 'bilinmiyor',
     displayName: row?.display_name ?? row?.username ?? 'Bilinmiyor',
+    avatarPath: row?.avatar_path ?? null,
   };
 }
 
@@ -150,9 +152,9 @@ const SELECT =
   'id, slug, title, body, category_id, created_at, last_activity_at, ' +
   'reply_count, view_count, pinned, locked, solution_post_id, labels, ' +
   'removal_reason, ' +
-  'profiles!forum_threads_author_id_profiles_fkey(username, display_name), ' +
+  'profiles!forum_threads_author_id_profiles_fkey(username, display_name, avatar_path), ' +
   'forum_posts(id, body, created_at, removal_reason, ' +
-  'profiles!forum_posts_author_id_profiles_fkey(username, display_name))';
+  'profiles!forum_posts_author_id_profiles_fkey(username, display_name, avatar_path))';
 
 async function fetchThreads(client: SupabaseClient): Promise<ForumThread[]> {
   const { data, error } = await client

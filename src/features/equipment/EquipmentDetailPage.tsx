@@ -13,7 +13,7 @@ import { breadcrumbJsonLd } from '@/lib/seo';
 import { PassbandStrip } from './PassbandStrip';
 import { useFilterSpectrum } from '@/services/content/filterSpectrum';
 import { usePhotoCatalog } from '@/services/content/photos';
-import { listings } from '@/features/marketplace/data';
+import { formatListingPrice, listings } from '@/features/marketplace/data';
 import {
   equipmentCategoryLabels,
   equipmentPath,
@@ -392,7 +392,7 @@ export function EquipmentDetailPage() {
                           {listing.title}
                         </span>
                         <span className="tabular shrink-0 text-meta text-primary">
-                          {listing.price.toLocaleString('tr-TR')} ₺
+                          {formatListingPrice(listing.price, listing.currency)}
                         </span>
                       </Link>
                     </li>

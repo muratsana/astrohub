@@ -4,6 +4,10 @@ import { Panel } from '@/components/ui/Panel';
 import { Button } from '@/components/ui/Button';
 import { useEquipmentCatalog } from '@/services/content/equipment';
 import { SLOT_LABELS, type SlotId } from '@/domain/setup/types';
+import {
+  formatListingPrice,
+  normalizeListingCurrency,
+} from '@/features/marketplace/data';
 import { profileAvatarUrl } from '@/services/content/profile';
 import {
   useFollowList,
@@ -140,9 +144,10 @@ function ListingsSection({ userId }: { userId: string | undefined }) {
               </span>
               <span className="tabular shrink-0 text-meta text-foreground">
                 {listing.price !== null
-                  ? listing.price.toLocaleString('tr-TR') +
-                    ' ' +
-                    (listing.currency ?? 'TL')
+                  ? formatListingPrice(
+                      listing.price,
+                      normalizeListingCurrency(listing.currency)
+                    )
                   : '—'}
               </span>
             </Link>

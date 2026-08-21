@@ -16,7 +16,7 @@ import {
   articleHref,
 } from '@/features/articles/data';
 import { news, newsCategoryLabels } from '@/features/news/data';
-import { listings } from '@/features/marketplace/data';
+import { formatListingPrice, listings } from '@/features/marketplace/data';
 
 /**
  * Global arama (§16.1). Tek kutu; fotoğraf, hedef, kullanıcı, ekipman,
@@ -216,7 +216,7 @@ export const searchIndex: SearchDoc[] = [
       'ilan',
       l.slug,
       l.title,
-      `${l.price.toLocaleString('tr-TR')} ₺ · ${l.city}`,
+      `${formatListingPrice(l.price, l.currency)} · ${l.city}`,
       `/ilan/${l.slug}`,
       [l.city, equipmentCategoryLabels[l.category], l.condition]
     )

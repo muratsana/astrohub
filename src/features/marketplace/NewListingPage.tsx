@@ -28,7 +28,13 @@ import {
   LISTING_PHOTO_LIMIT,
   uploadListingPhoto,
 } from '@/services/marketplace/photos';
-import type { ListingCondition } from './data';
+import {
+  formatListingPrice,
+  listingCurrencies,
+  listingCurrencyLabels,
+  type ListingCondition,
+  type ListingCurrency,
+} from './data';
 import { sanitizeText } from '@/lib/sanitize';
 import { useFlag } from '@/features/site/SiteConfigContext';
 import { FlagClosedNote } from '@/features/site/FlagClosedNote';
@@ -104,6 +110,7 @@ export function NewListingPage() {
   const [category, setCategory] = useState<EquipmentCategory>('optik-tup');
   const [equipmentSlug, setEquipmentSlug] = useState('');
   const [price, setPrice] = useState('');
+  const [currency, setCurrency] = useState<ListingCurrency>('TRY');
   /*
    * ŞEHİR ALANI `label` İLE DEĞİL `provinceName` İLE DOLUYOR.
    *
@@ -138,6 +145,7 @@ export function NewListingPage() {
   const [error, setError] = useState<string | null>(null);
   const [createdSlug, setCreatedSlug] = useState<string | null>(null);
   const [photos, setPhotos] = useState<SelectedListingPhoto[]>([]);
+  const [coverPhotoId, setCoverPhotoId] = useState<string | null>(null);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const photoUrls = useRef<string[]>([]);
 
@@ -183,6 +191,7 @@ export function NewListingPage() {
     title,
     category,
     price: Number(price.replace(',', '.')),
+    currency,
     city,
     district: district || undefined,
     condition,
@@ -243,14 +252,23 @@ export function NewListingPage() {
         `İlk ${slots} fotoğraf eklendi; sınır ${LISTING_PHOTO_LIMIT}.`
       );
     }
-    if (accepted.length > 0) setPhotos((current) => [...current, ...accepted]);
+    if (accepted.length > 0) {
+      setPhotos((current) => {
+        if (!coverPhotoId && current.length === 0) {
+          setCoverPhotoId(accepted[0].id);
+        }
+        return [...current, ...accepted];
+      });
+    }
   }
 
   function removePhoto(id: string) {
     setPhotos((current) => {
       const target = current.find((photo) => photo.id === id);
       if (target) revokePhotoUrl(target.url);
-      return current.filter((photo) => photo.id !== id);
+      const next = current.filter((photo) => photo.id !== id);
+      if (coverPhotoId === id) setCoverPhotoId(next[0]?.id ?? null);
+      return next;
     });
   }
 
@@ -270,11 +288,18 @@ export function NewListingPage() {
     try {
       const created = await createListing(input);
       publishedSlug = created.slug;
-      for (let index = 0; index < photos.length; index += 1) {
+      const orderedPhotos =
+        coverPhotoId === null
+          ? photos
+          : [
+              ...photos.filter((photo) => photo.id === coverPhotoId),
+              ...photos.filter((photo) => photo.id !== coverPhotoId),
+            ];
+      for (let index = 0; index < orderedPhotos.length; index += 1) {
         await uploadListingPhoto({
           listingId: created.id,
           userId: user.id,
-          file: photos[index].file,
+          file: orderedPhotos[index].file,
           position: index,
         });
       }
@@ -508,11 +533,20 @@ export function NewListingPage() {
                               >
                                 Sil
                               </button>
-                              {index === 0 && (
-                                <span className="absolute left-2 top-2 rounded-card border border-primary/50 bg-background/90 px-2 py-1 text-meta text-primary">
-                                  Kapak
-                                </span>
-                              )}
+                              <button
+                                type="button"
+                                onClick={() => setCoverPhotoId(photo.id)}
+                                className={cn(
+                                  'absolute left-2 top-2 rounded-card border bg-background/90 px-2 py-1 text-meta transition-colors',
+                                  coverPhotoId === photo.id
+                                    ? 'border-primary/50 text-primary'
+                                    : 'border-border-strong text-muted-foreground hover:border-primary hover:text-primary'
+                                )}
+                              >
+                                {coverPhotoId === photo.id
+                                  ? 'Vitrin'
+                                  : 'Vitrin yap'}
+                              </button>
                             </div>
                             <div className="px-2.5 py-2">
                               <p className="truncate text-meta font-medium text-foreground">
@@ -531,17 +565,34 @@ export function NewListingPage() {
 
                 <Panel title="Fiyat ve teslim">
                   <div className="grid gap-3 sm:grid-cols-3">
-                    <Field label="Fiyat (₺)" htmlFor="l-price">
-                      <Input
-                        id="l-price"
-                        inputMode="numeric"
-                        value={price}
-                        placeholder="48500"
-                        onChange={(e) =>
-                          setPrice(e.target.value.replace(/[^\d.,]/g, ''))
-                        }
-                      />
-                    </Field>
+                    <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_7rem]">
+                      <Field label="Fiyat" htmlFor="l-price">
+                        <Input
+                          id="l-price"
+                          inputMode="numeric"
+                          value={price}
+                          placeholder="48500"
+                          onChange={(e) =>
+                            setPrice(e.target.value.replace(/[^\d.,]/g, ''))
+                          }
+                        />
+                      </Field>
+                      <Field label="Para" htmlFor="l-currency">
+                        <Select
+                          id="l-currency"
+                          value={currency}
+                          onChange={(e) =>
+                            setCurrency(e.target.value as ListingCurrency)
+                          }
+                        >
+                          {listingCurrencies.map((item) => (
+                            <option key={item} value={item}>
+                              {listingCurrencyLabels[item]}
+                            </option>
+                          ))}
+                        </Select>
+                      </Field>
+                    </div>
 
                     <Field label="Konum (il / ilçe)" htmlFor="l-location">
                       {/*
@@ -679,8 +730,8 @@ export function NewListingPage() {
                   </p>
                   <p className="tabular mt-1.5 font-display text-readout-sm font-bold leading-none text-primary">
                     {Number.isFinite(input.price) && input.price > 0
-                      ? `${input.price.toLocaleString('tr-TR')} ₺`
-                      : '— ₺'}
+                      ? formatListingPrice(input.price, input.currency)
+                      : `— ${listingCurrencyLabels[input.currency]}`}
                   </p>
                   <p className="tabular mt-1 truncate text-meta text-muted-foreground">
                     {city || 'Şehir'} · {condition}

@@ -11,8 +11,10 @@ import {
   listings as listingsSeed,
   type Listing,
   type ListingCondition,
+  type ListingCurrency,
   type ListingStatus,
   getListingBySlug,
+  normalizeListingCurrency,
 } from '@/features/marketplace/data';
 /* Taksonomiden — kataloğun kendisi burada gerekmiyor ve onu çekmek
    ana sayfa paketine 80 kB ekliyordu (bkz. taxonomy.ts). */
@@ -52,6 +54,7 @@ interface ListingRow {
   title: string;
   category_id: string;
   price: number | string;
+  currency: string | null;
   city: string;
   district: string | null;
   condition: string;
@@ -115,6 +118,7 @@ export function mapListingRow(row: ListingRow): Listing {
       ? row.category_id
       : equipmentCategoryOrder[0]) as EquipmentCategory,
     price: num(row.price),
+    currency: normalizeListingCurrency(row.currency),
     city: row.city,
     district: row.district ?? undefined,
     condition: (CONDITIONS.includes(row.condition as ListingCondition)
@@ -146,7 +150,7 @@ export function mapListingRow(row: ListingRow): Listing {
 }
 
 const SELECT =
-  'id, seller_id, slug, title, category_id, price, city, district, condition, has_invoice, ' +
+  'id, seller_id, slug, title, category_id, price, currency, city, district, condition, has_invoice, ' +
   'shipping_ok, negotiable, description, includes, status, sale_state, posted_at, ' +
   'profiles!listings_seller_id_profiles_fkey(username, display_name), ' +
   'equipment_models(slug), listing_photos(storage_path, position)';
@@ -410,6 +414,7 @@ export interface NewListingInput {
   title: string;
   category: EquipmentCategory;
   price: number;
+  currency: ListingCurrency;
   city: string;
   /** İlçe adı — isteğe bağlı; `DistrictSelect` kanonik yazımı veriyor. */
   district?: string;
@@ -446,6 +451,9 @@ export function validateListing(input: NewListingInput): string | null {
   }
   if (input.price > 10_000_000) {
     return 'Fiyat çok yüksek görünüyor; kuruş yerine lira girdiğinizden emin olun.';
+  }
+  if (normalizeListingCurrency(input.currency) !== input.currency) {
+    return 'Para birimi TL, USD veya EUR olmalı.';
   }
   if (input.city.trim().length < 2) {
     return 'Şehir gerekli — alıcı elden teslim olup olmadığını bilmek ister.';
@@ -495,6 +503,7 @@ export async function createListing(
       category_id: input.category,
       model_id: modelId,
       price: input.price,
+      currency: input.currency,
       city: sanitizeText(input.city, { maxLength: 60 }),
       district: input.district
         ? sanitizeText(input.district, { maxLength: 60 })

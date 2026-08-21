@@ -33,6 +33,7 @@ import {
 import { contentStatusLabels } from '@/domain/content/status';
 import {
   listingStatusLabels,
+  formatListingPrice,
   type ListingStatus,
 } from '@/features/marketplace/data';
 import { photoStatusLabels, type PhotoStatus } from '@/features/photos/types';
@@ -754,7 +755,7 @@ export function PanelPage() {
                         : undefined
                     }
                     title={listing.title}
-                    meta={`${listing.price.toLocaleString('tr-TR')} ₺ · ${listing.city}`}
+                    meta={`${formatListingPrice(listing.price, listing.currency)} · ${listing.city}`}
                     note="pazaryerinde görünmüyor"
                     badge={
                       listing.status && (

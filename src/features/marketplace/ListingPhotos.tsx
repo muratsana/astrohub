@@ -142,6 +142,27 @@ export function ListingPhotos({ listing }: { listing: Listing }) {
     }
   }
 
+  async function makeCover() {
+    if (active === 0 || !current) return;
+    const yeni = [
+      current,
+      ...photos.filter((photo) => photo.id !== current.id),
+    ];
+    setPhotos(yeni);
+    setActive(0);
+    setBusy(true);
+    setError(null);
+    try {
+      await reorderListingPhotos(yeni.map((p) => p.id));
+      load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Vitrin fotoğrafı kaydedilemedi');
+      load();
+    } finally {
+      setBusy(false);
+    }
+  }
+
   /* DEĞİŞTİR (A09): eski fotoğrafın yerine yenisini koyar. Önce yeni
      yükleniyor, sonra eski siliniyor — ters sırada bir yükleme hatası
      fotoğrafı büsbütün kaybettirirdi. */
@@ -297,6 +318,16 @@ export function ListingPhotos({ listing }: { listing: Listing }) {
                     ▶
                   </Button>
                 </span>
+              )}
+              {photos.length > 1 && (
+                <Button
+                  size="sm"
+                  variant={active === 0 ? 'secondary' : 'ghost'}
+                  disabled={busy || active === 0}
+                  onClick={() => void makeCover()}
+                >
+                  {active === 0 ? 'Vitrin fotoğrafı' : 'Vitrin yap'}
+                </Button>
               )}
               <Button
                 size="sm"

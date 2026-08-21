@@ -9,6 +9,35 @@ import {
 /** İlan tohum verisi (§7.13). Gerçek ilan akışı + moderasyon Faz 1.8'de. */
 
 export type ListingCondition = 'Sıfır gibi' | 'Çok iyi' | 'İyi' | 'Yıpranmış';
+export type ListingCurrency = 'TRY' | 'USD' | 'EUR';
+
+export const listingCurrencies = ['TRY', 'USD', 'EUR'] as const;
+
+export const listingCurrencyLabels: Record<ListingCurrency, string> = {
+  TRY: 'TL',
+  USD: 'USD',
+  EUR: 'EUR',
+};
+
+export function normalizeListingCurrency(value: unknown): ListingCurrency {
+  return listingCurrencies.includes(value as ListingCurrency)
+    ? (value as ListingCurrency)
+    : 'TRY';
+}
+
+export function formatListingPrice(
+  price: number,
+  currency: ListingCurrency = 'TRY'
+): string {
+  const normalized = normalizeListingCurrency(currency);
+  if (normalized === 'TRY') return `${price.toLocaleString('tr-TR')} TL`;
+
+  return new Intl.NumberFormat('tr-TR', {
+    style: 'currency',
+    currency: normalized,
+    maximumFractionDigits: Number.isInteger(price) ? 0 : 2,
+  }).format(price);
+}
 
 /**
  * İlan durumu artık ORTAK KÜMENİN kendisi (FAZ 3).
@@ -49,7 +78,8 @@ export interface Listing {
   slug: string;
   title: string;
   category: EquipmentCategory;
-  price: number; // TL
+  price: number;
+  currency?: ListingCurrency;
   city: string;
   /**
    * İlçe adı — `districts` tablosundaki kanonik yazım.
