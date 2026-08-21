@@ -235,7 +235,7 @@ export function SitesPage() {
     direction: SortDirection;
   }>({ key: 'distance', direction: 'asc' });
   const [active, setActive] = useState<string | null>(null);
-  const [showAll, setShowAll] = useState(false);
+  const [showAll, setShowAll] = useState(true);
   const [allowed, setAllowed] = useState(storedConsent);
   const [opacity, setOpacity] = useState(55);
   const [baseMode, setBaseMode] = useState<BaseMode>('harita');
@@ -650,11 +650,12 @@ export function SitesPage() {
                   />
                 ) : live && mapProvider === 'lightpollutionmap' ? (
                   <iframe
-                    title="Light Pollution Map"
+                    title="LightPollutionMap"
                     src={lpmFrameUrl}
                     className="h-full w-full border-0"
                     loading="lazy"
                     referrerPolicy="no-referrer"
+                    allow="geolocation"
                     allowFullScreen
                     sandbox="allow-forms allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"
                   />
@@ -736,96 +737,100 @@ export function SitesPage() {
                       </option>
                     </Select>
 
-                    {mapProvider === 'astrohub' ? (
-                      <>
-                        <label htmlFor="site-base-mode" className="sr-only">
-                          Harita altlığı
-                        </label>
-                        <Select
-                          id="site-base-mode"
-                          value={baseMode}
-                          onChange={(event) =>
-                            setBaseMode(event.target.value as BaseMode)
-                          }
-                          width="auto"
-                          className="h-8 text-meta"
-                        >
-                          <option value="harita">Altlık: Harita</option>
-                          <option value="uydu">Altlık: Uydu</option>
-                        </Select>
-
-                        <label htmlFor="site-layer-mode" className="sr-only">
-                          Harita katmanı
-                        </label>
-                        <Select
-                          id="site-layer-mode"
-                          value={layerMode}
-                          onChange={(event) =>
-                            setLayerMode(event.target.value as LayerMode)
-                          }
-                          width="auto"
-                          className="h-8 text-meta"
-                        >
-                          <option value="isik">Katman: Işık</option>
-                          <option value="yok">Katman: Yok</option>
-                        </Select>
-
-                        {overlay && (
-                          <label
-                            htmlFor="site-opacity"
-                            className="flex h-8 items-center gap-2 rounded-card border border-border bg-background px-2"
-                          >
-                            <span className="text-meta text-muted-foreground">
-                              Saydamlık
-                            </span>
-                            <input
-                              id="site-opacity"
-                              type="range"
-                              min={OPACITY_RANGE.min}
-                              max={OPACITY_RANGE.max}
-                              step={5}
-                              value={opacity}
-                              onChange={(event) =>
-                                setOpacity(Number(event.target.value))
-                              }
-                              className="block w-20 accent-primary"
-                            />
-                          </label>
-                        )}
-
-                        <label className="flex h-8 items-center gap-2 rounded-card border border-border bg-background px-2 text-meta text-muted-foreground">
-                          <input
-                            type="checkbox"
-                            checked={showMeasurements}
-                            onChange={(event) =>
-                              setShowMeasurements(event.target.checked)
-                            }
-                            className="accent-primary"
-                          />
-                          Topluluk SQM
-                        </label>
-
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          onClick={toggleMapScope}
-                        >
-                          {showAll ? 'Tek pini göster' : 'Tümünü göster'}
-                        </Button>
-                      </>
-                    ) : (
-                      <a
-                        href={lpmFrameUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex h-8 shrink-0 items-center justify-center rounded-card border border-border bg-background px-3 text-meta font-medium text-foreground transition-colors hover:border-primary hover:text-primary"
+                    <label htmlFor="site-base-mode" className="sr-only">
+                      Harita altlığı
+                    </label>
+                    {mapProvider === 'astrohub' && (
+                      <Select
+                        id="site-base-mode"
+                        value={baseMode}
+                        onChange={(event) =>
+                          setBaseMode(event.target.value as BaseMode)
+                        }
+                        width="auto"
+                        className="h-8 text-meta"
                       >
-                        Kaynakta aç
-                      </a>
+                        <option value="harita">Altlık: Harita</option>
+                        <option value="uydu">Altlık: Uydu</option>
+                      </Select>
                     )}
+
+                    <label htmlFor="site-layer-mode" className="sr-only">
+                      Harita katmanı
+                    </label>
+                    {mapProvider === 'astrohub' && (
+                      <Select
+                        id="site-layer-mode"
+                        value={layerMode}
+                        onChange={(event) =>
+                          setLayerMode(event.target.value as LayerMode)
+                        }
+                        width="auto"
+                        className="h-8 text-meta"
+                      >
+                        <option value="isik">Katman: Işık</option>
+                        <option value="yok">Katman: Yok</option>
+                      </Select>
+                    )}
+
+                    {mapProvider === 'astrohub' && overlay && (
+                      <label
+                        htmlFor="site-opacity"
+                        className="flex h-8 items-center gap-2 rounded-card border border-border bg-background px-2"
+                      >
+                        <span className="text-meta text-muted-foreground">
+                          Saydamlık
+                        </span>
+                        <input
+                          id="site-opacity"
+                          type="range"
+                          min={OPACITY_RANGE.min}
+                          max={OPACITY_RANGE.max}
+                          step={5}
+                          value={opacity}
+                          onChange={(event) =>
+                            setOpacity(Number(event.target.value))
+                          }
+                          className="block w-20 accent-primary"
+                        />
+                      </label>
+                    )}
+
+                    {mapProvider === 'astrohub' && (
+                      <label className="flex h-8 items-center gap-2 rounded-card border border-border bg-background px-2 text-meta text-muted-foreground">
+                        <input
+                          type="checkbox"
+                          checked={showMeasurements}
+                          onChange={(event) =>
+                            setShowMeasurements(event.target.checked)
+                          }
+                          className="accent-primary"
+                        />
+                        Topluluk SQM
+                      </label>
+                    )}
+
+                    {mapProvider === 'astrohub' && (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={toggleMapScope}
+                      >
+                        {showAll ? 'Tek pini göster' : 'Tümünü göster'}
+                      </Button>
+                    )}
+
+                    <a
+                      href={lpmFrameUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex h-8 shrink-0 items-center justify-center rounded-card border border-border bg-background px-3 text-meta font-medium text-foreground transition-colors hover:border-primary hover:text-primary"
+                    >
+                      LightPollutionMap
+                    </a>
                   </div>
 
-                  {mapProvider === 'astrohub' && live ? (
+                  {live && mapProvider === 'astrohub' ? (
                     <div className="flex flex-wrap items-center justify-end gap-1.5">
                       <Button
                         size="sm"
@@ -866,8 +871,9 @@ export function SitesPage() {
                     </div>
                   ) : (
                     <p className="text-meta text-muted-foreground">
-                      Katmanlar ve cadde/uydu seçenekleri gömülü haritanın kendi
-                      panelinde.
+                      {live
+                        ? 'LightPollutionMap kendi paneliyle gömülü açılır.'
+                        : 'Haritayı yüklemek için dış döşeme izni gerekir.'}
                     </p>
                   )}
                 </div>
@@ -875,8 +881,8 @@ export function SitesPage() {
                 {live && (
                   <p className="mt-2 text-[0.62rem] leading-snug text-muted-foreground">
                     {mapProvider === 'astrohub'
-                      ? credit
-                      : 'Gömülü kaynak: lightpollutionmap.info · VIIRS, World Atlas, SQM/SQC ve kendi araç panelleri üçüncü taraf uygulama içinde çalışır.'}
+                      ? `${credit} · Gözlem noktaları ve Topluluk SQM pinleri bu haritada görünür.`
+                      : 'Gömülü kaynak: lightpollutionmap.info · Sağlayıcı tarayıcıda izin verirse katman ve analiz kontrolleri kendi panelinde çalışır.'}
                   </p>
                 )}
               </div>

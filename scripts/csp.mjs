@@ -123,8 +123,18 @@ const DIRECTIVES = {
     'https://air-quality-api.open-meteo.com',
   ],
 
-  /* YouTube yayın gömme (nocookie) ve Spotify parça gömme. */
-  'frame-src': ['https://www.youtube-nocookie.com', 'https://open.spotify.com'],
+  /*
+   * YouTube yayın, Spotify parça ve saha sayfasında opsiyonel
+   * LightPollutionMap gömüsü. `.app` sağlayıcı tarafında X-Frame-Options ile
+   * kapanmıştı; `.info` sürümü 2026-08-21'de HEAD kontrolünde frame başlığı
+   * döndürmediği için yalnızca burada izinli.
+   */
+  'frame-src': [
+    'https://www.youtube-nocookie.com',
+    'https://open.spotify.com',
+    'https://www.lightpollutionmap.info',
+    'https://lightpollutionmap.info',
+  ],
 
   /* Servis çalışanı. */
   'worker-src': ["'self'"],
