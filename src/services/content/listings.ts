@@ -424,6 +424,11 @@ export interface NewListingInput {
   equipmentSlug?: string;
 }
 
+export interface CreatedListing {
+  id: string;
+  slug: string;
+}
+
 /**
  * Form doğrulaması.
  *
@@ -457,8 +462,10 @@ async function client(): Promise<SupabaseClient> {
   return promise;
 }
 
-/** İlanı yayımlar ve slug'ını döndürür. */
-export async function createListing(input: NewListingInput): Promise<string> {
+/** İlanı yayımlar ve fotoğraf yükleme akışı için kimliğiyle birlikte döndürür. */
+export async function createListing(
+  input: NewListingInput
+): Promise<CreatedListing> {
   const problem = validateListing(input);
   if (problem) throw new Error(problem);
 
@@ -479,34 +486,42 @@ export async function createListing(input: NewListingInput): Promise<string> {
     modelId = (data as { id: string } | null)?.id ?? null;
   }
 
-  const { error } = await supabase.from('listings').insert({
-    slug,
-    seller_id: input.sellerId,
-    title,
-    category_id: input.category,
-    model_id: modelId,
-    price: input.price,
-    city: sanitizeText(input.city, { maxLength: 60 }),
-    district: input.district
-      ? sanitizeText(input.district, { maxLength: 60 })
-      : null,
-    condition: input.condition,
-    has_invoice: input.hasInvoice,
-    shipping_ok: input.shippingOk,
-    negotiable: input.negotiable,
-    description: sanitizeText(input.description, {
-      multiline: true,
-      maxLength: 5000,
-    }),
-    includes: input.includes
-      .map((line) => sanitizeText(line, { maxLength: 120 }))
-      .filter(Boolean),
-    status: 'yayinda',
-    posted_at: new Date().toISOString(),
-  });
+  const { data, error } = await supabase
+    .from('listings')
+    .insert({
+      slug,
+      seller_id: input.sellerId,
+      title,
+      category_id: input.category,
+      model_id: modelId,
+      price: input.price,
+      city: sanitizeText(input.city, { maxLength: 60 }),
+      district: input.district
+        ? sanitizeText(input.district, { maxLength: 60 })
+        : null,
+      condition: input.condition,
+      has_invoice: input.hasInvoice,
+      shipping_ok: input.shippingOk,
+      negotiable: input.negotiable,
+      description: sanitizeText(input.description, {
+        multiline: true,
+        maxLength: 5000,
+      }),
+      includes: input.includes
+        .map((line) => sanitizeText(line, { maxLength: 120 }))
+        .filter(Boolean),
+      status: 'yayinda',
+      posted_at: new Date().toISOString(),
+    })
+    .select('id, slug')
+    .single();
 
   if (error) throw new Error(error.message);
-  return slug;
+  const created = data as CreatedListing | null;
+  if (!created?.id || !created.slug) {
+    throw new Error('İlan oluşturuldu ama kayıt kimliği okunamadı.');
+  }
+  return created;
 }
 
 /**

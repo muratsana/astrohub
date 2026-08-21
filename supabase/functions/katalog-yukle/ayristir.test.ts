@@ -10,7 +10,7 @@ import {
   type Nesne,
 } from './ayristir.ts';
 import { sinirlariAyristir, takimyildizBul } from './takimyildiz.ts';
-import { VIZIER_KAYNAKLAR } from './kaynaklar.ts';
+import { VIZIER_KAYNAKLAR, vizierUrl } from './kaynaklar.ts';
 
 /*
  * Örnekler gerçek kaynaklardan kesildi — uydurulmuş bir CSV, biçim
@@ -54,8 +54,21 @@ const SH2_TSV = [
   '350.200000\t+61.200000\t 155\t  50\t2\t3\t2',
 ].join('\n');
 
+const ABELL_TSV = [
+  '#Column\tName',
+  '_RAJ2000\t_DEJ2000\tName\tPNG\tPK',
+  'deg\tdeg\t \t \t ',
+  '------\t------\t-------------\t----------\t---------',
+  '246.8892913\t+27.9096517\tA 39         \t047.0+42.4\t 47+42 1',
+  '263.8973977\t-27.4009351\tAl 2-J       \t000.1+02.6\t',
+  '299.3825534\t-21.6102576\tA 66         \t019.8-23.7\t 19-23 1',
+].join('\n');
+
 const sinirlar = sinirlariAyristir(SINIR);
 const sh2Kaynak = VIZIER_KAYNAKLAR.find((k) => k.onek === 'Sh2')!;
+const abellKaynak = VIZIER_KAYNAKLAR.find(
+  (k) => k.raporAnahtari === 'abell_pn'
+)!;
 
 describe('slugUret', () => {
   it('boşlukları atar, kodu küçültür', () => {
@@ -143,6 +156,16 @@ describe('vizierAyristir', () => {
     /* Sütun adları yer değişti; değerler değişmedi. Ada bakan okuyucu
        artık "Diam" sütunundan numarayı okumalı. */
     expect(sonuc[0].katalog).toBe('Sh2-150');
+  });
+
+  it('Abell gezegenimsi bulutsularında numarayı isimden çıkarır', () => {
+    const sonuc = vizierAyristir(abellKaynak, ABELL_TSV, sinirlar);
+    expect(sonuc.map((n) => n.katalog)).toEqual(['Abell 39', 'Abell 66']);
+    expect(sonuc.every((n) => n.tur === 'gezegenimsi-bulutsu')).toBe(true);
+  });
+
+  it('Abell kaynağını VizieR tarafında A adlarıyla sınırlar', () => {
+    expect(vizierUrl(abellKaynak)).toContain('&Name=A*');
   });
 });
 

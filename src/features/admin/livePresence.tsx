@@ -33,13 +33,16 @@ export function LivePresenceTracker() {
       const supabase = await promise;
       if (!alive) return;
 
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('profiles')
         .select('username, display_name, city, district')
         .eq('id', user.id)
         .maybeSingle();
 
       if (!alive) return;
+      if (error) {
+        console.warn('canlı varlık profil konumu okunamadı', error.message);
+      }
       const profile = (data ?? {}) as ProfileLocationRow;
       const channel = supabase.channel(LIVE_PRESENCE_TOPIC, {
         config: {

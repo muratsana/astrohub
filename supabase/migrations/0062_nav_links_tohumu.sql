@@ -57,7 +57,7 @@ select v.menu, v.label, v.path, v.position
     ('header', 'Araçlar',     '/araclar',     7),
     ('header', 'Forum',       '/forum',       8),
     ('header', 'Saha',        '/saha',        9),
-    ('header', 'ALLSKY',      '/allsky',      10)
+    ('header', 'Allsky',      '/allsky',      10)
   ) as v(menu, label, path, position)
  where not exists (
    select 1 from public.nav_links where menu = 'header'

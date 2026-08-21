@@ -135,6 +135,20 @@ describe('ham HTML bloğu', () => {
     expect(container.querySelector('[data-ah-fig="kare-sayisi"]')).toBeTruthy();
     expect(container.querySelector('script')).toBeNull();
   });
+
+  it('doküman modundaki HTMLi izole çerçevede çizer', () => {
+    const { container } = ciz([
+      {
+        type: 'html',
+        mode: 'document',
+        html: '<!doctype html><html><head><style>.grid{display:grid}</style></head><body><script>alert(1)</script><main class="grid">Kaynak</main></body></html>',
+      },
+    ]);
+    const frame = container.querySelector('iframe');
+    expect(frame).toHaveAttribute('sandbox', 'allow-same-origin');
+    expect(frame?.getAttribute('srcdoc')).toContain('.grid{display:grid}');
+    expect(frame?.getAttribute('srcdoc')).not.toContain('<script>');
+  });
 });
 
 describe('satır içi biçim', () => {

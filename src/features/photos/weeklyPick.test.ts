@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   formatPhotoWeekLabel,
+  isoWeekFromDateString,
   isoWeekLabelFromDate,
   photoWeekLabelFromDateString,
   photoWeekArchive,
@@ -37,6 +38,14 @@ describe('haftanın fotoğrafı etiketi', () => {
     expect(isoWeekLabelFromDate(new Date('2026-01-01T12:00:00Z'))).toBe(
       '2026-01'
     );
+  });
+
+  it('tarih değerinden ISO yıl ve hafta numarasını birlikte üretir', () => {
+    expect(isoWeekFromDateString('2026-08-21T12:00:00')).toEqual({
+      isoYear: 2026,
+      isoWeek: 34,
+      label: '2026-34',
+    });
   });
 
   it('yayın tarihinden hafta rozeti üretir', () => {

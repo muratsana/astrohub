@@ -88,7 +88,7 @@ describe('navigasyon bağlantıları', () => {
       'Araçlar',
       'Forum',
       'Saha',
-      'ALLSKY',
+      'Allsky',
     ]);
   });
 

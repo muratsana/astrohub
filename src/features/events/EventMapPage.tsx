@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { adminEditPath } from '@/components/admin/adminEditPath';
-import { Link, useNavigate } from 'react-router';
+import { Link } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Panel } from '@/components/ui/Panel';
@@ -9,7 +9,6 @@ import { Select } from '@/components/ui/Input';
 import { Button, ButtonLink, ExternalButtonLink } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SortableHeader } from '@/components/ui/SortableHeader';
-import { LeadCard } from '@/components/ui/EditorialList';
 import { AdminEditLink } from '@/components/admin/AdminEditLink';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { PhotoPlaceholder } from '@/components/media/PhotoPlaceholder';
@@ -174,7 +173,6 @@ function EventActions({
 }
 
 export function EventMapPage() {
-  const navigate = useNavigate();
   const { location, permission, requestDeviceLocation } = useLocationContext();
   const { theme } = useTheme();
   const [active, setActive] = useState<string | null>(null);
@@ -197,6 +195,7 @@ export function EventMapPage() {
   }>({ key: 'distance', direction: 'asc' });
   const [center, setCenter] = useState<LatLng>(TURKEY_CENTER);
   const [zoom, setZoom] = useState(TURKEY_ZOOM);
+  const [mapExpanded, setMapExpanded] = useState(false);
   const featuredEvents = useFeatured('etkinlik');
 
   useEffect(() => {
@@ -214,15 +213,6 @@ export function EventMapPage() {
     [located, sort]
   );
 
-  useEffect(() => {
-    setActive((current) => {
-      if (current && located.some(({ item }) => item.slug === current)) {
-        return current;
-      }
-      return located[0]?.item.slug ?? null;
-    });
-  }, [located]);
-
   const featuredItem =
     applyFeatured(
       catalog.items,
@@ -230,11 +220,26 @@ export function EventMapPage() {
       (event) => event.slug,
       1
     )[0] ?? null;
-  const featuredDistance = featuredItem
-    ? located.find(({ item }) => item.slug === featuredItem.slug)?.distanceKm
-    : undefined;
+
+  useEffect(() => {
+    setActive((current) => {
+      if (current && located.some(({ item }) => item.slug === current)) {
+        return current;
+      }
+      if (
+        featuredItem &&
+        located.some(({ item }) => item.slug === featuredItem.slug)
+      ) {
+        return featuredItem.slug;
+      }
+      return located[0]?.item.slug ?? null;
+    });
+  }, [featuredItem, located]);
+
   const selected =
     located.find(({ item }) => item.slug === active) ?? located[0];
+  const selectedIsFeatured =
+    selected && featuredItem ? selected.item.slug === featuredItem.slug : false;
   const mapItems = showAll ? located : selected ? [selected] : [];
   const overlay = layerMode === 'isik' ? OVERLAY_SOURCES[0] : undefined;
   const base =
@@ -282,6 +287,26 @@ export function EventMapPage() {
     setShowAll(true);
     setCenter(TURKEY_CENTER);
     setZoom(TURKEY_ZOOM);
+  }
+
+  function resetMapView() {
+    setFollowDevice(false);
+    if (showAll || !selected?.item.coords) {
+      setCenter(TURKEY_CENTER);
+      setZoom(TURKEY_ZOOM);
+      return;
+    }
+    setCenter({
+      lat: selected.item.coords.latitude,
+      lng: selected.item.coords.longitude,
+    });
+    setZoom(7);
+  }
+
+  function changeMapZoom(delta: number) {
+    setZoom((current) =>
+      Math.min(ZOOM_RANGE.max, Math.max(ZOOM_RANGE.min, current + delta))
+    );
   }
 
   function changeSort(key: EventSortKey) {
@@ -332,192 +357,330 @@ export function EventMapPage() {
 
         <EventViews />
 
-        {featuredItem && (
-          <LeadCard
-            label="Öne çıkan"
-            item={{
-              slug: featuredItem.slug,
-              to: `/etkinlik/${featuredItem.slug}`,
-              title: featuredItem.title,
-              summary: featuredItem.description,
-              category: featuredItem.city,
-              meta: formatEventDateRange(
-                featuredItem.startsAt,
-                featuredItem.endsAt
-              ),
-              tint: featuredItem.gradient,
-              imageUrl: featuredItem.image?.url,
-              imageCredit: featuredItem.image
-                ? `${featuredItem.image.credit} · ${featuredItem.image.licence}`
-                : undefined,
-              footer:
-                featuredDistance === undefined ? undefined : (
-                  <span className="tabular rounded-card border border-border bg-background px-2.5 py-1.5 text-body-sm text-cold">
-                    {formatLocalDistance(featuredDistance)}
-                  </span>
-                ),
-            }}
-          />
-        )}
-
         <div className="space-y-4">
-          {/* ───────── Harita ───────── */}
-          <Panel
-            title="Etkinlik haritası"
-            status={`${mapItems.length} etkinlik`}
-            bodyClassName="p-0"
+          <div
+            className={cn(
+              'grid gap-4 lg:items-stretch',
+              mapExpanded
+                ? 'lg:grid-cols-1'
+                : 'lg:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.85fr)]'
+            )}
           >
-            <div className="relative h-[70vh] min-h-[520px] overflow-hidden rounded-b-card bg-surface-2">
-              <Button
-                size="sm"
-                variant="secondary"
-                className="absolute left-2 top-2 z-10 bg-background/90 backdrop-blur-sm"
-                onClick={locateOnMap}
-                disabled={permission === 'pending'}
+            {/* ───────── Harita ───────── */}
+            <Panel
+              title="Etkinlik haritası"
+              status={`${mapItems.length} etkinlik`}
+              className="flex h-full min-h-0 flex-col"
+              bodyClassName="min-h-0 flex-1 p-0"
+            >
+              <div
+                className={cn(
+                  'relative overflow-hidden rounded-b-card bg-surface-2',
+                  mapExpanded
+                    ? 'h-[78vh] min-h-[620px]'
+                    : 'h-[54vh] min-h-[460px] lg:h-[560px]'
+                )}
               >
-                {permission === 'pending' ? 'Konum alınıyor' : 'Konumumu bul'}
-              </Button>
-              {!hasNetworkAccess ? (
-                <div className="grid h-full place-items-center p-6 text-center text-body-sm text-muted-foreground">
-                  Bu önizleme dış harita isteği yapmıyor.
-                </div>
-              ) : live ? (
-                <TileMap
-                  label="Etkinlik haritası — sürükleyerek ve ok tuşlarıyla gezin"
-                  className={cn(
-                    'h-full w-full',
-                    theme === 'field' &&
-                      '[filter:sepia(1)_saturate(5)_hue-rotate(-38deg)_brightness(0.6)]'
-                  )}
-                  center={center}
-                  zoom={zoom}
-                  minZoom={ZOOM_RANGE.min}
-                  maxZoom={ZOOM_RANGE.max}
-                  onCenterChange={setCenter}
-                  onZoomChange={setZoom}
-                  base={base}
-                  overlay={overlay}
-                  overlayOpacity={opacity / 100}
-                  marker={{ lat: location.latitude, lng: location.longitude }}
-                  markers={mapItems.map(({ item, distanceKm }) => ({
-                    id: item.slug,
-                    point: {
-                      lat: item.coords!.latitude,
-                      lng: item.coords!.longitude,
-                    },
-                    label: `${item.title}, ${item.city}, ${formatLocalDistance(distanceKm)} uzaklıkta`,
-                    popup: (
-                      <>
-                        <span className="block truncate text-body-sm font-medium text-foreground">
-                          {item.title}
-                        </span>
-                        <span className="mt-1 block truncate text-meta text-muted-foreground">
-                          {item.city} ·{' '}
-                          {formatEventDateRange(item.startsAt, item.endsAt)}
-                        </span>
-                        <span className="mt-1 block text-meta text-cold">
-                          {formatLocalDistance(distanceKm)}
-                        </span>
-                      </>
-                    ),
-                    active: active === item.slug,
-                    onSelect: () => navigate(`/etkinlik/${item.slug}`),
-                  }))}
-                />
-              ) : (
-                <div className="grid h-full place-items-center p-6 text-center">
-                  <div className="max-w-md">
-                    <p className="text-body-sm leading-relaxed text-muted-foreground">
-                      Harita CARTO döşemelerini yükler; IP adresiniz ve
-                      baktığınız bölge sağlayıcıya iletilir.
-                    </p>
-                    <Button size="sm" className="mt-3" onClick={allow}>
-                      Haritayı yükle
-                    </Button>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="absolute left-2 top-2 z-10 bg-background/90 backdrop-blur-sm"
+                  onClick={locateOnMap}
+                  disabled={permission === 'pending'}
+                >
+                  {permission === 'pending'
+                    ? 'Konum alınıyor'
+                    : 'Konumumu bul'}
+                </Button>
+                {!hasNetworkAccess ? (
+                  <div className="grid h-full place-items-center p-6 text-center text-body-sm text-muted-foreground">
+                    Bu önizleme dış harita isteği yapmıyor.
                   </div>
-                </div>
-              )}
-
-              {live && active && (
-                <div className="pointer-events-none absolute inset-x-2 bottom-7 rounded-card border border-border bg-surface-1/95 px-2.5 py-1.5">
-                  {(() => {
-                    const hit = located.find((l) => l.item.slug === active);
-                    if (!hit) return null;
-                    return (
-                      <p className="truncate text-body-sm text-foreground">
-                        <span className="font-medium">{hit.item.title}</span>
-                        <span className="ml-2 text-muted-foreground">
-                          {hit.item.city} ·{' '}
-                          {formatLocalDistance(hit.distanceKm)}
-                        </span>
-                      </p>
-                    );
-                  })()}
-                </div>
-              )}
-              {live && (
-                <>
-                  <div className="absolute right-2 top-2 flex max-w-[calc(100%-1rem)] flex-wrap items-end gap-2 rounded-card border border-border-strong bg-background/90 px-2 py-1.5 shadow-card backdrop-blur-sm">
-                    <label className="grid gap-1">
-                      <span className="label">Altlık</span>
-                      <Select
-                        value={baseMode}
-                        onChange={(event) =>
-                          setBaseMode(event.target.value as BaseMode)
-                        }
-                        width="7rem"
-                        className="h-8 text-meta"
-                      >
-                        <option value="harita">Harita</option>
-                        <option value="uydu">Uydu</option>
-                      </Select>
-                    </label>
-                    <label className="grid gap-1">
-                      <span className="label">Katman</span>
-                      <Select
-                        value={layerMode}
-                        onChange={(event) =>
-                          setLayerMode(event.target.value as LayerMode)
-                        }
-                        width="7rem"
-                        className="h-8 text-meta"
-                      >
-                        <option value="isik">Işık</option>
-                        <option value="yok">Yok</option>
-                      </Select>
-                    </label>
-                    {overlay && (
-                      <label htmlFor="event-opacity" className="grid gap-1">
-                        <span className="label">Saydamlık</span>
-                        <input
-                          id="event-opacity"
-                          type="range"
-                          min={OPACITY_RANGE.min}
-                          max={OPACITY_RANGE.max}
-                          step={5}
-                          value={opacity}
-                          onChange={(event) =>
-                            setOpacity(Number(event.target.value))
-                          }
-                          className="block w-24 accent-primary"
-                        />
-                      </label>
+                ) : live ? (
+                  <TileMap
+                    label="Etkinlik haritası — sürükleyerek ve ok tuşlarıyla gezin"
+                    className={cn(
+                      'h-full w-full',
+                      theme === 'field' &&
+                        '[filter:sepia(1)_saturate(5)_hue-rotate(-38deg)_brightness(0.6)]'
                     )}
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      onClick={toggleMapScope}
-                    >
-                      {showAll ? 'Tek pini göster' : 'Tümünü göster'}
-                    </Button>
+                    center={center}
+                    zoom={zoom}
+                    minZoom={ZOOM_RANGE.min}
+                    maxZoom={ZOOM_RANGE.max}
+                    onCenterChange={setCenter}
+                    onZoomChange={setZoom}
+                    base={base}
+                    overlay={overlay}
+                    overlayOpacity={opacity / 100}
+                    marker={{ lat: location.latitude, lng: location.longitude }}
+                    markers={mapItems.map(({ item, distanceKm }) => ({
+                      id: item.slug,
+                      point: {
+                        lat: item.coords!.latitude,
+                        lng: item.coords!.longitude,
+                      },
+                      label: `${item.title}, ${item.city}, ${formatLocalDistance(distanceKm)} uzaklıkta`,
+                      popup: (
+                        <>
+                          <span className="block truncate text-body-sm font-medium text-foreground">
+                            {item.title}
+                          </span>
+                          <span className="mt-1 block truncate text-meta text-muted-foreground">
+                            {item.city} ·{' '}
+                            {formatEventDateRange(item.startsAt, item.endsAt)}
+                          </span>
+                          <span className="mt-1 block text-meta text-cold">
+                            {formatLocalDistance(distanceKm)}
+                          </span>
+                        </>
+                      ),
+                      active: active === item.slug,
+                      onSelect: () => focusEvent(item),
+                    }))}
+                  />
+                ) : (
+                  <div className="grid h-full place-items-center p-6 text-center">
+                    <div className="max-w-md">
+                      <p className="text-body-sm leading-relaxed text-muted-foreground">
+                        Harita CARTO döşemelerini yükler; IP adresiniz ve
+                        baktığınız bölge sağlayıcıya iletilir.
+                      </p>
+                      <Button size="sm" className="mt-3" onClick={allow}>
+                        Haritayı yükle
+                      </Button>
+                    </div>
                   </div>
-                  <p className="absolute bottom-1 left-2 text-[0.62rem] text-muted-foreground">
-                    {credit}
-                  </p>
-                </>
+                )}
+
+                {live && active && (
+                  <div className="pointer-events-none absolute inset-x-2 bottom-7 rounded-card border border-border bg-surface-1/95 px-2.5 py-1.5">
+                    {(() => {
+                      const hit = located.find((l) => l.item.slug === active);
+                      if (!hit) return null;
+                      return (
+                        <p className="truncate text-body-sm text-foreground">
+                          <span className="font-medium">{hit.item.title}</span>
+                          <span className="ml-2 text-muted-foreground">
+                            {hit.item.city} ·{' '}
+                            {formatLocalDistance(hit.distanceKm)}
+                          </span>
+                        </p>
+                      );
+                    })()}
+                  </div>
+                )}
+                {live && (
+                  <>
+                    <div className="absolute right-2 top-2 flex max-w-[calc(100%-1rem)] flex-wrap items-end gap-2 rounded-card border border-border-strong bg-background/90 px-2 py-1.5 shadow-card backdrop-blur-sm">
+                      <label className="grid gap-1">
+                        <span className="label">Altlık</span>
+                        <Select
+                          value={baseMode}
+                          onChange={(event) =>
+                            setBaseMode(event.target.value as BaseMode)
+                          }
+                          width="7rem"
+                          className="h-8 text-meta"
+                        >
+                          <option value="harita">Harita</option>
+                          <option value="uydu">Uydu</option>
+                        </Select>
+                      </label>
+                      <label className="grid gap-1">
+                        <span className="label">Katman</span>
+                        <Select
+                          value={layerMode}
+                          onChange={(event) =>
+                            setLayerMode(event.target.value as LayerMode)
+                          }
+                          width="7rem"
+                          className="h-8 text-meta"
+                        >
+                          <option value="isik">Işık</option>
+                          <option value="yok">Yok</option>
+                        </Select>
+                      </label>
+                      {overlay && (
+                        <label htmlFor="event-opacity" className="grid gap-1">
+                          <span className="label">Saydamlık</span>
+                          <input
+                            id="event-opacity"
+                            type="range"
+                            min={OPACITY_RANGE.min}
+                            max={OPACITY_RANGE.max}
+                            step={5}
+                            value={opacity}
+                            onChange={(event) =>
+                              setOpacity(Number(event.target.value))
+                            }
+                            className="block w-24 accent-primary"
+                          />
+                        </label>
+                      )}
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={toggleMapScope}
+                      >
+                        {showAll ? 'Tek pini göster' : 'Tümünü göster'}
+                      </Button>
+                    </div>
+                    <div className="absolute bottom-7 right-2 flex flex-wrap justify-end gap-1.5">
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="h-8 w-8 bg-background/90 px-0 text-base backdrop-blur-sm"
+                        onClick={() => changeMapZoom(1)}
+                        aria-label="Haritayı yakınlaştır"
+                        title="Yakınlaştır"
+                      >
+                        +
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="h-8 w-8 bg-background/90 px-0 text-base backdrop-blur-sm"
+                        onClick={() => changeMapZoom(-1)}
+                        aria-label="Haritayı uzaklaştır"
+                        title="Uzaklaştır"
+                      >
+                        -
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="bg-background/90 backdrop-blur-sm"
+                        onClick={resetMapView}
+                      >
+                        Sıfırla
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="bg-background/90 backdrop-blur-sm"
+                        onClick={() => setMapExpanded((current) => !current)}
+                      >
+                        {mapExpanded ? 'Daralt' : 'Genişlet'}
+                      </Button>
+                    </div>
+                    <p className="absolute bottom-1 left-2 text-[0.62rem] text-muted-foreground">
+                      {credit}
+                    </p>
+                  </>
+                )}
+              </div>
+            </Panel>
+
+            <Panel
+              title={selectedIsFeatured ? 'Öne çıkan etkinlik' : 'Seçili etkinlik'}
+              status={
+                selected
+                  ? formatEventDateRange(
+                      selected.item.startsAt,
+                      selected.item.endsAt
+                    )
+                  : undefined
+              }
+              className="flex h-full min-h-0 flex-col"
+              bodyClassName="flex min-h-0 flex-1 flex-col p-0"
+            >
+              {selected ? (
+                <div className="flex h-full min-h-0 flex-col">
+                  <Link
+                    to={`/etkinlik/${selected.item.slug}`}
+                    className="relative block h-56 shrink-0 overflow-hidden bg-surface-2"
+                    aria-label={`${selected.item.title} detayını aç`}
+                  >
+                    {selected.item.image ? (
+                      <RemoteImage
+                        src={selected.item.image.url}
+                        alt={`${selected.item.title} etkinlik görseli`}
+                        seed={selected.item.slug}
+                        tint={selected.item.gradient}
+                        className="h-full w-full object-cover transition duration-300 hover:scale-105"
+                        sizes="(min-width: 1024px) 380px, 100vw"
+                      />
+                    ) : (
+                      <PhotoPlaceholder
+                        gradient={selected.item.gradient}
+                        alt={`${selected.item.title} etkinlik görseli`}
+                        className="h-full w-full"
+                      />
+                    )}
+                    {selectedIsFeatured && (
+                      <span className="absolute left-3 top-3">
+                        <Badge tone="primary">Öne çıkan</Badge>
+                      </span>
+                    )}
+                  </Link>
+                  <div className="flex min-h-0 flex-1 flex-col gap-4 px-4 py-4">
+                    <div>
+                      <div className="flex flex-wrap gap-1.5">
+                        <Badge tone="primary">
+                          {eventTypeLabels[selected.item.type]}
+                        </Badge>
+                        <Badge tone={selected.item.free ? 'success' : 'muted'}>
+                          {selected.item.free ? 'Ücretsiz' : 'Ücretli'}
+                        </Badge>
+                        <Badge tone="cold">{selected.item.city}</Badge>
+                      </div>
+                      <h2 className="mt-3 type-section text-foreground">
+                        {selected.item.title}
+                      </h2>
+                      <p className="mt-2 line-clamp-4 text-body-sm leading-relaxed text-muted-foreground">
+                        {selected.item.description}
+                      </p>
+                    </div>
+
+                    <dl className="grid gap-px overflow-hidden rounded-card border border-border bg-border text-body-sm">
+                      <div className="grid grid-cols-[7rem_1fr] gap-3 bg-surface-1 px-3 py-2">
+                        <dt className="label">Tarih</dt>
+                        <dd className="tabular text-foreground">
+                          {formatEventDateRange(
+                            selected.item.startsAt,
+                            selected.item.endsAt
+                          )}
+                        </dd>
+                      </div>
+                      <div className="grid grid-cols-[7rem_1fr] gap-3 bg-surface-1 px-3 py-2">
+                        <dt className="label">Konum</dt>
+                        <dd className="text-foreground">
+                          {selected.item.venue}, {selected.item.city}
+                        </dd>
+                      </div>
+                      <div className="grid grid-cols-[7rem_1fr] gap-3 bg-surface-1 px-3 py-2">
+                        <dt className="label">Mesafe</dt>
+                        <dd className="tabular text-cold">
+                          {formatLocalDistance(selected.distanceKm)}
+                        </dd>
+                      </div>
+                      <div className="grid grid-cols-[7rem_1fr] gap-3 bg-surface-1 px-3 py-2">
+                        <dt className="label">Düzenleyen</dt>
+                        <dd className="text-foreground">
+                          {selected.item.organizer.name}
+                        </dd>
+                      </div>
+                    </dl>
+
+                    <div className="mt-auto flex flex-wrap gap-2">
+                      <EventActions
+                        item={selected.item}
+                        active={active}
+                        onFocus={focusEvent}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <EmptyState
+                  message="Seçili etkinlik yok"
+                  hint="Konum bilgisi olan bir etkinlik seçildiğinde ayrıntısı burada görünür."
+                  className="border-0 py-8"
+                />
               )}
-            </div>
-          </Panel>
+            </Panel>
+          </div>
 
           {/* ───────── Yakınlık listesi ───────── */}
           <div className="space-y-4">

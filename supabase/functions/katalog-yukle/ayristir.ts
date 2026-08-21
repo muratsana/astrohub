@@ -6,10 +6,7 @@
  * internete ya da bir veritabanına ihtiyaç duymadan çalışabilmeli.
  */
 
-import {
-  takimyildizBul,
-  type Sinir,
-} from './takimyildiz.ts';
+import { takimyildizBul, type Sinir } from './takimyildiz.ts';
 import type { VizierKaynak } from './kaynaklar.ts';
 
 export interface Nesne {
@@ -133,6 +130,18 @@ function sayi(metin: string | undefined): number | null {
   if (!t) return null;
   const n = Number(t);
   return Number.isFinite(n) ? n : null;
+}
+
+function katalogNumarasi(
+  kaynak: VizierKaynak,
+  metin: string | undefined
+): number | null {
+  if (kaynak.numaraDeseni) {
+    const m = new RegExp(kaynak.numaraDeseni).exec((metin ?? '').trim());
+    return m?.[1] ? sayi(m[1]) : null;
+  }
+
+  return sayi(metin);
 }
 
 /**
@@ -391,8 +400,11 @@ export function vizierAyristir(
     if (!satir || satir.startsWith('#') || satir.startsWith('---')) continue;
 
     const alanlar = satir.split('\t');
-    const numara = sayi(alanlar[iNo]);
-    const [raDeg, decDeg] = konumNormalle(sayi(alanlar[iRa]), sayi(alanlar[iDec]));
+    const numara = katalogNumarasi(kaynak, alanlar[iNo]);
+    const [raDeg, decDeg] = konumNormalle(
+      sayi(alanlar[iRa]),
+      sayi(alanlar[iDec])
+    );
     if (numara === null || raDeg === null || decDeg === null) continue;
 
     const kod = `${kaynak.onek}${kaynak.ayirici}${numara}`;

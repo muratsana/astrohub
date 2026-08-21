@@ -5,8 +5,10 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { ExternalButtonLink } from '@/components/ui/Button';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { Panel } from '@/components/ui/Panel';
+import { CARD_RATIO } from '@/components/ui/cardRatios';
 import { SpecList, SpecRow } from '@/components/ui/Panel';
 import { RemoteImage } from '@/components/media/RemoteImage';
+import { cn } from '@/lib/cn';
 import { fetchAllskyCameras } from '@/services/content/allsky';
 import type { AllskyCamera } from './data';
 
@@ -57,7 +59,7 @@ export function AllskyPage() {
   return (
     <>
       <PageMeta
-        title="ALLSKY"
+        title="Allsky"
         description="Astrohub Allsky kamera yayınları."
       />
       <Container className="py-8">
@@ -65,7 +67,7 @@ export function AllskyPage() {
           <p className="label text-primary">Canlı gökyüzü</p>
           <div className="mt-2 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div>
-              <h1 className="type-page-sm text-foreground">ALLSKY</h1>
+              <h1 className="type-page-sm text-foreground">Allsky</h1>
               <p className="mt-2 max-w-2xl text-body-sm leading-relaxed text-muted-foreground">
                 Gözlemevlerinden gelen güncel all-sky kamera görüntüleri.
               </p>
@@ -103,7 +105,12 @@ export function AllskyPage() {
                   status={`${Math.max(5, camera.refreshSeconds)} sn`}
                   bodyClassName="p-0"
                 >
-                  <div className="aspect-video overflow-hidden border-b border-border bg-background">
+                  <div
+                    className={cn(
+                      CARD_RATIO.wide,
+                      'overflow-hidden border-b border-border bg-background'
+                    )}
+                  >
                     <RemoteImage
                       src={withRefreshToken(camera, now)}
                       alt={`${camera.title} canlı allsky görüntüsü`}

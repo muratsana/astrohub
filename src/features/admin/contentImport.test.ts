@@ -52,16 +52,21 @@ describe('importContentFile', () => {
     } as unknown as File;
   }
 
-  it('html dosyasını kaynak blok olarak açar', async () => {
+  it('html dosyasını mizanpaj koruyan doküman blok olarak açar', async () => {
     const sonuc = await importContentFile(
-      dosya('yazi.html', '<h2>Başlık</h2><p>Gövde.</p>')
+      dosya(
+        'yazi.html',
+        '<style>.hero{display:grid}</style><h2>Başlık</h2><p>Gövde.</p>'
+      )
     );
-    expect(sonuc.blocks).toEqual([
-      {
-        type: 'html',
-        html: '<h2>Başlık</h2><p>Gövde.</p>',
-      },
-    ]);
+    expect(sonuc.blocks[0]).toMatchObject({
+      type: 'html',
+      mode: 'document',
+    });
+    expect(sonuc.blocks[0]).toHaveProperty(
+      'html',
+      expect.stringContaining('<style>.hero{display:grid}</style>')
+    );
   });
 
   it('htm uzantısını da tanır', async () => {

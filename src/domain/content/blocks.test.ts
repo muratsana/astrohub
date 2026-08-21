@@ -276,6 +276,23 @@ describe('mizanpaj blokları', () => {
     ).toBe(false);
   });
 
+  it('html bloğu doküman modu bilgisini kabul ediyor', () => {
+    expect(
+      ContentBlockSchema.safeParse({
+        type: 'html',
+        mode: 'document',
+        html: '<!doctype html><html><body>İçe aktarılan belge</body></html>',
+      }).success
+    ).toBe(true);
+    expect(
+      ContentBlockSchema.safeParse({
+        type: 'html',
+        mode: 'popup',
+        html: '<p>Geçersiz</p>',
+      }).success
+    ).toBe(false);
+  });
+
   /* Özet ve arama bu çıktıyı okuyor: yeni bloklar metinsiz kalırsa
      içerikleri sitede hiç aranamaz olurdu. */
   it('yeni blokların metni özete giriyor', () => {

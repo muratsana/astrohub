@@ -286,7 +286,7 @@ export function FilterCell({
     <div
       className={cn(
         'flex min-w-[10rem] flex-1 flex-col justify-center border',
-        toolbarCompact && 'min-h-10 rounded-card px-2.5 py-0.5 shadow-overlay',
+        toolbarCompact && 'min-h-11 rounded-card px-2.5 py-0.5 shadow-overlay',
         popoverCompact && 'min-h-10 min-w-0 rounded-md px-3 py-2 shadow-none',
         density === 'default' && 'min-h-12 rounded-card px-3 py-1.5 shadow-overlay',
         'transition-colors hover:border-foreground/25 hover:bg-surface-2',
@@ -337,6 +337,7 @@ export function FilterToggle({
   className?: string;
 }) {
   const density = useContext(FilterDensityContext);
+  const toolbarCompact = density === 'toolbar';
   const popoverCompact = density === 'popover';
 
   return (
@@ -345,7 +346,9 @@ export function FilterToggle({
         'flex min-w-[10rem] flex-1 items-center border',
         popoverCompact
           ? 'min-h-10 min-w-0 rounded-md px-3 py-2 shadow-none'
-          : 'min-h-12 rounded-card px-3 py-1.5 shadow-overlay',
+          : toolbarCompact
+            ? 'min-h-11 min-w-max rounded-card px-3 py-0.5 shadow-overlay'
+            : 'min-h-12 rounded-card px-3 py-1.5 shadow-overlay',
         'transition-colors hover:border-foreground/25 hover:bg-surface-2',
         'has-[:focus-visible]:border-primary has-[:focus-visible]:bg-surface-2 has-[:focus-visible]:shadow-[0_0_0_1px_var(--color-primary)]',
         checked
@@ -358,7 +361,10 @@ export function FilterToggle({
     >
       <label
         htmlFor={id}
-        className="label flex cursor-pointer items-center gap-2 text-muted-foreground has-[:checked]:text-foreground"
+        className={cn(
+          'label flex cursor-pointer items-center gap-2 text-muted-foreground has-[:checked]:text-foreground',
+          toolbarCompact && 'text-meta font-medium'
+        )}
       >
         <input
           id={id}
@@ -369,7 +375,7 @@ export function FilterToggle({
              mobilde parmakla vurulamıyordu. */
           className={cn(
             'rounded-card border-border accent-primary',
-            popoverCompact ? 'h-4 w-4' : 'h-6 w-6'
+            popoverCompact ? 'h-4 w-4' : toolbarCompact ? 'h-5 w-5' : 'h-6 w-6'
           )}
         />
         {label}

@@ -63,15 +63,18 @@ export function ModuleToolbar<M extends string = ViewMode>({
         className
       )}
     >
-      <div className="flex flex-col gap-1.5 md:flex-row md:items-center">
-        <div className="min-w-0 flex-1">
+      <div className="flex flex-wrap items-stretch gap-2 xl:flex-nowrap">
+        <div className="min-w-0 flex-[1_1_34rem]">
           <FilterBar
             activeCount={activeFilters.chips.length}
             columns={columns}
             primaryCount={primaryFilters}
             collapseQuery="(max-width: 1099px)"
             className={cn(
-              '!mb-0 flex-nowrap overflow-x-auto overscroll-x-contain pb-1 [scrollbar-width:thin] md:pb-0 [&>*]:!min-w-[8rem] [&>*]:!flex-none [&>*:first-child]:!min-w-[14rem] [&>*:first-child]:flex-1 [&_[role=tablist]]:!flex-nowrap [&_[role=tab]]:!whitespace-nowrap',
+              '!mb-0 flex-wrap items-stretch gap-2 xl:flex-nowrap',
+              '[&>*]:!min-w-[7.25rem] [&>*]:!flex-[1_1_7.25rem]',
+              '[&>*:first-child]:!min-w-[14rem] [&>*:first-child]:!flex-[2_1_14rem]',
+              '[&_[role=tablist]]:!flex-nowrap [&_[role=tab]]:!whitespace-nowrap',
               filterClassName
             )}
           >
@@ -83,11 +86,11 @@ export function ModuleToolbar<M extends string = ViewMode>({
             sort={sort}
             view={view}
             extra={extra}
-            className="!mb-0 min-w-0 w-full md:ml-auto md:w-auto md:shrink-0"
+            className="!mb-0 min-w-0 w-auto shrink-0"
           />
         )}
         {showResultCount && (
-          <div className="shrink-0 rounded-card border border-border bg-background/55 px-2.5 py-1.5">
+          <div className="flex min-h-11 shrink-0 items-center rounded-card border border-border bg-background/55 px-2.5">
             <ResultCount {...result} />
           </div>
         )}

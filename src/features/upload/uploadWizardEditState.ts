@@ -4,16 +4,17 @@ import { VARSAYILAN_KADRAJ, type Kadraj } from '@/domain/profile/kadraj';
 import {
   PHOTO_LICENSE,
   type AstroPhoto,
+  photoTypeLabels,
   type PhotoType,
   type ProcessingPalette,
 } from '@/features/photos/types';
 import { targets } from '@/features/targets/data';
-import type { TargetKind } from '@/domain/targets/derive';
+import { kindToPhotoType, type TargetKind } from '@/domain/targets/derive';
 
 export interface WizardState {
   fileName: string;
   targetSlug: string;
-  /** Seçim listesini daraltan obje tipi; hedef seçimini kaydetmez. */
+  /** Seçili katalog kaydının türü; yükleme ekranında kullanıcı girdisi değildir. */
   targetKind: TargetKind | 'hepsi';
   type: PhotoType;
   title: string;
@@ -104,6 +105,11 @@ export const initialState: WizardState = {
   copyrightConfirmed: false,
 };
 
+function photoTypeFromTargetKind(kind: TargetKind): PhotoType | undefined {
+  const candidate = kindToPhotoType[kind];
+  return candidate in photoTypeLabels ? (candidate as PhotoType) : undefined;
+}
+
 export function wizardStateFromPhoto(photo: AstroPhoto): WizardState {
   const hedef = targets.find(
     (target) =>
@@ -117,7 +123,9 @@ export function wizardStateFromPhoto(photo: AstroPhoto): WizardState {
     fileName: photo.image ? 'Mevcut fotoğraf' : photo.title,
     targetSlug: hedef?.slug ?? '',
     targetKind: hedef?.kind ?? 'hepsi',
-    type: photo.type,
+    type: hedef
+      ? (photoTypeFromTargetKind(hedef.kind) ?? photo.type)
+      : photo.type,
     title: photo.title,
     description: photo.description,
     captureSessions:

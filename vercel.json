@@ -37,6 +37,10 @@
       "destination": "/app.html"
     },
     {
+      "source": "/allsky",
+      "destination": "/app.html"
+    },
+    {
       "source": "/amasya-astronomi-etkinlikleri",
       "destination": "/app.html"
     },

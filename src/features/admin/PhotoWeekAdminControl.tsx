@@ -6,7 +6,12 @@ import { Input, Select } from '@/components/ui/Input';
 import { useAuth } from '@/features/auth/AuthContext';
 import { usePhotoCatalog } from '@/services/content/photos';
 import { usePhotoWeekRounds } from '@/services/content/photoOfWeek';
-import { fetchUsers, type AdminUser } from './users';
+import { isoWeekFromDateString } from '@/features/photos/weeklyPick';
+import {
+  findCandidateRoundForPhoto,
+  photoNominationWeek,
+  roundLabel,
+} from './photoWeekRoundDates';
 import {
   addPhotoWeekNominee,
   appointJuror,
@@ -15,8 +20,10 @@ import {
   endJuryTerm,
   fetchPhotoWeekResults,
   fetchJuryMembers,
+  searchJuryCandidates,
   setEditorsPick,
   setPhotoWeekRoundStatus,
+  type JuryCandidateAdmin,
   type JuryMemberAdmin,
   type PhotoWeekResult,
 } from './photoWeekAdmin';
@@ -33,19 +40,16 @@ export function PhotoWeekAdminControl({ canWrite }: { canWrite: boolean }) {
   const rounds = usePhotoWeekRounds();
   const catalog = usePhotoCatalog();
   const [members, setMembers] = useState<JuryMemberAdmin[]>([]);
-  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [users, setUsers] = useState<JuryCandidateAdmin[]>([]);
   const [search, setSearch] = useState('');
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-  const [selectedRound, setSelectedRound] = useState('');
   const [selectedPhoto, setSelectedPhoto] = useState('');
   const [resultRoundId, setResultRoundId] = useState('');
   const [results, setResults] = useState<PhotoWeekResult[]>([]);
   const [resultsError, setResultsError] = useState<string | null>(null);
 
   const now = new Date();
-  const [year, setYear] = useState(now.getFullYear());
-  const [week, setWeek] = useState(1);
   const [opensAt, setOpensAt] = useState(now.toISOString().slice(0, 16));
   const [closesAt, setClosesAt] = useState(new Date(now.getTime() + 7 * 86_400_000).toISOString().slice(0, 16));
 
@@ -73,6 +77,13 @@ export function PhotoWeekAdminControl({ canWrite }: { canWrite: boolean }) {
   const resultRounds = useMemo(() => rounds.rounds.filter((round) => round.status === 'sonuclandi' || round.status === 'yayinda'), [rounds.rounds]);
   const resultRound = useMemo(() => rounds.rounds.find((round) => round.id === resultRoundId) ?? null, [resultRoundId, rounds.rounds]);
   const photoById = useMemo(() => new Map(catalog.items.filter((photo) => photo.id).map((photo) => [photo.id!, photo])), [catalog.items]);
+  const roundDraft = useMemo(() => isoWeekFromDateString(opensAt), [opensAt]);
+  const selectedPhotoItem = useMemo(() => photoById.get(selectedPhoto) ?? null, [photoById, selectedPhoto]);
+  const selectedPhotoWeek = useMemo(() => photoNominationWeek(selectedPhotoItem), [selectedPhotoItem]);
+  const autoCandidateRound = useMemo(
+    () => findCandidateRoundForPhoto(rounds.rounds, selectedPhotoItem),
+    [rounds.rounds, selectedPhotoItem]
+  );
 
   useEffect(() => {
     if (!resultRoundId && resultRounds[0]) setResultRoundId(resultRounds[0].id);
@@ -108,8 +119,12 @@ export function PhotoWeekAdminControl({ canWrite }: { canWrite: boolean }) {
             className="mb-2 flex gap-2"
             onSubmit={(event) => {
               event.preventDefault();
-              fetchUsers({ search, pageSize: 10 })
-                .then((sayfa) => setUsers(sayfa.rows)).catch((error: unknown) => setMessage(error instanceof Error ? error.message : 'Kullanıcı aranamadı.'));
+              searchJuryCandidates(search, 10)
+                .then((candidates) => {
+                  setUsers(candidates);
+                  setMessage(candidates.length === 0 ? 'Kullanıcı bulunamadı.' : null);
+                })
+                .catch((error: unknown) => setMessage(error instanceof Error ? error.message : 'Kullanıcı aranamadı.'));
             }}
           >
             <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Kullanıcı ara" aria-label="Jüri için kullanıcı ara" className="h-9 flex-1 text-meta" />
@@ -138,18 +153,22 @@ export function PhotoWeekAdminControl({ canWrite }: { canWrite: boolean }) {
 
         <section className="rounded-card border border-border bg-surface-2 p-3">
           <h3 className="label mb-2 text-foreground">Tur takvimi</h3>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            <Input type="number" min={2020} max={2200} value={year} onChange={(event) => setYear(Number(event.target.value))} aria-label="ISO yıl" />
-            <Input type="number" min={1} max={53} value={week} onChange={(event) => setWeek(Number(event.target.value))} aria-label="ISO hafta" />
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-[minmax(7rem,0.75fr)_1fr_1fr]">
+            <div className="rounded-card border border-border bg-background px-3 py-2">
+              <span className="label block text-muted-foreground">Hafta</span>
+              <span className="tabular mt-1 block text-body-sm font-semibold text-foreground">
+                {roundDraft ? roundDraft.label : 'Tarih seçin'}
+              </span>
+            </div>
             <Input type="datetime-local" value={opensAt} onChange={(event) => setOpensAt(event.target.value)} aria-label="Tur açılışı" />
             <Input type="datetime-local" value={closesAt} onChange={(event) => setClosesAt(event.target.value)} aria-label="Tur kapanışı" />
           </div>
-          <Button className="mt-2" size="sm" disabled={!canWrite || busy || !user} onClick={() => user && void run(() => createPhotoWeekRound({ isoYear: year, isoWeek: week, opensAt: new Date(opensAt).toISOString(), closesAt: new Date(closesAt).toISOString(), createdBy: user.id }))}>Tur oluştur</Button>
+          <Button className="mt-2" size="sm" disabled={!canWrite || busy || !user || !roundDraft} onClick={() => user && roundDraft && void run(() => createPhotoWeekRound({ isoYear: roundDraft.isoYear, isoWeek: roundDraft.isoWeek, opensAt: new Date(opensAt).toISOString(), closesAt: new Date(closesAt).toISOString(), createdBy: user.id }))}>Tur oluştur</Button>
 
           <ul className="mt-3">
             {rounds.rounds.map((round) => (
               <li key={round.id} className="flex flex-wrap items-center gap-2 border-b border-border py-2 last:border-0">
-                <span className="tabular text-meta text-foreground">{round.isoYear}-{String(round.isoWeek).padStart(2, '0')}</span>
+                <span className="tabular text-meta text-foreground">{roundLabel(round)}</span>
                 <Badge>{STATUS_LABELS[round.status] ?? round.status}</Badge>
                 {round.status === 'aday_toplama' && <Button size="sm" variant="ghost" disabled={!canWrite || busy} onClick={() => void run(() => setPhotoWeekRoundStatus(round.id, 'oylama'))}>Oylamayı aç</Button>}
                 {round.status === 'oylama' && <Button size="sm" variant="ghost" disabled={!canWrite || busy} onClick={() => void run(() => closePhotoWeekRound(round.id))}>Sonuçlandır</Button>}
@@ -158,17 +177,20 @@ export function PhotoWeekAdminControl({ canWrite }: { canWrite: boolean }) {
             ))}
           </ul>
 
-          <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
-            <Select value={selectedRound} onChange={(event) => setSelectedRound(event.target.value)} aria-label="Aday eklenecek tur">
-              <option value="">Tur seçin</option>
-              {rounds.rounds.filter((round) => round.status === 'aday_toplama').map((round) => <option key={round.id} value={round.id}>{round.isoYear}-{round.isoWeek}</option>)}
-            </Select>
+          <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto]">
             <Select value={selectedPhoto} onChange={(event) => setSelectedPhoto(event.target.value)} aria-label="Aday fotoğraf">
               <option value="">Fotoğraf seçin</option>
               {catalog.items.filter((photo) => photo.id).map((photo) => <option key={photo.id} value={photo.id}>{photo.title} · @{photo.user.username}</option>)}
             </Select>
-            <Button size="sm" disabled={!canWrite || busy || !user || !selectedRound || !selectedPhoto} onClick={() => user && void run(() => addPhotoWeekNominee(selectedRound, selectedPhoto, user.id))}>Aday ekle</Button>
+            <Button size="sm" disabled={!canWrite || busy || !user || !selectedPhoto || !autoCandidateRound} onClick={() => user && autoCandidateRound && void run(() => addPhotoWeekNominee(autoCandidateRound.id, selectedPhoto, user.id))}>Aday ekle</Button>
           </div>
+          <p className="mt-2 rounded-card border border-border bg-background px-3 py-2 text-meta text-muted-foreground">
+            {selectedPhotoItem && selectedPhotoWeek && autoCandidateRound
+              ? `Aday ${selectedPhotoWeek.label} turuna eklenecek.`
+              : selectedPhotoItem && selectedPhotoWeek
+                ? `${selectedPhotoWeek.label} için aday toplama turu yok. Önce bu haftanın turunu oluşturun.`
+                : 'Fotoğraf seçilince tur, fotoğrafın yayın/çekim haftasına göre otomatik belirlenir.'}
+          </p>
         </section>
       </div>
 
@@ -184,7 +206,7 @@ export function PhotoWeekAdminControl({ canWrite }: { canWrite: boolean }) {
             <option value="">Tur seçin</option>
             {resultRounds.map((round) => (
               <option key={round.id} value={round.id}>
-                {round.isoYear}-{String(round.isoWeek).padStart(2, '0')} · {STATUS_LABELS[round.status] ?? round.status}
+                {roundLabel(round)} · {STATUS_LABELS[round.status] ?? round.status}
               </option>
             ))}
           </Select>

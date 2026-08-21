@@ -64,22 +64,22 @@ export function ArticleDetailPage() {
       />
 
       <Container className="py-10 sm:py-12">
-        <article className="mx-auto w-full max-w-7xl">
+        <article className="w-full">
           <nav aria-label="İz" className="label mb-5">
             <UpLink etiket="Yazılar" />
           </nav>
 
-          <header className="max-w-5xl">
+          <header className="border-b border-border pb-6">
             <h1 className="type-page-lg text-foreground">{article.title}</h1>
 
-            <p className="mt-6 border-l-2 border-primary pl-4 text-body-sm leading-relaxed text-foreground">
+            <p className="mt-6 max-w-none border-l-2 border-primary pl-4 text-justify text-body-sm leading-7 text-foreground [text-align-last:left]">
               {article.summary}
             </p>
           </header>
 
           <section
             aria-labelledby="yazi-kunye"
-            className="mt-6 border-y border-border py-3"
+            className="border-b border-border py-3"
           >
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
               <h2
@@ -128,7 +128,7 @@ export function ArticleDetailPage() {
           </section>
 
           <BlockRenderer
-            className="mt-8 [&>blockquote]:max-w-5xl [&>h2]:max-w-5xl [&>h3]:max-w-5xl [&>ol]:max-w-5xl [&>p]:max-w-5xl [&>ul]:max-w-5xl"
+            className="mt-8 w-full max-w-none text-justify [text-align-last:left] [&>blockquote]:max-w-none [&>h2]:max-w-none [&>h3]:max-w-none [&>ol]:max-w-none [&>p]:max-w-none [&>ul]:max-w-none"
             blocks={article.bodyBlocks ?? paragraphsToBlocks(article.body)}
           />
 

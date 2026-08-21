@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -8,6 +8,7 @@ import { Input, Select } from '@/components/ui/Input';
 import { LocationTypeahead } from '@/components/ui/LocationTypeahead';
 import { Button, ButtonLink } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
+import { Alert } from '@/components/ui/Alert';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { useAuth } from '@/features/auth/AuthContext';
 import { useLocationContext } from '@/features/location/LocationContext';
@@ -22,8 +23,10 @@ import {
   type NewListingInput,
 } from '@/services/content/listings';
 import {
+  LISTING_MAX_EDGE,
   LISTING_PHOTO_BUDGET_LABEL,
   LISTING_PHOTO_LIMIT,
+  uploadListingPhoto,
 } from '@/services/marketplace/photos';
 import type { ListingCondition } from './data';
 import { sanitizeText } from '@/lib/sanitize';
@@ -79,6 +82,17 @@ const categoryOrder: EquipmentCategory[] = [
   'aksesuar',
 ];
 
+interface SelectedListingPhoto {
+  id: string;
+  file: File;
+  url: string;
+}
+
+function formatFileSize(bytes: number): string {
+  if (bytes >= 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+  return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+}
+
 export function NewListingPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -122,6 +136,18 @@ export function NewListingPage() {
 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [createdSlug, setCreatedSlug] = useState<string | null>(null);
+  const [photos, setPhotos] = useState<SelectedListingPhoto[]>([]);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const photoUrls = useRef<string[]>([]);
+
+  useEffect(
+    () => () => {
+      for (const url of photoUrls.current) URL.revokeObjectURL(url);
+      photoUrls.current = [];
+    },
+    []
+  );
 
   /*
    * GEÇ ÖN DOLDURMA KALDIRILDI.
@@ -179,18 +205,88 @@ export function NewListingPage() {
      hata almaktansa neyin eksik olduğunu yazarken görmeli. */
   const problem = validateListing(input);
 
+  function revokePhotoUrl(url: string) {
+    URL.revokeObjectURL(url);
+    photoUrls.current = photoUrls.current.filter((item) => item !== url);
+  }
+
+  function addPhotos(files: FileList | null) {
+    if (!files || files.length === 0) return;
+
+    setPhotoError(null);
+    const incoming = Array.from(files);
+    const slots = Math.max(0, LISTING_PHOTO_LIMIT - photos.length);
+    if (slots === 0) {
+      setPhotoError(
+        `Bir ilana en fazla ${LISTING_PHOTO_LIMIT} fotoğraf eklenebilir.`
+      );
+      return;
+    }
+
+    const accepted: SelectedListingPhoto[] = [];
+    for (const file of incoming.slice(0, slots)) {
+      if (!file.type.startsWith('image/')) {
+        setPhotoError('Yalnızca görsel dosyaları seçilebilir.');
+        continue;
+      }
+      const url = URL.createObjectURL(file);
+      photoUrls.current.push(url);
+      accepted.push({
+        id: `${file.name}-${file.lastModified}-${Math.random().toString(36).slice(2)}`,
+        file,
+        url,
+      });
+    }
+
+    if (incoming.length > slots) {
+      setPhotoError(
+        `İlk ${slots} fotoğraf eklendi; sınır ${LISTING_PHOTO_LIMIT}.`
+      );
+    }
+    if (accepted.length > 0) setPhotos((current) => [...current, ...accepted]);
+  }
+
+  function removePhoto(id: string) {
+    setPhotos((current) => {
+      const target = current.find((photo) => photo.id === id);
+      if (target) revokePhotoUrl(target.url);
+      return current.filter((photo) => photo.id !== id);
+    });
+  }
+
   async function submit() {
+    if (createdSlug) {
+      navigate(`/ilan/${createdSlug}`);
+      return;
+    }
     if (!user) {
       navigate('/giris');
       return;
     }
     setBusy(true);
     setError(null);
+    setCreatedSlug(null);
+    let publishedSlug: string | null = null;
     try {
-      const slug = await createListing(input);
-      navigate(`/ilan/${slug}`);
+      const created = await createListing(input);
+      publishedSlug = created.slug;
+      for (let index = 0; index < photos.length; index += 1) {
+        await uploadListingPhoto({
+          listingId: created.id,
+          userId: user.id,
+          file: photos[index].file,
+          position: index,
+        });
+      }
+      navigate(`/ilan/${created.slug}`);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'İlan yayımlanamadı');
+      const message = e instanceof Error ? e.message : 'İlan yayımlanamadı';
+      if (publishedSlug) {
+        setCreatedSlug(publishedSlug);
+        setError(`İlan yayımlandı; fotoğraf yükleme tamamlanamadı: ${message}`);
+      } else {
+        setError(message);
+      }
     } finally {
       setBusy(false);
     }
@@ -343,6 +439,96 @@ export function NewListingPage() {
                   </div>
                 </Panel>
 
+                <Panel
+                  title="Fotoğraflar"
+                  status={`${photos.length}/${LISTING_PHOTO_LIMIT}`}
+                >
+                  <div className="grid gap-3">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <p className="max-w-xl text-body-sm leading-relaxed text-muted-foreground">
+                        En fazla {LISTING_PHOTO_LIMIT} fotoğraf ekleyin.
+                        Dosyalar yüklenirken en uzun kenar {LISTING_MAX_EDGE}px
+                        olacak şekilde küçültülür ve fotoğraf başına{' '}
+                        {LISTING_PHOTO_BUDGET_LABEL} sınırına sığdırılır.
+                      </p>
+                      <label
+                        htmlFor="l-photos"
+                        aria-disabled={photos.length >= LISTING_PHOTO_LIMIT}
+                        className={cn(
+                          'inline-flex h-8 shrink-0 cursor-pointer items-center justify-center rounded-card border px-3.5 text-meta font-medium leading-none tracking-[0.03em] [text-indent:0.14em]',
+                          photos.length >= LISTING_PHOTO_LIMIT
+                            ? 'pointer-events-none border-border text-muted-foreground opacity-45'
+                            : 'border-border-strong text-foreground hover:border-primary hover:text-primary'
+                        )}
+                      >
+                        Fotoğraf seç
+                      </label>
+                      <input
+                        id="l-photos"
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        multiple
+                        className="sr-only"
+                        disabled={photos.length >= LISTING_PHOTO_LIMIT}
+                        onChange={(e) => {
+                          addPhotos(e.currentTarget.files);
+                          e.currentTarget.value = '';
+                        }}
+                      />
+                    </div>
+
+                    {photoError && (
+                      <Alert tone="warning" className="mt-0">
+                        {photoError}
+                      </Alert>
+                    )}
+
+                    {photos.length === 0 ? (
+                      <div className="rounded-card border border-dashed border-border bg-surface-2 px-3 py-6 text-center text-body-sm text-muted-foreground">
+                        Fotoğraf seçilmedi. İlk fotoğraf ilan kapak görseli
+                        olarak kullanılır.
+                      </div>
+                    ) : (
+                      <ul className="grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
+                        {photos.map((photo, index) => (
+                          <li
+                            key={photo.id}
+                            className="overflow-hidden rounded-card border border-border bg-surface-2"
+                          >
+                            <div className="relative">
+                              <img
+                                src={photo.url}
+                                alt={`${index + 1}. ilan fotoğrafı önizlemesi`}
+                                className="aspect-[4/3] w-full object-cover"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => removePhoto(photo.id)}
+                                className="absolute right-2 top-2 rounded-card border border-border-strong bg-background/90 px-2 py-1 text-meta text-foreground hover:border-danger hover:text-danger"
+                              >
+                                Sil
+                              </button>
+                              {index === 0 && (
+                                <span className="absolute left-2 top-2 rounded-card border border-primary/50 bg-background/90 px-2 py-1 text-meta text-primary">
+                                  Kapak
+                                </span>
+                              )}
+                            </div>
+                            <div className="px-2.5 py-2">
+                              <p className="truncate text-meta font-medium text-foreground">
+                                {photo.file.name}
+                              </p>
+                              <p className="tabular mt-1 text-meta text-faint">
+                                {formatFileSize(photo.file.size)}
+                              </p>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                </Panel>
+
                 <Panel title="Fiyat ve teslim">
                   <div className="grid gap-3 sm:grid-cols-3">
                     <Field label="Fiyat (₺)" htmlFor="l-price">
@@ -454,12 +640,17 @@ export function NewListingPage() {
                   )}
 
                   <div className="flex flex-wrap gap-2">
-                    <Button onClick={submit} disabled={busy || !!problem}>
+                    <Button
+                      onClick={submit}
+                      disabled={busy || (!!problem && !createdSlug)}
+                    >
                       {busy
                         ? 'Yayımlanıyor…'
-                        : user
-                          ? 'İlanı yayımla'
-                          : 'Giriş yap'}
+                        : createdSlug
+                          ? 'İlana git'
+                          : user
+                            ? 'İlanı yayımla'
+                            : 'Giriş yap'}
                     </Button>
                     <ButtonLink to="/ilanlar" variant="ghost">
                       Vazgeç
@@ -467,16 +658,16 @@ export function NewListingPage() {
                   </div>
 
                   <p className="mt-3 border-t border-border pt-3 text-meta leading-relaxed text-faint">
-                    İlan yayımlandıktan sonra detay sayfasından en fazla{' '}
+                    Fotoğraflar yayından önce eklenir; ilanın sahibi daha sonra
+                    detay sayfasından sırayı düzenleyebilir. Üst sınır{' '}
                     <span className="text-muted-foreground">
                       {LISTING_PHOTO_LIMIT} fotoğraf
                     </span>{' '}
-                    ekleyebilirsiniz. Her fotoğraf{' '}
+                    ve fotoğraf başına{' '}
                     <span className="text-muted-foreground">
                       {LISTING_PHOTO_BUDGET_LABEL}
                     </span>{' '}
-                    sınırına otomatik optimize edilir; bu bütçeye sığmayan
-                    dosyalarda daha düşük çözünürlük istenir.
+                    olarak korunur.
                   </p>
                 </Panel>
 

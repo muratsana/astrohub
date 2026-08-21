@@ -21,7 +21,13 @@ export function formatPhotoWeekLabel(label: string): {
   return { weekLabel: `${Number(match[2])}. Hafta`, yearLabel: match[1] };
 }
 
-export function isoWeekLabelFromDate(date: Date): string {
+export interface IsoWeekKey {
+  isoYear: number;
+  isoWeek: number;
+  label: string;
+}
+
+export function isoWeekFromDate(date: Date): IsoWeekKey {
   const dayMs = 24 * 60 * 60 * 1000;
   const value = new Date(
     Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())
@@ -32,7 +38,25 @@ export function isoWeekLabelFromDate(date: Date): string {
   const week = Math.ceil(
     ((value.getTime() - yearStart.getTime()) / dayMs + 1) / 7
   );
-  return `${value.getUTCFullYear()}-${String(week).padStart(2, '0')}`;
+  const isoYear = value.getUTCFullYear();
+  return {
+    isoYear,
+    isoWeek: week,
+    label: `${isoYear}-${String(week).padStart(2, '0')}`,
+  };
+}
+
+export function isoWeekLabelFromDate(date: Date): string {
+  return isoWeekFromDate(date).label;
+}
+
+export function isoWeekFromDateString(
+  value: string | null | undefined
+): IsoWeekKey | null {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return isoWeekFromDate(date);
 }
 
 export function photoWeekLabelFromDateString(
@@ -42,10 +66,9 @@ export function photoWeekLabelFromDateString(
   weekLabel: string;
   yearLabel: string | null;
 } | null {
-  if (!value) return null;
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return null;
-  const label = isoWeekLabelFromDate(date);
+  const week = isoWeekFromDateString(value);
+  if (!week) return null;
+  const label = week.label;
   return { label, ...formatPhotoWeekLabel(label) };
 }
 

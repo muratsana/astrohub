@@ -1,10 +1,14 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert } from '@/components/ui/Alert';
 import { Badge } from '@/components/ui/Badge';
 import { Button, ExternalButtonLink } from '@/components/ui/Button';
 import { Field } from '@/components/ui/Field';
 import { Input } from '@/components/ui/Input';
 import { Panel, SpecList, SpecRow } from '@/components/ui/Panel';
+import {
+  fetchAllDistricts,
+  type DistrictWithProvince,
+} from '@/services/content/districts';
 import {
   deleteAllskyCamera,
   fetchAllskyCameras,
@@ -15,6 +19,7 @@ import {
   type AllskyCameraInput,
 } from '@/services/content/allsky';
 import type { AllskyCamera } from '@/features/allsky/data';
+import { allskyLocationSuggestions } from './allskyLocation';
 
 const emptyDraft: AllskyCameraInput = {
   slug: '',
@@ -47,6 +52,120 @@ function toDraft(camera: AllskyCamera): AllskyCameraInput {
     enabled: camera.enabled,
     notes: camera.notes,
   };
+}
+
+function AllskyLocationInput({
+  id,
+  value,
+  onChange,
+}: {
+  id: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const [items, setItems] = useState<DistrictWithProvince[]>([]);
+  const [state, setState] = useState<'idle' | 'loading' | 'ready' | 'failed'>(
+    'idle'
+  );
+  const [open, setOpen] = useState(false);
+  const loadStarted = useRef(false);
+
+  const suggestions = useMemo(
+    () => allskyLocationSuggestions(items, value),
+    [items, value]
+  );
+
+  const loadLocations = useCallback(() => {
+    if (loadStarted.current) return;
+    loadStarted.current = true;
+    setState('loading');
+    fetchAllDistricts()
+      .then((list) => {
+        setItems(list);
+        setState(list.length > 0 ? 'ready' : 'failed');
+      })
+      .catch(() => setState('failed'));
+  }, []);
+
+  return (
+    <div className="relative">
+      <Input
+        id={id}
+        type="search"
+        autoComplete="off"
+        value={value}
+        onChange={(event) => {
+          onChange(event.target.value);
+          setOpen(true);
+          loadLocations();
+        }}
+        onFocus={() => {
+          setOpen(true);
+          loadLocations();
+        }}
+        onKeyDown={(event) => {
+          if (event.key === 'Escape') setOpen(false);
+        }}
+        placeholder="İl ya da ilçe yazın"
+      />
+
+      {open ? (
+        <button
+          type="button"
+          aria-hidden
+          tabIndex={-1}
+          onClick={() => setOpen(false)}
+          className="fixed inset-0 z-10 cursor-default"
+        />
+      ) : null}
+
+      {open ? (
+        <div className="absolute left-0 right-0 z-[var(--z-popover)] mt-1 overflow-hidden rounded-card border border-border-strong bg-surface-1 shadow-overlay">
+          {state === 'failed' ? (
+            <p className="px-3 py-3 text-body-sm leading-relaxed text-muted-foreground">
+              Konum listesi yüklenemedi.
+            </p>
+          ) : value.trim() === '' ? (
+            <p className="px-3 py-3 text-body-sm leading-relaxed text-muted-foreground">
+              {state === 'loading'
+                ? 'Konum listesi yükleniyor…'
+                : 'İl ya da ilçe adı yazın.'}
+            </p>
+          ) : state === 'loading' ? (
+            <p className="px-3 py-3 text-body-sm leading-relaxed text-muted-foreground">
+              Konum listesi yükleniyor…
+            </p>
+          ) : suggestions.length === 0 ? (
+            <p className="px-3 py-3 text-body-sm leading-relaxed text-muted-foreground">
+              Eşleşen konum yok.
+            </p>
+          ) : (
+            <ul className="max-h-72 overflow-auto">
+              {suggestions.map((suggestion) => (
+                <li key={suggestion.key}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onChange(suggestion.value);
+                      setOpen(false);
+                    }}
+                    className="flex w-full items-baseline gap-2 border-b border-border px-3 py-2 text-left transition-colors last:border-0 hover:bg-surface-2"
+                  >
+                    <span className="min-w-0 flex-1 truncate text-body-sm text-foreground">
+                      {suggestion.districtName}
+                    </span>
+                    <span className="shrink-0 text-meta text-muted-foreground">
+                      {suggestion.provinceName}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
 export function AllskyControl({ canWrite }: { canWrite: boolean }) {
@@ -127,7 +246,7 @@ export function AllskyControl({ canWrite }: { canWrite: boolean }) {
         status={items ? `${items.length} kayıt` : 'okunuyor…'}
       >
         <p className="mb-4 max-w-3xl text-body-sm leading-relaxed text-muted-foreground">
-          Navbar’daki ALLSKY sayfasında gösterilecek canlı kamera adresleri
+          Navbar’daki Allsky sayfasında gösterilecek canlı kamera adresleri
           burada yönetilir. Public sayfa yalnızca aktif kayıtların canlı görüntü
           adresini çizer.
         </p>
@@ -262,11 +381,10 @@ export function AllskyControl({ canWrite }: { canWrite: boolean }) {
 
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Field label="Konum" htmlFor="allsky-location">
-              <Input
+              <AllskyLocationInput
                 id="allsky-location"
                 value={draft.location}
-                onChange={(event) => update('location', event.target.value)}
-                placeholder="Ankara, Beypazarı"
+                onChange={(value) => update('location', value)}
               />
             </Field>
             <Field label="Sahip" htmlFor="allsky-owner">

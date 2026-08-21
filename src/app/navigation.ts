@@ -48,7 +48,7 @@ export const primaryNav: NavItem[] = [
   { label: 'Araçlar', to: '/araclar' },
   { label: 'Forum', to: '/forum' },
   { label: 'Saha', to: '/saha' },
-  { label: 'ALLSKY', to: '/allsky' },
+  { label: 'Allsky', to: '/allsky' },
 ];
 
 /**
@@ -395,10 +395,10 @@ export const siteMap: NavGroup[] = [
     ],
   },
   {
-    title: 'ALLSKY',
+    title: 'Allsky',
     items: [
       {
-        label: 'ALLSKY Kameraları',
+        label: 'Allsky Kameraları',
         to: '/allsky',
         description: 'Canlı all-sky kamera görüntüleri',
         keywords: ['allsky', 'all-sky', 'kamera', 'canlı gökyüzü'],

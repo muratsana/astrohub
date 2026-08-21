@@ -418,7 +418,7 @@ function ScoreBlock({
             </dd>
             <dd
               className={cn(
-                'num min-w-[4.5ch] text-right text-meta',
+                'min-w-[5.5ch] text-right text-meta font-medium tabular-nums',
                 row.value === null ? 'text-faint' : 'text-muted-foreground'
               )}
             >

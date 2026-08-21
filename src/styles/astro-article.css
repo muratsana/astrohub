@@ -970,14 +970,17 @@ html.light .ah:not([data-ah-theme='dark']),
    makale dili taşıyor. Sitede ise yazı sayfası başlık ve künyeyi zaten
    sağlıyor; burada kutu yoğunluğunu azaltıp okuma akışını öne alıyoruz. */
 .astrohub-html-block .ah {
-  --ah-measure: min(78ch, 100%);
+  --ah-measure: 100%;
   --ah-r: 2px;
   font-size: 15.5px;
-  line-height: 1.72;
+  line-height: 1.78;
+  width: 100%;
+  max-width: none;
 }
 
 .astrohub-html-block .ah > * {
-  max-width: var(--ah-measure);
+  width: 100%;
+  max-width: none;
 }
 
 .astrohub-html-block .ah > .ah-wide,
@@ -985,7 +988,7 @@ html.light .ah:not([data-ah-theme='dark']),
 .astrohub-html-block .ah figure.ah-fig,
 .astrohub-html-block .ah figure.ah-photo,
 .astrohub-html-block .ah .ah-tw {
-  max-width: min(980px, 100%);
+  max-width: none;
 }
 
 .astrohub-html-block .ah h1,
@@ -998,21 +1001,25 @@ html.light .ah:not([data-ah-theme='dark']),
   margin: 40px 0 12px;
   font-size: 22px;
   line-height: 1.28;
+  max-width: none;
 }
 
 .astrohub-html-block .ah h3 {
   margin: 28px 0 9px;
   font-size: 17px;
+  max-width: none;
 }
 
 .astrohub-html-block .ah p {
   margin-bottom: 16px;
+  max-width: none;
 }
 
 .astrohub-html-block .ah .ah-lead {
   font-size: inherit;
   line-height: inherit;
   margin-bottom: 18px;
+  max-width: none;
 }
 
 .astrohub-html-block .ah .ah-note,
@@ -1023,7 +1030,7 @@ html.light .ah:not([data-ah-theme='dark']),
   border-left: 2px solid var(--ah-hair);
   border-radius: 0;
   background: transparent;
-  padding: 5px 0 5px 14px;
+  padding: 8px 0 8px 18px;
 }
 
 .astrohub-html-block .ah .ah-note {
@@ -1034,7 +1041,37 @@ html.light .ah:not([data-ah-theme='dark']),
 .astrohub-html-block .ah .ah-tldr h3 {
   color: var(--ah-ink);
   letter-spacing: 0;
+  line-height: 1.35;
+  margin: 0 0 10px;
   text-transform: none;
+}
+
+.astrohub-html-block .ah .ah-note > *:last-child,
+.astrohub-html-block .ah .ah-tldr > *:last-child,
+.astrohub-html-block .ah .ah-eq > *:last-child {
+  margin-bottom: 0;
+}
+
+.astrohub-html-block .ah .ah-note p,
+.astrohub-html-block .ah .ah-tldr p {
+  margin: 0 0 12px;
+}
+
+.astrohub-html-block .ah .ah-tldr ul,
+.astrohub-html-block .ah .ah-note ul,
+.astrohub-html-block .ah details.ah-more .ah-body ul {
+  display: grid;
+  gap: 10px;
+  list-style: none;
+  margin: 0;
+  padding-left: 0;
+}
+
+.astrohub-html-block .ah .ah-tldr li,
+.astrohub-html-block .ah .ah-note li,
+.astrohub-html-block .ah details.ah-more .ah-body li {
+  margin: 0;
+  padding-left: 0;
 }
 
 .astrohub-html-block .ah .ah-note.ah-warn,
@@ -1102,9 +1139,12 @@ html.light .ah:not([data-ah-theme='dark']),
 .astrohub-html-block .ah .ah-verdict p,
 .astrohub-html-block .ah details.ah-more .ah-body p,
 .astrohub-html-block .ah .ah-tool > .ah-fine {
-  text-align: left;
-  hyphens: manual;
-  -webkit-hyphens: manual;
+  text-align: justify;
+  text-align-last: left;
+  text-justify: inter-word;
+  hyphens: auto;
+  -webkit-hyphens: auto;
+  text-wrap: pretty;
 }
 
 @media (max-width: 720px) {

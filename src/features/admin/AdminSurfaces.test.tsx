@@ -41,15 +41,11 @@ describe('UserControl', () => {
     expect(screen.getByLabelText(/kullanıcı ara/i)).toBeInTheDocument();
   });
 
-  /*
-   * E-POSTA SIZDIRILMIYOR ve bu ekranda YAZILI. `auth.users` PostgREST'e
-   * hiç açılmadı; panel kullanıcıyı profil üzerinden tanıyor. Cümle
-   * kalkarsa birinin "eksik" sanıp e-postayı eklemeye çalışması an
-   * meselesi.
-   */
-  it('e-postanın gösterilmediğini açıkça söylüyor', () => {
-    renderIn(<UserControl />);
-    expect(screen.getByText(/e-posta adresleri panelde/i)).toBeInTheDocument();
+  it('e-posta adresi göstermiyor', () => {
+    const { container } = renderIn(<UserControl />);
+    expect(container.textContent ?? '').not.toMatch(
+      /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i
+    );
   });
 
   it('okuma düşerse sebebini yazıyor, boş liste göstermiyor', async () => {

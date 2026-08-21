@@ -267,12 +267,6 @@ export async function importDocx(file: File): Promise<ImportResult> {
   };
 }
 
-interface PdfTextItem {
-  str: string;
-  transform: number[];
-  height: number;
-}
-
 export async function importPdf(file: File): Promise<ImportResult> {
   const pdfjs = await import('pdfjs-dist');
   pdfjs.GlobalWorkerOptions.workerSrc = new URL(
@@ -282,47 +276,35 @@ export async function importPdf(file: File): Promise<ImportResult> {
   const document = await pdfjs.getDocument({
     data: new Uint8Array(await file.arrayBuffer()),
   }).promise;
-  const blocks: ContentBlock[] = [];
+  const pages: string[] = [];
 
   for (let pageNo = 1; pageNo <= document.numPages; pageNo += 1) {
     const page = await document.getPage(pageNo);
-    const content = await page.getTextContent();
-    const items: PdfTextItem[] = content.items.flatMap((item) =>
-      'str' in item && 'transform' in item && 'height' in item
-        ? [{ str: item.str, transform: item.transform, height: item.height }]
-        : []
+    const viewport = page.getViewport({ scale: 1.45 });
+    const canvas = globalThis.document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    if (!context) throw new Error('PDF sayfası çizilemedi.');
+
+    canvas.width = Math.ceil(viewport.width);
+    canvas.height = Math.ceil(viewport.height);
+    await page.render({ canvas, canvasContext: context, viewport }).promise;
+
+    const image = canvas.toDataURL('image/jpeg', 0.88);
+    pages.push(
+      `<figure class="ah-pdf-page"><img src="${image}" alt="${escapeAttr(file.name)} sayfa ${pageNo}"></figure>`
     );
-    const rows = new Map<number, PdfTextItem[]>();
-    for (const item of items) {
-      const y = Math.round(item.transform[5] / 3) * 3;
-      rows.set(y, [...(rows.get(y) ?? []), item]);
-    }
-    const ordered = [...rows.entries()].sort((a, b) => b[0] - a[0]);
-    const medianHeight =
-      items.map((item) => item.height).sort((a, b) => a - b)[
-        Math.floor(items.length / 2)
-      ] ?? 12;
-    for (const [, row] of ordered) {
-      const value = clean(
-        row
-          .sort((a, b) => a.transform[4] - b.transform[4])
-          .map((item) => item.str)
-          .join(' ')
-      );
-      if (!value) continue;
-      const height = Math.max(...row.map((item) => item.height));
-      blocks.push(
-        height > medianHeight * 1.35
-          ? { type: 'heading', level: 2, text: value.slice(0, 300) }
-          : { type: 'paragraph', text: value }
-      );
-    }
   }
 
   return {
-    blocks,
+    blocks: [
+      {
+        type: 'html',
+        mode: 'document',
+        html: pdfDocumentHtml(file.name, pages),
+      },
+    ],
     warnings: [
-      'PDF sunum biçimidir; başlıklar punto farkıyla tahmin edildi. Yayınlamadan önce blokları kontrol edin.',
+      'PDF mizanpajı korunarak sayfa görselleri olarak içe aktarıldı. Metinleri düzenlemek için ham HTML kaynağını düzenleyin.',
     ],
   };
 }
@@ -355,12 +337,15 @@ export async function importHtml(file: File): Promise<ImportResult> {
     blocks: [
       {
         type: 'html',
-        html,
+        html: article ? html : importedHtmlDocument(raw, doc),
+        ...(article ? {} : { mode: 'document' as const }),
         ...(scriptSrc ? { scriptSrc } : {}),
       },
     ],
     warnings: [
-      'HTML kaynak olarak korundu; şekil ve etkileşimli araç yer tutucuları parçalanmadı.',
+      article
+        ? 'HTML kaynak olarak korundu; şekil ve etkileşimli araç yer tutucuları parçalanmadı.'
+        : 'HTML dosyası CSS ve mizanpajıyla birlikte izole doküman olarak korundu.',
     ],
   };
 }
@@ -371,4 +356,40 @@ export async function importContentFile(file: File): Promise<ImportResult> {
   if (name.endsWith('.pdf')) return importPdf(file);
   if (name.endsWith('.html') || name.endsWith('.htm')) return importHtml(file);
   throw new Error('Yalnızca .html, .docx ve .pdf dosyaları desteklenir.');
+}
+
+function importedHtmlDocument(raw: string, doc: Document): string {
+  if (/<html[\s>]/i.test(raw)) return raw.trim();
+  const title =
+    clean(doc.querySelector('title')?.textContent) || 'İçe aktarılan HTML';
+  return `<!doctype html><html lang="tr"><head><meta charset="utf-8"><title>${escapeHtml(title)}</title></head><body>${raw}</body></html>`;
+}
+
+function pdfDocumentHtml(fileName: string, pages: string[]): string {
+  return `<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>${escapeHtml(fileName)}</title>
+<style>
+  html, body { margin: 0; background: transparent; color: inherit; }
+  body { font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+  .ah-pdf-import { display: grid; gap: 24px; }
+  .ah-pdf-page { margin: 0; overflow: hidden; border: 1px solid rgba(148, 163, 184, .35); background: #fff; }
+  .ah-pdf-page img { display: block; width: 100%; height: auto; }
+</style>
+</head>
+<body><main class="ah-pdf-import">${pages.join('')}</main></body>
+</html>`;
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;');
+}
+
+function escapeAttr(value: string): string {
+  return escapeHtml(value).replaceAll('"', '&quot;');
 }

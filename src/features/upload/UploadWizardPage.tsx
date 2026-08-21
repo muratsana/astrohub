@@ -103,9 +103,6 @@ function isPhotoType(value: string): value is PhotoType {
   return value in photoTypeLabels;
 }
 
-const selectClass =
-  'h-11 w-full rounded-card border border-border bg-surface-1 px-3 text-sm text-foreground focus:border-primary/60';
-
 /** Yeni çekim oturumu — istemci tarafı benzersiz kimlikle (C03). */
 function yeniOturum(
   startsOn = '',
@@ -402,7 +399,9 @@ export function UploadWizardPage() {
 
       if (!file) return;
       const objectId = await requiredTargetId();
-      const title = selectedTarget ? targetDisplayTitle(selectedTarget) : state.title;
+      const title = selectedTarget
+        ? targetDisplayTitle(selectedTarget)
+        : state.title;
       /*
        * KIRPMA GÖNDERİM ANINDA, TEK SEFERDE UYGULANIYOR.
        *
@@ -930,12 +929,11 @@ export function UploadWizardPage() {
 
               <TargetPicker
                 value={state.targetSlug}
-                kind={state.targetKind}
-                onKindChange={(targetKind) => patch({ targetKind })}
+                showKindFilter={false}
                 onChange={(target) => {
                   if (!target) {
                     setSelectedRemoteTarget(null);
-                    patch({ targetSlug: '' });
+                    patch({ targetSlug: '', targetKind: 'hepsi' });
                     return;
                   }
                   /*
@@ -957,7 +955,6 @@ export function UploadWizardPage() {
                     type: isPhotoType(suggested) ? suggested : state.type,
                   });
                 }}
-                selectClassName={selectClass}
               />
 
               {/*
@@ -1595,7 +1592,7 @@ function SoftwareAutocomplete({
         <div
           id="software-suggestions"
           role="listbox"
-          className="absolute z-20 mt-1 max-h-56 w-full overflow-y-auto rounded-card border border-border bg-surface-2 p-1 shadow-xl"
+          className="absolute z-20 mt-1 max-h-56 w-full overflow-y-auto rounded-card border border-border bg-surface-2 p-1"
         >
           {suggestions.map((suggestion, index) => (
             <button

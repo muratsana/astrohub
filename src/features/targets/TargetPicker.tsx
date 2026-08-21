@@ -11,21 +11,20 @@ import { searchTargets, targets, type CelestialTarget } from './data';
 import { useCatalogSearch } from '@/services/content/targets';
 
 /**
- * HEDEF SEÇİCİ — önce obje tipi, sonra katalog kaydı.
+ * HEDEF SEÇİCİ — tek kaynak katalog kaydı.
  *
  * Katalog 200 kaydı geçince tek bir `<select>` işe yaramaz hâle geldi:
  * açılan listede 200 satırı gözle taramak, aradığı hedefi bilen kullanıcı
- * için de bilmeyen için de kötü. Bu yüzden iki aşama var ve sıra bilinçli:
+ * için de bilmeyen için de kötü. Bu yüzden serbest arama var:
  *
- *   1. OBJE TİPİ. Kullanıcı ne çektiğini her zaman bilir — "bir galaksi",
- *      "Ay", "bir meteor yağmuru". Tipi önce sormak, aday listesini 200'den
- *      onlarcaya indiriyor ve ikinci adımı gerçekten aranabilir kılıyor.
- *   2. KATALOG KAYDI. Serbest metinle arama; kod, Türkçe ad, alias ve
- *      takımyıldız üzerinden eşleşir. "NGC 224" yazan kullanıcı M 31'i
- *      bulur — aksi hâlde aynı cisim iki ayrı hedef gibi kaydedilirdi.
+ *   · KATALOG KAYDI. Kod, Türkçe ad, alias ve takımyıldız üzerinden
+ *     eşleşir. "NGC 224" yazan kullanıcı M 31'i bulur — aksi hâlde aynı
+ *     cisim iki ayrı hedef gibi kaydedilirdi.
  *
- * TİP SEÇMEK ZORUNLU DEĞİL. "Tüm türler" seçiliyken arama tüm katalogda
- * çalışır; kodu ezbere bilen kullanıcıyı iki tıkla yormanın anlamı yok.
+ * Upload akışında obje tipi kullanıcı girdisi değildir. Katalog satırında
+ * zaten bulunur ve seçimden sonra yalnızca bilgi olarak gösterilir; fotoğraf
+ * türü de yükleme sihirbazında bu katalog türünden türetilir. Kadraj ve
+ * mozaik araçlarında aynı bileşenin tip filtresi açık kalabilir.
  *
  * ══════════════════════════════════════════════════════════════════════
  * İKİ KAYNAK, TEK LİSTE
@@ -58,16 +57,18 @@ function groupedKinds(): { label: string; kinds: TargetKind[] }[] {
 export function TargetPicker({
   value,
   onChange,
-  kind,
+  kind = 'hepsi',
   onKindChange,
-  selectClassName,
+  selectClassName = 'h-11 w-full rounded-card border border-border bg-surface-1 px-3 text-sm text-foreground focus:border-primary/60',
+  showKindFilter = true,
 }: {
   /** Seçili hedefin slug'ı; boşsa seçim yok. */
   value: string;
   onChange: (target: CelestialTarget | null) => void;
-  kind: TargetKind | 'hepsi';
-  onKindChange: (kind: TargetKind | 'hepsi') => void;
-  selectClassName: string;
+  kind?: TargetKind | 'hepsi';
+  onKindChange?: (kind: TargetKind | 'hepsi') => void;
+  selectClassName?: string;
+  showKindFilter?: boolean;
 }) {
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
@@ -81,8 +82,9 @@ export function TargetPicker({
   const listId = useRef(
     `target-picker-${Math.random().toString(36).slice(2, 7)}`
   ).current;
-
   const groups = useMemo(groupedKinds, []);
+  const activeKind = showKindFilter ? kind : 'hepsi';
+
   const selected = useMemo(
     () =>
       targets.find((t) => t.slug === value) ??
@@ -90,12 +92,17 @@ export function TargetPicker({
     [value, secilenUzak]
   );
 
-  const { rows: uzak, loading: uzakYukleniyor } = useCatalogSearch(query, kind);
+  const { rows: uzak, loading: uzakYukleniyor } = useCatalogSearch(
+    query,
+    activeKind
+  );
 
   const yerel = useMemo(() => {
     const base = query.trim() ? searchTargets(query, targets.length) : targets;
-    return kind === 'hepsi' ? base : base.filter((t) => t.kind === kind);
-  }, [query, kind]);
+    return activeKind === 'hepsi'
+      ? base
+      : base.filter((t) => t.kind === activeKind);
+  }, [query, activeKind]);
 
   const eslesenler = useMemo(() => {
     const gorulen = new Set(yerel.map((t) => t.slug));
@@ -116,39 +123,39 @@ export function TargetPicker({
 
   return (
     <div className="space-y-4">
-      {/* ── Adım 1: obje tipi ── */}
-      <div>
-        <label htmlFor={`${listId}-kind`} className="label mb-1 block">
-          Obje tipi
-        </label>
-        <select
-          id={`${listId}-kind`}
-          className={selectClassName}
-          value={kind}
-          onChange={(e) => {
-            const next = e.target.value as TargetKind | 'hepsi';
-            onKindChange(next);
-            // Seçili hedef yeni tipe uymuyorsa seçim düşer: aksi hâlde
-            // "Gezegen" filtresi altında bir galaksi seçili görünürdü.
-            if (next !== 'hepsi' && selected && selected.kind !== next) {
-              onChange(null);
-            }
-          }}
-        >
-          <option value="hepsi">Tüm türler ({targets.length} kayıt)</option>
-          {groups.map((group) => (
-            <optgroup key={group.label} label={group.label}>
-              {group.kinds.map((k) => (
-                <option key={k} value={k}>
-                  {targetKindLabels[k]}
-                </option>
-              ))}
-            </optgroup>
-          ))}
-        </select>
-      </div>
+      {showKindFilter && (
+        <div>
+          <label htmlFor={`${listId}-kind`} className="label mb-1 block">
+            Obje tipi
+          </label>
+          <select
+            id={`${listId}-kind`}
+            className={selectClassName}
+            value={kind}
+            onChange={(e) => {
+              const next = e.target.value as TargetKind | 'hepsi';
+              onKindChange?.(next);
+              // Seçili hedef yeni tipe uymuyorsa seçim düşer: aksi hâlde
+              // "Gezegen" filtresi altında bir galaksi seçili görünürdü.
+              if (next !== 'hepsi' && selected && selected.kind !== next) {
+                onChange(null);
+              }
+            }}
+          >
+            <option value="hepsi">Tüm türler ({targets.length} kayıt)</option>
+            {groups.map((group) => (
+              <optgroup key={group.label} label={group.label}>
+                {group.kinds.map((k) => (
+                  <option key={k} value={k}>
+                    {targetKindLabels[k]}
+                  </option>
+                ))}
+              </optgroup>
+            ))}
+          </select>
+        </div>
+      )}
 
-      {/* ── Adım 2: katalog kaydı ── */}
       <div className="relative">
         <label htmlFor={`${listId}-search`} className="label mb-1 block">
           Katalog kaydı

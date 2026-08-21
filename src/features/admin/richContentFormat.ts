@@ -137,7 +137,8 @@ function blockToHtml(block: ContentBlock): string {
     const script = block.scriptSrc
       ? ` data-script-src="${escapeAttr(block.scriptSrc)}"`
       : '';
-    return `<section data-raw-html${script}><pre>${escapeHtml(block.html)}</pre></section>`;
+    const mode = block.mode ? ` data-mode="${escapeAttr(block.mode)}"` : '';
+    return `<section data-raw-html${script}${mode}><pre>${escapeHtml(block.html)}</pre></section>`;
   }
   return `<p>${inlineToHtml(block.text)}</p>`;
 }
@@ -195,11 +196,13 @@ function elementToBlocks(element: Element): ContentBlock[] {
   if (tag === 'section' && element.hasAttribute('data-raw-html')) {
     const html = element.querySelector('pre')?.textContent?.trim() ?? '';
     const scriptSrc = element.getAttribute('data-script-src')?.trim();
+    const mode = element.getAttribute('data-mode')?.trim();
     if (!html) return [];
     return [
       {
         type: 'html',
         html,
+        ...(mode === 'inline' || mode === 'document' ? { mode } : {}),
         ...(scriptSrc ? { scriptSrc } : {}),
       },
     ];

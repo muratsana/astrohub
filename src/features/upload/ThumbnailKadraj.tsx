@@ -248,7 +248,7 @@ function Slider({
         onChange={(e) => onChange(Number(e.target.value))}
         className="h-1.5 min-w-0 accent-primary"
       />
-      <span className="rounded-card border border-border bg-surface-2 px-2 py-1 text-right font-mono text-[11px] text-foreground">
+      <span className="rounded-card border border-border bg-surface-2 px-2 py-1 text-right font-mono text-meta text-foreground">
         {valueLabel}
       </span>
     </label>

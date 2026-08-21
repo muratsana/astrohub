@@ -59,6 +59,14 @@ export interface VizierKaynak {
   tablo: string;
   /** Numara sütunu. */
   numara: string;
+  /**
+   * Numara sütunu doğrudan sayı değilse kullanılan çıkarım deseni.
+   *
+   * Örn. V/84 gezegenimsi bulutsu kataloğunda Abell kayıtları `Name`
+   * sütununda "A 39" olarak gelir; birinci yakalama grubu katalog
+   * numarasına çevrilir.
+   */
+  numaraDeseni?: string;
   /** Büyük eksen sütunu (yay dakikası) — yoksa boş. */
   capSutun?: string;
   /** Küçük eksen sütunu (yay dakikası). */
@@ -71,6 +79,10 @@ export interface VizierKaynak {
   tur: string;
   /** İnsan okunur katalog adı — içe aktarma raporunda görünüyor. */
   baslik: string;
+  /** Rapor anahtarı. Aynı önek birden çok tablodan geliyorsa ayrıştırır. */
+  raporAnahtari?: string;
+  /** VizieR sorgusuna eklenecek güvenli filtre parçası. */
+  filtre?: string;
 }
 
 /**
@@ -91,6 +103,28 @@ export const VIZIER_KAYNAKLAR: VizierKaynak[] = [
     capSutun: 'Diam',
     tur: 'emisyon-bulutsusu',
     baslik: 'Sharpless (Sh2)',
+  },
+  {
+    onek: 'Abell',
+    ayirici: ' ',
+    tablo: 'V/84/main',
+    numara: 'Name',
+    numaraDeseni: '^A\\s*(\\d+)$',
+    tur: 'gezegenimsi-bulutsu',
+    baslik: 'Abell gezegenimsi bulutsuları',
+    raporAnahtari: 'abell_pn',
+    filtre: '&Name=A*',
+  },
+  {
+    onek: 'Abell',
+    ayirici: ' ',
+    tablo: 'V/84/pospn',
+    numara: 'Name',
+    numaraDeseni: '^A\\s*(\\d+)$',
+    tur: 'gezegenimsi-bulutsu',
+    baslik: 'Abell olası gezegenimsi bulutsuları',
+    raporAnahtari: 'abell_pn_olasi',
+    filtre: '&Name=A*',
   },
   {
     onek: 'Barnard',
@@ -183,7 +217,8 @@ export function vizierUrl(kaynak: VizierKaynak): string {
 
   return (
     `${VIZIER}?-source=${encodeURIComponent(kaynak.tablo)}` +
-    `&-out.max=unlimited&-out.add=_RAJ2000,_DEJ2000&-oc.form=dec${sutunlar}`
+    `&-out.max=unlimited&-out.add=_RAJ2000,_DEJ2000&-oc.form=dec${sutunlar}` +
+    (kaynak.filtre ?? '')
   );
 }
 

@@ -74,12 +74,11 @@ export const targetKindLabels: Record<TargetKind, string> = {
 };
 
 /**
- * Fotoğraf türü eşlemesi — yükleme sihirbazı hedefe göre türü öneriyor.
+ * Fotoğraf türü eşlemesi — yükleme sihirbazı hedefe göre türü belirliyor.
  *
  * Kullanıcı "M 42" seçtiğinde türü ayrıca "Deep Sky" yapmak zorunda
- * kalmamalı; hedefin türü zaten bunu söylüyor. Öneri **zorlama değil**:
- * aynı hedefin geniş alan manzarası da çekilebilir, kullanıcı türü
- * değiştirebilir.
+ * kalmamalı; hedefin türü zaten bunu söylüyor. Bu alan kullanıcı girdisi
+ * değil, katalog kaydından türetilen yayın bilgisidir.
  */
 export const kindToPhotoType: Record<TargetKind, string> = {
   galaksi: 'deep-sky',
@@ -154,7 +153,7 @@ function monthOfDay(dayOfYear: number): number {
  * birleştirmek, "en uygun ay"ı tahmin değil hesap hâline getiriyor.
  */
 export function midnightCulminationDay(raHours: number): number {
-  const sunRa = ((raHours - 12) % 24 + 24) % 24;
+  const sunRa = (((raHours - 12) % 24) + 24) % 24;
   return (sunRa / 24) * 365 + 80;
 }
 
@@ -231,7 +230,8 @@ export function difficultyFor(
   sizeArcmin: number
 ): Difficulty {
   const mag = magnitude ?? 11;
-  const penalty = sizeArcmin < 5 ? 4 : sizeArcmin < 10 ? 2 : sizeArcmin < 25 ? 1 : 0;
+  const penalty =
+    sizeArcmin < 5 ? 4 : sizeArcmin < 10 ? 2 : sizeArcmin < 25 ? 1 : 0;
   const score = mag + penalty;
   if (score <= 7.5) return 'Kolay';
   if (score <= 10.5) return 'Orta';

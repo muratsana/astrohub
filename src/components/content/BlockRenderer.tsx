@@ -1,5 +1,5 @@
 import type { ContentBlock } from '@/domain/content/blocks';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { youtubeEmbedUrl } from '@/features/tv/types';
 import { cn } from '@/lib/cn';
@@ -361,6 +361,18 @@ function HtmlBlock({
 }: {
   block: Extract<ContentBlock, { type: 'html' }>;
 }) {
+  if (block.mode === 'document') {
+    return <ImportedDocumentBlock html={block.html} />;
+  }
+
+  return <InlineHtmlBlock block={block} />;
+}
+
+function InlineHtmlBlock({
+  block,
+}: {
+  block: Extract<ContentBlock, { type: 'html' }>;
+}) {
   const ref = useRef<HTMLDivElement>(null);
   const html = useMemo(() => sanitizeArticleHtml(block.html), [block.html]);
 
@@ -390,6 +402,27 @@ function HtmlBlock({
   );
 }
 
+function ImportedDocumentBlock({ html }: { html: string }) {
+  const [height, setHeight] = useState(520);
+  const srcDoc = useMemo(() => sanitizeImportedDocumentHtml(html), [html]);
+
+  return (
+    <iframe
+      title="İçe aktarılmış içerik"
+      sandbox="allow-same-origin"
+      srcDoc={srcDoc}
+      className="block w-full rounded-card border border-border bg-background"
+      style={{ height }}
+      onLoad={(event) => {
+        const frame = event.currentTarget;
+        const doc = frame.contentDocument;
+        const nextHeight = doc?.documentElement.scrollHeight ?? height;
+        setHeight(Math.min(Math.max(nextHeight + 8, 360), 8000));
+      }}
+    />
+  );
+}
+
 function sanitizeArticleHtml(value: string): string {
   return value
     .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '')
@@ -398,4 +431,22 @@ function sanitizeArticleHtml(value: string): string {
     .replace(/\son[a-z]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '')
     .replace(/\s(href|src)\s*=\s*(["'])\s*javascript:[\s\S]*?\2/gi, '')
     .replace(/\ssrc\s*=\s*(["'])astrohub\/img\//gi, ' src=$1/astrohub/img/');
+}
+
+function sanitizeImportedDocumentHtml(value: string): string {
+  const withoutActiveContent = value
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '')
+    .replace(/<iframe\b[^>]*>[\s\S]*?<\/iframe>/gi, '')
+    .replace(/<object\b[^>]*>[\s\S]*?<\/object>/gi, '')
+    .replace(/<embed\b[^>]*>[\s\S]*?<\/embed>/gi, '')
+    .replace(/<form\b[^>]*>[\s\S]*?<\/form>/gi, '')
+    .replace(/\son[a-z]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '')
+    .replace(/\s(href|src)\s*=\s*(["'])\s*javascript:[\s\S]*?\2/gi, '')
+    .replace(/\ssrc\s*=\s*(["'])astrohub\/img\//gi, ' src=$1/astrohub/img/');
+
+  const base = `<base target="_blank"><style>html{color-scheme:dark;}body{box-sizing:border-box;margin:0;padding:0;background:transparent;}*,*::before,*::after{box-sizing:border-box;}img,svg,video,canvas{max-width:100%;}</style>`;
+  if (/<head[\s>]/i.test(withoutActiveContent)) {
+    return withoutActiveContent.replace(/<head([^>]*)>/i, `<head$1>${base}`);
+  }
+  return `<!doctype html><html lang="tr"><head>${base}</head><body>${withoutActiveContent}</body></html>`;
 }

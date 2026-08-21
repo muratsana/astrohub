@@ -83,12 +83,42 @@ async function indir(url: string, ad: string): Promise<string> {
   }
   const metin = await yanit.text();
   if (metin.length < 500) {
-    throw new Error(`${ad}: yanıt beklenmedik biçimde kısa (${metin.length} bayt)`);
+    throw new Error(
+      `${ad}: yanıt beklenmedik biçimde kısa (${metin.length} bayt)`
+    );
   }
   return metin;
 }
 
 const PARCA = 2000;
+
+const ASGARI_KOD_SAYILARI = {
+  messier: 110,
+  ngc: 7800,
+  ic: 5200,
+};
+
+const ASGARI_VIZIER_SAYILARI: Record<string, number> = {
+  sh2: 300,
+  abell_pn: 70,
+  abell_pn_olasi: 2,
+};
+
+function kodSay(nesneler: Nesne[], test: (kod: string) => boolean): number {
+  const kodlar = new Set<string>();
+  for (const nesne of nesneler) {
+    for (const kod of nesne.kodlar) {
+      if (test(kod)) kodlar.add(kod);
+    }
+  }
+  return kodlar.size;
+}
+
+function asgariyiDogrula(ad: string, sayi: number, asgari: number): void {
+  if (sayi < asgari) {
+    throw new Error(`${ad}: beklenenin altında kayıt var (${sayi}/${asgari})`);
+  }
+}
 
 /**
  * Çağıran yetkili mi — sır ya da yönetici JWT'si.
@@ -161,15 +191,25 @@ Deno.serve(async (istek: Request): Promise<Response> => {
     if (ngc.length < 12000) {
       throw new Error(`OpenNGC beklenenden az kayıt verdi: ${ngc.length}`);
     }
+    rapor['messier_kod'] = kodSay(ngc, (kod) => /^M \d+$/.test(kod));
+    rapor['ngc_kod'] = kodSay(ngc, (kod) => /^NGC \d+[A-Z]?$/.test(kod));
+    rapor['ic_kod'] = kodSay(ngc, (kod) => /^IC \d+[A-Z]?$/.test(kod));
+    asgariyiDogrula(
+      'Messier',
+      rapor['messier_kod'],
+      ASGARI_KOD_SAYILARI.messier
+    );
+    asgariyiDogrula('NGC', rapor['ngc_kod'], ASGARI_KOD_SAYILARI.ngc);
+    asgariyiDogrula('IC', rapor['ic_kod'], ASGARI_KOD_SAYILARI.ic);
 
     const listeler: Nesne[][] = [ngc];
     for (const kaynak of VIZIER_KAYNAKLAR) {
       const metin = await indir(vizierUrl(kaynak), kaynak.baslik);
       const liste = vizierAyristir(kaynak, metin, sinirlar);
-      rapor[kaynak.onek.toLowerCase()] = liste.length;
-      if (liste.length === 0) {
-        throw new Error(`${kaynak.baslik}: hiç satır ayrıştırılamadı`);
-      }
+      const anahtar = kaynak.raporAnahtari ?? kaynak.onek.toLowerCase();
+      rapor[anahtar] = liste.length;
+      const asgari = ASGARI_VIZIER_SAYILARI[anahtar] ?? 1;
+      asgariyiDogrula(kaynak.baslik, liste.length, asgari);
       listeler.push(liste);
     }
 
@@ -195,22 +235,20 @@ Deno.serve(async (istek: Request): Promise<Response> => {
         kodlar: n.kodlar,
       }));
 
-      const { error } = await db.rpc('katalog_hazirligi_yaz', { kayitlar: dilim });
+      const { error } = await db.rpc('katalog_hazirligi_yaz', {
+        kayitlar: dilim,
+      });
       if (error) throw new Error(`hazırlık yazımı: ${error.message}`);
     }
 
-    const { data: sonuc, error: birlesmeHatasi } = await db.rpc(
-      'katalog_birlestir'
-    );
+    const { data: sonuc, error: birlesmeHatasi } =
+      await db.rpc('katalog_birlestir');
     if (birlesmeHatasi) {
       throw new Error(`birleştirme: ${birlesmeHatasi.message}`);
     }
 
     return json({ tamam: true, rapor, birlestirme: sonuc });
   } catch (hata) {
-    return json(
-      { tamam: false, rapor, hata: (hata as Error).message },
-      500
-    );
+    return json({ tamam: false, rapor, hata: (hata as Error).message }, 500);
   }
 });

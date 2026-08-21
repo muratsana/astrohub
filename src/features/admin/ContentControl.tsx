@@ -974,7 +974,7 @@ function KindEditor({
                     onChange={(event) =>
                       updateHtmlBlock({ html: event.target.value })
                     }
-                    className="min-h-[65dvh] w-full resize-y rounded-card border border-border bg-background px-3 py-2 font-mono text-[12px] leading-relaxed text-foreground outline-none focus:border-primary"
+                    className="min-h-[65dvh] w-full resize-y rounded-card border border-border bg-background px-3 py-2 font-mono text-meta leading-relaxed text-foreground outline-none focus:border-primary"
                   />
                   <Field label="Etkileşim betiği" htmlFor="c-html-script">
                     <Input
@@ -1083,7 +1083,7 @@ function ContentPreviewModal({
       aria-label="Canlı site önizlemesi"
       className="fixed inset-0 z-[80] bg-black/75 p-3 sm:p-6"
     >
-      <div className="mx-auto flex max-h-[calc(100dvh-2rem)] max-w-5xl flex-col overflow-hidden rounded-card border border-border-strong bg-background shadow-overlay">
+      <div className="mx-auto flex max-h-[calc(100dvh-2rem)] max-w-5xl flex-col overflow-hidden rounded-card border border-border-strong bg-background">
         <div className="flex items-center justify-between gap-3 border-b border-border bg-surface-1 px-4 py-3">
           <div>
             <p className="label text-primary">Canlı site önizlemesi</p>

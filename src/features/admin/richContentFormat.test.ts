@@ -80,6 +80,17 @@ describe('gidiş-dönüş bütünlüğü', () => {
     ];
     expect(roundTrip(blocks)).toEqual(blocks);
   });
+
+  it('doküman modundaki HTML blok kaydetmede korunuyor', () => {
+    const blocks: ContentBlock[] = [
+      {
+        type: 'html',
+        mode: 'document',
+        html: '<!doctype html><html><body><style>.a{display:grid}</style><main>PDF</main></body></html>',
+      },
+    ];
+    expect(roundTrip(blocks)).toEqual(blocks);
+  });
 });
 
 describe('callout ayrıştırma', () => {

@@ -161,7 +161,8 @@ export const ContentBlockSchema = z.discriminatedUnion('type', [
 
   z.object({
     type: z.literal('html'),
-    html: z.string().trim().min(1).max(250_000),
+    html: z.string().trim().min(1).max(5_000_000),
+    mode: z.enum(['inline', 'document']).optional(),
     scriptSrc: articleScriptSrc.optional(),
   }),
 
