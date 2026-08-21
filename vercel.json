@@ -289,11 +289,11 @@
       "destination": "/app.html"
     },
     {
-      "source": "/forum/kategori/:category",
+      "source": "/forum/:slug",
       "destination": "/app.html"
     },
     {
-      "source": "/forum/:slug",
+      "source": "/forum/kategori/:category",
       "destination": "/app.html"
     },
     {

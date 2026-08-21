@@ -14,6 +14,7 @@ export interface SiteSource {
 }
 
 export interface ObservingSite {
+  id?: string;
   slug: string;
   name: string;
   region: string; // il/ilçe

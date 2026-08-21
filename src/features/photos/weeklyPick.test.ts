@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   formatPhotoWeekLabel,
+  bestRatedPhotoForWeek,
   isoWeekFromDateString,
   isoWeekLabelFromDate,
   photoWeekLabelFromDateString,
@@ -64,5 +65,30 @@ describe('haftanın fotoğrafı etiketi', () => {
       '31. Hafta',
       '30. Hafta',
     ]);
+  });
+
+  it('otomatik seçimde ortalama eşitse daha çok değerlendirme alanı seçer', () => {
+    const base = photos[0];
+    const candidates = [
+      {
+        ...base,
+        slug: 'az-oy',
+        publishedAt: '2026-08-19T12:00:00Z',
+        rating: { toplam: 180, sayi: 20 },
+        editorsPick: false,
+        photoOfWeekWins: [],
+      },
+      {
+        ...base,
+        slug: 'cok-oy',
+        publishedAt: '2026-08-20T12:00:00Z',
+        rating: { toplam: 450, sayi: 50 },
+        editorsPick: false,
+        photoOfWeekWins: [],
+      },
+    ];
+
+    expect(bestRatedPhotoForWeek(candidates, '2026-34')?.slug).toBe('cok-oy');
+    expect(selectWeeklyPhoto(candidates, [], new Date('2026-08-21T12:00:00Z'))?.photo.slug).toBe('cok-oy');
   });
 });

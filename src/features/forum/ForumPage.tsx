@@ -46,10 +46,7 @@ export function ForumPage() {
   const threadCatalog = useForumThreads();
   const threads = threadCatalog.items;
   const category = getForumCategoryId(params.category);
-
-  if (params.category && !category) {
-    return <NotFoundPage />;
-  }
+  const invalidCategory = Boolean(params.category && !category);
 
   const currentCategoryInfo = category ? forumCategories[category] : null;
   const pageThreads = category
@@ -92,6 +89,10 @@ export function ForumPage() {
     currentCategoryInfo?.description ??
     'Astrofotoğraf ve gözlem forumu: ekipmanlar, yazılımlar, görüntü işleme, etkinlikler, topluluklar, bilimsel çalışmalar, radyo astronomi ve astro kampçılık.';
   const path = category ? forumCategoryHref(category) : '/forum';
+
+  if (invalidCategory) {
+    return <NotFoundPage />;
+  }
 
   return (
     <>

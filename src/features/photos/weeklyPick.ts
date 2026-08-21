@@ -78,6 +78,37 @@ function withWeekWin(photo: AstroPhoto, label: string): AstroPhoto {
     : { ...photo, photoOfWeekWins: [...(photo.photoOfWeekWins ?? []), label] };
 }
 
+function ratingAverage(photo: AstroPhoto) {
+  return photo.rating.sayi > 0 ? photo.rating.toplam / photo.rating.sayi : 0;
+}
+
+export function compareWeeklyPhotoScore(a: AstroPhoto, b: AstroPhoto) {
+  return (
+    ratingAverage(b) - ratingAverage(a) ||
+    b.rating.sayi - a.rating.sayi ||
+    new Date(a.publishedAt ?? a.capturedAt).getTime() -
+      new Date(b.publishedAt ?? b.capturedAt).getTime() ||
+    a.slug.localeCompare(b.slug)
+  );
+}
+
+export function bestRatedPhotoForWeek(
+  photos: AstroPhoto[],
+  label: string
+): AstroPhoto | null {
+  return (
+    photos
+      .filter((photo) => {
+        if (photo.rating.sayi <= 0) return false;
+        return (
+          isoWeekFromDateString(photo.publishedAt ?? photo.capturedAt)?.label ===
+          label
+        );
+      })
+      .sort(compareWeeklyPhotoScore)[0] ?? null
+  );
+}
+
 export function selectWeeklyPhoto(
   photos: AstroPhoto[],
   rounds: PhotoWeekRound[],
@@ -112,8 +143,17 @@ export function selectWeeklyPhoto(
     };
   }
 
-  const editor = photos.find((photo) => photo.editorsPick) ?? photos[0];
   const fallbackLabel = isoWeekLabelFromDate(now);
+  const automatic = bestRatedPhotoForWeek(photos, fallbackLabel);
+  if (automatic) {
+    return {
+      photo: withWeekWin(automatic, fallbackLabel),
+      label: fallbackLabel,
+      ...formatPhotoWeekLabel(fallbackLabel),
+    };
+  }
+
+  const editor = photos.find((photo) => photo.editorsPick) ?? photos[0];
   return editor
     ? {
         photo: withWeekWin(editor, fallbackLabel),

@@ -86,8 +86,8 @@ insert into public.allsky_cameras (
 values (
   'ozdens-beypazari',
   'Ozdens ALLSKY CAM',
-  'https://ozdensobs.com/allsky/index.php',
-  'https://ozdensobs.com/allsky/image.jpg',
+  'https://www.ozdensobs.com/allsky/index.php',
+  'https://www.ozdensobs.com/allsky/image.jpg',
   'Ankara, Beypazarı',
   'Emre OZDEN',
   'ZWOASI676MC',

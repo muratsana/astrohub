@@ -49,7 +49,10 @@ import { ReportButton } from '@/features/admin/ReportButton';
 import { exifHasValues, photoTypeLabels } from './types';
 import { familyOf, photoFamilies } from './families';
 import { photoTargetHeading } from './photoHeading';
-import { photoWeekLabelFromDateString } from './weeklyPick';
+import {
+  formatPhotoWeekLabel,
+  photoWeekLabelFromDateString,
+} from './weeklyPick';
 import { formatExposure } from '@/domain/photography/exif';
 import type { AstroPhoto } from './types';
 import { cn } from '@/lib/cn';
@@ -225,6 +228,19 @@ function PhotoDetail({
                   </Badge>
                 </span>
               )}
+              {(photo.photoOfWeekWins ?? []).map((label) => {
+                const formatted = formatPhotoWeekLabel(label);
+                return (
+                  <span
+                    key={label}
+                    title={`Haftanın Fotoğrafı${formatted.yearLabel ? ` · ${formatted.yearLabel}` : ''}`}
+                  >
+                    <Badge tone="primary" className="bg-surface-1/80">
+                      Haftanın Fotoğrafı · {formatted.weekLabel}
+                    </Badge>
+                  </span>
+                );
+              })}
             </div>
             {/* Fotoğraftan kadraja: "bunu ben de çekebilir miyim"
                 sorusunun cevabı bir tık uzakta olmalı. */}

@@ -13,42 +13,15 @@ export interface PhotoWeekResult {
   averageScore: number;
 }
 
-export async function createPhotoWeekRound(input: {
-  isoYear: number;
-  isoWeek: number;
-  opensAt: string;
-  closesAt: string;
-  createdBy: string;
-}) {
-  const supabase = await client();
-  const { error } = await supabase.from('photo_of_week_rounds').insert({
-    iso_year: input.isoYear,
-    iso_week: input.isoWeek,
-    opens_at: input.opensAt,
-    closes_at: input.closesAt,
-    created_by: input.createdBy,
-  });
-  if (error) throw new Error(error.message);
-}
-
-export async function setPhotoWeekRoundStatus(roundId: string, status: string) {
-  const supabase = await client();
-  const { error } = await supabase.from('photo_of_week_rounds').update({ status }).eq('id', roundId);
-  if (error) throw new Error(error.message);
-}
-
-export async function addPhotoWeekNominee(roundId: string, photoId: string, userId: string) {
-  const supabase = await client();
-  const { error } = await supabase.from('photo_of_week_nominees').upsert(
-    { round_id: roundId, photo_id: photoId, nominated_by: userId },
-    { onConflict: 'round_id,photo_id' }
-  );
-  if (error) throw new Error(error.message);
-}
-
 export async function closePhotoWeekRound(roundId: string) {
   const supabase = await client();
   const { error } = await supabase.rpc('close_photo_of_week', { target_round: roundId });
+  if (error) throw new Error(error.message);
+}
+
+export async function syncPhotoWeekAutomation() {
+  const supabase = await client();
+  const { error } = await supabase.rpc('sync_photo_week_rounds');
   if (error) throw new Error(error.message);
 }
 

@@ -48,14 +48,20 @@ async function client() {
 function isMissingRpc(error: { code?: string; message?: string } | null): boolean {
   if (!error) return false;
   if (['PGRST200', 'PGRST202', 'PGRST204'].includes(error.code ?? '')) return true;
-  return /settle_due_photo_week_rounds|schema cache|could not find/i.test(error.message ?? '');
+  return /sync_photo_week_rounds|settle_due_photo_week_rounds|schema cache|could not find/i.test(error.message ?? '');
 }
 
-async function settleDuePhotoWeekRounds(supabase: Awaited<ReturnType<typeof client>>) {
-  const { error } = await supabase.rpc('settle_due_photo_week_rounds');
-  if (error && !isMissingRpc(error)) {
-    console.warn('Haftanın fotoğrafı otomatik sonuçlandırma çalışmadı:', error.message);
+async function syncPhotoWeekRounds(supabase: Awaited<ReturnType<typeof client>>) {
+  const { error } = await supabase.rpc('sync_photo_week_rounds');
+  if (!error) return;
+  if (isMissingRpc(error)) {
+    const fallback = await supabase.rpc('settle_due_photo_week_rounds');
+    if (fallback.error && !isMissingRpc(fallback.error)) {
+      console.warn('Haftanın fotoğrafı otomatik senkronizasyonu çalışmadı:', fallback.error.message);
+    }
+    return;
   }
+  console.warn('Haftanın fotoğrafı otomatik senkronizasyonu çalışmadı:', error.message);
 }
 
 export function usePhotoWeekRounds() {
@@ -73,7 +79,7 @@ export function usePhotoWeekRounds() {
     setLoading(true);
     client()
       .then(async (supabase) => {
-        await settleDuePhotoWeekRounds(supabase);
+        await syncPhotoWeekRounds(supabase);
         return supabase
           .from('photo_of_week_rounds')
           .select('id, iso_year, iso_week, status, opens_at, closes_at, winner_photo_id')
@@ -132,7 +138,7 @@ export function usePhotoWeekBallot(userId: string | undefined) {
     setLoading(true);
     client()
       .then(async (supabase) => {
-        await settleDuePhotoWeekRounds(supabase);
+        await syncPhotoWeekRounds(supabase);
         const { data: roundData, error: roundError } = await supabase
           .from('photo_of_week_rounds')
           .select('id, iso_year, iso_week, status, opens_at, closes_at, winner_photo_id')

@@ -56,6 +56,7 @@ export function PhotoCard({
             )}
             {(photo.photoOfWeekWins?.length ?? 0) > 0 && (
               <Badge tone="success" className="bg-background/85">
+                Haftanın fotoğrafı ·{' '}
                 {formatPhotoWeekLabel(photo.photoOfWeekWins!.at(-1)!).weekLabel}
               </Badge>
             )}

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ForumPage } from './ForumPage';
@@ -18,7 +18,7 @@ describe('ForumPage', () => {
       screen.getByRole('heading', { level: 2, name: 'Ekipmanlar' })
     ).toBeVisible();
     expect(
-      screen.getByRole('link', { name: /Ekipmanlar.*2 konu/i })
+      screen.getByRole('link', { name: /Ekipmanlar.*0 konu/i })
     ).toHaveAttribute('href', '/forum/kategori/ekipmanlar');
     expect(
       screen.queryByRole('link', {
@@ -30,59 +30,34 @@ describe('ForumPage', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('kategori alt sayfasında ilgili konuları gösteriyor', () => {
+  it('kategori alt sayfasında mock konu göstermiyor', () => {
     renderForum('/forum/kategori/ekipmanlar');
 
     expect(
       screen.getByRole('heading', { level: 1, name: 'Ekipmanlar' })
     ).toBeVisible();
     expect(
-      screen.queryByRole('link', { name: /Ekipmanlar.*2 konu/i })
+      screen.queryByRole('link', { name: /Ekipmanlar.*0 konu/i })
     ).not.toBeInTheDocument();
-
-    const threadLink = screen.getByRole('link', {
-      name: /İlk teleskop: 130 mm newton mu, 8 inç dobson mu?/,
-    });
-    expect(threadLink).toHaveAttribute(
-      'href',
-      '/forum/ilk-teleskop-130-mm-mi-8-inc-dobson-mi'
-    );
-    expect(screen.getByText(/Ankara’da oturuyorum/)).toBeVisible();
-    expect(screen.getAllByRole('link', { name: '@gokhan_k' })[0]).toHaveAttribute(
-      'href',
-      '/profil/gokhan_k'
-    );
-
-    fireEvent.click(screen.getByRole('button', { name: 'Izgara görünümü' }));
-    expect(
-      screen.getByRole('link', {
-        name: /İlk teleskop: 130 mm newton mu, 8 inç dobson mu?/,
-      })
-    ).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Liste görünümü' }));
     expect(
       screen.queryByRole('link', {
-        name: /Forum kuralları ve başlarken okunacaklar/,
+        name: /İlk teleskop: 130 mm newton mu, 8 inç dobson mu?/,
       })
     ).not.toBeInTheDocument();
+    expect(screen.getByText('Eşleşen konu yok')).toBeVisible();
   });
 
-  it('kategori alt sayfasında rozet filtresini uygular', () => {
+  it('kategori alt sayfasında mock kullanıcı göstermiyor', () => {
     renderForum('/forum/kategori/yazilimlar');
 
     expect(
-      screen.getByRole('link', {
+      screen.queryByRole('link', {
         name: /PHD2 guide hatası doğuda ve batıda farklı çıkıyor/,
       })
-    ).toHaveAttribute('href', '/forum/phd2-guide-hatasi-dogu-batida-farkli');
-
-    fireEvent.click(screen.getByRole('checkbox', { name: /Sorun Giderme/ }));
+    ).not.toBeInTheDocument();
     expect(
-      screen.getByRole('link', {
-        name: /PHD2 guide hatası doğuda ve batıda farklı çıkıyor/,
-      })
-    ).toBeInTheDocument();
+      screen.queryByRole('link', { name: /@gokhan_k|@tolga_m|@burak_deniz/ })
+    ).not.toBeInTheDocument();
   });
 });
 

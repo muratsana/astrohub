@@ -164,6 +164,7 @@ export function MarketplacePage() {
             onChange: setView,
             modes: ['grid', 'list', 'table'],
           }}
+          primaryFilters={4}
           showResultCount={false}
         >
           <FilterCell
@@ -371,14 +372,14 @@ function ListingPriceFilter({
     current: string,
     setCurrent: (value: string) => void
   ) => (
-    <span className="flex min-w-0 flex-1 items-center gap-1">
+    <span className="min-w-0">
       <input
         type="number"
         inputMode="numeric"
         step={500}
         value={current}
         aria-label={`Fiyat ${edge === 'min' ? 'en az' : 'en çok'}`}
-        placeholder={edge === 'min' ? 'en az' : 'en çok'}
+        placeholder={edge === 'min' ? 'Min' : 'Max'}
         onChange={(event) => setCurrent(event.target.value)}
         onBlur={(event) => apply(edge, event.target.value)}
         onKeyDown={(event) => {
@@ -386,11 +387,8 @@ function ListingPriceFilter({
           event.preventDefault();
           apply(edge, (event.target as HTMLInputElement).value);
         }}
-        className={`${filterControlClass} min-w-0 font-sans`}
+        className={`${filterControlClass} min-w-0 text-right font-sans`}
       />
-      <span aria-hidden className="shrink-0 text-meta text-faint">
-        TL
-      </span>
     </span>
   );
 
@@ -398,14 +396,17 @@ function ListingPriceFilter({
     <FilterCell
       label="Fiyat"
       active={Boolean(value && (value.min !== null || value.max !== null))}
-      className="min-w-[14rem]"
+      className="min-w-[12rem]"
     >
-      <span className="flex items-center gap-1.5">
+      <span className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_auto] items-center gap-1.5">
         {input('min', min, setMin)}
         <span aria-hidden className="shrink-0 text-meta text-faint">
           –
         </span>
         {input('max', max, setMax)}
+        <span aria-hidden className="shrink-0 text-meta font-medium text-muted-foreground">
+          TL
+        </span>
       </span>
     </FilterCell>
   );
