@@ -6,6 +6,7 @@ import { breadcrumbJsonLd } from '@/lib/seo';
 import { siteMap } from '@/app/navigation';
 import { RemoteImage } from '@/components/media/RemoteImage';
 import { CARD_RATIO } from '@/components/ui/cardRatios';
+import { CardGrid } from '@/components/ui/CardGrid';
 import { commonsImage } from '@/lib/commons';
 import {
   CalendarIcon,
@@ -134,8 +135,8 @@ export function ToolsIndexPage() {
         ])}
       />
 
-      <Container className="py-10 sm:py-12">
-        <header className="mb-8 border-b border-border pb-6">
+      <Container className="py-8 sm:py-10">
+        <header className="mb-6 border-b border-border pb-5">
           <h1 className="type-page text-foreground">Araçlar</h1>
           <p className="mt-3 max-w-[70ch] text-caption leading-relaxed text-muted-foreground">
             Çekim öncesi kararları sayıya dayandıran araçlar. FoV, pixel scale
@@ -146,8 +147,8 @@ export function ToolsIndexPage() {
         {[...grouped, { title: 'Diğer', hint: '', items: ungrouped }]
           .filter((group) => group.items.length > 0)
           .map((group) => (
-            <section key={group.title} className="mb-8 last:mb-0">
-              <div className="mb-3 flex flex-wrap items-baseline gap-x-3 border-b border-border pb-2">
+            <section key={group.title} className="mb-6 last:mb-0">
+              <div className="mb-2 flex flex-wrap items-baseline gap-x-3 border-b border-border pb-2">
                 <h2 className="type-section text-foreground">{group.title}</h2>
                 {group.hint && (
                   <p className="text-meta text-muted-foreground">
@@ -156,7 +157,7 @@ export function ToolsIndexPage() {
                 )}
               </div>
 
-              <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 [&>li]:h-full">
+              <CardGrid view="grid">
                 {group.items.map((tool) => {
                   const Icon = toolIcons[tool.to];
                   const cover = toolCovers[tool.to] ?? toolCovers.default;
@@ -164,60 +165,60 @@ export function ToolsIndexPage() {
                     <li key={tool.to + tool.label}>
                       <Link
                         to={tool.to}
-                        className="group flex h-full min-h-[21.5rem] flex-col overflow-hidden rounded-card border border-border bg-surface-1 transition-[border-color,background-color,transform] hover:-translate-y-0.5 hover:border-primary/50 hover:bg-surface-2 sm:h-[21.5rem]"
+                        className="group flex h-full flex-col overflow-hidden rounded-card border border-border bg-surface-1 transition-[border-color,background-color,transform] hover:-translate-y-0.5 hover:border-primary/50 hover:bg-surface-2"
                       >
                         <ToolCover cover={cover} Icon={Icon} />
-                        <span className="flex items-baseline gap-2 px-4 pt-4">
-                          <span className="font-display text-readout-sm font-bold text-foreground transition-colors group-hover:text-primary">
+                        <span className="flex items-baseline gap-2 px-3 pt-3">
+                          <span className="font-display text-body font-bold text-foreground transition-colors group-hover:text-primary">
                             {tool.label}
                           </span>
                           {tool.soon && <Badge>Yakında</Badge>}
                         </span>
                         {tool.description && (
-                          <span className="mt-2 px-4 text-meta leading-relaxed text-muted-foreground">
+                          <span className="mt-1.5 line-clamp-2 px-3 text-meta leading-relaxed text-muted-foreground">
                             {tool.description}
                           </span>
                         )}
-                        <span className="mt-auto px-4 pb-4 pt-5 text-meta tracking-[0.04em] text-faint transition-colors group-hover:text-primary">
+                        <span className="mt-auto px-3 pb-3 pt-4 text-meta tracking-[0.04em] text-faint transition-colors group-hover:text-primary">
                           {tool.soon ? 'yol haritasında' : 'aracı aç →'}
                         </span>
                       </Link>
                     </li>
                   );
                 })}
-              </ul>
+              </CardGrid>
             </section>
           ))}
 
         {REFERENCE.length > 0 && (
-          <section className="mt-8">
-            <div className="mb-3 flex flex-wrap items-baseline gap-x-3 border-b border-border pb-2">
+          <section className="mt-6">
+            <div className="mb-2 flex flex-wrap items-baseline gap-x-3 border-b border-border pb-2">
               <h2 className="type-section text-foreground">Referans</h2>
               <p className="text-meta text-muted-foreground">
                 Araçların okuduğu kataloglar
               </p>
             </div>
-            <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 [&>li]:h-full">
+            <CardGrid view="grid">
               {REFERENCE.map((item) => (
                 <li key={item.to}>
                   <Link
                     to={item.to}
-                    className="group flex h-full min-h-[21.5rem] flex-col overflow-hidden rounded-card border border-border bg-surface-1 transition-[border-color,background-color,transform] hover:-translate-y-0.5 hover:border-primary/50 hover:bg-surface-2 sm:h-[21.5rem]"
+                    className="group flex h-full flex-col overflow-hidden rounded-card border border-border bg-surface-1 transition-[border-color,background-color,transform] hover:-translate-y-0.5 hover:border-primary/50 hover:bg-surface-2"
                   >
                     <ToolCover cover={toolCovers.reference} Icon={GridIcon} />
-                    <span className="px-4 pt-4 font-display text-readout-sm font-bold text-foreground transition-colors group-hover:text-primary">
+                    <span className="px-3 pt-3 font-display text-body font-bold text-foreground transition-colors group-hover:text-primary">
                       {item.label}
                     </span>
-                    <span className="mt-2 px-4 text-meta leading-relaxed text-muted-foreground">
+                    <span className="mt-1.5 line-clamp-2 px-3 text-meta leading-relaxed text-muted-foreground">
                       {item.description}
                     </span>
-                    <span className="mt-auto px-4 pb-4 pt-5 text-meta tracking-[0.04em] text-faint transition-colors group-hover:text-primary">
+                    <span className="mt-auto px-3 pb-3 pt-4 text-meta tracking-[0.04em] text-faint transition-colors group-hover:text-primary">
                       katalogu aç →
                     </span>
                   </Link>
                 </li>
               ))}
-            </ul>
+            </CardGrid>
           </section>
         )}
       </Container>
@@ -241,16 +242,16 @@ function ToolCover({
         alt={cover.alt}
         seed={cover.seed}
         tint={cover.tint}
-        sizes="(min-width: 1536px) 25vw, (min-width: 1280px) 33vw, (min-width: 640px) 50vw, 100vw"
+        sizes="(min-width: 1280px) 20vw, (min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
         className="transition duration-500 group-hover:scale-[1.03]"
       />
       <span className="absolute inset-0 bg-gradient-to-t from-background/80 via-background/15 to-background/10" />
       {Icon && (
-        <span className="absolute left-3 top-3 grid h-9 w-9 place-items-center rounded-card border border-border bg-background/82 text-primary shadow-overlay backdrop-blur-sm transition-colors group-hover:text-primary-hover">
-          <Icon className="h-5 w-5" />
+        <span className="absolute left-2 top-2 grid h-8 w-8 place-items-center rounded-card border border-border bg-background/82 text-primary shadow-overlay backdrop-blur-sm transition-colors group-hover:text-primary-hover">
+          <Icon className="h-4 w-4" />
         </span>
       )}
-      <span className="absolute bottom-3 right-3 rounded-card border border-border-strong bg-background/82 px-2 py-1 text-meta text-muted-foreground backdrop-blur-sm">
+      <span className="absolute bottom-2 right-2 rounded-card border border-border-strong bg-background/82 px-2 py-1 text-meta text-muted-foreground backdrop-blur-sm">
         {cover.credit}
       </span>
     </span>

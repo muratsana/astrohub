@@ -39,34 +39,10 @@ export function RadioPage() {
         />
 
         {!hasBroadcast ? (
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,380px)]">
-            <EmptyState
-              message="Yayın henüz başlamadı"
-              hint="Radyo yayına alındığında bu sayfadan ve üst çubuktan açılır."
-            />
-
-            <Panel title="Yayın nasıl işler">
-              <ul className="space-y-3 text-meta leading-relaxed text-muted-foreground">
-                <li>
-                  <span className="label mb-0.5 block text-cold">
-                    Programı Astrohub yapar
-                  </span>
-                  Radyo bir topluluk kuyruğu değil, sitenin kendi yayını.
-                  Listeyi editör ekibi hazırlar; dinleyiciden parça
-                  yüklenmez. Bunun sebebi lisans: çalınan her kaydın
-                  hakkının kimde olduğunu tek bir yerin izlemesi gerekir,
-                  aksi hâlde sorumluluk kimsede olmayan bir yayın çıkar.
-                </li>
-                <li>
-                  <span className="label mb-0.5 block text-cold">
-                    Kesintisiz akış
-                  </span>
-                  Dinleyici sırayı seçmez; kanal arkada akmaya devam eder.
-                  Başlatıldığında güncel yayın noktasına bağlanır.
-                </li>
-              </ul>
-            </Panel>
-          </div>
+          <EmptyState
+            message="Yayın henüz başlamadı"
+            hint="Radyo yayına alındığında bu sayfadan ve üst çubuktan açılır."
+          />
         ) : (
           <Panel title="Canlı yayın" status={playing ? 'açık' : 'duraklatıldı'}>
             <div className="flex items-center gap-3">

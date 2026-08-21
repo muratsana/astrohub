@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { Container } from '@/components/ui/Container';
+import { Badge } from '@/components/ui/Badge';
 import { Button, ButtonLink } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -160,6 +161,7 @@ export function SitesPage() {
     lng: location.longitude,
   });
   const [zoom, setZoom] = useState(6);
+  const [mapExpanded, setMapExpanded] = useState(false);
 
   useEffect(() => {
     setCenter({ lat: location.latitude, lng: location.longitude });
@@ -220,6 +222,42 @@ export function SitesPage() {
     setZoom((current) => Math.max(current, 7));
   }
 
+  function locateOnMap() {
+    setShowAll(false);
+    requestDeviceLocation();
+    setCenter({ lat: location.latitude, lng: location.longitude });
+    setZoom((current) => Math.max(current, 7));
+  }
+
+  function toggleMapScope() {
+    if (showAll) {
+      if (selected) focusSite(selected.item);
+      return;
+    }
+    setShowAll(true);
+    setCenter({ lat: location.latitude, lng: location.longitude });
+    setZoom(6);
+  }
+
+  function resetMapView() {
+    if (!showAll && selected) {
+      setCenter({
+        lat: selected.item.coords.latitude,
+        lng: selected.item.coords.longitude,
+      });
+      setZoom(7);
+      return;
+    }
+    setCenter({ lat: location.latitude, lng: location.longitude });
+    setZoom(6);
+  }
+
+  function changeMapZoom(delta: number) {
+    setZoom((current) =>
+      Math.min(ZOOM_RANGE.max, Math.max(ZOOM_RANGE.min, current + delta))
+    );
+  }
+
   function allow() {
     setAllowed(true);
     try {
@@ -261,21 +299,6 @@ export function SitesPage() {
           title="Gözlem Sahaları"
           description="Kamp ve gözlem noktaları artık harita üstünde: Bortle/SQM kayıtları, ışık kirliliği katmanı ve size en yakın sahalar."
           meta={location.label}
-          actions={
-            <>
-              <ButtonLink to="/saha/yeni" size="sm">
-                Saha ekle
-              </ButtonLink>
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={requestDeviceLocation}
-                disabled={permission === 'pending'}
-              >
-                {permission === 'pending' ? 'Konum alınıyor' : 'Konumumu bul'}
-              </Button>
-            </>
-          }
         />
 
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-card border border-border bg-surface-1 px-3 py-2">
@@ -337,124 +360,357 @@ export function SitesPage() {
         <CatalogSourceNote selection={catalog} />
 
         <div className="mt-4 space-y-4">
-          <Panel
-            title="Bortle saha haritası"
-            status={`${mapItems.length} işaret`}
-            bodyClassName="p-0"
+          <div
+            className={cn(
+              'grid gap-4 lg:items-stretch',
+              mapExpanded
+                ? 'lg:grid-cols-1'
+                : 'lg:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.85fr)]'
+            )}
           >
-            <div className="relative h-[70vh] min-h-[520px] overflow-hidden rounded-b-card bg-surface-2">
-              {!hasNetworkAccess ? (
-                <MapNotice
-                  title="Bu önizleme dış harita isteği yapmıyor"
-                  body="Yayındaki sitede altlık harita ve ışık kirliliği katmanı burada açılır."
-                />
-              ) : live ? (
-                <TileMap
-                  label="Saha haritası — sürükleyerek gezin"
-                  className={cn(
-                    'h-full w-full',
-                    theme === 'field' &&
-                      '[filter:sepia(1)_saturate(5)_hue-rotate(-38deg)_brightness(0.6)]'
-                  )}
-                  center={center}
-                  zoom={zoom}
-                  minZoom={ZOOM_RANGE.min}
-                  maxZoom={ZOOM_RANGE.max}
-                  onCenterChange={setCenter}
-                  onZoomChange={setZoom}
-                  base={base}
-                  overlay={overlay}
-                  overlayOpacity={opacity / 100}
-                  marker={{ lat: location.latitude, lng: location.longitude }}
-                  markers={mapItems.map(({ item, distanceKm }) => ({
-                    id: item.slug,
-                    point: {
-                      lat: item.coords.latitude,
-                      lng: item.coords.longitude,
-                    },
-                    label: `${item.name}, ${item.region}, Bortle ${item.bortle}, ${formatDistance(distanceKm)} uzaklıkta`,
-                    active: active === item.slug,
-                    color: markerColor(item.bortle),
-                    onSelect: () => focusSite(item),
-                  }))}
-                />
-              ) : (
-                <MapNotice
-                  title="Harita üçüncü taraf döşemeleri yükler"
-                  body="Haritayı açtığınızda IP adresiniz ve baktığınız bölge CARTO ve NASA GIBS sağlayıcılarına gider."
-                  action={
-                    <Button size="sm" onClick={allow}>
-                      Haritayı yükle
-                    </Button>
-                  }
-                />
-              )}
-
-              {live && (
-                <>
-                  <div className="absolute right-2 top-2 flex max-w-[calc(100%-1rem)] flex-wrap items-end gap-2 rounded-card border border-border-strong bg-background/90 px-2 py-1.5 shadow-card backdrop-blur-sm">
-                    <label className="grid gap-1">
-                      <span className="label">Altlık</span>
-                      <Select
-                        value={baseMode}
-                        onChange={(event) =>
-                          setBaseMode(event.target.value as BaseMode)
-                        }
-                        width="7rem"
-                        className="h-8 text-meta"
-                      >
-                        <option value="harita">Harita</option>
-                        <option value="uydu">Uydu</option>
-                      </Select>
-                    </label>
-                    <label className="grid gap-1">
-                      <span className="label">Katman</span>
-                      <Select
-                        value={layerMode}
-                        onChange={(event) =>
-                          setLayerMode(event.target.value as LayerMode)
-                        }
-                        width="7rem"
-                        className="h-8 text-meta"
-                      >
-                        <option value="isik">Işık</option>
-                        <option value="yok">Yok</option>
-                      </Select>
-                    </label>
-                    {overlay && (
-                      <label htmlFor="site-opacity" className="grid gap-1">
-                        <span className="label">Saydamlık</span>
-                        <input
-                          id="site-opacity"
-                          type="range"
-                          min={OPACITY_RANGE.min}
-                          max={OPACITY_RANGE.max}
-                          step={5}
-                          value={opacity}
-                          onChange={(event) =>
-                            setOpacity(Number(event.target.value))
-                          }
-                          className="block w-24 accent-primary"
-                        />
-                      </label>
+            <Panel
+              title="Bortle saha haritası"
+              status={`${mapItems.length} işaret`}
+              className="flex h-full min-h-0 flex-col"
+              bodyClassName="min-h-0 flex-1 p-0"
+            >
+              <div
+                className={cn(
+                  'relative overflow-hidden rounded-b-card bg-surface-2',
+                  mapExpanded
+                    ? 'h-[78vh] min-h-[620px]'
+                    : 'h-[54vh] min-h-[460px] lg:h-[560px]'
+                )}
+              >
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="absolute left-2 top-2 z-10 bg-background/90 backdrop-blur-sm"
+                  onClick={locateOnMap}
+                  disabled={permission === 'pending'}
+                >
+                  {permission === 'pending'
+                    ? 'Konum alınıyor'
+                    : 'Konumumu bul'}
+                </Button>
+                {!hasNetworkAccess ? (
+                  <MapNotice
+                    title="Bu önizleme dış harita isteği yapmıyor"
+                    body="Yayındaki sitede altlık harita ve ışık kirliliği katmanı burada açılır."
+                  />
+                ) : live ? (
+                  <TileMap
+                    label="Saha haritası — sürükleyerek gezin"
+                    className={cn(
+                      'h-full w-full',
+                      theme === 'field' &&
+                        '[filter:sepia(1)_saturate(5)_hue-rotate(-38deg)_brightness(0.6)]'
                     )}
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      onClick={() => setShowAll((current) => !current)}
-                    >
-                      {showAll ? 'Tek pini göster' : 'Tümünü göster'}
-                    </Button>
-                  </div>
-                  <p className="absolute bottom-1 left-2 text-[0.62rem] text-muted-foreground">
-                    {credit}
-                  </p>
-                </>
-              )}
-            </div>
-          </Panel>
+                    center={center}
+                    zoom={zoom}
+                    minZoom={ZOOM_RANGE.min}
+                    maxZoom={ZOOM_RANGE.max}
+                    onCenterChange={setCenter}
+                    onZoomChange={setZoom}
+                    base={base}
+                    overlay={overlay}
+                    overlayOpacity={opacity / 100}
+                    marker={{ lat: location.latitude, lng: location.longitude }}
+                    markers={mapItems.map(({ item, distanceKm }) => ({
+                      id: item.slug,
+                      point: {
+                        lat: item.coords.latitude,
+                        lng: item.coords.longitude,
+                      },
+                      label: `${item.name}, ${item.region}, Bortle ${item.bortle}, ${formatDistance(distanceKm)} uzaklıkta`,
+                      popup: (
+                        <>
+                          <span className="block truncate text-body-sm font-medium text-foreground">
+                            {item.name}
+                          </span>
+                          <span className="mt-1 block truncate text-meta text-muted-foreground">
+                            {item.region} · {siteTypeLabels[item.siteType]} ·{' '}
+                            {formatBortle(item.bortle)}
+                          </span>
+                          <span className="mt-1 block text-meta text-cold">
+                            {formatDistance(distanceKm)}
+                          </span>
+                        </>
+                      ),
+                      active: active === item.slug,
+                      color: markerColor(item.bortle),
+                      onSelect: () => focusSite(item),
+                    }))}
+                  />
+                ) : (
+                  <MapNotice
+                    title="Harita üçüncü taraf döşemeleri yükler"
+                    body="Haritayı açtığınızda IP adresiniz ve baktığınız bölge CARTO ve NASA GIBS sağlayıcılarına gider."
+                    action={
+                      <Button size="sm" onClick={allow}>
+                        Haritayı yükle
+                      </Button>
+                    }
+                  />
+                )}
 
-          <Panel title="Saha listesi" status={location.label}>
+                {live && active && (
+                  <div className="pointer-events-none absolute inset-x-2 bottom-7 rounded-card border border-border bg-surface-1/95 px-2.5 py-1.5">
+                    {(() => {
+                      const hit = sortedSites.find(
+                        (site) => site.item.slug === active
+                      );
+                      if (!hit) return null;
+                      return (
+                        <p className="truncate text-body-sm text-foreground">
+                          <span className="font-medium">{hit.item.name}</span>
+                          <span className="ml-2 text-muted-foreground">
+                            {hit.item.region} · {formatDistance(hit.distanceKm)}
+                          </span>
+                        </p>
+                      );
+                    })()}
+                  </div>
+                )}
+
+                {live && (
+                  <>
+                    <div className="absolute right-2 top-2 flex max-w-[calc(100%-1rem)] flex-wrap items-end gap-2 rounded-card border border-border-strong bg-background/90 px-2 py-1.5 shadow-card backdrop-blur-sm">
+                      <label className="grid gap-1">
+                        <span className="label">Altlık</span>
+                        <Select
+                          value={baseMode}
+                          onChange={(event) =>
+                            setBaseMode(event.target.value as BaseMode)
+                          }
+                          width="7rem"
+                          className="h-8 text-meta"
+                        >
+                          <option value="harita">Harita</option>
+                          <option value="uydu">Uydu</option>
+                        </Select>
+                      </label>
+                      <label className="grid gap-1">
+                        <span className="label">Katman</span>
+                        <Select
+                          value={layerMode}
+                          onChange={(event) =>
+                            setLayerMode(event.target.value as LayerMode)
+                          }
+                          width="7rem"
+                          className="h-8 text-meta"
+                        >
+                          <option value="isik">Işık</option>
+                          <option value="yok">Yok</option>
+                        </Select>
+                      </label>
+                      {overlay && (
+                        <label htmlFor="site-opacity" className="grid gap-1">
+                          <span className="label">Saydamlık</span>
+                          <input
+                            id="site-opacity"
+                            type="range"
+                            min={OPACITY_RANGE.min}
+                            max={OPACITY_RANGE.max}
+                            step={5}
+                            value={opacity}
+                            onChange={(event) =>
+                              setOpacity(Number(event.target.value))
+                            }
+                            className="block w-24 accent-primary"
+                          />
+                        </label>
+                      )}
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={toggleMapScope}
+                      >
+                        {showAll ? 'Tek pini göster' : 'Tümünü göster'}
+                      </Button>
+                    </div>
+                    <div className="absolute bottom-7 right-2 flex flex-wrap justify-end gap-1.5">
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="h-8 w-8 bg-background/90 px-0 text-base backdrop-blur-sm"
+                        onClick={() => changeMapZoom(1)}
+                        aria-label="Haritayı yakınlaştır"
+                        title="Yakınlaştır"
+                      >
+                        +
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="h-8 w-8 bg-background/90 px-0 text-base backdrop-blur-sm"
+                        onClick={() => changeMapZoom(-1)}
+                        aria-label="Haritayı uzaklaştır"
+                        title="Uzaklaştır"
+                      >
+                        -
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="bg-background/90 backdrop-blur-sm"
+                        onClick={resetMapView}
+                      >
+                        Sıfırla
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="bg-background/90 backdrop-blur-sm"
+                        onClick={() => setMapExpanded((current) => !current)}
+                      >
+                        {mapExpanded ? 'Daralt' : 'Genişlet'}
+                      </Button>
+                    </div>
+                    <p className="absolute bottom-1 left-2 text-[0.62rem] text-muted-foreground">
+                      {credit}
+                    </p>
+                  </>
+                )}
+              </div>
+            </Panel>
+
+            <Panel
+              title="Seçili saha"
+              status={selected ? formatDistance(selected.distanceKm) : undefined}
+              className={cn(
+                'flex h-full min-h-0 flex-col',
+                mapExpanded && 'lg:hidden'
+              )}
+              bodyClassName="flex min-h-0 flex-1 flex-col p-0"
+            >
+              {selected ? (
+                <div className="flex h-full min-h-0 flex-col">
+                  <Link
+                    to={`/saha/${selected.item.slug}`}
+                    className="relative block h-56 shrink-0 overflow-hidden bg-surface-2"
+                    aria-label={`${selected.item.name} detayını aç`}
+                  >
+                    {selected.item.image ? (
+                      <img
+                        src={
+                          commonsWidthUrl(selected.item.image.url, 760) ??
+                          selected.item.image.url
+                        }
+                        alt={`${selected.item.name} saha görseli`}
+                        loading="lazy"
+                        className="h-full w-full object-cover transition duration-300 hover:scale-105"
+                      />
+                    ) : (
+                      <span
+                        aria-hidden
+                        className="block h-full w-full"
+                        style={{ backgroundImage: selected.item.gradient }}
+                      />
+                    )}
+                    <span className="absolute left-3 top-3 flex flex-wrap gap-1.5">
+                      <Badge tone="primary">
+                        {siteTypeLabels[selected.item.siteType]}
+                      </Badge>
+                      <Badge tone="cold">
+                        {formatBortle(selected.item.bortle)}
+                      </Badge>
+                    </span>
+                  </Link>
+                  <div className="flex min-h-0 flex-1 flex-col gap-4 px-4 py-4">
+                    <div>
+                      <div className="flex flex-wrap gap-1.5">
+                        <Badge tone="muted">{selected.item.region}</Badge>
+                        <Badge tone="warning">
+                          ★ {selected.item.rating.toFixed(1)}
+                        </Badge>
+                        {selected.item.sqm !== undefined && (
+                          <Badge tone="cold">SQM {selected.item.sqm}</Badge>
+                        )}
+                      </div>
+                      <h2 className="mt-3 type-section text-foreground">
+                        {selected.item.name}
+                      </h2>
+                      <p className="mt-2 line-clamp-4 text-body-sm leading-relaxed text-muted-foreground">
+                        {selected.item.description}
+                      </p>
+                    </div>
+
+                    <dl className="grid gap-px overflow-hidden rounded-card border border-border bg-border text-body-sm">
+                      <div className="grid grid-cols-[7rem_1fr] gap-3 bg-surface-1 px-3 py-2">
+                        <dt className="label">Mesafe</dt>
+                        <dd className="tabular text-cold">
+                          {formatDistance(selected.distanceKm)}
+                        </dd>
+                      </div>
+                      <div className="grid grid-cols-[7rem_1fr] gap-3 bg-surface-1 px-3 py-2">
+                        <dt className="label">Rakım</dt>
+                        <dd className="tabular text-foreground">
+                          {selected.item.altitude} m
+                        </dd>
+                      </div>
+                      <div className="grid grid-cols-[7rem_1fr] gap-3 bg-surface-1 px-3 py-2">
+                        <dt className="label">Yol</dt>
+                        <dd className="text-foreground">
+                          {selected.item.roadAccess}
+                        </dd>
+                      </div>
+                      <div className="grid grid-cols-[7rem_1fr] gap-3 bg-surface-1 px-3 py-2">
+                        <dt className="label">En iyi dönem</dt>
+                        <dd className="text-foreground">
+                          {selected.item.bestMonths}
+                        </dd>
+                      </div>
+                      <div className="grid grid-cols-[7rem_1fr] gap-3 bg-surface-1 px-3 py-2">
+                        <dt className="label">Güney ufku</dt>
+                        <dd className="text-foreground">
+                          {selected.item.southHorizon}
+                        </dd>
+                      </div>
+                    </dl>
+
+                    <div className="mt-auto flex flex-wrap gap-2">
+                      <Button
+                        size="sm"
+                        variant="primary"
+                        onClick={() => focusSite(selected.item)}
+                      >
+                        Haritada göster
+                      </Button>
+                      <ButtonLink
+                        to={`/saha/${selected.item.slug}`}
+                        size="sm"
+                        variant="ghost"
+                      >
+                        Görüntüle
+                      </ButtonLink>
+                      <AdminEditLink to={`/admin/sites?slug=${selected.item.slug}`} />
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <EmptyState
+                  message="Seçili saha yok"
+                  hint="Haritada veya listede bir saha seçildiğinde ayrıntısı burada görünür."
+                  className="border-0 py-8"
+                />
+              )}
+            </Panel>
+          </div>
+
+          <Panel
+            title="Saha listesi"
+            status={
+              <span className="flex flex-wrap items-center justify-end gap-2">
+                <span className="tabular text-muted-foreground">
+                  {location.label}
+                </span>
+                <ButtonLink to="/saha/yeni" size="sm">
+                  Saha ekle
+                </ButtonLink>
+              </span>
+            }
+          >
             {nearest.length === 0 ? (
               <EmptyState
                 message="Eşleşen saha yok"

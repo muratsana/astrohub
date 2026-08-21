@@ -36,11 +36,6 @@ import { csvFileName, toCsv } from '@/lib/csv';
  * kuralın iki kaynağı olmasın.
  */
 
-/**
- * Sıra `app.app_role` enum'unun sırası. `jury` en sonda çünkü enum'a en
- * son eklendi (`20260807200000_jury_rolu.sql`) ve PostgreSQL enum
- * değerlerini araya sokmuyor.
- */
 export const ROLES = [
   'member',
   'verified_organizer',
@@ -48,7 +43,6 @@ export const ROLES = [
   'content_editor',
   'moderator',
   'admin',
-  'jury',
 ] as const;
 
 export type AppRole = (typeof ROLES)[number];
@@ -60,7 +54,6 @@ export const roleLabels: Record<AppRole, string> = {
   content_editor: 'İçerik editörü',
   moderator: 'Moderatör',
   admin: 'Yönetici',
-  jury: 'Jüri',
 };
 
 /** Rolün ne açtığını tek cümlede söyler — panelde yanında yazıyor. */
@@ -71,9 +64,6 @@ export const roleDescriptions: Record<AppRole, string> = {
   content_editor: 'Haber, yazı, TV ve radyo yayınlarını düzenler.',
   moderator: 'İçerik kaldırır, forumu ve ilanları denetler.',
   admin: 'Her şey — rol verme dahil.',
-  /* Jüri yetkisi tek bir işten ibaret ve o iş photo_of_week_votes
-     politikalarında zorlanıyor; özellik izni taşımıyor. */
-  jury: 'Haftanın fotoğrafı adaylarına oy verir. Başka yetkisi yoktur.',
 };
 
 export const MEMBERSHIP_STATUSES = [
@@ -213,6 +203,10 @@ export interface UserPage {
 
 export const USER_PAGE_SIZE = 50;
 
+function isAppRole(role: string): role is AppRole {
+  return (ROLES as readonly string[]).includes(role);
+}
+
 /**
  * Kullanıcı listesi — sunucu taraflı sayfalama ve süzme (Görev 1.3).
  *
@@ -332,7 +326,8 @@ export async function fetchUsers(query: UserQuery = {}): Promise<UserPage> {
   ]);
 
   const roleMap = new Map<string, AppRole[]>();
-  for (const row of (rolesRes.data ?? []) as { user_id: string; role: AppRole }[]) {
+  for (const row of (rolesRes.data ?? []) as { user_id: string; role: string }[]) {
+    if (!isAppRole(row.role)) continue;
     roleMap.set(row.user_id, [...(roleMap.get(row.user_id) ?? []), row.role]);
   }
 

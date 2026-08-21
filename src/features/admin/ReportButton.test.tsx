@@ -29,6 +29,24 @@ describe('şikâyet açıklaması', () => {
     expect(screen.getByRole('button', { name: /gönder/i })).toBeDisabled();
   });
 
+  it('form açıldığında tetikleyici butonu akıştan çıkarmıyor', () => {
+    const { container } = render(
+      <ReportButton
+        targetType="photo"
+        targetId="m31"
+        targetPath="/fotograf/m31"
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /bildir/i }));
+
+    expect(screen.getByRole('button', { name: /^Bildir$/ })).toBeInTheDocument();
+    expect(screen.getByText('İçeriği bildir').closest('div')).toHaveClass(
+      'absolute'
+    );
+    expect(container.querySelector('.relative.inline-flex')).toBeInTheDocument();
+  });
+
   it('eşiğin altında gönderilemiyor', () => {
     ac();
     fireEvent.change(screen.getByLabelText(/açıklama/i), {

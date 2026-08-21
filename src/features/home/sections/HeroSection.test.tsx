@@ -66,6 +66,7 @@ afterEach(() => {
 describe('dokunma kaydırması', () => {
   it('slayt kategori rozetini hero üzerinde göstermiyor', () => {
     wrap();
+    fireEvent.click(screen.getByRole('tab', { name: /2\. slayt: galeri/i }));
     expect(screen.queryByText(defaultHeroSlides[0].badge)).toBeNull();
     expect(screen.getByRole('link', { name: /galeriye bak/i })).toBeTruthy();
   });

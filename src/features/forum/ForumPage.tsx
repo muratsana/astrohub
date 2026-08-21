@@ -1,10 +1,9 @@
 import { Link } from 'react-router';
 import { Container } from '@/components/ui/Container';
-import { Input, Select } from '@/components/ui/Input';
+import { Input } from '@/components/ui/Input';
 import { ButtonLink } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { CatalogSourceNote } from '@/components/ui/CatalogSourceNote';
 import {
   FilterCell,
   filterControlClass,
@@ -21,9 +20,12 @@ import {
   forumCategoryOrder,
   forumLabelOrder,
   forumLabels,
+  relativeTime,
   type ForumThread,
 } from './types';
 import { cn } from '@/lib/cn';
+import { LabelChip } from './LabelChip';
+import { ChevronDownIcon } from '@/components/ui/icons';
 
 /**
  * FORUM ANA SAYFASI.
@@ -65,35 +67,20 @@ export function ForumPage() {
    */
   const [view, setView] = useViewMode('forum', 'list');
   const result = ex.items;
-  const category = ex.query.facets.kategori?.[0] ?? 'hepsi';
+  const categories = ex.query.facets.kategori ?? [];
   const rozetler = ex.query.facets.rozet ?? [];
-  const searching = ex.searchInput.trim().length > 0;
-  /*
-    HERHANGİ BİR SÜZGEÇ AÇIKSA KONU LİSTESİ, KATEGORİ IZGARASI DEĞİL.
-
-    Kapı önce yalnızca kategori ve aramaya bakıyordu. Rozet süzgeci eklenince
-    kullanıcı "Soru" rozetine basıyor, sayfa hâlâ kategori ızgarasını gösteriyor
-    ve süzgeç hiçbir şey yapmamış gibi görünüyordu. Süzgeç varsa sonucu
-    göstermek zorundayız.
-  */
-  const showThreads =
-    view === 'list' ||
-    category !== 'hepsi' ||
-    searching ||
-    rozetler.length > 0;
   const sections = forumCategoryOrder
     .map((id) => ({
       id,
       threads: result.filter((thread) => thread.category === id),
     }))
-    .filter((section) => category === 'hepsi' || section.id === category);
-
-  const tekSec = (param: string, next: string) => {
-    const mevcut = ex.query.facets[param]?.[0];
-    if (mevcut) ex.toggleFacet(param, mevcut);
-    if (next !== 'hepsi' && next !== mevcut) ex.toggleFacet(param, next);
-  };
-  const setCategory = (next: string) => tekSec('kategori', next);
+    .filter(
+      (section) =>
+        section.threads.length > 0 &&
+        (categories.length === 0 || categories.includes(section.id))
+    );
+  const categoryCounts = ex.counts('kategori');
+  const labelCounts = ex.counts('rozet');
 
   return (
     <>
@@ -153,59 +140,39 @@ export function ForumPage() {
           </FilterCell>
           <FilterCell
             label="Kategori"
-            htmlFor="forum-category"
-            active={category !== 'hepsi'}
+            active={categories.length > 0}
           >
-            <Select
-              id="forum-category"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className={filterControlClass}
-            >
-              <option value="hepsi">Tüm kategoriler</option>
-              {forumCategoryOrder.map((id) => (
-                <option key={id} value={id}>
-                  {forumCategories[id].name}
-                </option>
-              ))}
-            </Select>
+            <ForumFacetDropdown
+              allLabel="Tüm kategoriler"
+              selected={categories}
+              items={forumCategoryOrder.map((id) => ({
+                id,
+                name: forumCategories[id].name,
+                description: forumCategories[id].description,
+                count: categoryCounts.get(id) ?? 0,
+                className: forumCategoryTextClass(id),
+              }))}
+              onToggle={(id) => ex.toggleFacet('kategori', id)}
+            />
           </FilterCell>
-          {/*
-            ROZET SÜZGECİ TEK SEÇİM DEĞİL: bir konu birden çok rozet
-            taşıyabiliyor. `Select` bunu ifade edemezdi; faset motoru zaten
-            çoklu seçimi destekliyor ve seçim adres çubuğuna yazılıyor.
-          */}
           <FilterCell label="Rozet" active={rozetler.length > 0}>
-            <div className="flex flex-wrap items-center gap-1">
-              {forumLabelOrder.map((id) => {
-                const secili = rozetler.includes(id);
-                return (
-                  <button
-                    key={id}
-                    type="button"
-                    aria-pressed={secili}
-                    title={forumLabels[id].description}
-                    onClick={() => ex.toggleFacet('rozet', id)}
-                    className={cn(
-                      'rounded-card border px-2 py-1 text-meta font-medium transition-colors',
-                      secili
-                        ? 'border-primary bg-primary/12 text-primary'
-                        : 'border-border text-muted-foreground hover:border-border-strong hover:text-foreground'
-                    )}
-                  >
-                    {forumLabels[id].name}
-                  </button>
-                );
-              })}
-            </div>
+            <ForumFacetDropdown
+              allLabel="Tüm rozetler"
+              selected={rozetler}
+              items={forumLabelOrder.map((id) => ({
+                id,
+                name: forumLabels[id].name,
+                description: forumLabels[id].description,
+                count: labelCounts.get(id) ?? 0,
+              }))}
+              onToggle={(id) => ex.toggleFacet('rozet', id)}
+            />
           </FilterCell>
         </ModuleToolbar>
 
-        <CatalogSourceNote selection={threadCatalog} />
+        <ForumCategoryGrid threads={threads} activeCategories={categories} />
 
-        {!showThreads ? (
-          <ForumCategoryGrid threads={threads} />
-        ) : result.length === 0 ? (
+        {result.length === 0 ? (
           <EmptyState
             message="Eşleşen konu yok"
             hint="Farklı bir kategori seçmeyi ya da aramayı kısaltmayı deneyin."
@@ -216,75 +183,357 @@ export function ForumPage() {
             }
           />
         ) : (
-          <div className="space-y-4">
-            {sections.map(({ id, threads: sectionThreads }) => {
-              const info = forumCategories[id];
-              return (
-                <section
-                  key={id}
-                  aria-labelledby={`forum-category-${id}`}
-                  className="rounded-card border border-border bg-surface-1"
-                >
-                  <header className="flex items-start justify-between gap-3 border-b border-border px-3 py-2.5">
-                    <div className="min-w-0">
-                      <h2
-                        id={`forum-category-${id}`}
-                        className="text-caption font-semibold text-foreground"
-                      >
-                        {info.name}
-                      </h2>
-                      <p className="mt-0.5 text-meta leading-snug text-muted-foreground">
-                        {info.description}
-                      </p>
-                    </div>
-                    <span
-                      className={cn(
-                        'shrink-0 rounded-card border px-2 py-1 text-meta font-medium tabular',
-                        info.className
-                      )}
-                    >
-                      {sectionThreads.length} konu
-                    </span>
-                  </header>
-
-                </section>
-              );
-            })}
-          </div>
+          <ForumThreadSections sections={sections} view={view} />
         )}
       </Container>
     </>
   );
 }
 
-function ForumCategoryGrid({ threads }: { threads: ForumThread[] }) {
+type ForumFacetDropdownItem = {
+  id: string;
+  name: string;
+  description: string;
+  count: number;
+  className?: string;
+};
+
+function ForumFacetDropdown({
+  allLabel,
+  selected,
+  items,
+  onToggle,
+}: {
+  allLabel: string;
+  selected: string[];
+  items: ForumFacetDropdownItem[];
+  onToggle: (id: string) => void;
+}) {
+  const selectedNames = selected
+    .map((id) => items.find((item) => item.id === id)?.name)
+    .filter(Boolean);
+  const summary =
+    selectedNames.length === 0
+      ? allLabel
+      : selectedNames.length <= 2
+        ? selectedNames.join(', ')
+        : `${selectedNames.length} seçim`;
+
   return (
-    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+    <details className="group relative min-w-0">
+      <summary
+        className={cn(
+          filterControlClass,
+          'flex cursor-pointer list-none items-center justify-between gap-2 [&::-webkit-details-marker]:hidden'
+        )}
+      >
+        <span className="truncate">{summary}</span>
+        <ChevronDownIcon className="h-3.5 w-3.5 shrink-0 text-faint transition-transform group-open:rotate-180" />
+      </summary>
+      <div className="absolute left-0 z-30 mt-2 w-[min(18rem,calc(100vw-2rem))] rounded-card border border-border-strong bg-surface-1 p-1.5 shadow-overlay">
+        <div className="max-h-72 overflow-y-auto">
+          {items.map((item) => {
+            const checked = selected.includes(item.id);
+            return (
+              <label
+                key={item.id}
+                title={item.description}
+                className={cn(
+                  'flex min-h-10 cursor-pointer items-center gap-2 rounded-card px-2.5 py-2 text-body-sm transition-colors hover:bg-surface-2',
+                  checked ? 'text-foreground' : 'text-muted-foreground'
+                )}
+              >
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  onChange={() => onToggle(item.id)}
+                  className="h-4 w-4 rounded-card border-border accent-primary"
+                />
+                <span className="min-w-0 flex-1">
+                  <span
+                    className={cn('block truncate font-medium', item.className)}
+                  >
+                    {item.name}
+                  </span>
+                  <span className="block truncate text-meta text-faint">
+                    {item.description}
+                  </span>
+                </span>
+                <span
+                  className={cn(
+                    'shrink-0 rounded-card border border-border px-1.5 py-0.5 text-meta tabular',
+                    checked ? 'text-foreground' : 'text-faint'
+                  )}
+                >
+                  {item.count}
+                </span>
+              </label>
+            );
+          })}
+        </div>
+      </div>
+    </details>
+  );
+}
+
+function ForumCategoryGrid({
+  threads,
+  activeCategories,
+}: {
+  threads: ForumThread[];
+  activeCategories: string[];
+}) {
+  return (
+    <nav
+      aria-label="Forum kategorileri"
+      className="mb-5 divide-y divide-border border-y border-border"
+    >
       {forumCategoryOrder.map((id) => {
         const info = forumCategories[id];
         const categoryThreads = threads.filter(
           (thread) => thread.category === id
         );
+        const active = activeCategories.includes(id);
         return (
           <Link
             key={id}
-            to={`/forum?kategori=${id}`}
-            className="group flex min-h-32 flex-col rounded-card border border-border bg-surface-1 p-4 transition-colors hover:border-primary/60 hover:bg-surface-2"
+            to={forumCategoryToggleHref(id, activeCategories)}
+            aria-current={active ? 'page' : undefined}
+            className={cn(
+              'group flex items-center justify-between gap-4 py-3 transition-colors hover:bg-surface-1/55 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary',
+              active ? 'bg-surface-1/70' : ''
+            )}
           >
-            <div className="flex items-start justify-between gap-3">
-              <h2 className="text-caption font-semibold text-foreground group-hover:text-primary">
+            <div className="min-w-0">
+              <h2
+                className={cn(
+                  'text-body-sm font-semibold transition-colors group-hover:text-primary',
+                  forumCategoryTextClass(id)
+                )}
+              >
                 {info.name}
               </h2>
-              <span className="tabular text-meta text-muted-foreground">
-                {categoryThreads.length} konu
-              </span>
+              <p className="mt-0.5 line-clamp-1 text-meta leading-snug text-muted-foreground">
+                {info.description}
+              </p>
             </div>
-            <p className="mt-2 line-clamp-3 text-body-sm leading-relaxed text-muted-foreground">
-              {info.description}
-            </p>
+            <span className="shrink-0 text-caption font-semibold tabular text-foreground">
+              {categoryThreads.length} konu
+            </span>
           </Link>
+        );
+      })}
+    </nav>
+  );
+}
+
+function forumCategoryToggleHref(id: string, activeCategories: string[]) {
+  const next = activeCategories.includes(id)
+    ? activeCategories.filter((category) => category !== id)
+    : [...activeCategories, id];
+  return next.length === 0 ? '/forum' : `/forum?kategori=${next.join(',')}`;
+}
+
+function ForumThreadSections({
+  sections,
+  view,
+}: {
+  sections: { id: string; threads: ForumThread[] }[];
+  view: 'grid' | 'list';
+}) {
+  return (
+    <div className="space-y-4">
+      {sections.map(({ id, threads }) => {
+        const info = forumCategories[id as keyof typeof forumCategories];
+        const categoryHref = `/forum?kategori=${id}`;
+        return (
+          <section
+            key={id}
+            aria-labelledby={`forum-category-${id}`}
+            className="space-y-2"
+          >
+            <header className="flex items-end justify-between gap-4 border-b border-border pb-2">
+              <div className="flex min-w-0 items-center gap-2.5">
+                <span
+                  aria-hidden="true"
+                  className={cn(
+                    'h-5 w-1 shrink-0 rounded-card',
+                    forumCategoryAccentClass(id)
+                  )}
+                />
+                <div className="min-w-0">
+                  <Link
+                    to={categoryHref}
+                    id={`forum-category-${id}`}
+                    className={cn(
+                      'block truncate text-body-base font-semibold transition-colors hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary',
+                      forumCategoryTextClass(id)
+                    )}
+                  >
+                    {info.name}
+                  </Link>
+                  <p className="mt-1 line-clamp-1 text-body-sm leading-snug text-muted-foreground">
+                    {info.description}
+                  </p>
+                </div>
+              </div>
+              <Link
+                to={categoryHref}
+                className="shrink-0 text-caption font-semibold tabular text-foreground transition-colors hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                {threads.length} konu
+              </Link>
+            </header>
+
+            <div
+              className={cn(
+                'grid gap-2',
+                view === 'grid' ? 'sm:grid-cols-2 xl:grid-cols-3' : ''
+              )}
+            >
+              {threads.map((thread) => (
+                <ForumThreadCard key={thread.id} thread={thread} view={view} />
+              ))}
+            </div>
+          </section>
         );
       })}
     </div>
   );
 }
+
+function forumCategoryAccentClass(id: string) {
+  switch (id) {
+    case 'ekipmanlar':
+      return 'bg-primary';
+    case 'yazilimlar':
+      return 'bg-[#38bdf8]';
+    case 'goruntu-isleme':
+      return 'bg-[#a78bfa]';
+    case 'etkinlikler':
+      return 'bg-[#e11d48]';
+    case 'topluluklar':
+      return 'bg-[#34d399]';
+    case 'bilimsel-calismalar':
+      return 'bg-cold';
+    case 'radyo-astronomi':
+      return 'bg-[#14b8a6]';
+    case 'astro-kampcilik':
+      return 'bg-[#f59e0b]';
+    default:
+      return 'bg-border-strong';
+  }
+}
+
+function forumCategoryTextClass(id: string) {
+  switch (id) {
+    case 'ekipmanlar':
+      return 'text-primary';
+    case 'yazilimlar':
+      return 'text-[#7dd3fc]';
+    case 'goruntu-isleme':
+      return 'text-[#c4b1fd]';
+    case 'etkinlikler':
+      return 'text-[#fb7185]';
+    case 'topluluklar':
+      return 'text-[#5fe0b0]';
+    case 'bilimsel-calismalar':
+      return 'text-cold';
+    case 'radyo-astronomi':
+      return 'text-[#2dd4bf]';
+    case 'astro-kampcilik':
+      return 'text-[#fbbf24]';
+    default:
+      return 'text-foreground';
+  }
+}
+
+function ForumThreadCard({
+  thread,
+  view,
+}: {
+  thread: ForumThread;
+  view: 'grid' | 'list';
+}) {
+  const info = forumCategories[thread.category];
+
+  return (
+    <Link
+      to={`/forum/${thread.slug}`}
+      className={cn(
+        'group min-w-0 bg-surface-1 px-3 py-3 transition-colors hover:bg-surface-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary',
+        view === 'list'
+          ? 'grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]'
+          : 'flex min-h-48 flex-col'
+      )}
+    >
+      <div className="min-w-0">
+        <div className="mb-2 flex flex-wrap items-center gap-1.5">
+          <span
+            className={cn(
+              'rounded-card border px-2 py-0.5 text-meta font-medium',
+              info.className
+            )}
+          >
+            {info.name}
+          </span>
+          {(thread.labels ?? []).map((id) => (
+            <LabelChip key={id} id={id} />
+          ))}
+          {thread.pinned && (
+            <span className="rounded-card border border-primary/45 px-2 py-0.5 text-meta font-medium text-primary">
+              Sabit
+            </span>
+          )}
+          {thread.locked && (
+            <span className="rounded-card border border-border px-2 py-0.5 text-meta font-medium text-faint">
+              Kilitli
+            </span>
+          )}
+          {thread.solved && (
+            <span className="rounded-card border border-success/45 px-2 py-0.5 text-meta font-medium text-success">
+              Çözüldü
+            </span>
+          )}
+        </div>
+
+        <h3 className="text-caption font-semibold text-foreground group-hover:text-primary">
+          {thread.title}
+        </h3>
+        <p className="mt-1 text-meta text-muted-foreground">
+          @{thread.author.username} · {relativeTime(thread.lastActivityAt)}
+        </p>
+        <p
+          className={cn(
+            'mt-2 text-body-sm leading-relaxed text-muted-foreground',
+            view === 'list' ? 'line-clamp-2' : 'line-clamp-4'
+          )}
+        >
+          {thread.removalReason ?? thread.body}
+        </p>
+      </div>
+
+      <dl
+        className={cn(
+          'grid shrink-0 grid-cols-2 gap-2 text-meta text-muted-foreground',
+          view === 'list' ? 'min-w-44 self-center' : 'mt-auto pt-4'
+        )}
+      >
+        <div className="rounded-card border border-border bg-background/45 px-2 py-1.5">
+          <dt>Yanıt</dt>
+          <dd className="tabular text-body-sm font-semibold text-foreground">
+            {thread.replyCount}
+          </dd>
+        </div>
+        <div className="rounded-card border border-border bg-background/45 px-2 py-1.5">
+          <dt>Görüntülenme</dt>
+          <dd className="tabular text-body-sm font-semibold text-foreground">
+            {thread.viewCount.toLocaleString('tr-TR')}
+          </dd>
+        </div>
+      </dl>
+    </Link>
+  );
+}
+
+

@@ -6,103 +6,11 @@ async function client() {
   return promise;
 }
 
-export interface JuryMemberAdmin {
-  userId: string;
-  username: string;
-  displayName: string | null;
-  termStart: string;
-  termEnd: string | null;
-}
-
-export interface JuryCandidateAdmin {
-  id: string;
-  username: string;
-  displayName: string | null;
-}
-
 export interface PhotoWeekResult {
   photoId: string;
   totalScore: number;
   voteCount: number;
   averageScore: number;
-}
-
-export async function fetchJuryMembers(): Promise<JuryMemberAdmin[]> {
-  const supabase = await client();
-  const { data, error } = await supabase
-    .from('jury_members')
-    .select('user_id, term_start, term_end, profiles!jury_members_user_id_fkey(username, display_name)')
-    .order('term_start', { ascending: false });
-  if (error) throw new Error(error.message);
-  return (data ?? []).map((row) => {
-    const profile = row.profiles as unknown as { username: string; display_name: string | null } | null;
-    return {
-      userId: row.user_id as string,
-      username: profile?.username ?? 'bilinmiyor',
-      displayName: profile?.display_name ?? null,
-      termStart: row.term_start as string,
-      termEnd: row.term_end as string | null,
-    };
-  });
-}
-
-export async function appointJuror(userId: string, appointedBy: string) {
-  const supabase = await client();
-  const { error } = await supabase.from('jury_members').insert({
-    user_id: userId,
-    term_start: new Date().toISOString().slice(0, 10),
-    appointed_by: appointedBy,
-  });
-  if (error) throw new Error(error.message);
-}
-
-export function normalizeJuryCandidateSearch(value: string) {
-  return value
-    .trim()
-    .replace(/^@+/, '')
-    .replace(/[,()]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-export async function searchJuryCandidates(
-  search: string,
-  limit = 10
-): Promise<JuryCandidateAdmin[]> {
-  const supabase = await client();
-  const term = normalizeJuryCandidateSearch(search);
-  let query = supabase
-    .from('profiles')
-    .select('id, username, display_name')
-    .order('username', { ascending: true })
-    .limit(limit);
-
-  if (term) {
-    query = query.or(`username.ilike.%${term}%,display_name.ilike.%${term}%`);
-  }
-
-  const { data, error } = await query;
-  if (error) throw new Error(error.message);
-
-  return ((data ?? []) as {
-    id: string;
-    username: string;
-    display_name: string | null;
-  }[]).map((row) => ({
-    id: row.id,
-    username: row.username,
-    displayName: row.display_name,
-  }));
-}
-
-export async function endJuryTerm(userId: string, termStart: string) {
-  const supabase = await client();
-  const { error } = await supabase
-    .from('jury_members')
-    .update({ term_end: new Date().toISOString().slice(0, 10) })
-    .eq('user_id', userId)
-    .eq('term_start', termStart);
-  if (error) throw new Error(error.message);
 }
 
 export async function createPhotoWeekRound(input: {
@@ -148,7 +56,8 @@ export async function fetchPhotoWeekResults(roundId: string): Promise<PhotoWeekR
   const supabase = await client();
   const { data, error } = await supabase.rpc('photo_of_week_results', { target_round: roundId });
   if (error) throw new Error(error.message);
-  return ((data ?? []) as { photo_id: string; total_score: number; vote_count: number }[])
+  return sortPhotoWeekResults(
+    ((data ?? []) as { photo_id: string; total_score: number; vote_count: number }[])
     .map((row) => {
       const voteCount = Number(row.vote_count);
       const totalScore = Number(row.total_score);
@@ -159,7 +68,16 @@ export async function fetchPhotoWeekResults(roundId: string): Promise<PhotoWeekR
         averageScore: voteCount > 0 ? totalScore / voteCount : 0,
       };
     })
-    .sort((a, b) => b.averageScore - a.averageScore || b.voteCount - a.voteCount || a.photoId.localeCompare(b.photoId));
+  );
+}
+
+export function sortPhotoWeekResults(results: PhotoWeekResult[]): PhotoWeekResult[] {
+  return [...results].sort(
+    (a, b) =>
+      b.averageScore - a.averageScore ||
+      b.voteCount - a.voteCount ||
+      a.photoId.localeCompare(b.photoId)
+  );
 }
 
 export async function setEditorsPick(photoId: string, value: boolean) {

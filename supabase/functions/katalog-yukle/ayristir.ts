@@ -6,7 +6,7 @@
  * internete ya da bir veritabanına ihtiyaç duymadan çalışabilmeli.
  */
 
-import { takimyildizBul, type Sinir } from './takimyildiz.ts';
+import { TAKIMYILDIZ_TR, takimyildizBul, type Sinir } from './takimyildiz.ts';
 import type { VizierKaynak } from './kaynaklar.ts';
 
 export interface Nesne {
@@ -142,6 +142,27 @@ function katalogNumarasi(
   }
 
   return sayi(metin);
+}
+
+function metinKatalogKodu(metin: string | undefined): string | null {
+  const clean = (metin ?? '').replace(/\s+/g, ' ').trim();
+  if (!clean) return null;
+  if (clean.length > 32) return null;
+  if (!/^[A-Za-z0-9+.*'\-/ ]+$/.test(clean)) return null;
+  return clean;
+}
+
+function vizierKodu(kaynak: VizierKaynak, metin: string | undefined): string | null {
+  if (kaynak.metinKod) return metinKatalogKodu(metin);
+  const numara = katalogNumarasi(kaynak, metin);
+  return numara === null ? null : `${kaynak.onek}${kaynak.ayirici}${numara}`;
+}
+
+function gcvsTakimyildiz(kod: string): string | null {
+  const m = /\b([A-Z][A-Za-z]{2})$/.exec(kod);
+  if (!m) return null;
+  const kisaltma = `${m[1][0]}${m[1].slice(1).toLowerCase()}`;
+  return TAKIMYILDIZ_TR[kisaltma] ?? null;
 }
 
 /**
@@ -326,7 +347,9 @@ export function openNgcAyristir(
       const takimyildiz =
         (raDeg !== null && decDeg !== null
           ? takimyildizBul(sinirlar, raDeg, decDeg)
-          : null) ?? '—';
+          : null) ??
+        TAKIMYILDIZ_TR[ham.takimyildiz] ??
+        '—';
 
       nesneler.push({
         slug: slugUret(birincil),
@@ -400,14 +423,13 @@ export function vizierAyristir(
     if (!satir || satir.startsWith('#') || satir.startsWith('---')) continue;
 
     const alanlar = satir.split('\t');
-    const numara = katalogNumarasi(kaynak, alanlar[iNo]);
+    const kod = vizierKodu(kaynak, alanlar[iNo]);
     const [raDeg, decDeg] = konumNormalle(
       sayi(alanlar[iRa]),
       sayi(alanlar[iDec])
     );
-    if (numara === null || raDeg === null || decDeg === null) continue;
+    if (kod === null || raDeg === null || decDeg === null) continue;
 
-    const kod = `${kaynak.onek}${kaynak.ayirici}${numara}`;
     /* Arp gibi kataloglarda bir numara altında birden çok galaksi
        listeleniyor; ilk satır grubun konumunu veriyor ve nesne o. */
     if (gorulen.has(kod)) continue;
@@ -431,7 +453,10 @@ export function vizierAyristir(
       ad: `${kod} ${TUR_ADI[kaynak.tur] ?? 'Gök Cismi'}`,
       katalog: kod,
       tur: kaynak.tur,
-      takimyildiz: takimyildizBul(sinirlar, raDeg, decDeg) ?? '—',
+      takimyildiz:
+        (kaynak.raporAnahtari === 'gcvs' ? gcvsTakimyildiz(kod) : null) ??
+        takimyildizBul(sinirlar, raDeg, decDeg) ??
+        '—',
       raDeg,
       decDeg,
       kadir: iKadir >= 0 ? sayi(alanlar[iKadir]) : null,

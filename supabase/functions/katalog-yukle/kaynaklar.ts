@@ -22,7 +22,7 @@
  * da kendi sütunlarında geliyor, yani bu üç katalog tek kaynaktan tutarlı
  * çıkıyor.
  *
- * VizieR — Sh2, Barnard, LBN, LDN, vdB, Ced, RCW, Arp, HCG için CDS'in
+ * VizieR — Sh2, Barnard, LBN, LDN, vdB, Ced, RCW, Arp, HCG ve GCVS için CDS'in
  * yayımladığı orijinal katalog tabloları. Bunlar OpenNGC'de YOK: NGC/IC
  * numarası olmayan binlerce bulutsu ve karanlık bulut yalnızca bu
  * kataloglarda numaralı.
@@ -59,6 +59,8 @@ export interface VizierKaynak {
   tablo: string;
   /** Numara sütunu. */
   numara: string;
+  /** Numara sütunu sayısal değil, doğrudan katalog adıysa. */
+  metinKod?: boolean;
   /**
    * Numara sütunu doğrudan sayı değilse kullanılan çıkarım deseni.
    *
@@ -109,7 +111,7 @@ export const VIZIER_KAYNAKLAR: VizierKaynak[] = [
     ayirici: ' ',
     tablo: 'V/84/main',
     numara: 'Name',
-    numaraDeseni: '^A\\s*(\\d+)$',
+    numaraDeseni: '^A *(\\d+)$',
     tur: 'gezegenimsi-bulutsu',
     baslik: 'Abell gezegenimsi bulutsuları',
     raporAnahtari: 'abell_pn',
@@ -120,7 +122,7 @@ export const VIZIER_KAYNAKLAR: VizierKaynak[] = [
     ayirici: ' ',
     tablo: 'V/84/pospn',
     numara: 'Name',
-    numaraDeseni: '^A\\s*(\\d+)$',
+    numaraDeseni: '^A *(\\d+)$',
     tur: 'gezegenimsi-bulutsu',
     baslik: 'Abell olası gezegenimsi bulutsuları',
     raporAnahtari: 'abell_pn_olasi',
@@ -197,6 +199,17 @@ export const VIZIER_KAYNAKLAR: VizierKaynak[] = [
     alanSutun: 'Area',
     tur: 'karanlik-bulutsu',
     baslik: 'Lynds karanlık bulutsular (LDN)',
+  },
+  {
+    onek: '',
+    ayirici: '',
+    tablo: 'B/gcvs/gcvs_cat',
+    numara: 'GCVS',
+    metinKod: true,
+    kadirSutun: 'magMax',
+    tur: 'yildiz',
+    baslik: 'GCVS değişen yıldızlar',
+    raporAnahtari: 'gcvs',
   },
 ];
 

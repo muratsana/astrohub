@@ -95,19 +95,12 @@ describe('rol ve statü', () => {
     expect(p({ roller: ['jury'] }).canAccessAdmin).toBe(false);
   });
 
-  it('jüri rolü panele yetki VERMİYOR (plan §3.2)', () => {
-    /* Jüri yetkisi tek bir işten ibaret: oy vermek. Panele erişim ya da
-       başka bir yönetim yetkisi taşımaz. */
-    const juri = p({ roller: ['jury'], statu: 'standart' });
-    expect(juri.isJury).toBe(true);
-    expect(juri.isAdmin).toBe(false);
-    expect(juri.isModerator).toBe(false);
-    expect(juri.canAccessAdmin).toBe(false);
-  });
-
-  it('jüri standart statüyle birlikte taşınabiliyor', () => {
-    expect(p({ roller: ['jury'], statu: 'standart' }).tier).toBe('standart');
-    expect(p({ roller: ['jury'], statu: 'premium' }).tier).toBe('premium');
+  it('kaldırılmış roller arayüzde geçerli rol sayılmıyor', () => {
+    const state = p({ roller: ['jury'], statu: 'standart' });
+    expect(state.roles).toEqual([]);
+    expect(state.isAdmin).toBe(false);
+    expect(state.isModerator).toBe(false);
+    expect(state.canAccessAdmin).toBe(false);
   });
 });
 
@@ -131,8 +124,6 @@ describe('enum ile arayüz eşleşmesi', () => {
       expect(roleLabels, `enum değeri "${d}" için etiket yok`).toHaveProperty(d);
     }
 
-    /* `jury` enum'a ayrı bir göçle eklendi (aynı işlemde kullanılamıyor);
-       etiketi burada olmalı ama 0001'de görünmüyor. */
-    expect(roleLabels).toHaveProperty('jury');
+    expect(roleLabels).not.toHaveProperty('jury');
   });
 });

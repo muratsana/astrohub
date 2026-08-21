@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { StarField } from './StarField';
 import { tintFor } from './tints';
 import { taramaOnizlemesi } from '@/services/sky/survey';
+import { cn } from '@/lib/cn';
 
 /**
  * GÖK CİSMİ ÖNİZLEMESİ — gerçek tarama görüntüsü, olmazsa yıldız alanı.
@@ -59,7 +60,7 @@ export function SkyPreview({
       : taramaOnizlemesi({ raDeg, decDeg, arcmin, width, height });
 
   return (
-    <div className={className ?? 'absolute inset-0'}>
+    <div className={cn('relative overflow-hidden', className ?? 'absolute inset-0')}>
       <StarField seed={seed} tint={tintFor(kind)} />
       {src && !basarisiz && (
         <img

@@ -128,140 +128,146 @@ export function ReportButton({
     );
   }
 
+  const trigger = compact ? (
+    <button
+      type="button"
+      onClick={() => setOpen(true)}
+      className={cn(
+        'transition-colors hover:text-danger',
+        !open && className
+      )}
+    >
+      Bildir
+    </button>
+  ) : (
+    <Button
+      size="sm"
+      variant="ghost"
+      className={!open ? className : undefined}
+      onClick={() => setOpen(true)}
+    >
+      Bildir
+    </Button>
+  );
+
   if (!open) {
     /* Satır içi biçim: mesaj balonunun altındaki damga şeridine sığması
        gerekiyor ve orada bir düğme kutusu görsel olarak fazla ağır. */
-    if (compact) {
-      return (
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          className={cn('transition-colors hover:text-danger', className)}
-        >
-          Bildir
-        </button>
-      );
-    }
-
-    return (
-      <Button
-        size="sm"
-        variant="ghost"
-        className={className}
-        onClick={() => setOpen(true)}
-      >
-        Bildir
-      </Button>
-    );
+    return trigger;
   }
 
   return (
-    <div
-      className={cn(
-        'rounded-card border border-border bg-surface-1 p-3',
-        /* Satır içi tetikleyiciden açıldığında form, dar bir damga
-           şeridinin içinde değil onun ÜSTÜNDE durmalı. */
-        compact && 'absolute right-0 z-[var(--z-popover)] mt-1 w-72 text-left shadow-overlay',
-        className
-      )}
-    >
-      <h3 className="label mb-2 text-foreground">İçeriği bildir</h3>
-
-      {!configured || !user ? (
-        <p className="text-body-sm leading-relaxed text-muted-foreground">
-          Bildirim göndermek için giriş yapmanız gerekir. Kayıtların hesapla
-          ilişkilendirilmesi, kötüye kullanımı önlemenin tek pratik yolu.
-        </p>
-      ) : (
-        <>
-          {/*
-            ETİKETLER `Field` İLE.
-
-            Elle yazılan `<label className="label block">` etiketi kutuya
-            SIFIR mesafede bırakıyordu — `.label` sınıfının alt boşluğu
-            yok — ve etiket, altındaki kutunun kenarına biniyordu.
-            Boşluğu buraya elle eklemek aynı hatayı üçüncü bir yerde
-            tekrar etmek olurdu; `Field` bu aralığı uygulamanın her
-            yerinde zaten doğru veriyor.
-          */}
-          <div className="mb-3 grid gap-3">
-            <Field label="Gerekçe" htmlFor="report-reason">
-              <Select
-                id="report-reason"
-                value={reason}
-                onChange={(e) => setReason(e.target.value as ModerationReason)}
-                className="h-9 text-meta"
-              >
-                {Object.entries(reasonLabels).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-
-            <Field
-              label="Açıklama"
-              htmlFor="report-note"
-              hint={`Ne olduğunu somut yazın — en az ${MIN_ACIKLAMA} karakter.`}
-              error={
-                note.trim().length > 0 && !aciklamaYeterli
-                  ? `${eksikKarakter} karakter daha gerekiyor.`
-                  : undefined
-              }
-            >
-              <textarea
-                id="report-note"
-                rows={4}
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                maxLength={2000}
-                aria-describedby="report-note-sayac"
-                placeholder="Hangi kural çiğnendi, nerede? Örnek: telif ihlalinde özgün eserin adresi."
-                className="w-full resize-y rounded-card border border-border bg-surface-2 px-2.5 py-2 text-meta leading-relaxed text-foreground outline-none placeholder:text-faint focus:border-primary"
-              />
-            </Field>
-
-            {/* Sayaç ayrı satırda ve canlı: kullanıcı düğmenin neden
-                kapalı olduğunu aramamalı. */}
-            <p
-              id="report-note-sayac"
-              className={cn(
-                'tabular text-meta',
-                aciklamaYeterli ? 'text-success' : 'text-faint'
-              )}
-            >
-              {note.trim().length} / {MIN_ACIKLAMA} karakter
-            </p>
-          </div>
-
-          {error && (
-            <Alert variant="text" className="mb-2">
-              {error}
-            </Alert>
-          )}
-        </>
-      )}
-
-      <div className="flex flex-wrap items-center gap-2">
-        <Button size="sm" variant="ghost" onClick={() => setOpen(false)}>
-          Vazgeç
-        </Button>
-        {configured && user && (
-          <Button
-            size="sm"
-            disabled={state === 'sending' || !aciklamaYeterli}
-            onClick={() => void submit()}
-          >
-            {state === 'sending' ? 'Gönderiliyor…' : 'Gönder'}
-          </Button>
+    <span className={cn('relative inline-flex shrink-0', className)}>
+      {trigger}
+      <div
+        className={cn(
+          'absolute right-0 top-full z-[var(--z-popover)] mt-2 rounded-card border border-border bg-surface-1 p-3 text-left shadow-overlay',
+          /*
+            Form butonun yerine akışa girerse fotoğraf detayındaki başlık
+            kolonu birkaç kelimelik genişliğe sıkışıyor. Panel absolute:
+            buton yerinde kalır, form layout hesabına dahil olmaz.
+          */
+          compact ? 'w-72' : 'w-[min(46rem,calc(100vw-2rem))]'
         )}
-      </div>
+      >
+        <h3 className="label mb-2 text-foreground">İçeriği bildir</h3>
 
-      <p className="mt-2 text-meta leading-snug text-faint">
-        Bildiriminizin durumu size ayrıca gösterilmez: kuyruğu izleyebilmek,
-        bildirilen kullanıcının kimin şikâyet ettiğini çıkarmasına kapı açar.
-      </p>
-    </div>
+        {!configured || !user ? (
+          <p className="text-body-sm leading-relaxed text-muted-foreground">
+            Bildirim göndermek için giriş yapmanız gerekir. Kayıtların hesapla
+            ilişkilendirilmesi, kötüye kullanımı önlemenin tek pratik yolu.
+          </p>
+        ) : (
+          <>
+            {/*
+              ETİKETLER `Field` İLE.
+
+              Elle yazılan `<label className="label block">` etiketi kutuya
+              SIFIR mesafede bırakıyordu — `.label` sınıfının alt boşluğu
+              yok — ve etiket, altındaki kutunun kenarına biniyordu.
+              Boşluğu buraya elle eklemek aynı hatayı üçüncü bir yerde
+              tekrar etmek olurdu; `Field` bu aralığı uygulamanın her
+              yerinde zaten doğru veriyor.
+            */}
+            <div className="mb-3 grid gap-3">
+              <Field label="Gerekçe" htmlFor="report-reason">
+                <Select
+                  id="report-reason"
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value as ModerationReason)}
+                  className="h-9 text-meta"
+                >
+                  {Object.entries(reasonLabels).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+
+              <Field
+                label="Açıklama"
+                htmlFor="report-note"
+                hint={`Ne olduğunu somut yazın — en az ${MIN_ACIKLAMA} karakter.`}
+                error={
+                  note.trim().length > 0 && !aciklamaYeterli
+                    ? `${eksikKarakter} karakter daha gerekiyor.`
+                    : undefined
+                }
+              >
+                <textarea
+                  id="report-note"
+                  rows={4}
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  maxLength={2000}
+                  aria-describedby="report-note-sayac"
+                  placeholder="Hangi kural çiğnendi, nerede? Örnek: telif ihlalinde özgün eserin adresi."
+                  className="w-full resize-y rounded-card border border-border bg-surface-2 px-2.5 py-2 text-meta leading-relaxed text-foreground outline-none placeholder:text-faint focus:border-primary"
+                />
+              </Field>
+
+              {/* Sayaç ayrı satırda ve canlı: kullanıcı düğmenin neden
+                  kapalı olduğunu aramamalı. */}
+              <p
+                id="report-note-sayac"
+                className={cn(
+                  'tabular text-meta',
+                  aciklamaYeterli ? 'text-success' : 'text-faint'
+                )}
+              >
+                {note.trim().length} / {MIN_ACIKLAMA} karakter
+              </p>
+            </div>
+
+            {error && (
+              <Alert variant="text" className="mb-2">
+                {error}
+              </Alert>
+            )}
+          </>
+        )}
+
+        <div className="flex flex-wrap items-center gap-2">
+          <Button size="sm" variant="ghost" onClick={() => setOpen(false)}>
+            Vazgeç
+          </Button>
+          {configured && user && (
+            <Button
+              size="sm"
+              disabled={state === 'sending' || !aciklamaYeterli}
+              onClick={() => void submit()}
+            >
+              {state === 'sending' ? 'Gönderiliyor…' : 'Gönder'}
+            </Button>
+          )}
+        </div>
+
+        <p className="mt-2 text-meta leading-snug text-faint">
+          Bildiriminizin durumu size ayrıca gösterilmez: kuyruğu izleyebilmek,
+          bildirilen kullanıcının kimin şikâyet ettiğini çıkarmasına kapı açar.
+        </p>
+      </div>
+    </span>
   );
 }

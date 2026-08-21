@@ -97,10 +97,15 @@ export function SetupBuilder({
   );
   const etkinGorunurluk = visibility ?? varsayilanGorunurluk;
   const [saved, setSaved] = useState(false);
+  const [pendingModels, setPendingModels] = useState<Record<string, EquipmentModel>>({});
 
   const bySlug = useMemo(
-    () => new Map(catalog.items.map((m) => [m.slug, m])),
-    [catalog.items]
+    () =>
+      new Map([
+        ...catalog.items.map((m) => [m.slug, m] as const),
+        ...Object.values(pendingModels).map((m) => [m.slug, m] as const),
+      ]),
+    [catalog.items, pendingModels]
   );
 
   const resolved: ResolvedSetup = useMemo(() => {
@@ -127,7 +132,13 @@ export function SetupBuilder({
 
   function setSlot(slot: SlotId, model: EquipmentModel | undefined) {
     const slots = { ...draft.slots };
-    if (model) slots[slot] = model.slug;
+    if (model) {
+      slots[slot] = model.slug;
+      if (!catalog.items.some((item) => item.slug === model.slug)) {
+        setPendingModels((prev) => ({ ...prev, [model.slug]: model }));
+        void catalog.refresh();
+      }
+    }
     else delete slots[slot];
     onChange({ ...draft, slots });
     setSaved(false);
@@ -198,7 +209,13 @@ export function SetupBuilder({
                     value={bySlug.get(slug)}
                     onChange={(model: EquipmentModel | undefined) => {
                       const next = [...(draft.extraFilters ?? [])];
-                      if (model) next[i] = model.slug;
+                      if (model) {
+                        next[i] = model.slug;
+                        if (!catalog.items.some((item) => item.slug === model.slug)) {
+                          setPendingModels((prev) => ({ ...prev, [model.slug]: model }));
+                          void catalog.refresh();
+                        }
+                      }
                       else next.splice(i, 1);
                       onChange({ ...draft, extraFilters: next });
                     }}

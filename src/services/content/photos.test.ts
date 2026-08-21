@@ -80,6 +80,30 @@ describe('mapPhotoRow', () => {
     expect(photo.photoOfWeekWins).toEqual(['2026-32']);
   });
 
+  it('açık haftalık adaylığı taşır', () => {
+    const photo = mapPhotoRow(
+      row({
+        photo_of_week_nominees: [
+          {
+            photo_of_week_rounds: {
+              iso_year: 2026,
+              iso_week: 34,
+              status: 'oylama',
+            },
+          },
+          {
+            photo_of_week_rounds: {
+              iso_year: 2026,
+              iso_week: 33,
+              status: 'yayinda',
+            },
+          },
+        ],
+      })
+    );
+    expect(photo.photoOfWeekCandidates).toEqual(['2026-34']);
+  });
+
   it('katalog nesnesinden kanonik hedefi alır', () => {
     const photo = mapPhotoRow(row());
     expect(photo.target).toEqual({

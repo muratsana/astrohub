@@ -2,6 +2,8 @@ import { useMemo, useRef, useState } from 'react';
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { Alert } from '@/components/ui/Alert';
+import { useAuth } from '@/features/auth/AuthContext';
 import {
   isMovingKind,
   targetKindLabels,
@@ -9,6 +11,11 @@ import {
 } from '@/domain/targets/derive';
 import { searchTargets, targets, type CelestialTarget } from './data';
 import { useCatalogSearch } from '@/services/content/targets';
+import {
+  canonicalCatalogCode,
+  contributeTarget,
+  validateTargetContribution,
+} from '@/services/content/targetContribute';
 
 /**
  * HEDEF SEÇİCİ — tek kaynak katalog kaydı.
@@ -61,6 +68,7 @@ export function TargetPicker({
   onKindChange,
   selectClassName = 'h-11 w-full rounded-card border border-border bg-surface-1 px-3 text-sm text-foreground focus:border-primary/60',
   showKindFilter = true,
+  showDetails = true,
 }: {
   /** Seçili hedefin slug'ı; boşsa seçim yok. */
   value: string;
@@ -69,9 +77,21 @@ export function TargetPicker({
   onKindChange?: (kind: TargetKind | 'hepsi') => void;
   selectClassName?: string;
   showKindFilter?: boolean;
+  /** Dar araç kolonlarında seçili hedef açıklama kartını gizler. */
+  showDetails?: boolean;
 }) {
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const [newCatalog, setNewCatalog] = useState('');
+  const [newName, setNewName] = useState('');
+  const [newKind, setNewKind] = useState<TargetKind>(
+    kind !== 'hepsi' ? kind : 'emisyon-bulutsusu'
+  );
+  const [newConstellation, setNewConstellation] = useState('');
+  const [contributionError, setContributionError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const auth = useAuth();
   /*
     Seçilen kayıt burada TUTULUYOR, yalnızca slug'la aranmıyor: sunucudan
     gelen bir hedef paketlenmiş listede yok ve `targets.find` onu
@@ -119,6 +139,46 @@ export function TargetPicker({
     onChange(target);
     setQuery('');
     setOpen(false);
+    setAdding(false);
+    setContributionError(null);
+  }
+
+  async function submitContribution() {
+    if (!auth.user) {
+      setContributionError('Katalog kaydı eklemek için giriş yapmalısınız.');
+      return;
+    }
+
+    const payload = {
+      catalog: canonicalCatalogCode(newCatalog || query),
+      name: newName,
+      kind: newKind,
+      constellation: newConstellation,
+    };
+    const problem = validateTargetContribution(payload);
+    if (problem) {
+      setContributionError(problem);
+      return;
+    }
+
+    setSubmitting(true);
+    setContributionError(null);
+    try {
+      const created = await contributeTarget({
+        ...payload,
+        userId: auth.user.id,
+      });
+      pick(created);
+      setNewCatalog('');
+      setNewName('');
+      setNewConstellation('');
+    } catch (error) {
+      setContributionError(
+        error instanceof Error ? error.message : 'Katalog kaydı eklenemedi.'
+      );
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -193,11 +253,28 @@ export function TargetPicker({
             {open && (
               <div className="absolute left-0 right-0 z-[var(--z-popover)] mt-1 overflow-hidden rounded-card border border-border-strong bg-surface-1 shadow-overlay">
                 {options.length === 0 ? (
-                  <p className="px-3 py-3 text-body-sm leading-relaxed text-muted-foreground">
-                    {uzakYukleniyor
-                      ? 'Katalogda aranıyor…'
-                      : 'Bu türde eşleşen katalog kaydı yok. Fotoğraf eklemek için hedefi katalog kodundan listeden seçmelisiniz.'}
-                  </p>
+                  <div className="px-3 py-3">
+                    <p className="text-body-sm leading-relaxed text-muted-foreground">
+                      {uzakYukleniyor
+                        ? 'Katalogda aranıyor…'
+                        : activeKind === 'hepsi'
+                          ? 'Eşleşen katalog kaydı yok. Kodu kontrol edin veya eksik hedefi katalog koduyla ekleyin.'
+                          : 'Bu türde eşleşen katalog kaydı yok. Tür filtresini kaldırabilir veya eksik hedefi katalog koduyla ekleyebilirsiniz.'}
+                    </p>
+                    {!uzakYukleniyor && (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="mt-2"
+                        onClick={() => {
+                          setAdding(true);
+                          setNewCatalog(canonicalCatalogCode(query));
+                        }}
+                      >
+                        + Katalog kaydı ekle
+                      </Button>
+                    )}
+                  </div>
                 ) : (
                   <>
                     <ul className="max-h-72 overflow-auto">
@@ -222,14 +299,94 @@ export function TargetPicker({
                         </li>
                       ))}
                     </ul>
-                    {(totalMatches > options.length || uzakYukleniyor) && (
-                      <p className="border-t border-border-strong px-3 py-1.5 text-meta text-faint">
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border-strong px-3 py-2">
+                      <p className="text-meta text-faint">
                         {uzakYukleniyor
                           ? 'Katalogda aranıyor…'
-                          : `${totalMatches} eşleşmenin ilk ${options.length} tanesi — aramayı daraltın.`}
+                          : totalMatches > options.length
+                            ? `${totalMatches} eşleşmenin ilk ${options.length} tanesi — aramayı daraltın.`
+                            : `${totalMatches} eşleşme`}
                       </p>
-                    )}
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => {
+                          setAdding(true);
+                          setNewCatalog(canonicalCatalogCode(query));
+                        }}
+                      >
+                        Listede yoksa ekle
+                      </Button>
+                    </div>
                   </>
+                )}
+
+                {adding && (
+                  <div className="border-t border-border-strong bg-surface-2 p-3">
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      <label className="block">
+                        <span className="label mb-1 block">Katalog kodu</span>
+                        <Input
+                          value={newCatalog}
+                          onChange={(e) => setNewCatalog(e.target.value)}
+                          placeholder="NGC 6888, Sh2-157, vdB 141, V398 Cyg"
+                          className="h-9 text-caption"
+                        />
+                      </label>
+                      <label className="block">
+                        <span className="label mb-1 block">Orijinal ad</span>
+                        <Input
+                          value={newName}
+                          onChange={(e) => setNewName(e.target.value)}
+                          placeholder="Crescent Nebula"
+                          className="h-9 text-caption"
+                        />
+                      </label>
+                      <label className="block">
+                        <span className="label mb-1 block">Obje tipi</span>
+                        <select
+                          value={newKind}
+                          onChange={(e) => setNewKind(e.target.value as TargetKind)}
+                          className="h-9 w-full rounded-card border border-border bg-surface-1 px-2 text-caption text-foreground"
+                        >
+                          {Object.entries(targetKindLabels).map(([value, label]) => (
+                            <option key={value} value={value}>
+                              {label}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label className="block">
+                        <span className="label mb-1 block">Takımyıldız</span>
+                        <Input
+                          value={newConstellation}
+                          onChange={(e) => setNewConstellation(e.target.value)}
+                          placeholder="Kuğu"
+                          className="h-9 text-caption"
+                        />
+                      </label>
+                    </div>
+                    {contributionError && (
+                      <Alert variant="text" className="mt-2">
+                        {contributionError}
+                      </Alert>
+                    )}
+                    <div className="mt-3 flex flex-wrap items-center justify-end gap-2">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => {
+                          setAdding(false);
+                          setContributionError(null);
+                        }}
+                      >
+                        Vazgeç
+                      </Button>
+                      <Button size="sm" onClick={submitContribution} disabled={submitting}>
+                        {submitting ? 'Ekleniyor…' : 'Ekle ve seç'}
+                      </Button>
+                    </div>
+                  </div>
                 )}
               </div>
             )}
@@ -247,7 +404,7 @@ export function TargetPicker({
         )}
       </div>
 
-      {selected && (
+      {selected && showDetails && (
         <div className="rounded-card border border-border bg-surface-2/60 px-3 py-2.5">
           <p className="text-body-sm leading-relaxed text-muted-foreground">
             {selected.description}

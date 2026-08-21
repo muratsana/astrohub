@@ -58,7 +58,7 @@ describe('HomePage · hero', () => {
     expect(
       screen.getByRole('heading', {
         level: 1,
-        name: heroName(defaultHeroSlides[0].title),
+        name: /HAFTANIN FOTOĞRAFI:/i,
       })
     ).toBeInTheDocument();
   });
@@ -77,7 +77,7 @@ describe('HomePage · hero', () => {
     expect(
       screen.getByRole('heading', {
         level: 1,
-        name: heroName(defaultHeroSlides[1].title),
+        name: heroName(defaultHeroSlides[0].title),
       })
     ).toBeInTheDocument();
   });
@@ -90,7 +90,7 @@ describe('HomePage · hero', () => {
     expect(
       screen.getByRole('heading', {
         level: 1,
-        name: /HAFTANIN FOTOĞRAFI:/i,
+        name: heroName(defaultHeroSlides[defaultHeroSlides.length - 1].title),
       })
     ).toBeInTheDocument();
   });
@@ -102,7 +102,7 @@ describe('HomePage · hero', () => {
     expect(
       screen.getByRole('heading', {
         level: 1,
-        name: heroName(defaultHeroSlides[2].title),
+        name: heroName(defaultHeroSlides[1].title),
       })
     ).toBeInTheDocument();
     expect(tabs[2]).toHaveAttribute('aria-selected', 'true');

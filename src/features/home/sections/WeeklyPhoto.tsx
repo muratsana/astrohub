@@ -31,7 +31,7 @@ export function WeeklyPhoto({ hideWhenEmpty = true }: { hideWhenEmpty?: boolean 
         {photo ? (
           <div className="max-w-xl"><PhotoCard photo={photo} /></div>
         ) : (
-          <EmptyState message="Henüz haftalık kazanan yok" hint="İlk jüri turu sonuçlandığında burada görünecek." />
+          <EmptyState message="Henüz haftalık kazanan yok" hint="İlk topluluk oylaması kapanınca burada görünecek." />
         )}
       </Container>
     </section>

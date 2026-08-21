@@ -190,11 +190,17 @@ export function useForumThread(slug: string | undefined) {
     staleTime: 30 * 1000,
     retry: 1,
     queryFn: async () => {
+      const local = forumSeed.find((thread) => thread.slug === slug) ?? null;
       const clientPromise = getSupabase();
       if (!clientPromise || !slug) {
-        return forumSeed.find((thread) => thread.slug === slug) ?? null;
+        return local;
       }
-      return fetchThreadBySlug(await clientPromise, slug);
+      try {
+        return (await fetchThreadBySlug(await clientPromise, slug)) ?? local;
+      } catch (error) {
+        if (local) return local;
+        throw error;
+      }
     },
   });
 }

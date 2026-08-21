@@ -7,8 +7,6 @@ export function ProfileBadges({ userId }: { userId: string | undefined }) {
 
   return (
     <div className="flex flex-wrap gap-1.5" aria-label="Profil rozetleri">
-      {badges.activeJuror && <Badge tone="primary">🏅 Jüri Üyesi</Badge>}
-      {!badges.activeJuror && badges.formerJuror && <Badge>🏅 Eski Jüri Üyesi</Badge>}
       {badges.weekWins > 0 && (
         <Badge tone="success">⭐ Haftanın Fotoğrafı ×{badges.weekWins}</Badge>
       )}

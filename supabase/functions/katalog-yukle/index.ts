@@ -4,17 +4,17 @@
  * ══════════════════════════════════════════════════════════════════════
  * NE YAPIYOR
  *
- * OpenNGC (NGC + IC + Messier + Caldwell) ve VizieR'deki dokuz katalog
+ * OpenNGC (NGC + IC + Messier + Caldwell) ve VizieR'deki katalog
  * tablosunu indiriyor, tek bir normalleştirilmiş listeye indiriyor ve
  * hazırlık tablosuna yazıyor. Birleştirmenin kendisi SQL'de
  * (`app.katalog_birlestir`) çünkü orada mevcut kayıtlarla eşleştirme
- * küme işlemi; burada satır satır yapılsaydı 19.000 ayrı sorgu olurdu.
+ * küme işlemi; burada satır satır yapılsaydı on binlerce ayrı sorgu olurdu.
  *
  * ══════════════════════════════════════════════════════════════════════
  * NEDEN EDGE FUNCTION
  *
- * İçe aktarma ~12 MB indiriyor ve 19.000 satır yazıyor. Bunu tarayıcıda
- * yapmak, yönetim panelini açan kişinin bağlantısına 12 MB yüklemek
+ * İçe aktarma büyük katalog paketleri indiriyor ve on binlerce satır yazıyor. Bunu tarayıcıda
+ * yapmak, yönetim panelini açan kişinin bağlantısına gereksiz yük bindirmek
  * demekti; ayrıca `service_role` anahtarı gerektirir ve o anahtar
  * tarayıcıya İNMEZ. Sunucuda çalışan bir fonksiyon her iki sorunu da
  * çözüyor.
@@ -57,7 +57,7 @@ import {
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, content-type',
+  'Access-Control-Allow-Headers': 'authorization, content-type, x-katalog-sirri',
 };
 
 function json(gövde: unknown, status = 200): Response {
@@ -75,25 +75,68 @@ function json(gövde: unknown, status = 200): Response {
  * etmez. Rapor hangi kaynağın kaç satır verdiğini de döndürüyor.
  */
 async function indir(url: string, ad: string): Promise<string> {
-  const yanit = await fetch(url, {
-    headers: { 'User-Agent': 'astrohub-katalog/1.0' },
-  });
-  if (!yanit.ok) {
-    throw new Error(`${ad}: HTTP ${yanit.status}`);
+  let sonHata: Error | null = null;
+
+  for (let deneme = 1; deneme <= 3; deneme++) {
+    try {
+      const yanit = await fetch(url, {
+        headers: { 'User-Agent': 'astrohub-katalog/1.0' },
+      });
+      if (!yanit.ok) {
+        throw new Error(`${ad}: HTTP ${yanit.status}`);
+      }
+      const metin = await yanit.text();
+      if (metin.length < 500) {
+        throw new Error(
+          `${ad}: yanıt beklenmedik biçimde kısa (${metin.length} bayt)`
+        );
+      }
+      return metin;
+    } catch (hata) {
+      sonHata = hata as Error;
+      await new Promise((resolve) => setTimeout(resolve, deneme * 1000));
+    }
   }
-  const metin = await yanit.text();
-  if (metin.length < 500) {
-    throw new Error(
-      `${ad}: yanıt beklenmedik biçimde kısa (${metin.length} bayt)`
-    );
+
+  throw sonHata ?? new Error(`${ad}: indirilemedi`);
+}
+
+async function sinirlariIndir(
+  rapor: Record<string, number>
+): Promise<ReturnType<typeof sinirlariAyristir>> {
+  let sonHata: Error | null = null;
+
+  for (let deneme = 1; deneme <= 3; deneme++) {
+    try {
+      const sinirMetni = await indir(
+        SINIR_URL,
+        `IAU sınırları (${deneme}/3)`
+      );
+      const sinirlar = sinirlariAyristir(sinirMetni);
+      if (sinirlar.length >= 300) {
+        rapor['iau_sinir'] = sinirlar.length;
+        return sinirlar;
+      }
+      throw new Error(`IAU sınır tablosu eksik: ${sinirlar.length} satır`);
+    } catch (hata) {
+      sonHata = hata as Error;
+      await new Promise((resolve) => setTimeout(resolve, deneme * 1000));
+    }
   }
-  return metin;
+
+  rapor['iau_sinir'] = 0;
+  rapor['iau_sinir_fallback'] = 1;
+  console.warn(
+    'IAU sınırları alınamadı; katalog importu takımyıldız fallbackleriyle sürdürülecek.',
+    sonHata?.message
+  );
+  return [];
 }
 
 const PARCA = 2000;
 
 const ASGARI_KOD_SAYILARI = {
-  messier: 110,
+  messier: 109,
   ngc: 7800,
   ic: 5200,
 };
@@ -102,6 +145,10 @@ const ASGARI_VIZIER_SAYILARI: Record<string, number> = {
   sh2: 300,
   abell_pn: 70,
   abell_pn_olasi: 2,
+  vdb: 150,
+  lbn: 1100,
+  ldn: 1700,
+  gcvs: 40000,
 };
 
 function kodSay(nesneler: Nesne[], test: (kod: string) => boolean): number {
@@ -170,12 +217,7 @@ Deno.serve(async (istek: Request): Promise<Response> => {
   const rapor: Record<string, number> = {};
 
   try {
-    const sinirMetni = await indir(SINIR_URL, 'IAU sınırları');
-    const sinirlar = sinirlariAyristir(sinirMetni);
-    if (sinirlar.length < 300) {
-      throw new Error(`IAU sınır tablosu eksik: ${sinirlar.length} satır`);
-    }
-    rapor['iau_sinir'] = sinirlar.length;
+    const sinirlar = await sinirlariIndir(rapor);
 
     const [ngcMetni, ekMetni] = await Promise.all([
       indir(OPENNGC_URL, 'OpenNGC'),

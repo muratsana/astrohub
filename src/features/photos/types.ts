@@ -307,6 +307,8 @@ export interface AstroPhoto {
   editorsPick?: boolean;
   /** Kazandığı haftalar, `2026-32` biçiminde. */
   photoOfWeekWins?: string[];
+  /** Aday olduğu açık haftalar, `2026-32` biçiminde. */
+  photoOfWeekCandidates?: string[];
   year: number;
   city: string;
   /**

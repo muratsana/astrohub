@@ -46,9 +46,6 @@ describe('roller', () => {
       'content_editor',
       'moderator',
       'admin',
-      /* `jury` en sonda: enum'a en son eklendi ve PostgreSQL değerleri
-         araya sokmuyor. Sıra canlı `pg_enum` sorgusuyla doğrulandı. */
-      'jury',
     ]);
   });
 

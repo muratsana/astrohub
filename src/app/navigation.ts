@@ -91,8 +91,8 @@ export const siteMap: NavGroup[] = [
       {
         label: 'Haftanın Fotoğrafı',
         to: '/haftanin-fotografi',
-        description: 'Jürinin haftalık kazananı ve seçki arşivi',
-        keywords: ['hafta', 'jüri', 'kazanan', 'seçki'],
+        description: 'Topluluğun haftalık kazananı ve seçki arşivi',
+        keywords: ['hafta', 'oylama', 'kazanan', 'seçki'],
       },
       {
         label: 'Astrofotoğrafçılar',

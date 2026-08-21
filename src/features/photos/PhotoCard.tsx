@@ -47,10 +47,19 @@ export function PhotoCard({
       username={photo.user.username}
       family={{ label: info.label, className: info.className }}
       bodyBadges={
-        (photo.photoOfWeekWins?.length ?? 0) > 0 ? (
-          <Badge tone="success" className="bg-background/85">
-            {formatPhotoWeekLabel(photo.photoOfWeekWins!.at(-1)!).weekLabel}
-          </Badge>
+        (photo.photoOfWeekWins?.length ?? 0) > 0 || (photo.photoOfWeekCandidates?.length ?? 0) > 0 ? (
+          <>
+            {(photo.photoOfWeekCandidates?.length ?? 0) > 0 && (
+              <Badge tone="primary" className="bg-background/85">
+                Haftanın fotoğrafı adayı
+              </Badge>
+            )}
+            {(photo.photoOfWeekWins?.length ?? 0) > 0 && (
+              <Badge tone="success" className="bg-background/85">
+                {formatPhotoWeekLabel(photo.photoOfWeekWins!.at(-1)!).weekLabel}
+              </Badge>
+            )}
+          </>
         ) : undefined
       }
       /*

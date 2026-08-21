@@ -45,6 +45,19 @@ async function client() {
   return promise;
 }
 
+function isMissingRpc(error: { code?: string; message?: string } | null): boolean {
+  if (!error) return false;
+  if (['PGRST200', 'PGRST202', 'PGRST204'].includes(error.code ?? '')) return true;
+  return /settle_due_photo_week_rounds|schema cache|could not find/i.test(error.message ?? '');
+}
+
+async function settleDuePhotoWeekRounds(supabase: Awaited<ReturnType<typeof client>>) {
+  const { error } = await supabase.rpc('settle_due_photo_week_rounds');
+  if (error && !isMissingRpc(error)) {
+    console.warn('Haftanın fotoğrafı otomatik sonuçlandırma çalışmadı:', error.message);
+  }
+}
+
 export function usePhotoWeekRounds() {
   const [rounds, setRounds] = useState<PhotoWeekRound[]>([]);
   const [loading, setLoading] = useState(isSupabaseConfigured);
@@ -59,14 +72,15 @@ export function usePhotoWeekRounds() {
     let active = true;
     setLoading(true);
     client()
-      .then((supabase) =>
-        supabase
+      .then(async (supabase) => {
+        await settleDuePhotoWeekRounds(supabase);
+        return supabase
           .from('photo_of_week_rounds')
           .select('id, iso_year, iso_week, status, opens_at, closes_at, winner_photo_id')
           .order('iso_year', { ascending: false })
           .order('iso_week', { ascending: false })
-          .limit(100)
-      )
+          .limit(100);
+      })
       .then(({ data, error: queryError }) => {
         if (queryError) throw new Error(queryError.message);
         if (active) setRounds(((data ?? []) as RoundRow[]).map(mapRound));
@@ -88,22 +102,22 @@ export function usePhotoWeekRounds() {
   };
 }
 
-export interface JuryBallot {
+export interface PhotoWeekBallot {
   active: boolean;
   round: PhotoWeekRound | null;
   nomineeIds: string[];
-  votes: Record<string, { score: number; comment: string }>;
+  votes: Record<string, { score: number }>;
 }
 
-const EMPTY_BALLOT: JuryBallot = {
+const EMPTY_BALLOT: PhotoWeekBallot = {
   active: false,
   round: null,
   nomineeIds: [],
   votes: {},
 };
 
-export function useJuryBallot(userId: string | undefined) {
-  const [ballot, setBallot] = useState<JuryBallot>(EMPTY_BALLOT);
+export function usePhotoWeekBallot(userId: string | undefined) {
+  const [ballot, setBallot] = useState<PhotoWeekBallot>(EMPTY_BALLOT);
   const [loading, setLoading] = useState(Boolean(userId && isSupabaseConfigured));
   const [error, setError] = useState<string | null>(null);
   const [tick, setTick] = useState(0);
@@ -118,17 +132,7 @@ export function useJuryBallot(userId: string | undefined) {
     setLoading(true);
     client()
       .then(async (supabase) => {
-        const today = new Date().toISOString().slice(0, 10);
-        const { data: activeData, error: activeError } = await supabase
-          .from('jury_members')
-          .select('user_id')
-          .eq('user_id', userId)
-          .lte('term_start', today)
-          .or(`term_end.is.null,term_end.gte.${today}`)
-          .limit(1);
-        if (activeError) throw new Error(activeError.message);
-        if (!activeData || activeData.length === 0) return EMPTY_BALLOT;
-
+        await settleDuePhotoWeekRounds(supabase);
         const { data: roundData, error: roundError } = await supabase
           .from('photo_of_week_rounds')
           .select('id, iso_year, iso_week, status, opens_at, closes_at, winner_photo_id')
@@ -137,12 +141,12 @@ export function useJuryBallot(userId: string | undefined) {
           .limit(1)
           .maybeSingle();
         if (roundError) throw new Error(roundError.message);
-        if (!roundData) return { ...EMPTY_BALLOT, active: true };
+        if (!roundData) return EMPTY_BALLOT;
         const round = mapRound(roundData as RoundRow);
 
         const [nominees, votes] = await Promise.all([
           supabase.from('photo_of_week_nominees').select('photo_id').eq('round_id', round.id),
-          supabase.from('photo_of_week_votes').select('photo_id, score, comment').eq('round_id', round.id).eq('juror_id', userId),
+          supabase.from('photo_of_week_votes').select('photo_id, score').eq('round_id', round.id).eq('juror_id', userId),
         ]);
         if (nominees.error) throw new Error(nominees.error.message);
         if (votes.error) throw new Error(votes.error.message);
@@ -152,13 +156,13 @@ export function useJuryBallot(userId: string | undefined) {
           nomineeIds: (nominees.data ?? []).map((row) => row.photo_id as string),
           votes: Object.fromEntries((votes.data ?? []).map((row) => [
             row.photo_id as string,
-            { score: row.score as number, comment: (row.comment as string | null) ?? '' },
+            { score: row.score as number },
           ])),
         };
       })
       .then((value) => { if (active) { setBallot(value); setError(null); } })
       .catch((reason: unknown) => {
-        if (active) setError(reason instanceof Error ? reason.message : 'Jüri oylaması okunamadı.');
+        if (active) setError(reason instanceof Error ? reason.message : 'Haftanın fotoğrafı oylaması okunamadı.');
       })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
@@ -172,21 +176,20 @@ export function useJuryBallot(userId: string | undefined) {
   };
 }
 
-export async function saveJuryVote(input: {
+export async function savePhotoWeekVote(input: {
   roundId: string;
-  jurorId: string;
+  userId: string;
   photoId: string;
   score: number;
-  comment: string;
 }) {
   const supabase = await client();
   const { error } = await supabase.from('photo_of_week_votes').upsert(
     {
       round_id: input.roundId,
-      juror_id: input.jurorId,
+      juror_id: input.userId,
       photo_id: input.photoId,
       score: input.score,
-      comment: input.comment.trim() || null,
+      comment: null,
     },
     { onConflict: 'round_id,juror_id,photo_id' }
   );
@@ -194,8 +197,6 @@ export async function saveJuryVote(input: {
 }
 
 export interface PublicProfileBadges {
-  activeJuror: boolean;
-  formerJuror: boolean;
   weekWins: number;
   verifiedOrganizer: boolean;
   clubManager: boolean;
@@ -212,15 +213,11 @@ export function usePublicProfileBadges(userId: string | undefined) {
         if (error) throw new Error(error.message);
         if (!active) return;
         const row = data as {
-          active_juror: boolean;
-          former_juror: boolean;
           week_wins: number;
           verified_organizer: boolean;
           club_manager: boolean;
         };
         setBadges({
-          activeJuror: row.active_juror,
-          formerJuror: row.former_juror,
           weekWins: Number(row.week_wins),
           verifiedOrganizer: row.verified_organizer,
           clubManager: row.club_manager,

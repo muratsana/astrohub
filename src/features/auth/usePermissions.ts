@@ -40,14 +40,16 @@ import { getSupabase } from '@/services/supabase/client';
  * kullanıcı kimliği; oturum değişince önbellek düşüyor.
  */
 
-export type AppRole =
-  | 'member'
-  | 'verified_organizer'
-  | 'club_manager'
-  | 'content_editor'
-  | 'moderator'
-  | 'jury'
-  | 'admin';
+export const APP_ROLES = [
+  'member',
+  'verified_organizer',
+  'club_manager',
+  'content_editor',
+  'moderator',
+  'admin',
+] as const;
+
+export type AppRole = (typeof APP_ROLES)[number];
 
 export const roleLabels: Record<AppRole, string> = {
   member: 'Üye',
@@ -55,7 +57,6 @@ export const roleLabels: Record<AppRole, string> = {
   club_manager: 'Kulüp Yöneticisi',
   content_editor: 'İçerik Editörü',
   moderator: 'Moderatör',
-  jury: 'Jüri',
   admin: 'Yönetici',
 };
 
@@ -94,7 +95,6 @@ export interface PermissionsState {
   tier: 'standart' | 'premium';
   isAdmin: boolean;
   isModerator: boolean;
-  isJury: boolean;
   /** Yönetim paneline girebilir mi (arayüz kapısı). */
   canAccessAdmin: boolean;
   /** Üyelik bitiş tarihi; süresiz üyelikte ve üyeliksiz hesapta null. */
@@ -111,7 +111,7 @@ export interface PermissionsState {
 }
 
 export interface Payload {
-  roller: AppRole[];
+  roller: unknown[];
   statu: 'standart' | 'premium';
   izinler: FeatureKey[];
   kotalar: Partial<Record<LimitKey, number | null>>;
@@ -126,6 +126,13 @@ const EMPTY_PAYLOAD: Payload = {
   uyelik_bitis: null,
 };
 
+function isAppRole(role: unknown): role is AppRole {
+  return (
+    typeof role === 'string' &&
+    (APP_ROLES as readonly string[]).includes(role)
+  );
+}
+
 /**
  * `izinlerim()` yanıtı → arayüzün okuyacağı şekil.
  *
@@ -137,7 +144,7 @@ export function permissionsFromPayload(
   payload: Payload,
   error: string | null = null
 ): PermissionsState {
-  const roles = payload.roller;
+  const roles = payload.roller.filter(isAppRole);
   const izinSet = new Set<string>(payload.izinler);
   const isAdmin = roles.includes('admin');
   return {
@@ -146,7 +153,6 @@ export function permissionsFromPayload(
     tier: payload.statu,
     isAdmin,
     isModerator: roles.includes('moderator'),
-    isJury: roles.includes('jury'),
     canAccessAdmin: isAdmin || roles.includes('moderator'),
     membershipEndsAt: payload.uyelik_bitis,
     error,

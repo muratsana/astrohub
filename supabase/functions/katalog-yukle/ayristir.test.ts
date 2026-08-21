@@ -64,10 +64,22 @@ const ABELL_TSV = [
   '299.3825534\t-21.6102576\tA 66         \t019.8-23.7\t 19-23 1',
 ].join('\n');
 
+const GCVS_TSV = [
+  '#Column\tGCVS',
+  '_RAJ2000\t_DEJ2000\tGCVS\tVarType\tmagMax',
+  'deg\tdeg\t \t \tmag',
+  '-----------\t-----------\t----------\t----------\t------',
+  '309.5125000\t+35.9613889\tV398 Cyg  \tEA        \t 9.200',
+  '005.5964583\t+26.9960556\tT And     \tM         \t 7.700',
+].join('\n');
+
 const sinirlar = sinirlariAyristir(SINIR);
 const sh2Kaynak = VIZIER_KAYNAKLAR.find((k) => k.onek === 'Sh2')!;
 const abellKaynak = VIZIER_KAYNAKLAR.find(
   (k) => k.raporAnahtari === 'abell_pn'
+)!;
+const gcvsKaynak = VIZIER_KAYNAKLAR.find(
+  (k) => k.raporAnahtari === 'gcvs'
 )!;
 
 describe('slugUret', () => {
@@ -166,6 +178,17 @@ describe('vizierAyristir', () => {
 
   it('Abell kaynağını VizieR tarafında A adlarıyla sınırlar', () => {
     expect(vizierUrl(abellKaynak)).toContain('&Name=A*');
+  });
+
+  it('GCVS değişen yıldız adlarını metin katalog kodu olarak taşır', () => {
+    const sonuc = vizierAyristir(gcvsKaynak, GCVS_TSV, sinirlar);
+    expect(sonuc.map((n) => n.katalog)).toEqual(['V398 Cyg', 'T And']);
+    expect(sonuc[0]).toMatchObject({
+      slug: 'v398cyg',
+      tur: 'yildiz',
+      kadir: 9.2,
+      ad: 'V398 Cyg Yıldızı',
+    });
   });
 });
 

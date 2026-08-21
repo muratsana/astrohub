@@ -7,6 +7,7 @@ import { Field } from '@/components/ui/Field';
 import { Input, Select } from '@/components/ui/Input';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { FramingViews } from './FramingViews';
+import { RemoteImage } from '@/components/media/RemoteImage';
 import { Panel, SpecList, SpecRow } from '@/components/ui/Panel';
 import { Readout } from '@/components/ui/Readout';
 import { PageMeta } from '@/components/seo/PageMeta';
@@ -16,7 +17,10 @@ import { computeOptics } from '@/domain/astronomy/optics';
 import { parseAngularSizeArcmin } from '@/domain/astronomy/mosaic';
 import { TargetPicker } from '@/features/targets/TargetPicker';
 import { toolLink, useActiveTarget } from '@/features/targets/useActiveTarget';
+import type { CelestialTarget } from '@/features/targets/data';
 import { useActiveSetup } from '@/features/setups/ActiveSetupContext';
+import { usePhotoCatalog } from '@/services/content/photos';
+import type { AstroPhoto } from '@/features/photos/types';
 import type { TargetKind } from '@/domain/targets/derive';
 import { breadcrumbJsonLd } from '@/lib/seo';
 import { PresetSelect } from '@/features/calculators/PresetSelect';
@@ -69,8 +73,9 @@ export function SimulatorPage() {
    *
    * Şimdi seçim `?hedef=<slug>` ile geliyor (bkz. `useActiveTarget`) ve
    * arama sunucu tarafında (`TargetPicker`).
-   */
+  */
   const activeTarget = useActiveTarget();
+  const photoCatalog = usePhotoCatalog();
   const { setup: aktifEkipman } = useActiveSetup();
   const [targetKind, setTargetKind] = useState<TargetKind | 'hepsi'>('hepsi');
 
@@ -96,6 +101,10 @@ export function SimulatorPage() {
     const size = parseAngularSizeArcmin(t.angularSize);
     return size ? { target: t, size } : undefined;
   }, [activeTarget.target]);
+  const selectedPhoto = useMemo(
+    () => findPhotoForTarget(activeTarget.target, photoCatalog.items),
+    [activeTarget.target, photoCatalog.items]
+  );
   const valid =
     focalLength > 0 &&
     aperture > 0 &&
@@ -226,53 +235,17 @@ export function SimulatorPage() {
 
         <FramingViews />
 
-        <ActiveSetupBar className="mb-4" />
-
-        <div className="mb-4 flex flex-wrap gap-2">
-          {result && <Badge tone="cold">{result.pixelScale.toFixed(2)}″/px</Badge>}
-        </div>
-
-        <div className="grid gap-4 2xl:grid-cols-[330px_minmax(0,1fr)_380px]">
+        <div className="grid gap-4 xl:grid-cols-[360px_minmax(0,1fr)]">
           <aside className="space-y-4">
-            <Panel title="Setup ve hedef" status={`${presets.catalogSize} model`}>
-              <div className="space-y-4">
-                <PresetSelect
-                  label="Montür"
-                  options={presets.mount}
-                  value={mountSlug}
-                  onSelect={(p) => {
-                    setMountSlug(p?.slug ?? '');
-                  }}
-                />
-                <PresetSelect
-                  label="Hazır teleskop"
-                  options={presets.optic}
-                  value={opticSlug}
-                  onSelect={(p) => {
-                    setOpticSlug(p?.slug ?? '');
-                    if (!p) return;
-                    setFocalLength(p.focalLength);
-                    setAperture(p.aperture);
-                  }}
-                />
-                <PresetSelect
-                  label="Hazır kamera"
-                  options={presets.camera}
-                  value={cameraSlug}
-                  onSelect={(p) => {
-                    setCameraSlug(p?.slug ?? '');
-                    if (!p) return;
-                    setPixelSize(p.pixelSize);
-                    setSensorWidth(p.sensorWidth);
-                    setSensorHeight(p.sensorHeight);
-                  }}
-                />
+            <Panel title="Obje seçici">
+              <div className="space-y-3">
                 <TargetPicker
                   value={activeTarget.slug ?? ''}
                   onChange={(target) => activeTarget.setSlug(target?.slug ?? null)}
                   kind={targetKind}
                   onKindChange={setTargetKind}
                   selectClassName="h-10 text-body-sm"
+                  showDetails={false}
                 />
 
                 {/* Hedef seçili ama boyutu yoksa kadraj çizilemiyor;
@@ -283,44 +256,93 @@ export function SimulatorPage() {
                     kayıtlı değil; kadraj önizlemesi çizilemiyor.
                   </p>
                 )}
-                <Field label="Reducer / Barlow" htmlFor="sim-reducer">
-                  <Select
-                    id="sim-reducer"
-                    value={reducer}
-                    onChange={(event) => setReducer(Number(event.target.value))}
-                  >
-                    {presets.reducer.map((entry) => (
-                      <option key={entry.label} value={entry.factor}>
-                        {entry.label}
-                      </option>
-                    ))}
-                  </Select>
-                </Field>
+              </div>
+            </Panel>
+
+            <Panel title="Hazır ekipman">
+              <div className="space-y-3">
+                <ActiveSetupBar className="border-y-0 py-0" />
                 <PresetSelect
-                  label="Guide seti"
-                  options={presets.guide}
-                  value={guideSlug}
+                  label="Montür"
+                  options={presets.mount}
+                  value={mountSlug}
                   onSelect={(p) => {
-                    setGuideSlug(p?.slug ?? '');
-                    if (!p) return;
-                    setGuideFocalLength(p.focalLength < 0 ? focalLength * reducer : p.focalLength);
-                    setGuidePixelSize(p.pixelSize);
+                    setMountSlug(p?.slug ?? '');
                   }}
-                  placeholder="Guide yok veya elle gir…"
                 />
               </div>
             </Panel>
 
-            <Panel title="Optik değerler">
-              <div className="grid grid-cols-2 gap-3">
-                <NumberField id="sim-focal" label="Odak" value={focalLength} unit="mm" onChange={setFocalLength} />
-                <NumberField id="sim-aperture" label="Açıklık" value={aperture} unit="mm" onChange={setAperture} />
-                <NumberField id="sim-pixel" label="Piksel" value={pixelSize} unit="µm" step={0.01} onChange={setPixelSize} />
-                <NumberField id="seeing" label="Seeing" value={seeingArcsec} unit="″" step={0.1} onChange={setSeeingArcsec} />
-                <NumberField id="sim-sensor-w" label="Sensör G" value={sensorWidth} unit="mm" step={0.1} onChange={setSensorWidth} />
-                <NumberField id="sim-sensor-h" label="Sensör Y" value={sensorHeight} unit="mm" step={0.1} onChange={setSensorHeight} />
-                <NumberField id="guide-focal" label="Guide odak" value={guideFocalLength} unit="mm" onChange={setGuideFocalLength} />
-                <NumberField id="guide-pixel" label="Guide piksel" value={guidePixelSize} unit="µm" step={0.01} onChange={setGuidePixelSize} />
+            <Panel title="Manuel giriş">
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <NumberField id="sim-focal" label="Odak" value={focalLength} unit="mm" onChange={setFocalLength} />
+                  <NumberField id="sim-aperture" label="Açıklık" value={aperture} unit="mm" onChange={setAperture} />
+                  <NumberField id="sim-pixel" label="Piksel" value={pixelSize} unit="µm" step={0.01} onChange={setPixelSize} />
+                  <NumberField id="seeing" label="Seeing" value={seeingArcsec} unit="″" step={0.1} onChange={setSeeingArcsec} />
+                  <NumberField id="sim-sensor-w" label="Sensör G" value={sensorWidth} unit="mm" step={0.1} onChange={setSensorWidth} />
+                  <NumberField id="sim-sensor-h" label="Sensör Y" value={sensorHeight} unit="mm" step={0.1} onChange={setSensorHeight} />
+                  <NumberField id="guide-focal" label="Guide odak" value={guideFocalLength} unit="mm" onChange={setGuideFocalLength} />
+                  <NumberField id="guide-pixel" label="Guide piksel" value={guidePixelSize} unit="µm" step={0.01} onChange={setGuidePixelSize} />
+                </div>
+                <details className="group border border-border bg-surface-2/50">
+                  <summary className="flex cursor-pointer items-center justify-between gap-3 px-3 py-2 text-body-sm font-medium text-foreground">
+                    Katalogdan değer doldur
+                    <span className="text-meta text-muted-foreground group-open:hidden">
+                      teleskop, kamera, reducer, guide
+                    </span>
+                  </summary>
+                  <div className="space-y-3 border-t border-border px-3 py-3">
+                    <PresetSelect
+                      label="Hazır teleskop"
+                      options={presets.optic}
+                      value={opticSlug}
+                      onSelect={(p) => {
+                        setOpticSlug(p?.slug ?? '');
+                        if (!p) return;
+                        setFocalLength(p.focalLength);
+                        setAperture(p.aperture);
+                      }}
+                    />
+                    <PresetSelect
+                      label="Hazır kamera"
+                      options={presets.camera}
+                      value={cameraSlug}
+                      onSelect={(p) => {
+                        setCameraSlug(p?.slug ?? '');
+                        if (!p) return;
+                        setPixelSize(p.pixelSize);
+                        setSensorWidth(p.sensorWidth);
+                        setSensorHeight(p.sensorHeight);
+                      }}
+                    />
+                    <Field label="Reducer / Barlow" htmlFor="sim-reducer">
+                      <Select
+                        id="sim-reducer"
+                        value={reducer}
+                        onChange={(event) => setReducer(Number(event.target.value))}
+                      >
+                        {presets.reducer.map((entry) => (
+                          <option key={entry.label} value={entry.factor}>
+                            {entry.label}
+                          </option>
+                        ))}
+                      </Select>
+                    </Field>
+                    <PresetSelect
+                      label="Guide seti"
+                      options={presets.guide}
+                      value={guideSlug}
+                      onSelect={(p) => {
+                        setGuideSlug(p?.slug ?? '');
+                        if (!p) return;
+                        setGuideFocalLength(p.focalLength < 0 ? focalLength * reducer : p.focalLength);
+                        setGuidePixelSize(p.pixelSize);
+                      }}
+                      placeholder="Guide yok veya elle gir…"
+                    />
+                  </div>
+                </details>
               </div>
             </Panel>
 
@@ -348,8 +370,26 @@ export function SimulatorPage() {
               bodyClassName="p-0"
             >
               <div className="relative min-h-[540px] overflow-hidden bg-[radial-gradient(circle_at_46%_38%,rgba(103,201,255,0.32),transparent_11%),radial-gradient(circle_at_54%_46%,rgba(188,167,255,0.22),transparent_14%),radial-gradient(circle_at_33%_63%,rgba(255,159,36,0.13),transparent_17%),#071015]">
-                <div className="absolute inset-0 opacity-55 [background-image:radial-gradient(circle,rgba(255,255,255,0.75)_1px,transparent_1.2px)] [background-size:39px_39px]" />
-                <div className="absolute inset-0 opacity-30 [background-image:radial-gradient(circle,rgba(255,255,255,0.8)_1px,transparent_1.2px)] [background-size:71px_71px] [transform:rotate(9deg)_scale(1.2)]" />
+                {selectedPhoto?.image ? (
+                  <div className="absolute inset-0 bg-black">
+                    <RemoteImage
+                      src={selectedPhoto.image.url}
+                      alt={`${selectedPhoto.title} — ${selectedPhoto.target.catalog}`}
+                      seed={selectedPhoto.slug}
+                      tint={selectedPhoto.gradient}
+                      sizes="(min-width: 1536px) 52vw, 100vw"
+                      widths={[960, 1440, 2048]}
+                      priority
+                      className="object-contain"
+                    />
+                    <div className="absolute inset-0 bg-background/10" />
+                  </div>
+                ) : (
+                  <>
+                    <div className="absolute inset-0 opacity-55 [background-image:radial-gradient(circle,rgba(255,255,255,0.75)_1px,transparent_1.2px)] [background-size:39px_39px]" />
+                    <div className="absolute inset-0 opacity-30 [background-image:radial-gradient(circle,rgba(255,255,255,0.8)_1px,transparent_1.2px)] [background-size:71px_71px] [transform:rotate(9deg)_scale(1.2)]" />
+                  </>
+                )}
                 <div className="absolute left-4 top-4 flex flex-wrap gap-2">
                   <Badge tone={targetFits ? 'success' : 'warning'}>
                     {targetFits ? 'hedef kadrajda' : 'hedef taşabilir'}
@@ -365,18 +405,6 @@ export function SimulatorPage() {
                 )}
                 <div className="absolute inset-x-[18%] inset-y-[18%] rotate-[-7deg] border-2 border-primary/90 bg-primary/5" />
                 <div className="absolute inset-x-[31%] inset-y-[31%] rotate-[-7deg] border border-dashed border-cold/80" />
-                <div className="absolute right-4 top-4 w-72 max-w-[calc(100%-2rem)] border border-border bg-background/85 p-3 backdrop-blur">
-                  <p className="label text-muted-foreground">Anlık kadraj</p>
-                  <div className="mt-3 grid grid-cols-3 gap-2">
-                    <MiniMetric label="FoV" value={result ? `${result.fov.widthDeg.toFixed(2)}°` : '—'} />
-                    <MiniMetric label="Scale" value={result ? `${result.pixelScale.toFixed(2)}″` : '—'} />
-                    <MiniMetric label="Rotasyon" value="18°" />
-                  </div>
-                  <div className="mt-3 space-y-2">
-                    <InlineCheck label="Hedef / FoV" ok={targetFits} value={targetFits ? 'uygun' : 'dar'} />
-                    <InlineCheck label="Sampling" ok={result?.sampling.category === 'optimal'} value={result?.sampling.label ?? '—'} />
-                  </div>
-                </div>
                 <div className="absolute bottom-4 left-4 right-4 flex flex-wrap items-end justify-between gap-3 border border-border bg-background/85 p-3 backdrop-blur">
                   <div>
                     <p className="label text-primary">Seçili hedef</p>
@@ -395,9 +423,7 @@ export function SimulatorPage() {
                   <ButtonLink
                     to={
                       selected
-                        ? `/araclar/gokyuzu-katalogu?q=${encodeURIComponent(
-                            selected.target.catalog
-                          )}`
+                        ? `/hedef/${selected.target.slug}`
                         : '/araclar/gokyuzu-katalogu'
                     }
                     size="sm"
@@ -442,45 +468,61 @@ export function SimulatorPage() {
                 </div>
               </Panel>
             </div>
-          </main>
 
-          <aside className="space-y-4">
-
-            <Panel title="Arşive ekle">
-              <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-3">
-                  <NumberField id="planned-hours" label="Plan" value={plannedHours} unit="sa" step={0.5} onChange={setPlannedHours} />
-                  <NumberField id="completed-hours" label="Tamam" value={completedHours} unit="sa" step={0.5} onChange={setCompletedHours} />
+            <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
+              <Panel title="Arşive ekle">
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <NumberField id="planned-hours" label="Plan" value={plannedHours} unit="sa" step={0.5} onChange={setPlannedHours} />
+                    <NumberField id="completed-hours" label="Tamam" value={completedHours} unit="sa" step={0.5} onChange={setCompletedHours} />
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Button type="button" className="flex-1" onClick={savePlan}>
+                      Hedefi arşivime ekle
+                    </Button>
+                    <ButtonLink to="/arsivim" className="flex-1" variant="secondary">
+                      Arşivimi aç
+                    </ButtonLink>
+                  </div>
                 </div>
-                <Button type="button" className="w-full" onClick={savePlan}>
-                  Hedefi arşivime ekle
-                </Button>
-                <ButtonLink to="/arsivim" className="w-full" variant="secondary">
-                  Arşivimi aç
-                </ButtonLink>
-              </div>
-            </Panel>
+              </Panel>
 
-            <Panel title="Son arşiv kayıtları">
-              <ul className="space-y-2">
-                {plans.slice(0, 3).map((plan) => (
-                  <li key={plan.id} className="border border-border bg-surface-2 p-3">
-                    <Link to="/arsivim" className="font-medium text-foreground hover:text-primary">
-                      {plan.targetCatalog} · {plan.targetName}
-                    </Link>
-                    <ProgressBar value={(plan.completedHours / Math.max(1, plan.plannedHours)) * 100} className="mt-2" />
-                  </li>
-                ))}
-                {plans.length === 0 && (
-                  <li className="text-meta text-muted-foreground">Henüz kayıt yok.</li>
-                )}
-              </ul>
-            </Panel>
-          </aside>
+              <Panel title="Son arşiv kayıtları">
+                <ul className="space-y-2">
+                  {plans.slice(0, 3).map((plan) => (
+                    <li key={plan.id} className="border border-border bg-surface-2 p-3">
+                      <Link to="/arsivim" className="font-medium text-foreground hover:text-primary">
+                        {plan.targetCatalog} · {plan.targetName}
+                      </Link>
+                      <ProgressBar value={(plan.completedHours / Math.max(1, plan.plannedHours)) * 100} className="mt-2" />
+                    </li>
+                  ))}
+                  {plans.length === 0 && (
+                    <li className="text-meta text-muted-foreground">Henüz kayıt yok.</li>
+                  )}
+                </ul>
+              </Panel>
+            </div>
+          </main>
         </div>
       </Container>
     </>
   );
+}
+
+function normalizeCatalogCode(code: string): string {
+  return code.trim().toLocaleLowerCase('tr-TR').replace(/[\s-]+/g, '');
+}
+
+function findPhotoForTarget(
+  target: CelestialTarget | undefined,
+  photos: readonly AstroPhoto[]
+): AstroPhoto | undefined {
+  if (!target) return undefined;
+  const targetCodes = new Set(
+    [target.catalog, ...target.aliases].map(normalizeCatalogCode)
+  );
+  return photos.find((photo) => targetCodes.has(normalizeCatalogCode(photo.target.catalog)));
 }
 
 function NumberField({
@@ -523,25 +565,6 @@ function MiniMetric({ label, value }: { label: string; value: string }) {
     <div className="border border-border bg-surface-1 p-2">
       <p className="label">{label}</p>
       <p className="tabular mt-1 text-body-sm font-medium text-foreground">{value}</p>
-    </div>
-  );
-}
-
-function InlineCheck({
-  label,
-  ok,
-  value,
-}: {
-  label: string;
-  ok: boolean;
-  value: string;
-}) {
-  return (
-    <div className="flex items-center justify-between gap-3 text-meta">
-      <span className="text-muted-foreground">
-        <span className={ok ? 'text-success' : 'text-warning'}>●</span> {label}
-      </span>
-      <span className={ok ? 'text-success' : 'text-warning'}>{value}</span>
     </div>
   );
 }

@@ -132,6 +132,13 @@ interface PhotoRow {
     iso_week: number;
     status: string;
   }> | null;
+  photo_of_week_nominees?: Array<{
+    photo_of_week_rounds: {
+      iso_year: number;
+      iso_week: number;
+      status: string;
+    } | null;
+  }> | null;
 }
 
 const PHOTO_TYPES: PhotoType[] = [
@@ -401,6 +408,14 @@ export function mapPhotoRow(row: PhotoRow): AstroPhoto {
         (round) =>
           `${round.iso_year}-${String(round.iso_week).padStart(2, '0')}`
       ),
+    photoOfWeekCandidates: (row.photo_of_week_nominees ?? [])
+      .map((nominee) => nominee.photo_of_week_rounds)
+      .filter((round): round is { iso_year: number; iso_week: number; status: string } =>
+        round !== null && round.status === 'oylama'
+      )
+      .map((round) =>
+        `${round.iso_year}-${String(round.iso_week).padStart(2, '0')}`
+      ),
     year: capturedAt ? new Date(capturedAt).getFullYear() : 0,
     /* Gerçek kolon varsa O kullanılıyor; yoksa eski etiketten tahmin.
        Sıra önemli: tahmin bir yedek, ana yol değil. */
@@ -432,6 +447,7 @@ const SELECT =
   'celestial_objects(name, catalog, constellation), ' +
   'photo_exposures(filter, frames, exposure_seconds, position, session_id), ' +
   'photo_capture_sessions(id, starts_on, ends_on, position), ' +
+  'photo_of_week_nominees!photo_of_week_nominees_photo_id_fkey(photo_of_week_rounds!photo_of_week_nominees_round_id_fkey(iso_year, iso_week, status)), ' +
   'photo_of_week_rounds!photo_of_week_rounds_winner_photo_id_fkey(iso_year, iso_week, status), ' +
   'photo_versions(id, label, kind, note, palette, published_at, position, storage_path)';
 
@@ -470,6 +486,7 @@ export function isPhotoPubliclyVisible(status: PhotoStatus): boolean {
 const YENI_ALANLAR = [
   'thumb_crop, ',
   'photo_capture_sessions(id, starts_on, ends_on, position), ',
+  'photo_of_week_nominees!photo_of_week_nominees_photo_id_fkey(photo_of_week_rounds!photo_of_week_nominees_round_id_fkey(iso_year, iso_week, status)), ',
 ];
 
 const CORE_SELECT = YENI_ALANLAR.reduce(

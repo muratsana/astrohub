@@ -77,7 +77,6 @@ export function HeroSection() {
     if (enabled || !weeklyPick) return baseSlides;
     const { photo, weekLabel } = weeklyPick;
     return [
-      ...baseSlides,
       {
         id: `haftanin-fotografi-${photo.slug}`,
         badge: 'Haftanın Fotoğrafı',
@@ -93,6 +92,7 @@ export function HeroSection() {
         focalY: 50,
         textAlign: 'left',
       },
+      ...baseSlides,
     ];
   }, [baseSlides, enabled, weeklyPick]);
   const [index, setIndex] = useState(0);

@@ -36,8 +36,6 @@ import {
   type ListingStatus,
 } from '@/features/marketplace/data';
 import { photoStatusLabels, type PhotoStatus } from '@/features/photos/types';
-import { useJuryBallot } from '@/services/content/photoOfWeek';
-import { JuryPanel } from './JuryPanel';
 
 /** Durum rengi: yayındaki yeşil, biten sönük, taslak uyarı sarısı. */
 function listingStatusTone(status: ListingStatus): BadgeTone {
@@ -200,7 +198,6 @@ export function PanelPage() {
    * kullanıcının bakmadığı bir liste için istek harcamak olurdu.
    */
   const saved = useSavedPhotos();
-  const jury = useJuryBallot(user?.id);
 
   /*
    * SİLME İKİ ADIM — açık olan satırın kimliği `silinecek`te.
@@ -306,15 +303,6 @@ export function PanelPage() {
     { label: 'Kayıtlı Noktalar', to: '/saha' },
     { label: 'İlanlarım', to: '/panel/ilanlar' },
     { label: 'Gönderilerim', to: '/panel/gonderilerim' },
-    ...(permissions.isJury || jury.active || section === 'juri'
-      ? [
-          {
-            label: 'Jüri Oylaması',
-            to: '/panel/juri',
-            note: jury.round ? 'açık tur var' : undefined,
-          },
-        ]
-      : []),
     /*
      * "ÜYELİK VE ÖDEME" KALDIRILDI, GİZLENMEDİ.
      *
@@ -441,12 +429,6 @@ export function PanelPage() {
             fotoğraf kaç sürüme sahip olursa olsun tek hak tüketir (§4.2).
           </p>
         </Panel>
-
-        {section === 'juri' && user && (
-          <div className="mb-4">
-            <JuryPanel userId={user.id} />
-          </div>
-        )}
 
         {section === 'fotograflar' && (
           <Panel

@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
+import { Alert } from '@/components/ui/Alert';
+import { useAuth } from '@/features/auth/AuthContext';
 import { EquipmentGlyph } from '../EquipmentGlyph';
 import {
   equipmentCategoryLabels,
@@ -11,6 +13,10 @@ import {
 } from '../data';
 import { headlineSpec } from './headline';
 import { cn } from '@/lib/cn';
+import {
+  contributeEquipment,
+  validateContribution,
+} from '@/services/content/equipmentContribute';
 
 /**
  * KATEGORİ → MARKA → MODEL SEÇİCİ.
@@ -46,6 +52,12 @@ export function ModelPicker({ categories, catalog, value, onChange, label }: Pro
   const [category, setCategory] = useState<EquipmentCategory | ''>('');
   const [brand, setBrand] = useState('');
   const [query, setQuery] = useState('');
+  const [adding, setAdding] = useState(false);
+  const [newBrand, setNewBrand] = useState('');
+  const [newModel, setNewModel] = useState('');
+  const [contributionError, setContributionError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const auth = useAuth();
   const panelId = useRef(
     `picker-${Math.random().toString(36).slice(2, 7)}`
   ).current;
@@ -88,6 +100,57 @@ export function ModelPicker({ categories, catalog, value, onChange, label }: Pro
     onChange(model);
     setOpen(false);
     setQuery('');
+    setAdding(false);
+    setContributionError(null);
+  }
+
+  async function submitContribution() {
+    const selectedCategory =
+      category || (available[0] as EquipmentCategory | undefined);
+    if (!auth.user) {
+      setContributionError('Ekipman modeli eklemek için giriş yapmalısınız.');
+      return;
+    }
+    if (!selectedCategory) {
+      setContributionError('Önce ekipman türünü seçin.');
+      return;
+    }
+
+    const payload = {
+      brand: newBrand || brand,
+      model: newModel || query,
+      category: selectedCategory,
+    };
+    const problem = validateContribution(payload);
+    if (problem) {
+      setContributionError(problem);
+      return;
+    }
+
+    setSubmitting(true);
+    setContributionError(null);
+    try {
+      const created = await contributeEquipment({
+        ...payload,
+        userId: auth.user.id,
+      });
+      pick({
+        slug: created.slug,
+        brand: created.brand,
+        model: created.model,
+        category: created.category,
+        specs: {},
+        confidence: 'inceleme-gerekli',
+      });
+      setNewBrand('');
+      setNewModel('');
+    } catch (error) {
+      setContributionError(
+        error instanceof Error ? error.message : 'Ekipman modeli eklenemedi.'
+      );
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   if (value && !open) {
@@ -195,11 +258,24 @@ export function ModelPicker({ categories, catalog, value, onChange, label }: Pro
       />
 
       {shown.length === 0 ? (
-        <p className="px-1 py-3 text-body-sm leading-relaxed text-muted-foreground">
-          Eşleşme yok. Aramayı kısaltın ya da başka bir marka seçin.
-          Katalogda olmayan bir ürünü “Ekipmanlarım” bölümünden
-          ekleyebilirsiniz.
-        </p>
+        <div className="px-1 py-3">
+          <p className="text-body-sm leading-relaxed text-muted-foreground">
+            Eşleşme yok. Katalogda olmayan modeli inceleme bekleyen kayıt
+            olarak ekleyip bu kurulumda kullanabilirsiniz.
+          </p>
+          <Button
+            size="sm"
+            variant="secondary"
+            className="mt-2"
+            onClick={() => {
+              setAdding(true);
+              setNewBrand(brand);
+              setNewModel(query);
+            }}
+          >
+            + Model ekle
+          </Button>
+        </div>
       ) : (
         <ul className="max-h-72 overflow-auto rounded-card border border-border bg-surface-1">
           {shown.map((m) => (
@@ -233,15 +309,73 @@ export function ModelPicker({ categories, catalog, value, onChange, label }: Pro
         </ul>
       )}
 
+      {adding && (
+        <div className="mt-2 rounded-card border border-border bg-surface-1 p-2.5">
+          <div className="grid gap-2 sm:grid-cols-2">
+            <label className="block">
+              <span className="label mb-1 block">Marka</span>
+              <Input
+                value={newBrand}
+                onChange={(e) => setNewBrand(e.target.value)}
+                placeholder="Sky-Watcher, ZWO, iOptron"
+                className="h-9 text-caption"
+              />
+            </label>
+            <label className="block">
+              <span className="label mb-1 block">Model</span>
+              <Input
+                value={newModel}
+                onChange={(e) => setNewModel(e.target.value)}
+                placeholder={label}
+                className="h-9 text-caption"
+              />
+            </label>
+          </div>
+          {contributionError && (
+            <Alert variant="text" className="mt-2">
+              {contributionError}
+            </Alert>
+          )}
+          <div className="mt-3 flex flex-wrap items-center justify-end gap-2">
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                setAdding(false);
+                setContributionError(null);
+              }}
+            >
+              Vazgeç
+            </Button>
+            <Button size="sm" onClick={submitContribution} disabled={submitting}>
+              {submitting ? 'Ekleniyor…' : 'Ekle ve seç'}
+            </Button>
+          </div>
+        </div>
+      )}
+
       <div className="mt-2 flex items-center justify-between gap-2">
         <span className="tabular text-meta text-faint">
           {results.length > shown.length
             ? `${results.length} eşleşmenin ilk ${shown.length} tanesi`
             : `${results.length} eşleşme`}
         </span>
-        <Button size="sm" variant="ghost" onClick={() => setOpen(false)}>
-          Vazgeç
-        </Button>
+        <span className="flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              setAdding(true);
+              setNewBrand(brand);
+              setNewModel(query);
+            }}
+          >
+            Listede yoksa ekle
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => setOpen(false)}>
+            Vazgeç
+          </Button>
+        </span>
       </div>
     </div>
   );
