@@ -63,6 +63,8 @@ export interface ForumPost {
   createdAt: string;
   /** Düz metin. Zengin metin geldiğinde sanitize edilerek işlenecek. */
   body: string;
+  /** Forum mesajına eklenen tek optimize görsel. */
+  image?: ForumImage;
   /** Konuyu açanın "çözüm" olarak işaretlediği yanıt. */
   solution?: boolean;
   /**
@@ -94,6 +96,8 @@ export interface ForumThread {
   solved?: boolean;
   /** Açılış mesajı. */
   body: string;
+  /** Açılış mesajına eklenen tek optimize görsel. */
+  image?: ForumImage;
   replies: ForumPost[];
   /** Sabit setten seçilen rozetler. */
   labels?: ForumLabelId[];
@@ -105,6 +109,12 @@ export interface ForumThread {
    * metin.
    */
   removalReason?: string;
+}
+
+export interface ForumImage {
+  url: string;
+  width: number | null;
+  height: number | null;
 }
 
 export const forumCategories: Record<ForumCategoryId, ForumCategory> = {

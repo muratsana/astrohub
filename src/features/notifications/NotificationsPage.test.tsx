@@ -1,5 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, within, fireEvent, waitFor } from '@testing-library/react';
+import {
+  render,
+  screen,
+  within,
+  fireEvent,
+  waitFor,
+} from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { NotificationsPage } from './NotificationsPage';
 import {
@@ -112,6 +118,15 @@ describe('bildirim listesi', () => {
     expect(link.getAttribute('href')).toBe('/profil/ali');
   });
 
+  it('bağlantılı bildirime tıklayınca okundu işaretler', async () => {
+    items = [notification({ id: 'gidilecek', url: '/profil/ali' })];
+    renderPage();
+    fireEvent.click(
+      screen.getByRole('link', { name: /Ali seni takip etmeye başladı/ })
+    );
+    await waitFor(() => expect(markRead).toHaveBeenCalledWith('gidilecek'));
+  });
+
   /*
    * ASIL KORUNAN DAVRANIŞ. Kaynağı silinmiş bildirimin `url`i boş geliyor;
    * satırı yine de tıklanabilir çizmek kullanıcıyı "bulunamadı" sayfasına
@@ -141,7 +156,9 @@ describe('bildirim listesi', () => {
     const yeni = rows.find((r) => r.textContent?.includes('takip etmeye'))!;
     const eski = rows.find((r) => r.textContent?.includes('Eski bildirim'))!;
 
-    expect(within(yeni).getByRole('button', { name: 'Okundu' })).toBeInTheDocument();
+    expect(
+      within(yeni).getByRole('button', { name: 'Okundu' })
+    ).toBeInTheDocument();
     expect(within(eski).queryByRole('button', { name: 'Okundu' })).toBeNull();
   });
 

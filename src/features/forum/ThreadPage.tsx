@@ -27,6 +27,7 @@ import { ReportButton } from '@/features/admin/ReportButton';
 import { RemovedNotice } from '@/features/admin/RemovedNotice';
 import { profileAvatarUrl } from '@/services/content/profile';
 import { ProfileInlineLink } from '@/components/user/ProfileInlineLink';
+import { ForumImagePicker } from './ForumImagePicker';
 
 /** Konu detayı: açılış mesajı + yanıtlar + yanıt kutusu. */
 export function ThreadPage() {
@@ -64,6 +65,7 @@ export function ThreadPage() {
     author: thread.author,
     createdAt: thread.createdAt,
     body: thread.body,
+    image: thread.image,
     /* Açılış mesajının kaldırma gerekçesi KONUNUN üzerinde duruyor
        (`forum_threads.removal_reason`) — açılış mesajının ayrı bir
        `forum_posts` satırı yok. */
@@ -307,14 +309,33 @@ function PostCard({
           `dangerouslySetInnerHTML` bilerek kullanılmıyor — zengin metin
           eklendiğinde önce sanitize katmanı gelecek (bkz. lib/sanitize.ts).
         */
-        <p
-          className={cn(
-            'whitespace-pre-line px-3 py-3 text-caption leading-[1.7]',
-            opening ? 'text-foreground' : 'text-muted-foreground'
+        <div className="space-y-3 px-3 py-3">
+          <p
+            className={cn(
+              'whitespace-pre-line text-caption leading-[1.7]',
+              opening ? 'text-foreground' : 'text-muted-foreground'
+            )}
+          >
+            {post.body}
+          </p>
+          {post.image && (
+            <a
+              href={post.image.url}
+              target="_blank"
+              rel="noreferrer"
+              className="block overflow-hidden rounded-card border border-border bg-black/25"
+            >
+              <img
+                src={post.image.url}
+                alt="Forum mesajına eklenen fotoğraf"
+                width={post.image.width ?? undefined}
+                height={post.image.height ?? undefined}
+                loading="lazy"
+                className="max-h-[520px] w-full object-contain"
+              />
+            </a>
           )}
-        >
-          {post.body}
-        </p>
+        </div>
       )}
     </article>
   );
@@ -382,6 +403,7 @@ function ReplyBox({
 }) {
   const { user } = useAuth();
   const [body, setBody] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -390,8 +412,14 @@ function ReplyBox({
     setBusy(true);
     setError(null);
     try {
-      await createReply({ threadId: thread.id, body, authorId: user.id });
+      await createReply({
+        threadId: thread.id,
+        body,
+        authorId: user.id,
+        imageFile,
+      });
       setBody('');
+      setImageFile(null);
       onSent();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Yanıt gönderilemedi');
@@ -410,6 +438,16 @@ function ReplyBox({
         aria-label="Yanıt metni"
         className="w-full resize-y rounded-card border border-border bg-surface-2 px-3 py-2 text-meta leading-relaxed text-foreground outline-none placeholder:text-faint focus:border-primary"
       />
+
+      <div className="mt-2.5">
+        <ForumImagePicker
+          id="reply-image"
+          file={imageFile}
+          onChange={setImageFile}
+          disabled={busy}
+          compact
+        />
+      </div>
 
       {error && (
         <Alert variant="text" className="mt-2">

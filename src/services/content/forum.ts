@@ -2,12 +2,18 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { useQuery } from '@tanstack/react-query';
 import { getSupabase } from '@/services/supabase/client';
 import { slugify } from '@/lib/slug';
+import {
+  encodeWithinBudget,
+  type EncodeAttempt,
+} from '@/domain/photography/resize';
+import { checkImageFormat, readHead } from '@/domain/photography/fileType';
 import { forumThreads as forumSeed } from '@/features/forum/data';
 import {
   forumCategoryOrder,
   forumLabelOrder,
   forumLabelLimit,
   type ForumCategoryId,
+  type ForumImage,
   type ForumLabelId,
   type ForumPost,
   type ForumThread,
@@ -44,6 +50,9 @@ interface PostRow {
   body: string;
   created_at: string;
   removal_reason: string | null;
+  image_path?: string | null;
+  image_width?: number | null;
+  image_height?: number | null;
   profiles: AuthorRow | null;
 }
 
@@ -62,9 +71,24 @@ interface ThreadRow {
   solution_post_id: string | null;
   labels: string[] | null;
   removal_reason: string | null;
+  image_path: string | null;
+  image_width: number | null;
+  image_height: number | null;
   profiles: AuthorRow | null;
   forum_posts: PostRow[] | null;
 }
+
+export const FORUM_IMAGE_BUDGET_BYTES = 5 * 1024 * 1024;
+export const FORUM_IMAGE_BUDGET_LABEL = '5 MB';
+export const FORUM_IMAGE_ACCEPT = 'image/jpeg,image/png,image/webp';
+
+const FORUM_IMAGE_LADDER = [
+  { maxEdge: 1600, quality: 0.82 },
+  { maxEdge: 1600, quality: 0.74 },
+  { maxEdge: 1400, quality: 0.72 },
+  { maxEdge: 1200, quality: 0.68 },
+  { maxEdge: 1000, quality: 0.64 },
+] as const satisfies readonly EncodeAttempt[];
 
 /**
  * Tanınmayan rozet kimliklerini eler.
@@ -89,6 +113,27 @@ function author(row: AuthorRow | null) {
   };
 }
 
+export function forumImageUrl(path: string | null | undefined): string | null {
+  if (!path) return null;
+  const base = import.meta.env.VITE_SUPABASE_URL?.trim();
+  if (!base) return null;
+  return `${base.replace(/\/+$/, '')}/storage/v1/object/public/forum-images/${path}`;
+}
+
+function image(row: {
+  image_path?: string | null;
+  image_width?: number | null;
+  image_height?: number | null;
+}): ForumImage | undefined {
+  const url = forumImageUrl(row.image_path);
+  if (!url) return undefined;
+  return {
+    url,
+    width: row.image_width ?? null,
+    height: row.image_height ?? null,
+  };
+}
+
 /**
  * Kaldırma gerekçesi — boş metin `undefined`a düşürülüyor.
  *
@@ -108,6 +153,7 @@ function mapPost(row: PostRow, solutionId: string | null): ForumPost {
     author: author(row.profiles),
     createdAt: row.created_at,
     body: row.body,
+    image: image(row),
     solution: solutionId !== null && row.id === solutionId ? true : undefined,
     removalReason: removalReason(row.removal_reason),
   };
@@ -137,6 +183,7 @@ export function mapThreadRow(row: ThreadRow): ForumThread {
     locked: row.locked || undefined,
     solved: row.solution_post_id !== null || undefined,
     body: row.body,
+    image: image(row),
     replies,
     labels: labels(row.labels),
     removalReason: removalReason(row.removal_reason),
@@ -151,9 +198,9 @@ export function mapThreadRow(row: ThreadRow): ForumThread {
 const SELECT =
   'id, slug, title, body, category_id, created_at, last_activity_at, ' +
   'reply_count, view_count, pinned, locked, solution_post_id, labels, ' +
-  'removal_reason, ' +
+  'removal_reason, image_path, image_width, image_height, ' +
   'profiles!forum_threads_author_id_profiles_fkey(username, display_name, avatar_path), ' +
-  'forum_posts(id, body, created_at, removal_reason, ' +
+  'forum_posts(id, body, created_at, removal_reason, image_path, image_width, image_height, ' +
   'profiles!forum_posts_author_id_profiles_fkey(username, display_name, avatar_path))';
 
 async function fetchThreads(client: SupabaseClient): Promise<ForumThread[]> {
@@ -239,6 +286,72 @@ export interface NewThreadInput {
   category: ForumCategoryId;
   labels?: ForumLabelId[];
   authorId: string;
+  imageFile?: File | null;
+}
+
+interface PreparedForumImage {
+  path: string;
+  blob: Blob;
+  width: number;
+  height: number;
+}
+
+function randomUuid(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  throw new Error('Tarayıcı bu işlem için gereken güvenli kimlik üretimini desteklemiyor.');
+}
+
+async function prepareForumImage(
+  file: File | null | undefined,
+  userId: string,
+  recordId: string,
+  kind: 'thread' | 'post'
+): Promise<PreparedForumImage | null> {
+  if (!file) return null;
+
+  const format = checkImageFormat(await readHead(file), file.type);
+  if (format.kind === 'reject') throw new Error(format.reason);
+
+  const resized = await encodeWithinBudget(
+    file,
+    FORUM_IMAGE_BUDGET_BYTES,
+    FORUM_IMAGE_LADDER
+  );
+  if (!resized) {
+    throw new Error(
+      format.kind === 'risky'
+        ? format.reason
+        : 'Görsel bu tarayıcıda işlenemedi. JPEG, PNG veya WebP deneyin.'
+    );
+  }
+  if (!resized.withinBudget) {
+    throw new Error(
+      `Fotoğraf ${FORUM_IMAGE_BUDGET_LABEL} sınırına sığacak şekilde optimize edilemedi. Daha düşük çözünürlüklü bir dosya deneyin.`
+    );
+  }
+
+  return {
+    path: `${userId}/${recordId}/${kind}.jpg`,
+    blob: resized.blob,
+    width: resized.size.width,
+    height: resized.size.height,
+  };
+}
+
+async function uploadPreparedForumImage(
+  supabase: SupabaseClient,
+  prepared: PreparedForumImage | null
+): Promise<void> {
+  if (!prepared) return;
+  const { error } = await supabase.storage
+    .from('forum-images')
+    .upload(prepared.path, prepared.blob, {
+      contentType: 'image/jpeg',
+      upsert: false,
+    });
+  if (error) throw new Error(error.message);
 }
 
 /** Konu açar ve oluşan slug'ı döndürür — çağıran oraya yönlendirir. */
@@ -256,6 +369,7 @@ export async function createThread(input: NewThreadInput): Promise<string> {
   }
 
   const supabase = await client();
+  const threadId = randomUuid();
   const slug = threadSlug(title, slugSuffix());
 
   /* Rozetler istemcide de süzülüyor. Kolonda CHECK var ve asıl kapı orası;
@@ -266,16 +380,37 @@ export async function createThread(input: NewThreadInput): Promise<string> {
     .filter((id) => forumLabelOrder.includes(id))
     .slice(0, forumLabelLimit);
 
+  const prepared = await prepareForumImage(
+    input.imageFile,
+    input.authorId,
+    threadId,
+    'thread'
+  );
+  await uploadPreparedForumImage(supabase, prepared);
+
   const { error } = await supabase.from('forum_threads').insert({
+    id: threadId,
     slug,
     title,
     body,
     category_id: input.category,
     labels: chosen,
     author_id: input.authorId,
+    image_path: prepared?.path ?? null,
+    image_width: prepared?.width ?? null,
+    image_height: prepared?.height ?? null,
   });
 
-  if (error) throw new Error(error.message);
+  if (error) {
+    if (prepared) {
+      try {
+        await supabase.storage.from('forum-images').remove([prepared.path]);
+      } catch (cause) {
+        console.error('geri alma: forum konu görseli silinemedi', cause);
+      }
+    }
+    throw new Error(error.message);
+  }
   return slug;
 }
 
@@ -283,6 +418,7 @@ export interface NewReplyInput {
   threadId: string;
   body: string;
   authorId: string;
+  imageFile?: File | null;
 }
 
 export async function createReply(input: NewReplyInput): Promise<void> {
@@ -290,11 +426,33 @@ export async function createReply(input: NewReplyInput): Promise<void> {
   if (body.length < 2) throw new Error('Boş yanıt gönderilemez.');
 
   const supabase = await client();
+  const postId = randomUuid();
+  const prepared = await prepareForumImage(
+    input.imageFile,
+    input.authorId,
+    postId,
+    'post'
+  );
+  await uploadPreparedForumImage(supabase, prepared);
+
   const { error } = await supabase.from('forum_posts').insert({
+    id: postId,
     thread_id: input.threadId,
     body,
     author_id: input.authorId,
+    image_path: prepared?.path ?? null,
+    image_width: prepared?.width ?? null,
+    image_height: prepared?.height ?? null,
   });
 
-  if (error) throw new Error(error.message);
+  if (error) {
+    if (prepared) {
+      try {
+        await supabase.storage.from('forum-images').remove([prepared.path]);
+      } catch (cause) {
+        console.error('geri alma: forum yanıt görseli silinemedi', cause);
+      }
+    }
+    throw new Error(error.message);
+  }
 }

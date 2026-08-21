@@ -78,6 +78,13 @@ export function ClubsPage() {
         />
 
         <ModuleToolbar
+          filterClassName="
+            text-[0.72rem]
+            [&>*]:!min-w-[6.25rem] [&>*]:!flex-[0_1_7.25rem]
+            [&>*:first-child]:!min-w-[12rem] [&>*:first-child]:!flex-[0_1_16rem]
+            [&_input]:text-[0.75rem] [&_select]:text-[0.75rem]
+            [&_label]:whitespace-nowrap [&_label]:text-[0.7rem]
+          "
           activeFilters={{
             chips: ex.chips,
             onRemove: ex.removeChip,
@@ -98,7 +105,7 @@ export function ClubsPage() {
           <FilterCell
             label="Ara"
             htmlFor="club-search"
-            className="lg:col-span-2"
+            className="max-w-[16rem] lg:col-span-2"
           >
             <Input
               id="club-search"
@@ -166,18 +173,21 @@ export function ClubsPage() {
             label="Halka açık etkinlik"
             checked={acik('halka-acik')}
             onChange={() => cevir('halka-acik')}
+            className="!min-w-[9.75rem] !flex-none whitespace-nowrap px-2.5"
           />
           <FilterToggle
             id="club-equipment"
             label="Ortak ekipman"
             checked={acik('ortak-ekipman')}
             onChange={() => cevir('ortak-ekipman')}
+            className="!min-w-[8.5rem] !flex-none whitespace-nowrap px-2.5"
           />
           <FilterToggle
             id="club-verified"
             label="Yalnızca doğrulanmış"
             checked={acik('dogrulanmis')}
             onChange={() => cevir('dogrulanmis')}
+            className="!min-w-[10rem] !flex-none whitespace-nowrap px-2.5"
           />
         </ModuleToolbar>
 

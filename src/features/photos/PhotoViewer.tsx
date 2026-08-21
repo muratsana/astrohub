@@ -160,13 +160,10 @@ export function PhotoViewer({ photo }: { photo: AstroPhoto }) {
 /**
  * TAM EKRAN GÖRÜNTÜLEYİCİ.
  *
- * İki kip var ve ikisi de bir SORUYA cevap veriyor:
- *   sığdır → "kadraj nasıl?"   (tamamı ekranda)
- *   1:1    → "detay nasıl?"    (piksel piksel, yıldızlar keskin mi)
- *
- * Ara yakınlaştırma kademesi YOK. Astrofotoğrafta anlamlı olan bu iki
- * uç; aradaki her oran görüntüyü yeniden örnekler ve "yıldızlar biraz
- * bulanık mı" sorusunu cevaplanamaz hale getirir.
+ * Sığdır kipi kadrajı, ayarlanabilir zoom ise detay incelemeyi çözer.
+ * Önce yalnızca 1:1 vardı; 2048px gösterim kopyasında küçük yapıları
+ * incelemek için yetersiz kalıyordu. Zoom çarpanı görünür ve sınırlı:
+ * kullanıcı bulanıklaşmanın ne zaman kendi büyütmesinden geldiğini bilir.
  *
  * `Escape` ile kapanıyor ve açılırken sayfa kaydırması kilitleniyor —
  * arkada kayan bir sayfa, sürükleyerek gezinmeyi imkânsız kılardı.
@@ -182,8 +179,10 @@ function Lightbox({
   pixels?: { width: number; height: number };
   onClose: () => void;
 }) {
-  const [actual, setActual] = useState(false);
+  const [zoom, setZoom] = useState(0);
   const closeRef = useRef<HTMLButtonElement>(null);
+  const fitted = zoom === 0;
+  const effectiveZoom = fitted ? 1 : zoom;
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -215,19 +214,47 @@ function Lightbox({
         </p>
         <div className="flex shrink-0 items-center gap-2">
           {pixels && (
-            <button
-              type="button"
-              onClick={() => setActual((v) => !v)}
-              aria-pressed={actual}
-              className={cn(
-                'rounded-card border px-3 py-1.5 text-meta font-medium transition-colors',
-                actual
-                  ? 'border-primary bg-primary/10 text-primary'
-                  : 'border-border-strong text-muted-foreground hover:text-foreground'
-              )}
-            >
-              {actual ? 'Ekrana sığdır' : '1:1 göster'}
-            </button>
+            <div className="flex items-center gap-2 rounded-card border border-border-strong px-2 py-1">
+              <button
+                type="button"
+                onClick={() => setZoom(0)}
+                aria-pressed={fitted}
+                className={cn(
+                  'rounded-card px-2 py-1 text-meta font-medium transition-colors',
+                  fitted
+                    ? 'bg-primary/10 text-primary'
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                Sığdır
+              </button>
+              <button
+                type="button"
+                onClick={() => setZoom(1)}
+                aria-pressed={!fitted && zoom === 1}
+                className={cn(
+                  'rounded-card px-2 py-1 text-meta font-medium transition-colors',
+                  !fitted && zoom === 1
+                    ? 'bg-primary/10 text-primary'
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                1:1
+              </button>
+              <input
+                type="range"
+                min={1}
+                max={4}
+                step={0.25}
+                value={effectiveZoom}
+                aria-label="Yakınlaştırma"
+                onChange={(event) => setZoom(Number(event.currentTarget.value))}
+                className="h-6 w-28 accent-primary"
+              />
+              <span className="tabular w-10 text-right text-meta text-muted-foreground">
+                {effectiveZoom.toFixed(effectiveZoom % 1 === 0 ? 0 : 2)}x
+              </span>
+            </div>
           )}
           <button
             ref={closeRef}
@@ -249,14 +276,14 @@ function Lightbox({
       <div
         className={cn(
           'flex-1 overflow-auto',
-          actual ? 'cursor-grab' : 'flex items-center justify-center p-4'
+          fitted ? 'flex items-center justify-center p-4' : 'cursor-grab'
         )}
       >
         <img
           src={url}
           alt={alt}
-          className={actual ? 'max-w-none' : 'max-h-full max-w-full object-contain'}
-          style={actual && pixels ? { width: pixels.width } : undefined}
+          className={fitted ? 'max-h-full max-w-full object-contain' : 'max-w-none'}
+          style={!fitted && pixels ? { width: pixels.width * effectiveZoom } : undefined}
         />
       </div>
     </div>

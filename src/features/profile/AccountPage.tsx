@@ -15,6 +15,20 @@ import { useRoles, roleLabels } from '@/features/admin/useRoles';
 import { BlockList } from '@/features/social/BlockList';
 import { useClubs } from '@/features/clubs/clubsSource';
 import { formatIntegration } from '@/domain/photography/integration';
+import { MAX_DRAFT_PHOTOS } from '@/domain/membership/quota';
+import {
+  formatBytes as formatQuotaBytes,
+  useQuota,
+  type QuotaState,
+} from '@/services/content/membership';
+import {
+  isPhotoPubliclyVisible,
+  useMyPhotos,
+  type MyPhotosState,
+  type MyPhotoSummary,
+} from '@/services/content/photos';
+import { deletePhoto } from '@/services/photos/remove';
+import { photoStatusLabels, type PhotoStatus } from '@/features/photos/types';
 import {
   deleteOwnAccount,
   updateProfile,
@@ -46,6 +60,7 @@ const ClubManagementPanel = lazy(() =>
 type Tab =
   | 'hesabim'
   | 'profilim'
+  | 'fotograflarim'
   | 'ekipmanlarim'
   | 'koleksiyonlarim'
   | 'kulup-yonetimi'
@@ -54,6 +69,7 @@ type Tab =
 const TAB_LABELS: Record<Tab, string> = {
   hesabim: 'Hesabım',
   profilim: 'Profilim',
+  fotograflarim: 'Fotoğraflarım',
   ekipmanlarim: 'Ekipmanlarım',
   koleksiyonlarim: 'Koleksiyonlarım',
   'kulup-yonetimi': 'Kulüp Yönetimi',
@@ -69,6 +85,7 @@ const TAB_LABELS: Record<Tab, string> = {
  */
 function tabFromQuery(value: string | null): Tab {
   if (value === 'profilim') return 'profilim';
+  if (value === 'fotograflarim') return 'fotograflarim';
   if (value === 'ekipmanlarim') return 'ekipmanlarim';
   if (value === 'koleksiyonlarim') return 'koleksiyonlarim';
   if (value === 'kulup-yonetimi') return 'kulup-yonetimi';
@@ -86,6 +103,8 @@ export function AccountPage() {
   const contactState = useMyProfileContact(user?.id);
   const statsState = useMyProfileStats(user?.id);
   const membershipsState = useMyClubMemberships(user?.id);
+  const myPhotos = useMyPhotos(user?.id);
+  const quota = useQuota();
   const { clubs } = useClubs();
 
   const [edit, setEdit] = useState<ProfileEdit>({
@@ -163,6 +182,7 @@ export function AccountPage() {
   }
 
   const emailVerified = Boolean(user?.email_confirmed_at || user?.confirmed_at);
+  const accountUserId = user?.id ?? '';
   const problem = validateProfile(edit);
   const usernameChanged = !!profile && edit.username !== profile.username;
   /*
@@ -608,6 +628,12 @@ export function AccountPage() {
           </div>
         ) : activeTab === 'ekipmanlarim' ? (
           <MyEquipmentPanel />
+        ) : activeTab === 'fotograflarim' ? (
+          <MyPhotosAccountPanel
+            photosState={myPhotos}
+            quota={quota}
+            userId={accountUserId}
+          />
         ) : activeTab === 'koleksiyonlarim' ? (
           <CollectionsPanel />
         ) : activeTab === 'kulup-yonetimi' ? (
@@ -736,6 +762,305 @@ export function AccountPage() {
         )}
       </Container>
     </>
+  );
+}
+
+function photoStatusTone(status: PhotoStatus) {
+  if (status === 'yayinda') return 'success';
+  if (status === 'taslak') return 'warning';
+  if (status === 'reddedildi' || status === 'yayindan_kaldirildi') {
+    return 'danger';
+  }
+  if (status === 'incelemede' || status === 'onaylandi') return 'primary';
+  return 'muted';
+}
+
+function formatDate(value: string): string {
+  if (!value) return 'Tarih yok';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'Tarih yok';
+  return date.toLocaleDateString('tr-TR', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
+}
+
+function averageScore(photo: MyPhotoSummary): string {
+  if (photo.ratingCount <= 0) return 'Puan yok';
+  return `${(photo.ratingSum / photo.ratingCount).toFixed(1)} / 10`;
+}
+
+function MyPhotosAccountPanel({
+  photosState,
+  quota,
+  userId,
+}: {
+  photosState: MyPhotosState;
+  quota: QuotaState | null;
+  userId: string;
+}) {
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [busyDeleteId, setBusyDeleteId] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const photos = photosState.photos;
+  const totalIntegration = photos.reduce(
+    (sum, photo) => sum + photo.integrationSeconds,
+    0
+  );
+  const totalLikes = photos.reduce((sum, photo) => sum + photo.likeCount, 0);
+  const totalComments = photos.reduce(
+    (sum, photo) => sum + photo.commentCount,
+    0
+  );
+  const totalRatings = photos.reduce((sum, photo) => sum + photo.ratingCount, 0);
+  const totalRatingScore = photos.reduce(
+    (sum, photo) => sum + photo.ratingSum,
+    0
+  );
+  const average =
+    totalRatings > 0 ? `${(totalRatingScore / totalRatings).toFixed(1)} / 10` : '—';
+  const archived = photos.filter((photo) => photo.status === 'arsivlendi').length;
+  const review = photos.filter((photo) =>
+    ['incelemede', 'onaylandi'].includes(photo.status)
+  ).length;
+
+  async function removePhoto(photo: MyPhotoSummary) {
+    setBusyDeleteId(photo.id);
+    setDeleteError(null);
+    try {
+      await deletePhoto({ userId, photoId: photo.id });
+      setDeleteId(null);
+      photosState.refresh();
+    } catch (e) {
+      setDeleteError(e instanceof Error ? e.message : 'Fotoğraf kaldırılamadı');
+    } finally {
+      setBusyDeleteId(null);
+    }
+  }
+
+  return (
+    <div className="grid gap-4">
+      <div className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-6">
+        <Readout label="Toplam fotoğraf" value={photos.length} />
+        <Readout
+          label="Yayında"
+          value={quota?.photosUsed ?? photosState.published}
+          tone="primary"
+        />
+        <Readout label="Taslak" value={photosState.drafts} tone="muted" />
+        <Readout label="Arşiv" value={archived} />
+        <Readout
+          label="Toplam entegrasyon"
+          value={formatIntegration(totalIntegration)}
+          tone="cold"
+        />
+        <Readout label="Ortalama puan" value={average} />
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,320px)]">
+        <Panel
+          title="Fotoğraflarım"
+          status={
+            photosState.loading
+              ? 'yükleniyor'
+              : `${photos.length.toLocaleString('tr-TR')} kayıt`
+          }
+        >
+          {deleteError && (
+            <p className="mb-3 rounded-card border border-danger/45 bg-surface-2 px-3 py-2 text-body-sm text-danger">
+              {deleteError}
+            </p>
+          )}
+
+          {photosState.error && (
+            <p className="mb-3 rounded-card border border-danger/45 bg-surface-2 px-3 py-2 text-body-sm text-danger">
+              Fotoğraflar okunamadı: {photosState.error}
+            </p>
+          )}
+
+          {photosState.loading ? (
+            <p className="text-body-sm text-muted-foreground">
+              Fotoğraflar yükleniyor…
+            </p>
+          ) : photos.length > 0 ? (
+            <ul className="divide-y divide-border">
+              {photos.map((photo) => {
+                const publicPath = isPhotoPubliclyVisible(photo.status)
+                  ? `/fotograf/${photo.slug}`
+                  : undefined;
+                return (
+                  <li
+                    key={photo.id}
+                    className="grid gap-3 py-3 md:grid-cols-[minmax(0,1fr)_auto]"
+                  >
+                    <div className="flex min-w-0 gap-3">
+                      <div className="h-16 w-20 shrink-0 overflow-hidden rounded-card border border-border bg-surface-2">
+                        {photo.thumbUrl ? (
+                          <img
+                            src={photo.thumbUrl}
+                            alt=""
+                            loading="lazy"
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="h-full w-full bg-[linear-gradient(135deg,rgba(250,166,50,.22),rgba(80,160,190,.16))]" />
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="truncate text-body-sm font-semibold text-foreground">
+                            {photo.title}
+                          </p>
+                          <Badge tone={photoStatusTone(photo.status)}>
+                            {photoStatusLabels[photo.status]}
+                          </Badge>
+                        </div>
+                        <p className="mt-1 text-meta text-muted-foreground">
+                          Çekim {formatDate(photo.capturedAt)} · Yayın{' '}
+                          {formatDate(photo.publishedAt)}
+                        </p>
+                        <p className="mt-1 text-meta text-faint">
+                          {formatIntegration(photo.integrationSeconds)} ·{' '}
+                          {photo.likeCount} beğeni · {photo.commentCount} yorum ·{' '}
+                          {averageScore(photo)} ({photo.ratingCount} oy)
+                          {photo.width && photo.height
+                            ? ` · ${photo.width}×${photo.height}px`
+                            : ''}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2 md:justify-end">
+                      {publicPath && (
+                        <ButtonLink to={publicPath} size="sm" variant="secondary">
+                          Gör
+                        </ButtonLink>
+                      )}
+                      <ButtonLink
+                        to={`/galeri/yukle?duzenle=${photo.slug}`}
+                        size="sm"
+                      >
+                        Düzenle
+                      </ButtonLink>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="danger"
+                        disabled={busyDeleteId === photo.id}
+                        onClick={() =>
+                          setDeleteId(deleteId === photo.id ? null : photo.id)
+                        }
+                      >
+                        Kaldır
+                      </Button>
+                    </div>
+
+                    {deleteId === photo.id && (
+                      <div className="md:col-span-2 rounded-card border border-danger/40 bg-danger/10 px-3 py-2">
+                        <p className="text-meta leading-relaxed text-danger">
+                          <strong>{photo.title}</strong> hesabınızdan
+                          kaldırılacak. Kayıt public listelerden ve kotadan
+                          düşer; gerekirse yönetim panelinden geri alınabilir.
+                        </p>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="danger"
+                            disabled={busyDeleteId === photo.id}
+                            onClick={() => void removePhoto(photo)}
+                          >
+                            {busyDeleteId === photo.id
+                              ? 'Kaldırılıyor…'
+                              : 'Evet, kaldır'}
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            disabled={busyDeleteId === photo.id}
+                            onClick={() => setDeleteId(null)}
+                          >
+                            Vazgeç
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <div className="rounded-card border border-border bg-surface-2 px-3 py-4">
+              <p className="text-body-sm font-medium text-foreground">
+                Henüz fotoğraf yok.
+              </p>
+              <p className="mt-1 text-meta text-muted-foreground">
+                İlk fotoğrafınızı yüklediğinizde taslaklar, yayındaki kayıtlar
+                ve arşiv buradan yönetilecek.
+              </p>
+              <ButtonLink to="/galeri/yukle" size="sm" className="mt-3">
+                Fotoğraf yükle
+              </ButtonLink>
+            </div>
+          )}
+        </Panel>
+
+        <div className="grid gap-4 lg:content-start">
+          <Panel title="Kota ve depolama">
+            <SpecList>
+              <SpecRow
+                label="Fotoğraf kotası"
+                value={
+                  quota
+                    ? `${quota.photosUsed} / ${quota.photosLimit}`
+                    : `${photosState.published} / —`
+                }
+              />
+              <SpecRow
+                label="Taslak"
+                value={`${photosState.drafts} / ${MAX_DRAFT_PHOTOS}`}
+              />
+              <SpecRow
+                label="Depolama"
+                value={
+                  quota
+                    ? `${formatQuotaBytes(quota.storageUsed)} / ${formatQuotaBytes(
+                        quota.storageLimit
+                      )}`
+                    : '—'
+                }
+              />
+              <SpecRow
+                label="Üyelik"
+                value={quota?.tier === 'premium' ? 'Premium' : 'Standart'}
+              />
+            </SpecList>
+            {quota?.overLimit && (
+              <p className="mt-3 rounded-card border border-warning/45 bg-warning/10 px-3 py-2 text-meta text-warning">
+                Fotoğraf sayınız mevcut kota sınırının üstünde. Yeni yayın için
+                önce bir kaydı arşivleyin.
+              </p>
+            )}
+          </Panel>
+
+          <Panel title="Analiz">
+            <SpecList>
+              <SpecRow label="Toplam entegrasyon" value={formatIntegration(totalIntegration)} />
+              <SpecRow label="Toplam beğeni" value={totalLikes.toLocaleString('tr-TR')} />
+              <SpecRow label="Toplam yorum" value={totalComments.toLocaleString('tr-TR')} />
+              <SpecRow label="Toplam oy" value={totalRatings.toLocaleString('tr-TR')} />
+              <SpecRow label="İncelemede" value={review.toLocaleString('tr-TR')} />
+            </SpecList>
+          </Panel>
+
+          <ButtonLink to="/galeri/yukle" className="w-full justify-center">
+            Yeni fotoğraf yükle
+          </ButtonLink>
+        </div>
+      </div>
+    </div>
   );
 }
 

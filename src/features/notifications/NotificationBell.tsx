@@ -9,6 +9,7 @@ import {
   markNotificationRead,
   useNotifications,
   useUnreadCount,
+  type NotificationItem,
 } from '@/services/content/notifications';
 
 /**
@@ -77,6 +78,13 @@ export function NotificationBell() {
   if (loading || !user) return null;
 
   const label = count > 0 ? `Bildirimler — ${count} okunmamış` : 'Bildirimler';
+
+  function openNotification(item: NotificationItem) {
+    setOpen(false);
+    if (!item.readAt) {
+      void markNotificationRead(item.id).then(refreshCount);
+    }
+  }
 
   return (
     <div ref={wrapRef} className="relative">
@@ -161,19 +169,17 @@ export function NotificationBell() {
                   'flex w-full items-start gap-2 px-3 py-2 text-left transition-colors hover:bg-surface-2';
 
                 return (
-                  <li key={item.id} className="border-b border-border last:border-0">
+                  <li
+                    key={item.id}
+                    className="border-b border-border last:border-0"
+                  >
                     {/* Yolu olmayan bildirim bağlantı değil — kaynağı
                         silinmiş satırı tıklanabilir çizmek, kullanıcıyı
                         "bulunamadı" sayfasına yollamaktı. */}
                     {item.url ? (
                       <Link
                         to={item.url}
-                        onClick={() => {
-                          setOpen(false);
-                          if (unread) {
-                            void markNotificationRead(item.id).then(refreshCount);
-                          }
-                        }}
+                        onClick={() => openNotification(item)}
                         className={shared}
                       >
                         {body}

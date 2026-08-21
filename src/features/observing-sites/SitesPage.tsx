@@ -248,6 +248,7 @@ export function SitesPage() {
   });
   const [zoom, setZoom] = useState(6);
   const [mapExpanded, setMapExpanded] = useState(false);
+  const [measurementOpen, setMeasurementOpen] = useState(false);
   const [pickedPoint, setPickedPoint] = useState<LatLng | null>(null);
   const [measurementAt, setMeasurementAt] = useState(localDateTimeValue);
   const [measurementSqm, setMeasurementSqm] = useState('');
@@ -810,6 +811,14 @@ export function SitesPage() {
                       </label>
                     )}
 
+                    <Button
+                      size="sm"
+                      variant="primary"
+                      onClick={() => setMeasurementOpen(true)}
+                    >
+                      Manuel veri girişi
+                    </Button>
+
                     {mapProvider === 'astrohub' && (
                       <Button
                         size="sm"
@@ -1016,224 +1025,6 @@ export function SitesPage() {
                   />
                 )}
               </Panel>
-
-              <Panel
-                title="Işık kirliliği ölçümü"
-                status={
-                  pickedPoint ? coordinateLabel(pickedPoint) : 'Haritaya tıkla'
-                }
-              >
-                <div className="space-y-3">
-                  <p className="text-body-sm leading-relaxed text-muted-foreground">
-                    Haritada ölçüm yaptığınız noktaya tıklayın; SQM, Bortle,
-                    cihaz ve koşul bilgilerini aynı koordinata kaydedin.
-                  </p>
-
-                  {pickedPoint ? (
-                    <div className="rounded-card border border-border bg-surface-1 px-3 py-2">
-                      <p className="label">Seçilen nokta</p>
-                      <p className="mt-1 tabular text-body-sm text-foreground">
-                        {coordinateLabel(pickedPoint)}
-                      </p>
-                      {nearestPickedSite ? (
-                        <p className="mt-1 text-meta text-muted-foreground">
-                          Yakındaki saha: {nearestPickedSite.item.name} ·{' '}
-                          {formatDistance(nearestPickedSite.distanceKm)}
-                        </p>
-                      ) : (
-                        <p className="mt-1 text-meta text-muted-foreground">
-                          Saha kaydına bağlı değil; bağımsız ölçüm noktası.
-                        </p>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="rounded-card border border-dashed border-border bg-surface-1 px-3 py-3 text-body-sm text-muted-foreground">
-                      Ölçüm için haritada konumu seçin.
-                    </div>
-                  )}
-
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <Field label="Ölçüm zamanı" htmlFor="lp-measured-at">
-                      <Input
-                        id="lp-measured-at"
-                        type="datetime-local"
-                        value={measurementAt}
-                        onChange={(event) =>
-                          setMeasurementAt(event.target.value)
-                        }
-                      />
-                    </Field>
-                    <Field label="Ay evresi" htmlFor="lp-moon">
-                      <Input
-                        id="lp-moon"
-                        value={`${measurementMoon.name} · %${Math.round(
-                          measurementMoon.illumination * 100
-                        )}`}
-                        readOnly
-                      />
-                    </Field>
-                  </div>
-
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <Field label="SQM" htmlFor="lp-sqm" hint="mag/arcsec²">
-                      <Input
-                        id="lp-sqm"
-                        inputMode="decimal"
-                        placeholder="21.35"
-                        value={measurementSqm}
-                        onChange={(event) =>
-                          setMeasurementSqm(event.target.value)
-                        }
-                      />
-                    </Field>
-                    <Field label="Bortle" htmlFor="lp-bortle">
-                      <Select
-                        id="lp-bortle"
-                        value={measurementBortle}
-                        onChange={(event) =>
-                          setMeasurementBortle(event.target.value)
-                        }
-                      >
-                        <option value="">Seçilmedi</option>
-                        {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((value) => (
-                          <option key={value} value={value}>
-                            Bortle {value}
-                          </option>
-                        ))}
-                      </Select>
-                    </Field>
-                  </div>
-
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <Field label="Yöntem" htmlFor="lp-method">
-                      <Select
-                        id="lp-method"
-                        value={measurementMethod}
-                        onChange={(event) =>
-                          setMeasurementMethod(
-                            event.target.value as typeof measurementMethod
-                          )
-                        }
-                      >
-                        {MEASUREMENT_METHODS.map((option) => (
-                          <option key={option} value={option}>
-                            {option}
-                          </option>
-                        ))}
-                      </Select>
-                    </Field>
-                    <Field label="Ekipman türü" htmlFor="lp-equipment-type">
-                      <Select
-                        id="lp-equipment-type"
-                        value={measurementEquipmentType}
-                        onChange={(event) =>
-                          setMeasurementEquipmentType(
-                            event.target
-                              .value as typeof measurementEquipmentType
-                          )
-                        }
-                      >
-                        {EQUIPMENT_TYPES.map((option) => (
-                          <option key={option} value={option}>
-                            {option}
-                          </option>
-                        ))}
-                      </Select>
-                    </Field>
-                  </div>
-
-                  <Field label="Ekipman / cihaz modeli" htmlFor="lp-equipment">
-                    <Input
-                      id="lp-equipment"
-                      placeholder="Örn. Unihedron SQM-L, TESS-W, ASI585MC"
-                      value={measurementEquipmentName}
-                      onChange={(event) =>
-                        setMeasurementEquipmentName(event.target.value)
-                      }
-                    />
-                  </Field>
-
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <Field label="Gökyüzü" htmlFor="lp-sky">
-                      <Select
-                        id="lp-sky"
-                        value={measurementSkyCondition}
-                        onChange={(event) =>
-                          setMeasurementSkyCondition(
-                            event.target.value as typeof measurementSkyCondition
-                          )
-                        }
-                      >
-                        {SKY_CONDITIONS.map((option) => (
-                          <option key={option} value={option}>
-                            {option}
-                          </option>
-                        ))}
-                      </Select>
-                    </Field>
-                    <Field label="Şeffaflık" htmlFor="lp-transparency">
-                      <Select
-                        id="lp-transparency"
-                        value={measurementTransparency}
-                        onChange={(event) =>
-                          setMeasurementTransparency(
-                            event.target.value as typeof measurementTransparency
-                          )
-                        }
-                      >
-                        {TRANSPARENCY_OPTIONS.map((option) => (
-                          <option key={option} value={option}>
-                            {option}
-                          </option>
-                        ))}
-                      </Select>
-                    </Field>
-                  </div>
-
-                  <Field label="Not" htmlFor="lp-note" hint="Opsiyonel">
-                    <textarea
-                      id="lp-note"
-                      value={measurementNote}
-                      onChange={(event) =>
-                        setMeasurementNote(event.target.value)
-                      }
-                      className="min-h-20 w-full rounded-card border border-border bg-surface-1 px-3 py-2 text-body-sm text-foreground placeholder:text-faint focus:border-primary focus:bg-surface-2"
-                    />
-                  </Field>
-
-                  {measurementError && (
-                    <p className="rounded-card border border-danger/40 bg-danger/10 px-3 py-2 text-body-sm text-danger">
-                      {measurementError}
-                    </p>
-                  )}
-                  {measurementSuccess && (
-                    <p className="rounded-card border border-success/40 bg-success/10 px-3 py-2 text-body-sm text-success">
-                      {measurementSuccess}
-                    </p>
-                  )}
-
-                  <div className="flex flex-wrap gap-2">
-                    <Button
-                      size="sm"
-                      onClick={() => void submitMeasurement()}
-                      disabled={measurementBusy || !pickedPoint}
-                    >
-                      {measurementBusy ? 'Kaydediliyor' : 'Ölçümü kaydet'}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      onClick={() => {
-                        setPickedPoint(null);
-                        setMeasurementError(null);
-                        setMeasurementSuccess(null);
-                      }}
-                    >
-                      Temizle
-                    </Button>
-                  </div>
-                </div>
-              </Panel>
             </div>
           </div>
 
@@ -1386,6 +1177,247 @@ export function SitesPage() {
             )}
           </Panel>
         </div>
+
+        {measurementOpen && (
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="lp-dialog-title"
+            className="fixed inset-0 z-[var(--z-modal)] grid place-items-center bg-background/80 p-4 backdrop-blur-sm"
+          >
+            <div className="max-h-[90vh] w-full max-w-3xl overflow-hidden rounded-card border border-border-strong bg-surface-1 shadow-overlay">
+              <header className="flex items-start justify-between gap-3 border-b border-border px-4 py-3">
+                <div>
+                  <h2 id="lp-dialog-title" className="label text-foreground">
+                    Işık kirliliği manuel veri girişi
+                  </h2>
+                  <p className="mt-1 text-meta text-muted-foreground">
+                    {pickedPoint
+                      ? coordinateLabel(pickedPoint)
+                      : 'Haritada ölçüm noktasını seçin; sonra değerleri girin.'}
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setMeasurementOpen(false)}
+                >
+                  Kapat
+                </Button>
+              </header>
+
+              <div className="max-h-[calc(90vh-4.5rem)] overflow-y-auto px-4 py-4">
+                <div className="space-y-3">
+                  {pickedPoint ? (
+                    <div className="rounded-card border border-border bg-background px-3 py-2">
+                      <p className="label">Seçilen nokta</p>
+                      <p className="mt-1 tabular text-body-sm text-foreground">
+                        {coordinateLabel(pickedPoint)}
+                      </p>
+                      {nearestPickedSite ? (
+                        <p className="mt-1 text-meta text-muted-foreground">
+                          Yakındaki saha: {nearestPickedSite.item.name} ·{' '}
+                          {formatDistance(nearestPickedSite.distanceKm)}
+                        </p>
+                      ) : (
+                        <p className="mt-1 text-meta text-muted-foreground">
+                          Saha kaydına bağlı değil; bağımsız ölçüm noktası.
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="rounded-card border border-dashed border-border bg-background px-3 py-3 text-body-sm text-muted-foreground">
+                      Ölçüm için önce haritada konumu seçin. Seçilen nokta
+                      marker olarak haritada kalır.
+                    </div>
+                  )}
+
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <Field label="Ölçüm zamanı" htmlFor="lp-measured-at">
+                      <Input
+                        id="lp-measured-at"
+                        type="datetime-local"
+                        value={measurementAt}
+                        onChange={(event) =>
+                          setMeasurementAt(event.target.value)
+                        }
+                      />
+                    </Field>
+                    <Field label="Ay evresi" htmlFor="lp-moon">
+                      <Input
+                        id="lp-moon"
+                        value={`${measurementMoon.name} · %${Math.round(
+                          measurementMoon.illumination * 100
+                        )}`}
+                        readOnly
+                      />
+                    </Field>
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <Field label="SQM" htmlFor="lp-sqm" hint="mag/arcsec²">
+                      <Input
+                        id="lp-sqm"
+                        inputMode="decimal"
+                        placeholder="21.35"
+                        value={measurementSqm}
+                        onChange={(event) =>
+                          setMeasurementSqm(event.target.value)
+                        }
+                      />
+                    </Field>
+                    <Field label="Bortle" htmlFor="lp-bortle">
+                      <Select
+                        id="lp-bortle"
+                        value={measurementBortle}
+                        onChange={(event) =>
+                          setMeasurementBortle(event.target.value)
+                        }
+                      >
+                        <option value="">Seçilmedi</option>
+                        {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((value) => (
+                          <option key={value} value={value}>
+                            Bortle {value}
+                          </option>
+                        ))}
+                      </Select>
+                    </Field>
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <Field label="Yöntem" htmlFor="lp-method">
+                      <Select
+                        id="lp-method"
+                        value={measurementMethod}
+                        onChange={(event) =>
+                          setMeasurementMethod(
+                            event.target.value as typeof measurementMethod
+                          )
+                        }
+                      >
+                        {MEASUREMENT_METHODS.map((option) => (
+                          <option key={option} value={option}>
+                            {option}
+                          </option>
+                        ))}
+                      </Select>
+                    </Field>
+                    <Field label="Ekipman türü" htmlFor="lp-equipment-type">
+                      <Select
+                        id="lp-equipment-type"
+                        value={measurementEquipmentType}
+                        onChange={(event) =>
+                          setMeasurementEquipmentType(
+                            event.target
+                              .value as typeof measurementEquipmentType
+                          )
+                        }
+                      >
+                        {EQUIPMENT_TYPES.map((option) => (
+                          <option key={option} value={option}>
+                            {option}
+                          </option>
+                        ))}
+                      </Select>
+                    </Field>
+                  </div>
+
+                  <Field label="Ekipman / cihaz modeli" htmlFor="lp-equipment">
+                    <Input
+                      id="lp-equipment"
+                      placeholder="Örn. Unihedron SQM-L, TESS-W, ASI585MC"
+                      value={measurementEquipmentName}
+                      onChange={(event) =>
+                        setMeasurementEquipmentName(event.target.value)
+                      }
+                    />
+                  </Field>
+
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <Field label="Gökyüzü" htmlFor="lp-sky">
+                      <Select
+                        id="lp-sky"
+                        value={measurementSkyCondition}
+                        onChange={(event) =>
+                          setMeasurementSkyCondition(
+                            event.target.value as typeof measurementSkyCondition
+                          )
+                        }
+                      >
+                        {SKY_CONDITIONS.map((option) => (
+                          <option key={option} value={option}>
+                            {option}
+                          </option>
+                        ))}
+                      </Select>
+                    </Field>
+                    <Field label="Şeffaflık" htmlFor="lp-transparency">
+                      <Select
+                        id="lp-transparency"
+                        value={measurementTransparency}
+                        onChange={(event) =>
+                          setMeasurementTransparency(
+                            event.target.value as typeof measurementTransparency
+                          )
+                        }
+                      >
+                        {TRANSPARENCY_OPTIONS.map((option) => (
+                          <option key={option} value={option}>
+                            {option}
+                          </option>
+                        ))}
+                      </Select>
+                    </Field>
+                  </div>
+
+                  <Field label="Not" htmlFor="lp-note" hint="Opsiyonel">
+                    <textarea
+                      id="lp-note"
+                      value={measurementNote}
+                      onChange={(event) =>
+                        setMeasurementNote(event.target.value)
+                      }
+                      className="min-h-20 w-full rounded-card border border-border bg-background px-3 py-2 text-body-sm text-foreground placeholder:text-faint focus:border-primary focus:bg-surface-2"
+                    />
+                  </Field>
+
+                  {measurementError && (
+                    <p className="rounded-card border border-danger/40 bg-danger/10 px-3 py-2 text-body-sm text-danger">
+                      {measurementError}
+                    </p>
+                  )}
+                  {measurementSuccess && (
+                    <p className="rounded-card border border-success/40 bg-success/10 px-3 py-2 text-body-sm text-success">
+                      {measurementSuccess}
+                    </p>
+                  )}
+
+                  <div className="flex flex-wrap justify-end gap-2 border-t border-border pt-3">
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => {
+                        setPickedPoint(null);
+                        setMeasurementError(null);
+                        setMeasurementSuccess(null);
+                      }}
+                    >
+                      Temizle
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => void submitMeasurement()}
+                      disabled={measurementBusy || !pickedPoint}
+                    >
+                      {measurementBusy ? 'Kaydediliyor' : 'Ölçümü kaydet'}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </Container>
     </>
   );

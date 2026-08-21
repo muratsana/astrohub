@@ -573,7 +573,15 @@ export interface MyPhotoSummary {
   status: PhotoStatus;
   /** Çekim tarihi; yoksa yayın tarihi, o da yoksa boş. */
   capturedAt: string;
+  publishedAt: string;
   thumbUrl: string | null;
+  integrationSeconds: number;
+  likeCount: number;
+  commentCount: number;
+  ratingSum: number;
+  ratingCount: number;
+  width: number | null;
+  height: number | null;
 }
 
 export interface MyPhotosState {
@@ -596,7 +604,9 @@ const PHOTO_STATUSES: readonly PhotoStatus[] = CONTENT_STATUSES;
  * bir liste çizmek için kullanıcının bütün arşivini indirmek olurdu.
  */
 const MY_PHOTO_SELECT =
-  'id, slug, title, status, captured_at, published_at, thumb_path, display_path';
+  'id, slug, title, status, captured_at, published_at, thumb_path, display_path, ' +
+  'like_count, comment_count, rating_sum, rating_count, width, height, ' +
+  'photo_exposures(filter, frames, exposure_seconds, position)';
 
 interface MyPhotoRow {
   id: string;
@@ -607,6 +617,13 @@ interface MyPhotoRow {
   published_at: string | null;
   thumb_path: string | null;
   display_path: string | null;
+  like_count?: number | null;
+  comment_count?: number | null;
+  rating_sum?: number | null;
+  rating_count?: number | null;
+  width?: number | null;
+  height?: number | null;
+  photo_exposures?: ExposureRow[] | null;
 }
 
 const EMPTY_MY_PHOTOS = {
@@ -658,6 +675,7 @@ export function useMyPhotos(userId: string | undefined): MyPhotosState {
           .from('astro_photos')
           .select(MY_PHOTO_SELECT)
           .eq('user_id', userId)
+          .is('deleted_at', null)
           /* Çekim tarihi boş olabilir (eski kayıtlar), yayın tarihi
              taslakta boş. Sıralama kolonu olarak `created_at` ikisinde de
              dolu — liste hiçbir durumda rastgele sıraya düşmüyor. */
@@ -704,6 +722,20 @@ function mapMyPhotoRow(row: MyPhotoRow): MyPhotoSummary {
       ? (row.status as PhotoStatus)
       : 'taslak',
     capturedAt: row.captured_at ?? row.published_at ?? '',
+    publishedAt: row.published_at ?? '',
     thumbUrl: publicPhotoUrl(row.thumb_path ?? row.display_path),
+    integrationSeconds: (row.photo_exposures ?? []).reduce(
+      (sum, exposure) =>
+        sum +
+        Math.max(0, exposure.frames ?? 0) *
+          Math.max(0, num(exposure.exposure_seconds) ?? 0),
+      0
+    ),
+    likeCount: row.like_count ?? 0,
+    commentCount: row.comment_count ?? 0,
+    ratingSum: row.rating_sum ?? 0,
+    ratingCount: row.rating_count ?? 0,
+    width: row.width ?? null,
+    height: row.height ?? null,
   };
 }

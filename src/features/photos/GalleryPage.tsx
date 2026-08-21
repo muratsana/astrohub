@@ -269,6 +269,13 @@ export function GalleryPage() {
         )}
 
         <ModuleToolbar
+          filterClassName="
+            text-[0.72rem]
+            [&>*]:!min-w-[6rem] [&>*]:!flex-[0_1_7rem]
+            [&>*:first-child]:!min-w-[11rem] [&>*:first-child]:!flex-[0_1_15rem]
+            [&_input]:text-[0.75rem] [&_select]:text-[0.75rem]
+            [&_label]:whitespace-nowrap [&_label]:text-[0.7rem]
+          "
           activeFilters={{
             chips: ex.chips,
             onRemove: ex.removeChip,
@@ -291,6 +298,7 @@ export function GalleryPage() {
             label="Ara"
             htmlFor="gallery-search"
             active={ex.searchInput.trim().length > 0}
+            className="max-w-[15rem]"
           >
             <Input
               id="gallery-search"
@@ -386,6 +394,7 @@ export function GalleryPage() {
               label="Kaydettiklerim"
               checked={kisiselAcik('kaydettiklerim')}
               onChange={() => ex.toggleFacet('kaydettiklerim', 'evet')}
+              className="!min-w-[7.75rem] !flex-none whitespace-nowrap px-2.5"
             />
           )}
           {takipEdilen.ready && (
@@ -394,6 +403,7 @@ export function GalleryPage() {
               label="Takip ettiklerim"
               checked={kisiselAcik('takip')}
               onChange={() => ex.toggleFacet('takip', 'evet')}
+              className="!min-w-[8.25rem] !flex-none whitespace-nowrap px-2.5"
             />
           )}
         </ModuleToolbar>

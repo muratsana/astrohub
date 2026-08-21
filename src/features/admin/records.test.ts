@@ -4,6 +4,7 @@ import {
   mergeEventSeeds,
   restoreRecord,
   setRecordStatus,
+  softDeletePhotoDrafts,
   softDeleteRecord,
   type RecordKind,
 } from './records';
@@ -234,5 +235,11 @@ describe('softDeleteRecord / restoreRecord · desteklenmeyen tür', () => {
 
   it('forum konusunda geri alma açıkça reddediliyor', async () => {
     await expect(restoreRecord('thread', 'x')).rejects.toThrow(/geri alma yok/);
+  });
+});
+
+describe('softDeletePhotoDrafts · güvenli toplu işlem', () => {
+  it('boş seçimde veritabanına gitmeden sıfır döner', async () => {
+    await expect(softDeletePhotoDrafts([])).resolves.toBe(0);
   });
 });

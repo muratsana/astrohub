@@ -656,6 +656,30 @@ export async function softDeleteRecord(
   }
 }
 
+/**
+ * Fotoğraf taslaklarını toplu kaldırır.
+ *
+ * Yalnızca `status = taslak` ve `deleted_at is null` satırlar hedeflenir.
+ * Yönetici ekranda yanlışlıkla yayındaki bir fotoğrafı seçse bile bu
+ * fonksiyon onu kaldırmaz; toplu işlem dar tutuluyor.
+ */
+export async function softDeletePhotoDrafts(ids: string[]): Promise<number> {
+  const uniqueIds = [...new Set(ids.filter(Boolean))];
+  if (uniqueIds.length === 0) return 0;
+
+  const supabase = await client();
+  const { data, error } = await supabase
+    .from('astro_photos')
+    .update({ deleted_at: new Date().toISOString() })
+    .in('id', uniqueIds)
+    .eq('status', 'taslak')
+    .is('deleted_at', null)
+    .select('id');
+
+  if (error) throw new Error(error.message);
+  return data?.length ?? 0;
+}
+
 /** Silinmiş kaydı geri getirir (plan görev 5). */
 export async function restoreRecord(
   kind: RecordKind,

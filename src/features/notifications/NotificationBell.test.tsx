@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { NotificationBell } from './NotificationBell';
 import type { NotificationItem } from '@/services/content/notifications';
@@ -15,6 +15,8 @@ import type { NotificationItem } from '@/services/content/notifications';
 let count = 0;
 let items: NotificationItem[] = [];
 let user: { id: string } | null = { id: 'ben' };
+const refreshCount = vi.fn();
+const markRead = vi.fn().mockResolvedValue(undefined);
 
 vi.mock('@/services/content/notifications', async () => {
   const actual = await vi.importActual<
@@ -22,7 +24,7 @@ vi.mock('@/services/content/notifications', async () => {
   >('@/services/content/notifications');
   return {
     ...actual,
-    useUnreadCount: () => ({ count, refresh: vi.fn() }),
+    useUnreadCount: () => ({ count, refresh: refreshCount }),
     useNotifications: () => ({
       items,
       loading: false,
@@ -30,7 +32,7 @@ vi.mock('@/services/content/notifications', async () => {
       refresh: vi.fn(),
     }),
     markAllNotificationsRead: vi.fn().mockResolvedValue(undefined),
-    markNotificationRead: vi.fn().mockResolvedValue(undefined),
+    markNotificationRead: (id: string) => markRead(id),
   };
 });
 
@@ -122,8 +124,12 @@ describe('bildirim merkezi', () => {
     items = [notification()];
     renderBell();
     fireEvent.click(screen.getByRole('button', { name: 'Bildirimler' }));
-    expect(screen.getByRole('dialog', { name: 'Bildirim merkezi' })).toBeInTheDocument();
-    expect(screen.getByText('Ali seni takip etmeye başladı')).toBeInTheDocument();
+    expect(
+      screen.getByRole('dialog', { name: 'Bildirim merkezi' })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Ali seni takip etmeye başladı')
+    ).toBeInTheDocument();
   });
 
   it('panel tam listeye bağlantı taşıyor', () => {
@@ -147,12 +153,30 @@ describe('bildirim merkezi', () => {
     renderBell();
     fireEvent.click(screen.getByRole('button', { name: 'Bildirimler' }));
     expect(screen.getByText('Raporun incelendi')).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /Raporun incelendi/ })).toBeNull();
+    expect(
+      screen.queryByRole('link', { name: /Raporun incelendi/ })
+    ).toBeNull();
   });
 
   it('boş panelde ne olduğunu yazıyor', () => {
     renderBell();
     fireEvent.click(screen.getByRole('button', { name: 'Bildirimler' }));
     expect(screen.getByText('Yeni bildirimin yok.')).toBeInTheDocument();
+  });
+
+  it('bildirime tıklayınca okundu işaretler ve paneli kapatır', async () => {
+    items = [notification({ id: 'gidilecek', url: '/profil/ali' })];
+    renderBell();
+    fireEvent.click(screen.getByRole('button', { name: 'Bildirimler' }));
+
+    const link = screen.getByRole('link', {
+      name: /Ali seni takip etmeye başladı/,
+    });
+    expect(link.getAttribute('href')).toBe('/profil/ali');
+
+    fireEvent.click(link);
+
+    expect(screen.queryByRole('dialog')).toBeNull();
+    await waitFor(() => expect(markRead).toHaveBeenCalledWith('gidilecek'));
   });
 });

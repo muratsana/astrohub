@@ -22,6 +22,7 @@ import { sanitizeText } from '@/lib/sanitize';
 import { useAuth } from '@/features/auth/AuthContext';
 import { createThread } from '@/services/content/forum';
 import { Alert } from '@/components/ui/Alert';
+import { ForumImagePicker } from './ForumImagePicker';
 
 /**
  * YENİ KONU FORMU.
@@ -42,6 +43,7 @@ export function NewThreadPage() {
   const [category, setCategory] = useState<string>(forumCategoryOrder[0]);
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [labels, setLabels] = useState<ForumLabelId[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -60,6 +62,7 @@ export function NewThreadPage() {
         category: category as ForumCategoryId,
         labels,
         authorId: user.id,
+        imageFile,
       });
       await queryClient.invalidateQueries({ queryKey: ['katalog', 'forum'] });
       navigate(`/forum/${slug}`);
@@ -214,6 +217,13 @@ export function NewThreadPage() {
                 className="w-full resize-y rounded-card border border-border bg-surface-1 px-3 py-2.5 text-caption leading-[1.7] text-foreground outline-none placeholder:text-faint focus:border-primary"
               />
             </Field>
+
+            <ForumImagePicker
+              id="thread-image"
+              file={imageFile}
+              onChange={setImageFile}
+              disabled={busy}
+            />
 
             {error && <Alert variant="text">{error}</Alert>}
 

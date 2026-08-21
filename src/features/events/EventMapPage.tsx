@@ -334,6 +334,115 @@ export function EventMapPage() {
     }
   }
 
+  const mapHeaderStatus = (
+    <span className="flex min-w-0 items-center justify-end gap-2 overflow-x-auto whitespace-nowrap">
+      <span className="shrink-0 text-meta text-muted-foreground">
+        {mapItems.length} etkinlik
+      </span>
+      {live && (
+        <>
+          <Button
+            size="sm"
+            variant="secondary"
+            className="h-8 shrink-0 px-2"
+            onClick={locateOnMap}
+            disabled={permission === 'pending'}
+          >
+            {permission === 'pending' ? 'Konum alınıyor' : 'Konumumu bul'}
+          </Button>
+          <label className="flex shrink-0 items-center gap-1">
+            <span className="text-[0.68rem] text-faint">Altlık</span>
+            <Select
+              value={baseMode}
+              onChange={(event) => setBaseMode(event.target.value as BaseMode)}
+              width="5.75rem"
+              className="h-8 text-meta"
+            >
+              <option value="harita">Harita</option>
+              <option value="uydu">Uydu</option>
+            </Select>
+          </label>
+          <label className="flex shrink-0 items-center gap-1">
+            <span className="text-[0.68rem] text-faint">Katman</span>
+            <Select
+              value={layerMode}
+              onChange={(event) =>
+                setLayerMode(event.target.value as LayerMode)
+              }
+              width="5.75rem"
+              className="h-8 text-meta"
+            >
+              <option value="isik">Işık</option>
+              <option value="yok">Yok</option>
+            </Select>
+          </label>
+          {overlay && (
+            <label
+              htmlFor="event-opacity"
+              className="flex shrink-0 items-center gap-1"
+            >
+              <span className="text-[0.68rem] text-faint">Saydamlık</span>
+              <input
+                id="event-opacity"
+                type="range"
+                min={OPACITY_RANGE.min}
+                max={OPACITY_RANGE.max}
+                step={5}
+                value={opacity}
+                onChange={(event) => setOpacity(Number(event.target.value))}
+                className="block w-16 accent-primary"
+              />
+            </label>
+          )}
+          <Button
+            size="sm"
+            variant="secondary"
+            className="h-8 shrink-0 px-2"
+            onClick={toggleMapScope}
+          >
+            {showAll ? 'Tek pin' : 'Tümü'}
+          </Button>
+          <Button
+            size="sm"
+            variant="secondary"
+            className="h-8 w-8 shrink-0 px-0 text-base"
+            onClick={() => changeMapZoom(1)}
+            aria-label="Haritayı yakınlaştır"
+            title="Yakınlaştır"
+          >
+            +
+          </Button>
+          <Button
+            size="sm"
+            variant="secondary"
+            className="h-8 w-8 shrink-0 px-0 text-base"
+            onClick={() => changeMapZoom(-1)}
+            aria-label="Haritayı uzaklaştır"
+            title="Uzaklaştır"
+          >
+            -
+          </Button>
+          <Button
+            size="sm"
+            variant="secondary"
+            className="h-8 shrink-0 px-2"
+            onClick={resetMapView}
+          >
+            Sıfırla
+          </Button>
+          <Button
+            size="sm"
+            variant="secondary"
+            className="h-8 shrink-0 px-2"
+            onClick={() => setMapExpanded((current) => !current)}
+          >
+            {mapExpanded ? 'Daralt' : 'Genişlet'}
+          </Button>
+        </>
+      )}
+    </span>
+  );
+
   return (
     <>
       <PageMeta
@@ -369,7 +478,7 @@ export function EventMapPage() {
             {/* ───────── Harita ───────── */}
             <Panel
               title="Etkinlik haritası"
-              status={`${mapItems.length} etkinlik`}
+              status={mapHeaderStatus}
               className="flex h-full min-h-0 flex-col"
               bodyClassName="min-h-0 flex-1 p-0"
             >
@@ -381,17 +490,6 @@ export function EventMapPage() {
                     : 'h-[54vh] min-h-[460px] lg:h-[560px]'
                 )}
               >
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  className="absolute left-2 top-2 z-10 bg-background/90 backdrop-blur-sm"
-                  onClick={locateOnMap}
-                  disabled={permission === 'pending'}
-                >
-                  {permission === 'pending'
-                    ? 'Konum alınıyor'
-                    : 'Konumumu bul'}
-                </Button>
                 {!hasNetworkAccess ? (
                   <div className="grid h-full place-items-center p-6 text-center text-body-sm text-muted-foreground">
                     Bu önizleme dış harita isteği yapmıyor.
@@ -472,98 +570,6 @@ export function EventMapPage() {
                 )}
                 {live && (
                   <>
-                    <div className="absolute right-2 top-2 flex max-w-[calc(100%-1rem)] flex-wrap items-end gap-2 rounded-card border border-border-strong bg-background/90 px-2 py-1.5 shadow-card backdrop-blur-sm">
-                      <label className="grid gap-1">
-                        <span className="label">Altlık</span>
-                        <Select
-                          value={baseMode}
-                          onChange={(event) =>
-                            setBaseMode(event.target.value as BaseMode)
-                          }
-                          width="7rem"
-                          className="h-8 text-meta"
-                        >
-                          <option value="harita">Harita</option>
-                          <option value="uydu">Uydu</option>
-                        </Select>
-                      </label>
-                      <label className="grid gap-1">
-                        <span className="label">Katman</span>
-                        <Select
-                          value={layerMode}
-                          onChange={(event) =>
-                            setLayerMode(event.target.value as LayerMode)
-                          }
-                          width="7rem"
-                          className="h-8 text-meta"
-                        >
-                          <option value="isik">Işık</option>
-                          <option value="yok">Yok</option>
-                        </Select>
-                      </label>
-                      {overlay && (
-                        <label htmlFor="event-opacity" className="grid gap-1">
-                          <span className="label">Saydamlık</span>
-                          <input
-                            id="event-opacity"
-                            type="range"
-                            min={OPACITY_RANGE.min}
-                            max={OPACITY_RANGE.max}
-                            step={5}
-                            value={opacity}
-                            onChange={(event) =>
-                              setOpacity(Number(event.target.value))
-                            }
-                            className="block w-24 accent-primary"
-                          />
-                        </label>
-                      )}
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={toggleMapScope}
-                      >
-                        {showAll ? 'Tek pini göster' : 'Tümünü göster'}
-                      </Button>
-                    </div>
-                    <div className="absolute bottom-7 right-2 flex flex-wrap justify-end gap-1.5">
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        className="h-8 w-8 bg-background/90 px-0 text-base backdrop-blur-sm"
-                        onClick={() => changeMapZoom(1)}
-                        aria-label="Haritayı yakınlaştır"
-                        title="Yakınlaştır"
-                      >
-                        +
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        className="h-8 w-8 bg-background/90 px-0 text-base backdrop-blur-sm"
-                        onClick={() => changeMapZoom(-1)}
-                        aria-label="Haritayı uzaklaştır"
-                        title="Uzaklaştır"
-                      >
-                        -
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        className="bg-background/90 backdrop-blur-sm"
-                        onClick={resetMapView}
-                      >
-                        Sıfırla
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        className="bg-background/90 backdrop-blur-sm"
-                        onClick={() => setMapExpanded((current) => !current)}
-                      >
-                        {mapExpanded ? 'Daralt' : 'Genişlet'}
-                      </Button>
-                    </div>
                     <p className="absolute bottom-1 left-2 text-[0.62rem] text-muted-foreground">
                       {credit}
                     </p>
@@ -573,7 +579,9 @@ export function EventMapPage() {
             </Panel>
 
             <Panel
-              title={selectedIsFeatured ? 'Öne çıkan etkinlik' : 'Seçili etkinlik'}
+              title={
+                selectedIsFeatured ? 'Öne çıkan etkinlik' : 'Seçili etkinlik'
+              }
               status={
                 selected
                   ? formatEventDateRange(
@@ -714,19 +722,26 @@ export function EventMapPage() {
                     <table className="w-full min-w-[980px] border-collapse text-left">
                       <thead className="border-b border-border text-meta text-muted-foreground">
                         <tr>
-                          <th scope="col" className="px-0 py-2 pr-4 font-medium">
+                          <th
+                            scope="col"
+                            className="px-0 py-2 pr-4 font-medium"
+                          >
                             Etkinlik
                           </th>
                           <SortableHeader onClick={() => changeSort('city')}>
                             {sortLabel('city', 'İl')}
                           </SortableHeader>
-                          <SortableHeader onClick={() => changeSort('startsAt')}>
+                          <SortableHeader
+                            onClick={() => changeSort('startsAt')}
+                          >
                             {sortLabel('startsAt', 'Başlangıç')}
                           </SortableHeader>
                           <SortableHeader onClick={() => changeSort('endsAt')}>
                             {sortLabel('endsAt', 'Bitiş')}
                           </SortableHeader>
-                          <SortableHeader onClick={() => changeSort('distance')}>
+                          <SortableHeader
+                            onClick={() => changeSort('distance')}
+                          >
                             {sortLabel('distance', 'Mesafe')}
                           </SortableHeader>
                           <th

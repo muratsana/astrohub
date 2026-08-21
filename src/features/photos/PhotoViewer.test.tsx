@@ -106,20 +106,19 @@ describe('PhotoViewer · tam çözünürlük', () => {
     fireEvent.click(screen.getByRole('button', { name: /büyüt/i }));
 
     expect(screen.getByRole('dialog')).toBeInTheDocument();
-    expect(
-      screen.queryByRole('button', { name: /1:1 göster/i })
-    ).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '1:1' })).not.toBeInTheDocument();
   });
 
-  it('ölçü biliniyorsa 1:1 ile sığdır arasında geçiş yapılıyor', () => {
+  it('ölçü biliniyorsa sığdır, 1:1 ve ayarlanabilir zoom sunuyor', () => {
     renderViewer({ ...withImage, pixels: { width: 2048, height: 1365 } });
     fireEvent.click(screen.getByRole('button', { name: /büyüt/i }));
 
-    const zoom = screen.getByRole('button', { name: /1:1 göster/i });
-    fireEvent.click(zoom);
-    expect(
-      screen.getByRole('button', { name: /ekrana sığdır/i })
-    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '1:1' }));
+    const slider = screen.getByRole('slider', { name: /yakınlaştırma/i });
+    expect(slider).toHaveAttribute('max', '4');
+    fireEvent.change(slider, { target: { value: '3' } });
+    expect(screen.getByText('3x')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /sığdır/i })).toBeInTheDocument();
   });
 });
 

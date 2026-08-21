@@ -11,6 +11,7 @@ import { ThemeToggle } from '@/features/theme/ThemeToggle';
 import { RadioToggle } from '@/features/radio/RadioToggle';
 import { TvToggle } from '@/features/tv/TvToggle';
 import { NotificationBell } from '@/features/notifications/NotificationBell';
+import { GlobalSearchBox } from '@/features/search/GlobalSearchBox';
 import { cn } from '@/lib/cn';
 
 /**
@@ -214,6 +215,7 @@ export function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
               sayfada görünmesi gerekiyor. Menüde bir metin bağlantısı bunu
               yapamazdı.
             */}
+            <GlobalSearchBox />
             <TvToggle />
             <RadioToggle />
 

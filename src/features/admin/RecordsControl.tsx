@@ -15,6 +15,7 @@ import {
   fetchRecordDetail,
   fetchRecords,
   setRecordStatus,
+  softDeletePhotoDrafts,
   updateRecord,
   setThreadLocked,
   RECORD_KINDS,
@@ -98,6 +99,9 @@ export function RecordsControl({
   /* Açık düzenleme formunun kayıt kimliği; aynı anda yalnızca bir tane
      — iki form açıkken hangi kaydı düzenlediğini kaybetmek kolay. */
   const [editing, setEditing] = useState<string | null>(null);
+  const [selectedDrafts, setSelectedDrafts] = useState<Set<string>>(
+    () => new Set()
+  );
   /*
    * SİLİNMİŞLER AYRI GÖRÜNÜM (FAZ 3, plan görev 5).
    *
@@ -113,6 +117,7 @@ export function RecordsControl({
       setError(null);
       setConfirming(null);
       setEditing(null);
+      setSelectedDrafts(new Set());
       const slug = k === initialKind ? targetSlug : null;
       fetchRecords(k, slug ? 1 : 40, slug, { deleted })
         .then(setRows)
@@ -145,6 +150,23 @@ export function RecordsControl({
 
   const spec = RECORD_KINDS[kind];
   const hasReadOnlyRows = rows?.some((row) => row.readOnly) ?? false;
+  const draftRows =
+    kind === 'photo' && !silinmisler
+      ? (rows ?? []).filter((row) => !row.readOnly && row.status === 'taslak')
+      : [];
+  const selectedDraftCount = selectedDrafts.size;
+  const allDraftsSelected =
+    draftRows.length > 0 &&
+    draftRows.every((row) => selectedDrafts.has(row.id));
+
+  function toggleDraft(id: string, checked: boolean) {
+    setSelectedDrafts((current) => {
+      const next = new Set(current);
+      if (checked) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  }
 
   return (
     <Panel title={title} status={rows ? `${rows.length} kayıt` : 'okunuyor…'}>
@@ -214,6 +236,48 @@ export function RecordsControl({
 
       {error && <Alert className="mb-3">{error}</Alert>}
 
+      {kind === 'photo' && !silinmisler && draftRows.length > 0 && (
+        <div className="mb-3 flex flex-wrap items-center gap-2 rounded-card border border-border bg-surface-2 px-3 py-2">
+          <label className="flex items-center gap-2 text-meta text-muted-foreground">
+            <input
+              type="checkbox"
+              checked={allDraftsSelected}
+              onChange={(event) => {
+                const checked = event.currentTarget.checked;
+                setSelectedDrafts(
+                  checked ? new Set(draftRows.map((row) => row.id)) : new Set()
+                );
+              }}
+            />
+            Bu sayfadaki taslakları seç
+          </label>
+          <Button
+            type="button"
+            size="sm"
+            variant="danger"
+            disabled={busy || selectedDraftCount === 0}
+            onClick={() =>
+              void run(async () => {
+                const count = await softDeletePhotoDrafts([...selectedDrafts]);
+                if (count === 0) {
+                  throw new Error(
+                    'Seçili taslak bulunamadı ya da yetki nedeniyle kaldırılmadı.'
+                  );
+                }
+              })
+            }
+          >
+            {selectedDraftCount > 0
+              ? `${selectedDraftCount} taslağı kaldır`
+              : 'Seçili taslakları kaldır'}
+          </Button>
+          <span className="text-meta text-faint">
+            Yalnızca taslak fotoğraflar etkilenir; yayındaki fotoğraflar bu
+            işlemle kaldırılmaz.
+          </span>
+        </div>
+      )}
+
       {hasReadOnlyRows && !silinmisler && (
         <Alert className="mb-3">
           Bu listede sitede görünen katalog tohumu kayıtları da var. DB kaydı
@@ -238,6 +302,17 @@ export function RecordsControl({
           >
             <div className="grid items-center gap-2 md:grid-cols-[7rem_minmax(0,1fr)_7rem_auto]">
               <span className="flex items-center gap-1.5">
+                {kind === 'photo' && !silinmisler && row.status === 'taslak' && (
+                  <input
+                    type="checkbox"
+                    aria-label={`${row.title} taslağını seç`}
+                    checked={selectedDrafts.has(row.id)}
+                    disabled={busy || row.readOnly}
+                    onChange={(event) =>
+                      toggleDraft(row.id, event.currentTarget.checked)
+                    }
+                  />
+                )}
                 <Badge tone={statusTone(row.status)}>
                   {recordStatusLabel(row.status)}
                 </Badge>
