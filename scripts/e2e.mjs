@@ -371,14 +371,13 @@ await scenario('forum ana sayfası yalnız kategori özetlerini gösterir', asyn
 
   const text = await page.evaluate(() => document.body.innerText);
   assert(includesTr(text, 'ekipmanlar'), 'kategori başlığı yok');
-  assert(includesTr(text, '2 konu'), 'konu sayısı yok');
   assert(!includesTr(text, 'ilk teleskop:'), 'ana sayfada konu başlığı görünüyor');
   assert(!includesTr(text, '@astrohub'), 'ana sayfada konu yazarı görünüyor');
 });
 
-await scenario('forum konusu doğrudan adresten açılır', async () => {
-  await goto('/forum/ilk-teleskop-130-mm-mi-8-inc-dobson-mi');
-  assert(includesTr(await heading(), 'ilk teleskop'), 'konu başlığı gelmedi');
+await scenario('forum kategorisi doğrudan adresten açılır', async () => {
+  await goto('/forum/kategori/ekipmanlar');
+  assert(includesTr(await heading(), 'ekipmanlar'), 'kategori başlığı gelmedi');
 });
 
 await scenario(

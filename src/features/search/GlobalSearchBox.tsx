@@ -106,7 +106,7 @@ export function GlobalSearchBox() {
       </div>
 
       {open && query.trim() ? (
-        <div className="absolute right-0 top-[calc(100%+0.5rem)] z-40 w-72 overflow-hidden rounded-card border border-border-strong bg-surface-1 shadow-lg shadow-background/30">
+        <div className="absolute right-0 top-[calc(100%+0.5rem)] z-40 w-72 overflow-hidden rounded-card border border-border-strong bg-surface-1 shadow-overlay">
           {results.length === 0 ? (
             <p className="px-3 py-3 text-meta text-muted-foreground">
               Sonuç yok.
