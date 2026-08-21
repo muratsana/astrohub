@@ -392,6 +392,27 @@ export function SitesPage() {
         color: measurementColor(item),
       }))
     : [];
+  const pickedMarkers = pickedPoint
+    ? [
+        {
+          id: 'measurement:new',
+          point: pickedPoint,
+          label: `Yeni ölçüm noktası, ${coordinateLabel(pickedPoint)}`,
+          popup: (
+            <>
+              <span className="block truncate text-body-sm font-medium text-foreground">
+                Yeni ölçüm noktası
+              </span>
+              <span className="mt-1 block tabular text-meta text-cold">
+                {coordinateLabel(pickedPoint)}
+              </span>
+            </>
+          ),
+          active: true,
+          color: '#f59e0b',
+        },
+      ]
+    : [];
 
   function focusSite(item: ObservingSite) {
     setActive(item.slug);
@@ -656,7 +677,11 @@ export function SitesPage() {
                     overlay={overlay}
                     overlayOpacity={opacity / 100}
                     marker={{ lat: location.latitude, lng: location.longitude }}
-                    markers={[...siteMarkers, ...measurementMarkers]}
+                    markers={[
+                      ...siteMarkers,
+                      ...measurementMarkers,
+                      ...pickedMarkers,
+                    ]}
                   />
                 ) : (
                   <MapNotice
