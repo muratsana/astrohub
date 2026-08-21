@@ -27,6 +27,8 @@ export interface IsoWeekKey {
   label: string;
 }
 
+const ISTANBUL_UTC_OFFSET_HOURS = 3;
+
 export function isoWeekFromDate(date: Date): IsoWeekKey {
   const dayMs = 24 * 60 * 60 * 1000;
   const value = new Date(
@@ -72,6 +74,49 @@ export function photoWeekLabelFromDateString(
   return { label, ...formatPhotoWeekLabel(label) };
 }
 
+export function photoWeekClosesAtFromLabel(label: string): Date | null {
+  const match = /^(\d{4})-(\d{1,2})$/.exec(label.trim());
+  if (!match) return null;
+
+  const isoYear = Number(match[1]);
+  const isoWeek = Number(match[2]);
+  if (!Number.isInteger(isoYear) || !Number.isInteger(isoWeek)) return null;
+
+  const jan4 = new Date(Date.UTC(isoYear, 0, 4));
+  const jan4Weekday = jan4.getUTCDay() || 7;
+  const monday = new Date(jan4);
+  monday.setUTCDate(jan4.getUTCDate() - jan4Weekday + 1 + (isoWeek - 1) * 7);
+
+  return new Date(
+    Date.UTC(
+      monday.getUTCFullYear(),
+      monday.getUTCMonth(),
+      monday.getUTCDate() + 6,
+      23 - ISTANBUL_UTC_OFFSET_HOURS,
+      59,
+      0
+    )
+  );
+}
+
+export function isPhotoWeekLabelClosed(
+  label: string,
+  now = new Date()
+): boolean {
+  const closesAt = photoWeekClosesAtFromLabel(label);
+  return Boolean(closesAt && closesAt.getTime() <= now.getTime());
+}
+
+export function isPhotoWeekRoundClosed(
+  round: Pick<PhotoWeekRound, 'closesAt'>,
+  now = new Date()
+): boolean {
+  const closesAt = new Date(round.closesAt);
+  return (
+    !Number.isNaN(closesAt.getTime()) && closesAt.getTime() <= now.getTime()
+  );
+}
+
 function withWeekWin(photo: AstroPhoto, label: string): AstroPhoto {
   return (photo.photoOfWeekWins ?? []).includes(label)
     ? photo
@@ -101,8 +146,8 @@ export function bestRatedPhotoForWeek(
       .filter((photo) => {
         if (photo.rating.sayi <= 0) return false;
         return (
-          isoWeekFromDateString(photo.publishedAt ?? photo.capturedAt)?.label ===
-          label
+          isoWeekFromDateString(photo.publishedAt ?? photo.capturedAt)
+            ?.label === label
         );
       })
       .sort(compareWeeklyPhotoScore)[0] ?? null
@@ -116,7 +161,9 @@ export function selectWeeklyPhoto(
 ): WeeklyPick | null {
   const completed = rounds.filter(
     (round) =>
-      round.winnerPhotoId && ['sonuclandi', 'yayinda'].includes(round.status)
+      round.winnerPhotoId &&
+      ['sonuclandi', 'yayinda'].includes(round.status) &&
+      isPhotoWeekRoundClosed(round, now)
   );
 
   for (const round of completed) {
@@ -131,11 +178,15 @@ export function selectWeeklyPhoto(
     }
   }
 
-  const previous = photos.find(
-    (photo) => (photo.photoOfWeekWins?.length ?? 0) > 0
+  const previous = photos.find((photo) =>
+    (photo.photoOfWeekWins ?? []).some((label) =>
+      isPhotoWeekLabelClosed(label, now)
+    )
   );
   if (previous) {
-    const label = previous.photoOfWeekWins!.at(-1)!;
+    const label = previous
+      .photoOfWeekWins!.filter((item) => isPhotoWeekLabelClosed(item, now))
+      .at(-1)!;
     return {
       photo: withWeekWin(previous, label),
       label,
@@ -143,34 +194,43 @@ export function selectWeeklyPhoto(
     };
   }
 
-  const fallbackLabel = isoWeekLabelFromDate(now);
-  const automatic = bestRatedPhotoForWeek(photos, fallbackLabel);
-  if (automatic) {
-    return {
-      photo: withWeekWin(automatic, fallbackLabel),
-      label: fallbackLabel,
-      ...formatPhotoWeekLabel(fallbackLabel),
-    };
+  const closedLabels = [
+    ...new Set(
+      photos
+        .map(
+          (photo) =>
+            isoWeekFromDateString(photo.publishedAt ?? photo.capturedAt)?.label
+        )
+        .filter((label): label is string =>
+          Boolean(label && isPhotoWeekLabelClosed(label, now))
+        )
+    ),
+  ].sort((a, b) => b.localeCompare(a));
+
+  for (const label of closedLabels) {
+    const automatic = bestRatedPhotoForWeek(photos, label);
+    if (automatic) {
+      return {
+        photo: withWeekWin(automatic, label),
+        label,
+        ...formatPhotoWeekLabel(label),
+      };
+    }
   }
 
-  const editor = photos.find((photo) => photo.editorsPick) ?? photos[0];
-  return editor
-    ? {
-        photo: withWeekWin(editor, fallbackLabel),
-        label: fallbackLabel,
-        ...formatPhotoWeekLabel(fallbackLabel),
-      }
-    : null;
+  return null;
 }
 
 export function photoWeekArchive(
   photos: AstroPhoto[],
-  rounds: PhotoWeekRound[]
+  rounds: PhotoWeekRound[],
+  now = new Date()
 ): WeeklyArchiveItem[] {
   const archive = rounds.flatMap((round) => {
     if (
       !round.winnerPhotoId ||
-      !['sonuclandi', 'yayinda'].includes(round.status)
+      !['sonuclandi', 'yayinda'].includes(round.status) ||
+      !isPhotoWeekRoundClosed(round, now)
     ) {
       return [];
     }
@@ -191,12 +251,14 @@ export function photoWeekArchive(
 
   return photos
     .flatMap((photo) =>
-      (photo.photoOfWeekWins ?? []).map((label) => ({
-        id: `${photo.slug}-${label}`,
-        photo,
-        label,
-        ...formatPhotoWeekLabel(label),
-      }))
+      (photo.photoOfWeekWins ?? [])
+        .filter((label) => isPhotoWeekLabelClosed(label, now))
+        .map((label) => ({
+          id: `${photo.slug}-${label}`,
+          photo,
+          label,
+          ...formatPhotoWeekLabel(label),
+        }))
     )
     .sort((a, b) => b.label.localeCompare(a.label));
 }

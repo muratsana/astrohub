@@ -8,6 +8,7 @@ import { usePhotoWeekRounds } from '@/services/content/photoOfWeek';
 import {
   formatPhotoWeekLabel,
   isoWeekFromDateString,
+  isPhotoWeekRoundClosed,
 } from '@/features/photos/weeklyPick';
 import {
   closePhotoWeekRound,
@@ -69,11 +70,11 @@ export function PhotoWeekAdminControl({ canWrite }: { canWrite: boolean }) {
   const currentRound = useMemo(
     () =>
       currentWeek
-        ? rounds.rounds.find(
+        ? (rounds.rounds.find(
             (round) =>
               round.isoYear === currentWeek.isoYear &&
               round.isoWeek === currentWeek.isoWeek
-          ) ?? null
+          ) ?? null)
         : null,
     [currentWeek, rounds.rounds]
   );
@@ -83,6 +84,9 @@ export function PhotoWeekAdminControl({ canWrite }: { canWrite: boolean }) {
   );
   const ratedThisWeek = thisWeekPhotos.filter((photo) => photo.rating.sayi > 0);
   const leader = ratedThisWeek[0] ?? null;
+  const currentRoundClosed = currentRound
+    ? isPhotoWeekRoundClosed(currentRound)
+    : false;
   const resultRounds = useMemo(
     () =>
       rounds.rounds.filter((round) =>
@@ -111,7 +115,9 @@ export function PhotoWeekAdminControl({ canWrite }: { canWrite: boolean }) {
       rounds.refresh();
       catalog.refresh();
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'İşlem uygulanamadı.');
+      setMessage(
+        error instanceof Error ? error.message : 'İşlem uygulanamadı.'
+      );
     } finally {
       setBusy(false);
     }
@@ -159,7 +165,8 @@ export function PhotoWeekAdminControl({ canWrite }: { canWrite: boolean }) {
             <p className="mt-1 max-w-3xl text-meta leading-relaxed text-muted-foreground">
               Sistem o hafta yayına alınan fotoğrafları otomatik aday sayar.
               Kazanan önce 10 üzerinden ortalama puana, eşitlikte değerlendirme
-              sayısına, son eşitlikte yayın tarihine göre belirlenir.
+              sayısına, son eşitlikte yayın tarihine göre belirlenir. Seçim
+              Pazar 23:59 kapanışından önce yayımlanmaz.
             </p>
           </div>
           <Button
@@ -181,7 +188,13 @@ export function PhotoWeekAdminControl({ canWrite }: { canWrite: boolean }) {
           />
           <Metric
             label="Durum"
-            value={currentRound ? STATUS_LABELS[currentRound.status] : 'Hazırlanıyor'}
+            value={
+              currentRound
+                ? currentRoundClosed
+                  ? STATUS_LABELS[currentRound.status]
+                  : 'Pazar 23:59 bekleniyor'
+                : 'Hazırlanıyor'
+            }
             compact
           />
         </div>
@@ -202,12 +215,14 @@ export function PhotoWeekAdminControl({ canWrite }: { canWrite: boolean }) {
                 <Button
                   size="sm"
                   variant="secondary"
-                  disabled={!canWrite || busy}
+                  disabled={!canWrite || busy || !currentRoundClosed}
                   onClick={() =>
                     void run(() => closePhotoWeekRound(currentRound.id))
                   }
                 >
-                  Bu haftayı hesapla
+                  {currentRoundClosed
+                    ? 'Bu haftayı hesapla'
+                    : 'Pazar 23:59 sonrası'}
                 </Button>
               )}
             </div>
@@ -225,8 +240,8 @@ export function PhotoWeekAdminControl({ canWrite }: { canWrite: boolean }) {
           <div>
             <h3 className="label text-foreground">Haftalık sonuçlar</h3>
             <p className="mt-1 text-meta leading-relaxed text-muted-foreground">
-              Geçmiş haftaların kazananları fotoğraf detaylarında hafta rozetiyle
-              görünür.
+              Geçmiş haftaların kazananları fotoğraf detaylarında hafta
+              rozetiyle görünür.
             </p>
           </div>
           <Select
@@ -238,7 +253,8 @@ export function PhotoWeekAdminControl({ canWrite }: { canWrite: boolean }) {
             <option value="">Hafta seçin</option>
             {resultRounds.map((round) => (
               <option key={round.id} value={round.id}>
-                {roundLabel(round)} · {STATUS_LABELS[round.status] ?? round.status}
+                {roundLabel(round)} ·{' '}
+                {STATUS_LABELS[round.status] ?? round.status}
               </option>
             ))}
           </Select>
@@ -316,7 +332,9 @@ export function PhotoWeekAdminControl({ canWrite }: { canWrite: boolean }) {
             ))}
         </div>
       </section>
-      {message && <p className="mt-2 text-meta text-muted-foreground">{message}</p>}
+      {message && (
+        <p className="mt-2 text-meta text-muted-foreground">{message}</p>
+      )}
     </Panel>
   );
 }

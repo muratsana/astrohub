@@ -30,9 +30,27 @@ describe('haftanın fotoğrafı etiketi', () => {
       new Date('2026-08-05T12:00:00Z')
     );
 
-    expect(pick?.label).toBe('2026-32');
-    expect(pick?.weekLabel).toBe('32. Hafta');
-    expect(pick?.yearLabel).toBe('2026');
+    expect(pick).toBeNull();
+  });
+
+  it('erken atanmış winner satırını kapanış saatinden önce göstermez', () => {
+    const pick = selectWeeklyPhoto(
+      photos,
+      [
+        {
+          id: 'erken',
+          isoYear: 2026,
+          isoWeek: 34,
+          status: 'yayinda',
+          opensAt: '2026-08-17T21:00:00.000Z',
+          closesAt: '2026-08-23T20:59:00.000Z',
+          winnerPhotoId: photos[0].id ?? 'p0',
+        },
+      ],
+      new Date('2026-08-21T12:00:00Z')
+    );
+
+    expect(pick?.label).not.toBe('2026-34');
   });
 
   it('ISO hafta etiketini yıl sınırında doğru üretir', () => {
@@ -89,6 +107,12 @@ describe('haftanın fotoğrafı etiketi', () => {
     ];
 
     expect(bestRatedPhotoForWeek(candidates, '2026-34')?.slug).toBe('cok-oy');
-    expect(selectWeeklyPhoto(candidates, [], new Date('2026-08-21T12:00:00Z'))?.photo.slug).toBe('cok-oy');
+    expect(
+      selectWeeklyPhoto(candidates, [], new Date('2026-08-21T12:00:00Z'))
+    ).toBeNull();
+    expect(
+      selectWeeklyPhoto(candidates, [], new Date('2026-08-23T21:00:00Z'))?.photo
+        .slug
+    ).toBe('cok-oy');
   });
 });
