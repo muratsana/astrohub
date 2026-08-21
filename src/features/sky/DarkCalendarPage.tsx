@@ -151,7 +151,7 @@ export function DarkCalendarPage() {
                   key={o}
                   className="h-3 w-4 border-l border-surface-1 first:border-0"
                   style={{
-                    backgroundColor: `color-mix(in srgb, #f8fafc ${(1 - o) * 82}%, #020617 ${35 + o * 55}%)`,
+                    backgroundColor: `color-mix(in srgb, #d8dee8 ${58 - o * 48}%, #020617)`,
                   }}
                 />
               ))}
@@ -399,11 +399,11 @@ function DayCell({
   const intensity = Math.min(entry.moonlessMinutes / 360, 1);
   const hours = entry.moonlessMinutes / 60;
   const moonPercent = Math.round(entry.moon.illumination * 100);
-  const moonWash = Math.min(
-    entry.moon.illumination * (1 - intensity * 0.65) + (1 - intensity) * 0.2,
-    1
+  const moonWash = clamp01(
+    entry.moon.illumination * 0.62 + (1 - intensity) * 0.38
   );
-  const isMoonlit = moonWash > 0.45 && intensity < 0.55;
+  const darkDepth = clamp01(intensity * (1 - entry.moon.illumination * 0.55));
+  const isLightCell = moonWash > 0.66 && intensity < 0.62;
   const isGood = entry.moonlessMinutes >= 300;
   const isUsable = entry.moonlessMinutes >= 180;
 
@@ -419,9 +419,11 @@ function DayCell({
         isSelected && 'z-10 outline outline-1 -outline-offset-1 outline-primary'
       )}
       style={{
-        backgroundColor: isMoonlit
-          ? `color-mix(in srgb, #f8fafc ${40 + moonWash * 45}%, var(--color-surface-1))`
-          : `color-mix(in srgb, #020617 ${35 + intensity * 55}%, var(--color-surface-1))`,
+        backgroundColor: `color-mix(in srgb, #d8dee8 ${10 + moonWash * 48}%, #020617)`,
+        backgroundImage: [
+          `linear-gradient(135deg, rgba(255,255,255,${0.05 + moonWash * 0.12}), rgba(255,255,255,0) 52%)`,
+          `linear-gradient(180deg, rgba(15,23,42,${0.16 + darkDepth * 0.18}), rgba(2,6,23,${0.2 + darkDepth * 0.25}))`,
+        ].join(', '),
       }}
     >
       <span className="flex items-start justify-between gap-2">
@@ -430,7 +432,7 @@ function DayCell({
             'tabular text-body-sm leading-none',
             isToday
               ? 'font-bold text-primary'
-              : isMoonlit
+              : isLightCell
                 ? 'text-slate-950'
                 : 'text-foreground'
           )}
@@ -441,8 +443,8 @@ function DayCell({
           aria-hidden
           className={cn(
             'rounded-card border px-1.5 py-0.5 text-meta leading-none',
-            isMoonlit
-              ? 'border-slate-300 bg-white/75 text-slate-700'
+            isLightCell
+              ? 'border-slate-300/80 bg-white/55 text-slate-700'
               : 'border-border bg-background/55 text-muted-foreground'
           )}
           title={entry.moon.name}
@@ -458,10 +460,10 @@ function DayCell({
             isGood
               ? 'text-primary'
               : isUsable
-                ? isMoonlit
+                ? isLightCell
                   ? 'text-slate-950'
                   : 'text-foreground'
-                : isMoonlit
+                : isLightCell
                   ? 'text-slate-600'
                   : 'text-muted-foreground'
           )}
@@ -471,7 +473,7 @@ function DayCell({
         <span
           className={cn(
             'label mt-0.5 block',
-            isMoonlit ? 'text-slate-600' : 'text-faint'
+            isLightCell ? 'text-slate-600' : 'text-faint'
           )}
         >
           Aysız süre
@@ -482,7 +484,7 @@ function DayCell({
         aria-hidden
         className={cn(
           'block h-1.5 overflow-hidden rounded-full',
-          isMoonlit ? 'bg-slate-200/85' : 'bg-background/60'
+          isLightCell ? 'bg-slate-200/75' : 'bg-background/60'
         )}
       >
         <span
@@ -492,7 +494,7 @@ function DayCell({
               ? 'bg-primary'
               : isUsable
                 ? 'bg-cold'
-                : isMoonlit
+                : isLightCell
                   ? 'bg-slate-500'
                   : 'bg-muted-foreground'
           )}
@@ -501,6 +503,10 @@ function DayCell({
       </span>
     </button>
   );
+}
+
+function clamp01(value: number): number {
+  return Math.max(0, Math.min(1, value));
 }
 
 function Row({ label, value }: { label: string; value: string }) {

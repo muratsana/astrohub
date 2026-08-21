@@ -492,6 +492,15 @@ export const appRoutes = [
           )
         ),
       },
+      {
+        path: 'araclar/rehber-kurulumu',
+        element: route(
+          named(
+            () => import('@/features/calculators/GuidingPlannerPage'),
+            'GuidingPlannerPage'
+          )
+        ),
+      },
       /* Mozaik, kadrajın ikinci görünümü (denetim §3.6): "sığmıyor"
          cevabını alan kullanıcının bir sonraki sorusu zaten "kaç panele
          bölerim". Gece modülüyle aynı gerekçeyle ayrı rota kaldı —

@@ -298,6 +298,21 @@ export const siteMap: NavGroup[] = [
         ],
       },
       {
+        label: 'Rehber Kurulumu',
+        to: '/araclar/rehber-kurulumu',
+        description: 'Ana kamera ile guide sisteminin ölçek uyumunu hesaplar',
+        keywords: [
+          'guide',
+          'guiding',
+          'rehber',
+          'guide scope',
+          'oag',
+          'phd2',
+          'min move',
+          'piksel ölçeği',
+        ],
+      },
+      {
         label: 'Gökyüzü Kataloğu',
         to: '/araclar/gokyuzu-katalogu',
         description: 'NGC, IC, Sharpless, Herschel 400 — 16.663 gök cismi',

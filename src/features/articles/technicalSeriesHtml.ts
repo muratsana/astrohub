@@ -31,9 +31,9 @@ export const technicalSeriesArticles: Article[] = [
     ],
     tint: '255,157,46',
     image: {
-      url: commonsImage('Orion Nebula - Hubble 2006 mosaic.jpg'),
-      credit: 'NASA, ESA, M. Robberto (STScI/ESA)',
-      licence: 'Kamu malı',
+      url: commonsImage('NGC 6888.png'),
+      credit: 'Wikimedia Commons - NGC 6888',
+      licence: 'CC0 1.0',
     },
   },
   {
@@ -85,9 +85,9 @@ export const technicalSeriesArticles: Article[] = [
     ],
     tint: '255,157,46',
     image: {
-      url: commonsImage('Andromeda galaxy.jpg'),
-      credit: 'Wikimedia Commons - Andromeda Galaksisi',
-      licence: 'CC BY-SA',
+      url: commonsImage('NGC 6302 Hubble 2009.full.jpg'),
+      credit: 'NASA, ESA, Hubble SM4 ERO Team',
+      licence: 'Kamu malı',
     },
   },
   {
@@ -220,9 +220,9 @@ export const technicalSeriesArticles: Article[] = [
     ],
     tint: '255,157,46',
     image: {
-      url: commonsImage('Orion Nebula - Hubble 2006 mosaic.jpg'),
-      credit: 'NASA, ESA, M. Robberto (STScI/ESA)',
-      licence: 'Kamu malı',
+      url: commonsImage('Elephant Trunk Nebula.jpg'),
+      credit: 'Wikimedia Commons - Fil Hortumu Bulutsusu',
+      licence: 'CC BY-SA',
     },
   },
 ];

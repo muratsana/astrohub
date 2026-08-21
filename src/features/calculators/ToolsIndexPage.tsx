@@ -10,6 +10,7 @@ import { commonsImage } from '@/lib/commons';
 import {
   CalendarIcon,
   CalculatorIcon,
+  ChainIcon,
   FrameIcon,
   GridIcon,
   MapIcon,
@@ -58,7 +59,11 @@ const GROUPS: { title: string; hint: string; paths: string[] }[] = [
   {
     title: 'Kadraj',
     hint: 'Hedef bu ekipmana sığıyor mu',
-    paths: ['/araclar/kadraj', '/araclar/kadraj/mozaik'],
+    paths: [
+      '/araclar/kadraj',
+      '/araclar/rehber-kurulumu',
+      '/araclar/kadraj/mozaik',
+    ],
   },
   {
     title: 'Poz ve saha',
@@ -109,6 +114,7 @@ const toolIcons: Record<string, typeof GridIcon> = {
   '/araclar': GridIcon,
   '/araclar/gokyuzu-katalogu': SparkleIcon,
   '/araclar/kadraj': FrameIcon,
+  '/araclar/rehber-kurulumu': ChainIcon,
   '/araclar/isik-kirliligi': MapIcon,
   '/bu-gece': MoonIcon,
   '/araclar/poz-plani': CalculatorIcon,
@@ -288,6 +294,15 @@ const toolCovers: Record<string, ToolCoverData> = {
     alt: 'Paranal Gözlemevi’nde gece çalışan teleskoplar',
     seed: 'tool-framing',
     tint: '120,190,220',
+    credit: 'ESO',
+  },
+  '/araclar/rehber-kurulumu': {
+    url: commonsImage(
+      'ESO astronomers testing a new all-sky camera at Paranal.jpg'
+    ),
+    alt: 'Gece gökyüzü altında takip ve rehberleme ekipmanı',
+    seed: 'tool-guiding',
+    tint: '120,215,200',
     credit: 'ESO',
   },
   '/araclar/kadraj/mozaik': {
