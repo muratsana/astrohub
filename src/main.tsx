@@ -1,11 +1,10 @@
-import { StrictMode } from 'react';
+import { createElement, lazy, StrictMode, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 import { watchStaleBuild } from '@/app/staleBuild';
 import { RouterProvider } from 'react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { router } from '@/app/router';
 import { AuthProvider } from '@/features/auth/AuthContext';
-import { LivePresenceTracker } from '@/features/admin/livePresence';
 import { ThemeProvider } from '@/features/theme/ThemeContext';
 import { LocationProvider } from '@/features/location/LocationContext';
 import { PreviewEditorProvider } from '@/features/preview-editor/PreviewEditorContext';
@@ -15,6 +14,12 @@ import { SiteConfigProvider } from '@/features/site/SiteConfigContext';
 import { UiPreferencesProvider } from '@/features/preferences/UiPreferencesProvider';
 import { registerServiceWorker } from '@/pwa/register';
 import './index.css';
+
+const livePresenceTracker = lazy(() =>
+  import('@/features/admin/livePresence').then((module) => ({
+    default: module.LivePresenceTracker,
+  }))
+);
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -44,7 +49,9 @@ createRoot(rootEl).render(
               gezinme yayını sıfırlardı.
             */}
             <RadioProvider>
-              <LivePresenceTracker />
+              <Suspense fallback={null}>
+                {createElement(livePresenceTracker)}
+              </Suspense>
               {/*
                 Site ayarları router'ın DIŞINDA: bakım kapısı ve duyuru
                 bandı kabuk seviyesinde yaşıyor, her rota değişiminde
