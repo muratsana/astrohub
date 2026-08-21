@@ -9,7 +9,7 @@ describe('allsky servis yardımcıları', () => {
   it('Allsky index adresinden canlı görüntü adresi türetir', () => {
     expect(
       imageUrlFromAllskyPage('https://ozdensobs.com/allsky/index.php')
-    ).toBe('https://www.ozdensobs.com/allsky/image.jpg');
+    ).toBe('https://ozdensobs.com/allsky/image.jpg');
   });
 
   it('Türkçe başlıktan kararlı slug üretir', () => {

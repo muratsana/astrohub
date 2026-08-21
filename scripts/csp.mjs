@@ -85,7 +85,9 @@ const DIRECTIVES = {
      kesitlerinden geliyor; kaynak kamuya açık ve her koordinat için
      kesit üretebildiği için kataloğun tamamı kapsanıyor. Bu satır
      olmadan önizlemeler sessizce kırılır ve kartlar yordamsal yıldız
-     alanına düşerdi — yani hata görünmez olurdu. */
+     alanına düşerdi — yani hata görünmez olurdu.
+
+     ozdensobs.com — Allsky sayfasındaki canlı kamera görüntüsü. */
   'img-src': [
     "'self'",
     'data:',
@@ -98,6 +100,8 @@ const DIRECTIVES = {
     'https://upload.wikimedia.org',
     'https://cdn.esahubble.org',
     'https://alasky.cds.unistra.fr',
+    'https://ozdensobs.com',
+    'https://www.ozdensobs.com',
   ],
 
   /* Fontlar self-host — dış kaynak yok. */

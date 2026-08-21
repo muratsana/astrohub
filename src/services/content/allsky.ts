@@ -63,9 +63,6 @@ export function imageUrlFromAllskyPage(pageUrl: string): string | null {
   if (!safe) return null;
   try {
     const url = new URL(safe);
-    if (url.hostname === 'ozdensobs.com') {
-      url.hostname = 'www.ozdensobs.com';
-    }
     if (!url.pathname.endsWith('/')) {
       url.pathname = url.pathname.replace(/\/[^/]*$/, '/image.jpg');
     } else {
