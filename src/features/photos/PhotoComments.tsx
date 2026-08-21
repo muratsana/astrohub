@@ -213,6 +213,7 @@ function CommentItem({
 
 function formatCommentDateTime(value: string): string {
   return new Date(value).toLocaleString('tr-TR', {
+    timeZone: 'Europe/Istanbul',
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
