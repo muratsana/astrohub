@@ -10,6 +10,7 @@ import { Readout } from '@/components/ui/Readout';
 import { FilterCell } from '@/components/ui/FilterBar';
 import { Input, Select } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
+import { CARD_RATIO } from '@/components/ui/cardRatios';
 import { cn } from '@/lib/cn';
 import { computeGuiding } from '@/domain/astronomy/guiding';
 import { useCalculatorPresets, type GuidePreset } from './presets';
@@ -367,7 +368,7 @@ function ScopeComparisonVisual({
           <div className="absolute inset-0 opacity-55 [background-image:radial-gradient(circle_at_18%_22%,rgba(255,255,255,0.28)_0_1px,transparent_1.5px),radial-gradient(circle_at_72%_30%,rgba(125,211,252,0.22)_0_1px,transparent_1.5px),radial-gradient(circle_at_56%_78%,rgba(255,170,70,0.24)_0_1px,transparent_1.5px)] [background-size:84px_74px,118px_91px,148px_112px]" />
           <div className="relative flex h-full min-h-[15rem] flex-col justify-end">
             <p className="label mb-auto text-faint">Ana scope / guide scope</p>
-            <div className="mb-6 ml-[18%] h-4 w-[64%] rounded-full border border-cold/45 bg-cold/10 shadow-[0_0_22px_rgba(125,211,252,0.12)]" />
+            <div className="mb-6 ml-[18%] h-4 w-[64%] rounded-full border border-cold/45 bg-cold/10" />
             <div
               className="mb-4 ml-[32%] h-2.5 rounded-full border border-primary/55 bg-primary/15"
               style={{ width: `${guideWidth}%` }}
@@ -394,9 +395,14 @@ function ScopeComparisonVisual({
               {formatNumber(guideStarPx, 1)} px
             </Badge>
           </div>
-          <div className="relative grid aspect-[16/10] place-items-center overflow-hidden rounded-card border border-border bg-background [background-image:linear-gradient(rgba(148,163,184,0.12)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.12)_1px,transparent_1px)] [background-size:24px_24px]">
+          <div
+            className={cn(
+              'relative grid place-items-center overflow-hidden rounded-card border border-border bg-background [background-image:linear-gradient(rgba(148,163,184,0.12)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.12)_1px,transparent_1px)] [background-size:24px_24px]',
+              CARD_RATIO.wide
+            )}
+          >
             <span
-              className="rounded-full border border-foreground/25 bg-foreground/35 shadow-[0_0_34px_rgba(255,255,255,0.22)]"
+              className="rounded-full border border-foreground/35 bg-foreground/35 outline outline-1 outline-offset-4 outline-foreground/10"
               style={{ width: starSize, height: starSize }}
             />
             <span
