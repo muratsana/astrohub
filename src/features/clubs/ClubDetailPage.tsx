@@ -133,7 +133,7 @@ export function ClubDetailPage() {
               { label: club.name },
             ]}
           />
-          <div className="grid gap-4 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-start">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
             {logoPhoto && (
               <div className="flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-card border border-border bg-surface-1 p-1 sm:size-24">
                 <RemoteImage
@@ -166,18 +166,19 @@ export function ClubDetailPage() {
                   {club.summary}
                 </p>
               )}
-            </div>
-
-            <div className="flex min-w-0 max-w-full flex-wrap items-center gap-2">
-              <Badge tone="primary">{clubKindLabels[club.kind]}</Badge>
-              {club.verifiedAt && <Badge tone="success">Doğrulanmış</Badge>}
-              {club.topics?.map((topic) => (
-                <Badge key={topic} tone="cold">
-                  {clubTopicLabels[topic]}
-                </Badge>
-              ))}
-              {club.publicEvents && <Badge>Halka açık</Badge>}
-              {club.sharedEquipment && <Badge tone="cold">Ortak ekipman</Badge>}
+              <div className="mt-3 flex min-w-0 max-w-full flex-wrap items-center gap-2">
+                <Badge tone="primary">{clubKindLabels[club.kind]}</Badge>
+                {club.verifiedAt && <Badge tone="success">Doğrulanmış</Badge>}
+                {club.topics?.map((topic) => (
+                  <Badge key={topic} tone="cold">
+                    {clubTopicLabels[topic]}
+                  </Badge>
+                ))}
+                {club.publicEvents && <Badge>Halka açık</Badge>}
+                {club.sharedEquipment && (
+                  <Badge tone="cold">Ortak ekipman</Badge>
+                )}
+              </div>
             </div>
           </div>
         </header>
