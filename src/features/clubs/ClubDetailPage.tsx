@@ -12,13 +12,14 @@ import { RemoteImage } from '@/components/media/RemoteImage';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { BlockRenderer } from '@/components/content/BlockRenderer';
 import { breadcrumbJsonLd, absoluteUrl } from '@/lib/seo';
-import { events } from '@/features/events/data';
 import { eventTypeLabels } from '@/features/events/types';
+import { formatEventDateRange } from '@/features/events/eventDates';
 import { clubKindLabels, clubTopicLabels } from './data';
 import { useClub } from './clubsSource';
 import { cityPathForName } from '@/features/city/routes';
 import { useAuth } from '@/features/auth/AuthContext';
 import { useClubPublicSpace } from '@/services/content/clubManagement';
+import { useEventCatalog } from '@/services/content/events';
 
 /**
  * TOPLULUK PROFİLİ (§8.11, §14.7).
@@ -45,24 +46,33 @@ import { useClubPublicSpace } from '@/services/content/clubManagement';
  * kulübü "bilgisi taze ama kim olduğu belirsiz" bir kulüple aynı
  * gösterirdi.
  */
+function normalizeOwner(value: string | undefined): string {
+  return (value ?? '').trim().toLocaleLowerCase('tr-TR');
+}
+
 export function ClubDetailPage() {
   const { slug } = useParams<{ slug: string }>();
   const { user } = useAuth();
   const { club, loading } = useClub(slug);
   const clubSpace = useClubPublicSpace(club?.slug, Boolean(user));
+  const eventCatalog = useEventCatalog();
 
   const clubEvents = useMemo(() => {
-    if (!club?.organizerName) return { upcoming: [], past: [] };
+    if (!club) return { upcoming: [], past: [] };
+    const ownerNames = [club.organizerName, club.name]
+      .map(normalizeOwner)
+      .filter(Boolean);
+    if (ownerNames.length === 0) return { upcoming: [], past: [] };
     const now = Date.now();
-    const mine = events
-      .filter((e) => e.organizer.name === club.organizerName)
+    const mine = eventCatalog.items
+      .filter((e) => ownerNames.includes(normalizeOwner(e.organizer.name)))
       .sort((a, b) => a.startsAt.localeCompare(b.startsAt));
 
     return {
       upcoming: mine.filter((e) => new Date(e.startsAt).getTime() >= now),
       past: mine.filter((e) => new Date(e.startsAt).getTime() < now).reverse(),
     };
-  }, [club]);
+  }, [club, eventCatalog.items]);
 
   /* Veri gelmeden 404 basmıyoruz: ilk kare koddaki yedekle çiziliyor ve
      orada olmayan bir kulüp veritabanında olabilir. */
@@ -72,6 +82,14 @@ export function ClubDetailPage() {
   const approvedMembers = clubSpace.members;
   const memberPosts = clubSpace.posts.filter((post) => post.audience === 'members');
   const publicPosts = clubSpace.posts.filter((post) => post.audience === 'public');
+  const logoPhoto = club.photos?.[0];
+  const galleryPhotos = club.photos?.slice(1) ?? [];
+  const memberCountLabel =
+    approvedMembers.length > 0
+      ? `${approvedMembers.length} üye`
+      : club.memberCount
+        ? `${club.memberCount} üye`
+        : '0 üye';
 
   const organizationJson = {
     '@context': 'https://schema.org',
@@ -115,7 +133,19 @@ export function ClubDetailPage() {
               { label: club.name },
             ]}
           />
-          <div className="grid gap-3">
+          <div className="grid gap-4 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-start">
+            {logoPhoto && (
+              <div className="flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-card border border-border bg-surface-1 p-1 sm:size-24">
+                <RemoteImage
+                  src={logoPhoto.url}
+                  alt={logoPhoto.alt}
+                  seed={`${club.slug}-logo`}
+                  className="object-contain"
+                  sizes="96px"
+                  priority
+                />
+              </div>
+            )}
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2 text-meta text-muted-foreground">
                 <span>{club.city}</span>
@@ -128,11 +158,11 @@ export function ClubDetailPage() {
                   </>
                 )}
               </div>
-              <h1 className="mt-2 max-w-5xl text-balance type-page text-foreground">
+              <h1 className="mt-2 max-w-none text-balance type-page text-foreground">
                 {club.name}
               </h1>
               {club.summary && (
-                <p className="mt-3 max-w-5xl text-body-sm leading-relaxed text-muted-foreground">
+                <p className="mt-3 w-full max-w-none text-body-sm leading-relaxed text-muted-foreground">
                   {club.summary}
                 </p>
               )}
@@ -152,7 +182,7 @@ export function ClubDetailPage() {
           </div>
         </header>
 
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,22rem)]">
           <div className="space-y-4">
             {club.bodyBlocks.length > 0 && (
               <Panel title="Topluluk Profili">
@@ -162,10 +192,10 @@ export function ClubDetailPage() {
               </Panel>
             )}
 
-            {club.photos && club.photos.length > 0 && (
-              <Panel title="Fotoğraflar" status={`${club.photos.length}`}>
+            {galleryPhotos.length > 0 && (
+              <Panel title="Fotoğraflar" status={`${galleryPhotos.length}`}>
                 <div className="grid gap-2 sm:grid-cols-3 xl:grid-cols-4">
-                  {club.photos.map((photo, index) => (
+                  {galleryPhotos.map((photo, index) => (
                     <div
                       key={photo.url}
                       className="aspect-[4/3] overflow-hidden rounded-card border border-border bg-surface-2"
@@ -188,7 +218,7 @@ export function ClubDetailPage() {
                 approvedMembers.length > 0
                   ? `${approvedMembers.length} üye`
                   : club.memberCount
-                    ? `${club.memberCount} bildirilen`
+                    ? `${club.memberCount} üye`
                     : undefined
               }
             >
@@ -221,9 +251,7 @@ export function ClubDetailPage() {
                 </ul>
               ) : (
                 <p className="py-3 text-meta leading-relaxed text-muted-foreground">
-                  Üye listesi yalnızca oturum açmış ve yetkili kullanıcılar için
-                  veritabanından okunur. Bildirilen üye sayısı künyede
-                  görünür.
+                  Henüz onaylanmış üye görünmüyor.
                 </p>
               )}
             </Panel>
@@ -282,50 +310,6 @@ export function ClubDetailPage() {
               </Panel>
             )}
 
-            <Panel
-              title="Yaklaşan etkinlikler"
-              status={`${clubEvents.upcoming.length} kayıt`}
-            >
-              {clubEvents.upcoming.length === 0 ? (
-                <p className="py-3 text-meta leading-relaxed text-muted-foreground">
-                  Bu topluluğun takvimde duyurulmuş yaklaşan etkinliği yok.
-                  Geçmiş etkinlikleri aşağıda görebilirsiniz.
-                </p>
-              ) : (
-                <ul>
-                  {clubEvents.upcoming.map((event) => (
-                    <li
-                      key={event.slug}
-                      className="border-b border-border last:border-0"
-                    >
-                      <Link
-                        to={`/etkinlik/${event.slug}`}
-                        className="group flex items-baseline justify-between gap-3 py-2.5"
-                      >
-                        <span className="min-w-0">
-                          <span className="block truncate text-caption text-foreground group-hover:text-primary">
-                            {event.title}
-                          </span>
-                          <span className="tabular mt-0.5 block text-meta text-muted-foreground">
-                            {new Date(event.startsAt).toLocaleDateString(
-                              'tr-TR',
-                              {
-                                day: 'numeric',
-                                month: 'long',
-                                year: 'numeric',
-                              }
-                            )}{' '}
-                            · {event.venue}
-                          </span>
-                        </span>
-                        <Badge>{eventTypeLabels[event.type]}</Badge>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </Panel>
-
             {clubEvents.past.length > 0 && (
               <Panel
                 title="Geçmiş etkinlikler"
@@ -378,12 +362,8 @@ export function ClubDetailPage() {
                 />
                 <SpecRow
                   label="Üye sayısı"
-                  value={
-                    club.memberCount
-                      ? String(club.memberCount)
-                      : 'bildirilmemiş'
-                  }
-                  tone="muted"
+                  value={memberCountLabel}
+                  tone={approvedMembers.length > 0 ? 'cold' : 'muted'}
                 />
                 <SpecRow
                   label="Halka açık etkinlik"
@@ -483,35 +463,46 @@ export function ClubDetailPage() {
               )}
             </Panel>
 
-            <Panel title="Düzenli faaliyetler">
-              <ul className="space-y-2">
-                {club.activities.map((activity) => (
-                  <li
-                    key={activity}
-                    className="flex gap-2 text-meta leading-relaxed text-muted-foreground"
-                  >
-                    <span aria-hidden className="text-primary">
-                      ·
-                    </span>
-                    {activity}
-                  </li>
-                ))}
-              </ul>
-            </Panel>
-
-            <Panel title="Topluluk Araçları">
-              <div className="flex flex-wrap gap-2">
-                <ButtonLink to="/etkinlikler" size="sm" variant="secondary">
-                  Tüm etkinlikler
-                </ButtonLink>
+            <Panel
+              title="Yaklaşan etkinlikler"
+              status={`${clubEvents.upcoming.length} kayıt`}
+            >
+              <div className="mb-3 flex justify-end">
                 <ButtonLink
-                  to={`/hesap?sekme=kulup-yonetimi`}
+                  to={`/etkinlik/yeni?ad=${encodeURIComponent(club.name)}`}
                   size="sm"
-                  variant="ghost"
+                  variant="secondary"
                 >
-                  Yönetim paneli
+                  Etkinlik oluştur
                 </ButtonLink>
               </div>
+              {clubEvents.upcoming.length === 0 ? (
+                <p className="py-3 text-meta leading-relaxed text-muted-foreground">
+                  Bu topluluğun takvimde duyurulmuş yaklaşan etkinliği yok.
+                </p>
+              ) : (
+                <ul className="divide-y divide-border">
+                  {clubEvents.upcoming.map((event) => (
+                    <li key={event.slug}>
+                      <Link
+                        to={`/etkinlik/${event.slug}`}
+                        className="group grid gap-1 py-3 transition-colors hover:text-primary"
+                      >
+                        <span className="flex items-start justify-between gap-3">
+                          <span className="min-w-0 truncate text-caption font-semibold text-foreground group-hover:text-primary">
+                            {event.title}
+                          </span>
+                          <Badge>{eventTypeLabels[event.type]}</Badge>
+                        </span>
+                        <span className="tabular text-meta text-muted-foreground">
+                          {formatEventDateRange(event.startsAt, event.endsAt)} ·{' '}
+                          {event.venue}
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </Panel>
           </div>
         </div>
