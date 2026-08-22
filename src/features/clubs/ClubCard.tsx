@@ -1,3 +1,4 @@
+import { Link } from 'react-router';
 import { Badge } from '@/components/ui/Badge';
 import {
   ContentCard,
@@ -8,8 +9,9 @@ import {
 } from '@/components/ui/ContentCard';
 import { RemoteImage } from '@/components/media/RemoteImage';
 import { cn } from '@/lib/cn';
-import { clubKindLabels, clubTopicLabels } from './data';
+import { clubKindLabels } from './data';
 import type { ClubView } from './clubsSource';
+import { ClubJoinButton } from './ClubJoinButton';
 
 /**
  * DİZİN KARTI — hem ana listede hem şehir sayfalarında.
@@ -27,26 +29,28 @@ export function ClubCard({
   variant: 'grid' | 'list';
 }) {
   return (
-    <ContentCard
-      to={`/topluluk/${club.slug}`}
-      variant={variant}
-      className={variant === 'grid' ? undefined : 'items-stretch'}
-    >
-      <ContentCardMedia
-        variant={variant}
-        ratio="standard"
-        className={variant === 'list' ? 'mt-0 self-start' : undefined}
+    <ContentCard variant={variant} className={variant === 'grid' ? undefined : 'items-stretch'}>
+      <Link
+        to={`/topluluk/${club.slug}`}
+        className={variant === 'list' ? 'shrink-0' : 'block'}
+        aria-label={`${club.name} sayfasını aç`}
       >
-        <RemoteImage
-          src={club.photos?.[0]?.url}
-          alt={club.photos?.[0]?.alt ?? `${club.name} görseli`}
-          seed={club.slug}
-          tint={club.kind}
-          sizes={
-            variant === 'list' ? '128px' : '(min-width: 1024px) 260px, 100vw'
-          }
-        />
-      </ContentCardMedia>
+        <ContentCardMedia
+          variant={variant}
+          ratio="standard"
+          className={variant === 'list' ? 'mt-0 self-start' : undefined}
+        >
+          <RemoteImage
+            src={club.photos?.[0]?.url}
+            alt={club.photos?.[0]?.alt ?? `${club.name} görseli`}
+            seed={club.slug}
+            tint={club.kind}
+            sizes={
+              variant === 'list' ? '128px' : '(min-width: 1024px) 260px, 100vw'
+            }
+          />
+        </ContentCardMedia>
+      </Link>
 
       <ContentCardBody
         className={cn(
@@ -55,20 +59,13 @@ export function ClubCard({
         )}
       >
         <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-          <ContentCardTitle lines={2} className="font-medium leading-snug">
-            {club.name}
-          </ContentCardTitle>
+          <Link to={`/topluluk/${club.slug}`} className="min-w-0">
+            <ContentCardTitle lines={2} className="font-medium leading-snug">
+              {club.name}
+            </ContentCardTitle>
+          </Link>
           <span className="label">{club.city}</span>
         </div>
-
-        <p
-          className={cn(
-            'mt-1.5 text-body-sm leading-relaxed text-muted-foreground',
-            variant === 'grid' ? 'line-clamp-3' : 'line-clamp-2'
-          )}
-        >
-          {club.summary}
-        </p>
 
         <ContentCardMeta className="mt-1.5 text-faint">
           {club.foundedOn
@@ -80,18 +77,16 @@ export function ClubCard({
         </ContentCardMeta>
 
         <div className="mt-auto pt-2">
-          <div className="flex flex-wrap gap-1">
+          <div className="flex flex-wrap items-center gap-1.5">
             <Badge tone="primary">{clubKindLabels[club.kind]}</Badge>
             {/* Doğrulama rozeti önde: ziyaretçinin kartta aradığı ilk şey
                 "bu kayıt teyitli mi". */}
             {club.verifiedAt && <Badge tone="success">Doğrulanmış</Badge>}
-            {club.topics?.slice(0, 2).map((topic) => (
-              <Badge key={topic} tone="cold">
-                {clubTopicLabels[topic]}
-              </Badge>
-            ))}
-            {club.publicEvents && <Badge>Halka açık</Badge>}
-            {club.sharedEquipment && <Badge tone="cold">Ortak ekipman</Badge>}
+            <ClubJoinButton
+              clubSlug={club.slug}
+              clubName={club.name}
+              compact
+            />
           </div>
         </div>
       </ContentCardBody>

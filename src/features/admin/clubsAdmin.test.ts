@@ -94,7 +94,7 @@ describe('describeClubInfoProblem', () => {
     ).toBeNull();
   });
 
-  it('mevcut görsellerle birlikte toplam 5 sınırını koruyor', () => {
+  it('mevcut görsellerle birlikte toplam 20 sınırını koruyor', () => {
     expect(
       describeClubInfoProblem(
         gecerli,
@@ -104,8 +104,8 @@ describe('describeClubInfoProblem', () => {
           { size: 140_000, type: 'image/png' },
           { size: 150_000, type: 'image/jpeg' },
         ],
-        2
+        19
       )
-    ).toMatch(/en fazla 5/);
+    ).toMatch(/en fazla 20/);
   });
 });

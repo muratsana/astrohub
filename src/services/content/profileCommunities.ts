@@ -93,3 +93,21 @@ export async function requestClubMembership(
   if (error) throw new Error(error.message);
 }
 
+export async function leaveClubMembership(
+  userId: string,
+  clubSlug: string
+): Promise<void> {
+  const slug = sanitizeText(clubSlug, { maxLength: 120 });
+  if (!slug) throw new Error('Topluluk seçin.');
+
+  const supabase = await getSupabase();
+  if (!supabase) throw new Error('Veritabanı bağlantısı yapılandırılmamış.');
+
+  const { error } = await supabase
+    .from('club_membership_requests')
+    .delete()
+    .eq('user_id', userId)
+    .eq('club_slug', slug);
+  if (error) throw new Error(error.message);
+}
+

@@ -43,6 +43,7 @@ export interface AdminClub {
   listed: boolean;
   status: ClubStatus;
   submittedBy: string | null;
+  deletedAt: string | null;
 }
 
 export interface ClubInfoDraft extends ClubDraft {
@@ -58,7 +59,7 @@ async function client() {
 const SELECT =
   'slug, name, kind, city, founded_on, place, topics, summary, body_blocks, public_events, ' +
   'shared_equipment, website, contact_email, join_url, social_url, whatsapp_url, telegram_url, ' +
-  'photo_paths, source_name, info_checked_on, verified_at, listed, status, submitted_by';
+  'photo_paths, source_name, info_checked_on, verified_at, listed, status, submitted_by, deleted_at';
 
 interface Row {
   slug: string;
@@ -85,6 +86,7 @@ interface Row {
   listed: boolean;
   status: string | null;
   submitted_by: string | null;
+  deleted_at: string | null;
 }
 
 function status(raw: string | null): ClubStatus {
@@ -121,6 +123,7 @@ function toAdminClub(r: Row): AdminClub {
     listed: r.listed,
     status: status(r.status),
     submittedBy: r.submitted_by,
+    deletedAt: r.deleted_at,
   };
 }
 
@@ -204,13 +207,21 @@ export function describeClubInfoProblem(
   return null;
 }
 
-export async function fetchAdminClubs(): Promise<AdminClub[]> {
+export async function fetchAdminClubs({
+  archived = false,
+}: {
+  archived?: boolean;
+} = {}): Promise<AdminClub[]> {
   const supabase = await client();
-  const { data, error } = await supabase
+  let query = supabase
     .from('clubs')
     .select(SELECT)
     .order('status', { ascending: true })
     .order('name');
+  query = archived
+    ? query.not('deleted_at', 'is', null)
+    : query.is('deleted_at', null);
+  const { data, error } = await query;
   if (error) throw new Error(error.message);
   return ((data ?? []) as unknown as Row[]).map(toAdminClub);
 }
@@ -353,6 +364,30 @@ export async function setClubListed(
   const { error } = await supabase
     .from('clubs')
     .update({ listed })
+    .eq('slug', slug);
+  if (error) throw new Error(error.message);
+}
+
+export async function archiveClub(slug: string): Promise<void> {
+  const supabase = await client();
+  const { error } = await supabase
+    .from('clubs')
+    .update({
+      deleted_at: new Date().toISOString(),
+      listed: false,
+    })
+    .eq('slug', slug);
+  if (error) throw new Error(error.message);
+}
+
+export async function restoreClub(slug: string): Promise<void> {
+  const supabase = await client();
+  const { error } = await supabase
+    .from('clubs')
+    .update({
+      deleted_at: null,
+      listed: false,
+    })
     .eq('slug', slug);
   if (error) throw new Error(error.message);
 }

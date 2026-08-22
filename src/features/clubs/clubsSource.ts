@@ -136,7 +136,7 @@ function normalize(row: Record<string, unknown>): ClubView | null {
   const topics = konuListesi(row.topics);
   const summary = metin(row.summary);
   const photoPaths = Array.isArray(row.photo_paths)
-    ? row.photo_paths.map(metin).filter(Boolean).slice(0, 3)
+    ? row.photo_paths.map(metin).filter(Boolean).slice(0, 20)
     : [];
   const uploadedPhotos = photoPaths
     .map((path, i) => {

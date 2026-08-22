@@ -16,7 +16,7 @@ import {
   type ClubTopic,
 } from '@/features/clubs/data';
 
-export const CLUB_PHOTO_LIMIT = 5;
+export const CLUB_PHOTO_LIMIT = 20;
 export const CLUB_PHOTO_MAX_BYTES = 5 * 1024 * 1024;
 export const CLUB_PHOTO_MAX_EDGE = 1400;
 

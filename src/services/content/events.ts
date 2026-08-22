@@ -171,6 +171,7 @@ export function useEventCatalog(): ContentSelection<AstroEvent> {
 
 export interface NewEventInput {
   userId: string;
+  organizerName?: string;
   title: string;
   type: EventType;
   city: string;
@@ -234,7 +235,9 @@ export async function createEventContribution(
     free: input.free,
     camping: input.camping,
     organizer_id: input.userId,
-    organizer_name: 'Topluluk katkısı',
+    organizer_name:
+      sanitizeText(input.organizerName, { maxLength: 120 }) ||
+      'Topluluk katkısı',
     organizer_verified: false,
     description: sanitizeText(input.description, {
       multiline: true,

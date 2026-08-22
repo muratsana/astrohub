@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate, useSearchParams } from 'react-router';
 import { Container } from '@/components/ui/Container';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Panel } from '@/components/ui/Panel';
@@ -19,7 +19,9 @@ import { eventTypeLabels, type EventType } from './types';
 
 export function NewEventPage() {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
   const { user } = useAuth();
+  const organizerName = params.get('ad')?.trim() ?? '';
   const [title, setTitle] = useState('');
   const [type, setType] = useState<EventType>('halk-gozlemi');
   const [city, setCity] = useState('');
@@ -37,6 +39,7 @@ export function NewEventPage() {
 
   const input: NewEventInput = {
     userId: user?.id ?? '',
+    organizerName,
     title,
     type,
     city,
@@ -97,6 +100,11 @@ export function NewEventPage() {
           )}
 
           <div className="grid gap-3">
+            {organizerName && (
+              <Field label="Organizatör" htmlFor="event-organizer">
+                <Input id="event-organizer" value={organizerName} readOnly />
+              </Field>
+            )}
             <Field label="Etkinlik adı" htmlFor="event-title">
               <Input
                 id="event-title"

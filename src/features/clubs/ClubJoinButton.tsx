@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
-import { Button } from '@/components/ui/Button';
+import { Button, ButtonLink } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { useAuth } from '@/features/auth/AuthContext';
 import {
+  leaveClubMembership,
   requestClubMembership,
   useMyClubMemberships,
 } from '@/services/content/profileCommunities';
@@ -39,9 +40,11 @@ import {
 export function ClubJoinButton({
   clubSlug,
   clubName,
+  compact = false,
 }: {
   clubSlug: string;
   clubName: string;
+  compact?: boolean;
 }) {
   const { user } = useAuth();
   const memberships = useMyClubMemberships(user?.id);
@@ -49,6 +52,14 @@ export function ClubJoinButton({
   const [error, setError] = useState<string | null>(null);
 
   if (!user) {
+    if (compact) {
+      return (
+        <ButtonLink to="/giris" size="sm" variant="secondary">
+          Katıl
+        </ButtonLink>
+      );
+    }
+
     return (
       <p className="text-meta leading-relaxed text-muted-foreground">
         <Link to="/giris" className="text-primary hover:underline">
@@ -67,11 +78,43 @@ export function ClubJoinButton({
   const mevcut = memberships.memberships.find((m) => m.clubSlug === clubSlug);
 
   if (mevcut?.status === 'approved') {
-    return <Badge tone="success">Bu topluluğun üyesisiniz</Badge>;
+    return (
+      <div>
+        {!compact && <Badge tone="success">Bu topluluğun üyesisiniz</Badge>}
+        <Button
+          size="sm"
+          variant={compact ? 'secondary' : 'ghost'}
+          disabled={busy}
+          onClick={() => void ayril()}
+          className={compact ? undefined : 'mt-2'}
+        >
+          {busy ? 'Çıkılıyor…' : 'Çık'}
+        </Button>
+        {error && (
+          <p className="mt-1 text-meta leading-snug text-danger">{error}</p>
+        )}
+      </div>
+    );
   }
 
   if (mevcut?.status === 'pending') {
-    return <Badge tone="primary">Üyelik isteğiniz onay bekliyor</Badge>;
+    return (
+      <div>
+        {!compact && <Badge tone="primary">Üyelik isteğiniz onay bekliyor</Badge>}
+        <Button
+          size="sm"
+          variant="ghost"
+          disabled={busy}
+          onClick={() => void ayril()}
+          className={compact ? undefined : 'mt-2'}
+        >
+          {busy ? 'İptal ediliyor…' : compact ? 'Bekliyor' : 'İsteği geri çek'}
+        </Button>
+        {error && (
+          <p className="mt-1 text-meta leading-snug text-danger">{error}</p>
+        )}
+      </div>
+    );
   }
 
   async function gonder() {
@@ -88,10 +131,24 @@ export function ClubJoinButton({
     }
   }
 
+  async function ayril() {
+    if (!user) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await leaveClubMembership(user.id, clubSlug);
+      memberships.refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Üyelik güncellenemedi.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div>
       <Button size="sm" disabled={busy} onClick={() => void gonder()}>
-        {busy ? 'Gönderiliyor…' : 'Katılma isteği gönder'}
+        {busy ? 'Gönderiliyor…' : compact ? 'Katıl' : 'Katılma isteği gönder'}
       </Button>
       {mevcut?.status === 'rejected' && (
         <p className="mt-1 text-meta leading-snug text-muted-foreground">

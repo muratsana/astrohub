@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { ClubJoinButton } from './ClubJoinButton';
 import { Link, useParams } from 'react-router';
 import { Container } from '@/components/ui/Container';
-import { PageHeader } from '@/components/ui/PageHeader';
+import { Breadcrumb } from '@/components/ui/PageHeader';
 import { Panel, SpecList, SpecRow } from '@/components/ui/Panel';
 import { Badge } from '@/components/ui/Badge';
 import { ButtonLink } from '@/components/ui/Button';
@@ -16,8 +16,9 @@ import { events } from '@/features/events/data';
 import { eventTypeLabels } from '@/features/events/types';
 import { clubKindLabels, clubTopicLabels } from './data';
 import { useClub } from './clubsSource';
-import { ClubDeletionPanel } from './ClubDeletionPanel';
 import { cityPathForName } from '@/features/city/routes';
+import { useAuth } from '@/features/auth/AuthContext';
+import { useClubPublicSpace } from '@/services/content/clubManagement';
 
 /**
  * TOPLULUK PROFİLİ (§8.11, §14.7).
@@ -46,7 +47,9 @@ import { cityPathForName } from '@/features/city/routes';
  */
 export function ClubDetailPage() {
   const { slug } = useParams<{ slug: string }>();
+  const { user } = useAuth();
   const { club, loading } = useClub(slug);
+  const clubSpace = useClubPublicSpace(club?.slug, Boolean(user));
 
   const clubEvents = useMemo(() => {
     if (!club?.organizerName) return { upcoming: [], past: [] };
@@ -66,6 +69,9 @@ export function ClubDetailPage() {
   if (!club) return loading ? null : <NotFoundPage />;
 
   const sehirYolu = cityPathForName(club.city);
+  const approvedMembers = clubSpace.members;
+  const memberPosts = clubSpace.posts.filter((post) => post.audience === 'members');
+  const publicPosts = clubSpace.posts.filter((post) => post.audience === 'public');
 
   const organizationJson = {
     '@context': 'https://schema.org',
@@ -101,17 +107,38 @@ export function ClubDetailPage() {
       />
 
       <Container className="py-8 sm:py-10">
-        <PageHeader
-          breadcrumb={[
-            { label: 'Ana Sayfa', to: '/' },
-            { label: 'Topluluklar', to: '/topluluklar' },
-            { label: club.name },
-          ]}
-          title={club.name}
-          meta={club.city}
-          description={club.summary}
-          actions={
-            <>
+        <header className="mb-5 border-b border-border pb-5">
+          <Breadcrumb
+            items={[
+              { label: 'Ana Sayfa', to: '/' },
+              { label: 'Topluluklar', to: '/topluluklar' },
+              { label: club.name },
+            ]}
+          />
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2 text-meta text-muted-foreground">
+                <span>{club.city}</span>
+                <span aria-hidden>·</span>
+                <span>{clubKindLabels[club.kind]}</span>
+                {club.foundedYear && (
+                  <>
+                    <span aria-hidden>·</span>
+                    <span>{club.foundedYear}</span>
+                  </>
+                )}
+              </div>
+              <h1 className="mt-2 max-w-5xl text-balance type-page text-foreground">
+                {club.name}
+              </h1>
+              {club.summary && (
+                <p className="mt-3 max-w-5xl text-body-sm leading-relaxed text-muted-foreground">
+                  {club.summary}
+                </p>
+              )}
+            </div>
+
+            <div className="flex max-w-full flex-wrap items-center gap-2 lg:justify-end">
               <Badge tone="primary">{clubKindLabels[club.kind]}</Badge>
               {club.verifiedAt && <Badge tone="success">Doğrulanmış</Badge>}
               {club.topics?.map((topic) => (
@@ -121,21 +148,23 @@ export function ClubDetailPage() {
               ))}
               {club.publicEvents && <Badge>Halka açık</Badge>}
               {club.sharedEquipment && <Badge tone="cold">Ortak ekipman</Badge>}
-            </>
-          }
-        />
+            </div>
+          </div>
+        </header>
 
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
           <div className="space-y-4">
             {club.bodyBlocks.length > 0 && (
-              <Panel title="Kulüp İçeriği">
-                <BlockRenderer blocks={club.bodyBlocks} />
+              <Panel title="Topluluk Profili">
+                <div className="prose prose-invert max-w-none text-body-sm leading-7 text-muted-foreground prose-p:my-3 prose-a:text-primary prose-strong:text-foreground">
+                  <BlockRenderer blocks={club.bodyBlocks} />
+                </div>
               </Panel>
             )}
 
             {club.photos && club.photos.length > 0 && (
               <Panel title="Fotoğraflar" status={`${club.photos.length}`}>
-                <div className="grid gap-2 sm:grid-cols-3">
+                <div className="grid gap-2 sm:grid-cols-3 xl:grid-cols-4">
                   {club.photos.map((photo, index) => (
                     <div
                       key={photo.url}
@@ -150,6 +179,106 @@ export function ClubDetailPage() {
                     </div>
                   ))}
                 </div>
+              </Panel>
+            )}
+
+            <Panel
+              title="Üyeler"
+              status={
+                approvedMembers.length > 0
+                  ? `${approvedMembers.length} üye`
+                  : club.memberCount
+                    ? `${club.memberCount} bildirilen`
+                    : undefined
+              }
+            >
+              {approvedMembers.length > 0 ? (
+                <ul className="grid gap-2 sm:grid-cols-2">
+                  {approvedMembers.map((member) => (
+                    <li
+                      key={member.id}
+                      className="rounded-card border border-border bg-surface-2 px-3 py-2"
+                    >
+                      {member.username ? (
+                        <Link
+                          to={`/profil/${member.username}`}
+                          className="text-body-sm font-semibold text-foreground transition-colors hover:text-primary"
+                        >
+                          {member.displayName || member.username}
+                        </Link>
+                      ) : (
+                        <span className="text-body-sm text-foreground">
+                          {member.userId}
+                        </span>
+                      )}
+                      {member.username && (
+                        <p className="mt-0.5 text-meta text-muted-foreground">
+                          @{member.username}
+                        </p>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="py-3 text-meta leading-relaxed text-muted-foreground">
+                  Üye listesi yalnızca oturum açmış ve yetkili kullanıcılar için
+                  veritabanından okunur. Bildirilen üye sayısı künyede
+                  görünür.
+                </p>
+              )}
+            </Panel>
+
+            <Panel
+              title="Üyelere Özel Mesaj Panosu"
+              status={memberPosts.length > 0 ? `${memberPosts.length}` : undefined}
+            >
+              {memberPosts.length > 0 ? (
+                <ul className="divide-y divide-border">
+                  {memberPosts.map((post) => (
+                    <li key={post.id} className="py-3 first:pt-0 last:pb-0">
+                      <div className="flex flex-wrap items-baseline justify-between gap-2">
+                        <h2 className="text-body-sm font-semibold text-foreground">
+                          {post.title}
+                        </h2>
+                        <span className="tabular text-meta text-muted-foreground">
+                          {new Date(post.createdAt).toLocaleString('tr-TR', {
+                            dateStyle: 'short',
+                            timeStyle: 'short',
+                          })}
+                        </span>
+                      </div>
+                      <p className="mt-2 whitespace-pre-line text-body-sm leading-relaxed text-muted-foreground">
+                        {post.body}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="py-3 text-meta leading-relaxed text-muted-foreground">
+                  Üyelere özel duyurular burada görünür. Kulüp yöneticisi bu
+                  mesajları Hesabım içindeki Kulüp Yönetimi sekmesinden
+                  gönderebilir.
+                </p>
+              )}
+            </Panel>
+
+            {publicPosts.length > 0 && (
+              <Panel title="Topluluk Haberleri" status={`${publicPosts.length}`}>
+                <ul className="divide-y divide-border">
+                  {publicPosts.map((post) => (
+                    <li key={post.id} className="py-3 first:pt-0 last:pb-0">
+                      <h2 className="text-body-sm font-semibold text-foreground">
+                        {post.title}
+                      </h2>
+                      <p className="mt-1 text-meta text-muted-foreground">
+                        {new Date(post.createdAt).toLocaleDateString('tr-TR')}
+                      </p>
+                      <p className="mt-2 whitespace-pre-line text-body-sm leading-relaxed text-muted-foreground">
+                        {post.body}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
               </Panel>
             )}
 
@@ -370,61 +499,20 @@ export function ClubDetailPage() {
               </ul>
             </Panel>
 
-            <Panel
-              title="Kaynak ve doğrulama"
-              status={club.verifiedAt ? 'doğrulanmış' : 'doğrulanmamış'}
-            >
-              <p className="text-body-sm leading-relaxed text-muted-foreground">
-                {club.verifiedAt ? (
-                  <>
-                    Bu kulüp{' '}
-                    <span className="text-foreground">
-                      {new Date(club.verifiedAt).toLocaleDateString('tr-TR')}
-                    </span>{' '}
-                    tarihinde{' '}
-                    <span className="text-foreground">doğrulandı</span>: kulüp
-                    yöneticisiyle iletişim kuruldu ve kaydın gerçek bir
-                    topluluğa ait olduğu teyit edildi.
-                  </>
-                ) : (
-                  <>
-                    Bu kayıt{' '}
-                    <span className="text-foreground">doğrulanmadı</span>: kulüp
-                    yöneticisiyle henüz iletişim kurulmadı. Kaydın yanlış olduğu
-                    anlamına gelmez, teyit edilmediği anlamına gelir.
-                  </>
-                )}
-              </p>
-
-              <p className="mt-2 text-body-sm leading-relaxed text-muted-foreground">
-                Bilgiler{' '}
-                <span className="text-foreground">{club.source.name}</span>{' '}
-                üzerinden derlendi
-                {club.source.lastVerifiedAt && (
-                  <>
-                    ; en son{' '}
-                    <span className="tabular">
-                      {new Date(club.source.lastVerifiedAt).toLocaleDateString(
-                        'tr-TR'
-                      )}
-                    </span>{' '}
-                    tarihinde kontrol edildi
-                  </>
-                )}
-                . Değişmiş olabilir — yola çıkmadan önce topluluğun kendi
-                duyurusuna bakın.
-              </p>
-
-              <div className="mt-3">
+            <Panel title="Topluluk Araçları">
+              <div className="flex flex-wrap gap-2">
                 <ButtonLink to="/etkinlikler" size="sm" variant="secondary">
-                  Tüm Etkinlikler
+                  Tüm etkinlikler
+                </ButtonLink>
+                <ButtonLink
+                  to={`/hesap?sekme=kulup-yonetimi`}
+                  size="sm"
+                  variant="ghost"
+                >
+                  Yönetim paneli
                 </ButtonLink>
               </div>
             </Panel>
-
-            {/* Yalnızca kaydın sahibine çiziliyor; sahipliği veritabanı
-                söylüyor (bkz. ClubDeletionPanel). */}
-            <ClubDeletionPanel slug={club.slug} clubName={club.name} />
           </div>
         </div>
       </Container>

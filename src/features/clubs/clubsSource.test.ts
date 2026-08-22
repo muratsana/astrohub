@@ -27,6 +27,13 @@ const portalSql = readFileSync(
   ),
   'utf8'
 );
+const photoLimitSql = readFileSync(
+  resolve(
+    process.cwd(),
+    'supabase/migrations/20260822121023_club_photo_limit_and_member_visibility.sql'
+  ),
+  'utf8'
+);
 
 describe('mock topluluk temizliği', () => {
   it('kod tarafında yedek/mock topluluk kalmadı', () => {
@@ -47,7 +54,7 @@ describe('mock topluluk temizliği', () => {
     expect(portalSql).toContain('deleted_at = coalesce(deleted_at, now())');
     expect(portalSql).toContain("'topluluk'");
     expect(portalSql).toContain('clubs_telegram_url_check');
-    expect(portalSql).toContain('cardinality(photo_paths) <= 5');
+    expect(photoLimitSql).toContain('cardinality(photo_paths) <= 20');
     expect(portalSql).toContain('5242880');
   });
 });

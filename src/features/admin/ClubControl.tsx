@@ -6,11 +6,13 @@ import { Alert } from '@/components/ui/Alert';
 import { Badge } from '@/components/ui/Badge';
 import { Field } from '@/components/ui/Field';
 import {
+  archiveClub,
   createAdminClub,
   describeClubInfoProblem,
   draftFromClub,
   emptyClubDraft,
   fetchAdminClubs,
+  restoreClub,
   saveClubInfo,
   setClubListed,
   setClubStatus,
@@ -34,6 +36,9 @@ export function ClubControl({ canWrite }: { canWrite: boolean }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState<string | null>(null);
+  const [archived, setArchived] = useState(false);
+  const [deleteSlug, setDeleteSlug] = useState<string | null>(null);
+  const [deleteChecked, setDeleteChecked] = useState(false);
   const [draft, setDraft] = useState<ClubInfoDraft | null>(null);
   const [editPhotos, setEditPhotos] = useState<File[]>([]);
   const [newDraft, setNewDraft] = useState<ClubInfoDraft>(() =>
@@ -43,13 +48,13 @@ export function ClubControl({ canWrite }: { canWrite: boolean }) {
 
   const load = useCallback(() => {
     setError(null);
-    fetchAdminClubs()
+    fetchAdminClubs({ archived })
       .then(setItems)
       .catch((e: unknown) => {
         setItems([]);
         setError(e instanceof Error ? e.message : 'Dizin okunamadı');
       });
-  }, []);
+  }, [archived]);
 
   useEffect(load, [load]);
 
@@ -58,6 +63,8 @@ export function ClubControl({ canWrite }: { canWrite: boolean }) {
     setError(null);
     try {
       await action();
+      setDeleteSlug(null);
+      setDeleteChecked(false);
       load();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'İşlem uygulanamadı');
@@ -72,8 +79,10 @@ export function ClubControl({ canWrite }: { canWrite: boolean }) {
     setEditPhotos([]);
   }
 
-  const verified = items?.filter((c) => c.verifiedAt).length ?? 0;
-  const pending = items?.filter((c) => c.status === 'incelemede').length ?? 0;
+  const verified =
+    items?.filter((c) => !c.deletedAt && c.verifiedAt).length ?? 0;
+  const pending =
+    items?.filter((c) => !c.deletedAt && c.status === 'incelemede').length ?? 0;
   const newProblem = describeClubInfoProblem(newDraft, newPhotos);
   const editing = items?.find((c) => c.slug === open) ?? null;
   const editProblem =
@@ -98,7 +107,41 @@ export function ClubControl({ canWrite }: { canWrite: boolean }) {
 
       {error && <Alert className="mb-3">{error}</Alert>}
 
-      {canWrite && (
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <Button
+          size="sm"
+          variant={!archived ? 'secondary' : 'ghost'}
+          disabled={busy}
+          onClick={() => {
+            setArchived(false);
+            setOpen(null);
+            setDeleteSlug(null);
+            setDeleteChecked(false);
+          }}
+        >
+          Aktif topluluklar
+        </Button>
+        <Button
+          size="sm"
+          variant={archived ? 'secondary' : 'ghost'}
+          disabled={busy}
+          onClick={() => {
+            setArchived(true);
+            setOpen(null);
+            setDeleteSlug(null);
+            setDeleteChecked(false);
+          }}
+        >
+          Arşiv
+        </Button>
+        {archived && (
+          <span className="text-meta text-faint">
+            Silinen topluluklar ziyaretçiye görünmez; buradan geri alınabilir.
+          </span>
+        )}
+      </div>
+
+      {canWrite && !archived && (
         <div className="mb-4 rounded-card border border-border p-3">
           <h3 className="mb-3 text-caption font-medium text-foreground">
             Yeni topluluk ekle
@@ -133,8 +176,9 @@ export function ClubControl({ canWrite }: { canWrite: boolean }) {
 
       {items && items.length === 0 && !error && (
         <p className="py-4 text-center text-body-sm text-muted-foreground">
-          Dizinde kayıt yok. Tohum göçü (<code>0067</code>) uygulanmamış
-          olabilir.
+          {archived
+            ? 'Arşivde topluluk yok.'
+            : 'Dizinde kayıt yok. Yeni toplulukları elle ekleyebilirsiniz.'}
         </p>
       )}
 
@@ -156,6 +200,7 @@ export function ClubControl({ canWrite }: { canWrite: boolean }) {
               </span>
 
               <StatusBadge status={club.status} />
+              {club.deletedAt && <Badge tone="danger">Arşivde</Badge>}
               {club.verifiedAt ? (
                 <Badge tone="success">Doğrulanmış</Badge>
               ) : (
@@ -165,69 +210,133 @@ export function ClubControl({ canWrite }: { canWrite: boolean }) {
 
               {canWrite && (
                 <>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    disabled={busy}
-                    onClick={() =>
-                      open === club.slug ? setOpen(null) : edit(club)
-                    }
-                  >
-                    {open === club.slug ? 'Kapat' : 'Düzenle'}
-                  </Button>
-                  {club.status !== 'yayinda' && (
+                  {archived ? (
                     <Button
                       size="sm"
                       variant="secondary"
                       disabled={busy}
-                      onClick={() =>
-                        run(() => setClubStatus(club.slug, 'yayinda'))
-                      }
+                      onClick={() => run(() => restoreClub(club.slug))}
                     >
-                      Onayla
+                      Geri yükle
                     </Button>
+                  ) : (
+                    <>
+                      <Button
+                        size="sm"
+                        variant={club.listed ? 'secondary' : 'ghost'}
+                        disabled={busy}
+                        onClick={() =>
+                          run(() => setClubListed(club.slug, !club.listed))
+                        }
+                      >
+                        Yayında
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={club.verifiedAt ? 'secondary' : 'ghost'}
+                        disabled={busy}
+                        onClick={() =>
+                          run(() =>
+                            club.verifiedAt
+                              ? unverifyClub(club.slug)
+                              : verifyClub(club.slug)
+                          )
+                        }
+                      >
+                        Doğrulanmış
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        disabled={busy || club.status === 'yayinda'}
+                        onClick={() =>
+                          run(() => setClubStatus(club.slug, 'yayinda'))
+                        }
+                      >
+                        Kabul et
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        disabled={busy || club.status === 'reddedildi'}
+                        onClick={() =>
+                          run(() => setClubStatus(club.slug, 'reddedildi'))
+                        }
+                      >
+                        Reddet
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        disabled={busy}
+                        onClick={() =>
+                          open === club.slug ? setOpen(null) : edit(club)
+                        }
+                      >
+                        {open === club.slug ? 'Kapat' : 'Düzenle'}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="danger"
+                        disabled={busy}
+                        onClick={() => {
+                          setDeleteSlug(club.slug);
+                          setDeleteChecked(false);
+                          setOpen(null);
+                        }}
+                      >
+                        Sil
+                      </Button>
+                    </>
                   )}
-                  {club.status !== 'reddedildi' && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      disabled={busy}
-                      onClick={() =>
-                        run(() => setClubStatus(club.slug, 'reddedildi'))
-                      }
-                    >
-                      Reddet
-                    </Button>
-                  )}
+                </>
+              )}
+            </div>
+
+            {canWrite && deleteSlug === club.slug && !archived && (
+              <div className="mt-3 rounded-card border border-danger/50 bg-danger/5 p-3">
+                <p className="text-body-sm font-medium text-foreground">
+                  {club.name} arşive alınacak.
+                </p>
+                <p className="mt-1 text-meta leading-relaxed text-muted-foreground">
+                  Kayıt veritabanından silinmez; ziyaretçi listelerinden kalkar
+                  ve Arşiv görünümünden geri yüklenebilir.
+                </p>
+                <label className="mt-3 flex items-center gap-2 text-body-sm text-muted-foreground">
+                  <input
+                    type="checkbox"
+                    checked={deleteChecked}
+                    onChange={(event) =>
+                      setDeleteChecked(event.currentTarget.checked)
+                    }
+                  />
+                  Bu topluluğu arşive almak istediğimi onaylıyorum.
+                </label>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
                   <Button
                     size="sm"
-                    variant={club.verifiedAt ? 'ghost' : 'secondary'}
-                    disabled={busy}
-                    onClick={() =>
-                      run(() =>
-                        club.verifiedAt
-                          ? unverifyClub(club.slug)
-                          : verifyClub(club.slug)
-                      )
-                    }
+                    variant="danger"
+                    disabled={busy || !deleteChecked}
+                    onClick={() => run(() => archiveClub(club.slug))}
                   >
-                    {club.verifiedAt ? 'Doğrulamayı kaldır' : 'Doğrula'}
+                    Arşive al
                   </Button>
                   <Button
                     size="sm"
                     variant="ghost"
                     disabled={busy}
-                    onClick={() =>
-                      run(() => setClubListed(club.slug, !club.listed))
-                    }
+                    onClick={() => {
+                      setDeleteSlug(null);
+                      setDeleteChecked(false);
+                    }}
                   >
-                    {club.listed ? 'Dizinden çıkar' : 'Dizine al'}
+                    Vazgeç
                   </Button>
-                </>
-              )}
-            </div>
+                </div>
+              </div>
+            )}
 
-            {canWrite && open === club.slug && draft && (
+            {canWrite && open === club.slug && draft && !archived && (
               <div className="mt-3 rounded-card border border-border p-3">
                 <ClubForm
                   idPrefix={`club-${club.slug}`}
@@ -349,13 +458,6 @@ function ClubForm({
           onChange={(e) => set('foundedOn', e.target.value)}
         />
       </Field>
-      <Field label="Kuruluş / merkez yeri" htmlFor={`${idPrefix}-place`}>
-        <Input
-          id={`${idPrefix}-place`}
-          value={draft.place}
-          onChange={(e) => set('place', e.target.value)}
-        />
-      </Field>
       <Field label="İletişim e-postası" htmlFor={`${idPrefix}-mail`}>
         <Input
           id={`${idPrefix}-mail`}
@@ -406,33 +508,6 @@ function ClubForm({
           placeholder="https://t.me/..."
           value={draft.telegramUrl}
           onChange={(e) => set('telegramUrl', e.target.value)}
-        />
-      </Field>
-      <Field
-        label="Katılım bağlantısı"
-        htmlFor={`${idPrefix}-join`}
-        hint="Opsiyonel"
-      >
-        <Input
-          id={`${idPrefix}-join`}
-          placeholder="https://..."
-          value={draft.joinUrl}
-          onChange={(e) => set('joinUrl', e.target.value)}
-        />
-      </Field>
-      <Field label="Bilginin kaynağı" htmlFor={`${idPrefix}-source`}>
-        <Input
-          id={`${idPrefix}-source`}
-          value={draft.sourceName}
-          onChange={(e) => set('sourceName', e.target.value)}
-        />
-      </Field>
-      <Field label="Son kontrol tarihi" htmlFor={`${idPrefix}-checked`}>
-        <Input
-          id={`${idPrefix}-checked`}
-          type="date"
-          value={draft.infoCheckedOn}
-          onChange={(e) => set('infoCheckedOn', e.target.value)}
         />
       </Field>
       <div className="sm:col-span-2">

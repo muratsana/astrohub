@@ -10,6 +10,7 @@ import { getSupabase, isSupabaseConfigured } from '@/services/supabase/client';
 export interface ManagedClub {
   slug: string;
   name: string;
+  managerUserId: string | null;
   summary: string;
   bodyBlocks: ContentBlock[];
   contactEmail: string;
@@ -26,6 +27,9 @@ export interface ManagedClub {
 export interface ClubMemberRequest {
   id: string;
   userId: string;
+  username?: string;
+  displayName?: string | null;
+  avatarPath?: string | null;
   status: 'pending' | 'approved' | 'rejected';
   requestedAt: string;
   reviewedAt: string | null;
@@ -52,6 +56,7 @@ export interface ClubPost {
 interface ManagedClubRow {
   slug: string;
   name: string;
+  manager_user_id: string | null;
   summary: string | null;
   body_blocks: unknown;
   contact_email: string | null;
@@ -72,6 +77,13 @@ interface RequestRow {
   requested_at: string;
   reviewed_at: string | null;
   review_note: string | null;
+}
+
+interface ProfileRow {
+  id: string;
+  username: string;
+  display_name: string | null;
+  avatar_path: string | null;
 }
 
 interface InviteRow {
@@ -102,6 +114,7 @@ function toManagedClub(row: ManagedClubRow): ManagedClub {
   return {
     slug: row.slug,
     name: row.name,
+    managerUserId: row.manager_user_id,
     summary,
     bodyBlocks: parseContentBlocks(row.body_blocks, summary ? [summary] : []),
     contactEmail: row.contact_email ?? '',
@@ -140,7 +153,7 @@ export function useManagedClubs(userId: string | undefined): {
       try {
         const supabase = await client();
         const select =
-          'slug, name, summary, body_blocks, contact_email, website, social_url, whatsapp_url, telegram_url, public_events, shared_equipment, status, listed';
+          'slug, name, manager_user_id, summary, body_blocks, contact_email, website, social_url, whatsapp_url, telegram_url, public_events, shared_equipment, status, listed';
         const [managed, submitted] = await Promise.all([
           supabase
             .from('clubs')
@@ -152,18 +165,19 @@ export function useManagedClubs(userId: string | undefined): {
             .from('clubs')
             .select(select)
             .eq('submitted_by', userId)
-            .is('manager_user_id', null)
             .is('deleted_at', null)
             .order('name'),
         ]);
         if (managed.error) throw new Error(managed.error.message);
         if (submitted.error) throw new Error(submitted.error.message);
         if (!active) return;
+        const unique = new Map<string, ManagedClubRow>();
         const rows = [
           ...((managed.data ?? []) as ManagedClubRow[]),
           ...((submitted.data ?? []) as ManagedClubRow[]),
         ];
-        setClubs(rows.map(toManagedClub));
+        for (const row of rows) unique.set(row.slug, row);
+        setClubs([...unique.values()].map(toManagedClub));
         setError(null);
       } catch (e) {
         if (active) {
@@ -233,15 +247,35 @@ export function useClubPortal(clubSlug: string | undefined): {
         if (inviteResult.error) throw new Error(inviteResult.error.message);
         if (postResult.error) throw new Error(postResult.error.message);
         if (!active) return;
+        const requestRows = (requestResult.data ?? []) as RequestRow[];
+        const userIds = [...new Set(requestRows.map((row) => row.user_id))];
+        const profilesById = new Map<string, ProfileRow>();
+        if (userIds.length > 0) {
+          const profileResult = await supabase
+            .from('profiles')
+            .select('id, username, display_name, avatar_path')
+            .in('id', userIds);
+          if (profileResult.error) throw new Error(profileResult.error.message);
+          for (const row of (profileResult.data ?? []) as ProfileRow[]) {
+            profilesById.set(row.id, row);
+          }
+        }
+
         setRequests(
-          ((requestResult.data ?? []) as RequestRow[]).map((row) => ({
-            id: row.id,
-            userId: row.user_id,
-            status: row.status,
-            requestedAt: row.requested_at,
-            reviewedAt: row.reviewed_at,
-            reviewNote: row.review_note,
-          }))
+          requestRows.map((row) => {
+            const profile = profilesById.get(row.user_id);
+            return {
+              id: row.id,
+              userId: row.user_id,
+              username: profile?.username,
+              displayName: profile?.display_name ?? null,
+              avatarPath: profile?.avatar_path ?? null,
+              status: row.status,
+              requestedAt: row.requested_at,
+              reviewedAt: row.reviewed_at,
+              reviewNote: row.review_note,
+            };
+          })
         );
         setInvites(
           ((inviteResult.data ?? []) as InviteRow[]).map((row) => ({
@@ -279,6 +313,116 @@ export function useClubPortal(clubSlug: string | undefined): {
 
   const refresh = useCallback(() => setTick((t) => t + 1), []);
   return { requests, invites, posts, loading, error, refresh };
+}
+
+export function useClubPublicSpace(
+  clubSlug: string | undefined,
+  includeMembers: boolean
+): {
+  members: ClubMemberRequest[];
+  posts: ClubPost[];
+  loading: boolean;
+  error: string | null;
+  refresh: () => void;
+} {
+  const [members, setMembers] = useState<ClubMemberRequest[]>([]);
+  const [posts, setPosts] = useState<ClubPost[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [tick, setTick] = useState(0);
+
+  useEffect(() => {
+    if (!clubSlug || !isSupabaseConfigured) {
+      setMembers([]);
+      setPosts([]);
+      setLoading(false);
+      return;
+    }
+
+    let active = true;
+    setLoading(true);
+    void (async () => {
+      try {
+        const supabase = await client();
+        const postResult = await supabase
+          .from('club_posts')
+          .select('id, kind, audience, title, body, created_at, published_at')
+          .eq('club_slug', clubSlug)
+          .order('created_at', { ascending: false });
+        if (postResult.error) throw new Error(postResult.error.message);
+
+        let requestRows: RequestRow[] = [];
+        if (includeMembers) {
+          const requestResult = await supabase
+            .from('club_membership_requests')
+            .select('id, user_id, status, requested_at, reviewed_at, review_note')
+            .eq('club_slug', clubSlug)
+            .eq('status', 'approved')
+            .order('requested_at', { ascending: false });
+          if (requestResult.error) throw new Error(requestResult.error.message);
+          requestRows = (requestResult.data ?? []) as RequestRow[];
+        }
+
+        const userIds = [...new Set(requestRows.map((row) => row.user_id))];
+        const profilesById = new Map<string, ProfileRow>();
+        if (userIds.length > 0) {
+          const profileResult = await supabase
+            .from('profiles')
+            .select('id, username, display_name, avatar_path')
+            .in('id', userIds);
+          if (profileResult.error) throw new Error(profileResult.error.message);
+          for (const row of (profileResult.data ?? []) as ProfileRow[]) {
+            profilesById.set(row.id, row);
+          }
+        }
+
+        if (!active) return;
+        setMembers(
+          requestRows.map((row) => {
+            const profile = profilesById.get(row.user_id);
+            return {
+              id: row.id,
+              userId: row.user_id,
+              username: profile?.username,
+              displayName: profile?.display_name ?? null,
+              avatarPath: profile?.avatar_path ?? null,
+              status: row.status,
+              requestedAt: row.requested_at,
+              reviewedAt: row.reviewed_at,
+              reviewNote: row.review_note,
+            };
+          })
+        );
+        setPosts(
+          ((postResult.data ?? []) as PostRow[]).map((row) => ({
+            id: row.id,
+            kind: row.kind,
+            audience: row.audience,
+            title: row.title,
+            body: row.body,
+            createdAt: row.created_at,
+            publishedAt: row.published_at,
+          }))
+        );
+        setError(null);
+      } catch (e) {
+        if (active) {
+          setError(
+            e instanceof Error ? e.message : 'Topluluk alanı okunamadı.'
+          );
+        }
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [clubSlug, includeMembers, tick]);
+
+  const refresh = useCallback(() => setTick((t) => t + 1), []);
+  return { members, posts, loading, error, refresh };
 }
 
 export async function updateManagedClub(
@@ -332,6 +476,21 @@ export async function reviewClubMembership(
       review_note: sanitizeText(note, { maxLength: 300 }) || null,
     })
     .eq('id', id);
+  if (error) throw new Error(error.message);
+}
+
+export async function assignClubManager(
+  clubSlug: string,
+  userId: string
+): Promise<void> {
+  const slug = sanitizeText(clubSlug, { maxLength: 120 });
+  if (!slug) throw new Error('Topluluk seçin.');
+  if (!userId) throw new Error('Kullanıcı seçin.');
+  const supabase = await client();
+  const { error } = await supabase.rpc('topluluk_yoneticisi_ata', {
+    p_slug: slug,
+    p_user_id: userId,
+  });
   if (error) throw new Error(error.message);
 }
 

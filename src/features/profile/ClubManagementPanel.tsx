@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router';
 import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
+import { Button, ButtonLink } from '@/components/ui/Button';
 import { Field } from '@/components/ui/Field';
 import { Input } from '@/components/ui/Input';
 import { Panel } from '@/components/ui/Panel';
 import { RichContentEditor } from '@/features/admin/RichContentEditor';
 import {
+  assignClubManager,
   createClubPost,
   inviteClubMember,
   reviewClubMembership,
@@ -163,6 +164,13 @@ function ClubPortal({
             >
               Public sayfayı aç
             </Link>
+            <ButtonLink
+              to={`/etkinlik/yeni?topluluk=${club.slug}&ad=${encodeURIComponent(club.name)}`}
+              size="sm"
+              variant="secondary"
+            >
+              Etkinlik oluştur
+            </ButtonLink>
           </div>
           <Field
             label="Kulüp içeriği"
@@ -303,9 +311,18 @@ function ClubPortal({
             <ul className="divide-y divide-border">
               {portal.requests.map((request) => (
                 <li key={request.id} className="py-2">
-                  <p className="truncate text-body-sm text-foreground">
-                    {request.userId}
-                  </p>
+                  {request.username ? (
+                    <Link
+                      to={`/profil/${request.username}`}
+                      className="truncate text-body-sm text-foreground transition-colors hover:text-primary"
+                    >
+                      {request.displayName || request.username}
+                    </Link>
+                  ) : (
+                    <p className="truncate text-body-sm text-foreground">
+                      {request.userId}
+                    </p>
+                  )}
                   <p className="text-meta text-muted-foreground">
                     {new Date(request.requestedAt).toLocaleDateString('tr-TR')} ·{' '}
                     {request.status}
@@ -337,6 +354,23 @@ function ClubPortal({
                       </Button>
                     </div>
                   )}
+                  {request.status === 'approved' &&
+                    request.userId !== club.managerUserId && (
+                      <div className="mt-2">
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          disabled={busy === `manager-${request.id}`}
+                          onClick={() =>
+                            void run(`manager-${request.id}`, () =>
+                              assignClubManager(club.slug, request.userId)
+                            )
+                          }
+                        >
+                          Yönetici yap
+                        </Button>
+                      </div>
+                    )}
                 </li>
               ))}
             </ul>
