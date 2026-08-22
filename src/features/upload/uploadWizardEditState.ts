@@ -8,12 +8,14 @@ import {
   type PhotoType,
   type ProcessingPalette,
 } from '@/features/photos/types';
-import { targets } from '@/features/targets/data';
+import { targets, type CelestialTarget } from '@/features/targets/data';
 import { kindToPhotoType, type TargetKind } from '@/domain/targets/derive';
 
 export interface WizardState {
   fileName: string;
   targetSlug: string;
+  /** Paket dışı DB hedefi; edit ekranı seçimi boş göstermesin. */
+  selectedTarget: CelestialTarget | null;
   /** Seçili katalog kaydının türü; yükleme ekranında kullanıcı girdisi değildir. */
   targetKind: TargetKind | 'hepsi';
   type: PhotoType;
@@ -79,6 +81,7 @@ export interface WizardState {
 export const initialState: WizardState = {
   fileName: '',
   targetSlug: '',
+  selectedTarget: null,
   targetKind: 'hepsi',
   type: 'deep-sky',
   title: '',
@@ -110,21 +113,54 @@ function photoTypeFromTargetKind(kind: TargetKind): PhotoType | undefined {
   return candidate in photoTypeLabels ? (candidate as PhotoType) : undefined;
 }
 
+function isTargetKind(value: string | undefined): value is TargetKind {
+  return Boolean(value && value in kindToPhotoType);
+}
+
+function fallbackTargetFromPhoto(photo: AstroPhoto): CelestialTarget | null {
+  if (!photo.target.slug || !isTargetKind(photo.target.kind)) return null;
+  return {
+    slug: photo.target.slug,
+    name: photo.target.name,
+    catalog: photo.target.catalog,
+    aliases: [],
+    kind: photo.target.kind,
+    constellation: photo.target.constellation,
+    ra: '',
+    dec: '',
+    raDeg: null,
+    decDeg: null,
+    sizeArcmin: null,
+    magnitude: undefined,
+    angularSize: '—',
+    bestMonths: 'Tarihe bağlı',
+    difficulty: 'Orta',
+    recommendedFocal: 'Hedef boyutuna göre seçin',
+    recommendedFilters: '',
+    description: '',
+    gradient: photo.gradient,
+    moving: false,
+  };
+}
+
 export function wizardStateFromPhoto(photo: AstroPhoto): WizardState {
   const hedef = targets.find(
     (target) =>
+      target.slug === photo.target.slug ||
       target.catalog === photo.target.catalog ||
       target.aliases.includes(photo.target.catalog) ||
       target.name === photo.target.name
   );
+  const selectedTarget = hedef ?? fallbackTargetFromPhoto(photo);
 
   return {
     ...initialState,
     fileName: photo.image ? 'Mevcut fotoğraf' : photo.title,
-    targetSlug: hedef?.slug ?? '',
-    targetKind: hedef?.kind ?? 'hepsi',
-    type: hedef
-      ? (photoTypeFromTargetKind(hedef.kind) ?? photo.type)
+    targetSlug: selectedTarget?.slug ?? '',
+    selectedTarget,
+    targetKind: selectedTarget?.kind ?? 'hepsi',
+    type: selectedTarget
+      ? (photoTypeFromTargetKind(selectedTarget.kind) ?? photo.type)
       : photo.type,
     title: photo.title,
     description: photo.description,

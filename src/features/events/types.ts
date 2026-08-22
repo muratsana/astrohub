@@ -91,6 +91,15 @@ export interface AstroEvent {
   /** Etkinliğe ulaşmak/kayıt olmak için doğrulanmış dış adres. */
   contact?: EventContact;
   /**
+   * Astrohub içi kayıt portalı. Bu açık olduğunda kullanıcı kaydı
+   * `event_registrations` tablosuna yazılır ve admin panelden izlenir.
+   */
+  registrationPortal?: {
+    enabled: boolean;
+    label: string;
+    note?: string;
+  };
+  /**
    * Etkinlik afişi SİTEYE KOPYALANMAZ.
    *
    * Afişin telifi düzenleyendedir; izin almadan yeniden yayımlamak hak

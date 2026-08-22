@@ -127,6 +127,20 @@ describe('ilgi kontrolü', () => {
     renderPanel();
     expect(screen.getByText(/kontenjan tüketmez/i)).toBeTruthy();
   });
+
+  it('Astrohub kayıt portalı etkinlik metnini gösteriyor', () => {
+    renderPanel(
+      makeEvent({
+        registrationPortal: {
+          enabled: true,
+          label: 'Astrohub kayıt portalı',
+          note: 'Katılım notları düzenleyiciye iletilir.',
+        },
+      })
+    );
+    expect(screen.getByText('Astrohub kayıt portalı')).toBeTruthy();
+    expect(screen.getByText(/düzenleyiciye iletilir/i)).toBeTruthy();
+  });
 });
 
 describe('hatırlatma bölümü', () => {

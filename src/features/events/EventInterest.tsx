@@ -49,6 +49,9 @@ export function EventInterest({ event }: { event: AstroEvent }) {
   const { user } = useAuth();
   const interest = useEventInterest(event.id);
   const reminders = useReminders(event.id);
+  const portal = event.registrationPortal;
+  const portalLabel =
+    portal?.enabled && portal.label ? portal.label : 'Katılım';
 
   return (
     <div className="mt-4 space-y-3">
@@ -57,7 +60,9 @@ export function EventInterest({ event }: { event: AstroEvent }) {
       {event.id && !user && (
         <div className="rounded-card border border-border bg-surface-1 px-3 py-2.5">
           <p className="text-body-sm leading-relaxed text-muted-foreground">
-            Etkinliği takip etmek ve hatırlatma kurmak için{' '}
+            {portal?.enabled
+              ? `${portalLabel} üzerinden kayıt bırakmak, etkinliği takip etmek ve hatırlatma kurmak için `
+              : 'Etkinliği takip etmek ve hatırlatma kurmak için '}
             <Link to="/giris" className="text-primary hover:underline">
               giriş yapın
             </Link>
@@ -68,7 +73,12 @@ export function EventInterest({ event }: { event: AstroEvent }) {
 
       {interest.usable && (
         <div className="rounded-card border border-border bg-surface-1 p-3">
-          <p className="label mb-2">Katılım</p>
+          <p className="label mb-1.5">{portalLabel}</p>
+          {portal?.enabled && portal.note && (
+            <p className="mb-2 text-meta leading-snug text-muted-foreground">
+              {portal.note}
+            </p>
+          )}
 
           <InterestButtons
             level={interest.level}

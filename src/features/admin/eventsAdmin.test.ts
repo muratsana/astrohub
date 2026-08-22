@@ -136,6 +136,20 @@ describe('satır ⇄ taslak dönüşümü', () => {
     expect(row.source_last_verified_at).toBeNull();
   });
 
+  it('kayıt portalı alanları satıra yazılıyor', () => {
+    const row = draftToRow({
+      ...gecerli,
+      registrationPortalEnabled: true,
+      registrationPortalLabel: 'Astrohub başvuru',
+      registrationPortalNote: 'Katılım notları admin panelden izlenir.',
+    });
+    expect(row.registration_portal_enabled).toBe(true);
+    expect(row.registration_portal_label).toBe('Astrohub başvuru');
+    expect(row.registration_portal_note).toBe(
+      'Katılım notları admin panelden izlenir.'
+    );
+  });
+
   it('adres eki boşsa başlıktan üretiliyor', () => {
     expect(draftToRow(gecerli).slug).toMatch(/^[a-z0-9-]+$/);
   });
@@ -156,5 +170,19 @@ describe('satır ⇄ taslak dönüşümü', () => {
     const draft = rowToDraft({ id: 'x', slug: 'a', title: 'A' });
     expect(draft.observedTargets).toEqual([]);
     expect(draft.rules).toEqual([]);
+  });
+
+  it('kayıt portalı alanları satırdan okunuyor', () => {
+    const draft = rowToDraft({
+      id: 'x',
+      slug: 'a',
+      title: 'A',
+      registration_portal_enabled: true,
+      registration_portal_label: 'Astrohub kayıt',
+      registration_portal_note: 'Kayıt notu.',
+    });
+    expect(draft.registrationPortalEnabled).toBe(true);
+    expect(draft.registrationPortalLabel).toBe('Astrohub kayıt');
+    expect(draft.registrationPortalNote).toBe('Kayıt notu.');
   });
 });

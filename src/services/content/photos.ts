@@ -120,8 +120,10 @@ interface PhotoRow {
   setup_text: Record<string, unknown> | null;
   profiles: { username: string; display_name: string | null } | null;
   celestial_objects: {
+    slug: string;
     name: string;
     catalog: string;
+    kind: string;
     constellation: string | null;
   } | null;
   photo_exposures: ExposureRow[] | null;
@@ -280,6 +282,8 @@ export function mapPhotoRow(row: PhotoRow): AstroPhoto {
       name: row.celestial_objects?.name ?? row.target_label ?? row.title,
       catalog: row.celestial_objects?.catalog ?? row.target_label ?? '',
       constellation: row.celestial_objects?.constellation ?? '',
+      slug: row.celestial_objects?.slug,
+      kind: row.celestial_objects?.kind,
     },
     type: (PHOTO_TYPES.includes(row.photo_type as PhotoType)
       ? row.photo_type
@@ -444,7 +448,7 @@ const SELECT =
      için). İpucu olmadan PostgREST hangisini izleyeceğini bilemiyor ve
      "more than one relationship was found" diyerek sorguyu reddediyor. */
   'profiles!astro_photos_user_id_profiles_fkey(username, display_name), ' +
-  'celestial_objects(name, catalog, constellation), ' +
+  'celestial_objects(slug, name, catalog, kind, constellation), ' +
   'photo_exposures(filter, frames, exposure_seconds, position, session_id), ' +
   'photo_capture_sessions(id, starts_on, ends_on, position), ' +
   'photo_of_week_nominees!photo_of_week_nominees_photo_id_fkey(photo_of_week_rounds!photo_of_week_nominees_round_id_fkey(iso_year, iso_week, status)), ' +

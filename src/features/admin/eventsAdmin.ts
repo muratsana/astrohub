@@ -61,6 +61,9 @@ export interface EventDraft {
   rules: string[];
   sourceName: string;
   sourceLastVerifiedAt: string;
+  registrationPortalEnabled: boolean;
+  registrationPortalLabel: string;
+  registrationPortalNote: string;
   cancelledAt: string | null;
 }
 
@@ -73,6 +76,14 @@ export interface EventListRow {
   startsAt: string | null;
   cancelledAt: string | null;
   deletedAt: string | null;
+}
+
+export interface EventRegistrationRow {
+  userId: string;
+  username: string | null;
+  displayName: string | null;
+  note: string;
+  createdAt: string;
 }
 
 const EVENT_TYPES = Object.keys(eventTypeLabels) as EventType[];
@@ -119,6 +130,9 @@ export function emptyEventDraft(): EventDraft {
     rules: [],
     sourceName: '',
     sourceLastVerifiedAt: '',
+    registrationPortalEnabled: false,
+    registrationPortalLabel: 'Astrohub kayıt portalı',
+    registrationPortalNote: '',
     cancelledAt: null,
   };
 }
@@ -160,6 +174,10 @@ export function rowToDraft(row: Row): EventDraft {
     rules: list(row.rules),
     sourceName: str(row.source_name),
     sourceLastVerifiedAt: str(row.source_last_verified_at).slice(0, 10),
+    registrationPortalEnabled: row.registration_portal_enabled === true,
+    registrationPortalLabel:
+      str(row.registration_portal_label) || 'Astrohub kayıt portalı',
+    registrationPortalNote: str(row.registration_portal_note),
     cancelledAt: str(row.cancelled_at) || null,
   };
 }
@@ -213,6 +231,12 @@ export function describeEventProblem(draft: EventDraft): string | null {
   if (sanitizeText(draft.description, { multiline: true }).length < 20)
     return 'Açıklama en az 20 karakter olmalı.';
 
+  if (
+    draft.registrationPortalEnabled &&
+    sanitizeText(draft.registrationPortalLabel).length < 3
+  )
+    return 'Kayıt portalı etiketi en az 3 karakter olmalı.';
+
   const slug = draft.slug.trim();
   if (slug && !/^[a-z0-9-]{3,120}$/.test(slug))
     return 'Adres eki yalnızca küçük harf, rakam ve tire içerebilir (3-120 karakter).';
@@ -245,6 +269,7 @@ const DETAIL_SELECT = `
   free, camping, kids_friendly, astrophoto_focused, telescopes_provided,
   capacity, organizer_name, organizer_verified, description,
   observed_targets, rules, source_name, source_last_verified_at,
+  registration_portal_enabled, registration_portal_label, registration_portal_note,
   cancelled_at
 `;
 
@@ -256,7 +281,7 @@ export async function fetchAdminEvents(
     .from('events')
     .select(LIST_SELECT)
     .order('starts_at', { ascending: false })
-    .limit(options.limit ?? 60);
+    .limit(options.limit ?? 200);
 
   query = options.deleted
     ? query.not('deleted_at', 'is', null)
@@ -351,6 +376,17 @@ export function draftToRow(draft: EventDraft): Row {
       ? sanitizeText(draft.sourceName, { maxLength: 160 })
       : null,
     source_last_verified_at: draft.sourceLastVerifiedAt || null,
+    registration_portal_enabled: draft.registrationPortalEnabled,
+    registration_portal_label: sanitizeText(
+      draft.registrationPortalLabel || 'Astrohub kayıt portalı',
+      { maxLength: 80 }
+    ),
+    registration_portal_note: draft.registrationPortalNote.trim()
+      ? sanitizeText(draft.registrationPortalNote, {
+          multiline: true,
+          maxLength: 500,
+        })
+      : null,
     cancelled_at: draft.cancelledAt,
   };
 }
@@ -406,6 +442,62 @@ export async function setEventCancelled(
     .select('id');
   if (error) throw new Error(error.message);
   if (!data?.length) throw new Error('Etkinlik güncellenemedi.');
+}
+
+export async function fetchAdminEventRegistrations(
+  eventId: string
+): Promise<EventRegistrationRow[]> {
+  const supabase = await client();
+  const { data, error } = await supabase
+    .from('event_registrations')
+    .select('user_id, note, created_at')
+    .eq('event_id', eventId)
+    .order('created_at', { ascending: true });
+
+  if (error) throw new Error(error.message);
+
+  const baseRows = (data ?? []).map((row) => {
+    const r = row as Row;
+    return {
+      userId: str(r.user_id),
+      note: str(r.note),
+      createdAt: str(r.created_at),
+    };
+  });
+  const userIds = [...new Set(baseRows.map((row) => row.userId).filter(Boolean))];
+  if (!userIds.length) {
+    return baseRows.map((row) => ({
+      ...row,
+      username: null,
+      displayName: null,
+    }));
+  }
+
+  const { data: profiles, error: profileError } = await supabase
+    .from('profiles')
+    .select('id, username, display_name')
+    .in('id', userIds);
+
+  if (profileError) throw new Error(profileError.message);
+
+  const byId = new Map(
+    (profiles ?? []).map((profile) => {
+      const row = profile as Row;
+      return [
+        str(row.id),
+        {
+          username: str(row.username) || null,
+          displayName: str(row.display_name) || null,
+        },
+      ];
+    })
+  );
+
+  return baseRows.map((row) => ({
+    ...row,
+    username: byId.get(row.userId)?.username ?? null,
+    displayName: byId.get(row.userId)?.displayName ?? null,
+  }));
 }
 
 export { EVENT_TYPES };

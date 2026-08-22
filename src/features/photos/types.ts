@@ -187,7 +187,15 @@ export interface AstroPhoto {
   slug: string;
   title: string;
   /** Astronomik hedef (canonical ad + katalog kodu) */
-  target: { name: string; catalog: string; constellation: string };
+  target: {
+    name: string;
+    catalog: string;
+    constellation: string;
+    /** Veritabanındaki hedef slug'ı; düzenleme ekranı seçimi kaybetmesin. */
+    slug?: string;
+    /** Veritabanındaki hedef türü; fotoğraf türü bu katalog türünden türetilir. */
+    kind?: string;
+  };
   type: PhotoType;
   user: { username: string; displayName: string };
   description: string;

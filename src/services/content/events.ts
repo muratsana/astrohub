@@ -58,6 +58,9 @@ interface EventRow {
   rules: string[] | null;
   source_name: string | null;
   source_last_verified_at: string | null;
+  registration_portal_enabled?: boolean | null;
+  registration_portal_label?: string | null;
+  registration_portal_note?: string | null;
   event_sessions: EventSessionRow[] | null;
 }
 
@@ -113,6 +116,13 @@ export function mapEventRow(row: EventRow): AstroEvent {
       ...(seed?.source.url ? { url: seed.source.url } : {}),
     },
     ...(seed?.contact ? { contact: seed.contact } : {}),
+    registrationPortal: {
+      enabled: row.registration_portal_enabled === true,
+      label: row.registration_portal_label ?? 'Astrohub kayıt portalı',
+      ...(row.registration_portal_note
+        ? { note: row.registration_portal_note }
+        : {}),
+    },
   });
 }
 
@@ -124,7 +134,8 @@ async function fetchEvents(client: SupabaseClient): Promise<AstroEvent[]> {
         'ends_at, free, camping, kids_friendly, astrophoto_focused, ' +
         'telescopes_provided, capacity, registered_count, organizer_name, ' +
         'organizer_verified, description, observed_targets, rules, ' +
-        'source_name, source_last_verified_at, ' +
+        'source_name, source_last_verified_at, registration_portal_enabled, ' +
+        'registration_portal_label, registration_portal_note, ' +
         'event_sessions(starts_at, title, speaker, position)'
     )
     .eq('status', 'yayinda')

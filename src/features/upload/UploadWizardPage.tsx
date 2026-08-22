@@ -345,9 +345,7 @@ export function UploadWizardPage() {
         if (!editingPhoto.id) throw new Error('Fotoğraf kaydı bulunamadı.');
         setPublishState('kaydediliyor');
         const objectId = await requiredTargetId();
-        const title = selectedTarget
-          ? targetDisplayTitle(selectedTarget)
-          : state.title || editingPhoto.title;
+        const title = state.title.trim() || editingPhoto.title;
         await updatePhotoMetadata({
           photoId: editingPhoto.id,
           title,
@@ -399,9 +397,7 @@ export function UploadWizardPage() {
 
       if (!file) return;
       const objectId = await requiredTargetId();
-      const title = selectedTarget
-        ? targetDisplayTitle(selectedTarget)
-        : state.title;
+      const title = state.title.trim() || (selectedTarget ? targetDisplayTitle(selectedTarget) : '');
       /*
        * KIRPMA GÖNDERİM ANINDA, TEK SEFERDE UYGULANIYOR.
        *
@@ -533,8 +529,9 @@ export function UploadWizardPage() {
     }
     if (loadedEditSlug.current === editingPhoto.slug) return;
     loadedEditSlug.current = editingPhoto.slug;
-    setState(wizardStateFromPhoto(editingPhoto));
-    setSelectedRemoteTarget(null);
+    const editState = wizardStateFromPhoto(editingPhoto);
+    setState(editState);
+    setSelectedRemoteTarget(editState.selectedTarget);
     setCrop(FULL_FRAME);
     setAutoCrop(null);
     setAutoCropState('idle');
@@ -929,11 +926,16 @@ export function UploadWizardPage() {
 
               <TargetPicker
                 value={state.targetSlug}
+                initialTarget={state.selectedTarget}
                 showKindFilter={false}
                 onChange={(target) => {
                   if (!target) {
                     setSelectedRemoteTarget(null);
-                    patch({ targetSlug: '', targetKind: 'hepsi' });
+                    patch({
+                      targetSlug: '',
+                      selectedTarget: null,
+                      targetKind: 'hepsi',
+                    });
                     return;
                   }
                   /*
@@ -950,6 +952,7 @@ export function UploadWizardPage() {
                   setSelectedRemoteTarget(target);
                   patch({
                     targetSlug: target.slug,
+                    selectedTarget: target,
                     targetKind: target.kind,
                     title: targetDisplayTitle(target),
                     type: isPhotoType(suggested) ? suggested : state.type,
@@ -977,15 +980,13 @@ export function UploadWizardPage() {
               <Field
                 label="Başlık"
                 htmlFor="w-title"
-                hint="Katalog kodundan otomatik gelir; kartlarda global/orijinal ad gösterilir"
+                hint="Katalog seçiminde otomatik dolar; isterseniz fotoğraf başlığını sonradan değiştirebilirsiniz"
               >
                 <Input
                   id="w-title"
-                  placeholder="Katalog kaydı seçilince otomatik dolar"
+                  placeholder="Fotoğraf başlığı"
                   value={state.title}
-                  readOnly
-                  aria-readonly
-                  className="bg-surface-2 text-muted-foreground"
+                  onChange={(e) => patch({ title: e.target.value })}
                 />
               </Field>
               <Field

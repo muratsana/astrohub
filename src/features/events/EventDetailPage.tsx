@@ -110,6 +110,9 @@ export function EventDetailPage() {
                 {event.astrophotoFocused && (
                   <Badge tone="cold">Astrofoto odaklı</Badge>
                 )}
+                {event.registrationPortal?.enabled && (
+                  <Badge tone="success">Astrohub kayıt portalı</Badge>
+                )}
               </span>
               <AdminEditLink to={adminEditPath('event', event.slug)} />
             </div>

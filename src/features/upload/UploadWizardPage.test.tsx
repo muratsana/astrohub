@@ -68,4 +68,26 @@ describe('wizardStateFromPhoto', () => {
     expect(state.software).toBe('PixInsight');
     expect(state.copyrightConfirmed).toBe(true);
   });
+
+  it('paketlenmiş listede olmayan veritabanı hedefini düzenlemede kaybetmez', () => {
+    const uzakHedefli: AstroPhoto = {
+      ...photo,
+      title: 'V398 Cyg çalışması',
+      target: {
+        slug: 'v398-cyg',
+        catalog: 'V398 Cyg',
+        name: 'V398 Cyg',
+        constellation: 'Cyg',
+        kind: 'yildiz',
+      },
+      type: 'deep-sky',
+    };
+
+    const state = wizardStateFromPhoto(uzakHedefli);
+
+    expect(state.targetSlug).toBe('v398-cyg');
+    expect(state.targetKind).toBe('yildiz');
+    expect(state.selectedTarget?.catalog).toBe('V398 Cyg');
+    expect(state.title).toBe('V398 Cyg çalışması');
+  });
 });

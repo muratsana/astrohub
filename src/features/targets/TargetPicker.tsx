@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -69,6 +69,7 @@ export function TargetPicker({
   selectClassName = 'h-11 w-full rounded-card border border-border bg-surface-1 px-3 text-sm text-foreground focus:border-primary/60',
   showKindFilter = true,
   showDetails = true,
+  initialTarget = null,
 }: {
   /** Seçili hedefin slug'ı; boşsa seçim yok. */
   value: string;
@@ -79,6 +80,8 @@ export function TargetPicker({
   showKindFilter?: boolean;
   /** Dar araç kolonlarında seçili hedef açıklama kartını gizler. */
   showDetails?: boolean;
+  /** Paket dışı seçili hedef; ör. mevcut fotoğrafı düzenlerken DB'den gelir. */
+  initialTarget?: CelestialTarget | null;
 }) {
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
@@ -111,6 +114,11 @@ export function TargetPicker({
       (secilenUzak?.slug === value ? secilenUzak : null),
     [value, secilenUzak]
   );
+
+  useEffect(() => {
+    if (!initialTarget || initialTarget.slug !== value) return;
+    setSecilenUzak(initialTarget);
+  }, [initialTarget, value]);
 
   const { rows: uzak, loading: uzakYukleniyor } = useCatalogSearch(
     query,

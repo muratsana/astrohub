@@ -19,6 +19,7 @@ import {
   describeEventProblem,
   describeEventPublishWarning,
   emptyEventDraft,
+  fetchAdminEventRegistrations,
   fetchAdminEvent,
   fetchAdminEventBySlug,
   fetchAdminEvents,
@@ -26,6 +27,7 @@ import {
   setEventCancelled,
   type EventDraft,
   type EventListRow,
+  type EventRegistrationRow,
 } from './eventsAdmin';
 
 /**
@@ -62,6 +64,8 @@ export function EventControl({
   const [formError, setFormError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [registrations, setRegistrations] = useState<EventRegistrationRow[]>([]);
+  const [registrationError, setRegistrationError] = useState<string | null>(null);
 
   const load = useCallback(async (term: string) => {
     setLoading(true);
@@ -120,6 +124,27 @@ export function EventControl({
     }
   }
 
+  const loadRegistrations = useCallback(async (eventId: string) => {
+    try {
+      setRegistrations(await fetchAdminEventRegistrations(eventId));
+      setRegistrationError(null);
+    } catch (error) {
+      setRegistrations([]);
+      setRegistrationError(
+        error instanceof Error ? error.message : 'Kayıtlar okunamadı.'
+      );
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!draft?.id) {
+      setRegistrations([]);
+      setRegistrationError(null);
+      return;
+    }
+    void loadRegistrations(draft.id);
+  }, [draft?.id, loadRegistrations]);
+
   async function save() {
     if (!draft) return;
     setBusy(true);
@@ -129,6 +154,7 @@ export function EventControl({
       const id = await saveAdminEvent(draft);
       setDraft({ ...draft, id });
       setNotice('Etkinlik kaydedildi.');
+      await loadRegistrations(id);
       await load(search);
     } catch (error) {
       setFormError(
@@ -478,6 +504,133 @@ export function EventControl({
                 />
               </Field>
             </div>
+
+            <section className="rounded-card border border-border bg-surface-1 p-3">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="label text-foreground">Kayıt portalı</p>
+                  <p className="mt-1 text-meta leading-snug text-muted-foreground">
+                    Adminin açtığı Astrohub etkinliklerinde kullanıcı kayıtları
+                    burada toplanır.
+                  </p>
+                </div>
+                <label className="flex items-center gap-2 text-body-sm text-foreground">
+                  <input
+                    type="checkbox"
+                    checked={draft.registrationPortalEnabled}
+                    disabled={!canWrite}
+                    onChange={(event) =>
+                      set('registrationPortalEnabled', event.target.checked)
+                    }
+                  />
+                  Açık
+                </label>
+              </div>
+
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <Field label="Portal etiketi" htmlFor="event-portal-label">
+                  <Input
+                    id="event-portal-label"
+                    value={draft.registrationPortalLabel}
+                    disabled={!canWrite || !draft.registrationPortalEnabled}
+                    onChange={(event) =>
+                      set('registrationPortalLabel', event.target.value)
+                    }
+                  />
+                </Field>
+                <Field
+                  label="Kayıtlı kullanıcı"
+                  htmlFor="event-registration-count"
+                >
+                  <Input
+                    id="event-registration-count"
+                    value={`${registrations.length} kayıt`}
+                    disabled
+                    readOnly
+                  />
+                </Field>
+              </div>
+
+              <Field
+                label="Portal notu"
+                htmlFor="event-portal-note"
+                hint="Detay sayfasında kayıt düğmelerinin üstünde görünür."
+              >
+                <textarea
+                  id="event-portal-note"
+                  rows={3}
+                  value={draft.registrationPortalNote}
+                  disabled={!canWrite || !draft.registrationPortalEnabled}
+                  onChange={(event) =>
+                    set('registrationPortalNote', event.target.value)
+                  }
+                  className="w-full rounded-card border border-border bg-surface-2 px-2.5 py-2 text-body-sm leading-relaxed text-foreground outline-none focus:border-primary"
+                />
+              </Field>
+
+              {registrationError && (
+                <Alert variant="text" className="mt-2">
+                  {registrationError}
+                </Alert>
+              )}
+
+              {draft.id && (
+                <div className="mt-3 border-t border-border pt-3">
+                  <div className="mb-2 flex items-center justify-between gap-2">
+                    <p className="label text-muted-foreground">Kayıtlar</p>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      disabled={busy}
+                      onClick={() => void loadRegistrations(draft.id!)}
+                    >
+                      Yenile
+                    </Button>
+                  </div>
+
+                  {registrations.length === 0 ? (
+                    <p className="text-meta text-faint">
+                      Bu etkinlik için henüz kayıt yok.
+                    </p>
+                  ) : (
+                    <ul className="divide-y divide-border overflow-hidden rounded-card border border-border">
+                      {registrations.map((registration) => {
+                        const name =
+                          registration.displayName ||
+                          registration.username ||
+                          registration.userId;
+                        return (
+                          <li
+                            key={registration.userId}
+                            className="grid gap-1 bg-surface-2 px-3 py-2 text-body-sm"
+                          >
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <span className="font-medium text-foreground">
+                                {name}
+                              </span>
+                              <span className="tabular text-meta text-muted-foreground">
+                                {new Date(
+                                  registration.createdAt
+                                ).toLocaleString('tr-TR', {
+                                  dateStyle: 'short',
+                                  timeStyle: 'short',
+                                })}
+                              </span>
+                            </div>
+                            {registration.note && (
+                              <p className="text-meta leading-snug text-muted-foreground">
+                                {registration.note}
+                              </p>
+                            )}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </div>
+              )}
+            </section>
 
             <Field
               label="Adres eki"
