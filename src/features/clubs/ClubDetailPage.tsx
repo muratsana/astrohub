@@ -115,7 +115,7 @@ export function ClubDetailPage() {
               { label: club.name },
             ]}
           />
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+          <div className="grid gap-3">
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2 text-meta text-muted-foreground">
                 <span>{club.city}</span>
@@ -138,7 +138,7 @@ export function ClubDetailPage() {
               )}
             </div>
 
-            <div className="flex max-w-full flex-wrap items-center gap-2 lg:justify-end">
+            <div className="flex min-w-0 max-w-full flex-wrap items-center gap-2">
               <Badge tone="primary">{clubKindLabels[club.kind]}</Badge>
               {club.verifiedAt && <Badge tone="success">Doğrulanmış</Badge>}
               {club.topics?.map((topic) => (
