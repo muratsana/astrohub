@@ -7,11 +7,14 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { useAuth } from '@/features/auth/AuthContext';
 import { cn } from '@/lib/cn';
-import { IcerikSekmeleri } from './IcerikSekmeleri';
 import { UserControl } from './UserControl';
 import { RecordsControl, AuditControl } from './RecordsControl';
 import { CommentsControl } from './CommentsControl';
 import { ForumCategories } from './ForumCategories';
+import { ContentControl } from './ContentControl';
+import { EventControl } from './EventControl';
+import { ClubControl } from './ClubControl';
+import { PlateSolveControl } from './PlateSolveControl';
 import { FeaturedControl } from './FeaturedControl';
 import { SiteControl } from './SiteControl';
 import { BroadcastControl } from './BroadcastControl';
@@ -25,9 +28,7 @@ import { SpecImportControl } from './SpecImportControl';
 import { AllskyControl } from './AllskyControl';
 import { PhotoWeekAdminControl } from './PhotoWeekAdminControl';
 import { useRoles } from './useRoles';
-import type { EntryKind } from '@/services/content/entries';
 import { fetchDashboard, type DashboardStats } from './records';
-import type { RecordKind } from './records';
 import { formatAdminCount } from './dashboard';
 import { LivePresencePanel } from './livePresence';
 import {
@@ -51,7 +52,14 @@ type AdminSectionId =
   | 'genel'
   | 'onay'
   | 'kullanicilar'
-  | 'icerik'
+  | 'galeri'
+  | 'etkinlikler'
+  | 'topluluklar'
+  | 'haberler'
+  | 'yazilar'
+  | 'araclar'
+  | 'ilanlar'
+  | 'saha'
   | 'moderasyon'
   | 'forum'
   | 'destek'
@@ -62,8 +70,9 @@ type AdminSectionId =
   | 'allsky'
   | 'hafta'
   | 'duyuru'
-  | 'sayfa'
-  | 'ayar';
+  | 'anasayfa'
+  | 'ayar'
+  | 'odeme';
 
 const navGroups: readonly {
   title?: string;
@@ -78,60 +87,40 @@ const navGroups: readonly {
     items: [
       { id: 'genel', label: 'Genel Bakış', path: '/admin', icon: HomeIcon },
       {
-        id: 'onay',
-        label: 'Onay Kuyruğu',
-        path: '/admin/onay-kuyrugu',
-        icon: GridIcon,
-      },
-      {
         id: 'kullanicilar',
         label: 'Kullanıcılar',
         path: '/admin/kullanicilar',
         icon: UsersIcon,
       },
-      { id: 'icerik', label: 'İçerik', path: '/admin/icerik', icon: BookIcon },
+      { id: 'galeri', label: 'Galeri', path: '/admin/galeri', icon: ImageIcon },
       {
-        id: 'moderasyon',
-        label: 'Moderasyon',
-        path: '/admin/moderasyon',
-        icon: AlertIcon,
+        id: 'etkinlikler',
+        label: 'Etkinlikler',
+        path: '/admin/etkinlikler',
+        icon: CalendarIcon,
       },
-      /* Forum yönetimi (kategoriler, konular, iletiler) yazılmıştı ama menüde
-         girdisi yoktu ve `/admin/forum` takma adı da 'moderasyon'a gidiyordu:
-         ekrana hiçbir yoldan erişilemiyordu. */
+      {
+        id: 'topluluklar',
+        label: 'Topluluklar',
+        path: '/admin/topluluklar',
+        icon: UsersIcon,
+      },
+      {
+        id: 'haberler',
+        label: 'Haberler',
+        path: '/admin/haberler',
+        icon: BookIcon,
+      },
+      {
+        id: 'yazilar',
+        label: 'Yazılar',
+        path: '/admin/yazilar',
+        icon: BookIcon,
+      },
       { id: 'forum', label: 'Forum', path: '/admin/forum', icon: ChatIcon },
-      { id: 'destek', label: 'Destek', path: '/admin/destek', icon: BellIcon },
-      {
-        id: 'hafta',
-        label: 'Haftanın Fotoğrafı',
-        path: '/admin/haftanin-fotografi',
-        icon: SparkleIcon,
-      },
-    ],
-  },
-  {
-    title: 'Sistem',
-    items: [
-      /* MENÜDEN ÇIKARILAN ÜÇ GİRDİ — kimlikleri ve yolları duruyor.
-         'hata' ("Hata Günlükleri"), 'link' ("Link Sağlığı") ve 'eposta'
-         ("E-posta Sağlığı") kendi ekranlarına sahip değildi: sırasıyla
-         'aktivite' (denetim günlüğü), 'ayar' (site/katalog ayarları) ve
-         'destek' (hatırlatmalar) ile AYNI bileşeni çiziyorlardı. Etiketleri
-         yöneticiye var olmayan bir ekran vaat ediyordu. Kimlikler tip ve
-         gövde içinde korunuyor ki eski yer imleri ve `routeAliases`
-         çalışmaya devam etsin — yalnızca menüden kaldırıldılar. */
-      {
-        id: 'aktivite',
-        label: 'Aktivite',
-        path: '/admin/aktivite',
-        icon: ListIcon,
-      },
-      {
-        id: 'duyuru',
-        label: 'Duyurular',
-        path: '/admin/duyurular',
-        icon: RadioIcon,
-      },
+      { id: 'araclar', label: 'Araçlar', path: '/admin/araclar', icon: GridIcon },
+      { id: 'ilanlar', label: 'İlanlar', path: '/admin/ilanlar', icon: TagIcon },
+      { id: 'saha', label: 'Saha', path: '/admin/saha', icon: EyeIcon },
       {
         id: 'allsky',
         label: 'Allsky',
@@ -139,12 +128,37 @@ const navGroups: readonly {
         icon: EyeIcon,
       },
       {
-        id: 'sayfa',
-        label: 'Sayfalar',
-        path: '/admin/sayfalar',
-        icon: ImageIcon,
+        id: 'moderasyon',
+        label: 'Moderasyon',
+        path: '/admin/moderasyon',
+        icon: AlertIcon,
+      },
+      {
+        id: 'anasayfa',
+        label: 'Anasayfa Yönetimi',
+        path: '/admin/anasayfa',
+        icon: SparkleIcon,
       },
       { id: 'ayar', label: 'Ayarlar', path: '/admin/ayarlar', icon: GridIcon },
+      {
+        id: 'odeme',
+        label: 'Ödeme Yönetimi',
+        path: '/admin/odemeler',
+        icon: TagIcon,
+      },
+      { id: 'destek', label: 'Destek', path: '/admin/destek', icon: BellIcon },
+      {
+        id: 'hafta',
+        label: 'Haftanın Fotoğrafı',
+        path: '/admin/haftanin-fotografi',
+        icon: SparkleIcon,
+      },
+      {
+        id: 'duyuru',
+        label: 'Duyurular',
+        path: '/admin/duyurular',
+        icon: RadioIcon,
+      },
     ],
   },
 ];
@@ -152,14 +166,16 @@ const navGroups: readonly {
 const sections = navGroups.flatMap((group) => group.items);
 
 const routeAliases: Record<string, AdminSectionId> = {
-  '/admin/gallery': 'icerik',
-  '/admin/news': 'icerik',
-  '/admin/articles': 'icerik',
-  '/admin/content': 'icerik',
-  '/admin/events': 'icerik',
-  '/admin/listings': 'icerik',
-  '/admin/sites': 'icerik',
-  '/admin/media': 'icerik',
+  '/admin/icerik': 'haberler',
+  '/admin/gallery': 'galeri',
+  '/admin/news': 'haberler',
+  '/admin/articles': 'yazilar',
+  '/admin/content': 'haberler',
+  '/admin/events': 'etkinlikler',
+  '/admin/listings': 'ilanlar',
+  '/admin/sites': 'saha',
+  '/admin/media': 'galeri',
+  '/admin/onay-kuyrugu': 'moderasyon',
   '/admin/moderation': 'moderasyon',
   '/admin/users': 'kullanicilar',
   '/admin/broadcast': 'duyuru',
@@ -171,6 +187,8 @@ const routeAliases: Record<string, AdminSectionId> = {
   '/admin/site-settings': 'ayar',
   '/admin/catalog': 'ayar',
   '/admin/audit': 'aktivite',
+  '/admin/sayfalar': 'anasayfa',
+  '/admin/odemeler': 'odeme',
 };
 
 type StatTone = 'warning' | 'primary' | 'success' | 'cold';
@@ -251,7 +269,7 @@ function activityRows(data: DashboardStats | null): DashboardRow[] {
       title: 'Taslak içerik',
       text: 'Yayına alınmamış içerik',
       meta: formatAdminCount(data?.icerikTaslak),
-      href: '/admin/icerik',
+      href: '/admin/haberler',
     },
     {
       title: 'Bugünkü audit',
@@ -274,25 +292,25 @@ function contentRows(data: DashboardStats | null): DashboardRow[] {
       title: 'Yayındaki içerik',
       text: 'Haber, yazı, sözlük ve SSS kayıtları',
       meta: formatAdminCount(data?.icerikYayinda),
-      href: '/admin/icerik',
+      href: '/admin/haberler',
     },
     {
       title: 'Taslak içerik',
       text: 'Yayına alınmayı bekleyen içerik',
       meta: formatAdminCount(data?.icerikTaslak),
-      href: '/admin/icerik',
+      href: '/admin/haberler',
     },
     {
       title: 'Bekleyen fotoğraf',
       text: 'Fotoğraf moderasyon kuyruğu',
       meta: formatAdminCount(data?.fotografBekleyen),
-      href: '/admin/onay-kuyrugu?record=photo',
+      href: '/admin/galeri?record=photo',
     },
     {
       title: 'Onay kuyruğu',
       text: 'Moderasyon bekleyen tüm kayıtlar',
       meta: formatAdminCount(data?.moderasyonBekleyen),
-      href: '/admin/onay-kuyrugu',
+      href: '/admin/moderasyon',
     },
   ];
 }
@@ -309,7 +327,7 @@ function queueRows(data: DashboardStats | null): DashboardRow[] {
       title: 'Fotoğraf inceleme',
       text: 'Taslak fotoğraflar',
       meta: formatAdminCount(data?.fotografBekleyen),
-      href: '/admin/onay-kuyrugu?record=photo',
+      href: '/admin/galeri?record=photo',
     },
     {
       title: 'Silme talebi',
@@ -331,9 +349,7 @@ export function AdminPage() {
   const roles = useRoles();
   const location = useLocation();
   const search = new URLSearchParams(location.search);
-  const active = useActiveSection(location.pathname);
-  const contentKind = getContentKind(search.get('kind'));
-  const recordKind = getRecordKind(location.pathname, search.get('record'));
+  const active = useActiveSection(location.pathname, search);
   const targetSlug = search.get('slug') ?? undefined;
   const ready = configured && roles.status !== 'unconfigured';
 
@@ -451,8 +467,6 @@ export function AdminPage() {
               <AdminSection
                 active={active}
                 isAdmin={roles.isAdmin}
-                contentKind={contentKind}
-                recordKind={recordKind}
                 targetSlug={targetSlug}
               />
             )}
@@ -466,25 +480,12 @@ export function AdminPage() {
 function AdminSection({
   active,
   isAdmin,
-  contentKind,
-  recordKind,
   targetSlug,
 }: {
   active: AdminSectionId;
   isAdmin: boolean;
-  contentKind: EntryKind;
-  recordKind?: RecordKind;
   targetSlug?: string;
 }) {
-  if (active === 'onay') {
-    return (
-      <div className="space-y-4">
-        <RecordsControl kinds={['photo', 'listing', 'event', 'site']} />
-        <CommentsControl />
-      </div>
-    );
-  }
-
   /* İÇERİK ONAYI İLE ŞİKÂYET KUYRUĞU AYRI İŞLER.
      İkisi de bu dalda birleşiktiyken "Moderasyon" menüsü içerik onay
      ekranını açıyordu; `moderation_queue`'ya bakan hiçbir ekran yoktu. */
@@ -506,14 +507,81 @@ function AdminSection({
     );
   }
 
-  if (active === 'icerik') {
+  if (active === 'galeri') {
     return (
-      <IcerikSekmeleri
+      <div className="space-y-4">
+        <RecordsControl
+          kinds={['photo']}
+          title="Galeri yönetimi"
+          initialKind="photo"
+          targetSlug={targetSlug}
+        />
+        <PlateSolveControl />
+        <CommentsControl kinds={['photoComment']} />
+      </div>
+    );
+  }
+
+  if (active === 'etkinlikler') {
+    return <EventControl canWrite={isAdmin} targetSlug={targetSlug} />;
+  }
+
+  if (active === 'topluluklar') {
+    return <ClubControl canWrite={isAdmin} />;
+  }
+
+  if (active === 'haberler') {
+    return (
+      <ContentControl
         canWrite={isAdmin}
-        contentKind={contentKind}
-        recordKind={recordKind}
+        initialKind="haber"
+        initialSlug={targetSlug}
+      />
+    );
+  }
+
+  if (active === 'yazilar') {
+    return (
+      <ContentControl
+        canWrite={isAdmin}
+        initialKind="yazi"
+        initialSlug={targetSlug}
+      />
+    );
+  }
+
+  if (active === 'ilanlar') {
+    return (
+      <RecordsControl
+        kinds={['listing']}
+        title="İlan yönetimi"
+        initialKind="listing"
         targetSlug={targetSlug}
       />
+    );
+  }
+
+  if (active === 'saha') {
+    return (
+      <div className="space-y-4">
+        <RecordsControl
+          kinds={['site']}
+          title="Saha ve gözlem noktaları"
+          initialKind="site"
+          targetSlug={targetSlug}
+        />
+        <CommentsControl kinds={['siteReview']} />
+      </div>
+    );
+  }
+
+  if (active === 'araclar') {
+    return (
+      <div className="space-y-4">
+        <CatalogControl canWrite={isAdmin} />
+        <EquipmentDataControl canWrite={isAdmin} />
+        <SpecImportControl canWrite={isAdmin} />
+      </div>
     );
   }
 
@@ -541,11 +609,15 @@ function AdminSection({
     return <PhotoWeekAdminControl canWrite={isAdmin} />;
   }
 
-  if (active === 'sayfa') {
+  if (active === 'anasayfa') {
     return (
       <div className="space-y-4">
         <FeaturedControl canWrite={isAdmin} />
         <SiteControl canWrite={isAdmin} />
+        <AdminPlaceholder
+          title="Anasayfa GUI planı"
+          text="Hero, modül sırası, vitrin kartları ve görünürlük kuralları burada tek yönetim yüzeyinde toplanacak. Mevcut canlı kontroller yukarıda bağlı; eksik GUI ayrıntıları sonraki adımda tek tek gerçek alanlara ayrılacak."
+        />
       </div>
     );
   }
@@ -554,10 +626,16 @@ function AdminSection({
     return (
       <div className="space-y-4">
         <SiteControl canWrite={isAdmin} />
-        <CatalogControl canWrite={isAdmin} />
-        <EquipmentDataControl canWrite={isAdmin} />
-        <SpecImportControl canWrite={isAdmin} />
       </div>
+    );
+  }
+
+  if (active === 'odeme') {
+    return (
+      <AdminPlaceholder
+        title="Ödeme Yönetimi"
+        text="Premium ve normal üyelik ödeme takibi için ayrıldı. Şimdilik canlı ödeme sağlayıcısı bağlı değil; gerçek ödeme verisi gelene kadar boş tutuluyor."
+      />
     );
   }
 
@@ -587,6 +665,21 @@ function AdminSection({
      karşılıyor. Forum ekranı eskiden BU konumdaydı — koşulsuz son dönüş
      olduğu için de hiçbir kimlikle eşleşmiyordu; artık kendi dalında. */
   return <Dashboard />;
+}
+
+function AdminPlaceholder({ title, text }: { title: string; text: string }) {
+  return (
+    <section className="rounded-card border border-border bg-surface-1">
+      <header className="border-b border-border px-4 py-3">
+        <h2 className="label text-foreground">{title}</h2>
+      </header>
+      <div className="px-4 py-4">
+        <p className="max-w-3xl text-body-sm leading-relaxed text-muted-foreground">
+          {text}
+        </p>
+      </div>
+    </section>
+  );
 }
 
 function Dashboard() {
@@ -920,34 +1013,23 @@ function RecentActivityPanel({
   );
 }
 
-function useActiveSection(pathname: string): AdminSectionId {
+function useActiveSection(
+  pathname: string,
+  search: URLSearchParams
+): AdminSectionId {
   const normalized = pathname.replace(/\/+$/, '') || '/admin';
+  if (normalized === '/admin/icerik') {
+    const record = search.get('record');
+    if (record === 'photo') return 'galeri';
+    if (record === 'listing') return 'ilanlar';
+    if (record === 'event') return 'etkinlikler';
+    if (record === 'site') return 'saha';
+    const kind = search.get('kind');
+    if (kind === 'yazi') return 'yazilar';
+    if (kind === 'haber' || !kind) return 'haberler';
+  }
   const exact = sections.find((item) => item.path === normalized);
   return exact?.id ?? routeAliases[normalized] ?? 'genel';
-}
-
-function getContentKind(value: string | null): EntryKind {
-  if (value === 'yazi' || value === 'sozluk' || value === 'sss') return value;
-  return 'haber';
-}
-
-function getRecordKind(
-  pathname: string,
-  value: string | null
-): RecordKind | undefined {
-  if (
-    value === 'photo' ||
-    value === 'listing' ||
-    value === 'event' ||
-    value === 'site'
-  ) {
-    return value;
-  }
-  const normalized = pathname.replace(/\/+$/, '');
-  if (normalized === '/admin/events') return 'event';
-  if (normalized === '/admin/listings') return 'listing';
-  if (normalized === '/admin/sites') return 'site';
-  return undefined;
 }
 
 function IconTile({ index }: { index: number }) {

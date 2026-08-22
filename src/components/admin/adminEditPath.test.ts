@@ -46,8 +46,10 @@ describe('adminEditPath', () => {
 describe('entryEditPath', () => {
   it('içerik türünü ve slug’ı taşır', () => {
     expect(entryEditPath('yazi', 'drizzle')).toBe(
-      '/admin/icerik?kind=yazi&slug=drizzle'
+      '/admin/yazilar?kind=yazi&slug=drizzle'
     );
-    expect(entryEditPath('haber', 'x')).toContain('kind=haber');
+    expect(entryEditPath('haber', 'x')).toBe(
+      '/admin/haberler?kind=haber&slug=x'
+    );
   });
 });

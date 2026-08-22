@@ -45,6 +45,51 @@ vi.mock('./records', () => ({
     }),
 }));
 
+vi.mock('./ContentControl', () => ({
+  ContentControl: ({ initialKind }: { initialKind: string }) => (
+    <section>
+      <h2>ContentControl {initialKind}</h2>
+    </section>
+  ),
+}));
+
+vi.mock('./RecordsControl', () => ({
+  RecordsControl: ({ title }: { title: string }) => (
+    <section>
+      <h2>{title}</h2>
+    </section>
+  ),
+  AuditControl: () => (
+    <section>
+      <h2>AuditControl</h2>
+    </section>
+  ),
+}));
+
+vi.mock('./CommentsControl', () => ({
+  CommentsControl: () => null,
+}));
+
+vi.mock('./PlateSolveControl', () => ({
+  PlateSolveControl: () => null,
+}));
+
+vi.mock('./EventControl', () => ({
+  EventControl: () => (
+    <section>
+      <h2>EventControl</h2>
+    </section>
+  ),
+}));
+
+vi.mock('./ClubControl', () => ({
+  ClubControl: () => (
+    <section>
+      <h2>ClubControl</h2>
+    </section>
+  ),
+}));
+
 vi.mock('./livePresence', () => ({
   LivePresencePanel: () => (
     <section>
@@ -65,30 +110,27 @@ function renderPanel(path = '/admin') {
   );
 }
 
-/*
- * Menü on üç girdiden on bire indi ve bir yeni girdi kazandı.
- *
- * Çıkarılanlar — "Hata Günlükleri", "Link Sağlığı", "E-posta Sağlığı":
- * üçünün de kendi ekranı yoktu, sırasıyla "Aktivite", "Ayarlar" ve
- * "Destek" ile aynı bileşeni çiziyorlardı.
- *
- * Eklenen — "Forum": ekran yazılmıştı ama menüde girdisi olmadığı için
- * hiçbir yoldan erişilemiyordu.
- */
+// Admin menüsü site modüllerini doğrudan yönetilebilir başlıklar olarak gösterir.
 const NAV = [
   'Genel Bakış',
-  'Onay Kuyruğu',
   'Kullanıcılar',
-  'İçerik',
-  'Moderasyon',
+  'Galeri',
+  'Etkinlikler',
+  'Topluluklar',
+  'Haberler',
+  'Yazılar',
   'Forum',
+  'Araçlar',
+  'İlanlar',
+  'Saha',
+  'Allsky',
+  'Moderasyon',
+  'Anasayfa Yönetimi',
+  'Ayarlar',
+  'Ödeme Yönetimi',
   'Destek',
   'Haftanın Fotoğrafı',
-  'Aktivite',
   'Duyurular',
-  'Allsky',
-  'Sayfalar',
-  'Ayarlar',
 ];
 
 describe('StageHub tarzı admin GUI', () => {
@@ -114,9 +156,25 @@ describe('StageHub tarzı admin GUI', () => {
     ).toBeInTheDocument();
   });
 
-  it('eski admin içerik adresleri yeni İçerik sekmesine düşer', () => {
+  it('eski galeri adresi Galeri modülüne düşer', () => {
     renderPanel('/admin/gallery');
-    expect(screen.getByRole('link', { name: 'İçerik' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Galeri' })).toHaveAttribute(
+      'aria-current',
+      'page'
+    );
+  });
+
+  it('eski içerik kayıt parametresi ilgili kayıt modülüne düşer', () => {
+    renderPanel('/admin/icerik?record=photo');
+    expect(screen.getByRole('link', { name: 'Galeri' })).toHaveAttribute(
+      'aria-current',
+      'page'
+    );
+  });
+
+  it('eski yazı düzenleme adresi Yazılar modülüne düşer', () => {
+    renderPanel('/admin/icerik?kind=yazi&slug=drizzle');
+    expect(screen.getByRole('link', { name: 'Yazılar' })).toHaveAttribute(
       'aria-current',
       'page'
     );

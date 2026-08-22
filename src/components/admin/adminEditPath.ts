@@ -19,10 +19,10 @@ import type { RecordKind } from '@/features/admin/records';
  * değiştiğinde öteki sessizce kırılırdı.
  */
 const ROUTES: Record<RecordKind, string> = {
-  photo: '/admin/icerik',
-  listing: '/admin/listings',
-  event: '/admin/events',
-  site: '/admin/sites',
+  photo: '/admin/galeri',
+  listing: '/admin/ilanlar',
+  event: '/admin/etkinlikler',
+  site: '/admin/saha',
   /* Forum konularının kendi bölümü var ve orası zaten yalnızca konuları
      listeliyor — tür parametresine gerek yok. */
   thread: '/admin/forum',
@@ -56,5 +56,11 @@ export type EntryEditKind = 'haber' | 'yazi' | 'sozluk' | 'sss';
 
 export function entryEditPath(kind: EntryEditKind, slug: string): string {
   const params = new URLSearchParams({ kind, slug });
-  return `/admin/icerik?${params.toString()}`;
+  const base =
+    kind === 'yazi'
+      ? '/admin/yazilar'
+      : kind === 'haber'
+        ? '/admin/haberler'
+        : '/admin/icerik';
+  return `${base}?${params.toString()}`;
 }
