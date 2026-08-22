@@ -4,11 +4,7 @@ import { photoTypeLabels } from '@/features/photos/types';
 import { targets, targetKindLabels } from '@/features/targets/data';
 import { events } from '@/features/events/data';
 import { eventTypeLabels } from '@/features/events/types';
-import {
-  equipment,
-  equipmentCategoryLabels,
-  equipmentPath,
-} from '@/features/equipment/data';
+import { equipmentCategoryLabels } from '@/features/equipment/taxonomy';
 import { sites } from '@/features/observing-sites/data';
 import {
   articles,
@@ -164,15 +160,21 @@ export const searchIndex: SearchDoc[] = [
     )
   ),
 
-  ...equipment.map((eq) =>
-    doc(
-      'ekipman',
-      eq.slug,
-      `${eq.brand} ${eq.model}`,
-      equipmentCategoryLabels[eq.category],
-      equipmentPath(eq),
-      [eq.brand, eq.model, ...Object.values(eq.specs)]
-    )
+  doc(
+    'ekipman',
+    'katalog',
+    'Ekipman Kataloğu',
+    'Teleskop, montür, kamera, filtre ve aksesuarlar',
+    '/ekipman',
+    [
+      'teleskop',
+      'montür',
+      'kamera',
+      'filtre',
+      'aksesuar',
+      'optik tüp',
+      'astro kamera',
+    ]
   ),
 
   // Kullanıcılar fotoğraf verisinden türetilir (hesap sistemi bağlanınca

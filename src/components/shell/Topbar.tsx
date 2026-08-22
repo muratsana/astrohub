@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { NavLink } from 'react-router';
 import { Logo } from './Logo';
 import { ButtonLink } from '@/components/ui/Button';
@@ -11,8 +12,13 @@ import { ThemeToggle } from '@/features/theme/ThemeToggle';
 import { RadioToggle } from '@/features/radio/RadioToggle';
 import { TvToggle } from '@/features/tv/TvToggle';
 import { NotificationBell } from '@/features/notifications/NotificationBell';
-import { GlobalSearchBox } from '@/features/search/GlobalSearchBox';
 import { cn } from '@/lib/cn';
+
+const GlobalSearchBox = lazy(() =>
+  import('@/features/search/GlobalSearchBox').then((m) => ({
+    default: m.GlobalSearchBox,
+  }))
+);
 
 /**
  * ÜST NAVİGASYON.
@@ -215,7 +221,9 @@ export function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
               sayfada görünmesi gerekiyor. Menüde bir metin bağlantısı bunu
               yapamazdı.
             */}
-            <GlobalSearchBox />
+            <Suspense fallback={null}>
+              <GlobalSearchBox />
+            </Suspense>
             <TvToggle />
             <RadioToggle />
 

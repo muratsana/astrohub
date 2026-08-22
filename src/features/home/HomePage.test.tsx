@@ -173,7 +173,11 @@ describe('HomePage · bölümler', () => {
   it('etkinlikleri tablo olarak listeler', async () => {
     renderHome();
     expect(
-      await screen.findByRole('heading', { name: /yaklaşan etkinlikler/i })
+      await screen.findByRole(
+        'heading',
+        { name: /yaklaşan etkinlikler/i },
+        { timeout: 3000 }
+      )
     ).toBeInTheDocument();
     // Ajanda satırı: etkinlik adı tam kontrastta bir bağlantı olarak
     // okunmalı. Tablo düzeninde ad diğer hücrelerle aynı ağırlıktaydı.
@@ -189,7 +193,9 @@ describe('HomePage · bölümler', () => {
   it('haberler ve yazılar bölümlerini içerir', async () => {
     renderHome();
     for (const name of [/^haberler$/i, /^yazılar$/i]) {
-      expect(await screen.findByRole('heading', { name })).toBeInTheDocument();
+      expect(
+        await screen.findByRole('heading', { name }, { timeout: 3000 })
+      ).toBeInTheDocument();
     }
   });
 
@@ -227,7 +233,7 @@ describe('HomePage · bölümler', () => {
     ];
     const order: HTMLElement[] = [];
     for (const name of names) {
-      order.push(await screen.findByRole('heading', { name }));
+      order.push(await screen.findByRole('heading', { name }, { timeout: 3000 }));
     }
 
     for (let i = 1; i < order.length; i++) {

@@ -1,13 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { SearchIcon } from '@/components/ui/icons';
 import { cn } from '@/lib/cn';
 import { useHiddenPrefixes } from '@/features/site/useSiteMap';
-import {
-  flattenCommands,
-  runCommandSearch,
-  type Command,
-} from '@/features/search/commands';
+import type { Command } from '@/features/search/commands';
 
 function navigable(command: Command): command is Command & { to: string } {
   return Boolean(command.to) && !command.soon;
@@ -17,17 +13,35 @@ export function GlobalSearchBox() {
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
+  const [results, setResults] = useState<(Command & { to: string })[]>([]);
   const rootRef = useRef<HTMLFormElement>(null);
   const navigate = useNavigate();
   const hiddenPrefixes = useHiddenPrefixes();
 
-  const results = useMemo(
-    () =>
-      flattenCommands(runCommandSearch(query, hiddenPrefixes))
-        .filter(navigable)
-        .slice(0, 6),
-    [hiddenPrefixes, query]
-  );
+  useEffect(() => {
+    const trimmed = query.trim();
+    if (!trimmed) {
+      setResults([]);
+      return;
+    }
+
+    let cancelled = false;
+    import('@/features/search/commands').then(
+      ({ flattenCommands, runCommandSearch }) => {
+        if (cancelled) return;
+        const visible = flattenCommands(runCommandSearch(trimmed, hiddenPrefixes))
+          .filter(
+            (command): command is Command & { to: string } => navigable(command)
+          )
+          .slice(0, 6);
+        setResults(visible);
+      }
+    );
+
+    return () => {
+      cancelled = true;
+    };
+  }, [hiddenPrefixes, query]);
 
   useEffect(() => setActive(0), [query]);
 
